@@ -359,10 +359,15 @@ export class CaseService extends CaseAlertsCommonService {
     return result
   }
 
-  private getStatusChange(updates: CaseStatusUpdate): CaseStatusChange {
+  private getStatusChange(
+    updates: CaseStatusUpdate,
+    bySystem = false
+  ): CaseStatusChange {
     const userId = (getContext()?.user as Account).id
     return {
-      userId: userId ?? FLAGRIGHT_SYSTEM_USER,
+      userId: bySystem
+        ? FLAGRIGHT_SYSTEM_USER
+        : userId ?? FLAGRIGHT_SYSTEM_USER,
       timestamp: Date.now(),
       reason: updates.reason,
       caseStatus: updates.caseStatus,
@@ -443,6 +448,7 @@ export class CaseService extends CaseAlertsCommonService {
     caseIds: string[],
     updates: CaseStatusUpdate,
     options?: {
+      bySystem?: boolean
       cascadeAlertsUpdate?: boolean
       reviewAssignments?: Assignment[]
       skipReview?: boolean
@@ -455,7 +461,7 @@ export class CaseService extends CaseAlertsCommonService {
       skipReview = false,
       account,
     } = options ?? {}
-    const statusChange = this.getStatusChange(updates)
+    const statusChange = this.getStatusChange(updates, options?.bySystem)
 
     const cases = await this.caseRepository.getCasesByIds(caseIds)
 
@@ -594,6 +600,7 @@ export class CaseService extends CaseAlertsCommonService {
           alerts.map((a) => a.alertId!),
           alertsStatusChange,
           {
+            bySystem: true,
             cascadeCaseUpdates: false,
             account,
             skipReview: skipReview || isLastInReview,

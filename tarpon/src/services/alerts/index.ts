@@ -678,19 +678,23 @@ export class AlertsService extends CaseAlertsCommonService {
     alertIds: string[],
     statusUpdateRequest: AlertStatusUpdateRequest,
     options?: {
+      bySystem?: boolean
       cascadeCaseUpdates?: boolean
       skipReview?: boolean
       account?: Account
     }
   ): Promise<void> {
     const {
+      bySystem,
       cascadeCaseUpdates = true,
       skipReview = false,
       account,
     } = options ?? {}
     const userId = getContext()?.user?.id
     const statusChange: CaseStatusChange = {
-      userId: userId ?? FLAGRIGHT_SYSTEM_USER,
+      userId: bySystem
+        ? FLAGRIGHT_SYSTEM_USER
+        : userId ?? FLAGRIGHT_SYSTEM_USER,
       timestamp: Date.now(),
       reason: statusUpdateRequest.reason,
       caseStatus: statusUpdateRequest.alertStatus,
@@ -769,7 +773,7 @@ export class AlertsService extends CaseAlertsCommonService {
           statusChange
         ),
         this.saveAlertsComment(alertIds, caseIds, {
-          userId: userId ?? FLAGRIGHT_SYSTEM_USER,
+          userId: statusChange.userId,
           body: commentBody,
           files: statusUpdateRequest.files,
         }),
@@ -829,7 +833,7 @@ export class AlertsService extends CaseAlertsCommonService {
         await caseService.updateCasesStatus(
           caseIdsWithAllAlertsSameStatus,
           caseUpdateStatus,
-          { cascadeAlertsUpdate: false, account: userAccount }
+          { bySystem: true, cascadeAlertsUpdate: false, account: userAccount }
         )
 
         await this.auditLogService.handleAuditLogForCaseUpdate(

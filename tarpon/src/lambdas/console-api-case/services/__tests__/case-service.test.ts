@@ -14,7 +14,10 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
 import { AlertsService } from '@/services/alerts'
-import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import {
+  AlertsRepository,
+  FLAGRIGHT_SYSTEM_USER,
+} from '@/services/rules-engine/repositories/alerts-repository'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import * as Context from '@/core/utils/context'
@@ -686,7 +689,7 @@ describe('Post APIs Alerts Tests', () => {
     })
   })
 
-  test('Changing Status of a Case to Closed with Comments and Closes User Case', async () => {
+  test('Changing Status of a alert to Closed with Comments and Closes User Case', async () => {
     const caseService = await getCaseService(TEST_TENANT_ID)
     const alertsService = await getAlertsService(TEST_TENANT_ID)
 
@@ -757,7 +760,7 @@ describe('Post APIs Alerts Tests', () => {
         },
       ],
       lastStatusChange: {
-        userId: TEST_ACCOUNT_1.id,
+        userId: FLAGRIGHT_SYSTEM_USER,
         timestamp: expect.any(Number),
         reason: ['Other'],
         caseStatus: 'CLOSED',
@@ -765,7 +768,7 @@ describe('Post APIs Alerts Tests', () => {
       },
       statusChanges: [
         {
-          userId: TEST_ACCOUNT_1.id,
+          userId: FLAGRIGHT_SYSTEM_USER,
           timestamp: expect.any(Number),
           reason: ['Other'],
           caseStatus: 'CLOSED',
@@ -774,7 +777,7 @@ describe('Post APIs Alerts Tests', () => {
       ],
       comments: [
         {
-          userId: TEST_ACCOUNT_1.id,
+          userId: FLAGRIGHT_SYSTEM_USER,
           body:
             'Case status changed to Closed. Reason: All alerts of this case are Closed\n' +
             'some comment',
@@ -991,7 +994,7 @@ describe('Case Service - Post Api Tests', () => {
           alertStatus: 'CLOSED',
           caseId: 'C-1-1',
           lastStatusChange: {
-            userId: 'ACCOUNT-1',
+            userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
@@ -999,7 +1002,7 @@ describe('Case Service - Post Api Tests', () => {
           },
           statusChanges: [
             {
-              userId: 'ACCOUNT-1',
+              userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
@@ -1012,7 +1015,7 @@ describe('Case Service - Post Api Tests', () => {
           alertStatus: 'CLOSED',
           caseId: 'C-1-1',
           lastStatusChange: {
-            userId: 'ACCOUNT-1',
+            userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
@@ -1020,7 +1023,7 @@ describe('Case Service - Post Api Tests', () => {
           },
           statusChanges: [
             {
-              userId: 'ACCOUNT-1',
+              userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
@@ -1310,7 +1313,7 @@ describe('Case Service - Post Api Tests', () => {
           alertStatus: 'CLOSED',
           caseId: 'C-1-6',
           lastStatusChange: {
-            userId: TEST_ACCOUNT_1.id,
+            userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
@@ -1318,7 +1321,7 @@ describe('Case Service - Post Api Tests', () => {
           },
           statusChanges: [
             {
-              userId: TEST_ACCOUNT_1.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
@@ -1331,7 +1334,7 @@ describe('Case Service - Post Api Tests', () => {
           alertStatus: 'CLOSED',
           caseId: 'C-1-6',
           lastStatusChange: {
-            userId: TEST_ACCOUNT_1.id,
+            userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
@@ -1339,7 +1342,7 @@ describe('Case Service - Post Api Tests', () => {
           },
           statusChanges: [
             {
-              userId: TEST_ACCOUNT_1.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
@@ -1392,7 +1395,7 @@ describe('Case Service - Post Api Tests', () => {
           alertStatus: 'CLOSED',
           caseId: 'C-1-6',
           lastStatusChange: {
-            userId: TEST_ACCOUNT_1.id,
+            userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
@@ -1400,7 +1403,7 @@ describe('Case Service - Post Api Tests', () => {
           },
           statusChanges: [
             {
-              userId: TEST_ACCOUNT_1.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
@@ -1413,7 +1416,7 @@ describe('Case Service - Post Api Tests', () => {
           alertStatus: 'CLOSED',
           caseId: 'C-1-6',
           lastStatusChange: {
-            userId: TEST_ACCOUNT_1.id,
+            userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
@@ -1421,7 +1424,7 @@ describe('Case Service - Post Api Tests', () => {
           },
           statusChanges: [
             {
-              userId: TEST_ACCOUNT_1.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
@@ -1611,13 +1614,13 @@ describe('Test Review Approvals Send Back Flow', () => {
           caseId: 'C-1-5',
           comments: [
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               body: 'Alert status changed to In Review and is requested to be Closed. Reasons: Case of this alert was In Review Requested to be Closed\nI am closing this case',
               files: [],
             },
           ],
           lastStatusChange: {
-            userId: REVIEWEE.id,
+            userId: FLAGRIGHT_SYSTEM_USER,
             reason: ['Other'],
             caseStatus: 'IN_REVIEW_CLOSED',
             otherReason:
@@ -1625,7 +1628,7 @@ describe('Test Review Approvals Send Back Flow', () => {
           },
           statusChanges: [
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               reason: ['Other'],
               caseStatus: 'IN_REVIEW_CLOSED',
               otherReason:
@@ -1707,13 +1710,13 @@ describe('Test Review Approvals Send Back Flow', () => {
           caseId: 'C-1-5',
           comments: [
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               body: 'Alert status changed to In Review and is requested to be Escalated. Reasons: Case of this alert was In Review Requested to be Escalated\nI am closing this case',
               files: [],
             },
           ],
           lastStatusChange: {
-            userId: REVIEWEE.id,
+            userId: FLAGRIGHT_SYSTEM_USER,
             reason: ['Other'],
             caseStatus: 'IN_REVIEW_ESCALATED',
             otherReason:
@@ -1722,7 +1725,7 @@ describe('Test Review Approvals Send Back Flow', () => {
           reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
           statusChanges: [
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               reason: ['Other'],
               caseStatus: 'IN_REVIEW_ESCALATED',
               otherReason:
@@ -1764,7 +1767,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     const caseService = await getCaseService(tenantId)
     const caseId = 'C-1-5'
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWER' },
+      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
     })
     await caseService.caseRepository.addCaseMongo({
       caseId,
@@ -1786,14 +1789,14 @@ describe('Test Review Approvals Send Back Flow', () => {
     expect(c?.alerts?.[1]?.alertStatus).toBe('CLOSED')
     expect(c?.alerts?.[0]).toMatchObject({
       lastStatusChange: {
-        userId: REVIEWEE.id,
+        userId: FLAGRIGHT_SYSTEM_USER,
         reason: ['Other'],
         caseStatus: 'IN_REVIEW_CLOSED',
         otherReason: 'Case of this alert was In Review Requested to be Closed',
       },
       statusChanges: [
         {
-          userId: REVIEWEE.id,
+          userId: FLAGRIGHT_SYSTEM_USER,
           reason: ['Other'],
           caseStatus: 'IN_REVIEW_CLOSED',
           otherReason:
@@ -1802,7 +1805,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       ],
       comments: [
         {
-          userId: REVIEWEE.id,
+          userId: FLAGRIGHT_SYSTEM_USER,
           body:
             'Alert status changed to In Review and is requested to be Closed. Reasons: Case of this alert was In Review Requested to be Closed\n' +
             'I am closing this case',
@@ -1825,30 +1828,30 @@ describe('Test Review Approvals Send Back Flow', () => {
           caseId: 'C-1-5',
           comments: [
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               body: 'Alert status changed to In Review and is requested to be Closed. Reasons: Case of this alert was In Review Requested to be Closed\nI am closing this case',
             },
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               body: 'Alert is Approved and its status is changed to Closed. Reasons: Case of this alert was Closed',
             },
           ],
           lastStatusChange: {
-            userId: REVIEWEE.id,
+            userId: FLAGRIGHT_SYSTEM_USER,
             reason: ['Other'],
             caseStatus: 'CLOSED',
             otherReason: 'Case of this alert was Closed',
           },
           statusChanges: [
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               reason: ['Other'],
               caseStatus: 'IN_REVIEW_CLOSED',
               otherReason:
                 'Case of this alert was In Review Requested to be Closed',
             },
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               reason: ['Other'],
               caseStatus: 'CLOSED',
               otherReason: 'Case of this alert was Closed',
@@ -1975,21 +1978,21 @@ describe('Test Review Approvals Send Back Flow', () => {
           alertStatus: 'ESCALATED',
           reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
           lastStatusChange: {
-            userId: REVIEWEE.id,
+            userId: FLAGRIGHT_SYSTEM_USER,
             reason: ['Other'],
             caseStatus: 'ESCALATED',
             otherReason: 'Case of this alert was Escalated',
           },
           statusChanges: [
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               reason: ['Other'],
               caseStatus: 'IN_REVIEW_ESCALATED',
               otherReason:
                 'Case of this alert was In Review Requested to be Escalated',
             },
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               reason: ['Other'],
               caseStatus: 'ESCALATED',
               otherReason: 'Case of this alert was Escalated',
@@ -1997,11 +2000,11 @@ describe('Test Review Approvals Send Back Flow', () => {
           ],
           comments: [
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               body: 'Alert status changed to In Review and is requested to be Escalated. Reasons: Case of this alert was In Review Requested to be Escalated\nI am closing this case',
             },
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               body: 'Alert is Approved and its status is changed to Escalated. Reasons: Case of this alert was Escalated',
             },
           ],
@@ -2091,21 +2094,21 @@ describe('Test Review Approvals Send Back Flow', () => {
           alertStatus: 'OPEN',
           reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
           lastStatusChange: {
-            userId: REVIEWEE.id,
+            userId: FLAGRIGHT_SYSTEM_USER,
             reason: ['Other'],
             caseStatus: 'OPEN',
             otherReason: 'Case of this alert was Open',
           },
           statusChanges: [
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               reason: ['Other'],
               caseStatus: 'IN_REVIEW_ESCALATED',
               otherReason:
                 'Case of this alert was In Review Requested to be Escalated',
             },
             {
-              userId: REVIEWEE.id,
+              userId: FLAGRIGHT_SYSTEM_USER,
               reason: ['Other'],
               caseStatus: 'OPEN',
               otherReason: 'Case of this alert was Open',
