@@ -10,6 +10,7 @@ import s from './index.module.less';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import Select from '@/components/library/Select';
 import { Cursor } from '@/utils/queries/types';
+import { formatNumber } from '@/utils/number';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -35,7 +36,11 @@ export default function CursorPagination(props: Props) {
       }}
     >
       <div className={s.root}>
-        Found {(cursor.count > cursor.limit ? `${cursor.limit}+` : cursor.count).toLocaleString()}{' '}
+        Found{' '}
+        {(cursor.count > cursor.limit
+          ? `${formatNumber(cursor.limit)}+`
+          : formatNumber(cursor.count)
+        ).toLocaleString()}{' '}
         results
         <Button
           onClick={() => onFromChange(cursor.fetchFirstPage())}
