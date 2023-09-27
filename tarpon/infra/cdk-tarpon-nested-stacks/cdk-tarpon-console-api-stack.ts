@@ -377,11 +377,16 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* List Importer */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-      auditLogTopic,
-      batchJobQueue,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+        auditLogTopic,
+        batchJobQueue,
+      },
+      functionProps
+    )
 
     /* Case */
     createFunction(

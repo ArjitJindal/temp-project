@@ -701,7 +701,8 @@ export class CdkTarponStack extends cdk.Stack {
         name: StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
-      }
+      },
+      functionProps
     )
     const { alias: jobRunnerAlias } = createFunction(
       this,
