@@ -1,26 +1,26 @@
+import { uniq } from 'lodash'
 import { questions } from '@/services/copilot/questions/definitions'
 
 const MAX_DISTANCE = 2
 const LIMIT = 10
 export class AutocompleteService {
-  private phrases: string[] = questions.map((q) => q.questionId)
+  private phrases: string[] = questions.map((q) => q.questionId.toLowerCase())
 
   autocomplete(query: string): string[] {
+    query = query.toLowerCase()
     const prefixResults: string[] = []
     const results: { phrase: string; distance: number }[] = []
 
-    for (const phrase of this.phrases) {
-      const words = phrase.split(' ')
+    for (const completePhrase of this.phrases) {
+      for (const phrase of splitStringIntoSubstrings(completePhrase)) {
+        const distance = this.calculateLevenshteinDistance(query, phrase)
 
-      if (words.some((word) => word.startsWith(query))) {
-        prefixResults.push(phrase)
-      } else {
-        const minDistance = Math.min(
-          ...words.map((word) => this.calculateLevenshteinDistance(query, word))
-        )
+        if (distance <= MAX_DISTANCE) {
+          results.push({ phrase: completePhrase, distance })
+        }
 
-        if (minDistance <= MAX_DISTANCE) {
-          results.push({ phrase, distance: minDistance })
+        if (phrase.includes(query)) {
+          prefixResults.push(completePhrase)
         }
       }
     }
@@ -33,7 +33,16 @@ export class AutocompleteService {
       ...prefixResults,
       ...results.map((result) => result.phrase),
     ]
-    return combinedResults.slice(0, LIMIT)
+
+    // Repair casing
+    return uniq(combinedResults)
+      .slice(0, LIMIT)
+      .map((r) => {
+        return (
+          questions.find((q) => q.questionId.toLowerCase() === r)?.questionId ||
+          ''
+        )
+      })
   }
 
   private calculateLevenshteinDistance(a: string, b: string): number {
@@ -60,4 +69,15 @@ export class AutocompleteService {
 
     return matrix[a.length][b.length]
   }
+}
+
+export function splitStringIntoSubstrings(input: string): string[] {
+  const words = input.split(' ')
+  const substrings: string[] = []
+
+  for (let i = 0; i < words.length; i++) {
+    substrings.push(words.slice(i).join(' '), words.slice(0, i + 1).join(' '))
+  }
+
+  return substrings
 }

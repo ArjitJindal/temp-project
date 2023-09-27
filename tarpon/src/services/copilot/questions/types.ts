@@ -2,7 +2,10 @@ import { QuestionVariableOptionVariableTypeEnum } from '@/@types/openapi-interna
 import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { TableHeadersColumnTypeEnum } from '@/@types/openapi-internal/TableHeaders'
-import { Account } from '@/services/accounts'
+import { AccountsService } from '@/services/accounts'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { PropertiesProperties } from '@/@types/openapi-internal/PropertiesProperties'
 
 export type Variables = {
   [key: string]: string | number
@@ -24,8 +27,9 @@ export type InvestigationContext = {
   userId: string
   alert: Alert
   _case: Case
+  user: InternalConsumerUser | InternalBusinessUser
   username: string
-  getAccounts: (ids: string[]) => Promise<Account[]>
+  accountService: AccountsService
 }
 
 export type Question<V extends Variables, D> = {
@@ -55,6 +59,10 @@ export type StackedBarchartQuestion<V extends Variables> = {
 export type BarchartQuestion<V extends Variables> = {
   type: 'BARCHART'
 } & Question<V, { x: string; y: number }[]>
+
+export type PropertiesQuestion<V extends Variables> = {
+  type: 'PROPERTIES'
+} & Question<V, PropertiesProperties[]>
 
 export type Investigation = {
   alertId: string

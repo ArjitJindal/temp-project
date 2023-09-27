@@ -3,6 +3,7 @@ import {
   TableQuestion,
   TimeseriesQuestion,
   BarchartQuestion,
+  PropertiesQuestion,
 } from './types'
 import { CaseHistory } from '@/services/copilot/questions/definitions/case-history'
 import { TrsScore } from '@/services/copilot/questions/definitions/trs-score'
@@ -18,12 +19,18 @@ import { AlertsRelatedToTransaction } from '@/services/copilot/questions/definit
 import { TransactionLedRuleHit } from '@/services/copilot/questions/definitions/transaction-led-rule-hit'
 import { Transactions } from '@/services/copilot/questions/definitions/transactions'
 import { LinkedUsers } from '@/services/copilot/questions/definitions/linked-users'
+import { UserDetails } from '@/services/copilot/questions/definitions/user-details'
+import { Shareholders } from '@/services/copilot/questions/definitions/shareholders'
+import { Directors } from '@/services/copilot/questions/definitions/directors'
+import { Website } from '@/services/copilot/questions/definitions/website'
+import { Linkedin } from '@/services/copilot/questions/definitions/linkedin'
 
 export const questions: (
   | TableQuestion<any>
   | StackedBarchartQuestion<any>
   | BarchartQuestion<any>
   | TimeseriesQuestion<any>
+  | PropertiesQuestion<any>
 )[] = [
   AlertHistory,
   AlertsRelatedToTransaction,
@@ -32,6 +39,8 @@ export const questions: (
   LinkedUsers,
   CaseHistory,
   SarsFiled,
+  Shareholders,
+  Directors,
   TransactionByRulesAction,
   TransactionType,
   TrsScore,
@@ -39,6 +48,9 @@ export const questions: (
   UsersReceivedMoneyFrom,
   UniquePaymentIdentifierSent,
   UniquePaymentIdentifierReceived,
+  UserDetails,
+  Website,
+  Linkedin,
 ]
 
 export const queries = questions.map(({ questionId, variableOptions }) => {

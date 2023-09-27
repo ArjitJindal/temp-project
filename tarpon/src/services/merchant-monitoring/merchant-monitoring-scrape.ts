@@ -10,6 +10,7 @@ import { logger } from '@/core/logger'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { traceable } from '@/core/xray'
 import { ask } from '@/utils/openapi'
+import { ensureHttps } from '@/utils/http'
 
 const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output as a comma separate list For example:
 
@@ -88,7 +89,7 @@ export class MerchantMonitoringScrapeService {
       const results = (
         await Promise.allSettled(
           [
-            this.scrape(`https://${domain}`),
+            this.scrape(domain),
             this.companiesHouse(companyName),
             this.explorium(companyName),
             this.linkedin(domain),
@@ -157,7 +158,7 @@ export class MerchantMonitoringScrapeService {
     return result
   }
 
-  private async scrape(website: string): Promise<MerchantMonitoringSummary> {
+  public async scrape(website: string): Promise<MerchantMonitoringSummary> {
     try {
       if (!this.scrapflyApiKey) {
         throw new Error('No scrapfly api key')
@@ -168,7 +169,7 @@ export class MerchantMonitoringScrapeService {
         url: `https://api.scrapfly.io/scrape?key=scp-live-${
           this.scrapflyApiKey
         }&url=${encodeURIComponent(
-          website
+          ensureHttps(website)
         )}&render_js=true&rendering_wait=1000`,
       }
       const data = await this.axios.request(options)
@@ -192,7 +193,7 @@ export class MerchantMonitoringScrapeService {
     }
   }
 
-  private async companiesHouse(
+  public async companiesHouse(
     companyName: string
   ): Promise<MerchantMonitoringSummary | undefined> {
     try {
@@ -222,28 +223,41 @@ export class MerchantMonitoringScrapeService {
     }
   }
 
-  private async linkedin(
-    companyDomain: string
+  public async linkedin(
+    companyName: string
   ): Promise<MerchantMonitoringSummary | undefined> {
     if (!this.rapidApiKey) {
       throw new Error('No rapid api key')
     }
-    const options: AxiosRequestConfig = {
+    const companyNameOption: AxiosRequestConfig = {
       method: 'POST',
-      url: 'https://linkedin-company-data.p.rapidapi.com/linkedInCompanyDataByDomainJson',
+      url: 'https://linkedin-company-data.p.rapidapi.com/linkedInCompanyUrlFromSearchTerm',
       headers: {
         'content-type': 'application/json',
         'X-RapidAPI-Key': this.rapidApiKey,
         'X-RapidAPI-Host': 'linkedin-company-data.p.rapidapi.com',
       },
-      data: `{"domains":["${companyDomain.replace('https://', '')}"]}`,
+      data: `{"searchTerms":["${companyName}"]}`,
+    }
+
+    const companyDomainData: any = await this.axios.request(companyNameOption)
+    const companyDomain = companyDomainData.data.Results[0][companyName]
+    const options: AxiosRequestConfig = {
+      method: 'POST',
+      url: 'https://linkedin-company-data.p.rapidapi.com/linkedInCompanyDataJson',
+      headers: {
+        'content-type': 'application/json',
+        'X-RapidAPI-Key': this.rapidApiKey,
+        'X-RapidAPI-Host': 'linkedin-company-data.p.rapidapi.com',
+      },
+      data: `{"liUrls":["${companyDomain}"]}`,
     }
 
     const data = await this.axios.request(options)
     return this.summarise('LINKEDIN', JSON.stringify(data.data))
   }
 
-  private async explorium(
+  public async explorium(
     companyName: string
   ): Promise<MerchantMonitoringSummary | undefined> {
     if (!this.exploriumApiKey) {

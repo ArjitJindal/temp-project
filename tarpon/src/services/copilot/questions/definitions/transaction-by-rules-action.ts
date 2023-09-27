@@ -106,7 +106,7 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
       ),
       summary: `There have been ${
         results.length
-      } transactions filed for ${username} ${humanReadablePeriod(period)}.`,
+      } transactions processed for ${username} ${humanReadablePeriod(period)}.`,
     }
   },
   variableOptions: {

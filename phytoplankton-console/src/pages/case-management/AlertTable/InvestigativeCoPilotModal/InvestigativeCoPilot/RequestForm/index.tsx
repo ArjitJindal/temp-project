@@ -98,7 +98,7 @@ export default function RequestForm(props: Props) {
           className={s.form}
           onSubmit={() => {
             if (!isLoading(mutationRes)) {
-              mutation.mutate({ searchString: highlightedSuggestion ?? debouncedSearch ?? '' });
+              mutation.mutate({ searchString: searchText });
             }
           }}
         >
@@ -132,7 +132,11 @@ export default function RequestForm(props: Props) {
           <Button
             isDisabled={searchInputText === ''}
             isLoading={isLoading(mutationRes)}
-            htmlType="submit"
+            onClick={() => {
+              if (!isLoading(mutationRes)) {
+                mutation.mutate({ searchString: searchText });
+              }
+            }}
           >
             Ask AI <BrainIcon />
           </Button>

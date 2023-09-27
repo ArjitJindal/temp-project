@@ -4,6 +4,7 @@ import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
+  calculatePercentageBreakdown,
   humanReadablePeriod,
   matchPeriod,
   Period,
@@ -127,7 +128,11 @@ export const Transactions: TableQuestion<Period> = {
       }),
       summary: `There have been ${
         result.length
-      } transactions for ${username} ${humanReadablePeriod(period)}.`,
+      } transactions for ${username} ${humanReadablePeriod(
+        period
+      )}.  For the transactions, ${calculatePercentageBreakdown(
+        result.map((t) => t.status || '')
+      )}.`,
     }
   },
   variableOptions: {

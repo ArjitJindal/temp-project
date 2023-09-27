@@ -3,6 +3,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import {
+  calculatePercentageBreakdown,
   humanReadablePeriod,
   matchPeriod,
   Period,
@@ -42,7 +43,11 @@ export const CaseHistory: TableQuestion<Period> = {
       }),
       summary: `There have been ${
         result.length
-      } cases for ${username} ${humanReadablePeriod(period)}.`,
+      } cases for ${username} ${humanReadablePeriod(
+        period
+      )}. For the cases, ${calculatePercentageBreakdown(
+        result.map((c) => c?.caseStatus || '')
+      )}.`,
     }
   },
   headers: [

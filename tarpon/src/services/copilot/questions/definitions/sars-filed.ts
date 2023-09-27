@@ -7,6 +7,7 @@ import {
 import { Report } from '@/@types/openapi-internal/Report'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import {
+  calculatePercentageBreakdown,
   humanReadablePeriod,
   matchPeriod,
   Period,
@@ -20,7 +21,7 @@ export const SarsFiled: TableQuestion<Period> = {
     return `Alerts that results in SARs ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async (
-    { tenantId, userId, username, getAccounts },
+    { tenantId, userId, username, accountService },
     period
   ) => {
     const client = await getMongoDbClient()
@@ -50,21 +51,27 @@ export const SarsFiled: TableQuestion<Period> = {
       ])
       .toArray()
 
-    const accounts = await getAccounts(result.map((r) => r.createdById))
+    const accounts = await accountService.getAccounts(
+      result.map((r) => r.createdById)
+    )
 
     return {
       data: result.map((r, i) => {
         return [
           r.id,
           r.description,
-          accounts.at(i)?.name,
+          accounts && accounts.at(i)?.name,
           r.caseId,
           r.createdAt,
         ]
       }),
       summary: `There have been ${
         result.length
-      } SARs filed for ${username} ${humanReadablePeriod(period)}.`,
+      } SARs filed for ${username} ${humanReadablePeriod(
+        period
+      )}. For the SARs, ${calculatePercentageBreakdown(
+        result.map((r) => r.status || '')
+      )}.`,
     }
   },
   headers: [

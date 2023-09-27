@@ -1,6 +1,12 @@
 import dayjs from '@/utils/dayjs'
 import { VariableOptions } from '@/services/copilot/questions/types'
 
+export const MONGO_DATE_FORMAT = '%Y-%m-%d'
+export const DATE_FORMAT = 'YYYY-MM-DD'
+export const DATE_GRAPH_FORMAT = 'D/M/YYYY'
+export const DATETIME_GRAPH_FORMAT = 'D/M/YYYY HH:mm'
+export const TIME_GRAPH_FORMAT = 'HH:mm'
+
 export const periodDefaults = (days = 30): Period => {
   return {
     from: dayjs().subtract(days, 'days').valueOf(),
@@ -75,8 +81,67 @@ export function matchPeriod(timestampField: string, period: Period) {
   return { [timestampField]: filters }
 }
 
-export const MONGO_DATE_FORMAT = '%Y-%m-%d'
-export const DATE_FORMAT = 'YYYY-MM-DD'
-export const DATE_GRAPH_FORMAT = 'D/M/YYYY'
-export const DATETIME_GRAPH_FORMAT = 'D/M/YYYY HH:mm'
-export const TIME_GRAPH_FORMAT = 'HH:mm'
+export function calculatePercentageBreakdown(data: string[]): string {
+  const threshold = 10
+  const statusCount: { [status: string]: number } = {}
+
+  // Count the occurrences of each alert status
+  data.forEach((item) => {
+    if (statusCount[item]) {
+      statusCount[item]++
+    } else {
+      statusCount[item] = 1
+    }
+  })
+
+  const totalCount = data.length
+
+  // Calculate the percentage breakdown
+  const percentageBreakdown: { [status: string]: number } = {}
+  let otherStatusCount = 0
+
+  for (const status in statusCount) {
+    if (status in statusCount) {
+      const percentage = (statusCount[status] / totalCount) * 100
+      if (percentage >= threshold) {
+        percentageBreakdown[status] = percentage
+      } else {
+        otherStatusCount += statusCount[status]
+      }
+    }
+  }
+
+  if (otherStatusCount > 0) {
+    percentageBreakdown['Other'] = (otherStatusCount / totalCount) * 100
+  }
+
+  // Create the example text
+  let exampleText = ''
+
+  // Sort the percentage breakdowns in descending order
+  const sortedPercentageBreakdown = Object.entries(percentageBreakdown)
+    .sort(([, a], [, b]) => b - a)
+    .reduce((obj, [key, value]) => {
+      obj[key] = value
+      return obj
+    }, {})
+
+  for (const status in sortedPercentageBreakdown) {
+    if (status in percentageBreakdown) {
+      exampleText += `${percentageBreakdown[status].toFixed(
+        0
+      )}% had "${status}" status, `
+    }
+  }
+
+  exampleText = exampleText.slice(0, -1) // Remove the trailing comma
+  const remainingPercentage =
+    100 - Object.values(percentageBreakdown).reduce((sum, val) => sum + val, 0)
+  if (Math.floor(remainingPercentage) > 0) {
+    exampleText += `and the remaining ${remainingPercentage.toFixed(
+      0
+    )}% had other statuses`
+  }
+
+  return exampleText.trimEnd().replace(/,$/, '')
+}

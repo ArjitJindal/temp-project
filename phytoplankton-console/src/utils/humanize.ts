@@ -20,12 +20,12 @@ export function humanizeSnakeCase(name: string): string {
  */
 export function humanizeCamelCase(name: string): string {
   return name
-    .replace(/([A-Z])([A-Z])([a-z])/g, '$1 $2$3')
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/( [A-Z])([a-z])/g, (v, g1, g2) => g1.toLowerCase() + g2)
-    .replace(/^[a-z]/, (v) => v.toUpperCase());
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // Insert space before uppercase letters preceded by lowercase letters
+    .replace(/([A-Z])([A-Z])([a-z])/g, '$1 $2$3') // Insert space between consecutive uppercase letters followed by a lowercase letter
+    .replace(/( [A-Z])([a-z])/g, (v, g1, g2) => g1.toLowerCase() + g2) // Convert uppercase letter to lowercase if preceded by a space
+    .replace(/^[a-z]/, (v) => v.toUpperCase()) // Capitalize the first letter of the string
+    .replace(/ id$/, ' ID');
 }
-
 export function humanizeAuto(value: string): string {
   const caseType = recognizeCase(value);
   switch (caseType) {

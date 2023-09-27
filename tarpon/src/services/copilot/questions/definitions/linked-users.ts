@@ -4,6 +4,7 @@ import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getUserName } from '@/utils/helpers'
+import { calculatePercentageBreakdown } from '@/services/copilot/questions/definitions/util'
 
 export const LinkedUsers: TableQuestion<any> = {
   type: 'TABLE',
@@ -25,7 +26,11 @@ export const LinkedUsers: TableQuestion<any> = {
 
     return {
       data: result.map((u) => [u.userId, getUserName(u), u.type]),
-      summary: `There have ${result.length} users linked to ${username}.`,
+      summary: `There have ${
+        result.length
+      } users linked to ${username}. For the linked users, ${calculatePercentageBreakdown(
+        result.map((u) => u?.userStateDetails?.state || '')
+      )}.`,
     }
   },
   headers: [

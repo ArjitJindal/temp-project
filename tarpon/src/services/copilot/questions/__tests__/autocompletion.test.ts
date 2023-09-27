@@ -1,4 +1,7 @@
-import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
+import {
+  AutocompleteService,
+  splitStringIntoSubstrings,
+} from '@/services/copilot/questions/autocompletion-service'
 
 describe('Autocompletion', () => {
   const ac = new AutocompleteService()
@@ -10,8 +13,30 @@ describe('Autocompletion', () => {
       'Alerts that resulted in SAR',
     ])
   })
+  test('1 suggestions returned', async () => {
+    const suggestions = ac.autocomplete('user de')
+    expect(suggestions).toEqual(['User details'])
+  })
   test('10 returned with no input', async () => {
     const suggestions = ac.autocomplete('')
     expect(suggestions.length).toEqual(10)
+  })
+})
+
+describe('splitStringIntoSubstrings', () => {
+  test('Correct strings returned', async () => {
+    const suggestions = splitStringIntoSubstrings('The string to split up')
+    expect(suggestions).toEqual([
+      'The string to split up',
+      'The',
+      'string to split up',
+      'The string',
+      'to split up',
+      'The string to',
+      'split up',
+      'The string to split',
+      'up',
+      'The string to split up',
+    ])
   })
 })

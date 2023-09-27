@@ -42,7 +42,7 @@ export default function HistoryItemTable(props: Props) {
         (acc, header, i) => {
           return {
             ...acc,
-            [header.name ?? `header#${i}`]: row[i] ?? null,
+            [header.name ?? `header#${i}`]: row[i] ?? '-',
           };
         },
         { index: i },

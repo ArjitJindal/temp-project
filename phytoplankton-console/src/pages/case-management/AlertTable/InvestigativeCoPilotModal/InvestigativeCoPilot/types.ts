@@ -17,6 +17,10 @@ export interface QuestionResponseBarchart extends QuestionResponseBase, Api.Barc
   questionType: 'BARCHART';
 }
 
+export interface QuestionResponseProperties extends QuestionResponseBase, Api.Properties {
+  questionType: 'PROPERTIES';
+}
+
 export interface QuestionResponseStackedBarchart extends QuestionResponseBase, Api.StackedBarchart {
   questionType: 'STACKED_BARCHART';
 }
@@ -25,7 +29,8 @@ export type QuestionResponse =
   | QuestionResponseTable
   | QuestionResponseTimeSeries
   | QuestionResponseStackedBarchart
-  | QuestionResponseBarchart;
+  | QuestionResponseBarchart
+  | QuestionResponseProperties;
 
 export function parseQuestionResponse(response: Api.QuestionResponse): QuestionResponse {
   const { questionType, ...rest } = response;
@@ -44,6 +49,12 @@ export function parseQuestionResponse(response: Api.QuestionResponse): QuestionR
   if (questionType === 'STACKED_BARCHART') {
     return {
       questionType: 'STACKED_BARCHART' as const,
+      ...rest,
+    };
+  }
+  if (questionType === 'PROPERTIES') {
+    return {
+      questionType: 'PROPERTIES' as const,
       ...rest,
     };
   }

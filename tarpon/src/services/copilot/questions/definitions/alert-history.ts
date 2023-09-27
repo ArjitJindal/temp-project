@@ -3,6 +3,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import {
+  calculatePercentageBreakdown,
   humanReadablePeriod,
   matchPeriod,
   Period,
@@ -29,6 +30,7 @@ export const AlertHistory: TableQuestion<Period> = {
       })
       .toArray()
 
+    const alerts = result.flatMap((r) => r.alerts)
     return {
       data: result.flatMap((r) => {
         return (
@@ -49,8 +51,12 @@ export const AlertHistory: TableQuestion<Period> = {
         )
       }),
       summary: `There have been ${
-        result.flatMap((r) => r.alerts).length
-      } alerts for ${username} ${humanReadablePeriod(period)}.`,
+        alerts.length
+      } alerts for ${username} ${humanReadablePeriod(
+        period
+      )}. For the alerts, ${calculatePercentageBreakdown(
+        alerts.map((a) => a?.alertStatus || '')
+      )}.`,
     }
   },
   headers: [

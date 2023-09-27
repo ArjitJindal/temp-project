@@ -42,7 +42,7 @@ export default function Variables(props: Props) {
     setVisible(false);
   }, [varsValues, onConfirm]);
 
-  if (variables.length <= 2) {
+  if (variables.length <= 3) {
     return (
       <VariablesPopoverContent
         {...props}
@@ -51,10 +51,10 @@ export default function Variables(props: Props) {
           (updater: Updater<VariablesValues>) => {
             const newState = applyUpdater(varsValues, updater);
             setVarsValues(newState);
-            onConfirm(newState);
           },
         ]}
-        labelPosition={'LEFT'}
+        onConfirm={onConfirm}
+        modal={false}
       />
     );
   }
@@ -69,7 +69,7 @@ export default function Variables(props: Props) {
           <VariablesPopoverContent
             {...props}
             varsValuesState={[varsValues, setVarsValues]}
-            labelPosition={'TOP'}
+            modal={true}
           />
           <div className={s.buttons}>
             <Button onClick={handleConfirm}>Confirm</Button>
@@ -90,12 +90,18 @@ export default function Variables(props: Props) {
 }
 
 export function VariablesPopoverContent(
-  props: Props & { varsValuesState: StatePair<VariablesValues>; labelPosition: 'TOP' | 'LEFT' },
+  props: Props & { varsValuesState: StatePair<VariablesValues>; modal: boolean },
 ) {
-  const { variables, labelPosition } = props;
+  const { variables, modal } = props;
+  const labelPosition = modal ? 'TOP' : 'LEFT';
   const [varsValues, setVarsValues] = props.varsValuesState;
   return (
-    <div className={cn(s.variables, variables.length === 1 && s.singleVariable)}>
+    <div
+      className={cn(
+        modal ? s.variablesModal : s.variables,
+        variables.length === 1 ?? s.singleVariable,
+      )}
+    >
       {variables.map((variable) => {
         const varName = variable.name;
         if (varName == null) {
@@ -103,15 +109,18 @@ export function VariablesPopoverContent(
         }
         return (
           <Label key={varName} label={humanizeAuto(varName ?? 'N/A')} position={labelPosition}>
-            {renderInput(variable, {
-              value: varsValues[varName],
-              onChange: (newValue) => {
-                setVarsValues((prevState) => ({
-                  ...prevState,
-                  [varName]: newValue,
-                }));
-              },
-            })}
+            <div className={s.input}>
+              {renderInput(variable, {
+                value: varsValues[varName],
+                onBlur: () => props.onConfirm(varsValues),
+                onChange: (newValue) => {
+                  setVarsValues((prevState) => ({
+                    ...prevState,
+                    [varName]: newValue,
+                  }));
+                },
+              })}
+            </div>
           </Label>
         );
       })}

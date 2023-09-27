@@ -236,6 +236,7 @@ export function sampleBusinessUser(
           countryOfResidence: country ?? pickRandom(COUNTRY_CODES),
           countryOfNationality: country ?? pickRandom(COUNTRY_CODES),
           gender: pickRandom(['M', 'F', 'NB']),
+          dateOfBirth: new Date(generateRandomTimestamp()).toDateString(),
         },
         legalDocuments: Array.from(
           { length: Math.ceil(Math.random() * 4) },
@@ -278,7 +279,7 @@ export function sampleBusinessUser(
           gender: pickRandom(['M', 'F', 'NB']),
           countryOfResidence: pickRandom(COUNTRY_CODES),
           countryOfNationality: pickRandom(COUNTRY_CODES),
-          dateOfBirth: generateRandomTimestamp().toLocaleString(),
+          dateOfBirth: new Date(generateRandomTimestamp()).toDateString(),
           name,
         },
       } as Person
@@ -302,13 +303,13 @@ export function merchantMonitoringSummaries(
     switch (sourceType) {
       case 'COMPANIES_HOUSE':
         url =
-          'https://find-and-update.company-information.service.gov.uk/company/01772433'
+          'find-and-update.company-information.service.gov.uk/company/01772433'
         break
       case 'LINKEDIN':
-        url = 'https://www.linkedin.com/company/flagright'
+        url = 'www.linkedin.com/company/flagright'
         break
       case 'EXPLORIUM':
-        url = 'https://www.explorium.ai/'
+        url = 'www.explorium.ai/'
         break
       case 'SCRAPE':
         url = c.website
@@ -322,7 +323,7 @@ export function merchantMonitoringSummaries(
     ].map((updatedAt) => ({
       source: {
         sourceType,
-        sourceValue: `https://${url}`,
+        sourceValue: url,
       },
       summary,
       userId: id,

@@ -4908,6 +4908,7 @@ components:
         - $ref: '#/components/schemas/Timeseries'
         - $ref: '#/components/schemas/StackedBarchart'
         - $ref: '#/components/schemas/Barchart'
+        - $ref: '#/components/schemas/Properties'
     QuestionVariableOption:
       title: QuestionVariableOption
       type: object
@@ -5012,6 +5013,19 @@ components:
                 type: string
               y:
                 type: number
+    Properties:
+      title: Properties
+      type: object
+      properties:
+        properties:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
     KrsScore:
       title: KrsScore
       type: object

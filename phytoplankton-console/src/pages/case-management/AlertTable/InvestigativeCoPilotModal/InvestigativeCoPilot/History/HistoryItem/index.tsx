@@ -13,6 +13,7 @@ import { getMutationAsyncResource } from '@/utils/queries/hooks';
 import { isLoading } from '@/utils/asyncResource';
 import HistoryItemBarchart from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBarchart';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
+import HistoryItemProperties from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemProperties';
 
 interface Props {
   alertId: string;
@@ -94,6 +95,9 @@ function renderItem(item: QuestionResponse) {
   }
   if (item.questionType === 'BARCHART') {
     return <HistoryItemBarchart item={item} />;
+  }
+  if (item.questionType === 'PROPERTIES') {
+    return <HistoryItemProperties item={item} />;
   }
   return neverReturn(item, <>{JSON.stringify(item)}</>);
 }

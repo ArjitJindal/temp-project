@@ -8,6 +8,7 @@ import {
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Report } from '@/@types/openapi-internal/Report'
 import {
+  calculatePercentageBreakdown,
   humanReadablePeriod,
   matchPeriod,
   Period,
@@ -16,17 +17,17 @@ import {
 
 export const AlertsRelatedToTransaction: TableQuestion<
   {
-    transactionID: string
+    transactionId: string
   } & Period
 > = {
   type: 'TABLE',
   questionId: 'Alerts related to transaction',
   title: (_, vars) => {
-    return `Alerts related to transaction ${vars.transactionID}`
+    return `Alerts related to transaction ${vars.transactionId}`
   },
   aggregationPipeline: async (
     { tenantId, username },
-    { transactionID, ...period }
+    { transactionId, ...period }
   ) => {
     const client = await getMongoDbClient()
     const db = client.db()
@@ -36,7 +37,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
         {
           $match: {
             ...matchPeriod('createdTimestamp', period),
-            caseTransactionsIds: transactionID,
+            caseTransactionsIds: transactionId,
           },
         },
         {
@@ -56,6 +57,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
       ])
       .toArray()
 
+    const alerts = result.flatMap((r) => r.alerts)
     return {
       data: result.flatMap((r) => {
         return r.alerts.map((a) => {
@@ -73,8 +75,12 @@ export const AlertsRelatedToTransaction: TableQuestion<
         })
       }),
       summary: `There have been ${
-        result.flatMap((r) => r.alerts).length
-      } alerts for ${username} ${humanReadablePeriod(period)}.`,
+        alerts.length
+      } alerts for ${username} ${humanReadablePeriod(
+        period
+      )}. For the alerts, ${calculatePercentageBreakdown(
+        alerts.map((a) => a.alertStatus || '')
+      )}.`,
     }
   },
   headers: [
@@ -87,7 +93,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
     { name: "SAR's filed", columnType: 'STRING' },
   ],
   variableOptions: {
-    transactionID: {
+    transactionId: {
       type: 'STRING',
       options: async (ctx) => {
         return ctx._case.caseTransactionsIds || []
@@ -97,7 +103,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
   },
   defaults: ({ _case }) => {
     return {
-      transactionID: _case.caseTransactionsIds?.at(0) || '',
+      transactionId: _case.caseTransactionsIds?.at(0) || '',
     }
   },
 }

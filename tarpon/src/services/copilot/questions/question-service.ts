@@ -2,6 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { BadRequest } from 'http-errors'
 import { queries, questions } from './definitions'
 import { InvestigationRepository } from './investigation-repository'
 import { InvestigationContext, Variables } from './types'
@@ -18,6 +19,9 @@ import { logger } from '@/core/logger'
 import { ask } from '@/utils/openapi'
 import { getUserName } from '@/utils/helpers'
 import { AccountsService } from '@/services/accounts'
+import dayjs from '@/utils/dayjs'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 
 export class QuestionService {
   static async fromEvent(
@@ -104,35 +108,39 @@ export class QuestionService {
     c: Case,
     a: Alert
   ): Promise<Omit<QuestionResponse, 'createdAt' | 'createdById'>> {
-    let question = questions.find((qt) => qt.questionId === questionId)
-    if (!question) {
-      const { questionId: gptQuestionId, variables } = await this.gpt(
-        questionId
-      )
-      varObject = variables
-      question = questions.find((qt) => qt.questionId === gptQuestionId)
-    }
-
     const userId =
       c.caseUsers?.destination?.userId || c.caseUsers?.origin?.userId
-    const user = c.caseUsers?.destination || c.caseUsers?.origin
+    const user = (c.caseUsers?.destination || c.caseUsers?.origin) as
+      | InternalConsumerUser
+      | InternalBusinessUser
     const username = getUserName(user)
     const tenantId = getContext()?.tenantId
     const caseId = c.caseId
     const alertId = a.alertId
 
-    if (!tenantId || !userId || !caseId || !alertId) {
+    if (!tenantId || !userId || !caseId || !alertId || !user) {
       throw new Error('Could not get context for question')
     }
     const ctx: InvestigationContext = {
       alert: a,
       _case: c,
+      user,
       tenantId,
       userId,
       caseId,
       alertId,
       username,
-      getAccounts: this.accountsService.getAccounts,
+      accountService: this.accountsService,
+    }
+
+    let question = questions.find((qt) => qt.questionId === questionId)
+    if (!question) {
+      const { questionId: gptQuestionId, variables } = await this.gpt(
+        ctx,
+        questionId
+      )
+      varObject = variables
+      question = questions.find((qt) => qt.questionId === gptQuestionId)
     }
 
     if (!question?.type) {
@@ -198,6 +206,14 @@ export class QuestionService {
         timeseries: result.data,
       }
     }
+    if (question.type === 'PROPERTIES') {
+      const result = await question.aggregationPipeline(ctx, varObject)
+      return {
+        ...common,
+        summary: result.summary,
+        properties: result.data,
+      }
+    }
     if (question.type === 'BARCHART') {
       const result = await question.aggregationPipeline(ctx, varObject)
       return {
@@ -209,15 +225,15 @@ export class QuestionService {
     throw new Error(`Unsupported question type`)
   }
 
-  private async gpt(question: string): Promise<{
-    questionId: string
-    variables: Variables
-  }> {
+  private async gpt(ctx: InvestigationContext, question: string) {
     const prompt = `
     ${JSON.stringify(queries)}
-Please parse "${question}" to give the best matching query and variables values that should be set. The only output you will provide will be in the following format, defined in typescript, with no extra context or content. Dates and datetimes should be output in ISO format, for example the datetime now is ${new Date().toISOString()} and the date is ${new Date()
+Please parse "${question}" to give the best matching query and variables values that should be set. The only output you will provide will be in the following format, defined in typescript, with no extra context or content. 
+Dates and datetimes should be output in ISO format, for example the datetime now is ${new Date().toISOString()} and the date is ${new Date()
       .toISOString()
-      .substring(0, 10)}:
+      .substring(0, 10)}. This user's ID is ${ctx.userId}. This case's ID is ${
+      ctx.caseId
+    }. This alert's ID is ${ctx.alertId}:
 {
   questionId: string,
   variables: {
@@ -226,10 +242,39 @@ Please parse "${question}" to give the best matching query and variables values 
 }`
 
     try {
-      return JSON.parse(await ask(prompt))
+      const result: {
+        questionId: string
+        variables: Variables
+      } = JSON.parse(await ask(prompt))
+
+      // Workaround in case GPT sets variable type as the value.
+      Object.entries(result.variables).map(([key, value]) => {
+        // TODO make an enum type for this.
+        if (
+          (typeof value === 'string' &&
+            ['DATE', 'DATETIME', 'STRING', 'INTEGER', 'FLOAT'].indexOf(value) >
+              -1) ||
+          value === question
+        ) {
+          delete result.variables[key]
+        }
+      })
+
+      // Workaround for GPT setting from/to dates to the same value
+      if (
+        result.variables['from'] === result.variables['to'] &&
+        typeof result.variables['from'] === 'string' &&
+        result.variables['from'].length > 0
+      ) {
+        result.variables['from'] = dayjs(result.variables['to'])
+          .subtract(1, 'day')
+          .format('YYYY-MM-DD')
+      }
+
+      return result
     } catch (e) {
       logger.error(e)
-      throw new Error('AI could not understand this query')
+      throw new BadRequest('AI could not understand this query')
     }
   }
 }

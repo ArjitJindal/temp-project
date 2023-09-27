@@ -8,6 +8,9 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { AccountsService } from '@/services/accounts'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+jest.mock('@/services/accounts')
 
 export async function testQuestion<V extends Variables, D>(
   q: Question<V, D>,
@@ -31,6 +34,13 @@ export async function testQuestion<V extends Variables, D>(
     ruleName: '',
     alertId: 'A-1',
   }
+  const user: InternalConsumerUser = {
+    createdTimestamp: new Date().valueOf(),
+    type: 'CONSUMER',
+    userId: 'U-1',
+  }
+
+  const accountService = new AccountsService({ auth0Domain: '' }, { mongoDb })
   const ctx: InvestigationContext = {
     tenantId,
     caseId: 'C-1',
@@ -39,9 +49,10 @@ export async function testQuestion<V extends Variables, D>(
     _case: c,
     username: 'John Smith',
     alert,
-    getAccounts: () => new Promise((resolve) => resolve([])),
+    user,
+    accountService,
   }
-  const result = await q.aggregationPipeline(ctx, { ...q.defaults(ctx), ...v })
 
+  const result = await q.aggregationPipeline(ctx, { ...q.defaults(ctx), ...v })
   assertions(result.data)
 }
