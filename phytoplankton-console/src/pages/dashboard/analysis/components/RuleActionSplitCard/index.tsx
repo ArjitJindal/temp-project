@@ -30,8 +30,6 @@ export default function RuleActionSplitCard(props: Props) {
 
   return (
     <Widget
-      {...props}
-      width="HALF"
       onDownload={(): Promise<{ fileName: string; data: string }> => {
         const randomID = (Math.floor(Math.random() * 90000) + 10000).toString();
         return new Promise((resolve, _reject) => {
@@ -45,6 +43,8 @@ export default function RuleActionSplitCard(props: Props) {
           resolve(fileData);
         });
       }}
+      resizing="FIXED"
+      {...props}
     >
       <AsyncResourceRenderer resource={ruleInstanceResults.data}>
         {(instance: RuleInstance[]) => {

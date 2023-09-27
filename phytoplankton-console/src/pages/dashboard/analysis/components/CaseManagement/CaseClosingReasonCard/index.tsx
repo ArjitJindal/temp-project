@@ -130,7 +130,7 @@ const CaseClosingReasonCard = (props: Props) => {
                 selectedSection={selectedSection}
                 setSelectedSection={setSelectedSection}
               />
-              <Treemap<ClosingReasons> height={330} data={data} colors={TREEMAP_COLORS} />
+              <Treemap<ClosingReasons> height={280} data={data} colors={TREEMAP_COLORS} />
             </div>
           );
         }}

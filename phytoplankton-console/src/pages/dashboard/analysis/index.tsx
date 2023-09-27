@@ -31,34 +31,34 @@ type KeyValues =
   | 'TOP_CONSUMER_USERS_BY_RULE_HITS'
   | 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION'
   | 'TOP_RULE_HITS_BY_COUNT'
-  | 'CONSUMER_USER_DISTIBUTION_BY_CRA_RISK_LEVEL'
+  | 'CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL'
   | 'TEAM_OVERVIEW'
-  | 'BUSINESS_USER_DISTIBUTION_BY_CRA_RISK_LEVEL'
+  | 'BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL'
   | 'TOP_BUSINESS_USERS_BY_RULE_HITS'
-  | 'RULE_PRIORITY_SPLIT'
+  | 'DISTRIBUTION_BY_RULE_PRIORITY'
   | 'DISTRIBUTION_BY_CLOSING_REASON'
   | 'DISTRIBUTION_BY_ALERT_PRIORITY'
   | 'DISTRIBUTION_BY_PAYMENT_METHOD'
   | 'DISTRIBUTION_BY_TRANSACTION_TYPE'
-  | 'RULE_ACTION_SPLIT'
+  | 'DISTRIBUTION_BY_RULE_ACTION'
   | 'TRANSACTIONS_BREAKDOWN_BY_KRS';
 
 const KEYS: KeyValues[] = [
   'OVERVIEW',
-  'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
+  'CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL',
   'TOP_CONSUMER_USERS_BY_RULE_HITS',
-  'TOP_RULE_HITS_BY_COUNT',
-  'DISTRIBUTION_BY_CLOSING_REASON',
-  'DISTRIBUTION_BY_ALERT_PRIORITY',
-  'TEAM_OVERVIEW',
-  'CONSUMER_USER_DISTIBUTION_BY_CRA_RISK_LEVEL',
-  'BUSINESS_USER_DISTIBUTION_BY_CRA_RISK_LEVEL',
+  'BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL',
   'TOP_BUSINESS_USERS_BY_RULE_HITS',
-  'RULE_PRIORITY_SPLIT',
+  'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
   'DISTRIBUTION_BY_PAYMENT_METHOD',
   'DISTRIBUTION_BY_TRANSACTION_TYPE',
   'TRANSACTIONS_BREAKDOWN_BY_KRS',
-  'RULE_ACTION_SPLIT',
+  'TOP_RULE_HITS_BY_COUNT',
+  'DISTRIBUTION_BY_RULE_PRIORITY',
+  'DISTRIBUTION_BY_RULE_ACTION',
+  'DISTRIBUTION_BY_CLOSING_REASON',
+  'DISTRIBUTION_BY_ALERT_PRIORITY',
+  'TEAM_OVERVIEW',
 ];
 
 const DEFAULT_VALUES = {
@@ -66,17 +66,17 @@ const DEFAULT_VALUES = {
   TOP_CONSUMER_USERS_BY_RULE_HITS: true,
   TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION: true,
   TOP_RULE_HITS_BY_COUNT: true,
-  CONSUMER_USER_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
+  CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
   TEAM_OVERVIEW: true,
-  RULE_PRIORITY_SPLIT: true,
+  DISTRIBUTION_BY_RULE_PRIORITY: true,
   DISTRIBUTION_BY_CLOSING_REASON: true,
-  BUSINESS_USER_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
+  BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
   TOP_BUSINESS_USERS_BY_RULE_HITS: true,
   DISTRIBUTION_BY_ALERT_PRIORITY: true,
   DISTRIBUTION_BY_PAYMENT_METHOD: true,
   DISTRIBUTION_BY_TRANSACTION_TYPE: true,
   TRANSACTIONS_BREAKDOWN_BY_KRS: true,
-  RULE_ACTION_SPLIT: true,
+  DISTRIBUTION_BY_RULE_ACTION: true,
 };
 
 type DashboardSettings = Record<KeyValues, boolean>;
@@ -129,9 +129,9 @@ function Analysis() {
             groupTitle: 'Consumer users',
             items: [
               isRiskScoringEnabled &&
-                settingsToDisplay.CONSUMER_USER_DISTIBUTION_BY_CRA_RISK_LEVEL && {
+                settingsToDisplay.CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL && {
                   props: {
-                    id: 'consumer_user_distibution_by_cra_risk_level',
+                    id: 'consumer_userS_distibution_by_cra_risk_level',
                     title: 'Distribution by CRA',
                     width: 'HALF' as const,
                     children: <DRSDistributionCard userType="CONSUMER" />,
@@ -153,9 +153,9 @@ function Analysis() {
             groupTitle: 'Business users',
             items: [
               isRiskScoringEnabled &&
-                settingsToDisplay.BUSINESS_USER_DISTIBUTION_BY_CRA_RISK_LEVEL && {
+                settingsToDisplay.BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL && {
                   props: {
-                    id: 'business_user_distibution_by_cra_risk_level',
+                    id: 'business_userS_distibution_by_cra_risk_level',
                     title: 'Distribution by CRA',
                     width: 'HALF' as const,
                     children: <DRSDistributionCard userType="BUSINESS" />,
@@ -226,11 +226,11 @@ function Analysis() {
                     },
                   ]
                 : []),
-              ...(settingsToDisplay.RULE_PRIORITY_SPLIT
+              ...(settingsToDisplay.DISTRIBUTION_BY_RULE_PRIORITY
                 ? [
                     {
                       props: {
-                        id: 'tempId',
+                        id: 'distribution_by_rule_priority',
                         title: 'Distribution by rule priority',
                         width: 'HALF' as const,
                       },
@@ -238,11 +238,11 @@ function Analysis() {
                     },
                   ]
                 : []),
-              ...(settingsToDisplay.RULE_ACTION_SPLIT
+              ...(settingsToDisplay.DISTRIBUTION_BY_RULE_ACTION
                 ? [
                     {
                       props: {
-                        id: 'tempId',
+                        id: 'distribution_by_rule_action',
                         title: 'Distribution by rule action',
                         width: 'HALF' as const,
                       },
@@ -261,6 +261,7 @@ function Analysis() {
                       props: {
                         id: 'distribution-by-closing reason',
                         title: 'Distribution by closing reason',
+                        width: 'HALF',
                       },
                       component: CaseClosingReasonCard,
                     },
