@@ -8,6 +8,7 @@ import { initSentry } from './init-sentry'
 import { metricsMiddleware } from './metrics-middleware'
 import { resourceCleanupHandler } from './resource-cleanup-handler'
 import { registerUnhandledErrorHandler } from './lambda-utils'
+import { requestLoggerMiddleware } from './request-logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { rbacMiddleware } from '@/core/middlewares/rbac'
 import { xrayMiddleware } from '@/core/middlewares/xray-middleware'
@@ -21,6 +22,7 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     xrayMiddleware(),
     bgProcessingMiddleware(),
     httpErrorHandler(),
+    requestLoggerMiddleware(),
     jsonSerializer(),
     rbacMiddleware(),
     initSentry(),

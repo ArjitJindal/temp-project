@@ -36,6 +36,9 @@ export const config: Config = {
       PROVISIONED_CONCURRENCY: 30,
       MEMORY_SIZE: 1024,
     },
+    REQUEST_LOGGER_LAMBDA: {
+      MEMORY_SIZE: 512,
+    },
     TRANSACTION_AGGREGATION_LAMBDA: {
       // TODO: Downscale after FR-2863
       MEMORY_SIZE: 10240,

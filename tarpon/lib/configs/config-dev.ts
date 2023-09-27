@@ -9,6 +9,9 @@ export const config: Config = {
   stage: 'dev',
   env: { account, region },
   resource: {
+    REQUEST_LOGGER_LAMBDA: {
+      MEMORY_SIZE: 512,
+    },
     CLOUD_WATCH: {
       logRetention: RetentionDays.TWO_WEEKS,
     },

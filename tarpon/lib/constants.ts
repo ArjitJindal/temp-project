@@ -254,6 +254,9 @@ export const StackConstants = {
   ),
   CRON_JOB_DAILY: getResourceNameForTarpon('CronJobDailyFunction'),
   CRON_JOB_TEN_MINUTE: getResourceNameForTarpon('CronJobTenMinuteFunction'),
+  REQUEST_LOGGER_FUNCTION_NAME: getResourceNameForTarpon(
+    'RequestLoggerFunction'
+  ),
   CRON_JOB_MONTHLY: getResourceNameForTarpon('CronJobMonthlyFunction'),
 }
 
@@ -270,6 +273,7 @@ export const SQSQueues = {
     getResourceName('WebhookTarponChangeCaptureRetryQueue') + '.fifo',
   HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME:
     getResourceName('HammerheadChangeCaptureRetryQueue') + '.fifo',
+  REQUEST_LOGGER_QUEUE_NAME: getResourceName('RequestLoggerQueue'),
 }
 
 export function getDeadLetterQueueName(queueName: string) {

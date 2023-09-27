@@ -6,6 +6,10 @@ export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-transactions`
 }
 
+export const API_REQUEST_LOGS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-api-request-logs`
+}
+
 export const NARRATIVE_TEMPLATE_COLLECTION = (tenantId: string) => {
   return `${tenantId}-narrative-templates`
 }

@@ -194,6 +194,14 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const requestLoggerQueue = this.createQueue(
+      SQSQueues.REQUEST_LOGGER_QUEUE_NAME,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
     /*
      * Kinesis Data Streams
      */
@@ -406,6 +414,7 @@ export class CdkTarponStack extends cdk.Stack {
         SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
         HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL:
           hammerheadChangeCaptureRetryQueue.queueUrl,
+        REQUEST_LOGGER_QUEUE_URL: requestLoggerQueue.queueUrl,
         TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
           tarponChangeCaptureRetryQueue.queueUrl,
         SLACK_CLIENT_ID: config.application.SLACK_CLIENT_ID,
@@ -471,6 +480,7 @@ export class CdkTarponStack extends cdk.Stack {
               webhookDeliveryQueue.queueArn,
               slackAlertQueue.queueArn,
               transactionAggregationQueue.queueArn,
+              requestLoggerQueue.queueArn,
             ],
           }),
           new PolicyStatement({
@@ -677,6 +687,28 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(transactionAggregationQueue, {
         batchSize: 1,
         maxConcurrency: 5,
+      })
+    )
+
+    /* Request Logger */
+    const { alias: requestLoggerAlias } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.REQUEST_LOGGER_FUNCTION_NAME,
+        auditLogTopic: this.auditLogTopic,
+        batchJobQueue,
+        memorySize:
+          this.config.resource.REQUEST_LOGGER_LAMBDA?.MEMORY_SIZE ?? 512,
+      },
+      functionProps
+    )
+
+    requestLoggerAlias.addEventSource(
+      new SqsEventSource(requestLoggerQueue, {
+        batchSize: 100,
+        maxConcurrency: 5,
+        maxBatchingWindow: Duration.minutes(5),
       })
     )
 

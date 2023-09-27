@@ -11,6 +11,9 @@ export const config: Config = {
     CLOUD_WATCH: {
       logRetention: RetentionDays.TWO_WEEKS,
     },
+    REQUEST_LOGGER_LAMBDA: {
+      MEMORY_SIZE: 512,
+    },
     DYNAMODB: {
       READ_CAPACITY: 1,
       WRITE_CAPACITY: 1,
