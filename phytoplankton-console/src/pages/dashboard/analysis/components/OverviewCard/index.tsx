@@ -28,7 +28,7 @@ export default function OverviewCard(props: Props) {
         averageInvestigationTimeCases,
         totalSarReported,
       }) => (
-        <WidgetBase width={props.width}>
+        <WidgetBase {...props}>
           <div className={s.root}>
             <OverviewSingleCard title="Open cases" value={totalOpenCases || '0'} />
             <OverviewSingleCard title="Open alerts" value={totalOpenAlerts || '0'} />
