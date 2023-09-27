@@ -222,7 +222,18 @@ export default function SubHeader(props: Props) {
             <KycRiskDisplay userId={caseUser.userId} />
             <DynamicRiskDisplay userId={caseUser.userId} />
             <Feature name="MACHINE_LEARNING_DEMO">
-              <AIRiskDisplay />
+              <AIRiskDisplay
+                businessUser={
+                  caseUser && 'type' in caseUser && caseUser.type === 'BUSINESS'
+                    ? caseUser
+                    : undefined
+                }
+                consumerUser={
+                  caseUser && 'type' in caseUser && caseUser.type === 'CONSUMER'
+                    ? caseUser
+                    : undefined
+                }
+              />
             </Feature>
           </div>
         )}

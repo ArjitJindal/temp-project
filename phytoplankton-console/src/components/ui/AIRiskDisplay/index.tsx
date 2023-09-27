@@ -1,12 +1,16 @@
 import React from 'react';
 
-//types
 import { ValueItem } from '../RiskScoreDisplay/types';
 import AiLogoIcon from './ai-logo.react.svg';
+import { BUSINESS_DATA, CONSUMER_DATA, TRANSACTION_DATA, getRandomTimestamp } from './utils';
 import { RiskLevel } from '@/utils/risk-levels';
-import { InternalTransaction, RiskEntityType } from '@/apis';
-
-//components
+import {
+  InternalBusinessUser,
+  InternalConsumerUser,
+  InternalTransaction,
+  RiskEntityType,
+  RiskScoreComponent,
+} from '@/apis';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import { COLORS_V2_AI_RISK_DISPLAY_BACKGROUND } from '@/components/ui/colors';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -18,131 +22,9 @@ export interface ExtendedValueItem extends ValueItem {
 
 type Props = {
   transaction?: InternalTransaction;
+  businessUser?: InternalBusinessUser;
+  consumerUser?: InternalConsumerUser;
 };
-
-const data = (transaction?: InternalTransaction) => [
-  {
-    components: [
-      {
-        value: transaction?.destinationPaymentDetails?.method ?? 'CARD',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'destinationPaymentDetails.method',
-      },
-      {
-        value: transaction?.originAmountDetails?.country ?? 'IN',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'originAmountDetails.country',
-      },
-      {
-        value: transaction?.originAmountDetails?.transactionCurrency ?? 'EUR',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'originAmountDetails.transactionCurrency',
-      },
-      {
-        value: transaction?.originPaymentDetails?.method ?? 'CARD',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'originPaymentDetails.method',
-      },
-    ],
-  },
-  {
-    components: [
-      {
-        value: transaction?.timestamp ?? getRandomTimestamp(),
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'timestamp',
-      },
-      {
-        value: transaction?.destinationAmountDetails?.country ?? 'DE',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'destinationAmountDetails.country',
-      },
-      {
-        value: transaction?.destinationAmountDetails?.transactionCurrency ?? 'EUR',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'destinationAmountDetails.transactionCurrency',
-      },
-      {
-        value: transaction?.originPaymentDetails?.method ?? 'CARD',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'originPaymentDetails.method',
-      },
-    ],
-  },
-  {
-    components: [
-      {
-        value: transaction?.timestamp ?? getRandomTimestamp(),
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'timestamp',
-      },
-      {
-        value: transaction?.originAmountDetails?.transactionCurrency ?? 'USD',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'originAmountDetails.transactionCurrency',
-      },
-      {
-        value: transaction?.originPaymentDetails?.method ?? 'CARD',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'originPaymentDetails.method',
-      },
-    ],
-  },
-  {
-    manualRiskLevel: 'MEDIUM' as RiskLevel,
-    components: [
-      {
-        value: transaction?.timestamp ?? getRandomTimestamp(),
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'timestamp',
-      },
-      {
-        value: transaction?.destinationAmountDetails?.country ?? 'DE',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'destinationAmountDetails.country',
-      },
-      {
-        value: transaction?.destinationAmountDetails?.transactionCurrency ?? 'EUR',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'destinationAmountDetails.transactionCurrency',
-      },
-      {
-        value: transaction?.destinationPaymentDetails?.method ?? 'CARD',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'destinationPaymentDetails.method',
-      },
-      {
-        value: transaction?.originAmountDetails?.country ?? 'IN',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'originAmountDetails.country',
-      },
-      {
-        value: transaction?.originAmountDetails?.transactionCurrency ?? 'EUR',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'originAmountDetails.transactionCurrency',
-      },
-      {
-        value: transaction?.originPaymentDetails?.method ?? 'CARD',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'originPaymentDetails.method',
-      },
-    ],
-  },
-  {
-    components: [
-      {
-        value: transaction?.timestamp ?? getRandomTimestamp(),
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'timestamp',
-      },
-      {
-        value: transaction?.destinationAmountDetails?.country ?? 'DE',
-        entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'destinationAmountDetails.country',
-      },
-    ],
-  },
-];
 
 const getRiskLevel = (score: number): RiskLevel => {
   let riskLevel;
@@ -165,12 +47,6 @@ const getRiskLevel = (score: number): RiskLevel => {
   return riskLevel as RiskLevel;
 };
 
-function getRandomTimestamp() {
-  const timeStamps = [1680020420000, 1680020421000, 1680020421000, 1680010421000];
-  const randomIndex = Math.floor(Math.random() * timeStamps.length);
-  return timeStamps[randomIndex];
-}
-
 function shuffleArray(array: ExtendedValueItem[]): ExtendedValueItem[] {
   // Iterate over the array from the end to the beginning
   for (let i = array.length - 1; i > 0; i--) {
@@ -184,31 +60,59 @@ function shuffleArray(array: ExtendedValueItem[]): ExtendedValueItem[] {
   return array;
 }
 
-const randomizedData = (transaction?: InternalTransaction) =>
-  data(transaction).map((item): ExtendedValueItem => {
+const randomizedData = (rawData: {
+  transaction?: InternalTransaction;
+  businessUser?: InternalBusinessUser;
+  consumerUser?: InternalConsumerUser;
+}): ExtendedValueItem[] => {
+  const data = rawData.transaction
+    ? TRANSACTION_DATA(rawData.transaction)
+    : rawData.businessUser
+    ? BUSINESS_DATA(rawData.businessUser)
+    : rawData.consumerUser
+    ? CONSUMER_DATA(rawData.consumerUser)
+    : [];
+
+  return data.map((item): ExtendedValueItem => {
     const drsScore = Math.floor(Math.random() * 101); // Random value between 0 and 100
     const derivedRiskLevel = getRiskLevel(drsScore);
     const createdAt = getRandomTimestamp() as number;
-    const components = item.components?.map((component) => {
-      const score = Math.floor((Math.random() * drsScore * 2) % 100) as number; // Random value between 0 and 2 x drsScore
-      const riskLevel = getRiskLevel(score);
-      return { ...component, score, riskLevel };
-    });
+    const components: RiskScoreComponent[] = (item.components ?? []).map(
+      (component): RiskScoreComponent => {
+        const score = Math.floor((Math.random() * drsScore * 2) % 100) as number; // Random value between 0 and 2 x drsScore
+        const riskLevel = getRiskLevel(score);
+        return {
+          entityType: component.entityType as RiskEntityType,
+          score,
+          riskLevel,
+          parameter: component.parameter as string,
+          value: component.value,
+        };
+      },
+    );
 
     return { ...item, drsScore, score: drsScore, createdAt, derivedRiskLevel, components };
   });
+};
 
-const riskScoredata = (transaction?: InternalTransaction) =>
-  shuffleArray(randomizedData(transaction));
+const riskScoredata = (rawData: {
+  transaction?: InternalTransaction;
+  businessUser?: InternalBusinessUser;
+  consumerUser?: InternalConsumerUser;
+}): ExtendedValueItem[] => shuffleArray(randomizedData(rawData));
 
-export default function AIRiskDisplay({ transaction }: Props) {
+export default function AIRiskDisplay({ transaction, businessUser, consumerUser }: Props) {
   const isAiRiskScoreEnabled = useFeatureEnabled('AI_RISK_SCORE');
   return isAiRiskScoreEnabled ? (
     <RiskScoreDisplay
       mainPanelCustomStyling={{
         background: COLORS_V2_AI_RISK_DISPLAY_BACKGROUND,
       }}
-      values={riskScoredata(transaction).map((x) => ({
+      values={riskScoredata({
+        transaction,
+        businessUser,
+        consumerUser,
+      }).map((x) => ({
         score: x.drsScore,
         createdAt: x.createdAt,
         components: x.components,
