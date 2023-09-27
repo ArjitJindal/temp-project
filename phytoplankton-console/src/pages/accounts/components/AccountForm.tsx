@@ -16,7 +16,7 @@ import {
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getBranding } from '@/utils/branding';
-import { useUsers, useAuth0User } from '@/utils/user-utils';
+import { useAuth0User, useInvalidateUsers, useUsers } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import COLORS from '@/components/ui/colors';
 import Radio from '@/components/library/Radio';
@@ -57,7 +57,7 @@ export default function AccountForm(props: Props) {
 
   const isEdit = editAccount !== null;
 
-  const [accounts, isLoading] = useUsers();
+  const [accounts, loading] = useUsers();
   // todo: i18n
 
   const isInviteDisabled = useMemo(() => {
@@ -65,12 +65,12 @@ export default function AccountForm(props: Props) {
       return false;
     }
 
-    if (isLoading) {
+    if (!maxSeats) {
       return true;
     }
 
-    if (!maxSeats) {
-      return true;
+    if (loading) {
+      return null;
     }
 
     const existingSeats = Object.values(accounts).length;
@@ -80,7 +80,7 @@ export default function AccountForm(props: Props) {
     }
 
     return existingSeats >= maxSeats;
-  }, [maxSeats, isEdit, isLoading, accounts]);
+  }, [maxSeats, isEdit, accounts, loading]);
 
   const [values, setValues] = useState<Partial<Account>>(defaultState);
 
@@ -113,6 +113,8 @@ export default function AccountForm(props: Props) {
     return REQUIRED_FIELDS.every((field) => values[field] !== '' && values[field] !== undefined);
   }, [values]);
 
+  const invalidateUsers = useInvalidateUsers();
+
   const isInviteButtonDisabled = useMemo(() => {
     if (isInviteDisabled) {
       return true;
@@ -141,6 +143,7 @@ export default function AccountForm(props: Props) {
         message.success('User invited!');
         onSuccess();
         hide?.();
+        invalidateUsers.invalidate();
       },
       onError: (e) => {
         message.fatal(`Failed to invite user - ${getErrorMessage(e)}`, e);
@@ -169,6 +172,7 @@ export default function AccountForm(props: Props) {
         message.success('Account updated!');
         onSuccess();
         hide?.();
+        invalidateUsers.invalidate();
       },
       onError: (e) => {
         message.fatal(`Failed to update account - ${getErrorMessage(e)}`, e);
@@ -294,7 +298,7 @@ export default function AccountForm(props: Props) {
             </div>
           </div>
         </Feature>
-        {isReviewRequired && isLoading === false && isEscalationsEnabled && (
+        {isReviewRequired && isEscalationsEnabled && (
           <div style={{ marginTop: '1rem' }}>
             <Label label="Select a reviewer">
               <AssigneesDropdown
@@ -319,12 +323,15 @@ export default function AccountForm(props: Props) {
             </Label>
           </div>
         )}
-        {isInviteDisabled && (
+        {isInviteDisabled === true && (
           <P variant="sml">
             You have reached maximum no. of Seats ({maxSeats}). Please contact support at{' '}
             <a href={`mailto:${branding.supportEmail}`}>{branding.supportEmail}</a> if you want
             additional seats
           </P>
+        )}
+        {isInviteDisabled === null && (
+          <P variant="sml">Loading existing accounts to check maximum no. of Seats...</P>
         )}
       </div>
     </Drawer>

@@ -1,5 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import _ from 'lodash';
+import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from './queries/hooks';
+import { ACCOUNT_LIST } from './queries/keys';
+import { getOr } from './asyncResource';
 import { useApi } from '@/api';
 import { Account, Permission } from '@/apis';
 
@@ -24,7 +28,6 @@ export interface FlagrightAuth0User {
   demoMode: boolean;
   permissions?: Map<Permission, boolean>;
 }
-let cachedUsers: Promise<Account[]> | null = null;
 
 export const NAMESPACE = 'https://flagright.com';
 
@@ -96,39 +99,41 @@ export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
 }
 
 export function useUsers(
-  includeUsersObject: { includeRootUsers?: boolean; includeBlockedUsers?: boolean } = {
+  options: { includeRootUsers?: boolean; includeBlockedUsers?: boolean } = {
     includeRootUsers: false,
     includeBlockedUsers: false,
   },
 ): [{ [userId: string]: Account }, boolean] {
   const user = useAuth0User();
-  const [users, setUsers] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(true);
   const api = useApi();
-  useEffect(() => {
-    if (!cachedUsers) {
-      cachedUsers = api
-        .getAccounts({})
-        .then((accounts: Account[]) => accounts)
-        .catch(() => []);
-    }
-    cachedUsers.then((users) => {
-      setUsers(users);
-      setLoading(false);
-    });
-  }, [api, users]);
+
+  const usersQueryResult = useQuery(ACCOUNT_LIST(), async () => {
+    return await api.getAccounts();
+  });
+
+  const users = getOr(usersQueryResult.data, []);
+
   const isSuperAdmin = isAtLeast(user, UserRole.ROOT);
 
   let tempUsers = users;
 
-  if (!includeUsersObject.includeRootUsers && !isSuperAdmin) {
+  if (!options.includeRootUsers && !isSuperAdmin) {
     tempUsers = tempUsers.filter((user) => parseUserRole(user.role) !== UserRole.ROOT);
   }
 
-  if (!includeUsersObject.includeBlockedUsers) {
+  if (!options.includeBlockedUsers) {
     tempUsers = tempUsers.filter((user) => !user.blocked);
   }
-  return [_.keyBy(tempUsers, 'id'), loading];
+  return [_.keyBy(tempUsers, 'id'), usersQueryResult.isLoading];
+}
+
+export function useInvalidateUsers() {
+  const queryClient = useQueryClient();
+  return {
+    invalidate: () => {
+      queryClient.invalidateQueries(ACCOUNT_LIST());
+    },
+  };
 }
 
 export function useUserName(userId: string | null | undefined): string {

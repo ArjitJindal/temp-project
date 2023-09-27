@@ -13,6 +13,7 @@ import {
   isAtLeastAdmin,
   parseUserRole,
   useAuth0User,
+  useInvalidateUsers,
   UserRole,
   useUsers,
 } from '@/utils/user-utils';
@@ -69,6 +70,8 @@ export default function Team() {
     }),
     [],
   );
+
+  const invalidateUsers = useInvalidateUsers();
 
   const columnHelper = new ColumnHelper<Account>();
   const columns: TableColumn<Account>[] = columnHelper.list([
@@ -140,6 +143,7 @@ export default function Team() {
                   try {
                     await api.accountsDelete({ accountId: item.id });
                     message.success('User deleted!');
+                    invalidateUsers.invalidate();
                     refreshTable();
                   } catch (e) {
                     const error = e instanceof Response ? (await e.json())?.message : e;
@@ -207,6 +211,7 @@ export default function Team() {
         isVisibile={isInviteVisible}
         onChangeVisibility={setIsInviteVisible}
         onSuccess={refreshTable}
+        key={editAccount?.id ?? 'new'}
       />
     </PageWrapperContentContainer>
   );

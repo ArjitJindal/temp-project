@@ -43,6 +43,7 @@ export default function ScreeningMatchList(props: Props) {
                   refetch: () => {
                     throw new Error(`Not implemented`);
                   },
+                  isLoading: false,
                 };
                 return {
                   tab: getTabName(details),

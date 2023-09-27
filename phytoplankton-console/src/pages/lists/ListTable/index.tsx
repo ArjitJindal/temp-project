@@ -176,6 +176,7 @@ function ListTable(props: Props, ref: ListTableRef) {
         queryResults={{
           data: map(queryResults.data, (items) => ({ items })),
           refetch: queryResults.refetch,
+          isLoading: queryResults.isLoading,
         }}
         rowKey="listId"
         columns={columns}

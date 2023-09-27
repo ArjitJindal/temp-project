@@ -21,6 +21,7 @@ export interface QueryResult<Data> {
   paginate?: (params: PaginationParams) => Promise<Data>;
   loadingNext?: boolean;
   cursor?: Cursor;
+  isLoading: boolean;
 }
 
 export function map<T, R>(
@@ -28,10 +29,11 @@ export function map<T, R>(
   fn: (value: T) => R,
   loadingFn?: (lastValue: T | null) => R,
 ): QueryResult<R> {
-  const { paginate, data, refetch } = res;
+  const { paginate, data, refetch, isLoading } = res;
   return {
     data: ar.map(data, fn, loadingFn),
     refetch,
     paginate: paginate ? async (page) => fn(await paginate(page)) : undefined,
+    isLoading,
   };
 }

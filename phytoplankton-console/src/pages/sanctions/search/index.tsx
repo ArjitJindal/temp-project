@@ -103,6 +103,7 @@ export function SanctionsSearchTable(props: Props) {
               }))
             : success({ items: [] }),
           refetch: queryResults.refetch,
+          isLoading: isLoading(queryResults.data),
         }}
       />
     </>

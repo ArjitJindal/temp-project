@@ -45,17 +45,20 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
     return {
       data: loading<TData>(results.data ?? null),
       refetch: results.refetch,
+      isLoading: results.isLoading,
     };
   }
   if (results.isFetching) {
     return {
       data: loading<TData>(results.data),
       refetch: results.refetch,
+      isLoading: results.isLoading,
     };
   }
   if (results.isSuccess) {
     return {
       data: success<TData>(results.data),
+      isLoading: results.isLoading,
       refetch: results.refetch,
     };
   }
@@ -63,6 +66,7 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
     return {
       data: failed<TData>(getErrorMessage(results.error)),
       refetch: results.refetch,
+      isLoading: results.isLoading,
     };
   }
   throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);
