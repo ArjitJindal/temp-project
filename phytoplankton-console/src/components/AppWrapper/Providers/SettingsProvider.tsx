@@ -124,7 +124,7 @@ export function getRuleActionLabel(
     return;
   }
   const alias = settings.ruleActionAliases?.find((item) => item.action === ruleAction)?.alias;
-  return alias || humanizeConstant(ruleAction);
+  return alias || capitalizeWords(ruleAction);
 }
 
 export function useRuleActionLabel(ruleAction: RuleAction | undefined): string | undefined {

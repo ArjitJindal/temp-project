@@ -10,8 +10,6 @@ import OverviewCard from './components/OverviewCard';
 import RulePrioritySplitCard from './components/RulePrioritySplitCard';
 import CaseClosingReasonCard from './components/CaseManagement/CaseClosingReasonCard';
 import DistributionByAlertPriority from './components/CaseManagement/DistributionByAlertPriority';
-import TransactionTRSChartCard from './components/TransactionTRSChartCard';
-import DistributionByTransactionTypeWidget from './components/Transactions/DistributionByTransactionTypeWidget';
 import s from './style.module.less';
 import RuleActionSplitCard from './components/RuleActionSplitCard';
 import PageWrapper from '@/components/PageWrapper';
@@ -26,6 +24,7 @@ import WidgetGrid from '@/components/library/WidgetGrid';
 import Widget from '@/components/library/Widget';
 import Label from '@/components/library/Label';
 import { notEmpty } from '@/utils/array';
+import TransactionTRSChartCard from '@/pages/dashboard/analysis/components/TransactionTRSChartCard';
 
 type KeyValues =
   | 'OVERVIEW'
@@ -61,24 +60,6 @@ const KEYS: KeyValues[] = [
   'DISTRIBUTION_BY_ALERT_PRIORITY',
   'TEAM_OVERVIEW',
 ];
-
-const TITLES: { [key in KeyValues]: string } = {
-  OVERVIEW: 'Overview',
-  TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION: 'Transactions breakdown by rule action',
-  TOP_RULE_HITS_BY_COUNT: 'Top rule hits by count',
-  TEAM_OVERVIEW: 'Team overview',
-  DISTRIBUTION_BY_CLOSING_REASON: 'Distribution by closing reason',
-  DISTRIBUTION_BY_ALERT_PRIORITY: 'Distribution by alert priority',
-  DISTRIBUTION_BY_PAYMENT_METHOD: 'Distribution by payment method',
-  DISTRIBUTION_BY_TRANSACTION_TYPE: 'Distribution by transaction type',
-  TOP_CONSUMER_USERS_BY_RULE_HITS: 'Top consumer users by rule hits',
-  CONSUMER_USER_DISTIBUTION_BY_CRA_RISK_LEVEL: 'Consumer user distribution by CRA risk level',
-  BUSINESS_USER_DISTIBUTION_BY_CRA_RISK_LEVEL: 'Business user distribution by CRA risk level',
-  TOP_BUSINESS_USERS_BY_RULE_HITS: 'Top business users by rule hits',
-  RULE_PRIORITY_SPLIT: 'Rule priority split',
-  TRANSACTIONS_BREAKDOWN_BY_KRS: 'Transactions breakdown by KRS',
-  RULE_ACTION_SPLIT: 'Rule action split',
-};
 
 const DEFAULT_VALUES = {
   OVERVIEW: true,
@@ -211,14 +192,14 @@ function Analysis() {
                 },
                 component: PaymentMethodDistributionWidget,
               },
-              settingsToDisplay.DISTRIBUTION_BY_TRANSACTION_TYPE && {
-                props: {
-                  id: 'distribution_by_transaction_type',
-                  title: 'Distribution by transaction type',
-                  width: 'HALF',
-                },
-                component: DistributionByTransactionTypeWidget,
-              },
+              // settingsToDisplay.DISTRIBUTION_BY_TRANSACTION_TYPE && {
+              //   props: {
+              //     id: 'distribution_by_transactions_type',
+              //     title: 'Distribution by transaction type',
+              //     width: 'HALF',
+              //   },
+              //   component: TransactinTypeDistribution,
+              // },
               isRiskScoringEnabled &&
                 settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_KRS && {
                   props: {
@@ -343,12 +324,7 @@ function Analysis() {
       >
         <div className={s.settingsDrawerRoot}>
           {KEYS.map((key) => (
-            <Label
-              key={key}
-              label={TITLES[key] ?? humanizeConstant(key)}
-              position="RIGHT"
-              level={2}
-            >
+            <Label key={key} label={humanizeConstant(key)} position="RIGHT" level={2}>
               <Checkbox
                 value={updatedState[key] == null ? true : updatedState[key]}
                 onChange={(value) => {

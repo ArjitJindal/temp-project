@@ -5,10 +5,10 @@ import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {
   DAY_DATE_FORMAT_JS,
-  getMongoDbClientDb,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
   MONTH_DATE_FORMAT_JS,
+  getMongoDbClientDb,
 } from '@/utils/mongodb-utils'
 import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
@@ -22,10 +22,7 @@ import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
-import {
-  RISK_LEVELS,
-  TRANSACTION_TYPES,
-} from '@/@types/openapi-internal-custom/all'
+import { RISK_LEVELS } from '@/@types/openapi-internal-custom/all'
 
 const TRANSACTION_STATE_KEY_TO_RULE_ACTION: Map<
   keyof DashboardStatsTransactionsCountData,
@@ -329,91 +326,6 @@ export class TransactionStatsDashboardMetric {
       )
     }
 
-    const getTransactionTypeAggregationPipeline = (
-      dateFormat: string,
-      aggregationCollection: string
-    ) => {
-      let timestampMatch: Record<string, unknown> | undefined = undefined
-      if (timeRange) {
-        const { start, end } = getAffectedInterval(timeRange, 'HOUR')
-        timestampMatch = {
-          timestamp: {
-            $gte: start,
-            $lt: end,
-          },
-        }
-      }
-      return withUpdatedAt(
-        [
-          {
-            $match: {
-              ...timestampMatch,
-              type: {
-                $ne: null,
-              },
-            },
-          },
-          {
-            $group: {
-              _id: {
-                date: {
-                  $dateToString: {
-                    format: dateFormat,
-                    date: {
-                      $toDate: {
-                        $toLong: '$timestamp',
-                      },
-                    },
-                  },
-                },
-                transactionType: { $concat: ['transactionType_', '$type'] },
-              },
-              count: {
-                $count: {},
-              },
-            },
-          },
-          {
-            $group: {
-              _id: '$_id.date',
-              items: {
-                $addToSet: {
-                  k: '$_id.transactionType',
-                  v: '$count',
-                },
-              },
-            },
-          },
-          {
-            $project: {
-              items: {
-                $arrayToObject: '$items',
-              },
-            },
-          },
-          {
-            $replaceRoot: {
-              newRoot: {
-                $mergeObjects: [
-                  {
-                    _id: '$_id',
-                  },
-                  '$items',
-                ],
-              },
-            },
-          },
-          {
-            $merge: {
-              into: aggregationCollection,
-              whenMatched: 'merge',
-            },
-          },
-        ],
-        lastUpdatedAt
-      )
-    }
-
     // Hourly Stats
     await transactionsCollection
       .aggregate(getHitRulesAggregationPipeline('totalTransactions'))
@@ -433,14 +345,6 @@ export class TransactionStatsDashboardMetric {
     await transactionsCollection
       .aggregate(
         getTRSAggregationPipeline(
-          HOUR_DATE_FORMAT,
-          aggregatedHourlyCollectionName
-        )
-      )
-      .next()
-    await transactionsCollection
-      .aggregate(
-        getTransactionTypeAggregationPipeline(
           HOUR_DATE_FORMAT,
           aggregatedHourlyCollectionName
         )
@@ -502,15 +406,6 @@ export class TransactionStatsDashboardMetric {
                   ...acc,
                   [`arsRiskLevel_${x}`]: {
                     $sum: `$arsRiskLevel_${x}`,
-                  },
-                }),
-                {}
-              ),
-              ...TRANSACTION_TYPES.reduce(
-                (acc, x) => ({
-                  ...acc,
-                  [`transactionType_${x}`]: {
-                    $sum: `$transactionType_${x}`,
                   },
                 }),
                 {}
@@ -656,13 +551,6 @@ export class TransactionStatsDashboardMetric {
         arsRiskLevel_MEDIUM: stat?.arsRiskLevel_MEDIUM ?? 0,
         arsRiskLevel_LOW: stat?.arsRiskLevel_LOW ?? 0,
         arsRiskLevel_VERY_LOW: stat?.arsRiskLevel_VERY_LOW ?? 0,
-        transactionType_DEPOSIT: stat?.transactionType_DEPOSIT ?? 0,
-        transactionType_TRANSFER: stat?.transactionType_TRANSFER ?? 0,
-        transactionType_EXTERNAL_PAYMENT:
-          stat?.transactionType_EXTERNAL_PAYMENT ?? 0,
-        transactionType_WITHDRAWAL: stat?.transactionType_WITHDRAWAL ?? 0,
-        transactionType_REFUND: stat?.transactionType_REFUND ?? 0,
-        transactionType_OTHER: stat?.transactionType_OTHER ?? 0,
       }
     })
   }

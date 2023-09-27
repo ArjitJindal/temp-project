@@ -1,11 +1,11 @@
-import Donut, { DonutData } from '../charts/Donut';
+import Donut from '../charts/Donut';
 import {
   COLORS_V2_ANALYTICS_CHARTS_24,
   COLORS_V2_ANALYTICS_CHARTS_25,
   COLORS_V2_ANALYTICS_CHARTS_26,
   COLORS_V2_ANALYTICS_CHARTS_27,
 } from '@/components/ui/colors';
-import { Priority, RuleInstance } from '@/apis';
+import { RuleInstance } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -45,27 +45,25 @@ export default function RulePrioritySplitCard(props: Props) {
       <AsyncResourceRenderer resource={ruleInstanceResults.data}>
         {(instance: RuleInstance[]) => {
           // Counting the frequency of casePriority values
-          const priorityFrequency: {
-            [key in Priority]?: number;
-          } = instance.reduce((frequencyMap, ruleInstance) => {
+          const priorityFrequency = instance.reduce((frequencyMap, ruleInstance) => {
             const { casePriority } = ruleInstance;
-            return {
-              ...frequencyMap,
-              [casePriority]: (frequencyMap[casePriority] ?? 0) + 1,
-            };
+            if (casePriority in frequencyMap) {
+              frequencyMap[casePriority]++;
+            } else {
+              frequencyMap[casePriority] = 1;
+            }
+            return frequencyMap;
           }, {});
 
           // Converting the frequency map into an array of objects
-          const priorityData: DonutData<Priority> = Object.entries(priorityFrequency).map(
-            ([priority, value]) => ({
-              series: priority as Priority,
-              value: value as number,
-            }),
-          );
+          const priorityData = Object.entries(priorityFrequency).map(([priority, value]) => ({
+            colorField: priority,
+            angleField: value,
+          }));
 
-          priorityData.sort((a, b) => {
-            const fa = a.series.toLowerCase(),
-              fb = b.series.toLowerCase();
+          const data = priorityData.sort((a, b) => {
+            const fa = a.colorField.toLowerCase(),
+              fb = b.colorField.toLowerCase();
 
             if (fa < fb) {
               return -1;
@@ -76,9 +74,7 @@ export default function RulePrioritySplitCard(props: Props) {
             return 0;
           });
 
-          return (
-            <Donut<Priority> data={priorityData} colors={gaugeColors} legendPosition="RIGHT" />
-          );
+          return <Donut data={data} COLORS={gaugeColors} position="right" />;
         }}
       </AsyncResourceRenderer>
     </Widget>

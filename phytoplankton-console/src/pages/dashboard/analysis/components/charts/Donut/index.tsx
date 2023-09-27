@@ -1,37 +1,35 @@
-import { Pie as AntPie } from '@ant-design/plots';
-import { PieConfig } from '@ant-design/plots/es/components/pie';
-import { escapeHtml } from '@/utils/browser';
+import { Pie } from '@ant-design/plots';
 
-const ANGLE_FIELD: keyof DonutDataItem<unknown> = 'value';
-const COLOR_FIELD: keyof DonutDataItem<unknown> = 'series';
+type Position =
+  | 'right'
+  | 'top'
+  | 'top-left'
+  | 'top-right'
+  | 'right-top'
+  | 'right-bottom'
+  | 'left'
+  | 'left-top'
+  | 'left-bottom'
+  | 'bottom'
+  | 'bottom-left'
+  | 'bottom-right'
+  | undefined;
 
-export type DonutDataItem<Series> = {
-  value: number;
-  series: Series;
-};
-
-export type DonutData<Series> = DonutDataItem<Series>[];
-
-interface Props<Series extends string> {
-  data: DonutData<Series>;
-  colors: { [key in Series]: string };
+interface Props {
+  data: Record<string, any>[];
+  COLORS: Record<string, string>;
+  position?: Position;
   shape?: 'CIRCLE' | 'SEMI_CIRCLE';
-  legendPosition?: 'RIGHT' | 'BOTTOM';
-  formatSeries?: (value: Series) => string;
 }
 
-function Donut<Series extends string>(props: Props<Series>) {
-  const { data, colors, formatSeries, legendPosition = 'RIGHT', shape = 'CIRCLE' } = props;
-
-  const legendPositionFixed: 'bottom' | 'right' = legendPosition === 'BOTTOM' ? 'bottom' : 'right';
-
-  const config: PieConfig = {
-    animation: false,
+function Donut(props: Props) {
+  const { data, COLORS, position, shape = 'SEMI_CIRCLE' } = props;
+  const config = {
     appendPadding: 10,
     data,
-    angleField: ANGLE_FIELD,
-    colorField: COLOR_FIELD,
-    color: (data: any) => colors[data[COLOR_FIELD]],
+    angleField: 'angleField',
+    colorField: 'colorField',
+    color: (data: any) => COLORS[data.colorField],
     radius: 1,
     innerRadius: 0.65,
     startAngle: shape === 'CIRCLE' ? 0 : Math.PI,
@@ -39,7 +37,7 @@ function Donut<Series extends string>(props: Props<Series>) {
     label: {
       type: 'inner',
       offset: '-50%',
-      content: (item: any) => item.value,
+      content: (item: any) => item.angleField,
       autoRotate: false,
       style: {
         textAlign: 'center',
@@ -67,19 +65,15 @@ function Donut<Series extends string>(props: Props<Series>) {
         content: '',
       },
     },
-    legend: {
-      position: legendPositionFixed,
-    },
-    meta: {
-      [COLOR_FIELD]: {
-        formatter: (value) => {
-          return escapeHtml(formatSeries?.(value) ?? value);
-        },
-      },
-    },
   };
-
-  return <AntPie {...config} />;
+  return (
+    <Pie
+      {...config}
+      legend={{
+        position: position || 'bottom',
+      }}
+    />
+  );
 }
 
 export default Donut;
