@@ -35,6 +35,7 @@ interface ConsoleLambdasProps extends cdk.NestedStackProps {
   webhookDeliveryQueue: Queue
   betterUptimeCloudWatchTopic: Topic
   domainName?: DomainName
+  requestLoggerQueue: Queue
 }
 
 export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
@@ -52,6 +53,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       webhookDeliveryQueue,
       betterUptimeCloudWatchTopic,
       domainName,
+      requestLoggerQueue,
     } = props
 
     const importBucketName = getNameForGlobalResource(
@@ -84,6 +86,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         DOCUMENT_BUCKET: documentBucketName,
         IMPORT_BUCKET: importBucketName,
         AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
+        REQUEST_LOGGER_QUEUE_URL: requestLoggerQueue.queueUrl,
       },
     }
 

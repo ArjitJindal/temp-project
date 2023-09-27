@@ -1205,6 +1205,7 @@ export class CdkTarponStack extends cdk.Stack {
         webhookDeliveryQueue,
         domainName,
         betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
+        requestLoggerQueue,
       }
     )
 
