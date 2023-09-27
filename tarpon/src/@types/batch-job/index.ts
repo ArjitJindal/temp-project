@@ -90,6 +90,12 @@ export type DashboardRefreshBatchJob = {
   parameters: DashboardRefreshBatchJobParameters
 }
 
+/* Merchant Monitoring */
+export type OngoingMerchantMonitoringBatchJob = {
+  type: 'ONGOING_MERCHANT_MONITORING'
+  tenantId: string
+}
+
 export type BatchJob =
   | FileImportBatchJob
   | SimulationPulseBatchJob
@@ -100,6 +106,7 @@ export type BatchJob =
   | ApiUsageMetricsBatchJob
   | GlobalRuleAggregationRebuildBatchJob
   | DashboardRefreshBatchJob
+  | OngoingMerchantMonitoringBatchJob
 
 export type BatchJobType = BatchJob['type']
 // Enforce they all have tenantId

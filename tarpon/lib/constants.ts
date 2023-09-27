@@ -254,6 +254,7 @@ export const StackConstants = {
   ),
   CRON_JOB_DAILY: getResourceNameForTarpon('CronJobDailyFunction'),
   CRON_JOB_TEN_MINUTE: getResourceNameForTarpon('CronJobTenMinuteFunction'),
+  CRON_JOB_MONTHLY: getResourceNameForTarpon('CronJobMonthlyFunction'),
 }
 
 export const SQSQueues = {

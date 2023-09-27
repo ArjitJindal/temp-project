@@ -1617,10 +1617,12 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-17',
-      name: 'Inconsistent business industry',
+      name: 'Inconsistent business industry on a platform',
       type: 'USER',
-      description: 'Business industry for user has changed.',
-      descriptionTemplate: 'Business industry for user has changed.',
+      description:
+        'Checks if industry has changed for a business user on an external platform',
+      descriptionTemplate:
+        'Business industry for user has changed on {{ sourceType }}',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'merchant-monitoring-industry',
@@ -1661,6 +1663,8 @@ export const RULES_LIBRARY: Array<Rule> = _RULES_LIBRARY.map((getRule) => {
         : USER_RULES[rule.ruleImplementationName]?.getSchema(),
   }
 })
+
+export const ONGOING_MERCHANT_MONITORING_RULE_IDS = ['R-17']
 
 export const RULES_LOOKUP: Map<string, Rule> = new Map(
   RULES_LIBRARY.map((r) => [r.id, r])

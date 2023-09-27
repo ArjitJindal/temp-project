@@ -1,5 +1,6 @@
-import { Document } from 'mongodb'
+import { Document, Filter } from 'mongodb'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-transactions`
@@ -267,13 +268,14 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     ],
     [USERS_COLLECTION(tenantId)]: [
       {
-        getIndexes: () => {
+        getIndexes: (): Filter<InternalUser>[] => {
           return [
             { type: 1 },
             { createdTimestamp: 1 },
             { updatedAt: 1 },
             { createdAt: 1 },
             { userId: 1 },
+            { isMonitoringEnabled: 1 },
             { 'userDetails.name.firstName': 1 },
             { 'userDetails.name.middleName': 1 },
             { 'userDetails.name.lastName': 1 },

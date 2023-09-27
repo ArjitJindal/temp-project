@@ -1,6 +1,5 @@
 import { Filter, MongoClient } from 'mongodb'
 import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
-import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { MerchantRepository } from '@/lambdas/console-api-merchant/merchant-repository'
 
@@ -15,20 +14,15 @@ export class MerchantMonitoringRetrieve {
 
   async getMerchantMonitoringHistory(
     source: MerchantMonitoringSource,
-    userId: string
-  ): Promise<MerchantMonitoringSummary[]> {
-    return await this.merchantRepository.getSummaryHistory(userId, source)
-  }
-
-  async getMerchantMonitoringHistoryBySourceType(
-    sourceType: MerchantMonitoringSourceType,
     userId: string,
-    filter?: Filter<MerchantMonitoringSummary>
+    filter?: Filter<MerchantMonitoringSummary>,
+    limit?: number
   ): Promise<MerchantMonitoringSummary[]> {
-    return await this.merchantRepository.getSummaryHistoryBySourceType(
+    return await this.merchantRepository.getSummaryHistory(
       userId,
-      sourceType,
-      filter
+      source,
+      filter,
+      limit
     )
   }
 }

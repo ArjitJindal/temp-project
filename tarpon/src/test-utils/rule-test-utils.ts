@@ -240,7 +240,7 @@ export function createTransactionRuleTestCase(
   tenantId: string,
   transactions: Transaction[],
   expectedHits: boolean[],
-  expectetRuleDescriptions?: Array<string | undefined>,
+  expectedRuleDescriptions?: Array<string | undefined>,
   options?: {
     autoCreateUser?: boolean
   }
@@ -251,8 +251,8 @@ export function createTransactionRuleTestCase(
     })
     const ruleHits = getRuleHits(results)
     expect(ruleHits).toEqual(expectedHits)
-    if (expectetRuleDescriptions) {
-      expect(getRuleDescriptions(results)).toEqual(expectetRuleDescriptions)
+    if (expectedRuleDescriptions) {
+      expect(getRuleDescriptions(results)).toEqual(expectedRuleDescriptions)
     }
   })
 }
@@ -262,14 +262,14 @@ export function createUserRuleTestCase(
   tenantId: string,
   users: Array<Business | User>,
   expectetRuleHitMetadata: Array<RuleHitMeta | undefined>,
-  expectetRuleDescriptions?: Array<string | undefined>,
+  expectedRuleDescriptions?: Array<string | undefined>,
   ongoingScreeningMode?: boolean
 ) {
   test(testCaseName, async () => {
     const results = await bulkVerifyUsers(tenantId, users, ongoingScreeningMode)
     expect(getRuleHitMetadata(results)).toEqual(expectetRuleHitMetadata)
-    if (expectetRuleDescriptions) {
-      expect(getRuleDescriptions(results)).toEqual(expectetRuleDescriptions)
+    if (expectedRuleDescriptions) {
+      expect(getRuleDescriptions(results)).toEqual(expectedRuleDescriptions)
     }
   })
 }
@@ -319,7 +319,7 @@ export interface UserRuleTestCase {
   name: string
   users: Array<Business | User>
   expectetRuleHitMetadata: Array<RuleHitMeta | undefined>
-  expectetRuleDescriptions?: Array<string | undefined>
+  expectedRuleDescriptions?: Array<string | undefined>
 }
 
 // For making sure a rule works the same w/ or w/o RULES_ENGINE_RULE_BASED_AGGREGATION feature flag

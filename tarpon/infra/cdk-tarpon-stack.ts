@@ -827,6 +827,28 @@ export class CdkTarponStack extends cdk.Stack {
       )
     }
 
+    // Cron Jon Monthly
+    const { func: cronJobMonthlyHandler } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CRON_JOB_MONTHLY,
+        auditLogTopic: this.auditLogTopic,
+        batchJobQueue,
+      },
+      functionProps
+    )
+
+    const monthlyRule = new Rule(
+      this,
+      getResourceNameForTarpon('MonthlyRule'),
+      {
+        schedule: Schedule.cron({ minute: '0', hour: '0', day: '1' }),
+      }
+    )
+
+    monthlyRule.addTarget(new LambdaFunctionTarget(cronJobMonthlyHandler))
+
     /* Tarpon Kinesis Change capture consumer */
 
     // MongoDB mirror handler

@@ -42,7 +42,9 @@ export const merchantMonitoringHandler = lambdaApi()(
         userId as string,
         name as string,
         domain as string,
-        refresh
+        {
+          refresh: refresh as boolean,
+        }
       )
       return {
         data: summaries,
@@ -77,6 +79,17 @@ export const merchantMonitoringHandler = lambdaApi()(
       )
     })
 
+    handlers.registerPostUpdateMonitoringStatus(async (ctx, request) => {
+      await userService.updateMointoringStatus(
+        request.userId,
+        request.UpdateMonitoringStatusRequest.isMonitoringEnabled
+      )
+    })
+
+    handlers.registerGetMerchantMonitoringStats(async () => {
+      const count = await userService.getTotalEnabledOngoingMonitoringUsers()
+      return { count }
+    })
     return await handlers.handle(event)
   }
 )

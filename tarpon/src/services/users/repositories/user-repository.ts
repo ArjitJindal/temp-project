@@ -151,6 +151,27 @@ export class UserRepository {
     }
   }
 
+  public async updateMonitoringStatus(
+    userId: string,
+    isMonitoringEnabled: boolean
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalBusinessUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    await collection.updateOne({ userId }, { $set: { isMonitoringEnabled } })
+  }
+
+  public async getTotalEnabledOngoingMonitoringUsers(): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalBusinessUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    return await collection.countDocuments({ isMonitoringEnabled: true })
+  }
+
   private async getMongoUsers(
     params: OptionalPaginationParams & {
       afterTimestamp?: number
@@ -609,6 +630,17 @@ export class UserRepository {
       | InternalConsumerUser
       | InternalBusinessUser
     )[]
+  }
+
+  public getOngoingScreeningUsersCursor(): FindCursor<InternalBusinessUser> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalBusinessUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    return collection.find({
+      isMonitoringEnabled: true,
+    })
   }
 
   public async getUser<T>(userId: string): Promise<T | undefined> {

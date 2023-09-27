@@ -10,6 +10,7 @@ import {
 import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { omit } from 'lodash'
+import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -132,6 +133,22 @@ export class UserService {
       ...result,
       data,
     }
+  }
+
+  public async updateMointoringStatus(userId: string, isEnabled: boolean) {
+    const user = await this.userRepository.getUserById(userId)
+
+    if (!isBusinessUser(user as Business | User)) {
+      throw new createError.BadRequest(
+        `Cannot enable monitoring for non-business user ${userId}`
+      )
+    }
+
+    await this.userRepository.updateMonitoringStatus(userId, isEnabled)
+  }
+
+  public async getTotalEnabledOngoingMonitoringUsers(): Promise<number> {
+    return await this.userRepository.getTotalEnabledOngoingMonitoringUsers()
   }
 
   public async getUser(userId: string): Promise<InternalUser> {

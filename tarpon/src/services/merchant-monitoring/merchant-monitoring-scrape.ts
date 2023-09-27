@@ -10,6 +10,7 @@ import { logger } from '@/core/logger'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { traceable } from '@/core/xray'
 import { ask } from '@/utils/openapi'
+import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { ensureHttps } from '@/utils/http'
 
 const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output as a comma separate list For example:
@@ -73,26 +74,53 @@ export class MerchantMonitoringScrapeService {
     userId: string,
     companyName: string,
     domain: string,
-    refresh?: boolean
+    options: {
+      refresh: boolean
+      skipExisting?: boolean
+      onlyTypes?: MerchantMonitoringSourceType[]
+      additionalDomains?: string[]
+    } = {
+      refresh: false,
+      onlyTypes: MERCHANT_MONITORING_SOURCE_TYPES,
+    }
   ): Promise<MerchantMonitoringSummary[]> {
     const mongoDb = await getMongoDbClient()
     const merchantRepository = new MerchantRepository(tenantId, {
       mongoDb,
     })
 
-    const existingSummaries = await merchantRepository.getSummaries(userId)
+    const existingSummaries = !options?.skipExisting
+      ? await merchantRepository.getSummaries(userId)
+      : []
 
-    if (refresh || (existingSummaries && existingSummaries.length === 0)) {
+    if (
+      options?.refresh ||
+      (existingSummaries && existingSummaries.length === 0)
+    ) {
       const timeout = new Promise((resolve) => {
         setTimeout(() => resolve(null), 20000)
       })
+
+      const typesAndFunctions: {
+        [key in MerchantMonitoringSourceType]: () => Promise<
+          MerchantMonitoringSummary | undefined
+        >
+      } = {
+        SCRAPE: () => this.scrape(domain),
+        COMPANIES_HOUSE: () => this.companiesHouse(companyName),
+        EXPLORIUM: () => this.explorium(companyName),
+        LINKEDIN: () => this.linkedin(domain),
+      }
+
       const results = (
         await Promise.allSettled(
           [
-            this.scrape(domain),
-            this.companiesHouse(companyName),
-            this.explorium(companyName),
-            this.linkedin(domain),
+            ...(options?.onlyTypes?.map(
+              (t) =>
+                typesAndFunctions[t]() as Promise<
+                  MerchantMonitoringSummary | undefined
+                >
+            ) ?? []),
             ...(existingSummaries
               ?.filter(
                 (s) =>
@@ -113,6 +141,27 @@ export class MerchantMonitoringScrapeService {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         .filter((p) => p && p.source) as MerchantMonitoringSummary[]
+
+      if (
+        options?.additionalDomains &&
+        options?.onlyTypes?.includes('SCRAPE')
+      ) {
+        const additionalResults = (
+          await Promise.allSettled(
+            options.additionalDomains.map((d) => this.scrape(ensureHttps(d)))
+          )
+        )
+          .map((p) => {
+            if (p.status === 'fulfilled' && p.value) {
+              return p.value
+            }
+          })
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          .filter((p) => p && p.source) as MerchantMonitoringSummary[]
+        results.push(...additionalResults)
+      }
+
       await Promise.all(
         results
           .map(async (r) => {
@@ -146,9 +195,7 @@ export class MerchantMonitoringScrapeService {
     companyName: string,
     domain: string
   ): Promise<MerchantMonitoringSummary> {
-    const parsedUrl = `https://${domain
-      .replace('https://', '')
-      .replace('http://', '')}`
+    const parsedUrl = ensureHttps(domain)
     const result = await this.scrape(parsedUrl)
     const mongoDb = await getMongoDbClient()
     const merchantRepository = new MerchantRepository(tenantId, {

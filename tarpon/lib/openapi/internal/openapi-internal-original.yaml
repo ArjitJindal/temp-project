@@ -1204,6 +1204,44 @@ paths:
           in: query
           name: sortOrder
     parameters: []
+  '/merchant-monitoring/{userId}/update_monitoring_status':
+    post:
+      summary: Update Monitoring Status
+      operationId: post-update-monitoring-status
+      x-flagright:
+        permissions:
+          - users:user-overview:write
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMonitoringStatusRequest'
+        required: true
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+  /merchant-monitoring/stats:
+    get:
+      summary: Merchant Monitoring Stats
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantMonitoringStatsResponse'
+              examples: {}
+      operationId: get-merchant-monitoring-stats
+      description: ''
   /users:
     get:
       summary: All Users - List
@@ -5971,6 +6009,15 @@ components:
                 type: number
       required:
         - transactionTypeData
+    UpdateMonitoringStatusRequest:
+      type: object
+      x-examples: {}
+      title: UpdateMonitoringStatusRequest
+      properties:
+        isMonitoringEnabled:
+          type: boolean
+      required:
+        - isMonitoringEnabled
     InternalConsumerUser:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserWithRulesResult
@@ -6019,6 +6066,8 @@ components:
               type: number
             updatedAt:
               type: number
+            isMonitoringEnabled:
+              type: boolean
           required:
             - type
     InternalUser:
@@ -6447,6 +6496,8 @@ components:
             seats:
               type: number
             apiKeyView:
+              type: number
+            ongoingMerchantMonitoringUsers:
               type: number
         tenantTimezone:
           $ref: '#/components/schemas/Timezone'
@@ -8009,6 +8060,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MerchantMonitoringSummary'
+    MerchantMonitoringStatsResponse:
+      type: object
+      title: MerchantMonitoringStatsResponse
+      properties:
+        count:
+          type: number
+      required:
+        - count
     ComplyAdvantageSearchHit:
       type: object
       properties:

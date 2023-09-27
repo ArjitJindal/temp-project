@@ -18,6 +18,7 @@ import {
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { FEATURES } from '@/apis/models-custom/Feature';
+import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';
 
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -116,7 +117,7 @@ export default function SuperAdminPanel() {
         {user.tenantName}
       </Button>
       <Modal
-        title="Super Admin Panel"
+        title="Super admin panel"
         width="L"
         isOpen={isModalVisible}
         okText="Save"
@@ -186,6 +187,19 @@ export default function SuperAdminPanel() {
             <NumberInput
               value={limits?.seats ?? 0}
               onChange={(value) => setLimits({ ...limits, seats: value })}
+              isDisabled={false}
+            />
+          </Label>
+        </div>
+        <div className={s.field}>
+          <Label
+            label="Max ongoing merchant monitoring users"
+            description="The maximum number of merchant monitoring users allowed for this tenant"
+            element="div"
+          >
+            <NumberInput
+              value={limits?.ongoingMerchantMonitoringUsers ?? DEFAULT_MERCHANT_MOITORING_LIMIT}
+              onChange={(value) => setLimits({ ...limits, ongoingMerchantMonitoringUsers: value })}
               isDisabled={false}
             />
           </Label>

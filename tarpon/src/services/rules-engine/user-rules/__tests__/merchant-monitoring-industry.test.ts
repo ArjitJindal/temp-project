@@ -82,7 +82,6 @@ describe.each<UserRuleTestCase>([
       }),
     ],
     expectetRuleHitMetadata: [undefined],
-    expectetRuleDescriptions: ['Business industry for user has changed.'],
   },
   {
     name: 'Should flag user if merchant industry has changed',
@@ -98,7 +97,9 @@ describe.each<UserRuleTestCase>([
         sanctionsDetails: undefined,
       },
     ],
-    expectetRuleDescriptions: ['Business industry for user has changed.'],
+    expectedRuleDescriptions: [
+      'Business industry for user has changed on COMPANIES_HOUSE.',
+    ],
   },
   {
     name: 'Does not run for consumer users',
@@ -108,11 +109,10 @@ describe.each<UserRuleTestCase>([
       }),
     ],
     expectetRuleHitMetadata: [undefined],
-    expectetRuleDescriptions: ['Business industry for user has changed.'],
   },
 ])(
   'Merchant Monitoring Industry User Rule',
-  ({ name, users, expectetRuleHitMetadata, expectetRuleDescriptions }) => {
+  ({ name, users, expectetRuleHitMetadata, expectedRuleDescriptions }) => {
     setUpRulesHooks(tenantId, [
       {
         id: 'R-17',
@@ -126,7 +126,7 @@ describe.each<UserRuleTestCase>([
       tenantId,
       users,
       expectetRuleHitMetadata,
-      expectetRuleDescriptions,
+      expectedRuleDescriptions,
       true
     )
   }

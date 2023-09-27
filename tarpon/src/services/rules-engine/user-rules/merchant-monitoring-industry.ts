@@ -1,11 +1,15 @@
 import { JSONSchemaType } from 'ajv'
 import { isEmpty, isEqual } from 'lodash'
+import { Filter } from 'mongodb'
 import { RuleHitResult } from '../rule'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { UserRule } from './rule'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import dayjs from '@/utils/dayjs'
 import { MerchantMonitoringRetrieve } from '@/services/merchant-monitoring/merchant-monitoring-retrieve'
+import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
+import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
+import { Business } from '@/@types/openapi-internal/Business'
 
 export type MerchantMonitoringIndustryUserRuleParameters = {
   sourceType: MerchantMonitoringSourceType[]
@@ -51,7 +55,36 @@ export default class MerchantMonitoringIndustryUserRule extends UserRule<Merchan
     }
 
     if (isEmpty(this.parameters.sourceType)) {
-      return hitResult
+      return
+    }
+
+    const allSources: MerchantMonitoringSource[] = []
+    const user = this.user as Business
+
+    for (const sourceType of this.parameters.sourceType) {
+      switch (sourceType) {
+        case 'LINKEDIN':
+        case 'EXPLORIUM':
+        case 'COMPANIES_HOUSE': {
+          allSources.push({
+            sourceType,
+          })
+
+          break
+        }
+
+        case 'SCRAPE': {
+          const websites = user.legalEntity.contactDetails?.websites ?? []
+          for (const website of websites) {
+            allSources.push({
+              sourceType,
+              sourceValue: website,
+            })
+          }
+
+          break
+        }
+      }
     }
 
     const merchantMonitoringService = new MerchantMonitoringRetrieve(
@@ -59,49 +92,58 @@ export default class MerchantMonitoringIndustryUserRule extends UserRule<Merchan
       { mongoDb: this.mongoDb }
     )
 
-    for (const sourceType of this.parameters.sourceType) {
-      const isMerchantIndustryChanged = await this.isMerchantIndustryChanged(
+    let changedSource: MerchantMonitoringSource | undefined
+
+    for await (const source of allSources) {
+      const isIndustryChanged = await this.isMerchantIndustryChanged(
         merchantMonitoringService,
-        sourceType
+        source
       )
 
-      if (isMerchantIndustryChanged) {
-        hitResult.push({
-          direction: 'ORIGIN',
-          vars: this.getUserVars(),
-        })
-
+      if (isIndustryChanged) {
+        changedSource = source
         break
       }
     }
 
-    return hitResult
+    if (changedSource) {
+      hitResult.push({
+        vars: {
+          ...this.getUserVars(),
+          sourceType:
+            changedSource.sourceType === 'SCRAPE'
+              ? changedSource.sourceValue
+              : changedSource.sourceType,
+        },
+        direction: 'ORIGIN',
+      })
+    }
+
+    if (!isEmpty(hitResult)) {
+      return hitResult
+    }
+
+    return
   }
 
   private async isMerchantIndustryChanged(
     merchantMonitoringService: MerchantMonitoringRetrieve,
-    sourceType: MerchantMonitoringSourceType
+    source: MerchantMonitoringSource
   ): Promise<boolean> {
     const merchantMonitoringSummary =
-      await merchantMonitoringService.getMerchantMonitoringHistoryBySourceType(
-        sourceType,
-        this.user.userId
+      await merchantMonitoringService.getMerchantMonitoringHistory(
+        source,
+        this.user.userId,
+        undefined,
+        1
       )
 
     if (merchantMonitoringSummary && !isEmpty(merchantMonitoringSummary)) {
       const merchantMonitoringSummaryBefore =
-        await merchantMonitoringService.getMerchantMonitoringHistoryBySourceType(
-          sourceType,
+        await merchantMonitoringService.getMerchantMonitoringHistory(
+          source,
           this.user.userId,
-          {
-            updatedAt: {
-              $lt: Math.min(
-                merchantMonitoringSummary[0].updatedAt ??
-                  Number.MAX_SAFE_INTEGER,
-                dayjs().subtract(1, 'day').valueOf()
-              ),
-            },
-          }
+          this.getTimestampCondition(merchantMonitoringSummary[0].updatedAt!)
         )
 
       if (
@@ -120,5 +162,18 @@ export default class MerchantMonitoringIndustryUserRule extends UserRule<Merchan
     }
 
     return false
+  }
+
+  private getTimestampCondition(
+    updatedAt: number
+  ): Filter<MerchantMonitoringSummary> {
+    return {
+      updatedAt: {
+        $lt: Math.min(
+          updatedAt ?? Number.MAX_SAFE_INTEGER,
+          dayjs().subtract(1, 'day').valueOf()
+        ),
+      },
+    }
   }
 }

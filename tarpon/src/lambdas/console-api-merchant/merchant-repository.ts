@@ -88,37 +88,28 @@ export class MerchantRepository {
 
   public async getSummaryHistory(
     userId: string,
-    source: MerchantMonitoringSource
+    source: MerchantMonitoringSource,
+    filter?: Filter<MerchantMonitoringSummary>,
+    limit?: number
   ): Promise<MerchantMonitoringSummary[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<MerchantMonitoringSummary>(
       MERCHANT_MONITORING_DATA_COLLECTION(this.tenantId)
     )
 
-    return await collection
-      .find({ userId, source })
-      .sort({ updatedAt: -1 })
-      .toArray()
-  }
-
-  public getSummaryHistoryBySourceType(
-    userId: string,
-    sourceType: MerchantMonitoringSource['sourceType'],
-    filter?: Filter<MerchantMonitoringSummary>
-  ): Promise<MerchantMonitoringSummary[]> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<MerchantMonitoringSummary>(
-      MERCHANT_MONITORING_DATA_COLLECTION(this.tenantId)
-    )
-
-    return collection
+    const cursor = collection
       .find({
+        ...(source.sourceType && { 'source.sourceType': source.sourceType }),
+        ...(source.sourceValue && { 'source.sourceValue': source.sourceValue }),
         userId,
-        'source.sourceType': sourceType,
         ...filter,
       })
       .sort({ updatedAt: -1 })
-      .limit(1)
-      .toArray()
+
+    if (limit != null) {
+      cursor.limit(limit)
+    }
+
+    return await cursor.toArray()
   }
 }

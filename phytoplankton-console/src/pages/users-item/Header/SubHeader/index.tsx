@@ -9,6 +9,7 @@ import Spam2LineIcon from '@/components/ui/icons/Remix/system/spam-2-line.react.
 import * as Form from '@/components/ui/Form';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
+import { MerchantMonitoringToggle } from '@/components/MerchantMonitoringToggle';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -30,6 +31,14 @@ export default function SubHeader(props: Props) {
         <div className={s['row-items']}>
           <KycStatusEditor onNewComment={onNewComment} title={'KYC status'} user={user} />
           <UserStateEditor onNewComment={onNewComment} title={'User status'} user={user} />
+          {user.type === 'BUSINESS' && (
+            <Feature name="MERCHANT_MONITORING">
+              <MerchantMonitoringToggle
+                userId={userId}
+                isMonitoring={user.isMonitoringEnabled ?? false}
+              />
+            </Feature>
+          )}
         </div>
       </div>
       <Feature name="RISK_SCORING">

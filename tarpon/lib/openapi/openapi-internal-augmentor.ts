@@ -63,6 +63,10 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
   '/merchant-monitoring/scrape':
     StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
+  '/merchant-monitoring/stats':
+    StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
+  '/merchant-monitoring/{userId}/update_monitoring_status':
+    StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
   '/transactions': StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/action':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
@@ -82,6 +86,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/questions/autocomplete': StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/users/{userId}': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+
   '/consumer/users':
     StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/consumer/users/{userId}':
@@ -151,6 +156,7 @@ export const ConsoleApiPathToLambda: any = {
   '/tenant/usageData': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenant/apiKeys': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/cases/assignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+
   '/cases/reviewAssignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/statusChange': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
