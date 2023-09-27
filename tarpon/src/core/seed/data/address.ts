@@ -112,7 +112,7 @@ const countries = {
   },
 }
 
-export const addresses: Address[] = [...Array(100)].map(() => {
+export const addresses: Address[] = [...Array(300)].map(() => {
   const country = pickRandom(Object.keys(countries))
   const state = pickRandom(Object.keys(countries[country]))
 
@@ -127,6 +127,6 @@ export const addresses: Address[] = [...Array(100)].map(() => {
   }
 })
 
-export const phoneNumber = [...Array(100)].map(() =>
+export const phoneNumber = [...Array(300)].map(() =>
   (Math.floor(Math.random() * 9_000_000) + 10_000_000).toString()
 )

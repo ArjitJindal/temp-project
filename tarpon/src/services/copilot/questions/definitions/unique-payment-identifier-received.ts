@@ -75,7 +75,7 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
     { name: 'Destination payment identifier', columnType: 'ID' },
     { name: 'Payment type', columnType: 'PAYMENT_METHOD' },
     { name: 'Transaction Count', columnType: 'NUMBER' },
-    { name: 'Total Amount', columnType: 'NUMBER' },
+    { name: 'Total Amount', columnType: 'MONEY_AMOUNT' },
   ],
   variableOptions: {
     ...periodVars,

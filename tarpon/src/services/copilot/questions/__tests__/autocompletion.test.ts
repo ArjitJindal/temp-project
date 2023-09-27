@@ -17,9 +17,9 @@ describe('Autocompletion', () => {
     const suggestions = ac.autocomplete('user de')
     expect(suggestions).toEqual(['User details'])
   })
-  test('10 returned with no input', async () => {
+  test('At least 10 returned with no input', async () => {
     const suggestions = ac.autocomplete('')
-    expect(suggestions.length).toEqual(10)
+    expect(suggestions.length).toBeGreaterThan(10)
   })
 })
 

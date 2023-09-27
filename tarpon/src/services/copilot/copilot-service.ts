@@ -30,6 +30,7 @@ type GenerateCaseNarrative = {
   _case: Case
   user: InternalBusinessUser | InternalConsumerUser
   reasons: CaseReasons[]
+  transactions: InternalTransaction[]
 }
 type GenerateSarNarrative = {
   _case: Case
@@ -40,11 +41,11 @@ type GenerateSarNarrative = {
 
 const PROMPT = `Please provide the same text but use placeholders or data from the JSON blob below to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
 const PLACEHOLDER_NARRATIVE = `OVERVIEW
-User: [Insert user's name]
-Date of Case Generation: [Case generation date]
-Reason for Case Generation: [Summarise the rule hits]
-Investigation Period: [Insert investigation start date] - [Insert investigation end date]
-Closure Date: [Case closure date]
+User: [user]
+Date of Case Generation: [caseGenerationDate]
+Reason for Case Generation: [ruleHitNames]
+Investigation Period: [caseGenerationDate] - [todaysDate]
+Closure Date: [todaysDate]
 
 BACKGROUND
 [This section should contain general details about the user in question.]
@@ -56,7 +57,7 @@ FINDINGS AND ASSESSMENT
 [This section should contain an analysis of the user's transactions and behaviors.]
 
 SCREENING DETAILS
-[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results, for example.]
+[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.]
 
 CONCLUSION`
 const MAX_TOKEN_OUTPUT = 4096
@@ -154,7 +155,7 @@ export class CopilotService {
   ): Promise<NarrativeResponse> {
     const attributeBuilder = new AttributeGenerator(DefaultAttributeBuilders)
     const attributes = attributeBuilder.getAttributes({
-      transactions: request._case.caseTransactions || [],
+      transactions: request.transactions || [],
       user: request.user,
       _case: request._case,
     })

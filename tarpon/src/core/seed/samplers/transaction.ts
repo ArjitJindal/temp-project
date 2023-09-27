@@ -64,7 +64,7 @@ export function sampleTransaction(
   }
 }
 
-export const paymentMethods = [...Array(100000)].map((i) =>
+export const paymentMethods = [...Array(500000)].map((i) =>
   samplePaymentDetails(i)
 )
 

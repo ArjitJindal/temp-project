@@ -35,7 +35,7 @@ export const Website: PropertiesQuestion<{
       }
       return {
         data: summaryToProperties(summary),
-        summary: summary.summary || '',
+        summary: `The website ${website} describes ${username} as: \n"${summary.summary}"`,
       }
     } catch (e) {
       return {

@@ -2,7 +2,7 @@ import { uniq } from 'lodash'
 import { questions } from '@/services/copilot/questions/definitions'
 
 const MAX_DISTANCE = 2
-const LIMIT = 10
+const LIMIT = 30
 export class AutocompleteService {
   private phrases: string[] = questions.map((q) => q.questionId.toLowerCase())
 

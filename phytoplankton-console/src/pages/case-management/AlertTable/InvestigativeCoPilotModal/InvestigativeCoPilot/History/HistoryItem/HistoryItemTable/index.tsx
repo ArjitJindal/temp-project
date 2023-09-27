@@ -14,6 +14,9 @@ import {
   PAYMENT_METHOD,
   UNKNOWN,
   TAG,
+  MONEY_AMOUNT,
+  MONEY_CURRENCY,
+  COUNTRY,
 } from '@/components/library/Table/standardDataTypes';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { ColumnDataType } from '@/components/library/Table/types';
@@ -85,6 +88,12 @@ export default function HistoryItemTable(props: Props) {
           type = PAYMENT_METHOD;
         } else if (header.columnType === 'TAG') {
           type = TAG;
+        } else if (header.columnType === 'MONEY_AMOUNT') {
+          type = MONEY_AMOUNT;
+        } else if (header.columnType === 'MONEY_CURRENCY') {
+          type = MONEY_CURRENCY;
+        } else if (header.columnType === 'COUNTRY') {
+          type = COUNTRY;
         }
         return columnHelper.simple({
           title: header.name as string,

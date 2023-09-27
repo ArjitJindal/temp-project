@@ -77,12 +77,6 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
                     ?.legalEntityType,
               },
               {
-                key: 'Tags',
-                value: JSON.stringify(
-                  result?.legalEntity.companyRegistrationDetails?.tags
-                ),
-              },
-              {
                 key: 'Date of registration',
                 value:
                   result?.legalEntity.companyRegistrationDetails
@@ -155,10 +149,6 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
         {
           key: 'Manual risk level',
           value: result?.drsScore?.manualRiskLevel,
-        },
-        {
-          key: 'Tags',
-          value: JSON.stringify(result?.tags || {}),
         },
         {
           key: 'Created at',

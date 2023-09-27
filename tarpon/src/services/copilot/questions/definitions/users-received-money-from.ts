@@ -88,7 +88,7 @@ export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
     { name: 'Username', columnType: 'STRING' },
     { name: 'User type', columnType: 'TAG' },
     { name: 'Transaction Count', columnType: 'NUMBER' },
-    { name: 'Total Amount', columnType: 'NUMBER' },
+    { name: 'Total Amount', columnType: 'MONEY_AMOUNT' },
   ],
   variableOptions: {
     ...periodVars,

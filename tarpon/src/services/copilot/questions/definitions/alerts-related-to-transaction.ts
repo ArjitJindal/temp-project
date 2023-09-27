@@ -23,7 +23,9 @@ export const AlertsRelatedToTransaction: TableQuestion<
   type: 'TABLE',
   questionId: 'Alerts related to transaction',
   title: (_, vars) => {
-    return `Alerts related to transaction ${vars.transactionId}`
+    return `Alerts related to transaction ${
+      vars.transactionId
+    } ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async (
     { tenantId, username },

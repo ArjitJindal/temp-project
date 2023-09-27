@@ -1,5 +1,10 @@
 import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import { isEmpty, isNil, mapKeys, omitBy, uniq } from 'lodash'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import {
   AuxiliaryIndexTransaction,
@@ -15,6 +20,7 @@ import {
   prefixRegexMatchFilter,
   paginateCursor,
   lookupPipelineStage,
+  getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,
@@ -54,6 +60,17 @@ export class MongoDbTransactionRepository
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.mongoDb = mongoDb
     this.tenantId = tenantId
+  }
+
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
+    >
+  ) {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const mongoDb = await getMongoDbClient()
+
+    return new MongoDbTransactionRepository(tenantId, mongoDb)
   }
 
   async addTransactionToMongo(

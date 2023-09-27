@@ -15,6 +15,7 @@ import Tooltip from '@/components/library/Tooltip';
 
 const AI_SOURCES_MAP: { [key in AIAttribute]: AIAttributeCategory } = {
   averageTransactionAmount: 'TRANSACTION',
+  alertComments: 'CASE',
   caseComments: 'CASE',
   caseGenerationDate: 'CASE',
   closureDate: 'CASE',

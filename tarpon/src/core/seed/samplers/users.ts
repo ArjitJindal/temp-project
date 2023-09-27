@@ -304,7 +304,7 @@ export function sampleBusinessUser(
         amountCurrency: pickRandom(CURRENCY_CODES),
       },
     },
-    shareHolders: Array.from({ length: Math.ceil(Math.random() * 1) }, () => {
+    shareHolders: Array.from({ length: 3 }, () => {
       const name: ConsumerName = randomConsumerName()
 
       return {
@@ -320,9 +320,9 @@ export function sampleBusinessUser(
           () => legalDocument(name)
         ),
         contactDetails: {
-          emailIds: [name.firstName.toLowerCase() + '@gmail.com'].concat(
-            company?.contactEmails || []
-          ),
+          emailIds: [
+            `${name.firstName.toLowerCase()}.${name.middleName?.toLowerCase()}.${name.lastName?.toLowerCase()}@gmail.com`,
+          ].concat(company?.contactEmails || []),
           faxNumbers: [randomPhoneNumber()],
           websites: [domain],
           addresses: [randomAddress()],
@@ -333,7 +333,7 @@ export function sampleBusinessUser(
         ),
       } as Person
     }),
-    directors: Array.from({ length: Math.ceil(Math.random() * 2) }, () => {
+    directors: Array.from({ length: 3 }, () => {
       const name: ConsumerName = randomConsumerName()
 
       return {

@@ -5018,6 +5018,9 @@ components:
                   - DATE_TIME
                   - PAYMENT_METHOD
                   - TAG
+                  - MONEY_AMOUNT
+                  - MONEY_CURRENCY
+                  - COUNTRY
         rows:
           type: array
           items:
@@ -6448,6 +6451,7 @@ components:
         - ruleHitNames
         - ruleHitNature
         - caseComments
+        - alertComments
         - userComments
         - caseGenerationDate
         - firstPaymentAmount

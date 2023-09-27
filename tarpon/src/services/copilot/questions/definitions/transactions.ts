@@ -57,15 +57,15 @@ export const Transactions: TableQuestion<Period> = {
     },
     {
       name: 'Origin amount',
-      columnType: 'NUMBER',
+      columnType: 'MONEY_AMOUNT',
     },
     {
       name: 'Origin currency',
-      columnType: 'STRING',
+      columnType: 'MONEY_CURRENCY',
     },
     {
       name: 'Origin country',
-      columnType: 'STRING',
+      columnType: 'COUNTRY',
     },
     {
       name: 'Destination user ID',
@@ -77,15 +77,15 @@ export const Transactions: TableQuestion<Period> = {
     },
     {
       name: 'Destination amount',
-      columnType: 'NUMBER',
+      columnType: 'MONEY_AMOUNT',
     },
     {
       name: 'Destination currency',
-      columnType: 'STRING',
+      columnType: 'MONEY_CURRENCY',
     },
     {
       name: 'Destination country',
-      columnType: 'STRING',
+      columnType: 'COUNTRY',
     },
     {
       name: 'Referene',

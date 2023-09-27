@@ -301,7 +301,15 @@ export class MerchantMonitoringScrapeService {
     }
 
     const data = await this.axios.request(options)
-    return this.summarise('LINKEDIN', JSON.stringify(data.data))
+
+    const summary = await this.summarise('LINKEDIN', JSON.stringify(data.data))
+
+    // Use linkedin description as the summary
+    if (summary) {
+      summary.summary = data.data.results[0].description
+    }
+
+    return summary
   }
 
   public async explorium(

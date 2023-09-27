@@ -25,6 +25,11 @@ export class CaseAttributeBuilder implements AttributeBuilder {
       inputData._case?.comments?.map((c) => c.body) || []
     )
     attributes.setAttribute(
+      'alertComments',
+      inputData._case?.alerts?.flatMap((a) => a.comments?.map((c) => c.body)) ||
+        []
+    )
+    attributes.setAttribute(
       'caseGenerationDate',
       new Date(inputData._case?.createdTimestamp || 0).toLocaleDateString() ||
         []

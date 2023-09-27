@@ -16,6 +16,9 @@ import * as Form from '@/components/ui/Form';
 import { isSuccess, map, useFinishedSuccessfully } from '@/utils/asyncResource';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import CaseStatusTag from '@/components/library/CaseStatusTag';
+import Id from '@/components/ui/Id';
+import { addBackUrlToRoute } from '@/utils/backUrl';
+import { makeUrl } from '@/utils/routing';
 
 interface Props {
   alertId: string;
@@ -85,8 +88,31 @@ export default function InvestigativeCoPilot(props: Props) {
               {(alert) => (
                 <>
                   <Form.Layout.Label title={'User'}>{caseUserName}</Form.Layout.Label>
-                  <Form.Layout.Label title={'Alert ID'}>{alert.alertId}</Form.Layout.Label>
-                  <Form.Layout.Label title={'Case ID'}>{alert.caseId}</Form.Layout.Label>
+                  <Form.Layout.Label title={'Alert ID'}>
+                    <Id
+                      to={addBackUrlToRoute(
+                        makeUrl(`/case-management/case/:caseId/:tab`, {
+                          caseId: alert.caseId,
+                          tab: 'alerts',
+                        }),
+                      )}
+                      testName="alert-id"
+                    >
+                      {alertId}
+                    </Id>
+                  </Form.Layout.Label>
+                  <Form.Layout.Label title={'Case ID'}>
+                    <Id
+                      to={addBackUrlToRoute(
+                        makeUrl(`/case-management/case/:caseId`, {
+                          caseId: alert.caseId,
+                        }),
+                      )}
+                      testName="case-id"
+                    >
+                      {alert.caseId}
+                    </Id>
+                  </Form.Layout.Label>
                   <Form.Layout.Label title={'Created at'}>
                     <TimestampDisplay
                       timestamp={alert.createdTimestamp}

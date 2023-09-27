@@ -29,6 +29,7 @@ export default function Variables(props: Props) {
   const { variables, initialValues, onConfirm } = props;
   const [isVisible, setVisible] = useState(false);
   const [varsValues, setVarsValues] = useState(initialValues);
+  const [dirty, setDirty] = useState<boolean>(false);
 
   useDeepEqualEffect(() => {
     if (!isVisible) {
@@ -42,6 +43,7 @@ export default function Variables(props: Props) {
 
   const handleConfirm = useCallback(() => {
     onConfirm(varsValues);
+    setDirty(false);
     setVisible(false);
   }, [varsValues, onConfirm]);
 
@@ -54,9 +56,15 @@ export default function Variables(props: Props) {
           (updater: Updater<VariablesValues>) => {
             const newState = applyUpdater(varsValues, updater);
             setVarsValues(newState);
+            setDirty(true);
           },
         ]}
-        onConfirm={onConfirm}
+        onConfirm={() => {
+          if (dirty) {
+            onConfirm(varsValues);
+            setDirty(false);
+          }
+        }}
         modal={false}
       />
     );
@@ -148,6 +156,7 @@ function renderInput(
         showTime={variable.variableType === 'DATETIME'}
         value={value}
         allowClear
+        onBlur={inputProps.onBlur}
         onChange={(dayjsValue) => {
           const newValue = dayjsValue ? dayjsValue.valueOf() : undefined;
           inputProps.onChange?.(newValue);

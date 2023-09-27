@@ -20,8 +20,8 @@ export const personColumns: {
   { name: 'First name', columnType: 'STRING' },
   { name: 'Middle name', columnType: 'STRING' },
   { name: 'Last name', columnType: 'STRING' },
-  { name: 'Country of residence', columnType: 'STRING' },
-  { name: 'Country of nationality', columnType: 'STRING' },
+  { name: 'Country of residence', columnType: 'COUNTRY' },
+  { name: 'Country of nationality', columnType: 'COUNTRY' },
   { name: 'Date of birth', columnType: 'STRING' },
   { name: 'Gender', columnType: 'STRING' },
 ]

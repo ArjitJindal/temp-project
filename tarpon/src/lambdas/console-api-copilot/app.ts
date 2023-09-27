@@ -10,10 +10,10 @@ import { CaseService } from '@/lambdas/console-api-case/services/case-service'
 import { UserService } from '@/services/users'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ReportService } from '@/services/sar/service'
-import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { QuestionService } from '@/services/copilot/questions/question-service'
 import { AlertsService } from '@/services/alerts'
 import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -21,10 +21,12 @@ export const copilotHandler = lambdaApi({})(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const [caseService, userService] = await Promise.all([
+    const [caseService, userService, txnRepository] = await Promise.all([
       CaseService.fromEvent(event),
       UserService.fromEvent(event),
+      MongoDbTransactionRepository.fromEvent(event),
     ])
+
     const handlers = new Handlers()
 
     handlers.registerGenerateNarrative(async (ctx, request) => {
@@ -36,6 +38,7 @@ export const copilotHandler = lambdaApi({})(
 
         const report = await reportService.getReport(entityId)
         const _case = await caseService.getCase(report.caseId)
+
         const userId =
           _case.caseUsers?.origin?.userId ||
           _case.caseUsers?.destination?.userId
@@ -44,14 +47,13 @@ export const copilotHandler = lambdaApi({})(
         }
 
         const user = await userService.getUser(userId)
-        const transactions =
-          report.parameters.transactions
-            ?.map((t) => {
-              return _case.caseTransactions?.find(
-                (ct) => ct.transactionId === t.id
-              )
-            })
-            .filter((t): t is InternalTransaction => Boolean(t)) || []
+
+        // Hydrate case transactions
+        const transactions = await txnRepository.getTransactionsByIds(
+          report.parameters.transactions?.map((t) => t.id) ||
+            _case.caseTransactionsIds ||
+            []
+        )
         return copilotService.getSarNarrative({
           _case,
           user,
@@ -67,11 +69,16 @@ export const copilotHandler = lambdaApi({})(
           ''
       )
 
+      const transactions = await txnRepository.getTransactionsByIds(
+        _case.caseTransactionsIds || []
+      )
+
       if (_case) {
         return copilotService.getCaseNarrative({
           _case,
           user,
           reasons,
+          transactions,
         })
       }
       throw new NotFound('Case not found')
