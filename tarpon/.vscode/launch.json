@@ -6,35 +6,41 @@
       "name": "Run Console API",
       "request": "launch",
       "command": "npm run dev:api:console",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
     },
     {
       "type": "node-terminal",
       "name": "Run Public API",
       "request": "launch",
       "command": "npm run dev:api:public",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
     },
     {
       "type": "node-terminal",
       "name": "Run Public Management API",
       "request": "launch",
       "command": "npm run dev:api:public-management",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
     },
     {
       "type": "node-terminal",
       "name": "Run Public Sanctions API",
       "request": "launch",
       "command": "npm run dev:api:public-sanctions",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
     },
     {
       "type": "node-terminal",
       "name": "Run all APIs",
       "request": "launch",
       "command": "npm run dev:api",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
     }
-  ]
+  ],
+
 }
