@@ -40,7 +40,7 @@ const INITIAL_VALUES: FormValues = {
   otherReason: undefined,
   files: [],
   comment: undefined,
-  priority: undefined,
+  priority: 'P1',
 };
 
 const MANUAL_CASE_CREATION_REASONSS: readonly CaseReasons[] = [
@@ -239,7 +239,16 @@ export const MannualCaseCreationModal = (props: Props) => {
         )}
 
         {type === 'CREATE' && (
-          <InputField<FormValues, 'priority'> name="priority" label="Priority">
+          <InputField<FormValues, 'priority'>
+            name="priority"
+            label="Priority"
+            labelProps={{
+              required: {
+                value: true,
+                showHint: true,
+              },
+            }}
+          >
             {(inputProps) => (
               <Select<Priority>
                 {...inputProps}
