@@ -16,7 +16,6 @@ export default function QueryResultsTable<T extends object, Params extends objec
   props: Props<T, Params>,
 ): JSX.Element {
   const { queryResults, showResultsInfo = true, ...rest } = props;
-
   return (
     <Table
       {...rest}

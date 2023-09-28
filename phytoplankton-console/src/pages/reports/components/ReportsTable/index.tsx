@@ -24,6 +24,7 @@ import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
+import COUNTRIES from '@/utils/countries';
 
 type TableParams = AllParams<DefaultApiGetReportsRequest>;
 
@@ -136,6 +137,15 @@ export default function ReportsTable() {
       title: 'Last updated',
       key: 'updatedAt',
       type: DATE,
+    }),
+    helper.simple<'reportTypeId'>({
+      title: 'Jurisdiction',
+      key: 'reportTypeId',
+      type: {
+        render: (reportTypeId) => {
+          return reportTypeId ? <div>{COUNTRIES[reportTypeId.split('-')[0]]}</div> : <>-</>;
+        },
+      },
     }),
   ]);
 
