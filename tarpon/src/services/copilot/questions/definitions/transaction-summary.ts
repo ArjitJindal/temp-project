@@ -14,7 +14,7 @@ import { AttributeSet } from '@/services/copilot/attributes/builder'
 export const TransactionSummary: PropertiesQuestion<Period> = {
   type: 'PROPERTIES',
   questionId: 'Transaction insights',
-  title: ({ username }, { ...period }) => {
+  title: async ({ username }, { ...period }) => {
     return `Transaction insights for ${username} ${humanReadablePeriod(period)}`
   },
   aggregationPipeline: async ({ user, tenantId, userId }, { ...period }) => {

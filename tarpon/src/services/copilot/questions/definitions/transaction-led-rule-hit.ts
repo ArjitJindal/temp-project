@@ -15,7 +15,7 @@ import {
 export const TransactionLedRuleHit: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Transactions leading to rule hit',
-  title: (ctx) => {
+  title: async (ctx) => {
     return `Transactions that led to "${ctx.alert.ruleName}" rule hit`
   },
   headers: [

@@ -1,5 +1,12 @@
+import { BadRequest } from 'http-errors'
 import dayjs from '@/utils/dayjs'
 import { VariableOptions } from '@/services/copilot/questions/types'
+import { getContext } from '@/core/utils/context'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { getUserName } from '@/utils/helpers'
 
 export const MONGO_DATE_FORMAT = '%Y-%m-%d'
 export const DATE_FORMAT = 'YYYY-MM-DD'
@@ -144,4 +151,20 @@ export function calculatePercentageBreakdown(data: string[]): string {
   }
 
   return exampleText.trimEnd().replace(/,$/, '')
+}
+
+export async function queryUsername(userId: string) {
+  const tenantId = getContext()?.tenantId
+  if (!tenantId) {
+    throw new BadRequest('No tenant ID')
+  }
+  const client = await getMongoDbClient()
+  const db = client.db()
+  const result = await db
+    .collection<InternalConsumerUser | InternalBusinessUser>(
+      USERS_COLLECTION(tenantId)
+    )
+    .findOne({ userId })
+
+  return getUserName(result)
 }

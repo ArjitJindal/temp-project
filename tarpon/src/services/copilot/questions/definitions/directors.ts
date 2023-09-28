@@ -8,12 +8,13 @@ import {
   personToRow,
 } from '@/services/copilot/questions/definitions/common/person'
 import { searchUser } from '@/services/copilot/questions/definitions/common/search'
+import { queryUsername } from '@/services/copilot/questions/definitions/util'
 
 export const Directors: TableQuestion<{ userId: string }> = {
   type: 'TABLE',
   questionId: 'Directors',
-  title: (_, { userId }) => {
-    return `Directors for ${userId}`
+  title: async (_, { userId }) => {
+    return `Directors for ${await queryUsername(userId)}`
   },
   aggregationPipeline: async ({ tenantId }, { userId }) => {
     const client = await getMongoDbClient()

@@ -41,7 +41,8 @@ export type InvestigationContext = {
 
 export type Question<V extends Variables> = {
   questionId: string
-  title?: (ctx: InvestigationContext, variables: V) => string
+  title?: (ctx: InvestigationContext, variables: V) => Promise<string>
+  explainer?: string
   variableOptions: VariableOptions<V>
   defaults: (ctx: InvestigationContext) => V
 }

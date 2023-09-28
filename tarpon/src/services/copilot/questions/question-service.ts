@@ -172,7 +172,8 @@ export class QuestionService {
         )
       ),
       questionType: question.type,
-      title: question.title ? question.title(ctx, varObject) : questionId,
+      title: question.title ? await question.title(ctx, varObject) : questionId,
+      explainer: question.explainer,
       variables: Object.entries(varObject).map(([name, value]) => {
         return {
           name,
@@ -234,11 +235,9 @@ export class QuestionService {
     const prompt = `
     ${JSON.stringify(queries)}
 Please parse "${question}" to give the best matching query and variables values that should be set. The only output you will provide will be in the following format, defined in typescript, with no extra context or content. 
-Dates and datetimes should be output in ISO format, for example the datetime now is ${new Date().toISOString()} and the date is ${new Date()
-      .toISOString()
-      .substring(0, 10)}. This user's ID is ${ctx.userId}. This case's ID is ${
-      ctx.caseId
-    }. This alert's ID is ${ctx.alertId}:
+Dates and datetimes should be output in ISO format, for example the datetime now is ${new Date().toISOString()}. This user's ID is ${
+      ctx.userId
+    }. This case's ID is ${ctx.caseId}. This alert's ID is ${ctx.alertId}:
 {
   questionId: string,
   variables: {
@@ -252,14 +251,14 @@ Dates and datetimes should be output in ISO format, for example the datetime now
         variables: Variables
       } = JSON.parse(await ask(prompt))
 
+      const question = questions.find((q) => q.questionId === result.questionId)
+
       // Workaround in case GPT sets variable type as the value.
       Object.entries(result.variables).map(([key, value]) => {
         // TODO make an enum type for this.
         if (
-          (typeof value === 'string' &&
-            ['DATE', 'DATETIME', 'STRING', 'INTEGER', 'FLOAT'].indexOf(value) >
-              -1) ||
-          value === question
+          typeof value === 'string' &&
+          ['DATE', 'DATETIME', 'STRING', 'INTEGER', 'FLOAT'].indexOf(value) > -1
         ) {
           delete result.variables[key]
         }
@@ -274,6 +273,23 @@ Dates and datetimes should be output in ISO format, for example the datetime now
         result.variables['from'] = dayjs(result.variables['to'])
           .subtract(1, 'day')
           .format('YYYY-MM-DD')
+      }
+
+      // Parse datetime variables
+      if (question?.variableOptions) {
+        Object.entries(question.variableOptions).map(([key, type]) => {
+          if (type === 'DATETIME' || type === 'DATE') {
+            if (key in result.variables) {
+              if (isIsoDate(result.variables[key])) {
+                result.variables[key] = new Date(
+                  result.variables[key]
+                ).valueOf()
+              } else {
+                delete result.variables[key]
+              }
+            }
+          }
+        })
       }
 
       return result
@@ -303,4 +319,10 @@ Dates and datetimes should be output in ISO format, for example the datetime now
     }
     return []
   }
+}
+
+function isIsoDate(str) {
+  if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false
+  const d = new Date(str)
+  return d instanceof Date && !isNaN(d.getTime()) && d.toISOString() === str // valid date
 }

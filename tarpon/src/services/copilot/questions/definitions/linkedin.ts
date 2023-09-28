@@ -7,8 +7,8 @@ export const Linkedin: PropertiesQuestion<{
 }> = {
   type: 'PROPERTIES',
   questionId: 'Linkedin',
-  title: ({ username }) => {
-    return `Details for ${username} from Linkedin`
+  title: async (_, { companyName }) => {
+    return `Business details from Linkedin for ${companyName}`
   },
   aggregationPipeline: async (_, { companyName }) => {
     try {

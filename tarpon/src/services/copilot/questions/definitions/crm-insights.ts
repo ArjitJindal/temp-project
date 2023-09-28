@@ -4,7 +4,7 @@ import { CrmService } from '@/services/crm'
 export const CrmInsights: PropertiesQuestion<any> = {
   type: 'PROPERTIES',
   questionId: 'CRM insights',
-  title: ({ username }) => {
+  title: async ({ username }) => {
     return `CRM insights for ${username}`
   },
   aggregationPipeline: async ({ user, tenantId }) => {

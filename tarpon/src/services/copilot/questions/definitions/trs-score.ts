@@ -15,7 +15,7 @@ import {
 export const TrsScore: TimeseriesQuestion<Period> = {
   type: 'TIME_SERIES',
   questionId: 'TRS score',
-  title: (_, vars) => {
+  title: async (_, vars) => {
     return `TRS score distribution ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async ({ userId, tenantId }, period) => {

@@ -133,8 +133,6 @@ export function sampleTransactionUserCases(
   ruleHits = ruleHits.concat(user?.hitRules ?? [])
 
   return RULE_NATURES.map((nature): Case => {
-    const caseId = `C-${counter}`
-    counter++
     const caseStatus = pickRandom(
       CASE_STATUSS.filter((s) => !isStatusInReview(s)),
       seed
@@ -146,8 +144,9 @@ export function sampleTransactionUserCases(
       'Terrorist financing',
       'Suspicious activity reported (SAR)',
     ])
+    const caseId = `C-${counter++}`
     return {
-      caseId: caseId,
+      caseId,
       caseType: 'SYSTEM',
       caseStatus,
       createdTimestamp: sampleTimestamp(seed),
@@ -221,8 +220,6 @@ export function sampleAlert(
   seed?: number
 ): Alert {
   const createdTimestamp = sampleTimestamp(seed, 3600 * 24 * 1000 * 30)
-  const alertId = `A-${alertCounter}`
-  alertCounter++
   const alertStatus = pickRandom(
     ['OPEN', 'OPEN', 'OPEN', 'OPEN', 'OPEN', 'CLOSED', 'REOPENED'],
     Math.random()
@@ -244,7 +241,7 @@ export function sampleAlert(
 
   return {
     ...params.ruleHit,
-    alertId: alertId,
+    alertId: `A-${alertCounter++}`,
     createdTimestamp: createdTimestamp,
     latestTransactionArrivalTimestamp: createdTimestamp - 3600 * 1000,
     caseId: params.caseId,

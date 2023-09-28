@@ -4945,6 +4945,8 @@ components:
           type: string
         title:
           type: string
+        explained:
+          type: string
         summary:
           type: string
         questionType:

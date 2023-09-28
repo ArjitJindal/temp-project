@@ -8,8 +8,8 @@ export const Website: PropertiesQuestion<{
 }> = {
   type: 'PROPERTIES',
   questionId: 'Website',
-  title: ({ username }, { website }) => {
-    return `Details for ${username} from ${website}`
+  title: async (_, { website }) => {
+    return `Business details from ${website}`
   },
   aggregationPipeline: async ({ tenantId, userId, username }, { website }) => {
     try {

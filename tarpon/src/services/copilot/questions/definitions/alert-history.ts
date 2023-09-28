@@ -13,8 +13,8 @@ import {
 export const AlertHistory: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Alerts',
-  title: (_, vars) => {
-    return `Alerts for this user ${humanReadablePeriod(vars)}`
+  title: async ({ username }, vars) => {
+    return `Alerts for ${username} ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async ({ tenantId, userId, username }, period) => {
     const client = await getMongoDbClient()

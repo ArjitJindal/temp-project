@@ -44,6 +44,7 @@ export default function HistoryItemLayout(props: Props) {
           <CommentPopover commentSubmitMutation={commentSubmitMutation} item={item} />
         </div>
       </div>
+      {item.explained && <div className={s.explained}>{item.explained}</div>}
       <div>{children}</div>
       <MetaInfo item={item} />
     </div>

@@ -17,7 +17,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
   type: 'STACKED_BARCHART',
   questionId: 'Transactions by rule action',
-  title: (_, vars) => {
+  title: async (_, vars) => {
     return `Transactions by rule action ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async ({ tenantId, userId, username }, period) => {

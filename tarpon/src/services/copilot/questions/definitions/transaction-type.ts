@@ -13,7 +13,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 export const TransactionType: BarchartQuestion<Period> = {
   type: 'BARCHART',
   questionId: 'Transactions by type',
-  title: (_, vars) => {
+  title: async (_, vars) => {
     return `Transactions by type ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async ({ tenantId, userId, username }, period) => {

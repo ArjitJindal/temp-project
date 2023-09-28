@@ -10,7 +10,7 @@ import { searchUser } from '@/services/copilot/questions/definitions/common/sear
 export const UserDetails: PropertiesQuestion<{ userId: string }> = {
   type: 'PROPERTIES',
   questionId: 'User details',
-  title: (_, { userId }) => {
+  title: async (_, { userId }) => {
     return `User details for ${userId}`
   },
   aggregationPipeline: async ({ tenantId }, { userId }) => {

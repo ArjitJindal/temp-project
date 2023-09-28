@@ -15,7 +15,7 @@ import {
 export const Transactions: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Transactions',
-  title: (ctx, vars) => {
+  title: async (ctx, vars) => {
     return `Transactions ${humanReadablePeriod(vars)}`
   },
   headers: [
@@ -95,6 +95,8 @@ export const Transactions: TableQuestion<Period> = {
   aggregationPipeline: async ({ tenantId, userId, username }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
+
+    console.log(period)
     const result = await db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .find({

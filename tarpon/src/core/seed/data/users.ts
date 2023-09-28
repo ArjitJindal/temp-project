@@ -1,7 +1,6 @@
 import {
   merchantMonitoringSummaries,
   sampleBusinessUser,
-  sampleConsumerUser,
 } from '@/core/seed/samplers/users'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
@@ -38,7 +37,8 @@ const init = () => {
   data.push(
     ...[
       ...businessUserData.map((b) => b.user),
-      ...[...new Array(30)].map(() => sampleConsumerUser()),
+      // TODO we will reenable this after NYC demo
+      // ...[...new Array(30)].map(() => sampleConsumerUser()),
     ]
   )
 }

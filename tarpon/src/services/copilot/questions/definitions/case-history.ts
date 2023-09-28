@@ -13,8 +13,8 @@ import {
 export const CaseHistory: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Cases',
-  title: (_, vars) => {
-    return `Cases for this user ${humanReadablePeriod(vars)}`
+  title: async ({ username }, vars) => {
+    return `Cases for ${username} ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async ({ tenantId, userId, username }, period) => {
     const client = await getMongoDbClient()

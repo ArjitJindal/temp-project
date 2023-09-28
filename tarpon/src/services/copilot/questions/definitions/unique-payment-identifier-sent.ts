@@ -15,7 +15,7 @@ export const UniquePaymentIdentifierSent: TableQuestion<
 > = {
   type: 'TABLE',
   questionId: 'Payment identifiers of receivers',
-  title: (_, vars) => {
+  title: async (_, vars) => {
     return `Top ${
       vars.top
     } payment identifiers they have received ${humanReadablePeriod(vars)}`
