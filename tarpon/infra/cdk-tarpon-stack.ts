@@ -95,8 +95,8 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = isQaEnv()
 
-// TODO make this equal to !isQaEnv before merge
-const deployKinesis = !isQaEnv()
+// TODO make this equal to !isQaEnv() before merge
+const deployKinesisConsumer = !isQaEnv()
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config
@@ -882,33 +882,32 @@ export class CdkTarponStack extends cdk.Stack {
     monthlyRule.addTarget(new LambdaFunctionTarget(cronJobMonthlyHandler))
 
     /* Tarpon Kinesis Change capture consumer */
-
-    // MongoDB mirror handler
-    const { alias: tarponChangeCaptureKinesisConsumerAlias } = createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-        memorySize:
-          this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
-    const { alias: tarponChangeCaptureKinesisConsumerRetryAlias } =
-      createFunction(
+    if (deployKinesisConsumer) {
+      // MongoDB mirror handler
+      const { alias: tarponChangeCaptureKinesisConsumerAlias } = createFunction(
         this,
         lambdaExecutionRole,
         {
-          name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+          name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+          memorySize:
+            this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
         functionProps
       )
+      const { alias: tarponChangeCaptureKinesisConsumerRetryAlias } =
+        createFunction(
+          this,
+          lambdaExecutionRole,
+          {
+            name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+            auditLogTopic: this.auditLogTopic,
+            batchJobQueue,
+          },
+          functionProps
+        )
 
-    if (deployKinesis) {
       this.createKinesisEventSource(
         tarponChangeCaptureKinesisConsumerAlias,
         tarponStream,
@@ -917,35 +916,71 @@ export class CdkTarponStack extends cdk.Stack {
       tarponChangeCaptureKinesisConsumerRetryAlias.addEventSource(
         new SqsEventSource(tarponChangeCaptureRetryQueue)
       )
-    }
-    const { alias: webhookTarponChangeCaptureHandlerAlias } = createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
-    const { alias: webhookTarponChangeCaptureHandlerRetryAlias } =
-      createFunction(
+
+      const { alias: webhookTarponChangeCaptureHandlerAlias } = createFunction(
         this,
         lambdaExecutionRole,
         {
-          name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+          name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
         functionProps
       )
-    if (deployKinesis) {
+      const { alias: webhookTarponChangeCaptureHandlerRetryAlias } =
+        createFunction(
+          this,
+          lambdaExecutionRole,
+          {
+            name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+            auditLogTopic: this.auditLogTopic,
+            batchJobQueue,
+          },
+          functionProps
+        )
+
       this.createKinesisEventSource(
         webhookTarponChangeCaptureHandlerAlias,
         tarponStream
       )
       webhookTarponChangeCaptureHandlerRetryAlias.addEventSource(
         new SqsEventSource(webhookTarponChangeCaptureRetryQueue)
+      )
+
+      /* Hammerhead Kinesis Change capture consumer */
+      const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
+        createFunction(
+          this,
+          lambdaExecutionRole,
+          {
+            name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+            memorySize:
+              config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
+            auditLogTopic: this.auditLogTopic,
+            batchJobQueue,
+          },
+          functionProps
+        )
+
+      const { alias: hammerheadChangeCaptureKinesisConsumerRetryAlias } =
+        createFunction(
+          this,
+          lambdaExecutionRole,
+          {
+            name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+            auditLogTopic: this.auditLogTopic,
+            batchJobQueue,
+          },
+          functionProps
+        )
+
+      this.createKinesisEventSource(
+        hammerheadChangeCaptureKinesisConsumerAlias,
+        hammerheadStream,
+        { startingPosition: StartingPosition.TRIM_HORIZON }
+      )
+      hammerheadChangeCaptureKinesisConsumerRetryAlias.addEventSource(
+        new SqsEventSource(hammerheadChangeCaptureRetryQueue)
       )
     }
 
@@ -961,32 +996,10 @@ export class CdkTarponStack extends cdk.Stack {
       functionProps
     )
 
-    /* Hammerhead Kinesis Change capture consumer */
-    const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
-      createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-          memorySize:
-            config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
-          auditLogTopic: this.auditLogTopic,
-          batchJobQueue,
-        },
-        functionProps
-      )
-
-    const { alias: hammerheadChangeCaptureKinesisConsumerRetryAlias } =
-      createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
-          auditLogTopic: this.auditLogTopic,
-          batchJobQueue,
-        },
-        functionProps
-      )
+    /**
+     * API Gateway
+     * Open Issue: CDK+OpenAPI proper integration - https://github.com/aws/aws-cdk/issues/1461
+     */
 
     const apiCert = Certificate.fromCertificateArn(
       this,
@@ -994,21 +1007,6 @@ export class CdkTarponStack extends cdk.Stack {
       config.application.CERTIFICATE_ARN
     )
 
-    if (deployKinesis) {
-      this.createKinesisEventSource(
-        hammerheadChangeCaptureKinesisConsumerAlias,
-        hammerheadStream,
-        { startingPosition: StartingPosition.TRIM_HORIZON }
-      )
-      hammerheadChangeCaptureKinesisConsumerRetryAlias.addEventSource(
-        new SqsEventSource(hammerheadChangeCaptureRetryQueue)
-      )
-    }
-
-    /**
-     * API Gateway
-     * Open Issue: CDK+OpenAPI proper integration - https://github.com/aws/aws-cdk/issues/1461
-     */
     let domainName: DomainName | undefined
     if (this.config.stage === 'dev') {
       domainName = new DomainName(this, getApiDomain(config), {
@@ -1266,18 +1264,16 @@ export class CdkTarponStack extends cdk.Stack {
     retentionPeriod: Duration,
     shardCount = 1
   ): IStream {
-    if (!deployKinesis) {
+    if (isQaEnv()) {
       const streamArn = `arn:aws:kinesis:${this.config.env.region}:${this.config.env.account}:stream/${streamName}`
       return Stream.fromStreamArn(this, streamId, streamArn)
     }
-    const isDevUserStack = isQaEnv()
-    const onDemand = isDevUserStack && deployKinesis
 
     const stream = new Stream(this, streamId, {
       streamName,
       retentionPeriod: retentionPeriod,
-      streamMode: onDemand ? StreamMode.ON_DEMAND : StreamMode.PROVISIONED,
-      shardCount: onDemand ? undefined : shardCount,
+      streamMode: StreamMode.PROVISIONED,
+      shardCount: shardCount,
     })
     if (this.config.stage === 'dev') {
       stream.applyRemovalPolicy(RemovalPolicy.DESTROY)
@@ -1294,8 +1290,10 @@ export class CdkTarponStack extends cdk.Stack {
     const eventSource = new KinesisEventSource(stream, {
       batchSize: 100,
       maxBatchingWindow: Duration.seconds(10),
-      startingPosition: StartingPosition.LATEST,
       ...props,
+      startingPosition: isQaEnv()
+        ? StartingPosition.LATEST
+        : props?.startingPosition ?? StartingPosition.LATEST,
     })
     alias.addEventSource(eventSource)
   }

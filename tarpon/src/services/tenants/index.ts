@@ -227,11 +227,10 @@ export class TenantService {
               .replace(':', '')
               .replace(usagePlan.tenantId, ''),
           }
-        } else {
-          logger.error(
-            `Invalid usage plan name ${usagePlan.name} for usage plan ${usagePlan.id}`
-          )
         }
+        logger.warn(
+          `Invalid usage plan name ${usagePlan.name} for usage plan ${usagePlan.id}`
+        )
         return null
       })
     )
