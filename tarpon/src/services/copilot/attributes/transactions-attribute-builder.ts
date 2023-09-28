@@ -72,7 +72,8 @@ export class TransactionsBuilder implements AttributeBuilder {
       transactionsCount++
 
       // Distinct counts
-      ipAddressSet.add(t.deviceData?.ipAddress)
+      ipAddressSet.add(t.originDeviceData?.ipAddress)
+      ipAddressSet.add(t.destinationDeviceData?.ipAddress)
       originPaymentMethods.add(JSON.stringify(t.originPaymentDetails?.method))
       destinationPaymentMethods.add(
         JSON.stringify(t.destinationPaymentDetails?.method)

@@ -102,7 +102,19 @@ paths:
                     transactionReferenceField: Deposit
                     3dsDone: true
                   reference: loan repayment
-                  deviceData:
+                  originDeviceData:
+                    batteryLevel: 95
+                    deviceLatitude: 13.0033
+                    deviceLongitude: 76.1004
+                    ipAddress: 10.23.191.2
+                    deviceIdentifier: 3c49f915d04485e34caba
+                    vpnUsed: false
+                    operatingSystem: Android 11.2
+                    deviceMaker: ASUS
+                    deviceModel: Zenphone M2 Pro Max
+                    deviceYear: '2018'
+                    appVersion: 1.1.0
+                  destinationDeviceData:
                     batteryLevel: 95
                     deviceLatitude: 13.0033
                     deviceLongitude: 76.1004
@@ -225,7 +237,19 @@ paths:
                       transactionReferenceField: Deposit
                       3dsDone: true
                     reference: loan repayment
-                    deviceData:
+                    originDeviceData:
+                      batteryLevel: 95
+                      deviceLatitude: 13.0033
+                      deviceLongitude: 76.1004
+                      ipAddress: 10.23.191.2
+                      deviceIdentifier: 3c49f915d04485e34caba
+                      vpnUsed: false
+                      operatingSystem: Android 11.2
+                      deviceMaker: ASUS
+                      deviceModel: Zenphone M2 Pro Max
+                      deviceYear: '2018'
+                      appVersion: 1.1.0
+                    destinationDeviceData:
                       batteryLevel: 95
                       deviceLatitude: 13.0033
                       deviceLongitude: 76.1004
@@ -366,7 +390,19 @@ paths:
                         transactionReferenceField: Deposit
                         3dsDone: true
                       reference: loan repayment
-                      deviceData:
+                      originDeviceData:
+                        batteryLevel: 95
+                        deviceLatitude: 13.0033
+                        deviceLongitude: 76.1004
+                        ipAddress: 10.23.191.2
+                        deviceIdentifier: 3c49f915d04485e34caba
+                        vpnUsed: false
+                        operatingSystem: Android 11.2
+                        deviceMaker: ASUS
+                        deviceModel: Zenphone M2 Pro Max
+                        deviceYear: '2018'
+                        appVersion: 1.1.0
+                      destinationDeviceData:
                         batteryLevel: 95
                         deviceLatitude: 13.0033
                         deviceLongitude: 76.1004
@@ -1570,7 +1606,19 @@ components:
           transactionReferenceField: Deposit
           3dsDone: true
         reference: loan repayment
-        deviceData:
+        originDeviceData:
+          batteryLevel: 95
+          deviceLatitude: 13.0033
+          deviceLongitude: 76.1004
+          ipAddress: 10.23.191.2
+          deviceIdentifier: 3c49f915d04485e34caba
+          vpnUsed: false
+          operatingSystem: Android 11.2
+          deviceMaker: ASUS
+          deviceModel: Zenphone M2 Pro Max
+          deviceYear: '2018'
+          appVersion: 1.1.0
+        destinationDeviceData:
           batteryLevel: 95
           deviceLatitude: 13.0033
           deviceLongitude: 76.1004
@@ -1610,7 +1658,19 @@ components:
             transactionReferenceField: Deposit
             3dsDone: true
           reference: loan repayment
-          deviceData:
+          originDeviceData:
+            batteryLevel: 95
+            deviceLatitude: 13.0033
+            deviceLongitude: 76.1004
+            ipAddress: 10.23.191.2
+            deviceIdentifier: 3c49f915d04485e34caba
+            vpnUsed: false
+            operatingSystem: Android 11.2
+            deviceMaker: ASUS
+            deviceModel: Zenphone M2 Pro Max
+            deviceYear: '2018'
+            appVersion: 1.1.0
+          destinationDeviceData:
             batteryLevel: 95
             deviceLatitude: 13.0033
             deviceLongitude: 76.1004
@@ -1685,8 +1745,6 @@ components:
           description:
             Reference field for the transaction indicating the purpose of the
             transaction etc.
-        deviceData:
-          $ref: '#/components/schemas/DeviceData'
         originDeviceData:
           $ref: '#/components/schemas/DeviceData'
         destinationDeviceData:
@@ -1763,7 +1821,19 @@ components:
           transactionReferenceField: Deposit
           3dsDone: true
         reference: loan repayment
-        deviceData:
+        originDeviceData:
+          batteryLevel: 95
+          deviceLatitude: 13.0033
+          deviceLongitude: 76.1004
+          ipAddress: 10.23.191.2
+          deviceIdentifier: 3c49f915d04485e34caba
+          vpnUsed: false
+          operatingSystem: Android 11.2
+          deviceMaker: ASUS
+          deviceModel: Zenphone M2 Pro Max
+          deviceYear: '2018'
+          appVersion: 1.1.0
+        destinationDeviceData:
           batteryLevel: 95
           deviceLatitude: 13.0033
           deviceLongitude: 76.1004
@@ -1824,7 +1894,19 @@ components:
             transactionReferenceField: Deposit
             3dsDone: true
           reference: loan repayment
-          deviceData:
+          originDeviceData:
+            batteryLevel: 95
+            deviceLatitude: 13.0033
+            deviceLongitude: 76.1004
+            ipAddress: 10.23.191.2
+            deviceIdentifier: 3c49f915d04485e34caba
+            vpnUsed: false
+            operatingSystem: Android 11.2
+            deviceMaker: ASUS
+            deviceModel: Zenphone M2 Pro Max
+            deviceYear: '2018'
+            appVersion: 1.1.0
+          destinationDeviceData:
             batteryLevel: 95
             deviceLatitude: 13.0033
             deviceLongitude: 76.1004
@@ -1988,7 +2070,19 @@ components:
               transactionReferenceField: Deposit
               3dsDone: true
             reference: loan repayment
-            deviceData:
+            originDeviceData:
+              batteryLevel: 95
+              deviceLatitude: 13.0033
+              deviceLongitude: 76.1004
+              ipAddress: 10.23.191.2
+              deviceIdentifier: 3c49f915d04485e34caba
+              vpnUsed: false
+              operatingSystem: Android 11.2
+              deviceMaker: ASUS
+              deviceModel: Zenphone M2 Pro Max
+              deviceYear: '2018'
+              appVersion: 1.1.0
+            destinationDeviceData:
               batteryLevel: 95
               deviceLatitude: 13.0033
               deviceLongitude: 76.1004

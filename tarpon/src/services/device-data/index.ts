@@ -78,9 +78,6 @@ export class DeviceDataService {
       },
       eventDescription: `Event triggered by device data`,
       updatedTransactionAttributes: {
-        deviceData: {
-          ...omitBy(deviceDataMapping, isEmpty),
-        },
         originDeviceData: {
           ...omitBy(deviceDataMapping, isEmpty),
         },

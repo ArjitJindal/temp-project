@@ -77,11 +77,6 @@ export class DynamoDbTransactionRepository
     transaction.transactionId = getNewTransactionID(transaction)
     transaction.timestamp = transaction.timestamp || Date.now()
 
-    if (!isEmpty(transaction.deviceData)) {
-      transaction.originDeviceData = transaction.deviceData
-      transaction.deviceData = undefined
-    }
-
     const primaryKey = DynamoDbKeys.TRANSACTION(
       this.tenantId,
       transaction.transactionId

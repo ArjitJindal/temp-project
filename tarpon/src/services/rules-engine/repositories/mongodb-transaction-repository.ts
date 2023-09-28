@@ -1265,7 +1265,6 @@ export class MongoDbTransactionRepository
         {
           $or: [
             { 'originDeviceData.ipAddress': ipAddress },
-            { 'deviceData.ipAddress': ipAddress },
             { 'destinationDeviceData.ipAddress': ipAddress },
           ],
         },

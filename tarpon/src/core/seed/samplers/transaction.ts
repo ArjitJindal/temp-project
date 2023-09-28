@@ -48,9 +48,6 @@ export function sampleTransaction(
     },
     timestamp: new Date().getTime(),
     destinationPaymentDetails: randomPaymentMethod(),
-    deviceData: {
-      ipAddress: [...new Array(4)].map(() => randomInt(rnd(), 256)).join('.'),
-    },
     originDeviceData: {
       ipAddress: [...new Array(4)].map(() => randomInt(rnd(), 256)).join('.'),
     },

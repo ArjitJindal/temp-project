@@ -28,20 +28,21 @@ export type TransactionViewConfig = {
   MAXIMUM_ALLOWED_EXPORT_SIZE: string
 }
 
-const DEVICE_DATA_FIELDS: CsvHeaderSettings<InternalTransaction['deviceData']> =
-  {
-    batteryLevel: 'INCLUDE',
-    deviceLatitude: 'INCLUDE',
-    deviceLongitude: 'INCLUDE',
-    ipAddress: 'INCLUDE',
-    deviceIdentifier: 'INCLUDE',
-    vpnUsed: 'INCLUDE',
-    operatingSystem: 'INCLUDE',
-    deviceMaker: 'INCLUDE',
-    deviceModel: 'INCLUDE',
-    deviceYear: 'INCLUDE',
-    appVersion: 'INCLUDE',
-  }
+const DEVICE_DATA_FIELDS: CsvHeaderSettings<
+  InternalTransaction['originDeviceData']
+> = {
+  batteryLevel: 'INCLUDE',
+  deviceLatitude: 'INCLUDE',
+  deviceLongitude: 'INCLUDE',
+  ipAddress: 'INCLUDE',
+  deviceIdentifier: 'INCLUDE',
+  vpnUsed: 'INCLUDE',
+  operatingSystem: 'INCLUDE',
+  deviceMaker: 'INCLUDE',
+  deviceModel: 'INCLUDE',
+  deviceYear: 'INCLUDE',
+  appVersion: 'INCLUDE',
+}
 
 export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTransaction> =
   {
@@ -68,7 +69,6 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTran
     productType: 'INCLUDE',
     promotionCodeUsed: 'INCLUDE',
     reference: 'INCLUDE',
-    deviceData: DEVICE_DATA_FIELDS,
     originDeviceData: DEVICE_DATA_FIELDS,
     destinationDeviceData: DEVICE_DATA_FIELDS,
     relatedTransactionIds: 'JSON',

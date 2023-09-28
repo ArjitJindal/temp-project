@@ -11,6 +11,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { Tenant } from '@/services/accounts'
 import { pickKnownEntityFields } from '@/utils/object'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { DeviceData } from '@/@types/openapi-internal/DeviceData'
 
 const elgibleTenantId = process.env.ENV?.startsWith('prod')
   ? 'VOLX1IP7NN'
@@ -57,7 +58,7 @@ async function migrateTenant(tenant: Tenant) {
         transaction as TransactionWithRulesResult,
         TransactionWithRulesResult
       ),
-      originDeviceData: transaction.deviceData,
+      originDeviceData: (transaction as any).deviceData as DeviceData,
       deviceData: undefined,
     }
     await Promise.all([

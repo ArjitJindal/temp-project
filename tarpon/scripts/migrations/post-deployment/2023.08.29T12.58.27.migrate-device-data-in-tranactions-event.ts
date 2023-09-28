@@ -9,6 +9,7 @@ import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { Tenant } from '@/services/accounts'
+import { DeviceData } from '@/@types/openapi-internal/DeviceData'
 
 const eligibleTenantId = process.env.ENV?.startsWith('prod')
   ? 'VOLX1IP7NN'
@@ -53,7 +54,9 @@ export const migrateTenant = async (tenant: Tenant) => {
     })
 
   for await (const transaction of cursor) {
-    const deviceData = transaction?.updatedTransactionAttributes?.deviceData
+    const deviceData = (transaction?.updatedTransactionAttributes as any)
+      .deviceData as DeviceData
+
     delete (transaction as any)._id
     await Promise.all([
       transactionRepository.saveTransactionEvent({
@@ -62,7 +65,7 @@ export const migrateTenant = async (tenant: Tenant) => {
           ...transaction.updatedTransactionAttributes,
           originDeviceData: deviceData,
           deviceData: undefined,
-        },
+        } as any,
       }),
       updateMigrationLastCompletedTimestamp(
         migrationKey,

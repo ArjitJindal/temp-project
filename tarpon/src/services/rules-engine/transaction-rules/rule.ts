@@ -132,7 +132,7 @@ export abstract class TransactionRule<
           currency: transaction.originAmountDetails?.transactionCurrency,
           amount: transaction.originAmountDetails?.transactionAmount,
         },
-        ipAddress: transaction.deviceData?.ipAddress,
+        ipAddress: transaction.originDeviceData?.ipAddress,
         user: this.senderUser,
       },
       destination: {
@@ -149,7 +149,7 @@ export abstract class TransactionRule<
           currency: transaction.destinationAmountDetails?.transactionCurrency,
           amount: transaction.destinationAmountDetails?.transactionAmount,
         },
-        ipAddress: transaction.deviceData?.ipAddress,
+        ipAddress: transaction.destinationDeviceData?.ipAddress,
         user: this.receiverUser,
       },
     }
