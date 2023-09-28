@@ -44,8 +44,8 @@ const PLACEHOLDER_NARRATIVE = `OVERVIEW
 User: [user]
 Date of Case Generation: [caseGenerationDate]
 Reason for Case Generation: [ruleHitNames]
-Investigation Period: [caseGenerationDate] - [todaysDate]
-Closure Date: [todaysDate]
+Investigation Period: [caseGenerationDate] - [caseClosureDate]
+Closure Date: [caseClosureDate]
 
 BACKGROUND
 [This section should contain general details about the user in question.]
