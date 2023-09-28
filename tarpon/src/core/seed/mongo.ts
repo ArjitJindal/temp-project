@@ -24,6 +24,7 @@ import {
   REPORT_COLLECTION,
   SIMULATION_TASK_COLLECTION,
   CHECKLIST_TEMPLATE_COLLECTION,
+  COUNTER_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { init as txnInit, transactions } from '@/core/seed/data/transactions'
 import { init as caseInit, data as cases } from '@/core/seed/data/cases'
@@ -62,6 +63,7 @@ import {
   initChecklistTemplate,
 } from '@/core/seed/data/checklists'
 import { initRules } from '@/core/seed/data/rules'
+import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 
 const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [TRANSACTIONS_COLLECTION, transactions],
@@ -141,6 +143,24 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   reportsInit()
   simulationInit()
   crmInit()
+
+  logger.info('Setting counters')
+  const counterCollection = db.collection<EntityCounter>(
+    COUNTER_COLLECTION(tenantId)
+  )
+  const counters: [string, number][] = [
+    ['Report', reports.length],
+    ['Case', cases.length],
+    ['Alert', cases.flatMap((c) => c.alerts).length],
+  ]
+
+  for (const counter of counters) {
+    await counterCollection.findOneAndUpdate(
+      { entity: counter[0] },
+      { $set: { count: counter[1] } },
+      { upsert: true, returnDocument: 'after' }
+    )
+  }
 
   logger.info('Creating collections')
   for (const [collectionNameFn, data] of collections) {
