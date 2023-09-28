@@ -38,7 +38,7 @@ import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBus
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
-import { INTERNAL_ONNLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
+import { INTERNAL_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { sendBatchJobCommand } from '@/services/batch-job'
 
 const sqs = new SQS({
@@ -269,7 +269,7 @@ async function userHandler(
   internalUser.updatedAt = Date.now()
 
   const savedUser = await usersRepo.saveUserMongo({
-    ...pick(existingUser, INTERNAL_ONNLY_USER_ATTRIBUTES),
+    ...pick(existingUser, INTERNAL_ONLY_USER_ATTRIBUTES),
     ...internalUser,
   })
 

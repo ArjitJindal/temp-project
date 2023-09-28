@@ -12,7 +12,7 @@ const consumerUserAttributes = UserWithRulesResult.getAttributeTypeMap().map(
   (v) => v.name
 )
 
-export const INTERNAL_ONNLY_USER_ATTRIBUTES = difference(
+export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   internalUserAttributes,
   uniq(businessUserAttributes.concat(consumerUserAttributes))
 )

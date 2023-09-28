@@ -1,5 +1,5 @@
 import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
-import { isEmpty, isNil, mapKeys, omitBy, uniq } from 'lodash'
+import { difference, isEmpty, isNil, mapKeys, omitBy, pick, uniq } from 'lodash'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -50,6 +50,11 @@ import {
   getPaymentMethodId,
 } from '@/core/dynamodb/dynamodb-keys'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
+
+const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
+  InternalTransaction.getAttributeTypeMap().map((v) => v.name),
+  uniq(TransactionWithRulesResult.getAttributeTypeMap().map((v) => v.name))
+)
 
 export class MongoDbTransactionRepository
   implements RulesEngineTransactionRepositoryInterface
@@ -109,7 +114,10 @@ export class MongoDbTransactionRepository
 
     await transactionsCollection.replaceOne(
       { transactionId: transaction.transactionId },
-      internalTransaction,
+      {
+        ...pick(existingTransaction, INTERNAL_ONLY_TRANSACTION_ATTRIBUTES),
+        ...internalTransaction,
+      },
       { upsert: true }
     )
     return internalTransaction
