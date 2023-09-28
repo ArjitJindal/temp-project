@@ -84,6 +84,7 @@ export class MerchantMonitoringScrapeService {
       onlyTypes: MERCHANT_MONITORING_SOURCE_TYPES,
     }
   ): Promise<MerchantMonitoringSummary[]> {
+    const { onlyTypes = MERCHANT_MONITORING_SOURCE_TYPES } = options
     const mongoDb = await getMongoDbClient()
     const merchantRepository = new MerchantRepository(tenantId, {
       mongoDb,
@@ -92,11 +93,7 @@ export class MerchantMonitoringScrapeService {
     const existingSummaries = !options?.skipExisting
       ? await merchantRepository.getSummaries(userId)
       : []
-
-    if (
-      options?.refresh ||
-      (existingSummaries && existingSummaries.length === 0)
-    ) {
+    if (options?.refresh || !existingSummaries?.length) {
       const timeout = new Promise((resolve) => {
         setTimeout(() => resolve(null), 20000)
       })
@@ -142,10 +139,7 @@ export class MerchantMonitoringScrapeService {
         // @ts-ignore
         .filter((p) => p && p.source) as MerchantMonitoringSummary[]
 
-      if (
-        options?.additionalDomains &&
-        options?.onlyTypes?.includes('SCRAPE')
-      ) {
+      if (options?.additionalDomains && onlyTypes?.includes('SCRAPE')) {
         const additionalResults = (
           await Promise.allSettled(
             options.additionalDomains.map((d) => this.scrape(ensureHttps(d)))
