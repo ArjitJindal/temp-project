@@ -17,26 +17,28 @@ export default function KycRiskDisplay({ userId }: Props) {
 
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
-      {(result) => (
-        <RiskScoreDisplay
-          values={
-            result?.krsScore
-              ? [
-                  {
-                    score: result.krsScore,
-                    createdAt: result.createdAt,
-                    components: result.components,
-                  },
-                ]
-              : []
-          }
-          icon={<Icon />}
-          title="KYC risk score (KRS)"
-          riskScoreName="KRS"
-          showFormulaBackLink
-          riskScoreAlgo={(values) => values.score}
-        />
-      )}
+      {(result) =>
+        result && (
+          <RiskScoreDisplay
+            values={
+              result?.krsScore
+                ? [
+                    {
+                      score: result.krsScore,
+                      createdAt: result.createdAt,
+                      components: result.components,
+                    },
+                  ]
+                : []
+            }
+            icon={<Icon />}
+            title="KYC risk score (KRS)"
+            riskScoreName="KRS"
+            showFormulaBackLink
+            riskScoreAlgo={(values) => values.score}
+          />
+        )
+      }
     </AsyncResourceRenderer>
   );
 }

@@ -17,21 +17,23 @@ export default function DynamicRiskDisplay({ userId }: Props) {
 
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
-      {(result) => (
-        <RiskScoreDisplay
-          values={result?.map((x) => ({
-            score: x.drsScore,
-            manualRiskLevel: x?.manualRiskLevel,
-            createdAt: x.createdAt,
-            components: x.components,
-          }))}
-          icon={<User3LineIcon />}
-          title="CRA risk score"
-          riskScoreName="CRA risk score"
-          showFormulaBackLink
-          riskScoreAlgo={(value) => value.score}
-        />
-      )}
+      {(result) =>
+        result?.length > 0 ? (
+          <RiskScoreDisplay
+            values={result?.map((x) => ({
+              score: x.drsScore,
+              manualRiskLevel: x?.manualRiskLevel,
+              createdAt: x.createdAt,
+              components: x.components,
+            }))}
+            icon={<User3LineIcon />}
+            title="CRA risk score"
+            riskScoreName="CRA risk score"
+            showFormulaBackLink
+            riskScoreAlgo={(value) => value.score}
+          />
+        ) : null
+      }
     </AsyncResourceRenderer>
   );
 }

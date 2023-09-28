@@ -19,26 +19,28 @@ export default function ActionRiskDisplay({ transactionId }: Props) {
 
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
-      {(result) => (
-        <RiskScoreDisplay
-          title="Transaction risk score (TRS)"
-          icon={<Icon />}
-          values={
-            result?.arsScore
-              ? [
-                  {
-                    score: result.arsScore,
-                    createdAt: result.createdAt,
-                    components: result.components,
-                  },
-                ]
-              : []
-          }
-          riskScoreName="TRS"
-          showFormulaBackLink
-          riskScoreAlgo={(value) => value.score}
-        />
-      )}
+      {(result) =>
+        result && (
+          <RiskScoreDisplay
+            title="Transaction risk score (TRS)"
+            icon={<Icon />}
+            values={
+              result?.arsScore
+                ? [
+                    {
+                      score: result.arsScore,
+                      createdAt: result.createdAt,
+                      components: result.components,
+                    },
+                  ]
+                : []
+            }
+            riskScoreName="TRS"
+            showFormulaBackLink
+            riskScoreAlgo={(value) => value.score}
+          />
+        )
+      }
     </AsyncResourceRenderer>
   );
 }
