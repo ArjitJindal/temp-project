@@ -1,4 +1,3 @@
-import { Tabs } from 'antd';
 import { useRef, useState } from 'react';
 import _ from 'lodash';
 import { useLocalStorageState } from 'ahooks';
@@ -8,6 +7,7 @@ import NewSimulation, { SimulationRef } from './NewSimulation';
 import SimulationHistory from './SimulationHistory';
 import { SimulationPostResponse } from '@/apis';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Tabs, { TabItem } from '@/components/library/Tabs';
 
 type Props = {
   refetchSimulationCount: () => void;
@@ -23,34 +23,44 @@ export const SimulateRiskClassification = (props: Props): JSX.Element => {
     'NEW',
   );
   const ref = useRef<SimulationRef>(null);
-
+  const tabItems: TabItem[] = [
+    {
+      tab: 'New simulation',
+      children: (
+        <NewSimulation
+          ref={ref}
+          setResult={setResult}
+          refetchSimulationCount={props.refetchSimulationCount}
+          defaultState={props.defaultState}
+          riskValuesRefetch={props.riskValuesRefetch}
+          onRun={() => {
+            setOpen(true);
+          }}
+        />
+      ),
+      key: 'NEW',
+      isClosable: false,
+    },
+    {
+      tab: 'Simulation history',
+      children: <SimulationHistory setResult={setResult} setOpen={setOpen} />,
+      key: 'HISTORY',
+      isClosable: false,
+    },
+  ];
+  const onChange = (key: string) => {
+    if (key === 'NEW' || key === 'HISTORY') {
+      setActiveKey(key);
+    }
+  };
   return (
     <Feature name="SIMULATOR">
       <Tabs
-        defaultActiveKey={activeKey}
-        onChange={(key) => {
-          if (key === 'NEW' || key === 'HISTORY') {
-            setActiveKey(key);
-          }
-        }}
         activeKey={activeKey}
-      >
-        <Tabs.TabPane tab="New simulation" key="NEW">
-          <NewSimulation
-            ref={ref}
-            setResult={setResult}
-            refetchSimulationCount={props.refetchSimulationCount}
-            defaultState={props.defaultState}
-            riskValuesRefetch={props.riskValuesRefetch}
-            onRun={() => {
-              setOpen(true);
-            }}
-          />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Simulation history" key="HISTORY" active={activeKey === 'HISTORY'}>
-          <SimulationHistory setResult={setResult} setOpen={setOpen} />
-        </Tabs.TabPane>
-      </Tabs>
+        type="line"
+        items={tabItems}
+        onChange={(key: string) => onChange(key)}
+      />
       {result && result.jobId && (
         <RiskClassificationSimulationResults
           onClose={(toClose) => {

@@ -23,10 +23,11 @@ interface Props extends Pick<TabsProps, 'type' | 'activeKey' | 'onChange'> {
 }
 
 export default function Tabs(props: Props) {
-  const { items, addIcon, tabBarGutter, onEdit, onChange } = props;
+  const { items, addIcon, tabBarGutter, onEdit, onChange, activeKey } = props;
 
   return (
     <AntTabs
+      activeKey={activeKey}
       type={props?.type}
       size={props?.size}
       className={cn(props.type === 'line' ? s.root : '')}
