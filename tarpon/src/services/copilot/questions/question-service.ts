@@ -222,7 +222,8 @@ export class QuestionService {
       const result = await question.aggregationPipeline(ctx, varObject)
       return {
         ...common,
-        ...result,
+        values: result.data,
+        summary: result.summary,
       }
     }
     if (question.type === 'EMBEDDED') {
