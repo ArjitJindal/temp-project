@@ -19,7 +19,7 @@ import {
 } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { ACCOUNT_LIST } from '@/utils/queries/keys';
+import { ACCOUNT_LIST_TEAM_MANAGEMENT } from '@/utils/queries/keys';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { Account } from '@/apis';
 import COLORS, {
@@ -45,17 +45,20 @@ export default function Team() {
       actionRef.current?.reload();
     }
   }
-  const accountsResult = usePaginatedQuery(ACCOUNT_LIST(), async (paginationParams) => {
-    const accounts = await api.getAccounts({ ...paginationParams });
-    const filteredAccounts = accounts.filter(
-      (account) => parseUserRole(account.role) !== UserRole.ROOT && !account.blocked,
-    );
-    return {
-      items: filteredAccounts,
-      success: true,
-      total: filteredAccounts.length,
-    };
-  });
+  const accountsResult = usePaginatedQuery(
+    ACCOUNT_LIST_TEAM_MANAGEMENT(),
+    async (paginationParams) => {
+      const accounts = await api.getAccounts({ ...paginationParams });
+      const filteredAccounts = accounts.filter(
+        (account) => parseUserRole(account.role) !== UserRole.ROOT && !account.blocked,
+      );
+      return {
+        items: filteredAccounts,
+        success: true,
+        total: filteredAccounts.length,
+      };
+    },
+  );
 
   const [isInviteVisible, setIsInviteVisible] = useState(false);
   const [editAccount, setEditAccount] = useState<Account | null>(null);

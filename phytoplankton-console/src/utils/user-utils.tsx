@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import _ from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from './queries/hooks';
-import { ACCOUNT_LIST } from './queries/keys';
+import { ACCOUNT_LIST, ACCOUNT_LIST_TEAM_MANAGEMENT } from './queries/keys';
 import { getOr } from './asyncResource';
 import { useApi } from '@/api';
 import { Account, Permission } from '@/apis';
@@ -108,24 +108,14 @@ export function useUsers(
   const api = useApi();
 
   const usersQueryResult = useQuery(ACCOUNT_LIST(), async () => {
-    const accounts = await api.getAccounts();
-
-    return {
-      items: accounts,
-      success: true,
-      total: accounts.length,
-    };
+    return await api.getAccounts();
   });
 
-  const users = getOr(usersQueryResult.data, {
-    items: [],
-    success: true,
-    total: 0,
-  });
+  const users = getOr(usersQueryResult.data, []);
 
   const isSuperAdmin = isAtLeast(user, UserRole.ROOT);
 
-  let tempUsers = users.items;
+  let tempUsers = users;
 
   if (!options.includeRootUsers && !isSuperAdmin) {
     tempUsers = tempUsers.filter((user) => parseUserRole(user.role) !== UserRole.ROOT);
@@ -142,6 +132,7 @@ export function useInvalidateUsers() {
   return {
     invalidate: () => {
       queryClient.invalidateQueries(ACCOUNT_LIST());
+      queryClient.invalidateQueries(ACCOUNT_LIST_TEAM_MANAGEMENT());
     },
   };
 }
