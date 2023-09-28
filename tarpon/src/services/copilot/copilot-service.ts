@@ -121,7 +121,16 @@ export class CopilotService {
     ${JSON.stringify([...attributes.entries()])}
     `.slice(0, MAX_TOKEN_OUTPUT)
 
-    const response = await this.gpt(content)
+    let response = ''
+
+    for (let i = 0; i < 3; i++) {
+      try {
+        response = await this.gpt(content)
+        break
+      } catch (e) {
+        console.log(e)
+      }
+    }
 
     return {
       narrative: response.replace(PROMPT, ''),
@@ -168,16 +177,29 @@ export class CopilotService {
     const content = `
     The following is a template for document written by bank staff to justify why they have or have not reported a customer to the financial authorities.
     
+    ----
     Example:
-    "${PLACEHOLDER_NARRATIVE}
-    ${reasonNarrs.join(',')}"
+    ${PLACEHOLDER_NARRATIVE}
+    ${reasonNarrs.join(',')}
+    ----
     
-    The following text and data are various pieces of information relevant to a single customer who is under investigation by the bank staff, please rewrite this information so that it conforms to the template above and correct any spelling mistakes or grammatical errors.
+   The following text and data are various pieces of information relevant to a single customer who is under investigation by the bank staff, please rewrite this information so that it conforms to the template above. This case is being closed for the following reasons: ${request.reasons.join(
+     ', '
+   )}
     
     ${JSON.stringify([...attributes.entries()])}
     `.slice(0, MAX_TOKEN_OUTPUT)
 
-    const response = await this.gpt(content)
+    let response = ''
+    for (let i = 0; i < 3; i++) {
+      try {
+        response = await this.gpt(content)
+        break
+      } catch (e) {
+        console.log(e)
+      }
+    }
+
     return {
       narrative: response.replace(PROMPT, ''),
       attributes: [...attributes.entries()].map((f) => {
