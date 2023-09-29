@@ -1,9 +1,10 @@
 import { ReactElement } from 'react';
-import { has } from 'lodash';
+import { capitalize, has } from 'lodash';
 import { LogItemData } from './LogItem';
 import { Account, AuditLog, Case, CaseStatus } from '@/apis';
 import { DEFAULT_DATE_FORMAT, TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { firstLetterUpper } from '@/utils/humanize';
+import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { statusEscalated } from '@/utils/case-utils';
 
 export const useGetLogData = (
@@ -29,7 +30,7 @@ export const useGetLogData = (
           ? {
               time: time,
               user: log.user,
-              icon: 'CASE',
+              icon: type,
               statement: createStatement,
             }
           : null;
@@ -150,6 +151,55 @@ export const getCreateStatement = (
         return handleOpenStatus(entityStatus, log, userName);
       }
       return null;
+    }
+    case 'DRS_RISK_LEVEL': {
+      const riskLevelLockChange = !!log.newImage?.isUpdatable !== !!log.oldImage?.isUpdatable;
+      const riskLevelUpdatebleStatus = log.newImage?.isUpdatable ? 'unlocked' : 'locked';
+      const newRiskLevel = log.newImage?.manualRiskLevel;
+      return riskLevelLockChange ? (
+        <>
+          Risk level <b>{riskLevelUpdatebleStatus}</b> by <b>{userName}</b>
+        </>
+      ) : (
+        <>
+          Risk level changed to <b>{RISK_LEVEL_LABELS[newRiskLevel].toLowerCase()}</b> by{' '}
+          <b>{userName}</b>
+        </>
+      );
+    }
+    case 'USER_STATUS_CHANGE': {
+      const currentUserStatus = log.newImage?.userStateDetails?.state;
+      const previousUserStatus = log.oldImage?.userStateDetails?.state;
+      return (
+        <>
+          User status changed{' '}
+          {previousUserStatus ? (
+            <>
+              from <b>{capitalize(previousUserStatus)}</b>
+            </>
+          ) : (
+            ''
+          )}{' '}
+          to <b>{capitalize(currentUserStatus)}</b> by <b>{userName}</b>{' '}
+        </>
+      );
+    }
+    case 'USER_KYC_STATUS_CHANGE': {
+      const currentUserKycStatus = log.newImage?.kycStatusDetails?.status;
+      const previousUserKycStatus = log.oldImage?.kycStatusDetails?.status;
+      return (
+        <>
+          User status changed from{' '}
+          {previousUserKycStatus ? (
+            <>
+              from <b>{capitalize(previousUserKycStatus)}</b>
+            </>
+          ) : (
+            ''
+          )}{' '}
+          to <b>{capitalize(currentUserKycStatus)}</b> by <b>{userName}</b>
+        </>
+      );
     }
     default:
       return null;

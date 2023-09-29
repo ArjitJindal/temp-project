@@ -62,7 +62,6 @@ export const UserEvents = (props: Props) => {
       defaultWidth: 300,
     }),
   ]);
-
   return (
     <Card.Root className={s.userEventsRoot}>
       <QueryResultsTable

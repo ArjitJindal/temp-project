@@ -198,7 +198,7 @@ function CaseDetails(props: Props) {
               <AsyncResourceRenderer resource={alertCommentsRes}>
                 {(alertCommentsGroups) => (
                   <ActivityCard
-                    caseItems={[caseItem]}
+                    caseItem={caseItem}
                     user={user as InternalBusinessUser | InternalConsumerUser}
                     comments={[
                       ...alertCommentsGroups,

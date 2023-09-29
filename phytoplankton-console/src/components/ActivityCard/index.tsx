@@ -23,7 +23,7 @@ interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
   handleUserUpdate?: (userItem: InternalConsumerUser | InternalBusinessUser) => void;
   type: 'USER' | 'CASE';
-  caseItems: Case[];
+  caseItem?: Case;
   comments: Array<Comment> | CommentGroup[];
 }
 
@@ -33,6 +33,7 @@ export interface ActivityLogFilterParams {
   filterAlertStatus?: AlertStatus[];
   alertId?: string;
   case?: Case;
+  user?: InternalConsumerUser | InternalBusinessUser;
 }
 
 const DEFAULT_ACTIVITY_LOG_PARAMS: ActivityLogFilterParams = {
@@ -41,17 +42,19 @@ const DEFAULT_ACTIVITY_LOG_PARAMS: ActivityLogFilterParams = {
   filterAlertStatus: undefined,
   alertId: undefined,
   case: undefined,
+  user: undefined,
 };
 
 export default function ActivityCard(props: Props) {
-  const { user, handleUserUpdate, type, caseItems, comments } = props;
+  const { user, handleUserUpdate, type, caseItem, comments } = props;
   const [selectedSection, setSelectedSection] = useState('COMMENTS');
-  const entityIds = useGetEntityIds(caseItems);
+  const entityIds = type === 'CASE' ? getEntityIds(caseItem) : [user.userId];
   const totalCommentsLength =
     type === 'CASE'
       ? (comments as CommentGroup[]).reduce((acc, group) => acc + group.comments.length, 0)
       : 0;
-  DEFAULT_ACTIVITY_LOG_PARAMS.case = type === 'CASE' ? caseItems[0] : undefined;
+  DEFAULT_ACTIVITY_LOG_PARAMS.case = type === 'CASE' && caseItem ? caseItem : undefined;
+  DEFAULT_ACTIVITY_LOG_PARAMS.user = user;
   const [params, setParams] = useState<ActivityLogFilterParams>(DEFAULT_ACTIVITY_LOG_PARAMS);
   return (
     <Card.Root>
@@ -66,35 +69,41 @@ export default function ActivityCard(props: Props) {
           />
           {selectedSection === 'LOG' && (
             <div className={s.subHeader}>
-              <StatusFilterButton
-                initialState={params?.filterCaseStatus ?? []}
-                onConfirm={(value) => {
-                  setParams((prevState) => ({
-                    ...prevState,
-                    filterCaseStatus: value,
-                  }));
-                }}
-                title={'Case status'}
-              />
-              <AlertIdSearchFilter
-                initialState={params?.alertId}
-                onConfirm={(value) => {
-                  setParams((prevState) => ({
-                    ...prevState,
-                    alertId: value,
-                  }));
-                }}
-              />
-              <StatusFilterButton
-                initialState={params?.filterAlertStatus ?? []}
-                onConfirm={(value) => {
-                  setParams((prevState) => ({
-                    ...prevState,
-                    filterAlertStatus: value,
-                  }));
-                }}
-                title={'Alert status'}
-              />
+              {type === 'CASE' && (
+                <StatusFilterButton
+                  initialState={params?.filterCaseStatus ?? []}
+                  onConfirm={(value) => {
+                    setParams((prevState) => ({
+                      ...prevState,
+                      filterCaseStatus: value,
+                    }));
+                  }}
+                  title={'Case status'}
+                />
+              )}
+              {type === 'CASE' && (
+                <AlertIdSearchFilter
+                  initialState={params?.alertId}
+                  onConfirm={(value) => {
+                    setParams((prevState) => ({
+                      ...prevState,
+                      alertId: value,
+                    }));
+                  }}
+                />
+              )}
+              {type === 'CASE' && (
+                <StatusFilterButton
+                  initialState={params?.filterAlertStatus ?? []}
+                  onConfirm={(value) => {
+                    setParams((prevState) => ({
+                      ...prevState,
+                      filterAlertStatus: value,
+                    }));
+                  }}
+                  title={'Alert status'}
+                />
+              )}
               <ActivityByFilterButton
                 initialState={params?.filterActivityBy ?? []}
                 onConfirm={(value) => {
@@ -119,7 +128,7 @@ export default function ActivityCard(props: Props) {
             />
           ) : (
             <CommentsCardForCase
-              id={caseItems[0].caseId}
+              id={caseItem?.caseId}
               comments={(comments ?? []) as CommentGroup[]}
             />
           ))}
@@ -131,13 +140,13 @@ export default function ActivityCard(props: Props) {
   );
 }
 
-export const useGetEntityIds = (entities: Case[]) => {
+export const getEntityIds = (caseItem?: Case) => {
   const ids = new Set();
-  entities.forEach((entity) => {
-    ids.add(entity.caseId);
-    entity.alerts?.forEach((alert) => {
+  if (caseItem) {
+    ids.add(caseItem?.caseId);
+    caseItem?.alerts?.forEach((alert) => {
       ids.add(alert.alertId);
     });
-  });
+  }
   return [...ids];
 };

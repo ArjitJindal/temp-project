@@ -1,7 +1,7 @@
 import { Tabs as AntTabs } from 'antd';
 import { useNavigate, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import UserDetails from './UserDetails';
 import Header from './Header';
 import s from './index.module.less';
@@ -10,13 +10,13 @@ import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
-import { CasesListResponse, Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useQuery } from '@/utils/queries/hooks';
 import { UI_SETTINGS } from '@/pages/users-item/ui-settings';
-import { CASES_LIST, USERS_ITEM_BY_TYPE } from '@/utils/queries/keys';
+import { USERS_ITEM_BY_TYPE } from '@/utils/queries/keys';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsCard';
@@ -28,7 +28,6 @@ import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import ActivityCard from '@/components/ActivityCard';
-import { isSuccess } from '@/utils/asyncResource';
 
 export default function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
@@ -50,16 +49,6 @@ export default function UserItem() {
         : api.getBusinessUsersItem({ userId: id });
     },
   );
-
-  const casesQueryResults = useQuery<CasesListResponse>(CASES_LIST({}), () => {
-    return api.getCaseList({
-      filterUserId: id,
-    });
-  });
-
-  const userCases = useMemo(() => {
-    return isSuccess(casesQueryResults.data) ? casesQueryResults.data.value.data : [];
-  }, [casesQueryResults.data]);
 
   const handleUserUpdate = (userItem: InternalConsumerUser | InternalBusinessUser) => {
     queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
@@ -211,7 +200,6 @@ export default function UserItem() {
                     user={user}
                     type={'USER'}
                     handleUserUpdate={handleUserUpdate}
-                    caseItems={userCases}
                     comments={user.comments as Comment[]}
                   />
                 ),

@@ -8354,6 +8354,8 @@ components:
             - MANUAL_CASE_CREATION
             - MANUAL_CASE_TRANSACTIONS_ADDITION
             - CHECKLIST
+            - USER_STATUS_CHANGE
+            - USER_KYC_STATUS_CHANGE
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:

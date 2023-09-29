@@ -1,3 +1,4 @@
+import { has } from 'lodash'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { publishAuditLog } from '@/services/audit-log'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
@@ -26,6 +27,9 @@ export class UserAuditLogService {
       timestamp: Date.now(),
       newImage: updateRequest,
       entityId: userId,
+      subtype: has(updateRequest, 'userStateDetails')
+        ? 'USER_STATUS_CHANGE'
+        : 'USER_KYC_STATUS_CHANGE',
     }
     await publishAuditLog(this.tenantId, auditLog)
   }
