@@ -2041,14 +2041,19 @@ paths:
             schema:
               $ref: '#/components/schemas/TenantSettings'
         required: true
-  /tenants/seed:
+  /tenants/batch-job:
     post:
-      summary: Tenant - Seed
-      operationId: get-seed-demo-data
+      summary: Tenant - Trigger Batch Job
+      operationId: post-tenants-trigger-batch-job
       responses:
         '200':
           description: OK
-    parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantTriggerBatchJobRequest'
+        required: true
   /tenant/apiKeys:
     get:
       parameters:
@@ -5890,6 +5895,21 @@ components:
       required:
         - total
         - data
+    TenantTriggerBatchJobRequest:
+      title: TenantTriggerBatchJobRequest
+      type: object
+      properties:
+        jobName:
+          $ref: '#/components/schemas/BatchJobNames'
+      required:
+        - jobName
+    BatchJobNames:
+      title: BatchJobNames
+      type: string
+      enum:
+        - ONGOING_MERCHANT_MONITORING
+        - PULSE_USERS_BACKFILL_RISK_SCORE
+        - DEMO_MODE_DATA_LOAD
     DashboardStatsTransactionsCount:
       type: object
       x-examples:

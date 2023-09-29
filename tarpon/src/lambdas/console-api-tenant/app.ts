@@ -130,21 +130,6 @@ export const tenantsHandler = lambdaApi()(
       return updatedResult
     })
 
-    handlers.registerGetSeedDemoData(async (ctx) => {
-      if (envIsNot('prod')) {
-        let fullTenantId = ctx.tenantId
-        if (envIs('sandbox')) {
-          fullTenantId = getFullTenantId(ctx.tenantId, true)
-        }
-        await sendBatchJobCommand({
-          type: 'DEMO_MODE_DATA_LOAD',
-          tenantId: fullTenantId,
-          awsCredentials: getCredentialsFromEvent(event),
-        })
-      }
-      return
-    })
-
     handlers.registerGetTenantUsageData(
       async (ctx) =>
         await new TenantService(ctx.tenantId, {
@@ -208,6 +193,47 @@ export const tenantsHandler = lambdaApi()(
           request.NarrativeTemplateRequest
         )
     )
+    handlers.registerPostTenantsTriggerBatchJob(async (ctx, request) => {
+      assertCurrentUserRole('root')
+      const tenantId = ctx.tenantId
+      const batchJobType = request.TenantTriggerBatchJobRequest.jobName
+      switch (batchJobType) {
+        case 'ONGOING_MERCHANT_MONITORING': {
+          await sendBatchJobCommand({
+            type: 'ONGOING_MERCHANT_MONITORING',
+            tenantId: tenantId,
+          })
+          break
+        }
+        case 'PULSE_USERS_BACKFILL_RISK_SCORE': {
+          await sendBatchJobCommand({
+            type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
+            tenantId: tenantId,
+            awsCredentials: getCredentialsFromEvent(event),
+          })
+          break
+        }
+        case 'DEMO_MODE_DATA_LOAD': {
+          if (envIsNot('prod')) {
+            let fullTenantId = ctx.tenantId
+            if (envIs('sandbox')) {
+              fullTenantId = getFullTenantId(ctx.tenantId, true)
+            }
+            await sendBatchJobCommand({
+              type: 'DEMO_MODE_DATA_LOAD',
+              tenantId: fullTenantId,
+              awsCredentials: getCredentialsFromEvent(event),
+            })
+          }
+          break
+        }
+
+        default: {
+          throw new Error(`Unknown batch job type: ${batchJobType}`)
+        }
+      }
+      return
+    })
 
     /** Checklist templates */
     const checklistService = new ChecklistTemplatesService(tenantId, mongoDb)

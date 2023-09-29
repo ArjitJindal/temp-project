@@ -1,18 +1,18 @@
-import _ from 'lodash';
+import { capitalize, toLower } from 'lodash';
 import { neverReturn } from '@/utils/lang';
 
 /*
   SOME_CONSTANT_NAME => Some constant name
  */
 export function humanizeConstant(name: string): string {
-  return _.capitalize(_.toLower(name.split('_').join(' ')));
+  return capitalize(toLower(name?.split('_')?.join(' ')));
 }
 
 /*
   bank_smart_iban => Bank smart iban
  */
 export function humanizeSnakeCase(name: string): string {
-  return _.capitalize(_.toLower(name.split('_').join(' ')));
+  return capitalize(toLower(name?.split('_')?.join(' ')));
 }
 
 /*

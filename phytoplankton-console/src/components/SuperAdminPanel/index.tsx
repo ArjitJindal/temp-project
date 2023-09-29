@@ -4,13 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
 import NumberInput from '../library/NumberInput';
 import Label from '../library/Label';
+import { H4 } from '../ui/Typography';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
 import Modal from '@/components/library/Modal';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
-import { Feature, TenantSettings } from '@/apis';
+import { BatchJobNames, Feature, TenantSettings } from '@/apis';
 import { useAuth0User, clearAuth0LocalStorage } from '@/utils/user-utils';
 import {
   useUpdateTenantSettings,
@@ -19,6 +20,9 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { FEATURES } from '@/apis/models-custom/Feature';
 import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';
+import { humanizeConstant } from '@/utils/humanize';
+import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
+import Confirm from '@/components/utils/Confirm';
 
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -32,7 +36,7 @@ export default function SuperAdminPanel() {
     settings.complyAdvantageSearchProfileId || '',
   );
 
-  const [seeding, setSeeding] = useState(false);
+  const [batchJobName, setBatchJobName] = useState<string>('');
   const user = useAuth0User();
   const api = useApi();
   const queryResult = useQuery(['tenants'], () => api.getTenantsList());
@@ -48,19 +52,6 @@ export default function SuperAdminPanel() {
       ),
       disabled: tenant.isProductionAccessDisabled ?? false,
     })) || [];
-
-  const handleSeed = () => {
-    setSeeding(true);
-    api
-      .getSeedDemoData()
-      .then(() => {
-        location.reload();
-      })
-      .catch((e) => {
-        message.error(`Failed to seed demo data: ${e}`);
-      })
-      .finally(() => setSeeding(false));
-  };
 
   const handleChangeTenant = async (newTenantId: string) => {
     const unsetDemoMode = api.accountChangeSettings({
@@ -110,6 +101,8 @@ export default function SuperAdminPanel() {
   const handleCancel = () => {
     setIsModalVisible(false);
   };
+
+  let batchJobMessage;
 
   return (
     <>
@@ -222,11 +215,47 @@ export default function SuperAdminPanel() {
             <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
           </Label>
         </div>
+        <Divider />
+        <H4>Run Batch Jobs</H4>
         <div className={s.field}>
-          <Button isDisabled={seeding} onClick={handleSeed}>
-            Seed Demo Data
-          </Button>
+          <Label label="Job Name">
+            <Select
+              options={BATCH_JOB_NAMESS.map((name) => ({
+                label: humanizeConstant(name),
+                value: name,
+              }))}
+              value={batchJobName}
+              onChange={setBatchJobName}
+              allowClear
+              onClear={() => setBatchJobName('')}
+              showSearch
+            />
+          </Label>
         </div>
+        <Confirm
+          title={`Run ${humanizeConstant(batchJobName)}?`}
+          onConfirm={() => {
+            batchJobMessage = message.loading(`Starting ${humanizeConstant(batchJobName)}...`);
+            api.postTenantsTriggerBatchJob({
+              TenantTriggerBatchJobRequest: {
+                jobName: batchJobName as BatchJobNames,
+              },
+            });
+          }}
+          text={`Are you sure you want to run ${humanizeConstant(batchJobName)} batch job?`}
+          onSuccess={() => {
+            batchJobMessage();
+            message.success(`${humanizeConstant(batchJobName)} started`);
+          }}
+        >
+          {(props) => (
+            <div className={s.field}>
+              <Button isDisabled={!batchJobName} onClick={props.onClick}>
+                Run
+              </Button>
+            </div>
+          )}
+        </Confirm>
       </Modal>
       <CreateTenantModal
         visible={showCreateTenantModal}
