@@ -1,9 +1,9 @@
-name: phytoplankton
+name: No test phytoplankton
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - 'phytoplankton-console/**'
+      - "phytoplankton-console/**"
 jobs:
   test:
     name: test-phytoplankton

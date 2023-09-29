@@ -1,9 +1,9 @@
-name: tarpon
+name: No test tarpon
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - 'tarpon/**'
+      - "tarpon/**"
 jobs:
   test:
     name: test-tarpon

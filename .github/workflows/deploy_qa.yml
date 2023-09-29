@@ -14,11 +14,13 @@ jobs:
       matrix:
         node-version: [18.x]
     runs-on: ubuntu-20.04
+    timeout-minutes: 30
     steps:
       - uses: khan/pull-request-comment-trigger@v1.1.0
         id: check
         with:
           trigger: "/deploy"
+          prefix_only: "true"
           reaction: rocket
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_PAT }}
@@ -75,8 +77,8 @@ jobs:
           cat ~/.aws/credentials
           export QA_SUBDOMAIN="qa$(echo "${{ steps.comment-branch.outputs.head_ref }}" | shasum | head -c5)"
 
-          if $(git diff --quiet $(git merge-base HEAD origin/main) origin/main -- tarpon); then
-            echo "Using dev API"
+          if $(git diff --quiet origin/main..HEAD tarpon); then
+            echo "Using Dev API"
             echo "tarpon=api" >> $GITHUB_OUTPUT
           else
             echo "Deploying Tarpon"

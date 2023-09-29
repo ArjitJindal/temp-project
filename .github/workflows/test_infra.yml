@@ -1,4 +1,4 @@
-name: infra
+name: Test infra
 
 defaults:
   run:
@@ -19,6 +19,7 @@ jobs:
   test:
     name: test-infra
     runs-on: ubuntu-20.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
         with:
@@ -40,7 +41,7 @@ jobs:
         uses: slackapi/slack-github-action@v1.24.0
         if: ${{ github.ref == 'refs/heads/main' && failure() }}
         with:
-          channel-id: 'C03L5KRE2E8'
+          channel-id: "C03L5KRE2E8"
           payload: |
             {
               "text": "main branch failed for infra!"

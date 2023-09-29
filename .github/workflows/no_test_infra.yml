@@ -1,9 +1,9 @@
-name: infra
+name: No test infra
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - 'infra/**'
+      - "infra/**"
 jobs:
   test:
     name: test-infra

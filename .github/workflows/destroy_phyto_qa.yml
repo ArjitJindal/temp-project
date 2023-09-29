@@ -12,6 +12,7 @@ on:
 jobs:
   destroy:
     runs-on: ubuntu-20.04
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -22,7 +23,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
+          cache: "yarn"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - run: yarn install --frozen-lockfile
         working-directory: "phytoplankton-console"
@@ -34,7 +35,7 @@ jobs:
           cat ~/.aws/credentials
           export NODE_OPTIONS="--max-old-space-size=8192"
           export QA_SUBDOMAIN="qa$(echo "${{ github.head_ref }}" | shasum | head -c5)"
-          
+
           echo "Destroying QA deploy for $QA_SUBDOMAIN.console.flagright.dev"
           cd phytoplankton-console
           yarn run destroy:qa
