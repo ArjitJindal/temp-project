@@ -323,14 +323,18 @@ export class AccountsService {
         fields: 'user_id,blocked',
       })
 
-      /* Temporary workaround for adding again blocked user to organization need to be removed after unblock user flow will be implemented */
-      if (existingUser.length > 0 && existingUser[0].blocked) {
-        user = await managementClient.updateUser(
-          {
-            id: existingUser[0].user_id as string,
-          },
-          { blocked: false }
-        )
+      if (existingUser.length > 0) {
+        /* Temporary workaround for adding again blocked user to organization need to be removed after unblock user flow will be implemented */
+        if (existingUser[0].blocked) {
+          user = await managementClient.updateUser(
+            {
+              id: existingUser[0].user_id as string,
+            },
+            { blocked: false }
+          )
+        } else {
+          throw new BadRequest('The user already exists.')
+        }
       } else {
         user = await managementClient.createUser({
           connection: CONNECTION_NAME,
