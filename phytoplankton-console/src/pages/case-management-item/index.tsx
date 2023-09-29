@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import _ from 'lodash';
 import { usePrevious } from 'ahooks';
@@ -20,6 +20,9 @@ const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const expandedAlertId = searchParams.get('expandedAlertId');
   const api = useApi();
   const queryClient = useQueryClient();
   useCloseSidebarByDefault();
@@ -83,6 +86,7 @@ function CaseManagementItemPage() {
             caseItem={caseItem}
             onReload={onReload}
             headerStickyElRef={headerStickyElRef}
+            expandedAlertId={expandedAlertId ? expandedAlertId : ''}
           />
         </PageWrapper>
       )}

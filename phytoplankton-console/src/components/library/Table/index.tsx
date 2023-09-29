@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useImperativeHandle, useMemo } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import cn from 'clsx';
 import * as TanTable from '@tanstack/react-table';
 import _ from 'lodash';
@@ -74,6 +74,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   partiallySelectedIds?: string[];
   externalState?: unknown;
   selectionInfo?: SelectionInfo;
+  expandedRowId?: string;
 }
 
 export type SelectionInfo = {
@@ -116,13 +117,13 @@ function Table<Item extends object, Params extends object = CommonParams>(
     selectionActions = [],
     selectionInfo,
     rowHeightMode = 'FIXED',
+    expandedRowId,
   } = props;
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
     return 'items' in props.data ? success(props.data) : props.data;
   }, [props.data]);
 
   const data = useMemo(() => getOr(dataRes, { items: [] }), [dataRes]);
-
   const handleChangeParams = useCallback(
     (newParams: AllParams<Params>) => {
       if (
@@ -204,6 +205,21 @@ function Table<Item extends object, Params extends object = CommonParams>(
   useEffect(() => {
     window.document.body.classList.toggle(s.bodyBlockSelection, isResizing !== false);
   }, [isResizing]);
+
+  const Rows = table.getRowModel();
+  const [rowExpanded, setrowExpanded] = useState<boolean>(false);
+  useEffect(() => {
+    if (rowExpanded) return;
+    if (expandedRowId === undefined) return;
+    if (!Rows?.rowsById[expandedRowId]?.getCanExpand()) return;
+    if (Rows?.rowsById[expandedRowId]?.getIsExpanded() === false) {
+      Rows?.rowsById[expandedRowId]?.toggleExpanded(true);
+      setrowExpanded(true);
+      document
+        .getElementById(`row_${expandedRowId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [Rows, expandedRowId, rowExpanded]);
 
   const showPagination =
     typeof pagination === 'boolean'
@@ -320,7 +336,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
 
                       return (
                         <React.Fragment key={row.id}>
-                          <tr>
+                          <tr id={`row_${row.id}`}>
                             {visibleCells.map((cell, i) => {
                               const isPinned = cell.column.getIsPinned();
                               let offset = 0;

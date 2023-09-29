@@ -34,13 +34,14 @@ import ActivityCard from '@/components/ActivityCard';
 
 interface Props {
   caseItem: Case;
+  expandedAlertId?: string;
   onReload: () => void;
   headerStickyElRef: HTMLDivElement | null;
 }
 
 function CaseDetails(props: Props) {
   const { tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>();
-  const { caseItem, headerStickyElRef } = props;
+  const { caseItem, headerStickyElRef, expandedAlertId } = props;
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   useScrollToFocus();
   const settings = useSettings();
@@ -86,7 +87,11 @@ function CaseDetails(props: Props) {
                   tab: 'Alerts',
                   key: 'alerts',
                   children: (
-                    <AlertsCard caseItem={caseItem} title={UI_SETTINGS.cards.ALERTS.title} />
+                    <AlertsCard
+                      caseItem={caseItem}
+                      expandedAlertId={expandedAlertId}
+                      title={UI_SETTINGS.cards.ALERTS.title}
+                    />
                   ),
                   isClosable: false,
                   isDisabled: false,

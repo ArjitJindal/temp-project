@@ -15,7 +15,8 @@ type Props<Item extends object, Params extends object = ParamsType> = Omit<
 export default function QueryResultsTable<T extends object, Params extends object = CommonParams>(
   props: Props<T, Params>,
 ): JSX.Element {
-  const { queryResults, showResultsInfo = true, ...rest } = props;
+  const { queryResults, showResultsInfo = true, expandedRowId, ...rest } = props;
+
   return (
     <Table
       {...rest}
@@ -24,6 +25,7 @@ export default function QueryResultsTable<T extends object, Params extends objec
       cursor={queryResults?.cursor}
       onPaginateData={queryResults.paginate}
       showResultsInfo={showResultsInfo}
+      expandedRowId={expandedRowId}
     />
   );
 }

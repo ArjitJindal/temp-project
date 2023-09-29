@@ -80,259 +80,6 @@ const getSelectedCaseIdsForAlerts = (selectedItems: Record<string, TableAlertIte
   return selectedCaseIds;
 };
 
-const mergedColumns = (
-  hideUserColumns: boolean,
-  hideAlertStatusFilters: boolean,
-  handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
-  handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
-  handleInvestigateAlert:
-    | ((alertInfo: { alertId: string; caseUserName: string }) => void)
-    | undefined,
-  userId: string,
-  reload: () => void,
-  falsePositiveEnabled: boolean,
-  selectedTxns: {
-    [alertId: string]: string[];
-  },
-): TableColumn<TableAlertItem>[] => {
-  const helper = new ColumnHelper<TableAlertItem>();
-  return helper.list([
-    helper.simple<'priority'>({
-      title: '',
-      key: 'priority',
-      type: PRIORITY,
-      disableColumnShuffling: true,
-      defaultWidth: 40,
-      enableResizing: false,
-    }),
-    helper.simple<'alertId'>({
-      title: 'Alert ID',
-      key: 'alertId',
-      icon: <StackLineIcon />,
-      showFilterByDefault: true,
-      filtering: true,
-      type: {
-        render: (alertId, { item: entity }) => {
-          const falsePositiveDetails = entity?.ruleHitMeta?.falsePositiveDetails;
-          return (
-            <>
-              <Id
-                to={addBackUrlToRoute(
-                  makeUrl(`/case-management/case/:caseId/:tab`, {
-                    caseId: entity.caseId,
-                    tab: 'alerts',
-                  }),
-                )}
-              >
-                {alertId}
-              </Id>
-              {falsePositiveDetails &&
-                falsePositiveDetails.isFalsePositive &&
-                falsePositiveEnabled && (
-                  <FalsePositiveTag
-                    caseIds={[entity.caseId!]}
-                    confidence={falsePositiveDetails.confidenceScore}
-                    newCaseStatus={'CLOSED'}
-                    onSaved={reload}
-                    rounded
-                  />
-                )}
-            </>
-          );
-        },
-      },
-    }),
-    helper.simple<'caseId'>({
-      title: 'Case ID',
-      key: 'caseId',
-      type: CASEID,
-    }),
-    helper.simple<'createdTimestamp'>({
-      title: 'Created at',
-      key: 'createdTimestamp',
-      showFilterByDefault: true,
-      sorting: true,
-      type: DATE,
-    }),
-    helper.simple<'age'>({
-      title: 'Alert age',
-      key: 'age',
-      sorting: true,
-    }),
-    helper.simple<'numberOfTransactionsHit'>({
-      title: '#TX',
-      key: 'numberOfTransactionsHit',
-      sorting: true,
-    }),
-    !hideUserColumns &&
-      helper.simple<'caseUserName'>({
-        title: 'User name',
-        key: 'caseUserName',
-      }),
-    helper.simple<'ruleName'>({
-      title: 'Rule name',
-      key: 'ruleName',
-    }),
-    helper.simple<'ruleDescription'>({
-      title: 'Rule description',
-      key: 'ruleDescription',
-    }),
-    helper.simple<'ruleAction'>({
-      title: 'Rule action',
-      key: 'ruleAction',
-      type: RULE_ACTION,
-    }),
-    helper.simple<'ruleNature'>({
-      title: 'Rule nature',
-      key: 'ruleNature',
-      type: RULE_NATURE,
-    }),
-    helper.simple<'alertStatus'>({
-      title: 'Alert status',
-      key: 'alertStatus',
-      filtering: !hideAlertStatusFilters,
-      type: CASE_STATUS<TableAlertItem>({
-        statusesToShow: CASE_STATUSS,
-        reload,
-      }),
-    }),
-    helper.simple<'caseCreatedTimestamp'>({
-      title: 'Case created at',
-      key: 'caseCreatedTimestamp',
-      type: DATE,
-      sorting: true,
-    }),
-    helper.simple<'updatedAt'>({
-      title: 'Last updated',
-      key: 'updatedAt',
-      type: DATE,
-      filtering: true,
-      sorting: true,
-    }),
-    helper.derived({
-      title: 'Assigned to',
-      id: '_assigneeName',
-      sorting: true,
-      defaultWidth: 300,
-      enableResizing: false,
-      value: (item) =>
-        statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
-          ? item.reviewAssignments
-          : item.assignments,
-      type: {
-        ...ASSIGNMENTS,
-        render: (assignments, { item: entity }) => {
-          const otherStatuses = isOnHoldOrInProgress(entity.alertStatus!);
-          return (
-            <AssigneesDropdown
-              assignments={assignments || []}
-              editing={!(statusInReview(entity.alertStatus) || otherStatuses)}
-              onChange={(assignees) => {
-                const assignments: Assignment[] = assignees.map((assignee) => ({
-                  assigneeUserId: assignee,
-                  assignedByUserId: userId,
-                  timestamp: Date.now(),
-                }));
-
-                const alertId = entity?.alertId;
-
-                if (alertId == null) {
-                  message.fatal('Alert ID is null');
-                  return;
-                }
-
-                if (statusEscalated(entity.alertStatus)) {
-                  handleAlertsReviewAssignments({
-                    alertIds: [alertId],
-                    reviewAssignments: assignments,
-                  });
-                } else {
-                  handleAlertsAssignments({
-                    alertIds: [alertId],
-                    assignments,
-                  });
-                }
-              }}
-            />
-          );
-        },
-      },
-    }),
-    helper.simple<'ruleQueueId'>({
-      title: 'Queue',
-      key: 'ruleQueueId',
-      type: {
-        render: (ruleQueueId) => {
-          return <RuleQueueTag queueId={ruleQueueId} />;
-        },
-      },
-    }),
-    helper.display({
-      title: 'Operations',
-      enableResizing: false,
-      defaultWidth: 200,
-      render: (entity) => {
-        if (!entity.alertId || !entity.caseId) {
-          return <></>;
-        }
-
-        const isInReview = isInReviewCases({ [entity.alertId]: entity }, true);
-
-        const canReview = canReviewCases({ [entity.alertId]: entity }, userId);
-        const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
-
-        return (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {entity?.caseId && !statusInReview(entity.alertStatus) && (
-              <AlertsStatusChangeButton
-                caseId={entity.caseId}
-                ids={[entity.alertId!]}
-                status={entity.alertStatus}
-                onSaved={reload}
-                statusTransitions={{
-                  OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
-                  OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
-                  ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
-                  ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
-                }}
-                transactionIds={selectedTxns}
-              />
-            )}
-            {entity?.caseId && isInReview && canReview && entity.alertStatus && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <ApproveSendBackButton
-                  ids={[entity.alertId]}
-                  onReload={reload}
-                  type="ALERT"
-                  previousStatus={previousStatus}
-                  status={entity.alertStatus}
-                  key={entity.alertId}
-                  selectedCaseId={entity.caseId}
-                />
-              </div>
-            )}
-            {handleInvestigateAlert && (
-              <Button
-                type="TETRIARY"
-                onClick={() => {
-                  if (entity.alertId != null) {
-                    handleInvestigateAlert({
-                      alertId: entity.alertId,
-                      caseUserName: entity.caseUserName || '',
-                    });
-                  }
-                }}
-              >
-                Investigate
-              </Button>
-            )}
-          </div>
-        );
-      },
-    }),
-  ]);
-};
-
 interface Props {
   params: AlertTableParams;
   onChangeParams?: (newState: AlertTableParams) => void;
@@ -343,6 +90,7 @@ interface Props {
   escalatedTransactionIds?: string[];
   expandTransactions?: boolean;
   hideAssignedToFilter?: boolean;
+  expandedAlertId?: string;
 }
 
 export default function AlertTable(props: Props) {
@@ -355,6 +103,7 @@ export default function AlertTable(props: Props) {
     hideUserFilters = false,
     expandTransactions = true,
     hideAssignedToFilter,
+    expandedAlertId,
   } = props;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const sarEnabled = useFeatureEnabled('SAR');
@@ -459,31 +208,290 @@ export default function AlertTable(props: Props) {
   );
 
   const icpEnabled = useFeatureEnabled('INVESTIGATIVE_COPILOT');
-  const columns = useMemo(
-    () =>
-      mergedColumns(
-        hideUserFilters,
-        hideAlertStatusFilters,
-        handleAlertAssignments,
-        handleAlertsReviewAssignments,
-        icpEnabled ? setInvestigativeAlert : undefined,
-        user.userId,
-        reloadTable,
-        isFalsePositiveEnabled,
-        selectedTxns,
-      ),
-    [
+  const columns = useMemo(() => {
+    const mergedColumns = (
+      hideUserColumns: boolean,
+      hideAlertStatusFilters: boolean,
+      handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
+      handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
+      handleInvestigateAlert:
+        | ((alertInfo: { alertId: string; caseUserName: string }) => void)
+        | undefined,
+      userId: string,
+      reload: () => void,
+      falsePositiveEnabled: boolean,
+      selectedTxns: {
+        [alertId: string]: string[];
+      },
+    ): TableColumn<TableAlertItem>[] => {
+      const helper = new ColumnHelper<TableAlertItem>();
+      return helper.list([
+        helper.simple<'priority'>({
+          title: '',
+          key: 'priority',
+          type: PRIORITY,
+          disableColumnShuffling: true,
+          defaultWidth: 40,
+          enableResizing: false,
+        }),
+        helper.simple<'alertId'>({
+          title: 'Alert ID',
+          key: 'alertId',
+          icon: <StackLineIcon />,
+          showFilterByDefault: true,
+          filtering: true,
+          type: {
+            render: (alertId, { item: entity }) => {
+              const falsePositiveDetails = entity?.ruleHitMeta?.falsePositiveDetails;
+              if (caseId !== undefined) return <div>{alertId}</div>;
+              return (
+                <>
+                  <Id
+                    to={addBackUrlToRoute(
+                      makeUrl(
+                        `/case-management/case/:caseId/:tab`,
+                        {
+                          caseId: entity.caseId,
+                          tab: 'alerts',
+                        },
+                        {
+                          expandedAlertId: alertId,
+                        },
+                      ),
+                    )}
+                  >
+                    {alertId}
+                  </Id>
+                  {falsePositiveDetails &&
+                    falsePositiveDetails.isFalsePositive &&
+                    falsePositiveEnabled && (
+                      <FalsePositiveTag
+                        caseIds={[entity.caseId!]}
+                        confidence={falsePositiveDetails.confidenceScore}
+                        newCaseStatus={'CLOSED'}
+                        onSaved={reload}
+                        rounded
+                      />
+                    )}
+                </>
+              );
+            },
+          },
+        }),
+        helper.simple<'caseId'>({
+          title: 'Case ID',
+          key: 'caseId',
+          type: CASEID,
+        }),
+        helper.simple<'createdTimestamp'>({
+          title: 'Created at',
+          key: 'createdTimestamp',
+          showFilterByDefault: true,
+          sorting: true,
+          type: DATE,
+        }),
+        helper.simple<'age'>({
+          title: 'Alert age',
+          key: 'age',
+          sorting: true,
+        }),
+        helper.simple<'numberOfTransactionsHit'>({
+          title: '#TX',
+          key: 'numberOfTransactionsHit',
+          sorting: true,
+        }),
+        !hideUserColumns &&
+          helper.simple<'caseUserName'>({
+            title: 'User name',
+            key: 'caseUserName',
+          }),
+        helper.simple<'ruleName'>({
+          title: 'Rule name',
+          key: 'ruleName',
+        }),
+        helper.simple<'ruleDescription'>({
+          title: 'Rule description',
+          key: 'ruleDescription',
+        }),
+        helper.simple<'ruleAction'>({
+          title: 'Rule action',
+          key: 'ruleAction',
+          type: RULE_ACTION,
+        }),
+        helper.simple<'ruleNature'>({
+          title: 'Rule nature',
+          key: 'ruleNature',
+          type: RULE_NATURE,
+        }),
+        helper.simple<'alertStatus'>({
+          title: 'Alert status',
+          key: 'alertStatus',
+          filtering: !hideAlertStatusFilters,
+          type: CASE_STATUS<TableAlertItem>({
+            statusesToShow: CASE_STATUSS,
+            reload,
+          }),
+        }),
+        helper.simple<'caseCreatedTimestamp'>({
+          title: 'Case created at',
+          key: 'caseCreatedTimestamp',
+          type: DATE,
+          sorting: true,
+        }),
+        helper.simple<'updatedAt'>({
+          title: 'Last updated',
+          key: 'updatedAt',
+          type: DATE,
+          filtering: true,
+          sorting: true,
+        }),
+        helper.derived({
+          title: 'Assigned to',
+          id: '_assigneeName',
+          sorting: true,
+          defaultWidth: 300,
+          enableResizing: false,
+          value: (item) =>
+            statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
+              ? item.reviewAssignments
+              : item.assignments,
+          type: {
+            ...ASSIGNMENTS,
+            render: (assignments, { item: entity }) => {
+              const otherStatuses = isOnHoldOrInProgress(entity.alertStatus!);
+              return (
+                <AssigneesDropdown
+                  assignments={assignments || []}
+                  editing={!(statusInReview(entity.alertStatus) || otherStatuses)}
+                  onChange={(assignees) => {
+                    const assignments: Assignment[] = assignees.map((assignee) => ({
+                      assigneeUserId: assignee,
+                      assignedByUserId: userId,
+                      timestamp: Date.now(),
+                    }));
+
+                    const alertId = entity?.alertId;
+
+                    if (alertId == null) {
+                      message.fatal('Alert ID is null');
+                      return;
+                    }
+
+                    if (statusEscalated(entity.alertStatus)) {
+                      handleAlertsReviewAssignments({
+                        alertIds: [alertId],
+                        reviewAssignments: assignments,
+                      });
+                    } else {
+                      handleAlertsAssignments({
+                        alertIds: [alertId],
+                        assignments,
+                      });
+                    }
+                  }}
+                />
+              );
+            },
+          },
+        }),
+        helper.simple<'ruleQueueId'>({
+          title: 'Queue',
+          key: 'ruleQueueId',
+          type: {
+            render: (ruleQueueId) => {
+              return <RuleQueueTag queueId={ruleQueueId} />;
+            },
+          },
+        }),
+        helper.display({
+          title: 'Operations',
+          enableResizing: false,
+          defaultWidth: 200,
+          render: (entity) => {
+            if (!entity.alertId || !entity.caseId) {
+              return <></>;
+            }
+
+            const isInReview = isInReviewCases({ [entity.alertId]: entity }, true);
+
+            const canReview = canReviewCases({ [entity.alertId]: entity }, userId);
+            const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
+
+            return (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {entity?.caseId && !statusInReview(entity.alertStatus) && (
+                  <AlertsStatusChangeButton
+                    caseId={entity.caseId}
+                    ids={[entity.alertId!]}
+                    status={entity.alertStatus}
+                    onSaved={reload}
+                    statusTransitions={{
+                      OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                      OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                      ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                      ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                    }}
+                    transactionIds={selectedTxns}
+                  />
+                )}
+                {entity?.caseId && isInReview && canReview && entity.alertStatus && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <ApproveSendBackButton
+                      ids={[entity.alertId]}
+                      onReload={reload}
+                      type="ALERT"
+                      previousStatus={previousStatus}
+                      status={entity.alertStatus}
+                      key={entity.alertId}
+                      selectedCaseId={entity.caseId}
+                    />
+                  </div>
+                )}
+                {handleInvestigateAlert && (
+                  <Button
+                    type="TETRIARY"
+                    onClick={() => {
+                      if (entity.alertId != null) {
+                        handleInvestigateAlert({
+                          alertId: entity.alertId,
+                          caseUserName: entity.caseUserName || '',
+                        });
+                      }
+                    }}
+                  >
+                    Investigate
+                  </Button>
+                )}
+              </div>
+            );
+          },
+        }),
+      ]);
+    };
+    const col = mergedColumns(
       hideUserFilters,
       hideAlertStatusFilters,
       handleAlertAssignments,
       handleAlertsReviewAssignments,
+      icpEnabled ? setInvestigativeAlert : undefined,
       user.userId,
       reloadTable,
       isFalsePositiveEnabled,
       selectedTxns,
-      icpEnabled,
-    ],
-  );
+    );
+    return col;
+  }, [
+    hideUserFilters,
+    hideAlertStatusFilters,
+    handleAlertAssignments,
+    handleAlertsReviewAssignments,
+    user.userId,
+    reloadTable,
+    isFalsePositiveEnabled,
+    selectedTxns,
+    icpEnabled,
+    caseId,
+  ]);
   useEffect(() => {
     const data = getOr(queryResults.data, { items: [] });
     if (data.total === 1) {
@@ -754,6 +762,7 @@ export default function AlertTable(props: Props) {
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>
+        expandedRowId={expandedAlertId}
         tableId={isEmbedded ? 'alerts-list-embedded' : 'alerts-list'}
         rowKey={'alertId'}
         fitHeight={isEmbedded ? 500 : true}

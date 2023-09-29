@@ -7,10 +7,11 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 interface Props {
   caseItem: Case;
   title: string;
+  expandedAlertId?: string;
 }
 
 export default function AlertsCard(props: Props) {
-  const { caseItem } = props;
+  const { caseItem, expandedAlertId } = props;
 
   const caseId = caseItem.caseId as string;
   const [params, setParams] = useState<AlertTableParams>({
@@ -24,6 +25,7 @@ export default function AlertsCard(props: Props) {
     <Card.Root>
       <Card.Section>
         <AlertTable
+          expandedAlertId={expandedAlertId}
           caseId={caseId}
           params={params}
           onChangeParams={setParams}

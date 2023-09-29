@@ -349,10 +349,16 @@ export const ALERT_ID: ColumnDataType<string, Case> = {
         {entity?.caseId && (
           <Id
             to={addBackUrlToRoute(
-              makeUrl(`/case-management/case/:caseId/:tab`, {
-                caseId: entity.caseId,
-                tab: 'alerts',
-              }),
+              makeUrl(
+                `/case-management/case/:caseId/:tab`,
+                {
+                  caseId: entity.caseId,
+                  tab: 'alerts',
+                },
+                {
+                  expandedAlertId: alertId,
+                },
+              ),
             )}
             testName="alert-id"
           >
