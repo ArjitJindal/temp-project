@@ -310,7 +310,7 @@ describe('Webhook delivery', () => {
       await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
     })
 
-    test('Stop retrying after 96 hours', async () => {
+    test('Stop retrying after 24 hours (96 hours for production)', async () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookUrl = await startTestWebhookServer(
         {
@@ -345,11 +345,11 @@ describe('Webhook delivery', () => {
         deliveryTaskId: deliveryTask._id,
         webhookId: ACTIVE_WEBHOOK_ID,
         webhookUrl: webhookUrl,
-        requestStartedAt: dayjs().subtract(4, 'day').valueOf(),
-        requestFinishedAt: dayjs().subtract(4, 'day').valueOf(),
+        requestStartedAt: dayjs().subtract(1, 'day').valueOf(),
+        requestFinishedAt: dayjs().subtract(1, 'day').valueOf(),
         success: false,
         event: 'USER_STATE_UPDATED',
-        eventCreatedAt: dayjs().subtract(4, 'day').valueOf(),
+        eventCreatedAt: dayjs().subtract(1, 'day').valueOf(),
         request: {},
       })
       await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
@@ -357,7 +357,7 @@ describe('Webhook delivery', () => {
         (await webhookRepository.getWebhook(ACTIVE_WEBHOOK_ID))?.enabled
       ).toBe(false)
     })
-    test('Keep retrying before 96 hours', async () => {
+    test('Keep retrying before 24 hours (96 hours for production)', async () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookUrl = await startTestWebhookServer(
         {
@@ -392,11 +392,11 @@ describe('Webhook delivery', () => {
         deliveryTaskId: deliveryTask._id,
         webhookId: ACTIVE_WEBHOOK_ID,
         webhookUrl: webhookUrl,
-        requestStartedAt: dayjs().subtract(3, 'day').valueOf(),
-        requestFinishedAt: dayjs().subtract(3, 'day').valueOf(),
+        requestStartedAt: dayjs().subtract(12, 'hour').valueOf(),
+        requestFinishedAt: dayjs().subtract(12, 'hour').valueOf(),
         success: false,
         event: 'USER_STATE_UPDATED',
-        eventCreatedAt: dayjs().subtract(4, 'day').valueOf(),
+        eventCreatedAt: dayjs().subtract(12, 'hour').valueOf(),
         request: {},
       })
       await expect(

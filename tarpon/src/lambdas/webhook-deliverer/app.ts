@@ -27,10 +27,12 @@ import {
   updateLogMetadata,
 } from '@/core/utils/context'
 import dayjs from '@/utils/dayjs'
+import { envIs } from '@/utils/env'
 
 export class ClientServerError extends Error {}
 
-const MAX_RETRY_HOURS = 4 * 24
+// For non-production env, we only retry up to 1 day
+const MAX_RETRY_HOURS = envIs('prod') ? 4 * 24 : 24
 
 function getNotExpiredSecrets(keys: SecretsManagerWebhookSecrets): string[] {
   return Object.keys(keys).filter(
@@ -128,9 +130,9 @@ async function deliverWebhookEvent(
       ? response.status >= 200 && response.status < 300
       : false
     if (success) {
-      logger.info(
-        `Successfully delivered event ${webhookDeliveryTask.event} to ${webhook.webhookUrl}`
-      )
+      logger.info('Successfully delivered event')
+    } else {
+      logger.warn(`Failed to deliver event`)
     }
     await webhookDeliveryRepository.addWebhookDeliveryAttempt({
       _id: uuidv4(),

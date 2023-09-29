@@ -91,11 +91,15 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         lambdaName,
         Duration.seconds(LAMBDAS[lambdaName].expectedMaxSeconds)
       )
-      createLambdaErrorPercentageAlarm(
-        this,
-        this.betterUptimeCloudWatchTopic,
-        lambdaName
-      )
+      // Disable error alarm for now as there's no way to differentiate system error or client side error
+      // (we should still get alerted in Sentry for system error)
+      if (lambdaName !== StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME) {
+        createLambdaErrorPercentageAlarm(
+          this,
+          this.betterUptimeCloudWatchTopic,
+          lambdaName
+        )
+      }
       createLambdaThrottlingAlarm(
         this,
         this.betterUptimeCloudWatchTopic,
