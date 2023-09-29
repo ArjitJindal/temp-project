@@ -4,9 +4,9 @@ import { Auth0TenantConfig } from './type'
 export const Auth0ProdRegtankTenantConfig: Auth0TenantConfig = {
   tenantName: 'regtank-flagright',
   region: 'eu',
-  customDomain: 'login.qc-live.console.regtank.com',
+  customDomain: 'login.transaction.console.regtank.com',
   consoleApplicationName: 'Regtank Console',
-  consoleUrl: 'https://qc-live.console.regtank.com',
+  consoleUrl: 'https://transaction.console.regtank.com',
   allowedOrigins: [WHITE_LABEL_ORIGINS.regtank.prod],
   allowedCallbackUrls: [WHITE_LABEL_ORIGINS.regtank.prod],
   branding: {

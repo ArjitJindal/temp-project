@@ -85,9 +85,9 @@ const WHITELABEL_BRANDING = {
     auth0Domain: 'login.qc-staging.console.regtank.com',
     auth0ClientId: 'Nz37vE2YAvMRPAIsqLVXcfACo216CMXE',
   },
-  'qc-live.console.regtank.com': {
+  'transaction.console.regtank.com': {
     ...REGTANK_BRANDING,
-    auth0Domain: 'login.qc-live.console.regtank.com',
+    auth0Domain: 'login.transaction.console.regtank.com',
     auth0ClientId: 'nVwFjIjOIyrzQfLtkUXo7sdxODGuHfvc',
   },
 };

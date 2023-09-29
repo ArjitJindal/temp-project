@@ -6,7 +6,7 @@ export const WHITE_LABEL_ORIGINS = {
   },
   regtank: {
     sandbox: 'https://qc-staging.console.regtank.com',
-    prod: 'https://qc-live.console.regtank.com',
+    prod: 'https://transaction.console.regtank.com',
   },
 }
 export const ALLOWED_ORIGINS = {
