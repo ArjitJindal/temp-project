@@ -56,6 +56,7 @@ import {
   getSingleCaseStatusPreviousForInReview,
   isInReviewCases,
   isOnHoldOrInProgress,
+  statusInProgressOrOnHold,
   statusEscalated,
   statusInReview,
 } from '@/utils/case-utils';
@@ -421,6 +422,11 @@ export default function CaseTable(props: Props) {
           const selectedCaseStatuses = new Set(
             Object.values(selectedItems).map((item) => item.caseStatus),
           );
+
+          if ([...selectedCaseStatuses].find((status) => statusInProgressOrOnHold(status))) {
+            return;
+          }
+
           return (
             <AssignToButton
               isDisabled={isDisabled}
@@ -452,17 +458,17 @@ export default function CaseTable(props: Props) {
             />
           );
         },
-        ({ selectedIds, params, isDisabled, selectedItems }) => {
+        ({ selectedIds, isDisabled, selectedItems }) => {
           if (_.isEmpty(selectedItems)) return;
 
           const isInReview = isInReviewCases(selectedItems);
-
+          const caseStatus = selectedItems[selectedIds[0]].caseStatus;
           return (
             !isInReview && (
               <CasesStatusChangeButton
                 caseIds={selectedIds}
                 onSaved={reloadTable}
-                caseStatus={params.caseStatus}
+                caseStatus={caseStatus}
                 isDisabled={isDisabled}
                 statusTransitions={{
                   OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },

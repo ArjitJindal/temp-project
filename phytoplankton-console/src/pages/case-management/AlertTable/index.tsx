@@ -53,6 +53,7 @@ import {
   getSingleCaseStatusPreviousForInReview,
   isInReviewCases,
   isOnHoldOrInProgress,
+  statusInProgressOrOnHold,
   statusEscalated,
   statusInReview,
 } from '@/utils/case-utils';
@@ -561,6 +562,10 @@ export default function AlertTable(props: Props) {
         Object.values(selectedItems).map((item) => item.alertStatus),
       );
 
+      if ([...selectedAlertStatuses].find((status) => statusInProgressOrOnHold(status))) {
+        return;
+      }
+
       if (selectedAlertStatuses.has('ESCALATED') && selectedAlertStatuses.size === 1) {
         return (
           <AssignToButton
@@ -616,6 +621,7 @@ export default function AlertTable(props: Props) {
       if (statusEscalated(alertStatus) && selectedTransactionIds.length) {
         return;
       }
+      const status = selectedItems[selectedIds[0]]?.alertStatus;
 
       const isReviewAlerts = isInReviewCases(selectedItems, true);
 
@@ -631,7 +637,7 @@ export default function AlertTable(props: Props) {
               reloadTable();
               setSelectedTxns({});
             }}
-            status={alertStatus}
+            status={status}
             caseId={caseId}
             statusTransitions={{
               OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
@@ -690,13 +696,12 @@ export default function AlertTable(props: Props) {
       if (selectedTransactionIds.length) {
         return;
       }
-      const status = params.alertStatus ?? statusChangeButtonValue;
       return statusChangeButtonValue ? (
         <AlertsStatusChangeButton
           ids={selectedIds}
           transactionIds={selectedTxns}
           onSaved={reloadTable}
-          status={status}
+          status={statusChangeButtonValue}
           caseId={params.caseId}
           isDisabled={isDisabled}
           statusTransitions={{

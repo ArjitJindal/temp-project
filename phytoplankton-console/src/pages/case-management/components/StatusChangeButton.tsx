@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { compact } from 'lodash';
 import { AlertStatus, CaseStatus, FileInfo, Permission } from '@/apis';
 import Button, { ButtonSize } from '@/components/library/Button';
 import { CaseReasons } from '@/apis/models/CaseReasons';
@@ -104,10 +105,21 @@ export default function StatusChangeButton(props: Props) {
     className,
   } = props;
   const [isModalVisible, setModalVisible] = useState(false);
+
   const overridenStatus = status ? statusTransitions?.[status] : null;
-  const newStatus = overridenStatus?.status ?? getNextStatus(status);
-  const requiredPermissions: Permission[] = ['case-management:case-overview:write'];
-  if (status === 'CLOSED') requiredPermissions.push('case-management:case-reopen:write');
+
+  const newStatus = useMemo(
+    () => overridenStatus?.status ?? getNextStatus(status),
+    [overridenStatus, status],
+  );
+
+  const requiredPermissions: Permission[] = useMemo(() => {
+    return compact([
+      'case-management:case-overview:write',
+      status === 'CLOSED' ? 'case-management:case-reopen:write' : undefined,
+    ]);
+  }, [status]);
+
   return (
     <>
       {ids.length > 0 && (

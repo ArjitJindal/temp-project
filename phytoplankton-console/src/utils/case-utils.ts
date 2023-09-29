@@ -24,12 +24,7 @@ export const findLastStatusForInReview = (statusChanges: CaseStatusChange[]): Ca
       (statusChange) =>
         !(
           statusInReview(statusChange.caseStatus) ||
-          [
-            'OPEN_IN_PROGRESS',
-            'OPEN_ON_HOLD',
-            'ESCALATED_IN_PROGRESS',
-            'ESCALATED_ON_HOLD',
-          ].includes(statusChange.caseStatus ?? '')
+          statusInProgressOrOnHold(statusChange.caseStatus)
         ),
     )
     .sort((a, b) => {
@@ -37,6 +32,10 @@ export const findLastStatusForInReview = (statusChanges: CaseStatusChange[]): Ca
     })[0];
 
   return latestStatus?.caseStatus ?? 'OPEN';
+};
+
+export const statusInProgressOrOnHold = (status: CaseStatus | undefined): boolean => {
+  return (status?.endsWith('IN_PROGRESS') || status?.endsWith('ON_HOLD')) ?? false;
 };
 
 export const canReviewCases = (
