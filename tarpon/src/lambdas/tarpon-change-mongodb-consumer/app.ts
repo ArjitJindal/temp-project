@@ -1,7 +1,7 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
-import { flatten, pick } from 'lodash'
+import { flatten, isEmpty, pick } from 'lodash'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -40,6 +40,8 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { INTERNAL_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { sendBatchJobCommand } from '@/services/batch-job'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { UserService } from '@/services/users'
 
 const sqs = new SQS({
   region: process.env.AWS_REGION,
@@ -171,10 +173,43 @@ async function transactionHandler(
   const transactionInMongo = await transactionsRepo.addTransactionToMongo(
     transaction
   )
-
   logger.info(`Starting Case Creation`)
   const timestampBeforeCasesCreation = Date.now()
-  const cases = await caseCreationService.handleTransaction(transactionInMongo)
+
+  const ruleInstances = await ruleInstancesRepo.getRuleInstancesByIds(
+    transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
+  )
+
+  const transactionUsers = await caseCreationService.getTransactionUsers(
+    transaction
+  )
+
+  const cases = await caseCreationService.handleTransaction(
+    transactionInMongo,
+    ruleInstances as RuleInstance[],
+    transactionUsers
+  )
+
+  const ruleWithAdvancedOptions = ruleInstances.filter(
+    (ruleInstance) =>
+      !isEmpty(ruleInstance.triggersOnHit) ||
+      !isEmpty(ruleInstance.riskLevelsTriggersOnHit)
+  )
+
+  if (
+    ruleWithAdvancedOptions?.length &&
+    (await tenantHasFeature(tenantId, 'DEV_RULES_ADVANCED_OPTIONS'))
+  ) {
+    const userService = new UserService(tenantId, { dynamoDb, mongoDb })
+
+    await userService.handleTransactionUserStatusUpdateTrigger(
+      transaction,
+      ruleInstances as RuleInstance[],
+      transactionUsers?.ORIGIN ?? null,
+      transactionUsers?.DESTINATION ?? null
+    )
+  }
+
   logger.info(`Case Creation Completed`)
   if (await tenantHasFeature(tenantId, 'RISK_SCORING')) {
     logger.info(`Calculating ARS & DRS`)

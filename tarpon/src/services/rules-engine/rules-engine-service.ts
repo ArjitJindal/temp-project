@@ -506,10 +506,7 @@ export class RulesEngineService {
     )
 
     updateStatsSegment?.close()
-    return {
-      ...executedAndHitRulesResult,
-      transactionAggregationTasks,
-    }
+    return { ...executedAndHitRulesResult, transactionAggregationTasks }
   }
 
   private async verifyRuleIdempotent(options: {

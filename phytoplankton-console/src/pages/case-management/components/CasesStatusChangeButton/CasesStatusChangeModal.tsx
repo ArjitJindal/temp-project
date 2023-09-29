@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { OTHER_REASON } from '@/components/Narrative';
 import { statusEscalated } from '@/utils/case-utils';
+import { UserStatusTriggersAdvancedOptionsForm } from '@/components/UserStatusTriggersAdvancedOptionsForm';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {}
 
@@ -37,6 +38,8 @@ export default function CasesStatusChangeModal(props: Props) {
         updates.reason = formValues.reasons;
         updates.files = formValues.files;
         updates.comment = formValues.comment ?? undefined;
+        updates.kycStatusDetails = formValues?.kycStatusDetails;
+        updates.userStateDetails = formValues?.userStateDetails;
       }
 
       try {
@@ -115,6 +118,11 @@ export default function CasesStatusChangeModal(props: Props) {
       key={String(props.isVisible)}
       entityName="CASE"
       updateMutation={updateMutation}
+      advancedOptions={
+        props.newStatus === 'CLOSED' ? (
+          <UserStatusTriggersAdvancedOptionsForm type="CASE" />
+        ) : undefined
+      }
     />
   );
 }

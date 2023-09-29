@@ -58,7 +58,12 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { CursorPaginationResponse } from '@/utils/pagination'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { ManualCasePatchRequest } from '@/@types/openapi-internal/ManualCasePatchRequest'
+import { background } from '@/utils/background'
+import { UserService } from '@/services/users'
+import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { Priority } from '@/@types/openapi-internal/Priority'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-internal/Business'
 
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
@@ -444,6 +449,55 @@ export class CaseService extends CaseAlertsCommonService {
     await sendWebhookTasks<CaseClosedDetails>(this.tenantId, webhookTasks)
   }
 
+  private async updateKycAndUserState(
+    cases: Case[],
+    updates: CaseStatusUpdate
+  ) {
+    const usersData: { caseId: string; user: User | Business }[] = []
+    cases.forEach((c) => {
+      const user = c?.caseUsers?.origin ?? c?.caseUsers?.destination
+      if (user && user.userId) {
+        usersData.push({ caseId: c.caseId!, user: user as User | Business })
+      }
+    })
+
+    const userService = new UserService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
+
+    const updateObject: UserUpdateRequest = {
+      ...(updates.kycStatusDetails?.status && {
+        kycStatusDetails: {
+          status: updates.kycStatusDetails.status,
+          reason: updates.kycStatusDetails.reason,
+          description: updates.kycStatusDetails.description,
+        },
+      }),
+      ...(updates.userStateDetails?.state && {
+        userStateDetails: {
+          state: updates.userStateDetails.state,
+          reason: updates.userStateDetails.reason,
+          description: updates.userStateDetails.description,
+        },
+      }),
+    }
+
+    if (isEmpty(updateObject)) {
+      return
+    }
+
+    if (!isEmpty(usersData)) {
+      await Promise.all(
+        usersData.map(({ user, caseId }) => {
+          return userService.updateUser(user, updateObject, {
+            caseId,
+          })
+        })
+      )
+    }
+  }
+
   public async updateCasesStatus(
     caseIds: string[],
     updates: CaseStatusUpdate,
@@ -464,6 +518,8 @@ export class CaseService extends CaseAlertsCommonService {
     const statusChange = this.getStatusChange(updates, options?.bySystem)
 
     const cases = await this.caseRepository.getCasesByIds(caseIds)
+
+    await background(this.updateKycAndUserState(cases, updates))
 
     const accountsService = new AccountsService(
       { auth0Domain: process.env.AUTH0_DOMAIN as string },

@@ -5277,6 +5277,77 @@ components:
           type: object
       required:
         - schema
+    StatusDetails:
+      title: StatusDetails
+      type: object
+      properties:
+        description:
+          type: string
+    UserDirections:
+      title: UserDirections
+      type: string
+      enum:
+        - ALL
+        - ORIGIN
+        - DESTINATION
+    UserStateDetailsInternal:
+      title: UserStateDetailsInternal
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserStateDetails
+        - $ref: '#/components/schemas/StatusDetails'
+      required:
+        - reason
+    KYCStatusDetailsInternal:
+      title: KYCStatusDetailsInternal
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatusDetails
+        - $ref: '#/components/schemas/StatusDetails'
+      required:
+        - reason
+    TriggersOnHit:
+      title: TriggersOnHit
+      type: object
+      properties:
+        usersToCheck:
+          $ref: '#/components/schemas/UserDirections'
+        userStateDetails:
+          $ref: '#/components/schemas/UserStateDetailsInternal'
+        kycStatusDetails:
+          $ref: '#/components/schemas/KYCStatusDetailsInternal'
+      required:
+        - usersToCheck
+    RiskLevelsTriggersOnHit:
+      title: RiskLevelsTriggersOnHit
+      type: object
+      properties:
+        VERY_HIGH:
+          $ref: '#/components/schemas/TriggersOnHit'
+        HIGH:
+          $ref: '#/components/schemas/TriggersOnHit'
+        MEDIUM:
+          $ref: '#/components/schemas/TriggersOnHit'
+        LOW:
+          $ref: '#/components/schemas/TriggersOnHit'
+        VERY_LOW:
+          $ref: '#/components/schemas/TriggersOnHit'
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
+    KYCAndUserStatusChangeReason:
+      title: KYCAndUserStatusChangeReason
+      type: string
+      enum:
+        - Fake document
+        - Blurry document
+        - Suspected fraud
+        - Adverse media
+        - PEP
+        - Sanctions hit
+        - Risky profile
+        - Other
     RuleInstance:
       title: RuleInstance
       type: object
@@ -5306,6 +5377,10 @@ components:
           $ref: '#/components/schemas/RiskLevelRuleParameters'
         riskLevelActions:
           $ref: '#/components/schemas/RiskLevelRuleActions'
+        triggersOnHit:
+          $ref: '#/components/schemas/TriggersOnHit'
+        riskLevelsTriggersOnHit:
+          $ref: '#/components/schemas/RiskLevelsTriggersOnHit'
         nature:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
         labels:
@@ -6310,9 +6385,9 @@ components:
       type: object
       properties:
         userStateDetails:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/UserStateDetails
+          $ref: '#/components/schemas/UserStateDetailsInternal'
         kycStatusDetails:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatusDetails
+          $ref: '#/components/schemas/KYCStatusDetailsInternal'
         transactionLimits:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionLimits
         comment:
@@ -6893,6 +6968,7 @@ components:
         - RULES_ENGINE_V2
         - QA
         - AI_RISK_SCORE
+        - DEV_RULES_ADVANCED_OPTIONS
       description: ''
     ManagedRoleName:
       type: string
@@ -7488,6 +7564,10 @@ components:
           type: array
           items:
             type: string
+        userStateDetails:
+          $ref: '#/components/schemas/UserStateDetailsInternal'
+        kycStatusDetails:
+          $ref: '#/components/schemas/KYCStatusDetailsInternal'
       required:
         - reason
       x-examples: {}

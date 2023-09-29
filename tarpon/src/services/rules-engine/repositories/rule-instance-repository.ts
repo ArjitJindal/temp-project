@@ -46,6 +46,8 @@ function toRuleInstance(item: any): RuleInstance {
     labels: item.labels,
     alertCreationInterval: item.alertCreationInterval,
     checklistTemplateId: item.checklistTemplateId,
+    triggersOnHit: item.triggersOnHit,
+    riskLevelsTriggersOnHit: item.riskLevelsTriggersOnHit,
     queueId: item.queueId,
   }
 }

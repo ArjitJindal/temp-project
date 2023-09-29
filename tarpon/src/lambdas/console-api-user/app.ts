@@ -59,14 +59,8 @@ export const businessUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerPostBusinessUsersUserId(async (ctx, request) => {
-      await userAuditLogService.handleAuditLogForUserUpdate(
-        request.UserUpdateRequest,
-        request.userId
-      )
-      return await userService.updateBusinessUser(
-        request.userId,
-        request.UserUpdateRequest
-      )
+      const user = await userService.getUser(request.userId)
+      return await userService.updateUser(user, request.UserUpdateRequest)
     })
 
     handlers.registerGetUsersUniques(async (ctx, request) =>
@@ -115,14 +109,8 @@ export const consumerUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerPostConsumerUsersUserId(async (ctx, request) => {
-      await userAuditLogService.handleAuditLogForUserUpdate(
-        request.UserUpdateRequest,
-        request.userId
-      )
-      return await userService.updateConsumerUser(
-        request.userId,
-        request.UserUpdateRequest
-      )
+      const user = await userService.getUser(request.userId)
+      return await userService.updateUser(user, request.UserUpdateRequest)
     })
 
     return await handlers.handle(event)

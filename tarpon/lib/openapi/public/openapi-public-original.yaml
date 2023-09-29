@@ -4078,6 +4078,8 @@ components:
           type: string
         status:
           $ref: '#/components/schemas/KYCStatus'
+        userId:
+          type: string
     UserStateDetails:
       title: UserStateDetails
       type: object
@@ -4217,6 +4219,7 @@ components:
             - $ref: '#/components/schemas/CaseClosedDetails'
             - $ref: '#/components/schemas/AlertClosedDetails'
             - $ref: '#/components/schemas/TransactionStatusDetails'
+            - $ref: '#/components/schemas/KYCStatusDetails'
         createdTimestamp:
           type: number
           minimum: 1262300400000
@@ -4235,6 +4238,7 @@ components:
         - USER_STATE_UPDATED
         - ALERT_CLOSED
         - TRANSACTION_STATUS_UPDATED
+        - KYC_STATUS_UPDATED
     ListType:
       type: string
       enum:

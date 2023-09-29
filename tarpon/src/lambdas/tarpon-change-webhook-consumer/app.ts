@@ -10,6 +10,7 @@ import {
   sendWebhookTasks,
   ThinWebhookDeliveryTask,
 } from '@/services/webhook/utils'
+import { KYCStatusDetails } from '@/@types/openapi-public/KYCStatusDetails'
 import { UserOptions } from '@/services/users/repositories/user-repository'
 
 type GenericUser = (Business | User) & UserOptions
@@ -19,7 +20,9 @@ async function userHandler(
   oldUser: GenericUser | undefined,
   newUser: GenericUser | undefined
 ) {
-  const webhookTasks: ThinWebhookDeliveryTask<UserStateDetails>[] = []
+  const webhookTasks: ThinWebhookDeliveryTask<
+    UserStateDetails | KYCStatusDetails
+  >[] = []
   const diffResult = diff(oldUser || {}, newUser || {}) as Partial<GenericUser>
 
   if (
@@ -32,12 +35,32 @@ async function userHandler(
       event: 'USER_STATE_UPDATED',
       payload: {
         userId: newUser.userId,
-        ...newUser.userStateDetails,
+        state: newUser.userStateDetails.state,
+        reason: newUser.userStateDetails.reason,
       },
     })
   }
+
+  if (
+    oldUser &&
+    diffResult?.kycStatusDetails?.status &&
+    newUser?.kycStatusDetails?.status
+  ) {
+    webhookTasks.push({
+      event: 'KYC_STATUS_UPDATED',
+      payload: {
+        userId: newUser.userId,
+        reason: newUser.kycStatusDetails.reason,
+        status: newUser.kycStatusDetails.status,
+      },
+    })
+  }
+
   if (webhookTasks?.length) {
-    await sendWebhookTasks<UserStateDetails>(tenantId, webhookTasks)
+    await sendWebhookTasks<UserStateDetails | KYCStatusDetails>(
+      tenantId,
+      webhookTasks
+    )
   }
 }
 

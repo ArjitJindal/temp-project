@@ -9,8 +9,11 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { omit } from 'lodash'
+import { isEmpty, isEqual, pick } from 'lodash'
+import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
+import { FLAGRIGHT_SYSTEM_USER } from '../rules-engine/repositories/alerts-repository'
+import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -35,9 +38,37 @@ import { getContext } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserViewConfig } from '@/lambdas/console-api-user/app'
-import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
 import { Account } from '@/@types/openapi-internal/Account'
+import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
+import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
+import { UserState } from '@/@types/openapi-internal/UserState'
+import { UserStateDetailsInternal } from '@/@types/openapi-internal/UserStateDetailsInternal'
+import { KYCStatusDetailsInternal } from '@/@types/openapi-internal/KYCStatusDetailsInternal'
+import { TriggersOnHit } from '@/@types/openapi-internal/TriggersOnHit'
+import { UserAuditLogService } from '@/lambdas/console-api-user/services/user-audit-log-service'
+import { background } from '@/utils/background'
+
+const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
+  MANUAL_REVIEW: 0,
+  FAILED: 1,
+  IN_PROGRESS: 2,
+  SUCCESSFUL: 3,
+  NOT_STARTED: 4,
+}
+
+const USER_STATE_DETAILS_PRIORITY: Record<UserState, number> = {
+  UNACCEPTABLE: 0,
+  BLOCKED: 1,
+  TERMINATED: 2,
+  SUSPENDED: 3,
+  DORMANT: 4,
+  ACTIVE: 5,
+  CREATED: 6,
+}
+
 @traceable
 export class UserService {
   userRepository: UserRepository
@@ -45,15 +76,16 @@ export class UserService {
   s3: S3
   documentBucketName: string
   tmpBucketName: string
+
   constructor(
     tenantId: string,
     connections: {
       dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     },
-    s3: S3,
-    tmpBucketName: string,
-    documentBucketName: string
+    s3?: S3,
+    tmpBucketName?: string,
+    documentBucketName?: string
   ) {
     this.userRepository = new UserRepository(tenantId, {
       mongoDb: connections.mongoDb,
@@ -63,9 +95,9 @@ export class UserService {
       mongoDb: connections.mongoDb,
       dynamoDb: connections.dynamoDb,
     })
-    this.s3 = s3
-    this.tmpBucketName = tmpBucketName
-    this.documentBucketName = documentBucketName
+    this.s3 = s3 as S3
+    this.tmpBucketName = tmpBucketName as string
+    this.documentBucketName = documentBucketName as string
   }
 
   public static async fromEvent(
@@ -103,6 +135,354 @@ export class UserService {
       ...result,
       data,
     }
+  }
+
+  private getTriggersOnHit(
+    ruleInstance: RuleInstance,
+    user: InternalUser | null,
+    direction: 'ORIGIN' | 'DESTINATION',
+    isPulseEnabled: boolean
+  ): TriggersOnHit | undefined {
+    const triggersOnHit =
+      isPulseEnabled && !isEmpty(ruleInstance.riskLevelsTriggersOnHit)
+        ? ruleInstance.riskLevelsTriggersOnHit[
+            user?.riskLevel ?? DEFAULT_RISK_LEVEL
+          ]
+        : ruleInstance.triggersOnHit
+
+    if (!triggersOnHit?.usersToCheck) {
+      return
+    }
+
+    if (!['ALL', direction].includes(triggersOnHit.usersToCheck)) {
+      return
+    }
+
+    return triggersOnHit
+  }
+
+  private getUserEventData(
+    user: User | Business,
+    userStateDetails: UserStateDetailsInternal | undefined,
+    kycStatusDetails: KYCStatusDetailsInternal | undefined
+  ): UserUpdateRequest {
+    const newKycStatus = kycStatusDetails?.status
+    const oldKycStatus = user?.kycStatusDetails?.status
+    const oldUserState = user?.userStateDetails?.state
+    const newUserState = userStateDetails?.state
+
+    const updateableData: UserUpdateRequest = {}
+
+    if (newKycStatus && newKycStatus !== oldKycStatus) {
+      updateableData.kycStatusDetails = {
+        status: newKycStatus,
+        reason: kycStatusDetails?.reason ?? '',
+        description: kycStatusDetails?.description ?? '',
+      }
+    }
+
+    if (newUserState && newUserState !== oldUserState) {
+      updateableData.userStateDetails = {
+        state: newUserState,
+        reason: userStateDetails?.reason ?? '',
+        description: userStateDetails?.description ?? '',
+      }
+    }
+
+    return updateableData
+  }
+
+  private processUserAndKycDetails(
+    triggersOnHit: TriggersOnHit,
+    userStateDetails: UserStateDetailsInternal | undefined,
+    kycStatusDetails: KYCStatusDetailsInternal | undefined,
+    userStateRID: RuleInstance | undefined,
+    kycStatusRID: RuleInstance | undefined,
+    ruleInstance: RuleInstance
+  ): [
+    UserStateDetailsInternal | undefined,
+    KYCStatusDetailsInternal | undefined,
+    RuleInstance | undefined,
+    RuleInstance | undefined
+  ] {
+    const newUserState = this.getUserStateDetails(
+      triggersOnHit,
+      userStateDetails
+    )
+
+    if (!isEqual(newUserState, userStateDetails)) {
+      userStateRID = ruleInstance
+    }
+
+    userStateDetails = newUserState
+
+    const newKycStatus = this.getKycStatusDetails(
+      triggersOnHit,
+      kycStatusDetails
+    )
+
+    if (!isEqual(newKycStatus, kycStatusDetails)) {
+      kycStatusRID = ruleInstance
+    }
+
+    kycStatusDetails = newKycStatus
+
+    return [userStateDetails, kycStatusDetails, userStateRID, kycStatusRID]
+  }
+
+  private async saveUserEvents(
+    user: User | Business | null,
+    userStateDetails: UserStateDetailsInternal | undefined,
+    kycStatusDetails: KYCStatusDetailsInternal | undefined,
+    userRID?: RuleInstance,
+    kycStatusRID?: RuleInstance
+  ) {
+    if (!user) return
+    const data = this.getUserEventData(user, userStateDetails, kycStatusDetails)
+    if (!isEmpty(data)) {
+      await this.updateUser(user, data, {
+        bySystem: true,
+        kycRuleInstance: kycStatusRID,
+        userStateRuleInstance: userRID,
+      })
+    }
+  }
+
+  public async handleTransactionUserStatusUpdateTrigger(
+    transaction: TransactionWithRulesResult,
+    ruleInstancesHit: RuleInstance[],
+    originUser: InternalUser | null,
+    destinationUser: InternalUser | null
+  ) {
+    let originUserStateDetails: UserStateDetailsInternal | undefined
+    let destinationUserStateDetails: UserStateDetailsInternal | undefined
+    let originKycStatusDetails: KYCStatusDetailsInternal | undefined
+    let destinationKycStatusDetails: KYCStatusDetailsInternal | undefined
+
+    const isRiskLevelsEnabled = await tenantHasFeature(
+      this.userRepository.tenantId,
+      'RISK_LEVELS'
+    )
+
+    let originKycStatusRID: RuleInstance | undefined
+    let destinationKycStatusRID: RuleInstance | undefined
+    let originUserStateRID: RuleInstance | undefined
+    let destinationUserStateRID: RuleInstance | undefined
+
+    ruleInstancesHit.forEach((ruleInstance) => {
+      const hitRulesDetails = transaction?.hitRules.find(
+        (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
+      )
+
+      if (!hitRulesDetails) {
+        return
+      }
+
+      const triggersOnHitOrigin = this.getTriggersOnHit(
+        ruleInstance,
+        originUser,
+        'ORIGIN',
+        isRiskLevelsEnabled
+      )
+
+      const triggersOnHitDestination = this.getTriggersOnHit(
+        ruleInstance,
+        destinationUser,
+        'DESTINATION',
+        isRiskLevelsEnabled
+      )
+
+      if (
+        triggersOnHitOrigin &&
+        hitRulesDetails.ruleHitMeta?.hitDirections?.includes('ORIGIN')
+      ) {
+        ;[
+          originUserStateDetails,
+          originKycStatusDetails,
+          originUserStateRID,
+          originKycStatusRID,
+        ] = this.processUserAndKycDetails(
+          triggersOnHitOrigin,
+          originUserStateDetails,
+          originKycStatusDetails,
+          originUserStateRID,
+          originKycStatusRID,
+          ruleInstance
+        )
+      }
+
+      if (
+        triggersOnHitDestination &&
+        hitRulesDetails.ruleHitMeta?.hitDirections?.includes('DESTINATION')
+      ) {
+        ;[
+          destinationUserStateDetails,
+          destinationKycStatusDetails,
+          destinationUserStateRID,
+          destinationKycStatusRID,
+        ] = this.processUserAndKycDetails(
+          triggersOnHitDestination,
+          destinationUserStateDetails,
+          destinationKycStatusDetails,
+          destinationUserStateRID,
+          destinationKycStatusRID,
+          ruleInstance
+        )
+      }
+    })
+
+    const promises: Promise<any>[] = [
+      this.saveUserEvents(
+        originUser,
+        originUserStateDetails,
+        originKycStatusDetails,
+        originUserStateRID,
+        originKycStatusRID
+      ),
+      this.saveUserEvents(
+        destinationUser,
+        destinationUserStateDetails,
+        destinationKycStatusDetails,
+        destinationUserStateRID,
+        destinationKycStatusRID
+      ),
+    ]
+
+    await Promise.all(promises)
+  }
+
+  private getUserStateDetails(
+    triggersOnHit: TriggersOnHit,
+    userStateDetails: UserStateDetailsInternal | undefined
+  ): UserStateDetailsInternal | undefined {
+    const triggerUserState = triggersOnHit?.userStateDetails?.state
+
+    if (triggerUserState) {
+      if (!userStateDetails || !userStateDetails.state) {
+        return (userStateDetails = {
+          state: triggerUserState,
+          reason: triggersOnHit?.userStateDetails?.reason ?? '',
+          description: triggersOnHit?.userStateDetails?.description ?? '',
+        })
+      } else {
+        const currentPriority =
+          USER_STATE_DETAILS_PRIORITY[userStateDetails.state]
+        const newPriority = USER_STATE_DETAILS_PRIORITY[triggerUserState]
+
+        if (newPriority < currentPriority) {
+          return (userStateDetails = {
+            state: triggerUserState,
+            reason: triggersOnHit?.userStateDetails?.reason ?? '',
+            description: triggersOnHit?.userStateDetails?.description ?? '',
+          })
+        }
+      }
+    }
+
+    return userStateDetails
+  }
+
+  private getKycStatusDetails(
+    triggersOnHit: TriggersOnHit,
+    kycStatusDetails: KYCStatusDetailsInternal | undefined
+  ): KYCStatusDetailsInternal | undefined {
+    const triggerKycStatus = triggersOnHit?.kycStatusDetails?.status
+
+    if (triggerKycStatus) {
+      if (!kycStatusDetails || !kycStatusDetails.status) {
+        return (kycStatusDetails = {
+          status: triggerKycStatus,
+          reason: triggersOnHit?.kycStatusDetails?.reason ?? '',
+          description: triggersOnHit?.kycStatusDetails?.description ?? '',
+        })
+      } else {
+        const currentPriority =
+          KYC_STATUS_DETAILS_PRIORITY[kycStatusDetails.status]
+        const newPriority = KYC_STATUS_DETAILS_PRIORITY[triggerKycStatus]
+
+        if (newPriority < currentPriority) {
+          return (kycStatusDetails = {
+            status: triggerKycStatus,
+            reason: triggersOnHit?.kycStatusDetails?.reason ?? '',
+            description: triggersOnHit?.kycStatusDetails?.description ?? '',
+          })
+        }
+      }
+    }
+
+    return kycStatusDetails
+  }
+
+  public getKycAndUserUpdateComment(data: {
+    kycRuleInstance?: RuleInstance
+    userStateRuleInstance?: RuleInstance
+    kycStatusDetails?: KYCStatusDetailsInternal
+    userStateDetails?: UserStateDetailsInternal
+    caseId?: string
+    comment?: string
+  }): string | undefined {
+    const {
+      kycRuleInstance,
+      userStateRuleInstance,
+      kycStatusDetails,
+      userStateDetails,
+      caseId,
+    } = data
+
+    const kycStatus = kycStatusDetails?.status
+    const userState = userStateDetails?.state
+
+    let reasonsText = [
+      userStateDetails?.reason &&
+        `User state update reason: ${userStateDetails.reason}`,
+      userStateDetails?.description &&
+        `User state update description: ${userStateDetails.description}`,
+      kycStatusDetails?.reason &&
+        `KYC status update reason: ${kycStatusDetails.reason}`,
+      kycStatusDetails?.description &&
+        `KYC status update description: ${kycStatusDetails.description}`,
+      data.comment && `Comment: ${data.comment}`,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    const caseIdText = caseId ? ` by case ${caseId}` : ``
+
+    if (reasonsText) {
+      reasonsText = '\n' + reasonsText
+    }
+
+    const kycRuleText = kycRuleInstance
+      ? `Rule ${kycRuleInstance.ruleId}(${kycRuleInstance.id}) is hit and KYC status updated to ${kycStatus}`
+      : ''
+
+    const userStateRuleText = userStateRuleInstance
+      ? `Rule ${userStateRuleInstance.ruleId}(${userStateRuleInstance.id}) is hit and User status updated to ${userState}`
+      : ''
+
+    if (kycRuleInstance && userStateRuleInstance && kycStatus && userState) {
+      return `${kycRuleText} and ${userStateRuleText}${reasonsText}`
+    }
+
+    if (kycRuleInstance && kycStatus) {
+      return `${kycRuleText}${reasonsText}`
+    }
+
+    if (userStateRuleInstance && userState) {
+      return `${userStateRuleText}${reasonsText}`
+    }
+
+    if (!kycRuleInstance && !userStateRuleInstance) {
+      if (kycStatus && userState) {
+        return `KYC status changed to ${kycStatus} and user status changed to ${userState}${caseIdText}${reasonsText}`
+      } else if (kycStatus) {
+        return `KYC status changed to ${kycStatus}${reasonsText}${caseIdText}${reasonsText}`
+      } else if (userState) {
+        return `User status changed to ${userState}${reasonsText}${caseIdText}${reasonsText}`
+      }
+    }
+
+    return
   }
 
   public async getConsumerUsers(
@@ -198,16 +578,29 @@ export class UserService {
     return { ...user, comments: commentsWithUrl } as T
   }
 
-  public async updateConsumerUser(
-    userId: string,
-    updateRequest: UserUpdateRequest
+  public async updateUser(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    options?: {
+      bySystem?: boolean
+      kycRuleInstance?: RuleInstance
+      userStateRuleInstance?: RuleInstance
+      caseId?: string
+    }
   ): Promise<Comment> {
-    const user = await this.userRepository.getConsumerUser(userId)
     if (!user) {
       throw new NotFound('User not found')
     }
-    const updatedUser: User = {
-      ...(mergeObjects(user, omit(updateRequest, ['comment'])) as User),
+
+    const isBusiness = isBusinessUser(user)
+
+    const updatedUser: User | Business = {
+      ...user,
+      ...this.getUserEventData(
+        user,
+        updateRequest.userStateDetails,
+        updateRequest.kycStatusDetails
+      ),
       transactionLimits: updateRequest.transactionLimits
         ? {
             ...user.transactionLimits,
@@ -216,55 +609,59 @@ export class UserService {
           }
         : undefined,
     }
-    await this.userRepository.saveConsumerUser(updatedUser, {
-      isWebhookRequried: true,
-    })
+
+    const userToUpdate = pick(updatedUser, DYNAMO_ONLY_USER_ATTRIBUTES)
+
+    if (isBusiness) {
+      await this.userRepository.saveBusinessUser(userToUpdate as Business, {
+        isWebhookRequried: true,
+      })
+    } else {
+      await this.userRepository.saveConsumerUser(userToUpdate as User, {
+        isWebhookRequried: true,
+      })
+    }
+
     await this.userEventRepository.saveUserEvent(
       {
         timestamp: Date.now(),
-        userId,
+        userId: user.userId,
         reason: updateRequest.userStateDetails?.reason,
         updatedConsumerUserAttributes: updateRequest,
       },
-      'CONSUMER'
+      isBusiness ? 'BUSINESS' : 'CONSUMER'
     )
 
-    return await this.userUpdateComment(updateRequest, userId)
-  }
-
-  public async updateBusinessUser(
-    userId: string,
-    updateRequest: UserUpdateRequest
-  ): Promise<Comment> {
-    const user = await this.userRepository.getBusinessUser(userId)
-    if (!user) {
-      throw new NotFound('User not found')
-    }
-    const updatedUser: Business = {
-      ...(mergeObjects(user, omit(updateRequest, ['comment'])) as Business),
-      transactionLimits: updateRequest.transactionLimits
-        ? {
-            ...user.transactionLimits,
-            paymentMethodLimits:
-              updateRequest.transactionLimits.paymentMethodLimits,
-          }
-        : undefined,
-    }
-    await this.userRepository.saveBusinessUser(updatedUser, {
-      isWebhookRequried: true,
+    const commentBody = this.getKycAndUserUpdateComment({
+      caseId: options?.caseId,
+      kycRuleInstance: options?.kycRuleInstance,
+      kycStatusDetails: updateRequest.kycStatusDetails,
+      userStateDetails: updateRequest.userStateDetails,
+      comment: updateRequest.comment?.body,
+      userStateRuleInstance: options?.userStateRuleInstance,
     })
-    // TODO: FDT-45236. Save business user event
-    await this.userEventRepository.saveUserEvent(
-      {
-        timestamp: Date.now(),
-        userId,
-        reason: updateRequest.userStateDetails?.reason,
-        updatedBusinessUserAttributes: updateRequest,
-      },
-      'BUSINESS'
+    const userAuditLogService = new UserAuditLogService(
+      this.userRepository.tenantId
     )
-    return await this.userUpdateComment(updateRequest, userId)
+
+    await background(
+      userAuditLogService.handleAuditLogForUserUpdate(
+        updateRequest,
+        user.userId
+      )
+    )
+
+    return await this.userRepository.saveUserComment(user.userId, {
+      body: commentBody ?? '',
+      createdAt: Date.now(),
+      userId: options?.bySystem
+        ? FLAGRIGHT_SYSTEM_USER
+        : (getContext()?.user?.id as string),
+      files: updateRequest.comment?.files ?? [],
+      updatedAt: Date.now(),
+    })
   }
+
   public async userUpdateComment(
     updateRequest: UserUpdateRequest,
     userId: string

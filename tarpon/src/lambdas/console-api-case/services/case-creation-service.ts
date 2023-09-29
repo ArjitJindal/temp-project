@@ -23,6 +23,7 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { notNullish } from '@/core/utils/array'
 import { getDefaultTimezone } from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 @traceable
 export class CaseCreationService {
@@ -62,7 +63,7 @@ export class CaseCreationService {
 
   private async getUser(
     userId: string | undefined
-  ): Promise<InternalConsumerUser | InternalBusinessUser | null> {
+  ): Promise<InternalUser | null> {
     if (userId == null) {
       return null
     }
@@ -74,14 +75,9 @@ export class CaseCreationService {
     return user
   }
 
-  private async getTransactionUsers(
+  public async getTransactionUsers(
     transaction: TransactionWithRulesResult
-  ): Promise<
-    Record<
-      RuleHitDirection,
-      InternalConsumerUser | InternalBusinessUser | undefined
-    >
-  > {
+  ): Promise<Record<RuleHitDirection, InternalUser | undefined>> {
     const { originUserId, destinationUserId } = transaction
 
     // If the origin user and the destination user are the same, we can pass undefined for the destination user
@@ -567,17 +563,16 @@ export class CaseCreationService {
     return result
   }
 
-  async handleTransaction(transaction: InternalTransaction): Promise<Case[]> {
+  async handleTransaction(
+    transaction: InternalTransaction,
+    ruleInstances: RuleInstance[],
+    transactionUsers: Record<RuleHitDirection, InternalUser | undefined>
+  ): Promise<Case[]> {
     logger.info(`Handling transaction for case creation`, {
       transactionId: transaction.transactionId,
     })
     const result: Case[] = []
 
-    const transactionUsers = await this.getTransactionUsers(transaction)
-    const ruleInstances =
-      await this.ruleInstanceRepository.getRuleInstancesByIds(
-        transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
-      )
     const casePriority = CaseRepository.getPriority(
       ruleInstances.map((ruleInstance) => ruleInstance.casePriority)
     )

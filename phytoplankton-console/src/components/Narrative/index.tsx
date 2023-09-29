@@ -1,7 +1,8 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { uniqBy } from 'lodash';
+import { ExpandContentButton } from '../library/ExpandContentButton';
 import s from './index.module.less';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Form, { InputProps } from '@/components/library/Form';
 import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { and } from '@/components/library/Form/utils/validation/combinators';
@@ -46,6 +47,7 @@ export type NarrativeFormValues<R> = {
   values: FormValues<R>;
   isValid: boolean;
 };
+
 type NarrativeProps<R> = {
   values: NarrativeFormValues<R>;
   onChange: Dispatch<SetStateAction<NarrativeFormValues<R>>>;
@@ -58,7 +60,9 @@ type NarrativeProps<R> = {
   showErrors: boolean;
   extraFields?: React.ReactNode;
   otherReason?: R;
+  advancedOptions?: React.ReactNode;
 };
+
 export default function Narrative<R extends string>(props: NarrativeProps<R>) {
   const {
     possibleReasons,
@@ -72,6 +76,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
     placeholder,
     showErrors,
     otherReason,
+    advancedOptions,
   } = props;
 
   const [uploadingCount, setUploadingCount] = useState(0);
@@ -135,6 +140,13 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
           {(inputProps) => <TextInput {...inputProps} />}
         </InputField>
       )}
+      <Feature name="DEV_RULES_ADVANCED_OPTIONS">
+        {advancedOptions && (
+          <ExpandContentButton suffixText={'advanced options'}>
+            {advancedOptions}
+          </ExpandContentButton>
+        )}
+      </Feature>
       <div className={s.comment}>
         <InputField<FormValues<R>, 'comment'>
           name={'comment'}

@@ -12,7 +12,7 @@ import {
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { Rule } from '@/@types/openapi-internal/Rule'
+import { Rule, RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { TRANSACTION_RULES } from '@/services/rules-engine/transaction-rules'
@@ -167,6 +167,12 @@ export class RuleService {
 
   async getAllRuleInstances(): Promise<RuleInstance[]> {
     return this.ruleInstanceRepository.getAllRuleInstances()
+  }
+
+  async getActiveRuleInstances(
+    type: RuleTypeEnum
+  ): Promise<ReadonlyArray<RuleInstance>> {
+    return this.ruleInstanceRepository.getActiveRuleInstances(type)
   }
 
   private assertValidRiskLevelParameters(

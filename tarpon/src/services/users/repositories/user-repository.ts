@@ -609,27 +609,21 @@ export class UserRepository {
     return mongoUser as unknown as InternalConsumerUser | null
   }
 
-  public async getMongoUser(
-    userId: string
-  ): Promise<InternalConsumerUser | InternalBusinessUser | null> {
+  public async getMongoUser(userId: string): Promise<InternalUser | null> {
     const db = this.mongoDb.db()
-    const collection = db.collection<
-      InternalConsumerUser | InternalBusinessUser
-    >(USERS_COLLECTION(this.tenantId))
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
     return await collection.findOne({ userId })
   }
 
-  public async getMongoUsersByIds(
-    userIds: string[]
-  ): Promise<(InternalConsumerUser | InternalBusinessUser)[]> {
+  public async getMongoUsersByIds(userIds: string[]): Promise<InternalUser[]> {
     const db = this.mongoDb.db()
-    const collection = db.collection<
-      InternalConsumerUser | InternalBusinessUser
-    >(USERS_COLLECTION(this.tenantId))
-    return (await collection.find({ userId: { $in: userIds } }).toArray()) as (
-      | InternalConsumerUser
-      | InternalBusinessUser
-    )[]
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    return await collection.find({ userId: { $in: userIds } }).toArray()
   }
 
   public getOngoingScreeningUsersCursor(): FindCursor<InternalBusinessUser> {

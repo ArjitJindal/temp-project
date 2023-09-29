@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
+import { pick } from 'lodash'
 import { syncRulesLibrary } from '../../../scripts/migrations/always-run/sync-rules-library'
 import { logger } from '../logger'
 import { init as riskScoresInit } from './data/risk-scores'
@@ -23,6 +23,9 @@ import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { initChecklistTemplate } from '@/core/seed/data/checklists'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { DYNAMO_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,
@@ -61,7 +64,13 @@ export async function seedDynamo(
 
   logger.info('Creating users...')
   for (const user of usersData) {
-    await userRepo.saveUser(omit(user, '_id'), (user as any).type as UserType)
+    const type = user.type as UserType
+    const dynamoUser = pick<UserWithRulesResult | BusinessWithRulesResult>(
+      user,
+      DYNAMO_ONLY_USER_ATTRIBUTES
+    ) as UserWithRulesResult | BusinessWithRulesResult
+
+    await userRepo.saveUser(dynamoUser, type)
   }
   logger.info('Creating lists...')
   for (const list of listsData) {

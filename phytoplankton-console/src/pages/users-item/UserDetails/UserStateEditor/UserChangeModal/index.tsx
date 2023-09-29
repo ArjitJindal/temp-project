@@ -4,7 +4,14 @@ import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef } from '@/components/library/Form';
 import { USER_STATES } from '@/utils/api/users';
-import { FileInfo, InternalConsumerUser, InternalBusinessUser, UserState, Comment } from '@/apis';
+import {
+  FileInfo,
+  InternalConsumerUser,
+  InternalBusinessUser,
+  UserState,
+  Comment,
+  KYCAndUserStatusChangeReason,
+} from '@/apis';
 import FilesInput, { RemoveAllFilesRef } from '@/components/ui/FilesInput';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
@@ -15,6 +22,8 @@ import TextInput from '@/components/library/TextInput';
 import { humanizeConstant } from '@/utils/humanize';
 import TextArea from '@/components/library/TextArea';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
+import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
+import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectParamAPI';
 interface Props {
   isVisible: boolean;
   onClose: () => void;
@@ -22,19 +31,10 @@ interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
   onOkay: (userStatus: UserState, comment: Comment) => void;
 }
-export type Reasons =
-  | 'Fake document'
-  | 'Blurry document'
-  | 'Suspected fraud'
-  | 'Adverse media'
-  | 'PEP'
-  | 'Sanctions hit'
-  | 'Risky profile'
-  | 'Other';
-const StatusChangeReasons: Reasons[] = ['Other'];
+
 interface FormValues {
   userStatus?: UserState | '';
-  reason: Reasons | '';
+  reason: KYCAndUserStatusChangeReason | '';
   otherReason: string | undefined;
   comment: string;
   files: FileInfo[];
@@ -107,7 +107,7 @@ export default function UserChangeModal(props: Props) {
           userStateDetails: newStateDetails,
           comment: commentContent.Comment,
         },
-      };
+      } as DefaultApiPostConsumerUsersUserIdRequest;
       let updatedComment: Comment | undefined;
       if (user.type === 'CONSUMER') {
         updatedComment = await api.postConsumerUsersUserId(params);
@@ -194,10 +194,12 @@ export default function UserChangeModal(props: Props) {
             {(inputProps) => (
               <Select
                 {...inputProps}
-                options={StatusChangeReasons.map((reason: Reasons) => ({
-                  label: reason,
-                  value: reason,
-                }))}
+                options={KYC_AND_USER_STATUS_CHANGE_REASONS.map(
+                  (reason: KYCAndUserStatusChangeReason) => ({
+                    label: reason,
+                    value: reason,
+                  }),
+                )}
                 mode="SINGLE"
               />
             )}

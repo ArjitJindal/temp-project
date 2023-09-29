@@ -42,6 +42,7 @@ import { CaseService } from '@/lambdas/console-api-case/services/case-service'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 
 dynamoDbSetupHook()
 
@@ -99,6 +100,23 @@ const TODAY = '2023-06-09T12:00:00.000Z'
 const TEST_USER_1 = getTestUser({ userId: 'test_user_id_1' })
 const TEST_USER_2 = getTestUser({ userId: 'test_user_id_2' })
 
+const getHitRuleInstances = async (
+  tenantId: string,
+  transaction: TransactionMonitoringResult
+): Promise<RuleInstance[]> => {
+  const dynamoDb = getDynamoDbClient()
+
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+
+  const ruleInstances = await ruleInstanceRepository.getRuleInstancesByIds(
+    transaction.hitRules.map((r) => r.ruleInstanceId)
+  )
+
+  return ruleInstances as RuleInstance[]
+}
+
 describe('Cases (Transaction hit)', () => {
   describe('Env #1', () => {
     const TEST_TENANT_ID = getTestTenantId()
@@ -119,10 +137,15 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).not.toEqual(0)
       const [result] = results
 
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
+      const cases = await caseCreationService.handleTransaction(
+        { ...transaction, ...result },
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionUsers({
+          ...transaction,
+          ...result,
+        })
+      )
+
       expect(cases.length).toEqual(1)
       expect(cases[0].alerts).toBeDefined()
 
@@ -150,10 +173,14 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).not.toEqual(0)
       const [result] = results
 
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
+      const cases = await caseCreationService.handleTransaction(
+        { ...transaction, ...result },
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionUsers({
+          ...transaction,
+          ...result,
+        })
+      )
       expect(cases.length).toEqual(1)
       expect(cases[0].alerts).toBeDefined()
       expectUserCase(cases, {
@@ -311,10 +338,17 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).not.toEqual(0)
       const [result] = results
 
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
+      const cases = await caseCreationService.handleTransaction(
+        {
+          ...transaction,
+          ...result,
+        },
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionUsers({
+          ...transaction,
+          ...result,
+        })
+      )
       expect(cases.length).toEqual(2)
       const case1 = expectUserCase(cases, {
         originUserId: TEST_USER_1.userId,
@@ -351,10 +385,17 @@ describe('Cases (Transaction hit)', () => {
         ])
         expect(results).toHaveLength(1)
         const [result] = results
-        const cases = await caseCreationService.handleTransaction({
-          ...transaction,
-          ...result,
-        })
+        const cases = await caseCreationService.handleTransaction(
+          {
+            ...transaction,
+            ...result,
+          },
+          await getHitRuleInstances(TEST_TENANT_ID, result),
+          await caseCreationService.getTransactionUsers({
+            ...transaction,
+            ...result,
+          })
+        )
         expect(cases).toHaveLength(1)
         firstCase = cases[0]
       }
@@ -371,10 +412,17 @@ describe('Cases (Transaction hit)', () => {
         ])
         expect(results.length).not.toEqual(0)
         const [result] = results
-        const cases = await caseCreationService.handleTransaction({
-          ...transaction,
-          ...result,
-        })
+        const cases = await caseCreationService.handleTransaction(
+          {
+            ...transaction,
+            ...result,
+          },
+          await getHitRuleInstances(TEST_TENANT_ID, result),
+          await caseCreationService.getTransactionUsers({
+            ...transaction,
+            ...result,
+          })
+        )
 
         expect(cases).toHaveLength(1)
         const nextCase = cases[0]
@@ -404,10 +452,18 @@ describe('Cases (Transaction hit)', () => {
         ])
         expect(results.length).not.toEqual(0)
         const [result] = results
-        const cases = await caseCreationService.handleTransaction({
-          ...transaction,
-          ...result,
-        })
+        const cases = await caseCreationService.handleTransaction(
+          {
+            ...transaction,
+            ...result,
+          },
+          await getHitRuleInstances(TEST_TENANT_ID, result),
+          await caseCreationService.getTransactionUsers({
+            ...transaction,
+            ...result,
+          })
+        )
+
         firstCase = cases[0]
       }
 
@@ -423,10 +479,17 @@ describe('Cases (Transaction hit)', () => {
         ])
         expect(results.length).not.toEqual(0)
         const [result] = results
-        const cases = await caseCreationService.handleTransaction({
-          ...transaction,
-          ...result,
-        })
+        const cases = await caseCreationService.handleTransaction(
+          {
+            ...transaction,
+            ...result,
+          },
+          await getHitRuleInstances(TEST_TENANT_ID, result),
+          await caseCreationService.getTransactionUsers({
+            ...transaction,
+            ...result,
+          })
+        )
 
         expect(results.length).toEqual(1)
         const nextCase = cases[0]
@@ -455,10 +518,17 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).not.toEqual(0)
       const [result] = results
 
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
+      const cases = await caseCreationService.handleTransaction(
+        {
+          ...transaction,
+          ...result,
+        },
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionUsers({
+          ...transaction,
+          ...result,
+        })
+      )
       expect(cases.length).toEqual(0)
     })
   })
@@ -482,10 +552,17 @@ describe('Cases (Transaction hit)', () => {
         ])
         expect(results.length).not.toEqual(0)
         const [result] = results
-        const cases = await caseCreationService.handleTransaction({
-          ...transaction,
-          ...result,
-        })
+        const cases = await caseCreationService.handleTransaction(
+          {
+            ...transaction,
+            ...result,
+          },
+          await getHitRuleInstances(TEST_TENANT_ID, result),
+          await caseCreationService.getTransactionUsers({
+            ...transaction,
+            ...result,
+          })
+        )
         if (!expectCase) {
           expect(cases).toHaveLength(0)
         } else {
@@ -538,10 +615,17 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).not.toEqual(0)
       const [result] = results
 
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
+      const cases = await caseCreationService.handleTransaction(
+        {
+          ...transaction,
+          ...result,
+        },
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionUsers({
+          ...transaction,
+          ...result,
+        })
+      )
       expect(cases.length).toEqual(1)
       const userCase = expectUserCase(cases, {
         originUserId: TEST_USER_1.userId,
@@ -571,10 +655,17 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).not.toEqual(0)
       const [result] = results
 
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
+      const cases = await caseCreationService.handleTransaction(
+        {
+          ...transaction,
+          ...result,
+        },
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionUsers({
+          ...transaction,
+          ...result,
+        })
+      )
       expect(cases.length).toEqual(1)
       const userCase = expectUserCase(cases, {
         destinationUserId: TEST_USER_2.userId,
@@ -605,10 +696,17 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).not.toEqual(0)
       const [result] = results
 
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
+      const cases = await caseCreationService.handleTransaction(
+        {
+          ...transaction,
+          ...result,
+        },
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionUsers({
+          ...transaction,
+          ...result,
+        })
+      )
       expect(cases.length).toEqual(1)
       const userCase = expectUserCase(cases, {
         destinationUserId: TEST_USER_2.userId,
@@ -645,14 +743,28 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).toEqual(2)
       results[0].hitRules = [results[0].hitRules[0]]
       results[1].hitRules = [results[1].hitRules[1]]
-      await caseCreationService.handleTransaction({
-        ...transactions[0],
-        ...results[0],
-      })
-      const cases = await caseCreationService.handleTransaction({
-        ...transactions[1],
-        ...results[1],
-      })
+      await caseCreationService.handleTransaction(
+        {
+          ...transactions[0],
+          ...results[0],
+        },
+        await getHitRuleInstances(TEST_TENANT_ID, results[0]),
+        await caseCreationService.getTransactionUsers({
+          ...transactions[0],
+          ...results[0],
+        })
+      )
+      const cases = await caseCreationService.handleTransaction(
+        {
+          ...transactions[1],
+          ...results[1],
+        },
+        await getHitRuleInstances(TEST_TENANT_ID, results[1]),
+        await caseCreationService.getTransactionUsers({
+          ...transactions[1],
+          ...results[1],
+        })
+      )
       expect(cases.length).toEqual(1)
       expect(cases[0].alerts).toHaveLength(2)
       expect(cases[0].alerts).toEqual([
@@ -705,23 +817,38 @@ describe('Cases (Transaction hit)', () => {
       ])
       const [result] = results
 
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...{
-          ...result,
-          hitRules: [result.hitRules[0]],
+      const cases = await caseCreationService.handleTransaction(
+        {
+          ...transaction,
+          ...{
+            ...result,
+            hitRules: [result.hitRules[0]],
+          },
         },
-      })
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionUsers({
+          ...transaction,
+          ...result,
+        })
+      )
+
       expect(cases.length).toEqual(1)
       expect(cases[0]?.caseTransactions).toHaveLength(1)
       expect(cases[0].caseTransactions?.[0]?.hitRules).toEqual([
         result.hitRules[0],
       ])
 
-      const cases2 = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
+      const cases2 = await caseCreationService.handleTransaction(
+        {
+          ...transaction,
+          ...result,
+        },
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionUsers({
+          ...transaction,
+          ...result,
+        })
+      )
       expect(cases2.length).toEqual(1)
       expect(cases2[0].caseId).toBe(cases[0].caseId)
       expect(cases2[0]?.caseTransactions).toHaveLength(1)
@@ -765,10 +892,17 @@ describe('Cases (User hit)', () => {
     })
     const results = await bulkVerifyTransactions(TEST_TENANT_ID, [transaction])
     const [result] = results
-    await caseCreationService.handleTransaction({
-      ...transaction,
-      ...result,
-    })
+    await caseCreationService.handleTransaction(
+      {
+        ...transaction,
+        ...result,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result),
+      await caseCreationService.getTransactionUsers({
+        ...transaction,
+        ...result,
+      })
+    )
 
     const userResults = await bulkVerifyUsers(TEST_TENANT_ID, [TEST_USER_1])
     const internalUser = {
@@ -804,10 +938,17 @@ describe('Env #1', () => {
     expect(results.length).not.toEqual(0)
     const [result] = results
 
-    const cases = await caseCreationService.handleTransaction({
-      ...transaction,
-      ...result,
-    })
+    const cases = await caseCreationService.handleTransaction(
+      {
+        ...transaction,
+        ...result,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result),
+      await caseCreationService.getTransactionUsers({
+        ...transaction,
+        ...result,
+      })
+    )
     expect(cases.length).toEqual(1)
   })
 })
@@ -829,10 +970,17 @@ describe('Env #2', () => {
     expect(results.length).not.toEqual(0)
     const [result] = results
 
-    const cases = await caseCreationService.handleTransaction({
-      ...transaction,
-      ...result,
-    })
+    const cases = await caseCreationService.handleTransaction(
+      {
+        ...transaction,
+        ...result,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result),
+      await caseCreationService.getTransactionUsers({
+        ...transaction,
+        ...result,
+      })
+    )
     expect(cases.length).toEqual(0)
   })
 })
@@ -853,10 +1001,17 @@ describe('Env #3', () => {
     expect(results.length).not.toEqual(0)
     const [result] = results
 
-    const cases = await caseCreationService.handleTransaction({
-      ...transaction,
-      ...result,
-    })
+    const cases = await caseCreationService.handleTransaction(
+      {
+        ...transaction,
+        ...result,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result),
+      await caseCreationService.getTransactionUsers({
+        ...transaction,
+        ...result,
+      })
+    )
     expect(cases.length).toEqual(1)
     const caseItem = expectUserCase(cases, {
       originUserId: TEST_USER_1.userId,
@@ -1134,10 +1289,17 @@ describe('Test delayed publishing', () => {
           expect(results.length).not.toEqual(0)
           const [result] = results
 
-          const cases = await caseCreationService.handleTransaction({
-            ...transaction,
-            ...result,
-          })
+          const cases = await caseCreationService.handleTransaction(
+            {
+              ...transaction,
+              ...result,
+            },
+            await getHitRuleInstances(TEST_TENANT_ID, result),
+            await caseCreationService.getTransactionUsers({
+              ...transaction,
+              ...result,
+            })
+          )
           expect(cases.length).toEqual(2)
         }
       )
@@ -1438,10 +1600,17 @@ async function createCases(
   expect(results.length).not.toEqual(0)
   const [result] = results
 
-  const cases = await caseCreationService.handleTransaction({
-    ...transaction,
-    ...result,
-  })
+  const cases = await caseCreationService.handleTransaction(
+    {
+      ...transaction,
+      ...result,
+    },
+    await getHitRuleInstances(tenantId, result),
+    await caseCreationService.getTransactionUsers({
+      ...transaction,
+      ...result,
+    })
+  )
   return cases
 }
 

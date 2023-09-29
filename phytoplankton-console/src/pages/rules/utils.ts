@@ -132,10 +132,20 @@ export function ruleInstanceToFormValues(
                   LOW: ruleInstance.action,
                   VERY_LOW: ruleInstance.action,
                 }),
+              riskLevelsTriggersOnHit:
+                ruleInstance.riskLevelsTriggersOnHit ??
+                (ruleInstance.triggersOnHit && {
+                  VERY_HIGH: ruleInstance.triggersOnHit,
+                  HIGH: ruleInstance.triggersOnHit,
+                  MEDIUM: ruleInstance.triggersOnHit,
+                  LOW: ruleInstance.triggersOnHit,
+                  VERY_LOW: ruleInstance.triggersOnHit,
+                }),
             }
           : {
               ruleParameters: ruleInstance.parameters,
               ruleAction: ruleInstance.action,
+              triggersOnHit: ruleInstance.triggersOnHit,
             },
       }
     : undefined;
@@ -147,7 +157,14 @@ export function formValuesToRuleInstance(
   isRiskLevelsEnabled: boolean,
 ): RuleInstance {
   const { basicDetailsStep, standardFiltersStep, ruleParametersStep } = formValues;
-  const { ruleAction, ruleParameters, riskLevelParameters, riskLevelActions } = ruleParametersStep;
+  const {
+    ruleAction,
+    ruleParameters,
+    riskLevelParameters,
+    riskLevelActions,
+    riskLevelsTriggersOnHit,
+    triggersOnHit,
+  } = ruleParametersStep;
 
   return {
     ...initialRuleInstance,
@@ -196,10 +213,20 @@ export function formValuesToRuleInstance(
                 VERY_LOW: ruleAction,
               }
             : undefined,
+          riskLevelsTriggersOnHit: riskLevelsTriggersOnHit
+            ? {
+                VERY_HIGH: removeEmpty(riskLevelsTriggersOnHit['VERY_HIGH']),
+                HIGH: removeEmpty(riskLevelsTriggersOnHit['HIGH']),
+                MEDIUM: removeEmpty(riskLevelsTriggersOnHit['MEDIUM']),
+                LOW: removeEmpty(riskLevelsTriggersOnHit['LOW']),
+                VERY_LOW: removeEmpty(riskLevelsTriggersOnHit['VERY_LOW']),
+              }
+            : undefined,
         }
       : {
           action: ruleAction ?? initialRuleInstance.action,
           parameters: removeEmpty(ruleParameters),
+          triggersOnHit: removeEmpty(triggersOnHit),
         }),
   };
 }

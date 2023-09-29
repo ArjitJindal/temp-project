@@ -95,7 +95,7 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = isQaEnv()
 
-// TODO make this equal to !isQaEnv() before merge
+// TODO make this equal to !isQaEnv before merge
 const deployKinesisConsumer = !isQaEnv()
 
 export class CdkTarponStack extends cdk.Stack {

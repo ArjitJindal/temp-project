@@ -3,7 +3,16 @@ import { useMutation } from '@tanstack/react-query';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef } from '@/components/library/Form';
-import { KYCStatus, FileInfo, InternalConsumerUser, InternalBusinessUser, Comment } from '@/apis';
+import {
+  KYCStatus,
+  FileInfo,
+  InternalConsumerUser,
+  InternalBusinessUser,
+  Comment,
+  KYCAndUserStatusChangeReason,
+  UserUpdateRequest,
+  KYCStatusDetailsInternal,
+} from '@/apis';
 import { KYC_STATUSES } from '@/utils/api/users';
 import FilesInput, { RemoveAllFilesRef } from '@/components/ui/FilesInput';
 import { useApi } from '@/api';
@@ -15,6 +24,7 @@ import TextInput from '@/components/library/TextInput';
 import { humanizeConstant } from '@/utils/humanize';
 import TextArea from '@/components/library/TextArea';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
+import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
 interface Props {
   isVisible: boolean;
   onClose: () => void;
@@ -22,29 +32,10 @@ interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
   onOkay: (kycStatus: KYCStatus | '', comment: Comment) => void;
 }
-type Reasons =
-  | 'Fake document'
-  | 'Blurry document'
-  | 'Suspected fraud'
-  | 'Adverse media'
-  | 'PEP'
-  | 'Sanctions hit'
-  | 'Risky profile'
-  | 'Other';
 
-const InitialReasonsObject: Reasons[] = [
-  'Fake document',
-  'Blurry document',
-  'Suspected fraud',
-  'Adverse media',
-  'PEP',
-  'Sanctions hit',
-  'Risky profile',
-  'Other',
-];
 interface FormValues {
   kycStatus: KYCStatus | '';
-  reason: Reasons | '';
+  reason: KYCAndUserStatusChangeReason | '';
   otherReason: string | undefined;
   comment: string;
   files: FileInfo[];
@@ -66,12 +57,14 @@ export default function KYCChangeModal(props: Props) {
     values: DEFAULT_INITIAL_VALUES,
     isValid: false,
   });
-  const [presentKycStatus, setpresentKycStatus] = useState<string>('');
-  const [StatusChangeReasons, setStatusChangeReasons] = useState<Reasons[]>(InitialReasonsObject);
   const uploadRef = useRef<RemoveAllFilesRef>(null);
   const isOtherReason = useMemo(() => {
     return formState.values.reason === 'Other';
   }, [formState.values.reason]);
+  const [presentKycStatus, setpresentKycStatus] = useState<string>('');
+  const [statusChangeReasons, setStatusChangeReasons] = useState<KYCAndUserStatusChangeReason[]>(
+    KYC_AND_USER_STATUS_CHANGE_REASONS,
+  );
 
   useEffect(() => {
     setFormState((prevState) => ({
@@ -89,14 +82,13 @@ export default function KYCChangeModal(props: Props) {
     }));
     uploadRef.current?.removeAllFiles();
   }, []);
-  const api = useApi();
-
   useEffect(() => {
     if (presentKycStatus === 'SUCCESSFUL') setStatusChangeReasons(['Other']);
     else {
-      setStatusChangeReasons(InitialReasonsObject);
+      setStatusChangeReasons(KYC_AND_USER_STATUS_CHANGE_REASONS);
     }
   }, [presentKycStatus]);
+  const api = useApi();
 
   let messageLoading: CloseMessage | undefined;
   const mutation = useMutation(
@@ -116,18 +108,22 @@ export default function KYCChangeModal(props: Props) {
           files: files,
         },
       };
-      const params = {
-        userId: user.userId,
-        UserUpdateRequest: {
-          kycStatusDetails: newStateDetails,
-          comment: commentContent.Comment,
-        },
-      };
+
       let updatedComment: Comment | undefined;
+      const payload: UserUpdateRequest = {
+        kycStatusDetails: newStateDetails as KYCStatusDetailsInternal,
+        comment: commentContent.Comment,
+      };
       if (user.type === 'CONSUMER') {
-        updatedComment = await api.postConsumerUsersUserId(params);
+        updatedComment = await api.postConsumerUsersUserId({
+          userId: user.userId,
+          UserUpdateRequest: payload,
+        });
       } else {
-        updatedComment = await api.postBusinessUsersUserId(params);
+        updatedComment = await api.postBusinessUsersUserId({
+          userId: user.userId,
+          UserUpdateRequest: payload,
+        });
       }
       return { kycStatus, updatedComment };
     },
@@ -214,7 +210,7 @@ export default function KYCChangeModal(props: Props) {
             {(inputProps) => (
               <Select
                 {...inputProps}
-                options={StatusChangeReasons.map((reason: Reasons) => ({
+                options={statusChangeReasons.map((reason: KYCAndUserStatusChangeReason) => ({
                   label: reason,
                   value: reason,
                 }))}

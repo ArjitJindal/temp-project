@@ -1,11 +1,24 @@
-import React from 'react';
 import { capitalize, toLower } from 'lodash';
+import { useMemo } from 'react';
 import s from './style.module.less';
-import { RiskLevel, RiskLevelRuleActions, RiskLevelRuleParameters, Rule, RuleAction } from '@/apis';
+import { AdvancedOptions } from './AdvancedOptions';
+import {
+  RiskLevelRuleActions,
+  RiskLevelRuleParameters,
+  RiskLevelsTriggersOnHit,
+  Rule,
+  RuleAction,
+  TriggersOnHit,
+} from '@/apis';
+
 import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
 import StepHeader from '@/pages/rules/RuleConfigurationDrawer/StepHeader';
 import { RISK_LEVELS } from '@/utils/risk-levels';
-import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  Feature,
+  getRiskLevelLabel,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import RuleActionSelector from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/RuleActionSelector';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import NestedForm from '@/components/library/Form/NestedForm';
@@ -19,6 +32,8 @@ export interface FormValues {
   ruleAction?: RuleAction;
   riskLevelParameters?: RiskLevelRuleParameters;
   riskLevelActions?: RiskLevelRuleActions;
+  triggersOnHit?: TriggersOnHit;
+  riskLevelsTriggersOnHit?: RiskLevelsTriggersOnHit;
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -65,6 +80,9 @@ function RuleSpecificFilters(props: Props) {
         >
           {(inputProps) => <RuleActionSelector {...inputProps} />}
         </InputField>
+        <Feature name="DEV_RULES_ADVANCED_OPTIONS">
+          <AdvancedOptions />
+        </Feature>
       </PropertyListLayout>
     </>
   );
@@ -78,76 +96,102 @@ function RiskBasedThresholds(props: Props) {
     'riskLevelParameters',
   );
   const riskLevelActionsField = useFieldState<FormValues, 'riskLevelActions'>('riskLevelActions');
-  const PropertyListLayoutComponent = (riskLevel: RiskLevel) => {
-    return (
-      <PropertyListLayout>
-        <NestedForm<FormValues> name={'riskLevelParameters'}>
-          <NestedForm<FormValues['riskLevelParameters']> name={riskLevel}>
-            <JsonSchemaEditor parametersSchema={rule.parametersSchema} />
-          </NestedForm>
-        </NestedForm>
-        <NestedForm<FormValues> name={'riskLevelActions'}>
-          <InputField<any>
-            name={riskLevel}
-            label={'Rule actions'}
-            description={`Select the action to perform if this rule is hit for users of ${toLower(
-              getRiskLevelLabel(riskLevel, settings),
-            )} risk level`}
-          >
-            {(inputProps) => <RuleActionSelector {...inputProps} />}
-          </InputField>
-        </NestedForm>
-        <ApplyRiskLevels
-          defaultInitialValues={defaultInitialValues.riskLevelParameters}
-          currentRiskLevel={riskLevel}
-          formValues={formState.values}
-          onConfirm={(riskLevels) => {
-            const currentRiskLevelParams = riskLevelParametersField?.value?.[riskLevel];
-            const currentRiskLevelActions = riskLevelActionsField?.value?.[riskLevel];
-            let newParams: RiskLevelRuleParameters | undefined = undefined;
-            let newActions: RiskLevelRuleActions | undefined = undefined;
-            if (currentRiskLevelParams && riskLevelParametersField.value) {
-              newParams = riskLevels.reduce<RiskLevelRuleParameters>(
-                (acc, riskLevel) => ({
-                  ...acc,
-                  [riskLevel]: currentRiskLevelParams,
-                }),
-                riskLevelParametersField.value,
-              );
-            }
-            if (currentRiskLevelActions && riskLevelActionsField.value) {
-              newActions = riskLevels.reduce<RiskLevelRuleActions>(
-                (acc, riskLevel) => ({
-                  ...acc,
-                  [riskLevel]: currentRiskLevelActions,
-                }),
-                riskLevelActionsField.value,
-              );
-            }
+  const riskLevelsTriggersOnHitField = useFieldState<FormValues, 'riskLevelsTriggersOnHit'>(
+    'riskLevelsTriggersOnHit',
+  );
 
-            formState.setValues({
-              ...formState.values,
-              ...(newParams && { riskLevelParameters: newParams }),
-              ...(newActions && { riskLevelActions: newActions }),
-            });
-          }}
-        />
-      </PropertyListLayout>
-    );
-  };
+  const tabItems: TabItem[] = useMemo(() => {
+    return RISK_LEVELS.map((riskLevel) => {
+      const tabItem: TabItem = {
+        tab: (
+          <div className={s.riskLevelTabLabel}>
+            {capitalize(getRiskLevelLabel(riskLevel, settings))}
+          </div>
+        ),
+        key: riskLevel,
+        children: (
+          <PropertyListLayout>
+            <NestedForm<FormValues> name={'riskLevelParameters'}>
+              <NestedForm<FormValues['riskLevelParameters']> name={riskLevel}>
+                <JsonSchemaEditor parametersSchema={rule.parametersSchema} />
+              </NestedForm>
+            </NestedForm>
+            <NestedForm<FormValues> name={'riskLevelActions'}>
+              <InputField<any>
+                name={riskLevel}
+                label={'Rule actions'}
+                description={`Select the action to perform if this rule is hit for users of ${toLower(
+                  getRiskLevelLabel(riskLevel, settings),
+                )} risk level`}
+              >
+                {(inputProps) => <RuleActionSelector {...inputProps} />}
+              </InputField>
+            </NestedForm>
+            <ApplyRiskLevels
+              defaultInitialValues={defaultInitialValues.riskLevelParameters}
+              currentRiskLevel={riskLevel}
+              formValues={formState.values}
+              onConfirm={(riskLevels) => {
+                const currentRiskLevelParams = riskLevelParametersField?.value?.[riskLevel];
+                const currentRiskLevelActions = riskLevelActionsField?.value?.[riskLevel];
+                const currentRiskLevelTriggersOnHit =
+                  riskLevelsTriggersOnHitField?.value?.[riskLevel];
+                let newParams: RiskLevelRuleParameters | undefined = undefined;
+                let newActions: RiskLevelRuleActions | undefined = undefined;
+                if (currentRiskLevelParams && riskLevelParametersField.value) {
+                  newParams = riskLevels.reduce<RiskLevelRuleParameters>(
+                    (acc, riskLevel) => ({
+                      ...acc,
+                      [riskLevel]: currentRiskLevelParams,
+                    }),
+                    riskLevelParametersField.value,
+                  );
+                }
+                if (currentRiskLevelActions && riskLevelActionsField.value) {
+                  newActions = riskLevels.reduce<RiskLevelRuleActions>(
+                    (acc, riskLevel) => ({
+                      ...acc,
+                      [riskLevel]: currentRiskLevelActions,
+                    }),
+                    riskLevelActionsField.value,
+                  );
+                }
+                if (currentRiskLevelTriggersOnHit && riskLevelsTriggersOnHitField.value) {
+                  const newTriggersOnHit = riskLevels.reduce<RiskLevelsTriggersOnHit>(
+                    (acc, riskLevel) => ({
+                      ...acc,
+                      [riskLevel]: currentRiskLevelTriggersOnHit,
+                    }),
+                    riskLevelsTriggersOnHitField.value,
+                  );
+                  formState.setValues({
+                    ...formState.values,
+                    riskLevelsTriggersOnHit: newTriggersOnHit,
+                  });
+                }
 
-  const tabItems: TabItem[] = RISK_LEVELS.map((riskLevel) => {
-    const tabItem: TabItem = {
-      tab: (
-        <div className={s.riskLevelTabLabel}>
-          {capitalize(getRiskLevelLabel(riskLevel, settings))}
-        </div>
-      ),
-      key: riskLevel,
-      children: PropertyListLayoutComponent(riskLevel),
-    };
-    return tabItem;
-  });
+                formState.setValues({
+                  ...formState.values,
+                  ...(newParams && { riskLevelParameters: newParams }),
+                  ...(newActions && { riskLevelActions: newActions }),
+                  ...(newParams && { riskLevelsTriggersOnHit: newParams }),
+                });
+              }}
+            />
+          </PropertyListLayout>
+        ),
+      };
+      return tabItem;
+    });
+  }, [
+    riskLevelParametersField,
+    riskLevelActionsField,
+    riskLevelsTriggersOnHitField,
+    formState,
+    rule.parametersSchema,
+    settings,
+    defaultInitialValues.riskLevelParameters,
+  ]);
 
   return (
     <>

@@ -16,3 +16,7 @@ export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   internalUserAttributes,
   uniq(businessUserAttributes.concat(consumerUserAttributes))
 )
+
+export const DYNAMO_ONLY_USER_ATTRIBUTES = businessUserAttributes.concat(
+  consumerUserAttributes
+)

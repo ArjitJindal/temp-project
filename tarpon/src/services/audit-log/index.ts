@@ -38,6 +38,10 @@ export async function publishAuditLog(
       return
     }
 
+    if (envIs('test')) {
+      return
+    }
+
     await snsClient.send(
       new PublishCommand({
         TopicArn: process.env.AUDITLOG_TOPIC_ARN as string,

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
 import { statusToOperationName } from './StatusChangeButton';
-import { CaseStatus, FileInfo } from '@/apis';
+import { CaseStatus, FileInfo, KYCStatusDetailsInternal, UserStateDetailsInternal } from '@/apis';
 import { CaseReasons } from '@/apis/models/CaseReasons';
 import Modal from '@/components/library/Modal';
 import Checkbox from '@/components/library/Checkbox';
@@ -25,6 +25,8 @@ export interface FormValues {
   comment: string | undefined;
   files: FileInfo[];
   closeRelatedCase?: boolean;
+  kycStatusDetails?: KYCStatusDetailsInternal;
+  userStateDetails?: UserStateDetailsInternal;
 }
 
 export interface Props {
@@ -41,6 +43,7 @@ export interface Props {
   updateMutation: UseMutationResult<unknown, unknown, FormValues>;
   displayCloseRelatedCases?: boolean;
   skipReasonsModal?: boolean;
+  advancedOptions?: React.ReactNode;
 }
 
 const DEFAULT_INITIAL_VALUES: FormValues = {
@@ -65,6 +68,7 @@ export default function StatusChangeModal(props: Props) {
     newStatusActionLabel,
     displayCloseRelatedCases,
     skipReasonsModal = false,
+    advancedOptions,
   } = props;
   const initialValues: FormValues = useDeepEqualMemo(
     () => ({
@@ -82,6 +86,7 @@ export default function StatusChangeModal(props: Props) {
 
   const updateRes = getMutationAsyncResource(updateMutation);
   const isFinishedSuccessfully = useFinishedSuccessfully(updateRes);
+
   useEffect(() => {
     if (isFinishedSuccessfully) {
       onClose();
@@ -89,20 +94,25 @@ export default function StatusChangeModal(props: Props) {
     }
   }, [isFinishedSuccessfully, initialValues, onSaved, onClose]);
 
+  const modalTitle = useMemo(() => {
+    return `${newStatusActionLabel ?? statusToOperationName(newStatus)} ${pluralize(
+      entityName.toLowerCase(),
+      entityIds.length,
+      true,
+    )}`;
+  }, [newStatusActionLabel, newStatus, entityName, entityIds]);
+
   const possibleReasons: CaseReasons[] = [
     ...(statusEscalated(newStatus) ? ESCALATION_REASONS : CLOSING_REASONS),
     ...COMMON_REASONS,
   ];
-  const modalTitle = `${newStatusActionLabel ?? statusToOperationName(newStatus)} ${pluralize(
-    entityName.toLowerCase(),
-    entityIds.length,
-    true,
-  )}`;
 
-  const alertMessage =
-    newStatusActionLabel === 'Send back'
+  const alertMessage = useMemo(() => {
+    return newStatusActionLabel === 'Send back'
       ? 'Please note that a case/alert will be reassigned to a previous assignee if available or else it will be assigned to the account that escalated the case/alert.'
       : undefined;
+  }, [newStatusActionLabel]);
+
   const [formState, setFormState] = useState<{ values: FormValues; isValid: boolean }>({
     values: initialValues,
     isValid: false,
@@ -154,6 +164,7 @@ export default function StatusChangeModal(props: Props) {
           onSubmit={() => {
             setAwaitingConfirmation(true);
           }}
+          advancedOptions={advancedOptions}
         />
       </Modal>
       <Modal
