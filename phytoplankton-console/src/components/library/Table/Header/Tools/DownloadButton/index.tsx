@@ -45,7 +45,6 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
       const result: CsvRow[] = [];
 
       const columnsToExport = prepareColumns(columns);
-
       result.push(
         columnsToExport.map((adjustedColumn) =>
           csvValue(typeof adjustedColumn.title === 'string' ? adjustedColumn.title : '-'),
@@ -232,8 +231,7 @@ function prepareColumns<T extends object>(
       result.push(...prepareColumns(column.children, `${title} / `));
     } else if (
       (isSimpleColumn(column) || isDerivedColumn(column)) &&
-      column.exporting !== false &&
-      column.hideInTable !== true
+      (column.exporting ?? column.hideInTable !== true)
     ) {
       result.push({
         ...column,

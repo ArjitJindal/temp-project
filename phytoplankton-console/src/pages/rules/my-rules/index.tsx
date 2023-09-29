@@ -154,6 +154,12 @@ const MyRule = (props: { simulationMode?: boolean }) => {
           },
         },
       }),
+      helper.simple<'id'>({
+        title: 'Rule instance ID',
+        key: 'id',
+        hideInTable: true,
+        exporting: true,
+      }),
       helper.simple<'ruleNameAlias'>({
         title: 'Name',
         key: 'ruleNameAlias',

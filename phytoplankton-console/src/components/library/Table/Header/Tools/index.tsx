@@ -25,7 +25,6 @@ interface Props<Item extends object, Params> {
 
 export default function Tools<Item extends object, Params>(props: Props<Item, Params>) {
   const { table, columns, extraTools = [], params, onReload, onPaginateData, options } = props;
-
   return (
     <>
       {extraTools.map((tool, i) => (
