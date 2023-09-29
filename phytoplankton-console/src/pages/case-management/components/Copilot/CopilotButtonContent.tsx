@@ -42,8 +42,9 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
         type={'TEXT'}
         icon={<BrainLineIcon />}
         isDisabled={!settings?.isAiEnabled || askLoading}
+        testName="ask-copilot"
       >
-        Ask Copilot
+        Ask copilot
       </Button>
       <Button
         isLoading={formatLoading}
@@ -52,6 +53,7 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
         type={'TEXT'}
         icon={<MagicLineIcon />}
         isDisabled={!settings?.isAiEnabled || formatLoading || !narrative || narrative.length < 50}
+        testName="format-copilot-narrative"
       >
         Format
       </Button>

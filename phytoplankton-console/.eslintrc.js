@@ -31,5 +31,6 @@ module.exports = {
     'import/no-duplicates': 'error',
     '@typescript-eslint/no-non-null-assertion': 'off',
     'custom-rules/enforce-paginated-query-params': 'error',
+    'cypress/no-async-tests': 'off',
   },
 };
