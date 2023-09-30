@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import * as Card from '@/components/ui/Card';
 import { ChecklistStatus } from '@/apis';
@@ -9,10 +9,9 @@ import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
-import { SimpleColumn } from '@/components/library/Table/types';
+import { SimpleColumn, TableRefType } from '@/components/library/Table/types';
 import Button from '@/components/library/Button';
 import { useQaMode } from '@/utils/qa-mode';
-import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   alertId: string;
@@ -24,8 +23,14 @@ export default function Checklist(props: Props) {
   const [category, setCategory] = useState<string | undefined>();
   const [checklistItemIds, setChecklistItemIds] = useState<string[]>([]);
   const [qaModeSet] = useQaMode();
-  const hasQaPermission = useHasPermissions(['case-management:qa:read']);
   const api = useApi();
+
+  const actionRef = useRef<TableRefType>(null);
+
+  const reloadTable = useCallback(() => {
+    actionRef.current?.reload();
+  }, []);
+
   const onQaStatusChange = useMutation(
     async ({
       status,
@@ -46,6 +51,7 @@ export default function Checklist(props: Props) {
       onSuccess: (_, { status }) => {
         checklistQueryResult.refetch();
         message.success(`Checklist items marked as ${status}`);
+        reloadTable();
       },
       onError: (err: Error) => {
         message.error(`Failed to update checklist items QA status. ${err}`);
@@ -97,7 +103,7 @@ export default function Checklist(props: Props) {
       }),
     ];
 
-    if (hasQaPermission) {
+    if (qaModeSet) {
       columns.push(
         helper.simple({
           key: 'qaStatus',
@@ -123,7 +129,7 @@ export default function Checklist(props: Props) {
       );
     }
     return columns;
-  }, [hasQaPermission]);
+  }, [qaModeSet]);
 
   return (
     <AsyncResourceRenderer<HydratedChecklist> resource={checklistQueryResult.data}>
@@ -153,6 +159,9 @@ export default function Checklist(props: Props) {
                 entityName: 'task',
               }}
               toolsOptions={false}
+              selection={(row) => {
+                return !row.content.qaStatus;
+              }}
               selectionActions={
                 qaModeSet
                   ? [
@@ -208,6 +217,7 @@ export default function Checklist(props: Props) {
                       },
                     ]
               }
+              innerRef={actionRef}
             ></Table>
           </Card.Section>
         </Card.Root>

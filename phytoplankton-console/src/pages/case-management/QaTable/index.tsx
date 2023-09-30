@@ -13,6 +13,7 @@ import {
   ALERT_ID,
   ASSIGNMENTS,
   DATE,
+  PRIORITY,
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
 import { useAlertQuery } from '@/pages/case-management/common';
@@ -22,6 +23,7 @@ import { useAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { DefaultApiPatchAlertsQaAssignmentsRequest } from '@/apis/types/ObjectParamAPI';
 import { AssignmentButton } from '@/pages/case-management/components/AssignmentButton';
+import { CLOSING_REASONS } from '@/components/Narrative';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -37,6 +39,14 @@ export default function QaTable(props: Props) {
 
   const helper = new ColumnHelper<TableAlertItem>();
   const columns = helper.list([
+    helper.simple<'priority'>({
+      title: '',
+      key: 'priority',
+      type: PRIORITY,
+      defaultWidth: 40,
+      enableResizing: false,
+      disableColumnShuffling: true,
+    }),
     helper.simple<'alertId'>({
       title: 'Alert ID',
       key: 'alertId',
@@ -78,6 +88,7 @@ export default function QaTable(props: Props) {
       key: 'updatedAt',
       type: DATE,
       sorting: true,
+      filtering: true,
     }),
     helper.display({
       title: 'Closing Reason',
@@ -131,10 +142,23 @@ export default function QaTable(props: Props) {
     }),
   ]);
 
-  const filters = useCaseAlertFilters('ALERTS', false, true);
-  const extraFilters = useMemo(
-    () =>
-      filters.concat({
+  const filters = useCaseAlertFilters([
+    'alertPriority',
+    'caseTypesFilter',
+    'rulesHitFilter',
+    'userId',
+    'assignedTo',
+    'ruleQueueIds',
+  ]);
+  const extraFilters = useMemo(() => {
+    const closingReasonOptions = [...CLOSING_REASONS, 'Other'].map((reason) => {
+      return {
+        value: reason,
+        label: reason,
+      };
+    });
+    return filters.concat([
+      {
         key: 'qaAssignment',
         title: 'QA assigned to',
         showFilterByDefault: true,
@@ -149,10 +173,44 @@ export default function QaTable(props: Props) {
             }}
           />
         ),
-      }),
-    [filters],
-  );
-
+      },
+      {
+        title: 'QA status',
+        key: 'filterQaStatus',
+        showFilterByDefault: true,
+        renderer: {
+          kind: 'select',
+          mode: 'MULTIPLE',
+          displayMode: 'select',
+          options: [
+            {
+              value: 'PASSED',
+              label: 'Passed',
+            },
+            {
+              value: 'FAILED',
+              label: 'Failed',
+            },
+            {
+              value: "NOT_QA'd",
+              label: "Not QA'd",
+            },
+          ],
+        },
+      },
+      {
+        title: 'Closing reason',
+        key: 'filterClosingReason',
+        showFilterByDefault: true,
+        renderer: {
+          kind: 'select',
+          mode: 'MULTIPLE',
+          displayMode: 'select',
+          options: closingReasonOptions,
+        },
+      },
+    ]);
+  }, [filters]);
   const handleChangeParams = useCallback(
     (params: AllParams<TableSearchParams>) => {
       onChangeParams(params);

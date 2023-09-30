@@ -40,7 +40,7 @@ export const useAlertChecklist = (alertId: string): QueryResult<HydratedChecklis
 };
 
 export type ChecklistItem = EmptyChecklistItem & {
-  qaStatus: ChecklistStatus;
+  qaStatus?: ChecklistStatus;
   done: boolean;
 };
 

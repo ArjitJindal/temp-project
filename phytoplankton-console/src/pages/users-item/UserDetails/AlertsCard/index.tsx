@@ -21,7 +21,7 @@ export default function AlertsCard(props: Props) {
     <Card.Root className={s.root}>
       <Card.Section>
         <AlertTable
-          hideUserFilters={true}
+          showUserFilters={false}
           params={params}
           onChangeParams={(newState) =>
             setParams((prevState) => ({

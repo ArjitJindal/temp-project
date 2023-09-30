@@ -59,14 +59,15 @@ import {
 } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
-import { useQaMode } from '@/utils/qa-mode';
+import { useQaEnabled, useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
 import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal';
 import { getOr } from '@/utils/asyncResource';
 import { RuleQueueTag } from '@/components/rules/RuleQueueTag';
+import { denseArray } from '@/utils/lang';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
-  filterQaStatus?: ChecklistStatus;
+  filterQaStatus?: Array<ChecklistStatus | undefined>;
 };
 
 const getSelectedCaseIdsForAlerts = (selectedItems: Record<string, TableAlertItem>) => {
@@ -86,11 +87,11 @@ interface Props {
   onChangeParams?: (newState: AlertTableParams) => void;
   isEmbedded?: boolean;
   hideAlertStatusFilters?: boolean;
-  hideUserFilters?: boolean;
+  showUserFilters?: boolean;
   caseId?: string;
   escalatedTransactionIds?: string[];
   expandTransactions?: boolean;
-  hideAssignedToFilter?: boolean;
+  showAssignedToFilter?: boolean;
   expandedAlertId?: string;
 }
 
@@ -101,14 +102,15 @@ export default function AlertTable(props: Props) {
     onChangeParams,
     isEmbedded = false,
     hideAlertStatusFilters = false,
-    hideUserFilters = false,
+    showUserFilters = false,
     expandTransactions = true,
-    hideAssignedToFilter,
+    showAssignedToFilter,
     expandedAlertId,
   } = props;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const sarEnabled = useFeatureEnabled('SAR');
   const [qaMode] = useQaMode();
+  const qaEnabled = useQaEnabled();
   const api = useApi();
   const user = useAuth0User();
 
@@ -211,7 +213,7 @@ export default function AlertTable(props: Props) {
   const icpEnabled = useFeatureEnabled('INVESTIGATIVE_COPILOT');
   const columns = useMemo(() => {
     const mergedColumns = (
-      hideUserColumns: boolean,
+      showUserColumns: boolean,
       hideAlertStatusFilters: boolean,
       handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
       handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
@@ -224,6 +226,7 @@ export default function AlertTable(props: Props) {
       selectedTxns: {
         [alertId: string]: string[];
       },
+      qaEnabled: boolean,
     ): TableColumn<TableAlertItem>[] => {
       const helper = new ColumnHelper<TableAlertItem>();
       return helper.list([
@@ -301,7 +304,7 @@ export default function AlertTable(props: Props) {
           key: 'numberOfTransactionsHit',
           sorting: true,
         }),
-        !hideUserColumns &&
+        showUserColumns &&
           helper.simple<'caseUserName'>({
             title: 'User name',
             key: 'caseUserName',
@@ -333,6 +336,29 @@ export default function AlertTable(props: Props) {
             reload,
           }),
         }),
+        ...(qaEnabled
+          ? [
+              helper.simple<'ruleQaStatus'>({
+                title: 'QA status',
+                key: 'ruleQaStatus',
+                type: {
+                  render: (status, { item: alert }) => {
+                    const alertStatus = alert.alertStatus;
+                    if (alertStatus === 'CLOSED') {
+                      if (status === 'PASSED') {
+                        return <>QA pass</>;
+                      }
+                      if (status === 'FAILED') {
+                        return <>QA fail</>;
+                      }
+                      return <>Not QA'd</>;
+                    }
+                    return <>-</>;
+                  },
+                },
+              }),
+            ]
+          : []),
         helper.simple<'caseCreatedTimestamp'>({
           title: 'Case created at',
           key: 'caseCreatedTimestamp',
@@ -470,7 +496,7 @@ export default function AlertTable(props: Props) {
       ]);
     };
     const col = mergedColumns(
-      hideUserFilters,
+      showUserFilters,
       hideAlertStatusFilters,
       handleAlertAssignments,
       handleAlertsReviewAssignments,
@@ -479,10 +505,11 @@ export default function AlertTable(props: Props) {
       reloadTable,
       isFalsePositiveEnabled,
       selectedTxns,
+      qaEnabled,
     );
     return col;
   }, [
-    hideUserFilters,
+    showUserFilters,
     hideAlertStatusFilters,
     handleAlertAssignments,
     handleAlertsReviewAssignments,
@@ -492,6 +519,7 @@ export default function AlertTable(props: Props) {
     selectedTxns,
     icpEnabled,
     caseId,
+    qaEnabled,
   ]);
   useEffect(() => {
     const data = getOr(queryResults.data, { items: [] });
@@ -500,7 +528,21 @@ export default function AlertTable(props: Props) {
       actionRef.current?.expandRow(alertId);
     }
   }, [queryResults.data]);
-  const filters = useCaseAlertFilters('ALERTS', hideUserFilters, hideAssignedToFilter);
+  const filterIds = denseArray([
+    'caseId',
+    'alertPriority',
+    'caseTypesFilter',
+    'rulesHitFilter',
+    showUserFilters && 'userId',
+    'tagKey',
+    'businessIndustryFilter',
+    'riskLevels',
+    'ruleQueueIds',
+    showAssignedToFilter && 'assignedTo',
+    'originMethodFilterId',
+    'destinationMethodFilterId',
+  ]);
+  const filters = useCaseAlertFilters(filterIds);
 
   const getSelectionInfo = () => {
     const selectedTransactions = [

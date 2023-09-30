@@ -61,17 +61,18 @@ import {
   statusInReview,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
+import { denseArray } from '@/utils/lang';
 
 interface Props {
   params: AllParams<TableSearchParams>;
   queryResult: QueryResult<PaginatedData<Case>>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   rules: { value: string; label: string }[];
-  hideAssignedToFilter?: boolean;
+  showAssignedToFilter?: boolean;
 }
 
 export default function CaseTable(props: Props) {
-  const { queryResult, params, onChangeParams, hideAssignedToFilter } = props;
+  const { queryResult, params, onChangeParams, showAssignedToFilter } = props;
 
   const tableQueryResult = useTableData(queryResult);
   const tableRef = useRef<TableRefType>(null);
@@ -388,7 +389,19 @@ export default function CaseTable(props: Props) {
   ]);
 
   const escalationEnabled = useFeatureEnabled('ESCALATION');
-  const filters = useCaseAlertFilters('CASES', false, hideAssignedToFilter);
+  const filterIds = denseArray([
+    'caseId',
+    'alertPriority',
+    'caseTypesFilter',
+    'rulesHitFilter',
+    'userId',
+    'tagKey',
+    'businessIndustryFilter',
+    'riskLevels',
+    'ruleQueueIds',
+    showAssignedToFilter && 'assignedTo',
+  ]);
+  const filters = useCaseAlertFilters(filterIds);
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
       innerRef={tableRef}

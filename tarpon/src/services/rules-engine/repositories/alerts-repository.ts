@@ -154,8 +154,11 @@ export class AlertsRepository {
     }
 
     if (params.filterQaStatus) {
+      const filterQaStatus = params.filterQaStatus.map((status) =>
+        (status as string) === "NOT_QA'd" ? undefined : status
+      )
       conditions.push({
-        'alerts.ruleQaStatus': params.filterQaStatus,
+        'alerts.ruleQaStatus': { $in: filterQaStatus },
       })
     }
     if (params.filterOutQaStatus) {
@@ -177,14 +180,31 @@ export class AlertsRepository {
     }
 
     if (
-      params.afterAlertLastUpdatedTimestamp != null &&
-      params.beforeAlertLastUpdatedTimestamp != null
+      params.filterAlertsByLastUpdatedEndTimestamp != null &&
+      params.filterAlertsByLastUpdatedStartTimestamp != null
     ) {
+      console.log('start', params.filterAlertsByLastUpdatedStartTimestamp)
+      console.log('end', params.filterAlertsByLastUpdatedEndTimestamp)
       conditions.push({
         'alerts.updatedAt': {
-          $lte: params.beforeAlertLastUpdatedTimestamp,
-          $gte: params.afterAlertLastUpdatedTimestamp,
+          $gte: params.filterAlertsByLastUpdatedStartTimestamp,
+          $lte: params.filterAlertsByLastUpdatedEndTimestamp,
         },
+      })
+    }
+
+    if (params.filterClosingReason != null) {
+      conditions.push({
+        $and: [
+          {
+            'alerts.alertStatus': 'CLOSED',
+          },
+          {
+            'alerts.lastStatusChange.reason': {
+              $in: params.filterClosingReason,
+            },
+          },
+        ],
       })
     }
 

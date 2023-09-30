@@ -1,6 +1,7 @@
 import {
   AlertStatus,
   AuditLogType,
+  CaseReasons,
   CaseStatus,
   CaseType,
   ChecklistStatus,
@@ -50,8 +51,9 @@ export type CommonCaseParams = {
   qaAssignment: string[];
   updatedAt: string[];
   caseTypesFilter: CaseType[];
-  filterQaStatus?: ChecklistStatus;
+  filterQaStatus?: ChecklistStatus[];
   filterOutQaStatus?: ChecklistStatus[];
+  filterClosingReason?: CaseReasons[];
   alertPriority: Priority[];
   ruleQueueIds?: string[];
 };

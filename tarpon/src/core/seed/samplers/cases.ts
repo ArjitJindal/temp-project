@@ -250,7 +250,10 @@ export function sampleAlert(
     numberOfTransactionsHit: params.transactions.length,
     priority: pickRandom(['P1', 'P2', 'P3', 'P4'], Math.random()),
     transactionIds,
-    ruleQaStatus: randomBool() ? pickRandom(CHECKLIST_STATUSS) : undefined,
+    ruleQaStatus:
+      randomBool() && alertStatus === 'CLOSED'
+        ? pickRandom(CHECKLIST_STATUSS)
+        : undefined,
     ruleChecklistTemplateId: checklistTemplateId,
     updatedAt: sampleTimestamp(),
     statusChanges: getStatusChangesObject(
@@ -269,7 +272,10 @@ export function sampleAlert(
               (cli): ChecklistItemValue => ({
                 checklistItemId: cli.id,
                 done: randomBool(),
-                status: pickRandom(CHECKLIST_STATUSS),
+                status:
+                  alertStatus === 'CLOSED'
+                    ? pickRandom(CHECKLIST_STATUSS)
+                    : undefined,
               })
             )
         )

@@ -103,8 +103,8 @@ export default function CaseTableWrapper(props: {
       filterAssignmentsIds:
         showCases === 'MY' ? [auth0user.userId] : assignedTo?.length ? assignedTo : undefined,
       ...(updatedAt && {
-        afterCaseLastUpdatedTimestamp: updatedAt ? dayjs(updatedAt[0]).valueOf() : 0,
-        beforeCaseLastUpdatedTimestamp: updatedAt
+        filterCasesByLastUpdatedStartTimestamp: updatedAt ? dayjs(updatedAt[0]).valueOf() : 0,
+        filterCasesByLastUpdatedEndTimestamp: updatedAt
           ? dayjs(updatedAt[1]).valueOf()
           : Number.MAX_SAFE_INTEGER,
       }),
@@ -134,7 +134,7 @@ export default function CaseTableWrapper(props: {
       onChangeParams={onChangeParams}
       queryResult={queryResults}
       rules={getRulesAndInstances}
-      hideAssignedToFilter={params.showCases === 'MY' ? true : false}
+      showAssignedToFilter={params.showCases === 'MY' ? false : true}
     />
   );
 }

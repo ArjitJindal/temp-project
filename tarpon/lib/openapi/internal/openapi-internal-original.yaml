@@ -2964,7 +2964,9 @@ paths:
           in: query
           name: beforeTransactionTimestamp
         - schema:
-            $ref: '#/components/schemas/ChecklistStatus'
+            type: array
+            items:
+              $ref: '#/components/schemas/ChecklistStatus'
           in: query
           name: filterQaStatus
         - schema:
@@ -3148,11 +3150,11 @@ paths:
         - schema:
             type: number
           in: query
-          name: beforeAlertLastUpdatedTimestamp
+          name: filterAlertsByLastUpdatedStartTimestamp
         - schema:
             type: number
           in: query
-          name: afterAlertLastUpdatedTimestamp
+          name: filterAlertsByLastUpdatedEndTimestamp
         - schema:
             type: number
           in: query
@@ -3175,6 +3177,12 @@ paths:
               type: string
           in: query
           name: filterRuleInstanceId
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseReasons'
+          in: query
+          name: filterClosingReason
         - schema:
             type: array
             items:
@@ -3592,11 +3600,11 @@ paths:
         - schema:
             type: number
           in: query
-          name: afterCaseLastUpdatedTimestamp
+          name: filterCasesByLastUpdatedEndTimestamp
         - schema:
             type: number
           in: query
-          name: beforeCaseLastUpdatedTimestamp
+          name: filterCasesByLastUpdatedStartTimestamp
         - schema:
             type: array
             items:
@@ -9629,8 +9637,6 @@ components:
           $ref: '#/components/schemas/ChecklistStatus'
         info:
           $ref: '#/components/schemas/ChecklistInfo'
-      required:
-        - status
     ChecklistItem:
       title: ChecklistItem
       type: object

@@ -296,13 +296,13 @@ export class CaseRepository {
     }
 
     if (
-      params.beforeCaseLastUpdatedTimestamp != null &&
-      params.afterCaseLastUpdatedTimestamp != null
+      params.filterCasesByLastUpdatedEndTimestamp != null &&
+      params.filterCasesByLastUpdatedStartTimestamp != null
     ) {
       conditions.push({
         updatedAt: {
-          $lte: params.beforeCaseLastUpdatedTimestamp,
-          $gte: params.afterCaseLastUpdatedTimestamp,
+          $lte: params.filterCasesByLastUpdatedEndTimestamp,
+          $gte: params.filterCasesByLastUpdatedStartTimestamp,
         },
       })
     }

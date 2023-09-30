@@ -40,10 +40,11 @@ export function useAlertQuery(
       filterQaStatus,
       filterOutQaStatus,
       qaAssignment,
+      updatedAt,
+      filterClosingReason,
       ruleQueueIds,
     } = params;
     const [sortField, sortOrder] = sort[0] ?? [];
-
     const preparedParams: DefaultApiGetAlertListRequest = {
       page,
       pageSize,
@@ -69,6 +70,10 @@ export function useAlertQuery(
       filterRuleQueueIds: ruleQueueIds,
       sortField: sortField === 'age' ? 'createdTimestamp' : sortField,
       sortOrder: sortOrder ?? undefined,
+      filterAlertsByLastUpdatedStartTimestamp:
+        updatedAt && updatedAt[0] ? dayjs.dayjs(updatedAt[0]).valueOf() : undefined,
+      filterAlertsByLastUpdatedEndTimestamp:
+        updatedAt && updatedAt[1] ? dayjs.dayjs(updatedAt[1]).valueOf() : undefined,
       ...(createdTimestamp
         ? {
             filterAlertBeforeCreatedTimestamp: createdTimestamp
@@ -89,6 +94,7 @@ export function useAlertQuery(
               : 0,
           }
         : {}),
+      filterClosingReason,
       filterAlertPriority: params.alertPriority,
     };
     const result = await api.getAlertList(

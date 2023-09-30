@@ -93,7 +93,7 @@ export default function CaseManagementPage() {
   }
 
   const qaModeItems: Item<ScopeSelectorValue>[] = [
-    { value: 'QA_UNCHECKED_ALERTS', label: 'Closed alerts' },
+    { value: 'QA_UNCHECKED_ALERTS', label: 'All closed alerts' },
     { value: 'QA_PASSED_ALERTS', label: 'Passed alerts' },
     { value: 'QA_FAILED_ALERTS', label: 'Failed alerts' },
   ];
@@ -140,7 +140,7 @@ function getTable(
           escalatedTransactionIds={[]}
           params={params}
           onChangeParams={handleChangeParams}
-          hideAssignedToFilter={true}
+          showAssignedToFilter={false}
         />
       );
     case 'ALL_ALERTS':
@@ -160,21 +160,21 @@ function getTable(
     case 'QA_UNCHECKED_ALERTS':
       return (
         <QaTable
-          params={{ ...params, filterOutQaStatus: ['PASSED', 'FAILED'], alertStatus: 'CLOSED' }}
+          params={{ ...params, alertStatus: 'CLOSED' }}
           onChangeParams={handleChangeParams}
         />
       );
     case 'QA_PASSED_ALERTS':
       return (
         <QaTable
-          params={{ ...params, filterQaStatus: 'PASSED', alertStatus: 'CLOSED' }}
+          params={{ ...params, filterQaStatus: ['PASSED'], alertStatus: 'CLOSED' }}
           onChangeParams={handleChangeParams}
         />
       );
     case 'QA_FAILED_ALERTS':
       return (
         <QaTable
-          params={{ ...params, filterQaStatus: 'FAILED', alertStatus: 'CLOSED' }}
+          params={{ ...params, filterQaStatus: ['FAILED'], alertStatus: 'CLOSED' }}
           onChangeParams={handleChangeParams}
         />
       );

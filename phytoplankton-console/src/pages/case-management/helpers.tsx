@@ -16,7 +16,7 @@ import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndu
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
-import { AlertStatus, CaseStatus, PaymentMethod } from '@/apis';
+import { AlertStatus, CaseReasons, CaseStatus, ChecklistStatus, PaymentMethod } from '@/apis';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { humanizeConstant } from '@/utils/humanize';
@@ -62,13 +62,14 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       assignedTo: params.assignedTo?.join(','),
       qaAssignment: params.qaAssignment?.join(','),
       updatedAt: params['updatedAt']?.map((x) => dayjs(x).valueOf()).join(','),
+      filterQaStatus: params['filterQaStatus']?.join(','),
+      filterClosingReason: params['filterClosingReason']?.join(','),
       alertPriority: params.alertPriority?.join(','),
       ruleQueueIds: params.ruleQueueIds?.join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
     const showCases = raw.showCases;
-
     return {
       ...defaultQueryAdapter.deserializer(raw),
       timestamp: raw.timestamp
@@ -120,6 +121,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       assignedTo: raw.assignedTo?.split(',') as unknown as TableSearchParams['assignedTo'],
       qaAssignment: raw.qaAssignment?.split(',') as unknown as TableSearchParams['qaAssignment'],
       updatedAt: raw?.['updatedAt']?.split(',').map((x) => dayjs(parseInt(x)).format()),
+      filterQaStatus: raw?.['filterQaStatus']?.split(',') as ChecklistStatus[] | undefined,
+      filterClosingReason: raw?.['filterClosingReason']?.split(',') as CaseReasons[],
       alertPriority: raw?.alertPriority?.split(
         ',',
       ) as unknown as TableSearchParams['alertPriority'],
@@ -128,11 +131,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
   },
 };
 
-export const useCaseAlertFilters = (
-  table: 'ALERTS' | 'CASES',
-  hideUserFilters: boolean,
-  hideAssignedToFilter?: boolean,
-): ExtraFilter<TableSearchParams>[] => {
+export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSearchParams>[] => {
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const ruleOptions = useRuleOptions();
   const ruleQueues = useRuleQueues();
@@ -178,7 +177,7 @@ export const useCaseAlertFilters = (
       icon: <GavelIcon />,
       showFilterByDefault: true,
     },
-    !hideUserFilters && {
+    {
       key: 'userId',
       title: 'User ID/Name',
       showFilterByDefault: true,
@@ -231,7 +230,7 @@ export const useCaseAlertFilters = (
         />
       ),
     },
-    !hideAssignedToFilter && {
+    {
       key: 'assignedTo',
       title: 'Assigned to',
       showFilterByDefault: false,
@@ -247,7 +246,7 @@ export const useCaseAlertFilters = (
         />
       ),
     },
-    table === 'ALERTS' && {
+    {
       key: 'originMethodFilterId',
       title: 'Origin Method',
       showFilterByDefault: false,
@@ -264,7 +263,7 @@ export const useCaseAlertFilters = (
         />
       ),
     },
-    table === 'ALERTS' && {
+    {
       key: 'destinationMethodFilterId',
       title: 'Destination Method',
       showFilterByDefault: false,
@@ -309,5 +308,5 @@ export const useCaseAlertFilters = (
       },
       showFilterByDefault: true,
     },
-  ]);
+  ]).filter((filter) => filterIds?.includes(filter.key)) as ExtraFilter<TableSearchParams>[];
 };
