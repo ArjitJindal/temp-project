@@ -1,5 +1,6 @@
 import React from 'react';
 import { Tag } from 'antd';
+import { uniqBy } from 'lodash';
 import s from './index.module.less';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
 import { InternalConsumerUser } from '@/apis';
@@ -91,6 +92,24 @@ export default function UsersInfoCard(props: Props) {
           </div>
         </Form.Layout.Label>
       </div>
+      {user?.pepStatus !== undefined && (
+        <div className={s.tag}>
+          <Form.Layout.Label
+            orientation="horizontal"
+            icon={<BookmarkLineIcon />}
+            title={'PEP Status'}
+          >
+            {uniqBy(
+              user.pepStatus.filter((pep) => pep.isPepHit),
+              'pepCountry',
+            )
+              .map((pep) => pep.pepCountry)
+              .map((pepCountry) => {
+                return <CountryDisplay key={pepCountry} isoCode={pepCountry} />;
+              })}
+          </Form.Layout.Label>
+        </div>
+      )}
     </div>
   );
 }
