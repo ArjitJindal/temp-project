@@ -48,6 +48,7 @@ import {
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
+import { sampleCurrency } from '@/core/seed/samplers/currencies'
 
 export function sampleUserState(seed?: number): UserState {
   return USER_STATES[randomInt(seed, USER_STATES.length)]
@@ -275,11 +276,11 @@ export function sampleBusinessUser(
       companyFinancialDetails: {
         expectedTransactionAmountPerMonth: {
           amountValue: Math.ceil(Math.random() * 10000),
-          amountCurrency: pickRandom(CURRENCY_CODES),
+          amountCurrency: sampleCurrency(),
         },
         expectedTurnoverPerMonth: {
           amountValue: Math.ceil(Math.random() * 100000),
-          amountCurrency: pickRandom(CURRENCY_CODES),
+          amountCurrency: sampleCurrency(),
         },
         tags: [{ key: 'Unit', value: 'S1300' }],
       },
