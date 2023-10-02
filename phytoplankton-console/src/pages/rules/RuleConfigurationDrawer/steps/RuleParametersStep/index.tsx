@@ -138,6 +138,7 @@ function RiskBasedThresholds(props: Props) {
                   riskLevelsTriggersOnHitField?.value?.[riskLevel];
                 let newParams: RiskLevelRuleParameters | undefined = undefined;
                 let newActions: RiskLevelRuleActions | undefined = undefined;
+                let newTriggersOnHit: RiskLevelsTriggersOnHit | undefined = undefined;
                 if (currentRiskLevelParams && riskLevelParametersField.value) {
                   newParams = riskLevels.reduce<RiskLevelRuleParameters>(
                     (acc, riskLevel) => ({
@@ -157,24 +158,20 @@ function RiskBasedThresholds(props: Props) {
                   );
                 }
                 if (currentRiskLevelTriggersOnHit && riskLevelsTriggersOnHitField.value) {
-                  const newTriggersOnHit = riskLevels.reduce<RiskLevelsTriggersOnHit>(
+                  newTriggersOnHit = riskLevels.reduce<RiskLevelsTriggersOnHit>(
                     (acc, riskLevel) => ({
                       ...acc,
                       [riskLevel]: currentRiskLevelTriggersOnHit,
                     }),
                     riskLevelsTriggersOnHitField.value,
                   );
-                  formState.setValues({
-                    ...formState.values,
-                    riskLevelsTriggersOnHit: newTriggersOnHit,
-                  });
                 }
 
                 formState.setValues({
                   ...formState.values,
                   ...(newParams && { riskLevelParameters: newParams }),
                   ...(newActions && { riskLevelActions: newActions }),
-                  ...(newParams && { riskLevelsTriggersOnHit: newParams }),
+                  ...(newTriggersOnHit && { riskLevelsTriggersOnHit: newTriggersOnHit }),
                 });
               }}
             />
