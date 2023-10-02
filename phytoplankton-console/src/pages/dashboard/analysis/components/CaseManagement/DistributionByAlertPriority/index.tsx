@@ -42,7 +42,6 @@ const DistributionByAlertPriority = (props: Props) => {
       );
   return (
     <Widget
-      width="HALF"
       onDownload={(): Promise<{ fileName: string; data: string }> => {
         return new Promise((resolve, _reject) => {
           const fileData = {
@@ -52,6 +51,7 @@ const DistributionByAlertPriority = (props: Props) => {
           resolve(fileData);
         });
       }}
+      width="HALF"
       resizing="FIXED"
       {...props}
     >
@@ -59,11 +59,18 @@ const DistributionByAlertPriority = (props: Props) => {
         {({ alertPriorityData }) => {
           const data = alertPriorityData.map(
             (item: DashboardStatsAlertPriorityDistributionStatsAlertPriorityData) => {
-              return { colorField: item.priority, angleField: item.value };
+              return { series: item.priority ?? 'N/A', value: item.value ?? 0 };
             },
           );
 
-          return <Donut data={data} COLORS={PRIORITY_COLORS} />;
+          return (
+            <Donut
+              shape="SEMI_CIRCLE"
+              data={data}
+              colors={PRIORITY_COLORS}
+              legendPosition={'BOTTOM'}
+            />
+          );
         }}
       </AsyncResourceRenderer>
     </Widget>

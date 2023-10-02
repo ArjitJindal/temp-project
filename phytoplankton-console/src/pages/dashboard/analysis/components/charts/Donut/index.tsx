@@ -1,35 +1,37 @@
-import { Pie } from '@ant-design/plots';
+import { Pie as AntPie } from '@ant-design/plots';
+import { PieConfig } from '@ant-design/plots/es/components/pie';
+import { escapeHtml } from '@/utils/browser';
 
-type Position =
-  | 'right'
-  | 'top'
-  | 'top-left'
-  | 'top-right'
-  | 'right-top'
-  | 'right-bottom'
-  | 'left'
-  | 'left-top'
-  | 'left-bottom'
-  | 'bottom'
-  | 'bottom-left'
-  | 'bottom-right'
-  | undefined;
+const ANGLE_FIELD: keyof DonutDataItem<unknown> = 'value';
+const COLOR_FIELD: keyof DonutDataItem<unknown> = 'series';
 
-interface Props {
-  data: Record<string, any>[];
-  COLORS: Record<string, string>;
-  position?: Position;
+export type DonutDataItem<Series> = {
+  value: number;
+  series: Series;
+};
+
+export type DonutData<Series> = DonutDataItem<Series>[];
+
+interface Props<Series extends string> {
+  data: DonutData<Series>;
+  colors: { [key in Series]: string };
   shape?: 'CIRCLE' | 'SEMI_CIRCLE';
+  legendPosition?: 'RIGHT' | 'BOTTOM';
+  formatSeries?: (value: Series) => string;
 }
 
-function Donut(props: Props) {
-  const { data, COLORS, position, shape = 'SEMI_CIRCLE' } = props;
-  const config = {
+function Donut<Series extends string>(props: Props<Series>) {
+  const { data, colors, formatSeries, legendPosition = 'RIGHT', shape = 'CIRCLE' } = props;
+
+  const legendPositionFixed: 'bottom' | 'right' = legendPosition === 'BOTTOM' ? 'bottom' : 'right';
+
+  const config: PieConfig = {
+    animation: false,
     appendPadding: 10,
     data,
-    angleField: 'angleField',
-    colorField: 'colorField',
-    color: (data: any) => COLORS[data.colorField],
+    angleField: ANGLE_FIELD,
+    colorField: COLOR_FIELD,
+    color: (data: any) => colors[data[COLOR_FIELD]],
     radius: 1,
     innerRadius: 0.65,
     startAngle: shape === 'CIRCLE' ? 0 : Math.PI,
@@ -37,7 +39,7 @@ function Donut(props: Props) {
     label: {
       type: 'inner',
       offset: '-50%',
-      content: (item: any) => item.angleField,
+      content: (item: any) => item.value,
       autoRotate: false,
       style: {
         textAlign: 'center',
@@ -65,15 +67,19 @@ function Donut(props: Props) {
         content: '',
       },
     },
+    legend: {
+      position: legendPositionFixed,
+    },
+    meta: {
+      [COLOR_FIELD]: {
+        formatter: (value) => {
+          return escapeHtml(formatSeries?.(value) ?? value);
+        },
+      },
+    },
   };
-  return (
-    <Pie
-      {...config}
-      legend={{
-        position: position || 'bottom',
-      }}
-    />
-  );
+
+  return <AntPie {...config} />;
 }
 
 export default Donut;
