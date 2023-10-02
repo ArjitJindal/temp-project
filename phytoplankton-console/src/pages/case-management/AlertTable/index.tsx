@@ -476,6 +476,7 @@ export default function AlertTable(props: Props) {
                 )}
                 {handleInvestigateAlert && (
                   <Button
+                    testName={'investigate-button'}
                     type="TETRIARY"
                     onClick={() => {
                       if (entity.alertId != null) {

@@ -13,6 +13,8 @@ export interface Props extends InputProps<string> {
   htmlAttrs?: InputHTMLAttributes<HTMLInputElement>;
   onArrowUp?: () => void;
   onArrowDown?: () => void;
+
+  testName?: string;
 }
 
 export default function TextInput(props: Props) {
@@ -29,6 +31,7 @@ export default function TextInput(props: Props) {
     onBlur,
     onArrowUp,
     onArrowDown,
+    testName,
   } = props;
 
   const ref = useRef<HTMLInputElement>(null);
@@ -48,6 +51,7 @@ export default function TextInput(props: Props) {
         }}
         onFocus={onFocus ? () => onFocus() : undefined}
         onBlur={onBlur ? () => onBlur() : undefined}
+        data-cy={testName}
         onKeyDown={
           onArrowUp || onArrowDown
             ? (e) => {

@@ -69,6 +69,7 @@ export default function RequestForm(props: Props) {
           <div className={cn(s.suggestions, showMore && s.showMore)}>
             {suggestions.map((suggestion, i) => (
               <button
+                data-cy="investigation-suggestion-button"
                 key={suggestion}
                 onClick={() => {
                   mutation.mutate({ searchString: suggestion });
@@ -104,6 +105,7 @@ export default function RequestForm(props: Props) {
         >
           <div className={s.textInput}>
             <TextInput
+              testName={'investigation-input'}
               value={searchInputText}
               onChange={(newValue) => {
                 setHighlightedSuggestionIndex(undefined);
@@ -130,6 +132,7 @@ export default function RequestForm(props: Props) {
             />
           </div>
           <Button
+            testName={'ask-ai-button'}
             isDisabled={searchInputText === ''}
             isLoading={isLoading(mutationRes)}
             onClick={() => {
