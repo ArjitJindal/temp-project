@@ -263,6 +263,7 @@ export default function AlertTable(props: Props) {
                         },
                       ),
                     )}
+                    testName="alert-id"
                   >
                     {alertId}
                   </Id>
