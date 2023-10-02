@@ -191,7 +191,7 @@ const paymentDetails: RecursivePartial<
   walletId: 'faker.random.word',
   walletPhoneNumber: 'faker.random.word',
   phoneNumber: 'faker.random.word',
-  tags: tag,
+  tags: [tag],
   transactionReferenceField: 'faker.random.word',
   nameOnCard: name,
   cardLast4Digits: '1234',

@@ -3247,6 +3247,11 @@ components:
             - PHYSICAL
         merchantDetails:
           $ref: '#/components/schemas/CardMerchantDetails'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
       required:
         - method
     IBANDetails:
@@ -3309,7 +3314,10 @@ components:
           type: string
           description: Name of the bank account holder
         tags:
-          $ref: '#/components/schemas/Tag'
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
         bankBranchCode:
           type: string
           description:
@@ -3344,7 +3352,10 @@ components:
           type: string
           description: Name of the account holder for a specific wallet
         tags:
-          $ref: '#/components/schemas/Tag'
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
         walletPhoneNumber:
           type: string
           description: Phone number associated with the wallet, if any
@@ -3400,6 +3411,11 @@ components:
         beneficiaryName:
           type: string
           description: Beneficiary name of the account
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
       required:
         - method
     SWIFTDetails:
@@ -3433,6 +3449,11 @@ components:
         specialInstructions:
           type: string
           description: Special instructions if any
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
       required:
         - method
     MpesaDetails:
@@ -3459,6 +3480,11 @@ components:
         phoneNumber:
           type: string
           description: Contact Number of the account holder
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
       required:
         - method
         - businessShortCode
@@ -3498,6 +3524,11 @@ components:
           description: Special instructions to be specified if any
         paymentChannel:
           type: string
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
       required:
         - method
     UPIDetails:
@@ -3528,6 +3559,11 @@ components:
         name:
           type: string
           description: Name of the account holder
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
       required:
         - method
         - upiID
@@ -4433,6 +4469,11 @@ components:
           minimum: 1262300400000
         shippingAddress:
           $ref: '#/components/schemas/Address'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
       required:
         - method
     CountryCode:
