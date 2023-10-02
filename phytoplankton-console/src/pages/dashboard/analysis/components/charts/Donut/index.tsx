@@ -1,6 +1,7 @@
 import { Pie as AntPie } from '@ant-design/plots';
 import { PieConfig } from '@ant-design/plots/es/components/pie';
 import { escapeHtml } from '@/utils/browser';
+import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 
 const ANGLE_FIELD: keyof DonutDataItem<unknown> = 'value';
 const COLOR_FIELD: keyof DonutDataItem<unknown> = 'series';
@@ -22,6 +23,10 @@ interface Props<Series extends string> {
 
 function Donut<Series extends string>(props: Props<Series>) {
   const { data, colors, formatSeries, legendPosition = 'RIGHT', shape = 'CIRCLE' } = props;
+
+  if (data.length === 0) {
+    return <NoData />;
+  }
 
   const legendPositionFixed: 'bottom' | 'right' = legendPosition === 'BOTTOM' ? 'bottom' : 'right';
 

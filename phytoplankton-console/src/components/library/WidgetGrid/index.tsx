@@ -2,6 +2,7 @@ import cn from 'clsx';
 import React from 'react';
 import s from './index.module.less';
 import { WidgetProps } from '@/components/library/Widget/types';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface Props {
   groups: {
@@ -24,7 +25,11 @@ export default function WidgetGrid(props: Props) {
             <div className={s.items}>
               {items.map((item) => {
                 const Component = item.component;
-                return <Component key={item.props.id} {...item.props} />;
+                return (
+                  <ErrorBoundary>
+                    <Component key={item.props.id} {...item.props} />
+                  </ErrorBoundary>
+                );
               })}
             </div>
           </div>
