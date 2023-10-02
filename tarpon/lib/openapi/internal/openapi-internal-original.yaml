@@ -6938,6 +6938,8 @@ components:
             - destinationUserSarFiled
             - employmentStatus
             - occupation
+            - reasonForAccountOpening
+            - sourceOfFunds
         isActive:
           type: boolean
         isDerived:

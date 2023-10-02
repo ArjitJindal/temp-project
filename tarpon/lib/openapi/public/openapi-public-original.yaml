@@ -1336,6 +1336,10 @@ components:
           type: array
           items:
             type: string
+        sourceOfFunds:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceOfFunds'
         userSegment:
           $ref: '#/components/schemas/ConsumerUserSegment'
         pepStatus:
@@ -2388,13 +2392,26 @@ components:
           $ref: '#/components/schemas/CompanyRegistrationDetails'
         reasonForAccountOpening:
           type: array
-          description: Reason for opening the account at financial institution
           items:
             type: string
+        sourceOfFunds:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceOfFunds'
         contactDetails:
           $ref: '#/components/schemas/ContactDetails'
       required:
         - companyGeneralDetails
+    SourceOfFunds:
+      title: SourceOfFunds
+      type: string
+      enum:
+        - Earnings
+        - Savings
+        - Investments/Deposits
+        - Wealth
+        - Gift
+        - Pension
     ContactDetails:
       title: ContactDetails
       type: object

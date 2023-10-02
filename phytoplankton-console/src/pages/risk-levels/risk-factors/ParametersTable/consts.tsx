@@ -48,6 +48,7 @@ import { convertToDays } from '@/utils/dayjs';
 import NumberInput from '@/components/library/NumberInput';
 import { getOr } from '@/utils/asyncResource';
 import { BOOLEAN_OPTIONS } from '@/utils/booleanOptions';
+import { SOURCE_OF_FUNDSS } from '@/apis/models-custom/SourceOfFunds';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -99,6 +100,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   USER_REGISTRATION_STATUS: 'MULTIPLE',
   BANK_NAMES: 'MULTIPLE',
   _3DS_STATUS: 'LITERAL',
+  SOURCE_OF_FUNDS: 'MULTIPLE',
 };
 
 export const DEFAULT_RISK_LEVEL = 'VERY_HIGH';
@@ -191,6 +193,26 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
   },
+  {
+    parameter: 'reasonForAccountOpening',
+    title: 'Reason for account opening',
+    description: 'Risk based on reason for account opening',
+    entity: 'CONSUMER_USER',
+    dataType: 'STRING',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
+  {
+    parameter: 'sourceOfFunds',
+    title: 'Source of funds',
+    description: 'Risk based on source of funds',
+    entity: 'CONSUMER_USER',
+    dataType: 'SOURCE_OF_FUNDS',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
 ];
 
 const timeIn24HourFormat = (hour: number | undefined) => {
@@ -238,6 +260,13 @@ export const CONSUMER_EMPLOYMENT_STATUS_OPTIONS = [
   { value: 'PENSIONER', label: 'Pensioner' },
   { value: 'COMPANY_OWNER', label: 'Company owner' },
 ];
+
+export const SOURCE_OF_FUNDS_OPTIONS = SOURCE_OF_FUNDSS.map((source) => {
+  return {
+    value: source,
+    label: source,
+  };
+});
 
 export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   {
@@ -869,6 +898,9 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   BOOLEAN: ((props) => {
     return <SingleSelect options={BOOLEAN_OPTIONS} {...props} />;
   }) as InputRenderer<'LITERAL'>,
+  SOURCE_OF_FUNDS: ((props) => {
+    return <MultipleSelect options={SOURCE_OF_FUNDS_OPTIONS} {...props} />;
+  }) as InputRenderer<'MULTIPLE'>,
 };
 
 const DEFAULT_MULTIPLE_RENDERER: ValueRenderer<'MULTIPLE'> = ({ value }) => {
@@ -1078,6 +1110,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
   BOOLEAN: (({ value }) => {
     return <span>{value?.content === true ? 'Yes' : 'No'}</span>;
   }) as ValueRenderer<'LITERAL'>,
+  SOURCE_OF_FUNDS: DEFAULT_MULTIPLE_RENDERER,
 };
 
 type Validation<T extends RiskValueType> = (params: {

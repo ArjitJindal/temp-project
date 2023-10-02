@@ -61,9 +61,28 @@ export default function UsersInfoCard(props: Props) {
       <Form.Layout.Label icon={<CopperCoinIcon />} title={'Main products and services'}>
         {user.legalEntity.companyGeneralDetails?.mainProductsServicesSold ?? '-'}
       </Form.Layout.Label>
-      <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
-        {user.legalEntity.reasonForAccountOpening ?? '-'}
-      </Form.Layout.Label>
+      {user.legalEntity?.reasonForAccountOpening?.length ? (
+        <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
+          <div>
+            {user.legalEntity?.reasonForAccountOpening.map((reason) => {
+              return <Tag>{reason}</Tag>;
+            })}
+          </div>
+        </Form.Layout.Label>
+      ) : (
+        <></>
+      )}
+      {user.legalEntity?.sourceOfFunds?.length ? (
+        <Form.Layout.Label icon={<EarthLineIcon />} title={'Source of funds'}>
+          <div>
+            {user.legalEntity?.sourceOfFunds.map((source) => {
+              return <Tag>{source}</Tag>;
+            })}
+          </div>
+        </Form.Layout.Label>
+      ) : (
+        <></>
+      )}
       <Form.Layout.Label icon={<SecurePaymentIcon />} title={'Allowed payment methods'}>
         <div>
           {user.allowedPaymentMethods

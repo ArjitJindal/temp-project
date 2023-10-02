@@ -68,19 +68,32 @@ export default function UsersInfoCard(props: Props) {
           {user.userSegment ?? '-'}
         </Form.Layout.Label>
       </div>
-      <div className={s.inner}>
-        <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
-          {user.reasonForAccountOpening ? (
+      {user.reasonForAccountOpening?.length ? (
+        <div className={s.inner}>
+          <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
             <div>
               {user.reasonForAccountOpening.map((reason) => {
                 return <Tag>{reason}</Tag>;
               })}
             </div>
-          ) : (
-            '-'
-          )}
-        </Form.Layout.Label>
-      </div>
+          </Form.Layout.Label>
+        </div>
+      ) : (
+        <></>
+      )}
+      {user.sourceOfFunds?.length ? (
+        <div className={s.inner}>
+          <Form.Layout.Label icon={<EarthLineIcon />} title={'Source of funds'}>
+            <div>
+              {user.sourceOfFunds.map((source) => {
+                return <Tag>{source}</Tag>;
+              })}
+            </div>
+          </Form.Layout.Label>
+        </div>
+      ) : (
+        <></>
+      )}
       <div className={s.tag}>
         <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
           <div>

@@ -41,6 +41,7 @@ import dayjs from '@/utils/dayjs'
 import { Person } from '@/@types/openapi-internal/Person'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
+import { SOURCE_OF_FUNDSS } from '@/@types/openapi-internal-custom/SourceOfFunds'
 import {
   businessSanctionsSearch,
   consumerSanctionsSearch,
@@ -213,6 +214,7 @@ export function sampleConsumerUser() {
     reasonForAccountOpening: [
       pickRandomDeterministic(['Investment', 'Saving', 'Business', 'Other']),
     ],
+    sourceOfFunds: [pickRandom(SOURCE_OF_FUNDSS)],
     userStateDetails: sampleUserStateDetails(),
     contactDetails: {
       addresses: [randomAddress()],
@@ -287,6 +289,7 @@ export function sampleBusinessUser(
       reasonForAccountOpening: [
         pickRandom(['Expansion', 'New Business', 'Savings', 'Other']),
       ],
+      sourceOfFunds: [pickRandom(SOURCE_OF_FUNDSS)],
       companyGeneralDetails: {
         legalName: name,
         businessIndustry: company?.industries || [],
