@@ -125,12 +125,12 @@ ruleVariantsTest(true, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-3',
-            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+            timestamp: dayjs('2022-01-01T00:00:00.001Z').valueOf(),
           }),
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-4',
-            timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+            timestamp: dayjs('2022-01-01T00:00:00.002Z').valueOf(),
           }),
         ],
         expectedHits: [false, false, true],

@@ -770,7 +770,9 @@ export class DynamoDbTransactionRepository
       partitionKey: partitionKeyId,
       sortKey: {
         from: `${timeRange.afterTimestamp}`,
-        to: `${timeRange.beforeTimestamp - 1}`,
+        // NOTE: As we're appending transaction ID to the sort key, we don't need to minus one for 'to'
+        // as `{timeRange.beforeTimestamp}` is always smaller than `{timeRange.beforeTimestamp}-{transactionId}`
+        to: `${timeRange.beforeTimestamp}`,
       },
     })
 
