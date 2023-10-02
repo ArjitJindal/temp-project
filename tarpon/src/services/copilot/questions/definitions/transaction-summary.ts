@@ -38,7 +38,7 @@ export const TransactionSummary: PropertiesQuestion<Period> = {
       data: figures.map(([key, value]) => {
         return {
           key,
-          value: value.value,
+          value: `${value}`,
         }
       }),
       summary: ``,

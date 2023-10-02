@@ -164,9 +164,13 @@ export class TransactionsBuilder implements AttributeBuilder {
       'firstPaymentAmount',
       `${currencySymbol}${firstPaymentAmount}`
     )
-    attributes.setAttribute(
-      'transactionIds',
-      transactions.map((t) => t.transactionId)
-    )
+
+    // If too many transactions, then we will hit token limit for GPT
+    if (transactions.length < 20) {
+      attributes.setAttribute(
+        'transactionIds',
+        transactions.map((t) => t.transactionId)
+      )
+    }
   }
 }

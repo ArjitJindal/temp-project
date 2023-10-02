@@ -6,6 +6,7 @@ import {
 } from '@/services/copilot/attributes/builder'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { getFullName } from '@/utils/helpers'
 
 export class UserAttributeBuilder implements AttributeBuilder {
   dependencies(): BuilderKey[] {
@@ -19,6 +20,10 @@ export class UserAttributeBuilder implements AttributeBuilder {
     } else {
       consumerAttributes(attributes, user)
     }
+    attributes.setAttribute(
+      'userComments',
+      user.comments?.map((c) => c.body) || []
+    )
   }
 }
 
@@ -31,11 +36,7 @@ function consumerAttributes(
     user.userDetails?.countryOfResidence ||
       user.userDetails?.countryOfNationality
   )
-  attributes.setAttribute(
-    'name',
-    `${user.userDetails?.name.firstName} ${user.userDetails?.name.middleName} ${user.userDetails?.name.lastName}`,
-    true
-  )
+  attributes.setAttribute('name', `${getFullName(user.userDetails)}`)
 }
 function businessAttributes(
   attributes: AttributeSet,
@@ -47,13 +48,11 @@ function businessAttributes(
   )
   attributes.setAttribute(
     'name',
-    user.legalEntity.companyGeneralDetails?.legalName,
-    true
+    user.legalEntity.companyGeneralDetails?.legalName
   )
   attributes.setAttribute(
     'websites',
-    user.legalEntity.contactDetails?.websites || [],
-    true
+    user.legalEntity.contactDetails?.websites || []
   )
   attributes.setAttribute(
     'industry',
@@ -63,5 +62,4 @@ function businessAttributes(
     'productsSold',
     user.legalEntity.companyGeneralDetails.mainProductsServicesSold || []
   )
-  attributes.setAttribute('userComments', user.comments || [])
 }

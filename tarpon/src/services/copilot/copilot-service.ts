@@ -8,6 +8,7 @@ import { Credentials } from '@aws-sdk/client-sts'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import {
   AttributeGenerator,
+  AttributeSet,
   DefaultAttributeBuilders,
 } from './attributes/builder'
 import { NarrativeResponse } from '@/@types/openapi-internal/NarrativeResponse'
@@ -26,35 +27,30 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { ask } from '@/utils/openapi'
 
-type GenerateCaseNarrative = {
+type GenerateNarrative = {
   _case: Case
   user: InternalBusinessUser | InternalConsumerUser
   reasons: CaseReasons[]
   transactions: InternalTransaction[]
-}
-type GenerateSarNarrative = {
-  _case: Case
-  transactions: InternalTransaction[]
-  user: InternalBusinessUser | InternalConsumerUser
-  reasons: CaseReasons[]
 }
 
+const SEPARATOR = '----'
 const PROMPT = `Please provide the same text but use placeholders or data from the JSON blob below to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
-const PLACEHOLDER_NARRATIVE = `OVERVIEW
-User: [user]
+const PLACEHOLDER_NARRATIVE = (type: string) => `OVERVIEW
+Name: [name]
 Date of Case Generation: [caseGenerationDate]
 Reason for Case Generation: [ruleHitNames]
-Investigation Period: [caseGenerationDate] - [caseClosureDate]
-Closure Date: [caseClosureDate]
+Investigation Period: [caseGenerationDate] - [closureDate]
+Closure Date: [closureDate]
 
 BACKGROUND
-[This section should contain general details about the user in question.]
+[This section should contain general details about the ${type} in question.]
 
 INVESTIGATION
-[This section should detail the method of the investigation and the user's activities that took place during the investigation.]
+[This section should detail the method of the investigation and the ${type}'s activities that took place during the investigation.]
 
 FINDINGS AND ASSESSMENT
-[This section should contain an analysis of the user's transactions and behaviors.]
+[This section should contain an analysis of the ${type}'s transactions and behaviors.]
 
 SCREENING DETAILS
 [This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.]
@@ -62,11 +58,20 @@ SCREENING DETAILS
 CONCLUSION`
 const MAX_TOKEN_OUTPUT = 4096
 
+// Obfuscatable attributes are ones that we can safely search and replace in the prompt. An example of one that isn't would be
+// transaction amount - we can't search and replace for a transaction amount of "1" for example, because it will replace all "1"'s
+// with a placeholder, leading to a jargon prompt. Fields like this are instead removed from the prompt.
+const ObfuscatableAttributePlaceholders: Partial<Record<AIAttribute, string>> =
+  {
+    name: 'Robert Marsh',
+    websites: 'www.google.com',
+  }
+
 @traceable
 export class CopilotService {
   private readonly tenantId: string
-  private mongoDb: MongoClient
-  private dynamoDb: DynamoDBDocumentClient
+  private readonly mongoDb: MongoClient
+  private readonly dynamoDb: DynamoDBDocumentClient
 
   public static async new(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -91,7 +96,7 @@ export class CopilotService {
   }
 
   async getSarNarrative(
-    request: GenerateSarNarrative
+    request: GenerateNarrative
   ): Promise<NarrativeResponse> {
     const attributeBuilder = new AttributeGenerator(DefaultAttributeBuilders)
     const attributes = attributeBuilder.getAttributes({
@@ -108,45 +113,22 @@ export class CopilotService {
       throw new Error('Unable to generate narrative for this SAR')
     }
 
-    const aiFieldsEnabled = await this.getAllEnabledAttribues()
-
-    const content = `
-    The following is a template for suspicious activity report written by bank staff to justify why they are reporting a customer to the financial authorities.
+    return this.generate(
+      `
+    The following is a template for suspicious activity report written by bank staff to justify why they are reporting a ${
+      request.user.type === 'BUSINESS' ? 'business' : 'customer'
+    } to the financial authorities.
     
     Example:
     ${ruleNarrs.join(',')}"
     
     Please fill in the template above with relevant data from the following JSON blob maintaining the exact same structure and correct any spelling mistakes or grammatical errors:
-    
-    ${JSON.stringify([...attributes.entries()])}
-    `.slice(0, MAX_TOKEN_OUTPUT)
-
-    let response = ''
-
-    for (let i = 0; i < 3; i++) {
-      try {
-        response = await this.gpt(content)
-        break
-      } catch (e) {
-        console.log(e)
-      }
-    }
-
-    return {
-      narrative: response.replace(PROMPT, ''),
-      attributes: [...attributes.entries()].map((f) => {
-        const [attribute, { value, secret }] = f
-        return {
-          attribute,
-          value,
-          secret:
-            secret ?? !aiFieldsEnabled?.includes(attribute as AIAttribute),
-        }
-      }),
-    }
+    `,
+      attributes
+    )
   }
 
-  private async getAllEnabledAttribues(): Promise<AIAttribute[]> {
+  private async getEnabledAttributes(): Promise<AIAttribute[]> {
     const tenantRepository = new TenantRepository(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
@@ -160,7 +142,7 @@ export class CopilotService {
   }
 
   async getCaseNarrative(
-    request: GenerateCaseNarrative
+    request: GenerateNarrative
   ): Promise<NarrativeResponse> {
     const attributeBuilder = new AttributeGenerator(DefaultAttributeBuilders)
     const attributes = attributeBuilder.getAttributes({
@@ -172,44 +154,134 @@ export class CopilotService {
     const reasonNarrs = request.reasons.map(
       (reason) => reasonNarratives.find((rn) => rn.reason === reason)?.narrative
     )
-    const aiFieldsEnabled = await this.getAllEnabledAttribues()
 
-    const content = `
-    The following is a template for document written by bank staff to justify why they have or have not reported a customer to the financial authorities.
+    return this.generate(
+      `
+    The following is a template for a document written by bank staff to justify why they have or have not reported a suspicious ${
+      request.user.type === 'BUSINESS' ? 'business' : 'customer'
+    } to the financial authorities.
     
-    ----
-    Example:
-    ${PLACEHOLDER_NARRATIVE}
+    ${SEPARATOR}
+    ${PLACEHOLDER_NARRATIVE(
+      request.user.type === 'BUSINESS' ? 'business' : 'customer'
+    )}
     ${reasonNarrs.join(',')}
-    ----
+    ${SEPARATOR}
     
-   The following text and data are various pieces of information relevant to a single customer who is under investigation by the bank staff, please rewrite this information so that it conforms to the template above. This case is being closed for the following reasons: ${request.reasons.join(
-     ', '
-   )}
-    
-    ${JSON.stringify([...attributes.entries()])}
-    `.slice(0, MAX_TOKEN_OUTPUT)
+    The following JSON blob is information relevant to a single ${
+      request.user.type === 'BUSINESS' ? 'business' : 'customer'
+    } who is under investigation by bank staff, please rewrite this information so that it conforms to the template above. This case is being closed for the following reasons: ${request.reasons.join(
+        ', '
+      )}.`,
+      attributes
+    )
+  }
+
+  private async generate(prompt: string, attributes: AttributeSet) {
+    const originalAttributes = [...attributes.entries()]
+    const enabledAttributes = await this.getEnabledAttributes()
+
+    // For disabled attributes that we can't obfuscate, remove them before sending result to GPT.
+    originalAttributes.forEach(([attributeName]) => {
+      const placeholder = ObfuscatableAttributePlaceholders[attributeName]
+      if (
+        !enabledAttributes.includes(attributeName) &&
+        placeholder == undefined
+      ) {
+        attributes.deleteAttribute(attributeName)
+      }
+    })
+
+    let serialisedAttributes = JSON.stringify(
+      Object.fromEntries(attributes.entries())
+    )
+
+    // For disabled attributes that we can obfuscate, obfuscate.
+    originalAttributes.forEach(([attributeName, value]) => {
+      if (!enabledAttributes.includes(attributeName)) {
+        const placeholder = ObfuscatableAttributePlaceholders[attributeName]
+        if (placeholder !== undefined) {
+          if (Array.isArray(value)) {
+            value.forEach((v) => {
+              if (v) {
+                serialisedAttributes = serialisedAttributes.replace(
+                  new RegExp(v.toString(), 'g'),
+                  placeholder
+                )
+              }
+            })
+          } else {
+            if (value) {
+              serialisedAttributes = serialisedAttributes.replace(
+                new RegExp(value.toString(), 'g'),
+                placeholder
+              )
+            }
+          }
+        }
+      }
+    })
+
+    const promptWithContext = `${prompt}\n\n${serialisedAttributes}`.slice(
+      0,
+      MAX_TOKEN_OUTPUT
+    )
 
     let response = ''
     for (let i = 0; i < 3; i++) {
       try {
-        response = await this.gpt(content)
+        response = await this.gpt(promptWithContext)
         break
       } catch (e) {
         console.log(e)
       }
     }
 
+    // Add back the obfuscated values and try and search & replace any attribute value placeholders that are in the response.
+    originalAttributes.forEach(([attributeName, value]) => {
+      if (!value) {
+        return
+      }
+      const placeholder = ObfuscatableAttributePlaceholders[attributeName]
+      if (!enabledAttributes.includes(attributeName) && placeholder) {
+        if (Array.isArray(value)) {
+          value.forEach((v) => {
+            if (v) {
+              response = response.replace(
+                new RegExp(placeholder, 'g'),
+                v.toString()
+              )
+            }
+          })
+        } else {
+          response = response.replace(
+            new RegExp(placeholder, 'g'),
+            value.toString()
+          )
+        }
+      }
+
+      response = response.replace(
+        new RegExp(`\\[${attributeName}]`, 'g'),
+        Array.isArray(value) ? value.join(', ') : value.toString()
+      )
+    })
+
+    // Clean up response
+    response = response
+      .replace(new RegExp(SEPARATOR, 'g'), '')
+      .replace(new RegExp(PROMPT, 'g'), '')
+      .trim()
+
     return {
-      narrative: response.replace(PROMPT, ''),
-      attributes: [...attributes.entries()].map((f) => {
-        const [attribute, entry] = f
+      narrative: response,
+      attributes: originalAttributes.map((f) => {
+        const [attribute, value] = f
+        const v = value ? value.toString() : ''
         return {
           attribute,
-          value: entry.value,
-          secret:
-            entry.secret ??
-            !aiFieldsEnabled?.includes(attribute as AIAttribute),
+          value: v.length === 0 ? '-' : v,
+          secret: !enabledAttributes?.includes(attribute),
         }
       }),
     }
@@ -218,19 +290,16 @@ export class CopilotService {
   async formatNarrative(
     request: DefaultApiFormatNarrativeRequest
   ): Promise<NarrativeResponse> {
-    const narrative = await this.gpt(
-      `Please correct any spelling or grammatical errors in the following text and make it sound professional: "${request.FormatRequest.narrative}"`
+    return await this.generate(
+      `Please correct any spelling or grammatical errors in the following text and make it sound professional: "${request.FormatRequest.narrative}"`,
+      new AttributeSet()
     )
-    return {
-      narrative,
-      attributes: [],
-    }
   }
 
   private async gpt(prompt: string): Promise<string> {
     logger.info(prompt)
     try {
-      return ask(prompt)
+      return ask(prompt, { temperature: 0.5 })
     } catch (e) {
       logger.error(e)
       throw e

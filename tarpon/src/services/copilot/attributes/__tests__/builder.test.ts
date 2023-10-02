@@ -20,6 +20,6 @@ describe('Attribute generator', () => {
       ],
       user,
     })
-    expect(attributes.getAttribute('transactionsCount')?.value).toEqual(5)
+    expect(attributes.getAttribute('transactionsCount')).toEqual(5)
   })
 })

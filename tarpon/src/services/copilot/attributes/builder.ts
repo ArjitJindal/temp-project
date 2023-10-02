@@ -19,22 +19,24 @@ export interface AttributeBuilder {
   build(attributes: AttributeSet, inputData: InputData): void
 }
 
-export class AttributeSet extends Map<string, { value: any; secret: boolean }> {
+type AttributeValue = string | number | undefined | Array<AttributeValue>
+export class AttributeSet extends Map<AIAttribute, AttributeValue> {
   getAttribute(key: AIAttribute) {
     if (!this.has(key)) {
-      throw new Error(
-        `No value set for ${key}. Dependencies mapped incorrectly.`
-      )
+      return undefined
     }
     return this.get(key)
   }
-  setAttribute(key: AIAttribute, value: any, secret = false) {
+  setAttribute(key: AIAttribute, value: AttributeValue) {
     if (this.has(key)) {
       throw new Error(
         `Value already set for ${key}. Dependencies mapped incorrectly.`
       )
     }
-    return this.set(key, { secret, value })
+    return this.set(key, value)
+  }
+  deleteAttribute(key: AIAttribute) {
+    this.delete(key)
   }
 }
 
