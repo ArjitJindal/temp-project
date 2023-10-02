@@ -1,6 +1,6 @@
 import { random, cloneDeep } from 'lodash'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import { pickRandom, randomSubset } from '@/utils/prng'
+import { pickRandom, randomSubset } from '@/core/seed/samplers/prng'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'

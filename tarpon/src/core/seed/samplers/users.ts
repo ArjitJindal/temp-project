@@ -9,7 +9,13 @@ import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { UserState } from '@/@types/openapi-internal/UserState'
 import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
-import { pickRandom, randomFloat, randomInt, randomSubset } from '@/utils/prng'
+import {
+  pickRandom,
+  pickRandomDeterministic,
+  randomFloat,
+  randomInt,
+  randomSubset,
+} from '@/core/seed/samplers/prng'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-internal-custom/KYCStatus'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
@@ -193,14 +199,18 @@ export function sampleConsumerUser() {
   const userId = `U-${userCounter}`
   userCounter++
   const name = randomConsumerName()
+  const riskLevel = pickRandomDeterministic(RISK_LEVEL1S)
+  const countryOfResidence = pickRandomDeterministic(COUNTRY_CODES)
+  const countryOfNationality = pickRandomDeterministic(COUNTRY_CODES)
+
   const user: InternalConsumerUser = {
     type: 'CONSUMER' as const,
     userId,
-    riskLevel: pickRandom(RISK_LEVEL1S),
-    acquisitionChannel: pickRandom(ACQUISITION_CHANNELS),
-    userSegment: pickRandom(CONSUMER_USER_SEGMENTS),
+    riskLevel,
+    acquisitionChannel: pickRandomDeterministic(ACQUISITION_CHANNELS),
+    userSegment: pickRandomDeterministic(CONSUMER_USER_SEGMENTS),
     reasonForAccountOpening: [
-      pickRandom(['Investment', 'Saving', 'Business', 'Other']),
+      pickRandomDeterministic(['Investment', 'Saving', 'Business', 'Other']),
     ],
     userStateDetails: sampleUserStateDetails(),
     contactDetails: {
@@ -210,8 +220,8 @@ export function sampleConsumerUser() {
     kycStatusDetails: sampleKycStatusDetails(),
     userDetails: {
       dateOfBirth: new Date(sampleTimestamp()).toISOString(),
-      countryOfResidence: pickRandom(COUNTRY_CODES),
-      countryOfNationality: pickRandom(COUNTRY_CODES),
+      countryOfResidence,
+      countryOfNationality,
       name,
     },
     executedRules: userRules,

@@ -1,4 +1,4 @@
-import { pickRandom } from '@/utils/prng'
+import { pickRandom } from '@/core/seed/samplers/prng'
 import { Address } from '@/@types/openapi-internal/Address'
 
 const streets = [

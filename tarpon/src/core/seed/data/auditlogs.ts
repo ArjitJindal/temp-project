@@ -2,7 +2,7 @@ import { v4 as uuid4 } from 'uuid'
 import { generateNarrative } from '../samplers/cases'
 import { data as users } from './users'
 import { transactionRules as rules } from './rules'
-import { prng, randomInt } from '@/utils/prng'
+import { prng, randomInt } from '@/core/seed/samplers/prng'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
 const AUDIT_LOG_COUNT = 100

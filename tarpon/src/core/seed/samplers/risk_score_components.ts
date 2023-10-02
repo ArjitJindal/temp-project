@@ -8,7 +8,7 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
-import { randomFloat } from '@/utils/prng'
+import { randomFloat } from '@/core/seed/samplers/prng'
 
 export function sampleConsumerUserRiskScoreComponents(
   consumer: InternalConsumerUser

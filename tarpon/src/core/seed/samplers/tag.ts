@@ -1,5 +1,5 @@
 import { Tag } from '@/@types/openapi-internal/Tag'
-import { pickRandom } from '@/utils/prng'
+import { pickRandom } from '@/core/seed/samplers/prng'
 
 const entityValues = ['Capital Markets', 'Securities', 'Onshore', 'Offshore']
 

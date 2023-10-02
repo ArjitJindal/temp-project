@@ -1,7 +1,7 @@
 import { transactions } from './transactions'
 import { sampleGuid } from '@/core/seed/samplers/id'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { prng } from '@/utils/prng'
+import { prng } from '@/core/seed/samplers/prng'
 
 const random = prng()
 const eventId = sampleGuid(random())

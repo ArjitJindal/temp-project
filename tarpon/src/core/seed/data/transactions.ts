@@ -5,7 +5,12 @@ import { sampleTransaction } from '@/core/seed/samplers/transaction'
 import { sampleTag } from '@/core/seed/samplers/tag'
 import { sampleCountry } from '@/core/seed/samplers/countries'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { pickRandom, prng, randomFloat, randomSubsetOfSize } from '@/utils/prng'
+import {
+  pickRandom,
+  prng,
+  randomFloat,
+  randomSubsetOfSize,
+} from '@/core/seed/samplers/prng'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'

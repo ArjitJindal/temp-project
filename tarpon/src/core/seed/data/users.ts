@@ -7,6 +7,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { companies } from '@/core/seed/samplers/dictionary'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
+
 const data: (InternalBusinessUser | InternalConsumerUser)[] = []
 const merchantMonitoring: MerchantMonitoringSummary[] = []
 

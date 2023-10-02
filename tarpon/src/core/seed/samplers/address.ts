@@ -1,5 +1,5 @@
 import { Address } from '@/@types/openapi-internal/Address'
-import { pickRandom, prng } from '@/utils/prng'
+import { pickRandom, prng } from '@/core/seed/samplers/prng'
 import { addresses } from '@/core/seed/data/address'
 
 export function sampleAddress(seed?: number): Address {

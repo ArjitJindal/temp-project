@@ -1,4 +1,4 @@
-import { prng } from '@/utils/prng'
+import { prng } from '@/core/seed/samplers/prng'
 
 export function sampleGuid(seed?: number | undefined): string {
   const random = prng(seed)

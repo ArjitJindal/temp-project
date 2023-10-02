@@ -1,5 +1,5 @@
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { pickRandom, prng, randomInt } from '@/utils/prng'
+import { pickRandom, prng, randomInt } from '@/core/seed/samplers/prng'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'

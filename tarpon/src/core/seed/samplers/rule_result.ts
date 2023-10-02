@@ -1,6 +1,6 @@
 import { sampleGuid } from './id'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import { prng } from '@/utils/prng'
+import { prng } from '@/core/seed/samplers/prng'
 
 export function sampleAllowRuleResult(): ExecutedRulesResult {
   return {

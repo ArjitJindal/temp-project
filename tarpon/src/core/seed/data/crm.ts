@@ -5,7 +5,7 @@ import {
 } from '@mergeapi/merge-sdk-typescript/dist/crm/models'
 import { data as users } from './users'
 import { CrmSummary } from '@/@types/openapi-internal/CrmSummary'
-import { randomInt } from '@/utils/prng'
+import { randomInt } from '@/core/seed/samplers/prng'
 import { randomName } from '@/core/seed/samplers/dictionary'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 

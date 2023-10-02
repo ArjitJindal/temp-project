@@ -1,4 +1,4 @@
-import { randomInt } from '@/utils/prng'
+import { randomInt } from '@/core/seed/samplers/prng'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 
 const SAMPLE_CURRENCIES: CurrencyCode[] = ['USD']

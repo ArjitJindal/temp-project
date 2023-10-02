@@ -1,4 +1,4 @@
-import { randomInt } from '@/utils/prng'
+import { randomInt } from '@/core/seed/samplers/prng'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 
 export function sampleCountry(seed?: number): CountryCode {
