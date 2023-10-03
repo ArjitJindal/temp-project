@@ -139,6 +139,7 @@ export default function CaseTable(props: Props) {
         defaultWidth: 40,
         enableResizing: false,
         disableColumnShuffling: true,
+        sorting: true,
       }),
       helper.simple<'caseId'>({
         title: 'Case ID',

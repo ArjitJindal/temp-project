@@ -237,6 +237,7 @@ export default function AlertTable(props: Props) {
           disableColumnShuffling: true,
           defaultWidth: 40,
           enableResizing: false,
+          sorting: true,
         }),
         helper.simple<'alertId'>({
           title: 'Alert ID',
