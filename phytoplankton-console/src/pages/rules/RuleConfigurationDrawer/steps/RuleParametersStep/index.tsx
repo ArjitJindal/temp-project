@@ -127,6 +127,9 @@ function RiskBasedThresholds(props: Props) {
                 {(inputProps) => <RuleActionSelector {...inputProps} />}
               </InputField>
             </NestedForm>
+            <Feature name="DEV_RULES_ADVANCED_OPTIONS">
+              <AdvancedOptions riskLevel={riskLevel} />
+            </Feature>
             <ApplyRiskLevels
               defaultInitialValues={defaultInitialValues.riskLevelParameters}
               currentRiskLevel={riskLevel}
