@@ -40,6 +40,7 @@ import {
   CASE_STATUS,
   CASEID,
   DATE,
+  ID,
   PRIORITY,
   RULE_ACTION,
   RULE_NATURE,
@@ -306,11 +307,20 @@ export default function AlertTable(props: Props) {
           key: 'numberOfTransactionsHit',
           sorting: true,
         }),
-        showUserColumns &&
-          helper.simple<'caseUserName'>({
-            title: 'User name',
-            key: 'caseUserName',
-          }),
+        ...(showUserColumns
+          ? [
+              helper.simple<'caseUserId'>({
+                title: 'User id',
+                key: 'caseUserId',
+                type: ID,
+              }),
+
+              helper.simple<'caseUserName'>({
+                title: 'User name',
+                key: 'caseUserName',
+              }),
+            ]
+          : []),
         helper.simple<'ruleName'>({
           title: 'Rule name',
           key: 'ruleName',

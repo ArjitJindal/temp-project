@@ -141,6 +141,7 @@ function getTable(
           params={params}
           onChangeParams={handleChangeParams}
           showAssignedToFilter={false}
+          showUserFilters
         />
       );
     case 'ALL_ALERTS':
@@ -150,6 +151,7 @@ function getTable(
           escalatedTransactionIds={[]}
           params={params}
           onChangeParams={handleChangeParams}
+          showUserFilters
         />
       );
     case 'MY':
