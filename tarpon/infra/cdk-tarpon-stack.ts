@@ -45,7 +45,14 @@ import {
   SqsEventSource,
 } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
-import { Peer, Port, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2'
+import {
+  IpAddresses,
+  Peer,
+  Port,
+  SecurityGroup,
+  SubnetType,
+  Vpc,
+} from 'aws-cdk-lib/aws-ec2'
 import {
   Choice,
   Condition,
@@ -1306,19 +1313,19 @@ export class CdkTarponStack extends cdk.Stack {
         securityGroup: null,
       } as any
     }
-
-    const vpcCidr = '10.0.0.0/21'
+    const IP_ADDRESS_RANGE = '10.0.0.0/21'
+    const ipAddresses = IpAddresses.cidr(IP_ADDRESS_RANGE)
     const vpc = new Vpc(this, 'vpc', {
       vpcName: StackConstants.VPC_NAME,
-      cidr: vpcCidr,
+      ipAddresses,
       subnetConfiguration: [
         {
-          subnetType: SubnetType.PRIVATE_WITH_NAT,
+          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
           name: 'PrivateSubnet1',
         },
         {
-          subnetType: SubnetType.PRIVATE_WITH_NAT,
+          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
           name: 'PrivateSubnet2',
         },
@@ -1343,11 +1350,11 @@ export class CdkTarponStack extends cdk.Stack {
         securityGroupName: StackConstants.VPC_SECURITY_GROUP_ID,
       }
     )
-    securityGroup.addIngressRule(Peer.ipv4(vpcCidr), Port.tcp(27017))
+    securityGroup.addIngressRule(Peer.ipv4(IP_ADDRESS_RANGE), Port.tcp(27017))
 
     return {
       vpc,
-      vpcCidr,
+      vpcCidr: IP_ADDRESS_RANGE,
       securityGroup,
     }
   }

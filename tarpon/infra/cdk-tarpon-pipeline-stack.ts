@@ -153,7 +153,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
     const vpc = new Vpc(this, 'vpc-codebuild', {
       subnetConfiguration: [
         {
-          subnetType: SubnetType.PRIVATE_WITH_NAT,
+          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
           name: 'PrivateSubnet1',
         },
