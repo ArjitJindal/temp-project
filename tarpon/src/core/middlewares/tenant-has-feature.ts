@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash'
+import { logger } from '../logger'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -17,15 +17,23 @@ export async function tenantHasFeature(
   const tenantRepository = new TenantRepository(tenantId, {
     dynamoDb: getDynamoDbClient(),
   })
-
-  const contextFeatures = getContext()?.features
-
-  const features = isEmpty(contextFeatures)
-    ? (await tenantRepository.getTenantSettings(['features']))?.features
-    : contextFeatures
-
-  if (isEmpty(contextFeatures) && features) {
-    updateTenantFeatures(features)
+  logger.info('Tenant Id', tenantId)
+  const context = getContext()
+  logger.info('context', context)
+  const contextFeatures = context?.features
+  logger.info('contextFeatures', contextFeatures)
+  const featuresExists = contextFeatures?.length
+  logger.info('featuresExists', featuresExists)
+  const features = contextFeatures
+  logger.info('features', features)
+  if (!featuresExists || tenantId !== context?.tenantId) {
+    const tenantFeatures = await tenantRepository.getTenantSettings([
+      'features',
+    ])
+    logger.info('tenantFeatures', tenantFeatures)
+    if (tenantFeatures?.features) {
+      updateTenantFeatures(tenantFeatures.features)
+    }
   }
 
   return (

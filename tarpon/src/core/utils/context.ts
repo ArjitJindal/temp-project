@@ -168,9 +168,11 @@ export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
 
 export function updateTenantFeatures(features: Feature[]) {
   const context = asyncLocalStorage.getStore()
+  logger.info('updateTenantFeatures', features)
   if (context) {
     context.features = features
   }
+  logger.info('updated context features', context?.features)
 }
 
 export function publishMetric(
