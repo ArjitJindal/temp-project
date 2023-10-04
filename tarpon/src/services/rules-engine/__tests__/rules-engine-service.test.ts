@@ -12,7 +12,7 @@ import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { getTestTransactionEvent } from '@/test-utils/transaction-event-test-utils'
-import { getContextStorage } from '@/core/utils/context'
+import { withContext } from '@/core/utils/context'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -362,54 +362,57 @@ describe('Verify Transaction Event', () => {
     setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
 
     test('returns risk-level action with PULSE feature flag', async () => {
-      await getContextStorage().run({ features: ['RISK_LEVELS'] }, async () => {
-        const mongoDb = await getMongoDbClient()
-        const riskRepository = new RiskRepository(TEST_TENANT_ID, {
-          dynamoDb,
-          mongoDb,
-        })
-        await riskRepository.createOrUpdateManualDRSRiskItem('1', 'HIGH')
+      await withContext(
+        async () => {
+          const mongoDb = await getMongoDbClient()
+          const riskRepository = new RiskRepository(TEST_TENANT_ID, {
+            dynamoDb,
+            mongoDb,
+          })
+          await riskRepository.createOrUpdateManualDRSRiskItem('1', 'HIGH')
 
-        const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
-        const transaction = getTestTransaction({
-          transactionId: '1',
-          originUserId: '1',
-        })
-        const result = await rulesEngine.verifyTransaction(transaction)
-        expect(result).toEqual({
-          transactionId: '1',
-          executedRules: [
-            {
-              ruleId: 'TEST-R-1',
-              ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
-              ruleName: 'test rule name',
-              ruleDescription: 'test rule description.',
-              ruleAction: 'BLOCK',
-              ruleHit: true,
-              nature: 'AML',
-              labels: [],
-              ruleHitMeta: {
-                hitDirections: ['ORIGIN', 'DESTINATION'],
+          const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+          const transaction = getTestTransaction({
+            transactionId: '1',
+            originUserId: '1',
+          })
+          const result = await rulesEngine.verifyTransaction(transaction)
+          expect(result).toEqual({
+            transactionId: '1',
+            executedRules: [
+              {
+                ruleId: 'TEST-R-1',
+                ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+                ruleName: 'test rule name',
+                ruleDescription: 'test rule description.',
+                ruleAction: 'BLOCK',
+                ruleHit: true,
+                nature: 'AML',
+                labels: [],
+                ruleHitMeta: {
+                  hitDirections: ['ORIGIN', 'DESTINATION'],
+                },
               },
-            },
-          ],
-          status: 'BLOCK',
-          hitRules: [
-            {
-              ruleId: 'TEST-R-1',
-              ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
-              ruleName: 'test rule name',
-              ruleDescription: 'test rule description.',
-              ruleAction: 'BLOCK',
-              nature: 'AML',
-              labels: [],
-              ruleHitMeta: {
-                hitDirections: ['ORIGIN', 'DESTINATION'],
+            ],
+            status: 'BLOCK',
+            hitRules: [
+              {
+                ruleId: 'TEST-R-1',
+                ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+                ruleName: 'test rule name',
+                ruleDescription: 'test rule description.',
+                ruleAction: 'BLOCK',
+                nature: 'AML',
+                labels: [],
+                ruleHitMeta: {
+                  hitDirections: ['ORIGIN', 'DESTINATION'],
+                },
               },
-            },
-          ],
-        } as TransactionMonitoringResult)
-      })
+            ],
+          } as TransactionMonitoringResult)
+        },
+        { features: ['RISK_LEVELS'] }
+      )
     })
 
     test('returns normal action without PULSE feature flag', async () => {

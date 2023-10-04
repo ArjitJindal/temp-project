@@ -12,10 +12,9 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { BatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import {
-  getContext,
-  getContextStorage,
   initializeTenantContext,
   updateLogMetadata,
+  withContext,
 } from '@/core/utils/context'
 
 function getBatchJobName(batchJobPayload: BatchJob) {
@@ -58,7 +57,7 @@ export const jobDecisionHandler = async (
 
 export const jobRunnerHandler = lambdaConsumer()(async (job: BatchJob) => {
   logger.info(`Starting job - ${job.type}`, job)
-  return getContextStorage().run(getContext() || {}, async () => {
+  return withContext(async () => {
     await initializeTenantContext(job.tenantId)
     updateLogMetadata({
       type: job.type,

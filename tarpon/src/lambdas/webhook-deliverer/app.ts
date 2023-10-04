@@ -21,11 +21,7 @@ import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
-import {
-  getContext,
-  getContextStorage,
-  updateLogMetadata,
-} from '@/core/utils/context'
+import { updateLogMetadata, withContext } from '@/core/utils/context'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 
@@ -207,7 +203,7 @@ export const webhookDeliveryHandler = lambdaConsumer()(
     const results = await Promise.allSettled(
       event.Records.map(async (record) => {
         try {
-          await getContextStorage().run(getContext() || {}, async () => {
+          await withContext(async () => {
             await handleWebhookDeliveryTask(record)
           })
         } catch (e) {

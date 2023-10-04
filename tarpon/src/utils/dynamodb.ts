@@ -455,10 +455,14 @@ export type CursorPaginatedResponse<Item> = {
 }
 
 export function cleanUpDynamoDbResources() {
-  const dynamoDbClients = getContext()?.dynamoDbClients
-  if (dynamoDbClients) {
-    dynamoDbClients.forEach((client) => {
-      client.destroy()
-    })
+  try {
+    const dynamoDbClients = getContext()?.dynamoDbClients
+    if (dynamoDbClients) {
+      dynamoDbClients.forEach((client) => {
+        client.destroy()
+      })
+    }
+  } catch (e) {
+    logger.error(`Failed to clean up dynamodb resources - ${e}`)
   }
 }

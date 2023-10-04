@@ -7,7 +7,6 @@ import {
   uniqBy,
   isEmpty,
   last,
-  cloneDeep,
   isNil,
   isObject,
 } from 'lodash'
@@ -52,10 +51,10 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import {
   getContext,
-  getContextStorage,
   hasFeature,
   updateLogMetadata,
   publishMetric,
+  withContext,
 } from '@/core/utils/context'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -697,49 +696,54 @@ export class RulesEngineService {
     | undefined
   > {
     const { rule, ruleInstance } = options
-    const context = cloneDeep(getContext() || {})
-    context.metricDimensions = {
-      ...context.metricDimensions,
-      ruleId: ruleInstance.ruleId,
-      ruleInstanceId: ruleInstance.id,
-      ruleImplementation: rule.ruleImplementationName,
-    }
-    return getContextStorage().run(context, async () => {
-      try {
-        updateLogMetadata({
+    const context = getContext()
+    return withContext(
+      async () => {
+        try {
+          updateLogMetadata({
+            ruleId: ruleInstance.ruleId,
+            ruleInstanceId: ruleInstance.id,
+          })
+          logger.info(`Running rule`)
+          const startTime = Date.now()
+          const { ruleClassInstance, isTransactionHistoricalFiltered, result } =
+            await this.verifyRuleIdempotent({
+              ...options,
+              tracing: true,
+              database: 'DYNAMODB',
+            })
+          const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
+          // Don't await publishing metric
+          publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
+          logger.info(`Completed rule`)
+
+          const transactionAggregationTasks =
+            ruleClassInstance instanceof TransactionAggregationRule
+              ? await this.handleTransactionRuleAggregation(
+                  ruleClassInstance,
+                  isTransactionHistoricalFiltered,
+                  options.transaction,
+                  ruleInstance.id!
+                )
+              : []
+          return {
+            result,
+            transactionAggregationTasks,
+          }
+        } catch (e) {
+          logger.error(e)
+        }
+      },
+      {
+        ...context,
+        metricDimensions: {
+          ...context?.metricDimensions,
           ruleId: ruleInstance.ruleId,
           ruleInstanceId: ruleInstance.id,
-        })
-        logger.info(`Running rule`)
-        const startTime = Date.now()
-        const { ruleClassInstance, isTransactionHistoricalFiltered, result } =
-          await this.verifyRuleIdempotent({
-            ...options,
-            tracing: true,
-            database: 'DYNAMODB',
-          })
-        const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
-        // Don't await publishing metric
-        publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
-        logger.info(`Completed rule`)
-
-        const transactionAggregationTasks =
-          ruleClassInstance instanceof TransactionAggregationRule
-            ? await this.handleTransactionRuleAggregation(
-                ruleClassInstance,
-                isTransactionHistoricalFiltered,
-                options.transaction,
-                ruleInstance.id!
-              )
-            : []
-        return {
-          result,
-          transactionAggregationTasks,
-        }
-      } catch (e) {
-        logger.error(e)
+          ruleImplementation: rule.ruleImplementationName,
+        },
       }
-    })
+    )
   }
 
   private async handleTransactionRuleAggregation(
@@ -820,8 +824,7 @@ export class RulesEngineService {
     user: User | Business
     ongoingScreeningMode?: boolean
   }) {
-    const context = cloneDeep(getContext() || {})
-    return getContextStorage().run(context, async () => {
+    return withContext(async () => {
       try {
         updateLogMetadata({
           ruleId: options.ruleInstance.ruleId,

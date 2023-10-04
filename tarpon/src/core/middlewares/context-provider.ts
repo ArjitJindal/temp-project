@@ -4,7 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { getContextStorage, getInitialContext } from '../utils/context'
+import { getInitialContext, withContext } from '../utils/context'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
@@ -16,7 +16,7 @@ export const apiContextProvider =
   (handler: CallableFunction): Handler =>
   async (event, context, callback): Promise<APIGatewayProxyResult> => {
     const initialContext = await getInitialContext(event, context)
-    return getContextStorage().run(initialContext, async () => {
+    return withContext(async () => {
       return handler(event, context, callback)
-    })
+    }, initialContext)
   }

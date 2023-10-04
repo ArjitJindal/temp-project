@@ -4,11 +4,11 @@ import {
   initBackground,
   waitForTasks,
 } from '@/utils/background'
-import { getContextStorage } from '@/core/utils/context'
+import { withContext } from '@/core/utils/context'
 describe('Background promises', () => {
   test('Promise is completed in the background', async () => {
     let i = 0
-    await getContextStorage().run({}, async () => {
+    await withContext(async () => {
       initBackground()
       const waitOneSecond = new Promise<void>((resolve) => {
         setTimeout(() => {
@@ -24,7 +24,7 @@ describe('Background promises', () => {
   test('Promise is completed when background not initialised', async () => {
     disableBackground()
     let i = 0
-    await getContextStorage().run({}, async () => {
+    await withContext(async () => {
       const waitOneSecond = new Promise<void>((resolve) => {
         setTimeout(() => {
           i++

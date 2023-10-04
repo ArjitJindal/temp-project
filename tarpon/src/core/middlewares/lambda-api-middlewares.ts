@@ -5,8 +5,6 @@ import { httpErrorHandler } from './http-error-handler'
 import { jsonSerializer } from './json-serializer'
 import { localDev } from './local-dev'
 import { initSentry } from './init-sentry'
-import { metricsMiddleware } from './metrics-middleware'
-import { resourceCleanupHandler } from './resource-cleanup-handler'
 import { registerUnhandledErrorHandler } from './lambda-utils'
 import { requestLoggerMiddleware } from './request-logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
@@ -27,8 +25,6 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     rbacMiddleware(),
     initSentry(),
     featureProtected(options?.requiredFeatures),
-    metricsMiddleware(),
-    resourceCleanupHandler(),
   ] as const
   return compose(...middlewares)
 }

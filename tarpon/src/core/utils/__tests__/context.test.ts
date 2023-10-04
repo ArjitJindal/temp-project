@@ -1,12 +1,8 @@
-import {
-  getContext,
-  getContextStorage,
-  publishMetric,
-} from '@/core/utils/context'
+import { getContext, publishMetric, withContext } from '@/core/utils/context'
 
 describe('Publish metric', () => {
   test('added to context for new namespace', async () => {
-    await getContextStorage().run({}, async () => {
+    await withContext(async () => {
       publishMetric(
         { name: 'Thingy', namespace: 'Flagright', kind: 'GAUGE' },
         100,
@@ -20,10 +16,7 @@ describe('Publish metric', () => {
   })
 
   test('added to context for existing namespace', async () => {
-    await getContextStorage().run(
-      {
-        metrics: { Flagright: [] },
-      },
+    await withContext(
       async () => {
         publishMetric(
           { name: 'Thingy', namespace: 'Flagright', kind: 'GAUGE' },
@@ -40,6 +33,9 @@ describe('Publish metric', () => {
           }
         )
         expect(getContext()?.metrics!['Flagright']).toHaveLength(2)
+      },
+      {
+        metrics: { Flagright: [] },
       }
     )
   })

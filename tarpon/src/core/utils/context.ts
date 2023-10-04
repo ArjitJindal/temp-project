@@ -17,12 +17,17 @@ import { Credentials } from '@aws-sdk/client-sts'
 import { cloneDeep, isNil, omitBy } from 'lodash'
 import { logger, winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
-import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import {
+  cleanUpDynamoDbResources,
+  getDynamoDbClient,
+  getDynamoDbClientByEvent,
+} from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { Account } from '@/@types/openapi-internal/Account'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Metric } from '@/core/cloudwatch/metrics'
 import { Permission } from '@/@types/openapi-internal/Permission'
+import { envIs } from '@/utils/env'
 
 type LogMetaData = {
   tenantId?: string
@@ -210,6 +215,10 @@ export function publishMetric(
 }
 
 export async function publishContextMetrics() {
+  if (envIs('local') || envIs('test')) {
+    return
+  }
+
   // Publish metrics for each namespace to cloudwatch
   try {
     const client = new CloudWatchClient({
@@ -237,11 +246,18 @@ export async function withContext<R>(
   callback: () => Promise<R>,
   context?: Context
 ): Promise<R> {
-  const ctx = context ?? getContext() ?? {}
-  return getContextStorage().run(cloneDeep(ctx), async () => {
-    const response = await callback()
-    await publishContextMetrics()
-    return response
+  const ctx = cloneDeep(context ?? getContext() ?? {})
+  ctx.metrics = {}
+  // Reset dynamodb clients from parent, then we won't clean up the dynamodb clients
+  // which might still be used.
+  ctx.dynamoDbClients = []
+  return getContextStorage().run(ctx, async () => {
+    try {
+      return callback()
+    } finally {
+      await publishContextMetrics()
+      cleanUpDynamoDbResources()
+    }
   })
 }
 
