@@ -220,7 +220,7 @@ ruleVariantsTest(true, () => {
             destinationUserId: 'Mike',
             originAmountDetails: {
               transactionCurrency: 'USD',
-              transactionAmount: 105,
+              transactionAmount: 103,
             },
             destinationAmountDetails: undefined,
             timestamp: now.subtract(1, 'day').subtract(1, 'hour').valueOf(),
