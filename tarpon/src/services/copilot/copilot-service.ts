@@ -5,6 +5,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
+import { difference } from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import {
   AttributeGenerator,
@@ -26,6 +27,7 @@ import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { ask } from '@/utils/openapi'
+import { AI_ATTRIBUTES } from '@/@types/openapi-internal-custom/AIAttribute'
 
 type GenerateNarrative = {
   _case: Case
@@ -135,10 +137,13 @@ export class CopilotService {
     })
 
     const tenantSettings = await tenantRepository.getTenantSettings([
-      'aiFieldsEnabled',
+      'aiSourcesDisabled',
     ])
-
-    return tenantSettings?.aiFieldsEnabled || []
+    const aiSourcesEnabled = difference(
+      AI_ATTRIBUTES,
+      tenantSettings.aiSourcesDisabled ?? []
+    )
+    return aiSourcesEnabled
   }
 
   async getCaseNarrative(

@@ -82,6 +82,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/copilot/narrative': StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/copilot/format': StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
+  '/copilot/sources': StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/alert/{alertId}/questions':
     StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/questions/autocomplete': StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,

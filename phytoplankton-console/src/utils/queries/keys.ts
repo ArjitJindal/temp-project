@@ -218,6 +218,8 @@ export const DASHBOARD_TEAM_STATS = (params: AnyParameters): QueryKey => [
 
 export const COPILOT = (entityId: string): QueryKey => ['copilot', entityId];
 
+export const COPILOT_AI_RESOURCES = (): QueryKey => ['copilot', 'aiSources'];
+
 export const REPORTS_TEMPLATE = (params: AnyParameters): QueryKey => [
   'reports',
   'template',

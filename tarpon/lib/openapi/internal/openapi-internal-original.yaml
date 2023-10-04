@@ -1376,6 +1376,17 @@ paths:
             schema:
               $ref: '#/components/schemas/FormatRequest'
         required: true
+  /copilot/sources:
+    get:
+      summary: Get an AI sources
+      operationId: get-ai-sources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiSourcesResponse'
   '/users/{userId}/comments/{commentId}':
     parameters:
       - schema:
@@ -6356,6 +6367,30 @@ components:
       required:
         - narrative
         - attributes
+    AiSourcesResponse:
+      title: AiSourcesResponse
+      type: object
+      properties:
+        aiSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiSource'
+      required:
+        - aiSources
+    AiSource:
+      title: AiSource
+      type: object
+      properties:
+        sourceName:
+          $ref: '#/components/schemas/AIAttribute'
+        category:
+          $ref: '#/components/schemas/AIAttributeCategory'
+        isPii:
+          type: boolean
+      required:
+        - sourceName
+        - category
+        - isPii
     FileInfo:
       title: FileInfo
       type: object
@@ -6603,7 +6638,7 @@ components:
           properties:
             currency:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
-        aiFieldsEnabled:
+        aiSourcesDisabled:
           type: array
           items:
             $ref: '#/components/schemas/AIAttribute'

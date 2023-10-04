@@ -14,6 +14,7 @@ import { QuestionService } from '@/services/copilot/questions/question-service'
 import { AlertsService } from '@/services/alerts'
 import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
+import { AI_SOURCES } from '@/services/copilot/attributes/ai-sources'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -133,6 +134,12 @@ export const copilotHandler = lambdaApi({})(
       const autocomplete = new AutocompleteService()
       return {
         suggestions: autocomplete.autocomplete(request.question || ''),
+      }
+    })
+
+    handlers.registerGetAiSources(async () => {
+      return {
+        aiSources: AI_SOURCES,
       }
     })
 

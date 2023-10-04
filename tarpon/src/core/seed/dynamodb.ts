@@ -22,7 +22,6 @@ import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler
 import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { initChecklistTemplate } from '@/core/seed/data/checklists'
-import { AI_ATTRIBUTES } from '@/@types/openapi-internal-custom/AIAttribute'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -94,7 +93,7 @@ export async function seedDynamo(
     features: FEATURES.filter((f) => DISABLED_FEATURES.indexOf(f) === -1),
     isAiEnabled: true,
     isPaymentApprovalEnabled: true,
-    aiFieldsEnabled: AI_ATTRIBUTES,
+    aiSourcesDisabled: [],
   })
 }
 
