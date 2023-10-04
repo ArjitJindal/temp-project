@@ -149,10 +149,7 @@ export const tenantsHandler = lambdaApi()(
         mongoDb,
       }).getApiKeys(
         request.unmaskApiKeyId && request.unmask != null
-          ? {
-              apiKeyId: request.unmaskApiKeyId,
-              unmask: request.unmask,
-            }
+          ? { apiKeyId: request.unmaskApiKeyId, unmask: request.unmask }
           : undefined
       )
       if (request.unmaskApiKeyId && request.unmask != null) {

@@ -33,6 +33,7 @@ import { TenantUsageData } from '@/@types/openapi-internal/TenantUsageData'
 import dayjs from '@/utils/dayjs'
 import { FlagrightRegion, envIs } from '@/utils/env'
 import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
+import { isFlagrightInternalUser } from '@/@types/jwt'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -414,18 +415,20 @@ export class TenantService {
       (x) => x.apiKey === unmaskingOptions.apiKeyId
     )
 
-    if (apiKeyViewDataIndex > -1) {
-      apiKeyViewData[apiKeyViewDataIndex].count = apiKeyViewTimes + 1
-    } else {
-      apiKeyViewData.push({
-        apiKey: unmaskingOptions.apiKeyId,
-        count: apiKeyViewTimes + 1,
+    if (isFlagrightInternalUser()) {
+      if (apiKeyViewDataIndex > -1) {
+        apiKeyViewData[apiKeyViewDataIndex].count = apiKeyViewTimes + 1
+      } else {
+        apiKeyViewData.push({
+          apiKey: unmaskingOptions.apiKeyId,
+          count: apiKeyViewTimes + 1,
+        })
+      }
+
+      await tenantRepository.createOrUpdateTenantSettings({
+        apiKeyViewData,
       })
     }
-
-    await tenantRepository.createOrUpdateTenantSettings({
-      apiKeyViewData,
-    })
 
     return apiKeysProcessed
   }

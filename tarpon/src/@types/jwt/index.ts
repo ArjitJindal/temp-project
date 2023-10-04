@@ -35,7 +35,7 @@ export function assertRole(user: ContextUser, requiredRole: ManagedRoleName) {
     throw new Forbidden('Unknown user')
   }
 
-  const { role, email } = user
+  const { role } = user
   if (
     !isValidManagedRoleName(role) ||
     MANAGED_ROLE_NAMES.indexOf(role) > MANAGED_ROLE_NAMES.indexOf(requiredRole)
@@ -45,10 +45,14 @@ export function assertRole(user: ContextUser, requiredRole: ManagedRoleName) {
     )
   }
 
-  const isFlagrightEmail = email != null && email.endsWith('@flagright.com')
-  if (role === 'root' && !isFlagrightEmail) {
+  if (role === 'root' && isFlagrightInternalUser()) {
     throw new Forbidden(`Root users should have email in Flagright domain`)
   }
+}
+
+export function isFlagrightInternalUser() {
+  const user = currentUser()
+  return user?.email?.endsWith('@flagright.com')
 }
 
 export function assertPermissions(requiredPermissions: Permission[]) {

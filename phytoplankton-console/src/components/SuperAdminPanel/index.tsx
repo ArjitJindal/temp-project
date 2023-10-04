@@ -211,6 +211,18 @@ export default function SuperAdminPanel() {
           </Label>
         </div>
         <div className={s.field}>
+          <Button
+            type="PRIMARY"
+            onClick={() =>
+              mutateTenantSettings.mutate({
+                apiKeyViewData: [],
+              })
+            }
+          >
+            Reset Current API Key View Count
+          </Button>
+        </div>
+        <div className={s.field}>
           <Label label="CA Search Profile ID">
             <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
           </Label>
