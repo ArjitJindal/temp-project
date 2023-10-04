@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { ValueItem } from '../RiskScoreDisplay/types';
 import AiLogoIcon from './ai-logo.react.svg';
@@ -99,20 +99,22 @@ const riskScoredata = (rawData: {
   transaction?: InternalTransaction;
   businessUser?: InternalBusinessUser;
   consumerUser?: InternalConsumerUser;
-}): ExtendedValueItem[] => shuffleArray(randomizedData(rawData));
+}): ExtendedValueItem[] => {
+  return shuffleArray(randomizedData(rawData));
+};
 
 export default function AIRiskDisplay({ transaction, businessUser, consumerUser }: Props) {
   const isAiRiskScoreEnabled = useFeatureEnabled('AI_RISK_SCORE');
+  const data = useMemo(
+    () => riskScoredata({ transaction, businessUser, consumerUser }),
+    [transaction, businessUser, consumerUser],
+  );
   return isAiRiskScoreEnabled ? (
     <RiskScoreDisplay
       mainPanelCustomStyling={{
         background: COLORS_V2_AI_RISK_DISPLAY_BACKGROUND,
       }}
-      values={riskScoredata({
-        transaction,
-        businessUser,
-        consumerUser,
-      }).map((x) => ({
+      values={data.map((x) => ({
         score: x.drsScore,
         createdAt: x.createdAt,
         components: x.components,
