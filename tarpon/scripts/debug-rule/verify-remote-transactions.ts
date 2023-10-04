@@ -18,14 +18,17 @@ import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 process.env.ENV = 'local'
 
 const configPath = path.join(__dirname, 'config.json')
-const { api, jwt, transactionIds, ruleInstanceIds } = fs.readJSONSync(
-  configPath,
-  'utf-8'
-)
+const {
+  api,
+  jwt: rawJwt,
+  transactionIds,
+  ruleInstanceIds,
+} = fs.readJSONSync(configPath, 'utf-8')
 console.info(`Using config from "${configPath}"`)
 console.info(`Will get ${transactionIds.length} transactions from "${api}"`)
 
 const createdUsers = new Set<string>()
+const jwt = rawJwt.replace(/^Bearer\s+/, '')
 
 async function getRemoteRuleInstances(
   ruleInstanceIds: string[]

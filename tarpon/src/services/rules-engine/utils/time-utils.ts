@@ -36,12 +36,12 @@ function getFiscalYearStart(
   return fiscalYearStart
 }
 
-export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {
+export function subtractTime(timestamp: Dayjs, timeWindow: TimeWindow): number {
   const granularity =
     timeWindow.granularity === 'fiscal_year' ? 'year' : timeWindow.granularity
 
   if (timeWindow.granularity === 'fiscal_year' && timeWindow.fiscalYear) {
-    const fiscalYearStart = getFiscalYearStart(timeStamp, timeWindow.fiscalYear)
+    const fiscalYearStart = getFiscalYearStart(timestamp, timeWindow.fiscalYear)
     const afterTimestamp = fiscalYearStart.subtract(
       timeWindow.units - 1,
       'year'
@@ -50,7 +50,7 @@ export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {
     return afterTimestamp.valueOf()
   }
 
-  let afterTimestamp = timeStamp
+  let afterTimestamp = timestamp
     .subtract(timeWindow.units, granularity)
     .valueOf()
 
@@ -58,10 +58,17 @@ export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {
     !timeWindow.rollingBasis &&
     ['day', 'week', 'month', 'year'].includes(timeWindow.granularity)
   ) {
-    afterTimestamp = timeStamp
+    afterTimestamp = timestamp
       .startOf(granularity)
       .subtract(timeWindow.units - 1, granularity)
       .valueOf()
+
+    if (afterTimestamp.valueOf() === timestamp.valueOf()) {
+      afterTimestamp = timestamp
+        .startOf(granularity)
+        .subtract(timeWindow.units, granularity)
+        .valueOf()
+    }
   }
 
   return afterTimestamp

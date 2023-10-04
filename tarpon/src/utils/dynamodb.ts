@@ -429,21 +429,21 @@ export function dynamoDbQueryHelper(query: {
     ),
   }
 
-  if (sortKey.from === sortKey.to) {
-    queryInput.KeyConditionExpression = `PartitionKeyID = :partitionKey AND SortKeyID = :sortKey`
-    queryInput.ExpressionAttributeValues = {
-      ':partitionKey': partitionKey,
-      ':sortKey': sortKey.from,
-      ...expressionAttributeValues,
-    }
-  } else {
-    queryInput.KeyConditionExpression = `PartitionKeyID = :partitionKey AND SortKeyID BETWEEN :from AND :to`
-    queryInput.ExpressionAttributeValues = {
-      ':partitionKey': partitionKey,
-      ':from': sortKey.from,
-      ':to': sortKey.to,
-      ...expressionAttributeValues,
-    }
+  // Make sure from <= to
+  let from = sortKey.from
+  if (from > sortKey.to) {
+    from = sortKey.to
+    logger.error(
+      `'from' (${sortKey.from} should be less or equal to 'to' (${sortKey.to}) ) `
+    )
+  }
+
+  queryInput.KeyConditionExpression = `PartitionKeyID = :partitionKey AND SortKeyID BETWEEN :from AND :to`
+  queryInput.ExpressionAttributeValues = {
+    ':partitionKey': partitionKey,
+    ':from': from,
+    ':to': sortKey.to,
+    ...expressionAttributeValues,
   }
 
   return queryInput
