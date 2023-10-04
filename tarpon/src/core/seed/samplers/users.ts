@@ -14,6 +14,7 @@ import {
   pickRandomDeterministic,
   randomFloat,
   randomInt,
+  randomIntDeterministic,
   randomSubset,
 } from '@/core/seed/samplers/prng'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
@@ -50,24 +51,25 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
+import { USER_REGISTRATION_STATUSS } from '@/@types/openapi-internal-custom/UserRegistrationStatus'
 
-export function sampleUserState(seed?: number): UserState {
-  return USER_STATES[randomInt(seed, USER_STATES.length)]
+export function sampleUserState(): UserState {
+  return pickRandomDeterministic(USER_STATES)
 }
 
-export function sampleUserStateDetails(seed?: number): UserStateDetails {
+export function sampleUserStateDetails(): UserStateDetails {
   return {
-    state: sampleUserState(seed),
+    state: sampleUserState(),
   }
 }
 
-export function sampleKycStatus(seed?: number): KYCStatus {
-  return KYC_STATUSS[randomInt(seed, KYC_STATUSS.length)]
+export function sampleKycStatus(): KYCStatus {
+  return pickRandomDeterministic(KYC_STATUSS)
 }
 
-export function sampleKycStatusDetails(seed?: number): KYCStatusDetails {
+export function sampleKycStatusDetails(): KYCStatusDetails {
   return {
-    status: sampleKycStatus(seed),
+    status: sampleKycStatus(),
   }
 }
 
@@ -76,11 +78,11 @@ const emailSet = [...Array(100)].map(
 )
 
 export const randomEmail = () => {
-  return pickRandom(emailSet)
+  return pickRandomDeterministic(emailSet)
 }
 
 export const randomPhoneNumber = () => {
-  return pickRandom(phoneNumber)
+  return pickRandomDeterministic(phoneNumber)
 }
 
 const generateRandomTimestamp = () => {
@@ -239,17 +241,20 @@ export function sampleConsumerUser() {
   return user
 }
 
-export function sampleBusinessUser(
-  { company, country }: { company?: CompanySeedData; country?: CountryCode },
-  seed = 0.1
-): { user: InternalBusinessUser } {
+export function sampleBusinessUser({
+  company,
+  country,
+}: {
+  company?: CompanySeedData
+  country?: CountryCode
+}): { user: InternalBusinessUser } {
   const name = company?.name || randomName()
   const domain = name.toLowerCase().replace(' ', '').replace('&', '')
   const userId = `U-${userCounter}`
   userCounter++
   const paymentMethod = samplePaymentDetails()
 
-  const timestamp = sampleTimestamp(seed)
+  const timestamp = sampleTimestamp()
   const user: InternalBusinessUser = {
     type: 'BUSINESS',
     userId: userId,
@@ -260,12 +265,12 @@ export function sampleBusinessUser(
       },
       sampleTag(),
     ],
-    userStateDetails: sampleUserStateDetails(seed),
+    userStateDetails: sampleUserStateDetails(),
     executedRules: userRules,
     hitRules: getUserRules(name, 'BUSINESS'),
     updatedAt: timestamp,
     comments: [],
-    kycStatusDetails: sampleKycStatusDetails(seed),
+    kycStatusDetails: sampleKycStatusDetails(),
     createdTimestamp: timestamp,
     allowedPaymentMethods: randomSubset(PAYMENT_METHODS),
     savedPaymentDetails: paymentMethod ? [paymentMethod] : [],
@@ -277,45 +282,51 @@ export function sampleBusinessUser(
       },
       companyFinancialDetails: {
         expectedTransactionAmountPerMonth: {
-          amountValue: Math.ceil(Math.random() * 10000),
+          amountValue: randomIntDeterministic(10000),
           amountCurrency: sampleCurrency(),
         },
         expectedTurnoverPerMonth: {
-          amountValue: Math.ceil(Math.random() * 100000),
+          amountValue: randomIntDeterministic(10000),
           amountCurrency: sampleCurrency(),
         },
         tags: [{ key: 'Unit', value: 'S1300' }],
       },
       reasonForAccountOpening: [
-        pickRandom(['Expansion', 'New Business', 'Savings', 'Other']),
+        pickRandomDeterministic([
+          'Expansion',
+          'New Business',
+          'Savings',
+          'Other',
+        ]),
       ],
-      sourceOfFunds: [pickRandom(SOURCE_OF_FUNDSS)],
+      sourceOfFunds: [pickRandomDeterministic(SOURCE_OF_FUNDSS)],
       companyGeneralDetails: {
         legalName: name,
         businessIndustry: company?.industries || [],
         mainProductsServicesSold: company?.products,
-        userSegment: pickRandom(BUSINESS_USER_SEGMENTS),
-        userRegistrationStatus:
-          Math.ceil(Math.random() * 9 + 1) > 8 ? 'UNREGISTERED' : 'REGISTERED',
+        userSegment: pickRandomDeterministic(BUSINESS_USER_SEGMENTS),
+        userRegistrationStatus: pickRandomDeterministic(
+          USER_REGISTRATION_STATUSS
+        ),
       },
       companyRegistrationDetails: {
-        taxIdentifier: sampleString(seed),
-        legalEntityType: pickRandom([
+        taxIdentifier: sampleString(),
+        legalEntityType: pickRandomDeterministic([
           'LLC',
           'Sole Proprietorship',
           'Other',
           'Corporation',
         ]),
-        registrationIdentifier: sampleString(seed),
-        registrationCountry: country ?? sampleCountry(seed),
+        registrationIdentifier: sampleString(),
+        registrationCountry: country ?? sampleCountry(),
         tags: [{ key: 'Unit', value: 'S1300' }],
       },
     },
     acquisitionChannel: pickRandom(ACQUISITION_CHANNELS),
     transactionLimits: {
       maximumDailyTransactionLimit: {
-        amountValue: Math.ceil(Math.random() * 10000),
-        amountCurrency: pickRandom(CURRENCY_CODES),
+        amountValue: randomIntDeterministic(10000),
+        amountCurrency: pickRandomDeterministic(CURRENCY_CODES),
       },
     },
     shareHolders: Array.from({ length: 3 }, () => {
@@ -324,9 +335,10 @@ export function sampleBusinessUser(
       return {
         generalDetails: {
           name,
-          countryOfResidence: country ?? pickRandom(COUNTRY_CODES),
-          countryOfNationality: country ?? pickRandom(COUNTRY_CODES),
-          gender: pickRandom(['M', 'F', 'NB']),
+          countryOfResidence: country ?? pickRandomDeterministic(COUNTRY_CODES),
+          countryOfNationality:
+            country ?? pickRandomDeterministic(COUNTRY_CODES),
+          gender: pickRandomDeterministic(['M', 'F', 'NB']),
           dateOfBirth: new Date(generateRandomTimestamp()).toDateString(),
         },
         legalDocuments: Array.from(

@@ -234,13 +234,15 @@ export default function SuperAdminPanel() {
         </div>
         <Confirm
           title={`Run ${humanizeConstant(batchJobName)}?`}
-          onConfirm={() => {
+          onConfirm={async () => {
             batchJobMessage = message.loading(`Starting ${humanizeConstant(batchJobName)}...`);
-            api.postTenantsTriggerBatchJob({
+            await api.postTenantsTriggerBatchJob({
               TenantTriggerBatchJobRequest: {
                 jobName: batchJobName as BatchJobNames,
               },
             });
+            batchJobMessage();
+            window.location.reload();
           }}
           text={`Are you sure you want to run ${humanizeConstant(batchJobName)} batch job?`}
           onSuccess={() => {

@@ -149,8 +149,8 @@ export function sampleTransactionUserCases(
       caseId,
       caseType: 'SYSTEM',
       caseStatus,
-      createdTimestamp: sampleTimestamp(seed),
-      latestTransactionArrivalTimestamp: sampleTimestamp(seed) + 3600 * 1000,
+      createdTimestamp: sampleTimestamp(),
+      latestTransactionArrivalTimestamp: sampleTimestamp() + 3600 * 1000,
       comments: [],
       caseTransactionsCount: transactions.length,
       statusChanges: getStatusChangesObject(
@@ -165,7 +165,7 @@ export function sampleTransactionUserCases(
           ? {
               reason: reasons,
               userId: params.userId,
-              timestamp: sampleTimestamp(seed),
+              timestamp: sampleTimestamp(),
               comment: generateNarrative(
                 ruleHits.map((r) => r.ruleDescription),
                 reasons,
@@ -189,37 +189,31 @@ export function sampleTransactionUserCases(
       caseTransactionsIds: transactions.map((t) => t.transactionId!),
       alerts: ruleHits
         .filter((rh) => rh.nature === nature)
-        .map((ruleHit, i) =>
-          sampleAlert(
-            {
-              caseId,
-              ruleHit,
-              transactions:
-                ruleHit.nature === 'SCREENING'
-                  ? []
-                  : transactions.filter(
-                      (t) =>
-                        !!t.hitRules.find(
-                          (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
-                        )
-                    ),
-            },
-            i * 0.001
-          )
+        .map((ruleHit) =>
+          sampleAlert({
+            caseId,
+            ruleHit,
+            transactions:
+              ruleHit.nature === 'SCREENING'
+                ? []
+                : transactions.filter(
+                    (t) =>
+                      !!t.hitRules.find(
+                        (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
+                      )
+                  ),
+          })
         ),
     }
   }).filter((c) => c.alerts && c.alerts.length > 0)
 }
 
-export function sampleAlert(
-  params: {
-    caseId: string
-    ruleHit: HitRulesDetails
-    transactions: InternalTransaction[]
-  },
-  seed?: number
-): Alert {
-  const createdTimestamp = sampleTimestamp(seed, 3600 * 24 * 1000 * 30)
+export function sampleAlert(params: {
+  caseId: string
+  ruleHit: HitRulesDetails
+  transactions: InternalTransaction[]
+}): Alert {
+  const createdTimestamp = sampleTimestamp(3600 * 24 * 1000 * 30)
   const alertStatus = pickRandom(
     ['OPEN', 'OPEN', 'OPEN', 'OPEN', 'OPEN', 'CLOSED', 'REOPENED'],
     Math.random()

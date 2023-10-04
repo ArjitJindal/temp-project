@@ -17,13 +17,12 @@ const init = () => {
   }
   const businessUserData = companies.map(
     (
-      c,
-      i
+      c
     ): {
       user: InternalBusinessUser
       merchantMonitoring: MerchantMonitoringSummary[]
     } => {
-      const { user } = sampleBusinessUser({ company: c }, i)
+      const { user } = sampleBusinessUser({ company: c })
 
       return {
         user,

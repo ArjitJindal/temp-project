@@ -6,10 +6,11 @@ import { sampleTag } from '@/core/seed/samplers/tag'
 import { sampleCountry } from '@/core/seed/samplers/countries'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
-  pickRandom,
-  prng,
-  randomFloat,
-  randomSubsetOfSize,
+  pickRandomDeterministic,
+  randomFloatDeterministic,
+  randomIntDeterministic,
+  randomNumberGeneratorDeterministic,
+  randomSubsetOfSizeDeterministic,
 } from '@/core/seed/samplers/prng'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
@@ -23,16 +24,20 @@ import {
   transactionRules,
 } from '@/core/seed/data/rules'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
+import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 
 const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
   : 50
 
-const generator = function* (seed: number): Generator<InternalTransaction> {
+const generator = function* (): Generator<InternalTransaction> {
   const userTransactionMap = new Map<string, string[]>()
-  users.forEach((u, i) => {
+  users.forEach((u) => {
     const filteredUsers = users.filter((thisU) => thisU.userId !== u.userId)
-    const usersToTransactWith = randomSubsetOfSize(filteredUsers, 3, i)
+    const usersToTransactWith = randomSubsetOfSizeDeterministic(
+      filteredUsers,
+      3
+    )
     userTransactionMap.set(
       u.userId,
       usersToTransactWith.map((u) => u.userId)
@@ -40,17 +45,11 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
   })
 
   for (let i = 0; i < TXN_COUNT; i += 1) {
-    const randomGenerator = prng(seed * i)
-    const type =
-      randomGenerator() < 0.24
-        ? 'TRANSFER'
-        : randomGenerator() < 0.95
-        ? 'REFUND'
-        : 'WITHDRAWAL'
+    const type = pickRandomDeterministic(TRANSACTION_TYPES)
 
     // Hack in some suspended transactions for payment approvals
     const hitRules: ExecutedRulesResult[] =
-      randomGenerator() < 0.75
+      randomNumberGeneratorDeterministic() < 0.75
         ? randomTransactionRules()
         : transactionRules.filter((r) => r.ruleAction === 'SUSPEND')
     const randomHitRules = hitRules.map((hitRule) => {
@@ -69,17 +68,16 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       }
       return hitRule
     })
-    const transaction = sampleTransaction({}, i)
+    const transaction = sampleTransaction({})
     const originUserId = users[i % users.length].userId
-    const destinationUserId = pickRandom(
-      userTransactionMap.get(originUserId) as string[],
-      i
+    const destinationUserId = pickRandomDeterministic(
+      userTransactionMap.get(originUserId) as string[]
     )
 
     const transactionId = `T-${i + 1}`
-    const timestamp = sampleTimestamp(i)
+    const timestamp = sampleTimestamp()
 
-    const transactionAmount = Math.round(Math.random() * 5000)
+    const transactionAmount = randomIntDeterministic(1_00_000)
     const fullTransaction: InternalTransaction = {
       ...transaction,
       type: type,
@@ -96,25 +94,25 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       originPaymentMethodId: getPaymentMethodId(
         transaction?.originPaymentDetails
       ),
-      transactionState: pickRandom(TRANSACTION_STATES),
+      transactionState: pickRandomDeterministic(TRANSACTION_STATES),
       arsScore: {
         transactionId,
         createdAt: timestamp,
         originUserId,
         destinationUserId,
-        riskLevel: pickRandom(RISK_LEVEL1S),
-        arsScore: Number((randomFloat(i * 2) * 100).toFixed(2)),
+        riskLevel: pickRandomDeterministic(RISK_LEVEL1S),
+        arsScore: Number(randomFloatDeterministic(100).toFixed(2)),
         components: sampleTransactionRiskScoreComponents(transaction),
       },
       executedRules: transactionRules,
       originAmountDetails: {
-        country: sampleCountry(i),
-        transactionCurrency: sampleCurrency(i),
+        country: sampleCountry(),
+        transactionCurrency: sampleCurrency(),
         transactionAmount,
       },
       destinationAmountDetails: {
-        country: sampleCountry(i + 1),
-        transactionCurrency: sampleCurrency(i + 1),
+        country: sampleCountry(),
+        transactionCurrency: sampleCurrency(),
         transactionAmount,
       },
       tags: [sampleTag()],
@@ -123,7 +121,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
   }
 }
 
-const generate: () => Iterable<InternalTransaction> = () => generator(42)
+const generate: () => Iterable<InternalTransaction> = () => generator()
 
 const transactions: InternalTransaction[] = []
 

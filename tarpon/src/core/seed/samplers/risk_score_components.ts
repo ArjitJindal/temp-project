@@ -8,13 +8,13 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
-import { randomFloat } from '@/core/seed/samplers/prng'
+import { randomFloatDeterministic } from '@/core/seed/samplers/prng'
 
 export function sampleConsumerUserRiskScoreComponents(
   consumer: InternalConsumerUser
 ): RiskScoreComponent[] {
   const scores = [...new Array(4)].map(() =>
-    Number((randomFloat() * 100).toFixed(2))
+    Number(randomFloatDeterministic(100).toFixed(2))
   )
 
   return [
@@ -65,7 +65,7 @@ export function sampleBusinessUserRiskScoreComponents(
   business: InternalBusinessUser
 ): RiskScoreComponent[] {
   const scores = [...new Array(4)].map(() =>
-    Number((randomFloat() * 100).toFixed(2))
+    Number(randomFloatDeterministic(100).toFixed(2))
   )
   return [
     {
@@ -117,7 +117,7 @@ export const sampleTransactionRiskScoreComponents = (
   transaction: InternalTransaction
 ): RiskScoreComponent[] => {
   const scores = [...new Array(4)].map(() =>
-    Number((randomFloat() * 100).toFixed(2))
+    Number(randomFloatDeterministic(100).toFixed(2))
   )
 
   return [

@@ -16,7 +16,7 @@ export function prng(seed?: number | undefined | null) {
 
 let seed = 0.1
 
-export function randomNumberGeneratorNew() {
+export function randomNumberGeneratorDeterministic() {
   let t = (seed += 0x6d2b79f5)
   t = Math.imul(t ^ (t >>> 15), t | 1)
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
@@ -28,16 +28,18 @@ export function randomInt(seed?: number | undefined | null, max?: number) {
   return Math.floor(Math.random() * (max ?? Number.MAX_SAFE_INTEGER))
 }
 
-export function randomIntNew(max: number) {
-  return Math.floor(randomNumberGeneratorNew() * max)
+export function randomIntDeterministic(max?: number) {
+  return Math.floor(
+    randomNumberGeneratorDeterministic() * (max ?? Number.MAX_SAFE_INTEGER)
+  )
 }
 
 export function randomFloat(seed?: number | undefined | null, max?: number) {
   return Math.random() * (max || 1)
 }
 
-export function randomFloatNew() {
-  return randomNumberGeneratorNew()
+export function randomFloatDeterministic(max?: number) {
+  return randomNumberGeneratorDeterministic() * (max || 1)
 }
 
 export function pickRandom<T>(variants: T[], seed?: number): T {
@@ -46,7 +48,7 @@ export function pickRandom<T>(variants: T[], seed?: number): T {
 }
 
 export function pickRandomDeterministic<T>(variants: T[]): T {
-  const index = randomIntNew(variants.length)
+  const index = randomIntDeterministic(variants.length)
   return variants[index]
 }
 
@@ -55,6 +57,16 @@ export function randomSubset<T>(variants: T[], seed?: number): T[] {
   const index = randomInt(seed ?? 0.1, output.length)
   for (let i = 0; i < index; i++) {
     const selected = randomInt(seed ?? 0.1, output.length)
+    output.splice(selected, 1)
+  }
+  return output
+}
+
+export const randomSubsetDeterministic = <T>(variants: T[]): T[] => {
+  const output = [...variants]
+  const index = randomIntDeterministic(output.length)
+  for (let i = 0; i < index; i++) {
+    const selected = randomIntDeterministic(output.length)
     output.splice(selected, 1)
   }
   return output
@@ -79,7 +91,7 @@ export function randomSubsetOfSizeDeterministic<T>(
 ): T[] {
   const output: T[] = []
   for (let i = 0; i < size; i++) {
-    const selected = randomIntNew(variants.length)
+    const selected = randomIntDeterministic(variants.length)
     output.push(variants[selected])
   }
   return output

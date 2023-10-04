@@ -30,7 +30,7 @@ const init = () => {
       i * 0.001
     ).map((c) => ({
       ...c,
-      createdTimestamp: sampleTimestamp(1) - 3600 * 1000 * i,
+      createdTimestamp: sampleTimestamp() - 3600 * 1000 * i,
     }))
     const originCases: Case[] = sampleTransactionUserCases(
       {
@@ -41,7 +41,7 @@ const init = () => {
       i * 0.001
     ).map((c) => ({
       ...c,
-      createdTimestamp: sampleTimestamp(1) - 3600 * 1000 * i,
+      createdTimestamp: sampleTimestamp() - 3600 * 1000 * i,
     }))
 
     data.push(...destinationCases)
