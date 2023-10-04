@@ -253,7 +253,7 @@ export async function withContext<R>(
   ctx.dynamoDbClients = []
   return getContextStorage().run(ctx, async () => {
     try {
-      return callback()
+      return await callback()
     } finally {
       await publishContextMetrics()
       cleanUpDynamoDbResources()
