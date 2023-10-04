@@ -92,9 +92,7 @@ export default function UserChangeModal(props: Props) {
         state: userStatus!,
         reason: reason === 'Other' ? otherReason : reason,
       };
-      const commentText = ` ${`User Status:${userStatus}`}. Reason: ${
-        reason === 'Other' ? otherReason : reason
-      } \n${comment}`;
+      const commentText = comment;
       const commentContent = {
         Comment: {
           body: commentText,

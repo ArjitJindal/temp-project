@@ -476,9 +476,9 @@ export class UserService {
       if (kycStatus && userState) {
         return `KYC status changed to ${kycStatus} and user status changed to ${userState}${caseIdText}${reasonsText}`
       } else if (kycStatus) {
-        return `KYC status changed to ${kycStatus}${reasonsText}${caseIdText}${reasonsText}`
+        return `KYC status changed to ${kycStatus}${caseIdText}${reasonsText}`
       } else if (userState) {
-        return `User status changed to ${userState}${reasonsText}${caseIdText}${reasonsText}`
+        return `User status changed to ${userState}${caseIdText}${reasonsText}`
       }
     }
 

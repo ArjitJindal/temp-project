@@ -99,9 +99,7 @@ export default function KYCChangeModal(props: Props) {
         status: kycStatus === '' ? undefined : kycStatus,
         reason: reason === 'Other' ? otherReason : reason,
       };
-      const commentText = ` ${`KYC Status:${kycStatus}`}. Reason: ${
-        reason === 'Other' ? otherReason : reason
-      } \n${comment}`;
+      const commentText = comment;
       const commentContent = {
         Comment: {
           body: commentText,
