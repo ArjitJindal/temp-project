@@ -25,7 +25,10 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
+import {
+  getTenantFeatures,
+  tenantHasFeature,
+} from '@/core/middlewares/tenant-has-feature'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -272,8 +275,10 @@ async function userHandler(
   let drsScore: DrsScore | null = null
 
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-  const isRiskScoringEnabled = await tenantHasFeature(tenantId, 'RISK_SCORING')
-  const isRiskLevelsEnabled = await tenantHasFeature(tenantId, 'RISK_LEVELS')
+  const features = await getTenantFeatures(tenantId)
+  const isRiskScoringEnabled = features.includes('RISK_SCORING')
+  const isRiskLevelsEnabled = features.includes('RISK_LEVELS')
+
   if (isRiskScoringEnabled) {
     krsScore = await riskRepository.getKrsScore(internalUser.userId)
     if (!krsScore) {
@@ -282,7 +287,6 @@ async function userHandler(
       )
     }
   }
-
   if (isRiskScoringEnabled || isRiskLevelsEnabled) {
     drsScore = await riskRepository.getDrsScore(internalUser.userId)
   }

@@ -171,13 +171,6 @@ export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
   }
 }
 
-export function updateTenantFeatures(features: Feature[]) {
-  const context = asyncLocalStorage.getStore()
-  if (context) {
-    context.features = features
-  }
-}
-
 export function publishMetric(
   metric: Metric,
   value: number,
