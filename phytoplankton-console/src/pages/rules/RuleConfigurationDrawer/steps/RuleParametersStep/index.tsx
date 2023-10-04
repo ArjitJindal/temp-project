@@ -14,11 +14,7 @@ import {
 import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
 import StepHeader from '@/pages/rules/RuleConfigurationDrawer/StepHeader';
 import { RISK_LEVELS } from '@/utils/risk-levels';
-import {
-  Feature,
-  getRiskLevelLabel,
-  useSettings,
-} from '@/components/AppWrapper/Providers/SettingsProvider';
+import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import RuleActionSelector from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/RuleActionSelector';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import NestedForm from '@/components/library/Form/NestedForm';
@@ -80,9 +76,7 @@ function RuleSpecificFilters(props: Props) {
         >
           {(inputProps) => <RuleActionSelector {...inputProps} />}
         </InputField>
-        <Feature name="DEV_RULES_ADVANCED_OPTIONS">
-          <AdvancedOptions />
-        </Feature>
+        <AdvancedOptions />
       </PropertyListLayout>
     </>
   );
@@ -127,9 +121,7 @@ function RiskBasedThresholds(props: Props) {
                 {(inputProps) => <RuleActionSelector {...inputProps} />}
               </InputField>
             </NestedForm>
-            <Feature name="DEV_RULES_ADVANCED_OPTIONS">
-              <AdvancedOptions riskLevel={riskLevel} />
-            </Feature>
+            <AdvancedOptions riskLevel={riskLevel} />
             <ApplyRiskLevels
               defaultInitialValues={defaultInitialValues.riskLevelParameters}
               currentRiskLevel={riskLevel}

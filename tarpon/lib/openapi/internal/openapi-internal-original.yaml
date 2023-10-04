@@ -6998,7 +6998,6 @@ components:
         - RULES_ENGINE_V2
         - QA
         - AI_RISK_SCORE
-        - DEV_RULES_ADVANCED_OPTIONS
       description: ''
     ManagedRoleName:
       type: string

@@ -199,10 +199,7 @@ async function transactionHandler(
       !isEmpty(ruleInstance.riskLevelsTriggersOnHit)
   )
 
-  if (
-    ruleWithAdvancedOptions?.length &&
-    (await tenantHasFeature(tenantId, 'DEV_RULES_ADVANCED_OPTIONS'))
-  ) {
+  if (ruleWithAdvancedOptions?.length) {
     const userService = new UserService(tenantId, { dynamoDb, mongoDb })
 
     await userService.handleTransactionUserStatusUpdateTrigger(

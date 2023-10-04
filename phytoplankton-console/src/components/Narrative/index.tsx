@@ -2,7 +2,7 @@ import React, { Dispatch, SetStateAction, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { ExpandContentButton } from '../library/ExpandContentButton';
 import s from './index.module.less';
-import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Form, { InputProps } from '@/components/library/Form';
 import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { and } from '@/components/library/Form/utils/validation/combinators';
@@ -140,13 +140,9 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
           {(inputProps) => <TextInput {...inputProps} />}
         </InputField>
       )}
-      <Feature name="DEV_RULES_ADVANCED_OPTIONS">
-        {advancedOptions && (
-          <ExpandContentButton suffixText={'advanced options'}>
-            {advancedOptions}
-          </ExpandContentButton>
-        )}
-      </Feature>
+      {advancedOptions && (
+        <ExpandContentButton suffixText={'advanced options'}>{advancedOptions}</ExpandContentButton>
+      )}
       <div className={s.comment}>
         <InputField<FormValues<R>, 'comment'>
           name={'comment'}
