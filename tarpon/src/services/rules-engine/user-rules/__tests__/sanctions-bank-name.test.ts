@@ -7,13 +7,13 @@ import {
   UserRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import {
   MOCK_CA_SEARCH_NO_HIT_RESPONSE,
   MOCK_CA_SEARCH_RESPONSE,
 } from '@/test-utils/resources/mock-ca-search-response'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 process.env.IBAN_API_KEY = 'fake'
 

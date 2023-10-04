@@ -4,14 +4,11 @@ import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import dayjs, { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
-import { hasFeature } from '@/core/utils/context'
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
 const AGGREGATION_VERSION = '2'
 
 const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
-
-process.env.RULES_ENGINE_V2 = 'true'
 
 export abstract class TransactionAggregationRule<
   P,
@@ -32,7 +29,7 @@ export abstract class TransactionAggregationRule<
   protected abstract getRuleAggregationVersion(): number
 
   protected shouldUseRawData() {
-    return !hasFeature('RULES_ENGINE_V2') || !this.shouldUseAggregation()
+    return !this.shouldUseAggregation()
   }
 
   public async isRebuilt(
@@ -213,13 +210,10 @@ export abstract class TransactionAggregationRule<
       userKeyId: string,
       ruleInstanceId: string
     ): Promise<string | undefined> => {
-      if (hasFeature('RULES_ENGINE_V2')) {
-        return this.aggregationRepository?.getLatestAvailableUserRuleTimeAggregationVersion(
-          userKeyId,
-          ruleInstanceId
-        )
-      }
-      return this.getLatestAggregationVersion()
+      return this.aggregationRepository?.getLatestAvailableUserRuleTimeAggregationVersion(
+        userKeyId,
+        ruleInstanceId
+      )
     },
     (...args) => args.join('_')
   )

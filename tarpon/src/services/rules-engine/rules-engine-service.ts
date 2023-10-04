@@ -767,10 +767,7 @@ export class RulesEngineService {
       if (shouldUpdateAggregation) {
         const userKeyId = ruleClassInstance.getUserKeyId(direction)
         if (userKeyId) {
-          if (
-            hasFeature('RULES_ENGINE_V2') &&
-            !(await ruleClassInstance.isRebuilt(direction))
-          ) {
+          if (!(await ruleClassInstance.isRebuilt(direction))) {
             transactionAggregationTasks.push({
               userKeyId,
               payload: {

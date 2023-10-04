@@ -11,10 +11,10 @@ import {
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+
 const TEST_TRANSACTION_METHODS = [
   {
     method: 'GENERIC_BANK_ACCOUNT',
@@ -73,7 +73,6 @@ function getTestDifferentBankTransactions(
 }
 
 dynamoDbSetupHook()
-withFeatureHook(['RULES_ENGINE_V2'])
 
 ruleVariantsTest(true, () => {
   describe('Description formatting', () => {

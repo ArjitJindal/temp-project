@@ -13,7 +13,6 @@ import {
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
-import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
@@ -33,7 +32,6 @@ const TEST_TRANSACTION_METHOD_IBAN_2 = {
 } as IBANDetails
 
 dynamoDbSetupHook()
-withFeatureHook(['RULES_ENGINE_V2'])
 
 ruleVariantsTest(true, () => {
   describe('Description formatting', () => {

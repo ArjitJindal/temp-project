@@ -10,7 +10,6 @@ import {
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
-import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
@@ -23,7 +22,6 @@ const TEST_TRANSACTION_AMOUNT_500: TransactionAmountDetails = {
 }
 
 dynamoDbSetupHook()
-withFeatureHook(['RULES_ENGINE_V2'])
 
 function getDefaultParams(): TransactionVolumeExceedsTwoPeriodsRuleParameters {
   return {

@@ -12,7 +12,6 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 dynamoDbSetupHook()
 
@@ -24,8 +23,6 @@ const TEST_TRANSACTION_AMOUNT_200: TransactionAmountDetails = {
   transactionCurrency: 'USD',
   transactionAmount: 200,
 }
-
-withFeatureHook(['RULES_ENGINE_V2'])
 
 ruleVariantsTest(true, () => {
   describe('Core logic', () => {
