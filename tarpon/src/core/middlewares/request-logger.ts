@@ -30,19 +30,9 @@ export const requestLoggerMiddleware = () => {
       >,
       context: Context
     ) => {
-      try {
-        const response = await handler(event, context)
-        await logRequest(event, context, response)
-        return response
-      } catch (error) {
-        await logRequest(event, context, {
-          body: (error as Error).message,
-          message: (error as Error).message,
-          statusCode: (error as any).statusCode ?? 500,
-        })
-
-        throw error
-      }
+      await background(logRequest(event, context))
+      const response = await handler(event, context)
+      return response
     }
   }
 }
@@ -51,12 +41,7 @@ async function logRequest(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
   >,
-  context: Context,
-  response: {
-    body?: any
-    message?: string
-    statusCode: number
-  }
+  context: Context
 ) {
   try {
     const tenantId = getContext()?.tenantId as string
@@ -66,7 +51,6 @@ async function logRequest(
       context,
       method: event.httpMethod,
       path: event.path,
-      responseCode: response.statusCode,
       timestamp: Date.now(),
       userId: localContext?.user?.id,
       payload:
@@ -77,8 +61,6 @@ async function logRequest(
       pathParameters: event.pathParameters,
       domainName: event.requestContext.domainName,
       multiValueQueryStringParameters: event.multiValueQueryStringParameters,
-      error: response.statusCode >= 400 ? response.body : undefined,
-      message: response.statusCode >= 400 ? response.message : undefined,
       tenantId,
       requestId: getContext()?.logMetadata?.requestId,
       traceId: getContext()?.logMetadata?.traceId,

@@ -5,7 +5,6 @@ export type RequestLogger = {
   path: string
   method: string
   userId?: string
-  responseCode: number
   timestamp: number
   payload?: any
   queryStringParameters?: any
@@ -13,8 +12,6 @@ export type RequestLogger = {
   domainName?: string
   stage?: string
   multiValueQueryStringParameters?: any
-  error?: any
-  message?: string
   tenantId: string
   requestId?: string
   traceId?: string

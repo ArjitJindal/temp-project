@@ -713,7 +713,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     requestLoggerAlias.addEventSource(
       new SqsEventSource(requestLoggerQueue, {
-        batchSize: 100,
+        batchSize: 50,
         maxConcurrency: 5,
         maxBatchingWindow: Duration.minutes(5),
       })
