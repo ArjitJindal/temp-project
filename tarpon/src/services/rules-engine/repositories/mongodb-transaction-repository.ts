@@ -1,4 +1,10 @@
-import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
+import {
+  AggregationCursor,
+  Document,
+  Filter,
+  FindCursor,
+  MongoClient,
+} from 'mongodb'
 import { difference, isEmpty, isNil, mapKeys, omitBy, pick, uniq } from 'lodash'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -539,6 +545,24 @@ export class MongoDbTransactionRepository
     const cursor = collection.find(query)
 
     return await cursor.toArray()
+  }
+
+  public async getTransactionsWithoutArsScoreCursor(timestamps: {
+    afterCreatedAt: number
+    beforeCreatedAt: number
+  }): Promise<FindCursor<InternalTransaction>> {
+    const db = this.mongoDb.db()
+    const transactionsCollectionName = TRANSACTIONS_COLLECTION(this.tenantId)
+    const { afterCreatedAt, beforeCreatedAt } = timestamps
+    const transactionsWithoutArsScore = db
+      .collection<InternalTransaction>(transactionsCollectionName)
+      .find({
+        arsScore: null as any,
+        createdAt: { $gte: afterCreatedAt, $lte: beforeCreatedAt },
+      })
+      .sort({ createdAt: 1 })
+
+    return transactionsWithoutArsScore
   }
 
   public async getTransactionsCursorPaginate(

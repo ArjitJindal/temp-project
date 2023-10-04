@@ -4,6 +4,8 @@ import { FindCursor, MongoClient } from 'mongodb'
 import { get, mean, memoize } from 'lodash'
 import { UserRepository } from '../users/repositories/user-repository'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
+import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
+import { CaseRepository } from '../rules-engine/repositories/case-repository'
 import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
@@ -31,6 +33,7 @@ import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassific
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { traceable } from '@/core/xray'
+import { logger } from '@/core/logger'
 
 function getDefaultRiskValue(
   riskClassificationValues: Array<RiskClassificationScore>
@@ -222,6 +225,8 @@ export class RiskScoringService {
   tenantId: string
   riskRepository: RiskRepository
   userRepository: UserRepository
+  mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
@@ -237,6 +242,8 @@ export class RiskScoringService {
     this.userRepository = new UserRepository(tenantId, {
       mongoDb: connections.mongoDb,
     })
+    this.mongoDb = connections.mongoDb as MongoClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
   }
 
   public async calculateKrsScore(
@@ -301,10 +308,7 @@ export class RiskScoringService {
   }
 
   public async updateInitialRiskScores(user: User | Business): Promise<number> {
-    const [riskFactors, riskClassificationValues] = await Promise.all([
-      this.riskRepository.getParameterRiskItems(),
-      this.riskRepository.getRiskClassificationValues(),
-    ])
+    const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
 
     const { score, components } = await this.calculateKrsScore(
       user,
@@ -333,9 +337,7 @@ export class RiskScoringService {
     originDrsScore: number | undefined | null
     destinationDrsScore: number | undefined | null
   }> {
-    const riskFactors = await this.riskRepository.getParameterRiskItems()
-    const riskClassificationValues =
-      await this.riskRepository.getRiskClassificationValues()
+    const { riskClassificationValues, riskFactors } = await this.getRiskConfig()
     const { score: arsScore, components } = await this.calculateArsScore(
       transaction,
       riskClassificationValues,
@@ -509,10 +511,7 @@ export class RiskScoringService {
   public async calculateAndUpdateKRSAndDRS(
     user: User | Business
   ): Promise<void> {
-    const [riskFactors, riskClassificationValues] = await Promise.all([
-      this.riskRepository.getParameterRiskItems(),
-      this.riskRepository.getRiskClassificationValues(),
-    ])
+    const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
 
     const oldKrsScore = (await this.riskRepository.getKrsScore(user.userId))
       ?.krsScore
@@ -554,6 +553,51 @@ export class RiskScoringService {
     }
   }
 
+  public async backfillTransactionRiskScores(
+    afterCreatedAt: number,
+    beforeCreatedAt: number
+  ): Promise<void> {
+    const transactionsRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+    const transactions: FindCursor<Transaction> =
+      await transactionsRepo.getTransactionsWithoutArsScoreCursor({
+        afterCreatedAt,
+        beforeCreatedAt,
+      })
+
+    logger.info(
+      `Found ${await transactions.count()} transactions for tenant ${
+        this.tenantId
+      }`
+    )
+
+    const caseRepo = new CaseRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
+    for await (const transaction of transactions) {
+      logger.info(
+        `Updating ARS score for transaction ${transaction.transactionId}`
+      )
+
+      const { originDrsScore, destinationDrsScore } =
+        await this.updateDynamicRiskScores(transaction)
+
+      await caseRepo.updateDynamicRiskScores(
+        transaction.transactionId,
+        originDrsScore,
+        destinationDrsScore
+      )
+
+      logger.info(
+        `Updated ARS score for transaction ${transaction.transactionId}`
+      )
+    }
+  }
+
   getUsersFromTransaction = memoize(
     async (transaction: Transaction) => {
       const userIds = [
@@ -572,4 +616,12 @@ export class RiskScoringService {
     },
     (transaction) => transaction.transactionId
   )
+
+  getRiskConfig = memoize(async () => {
+    const [riskFactors, riskClassificationValues] = await Promise.all([
+      this.riskRepository.getParameterRiskItems(),
+      this.riskRepository.getRiskClassificationValues(),
+    ])
+    return { riskFactors, riskClassificationValues }
+  })
 }
