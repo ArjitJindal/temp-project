@@ -85,7 +85,7 @@ async function main() {
   refreshCredentialsPeriodically()
   initializeEnvVars()
 
-  const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
+  const mongodb = await getMongoDbClient()
   const umzug = new Umzug({
     migrations: {
       glob: [`${directory}/*.ts`, { cwd: __dirname }],

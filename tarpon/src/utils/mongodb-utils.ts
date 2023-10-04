@@ -33,16 +33,12 @@ interface DBCredentials {
 
 let cacheClient: MongoClient
 
-export async function getMongoDbClientDb(
-  dbName = StackConstants.MONGO_DB_DATABASE_NAME
-) {
-  return (await getMongoDbClient(dbName)).db()
+export async function getMongoDbClientDb(useCache = true) {
+  return (await getMongoDbClient(useCache)).db()
 }
 
-export async function getMongoDbClient(
-  dbName = StackConstants.MONGO_DB_DATABASE_NAME
-) {
-  if (cacheClient) {
+export async function getMongoDbClient(useCache = true) {
+  if (useCache && cacheClient) {
     return cacheClient
   }
 
@@ -52,7 +48,7 @@ export async function getMongoDbClient(
     )
   } else if (process.env.ENV === 'local') {
     cacheClient = await MongoClient.connect(
-      `mongodb://localhost:27018/${dbName}`
+      `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}`
     )
   } else {
     const credentials = await getSecret<DBCredentials>(
@@ -61,7 +57,7 @@ export async function getMongoDbClient(
     const DB_USERNAME = credentials['username']
     const DB_PASSWORD = encodeURIComponent(credentials['password'])
     const DB_HOST = credentials['host']
-    const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${dbName}`
+    const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${StackConstants.MONGO_DB_DATABASE_NAME}`
     cacheClient = await MongoClient.connect(DB_URL as string)
   }
   return cacheClient

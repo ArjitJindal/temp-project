@@ -330,3 +330,16 @@ For example, if you want to use the transactions from tenant A
 9. Run `npm run verify-remote-transactions`
 
 - The rules result for the transactions will be saved in `scripts/debug-rule/.output/`
+
+### Run read-only MongoDB query across multiple tenants
+
+1. Add your read-only query in [scripts/cross-tenant-query.ts](scripts/cross-tenant-query.ts) (`runReadOnlyQueryForTenant` function)
+
+2. Acquire the privilege by running `npm run aws-sso-login:{env}`
+3. Run the script
+
+   ```
+   npm run cross-tenant-query:dev
+   npm run cross-tenant-query:sandbox
+   npm run cross-tenant-query:prod
+   ```

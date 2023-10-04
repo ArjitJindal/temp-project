@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid'
-import { StackConstants } from '@lib/constants'
 
 import { isEqual, round, startCase } from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
@@ -54,9 +53,7 @@ export class SanctionsService {
     if (this.apiKey) {
       return
     }
-    const mongoDb = await getMongoDbClient(
-      StackConstants.MONGO_DB_DATABASE_NAME
-    )
+    const mongoDb = await getMongoDbClient()
     this.sanctionsSearchRepository = new SanctionsSearchRepository(
       this.tenantId,
       mongoDb

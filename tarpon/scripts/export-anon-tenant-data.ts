@@ -1,6 +1,5 @@
 import { exit } from 'process'
 import { program } from 'commander'
-import { StackConstants } from '@lib/constants'
 import { MongoClient } from 'mongodb'
 
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -15,7 +14,7 @@ const outputDBUrl = program.args[1]
 
 async function exportTenantData() {
   logger.info(`Starting export for tenant ${tenantId}...`)
-  const client = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
+  const client = await getMongoDbClient()
   const inputDB = client.db()
   const outputDB = (await MongoClient.connect(outputDBUrl)).db()
 

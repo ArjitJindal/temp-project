@@ -3,11 +3,12 @@ import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
+import { FlagrightRegion, Stage } from '@/utils/env'
 
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(
-    process.env.ENV as 'dev' | 'sandbox' | 'prod',
-    process.env.REGION as 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2'
+    process.env.ENV as Stage,
+    process.env.REGION as FlagrightRegion
   )
 
   try {

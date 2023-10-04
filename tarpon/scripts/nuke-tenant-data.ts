@@ -319,7 +319,7 @@ async function nukeTenantData(tenantId: string) {
     )})...`
   )
   dynamoDb = await getDynamoDbClient()
-  mongoDb = (await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)).db()
+  mongoDb = (await getMongoDbClient()).db()
   allMongoDbCollections = (await mongoDb.listCollections().toArray()).map(
     (collection) => collection.name
   )

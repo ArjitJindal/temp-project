@@ -6,6 +6,7 @@ import { Auth0SandboxTenantConfig } from './tenant-config-sandbox'
 import { Auth0SandboxBureauTenantConfig } from './tenant-config-sandbox-bureau'
 import { Auth0SandboxRegtankTenantConfig } from './tenant-config-sandbox-regtank'
 import { Auth0ProdRegtankTenantConfig } from './tenant-config-prod-regtank'
+import { FlagrightRegion } from '@/utils/env'
 
 const REGION_TENANT_CONFIGS: { [key: string]: Auth0TenantConfig[] } = {
   'asia-1': [Auth0ProdRegtankTenantConfig],
@@ -14,7 +15,7 @@ const REGION_TENANT_CONFIGS: { [key: string]: Auth0TenantConfig[] } = {
 
 export function getAuth0TenantConfigs(
   stage: 'local' | 'dev' | 'sandbox' | 'prod',
-  region?: 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2' | 'au-1'
+  region?: FlagrightRegion
 ): Auth0TenantConfig[] {
   switch (stage) {
     case 'local': {

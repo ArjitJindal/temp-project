@@ -7,15 +7,16 @@ import { config as prodConfigEu1 } from '@lib/configs/config-prod-eu-1'
 import { config as prodConfigEu2 } from '@lib/configs/config-prod-eu-2'
 import { config as prodConfigAu1 } from '@lib/configs/config-prod-au-1'
 import { config as prodConfigUS1 } from '@lib/configs/config-prod-us-1'
+import { Env } from '@/utils/env'
 
 export function getConfig() {
   if (!process.env.ENV) {
     process.env.ENV = 'local'
     console.warn("ENV unspecified. Using 'local'.")
   }
-  let env = process.env.ENV
+  let env = process.env.ENV as Env
   if (env === 'prod') {
-    env = `${env}:${process.env.REGION}`
+    env = `${env}:${process.env.REGION}` as Env
   }
 
   switch (env) {

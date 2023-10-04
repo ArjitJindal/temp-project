@@ -9,6 +9,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'
 import { TenantBasic } from '@/services/accounts'
 import { TenantService } from '@/services/tenants'
+import { FlagrightRegion, Stage } from '@/utils/env'
 
 const optionDefinitions = [
   { name: 'tenantId', type: String },
@@ -20,8 +21,8 @@ const options = commandLineArgs(optionDefinitions)
 
 async function main() {
   const tenantInfos = await TenantService.getAllTenants(
-    process.env.ENV as 'dev' | 'sandbox' | 'prod',
-    process.env.REGION as 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2'
+    process.env.ENV as Stage,
+    process.env.REGION as FlagrightRegion
   )
   const tenantInfo: TenantBasic = {
     id: options.tenantId,

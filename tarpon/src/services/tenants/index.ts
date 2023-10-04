@@ -31,7 +31,7 @@ import { traceable } from '@/core/xray'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantUsageData } from '@/@types/openapi-internal/TenantUsageData'
 import dayjs from '@/utils/dayjs'
-import { envIs } from '@/utils/env'
+import { FlagrightRegion, envIs } from '@/utils/env'
 import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
 
 export type TenantInfo = {
@@ -64,7 +64,7 @@ export class TenantService {
 
   public static getAllTenants = async (
     stage?: Stage,
-    region?: 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2' | 'au-1'
+    region?: FlagrightRegion
   ): Promise<TenantInfo[]> => {
     const stageOrDefault = stage ?? (process.env.ENV as Stage)
     const regionOrDefault = region ?? process.env.REGION
