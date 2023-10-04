@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import cn from 'clsx';
 import { Select as AntSelect, SelectProps } from 'antd';
 import { SelectCommonPlacement } from 'antd/lib/_util/motion';
@@ -54,6 +54,8 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     className,
   } = props;
 
+  const selectInput = useRef<HTMLDivElement | null>(null);
+
   const antSelectProps: SelectProps<Value | Value[], Option<Value>> = {
     disabled: isDisabled,
     placeholder: placeholder,
@@ -86,12 +88,16 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     <div
       className={cn(s.root, isError && s.isError, s[`size-${size}`], className)}
       style={props.style}
+      ref={selectInput}
     >
       <AntSelect
         {...antSelectProps}
         allowClear
         loading={isLoading}
         disabled={isDisabled || isLoading}
+        dropdownMatchSelectWidth={
+          selectInput.current ? selectInput.current?.getBoundingClientRect().width : true
+        }
       >
         {options?.map((option) => (
           <AntSelect.Option
