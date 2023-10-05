@@ -39,6 +39,10 @@ export interface UiSchemaPaymentChannel extends UiSchemaCommon {
   'ui:subtype': 'PAYMENT_CHANNELS';
 }
 
+export interface UiSchemaChecklistsCategoryList extends UiSchemaCommon {
+  'ui:subtype': 'CHECKLISTS_CATEGORY_LIST';
+}
+
 export interface UiSchemaPaymentFilters extends UiSchemaCommon {
   'ui:subtype': 'PAYMENT_FILTERS';
 }
@@ -77,7 +81,8 @@ export type UiSchema =
   | UiSchemaCurrency
   | UiSchemaPaymentFilters
   | UiSchemaUnknown
-  | UiSchemaNarrative;
+  | UiSchemaNarrative
+  | UiSchemaChecklistsCategoryList;
 
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;

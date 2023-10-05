@@ -44,6 +44,9 @@ export function ChecklistTemplatesSettings() {
           },
           required: ['name', 'checklistItems'],
         },
+        'ui:schema': {
+          'ui:subtype': 'CHECKLISTS_CATEGORY_LIST',
+        },
       },
     },
     required: ['categories'],

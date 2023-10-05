@@ -1,5 +1,6 @@
 // TODO: Move JsonSchemaEditor/ to library
 
+import { useMemo } from 'react';
 import { ExtendedSchema } from './types';
 import {
   ChangeJsonSchemaEditorSettings,
@@ -17,11 +18,11 @@ interface Props {
 
 export default function JsonSchemaEditor(props: Props) {
   const { settings = DEFAULT_FORM_SETTINGS, parametersSchema } = props;
-
+  const items = useMemo(() => getOrderedProps(parametersSchema), [parametersSchema]);
   return (
     <JsonSchemaEditorContext.Provider value={{ rootSchema: parametersSchema }}>
       <ChangeJsonSchemaEditorSettings settings={settings}>
-        <PropertyList items={getOrderedProps(parametersSchema)} />
+        <PropertyList items={items} />
       </ChangeJsonSchemaEditorSettings>
     </JsonSchemaEditorContext.Provider>
   );
