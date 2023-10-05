@@ -4,8 +4,8 @@ import path from 'path'
 import os from 'os'
 import * as Sentry from '@sentry/serverless'
 import { BadRequest } from 'http-errors'
-import { XMLBuilder } from 'fast-xml-parser'
-import { isEqual, omit, cloneDeep, compact, chunk } from 'lodash'
+import { XMLBuilder, XMLParser } from 'fast-xml-parser'
+import { isEqual, omit, cloneDeep, compact, chunk, pick } from 'lodash'
 import { InternalReportType, ReportGenerator } from '../..'
 import {
   ContactOffice,
@@ -60,12 +60,26 @@ const FINCEN_BINARY = path.join(
   os.platform() === 'darwin' ? 'fincen-amd64-darwin' : 'fincen-amd64-linux'
 )
 const VALIDATION_PREFIX = 'Error validating file: '
-
-function removeEmptyString<T>(object: T): T {
+const attributesWithCorrectOrder = [
+  '@ActivityCount',
+  '@TotalAmount',
+  '@PartyCount',
+  '@ActivityAttachmentCount',
+  '@AttachmentCount',
+  '@xsi:schemaLocation',
+  '@xmlns:xsi',
+  '@xmlns:fc2',
+  'fc2:FormTypeCode',
+  'fc2:Activity',
+]
+function removeEmptyStringAndTrailingSpaces<T>(object: T): T {
   return JSON.parse(
     JSON.stringify(object, (k, v) => {
-      if (v === '') {
-        return undefined
+      if (typeof v === 'string') {
+        if (v === '') {
+          return undefined
+        }
+        return v.trim()
       }
       return v
     })
@@ -473,7 +487,7 @@ export class UsSarReportGenerator implements ReportGenerator {
           ?.ActivityNarrativeText
       )
 
-    return removeEmptyString({
+    return removeEmptyStringAndTrailingSpaces({
       EFilingBatchXML: {
         Activity: {
           Party: parties,
@@ -537,7 +551,30 @@ export class UsSarReportGenerator implements ReportGenerator {
     const finalFileContent = reformatOutput.slice(startIndex)
     fs.writeFileSync(outputFile, finalFileContent)
 
-    // Validate the final file
+    const parser = new XMLParser({
+      attributeNamePrefix: '@',
+      ignoreAttributes: false,
+      parseAttributeValue: true,
+      parseTagValue: false,
+      numberParseOptions: {
+        hex: false,
+        leadingZeros: true,
+      },
+    })
+    const xmlJson = parser.parse(finalFileContent)
+    xmlJson['fc2:EFilingBatchXML']['@ActivityAttachmentCount'] = '0'
+    xmlJson['fc2:EFilingBatchXML']['@AttachmentCount'] = 0
+    xmlJson['fc2:EFilingBatchXML'] = pick(
+      xmlJson['fc2:EFilingBatchXML'],
+      ...attributesWithCorrectOrder
+    )
+    const newXmlBuilder = new XMLBuilder({
+      attributeNamePrefix: '@',
+      ignoreAttributes: false,
+      format: true,
+    })
+    const newXmlFile = newXmlBuilder.build(xmlJson)
+    fs.writeFileSync(outputFile, newXmlFile)
     try {
       execSync(`${FINCEN_BINARY} validate ${outputFile}`, {
         cwd: __dirname,
@@ -550,7 +587,7 @@ export class UsSarReportGenerator implements ReportGenerator {
       )
     }
     fs.rmSync(outputFile)
-    return finalFileContent
+    return newXmlFile
   }
   public async getIPAddresses(
     userIds: string[],

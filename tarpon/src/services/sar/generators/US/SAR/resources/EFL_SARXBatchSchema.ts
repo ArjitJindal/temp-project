@@ -2,7 +2,7 @@ export const FincenJsonSchema = {
   $id: 'schema.json',
   $schema: 'http://json-schema.org/draft-07/schema#',
   title:
-    'This JSON Schema file was generated from schema on Thu Sep 21 2023 13:25:14 GMT+0530 (India Standard Time).  For more information please see http://www.xsd2jsonschema.org',
+    'This JSON Schema file was generated from schema on Thu Sep 28 2023 23:07:47 GMT+0530 (India Standard Time).  For more information please see http://www.xsd2jsonschema.org',
   description:
     "Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'",
   properties: {
@@ -159,6 +159,9 @@ export const FincenJsonSchema = {
           title: 'Country (code)',
           description:
             'This element identifies the country associated with the party.',
+          'ui:schema': {
+            'ui:subtype': 'COUNTRY',
+          },
         },
         RawStateCodeText: {
           $ref: '#/definitions/RestrictString3',
@@ -173,7 +176,7 @@ export const FincenJsonSchema = {
             'This element identifies the street address of the party.',
         },
         RawZIPCode: {
-          $ref: '#/definitions/RestrictString9',
+          $ref: '#/definitions/RawZIPCodeType',
           title: 'ZIP/Postal Code',
           description:
             'This element identifies the ZIP Code or foreign postal code associated with the address of the party.',
@@ -1742,6 +1745,11 @@ export const FincenJsonSchema = {
         'Fourth block of narrative text (character set 12001-16000, if needed)',
         'Fifth block of narrative text (character set 16001-17000, if needed)',
       ],
+    },
+    RawZIPCodeType: {
+      type: 'string',
+      maxLength: 9,
+      pattern: '^[a-zA-Z0-9]+$',
     },
   },
 }

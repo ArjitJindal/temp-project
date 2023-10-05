@@ -7,7 +7,10 @@ import { isObject, keys, omit, pick } from 'lodash'
 import { compile } from 'json-schema-to-typescript'
 import { XMLParser } from 'fast-xml-parser'
 import { AttributeInfos } from './attribute-infos'
-import { removeActivityBlockOrder } from '@/services/sar/utils/augmentations/removeActivityBlockOrder'
+import {
+  removeActivityBlockOrder,
+  manualValidation,
+} from '@/services/sar/utils/augmentations/manualSchemaManipulation'
 import { removeUnnecessaryOneOf } from '@/services/sar/utils/augmentations/removeUnnecessaryOneOf'
 
 // Augment the auto-generated json schema by adding additional information (e.g title) and
@@ -92,7 +95,9 @@ jsonSchema = augmentJsonSchema(
     [key: string]: { title: string; description: string }
   }
 )
+// manually manipulating the jsonSchema to add required behavior
 jsonSchema = removeActivityBlockOrder(jsonSchema)
+jsonSchema = manualValidation(jsonSchema)
 fs.writeFileSync(
   path.join(__dirname, '..', 'resources', 'EFL_SARXBatchSchema.ts'),
   `export const FincenJsonSchema = ${JSON.stringify(jsonSchema, null, 2)}`

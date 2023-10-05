@@ -23,3 +23,14 @@ export function removeActivityBlockOrder(jsonSchema: any) {
   }
   return jsonSchema
 }
+
+export function manualValidation(jsonSchema: any) {
+  jsonSchema['definitions']['RawZIPCodeType'] = {
+    type: 'string',
+    maxLength: 9,
+    pattern: '^[a-zA-Z0-9]+$',
+  }
+  jsonSchema['definitions']['AddressType']['properties']['RawZIPCode']['$ref'] =
+    '#/definitions/RawZIPCodeType'
+  return jsonSchema
+}

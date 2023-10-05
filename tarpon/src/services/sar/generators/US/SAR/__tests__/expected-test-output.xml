@@ -1,4 +1,4 @@
-<fc2:EFilingBatchXML TotalAmount="5052" PartyCount="2" ActivityCount="1" xsi:schemaLocation="www.fincen.gov/base https://www.fincen.gov/base/EFL_FinCENSARXBatchSchema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fc2="www.fincen.gov/base">
+<fc2:EFilingBatchXML ActivityCount="1" TotalAmount="5052" PartyCount="2" ActivityAttachmentCount="0" AttachmentCount="0" xsi:schemaLocation="www.fincen.gov/base https://www.fincen.gov/base/EFL_FinCENSARXBatchSchema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fc2="www.fincen.gov/base">
   <fc2:FormTypeCode>SARX</fc2:FormTypeCode>
   <fc2:Activity SeqNum="1">
     <fc2:EFilingPriorDocumentNumber>00000000000001</fc2:EFilingPriorDocumentNumber>

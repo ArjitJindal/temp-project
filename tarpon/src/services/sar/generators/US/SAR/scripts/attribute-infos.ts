@@ -202,6 +202,7 @@ export const AttributeInfos = {
   },
   RawCountryCodeText: {
     title: 'Country (code)',
+    'ui:schema': { 'ui:subtype': 'COUNTRY' },
     description:
       'This element identifies the country associated with the party.',
   },

@@ -44,7 +44,7 @@ export default function PropertyInput(props: Props) {
   if (uiSchema['ui:subtype'] === 'TIME_WINDOW') {
     return <TimeWindowInput {...props} schema={schema} uiSchema={uiSchema} />;
   }
-  if (uiSchema['ui:subtype'] === 'COUNTRIES') {
+  if (uiSchema['ui:subtype'] === 'COUNTRIES' || uiSchema['ui:subtype'] === 'COUNTRY') {
     return <CountriesInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'AGE_RANGE') {
