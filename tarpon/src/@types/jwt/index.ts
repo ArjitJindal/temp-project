@@ -45,7 +45,7 @@ export function assertRole(user: ContextUser, requiredRole: ManagedRoleName) {
     )
   }
 
-  if (role === 'root' && isFlagrightInternalUser()) {
+  if (role === 'root' && !isFlagrightInternalUser()) {
     throw new Forbidden(`Root users should have email in Flagright domain`)
   }
 }
