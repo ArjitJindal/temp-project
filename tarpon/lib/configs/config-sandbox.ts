@@ -45,6 +45,9 @@ export const config: Config = {
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 2,
     },
+    TARPON_CHANGE_CAPTURE_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
     TENANT_LAMBDA: {
       PROVISIONED_CONCURRENCY: 1,
     },
