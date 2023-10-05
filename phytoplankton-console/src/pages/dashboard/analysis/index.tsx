@@ -42,7 +42,7 @@ type KeyValues =
   | 'DISTRIBUTION_BY_PAYMENT_METHOD'
   | 'DISTRIBUTION_BY_TRANSACTION_TYPE'
   | 'DISTRIBUTION_BY_RULE_ACTION'
-  | 'TRANSACTIONS_BREAKDOWN_BY_KRS';
+  | 'TRANSACTIONS_BREAKDOWN_BY_TRS';
 
 const KEYS: KeyValues[] = [
   'OVERVIEW',
@@ -53,7 +53,7 @@ const KEYS: KeyValues[] = [
   'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
   'DISTRIBUTION_BY_PAYMENT_METHOD',
   'DISTRIBUTION_BY_TRANSACTION_TYPE',
-  'TRANSACTIONS_BREAKDOWN_BY_KRS',
+  'TRANSACTIONS_BREAKDOWN_BY_TRS',
   'TOP_RULE_HITS_BY_COUNT',
   'DISTRIBUTION_BY_RULE_PRIORITY',
   'DISTRIBUTION_BY_RULE_ACTION',
@@ -73,7 +73,7 @@ const TITLES: { [key in KeyValues]: string } = {
   DISTRIBUTION_BY_TRANSACTION_TYPE: 'Distribution by transaction type',
   TOP_CONSUMER_USERS_BY_RULE_HITS: 'Top consumer users by rule hits',
   TOP_BUSINESS_USERS_BY_RULE_HITS: 'Top business users by rule hits',
-  TRANSACTIONS_BREAKDOWN_BY_KRS: 'Transactions breakdown by KRS',
+  TRANSACTIONS_BREAKDOWN_BY_TRS: 'Transactions breakdown by TRS',
   CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL: 'Consumer users distribution by CRA risk level',
   BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL: 'Business users distribution by CRA risk level',
   DISTRIBUTION_BY_RULE_PRIORITY: 'Distribution by rule priority',
@@ -94,7 +94,7 @@ const DEFAULT_VALUES = {
   DISTRIBUTION_BY_ALERT_PRIORITY: true,
   DISTRIBUTION_BY_PAYMENT_METHOD: true,
   DISTRIBUTION_BY_TRANSACTION_TYPE: true,
-  TRANSACTIONS_BREAKDOWN_BY_KRS: true,
+  TRANSACTIONS_BREAKDOWN_BY_TRS: true,
   DISTRIBUTION_BY_RULE_ACTION: true,
 };
 
@@ -220,10 +220,10 @@ function Analysis() {
                 component: DistributionByTransactionTypeWidget,
               },
               isRiskScoringEnabled &&
-                settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_KRS && {
+                settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_TRS && {
                   props: {
                     id: 'transaction_breakdown_by_trs',
-                    title: 'Transaction breakdown by KRS',
+                    title: 'Transaction breakdown by TRS',
                   },
                   component: TransactionTRSChartCard,
                 },
