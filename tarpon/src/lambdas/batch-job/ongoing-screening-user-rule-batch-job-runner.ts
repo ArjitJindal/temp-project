@@ -74,13 +74,13 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
             { ongoingScreeningMode: true }
           )
           if (
-            !isEqual(user.executedRules || [], result.executedRules || []) ||
-            !isEqual(user.hitRules || [], result.hitRules || [])
+            !isEqual(user.executedRules ?? [], result.executedRules ?? []) ||
+            !isEqual(user.hitRules ?? [], result.hitRules ?? [])
           ) {
             await userRepository.updateUserWithExecutedRules(
               user.userId,
-              result.executedRules,
-              result.hitRules
+              result.executedRules ?? [],
+              result.hitRules ?? []
             )
           }
         },

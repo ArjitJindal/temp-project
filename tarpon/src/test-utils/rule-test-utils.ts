@@ -9,7 +9,6 @@ import {
 } from '@/services/rules-engine'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
-import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { User } from '@/@types/openapi-public/User'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -19,6 +18,8 @@ import { RuleHitMeta } from '@/@types/openapi-public/RuleHitMeta'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
+import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
+import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
 
 const DEFAULT_DESCRIPTION = 'test rule description.'
 
@@ -146,7 +147,7 @@ export async function bulkVerifyUsers(
   tenantId: string,
   users: Array<Business | User>,
   ongoingScreeningMode?: boolean
-): Promise<UserMonitoringResult[]> {
+): Promise<Array<ConsumerUsersResponse | BusinessUsersResponse>> {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const results: any[] = []
@@ -158,35 +159,47 @@ export async function bulkVerifyUsers(
 }
 
 export function getRuleHits(
-  results: (TransactionMonitoringResult | UserMonitoringResult)[]
+  results: (
+    | TransactionMonitoringResult
+    | ConsumerUsersResponse
+    | BusinessUsersResponse
+  )[]
 ): boolean[] {
   return results.map((result) => {
-    if (result.executedRules?.length > 1) {
+    if (result.executedRules && result.executedRules?.length > 1) {
       throw new Error('The number of the executed rules should be <= 1')
     }
-    return result.executedRules[0]?.ruleHit
+    return result.executedRules?.[0]?.ruleHit ?? false
   })
 }
 
 export function getRuleHitMetadata(
-  results: (TransactionMonitoringResult | UserMonitoringResult)[]
+  results: (
+    | TransactionMonitoringResult
+    | ConsumerUsersResponse
+    | BusinessUsersResponse
+  )[]
 ): RuleHitMeta[] {
   return results.map((result) => {
-    if (result.executedRules?.length > 1) {
+    if (result.executedRules && result.executedRules?.length > 1) {
       throw new Error('The number of the executed rules should be <= 1')
     }
-    return result.executedRules[0].ruleHitMeta!
+    return result.executedRules?.[0].ruleHitMeta as RuleHitMeta
   })
 }
 
 export function getRuleDescriptions(
-  results: (TransactionMonitoringResult | UserMonitoringResult)[]
+  results: (
+    | TransactionMonitoringResult
+    | ConsumerUsersResponse
+    | BusinessUsersResponse
+  )[]
 ): string[] {
   return results.map((result) => {
-    if (result.executedRules?.length > 1) {
+    if (result.executedRules && result.executedRules?.length > 1) {
       throw new Error('The number of the executed rules should be <= 1')
     }
-    return result.executedRules[0].ruleDescription!
+    return result.executedRules?.[0].ruleDescription || ''
   })
 }
 

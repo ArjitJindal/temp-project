@@ -586,7 +586,6 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/ConsumerUsersResponse'
-                  - $ref: '#/components/schemas/UserMonitoringResult'
                   - type: object
                     properties:
                       message:
@@ -743,7 +742,6 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/BusinessUsersResponse'
-                  - $ref: '#/components/schemas/UserMonitoringResult'
                   - type: object
                     properties:
                       message:
@@ -2117,17 +2115,6 @@ components:
                 for proof of funds
               ruleAction: BLOCK
       title: ''
-    UserMonitoringResult:
-      allOf:
-        - type: object
-          description: Model to convey the results of user monitoring
-          properties:
-            userId:
-              type: string
-              description: User ID that the results pertain to
-          required:
-            - userId
-        - $ref: '#/components/schemas/RulesResults'
     RulesResults:
       title: RulesResults
       type: object

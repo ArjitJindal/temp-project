@@ -65,7 +65,6 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 import { addNewSubsegment, traceable } from '@/core/xray'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { generateChecksum, mergeEntities } from '@/utils/object'
@@ -78,6 +77,8 @@ import { TransactionStatusDetails } from '@/@types/openapi-public/TransactionSta
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
 import { envIs } from '@/utils/env'
 import { handleTransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
+import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
+import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
 
 const sqs = new SQSClient({})
 
@@ -379,7 +380,7 @@ export class RulesEngineService {
   public async verifyUser(
     user: UserWithRulesResult | BusinessWithRulesResult,
     options?: { ongoingScreeningMode?: boolean }
-  ): Promise<UserMonitoringResult> {
+  ): Promise<ConsumerUsersResponse | BusinessUsersResponse> {
     const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
 
@@ -394,7 +395,7 @@ export class RulesEngineService {
     ruleInstances: readonly RuleInstance[],
     rules: readonly Rule[],
     options?: { ongoingScreeningMode?: boolean }
-  ): Promise<UserMonitoringResult> {
+  ): Promise<ConsumerUsersResponse | BusinessUsersResponse> {
     const rulesById = keyBy(rules, 'id')
     logger.info(`Running rules`)
     const userRiskLevel = await this.getUserRiskLevel(user)
