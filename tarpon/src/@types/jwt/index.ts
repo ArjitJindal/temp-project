@@ -26,8 +26,24 @@ export function isAtLeastRole(
   return true
 }
 
-export function assertCurrentUserRole(requiredRole: ManagedRoleName) {
-  assertRole(currentUser(), requiredRole)
+export function assertCurrentUserRole(...requiredRoles: ManagedRoleName[]) {
+  const hasRole = false
+  requiredRoles.forEach((requiredRole) => {
+    try {
+      assertRole(currentUser(), requiredRole)
+      return hasRole
+    } catch (e) {
+      // Do nothing
+      return
+    }
+  })
+  if (!hasRole) {
+    throw new Error(
+      `You need to have one of the following roles to perform this action: ${requiredRoles.join(
+        ', '
+      )}`
+    )
+  }
 }
 
 export function assertRole(user: ContextUser, requiredRole: ManagedRoleName) {

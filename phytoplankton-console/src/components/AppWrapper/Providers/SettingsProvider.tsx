@@ -9,6 +9,7 @@ import {
   TenantSettings,
   TransactionState,
   RiskLevel,
+  ManagedRoleName,
 } from '@/apis';
 import { capitalizeWords } from '@/utils/tags';
 import { useQuery } from '@/utils/queries/hooks';
@@ -18,6 +19,7 @@ import { isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 import { humanizeConstant } from '@/utils/humanize';
 import ErrorPage from '@/components/ErrorPage';
+import { useAccountRole } from '@/utils/user-utils';
 
 interface ContextValue {
   features: FeatureName[];
@@ -114,6 +116,14 @@ export function Feature(props: {
 }) {
   const isEnabled = useFeatureEnabled(props.name);
   return isEnabled ? <>{props.children}</> : <>{props.fallback}</>;
+}
+export function Roles(props: {
+  roles: ManagedRoleName[];
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}) {
+  const role = useAccountRole();
+  return props.roles.includes(role) ? <>{props.children}</> : <>{props.fallback}</>;
 }
 
 export function getRuleActionLabel(

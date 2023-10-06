@@ -10,6 +10,7 @@ import { Account, Permission } from '@/apis';
 // todo: rename file and utils to use "account" instead of "user" in names
 export enum UserRole {
   ROOT = 'root',
+  WHITELABEL_ROOT = 'whitelabel-root',
   ADMIN = 'admin',
   USER = 'user',
 }
@@ -65,6 +66,8 @@ export function parseUserRole(role: string | null): UserRole {
   switch (role) {
     case 'root':
       return UserRole.ROOT;
+    case 'whitelabel-root':
+      return UserRole.WHITELABEL_ROOT;
     case 'admin':
       return UserRole.ADMIN;
     case 'user':

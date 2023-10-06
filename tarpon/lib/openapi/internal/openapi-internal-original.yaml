@@ -7040,6 +7040,7 @@ components:
         id: byu0hqffp9h2
       enum:
         - root
+        - whitelabel-root
         - admin
         - user
         - analyst

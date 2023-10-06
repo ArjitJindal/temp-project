@@ -35,7 +35,7 @@ export const accountsHandler = lambdaApi()(
     })
 
     handlers.registerAccountsChangeTenant(async (ctx, request) => {
-      assertCurrentUserRole('root')
+      assertCurrentUserRole('root', 'whitelabel-root')
       await accountsService.accountsChangeTenantHandler(request, ctx.userId)
       return
     })
