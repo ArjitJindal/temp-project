@@ -1,6 +1,6 @@
-import { pickRandomDeterministic } from '@/core/seed/samplers/prng'
+import { pickRandom } from '@/core/seed/samplers/prng'
 import { addresses } from '@/core/seed/data/address'
 
 export const randomAddress = () => {
-  return pickRandomDeterministic(addresses)
+  return pickRandom(addresses)
 }

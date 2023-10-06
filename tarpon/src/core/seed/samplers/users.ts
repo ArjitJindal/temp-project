@@ -11,10 +11,8 @@ import { UserState } from '@/@types/openapi-internal/UserState'
 import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
 import {
   pickRandom,
-  pickRandomDeterministic,
   randomFloat,
   randomInt,
-  randomIntDeterministic,
   randomSubset,
 } from '@/core/seed/samplers/prng'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
@@ -54,7 +52,7 @@ import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { USER_REGISTRATION_STATUSS } from '@/@types/openapi-internal-custom/UserRegistrationStatus'
 
 export function sampleUserState(): UserState {
-  return pickRandomDeterministic(USER_STATES)
+  return pickRandom(USER_STATES)
 }
 
 export function sampleUserStateDetails(): UserStateDetails {
@@ -64,7 +62,7 @@ export function sampleUserStateDetails(): UserStateDetails {
 }
 
 export function sampleKycStatus(): KYCStatus {
-  return pickRandomDeterministic(KYC_STATUSS)
+  return pickRandom(KYC_STATUSS)
 }
 
 export function sampleKycStatusDetails(): KYCStatusDetails {
@@ -78,11 +76,11 @@ const emailSet = [...Array(100)].map(
 )
 
 export const randomEmail = () => {
-  return pickRandomDeterministic(emailSet)
+  return pickRandom(emailSet)
 }
 
 export const randomPhoneNumber = () => {
-  return pickRandomDeterministic(phoneNumber)
+  return pickRandom(phoneNumber)
 }
 
 const generateRandomTimestamp = () => {
@@ -126,7 +124,7 @@ const documentKeys = [
 const getDocumentTag = () => {
   return {
     key: pickRandom(documentKeys),
-    value: ['true', 'false'][Math.floor(Math.random() * 2)],
+    value: ['true', 'false'][Math.floor(randomInt(2))],
   }
 }
 
@@ -149,19 +147,19 @@ const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
 const legalDocument = (name: ConsumerName): LegalDocument => {
   const timestamp = generateRandomTimestamp()
   const expiryDate = dayjs(timestamp)
-    .add(Math.ceil(Math.random() * 10), pickRandom(timeIntervals))
+    .add(Math.ceil(randomInt(10)), pickRandom(timeIntervals))
     .valueOf()
 
   return {
     documentType: pickRandom(DOCUMENT_TYPES),
     documentNumber: Array.from(
-      { length: Math.max(8, Math.ceil(Math.random() * 20)) },
-      () => letters[Math.ceil(Math.random() * letters.length)]
+      { length: Math.max(8, Math.ceil(randomInt(10))) },
+      () => letters[Math.ceil(randomInt(letters.length))]
     ).join(''),
     documentIssuedDate: timestamp,
     documentExpirationDate: expiryDate,
     documentIssuedCountry: 'US',
-    tags: [...Array(Math.ceil(Math.random() * 2))].map(() => getDocumentTag()),
+    tags: [...Array(Math.ceil(randomInt(2)))].map(() => getDocumentTag()),
     nameOnDocument: name,
   }
 }
@@ -203,18 +201,18 @@ export function sampleConsumerUser() {
   const userId = `U-${userCounter}`
   userCounter++
   const name = randomConsumerName()
-  const riskLevel = pickRandomDeterministic(RISK_LEVEL1S)
-  const countryOfResidence = pickRandomDeterministic(COUNTRY_CODES)
-  const countryOfNationality = pickRandomDeterministic(COUNTRY_CODES)
+  const riskLevel = pickRandom(RISK_LEVEL1S)
+  const countryOfResidence = pickRandom(COUNTRY_CODES)
+  const countryOfNationality = pickRandom(COUNTRY_CODES)
 
   const user: InternalConsumerUser = {
     type: 'CONSUMER' as const,
     userId,
     riskLevel,
-    acquisitionChannel: pickRandomDeterministic(ACQUISITION_CHANNELS),
-    userSegment: pickRandomDeterministic(CONSUMER_USER_SEGMENTS),
+    acquisitionChannel: pickRandom(ACQUISITION_CHANNELS),
+    userSegment: pickRandom(CONSUMER_USER_SEGMENTS),
     reasonForAccountOpening: [
-      pickRandomDeterministic(['Investment', 'Saving', 'Business', 'Other']),
+      pickRandom(['Investment', 'Saving', 'Business', 'Other']),
     ],
     sourceOfFunds: [pickRandom(SOURCE_OF_FUNDSS)],
     userStateDetails: sampleUserStateDetails(),
@@ -282,36 +280,29 @@ export function sampleBusinessUser({
       },
       companyFinancialDetails: {
         expectedTransactionAmountPerMonth: {
-          amountValue: randomIntDeterministic(10000),
+          amountValue: randomInt(10000),
           amountCurrency: sampleCurrency(),
         },
         expectedTurnoverPerMonth: {
-          amountValue: randomIntDeterministic(10000),
+          amountValue: randomInt(10000),
           amountCurrency: sampleCurrency(),
         },
         tags: [{ key: 'Unit', value: 'S1300' }],
       },
       reasonForAccountOpening: [
-        pickRandomDeterministic([
-          'Expansion',
-          'New Business',
-          'Savings',
-          'Other',
-        ]),
+        pickRandom(['Expansion', 'New Business', 'Savings', 'Other']),
       ],
-      sourceOfFunds: [pickRandomDeterministic(SOURCE_OF_FUNDSS)],
+      sourceOfFunds: [pickRandom(SOURCE_OF_FUNDSS)],
       companyGeneralDetails: {
         legalName: name,
         businessIndustry: company?.industries || [],
         mainProductsServicesSold: company?.products,
-        userSegment: pickRandomDeterministic(BUSINESS_USER_SEGMENTS),
-        userRegistrationStatus: pickRandomDeterministic(
-          USER_REGISTRATION_STATUSS
-        ),
+        userSegment: pickRandom(BUSINESS_USER_SEGMENTS),
+        userRegistrationStatus: pickRandom(USER_REGISTRATION_STATUSS),
       },
       companyRegistrationDetails: {
         taxIdentifier: sampleString(),
-        legalEntityType: pickRandomDeterministic([
+        legalEntityType: pickRandom([
           'LLC',
           'Sole Proprietorship',
           'Other',
@@ -325,8 +316,8 @@ export function sampleBusinessUser({
     acquisitionChannel: pickRandom(ACQUISITION_CHANNELS),
     transactionLimits: {
       maximumDailyTransactionLimit: {
-        amountValue: randomIntDeterministic(10000),
-        amountCurrency: pickRandomDeterministic(CURRENCY_CODES),
+        amountValue: randomInt(10000),
+        amountCurrency: pickRandom(CURRENCY_CODES),
       },
     },
     shareHolders: Array.from({ length: 3 }, () => {
@@ -335,15 +326,13 @@ export function sampleBusinessUser({
       return {
         generalDetails: {
           name,
-          countryOfResidence: country ?? pickRandomDeterministic(COUNTRY_CODES),
-          countryOfNationality:
-            country ?? pickRandomDeterministic(COUNTRY_CODES),
-          gender: pickRandomDeterministic(['M', 'F', 'NB']),
+          countryOfResidence: country ?? pickRandom(COUNTRY_CODES),
+          countryOfNationality: country ?? pickRandom(COUNTRY_CODES),
+          gender: pickRandom(['M', 'F', 'NB']),
           dateOfBirth: new Date(generateRandomTimestamp()).toDateString(),
         },
-        legalDocuments: Array.from(
-          { length: Math.ceil(Math.random() * 4) },
-          () => legalDocument(name)
+        legalDocuments: Array.from({ length: Math.ceil(randomInt(4)) }, () =>
+          legalDocument(name)
         ),
         contactDetails: {
           emailIds: [
@@ -354,18 +343,15 @@ export function sampleBusinessUser({
           addresses: [randomAddress()],
           contactNumbers: [randomPhoneNumber()],
         },
-        tags: [...Array(Math.ceil(Math.random() * 2))].map(() =>
-          getNormalTag()
-        ),
+        tags: [...Array(Math.ceil(randomInt(2)))].map(() => getNormalTag()),
       } as Person
     }),
     directors: Array.from({ length: 3 }, () => {
       const name: ConsumerName = randomConsumerName()
 
       return {
-        legalDocuments: Array.from(
-          { length: Math.ceil(Math.random() * 4) },
-          () => legalDocument(name)
+        legalDocuments: Array.from({ length: Math.ceil(randomInt(4)) }, () =>
+          legalDocument(name)
         ),
         contactDetails: {
           emailIds: [name.firstName.toLowerCase() + '@gmail.com'],
@@ -394,7 +380,7 @@ export function merchantMonitoringSummaries(
   id: string,
   c: CompanySeedData
 ): MerchantMonitoringSummary[] {
-  return [0, 1, 2, 3].flatMap((n, i) => {
+  return [0, 1, 2, 3].flatMap((n) => {
     const summary = c.summaries[n % 2]
     const sourceType: MerchantMonitoringSourceType =
       MERCHANT_MONITORING_SOURCE_TYPES[n]
@@ -417,8 +403,8 @@ export function merchantMonitoringSummaries(
     const days = 1000 * 60 * 60 * 24
     return [
       new Date().getTime(),
-      new Date().getTime() - days * randomInt(i, 365),
-      new Date().getTime() - days * randomInt(i, 365),
+      new Date().getTime() - days * randomInt(365),
+      new Date().getTime() - days * randomInt(365),
     ].map((updatedAt) => ({
       source: {
         sourceType,

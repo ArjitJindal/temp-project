@@ -1,7 +1,6 @@
-import { prng } from '@/core/seed/samplers/prng'
+import { randomInt } from '@/core/seed/samplers/prng'
 
-export function sampleGuid(seed?: number | undefined): string {
-  const random = prng(seed)
+export function sampleGuid(): string {
   return [
     [...new Array(4)],
     [...new Array(2)],
@@ -11,10 +10,7 @@ export function sampleGuid(seed?: number | undefined): string {
     .map((arr) =>
       arr
         .map((_) =>
-          Math.floor(random() * 256)
-            .toString(16)
-            .toUpperCase()
-            .padStart(2, '0')
+          Math.floor(randomInt(255)).toString(16).toUpperCase().padStart(2, '0')
         )
         .join('')
     )

@@ -1,7 +1,4 @@
-import {
-  pickRandomDeterministic,
-  randomSubsetOfSizeDeterministic,
-} from './prng'
+import { pickRandom, randomSubsetOfSize } from './prng'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 
 const names = [
@@ -1265,7 +1262,7 @@ export const companies: CompanySeedData[] = [
   },
 ]
 export function randomName(): string {
-  return pickRandomDeterministic(names)
+  return pickRandom(names)
 }
 export function randomConsumerName(): {
   firstName: string
@@ -1273,7 +1270,7 @@ export function randomConsumerName(): {
   lastName: string
 } {
   const [firstName, middleName, lastName] = [
-    ...new Set(randomSubsetOfSizeDeterministic(names, 3)),
+    ...new Set(randomSubsetOfSize(names, 3)),
   ]
   return {
     firstName,

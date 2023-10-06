@@ -1,4 +1,4 @@
-import { getRandomIntInclusiveDeterministic } from './prng'
+import { getRandomIntInclusive } from './prng'
 import { Account } from '@/services/accounts'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { logger } from '@/core/logger'
@@ -10,10 +10,7 @@ export const setAccounts = (accountsToSet: Account[]) => {
 }
 
 export const getRandomUser = (): Assignment => {
-  const randomAccountIndex = getRandomIntInclusiveDeterministic(
-    0,
-    accounts.length - 1
-  )
+  const randomAccountIndex = getRandomIntInclusive(0, accounts.length - 1)
   logger.info(
     `Assigning to ${accounts[randomAccountIndex]?.id}, JSON: ${JSON.stringify(
       accounts[randomAccountIndex]
@@ -29,10 +26,7 @@ export const getRandomUsers = (): Assignment[] | undefined => {
   if (accounts.length === 0) {
     return undefined
   }
-  const randomAccountIndex = getRandomIntInclusiveDeterministic(
-    0,
-    accounts.length - 1
-  )
+  const randomAccountIndex = getRandomIntInclusive(0, accounts.length - 1)
   logger.info(
     `Assigning to ${accounts[randomAccountIndex]?.id}, JSON: ${JSON.stringify(
       accounts[randomAccountIndex]

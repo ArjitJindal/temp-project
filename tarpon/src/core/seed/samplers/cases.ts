@@ -6,7 +6,7 @@ import { sampleTimestamp } from './timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Alert } from '@/@types/openapi-internal/Alert'
-import { pickRandom, randomSubset } from '@/core/seed/samplers/prng'
+import { pickRandom, randomInt, randomSubset } from '@/core/seed/samplers/prng'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { CASE_REASONSS } from '@/@types/openapi-internal-custom/CaseReasons'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
@@ -23,6 +23,7 @@ import dayjs from '@/utils/dayjs'
 import { getChecklistTemplate } from '@/core/seed/data/checklists'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { RULE_NATURES } from '@/@types/openapi-internal-custom/RuleNature'
+import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 
 let counter = 1
 let alertCounter = 1
@@ -98,15 +99,12 @@ export function generateNarrative(
 ${footer}`
 }
 
-export function sampleTransactionUserCases(
-  params: {
-    transactions: InternalTransaction[]
-    userId: string
-    origin?: InternalBusinessUser | InternalConsumerUser
-    destination?: InternalBusinessUser | InternalConsumerUser
-  },
-  seed?: number
-): Case[] {
+export function sampleTransactionUserCases(params: {
+  transactions: InternalTransaction[]
+  userId: string
+  origin?: InternalBusinessUser | InternalConsumerUser
+  destination?: InternalBusinessUser | InternalConsumerUser
+}): Case[] {
   const { transactions, origin, destination } = params
 
   if (transactions.length === 0) {
@@ -134,8 +132,7 @@ export function sampleTransactionUserCases(
 
   return RULE_NATURES.map((nature): Case => {
     const caseStatus = pickRandom(
-      CASE_STATUSS.filter((s) => !isStatusInReview(s)),
-      seed
+      CASE_STATUSS.filter((s) => !isStatusInReview(s))
     )
     const reasons = randomSubset<CaseReasons>([
       'Anti-money laundering',
@@ -150,7 +147,7 @@ export function sampleTransactionUserCases(
       caseType: 'SYSTEM',
       caseStatus,
       createdTimestamp: sampleTimestamp(),
-      latestTransactionArrivalTimestamp: sampleTimestamp() + 3600 * 1000,
+      latestTransactionArrivalTimestamp: sampleTimestamp(),
       comments: [],
       caseTransactionsCount: transactions.length,
       statusChanges: getStatusChangesObject(
@@ -173,7 +170,7 @@ export function sampleTransactionUserCases(
               ),
             }
           : undefined,
-      priority: pickRandom(['P1', 'P2', 'P3', 'P4'], seed),
+      priority: pickRandom(['P1', 'P2', 'P3', 'P4']),
       relatedCases: [],
       caseUsers: {
         origin,
@@ -214,10 +211,15 @@ export function sampleAlert(params: {
   transactions: InternalTransaction[]
 }): Alert {
   const createdTimestamp = sampleTimestamp(3600 * 24 * 1000 * 30)
-  const alertStatus = pickRandom(
-    ['OPEN', 'OPEN', 'OPEN', 'OPEN', 'OPEN', 'CLOSED', 'REOPENED'],
-    Math.random()
-  ) as AlertStatus
+  const alertStatus = pickRandom([
+    'OPEN',
+    'OPEN',
+    'OPEN',
+    'OPEN',
+    'OPEN',
+    'CLOSED',
+    'REOPENED',
+  ]) as AlertStatus
 
   const statusChanges = getStatusChangesObject(
     alertStatus ?? 'OPEN',
@@ -242,7 +244,7 @@ export function sampleAlert(params: {
     alertStatus,
     ruleInstanceId: params.ruleHit.ruleInstanceId,
     numberOfTransactionsHit: params.transactions.length,
-    priority: pickRandom(['P1', 'P2', 'P3', 'P4'], Math.random()),
+    priority: pickRandom(PRIORITYS),
     transactionIds,
     ruleQaStatus:
       randomBool() && alertStatus === 'CLOSED'
@@ -290,7 +292,7 @@ const getStatusChangesObject = (
     statusChanges.push({
       caseStatus: 'CLOSED',
       timestamp: dayjs()
-        .subtract(Math.floor(Math.random() * (alerts ? 150 : 400)), 'minute')
+        .subtract(Math.floor(randomInt(alerts ? 150 : 400)), 'minute')
         .valueOf(),
       reason: randomSubset(CASE_REASONSS),
       userId,
@@ -308,7 +310,7 @@ const getStatusChangesObject = (
       statusChanges.push({
         caseStatus: 'OPEN_IN_PROGRESS',
         timestamp: dayjs()
-          .subtract(Math.floor(Math.random() * (alerts ? 150 : 400)), 'minute')
+          .subtract(Math.floor(randomInt(alerts ? 150 : 400)), 'minute')
           .valueOf(),
         userId,
       })

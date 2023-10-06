@@ -2,14 +2,12 @@ import { v4 as uuid4 } from 'uuid'
 import { generateNarrative } from '../samplers/cases'
 import { data as users } from './users'
 import { transactionRules as rules } from './rules'
-import { prng, randomInt } from '@/core/seed/samplers/prng'
+import { randomInt } from '@/core/seed/samplers/prng'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
 const AUDIT_LOG_COUNT = 100
-const generator = function* (seed: number): Generator<AuditLog> {
+const generator = function* (): Generator<AuditLog> {
   for (let i = 0; i < AUDIT_LOG_COUNT; i += 1) {
-    const random = prng(seed * i)
-
     let fullAuditLog: AuditLog = {
       auditlogId: uuid4(),
 
@@ -20,7 +18,7 @@ const generator = function* (seed: number): Generator<AuditLog> {
     }
     // User Viewed
     if (i % 3 === 0) {
-      const userId = users[randomInt(random(), users.length)].userId
+      const userId = users[randomInt(users.length)].userId
 
       fullAuditLog = {
         type: 'USER',
@@ -38,14 +36,14 @@ const generator = function* (seed: number): Generator<AuditLog> {
         action: 'CREATE',
         subtype: 'COMMENT',
         timestamp: Date.now(),
-        entityId: `C-${randomInt(random(), 25)}`,
+        entityId: `C-${randomInt(25)}`,
         oldImage: undefined,
         newImage: {
           id: uuid4(),
           body: generateNarrative(
-            [rules[randomInt(random(), rules.length)].ruleDescription],
+            [rules[randomInt(rules.length)].ruleDescription],
             ['Anti-money laundering'],
-            users[randomInt(random(), users.length)]
+            users[randomInt(users.length)]
           ),
         },
       }
@@ -56,14 +54,14 @@ const generator = function* (seed: number): Generator<AuditLog> {
           type: 'ALERT',
           action: 'UPDATE',
           timestamp: Date.now(),
-          entityId: `A-${randomInt(random(), 25)}`,
+          entityId: `A-${randomInt(25)}`,
           oldImage: {},
           newImage: {
             reason: ['Anti-money laundering'],
             body: generateNarrative(
-              [rules[randomInt(random(), rules.length)].ruleDescription],
+              [rules[randomInt(rules.length)].ruleDescription],
               ['Anti-money laundering'],
-              users[randomInt(random(), users.length)]
+              users[randomInt(users.length)]
             ),
           },
         }
@@ -74,7 +72,7 @@ const generator = function* (seed: number): Generator<AuditLog> {
   }
 }
 
-const generate: () => Iterable<AuditLog> = () => generator(42)
+const generate: () => Iterable<AuditLog> = () => generator()
 
 const auditlogs: AuditLog[] = []
 

@@ -1,4 +1,4 @@
-import { pickRandom } from '@/core/seed/samplers/prng'
+import { pickRandom, randomInt } from '@/core/seed/samplers/prng'
 import { Address } from '@/@types/openapi-internal/Address'
 
 const streets = [
@@ -117,16 +117,14 @@ export const addresses: Address[] = [...Array(300)].map(() => {
   const state = pickRandom(Object.keys(countries[country]))
 
   return {
-    addressLines: [
-      `${Math.floor(Math.random() * 1000)} ${pickRandom(streets)}`,
-    ],
-    postcode: String(Math.floor(Math.random() * 100_000)),
+    addressLines: [`${Math.floor(randomInt(1000))} ${pickRandom(streets)}`],
+    postcode: String(Math.floor(randomInt(100000))),
     city: pickRandom(countries[country][state]),
-    state: `California`,
-    country: `USA`,
+    state,
+    country,
   }
 })
 
 export const phoneNumber = [...Array(300)].map(() =>
-  (Math.floor(Math.random() * 9_000_000) + 10_000_000).toString()
+  (Math.floor(randomInt(1000000000)) + 1000000000).toString()
 )

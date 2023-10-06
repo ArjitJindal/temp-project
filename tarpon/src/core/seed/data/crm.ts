@@ -60,7 +60,7 @@ const init = () => {
     summaries.push({
       accountId: crmAccountId,
       summary: `${u.legalEntity.companyGeneralDetails.legalName} is a technology and services company that provides member support solutions utilizing technology, engagement, and analytics. They are located in ${u.legalEntity.companyRegistrationDetails?.registrationCountry} with 5001-10000 employees and a revenue of $500M-1B.`,
-      sentiment: randomInt(undefined, 100),
+      sentiment: randomInt(100),
       good: `${u.legalEntity.companyGeneralDetails.legalName} is regularly using the platform and has not missed a subscription payment`,
       neutral: `${u.legalEntity.companyGeneralDetails.legalName} has been active on the platform for 6 months`,
       bad: `They are being unresponsive to various emails related to documentation gathering`,

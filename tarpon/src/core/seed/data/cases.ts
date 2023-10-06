@@ -21,25 +21,19 @@ const init = () => {
       transactions.filter((t) => {
         return t.destinationUserId === user.userId
       })
-    const destinationCases: Case[] = sampleTransactionUserCases(
-      {
-        transactions: transactionsForUserADestination,
-        userId: user.userId,
-        destination: user,
-      },
-      i * 0.001
-    ).map((c) => ({
+    const destinationCases: Case[] = sampleTransactionUserCases({
+      transactions: transactionsForUserADestination,
+      userId: user.userId,
+      destination: user,
+    }).map((c) => ({
       ...c,
       createdTimestamp: sampleTimestamp() - 3600 * 1000 * i,
     }))
-    const originCases: Case[] = sampleTransactionUserCases(
-      {
-        transactions: transactionsForUserAsOrigin,
-        userId: user.userId,
-        origin: user,
-      },
-      i * 0.001
-    ).map((c) => ({
+    const originCases: Case[] = sampleTransactionUserCases({
+      transactions: transactionsForUserAsOrigin,
+      userId: user.userId,
+      origin: user,
+    }).map((c) => ({
       ...c,
       createdTimestamp: sampleTimestamp() - 3600 * 1000 * i,
     }))

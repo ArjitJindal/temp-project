@@ -1,9 +1,6 @@
 import { v4 as uuid } from 'uuid'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import {
-  pickRandomDeterministic,
-  randomIntDeterministic,
-} from '@/core/seed/samplers/prng'
+import { pickRandom, randomInt } from '@/core/seed/samplers/prng'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
@@ -34,7 +31,7 @@ export function sampleTransaction({
     destinationAmountDetails: {
       country: destinationCountry ?? 'PH',
       transactionCurrency: 'USD',
-      transactionAmount: randomIntDeterministic(1_00_000),
+      transactionAmount: randomInt(1_00_000),
     },
     originUserId,
     destinationUserId,
@@ -48,19 +45,15 @@ export function sampleTransaction({
     timestamp: new Date().getTime(),
     destinationPaymentDetails: randomPaymentMethod(),
     originDeviceData: {
-      ipAddress: [...new Array(4)]
-        .map(() => randomIntDeterministic(256))
-        .join('.'),
+      ipAddress: [...new Array(4)].map(() => randomInt(256)).join('.'),
     },
     destinationDeviceData: {
-      ipAddress: [...new Array(4)]
-        .map(() => randomIntDeterministic(256))
-        .join('.'),
+      ipAddress: [...new Array(4)].map(() => randomInt(256)).join('.'),
     },
     originPaymentDetails: randomPaymentMethod(),
     hitRules: [],
     executedRules: [],
-    status: pickRandomDeterministic(RULE_ACTIONS),
+    status: pickRandom(RULE_ACTIONS),
   }
 }
 
@@ -69,11 +62,11 @@ export const paymentMethods = [...Array(500000)].map(() =>
 )
 
 export const randomPaymentMethod = () => {
-  return pickRandomDeterministic(paymentMethods)
+  return pickRandom(paymentMethods)
 }
 
 export function samplePaymentDetails() {
-  switch (randomIntDeterministic(9)) {
+  switch (randomInt(9)) {
     case 0:
       return sampleCardDetails()
     case 1:
@@ -98,7 +91,7 @@ export function samplePaymentDetails() {
 export function sampleCardDetails(): CardDetails {
   return {
     method: 'CARD' as const,
-    cardFingerprint: 'FNGR' + randomIntDeterministic(),
+    cardFingerprint: 'FNGR' + randomInt(),
     cardIssuedCountry: 'RU',
     transactionReferenceField: 'transactionReferenceField',
     nameOnCard: {
@@ -131,23 +124,23 @@ export function sampleCardDetails(): CardDetails {
 export function sampleIBANDetails(): IBANDetails {
   return {
     method: 'IBAN' as const,
-    BIC: 'AABSDE' + (10 + randomIntDeterministic(90)).toString(),
+    BIC: 'AABSDE' + (10 + randomInt(90)).toString(),
     IBAN:
       'DE' +
-      [...new Array(2)].map(() => randomIntDeterministic(9)).join('') +
-      [...new Array(8)].map(() => randomIntDeterministic(9)).join('') +
-      [...new Array(10)].map(() => randomIntDeterministic(9)).join(''),
+      [...new Array(2)].map(() => randomInt(9)).join('') +
+      [...new Array(8)].map(() => randomInt(9)).join('') +
+      [...new Array(10)].map(() => randomInt(9)).join(''),
   }
 }
 
 export function sampleGenericBankAccountDetails(): GenericBankAccountDetails {
-  return pickRandomDeterministic<GenericBankAccountDetails>([
+  return pickRandom<GenericBankAccountDetails>([
     {
       method: 'GENERIC_BANK_ACCOUNT',
       bankName: 'Bank of America',
       bankCode: 'BWEHRHRB',
       name: 'Mark Schagal',
-      accountNumber: `${randomIntDeterministic()}`,
+      accountNumber: `${randomInt()}`,
       accountType: 'SAVINGS',
       bankAddress: randomAddress(),
     },
@@ -155,7 +148,7 @@ export function sampleGenericBankAccountDetails(): GenericBankAccountDetails {
       method: 'GENERIC_BANK_ACCOUNT',
       bankName: 'Citigroup',
       bankCode: '123123',
-      accountNumber: `${randomIntDeterministic()}`,
+      accountNumber: `${randomInt()}`,
       accountType: 'CURRENT',
       name: 'John Dow',
       bankAddress: randomAddress(),
@@ -165,42 +158,42 @@ export function sampleGenericBankAccountDetails(): GenericBankAccountDetails {
 export function sampleACHDetails(): ACHDetails {
   return {
     method: 'ACH',
-    accountNumber: 'ACH' + randomIntDeterministic(),
-    routingNumber: `${randomIntDeterministic()}`,
+    accountNumber: 'ACH' + randomInt(),
+    routingNumber: `${randomInt()}`,
   }
 }
 export function sampleSWIFTDetails(): SWIFTDetails {
   return {
     method: 'SWIFT',
-    accountNumber: 'SWIFT' + randomIntDeterministic(),
-    swiftCode: `${randomIntDeterministic()}`,
+    accountNumber: 'SWIFT' + randomInt(),
+    swiftCode: `${randomInt()}`,
   }
 }
 export function sampleMpesaDetails(): MpesaDetails {
   return {
     method: 'MPESA',
-    businessShortCode: `${randomIntDeterministic()}`,
+    businessShortCode: `${randomInt()}`,
     transactionType: 'SalaryPayment',
-    phoneNumber: `+${randomIntDeterministic(999999999999)}`,
+    phoneNumber: `+${randomInt(999999999999)}`,
   }
 }
 export function sampleUPIDetails(): UPIDetails {
   return {
     method: 'UPI',
-    upiID: 'UPI' + randomIntDeterministic(),
+    upiID: 'UPI' + randomInt(),
   }
 }
 export function sampleWalletDetails(): WalletDetails {
   return {
     method: 'WALLET',
     walletType: 'vault',
-    walletId: `${randomIntDeterministic()}`,
+    walletId: `${randomInt()}`,
   }
 }
 export function sampleCheckDetails(): CheckDetails {
   return {
     method: 'CHECK',
-    checkIdentifier: `${randomIntDeterministic()}`,
-    checkNumber: `${randomIntDeterministic()}`,
+    checkIdentifier: `${randomInt()}`,
+    checkNumber: `${randomInt()}`,
   }
 }
