@@ -12,5 +12,5 @@ export function notNullish<T>(value: T | undefined | null): value is T {
 }
 
 export function notEmpty<T>(value: T | undefined | null | false | ''): value is T {
-  return notNullish(value != null) && value !== false && value !== '';
+  return notNullish(value) && value !== false && value !== '';
 }

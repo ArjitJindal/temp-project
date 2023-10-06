@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React, { useState } from 'react';
+import React from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import _ from 'lodash';
 import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
 import { TableItem } from './types';
-import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import UserLink from '@/components/UserLink';
@@ -20,16 +18,12 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';
   userType: 'BUSINESS' | 'CONSUMER';
+  dateRange: RangeValue<Dayjs>;
 }
 
 export default function HitsPerUserCard(props: Props) {
-  const { direction, userType } = props;
+  const { dateRange, direction, userType } = props;
   const api = useApi();
-
-  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
-    dayjs().subtract(1, 'week'),
-    dayjs(),
-  ]);
 
   const helper = new ColumnHelper<TableItem>();
   const columns: TableColumn<TableItem>[] = helper.list([
@@ -122,7 +116,6 @@ export default function HitsPerUserCard(props: Props) {
     <QueryResultsTable<TableItem>
       rowKey="userId"
       columns={columns}
-      extraTools={[() => <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
       queryResults={hitsPerUserResult}
       pagination={false}
       sizingMode="SCROLL"
@@ -131,6 +124,7 @@ export default function HitsPerUserCard(props: Props) {
         reload: true,
       }}
       fitHeight={300}
+      externalHeader={true}
     />
   );
 }

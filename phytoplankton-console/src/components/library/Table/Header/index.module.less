@@ -3,10 +3,10 @@
 
 .root {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: space-between;
   min-height: 32px;
+  margin-bottom: 16px;
 
   &.filtersVisible {
     .right {
@@ -17,14 +17,15 @@
   &.externalHeader {
     position: absolute;
     top: 0;
-    width: 100%;
-    transform: translateY(-100%);
+    width: fit-content;
+    right: 0;
     margin-bottom: 0;
+    transform: translateY(-100%);
   }
 }
 
 .right {
-  padding-left: 20px;
   display: flex;
   gap: 20px;
+  padding-left: 20px;
 }

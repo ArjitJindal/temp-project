@@ -1,22 +1,35 @@
 import { useLocalStorageState } from 'ahooks';
+import { RangeValue } from 'rc-picker/es/interface';
+import React, { useState } from 'react';
 import HitsPerUserCard from './HitsPerUserCard';
 import SegmentedControl from '@/components/library/SegmentedControl';
+import Widget from '@/components/library/Widget';
+import { WidgetProps } from '@/components/library/Widget/types';
+import DatePicker from '@/components/ui/DatePicker';
+import { dayjs, Dayjs } from '@/utils/dayjs';
 
-interface Props {
-  userType: 'BUSINESS' | 'CONSUMER';
+interface Props extends WidgetProps {
+  userType?: 'BUSINESS' | 'CONSUMER';
 }
 
 type ScopeSelectorValue = 'ALL' | 'ORIGIN' | 'DESTINATION';
 
 const TopUsersHitCard = (props: Props) => {
-  const { userType } = props;
+  const { userType = 'BUSINESS' } = props;
 
+  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
+    dayjs().subtract(1, 'week'),
+    dayjs(),
+  ]);
   const [selectedSection, setSelectedSection] = useLocalStorageState<ScopeSelectorValue>(
     `dashboard-${userType}-user-active-tab`,
     'ALL',
   );
   return (
-    <div>
+    <Widget
+      {...props}
+      extraControls={[<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
+    >
       <SegmentedControl<ScopeSelectorValue>
         size="MEDIUM"
         active={selectedSection as ScopeSelectorValue}
@@ -32,8 +45,9 @@ const TopUsersHitCard = (props: Props) => {
       <HitsPerUserCard
         direction={selectedSection !== 'ALL' ? selectedSection : undefined}
         userType={userType}
+        dateRange={dateRange}
       />
-    </div>
+    </Widget>
   );
 };
 
