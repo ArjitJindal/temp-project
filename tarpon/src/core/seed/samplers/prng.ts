@@ -24,6 +24,14 @@ export function randomNumberGeneratorDeterministic() {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 }
 
+export function getRandomIntInclusiveDeterministic(min: number, max: number) {
+  min = Math.ceil(min)
+  max = Math.floor(max)
+  return (
+    Math.floor(randomNumberGeneratorDeterministic() * (max - min + 1)) + min
+  )
+}
+
 export function randomInt(seed?: number | undefined | null, max?: number) {
   return Math.floor(Math.random() * (max ?? Number.MAX_SAFE_INTEGER))
 }
