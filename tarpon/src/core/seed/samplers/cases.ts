@@ -267,11 +267,7 @@ export function sampleAlert(params: {
             category.checklistItems.map(
               (cli): ChecklistItemValue => ({
                 checklistItemId: cli.id,
-                done: randomBool(),
-                status:
-                  alertStatus === 'CLOSED'
-                    ? pickRandom(CHECKLIST_STATUSS)
-                    : undefined,
+                done: true,
               })
             )
         )
