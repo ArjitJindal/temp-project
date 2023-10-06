@@ -15,7 +15,7 @@ export enum UserRole {
   USER = 'user',
 }
 
-export const ROLES_ORDER = ['root', 'admin', 'user'];
+export const ROLES_ORDER = ['root', 'whitelabel-root', 'admin', 'user'];
 
 export interface FlagrightAuth0User {
   name: string | null;
@@ -121,7 +121,10 @@ export function useUsers(
   let tempUsers = users;
 
   if (!options.includeRootUsers && !isSuperAdmin) {
-    tempUsers = tempUsers.filter((user) => parseUserRole(user.role) !== UserRole.ROOT);
+    tempUsers = tempUsers.filter((user) => {
+      const role = parseUserRole(user.role);
+      return role !== UserRole.ROOT && role !== UserRole.WHITELABEL_ROOT;
+    });
   }
 
   if (!options.includeBlockedUsers) {
@@ -171,7 +174,7 @@ export function useUser(userId: string | null | undefined): Account | null {
     return null;
   }
   const user = users[userId];
-  if (user && isSuperAdmin(user)) {
+  if (user && (isSuperAdmin(user) || user.role === UserRole.WHITELABEL_ROOT)) {
     return {
       ...user,
       name: 'System',

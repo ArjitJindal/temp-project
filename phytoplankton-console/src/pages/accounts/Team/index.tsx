@@ -49,9 +49,10 @@ export default function Team() {
     ACCOUNT_LIST_TEAM_MANAGEMENT(),
     async (paginationParams) => {
       const accounts = await api.getAccounts({ ...paginationParams });
-      const filteredAccounts = accounts.filter(
-        (account) => parseUserRole(account.role) !== UserRole.ROOT && !account.blocked,
-      );
+      const filteredAccounts = accounts.filter((account) => {
+        const role = parseUserRole(account.role);
+        return role !== UserRole.ROOT && role !== UserRole.WHITELABEL_ROOT && !account.blocked;
+      });
       return {
         items: filteredAccounts,
         success: true,
