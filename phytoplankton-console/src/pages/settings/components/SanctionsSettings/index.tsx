@@ -1,5 +1,5 @@
-import SettingsCard from '../SettingsCard';
 import s from './styles.module.less';
+import SettingsCard from '@/components/library/SettingsCard';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';

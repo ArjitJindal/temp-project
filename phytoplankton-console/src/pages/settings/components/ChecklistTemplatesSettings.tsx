@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv';
-import SettingsCard from './SettingsCard';
+import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
 import { ChecklistTemplate } from '@/apis';
 import { DefaultApiGetChecklistTemplatesRequest } from '@/apis/types/ObjectParamAPI';

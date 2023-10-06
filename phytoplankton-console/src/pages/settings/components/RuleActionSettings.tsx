@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Button, Input } from 'antd';
-import SettingsCard from './SettingsCard';
+import SettingsCard from '@/components/library/SettingsCard';
 import Table from '@/components/library/Table';
 import {
   useSettings,

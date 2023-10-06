@@ -1,5 +1,5 @@
 import { startCase, toLower } from 'lodash';
-import SettingsCard from './SettingsCard';
+import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import Table from '@/components/library/Table';

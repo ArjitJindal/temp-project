@@ -55,6 +55,7 @@ import Widget from '@/components/library/Widget/story';
 import WidgetGrid from '@/components/library/WidgetGrid/story';
 import Narrative from '@/components/Narrative/story';
 import Line from '@/pages/dashboard/analysis/components/charts/Line/story';
+import SettingsCard from '@/components/library/SettingsCard/story';
 
 const config: Config = [
   {
@@ -208,6 +209,10 @@ const config: Config = [
       {
         key: 'Narrative',
         story: Narrative,
+      },
+      {
+        key: 'Settings Card',
+        story: SettingsCard,
       },
     ],
   },

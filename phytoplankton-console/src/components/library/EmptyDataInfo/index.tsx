@@ -2,12 +2,14 @@ import { Card } from 'antd';
 import Button from '../Button';
 import AddLineIcon from '@/components/ui/icons/Remix/system/add-line.react.svg';
 import { H4, P } from '@/components/ui/Typography';
+import EmptyBoxIcon from '@/components/ui/icons/empty-illustration.react.svg';
 
 interface Props {
   title?: string;
   description?: string;
   action?: string;
   onActionButtonClick?: () => void;
+  showIcon?: boolean;
 }
 
 export function EmptyEntitiesInfo(props: Props) {
@@ -23,6 +25,7 @@ export function EmptyEntitiesInfo(props: Props) {
         justifyContent: 'center',
       }}
     >
+      <div style={{ marginBottom: 16 }}>{props.showIcon && <EmptyBoxIcon />}</div>
       <H4 style={{ fontSize: 18 }}> {title ?? 'No data'}</H4>
       {description && (
         <P variant={'sml'} grey={true}>

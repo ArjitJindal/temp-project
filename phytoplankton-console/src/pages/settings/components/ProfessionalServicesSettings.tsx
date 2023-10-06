@@ -1,4 +1,4 @@
-import SettingsCard from './SettingsCard';
+import SettingsCard from '@/components/library/SettingsCard';
 import Button from '@/components/library/Button';
 import { getBranding } from '@/utils/branding';
 

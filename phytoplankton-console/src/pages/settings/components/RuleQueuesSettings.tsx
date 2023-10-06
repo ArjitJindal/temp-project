@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv';
-import SettingsCard from './SettingsCard';
+import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
 import { CrudEntitiesTable } from '@/components/library/CrudEntitiesTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';

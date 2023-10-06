@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import SettingsCard from './SettingsCard';
+import SettingsCard from '@/components/library/SettingsCard';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { getBranding } from '@/utils/branding';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -14,7 +14,7 @@ export const RiskAlgorithmsSettings = () => {
       title="Risk algorithms"
       description="Select the algorithm type you want to use for transaction monitoring."
     >
-      <p>
+      <p style={{ border: 'none' }}>
         <b>Algorithm type</b>
       </p>
       <SelectionGroup

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import SettingsCard from '../SettingsCard';
 import s from './index.module.less';
+import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
 import { TenantApiKey } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';

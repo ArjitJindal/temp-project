@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { WebhookDetails } from './WebhookDetails';
-import SettingsCard from './SettingsCard';
+import SettingsCard from '@/components/library/SettingsCard';
 import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';

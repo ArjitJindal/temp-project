@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import SettingsCard from './SettingsCard';
+import s from './index.module.less';
 import { AIAttribute, AiSourcesResponse } from '@/apis';
 import {
   useSettings,
@@ -16,6 +16,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { COPILOT_AI_RESOURCES } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import SettingsCard from '@/components/library/SettingsCard';
 
 export const AISources = () => {
   const settings = useSettings();
@@ -35,8 +36,8 @@ export const AISources = () => {
           >
             <>
               {AI_ATTRIBUTE_CATEGORYS.map((category) => (
-                <div key={category}>
-                  <P bold style={{ marginBottom: '0.25rem', marginTop: '0.5rem' }}>
+                <div key={category} className={s.categoryDiv}>
+                  <P bold className={s.paragraph}>
                     {humanizeAuto(category)}
                   </P>
                   {aiSources
@@ -48,7 +49,7 @@ export const AISources = () => {
                             title="We do not send this data to our AI engine as it may contain personally identifiable information (PII) we obfuscate this data before sending it to our AI engine."
                             placement="top"
                           >
-                            <div style={{ width: 'fit-content' }}>
+                            <div className={s.checkboxDiv}>
                               <Label
                                 key={key}
                                 position="RIGHT"
@@ -90,7 +91,7 @@ export const AISources = () => {
                     ))}
                 </div>
               ))}
-              <div style={{ marginTop: '1rem' }}>
+              <div className={s.buttonDiv}>
                 <Button
                   onClick={() => {
                     updateSettings.mutate({

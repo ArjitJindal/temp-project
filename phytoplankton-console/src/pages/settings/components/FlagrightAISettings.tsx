@@ -1,4 +1,4 @@
-import SettingsCard from './SettingsCard';
+import SettingsCard from '@/components/library/SettingsCard';
 import Confirm from '@/components/utils/Confirm/index';
 import {
   useSettings,
