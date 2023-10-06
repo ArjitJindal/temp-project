@@ -47,7 +47,7 @@ export const tenantsHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetTenantsList(async () => {
-      assertCurrentUserRole('root')
+      assertCurrentUserRole('root', 'whitelabel-root')
       const tenants = await accountsService.getTenants()
       const data = tenants.map(
         (tenant): Tenant => ({

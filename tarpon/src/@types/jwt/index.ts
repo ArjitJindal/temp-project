@@ -27,11 +27,12 @@ export function isAtLeastRole(
 }
 
 export function assertCurrentUserRole(...requiredRoles: ManagedRoleName[]) {
-  const hasRole = false
+  let hasRole = false
   requiredRoles.forEach((requiredRole) => {
     try {
       assertRole(currentUser(), requiredRole)
-      return hasRole
+      hasRole = true
+      return
     } catch (e) {
       // Do nothing
       return
