@@ -155,15 +155,19 @@ export const createAuth0TenantResources = (
   })
 
   // White label root
-  new auth0.role.Role(context, getTenantResourceId(tenantName, `root`), {
-    provider,
-    name: `whitelabel-root`,
-    permissions: PERMISSIONS.map((p) => ({
-      name: p,
-      resourceServerIdentifier: resourceServer.identifier,
-    })),
-    dependsOn: [resourceServer],
-  })
+  new auth0.role.Role(
+    context,
+    getTenantResourceId(tenantName, `whitelabel-root`),
+    {
+      provider,
+      name: `whitelabel-root`,
+      permissions: PERMISSIONS.map((p) => ({
+        name: p,
+        resourceServerIdentifier: resourceServer.identifier,
+      })),
+      dependsOn: [resourceServer],
+    }
+  )
 
   /**
    * Branding::Custom Domains
