@@ -7,7 +7,7 @@ import { neverReturn } from '@/utils/lang';
 import { humanizeConstant } from '@/utils/humanize';
 
 export const statusToOperationName = (
-  status: AlertStatus | CaseStatus | 'IN_REVIEW',
+  status: AlertStatus | CaseStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD',
   isPastTense = false,
 ) => {
   switch (status) {
@@ -32,6 +32,10 @@ export const statusToOperationName = (
       return 'On hold';
     case 'IN_REVIEW':
       return 'In review';
+    case 'IN_PROGRESS':
+      return 'In progress';
+    case 'ON_HOLD':
+      return 'On hold';
     default:
       return neverReturn(status, humanizeConstant(status));
   }

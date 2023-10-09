@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
+import { flatMap } from 'lodash';
 import AccountsStatisticsTable from './AccountsStatisticsTable';
 import s from './index.module.less';
 import SegmentedControl from '@/components/library/SegmentedControl';
@@ -21,7 +22,25 @@ interface Params extends TableCommonParams {
   dateRange?: RangeValue<Dayjs>;
   caseStatus?: (CaseStatus | AlertStatus)[];
 }
-
+const transformStatus = (
+  caseStatus: (CaseStatus | AlertStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD')[] | undefined,
+) => {
+  return flatMap(caseStatus, (val) => {
+    switch (val) {
+      case 'IN_REVIEW': {
+        return ['IN_REVIEW_OPEN', 'IN_REVIEW_CLOSED', 'IN_REVIEW_REOPENED', 'IN_REVIEW_ESCALATED'];
+      }
+      case 'IN_PROGRESS': {
+        return ['ESCALATED_IN_PROGRESS', 'OPEN_IN_PROGRESS'];
+      }
+      case 'ON_HOLD': {
+        return ['OPEN_ON_HOLD', 'ESCALATED_ON_HOLD'];
+      }
+      default:
+        return val;
+    }
+  });
+};
 export default function TeamPerformanceCard(props: WidgetProps) {
   const startTime = dayjs().subtract(1, 'day').startOf('day');
   const endTime = dayjs().endOf('day');
@@ -109,20 +128,34 @@ export default function TeamPerformanceCard(props: WidgetProps) {
             title: params.scope === 'CASES' ? 'Case status' : 'Alert status',
             dataType: {
               kind: 'select',
-              options: (['OPEN', 'CLOSED', 'REOPENED', 'ESCALATED', 'IN_REVIEW'] as const).map(
-                (caseStatus: CaseStatus | 'IN_REVIEW') => ({
-                  value: caseStatus,
-                  label: statusToOperationName(caseStatus, true),
-                }),
-              ),
+              options: (
+                [
+                  'OPEN',
+                  'CLOSED',
+                  'REOPENED',
+                  'ESCALATED',
+                  'IN_REVIEW',
+                  'IN_PROGRESS',
+                  'ON_HOLD',
+                ] as const
+              ).map((caseStatus: CaseStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD') => ({
+                value: caseStatus,
+                label: statusToOperationName(caseStatus, true),
+              })),
               mode: 'MULTIPLE',
               displayMode: 'select',
             },
           }}
           value={params.caseStatus}
           onChange={(value: unknown) => {
-            const caseStatus = value as (CaseStatus | AlertStatus)[] | undefined;
-            setParams((prevState) => ({ ...prevState, caseStatus }));
+            const caseStatus = value as
+              | (CaseStatus | AlertStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD')[]
+              | undefined;
+            const transformedStatus = transformStatus(caseStatus);
+            setParams((prevState) => ({
+              ...prevState,
+              transformedStatus,
+            }));
           }}
         />
       </div>
