@@ -10,6 +10,7 @@ export interface Option<Value extends Comparable> {
   value: Value;
   label?: React.ReactNode;
   isDisabled?: boolean;
+  isDefault?: boolean;
 }
 
 interface CommonProps<Value extends Comparable> {
@@ -82,6 +83,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       props.onChange?.(newValue as (Value & Value[]) | undefined);
     },
     onSearch: props.onSearch,
+    defaultValue: options.filter((option) => option.isDefault).map((option) => option.value),
   };
 
   return (
