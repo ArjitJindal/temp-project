@@ -65,6 +65,21 @@ export default function SarReportDrawerForm(props: Props) {
       isRequired: false,
       schema: report.schema?.transactionMetadataSchema,
     },
+    {
+      name: TRANSACTION_STEP,
+      isRequired: false,
+      schema: {
+        type: 'object' as const,
+        properties: report.parameters.transactions?.reduce((acc, x) => {
+          return {
+            ...acc,
+            [x.id]: report.schema?.transactionSchema,
+          };
+        }, {}),
+        definitions: report.schema?.transactionSchema?.definitions,
+        required: report.parameters.transactions?.map((x) => x.id),
+      },
+    },
   ].filter((x) => x.schema != null);
 
   const fieldValidators = makeValidators(orderedProps, {
@@ -72,6 +87,7 @@ export default function SarReportDrawerForm(props: Props) {
       type: 'object' as const,
       ...report.schema?.reportSchema?.definitions,
       ...report.schema?.transactionMetadataSchema?.definitions,
+      ...report.schema?.transactionSchema?.definitions,
     },
   });
 
