@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb'
+import { FindCursor, MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 
 import { InternalServerError } from 'http-errors'
@@ -100,6 +100,17 @@ export class RiskRepository {
     delete krsScoreItem.PartitionKeyID
     delete krsScoreItem.SortKeyID
     return krsScoreItem as KrsScore
+  }
+
+  async allArsScoresForUser(userId: string): Promise<FindCursor<ArsScore>> {
+    const mongoDb = this.mongoDb.db()
+    const arsScoresCollection = mongoDb.collection<ArsScore>(
+      ARS_SCORES_COLLECTION(this.tenantId)
+    )
+
+    return arsScoresCollection
+      .find({ $or: [{ originUserId: userId }, { destinationUserId: userId }] })
+      .sort({ createdAt: 1 })
   }
 
   async createOrUpdateKrsScore(

@@ -238,10 +238,13 @@ export class RiskScoringService {
     this.tenantId = tenantId
     this.riskRepository = new RiskRepository(tenantId, {
       dynamoDb: connections.dynamoDb,
+      mongoDb: connections.mongoDb,
     })
     this.userRepository = new UserRepository(tenantId, {
       mongoDb: connections.mongoDb,
+      dynamoDb: connections.dynamoDb,
     })
+    this
     this.mongoDb = connections.mongoDb as MongoClient
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
   }
@@ -298,6 +301,101 @@ export class RiskScoringService {
         : getDefaultRiskValue(riskClassificationValues),
       components,
     }
+  }
+
+  public async reCalculateDrsScoreFromOldArsScores(
+    userId: string,
+    krsScore: number
+  ): Promise<{
+    score: number
+    components: RiskScoreComponent[]
+    transactionId?: string
+  }> {
+    const cursor = await this.riskRepository.allArsScoresForUser(userId)
+    let score = krsScore
+    let components: RiskScoreComponent[] = []
+    let transactionId: string | undefined
+
+    for await (const arsScore of cursor) {
+      score = mean([score, arsScore.arsScore])
+      components = arsScore.components ?? []
+      transactionId = arsScore.transactionId
+    }
+
+    return {
+      score,
+      components,
+      transactionId,
+    }
+  }
+
+  public async reCalculateKrsAndDrsScores(userId: string): Promise<void> {
+    const user = await this.userRepository.getUserById(userId)
+    logger.info(`Recalculating KRS and DRS scores for user ${userId}`)
+    const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
+    if (!user) {
+      logger.warn(`User ${userId} not found`)
+      return
+    }
+    logger.info(`Recalculating KRS score for user ${userId}`)
+    // Calculate the KRS score
+    const { components: krsComponennts, score: krsScore } =
+      await this.calculateKrsScore(
+        user,
+        riskClassificationValues,
+        riskFactors || []
+      )
+    logger.info(`Calculated KRS score for user ${userId} is ${krsScore}`, {
+      krsComponennts,
+    })
+    logger.info(`Recalculating DRS score for user ${userId}`)
+    // Calculate the DRS score from the old ARS scores
+    const { components, score, transactionId } =
+      await this.reCalculateDrsScoreFromOldArsScores(user.userId, krsScore)
+    logger.info(`Calculated DRS score for user ${userId} is ${score}`, {
+      components,
+      transactionId,
+    })
+    //  Update the KRS and DRS scores
+    await this.riskRepository.createOrUpdateKrsScore(
+      user.userId,
+      krsScore,
+      krsComponennts
+    )
+
+    await this.riskRepository.createOrUpdateDrsScore(
+      user.userId,
+      score,
+      transactionId ?? 'FIRST_DRS',
+      components.length > 0 ? components : krsComponennts
+    )
+
+    if (transactionId) {
+      const caseRepository = new CaseRepository(this.tenantId, {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      })
+      const transactionRepository = new MongoDbTransactionRepository(
+        this.tenantId,
+        this.mongoDb
+      )
+      const transaction = await transactionRepository.getTransactionById(
+        transactionId
+      )
+
+      if (!transaction) {
+        logger.warn(`Transaction ${transactionId} not found`)
+        return
+      }
+
+      await caseRepository.updateDynamicRiskScores(
+        transactionId,
+        transaction.originUserId === userId ? score : undefined,
+        transaction.destinationUserId === userId ? score : undefined
+      )
+    }
+
+    logger.info(`Updated KRS and DRS scores for user ${userId}`)
   }
 
   public calculateDrsScore(

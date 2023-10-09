@@ -1172,28 +1172,30 @@ export class CaseRepository {
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
     await Promise.all([
-      collection.updateOne(
-        {
-          'caseTransactions.transactionId': transactionId,
-          'caseUsers.origin': { $ne: null },
-        },
-        {
-          $set: {
-            'caseUsers.originUserDrsScore': originDrsScore,
+      originDrsScore != null &&
+        collection.updateOne(
+          {
+            'caseTransactions.transactionId': transactionId,
+            'caseUsers.origin': { $ne: null },
           },
-        }
-      ),
-      collection.updateOne(
-        {
-          'caseTransactions.transactionId': transactionId,
-          'caseUsers.destination': { $ne: null },
-        },
-        {
-          $set: {
-            'caseUsers.destinationUserDrsScore': destinationDrsScore,
+          {
+            $set: {
+              'caseUsers.originUserDrsScore': originDrsScore,
+            },
+          }
+        ),
+      destinationDrsScore != null &&
+        collection.updateOne(
+          {
+            'caseTransactions.transactionId': transactionId,
+            'caseUsers.destination': { $ne: null },
           },
-        }
-      ),
+          {
+            $set: {
+              'caseUsers.destinationUserDrsScore': destinationDrsScore,
+            },
+          }
+        ),
     ])
   }
 }
