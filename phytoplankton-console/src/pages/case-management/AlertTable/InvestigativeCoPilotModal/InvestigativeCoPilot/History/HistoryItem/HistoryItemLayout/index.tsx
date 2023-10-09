@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
 import { UseMutationResult } from '@tanstack/react-query';
+import { omit } from 'lodash';
 import { QuestionResponseBase } from '../../../types';
 import s from './index.module.less';
 import Variables, { VariablesValues } from './Variables';
 import MetaInfo from './MetaInfo';
+import { dayjs } from '@/utils/dayjs';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import CommentPopover from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemLayout/CommentPopover';
+import { DownloadButton } from '@/components/library/Widget';
 
 interface Props {
   questionId: string;
@@ -42,6 +45,20 @@ export default function HistoryItemLayout(props: Props) {
             />
           )}
           <CommentPopover commentSubmitMutation={commentSubmitMutation} item={item} />
+          <DownloadButton
+            onDownload={async () => {
+              return {
+                fileName: `icp_history_item_data_${dayjs().format('YYYY_MM_DD')}.json`,
+                data: JSON.stringify(
+                  omit<QuestionResponseBase>(item, [
+                    'questionId',
+                    'createdById',
+                    'variableOptions',
+                  ]),
+                ),
+              };
+            }}
+          />
         </div>
       </div>
       {item.explained && <div className={s.explained}>{item.explained}</div>}

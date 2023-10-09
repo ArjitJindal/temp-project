@@ -43,7 +43,7 @@ export default function Widget(props: WidgetProps) {
   );
 }
 
-function DownloadButton(props: {
+export function DownloadButton(props: {
   onDownload: () => Promise<{
     fileName: string;
     data: string;
