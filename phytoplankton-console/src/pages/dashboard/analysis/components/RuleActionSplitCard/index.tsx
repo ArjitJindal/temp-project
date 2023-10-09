@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import Donut, { DonutData } from '../charts/Donut';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
@@ -7,9 +8,6 @@ import {
 } from '@/components/ui/colors';
 import { RuleAction, RuleInstance } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { RULE_INSTANCES } from '@/utils/queries/keys';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Widget from '@/components/library/Widget';
 import { arrayToCSV } from '@/utils/ruleInstanceArrayToCsv';
@@ -17,6 +15,11 @@ import {
   getRuleActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
+import WidgetRangePicker, {
+  Value as WidgetRangePickerValue,
+} from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
+import { useFilteredRuleInstances } from '@/pages/dashboard/analysis/components/dashboardutils';
+import { isSuccess } from '@/utils/asyncResource';
 
 const COLORS = {
   BLOCK: COLORS_V2_ANALYTICS_CHARTS_12,
@@ -30,10 +33,8 @@ const RULE_ACTION_ORDER = ['ALLOW', 'BLOCK', 'SUSPEND', 'FLAG'];
 interface Props extends WidgetProps {}
 
 export default function RuleActionSplitCard(props: Props) {
-  const api = useApi();
-  const ruleInstanceResults = useQuery(RULE_INSTANCES(), async () => {
-    return await api.getRuleInstances({});
-  });
+  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
+  const filteredDataRes = useFilteredRuleInstances(dateRange);
 
   const settings = useSettings();
 
@@ -44,18 +45,16 @@ export default function RuleActionSplitCard(props: Props) {
         return new Promise((resolve, _reject) => {
           const fileData = {
             fileName: `rule-action-split-${randomID}.csv`,
-            data:
-              ruleInstanceResults.data.kind === 'SUCCESS'
-                ? arrayToCSV(ruleInstanceResults.data.value)
-                : '',
+            data: isSuccess(filteredDataRes) ? arrayToCSV(filteredDataRes.value) : '',
           };
           resolve(fileData);
         });
       }}
       resizing="FIXED"
+      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
       {...props}
     >
-      <AsyncResourceRenderer resource={ruleInstanceResults.data}>
+      <AsyncResourceRenderer resource={filteredDataRes}>
         {(instances: RuleInstance[]) => {
           const frequencyMap: { [key in RuleAction]?: number } = {};
           for (const instance of instances) {

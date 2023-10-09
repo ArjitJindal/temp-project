@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import Donut from '@/pages/dashboard/analysis/components/charts/Donut';
 import {
   DashboardStatsAlertPriorityDistributionStats,
@@ -16,6 +17,9 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_PRIORITY_DISTRIBUTION } from '@/utils/queries/keys';
 import Widget from '@/components/library/Widget';
+import WidgetRangePicker, {
+  Value as WidgetRangePickerValue,
+} from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 
 const PRIORITY_COLORS: Record<string, string> = {
   ['P1']: COLORS_V2_PRIMARY_TINTS_BLUE_900,
@@ -27,9 +31,14 @@ const PRIORITY_COLORS: Record<string, string> = {
 interface Props extends WidgetProps {}
 
 const DistributionByAlertPriority = (props: Props) => {
+  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
   const api = useApi();
-  const queryResult = useQuery(ALERT_PRIORITY_DISTRIBUTION(), async () => {
-    const response = await api.getDashboardStatsAlertPriorityDistributionStats();
+  const params = {
+    startTimestamp: dateRange?.startTimestamp,
+    endTimestamp: dateRange?.endTimestamp,
+  };
+  const queryResult = useQuery(ALERT_PRIORITY_DISTRIBUTION(params), async () => {
+    const response = await api.getDashboardStatsAlertPriorityDistributionStats(params);
     return response;
   });
   const data = queryResult.data;
@@ -53,6 +62,7 @@ const DistributionByAlertPriority = (props: Props) => {
       }}
       width="HALF"
       resizing="FIXED"
+      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
       {...props}
     >
       <AsyncResourceRenderer<DashboardStatsAlertPriorityDistributionStats> resource={data}>

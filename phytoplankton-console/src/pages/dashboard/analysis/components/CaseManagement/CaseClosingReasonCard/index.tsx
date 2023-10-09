@@ -1,5 +1,6 @@
 import { has } from 'lodash';
 import { useLocalStorageState } from 'ahooks';
+import React, { useState } from 'react';
 import s from './index.module.less';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
@@ -27,6 +28,9 @@ import { useQuery } from '@/utils/queries/hooks';
 import Widget from '@/components/library/Widget';
 import { CLOSING_REASON_DISTRIBUTION } from '@/utils/queries/keys';
 import Treemap, { TreemapData } from '@/pages/dashboard/analysis/components/charts/Treemap';
+import WidgetRangePicker, {
+  Value as WidgetRangePickerValue,
+} from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 
 type ClosingReasons =
   | 'Other'
@@ -58,15 +62,19 @@ const TREEMAP_COLORS: { [key in ClosingReasons]: string } = {
 interface Props extends WidgetProps {}
 
 const CaseClosingReasonCard = (props: Props) => {
+  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
   const [selectedSection, setSelectedSection] = useLocalStorageState(
     'dashboard-closing-reason-active-tab',
     'CASE',
   );
   const api = useApi();
-  const queryResult = useQuery(CLOSING_REASON_DISTRIBUTION(selectedSection), async () => {
-    const response = await api.getDashboardStatsClosingReasonDistributionStats({
-      entity: selectedSection as 'CASE' | 'ALERT',
-    });
+  const params = {
+    entity: selectedSection as 'CASE' | 'ALERT',
+    startTimestamp: dateRange?.startTimestamp,
+    endTimestamp: dateRange?.endTimestamp,
+  };
+  const queryResult = useQuery(CLOSING_REASON_DISTRIBUTION(selectedSection, params), async () => {
+    const response = await api.getDashboardStatsClosingReasonDistributionStats(params);
     return response;
   });
   const data = queryResult.data;
@@ -104,6 +112,7 @@ const CaseClosingReasonCard = (props: Props) => {
         });
       }}
       resizing="FIXED"
+      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
       {...props}
     >
       <AsyncResourceRenderer<DashboardStatsClosingReasonDistributionStats>
@@ -112,7 +121,7 @@ const CaseClosingReasonCard = (props: Props) => {
         {({ closingReasonsData }) => {
           const data = closingReasonsData
             ?.map((child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData) => {
-              if (child.reason && has(TREEMAP_COLORS, child.reason)) {
+              if (child.reason) {
                 return {
                   name: child.reason,
                   value: child.value ?? 0,

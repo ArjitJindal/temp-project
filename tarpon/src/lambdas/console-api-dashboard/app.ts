@@ -225,7 +225,7 @@ export const dashboardStatsHandler = lambdaApi()(
     handlers.registerGetDashboardStatsClosingReasonDistributionStats(
       async (ctx, request) => {
         const client = await getMongoDbClient()
-        const { entity } = request
+        const { entity, startTimestamp, endTimestamp } = request
         const dashboardStatsRepository = new DashboardStatsRepository(
           ctx.tenantId,
           { mongoDb: client }
@@ -234,13 +234,18 @@ export const dashboardStatsHandler = lambdaApi()(
           await dashboardStatsRepository.refreshAllStats()
         }
         return await dashboardStatsRepository.getClosingReasonDistributionStatistics(
-          entity
+          entity,
+          {
+            startTimestamp,
+            endTimestamp,
+          }
         )
       }
     )
     handlers.registerGetDashboardStatsAlertPriorityDistributionStats(
-      async (ctx) => {
+      async (ctx, request) => {
         const client = await getMongoDbClient()
+        const { startTimestamp, endTimestamp } = request
         const dashboardStatsRepository = new DashboardStatsRepository(
           ctx.tenantId,
           { mongoDb: client }
@@ -248,7 +253,12 @@ export const dashboardStatsHandler = lambdaApi()(
         if (shouldRefreshAll(event)) {
           await dashboardStatsRepository.refreshAllStats()
         }
-        return await dashboardStatsRepository.getAlertPriorityDistributionStatistics()
+        return await dashboardStatsRepository.getAlertPriorityDistributionStatistics(
+          {
+            startTimestamp,
+            endTimestamp,
+          }
+        )
       }
     )
     handlers.registerGetDashboardStatsTransactionTypeDistributionStats(

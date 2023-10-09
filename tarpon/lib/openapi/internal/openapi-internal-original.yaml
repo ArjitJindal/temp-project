@@ -1960,7 +1960,14 @@ paths:
               - ALERT
           in: query
           name: entity
-    parameters: []
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
   /dashboard_stats/alert_priority_distribution:
     get:
       summary: DashboardStats - AlertPriorityDistributionStats
@@ -1978,6 +1985,15 @@ paths:
               examples: {}
       operationId: get-dashboard-stats-alert-priority-distribution-stats
       description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
   /dashboard_stats/transaction_type_distribution:
     get:
       summary: DashboardStats -TransactionTypeDistributionStats

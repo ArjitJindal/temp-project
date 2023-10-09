@@ -1,6 +1,7 @@
 import { Datum, Treemap as AntTreemap } from '@ant-design/charts';
 import { Tooltip } from '@ant-design/plots';
-import { COLORS_V2_ANALYTICS_CHARTS_11 } from '@/components/ui/colors';
+import { useMemo } from 'react';
+import { ALL_CHART_COLORS, COLORS_V2_ANALYTICS_CHARTS_11 } from '@/components/ui/colors';
 
 export interface TreemapItem<Name extends string = string> {
   name: Name | null;
@@ -19,6 +20,21 @@ interface Props<Name extends string = string> {
 export default function Treemap<Name extends string = string>(props: Props<Name>) {
   const { formatTitle, height, data, colors } = props;
 
+  const allColors = useMemo(() => {
+    const result = { ...colors };
+    let i = 0;
+    const availableColors = ALL_CHART_COLORS.filter((x) => !Object.values(colors).includes(x));
+    for (const { name } of data) {
+      if (name != null) {
+        if (result[name] == null) {
+          i = (i + 1) % ALL_CHART_COLORS.length;
+          result[name] = availableColors[i];
+        }
+      }
+    }
+    return result;
+  }, [colors, data]);
+
   return (
     <AntTreemap
       animation={false}
@@ -27,7 +43,7 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
         children: data,
       }}
       colorField={'name'}
-      color={(data: Datum) => colors[data.name] ?? COLORS_V2_ANALYTICS_CHARTS_11}
+      color={(data: Datum) => allColors[data.name] ?? COLORS_V2_ANALYTICS_CHARTS_11}
       height={height}
       tooltip={
         {

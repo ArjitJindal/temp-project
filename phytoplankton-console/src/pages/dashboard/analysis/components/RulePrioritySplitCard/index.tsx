@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import Donut, { DonutData } from '../charts/Donut';
 import {
   COLORS_V2_ANALYTICS_CHARTS_24,
@@ -7,11 +8,13 @@ import {
 } from '@/components/ui/colors';
 import { Priority, RuleInstance } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { RULE_INSTANCES } from '@/utils/queries/keys';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Widget from '@/components/library/Widget';
+import WidgetRangePicker, {
+  Value as WidgetRangePickerValue,
+} from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
+import { getOr } from '@/utils/asyncResource';
+import { useFilteredRuleInstances } from '@/pages/dashboard/analysis/components/dashboardutils';
 
 const gaugeColors = {
   ['P1']: COLORS_V2_ANALYTICS_CHARTS_24,
@@ -23,10 +26,8 @@ const gaugeColors = {
 interface Props extends WidgetProps {}
 
 export default function RulePrioritySplitCard(props: Props) {
-  const api = useApi();
-  const ruleInstanceResults = useQuery(RULE_INSTANCES(), async () => {
-    return await api.getRuleInstances({});
-  });
+  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
+  const filteredResult = useFilteredRuleInstances(dateRange);
 
   return (
     <Widget
@@ -34,15 +35,16 @@ export default function RulePrioritySplitCard(props: Props) {
         return new Promise((resolve, _reject) => {
           const fileData = {
             fileName: `rule-priority-split`,
-            data: JSON.stringify(ruleInstanceResults),
+            data: JSON.stringify(getOr(filteredResult, [])),
           };
           resolve(fileData);
         });
       }}
       resizing="FIXED"
+      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
       {...props}
     >
-      <AsyncResourceRenderer resource={ruleInstanceResults.data}>
+      <AsyncResourceRenderer resource={filteredResult}>
         {(instance: RuleInstance[]) => {
           // Counting the frequency of casePriority values
           const priorityFrequency: {

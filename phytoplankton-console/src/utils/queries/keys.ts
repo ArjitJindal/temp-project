@@ -243,13 +243,18 @@ export const DASHBOARD_TRANSACTIONS_TOTAL_STATS = (params: AnyParameters): Query
 
 export const DASHBOARD_OVERVIEW_TOTAL = (): QueryKey => ['dashboard', 'overview-total'];
 
-export const CLOSING_REASON_DISTRIBUTION = (entity: string): QueryKey => [
+export const CLOSING_REASON_DISTRIBUTION = (entity: string, params: AnyParameters): QueryKey => [
   'dashboard',
   'case-management',
   entity,
+  params,
 ];
 
-export const ALERT_PRIORITY_DISTRIBUTION = (): QueryKey => ['dashboard', 'case-management'];
+export const ALERT_PRIORITY_DISTRIBUTION = (params: AnyParameters): QueryKey => [
+  'dashboard',
+  'alert-priority-distribution',
+  params,
+];
 
 export const TRANSACTION_TYPE_DISTRIBUTION = (): QueryKey => ['dashboard', 'transactions'];
 

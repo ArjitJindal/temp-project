@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { RangeValue } from 'rc-picker/es/interface';
 import {
   COLORS_V2_ANALYTICS_CHARTS_09,
   COLORS_V2_ANALYTICS_CHARTS_11,
@@ -22,11 +21,16 @@ import Treemap, {
   TreemapData,
   TreemapItem,
 } from '@/pages/dashboard/analysis/components/charts/Treemap';
-import DatePicker from '@/components/ui/DatePicker';
-import { dayjs, Dayjs } from '@/utils/dayjs';
+import { dayjs } from '@/utils/dayjs';
 import Widget from '@/components/library/Widget';
+import WidgetRangePicker, {
+  Value as WidgetRangePickerValue,
+} from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 
-const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
+const DEFAULT_DATE_RANGE: WidgetRangePickerValue = {
+  startTimestamp: dayjs().subtract(1, 'year').valueOf(),
+  endTimestamp: dayjs().valueOf(),
+};
 
 const TREEMAP_COLORS: { [key in PaymentMethod]: string } = {
   ACH: COLORS_V2_ANALYTICS_CHARTS_22,
@@ -43,16 +47,16 @@ const TREEMAP_COLORS: { [key in PaymentMethod]: string } = {
 interface Props extends WidgetProps {}
 
 export default function PaymentMethodDistributionWidget(props: Props) {
-  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
-  const api = useApi();
+  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
 
-  const [start, end] = dateRange ?? DEFAULT_DATE_RANGE;
+  const { startTimestamp, endTimestamp } = dateRange ?? DEFAULT_DATE_RANGE;
   const params = {
-    startTimestamp: start!.startOf('day').valueOf(),
-    endTimestamp: end!.endOf('day').valueOf(),
+    startTimestamp,
+    endTimestamp,
   };
 
-  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_TOTAL_STATS(params), async () => {
+  const api = useApi();
+  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_TOTAL_STATS({}), async () => {
     return await api.getDashboardStatsTransactionsTotal(params);
   });
 
@@ -76,12 +80,7 @@ export default function PaymentMethodDistributionWidget(props: Props) {
 
   return (
     <Widget
-      extraControls={[
-        <DatePicker.RangePicker
-          value={dateRange}
-          onChange={(e) => setDateRange(e ?? DEFAULT_DATE_RANGE)}
-        />,
-      ]}
+      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
       onDownload={
         isSuccess(preparedDataRes)
           ? async () => ({
