@@ -12,6 +12,7 @@ import { getMutationAsyncResource } from '@/utils/queries/hooks';
 import Label from '@/components/library/Label';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const ESCALATION_REASONS: CaseReasons[] = [
   'Fraud',
@@ -107,6 +108,12 @@ export default function StatusChangeModal(props: Props) {
     ...COMMON_REASONS,
   ];
 
+  const isQAEnabled = useFeatureEnabled('QA');
+  const qaText =
+    isQAEnabled && newStatus === 'CLOSED'
+      ? 'All the checklist items status that are not updated will be marked as Done.'
+      : '';
+
   const alertMessage = useMemo(() => {
     return newStatusActionLabel === 'Send back'
       ? 'Please note that a case/alert will be reassigned to a previous assignee if available or else it will be assigned to the account that escalated the case/alert.'
@@ -184,7 +191,7 @@ export default function StatusChangeModal(props: Props) {
       >
         <span>
           Are you sure you want to <b>{newStatusActionLabel ?? statusToOperationName(newStatus)}</b>{' '}
-          {pluralize(entityName, entityIds.length, true)} <b>{entityIds.join(', ')}</b> ?
+          {pluralize(entityName, entityIds.length, true)} <b>{entityIds.join(', ')}</b> ? {qaText}
         </span>
       </Modal>
     </>

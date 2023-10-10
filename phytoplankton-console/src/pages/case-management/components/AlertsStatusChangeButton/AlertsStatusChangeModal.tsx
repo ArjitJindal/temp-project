@@ -10,7 +10,7 @@ import { AlertStatusUpdateRequest, CaseStatusUpdate } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
-import { CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_CHECKLIST, CASES_ITEM } from '@/utils/queries/keys';
 import { OTHER_REASON } from '@/components/Narrative';
 import { statusEscalated } from '@/utils/case-utils';
 
@@ -112,6 +112,13 @@ export default function AlertsStatusChangeModal(props: Props) {
     {
       onError: (e) => {
         message.error(`Failed to update the alert! ${getErrorMessage(e)}`);
+      },
+      onSuccess: async () => {
+        await Promise.all(
+          props.entityIds.map((alertId) =>
+            queryClient.invalidateQueries({ queryKey: ALERT_CHECKLIST(alertId) }),
+          ),
+        );
       },
     },
   );

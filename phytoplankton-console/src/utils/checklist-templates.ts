@@ -1,5 +1,5 @@
 import { QueryResult } from './queries/types';
-import { ChecklistStatus, ChecklistItem as EmptyChecklistItem } from '@/apis';
+import { ChecklistDoneStatus, ChecklistStatus, ChecklistItem as EmptyChecklistItem } from '@/apis';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_CHECKLIST } from '@/utils/queries/keys';
@@ -31,7 +31,7 @@ export const useAlertChecklist = (alertId: string): QueryResult<HydratedChecklis
             name: cli.name,
             level: cli.level,
             qaStatus: item.status,
-            done: item.done || false,
+            done: item.done ?? 'NOT_STARTED',
           };
         }),
       };
@@ -41,7 +41,7 @@ export const useAlertChecklist = (alertId: string): QueryResult<HydratedChecklis
 
 export type ChecklistItem = EmptyChecklistItem & {
   qaStatus?: ChecklistStatus;
-  done: boolean;
+  done: ChecklistDoneStatus;
 };
 
 type ChecklistCategory = {

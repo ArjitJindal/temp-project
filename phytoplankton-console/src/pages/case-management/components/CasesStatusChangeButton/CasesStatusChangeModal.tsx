@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import StatusChangeModal, {
   FormValues,
@@ -13,6 +13,7 @@ import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { OTHER_REASON } from '@/components/Narrative';
 import { statusEscalated } from '@/utils/case-utils';
 import { UserStatusTriggersAdvancedOptionsForm } from '@/components/UserStatusTriggersAdvancedOptionsForm';
+import { ALERT_CHECKLIST } from '@/utils/queries/keys';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {}
 
@@ -20,6 +21,7 @@ export default function CasesStatusChangeModal(props: Props) {
   const api = useApi();
   const [users] = useUsers();
   const user = useAuth0User();
+  const queryClient = useQueryClient();
   const currentUser = users[user.userId];
   const updateMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {
@@ -96,7 +98,16 @@ export default function CasesStatusChangeModal(props: Props) {
       onError: (e) => {
         message.fatal(`Failed to update the case! ${getErrorMessage(e)}`, e);
       },
-      onSuccess: () => {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          predicate(query) {
+            const checklistQueryKey = ALERT_CHECKLIST('');
+            return (
+              query.queryKey[0] === checklistQueryKey[0] &&
+              query.queryKey[1] === checklistQueryKey[1]
+            );
+          },
+        });
         if (currentUser.reviewerId) {
           message.warn(
             `${pluralize('Case', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${

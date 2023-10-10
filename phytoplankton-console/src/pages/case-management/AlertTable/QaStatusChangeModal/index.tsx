@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import Button from '@/components/library/Button';
-import { CaseReasons, ChecklistStatus } from '@/apis';
+import { Alert, CaseReasons, ChecklistStatus } from '@/apis';
 import Modal from '@/components/library/Modal';
 import Narrative, { CLOSING_REASONS, FormValues, OTHER_REASON } from '@/components/Narrative';
 import { message } from '@/components/library/Message';
@@ -14,10 +14,11 @@ interface ConfirmModalProps {
   caseId: string;
   onResetSelection: () => void;
   onSave: () => void;
+  alerts: Alert[];
 }
 
 export default function QaStatusChangeModal(props: ConfirmModalProps) {
-  const { status, alertIds, onSave } = props;
+  const { status, alertIds, onSave, alerts } = props;
   const displayStatus = status === 'PASSED' ? 'pass' : 'fail';
   const [isOpen, setIsOpen] = useState(false);
   const api = useApi();
@@ -34,7 +35,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
     },
   );
   const [showError, setShowError] = useState(false);
-  const alerts = pluralize('Alert', alertIds.length);
+  const alertsText = pluralize('Alert', alertIds.length);
   const mutation = useMutation(
     async (values: FormValues<CaseReasons>) => {
       await api.alertsQaStatusChange({
@@ -50,9 +51,9 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
     {
       onSuccess: () => {
         if (status === 'FAILED') {
-          message.success(`${alerts} reopened and reassigned successfully`);
+          message.success(`${alertsText} reopened and reassigned successfully`);
         } else {
-          message.success(`${alerts} marked as QA Pass successfully`);
+          message.success(`${alertsText} marked as QA Pass successfully`);
         }
         onSave();
         setIsOpen(false);
@@ -70,9 +71,21 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
     }
   };
 
+  const onQAStatusChangeClick = () => {
+    const isAllQAChecked = alerts.every((alert) =>
+      alert?.ruleChecklist?.every((item) => item.status != null),
+    );
+
+    if (isAllQAChecked) {
+      setIsOpen(true);
+    } else {
+      message.error('Please complete all QA checks before marking the QA status');
+    }
+  };
+
   return (
     <>
-      <Button type="SECONDARY" onClick={() => setIsOpen(true)}>
+      <Button type="SECONDARY" onClick={() => onQAStatusChangeClick()}>
         QA {displayStatus}
       </Button>
       <Modal

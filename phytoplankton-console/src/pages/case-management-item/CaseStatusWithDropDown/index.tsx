@@ -64,7 +64,7 @@ export const CaseStatusWithDropDown = (props: Props) => {
           onSelect(newStatus.value as CaseStatus);
         }
       }}
-      arrow
+      arrow={'FILLED'}
     >
       <div>
         <CaseStatusTag caseStatus={caseStatus ?? 'OPEN'} previousStatus={previousStatus} />

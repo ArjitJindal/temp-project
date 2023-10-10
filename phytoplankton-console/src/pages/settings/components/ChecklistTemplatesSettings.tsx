@@ -23,7 +23,7 @@ export function ChecklistTemplatesSettings() {
     type: 'object',
     properties: {
       categories: {
-        title: 'Categories',
+        title: 'Category details',
         type: 'array',
         items: {
           type: 'object',

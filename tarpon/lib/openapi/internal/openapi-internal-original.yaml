@@ -7841,7 +7841,7 @@ components:
           items:
             type: string
         done:
-          type: boolean
+          $ref: '#/components/schemas/ChecklistDoneStatus'
       required:
         - done
         - checklistItemIds
@@ -9677,6 +9677,12 @@ components:
       enum:
         - PASSED
         - FAILED
+    ChecklistDoneStatus:
+      type: string
+      enum:
+        - DONE
+        - NOT_DONE
+        - NOT_STARTED
     ChecklistItemValue:
       type: object
       title: ChecklistItemValue
@@ -9684,7 +9690,7 @@ components:
         checklistItemId:
           type: string
         done:
-          type: boolean
+          $ref: '#/components/schemas/ChecklistDoneStatus'
         status:
           $ref: '#/components/schemas/ChecklistStatus'
         info:

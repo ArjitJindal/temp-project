@@ -126,7 +126,7 @@ export const CheckListCategoryListsInput = (props: Props) => {
         return (
           <div key={categoryIndex + 'category'} className={s.root}>
             <Label
-              label={'Name'}
+              label={'Category name'}
               element="div"
               required={{
                 showHint: true,

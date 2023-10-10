@@ -63,6 +63,7 @@ import { isStatusInReview } from '@/utils/helpers'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
 import { ChecklistTemplatesService } from '@/services/tenants/checklist-template-service'
+import { ChecklistDoneStatus } from '@/@types/openapi-internal/ChecklistDoneStatus'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -682,6 +683,7 @@ export class AlertsService extends CaseAlertsCommonService {
       cascadeCaseUpdates?: boolean
       skipReview?: boolean
       account?: Account
+      updateChecklistStatus?: boolean
     }
   ): Promise<void> {
     const {
@@ -689,6 +691,7 @@ export class AlertsService extends CaseAlertsCommonService {
       cascadeCaseUpdates = true,
       skipReview = false,
       account,
+      updateChecklistStatus = true,
     } = options ?? {}
     const userId = getContext()?.user?.id
     const statusChange: CaseStatusChange = {
@@ -807,6 +810,11 @@ export class AlertsService extends CaseAlertsCommonService {
               ),
             ]
           : []),
+        ...(statusUpdateRequest?.alertStatus === 'CLOSED' &&
+        updateChecklistStatus &&
+        hasFeature('QA')
+          ? [this.alertsRepository.markAllChecklistItemsAsDone(alertIds)]
+          : []),
       ])
 
       const caseIdsWithAllAlertsSameStatus =
@@ -833,7 +841,12 @@ export class AlertsService extends CaseAlertsCommonService {
         await caseService.updateCasesStatus(
           caseIdsWithAllAlertsSameStatus,
           caseUpdateStatus,
-          { bySystem: true, cascadeAlertsUpdate: false, account: userAccount }
+          {
+            bySystem: true,
+            cascadeAlertsUpdate: false,
+            account: userAccount,
+            updateChecklistStatus: false,
+          }
         )
 
         await this.auditLogService.handleAuditLogForCaseUpdate(
@@ -959,7 +972,7 @@ export class AlertsService extends CaseAlertsCommonService {
   async updateAlertChecklistStatus(
     alertId: string,
     checklistItemIds: string[],
-    done: boolean
+    done: ChecklistDoneStatus
   ): Promise<void> {
     const alert = await this.alertsRepository.getAlertById(alertId)
     if (!alert) {

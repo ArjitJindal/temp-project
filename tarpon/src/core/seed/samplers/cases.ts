@@ -24,6 +24,7 @@ import { getChecklistTemplate } from '@/core/seed/data/checklists'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { RULE_NATURES } from '@/@types/openapi-internal-custom/RuleNature'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
+import { CHECKLIST_DONE_STATUSS } from '@/@types/openapi-internal-custom/ChecklistDoneStatus'
 
 let counter = 1
 let alertCounter = 1
@@ -267,7 +268,10 @@ export function sampleAlert(params: {
             category.checklistItems.map(
               (cli): ChecklistItemValue => ({
                 checklistItemId: cli.id,
-                done: true,
+                done:
+                  alertStatus === 'CLOSED'
+                    ? 'DONE'
+                    : pickRandom(CHECKLIST_DONE_STATUSS),
               })
             )
         )

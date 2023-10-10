@@ -458,6 +458,37 @@ export class AlertsRepository {
     return commentToSave
   }
 
+  public async markAllChecklistItemsAsDone(alertIds: string[]): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await collection.updateMany(
+      {
+        'alerts.alertId': {
+          $in: alertIds,
+        },
+      },
+      {
+        $set: {
+          'alerts.$[alert].ruleChecklist.$[item].done': true,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.alertId': {
+              $in: alertIds,
+            },
+            'alert.ruleChecklist.done': false,
+          },
+          {
+            'item.done': false,
+          },
+        ],
+      }
+    )
+  }
+
   public async saveAlert(caseId: string, alert: Alert): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))

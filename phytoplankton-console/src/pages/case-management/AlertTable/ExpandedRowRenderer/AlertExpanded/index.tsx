@@ -132,11 +132,11 @@ export default function AlertExpanded(props: Props) {
         </>
       ),
     });
-    if (alert.ruleChecklistTemplateId && alertId) {
+    if (alert.ruleChecklistTemplateId && alert?.alertId) {
       tabs.push({
         tab: 'Checklist',
         key: 'checklist',
-        children: <Checklist alertId={alertId} />,
+        children: <Checklist alert={alert} />,
       });
     }
     tabs.push({

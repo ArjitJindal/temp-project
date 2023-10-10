@@ -91,7 +91,7 @@ const initChecklistTemplate = () => {
         ],
       },
       {
-        name: 'RFI (optional)',
+        name: 'RFI',
         checklistItems: [
           {
             id: uuid4(),

@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import * as Card from '@/components/ui/Card';
-import { ChecklistStatus } from '@/apis';
+import { Alert, ChecklistDoneStatus, ChecklistStatus } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { ChecklistItem, HydratedChecklist, useAlertChecklist } from '@/utils/checklist-templates';
 import SegmentedControl from '@/components/library/SegmentedControl';
@@ -9,19 +9,21 @@ import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
-import { SimpleColumn, TableRefType } from '@/components/library/Table/types';
-import Button from '@/components/library/Button';
+import { TableRefType } from '@/components/library/Table/types';
 import { useQaMode } from '@/utils/qa-mode';
+import Dropdown from '@/components/library/Dropdown';
+import { humanizeConstant } from '@/utils/humanize';
+import { CHECKLIST_STATUSS } from '@/apis/models-custom/ChecklistStatus';
+import { statusInReview } from '@/utils/case-utils';
 
 interface Props {
-  alertId: string;
+  alert: Alert;
 }
 
 export default function Checklist(props: Props) {
-  const { alertId } = props;
-  const checklistQueryResult = useAlertChecklist(alertId);
+  const { alert } = props;
+  const checklistQueryResult = useAlertChecklist(alert.alertId!);
   const [category, setCategory] = useState<string | undefined>();
-  const [checklistItemIds, setChecklistItemIds] = useState<string[]>([]);
   const [qaModeSet] = useQaMode();
   const api = useApi();
 
@@ -40,7 +42,7 @@ export default function Checklist(props: Props) {
       checklistItemIds: string[];
     }) => {
       await api.patchAlertsQaStatus({
-        alertId,
+        alertId: alert.alertId!,
         AlertChecklistQaUpdateRequest: {
           status,
           checklistItemIds,
@@ -59,9 +61,15 @@ export default function Checklist(props: Props) {
     },
   );
   const onChecklistStatusChange = useMutation(
-    async ({ done, checklistItemIds }: { done: boolean; checklistItemIds: string[] }) => {
+    async ({
+      done,
+      checklistItemIds,
+    }: {
+      done: ChecklistDoneStatus;
+      checklistItemIds: string[];
+    }) => {
       await api.patchAlertsChecklistStatus({
-        alertId,
+        alertId: alert.alertId!,
         AlertChecklistUpdateRequest: {
           done,
           checklistItemIds,
@@ -80,9 +88,19 @@ export default function Checklist(props: Props) {
     },
   );
 
+  const isStatusEditable: boolean = useMemo(() => {
+    return (
+      (alert.alertStatus &&
+        !statusInReview(alert.alertStatus) &&
+        alert.alertStatus !== 'CLOSED' &&
+        qaModeSet === false) ||
+      false
+    );
+  }, [alert.alertStatus, qaModeSet]);
+
   const columns = useMemo(() => {
     const helper = new ColumnHelper<ChecklistItem>();
-    const columns: SimpleColumn<any, any>[] = [
+    const columns = helper.list([
       helper.simple({
         key: 'name',
         title: 'Checklist item',
@@ -92,44 +110,85 @@ export default function Checklist(props: Props) {
         key: 'level',
         title: 'Type',
       }),
-      helper.simple({
-        key: 'done',
-        title: 'Status',
-        type: {
-          render: (done) => {
-            return <>{done ? 'Done' : 'Not done'}</>;
-          },
+      helper.display({
+        id: 'actions',
+        title: 'Checklist status',
+        defaultWidth: 200,
+        render(item) {
+          return isStatusEditable ? (
+            <Dropdown<string>
+              options={(['DONE', 'NOT_DONE'] as const).map((s) => ({
+                label: humanizeConstant(s),
+                value: s,
+              }))}
+              arrow={'LINE'}
+              bordered
+              onSelect={(e) => {
+                if (item.id) {
+                  onChecklistStatusChange.mutate({
+                    checklistItemIds: [item.id],
+                    done: e.value as ChecklistDoneStatus,
+                  });
+                }
+              }}
+              minWidth={150}
+            >
+              <div>
+                {humanizeConstant(item.done === 'NOT_STARTED' ? 'SELECT_STATUS' : item.done)}
+              </div>
+            </Dropdown>
+          ) : (
+            <>{item.done === 'NOT_STARTED' ? '-' : humanizeConstant(item.done)}</>
+          );
         },
       }),
-    ];
+    ]);
 
     if (qaModeSet) {
       columns.push(
-        helper.simple({
-          key: 'qaStatus',
+        helper.display({
           title: 'QA Status',
-          defaultWidth: 160,
-          tooltip:
-            "To pass 'QA', an analyst must have no more than two 'P2' errors. P1 errors should be qualified as 'Fail'.",
-          type: {
-            render: (status) => {
-              let label = '-';
-              switch (status) {
-                case 'PASSED':
-                  label = 'QA passed';
-                  break;
-                case 'FAILED':
-                  label = 'QA failed';
-                  break;
-              }
-              return <>{label}</>;
-            },
+          id: 'qaStatus',
+          defaultWidth: 220,
+          render: (status) => {
+            let label = !alert.ruleQaStatus ? 'Select status' : '-';
+            switch (status.qaStatus) {
+              case 'PASSED':
+                label = 'QA passed';
+                break;
+              case 'FAILED':
+                label = 'QA failed';
+                break;
+            }
+            return !alert.ruleQaStatus ? (
+              <Dropdown<ChecklistStatus>
+                options={CHECKLIST_STATUSS.map((s) => ({
+                  label: `QA ${humanizeConstant(s)}`,
+                  value: s,
+                }))}
+                arrow={'LINE'}
+                bordered
+                onSelect={(e) => {
+                  if (status.id) {
+                    onQaStatusChange.mutate({
+                      checklistItemIds: [status.id],
+                      status: e.value,
+                    });
+                  }
+                }}
+                minWidth={200}
+              >
+                <div>{label}</div>
+              </Dropdown>
+            ) : (
+              <>{label}</>
+            );
           },
         }),
       );
     }
     return columns;
-  }, [qaModeSet]);
+  }, [qaModeSet, alert.ruleQaStatus, onQaStatusChange, onChecklistStatusChange, isStatusEditable]);
 
   return (
     <AsyncResourceRenderer<HydratedChecklist> resource={checklistQueryResult.data}>
@@ -152,73 +211,9 @@ export default function Checklist(props: Props) {
               externalHeader={true}
               columns={columns}
               rowKey={'id'}
-              selectedIds={checklistItemIds}
-              onSelect={(ids) => setChecklistItemIds(ids)}
-              selectionInfo={{
-                entityCount: checklistItemIds.length,
-                entityName: 'task',
-              }}
               toolsOptions={false}
-              selection={(row) => {
-                return !row.content.qaStatus;
-              }}
-              selectionActions={
-                qaModeSet
-                  ? [
-                      () => {
-                        return (
-                          <Button
-                            type={'SECONDARY'}
-                            onClick={() =>
-                              onQaStatusChange.mutate({ status: 'PASSED', checklistItemIds })
-                            }
-                          >
-                            QA pass
-                          </Button>
-                        );
-                      },
-                      () => {
-                        return (
-                          <Button
-                            type={'SECONDARY'}
-                            onClick={() =>
-                              onQaStatusChange.mutate({ status: 'FAILED', checklistItemIds })
-                            }
-                          >
-                            QA fail
-                          </Button>
-                        );
-                      },
-                    ]
-                  : [
-                      () => {
-                        return (
-                          <Button
-                            type={'SECONDARY'}
-                            onClick={() =>
-                              onChecklistStatusChange.mutate({ done: true, checklistItemIds })
-                            }
-                          >
-                            Mark done
-                          </Button>
-                        );
-                      },
-                      () => {
-                        return (
-                          <Button
-                            type={'SECONDARY'}
-                            onClick={() =>
-                              onChecklistStatusChange.mutate({ done: false, checklistItemIds })
-                            }
-                          >
-                            Mark not done
-                          </Button>
-                        );
-                      },
-                    ]
-              }
               innerRef={actionRef}
-            ></Table>
+            />
           </Card.Section>
         </Card.Root>
       )}

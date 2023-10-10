@@ -13,8 +13,8 @@ interface Props {
 export default function ExpandedRowRenderer(props: Props) {
   const { alert, selectedTransactionIds, onTransactionSelect, escalatedTransactionIds } = props;
 
-  if (alert.ruleNature === 'SCREENING' && alert.ruleHitMeta?.sanctionsDetails) {
-    return <ScreeningMatchList details={alert.ruleHitMeta?.sanctionsDetails ?? []} />;
+  if (alert.ruleNature === 'SCREENING' && alert.ruleHitMeta?.sanctionsDetails && alert.alertId) {
+    return <ScreeningMatchList details={alert.ruleHitMeta?.sanctionsDetails ?? []} alert={alert} />;
   }
 
   return (

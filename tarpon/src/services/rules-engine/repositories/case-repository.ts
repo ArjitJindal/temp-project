@@ -1163,6 +1163,22 @@ export class CaseRepository {
       .toArray()
   }
 
+  public async markAllChecklistItemsAsDone(caseIds: string[]) {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await casesCollection.updateMany(
+      { caseId: { $in: caseIds } },
+      { $set: { 'alerts.$[alert].ruleChecklist.$[item].done': true } },
+      {
+        arrayFilters: [
+          { 'alert.ruleChecklist.done': false },
+          { 'item.done': false },
+        ],
+      }
+    )
+  }
+
   public async updateDynamicRiskScores(
     transactionId: string,
     originDrsScore: number | undefined | null,

@@ -508,12 +508,14 @@ export class CaseService extends CaseAlertsCommonService {
       skipReview?: boolean
       account?: Account
       filterInReview?: boolean
+      updateChecklistStatus?: boolean
     }
   ): Promise<void> {
     const {
       cascadeAlertsUpdate = true,
       skipReview = false,
       account,
+      updateChecklistStatus = true,
     } = options ?? {}
     const statusChange = this.getStatusChange(updates, options?.bySystem)
 
@@ -606,6 +608,11 @@ export class CaseService extends CaseAlertsCommonService {
               ),
             ]
           : []),
+        ...(updateChecklistStatus &&
+        hasFeature('QA') &&
+        updates.caseStatus === 'CLOSED'
+          ? [this.caseRepository.markAllChecklistItemsAsDone(caseIds)]
+          : []),
       ])
 
       if (updates.caseStatus && cascadeAlertsUpdate && !isInProgressOrOnHold) {
@@ -660,6 +667,7 @@ export class CaseService extends CaseAlertsCommonService {
             cascadeCaseUpdates: false,
             account,
             skipReview: skipReview || isLastInReview,
+            updateChecklistStatus: false,
           }
         )
       }

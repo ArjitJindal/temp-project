@@ -28,7 +28,7 @@ export default function (): JSX.Element {
           onSelect={(option) => {
             alert(option.value);
           }}
-          arrow
+          arrow={'FILLED'}
         >
           <div>
             <CaseStatusTag caseStatus={'OPEN_IN_PROGRESS'} />

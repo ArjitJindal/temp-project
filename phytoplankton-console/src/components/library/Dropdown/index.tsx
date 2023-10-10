@@ -4,25 +4,28 @@ import { Dropdown as AntDropdown, Menu as AntMenu } from 'antd';
 import { Placement } from '@ant-design/pro-form/lib/interface';
 import s from './index.module.less';
 import ArrowDownFilled from '@/components/ui/icons/Remix/system/arrow-down-s-fill.react.svg';
+import ArrowDownLine from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 
-export interface DropdownOption<T extends string = string> {
+export interface DropdownOption<T extends string | number | boolean = string> {
   value: T;
   label?: string | React.ReactNode;
   isDisabled?: boolean;
 }
 
-interface Props<T extends string = string> {
-  onSelect?: (option: DropdownOption) => void;
+interface Props<T extends string | number = string> {
+  onSelect?: (option: DropdownOption<T>) => void;
   options: DropdownOption<T>[];
   children: React.ReactNode;
   placement?: Placement;
   disabled?: boolean;
   extraBottomMargin?: boolean;
-  arrow?: boolean;
+  arrow?: 'FILLED' | 'LINE';
   optionClassName?: string;
+  bordered?: boolean;
+  minWidth?: number;
 }
 
-export default function Dropdown<T extends string = string>(props: Props<T>): JSX.Element {
+export default function Dropdown<T extends string | number = string>(props: Props<T>): JSX.Element {
   const {
     options,
     children,
@@ -32,20 +35,22 @@ export default function Dropdown<T extends string = string>(props: Props<T>): JS
     disabled,
     arrow,
     optionClassName,
+    bordered,
+    minWidth,
   } = props;
 
   const menu = (
     <AntMenu
       onClick={({ key }) => {
         const option = options.find(({ value }) => value === key);
-        if (option) {
+        if (option != null) {
           onSelect?.(option);
         }
       }}
     >
       {options.map((option) => (
         <AntMenu.Item
-          key={option.value}
+          key={option.value.toString()}
           disabled={option.isDisabled}
           className={cn(optionClassName)}
         >
@@ -56,11 +61,15 @@ export default function Dropdown<T extends string = string>(props: Props<T>): JS
   );
 
   return (
-    <div className={cn(s.root, extraBottomMargin && s.extraBottomMargin)}>
+    <div
+      className={cn(s.root, extraBottomMargin && s.extraBottomMargin, bordered && s.bordered)}
+      style={{ minWidth }}
+    >
       <AntDropdown overlay={menu} trigger={['click']} placement={placement} disabled={disabled}>
         <div className={cn(s.dropdown)}>
           {children}
-          {arrow && <ArrowDownFilled className={s.arrow} />}
+          {arrow === 'FILLED' && <ArrowDownFilled className={cn(s.arrow)} />}
+          {arrow === 'LINE' && <ArrowDownLine className={cn(s.arrow)} />}
         </div>
       </AntDropdown>
     </div>
