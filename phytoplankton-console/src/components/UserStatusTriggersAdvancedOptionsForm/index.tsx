@@ -46,9 +46,9 @@ export const UserStatusTriggersAdvancedOptionsForm = (
       {type === 'RULE' && (
         <InputField<TriggersOnHit, 'usersToCheck'>
           name={'usersToCheck'}
-          label={'Users to check'}
+          label={'Users to update'}
           description={
-            'Select users of a transaction direction below for which the rule should be executed. If set to ORIGIN, the rule is checked for only users of origin side in a transaction.'
+            'Select users of a transaction direction below for which the User/KYC status needs to be updated. If set to ORIGIN, then only users of origin side status are updated.'
           }
         >
           {(inputProps) => (
