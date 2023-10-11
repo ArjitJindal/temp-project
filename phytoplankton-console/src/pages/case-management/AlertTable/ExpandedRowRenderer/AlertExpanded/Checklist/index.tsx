@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Card from '@/components/ui/Card';
 import { Alert, ChecklistDoneStatus, ChecklistStatus } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
@@ -15,6 +15,7 @@ import Dropdown from '@/components/library/Dropdown';
 import { humanizeConstant } from '@/utils/humanize';
 import { CHECKLIST_STATUSS } from '@/apis/models-custom/ChecklistStatus';
 import { statusInReview } from '@/utils/case-utils';
+import { ALERT_CHECKLIST } from '@/utils/queries/keys';
 
 interface Props {
   alert: Alert;
@@ -28,10 +29,33 @@ export default function Checklist(props: Props) {
   const api = useApi();
 
   const actionRef = useRef<TableRefType>(null);
+  const queryClient = useQueryClient();
 
-  const reloadTable = useCallback(() => {
-    actionRef.current?.reload();
-  }, []);
+  const updateQueryData = useCallback(
+    (alertId: string, checklistItemIds: string[], data: Partial<ChecklistItem>) => {
+      queryClient.setQueryData<HydratedChecklist>(ALERT_CHECKLIST(alertId), (checklist) => {
+        if (!checklist) {
+          return undefined;
+        }
+
+        return checklist.map((c) => {
+          return {
+            ...c,
+            items: c.items.map((i) => {
+              if (checklistItemIds.includes(i.id!)) {
+                return {
+                  ...i,
+                  ...data,
+                };
+              }
+              return i;
+            }),
+          };
+        });
+      });
+    },
+    [queryClient],
+  );
 
   const onQaStatusChange = useMutation(
     async ({
@@ -50,16 +74,16 @@ export default function Checklist(props: Props) {
       });
     },
     {
-      onSuccess: (_, { status }) => {
-        checklistQueryResult.refetch();
+      onSuccess: (_, { status, checklistItemIds }) => {
         message.success(`Checklist items marked as ${status}`);
-        reloadTable();
+        updateQueryData(alert.alertId!, checklistItemIds, { qaStatus: status });
       },
       onError: (err: Error) => {
         message.error(`Failed to update checklist items QA status. ${err}`);
       },
     },
   );
+
   const onChecklistStatusChange = useMutation(
     async ({
       done,
@@ -75,12 +99,11 @@ export default function Checklist(props: Props) {
           checklistItemIds,
         },
       });
-      checklistQueryResult.refetch();
     },
     {
-      onSuccess: (_, { done }) => {
-        checklistQueryResult.refetch();
+      onSuccess: (_, { done, checklistItemIds }) => {
         message.success(`Checklist items marked as ${done ? 'done' : 'not done'}`);
+        updateQueryData(alert.alertId!, checklistItemIds, { done });
       },
       onError: (err: Error) => {
         message.error(`Failed to mark checklist items. ${err}`);

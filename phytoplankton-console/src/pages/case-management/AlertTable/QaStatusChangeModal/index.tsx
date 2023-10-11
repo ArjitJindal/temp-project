@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import Button from '@/components/library/Button';
-import { Alert, CaseReasons, ChecklistStatus } from '@/apis';
+import { CaseReasons, ChecklistStatus } from '@/apis';
 import Modal from '@/components/library/Modal';
 import Narrative, { CLOSING_REASONS, FormValues, OTHER_REASON } from '@/components/Narrative';
 import { message } from '@/components/library/Message';
@@ -13,12 +13,11 @@ interface ConfirmModalProps {
   alertIds: string[];
   caseId: string;
   onResetSelection: () => void;
-  onSave: () => void;
-  alerts: Alert[];
+  reload: () => void;
 }
 
 export default function QaStatusChangeModal(props: ConfirmModalProps) {
-  const { status, alertIds, onSave, alerts } = props;
+  const { status, alertIds, reload } = props;
   const displayStatus = status === 'PASSED' ? 'pass' : 'fail';
   const [isOpen, setIsOpen] = useState(false);
   const api = useApi();
@@ -55,11 +54,11 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
         } else {
           message.success(`${alertsText} marked as QA Pass successfully`);
         }
-        onSave();
+        reload();
         setIsOpen(false);
       },
       onError: (error) => {
-        message.error(`Error marking ${alerts} as QA ${status}: ${(error as Error).message}`);
+        message.error(`Error marking ${alertsText} as QA ${status}: ${(error as Error).message}`);
       },
     },
   );
@@ -71,11 +70,15 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
     }
   };
 
-  const onQAStatusChangeClick = () => {
-    const isAllQAChecked = alerts.every((alert) =>
-      alert?.ruleChecklist?.every((item) => item.status != null),
-    );
-
+  const onQAStatusChangeClick = async () => {
+    const loading = message.loading('Validating QA status...');
+    const alerts = await api.alertsValidateQaStatuses({
+      ValidateAlertsQAStatusRequest: {
+        alertIds,
+      },
+    });
+    const isAllQAChecked = alerts.valid;
+    loading();
     if (isAllQAChecked) {
       setIsOpen(true);
     } else {
@@ -85,7 +88,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
 
   return (
     <>
-      <Button type="SECONDARY" onClick={() => onQAStatusChangeClick()}>
+      <Button type="SECONDARY" onClick={onQAStatusChangeClick}>
         QA {displayStatus}
       </Button>
       <Modal

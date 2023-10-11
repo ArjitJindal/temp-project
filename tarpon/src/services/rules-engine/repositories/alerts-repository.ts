@@ -417,6 +417,23 @@ export class AlertsRepository {
       .filter((alert) => alertIds.includes(alert.alertId))
   }
 
+  public async validateAlertsQAStatus(
+    alertIds: string[]
+  ): Promise<Pick<Alert, 'alertId' | 'ruleChecklist'>[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const result = await collection
+      .find({
+        'alerts.alertId': { $in: alertIds },
+        'alerts.ruleChecklist.qaStatus': null,
+      })
+      .project({ 'alerts.alertId': 1, 'alerts.ruleChecklist': 1 })
+      .toArray()
+
+    return result.flatMap((caseItem) => caseItem.alerts ?? [])
+  }
+
   public async saveAlertComment(
     caseId: string,
     alertId: string,
@@ -470,7 +487,7 @@ export class AlertsRepository {
       },
       {
         $set: {
-          'alerts.$[alert].ruleChecklist.$[item].done': true,
+          'alerts.$[alert].ruleChecklist.$[item].done': 'DONE',
         },
       },
       {
@@ -479,10 +496,14 @@ export class AlertsRepository {
             'alert.alertId': {
               $in: alertIds,
             },
-            'alert.ruleChecklist.done': false,
+            'alert.ruleChecklist.done': {
+              $nin: ['DONE'],
+            },
           },
           {
-            'item.done': false,
+            'item.done': {
+              $nin: ['DONE'],
+            },
           },
         ],
       }

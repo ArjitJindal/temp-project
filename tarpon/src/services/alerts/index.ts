@@ -62,7 +62,6 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { isStatusInReview } from '@/utils/helpers'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
-import { ChecklistTemplatesService } from '@/services/tenants/checklist-template-service'
 import { ChecklistDoneStatus } from '@/@types/openapi-internal/ChecklistDoneStatus'
 
 @traceable
@@ -196,6 +195,16 @@ export class AlertsService extends CaseAlertsCommonService {
     } finally {
       caseGetSegment?.close()
     }
+  }
+
+  public async validateAlertsQAStatus(alertIds: string[]): Promise<boolean> {
+    const alerts = await this.alertsRepository.validateAlertsQAStatus(alertIds)
+    const requiredAlerts = alerts.filter((alert) =>
+      alertIds.includes(alert.alertId!)
+    )
+    return requiredAlerts.every((alert) =>
+      alert.ruleChecklist?.every((item) => item.status)
+    )
   }
 
   public async escalateAlerts(
@@ -992,11 +1001,11 @@ export class AlertsService extends CaseAlertsCommonService {
       return checkListItem
     })
     if (isEqual(originalChecklist, updatedChecklist)) {
-      throw new BadRequest('No changes made to the checklist')
+      return // No changes made to the checklist
     }
     alert.ruleChecklist = updatedChecklist
     await this.alertsRepository.saveAlert(alert.caseId!, alert)
-    await this.auditLogService.handleAuditLogForAlertChecklistUpdate(
+    await this.auditLogService.handleAuditLogForChecklistUpdate(
       alertId,
       originalChecklist,
       updatedChecklist
@@ -1026,26 +1035,19 @@ export class AlertsService extends CaseAlertsCommonService {
       return checkListItem
     })
     if (isEqual(originalChecklist, updatedChecklist)) {
-      throw new BadRequest('No changes made to the checklist')
+      return // No changes made to the checklist
     }
 
     alert.ruleChecklist = updatedChecklist
 
-    await this.alertsRepository.saveAlert(alert.caseId!, alert)
-    const { autoFail } = await this.acceptanceCriteria(alert)
-    if (autoFail) {
-      await this.updateAlertQaStatus(getContext()?.user?.id as string, {
-        alertIds: [alertId],
-        checklistStatus: 'FAILED',
-        reason: ['Other'],
-        comment: 'Alert QA status changed to FAILED automatically',
-      })
-    }
-    await this.auditLogService.handleAuditLogForAlertChecklistUpdate(
-      alertId,
-      originalChecklist,
-      updatedChecklist
-    )
+    await Promise.all([
+      this.alertsRepository.saveAlert(alert.caseId!, alert),
+      this.auditLogService.handleAuditLogForChecklistUpdate(
+        alertId,
+        originalChecklist,
+        updatedChecklist
+      ),
+    ])
   }
 
   async updateAlertQaStatus(
@@ -1069,13 +1071,6 @@ export class AlertsService extends CaseAlertsCommonService {
                 timestamp: Date.now(),
               },
             ]
-          }
-        } else {
-          const { canPass } = await this.acceptanceCriteria(alert)
-          if (!canPass) {
-            throw new BadRequest(
-              `${alert.alertId} does not meet the acceptance critera`
-            )
           }
         }
         alert.ruleQaStatus = update.checklistStatus
@@ -1101,11 +1096,13 @@ export class AlertsService extends CaseAlertsCommonService {
           timestamp: Date.now(),
           userId,
         })
-        await this.alertsRepository.saveAlert(alert.caseId!, alert)
-        return this.auditLogService.handleAuditLogForAlertQaUpdate(
-          alert.alertId as string,
-          update
-        )
+        await Promise.all([
+          this.alertsRepository.saveAlert(alert.caseId!, alert),
+          this.auditLogService.handleAuditLogForAlertQaUpdate(
+            alert.alertId as string,
+            update
+          ),
+        ])
       })
     )
   }
@@ -1121,55 +1118,5 @@ export class AlertsService extends CaseAlertsCommonService {
 
     alert.qaAssignment = assignments
     await this.alertsRepository.saveAlert(alert.caseId!, alert)
-  }
-
-  // This is a static implementation of the following acceptance criteria:
-  // - An alert should fail QA if any P1 is failed
-  // - An alert should not be able to pass QA if 2 or more P2s are failed
-  // - An alert should not be able to pass QA if not all items are QA'd
-  private async acceptanceCriteria(
-    alert: Alert
-  ): Promise<{ autoFail: boolean; canPass: boolean }> {
-    const ruleChecklistTemplateId = alert.ruleChecklistTemplateId
-    if (!ruleChecklistTemplateId) {
-      throw new BadRequest('No checklist for alert')
-    }
-    const checklistTemplate =
-      await this.checklistTemplateService().getChecklistTemplate(
-        ruleChecklistTemplateId
-      )
-
-    let qaComplete = true
-    let noP1Failed = true
-    let p2sFailed = 0
-    checklistTemplate?.categories.forEach((category) => {
-      category.checklistItems.forEach((checklistItem) => {
-        const alertChecklistItem = alert.ruleChecklist?.find(
-          (rcli) => rcli.checklistItemId === checklistItem.id
-        )
-        if (!alertChecklistItem) {
-          qaComplete = false
-          return
-        }
-
-        if (alertChecklistItem.status === 'FAILED') {
-          if (checklistItem.level === 'P1') {
-            noP1Failed = false
-          }
-          if (checklistItem.level === 'P2') {
-            p2sFailed++
-          }
-        }
-      })
-    })
-
-    return {
-      canPass: qaComplete && noP1Failed && p2sFailed < 2,
-      autoFail: !noP1Failed,
-    }
-  }
-
-  private checklistTemplateService(): ChecklistTemplatesService {
-    return new ChecklistTemplatesService(this.tenantId, this.mongoDb)
   }
 }

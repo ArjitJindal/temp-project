@@ -115,9 +115,9 @@ export default function AlertsStatusChangeModal(props: Props) {
       },
       onSuccess: async () => {
         await Promise.all(
-          props.entityIds.map((alertId) =>
-            queryClient.invalidateQueries({ queryKey: ALERT_CHECKLIST(alertId) }),
-          ),
+          props.entityIds.map((alertId) => {
+            queryClient.invalidateQueries({ queryKey: ALERT_CHECKLIST(alertId) });
+          }),
         );
       },
     },

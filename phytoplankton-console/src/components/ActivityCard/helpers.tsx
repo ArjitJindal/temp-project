@@ -3,7 +3,7 @@ import { capitalize, has } from 'lodash';
 import { LogItemData } from './LogItem';
 import { Account, AuditLog, Case, CaseStatus } from '@/apis';
 import { DEFAULT_DATE_FORMAT, TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
-import { firstLetterUpper } from '@/utils/humanize';
+import { firstLetterUpper, humanizeAuto } from '@/utils/humanize';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { statusEscalated } from '@/utils/case-utils';
 
@@ -198,6 +198,14 @@ export const getCreateStatement = (
             ''
           )}{' '}
           to <b>{capitalize(currentUserKycStatus)}</b> by <b>{userName}</b>
+        </>
+      );
+    }
+    case 'CHECKLIST_QA_STATUS_CHANGE': {
+      return (
+        <>
+          Alert <b>{entityId}</b> is marked as {humanizeAuto(log?.newImage?.qaStatus)} by{' '}
+          <b>{userName}</b>
         </>
       );
     }

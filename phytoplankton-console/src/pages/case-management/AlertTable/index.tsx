@@ -785,7 +785,7 @@ export default function AlertTable(props: Props) {
   ];
 
   const qaModeSelectionActions: SelectionAction<TableAlertItem, AlertTableParams>[] = [
-    ({ selectedIds, params, selectedItems, onResetSelection }) => {
+    ({ selectedIds, params, onResetSelection }) => {
       if (selectedTransactionIds.length) {
         return;
       }
@@ -797,13 +797,12 @@ export default function AlertTable(props: Props) {
             alertIds={selectedIds}
             caseId={params.caseId}
             onResetSelection={onResetSelection}
-            onSave={reloadTable}
-            alerts={Object.values(selectedItems)}
+            reload={reloadTable}
           />
         )
       );
     },
-    ({ selectedIds, params, selectedItems, onResetSelection }) => {
+    ({ selectedIds, params, onResetSelection }) => {
       if (selectedTransactionIds.length) {
         return;
       }
@@ -814,8 +813,7 @@ export default function AlertTable(props: Props) {
             alertIds={selectedIds}
             caseId={params.caseId}
             onResetSelection={onResetSelection}
-            onSave={reloadTable}
-            alerts={Object.values(selectedItems)}
+            reload={reloadTable}
           />
         )
       );

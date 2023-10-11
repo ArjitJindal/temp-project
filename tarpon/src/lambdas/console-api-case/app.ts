@@ -130,6 +130,14 @@ export const casesHandler = lambdaApi()(
       )
     })
 
+    handlers.registerAlertsValidateQaStatuses(async (ctx, request) => {
+      const isValid = await alertsService.validateAlertsQAStatus(
+        request.ValidateAlertsQAStatusRequest.alertIds
+      )
+
+      return { valid: isValid }
+    })
+
     handlers.registerDeleteAlertsComment(async (ctx, request) => {
       const { alertId, commentId } = request
       const deleteCommentResult = await alertsService.deleteAlertComment(

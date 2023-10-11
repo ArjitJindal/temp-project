@@ -1177,11 +1177,11 @@ export class CaseRepository {
 
     await casesCollection.updateMany(
       { caseId: { $in: caseIds } },
-      { $set: { 'alerts.$[alert].ruleChecklist.$[item].done': true } },
+      { $set: { 'alerts.$[alert].ruleChecklist.$[item].done': 'DONE' } },
       {
         arrayFilters: [
-          { 'alert.ruleChecklist.done': false },
-          { 'item.done': false },
+          { 'alert.ruleChecklist.done': { $nin: ['DONE'] } },
+          { 'item.done': { $nin: ['DONE'] } },
         ],
       }
     )

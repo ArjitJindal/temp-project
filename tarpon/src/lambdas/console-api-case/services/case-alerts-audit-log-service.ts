@@ -155,7 +155,7 @@ export class CasesAlertsAuditLogService {
     }
   }
 
-  public async handleAuditLogForAlertChecklistUpdate(
+  public async handleAuditLogForChecklistUpdate(
     alertId: string,
     oldRuleChecklist: ChecklistItemValue[] | undefined,
     ruleChecklist: ChecklistItemValue[] | undefined
@@ -163,7 +163,7 @@ export class CasesAlertsAuditLogService {
     await this.createAlertAuditLog({
       alertId,
       logAction: 'UPDATE',
-      subtype: 'CHECKLIST',
+      subtype: 'CHECKLIST_ITEM_STATUS_CHANGE',
       oldImage: { ruleChecklist: oldRuleChecklist },
       newImage: { ruleChecklist: ruleChecklist },
     })
@@ -176,7 +176,7 @@ export class CasesAlertsAuditLogService {
     await this.createAlertAuditLog({
       alertId,
       logAction: 'UPDATE',
-      subtype: 'CHECKLIST',
+      subtype: 'CHECKLIST_QA_STATUS_CHANGE',
       newImage: {
         qaStatus: update.checklistStatus,
         qaInfo: {

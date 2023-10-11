@@ -3248,6 +3248,25 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertQaStatusUpdateRequest'
         required: true
+    post:
+      summary: Alerts - Validate QA Statuses
+      operationId: alerts-validate-qa-statuses
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateAlertsQAStatusResponse'
+      x-flagright:
+        permissions:
+          - case-management:qa:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateAlertsQAStatusRequest'
+        required: true
   '/alerts/{alertId}/qa':
     patch:
       summary: Alerts - Item Qa Status
@@ -7728,6 +7747,24 @@ components:
         - alertIds
         - reason
         - checklistStatus
+    ValidateAlertsQAStatusRequest:
+      title: ValidateAlertsQAStatusRequest
+      type: object
+      properties:
+        alertIds:
+          type: array
+          items:
+            type: string
+      required:
+        - alertIds
+    ValidateAlertsQAStatusResponse:
+      title: ValidateAlertsQAStatusResponse
+      type: object
+      properties:
+        valid:
+          type: boolean
+      required:
+        - valid
     AlertStatusUpdateRequest:
       title: AlertStatusUpdateRequest
       type: object
@@ -8519,7 +8556,8 @@ components:
             - STATUS_CHANGE
             - MANUAL_CASE_CREATION
             - MANUAL_CASE_TRANSACTIONS_ADDITION
-            - CHECKLIST
+            - CHECKLIST_QA_STATUS_CHANGE
+            - CHECKLIST_ITEM_STATUS_CHANGE
             - USER_STATUS_CHANGE
             - USER_KYC_STATUS_CHANGE
         action:
