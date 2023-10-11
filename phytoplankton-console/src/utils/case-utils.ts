@@ -20,6 +20,7 @@ export const statusEscalated = (
 
 export const findLastStatusForInReview = (statusChanges: CaseStatusChange[]): CaseStatus => {
   const latestStatus = statusChanges
+    .filter((statusChanges) => statusChanges?.caseStatus)
     .filter(
       (statusChange) =>
         !(
@@ -28,7 +29,7 @@ export const findLastStatusForInReview = (statusChanges: CaseStatusChange[]): Ca
         ),
     )
     .sort((a, b) => {
-      return b.timestamp - a.timestamp;
+      return b?.timestamp - a?.timestamp;
     })[0];
 
   return latestStatus?.caseStatus ?? 'OPEN';
