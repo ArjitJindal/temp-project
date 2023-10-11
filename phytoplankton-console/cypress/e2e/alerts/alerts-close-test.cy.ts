@@ -6,11 +6,12 @@ describe('Comment Alerts from Table', () => {
   });
 
   it('should close a alert', () => {
-    cy.visit('/case-management/cases');
+    cy.visit(
+      'https://console.flagright.dev/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&alertStatus=OPEN',
+    );
 
     // Close an alert
-    cy.get('button[data-cy="expand-icon"]', { timeout: 15000 }).eq(0).click();
-    cy.get('div[data-cy="expanded-content"] input[data-cy="row-table-checkbox"]', {
+    cy.get('input[data-cy="row-table-checkbox"]', {
       timeout: 15000,
     })
       .eq(0)
@@ -27,8 +28,10 @@ describe('Comment Alerts from Table', () => {
 
       // Re-open the closed alert
       // eslint-disable-next-line cypress/no-unnecessary-waiting
-      cy.wait(500);
-      cy.get('div[data-cy="expanded-content"] input[data-cy="row-table-checkbox"]', {
+      cy.visit(
+        'https://console.flagright.dev/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL_ALERTS&alertStatus=CLOSED',
+      );
+      cy.get('input[data-cy="row-table-checkbox"]', {
         timeout: 15000,
       })
         .eq(0)
