@@ -23,6 +23,8 @@ import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Provider
 import { Item } from '@/components/library/SegmentedControl';
 import QaTable from '@/pages/case-management/QaTable';
 import { useQaMode } from '@/utils/qa-mode';
+import Tooltip from '@/components/library/Tooltip';
+import { getBranding } from '@/utils/branding';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
@@ -98,16 +100,27 @@ export default function CaseManagementPage() {
     { value: 'QA_FAILED_ALERTS', label: 'Failed alerts' },
   ];
 
+  const branding = getBranding();
+
   return (
     <PageWrapper
       title={i18n('menu.case-management')}
       actionButton={
-        hasQaEnabled && (
-          <div className={s.qaSwitch}>
-            <p className={s.qaSwitchTitle}>QA</p>
+        <div className={s.qaSwitch}>
+          <p className={s.qaSwitchTitle}>QA</p>
+          {hasQaEnabled ? (
             <Toggle value={qaMode} onChange={(value) => setQaMode(!!value)} disabled={false} />
-          </div>
-        )
+          ) : (
+            <Tooltip
+              title={`This is an advanced feature. Contact support at ${branding.supportEmail} to access it.`}
+              placement="topLeft"
+            >
+              <div>
+                <Toggle value={qaMode} disabled={true} />
+              </div>
+            </Tooltip>
+          )}
+        </div>
       }
     >
       <PageWrapperContentContainer>
