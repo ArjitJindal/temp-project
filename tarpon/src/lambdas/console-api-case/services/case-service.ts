@@ -659,17 +659,21 @@ export class CaseService extends CaseAlertsCommonService {
           files: updates.files,
         } as AlertStatusUpdateRequest
 
-        await this.alertsService.updateAlertsStatus(
-          alerts.map((a) => a.alertId!),
-          alertsStatusChange,
-          {
+        const alertIds = alerts.map((a) => a.alertId!)
+        await Promise.all([
+          this.alertsService.updateAlertsStatus(alertIds, alertsStatusChange, {
             bySystem: true,
             cascadeCaseUpdates: false,
             account,
             skipReview: skipReview || isLastInReview,
             updateChecklistStatus: false,
-          }
-        )
+          }),
+          this.auditLogService.handleAuditLogForAlertsUpdate(
+            alertIds,
+            alertsStatusChange,
+            'STATUS_CHANGE'
+          ),
+        ])
       }
     })
 

@@ -846,22 +846,23 @@ export class AlertsService extends CaseAlertsCommonService {
           otherReason,
           files: statusUpdateRequest.files,
         }
-
-        await caseService.updateCasesStatus(
-          caseIdsWithAllAlertsSameStatus,
-          caseUpdateStatus,
-          {
-            bySystem: true,
-            cascadeAlertsUpdate: false,
-            account: userAccount,
-            updateChecklistStatus: false,
-          }
-        )
-
-        await this.auditLogService.handleAuditLogForCaseUpdate(
-          caseIdsWithAllAlertsSameStatus,
-          caseUpdateStatus
-        )
+        await Promise.all([
+          caseService.updateCasesStatus(
+            caseIdsWithAllAlertsSameStatus,
+            caseUpdateStatus,
+            {
+              bySystem: true,
+              cascadeAlertsUpdate: false,
+              account: userAccount,
+              updateChecklistStatus: false,
+            }
+          ),
+          this.auditLogService.handleAuditLogForCaseUpdate(
+            caseIdsWithAllAlertsSameStatus,
+            caseUpdateStatus,
+            'STATUS_CHANGE'
+          ),
+        ])
       }
 
       if (

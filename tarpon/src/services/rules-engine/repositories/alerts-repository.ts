@@ -496,10 +496,16 @@ export class AlertsRepository {
             'alert.alertId': {
               $in: alertIds,
             },
+            'alert.ruleChecklist': {
+              $exists: true,
+            },
           },
           {
             'item.done': {
               $ne: 'DONE',
+            },
+            item: {
+              $exists: true,
             },
           },
         ],

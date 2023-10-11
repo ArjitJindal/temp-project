@@ -105,24 +105,26 @@ export class CasesAlertsAuditLogService {
       dynamoDb: this.dynamoDb,
     })
 
-    for (const alertId of alertIds) {
-      const alertEntity = await alertsRepository.getAlertById(alertId)
-      const oldImage: { [key: string]: string } = {}
-      for (const field in Object.keys(updates)) {
-        const oldValue = get(alertEntity, field)
-        if (oldValue) {
-          oldImage[field] = oldValue
+    await Promise.all(
+      alertIds.map(async (alertId) => {
+        const alertEntity = await alertsRepository.getAlertById(alertId)
+        const oldImage: { [key: string]: string } = {}
+        for (const field in Object.keys(updates)) {
+          const oldValue = get(alertEntity, field)
+          if (oldValue) {
+            oldImage[field] = oldValue
+          }
         }
-      }
-      await this.createAlertAuditLog({
-        alertId: alertId,
-        logAction: 'UPDATE',
-        oldImage: oldImage,
-        newImage: updates,
-        alertDetails: alertEntity,
-        subtype,
+        await this.createAlertAuditLog({
+          alertId: alertId,
+          logAction: 'UPDATE',
+          oldImage: oldImage,
+          newImage: updates,
+          alertDetails: alertEntity,
+          subtype,
+        })
       })
-    }
+    )
   }
 
   public async handleAuditLogForAlertsEscalation(

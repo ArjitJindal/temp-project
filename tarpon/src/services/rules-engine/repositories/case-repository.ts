@@ -1180,8 +1180,11 @@ export class CaseRepository {
       { $set: { 'alerts.$[alert].ruleChecklist.$[item].done': 'DONE' } },
       {
         arrayFilters: [
-          { 'alert.ruleChecklist.done': { $ne: 'DONE' } },
-          { 'item.done': { $ne: 'DONE' } },
+          {
+            'alert.ruleChecklist.done': { $ne: 'DONE' },
+            'alert.ruleChecklist': { $exists: true },
+          },
+          { 'item.done': { $ne: 'DONE' }, item: { $exists: true } },
         ],
       }
     )
