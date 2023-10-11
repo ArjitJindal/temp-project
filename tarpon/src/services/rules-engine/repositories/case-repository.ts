@@ -563,6 +563,14 @@ export class CaseRepository {
       })
     }
 
+    if (params.filterAlertPriority != null) {
+      conditions.push({
+        'alerts.priority': {
+          $in: params.filterAlertPriority,
+        },
+      })
+    }
+
     conditions.push({
       $or: [
         {

@@ -403,6 +403,7 @@ export default function CaseTable(props: Props) {
     showAssignedToFilter && 'assignedTo',
   ]);
   const filters = useCaseAlertFilters(filterIds);
+
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
       innerRef={tableRef}
@@ -412,7 +413,11 @@ export default function CaseTable(props: Props) {
           {record.caseId && (
             <AlertTable
               isEmbedded={true}
-              params={{ ...DEFAULT_PARAMS_STATE, caseId: record.caseId }}
+              params={{
+                ...DEFAULT_PARAMS_STATE,
+                caseId: record.caseId,
+                alertPriority: params.alertPriority,
+              }}
               escalatedTransactionIds={record.caseHierarchyDetails?.childTransactionIds || []}
               expandTransactions={false}
             />

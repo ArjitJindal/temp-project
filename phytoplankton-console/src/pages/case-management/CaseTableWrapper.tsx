@@ -52,6 +52,7 @@ export default function CaseTableWrapper(props: {
       updatedAt,
       caseTypesFilter,
       ruleQueueIds,
+      alertPriority,
     } = params;
 
     const [sortField, sortOrder] = sort[0] ?? [];
@@ -108,6 +109,7 @@ export default function CaseTableWrapper(props: {
           ? dayjs(updatedAt[1]).valueOf()
           : Number.MAX_SAFE_INTEGER,
       }),
+      filterAlertPriority: alertPriority,
     });
 
     return {
