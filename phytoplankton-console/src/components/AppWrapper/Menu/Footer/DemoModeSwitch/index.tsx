@@ -34,8 +34,8 @@ export default function DemoModeSwitch(props: Props) {
 }
 
 const OPTIONS = [
-  { value: true, title: 'ON' },
   { value: false, title: 'OFF' },
+  { value: true, title: 'ON' },
 ];
 
 function Button(props: { isCollapsed?: boolean }) {
