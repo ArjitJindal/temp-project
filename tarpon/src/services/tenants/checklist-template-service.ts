@@ -54,6 +54,11 @@ export class ChecklistTemplatesService {
       updatedAt: Date.now(),
     })
   }
+
+  public async getChecklistTemplateByIds(templateIds: string[]) {
+    return this.repository.getChecklistTemplateByIds(templateIds)
+  }
+
   public async deleteChecklistTemplate(templateId: string) {
     if (!(await this.repository.getChecklistTemplate(templateId))) {
       throw new NotFound(`Checklist template ${templateId}  not found`)

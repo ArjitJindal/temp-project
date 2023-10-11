@@ -496,13 +496,10 @@ export class AlertsRepository {
             'alert.alertId': {
               $in: alertIds,
             },
-            'alert.ruleChecklist.done': {
-              $nin: ['DONE'],
-            },
           },
           {
             'item.done': {
-              $nin: ['DONE'],
+              $ne: 'DONE',
             },
           },
         ],

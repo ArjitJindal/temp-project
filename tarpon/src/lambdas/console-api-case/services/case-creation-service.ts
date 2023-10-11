@@ -1,4 +1,4 @@
-import { groupBy, last, minBy, uniq, uniqBy } from 'lodash'
+import { compact, groupBy, last, minBy, uniq, uniqBy } from 'lodash'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -24,6 +24,9 @@ import { notNullish } from '@/core/utils/array'
 import { getDefaultTimezone } from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { ChecklistTemplatesService } from '@/services/tenants/checklist-template-service'
+import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'
+import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 
 @traceable
 export class CaseCreationService {
@@ -107,7 +110,8 @@ export class CaseCreationService {
     alerts: Alert[],
     createdTimestamp: number,
     latestTransactionArrivalTimestamp?: number,
-    transaction?: InternalTransaction
+    transaction?: InternalTransaction,
+    checkListTemplates?: ChecklistTemplate[]
   ): { existingAlerts: Alert[]; newAlerts: Alert[] } {
     // Get the rule hits that are new for this transaction
     const newRuleHits = hitRules.filter(
@@ -123,7 +127,8 @@ export class CaseCreationService {
             ruleInstances,
             createdTimestamp,
             latestTransactionArrivalTimestamp,
-            transaction
+            transaction,
+            checkListTemplates
           )
         : []
 
@@ -148,7 +153,8 @@ export class CaseCreationService {
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
     latestTransaction?: InternalTransaction,
-    latestTransactionArrivalTimestamp?: number
+    latestTransactionArrivalTimestamp?: number,
+    checkListTemplates?: ChecklistTemplate[]
   ) {
     if (alerts) {
       const { existingAlerts, newAlerts } = this.separateExistingAndNewAlerts(
@@ -157,7 +163,8 @@ export class CaseCreationService {
         alerts,
         createdTimestamp,
         latestTransactionArrivalTimestamp,
-        latestTransaction
+        latestTransaction,
+        checkListTemplates
       )
 
       const updatedExistingAlerts =
@@ -165,7 +172,9 @@ export class CaseCreationService {
           ? this.updateExistingAlerts(
               existingAlerts,
               latestTransaction,
-              latestTransactionArrivalTimestamp
+              latestTransactionArrivalTimestamp,
+              ruleInstances,
+              checkListTemplates
             )
           : []
 
@@ -176,7 +185,8 @@ export class CaseCreationService {
         ruleInstances,
         createdTimestamp,
         latestTransactionArrivalTimestamp,
-        latestTransaction
+        latestTransaction,
+        checkListTemplates
       )
     }
   }
@@ -186,7 +196,8 @@ export class CaseCreationService {
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
     latestTransactionArrivalTimestamp?: number,
-    transaction?: InternalTransaction
+    transaction?: InternalTransaction,
+    checkListTemplates?: ChecklistTemplate[]
   ): Alert[] {
     const alerts: Alert[] = hitRules.map((hitRule: HitRulesDetails) => {
       const ruleInstanceMatch: RuleInstance | null =
@@ -203,6 +214,9 @@ export class CaseCreationService {
               this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
             )
           : undefined
+      const ruleChecklist = checkListTemplates?.find(
+        (x) => x.id === ruleInstanceMatch?.checklistTemplateId
+      )
       return {
         createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
         latestTransactionArrivalTimestamp,
@@ -228,6 +242,17 @@ export class CaseCreationService {
           ?.method
           ? [transaction?.destinationPaymentDetails?.method]
           : [],
+        ruleChecklistTemplateId: ruleInstanceMatch?.checklistTemplateId,
+        ruleChecklist: ruleChecklist?.categories.flatMap(
+          (category) =>
+            category.checklistItems.map(
+              (item) =>
+                ({
+                  checklistItemId: item.id,
+                  done: 'NOT_STARTED',
+                } as ChecklistItemValue)
+            ) ?? []
+        ),
       }
     })
 
@@ -237,7 +262,9 @@ export class CaseCreationService {
   private updateExistingAlerts(
     alerts: Alert[],
     transaction?: InternalTransaction,
-    latestTransactionArrivalTimestamp?: number
+    latestTransactionArrivalTimestamp?: number,
+    ruleInstances?: readonly RuleInstance[],
+    checkListTemplates?: ChecklistTemplate[]
   ): Alert[] {
     return alerts.map((alert) => {
       if (!transaction || !latestTransactionArrivalTimestamp) {
@@ -272,6 +299,23 @@ export class CaseCreationService {
         destinationPaymentMethods: Array.from(destinationPaymentDetails),
         numberOfTransactionsHit: txnSet.size,
         updatedAt: Date.now(),
+        ruleChecklistTemplateId:
+          alert?.ruleChecklistTemplateId ??
+          ruleInstances?.find((rule) => rule.id === alert.ruleInstanceId)
+            ?.checklistTemplateId,
+        ruleChecklist:
+          alert?.ruleChecklist ??
+          checkListTemplates?.flatMap((template) =>
+            template.categories.flatMap((category) =>
+              category.checklistItems.map(
+                (item) =>
+                  ({
+                    checklistItemId: item.id,
+                    done: 'NOT_STARTED',
+                  } as ChecklistItemValue)
+              )
+            )
+          ),
       }
     })
   }
@@ -366,6 +410,35 @@ export class CaseCreationService {
     return newCase
   }
 
+  private async getCheckListTemplates(
+    ruleInstances: readonly RuleInstance[],
+    hitRules: HitRulesDetails[]
+  ): Promise<ChecklistTemplate[]> {
+    const checklistTemplatesService = new ChecklistTemplatesService(
+      this.userRepository.tenantId,
+      this.userRepository.mongoDb
+    )
+
+    const checkListTemplateIds = uniq(
+      compact(
+        ruleInstances
+          .filter((x) => hitRules.some((y) => y.ruleInstanceId === x.id))
+          .map((x) => x.checklistTemplateId)
+      )
+    )
+
+    if (checkListTemplateIds.length === 0) {
+      return []
+    }
+
+    const checkListTemplates =
+      await checklistTemplatesService.getChecklistTemplateByIds(
+        checkListTemplateIds
+      )
+
+    return checkListTemplates
+  }
+
   private async getOrCreateCases(
     hitUsers: Array<{
       user: InternalConsumerUser | InternalBusinessUser
@@ -377,6 +450,7 @@ export class CaseCreationService {
       priority: Priority
       transaction?: InternalTransaction
       hitRules: HitRulesDetails[]
+      checkListTemplates?: ChecklistTemplate[]
     },
     ruleInstances: ReadonlyArray<RuleInstance>
   ): Promise<Case[]> {
@@ -501,7 +575,8 @@ export class CaseCreationService {
               ruleInstances,
               params.createdTimestamp,
               filteredTransaction,
-              params.latestTransactionArrivalTimestamp
+              params.latestTransactionArrivalTimestamp,
+              params.checkListTemplates
             )
 
             const caseTransactionsIds = uniq(
@@ -552,7 +627,8 @@ export class CaseCreationService {
                 ruleInstances,
                 params.createdTimestamp,
                 params.latestTransactionArrivalTimestamp,
-                params.transaction
+                params.transaction,
+                params.checkListTemplates
               ),
               updatedAt: now,
             })
@@ -611,6 +687,11 @@ export class CaseCreationService {
       }
     }
 
+    const checkListTemplates = await this.getCheckListTemplates(
+      ruleInstances,
+      transaction.hitRules
+    )
+
     const cases = await this.getOrCreateCases(
       hitUsers,
       {
@@ -619,6 +700,7 @@ export class CaseCreationService {
         priority: casePriority,
         transaction,
         hitRules: transaction.hitRules,
+        checkListTemplates,
       },
       ruleInstances
     )
@@ -653,6 +735,10 @@ export class CaseCreationService {
       ruleInstances.map((ruleInstance) => ruleInstance.casePriority)
     )
     const now = Date.now()
+    const checkListTemplates = await this.getCheckListTemplates(
+      ruleInstances,
+      hitRules
+    )
     logger.info(`Updating cases`, {
       userId: user.userId,
     })
@@ -663,6 +749,7 @@ export class CaseCreationService {
         createdTimestamp: now,
         priority: casePriority,
         hitRules,
+        checkListTemplates,
       },
       ruleInstances
     )

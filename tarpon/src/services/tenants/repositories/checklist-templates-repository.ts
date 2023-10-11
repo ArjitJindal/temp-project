@@ -43,6 +43,18 @@ export class ChecklistTemplateRepository {
     return await collection.findOne({ id: templateId! })
   }
 
+  public async getChecklistTemplateByIds(
+    checklistTemplateIds: string[]
+  ): Promise<ChecklistTemplate[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<ChecklistTemplate>(
+      CHECKLIST_TEMPLATE_COLLECTION(this.tenantId)
+    )
+    return await collection
+      .find({ id: { $in: checklistTemplateIds } })
+      .toArray()
+  }
+
   public async createOrUpdateChecklistTemplate(
     template: ChecklistTemplate
   ): Promise<ChecklistTemplate> {
