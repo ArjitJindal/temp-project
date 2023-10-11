@@ -8,6 +8,10 @@ export const WHITE_LABEL_ORIGINS = {
     sandbox: 'https://qc-staging.console.regtank.com',
     prod: 'https://transaction.console.regtank.com',
   },
+  zigram: {
+    sandbox: 'https://sandboxconsole.transactcomply.com/',
+    prod: 'https://console.transactcomply.com/',
+  },
 }
 export const ALLOWED_ORIGINS = {
   dev: ['*'],

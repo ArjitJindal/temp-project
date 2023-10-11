@@ -5,6 +5,7 @@ import { Auth0ProdBureauTenantConfig } from './tenant-config-prod-bureau'
 import { Auth0SandboxTenantConfig } from './tenant-config-sandbox'
 import { Auth0SandboxBureauTenantConfig } from './tenant-config-sandbox-bureau'
 import { Auth0SandboxRegtankTenantConfig } from './tenant-config-sandbox-regtank'
+import { Auth0SandboxZigramTenantConfig } from './tenant-config-sandbox-zigram'
 import { Auth0ProdRegtankTenantConfig } from './tenant-config-prod-regtank'
 import { FlagrightRegion } from '@/utils/env'
 
@@ -29,6 +30,7 @@ export function getAuth0TenantConfigs(
         Auth0SandboxTenantConfig,
         Auth0SandboxBureauTenantConfig,
         Auth0SandboxRegtankTenantConfig,
+        Auth0SandboxZigramTenantConfig,
       ]
     }
     case 'prod': {

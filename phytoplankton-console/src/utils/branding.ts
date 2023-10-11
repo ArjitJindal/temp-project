@@ -5,6 +5,8 @@ import BureauLogoSvg from '@/branding/bureau-logo.svg';
 import BureauFaviconSvg from '@/branding/bureau-favicon.svg';
 import RegtankLogoSvg from '@/branding/regtank-logo.svg';
 import RegtankFaviconSvg from '@/branding/regtank-favicon.svg';
+import ZigramLogoSvg from '@/branding/zigram-logo.svg';
+import ZigramFaviconSvg from '@/branding/zigram-favicon.svg';
 
 interface BrandingSettings {
   apiBasePath?: string;
@@ -69,6 +71,20 @@ const REGTANK_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> 
   systemAvatarUrl: RegtankFaviconSvg,
 };
 
+const ZIGRAM_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
+  // TBD
+  supportEmail: 'tmsupport@zigram.tech',
+  logoUrl: ZigramLogoSvg,
+  demoModeLogoUrl: ZigramLogoSvg,
+  companyName: 'Zigram',
+  notProvisionedWarning: `User does not have a provisioned Zigram Account.`,
+  apiDocsLinks: {
+    webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
+  },
+  faviconUrl: ZigramFaviconSvg,
+  systemAvatarUrl: ZigramFaviconSvg,
+};
+
 const WHITELABEL_BRANDING = {
   'tm.bureau.id': {
     ...BUREAU_BRANDING,
@@ -84,6 +100,11 @@ const WHITELABEL_BRANDING = {
     ...REGTANK_BRANDING,
     auth0Domain: 'login.qc-staging.console.regtank.com',
     auth0ClientId: 'Nz37vE2YAvMRPAIsqLVXcfACo216CMXE',
+  },
+  'sandboxconsole.transactcomply.com': {
+    ...ZIGRAM_BRANDING,
+    auth0Domain: 'login.sandboxconsole.transactcomply.com',
+    auth0ClientId: 'twQtyjrExlgXqkF14diuFhXI9rXqItL7',
   },
   'transaction.console.regtank.com': {
     ...REGTANK_BRANDING,
