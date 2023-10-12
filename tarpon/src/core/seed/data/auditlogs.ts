@@ -2,6 +2,7 @@ import { v4 as uuid4 } from 'uuid'
 import { generateNarrative } from '../samplers/cases'
 import { data as users } from './users'
 import { transactionRules as rules } from './rules'
+import { auditLogForCaseStatusChange } from './cases'
 import { randomInt } from '@/core/seed/samplers/prng'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
@@ -74,12 +75,9 @@ const generator = function* (): Generator<AuditLog> {
 
 const generate: () => Iterable<AuditLog> = () => generator()
 
-const auditlogs: AuditLog[] = []
+const auditlogs: AuditLog[] = auditLogForCaseStatusChange ?? []
 
 const init = () => {
-  if (auditlogs.length > 0) {
-    return
-  }
   const data = generate()
   for (const auditLog of data) {
     auditlogs.push(auditLog)

@@ -1,11 +1,17 @@
 import { data as users } from './users'
 import { transactions } from '@/core/seed/data/transactions'
-import { sampleTransactionUserCases } from '@/core/seed/samplers/cases'
+import {
+  sampleAuditLogForStatusChange,
+  sampleTransactionUserCases,
+} from '@/core/seed/samplers/cases'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
 const data: Case[] = []
+
+const auditLogForCaseStatusChange: AuditLog[] = []
 
 const init = () => {
   if (data.length > 0) {
@@ -41,6 +47,12 @@ const init = () => {
     data.push(...destinationCases)
     data.push(...originCases)
   }
+  data.map((caseItem) => {
+    if (caseItem.caseStatus !== 'OPEN') {
+      const auditLog = sampleAuditLogForStatusChange(caseItem)
+      auditLogForCaseStatusChange.push(auditLog as AuditLog)
+    }
+  })
 }
 
-export { init, data }
+export { init, data, auditLogForCaseStatusChange }

@@ -1,4 +1,5 @@
 import { last, uniqBy } from 'lodash'
+import { v4 as uuid4 } from 'uuid'
 import { compile } from 'handlebars'
 import { randomBool } from 'fp-ts/Random'
 import { getRuleInstance, transactionRules, userRules } from '../data/rules'
@@ -325,4 +326,27 @@ const getStatusChangesObject = (
     }
   }
   return statusChanges
+}
+
+export const sampleAuditLogForStatusChange = (caseItem: Case) => {
+  const reasons = randomSubset<CaseReasons>([
+    'Anti-money laundering',
+    'Documents collected',
+    'Fraud',
+    'Terrorist financing',
+    'Suspicious activity reported (SAR)',
+  ])
+  return {
+    action: 'UPDATE',
+    auditlogId: uuid4(),
+    entityId: caseItem.caseId,
+    newImage: {
+      reason: reasons,
+      caseStatus: caseItem.caseStatus,
+    },
+    oldImage: {},
+    subtype: 'STATUS_CHANGE',
+    timestamp: Date.now(),
+    type: 'CASE',
+  }
 }
