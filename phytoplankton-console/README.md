@@ -55,7 +55,7 @@ const response = await api.getTransactionsList();
 Assuming you have nvm and yarn installed:
 
 ```
-> echo '127.0.0.1\tflagright.local' | sudo tee -a '/etc/hosts'
+> echo '127.0.0.1   flagright.local' | sudo tee -a '/etc/hosts'
 > nvm use
 > yarn
 > yarn dev
