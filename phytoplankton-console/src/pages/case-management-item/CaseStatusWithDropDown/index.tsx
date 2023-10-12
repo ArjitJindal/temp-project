@@ -19,7 +19,7 @@ export const CaseStatusWithDropDown = (props: Props) => {
     props;
 
   const isReopened = useMemo(() => {
-    return statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED');
+    return statusChanges?.find((statusChange) => statusChange?.caseStatus === 'CLOSED');
   }, [statusChanges]);
 
   const ifCaseIsEscalated = useMemo(() => {
