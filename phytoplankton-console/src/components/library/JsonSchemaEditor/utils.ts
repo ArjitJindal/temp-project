@@ -32,16 +32,16 @@ export function getOrderedProps(
   let keys: string[] = [];
   const schema: ExtendedSchema =
     rawSchema.allOf && rootSchema ? flattenAllOf(rawSchema, rootSchema) : rawSchema;
-  const properties = schema.properties ?? {};
-  const uiSchema = schema['ui:schema'] ?? {};
+  const properties = schema?.properties ?? {};
+  const uiSchema = schema?.['ui:schema'] ?? {};
   if (uiSchema['ui:order'] != null) {
     keys = uiSchema['ui:order'];
   } else {
     keys = Object.keys(properties); // todo: sort to always have predicted order
   }
-  const required = Array.isArray(schema.required) ? schema.required : [];
+  const required = Array.isArray(schema?.required) ? schema?.required : [];
   const propertiesOrdered: PropertyItems = Object.entries(properties).map(([name, schema]) => ({
-    isRequired: schema.nullable !== true && required.includes(name),
+    isRequired: schema?.nullable !== true && required?.includes(name),
     name,
     schema,
   }));
