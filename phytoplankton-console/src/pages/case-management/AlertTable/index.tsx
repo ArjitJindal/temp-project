@@ -30,7 +30,7 @@ import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowR
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAuth0User } from '@/utils/user-utils';
+import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { useCaseAlertFilters } from '@/pages/case-management/helpers';
@@ -114,6 +114,7 @@ export default function AlertTable(props: Props) {
   const qaEnabled = useQaEnabled();
   const api = useApi();
   const user = useAuth0User();
+  const [users] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
 
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
@@ -396,6 +397,9 @@ export default function AlertTable(props: Props) {
               : item.assignments,
           type: {
             ...ASSIGNMENTS,
+            stringify: (value) => {
+              return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
+            },
             render: (assignments, { item: entity }) => {
               const otherStatuses = isOnHoldOrInProgress(entity.alertStatus!);
               return (
@@ -522,6 +526,7 @@ export default function AlertTable(props: Props) {
     );
     return col;
   }, [
+    users,
     showUserFilters,
     hideAlertStatusFilters,
     handleAlertAssignments,

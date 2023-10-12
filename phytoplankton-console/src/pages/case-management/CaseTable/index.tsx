@@ -85,7 +85,6 @@ export default function CaseTable(props: Props) {
   }, []);
 
   const api = useApi();
-
   const caseReviewAssignmentUpdateMutation = useCaseReviewAssignmentUpdateMutation(tableRef);
   const caseAssignmentUpdateMutation = useCaseAssignmentUpdateMutation(tableRef);
 
@@ -231,6 +230,9 @@ export default function CaseTable(props: Props) {
         enableResizing: false,
         type: {
           ...ASSIGNMENTS,
+          stringify: (value) => {
+            return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
+          },
           render: (__, { item: entity }) => {
             const isStatusInReview = statusInReview(entity.caseStatus);
             const assignments =
@@ -364,6 +366,9 @@ export default function CaseTable(props: Props) {
             title: 'Closed by',
             key: 'lastStatusChange.userId',
             type: {
+              stringify: (value) => {
+                return `${value === undefined ? '' : users[value]?.name ?? value}`;
+              },
               render: (userId, _) => {
                 return userId ? (
                   <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
