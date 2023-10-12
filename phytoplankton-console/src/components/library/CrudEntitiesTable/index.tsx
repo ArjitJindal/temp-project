@@ -6,7 +6,6 @@ import { PlusOutlined } from '@ant-design/icons';
 import { pick } from 'lodash';
 import { AllParams, TableColumn } from '../Table/types';
 import { DEFAULT_PARAMS_STATE } from '../Table/consts';
-
 import { EmptyEntitiesInfo } from '../EmptyDataInfo';
 import { DrawerMode, DrawerStepperJsonSchemaForm } from '../DrawerStepperJsonSchemaForm';
 import { Step } from '../Stepper';
@@ -158,40 +157,45 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     return tableHelper.display({
       id: '_action',
       title: 'Action',
-      render: (entity) => (
-        <Space>
-          <Button
-            size="MEDIUM"
-            type="SECONDARY"
-            icon={<EditLineIcon />}
-            onClick={() => (isReadOnly ? handleEntityView(entity) : handleEntityEdit(entity))}
-          >
-            {isReadOnly ? 'View' : 'Edit'}
-          </Button>
-          {isReadOnly ? undefined : (
-            <Confirm
-              title={`Are you sure you want to delete this ${entityName}?`}
-              onConfirm={() => {
-                deletionMutation.mutate(entity[props.entityIdField]);
-              }}
-              text={`Please confirm that you want to delete this ${entityName}. This action cannot be undone.`}
-              res={getMutationAsyncResource(deletionMutation)}
+      render: (entity) => {
+        const readOnly =
+          isReadOnly ||
+          (entity?.status === undefined ? false : entity.status === 'DRAFT' ? false : true);
+        return (
+          <Space>
+            <Button
+              size="MEDIUM"
+              type="SECONDARY"
+              icon={<EditLineIcon />}
+              onClick={() => (readOnly ? handleEntityView(entity) : handleEntityEdit(entity))}
             >
-              {({ onClick }) => (
-                <Button
-                  size="MEDIUM"
-                  type="TETRIARY"
-                  icon={<DeleteLineIcon />}
-                  onClick={onClick}
-                  isDisabled={deletionMutation.isLoading}
-                >
-                  Delete
-                </Button>
-              )}
-            </Confirm>
-          )}
-        </Space>
-      ),
+              {readOnly ? 'View' : 'Edit'}
+            </Button>
+            {isReadOnly ? undefined : (
+              <Confirm
+                title={`Are you sure you want to delete this ${entityName}?`}
+                onConfirm={() => {
+                  deletionMutation.mutate(entity[props.entityIdField]);
+                }}
+                text={`Please confirm that you want to delete this ${entityName}. This action cannot be undone.`}
+                res={getMutationAsyncResource(deletionMutation)}
+              >
+                {({ onClick }) => (
+                  <Button
+                    size="MEDIUM"
+                    type="TETRIARY"
+                    icon={<DeleteLineIcon />}
+                    onClick={onClick}
+                    isDisabled={deletionMutation.isLoading}
+                  >
+                    Delete
+                  </Button>
+                )}
+              </Confirm>
+            )}
+          </Space>
+        );
+      },
       defaultSticky: 'RIGHT',
       defaultWidth: 200,
     });

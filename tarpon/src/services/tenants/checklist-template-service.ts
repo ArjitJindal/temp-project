@@ -36,6 +36,7 @@ export class ChecklistTemplatesService {
     const now = Date.now()
     return this.repository.createOrUpdateChecklistTemplate({
       ...template,
+      status: template.status ?? 'DRAFT',
       createdAt: now,
       updatedAt: now,
     })

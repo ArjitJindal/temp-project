@@ -19,6 +19,7 @@ const initChecklistTemplate = () => {
     id: uuid4(),
     name: 'First checklist template',
     description: 'First checklist template',
+    status: 'ACTIVE',
     categories: [
       {
         name: 'Narrative',

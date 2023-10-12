@@ -239,10 +239,12 @@ function ChecklistDetails() {
   );
   const options = useMemo(() => {
     return isSuccess(queryResult.data)
-      ? queryResult.data.value.data.map((checklist) => ({
-          label: checklist.name,
-          value: checklist.id!,
-        }))
+      ? queryResult.data.value.data
+          .filter((checklist) => checklist.status === 'ACTIVE')
+          .map((checklist) => ({
+            label: checklist.name,
+            value: checklist.id!,
+          }))
       : [];
   }, [queryResult.data]);
   return (

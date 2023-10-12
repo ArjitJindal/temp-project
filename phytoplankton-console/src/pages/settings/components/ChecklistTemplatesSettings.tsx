@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv';
+import { useMutation } from '@tanstack/react-query';
 import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
 import { ChecklistTemplate } from '@/apis';
@@ -7,6 +8,9 @@ import { CrudEntitiesTable } from '@/components/library/CrudEntitiesTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { LONG_TEXT, STRING } from '@/components/library/Table/standardDataTypes';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
+import Confirm from '@/components/utils/Confirm';
+import { message } from '@/components/library/Message';
+import Button from '@/components/library/Button';
 
 export function ChecklistTemplatesSettings() {
   const api = useApi();
@@ -51,6 +55,25 @@ export function ChecklistTemplatesSettings() {
     },
     required: ['categories'],
   };
+  const statusMutation = useMutation(
+    async (entity: ChecklistTemplate) => {
+      return (
+        entity.id !== undefined &&
+        (await api.putChecklistTemplates({
+          checklistTemplateId: entity.id,
+          ChecklistTemplate: entity,
+        }))
+      );
+    },
+    {
+      onSuccess: () => {
+        message.success('Successfully updated status');
+      },
+      onError: (error: Error) => {
+        message.error(`Error: ${error.message}`);
+      },
+    },
+  );
   return (
     <SettingsCard
       title="Investigation checklist"
@@ -83,6 +106,33 @@ export function ChecklistTemplatesSettings() {
             key: 'description',
             defaultWidth: 400,
             type: LONG_TEXT,
+          }),
+          tableHelper.display({
+            title: 'Status',
+            render: (checklistTemplate) => {
+              const isActive = checklistTemplate.status === 'ACTIVE';
+              return (
+                <Confirm
+                  onConfirm={() => {
+                    if (!isActive) {
+                      checklistTemplate.status = 'ACTIVE';
+                      statusMutation.mutate(checklistTemplate);
+                    }
+                  }}
+                  title={`Are you sure you want to change the status to ${
+                    isActive ? 'Draft' : 'Active'
+                  } `}
+                  text="Please confirm that you want to change the status of this template. This action cannot be undone."
+                >
+                  {({ onClick }) => (
+                    <Button size="SMALL" type="TETRIARY" isDisabled={isActive} onClick={onClick}>
+                      {isActive ? 'Active' : 'Draft'}
+                    </Button>
+                  )}
+                </Confirm>
+              );
+            },
+            defaultWidth: 100,
           }),
         ]}
         formWidth="800px"

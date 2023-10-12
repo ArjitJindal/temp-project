@@ -9794,6 +9794,11 @@ components:
           type: integer
         updatedAt:
           type: integer
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - DRAFT
       required:
         - name
         - categories
