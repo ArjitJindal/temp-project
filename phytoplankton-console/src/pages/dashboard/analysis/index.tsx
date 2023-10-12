@@ -4,7 +4,7 @@ import TransactionsChartWidget from './components/TransactionsChartWidget';
 import PaymentMethodDistributionWidget from './components/Transactions/PaymentMethodDistributionWidget';
 import RuleHitCard from './components/RulesHitCard';
 import TopUsersHitCard from './components/TopUsersHitCard';
-import DRSDistributionCard from './components/DRSDistributionCard';
+import RiskLevelDistributionCard from './components/RiskLevelDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
 import OverviewCard from './components/OverviewCard';
 import RulePrioritySplitCard from './components/RulePrioritySplitCard';
@@ -32,9 +32,9 @@ type KeyValues =
   | 'TOP_CONSUMER_USERS_BY_RULE_HITS'
   | 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION'
   | 'TOP_RULE_HITS_BY_COUNT'
-  | 'CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL'
+  | 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL'
   | 'TEAM_OVERVIEW'
-  | 'BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL'
+  | 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL'
   | 'TOP_BUSINESS_USERS_BY_RULE_HITS'
   | 'DISTRIBUTION_BY_RULE_PRIORITY'
   | 'DISTRIBUTION_BY_CLOSING_REASON'
@@ -46,9 +46,9 @@ type KeyValues =
 
 const KEYS: KeyValues[] = [
   'OVERVIEW',
-  'CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL',
+  'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
   'TOP_CONSUMER_USERS_BY_RULE_HITS',
-  'BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL',
+  'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
   'TOP_BUSINESS_USERS_BY_RULE_HITS',
   'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
   'DISTRIBUTION_BY_PAYMENT_METHOD',
@@ -74,8 +74,8 @@ const TITLES: { [key in KeyValues]: string } = {
   TOP_CONSUMER_USERS_BY_RULE_HITS: 'Top consumer users by rule hits',
   TOP_BUSINESS_USERS_BY_RULE_HITS: 'Top business users by rule hits',
   TRANSACTIONS_BREAKDOWN_BY_TRS: 'Transactions breakdown by TRS',
-  CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL: 'Consumer users distribution by CRA risk level',
-  BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL: 'Business users distribution by CRA risk level',
+  CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Consumer users distribution by risk levels',
+  BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Business users distribution by risk levels',
   DISTRIBUTION_BY_RULE_PRIORITY: 'Distribution by rule priority',
   DISTRIBUTION_BY_RULE_ACTION: 'Distribution by rule action',
 };
@@ -85,11 +85,11 @@ const DEFAULT_VALUES = {
   TOP_CONSUMER_USERS_BY_RULE_HITS: true,
   TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION: true,
   TOP_RULE_HITS_BY_COUNT: true,
-  CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
+  CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: true,
   TEAM_OVERVIEW: true,
   DISTRIBUTION_BY_RULE_PRIORITY: true,
   DISTRIBUTION_BY_CLOSING_REASON: true,
-  BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
+  BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: true,
   TOP_BUSINESS_USERS_BY_RULE_HITS: true,
   DISTRIBUTION_BY_ALERT_PRIORITY: true,
   DISTRIBUTION_BY_PAYMENT_METHOD: true,
@@ -148,12 +148,12 @@ function Analysis() {
             groupTitle: 'Consumer users',
             items: [
               isRiskScoringEnabled &&
-                settingsToDisplay.CONSUMER_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL && {
+                settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
                   props: {
                     id: 'consumer_userS_distibution_by_cra_risk_level',
-                    title: 'Distribution by CRA',
+                    title: 'Distribution by risk levels',
                     width: 'HALF' as const,
-                    children: <DRSDistributionCard userType="CONSUMER" />,
+                    children: <RiskLevelDistributionCard userType="CONSUMER" />,
                   },
                   component: Widget,
                 },
@@ -172,12 +172,12 @@ function Analysis() {
             groupTitle: 'Business users',
             items: [
               isRiskScoringEnabled &&
-                settingsToDisplay.BUSINESS_USERS_DISTIBUTION_BY_CRA_RISK_LEVEL && {
+                settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
                   props: {
                     id: 'business_userS_distibution_by_cra_risk_level',
-                    title: 'Distribution by CRA',
+                    title: 'Distribution by risk levels',
                     width: 'HALF' as const,
-                    children: <DRSDistributionCard userType="BUSINESS" />,
+                    children: <RiskLevelDistributionCard userType="BUSINESS" />,
                   },
                   component: Widget,
                 },

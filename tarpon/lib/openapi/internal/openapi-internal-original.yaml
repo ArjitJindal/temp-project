@@ -1810,9 +1810,9 @@ paths:
           in: query
           name: endTimestamp
     parameters: []
-  /dashboard_stats/drs-distribution:
+  /dashboard_stats/risk-level-distribution:
     get:
-      summary: DashboardStats - DRS Distribution
+      summary: DashboardStats - Risk Level Distribution
       tags: []
       x-flagright:
         permissions:
@@ -1823,9 +1823,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardStatsDRSDistribution'
+                $ref: '#/components/schemas/DashboardStatsRiskLevelDistribution'
               examples: {}
-      operationId: get-dashboard-stats-drs-distribution
+      operationId: get-dashboard-stats-risk-level-distribution
       description: ''
       parameters:
         - schema:
@@ -1835,6 +1835,14 @@ paths:
               - CONSUMER
           in: query
           name: userType
+          required: true
+        - schema:
+            type: string
+            enum:
+              - CRA
+              - KRS
+          in: query
+          name: riskType
           required: true
     parameters: []
   /dashboard_stats/hits_per_user:
@@ -6104,10 +6112,10 @@ components:
               - hitCount
       required:
         - data
-    DashboardStatsDRSDistribution:
+    DashboardStatsRiskLevelDistribution:
       type: object
       x-examples: {}
-      title: DashboardStatsDRSDistribution
+      title: DashboardStatsRiskLevelDistribution
       properties:
         data:
           type: array

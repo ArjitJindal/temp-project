@@ -1,4 +1,4 @@
-export type DashboardStatsDRSDistributionData = {
+export type DashboardStatsRiskLevelDistributionData = {
   _id: number
   count: number
 }

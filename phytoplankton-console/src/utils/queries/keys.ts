@@ -90,10 +90,11 @@ export const TRANSACTIONS_STATS = (
   type: 'by-type' | 'by-date',
   searchParams: AnyParameters,
 ): QueryKey => ['transactions', 'stats', type, searchParams];
-export const USERS_STATS = (userType?: 'BUSINESS' | 'CONSUMER'): QueryKey => [
+export const USERS_STATS = (userType?: 'BUSINESS' | 'CONSUMER', riskType?: string): QueryKey => [
   'users',
   'stats',
   userType,
+  riskType,
 ];
 export const TRANSACTIONS_UNIQUES = (
   field: TransactionsUniquesField,

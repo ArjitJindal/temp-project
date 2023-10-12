@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import React, { useMemo } from 'react';
 import _ from 'lodash';
+import { useLocalStorageState } from 'ahooks';
 import Column, { ColumnData } from '../charts/Column';
+import s from './styles.module.less';
+import RiskTypeSelector from './RiskTypeSelector';
 import { useApi } from '@/api';
 import { RISK_LEVELS } from '@/utils/risk-levels';
 import { useQuery } from '@/utils/queries/hooks';
@@ -22,7 +25,6 @@ import {
   COLORS_V2_PRIMARY_SHADES_BLUE_600,
   COLORS_V2_PRIMARY_TINTS_BLUE_900,
 } from '@/components/ui/colors';
-
 const getType = (riskLevel: RiskLevel, settings: TenantSettings) => {
   const data = getRiskLevelLabel(riskLevel, settings);
   const upperCase = _.upperCase(data).replace(' ', '_');
@@ -41,12 +43,20 @@ interface Props {
   userType: 'BUSINESS' | 'CONSUMER';
 }
 
-export default function DRSDistributionCard(props: Props) {
+export default function RiskLevelDistributionCard(props: Props) {
   const { userType } = props;
   const api = useApi();
   const settings = useSettings();
-  const queryResult = useQuery(USERS_STATS(userType), async () => {
-    const response = await api.getDashboardStatsDrsDistribution({ userType });
+  const [selectedRiskType, setSelectedRiskType] = useLocalStorageState(
+    `dashboard-${userType}-risk-type-active-tab`,
+    'CRA',
+  );
+  const params = {
+    userType: userType,
+    riskType: selectedRiskType as 'KRS' | 'CRA',
+  };
+  const queryResult = useQuery(USERS_STATS(userType, selectedRiskType), async () => {
+    const response = await api.getDashboardStatsRiskLevelDistribution(params);
     return {
       total: response.total,
       items: response.data,
@@ -104,13 +114,19 @@ export default function DRSDistributionCard(props: Props) {
             };
           });
           return (
-            <Column
-              data={data}
-              colors={COLORS}
-              height={400}
-              hideLegend={true}
-              rotateLabel={false}
-            />
+            <div className={s.root}>
+              <RiskTypeSelector
+                selectedSection={selectedRiskType}
+                setSelectedSection={setSelectedRiskType}
+              />
+              <Column
+                data={data}
+                colors={COLORS}
+                height={400}
+                hideLegend={true}
+                rotateLabel={false}
+              />
+            </div>
           );
         }}
       </AsyncResourceRenderer>

@@ -155,23 +155,27 @@ export const dashboardStatsHandler = lambdaApi()(
       }
     })
 
-    handlers.registerGetDashboardStatsDrsDistribution(async (ctx, request) => {
-      const client = await getMongoDbClient()
-      const { userType } = request
-      const dashboardStatsRepository = new DashboardStatsRepository(
-        ctx.tenantId,
-        { mongoDb: client }
-      )
-      if (shouldRefreshAll(event)) {
-        await dashboardStatsRepository.refreshAllStats()
+    handlers.registerGetDashboardStatsRiskLevelDistribution(
+      async (ctx, request) => {
+        const client = await getMongoDbClient()
+        const { userType, riskType } = request
+        const dashboardStatsRepository = new DashboardStatsRepository(
+          ctx.tenantId,
+          { mongoDb: client }
+        )
+        if (shouldRefreshAll(event)) {
+          await dashboardStatsRepository.refreshAllStats()
+        }
+        const data =
+          await dashboardStatsRepository.getRiskLevelDistributionStats(
+            userType,
+            riskType
+          )
+        return {
+          data,
+        }
       }
-      const data = await dashboardStatsRepository.getDRSDistributionStats(
-        userType
-      )
-      return {
-        data,
-      }
-    })
+    )
 
     handlers.registerGetDashboardTeamStats(async (ctx, request) => {
       const client = await getMongoDbClient()

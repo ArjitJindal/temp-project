@@ -1,10 +1,11 @@
 import { WithId } from 'mongodb'
-import { DashboardStatsDRSDistributionData } from '../types'
+import { DashboardStatsRiskLevelDistributionData } from '../types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
-import { DashboardStatsDRSDistributionData as DRSDistributionStats } from '@/@types/openapi-internal/DashboardStatsDRSDistributionData'
+import { DashboardStatsRiskLevelDistributionData as RiskLevelDistributionStats } from '@/@types/openapi-internal/DashboardStatsRiskLevelDistributionData'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
   DRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
+  KRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 
@@ -33,13 +34,13 @@ function sanitizeBucketBoundry(riskIntervalBoundries: Array<number>) {
 
 function createDistributionItems(
   riskClassificationValues: RiskClassificationScore[],
-  buckets: WithId<DashboardStatsDRSDistributionData>[]
+  buckets: WithId<DashboardStatsRiskLevelDistributionData>[]
 ) {
   let total = 0
   buckets.map((bucket: any) => {
     total += bucket.count
   })
-  const result: DRSDistributionStats[] = []
+  const result: RiskLevelDistributionStats[] = []
   buckets.map((bucket: any) => {
     riskClassificationValues.map(
       (classificationValue: RiskClassificationScore) => {
@@ -57,8 +58,8 @@ function createDistributionItems(
   return result
 }
 
-export class DrsDistributionStatsDashboardMetric {
-  public static async refresh(tenantId): Promise<void> {
+export class RiskLevelDistributionStatsDashboardMetric {
+  public static async refresh(tenantId: string): Promise<void> {
     if (!(await tenantHasFeature(tenantId, 'RISK_SCORING'))) {
       return
     }
@@ -68,8 +69,12 @@ export class DrsDistributionStatsDashboardMetric {
       USERS_COLLECTION(tenantId)
     )
     const dynamoDb = getDynamoDbClient()
-    const aggregationCollection =
+
+    const aggregationDRSCollection =
       DRS_SCORES_DISTRIBUTION_STATS_COLLECTION(tenantId)
+    const aggregationKRSCollection =
+      KRS_SCORES_DISTRIBUTION_STATS_COLLECTION(tenantId)
+
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
@@ -88,10 +93,10 @@ export class DrsDistributionStatsDashboardMetric {
       ...new Set(sanitizeBucketBoundry(riskIntervalBoundries)), // duplicate values are not allowed in bucket boundaries
     ]
 
-    const pipeline = [
+    const pipeline = (type: 'drs' | 'krs', aggregationCollection: string) => [
       {
         $match: {
-          'drsScore.drsScore': { $exists: true, $nin: [null, ''] },
+          [`${type}Score.${type}Score`]: { $exists: true, $nin: [null, ''] },
         },
       },
       {
@@ -102,7 +107,7 @@ export class DrsDistributionStatsDashboardMetric {
             },
             {
               $bucket: {
-                groupBy: '$drsScore.drsScore',
+                groupBy: `$${type}Score.${type}Score`,
                 boundaries: sanitizedBounries,
                 default: sanitizedBounries[sanitizedBounries.length - 1],
                 output: {
@@ -117,7 +122,7 @@ export class DrsDistributionStatsDashboardMetric {
             },
             {
               $bucket: {
-                groupBy: '$drsScore.drsScore',
+                groupBy: `$${type}Score.${type}Score`,
                 boundaries: sanitizedBounries,
                 default: sanitizedBounries[sanitizedBounries.length - 1],
                 output: {
@@ -144,26 +149,49 @@ export class DrsDistributionStatsDashboardMetric {
     ]
     const lastUpdatedAt = Date.now()
     await usersCollection
-      .aggregate(withUpdatedAt(pipeline, lastUpdatedAt), { allowDiskUse: true })
+      .aggregate(
+        withUpdatedAt(pipeline('drs', aggregationDRSCollection), lastUpdatedAt),
+        {
+          allowDiskUse: true,
+        }
+      )
       .next()
-    await cleanUpStaleData(aggregationCollection, 'date', lastUpdatedAt)
+    await usersCollection
+      .aggregate(
+        withUpdatedAt(pipeline('krs', aggregationKRSCollection), lastUpdatedAt),
+        {
+          allowDiskUse: true,
+        }
+      )
+      .next()
+    await cleanUpStaleData(aggregationDRSCollection, 'date', lastUpdatedAt)
+    await cleanUpStaleData(aggregationKRSCollection, 'date', lastUpdatedAt)
   }
 
   public static async get(
     tenantId: string,
-    userType: 'BUSINESS' | 'CONSUMER'
-  ): Promise<DRSDistributionStats[]> {
+    userType: 'BUSINESS' | 'CONSUMER',
+    riskType: 'CRA' | 'KRS'
+  ): Promise<RiskLevelDistributionStats[]> {
     const db = await getMongoDbClientDb()
-    const collection = db.collection<{
+    const DRSCollection = db.collection<{
       _id: string
-      business: DashboardStatsDRSDistributionData[]
-      consumer: DashboardStatsDRSDistributionData[]
+      business: DashboardStatsRiskLevelDistributionData[]
+      consumer: DashboardStatsRiskLevelDistributionData[]
     }>(DRS_SCORES_DISTRIBUTION_STATS_COLLECTION(tenantId))
+    const KRSCollection = db.collection<{
+      _id: string
+      business: DashboardStatsRiskLevelDistributionData[]
+      consumer: DashboardStatsRiskLevelDistributionData[]
+    }>(KRS_SCORES_DISTRIBUTION_STATS_COLLECTION(tenantId))
     const dynamoDb = getDynamoDbClient()
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
-    const result = await collection.find({}).toArray()
+    const result =
+      riskType === 'CRA'
+        ? await DRSCollection.find({}).toArray()
+        : await KRSCollection.find({}).toArray()
     const stats =
       userType === 'BUSINESS' ? result[0]?.business : result[0]?.consumer
     const distributionItems = createDistributionItems(

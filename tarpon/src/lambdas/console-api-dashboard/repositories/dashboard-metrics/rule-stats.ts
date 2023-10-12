@@ -2,7 +2,7 @@ import { getAffectedInterval } from '../../utils'
 import {
   CASE_GROUP_KEYS,
   CASE_PROJECT_KEYS,
-  DashboardStatsDRSDistributionData,
+  DashboardStatsRiskLevelDistributionData,
   TimeRange,
 } from '../types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
@@ -133,7 +133,7 @@ export class RuleHitsStatsDashboardMetric {
     endTimestamp: number
   ): Promise<DashboardStatsRulesCountData[]> {
     const db = await getMongoDbClientDb()
-    const collection = db.collection<DashboardStatsDRSDistributionData>(
+    const collection = db.collection<DashboardStatsRiskLevelDistributionData>(
       DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
     )
 

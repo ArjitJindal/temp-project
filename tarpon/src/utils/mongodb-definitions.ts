@@ -114,6 +114,10 @@ export const DRS_SCORES_DISTRIBUTION_STATS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-drs-scores-distribution`
 }
 
+export const KRS_SCORES_DISTRIBUTION_STATS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-krs-scores-distribution`
+}
+
 export const IMPORT_COLLECTION = (tenantId: string) => {
   return `${tenantId}-import`
 }

@@ -4,11 +4,10 @@ import { TransactionStatsDashboardMetric } from './dashboard-metrics/transaction
 import { HitsByUserStatsDashboardMetric } from './dashboard-metrics/hits-by-user-stats'
 import { RuleHitsStatsDashboardMetric } from './dashboard-metrics/rule-stats'
 import { TeamStatsDashboardMetric } from './dashboard-metrics/team-stats'
-import { DrsDistributionStatsDashboardMetric } from './dashboard-metrics/drs-distribution-stats'
+import { RiskLevelDistributionStatsDashboardMetric } from './dashboard-metrics/risk-level-distribution-stats'
 import { OverviewStatsDashboardMetric } from './dashboard-metrics/overview-stats'
 import { CaseStatsDashboardMetric } from './dashboard-metrics/case-stats'
-import { DashboardStatsDRSDistributionData as DRSDistributionStats } from '@/@types/openapi-internal/DashboardStatsDRSDistributionData'
-
+import { DashboardStatsRiskLevelDistributionData as RiskLevelDistributionStats } from '@/@types/openapi-internal/DashboardStatsRiskLevelDistributionData'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
@@ -100,13 +99,18 @@ export class DashboardStatsRepository {
     )
   }
 
-  private async recalculateDRSDistributionStats() {
-    await DrsDistributionStatsDashboardMetric.refresh(this.tenantId)
+  private async recalculateRiskLevelDistributionStats() {
+    await RiskLevelDistributionStatsDashboardMetric.refresh(this.tenantId)
   }
-  public async getDRSDistributionStats(
-    userType: 'BUSINESS' | 'CONSUMER'
-  ): Promise<DRSDistributionStats[]> {
-    return DrsDistributionStatsDashboardMetric.get(this.tenantId, userType)
+  public async getRiskLevelDistributionStats(
+    userType: 'BUSINESS' | 'CONSUMER',
+    riskType: 'CRA' | 'KRS'
+  ): Promise<RiskLevelDistributionStats[]> {
+    return RiskLevelDistributionStatsDashboardMetric.get(
+      this.tenantId,
+      userType,
+      riskType
+    )
   }
 
   public async refreshTransactionStats(timestampTimeRange?: TimeRange) {
@@ -138,7 +142,7 @@ export class DashboardStatsRepository {
   }
 
   public async refreshUserStats() {
-    await this.recalculateDRSDistributionStats()
+    await this.recalculateRiskLevelDistributionStats()
   }
 
   public async refreshTeamStats(caseUpdatedAtTimeRange?: TimeRange) {
