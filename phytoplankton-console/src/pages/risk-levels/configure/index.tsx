@@ -14,6 +14,7 @@ import { getOr, isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
+import { Authorized } from '@/components/Authorized';
 
 export default function () {
   const i18n = useI18n();
@@ -66,22 +67,24 @@ export default function () {
         onSimulationModeChange={setIsSimulationEnabled}
         ref={pageWrapperRef}
       >
-        <div style={{ maxWidth: isSimulationEnabled ? '100%' : 800 }}>
-          {!isSimulationEnabled ? (
-            <RiskClassification
-              state={newState}
-              setState={setState}
-              riskValuesRefetch={riskValuesQueryResults.refetch}
-              riskValues={getOr(riskValuesQueryResults.data, [])}
-            />
-          ) : (
-            <SimulateRiskClassification
-              refetchSimulationCount={refetchSimulationCount}
-              riskValuesRefetch={riskValuesQueryResults.refetch}
-              defaultState={newState}
-            />
-          )}
-        </div>
+        <Authorized required={['risk-scoring:risk-levels:read']} showForbiddenPage>
+          <div style={{ maxWidth: isSimulationEnabled ? '100%' : 800 }}>
+            {!isSimulationEnabled ? (
+              <RiskClassification
+                state={newState}
+                setState={setState}
+                riskValuesRefetch={riskValuesQueryResults.refetch}
+                riskValues={getOr(riskValuesQueryResults.data, [])}
+              />
+            ) : (
+              <SimulateRiskClassification
+                refetchSimulationCount={refetchSimulationCount}
+                riskValuesRefetch={riskValuesQueryResults.refetch}
+                defaultState={newState}
+              />
+            )}
+          </div>
+        </Authorized>
       </SimulationPageWrapper>
     </Feature>
   );

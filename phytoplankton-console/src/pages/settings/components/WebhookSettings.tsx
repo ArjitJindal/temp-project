@@ -15,6 +15,7 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { message } from '@/components/library/Message';
 import Drawer from '@/components/library/Drawer';
+import { useHasPermissions } from '@/utils/user-utils';
 
 export const WebhookSettings: React.FC = () => {
   const api = useApi();
@@ -69,6 +70,8 @@ export const WebhookSettings: React.FC = () => {
     [api],
   );
 
+  const isDevelopersWriteEnabled = useHasPermissions(['settings:developers:write']);
+
   const helper = new ColumnHelper<WebhookConfiguration>();
   const columns: TableColumn<WebhookConfiguration>[] = helper.list([
     helper.derived<WebhookConfiguration>({
@@ -121,6 +124,7 @@ export const WebhookSettings: React.FC = () => {
           return (
             <Space style={{ alignItems: 'baseline' }}>
               <Switch
+                disabled={!isDevelopersWriteEnabled}
                 checked={webhook?.enabled ?? false}
                 onChange={(checked) => {
                   if (webhook) {
@@ -162,7 +166,11 @@ export const WebhookSettings: React.FC = () => {
         queryResults={webhooksListResult}
         extraTools={[
           () => (
-            <Button type="PRIMARY" onClick={handleCreateWebhook}>
+            <Button
+              type="PRIMARY"
+              onClick={handleCreateWebhook}
+              requiredPermissions={['settings:developers:write']}
+            >
               <PlusOutlined />
               Add endpoint
             </Button>

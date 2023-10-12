@@ -7,7 +7,7 @@ import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import AlertTable from '../AlertTable';
 import { Case, CasesAssignmentsUpdateRequest, CasesReviewAssignmentsUpdateRequest } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
-import { useAuth0User, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useHasPermissions, useUsers } from '@/utils/user-utils';
 import {
   AllParams,
   DerivedColumn,
@@ -408,7 +408,7 @@ export default function CaseTable(props: Props) {
     showAssignedToFilter && 'assignedTo',
   ]);
   const filters = useCaseAlertFilters(filterIds);
-
+  const exportPermissions = useHasPermissions(['case-management:export:read']);
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
       innerRef={tableRef}
@@ -577,6 +577,11 @@ export default function CaseTable(props: Props) {
       pagination={true}
       fitHeight={true}
       fixedExpandedContainer={true}
+      toolsOptions={{
+        reload: true,
+        download: exportPermissions,
+        setting: true,
+      }}
     />
   );
 }

@@ -25,9 +25,11 @@ import { useI18n } from '@/locales';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
+import { useHasPermissions } from '@/utils/user-utils';
 
 export default function SettingsPage() {
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
+  const isDevelopersReadEnabled = useHasPermissions(['settings:developers:read']);
 
   const { section = 'system' } = useParams<'section'>() as {
     section:
@@ -91,7 +93,11 @@ export default function SettingsPage() {
           <ProfessionalServicesSettings />
           <SanctionsSettings />
         </Tabs.TabPane>
-        <Tabs.TabPane tab={i18n('menu.settings.developers')} key={'developers'}>
+        <Tabs.TabPane
+          tab={i18n('menu.settings.developers')}
+          key={'developers'}
+          disabled={!isDevelopersReadEnabled}
+        >
           <ApiKeysSettings />
           <QuotaSettings />
           <WebhookSettings />

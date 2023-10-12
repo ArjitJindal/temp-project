@@ -93,7 +93,14 @@ const TableList: React.FC = () => {
           columns={columns}
           params={params}
           onChangeParams={setParams}
-          extraTools={[() => <FileImportButton type={'TRANSACTION'} />]}
+          extraTools={[
+            () => (
+              <FileImportButton
+                type={'TRANSACTION'}
+                requiredPermissions={['transactions:import:write']}
+              />
+            ),
+          ]}
           fitHeight
         />
       </PageWrapperContentContainer>

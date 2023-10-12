@@ -58,6 +58,7 @@ const columns: TableColumn<TableItem>[] = helper.list([
             (savedLevelToAlias.get(item.level) || '') === (newLevelToAlias.get(item.level) || '')
           }
           isLoading={item.level === savingLevel}
+          requiredPermissions={['settings:organisation:write']}
         >
           Update
         </Button>

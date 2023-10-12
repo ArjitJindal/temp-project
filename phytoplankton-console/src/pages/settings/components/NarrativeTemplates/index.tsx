@@ -85,6 +85,7 @@ const NarrativeTemplates = () => {
                       onClick={() => setIsDrawerVisible(true)}
                       icon={<AddLineIcon />}
                       style={{ height: '100%' }}
+                      requiredPermissions={['settings:organisation:write']}
                     >
                       Create template
                     </Button>
@@ -114,6 +115,7 @@ const NarrativeTemplates = () => {
                       size="MEDIUM"
                       onClick={() => setIsDrawerVisible(true)}
                       icon={<AddLineIcon />}
+                      requiredPermissions={['settings:organisation:write']}
                     >
                       Create template
                     </Button>
@@ -160,6 +162,7 @@ const NarrativeTemplates = () => {
                             setEditableNarrative(entity.id);
                             setIsDrawerVisible(true);
                           }}
+                          requiredPermissions={['settings:organisation:write']}
                         >
                           Edit
                         </Button>
@@ -177,6 +180,7 @@ const NarrativeTemplates = () => {
                               type="TETRIARY"
                               icon={<DeleteLineIcon />}
                               onClick={onClick}
+                              requiredPermissions={['settings:organisation:write']}
                             >
                               Delete
                             </Button>

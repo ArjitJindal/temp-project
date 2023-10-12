@@ -5,6 +5,8 @@ import { Placement } from '@ant-design/pro-form/lib/interface';
 import s from './index.module.less';
 import ArrowDownFilled from '@/components/ui/icons/Remix/system/arrow-down-s-fill.react.svg';
 import ArrowDownLine from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
+import { Permission } from '@/apis';
+import { useHasPermissions } from '@/utils/user-utils';
 
 export interface DropdownOption<T extends string | number | boolean = string> {
   value: T;
@@ -23,6 +25,7 @@ interface Props<T extends string | number = string> {
   optionClassName?: string;
   bordered?: boolean;
   minWidth?: number;
+  writePermissions?: Permission[];
 }
 
 export default function Dropdown<T extends string | number = string>(props: Props<T>): JSX.Element {
@@ -37,7 +40,10 @@ export default function Dropdown<T extends string | number = string>(props: Prop
     optionClassName,
     bordered,
     minWidth,
+    writePermissions = [],
   } = props;
+
+  const hasUserPermissions = useHasPermissions(writePermissions);
 
   const menu = (
     <AntMenu
@@ -47,6 +53,7 @@ export default function Dropdown<T extends string | number = string>(props: Prop
           onSelect?.(option);
         }
       }}
+      disabled={!hasUserPermissions}
     >
       {options.map((option) => (
         <AntMenu.Item

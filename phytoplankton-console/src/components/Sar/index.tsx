@@ -60,6 +60,7 @@ export function SarButton({
         onClick={() => setIsModalVisible(true)}
         isDisabled={isDisabled}
         testName="sar-button"
+        requiredPermissions={['case-management:case-details:write']}
       >
         Generate report
       </Button>
@@ -76,6 +77,7 @@ export function SarButton({
             draft.mutate(reportTypeId);
           }
         }}
+        writePermissions={['case-management:case-details:write']}
       >
         <AsyncResourceRenderer<ReportTypesResponse> resource={queryResult.data}>
           {(result) => (

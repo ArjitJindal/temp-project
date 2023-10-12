@@ -5,7 +5,7 @@ import { message } from '@/components/library/Message';
 import { Assignment, Case, CaseStatus } from '@/apis';
 import { useApi } from '@/api';
 import * as Form from '@/components/ui/Form';
-import { useAuth0User } from '@/utils/user-utils';
+import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
@@ -45,7 +45,7 @@ export default function SubHeader(props: Props) {
   );
 
   const queryClient = useQueryClient();
-
+  const hasEditingPermission = useHasPermissions(['case-management:case-overview:write']);
   const updateCaseQueryData = useUpdateCaseQueryData();
   const handleUpdateCaseMutation = useMutation<
     unknown,
@@ -156,7 +156,9 @@ export default function SubHeader(props: Props) {
         <Form.Layout.Label title={'Assigned to'}>
           <AssigneesDropdown
             assignments={assignments ?? []}
-            editing={!(statusInReview(caseItem.caseStatus) || otherStatuses)}
+            editing={
+              !(statusInReview(caseItem.caseStatus) || otherStatuses) && hasEditingPermission
+            }
             onChange={handleUpdateAssignments}
             fixSelectorHeight
           />

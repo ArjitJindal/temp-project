@@ -16,6 +16,7 @@ import RuleConfigurationDrawer, {
 import { Rule } from '@/apis';
 import { useHasPermissions } from '@/utils/user-utils';
 import { SimulationPageWrapper } from '@/components/SimulationPageWrapper';
+import { Authorized } from '@/components/Authorized';
 
 const TableList = () => {
   const { rule = 'rules-library' } = useParams<'rule'>();
@@ -61,26 +62,33 @@ const TableList = () => {
             <PageWrapperContentContainer>
               <PageTabs isPrimary={false}>
                 <Tabs.TabPane tab="My rules" key="my-rules">
-                  <MyRule simulationMode={isSimulationEnabled} />
+                  <Authorized required={['simulator:rules:read']} showForbiddenPage>
+                    <MyRule simulationMode={isSimulationEnabled} />
+                  </Authorized>
                 </Tabs.TabPane>
+
                 <Tabs.TabPane tab="Library" key="rules-library">
-                  <RulesTable
-                    simulationMode={isSimulationEnabled}
-                    onViewRule={(rule) => {
-                      setCurrentRule(rule);
-                      setRuleReadOnly(false);
-                    }}
-                    onEditRule={(rule) => {
-                      setCurrentRule(rule);
-                      setRuleReadOnly(false);
-                    }}
-                  />
+                  <Authorized required={['simulator:rules:read']} showForbiddenPage>
+                    <RulesTable
+                      simulationMode={isSimulationEnabled}
+                      onViewRule={(rule) => {
+                        setCurrentRule(rule);
+                        setRuleReadOnly(false);
+                      }}
+                      onEditRule={(rule) => {
+                        setCurrentRule(rule);
+                        setRuleReadOnly(false);
+                      }}
+                    />
+                  </Authorized>
                 </Tabs.TabPane>
               </PageTabs>
             </PageWrapperContentContainer>
           </Tabs.TabPane>
           <Tabs.TabPane tab="Simulation history" key="simulation-history">
-            <SimulationHistoryTable />
+            <Authorized required={['simulator:rules:read']} showForbiddenPage>
+              <SimulationHistoryTable />
+            </Authorized>
           </Tabs.TabPane>
         </PageTabs>
       ) : (
@@ -94,21 +102,25 @@ const TableList = () => {
         >
           <Tabs.TabPane tab="My rules" key="my-rules">
             <PageWrapperContentContainer>
-              <MyRule />
+              <Authorized required={['rules:my-rules:read']}>
+                <MyRule />
+              </Authorized>
             </PageWrapperContentContainer>
           </Tabs.TabPane>
           <Tabs.TabPane tab="Library" key="rules-library">
             <PageWrapperContentContainer>
-              <RulesTable
-                onViewRule={(rule) => {
-                  setCurrentRule(rule);
-                  setRuleReadOnly(false);
-                }}
-                onEditRule={(rule) => {
-                  setCurrentRule(rule);
-                  setRuleReadOnly(false);
-                }}
-              />
+              <Authorized required={['rules:library:read']}>
+                <RulesTable
+                  onViewRule={(rule) => {
+                    setCurrentRule(rule);
+                    setRuleReadOnly(false);
+                  }}
+                  onEditRule={(rule) => {
+                    setCurrentRule(rule);
+                    setRuleReadOnly(false);
+                  }}
+                />
+              </Authorized>
             </PageWrapperContentContainer>
           </Tabs.TabPane>
         </PageTabs>

@@ -125,7 +125,13 @@ export function ChecklistTemplatesSettings() {
                   text="Please confirm that you want to change the status of this template. This action cannot be undone."
                 >
                   {({ onClick }) => (
-                    <Button size="SMALL" type="TETRIARY" isDisabled={isActive} onClick={onClick}>
+                    <Button
+                      size="SMALL"
+                      type="TETRIARY"
+                      isDisabled={isActive}
+                      onClick={onClick}
+                      requiredPermissions={['settings:organisation:write']}
+                    >
                       {isActive ? 'Active' : 'Draft'}
                     </Button>
                   )}

@@ -145,6 +145,7 @@ export default function UserChangeModal(props: Props) {
             mutation.mutate(formState.values);
           }
         }}
+        writePermissions={['users:user-overview:write']}
       >
         <Form<FormValues>
           initialValues={DEFAULT_INITIAL_VALUES}

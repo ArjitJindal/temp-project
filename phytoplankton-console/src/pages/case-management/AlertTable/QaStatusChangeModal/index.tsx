@@ -88,7 +88,11 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
 
   return (
     <>
-      <Button type="SECONDARY" onClick={onQAStatusChangeClick}>
+      <Button
+        type="SECONDARY"
+        onClick={onQAStatusChangeClick}
+        requiredPermissions={['case-management:qa:write']}
+      >
         QA {displayStatus}
       </Button>
       <Modal
@@ -96,6 +100,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
         isOpen={isOpen}
         onCancel={() => setIsOpen(false)}
         onOk={onSubmit}
+        writePermissions={['case-management:qa:write']}
       >
         <Narrative
           values={formState}

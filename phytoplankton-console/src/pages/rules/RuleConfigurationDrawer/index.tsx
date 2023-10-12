@@ -192,7 +192,9 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
                     title="Rule parameters have not changed. To save the rule, please modify some rule parameters."
                   >
                     <div>
-                      <Button isDisabled={true}>{props.type === 'CREATE' ? 'Done' : 'Save'}</Button>
+                      <Button isDisabled={true} requiredPermissions={['rules:my-rules:write']}>
+                        {props.type === 'CREATE' ? 'Done' : 'Save'}
+                      </Button>
                     </div>
                   </Tooltip>
                 ) : (
@@ -205,6 +207,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
                     onClick={() => {
                       formRef?.current?.submit();
                     }}
+                    requiredPermissions={['rules:my-rules:write']}
                   >
                     {props.type === 'CREATE' ? 'Done' : 'Save'}
                   </Button>
@@ -220,6 +223,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
                   }
                 }}
                 icon={<EditOutlined />}
+                requiredPermissions={['rules:my-rules:write']}
               >
                 Edit
               </Button>
@@ -480,11 +484,16 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
                   }
                 }}
                 isDisabled={isLoading}
+                requiredPermissions={['rules:my-rules:write']}
               >
                 {iterations[activeTabIndex]?.ruleInstance?.id ? 'Update rule' : 'Create rule'}
               </Button>
             ) : (
-              <Button isLoading={startSimulationMutation.isLoading} onClick={handleStartSimulation}>
+              <Button
+                isLoading={startSimulationMutation.isLoading}
+                onClick={handleStartSimulation}
+                requiredPermissions={['simulator:rules:write']}
+              >
                 Run simulation
               </Button>
             )}

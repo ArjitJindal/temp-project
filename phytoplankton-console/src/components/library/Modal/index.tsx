@@ -6,6 +6,7 @@ import s from './style.module.less';
 import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
 import Button, { ButtonProps } from '@/components/library/Button';
 import Tabs, { TabItem } from '@/components/library/Tabs';
+import { Permission } from '@/apis';
 
 export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
@@ -28,6 +29,7 @@ interface Props {
   tabs?: TabItem[];
   children?: React.ReactNode;
   disablePadding?: boolean;
+  writePermissions?: Permission[];
 }
 
 const WIDTH: { [K in ModalWidth]: number | string } = {
@@ -55,6 +57,7 @@ export default function Modal(props: Props) {
     height = 'AUTO',
     tabs = [],
     disablePadding = false,
+    writePermissions = [],
   } = props;
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key);
@@ -110,6 +113,7 @@ export default function Modal(props: Props) {
               onClick={onOk}
               {...okProps}
               testName={`modal-ok`}
+              requiredPermissions={writePermissions}
             >
               {okText ?? 'OK'}
             </Button>

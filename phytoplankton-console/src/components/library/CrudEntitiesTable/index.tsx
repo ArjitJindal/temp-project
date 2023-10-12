@@ -168,6 +168,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
               type="SECONDARY"
               icon={<EditLineIcon />}
               onClick={() => (readOnly ? handleEntityView(entity) : handleEntityEdit(entity))}
+              requiredPermissions={readOnly ? props.readPermissions : props.writePermissions}
             >
               {readOnly ? 'View' : 'Edit'}
             </Button>
@@ -187,6 +188,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
                     icon={<DeleteLineIcon />}
                     onClick={onClick}
                     isDisabled={deletionMutation.isLoading}
+                    requiredPermissions={props.writePermissions}
                   >
                     Delete
                   </Button>
@@ -206,6 +208,8 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     handleEntityView,
     isReadOnly,
     props.entityIdField,
+    props.writePermissions,
+    props.readPermissions,
   ]);
   const formInitialValues = useMemo(() => {
     return Object.fromEntries(
@@ -237,7 +241,11 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
               extraTools={[
                 () =>
                   isReadOnly ? undefined : (
-                    <Button type="PRIMARY" onClick={handleEntityCreation}>
+                    <Button
+                      type="PRIMARY"
+                      onClick={handleEntityCreation}
+                      requiredPermissions={props.writePermissions}
+                    >
                       <PlusOutlined />
                       Create {`${entityName}`}
                     </Button>

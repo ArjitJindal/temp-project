@@ -64,6 +64,7 @@ export const CaseStatusWithDropDown = (props: Props) => {
           onSelect(newStatus.value as CaseStatus);
         }
       }}
+      writePermissions={['case-management:case-overview:write']}
       arrow={'FILLED'}
     >
       <div>

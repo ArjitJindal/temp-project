@@ -6,7 +6,7 @@ import filesize from 'filesize';
 import _ from 'lodash';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
-import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum } from '@/apis';
+import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum, Permission } from '@/apis';
 import { useApi } from '@/api';
 import { sleep } from '@/utils/time-utils';
 import { useAuth0User } from '@/utils/user-utils';
@@ -35,8 +35,13 @@ const FILE_UPLOAD_LIMIT_IN_BYTE = 10240000;
 interface FileImportButtonProps {
   type: ImportRequestTypeEnum;
   buttonText?: string;
+  requiredPermissions: Permission[];
 }
-export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, buttonText }) => {
+export const FileImportButton: React.FC<FileImportButtonProps> = ({
+  type,
+  buttonText,
+  requiredPermissions,
+}) => {
   const [loading, setLoading] = useState(false);
   const [format, setFormat] = useState<ImportRequestFormatEnum>('flagright');
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -98,7 +103,11 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
 
   return (
     <>
-      <Button analyticsName="Import" onClick={() => setIsModalVisible(true)}>
+      <Button
+        analyticsName="Import"
+        onClick={() => setIsModalVisible(true)}
+        requiredPermissions={requiredPermissions}
+      >
         {loading ? <LoadingOutlined /> : <UploadOutlined />}
         {buttonText || 'Import'}
       </Button>
@@ -109,6 +118,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
         onCancel={handleClose}
         okProps={{ isDisabled: !file, isLoading: loading, isDanger: true }}
         onOk={handleImport}
+        writePermissions={requiredPermissions}
       >
         <Select<ImportRequestFormatEnum> value={format} onChange={setFormat}>
           <Select.Option value="flagright">Flagright format (.csv)</Select.Option>

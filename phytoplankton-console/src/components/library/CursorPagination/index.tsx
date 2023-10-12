@@ -69,7 +69,7 @@ export default function CursorPagination(props: Props) {
           disabled={!cursor.hasNext || isDisabled}
           icon={<RightOutlined />}
           data-cy="pagination-next-button"
-        ></Button>
+        />
         <Button
           onClick={() => onFromChange(cursor.fetchLastPage())}
           disabled={!cursor.hasNext || isDisabled}

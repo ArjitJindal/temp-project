@@ -139,7 +139,7 @@ export default function Checklist(props: Props) {
         defaultWidth: 200,
         render(item) {
           return isStatusEditable ? (
-            <Dropdown<string>
+            <Dropdown<ChecklistDoneStatus>
               options={(['DONE', 'NOT_DONE'] as const).map((s) => ({
                 label: humanizeConstant(s),
                 value: s,
@@ -155,6 +155,7 @@ export default function Checklist(props: Props) {
                 }
               }}
               minWidth={150}
+              writePermissions={['case-management:case-overview:write']}
             >
               <div>
                 {humanizeConstant(item.done === 'NOT_STARTED' ? 'SELECT_STATUS' : item.done)}
@@ -200,6 +201,7 @@ export default function Checklist(props: Props) {
                   }
                 }}
                 minWidth={200}
+                writePermissions={['case-management:qa:write']}
               >
                 <div>{label}</div>
               </Dropdown>

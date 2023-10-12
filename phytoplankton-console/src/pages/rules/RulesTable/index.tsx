@@ -136,6 +136,9 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
                 type="PRIMARY"
                 onClick={() => onEditRule(entity)}
                 isDisabled={!canWriteRules}
+                requiredPermissions={
+                  simulationMode ? ['simulator:rules:write'] : ['rules:my-rules:write']
+                }
               >
                 {simulationMode ? 'New simulation' : 'Configure'}
               </Button>

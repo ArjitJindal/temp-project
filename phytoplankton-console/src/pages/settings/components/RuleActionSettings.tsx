@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Button, Input } from 'antd';
+import { Input } from 'antd';
 import SettingsCard from '@/components/library/SettingsCard';
 import Table from '@/components/library/Table';
 import {
@@ -9,6 +9,7 @@ import {
 import { RuleAction, RuleActionAlias } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import Button from '@/components/library/Button';
 
 interface TableItem {
   action: RuleAction;
@@ -60,15 +61,16 @@ const columns: TableColumn<TableItem>[] = columnHelper.list([
       const { newActionToAlias, savingAction, savedActionToAlias, onSaveAlias } = externalState;
       return (
         <Button
-          type="primary"
+          type="PRIMARY"
           onClick={() => onSaveAlias(item.action)}
-          disabled={
+          isDisabled={
             !!savingAction ||
             newActionToAlias.get(item.action) === undefined ||
             (savedActionToAlias.get(item.action) || '') ===
               (newActionToAlias.get(item.action) || '')
           }
-          loading={item.action === savingAction}
+          isLoading={item.action === savingAction}
+          requiredPermissions={['settings:organisation:write']}
         >
           Update
         </Button>

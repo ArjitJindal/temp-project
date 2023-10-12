@@ -30,7 +30,7 @@ import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowR
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAuth0User, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useUsers, useHasPermissions } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { useCaseAlertFilters } from '@/pages/case-management/helpers';
@@ -824,6 +824,9 @@ export default function AlertTable(props: Props) {
       );
     },
   ];
+
+  const exportPermissions = useHasPermissions(['case-management:export:read']);
+
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>
@@ -882,6 +885,11 @@ export default function AlertTable(props: Props) {
             ids.reduce((acc, id) => ({ ...acc, [id]: [] }), prevState),
           );
           setSelectedAlerts(ids);
+        }}
+        toolsOptions={{
+          reload: true,
+          download: exportPermissions,
+          setting: true,
         }}
       />
       <InvestigativeCoPilotModal

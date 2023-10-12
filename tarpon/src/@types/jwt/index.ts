@@ -80,19 +80,23 @@ export function assertPermissions(requiredPermissions: Permission[]) {
     return
   }
 
-  if (requiredPermissions !== undefined) {
-    const missingPermissions = requiredPermissions.filter(
-      (p) => context?.authz?.permissions && !context?.authz?.permissions.has(p)
-    )
+  // should have at least one permission among the required ones
 
-    if (missingPermissions.length > 0) {
-      throw new Forbidden(
-        `Missing required permissions to perform this action: ${missingPermissions.join(
-          ', '
-        )}`
-      )
-    }
+  if (!requiredPermissions?.length) {
     return
+  }
+
+  const userPermissions = context?.authz?.permissions
+
+  const hasPermission = requiredPermissions.some((requiredPermission) =>
+    userPermissions?.has(requiredPermission)
+  )
+  if (!hasPermission) {
+    throw new Forbidden(
+      `You need to have at least one of the following permissions to perform this action: ${requiredPermissions.join(
+        ', '
+      )}`
+    )
   }
 }
 

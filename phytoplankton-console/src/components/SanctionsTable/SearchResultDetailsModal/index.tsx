@@ -55,6 +55,7 @@ export default function SearchResultDetailsModal(props: Props) {
       okText={okText}
       onCancel={onClose}
       onOk={handleDownloadClick}
+      writePermissions={['sanctions:search:read']}
     >
       <div ref={pdfRef}>
         <Card.Section>

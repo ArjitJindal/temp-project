@@ -15,6 +15,7 @@ import CaseDetails from '@/pages/case-management-item/CaseDetails';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
+import { Authorized } from '@/components/Authorized';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
@@ -95,5 +96,9 @@ function CaseManagementItemPage() {
 }
 
 export default function CaseManagementItemPageWrapper() {
-  return <CaseManagementItemPage />;
+  return (
+    <Authorized required={['case-management:case-details:read']} showForbiddenPage>
+      <CaseManagementItemPage />
+    </Authorized>
+  );
 }

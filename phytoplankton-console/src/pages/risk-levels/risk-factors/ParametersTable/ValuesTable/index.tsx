@@ -160,7 +160,7 @@ export default function ValuesTable(props: Props) {
         </div>
         <div className={style.risk}>
           <RiskLevelSwitch
-            isDisabled={loading}
+            isDisabled={loading || !hasWritePermissions}
             value={defaultRiskLevel}
             onChange={(newRiskLevel) => {
               if (newRiskLevel != null) {
@@ -212,7 +212,7 @@ export default function ValuesTable(props: Props) {
               </div>
               <div style={labelExistsStyle(dataType, 'value')}>
                 <RiskLevelSwitch
-                  isDisabled={loading}
+                  isDisabled={loading || !hasWritePermissions}
                   value={riskLevel}
                   onChange={handleChangeRiskLevel}
                 />
@@ -221,7 +221,11 @@ export default function ValuesTable(props: Props) {
                 <Button
                   className={style.deleteButton}
                   type="text"
-                  disabled={loading || (onlyDeleteLast && index !== values.length - 1)}
+                  disabled={
+                    loading ||
+                    (onlyDeleteLast && index !== values.length - 1) ||
+                    !hasWritePermissions
+                  }
                   onClick={handleDeleteKey}
                 >
                   <DeleteFilled />
@@ -246,7 +250,7 @@ export default function ValuesTable(props: Props) {
             <>
               <div style={labelExistsStyle(dataType, 'input')}>
                 <RiskLevelSwitch
-                  isDisabled={loading}
+                  isDisabled={loading || !hasWritePermissions}
                   value={newRiskLevel}
                   onChange={setNewRiskLevel}
                 />
@@ -257,7 +261,8 @@ export default function ValuesTable(props: Props) {
                     loading ||
                     !newValue ||
                     newRiskLevel == null ||
-                    newValueValidationMessage != null
+                    newValueValidationMessage != null ||
+                    !hasWritePermissions
                   }
                   onClick={handleAdd}
                 >

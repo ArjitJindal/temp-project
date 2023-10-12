@@ -96,8 +96,20 @@ const TableList: React.FC = () => {
           onChangeParams={setParams}
           queryResults={filesResult}
           extraTools={[
-            () => <FileImportButton type={'USER'} buttonText="Import (Consumer user)" />,
-            () => <FileImportButton type={'BUSINESS'} buttonText="Import (Business user)" />,
+            () => (
+              <FileImportButton
+                type={'USER'}
+                buttonText="Import (Consumer user)"
+                requiredPermissions={['users:import:write']}
+              />
+            ),
+            () => (
+              <FileImportButton
+                type={'BUSINESS'}
+                buttonText="Import (Business user)"
+                requiredPermissions={['users:import:write']}
+              />
+            ),
           ]}
           fitHeight
         />

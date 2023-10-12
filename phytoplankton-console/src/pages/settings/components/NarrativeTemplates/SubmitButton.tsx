@@ -18,6 +18,7 @@ const SubmitButton = (props: SubmitButtonProps) => {
         style={{ width: '100%' }}
         icon={!isEditDrawer ? <AddLineIcon /> : undefined}
         onClick={() => submitRef.current?.click()}
+        requiredPermissions={['settings:organisation:write']}
       >
         {isEditDrawer ? 'Save' : 'Create'} template
       </Button>

@@ -8,6 +8,7 @@ import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
+import { Authorized } from '@/components/Authorized';
 
 export default function () {
   const { section = 'team' } = useParams<'section'>() as {
@@ -25,10 +26,14 @@ export default function () {
         }}
       >
         <Tabs.TabPane tab={sentenceCase(i18n('menu.accounts.team'))} key={'team'}>
-          <Team />
+          <Authorized required={['settings:organisation:read']} showForbiddenPage>
+            <Team />
+          </Authorized>
         </Tabs.TabPane>
         <Tabs.TabPane tab={sentenceCase(i18n('menu.accounts.roles'))} key={'roles'}>
-          <Roles />
+          <Authorized required={['settings:organisation:read']} showForbiddenPage>
+            <Roles />
+          </Authorized>
         </Tabs.TabPane>
       </PageTabs>
     </PageWrapper>

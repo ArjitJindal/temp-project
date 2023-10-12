@@ -54,6 +54,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { SelectionInfo } from '@/components/library/Table';
 import { dayjs } from '@/utils/dayjs';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
+import { useHasPermissions } from '@/utils/user-utils';
 
 const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<PaymentDetails> => ({
   stringify: (value) => {
@@ -410,6 +411,8 @@ export default function TransactionsTable(props: Props) {
   ];
 
   const settings = useSettings();
+  const isTransactionsDownloadEnabled = useHasPermissions(['transactions:export:read']);
+
   return (
     <QueryResultsTable<InternalTransaction, TransactionsTableParams>
       innerRef={tableRef}
@@ -473,6 +476,11 @@ export default function TransactionsTable(props: Props) {
         ),
       ]}
       rowHeightMode={showDetailsView ? 'AUTO' : 'FIXED'}
+      toolsOptions={{
+        download: isTransactionsDownloadEnabled,
+        reload: true,
+        setting: true,
+      }}
     />
   );
 }

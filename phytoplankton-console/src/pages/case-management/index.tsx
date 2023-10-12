@@ -16,7 +16,6 @@ import ScopeSelector, {
   ScopeSelectorValue,
 } from '@/pages/case-management/components/ScopeSelector';
 import StatusButtons from '@/pages/case-management/components/StatusButtons';
-import { useAuth0User } from '@/utils/user-utils';
 import PaymentApprovalsTable from '@/pages/case-management/PaymentApprovalTable';
 import Toggle from '@/components/library/Toggle';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -25,13 +24,13 @@ import QaTable from '@/pages/case-management/QaTable';
 import { useQaMode } from '@/utils/qa-mode';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
+import { Authorized } from '@/components/Authorized';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
   useCloseSidebarByDefault();
   const [qaMode, setQaMode] = useQaMode();
   const hasQaEnabled = useFeatureEnabled('QA');
-  const user = useAuth0User();
   const navigate = useNavigate();
   const parsedParams = queryAdapter.deserializer({
     showCases: qaMode ? 'QA_UNCHECKED_ALERTS' : 'ALL',
@@ -134,64 +133,81 @@ export default function CaseManagementPage() {
           />
           {qaMode || <StatusButtons params={params} onChangeParams={handleChangeParams} />}
         </div>
-        {getTable(user.userId, params, handleChangeParams)}
+        {getTable(params, handleChangeParams)}
       </PageWrapperContentContainer>
     </PageWrapper>
   );
 }
 
 function getTable(
-  userId: string,
   params: AllParams<TableSearchParams>,
   handleChangeParams: (newParams: AllParams<TableSearchParams>) => void,
 ) {
   switch (params.showCases) {
     case 'MY_ALERTS':
       return (
-        <AlertTable
-          hideAlertStatusFilters={true}
-          escalatedTransactionIds={[]}
-          params={params}
-          onChangeParams={handleChangeParams}
-          showAssignedToFilter={false}
-          showUserFilters
-        />
+        <Authorized required={['case-management:case-overview:read']} showForbiddenPage>
+          <AlertTable
+            hideAlertStatusFilters={true}
+            escalatedTransactionIds={[]}
+            params={params}
+            onChangeParams={handleChangeParams}
+            showAssignedToFilter={false}
+            showUserFilters
+          />
+        </Authorized>
       );
     case 'ALL_ALERTS':
       return (
-        <AlertTable
-          hideAlertStatusFilters={true}
-          escalatedTransactionIds={[]}
-          params={params}
-          onChangeParams={handleChangeParams}
-          showUserFilters
-        />
+        <Authorized required={['case-management:case-overview:read']} showForbiddenPage>
+          <AlertTable
+            hideAlertStatusFilters={true}
+            escalatedTransactionIds={[]}
+            params={params}
+            onChangeParams={handleChangeParams}
+            showUserFilters
+          />
+        </Authorized>
       );
     case 'MY':
     case 'ALL':
-      return <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />;
+      return (
+        <Authorized required={['case-management:case-overview:read']} showForbiddenPage>
+          <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />
+        </Authorized>
+      );
     case 'PAYMENT_APPROVALS':
-      return <PaymentApprovalsTable filterStatus={params.status} />;
+      return (
+        <Authorized required={['transactions:details:read']} showForbiddenPage>
+          <PaymentApprovalsTable filterStatus={params.status} />
+        </Authorized>
+      );
     case 'QA_UNCHECKED_ALERTS':
       return (
-        <QaTable
-          params={{ ...params, alertStatus: 'CLOSED' }}
-          onChangeParams={handleChangeParams}
-        />
+        <Authorized required={['case-management:qa:read']} showForbiddenPage>
+          <QaTable
+            params={{ ...params, alertStatus: 'CLOSED' }}
+            onChangeParams={handleChangeParams}
+          />
+        </Authorized>
       );
     case 'QA_PASSED_ALERTS':
       return (
-        <QaTable
-          params={{ ...params, filterQaStatus: ['PASSED'], alertStatus: 'CLOSED' }}
-          onChangeParams={handleChangeParams}
-        />
+        <Authorized required={['case-management:qa:read']} showForbiddenPage>
+          <QaTable
+            params={{ ...params, filterQaStatus: ['PASSED'], alertStatus: 'CLOSED' }}
+            onChangeParams={handleChangeParams}
+          />
+        </Authorized>
       );
     case 'QA_FAILED_ALERTS':
       return (
-        <QaTable
-          params={{ ...params, filterQaStatus: ['FAILED'], alertStatus: 'CLOSED' }}
-          onChangeParams={handleChangeParams}
-        />
+        <Authorized required={['case-management:qa:read']} showForbiddenPage>
+          <QaTable
+            params={{ ...params, filterQaStatus: ['FAILED'], alertStatus: 'CLOSED' }}
+            onChangeParams={handleChangeParams}
+          />
+        </Authorized>
       );
   }
 }

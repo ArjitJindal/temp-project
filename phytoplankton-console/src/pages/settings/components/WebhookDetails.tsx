@@ -109,6 +109,7 @@ export const WebhookDetails: React.FC<Props> = ({
             size="SMALL"
             onClick={() => handleSaveWebhook({ ...webhook, webhookUrl, events })}
             isDisabled={!canSave}
+            requiredPermissions={['settings:developers:write']}
           >
             Save
           </Button>
@@ -119,6 +120,7 @@ export const WebhookDetails: React.FC<Props> = ({
               onClick={() => handleDeleteWebhook(webhook)}
               size="SMALL"
               type="TETRIARY"
+              requiredPermissions={['settings:developers:write']}
             >
               Delete
             </Button>

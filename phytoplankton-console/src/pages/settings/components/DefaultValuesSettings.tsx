@@ -74,6 +74,7 @@ const columns = columnHelper.list([
             onSave(record.valueType, value[record.valueType]);
           }}
           isLoading={saving}
+          requiredPermissions={['settings:organisation:write']}
         >
           Save
         </Button>

@@ -75,7 +75,11 @@ export function useRoutes(): RouteItem[] {
         icon: 'case-management',
         position: 'top',
         hideChildrenInMenu: true,
-        permissions: ['case-management:case-overview:read'],
+        permissions: [
+          'case-management:case-overview:read',
+          'case-management:qa:read',
+          'transactions:overview:read',
+        ],
         routes: [
           {
             path: '/case-management/case/:id',
@@ -92,11 +96,21 @@ export function useRoutes(): RouteItem[] {
           {
             path: '/case-management',
             redirect: '/case-management/cases',
+            permissions: [
+              'case-management:case-overview:read',
+              'case-management:qa:read',
+              'transactions:overview:read',
+            ],
           },
           {
             path: '/case-management/cases',
             component: CaseManagementPage,
             name: 'list',
+            permissions: [
+              'case-management:case-overview:read',
+              'case-management:qa:read',
+              'transactions:overview:read',
+            ],
           },
         ],
       },
@@ -191,6 +205,7 @@ export function useRoutes(): RouteItem[] {
         name: 'rules',
         icon: 'rules',
         hideChildrenInMenu: true,
+        permissions: ['rules:library:read'],
         position: 'top',
         routes: [
           {
@@ -229,10 +244,16 @@ export function useRoutes(): RouteItem[] {
         icon: 'risk-scoring',
         name: 'risk-levels',
         position: 'top',
+        permissions: [
+          'risk-scoring:risk-factors:read',
+          'risk-scoring:risk-levels:read',
+          'risk-scoring:risk-algorithms:read',
+        ],
         routes: [
           {
             path: '/risk-levels',
             redirect: '/risk-levels/risk-factors',
+            permissions: ['risk-scoring:risk-factors:read'],
           },
           {
             name: 'risk-factors',
@@ -266,10 +287,12 @@ export function useRoutes(): RouteItem[] {
         name: 'import',
         icon: 'import',
         position: 'top',
+        permissions: ['users:import:write', 'transactions:import:write'],
         routes: [
           {
             path: '/import',
             redirect: '/import/import-users',
+            permissions: ['users:import:write'],
           },
           {
             name: 'import-users',
@@ -297,15 +320,18 @@ export function useRoutes(): RouteItem[] {
             path: '/lists/:type',
             name: 'lists-type',
             component: CreatedListsPage,
+            permissions: ['lists:all:read'],
           },
           {
             path: '/lists/:type/:id',
             name: 'lists-item',
             component: ListsItemPage,
+            permissions: ['lists:all:read'],
           },
           {
             path: '/lists',
             redirect: lastActiveList === 'whitelist' ? '/lists/whitelist' : '/lists/blacklist',
+            permissions: ['lists:all:read'],
           },
         ],
       },
@@ -362,11 +388,13 @@ export function useRoutes(): RouteItem[] {
           {
             path: '/settings',
             redirect: '/settings/system',
+            permissions: ['settings:organisation:read'],
           },
           {
             path: '/settings/:section',
             name: 'settings-section',
             component: SettingsPage,
+            permissions: ['settings:organisation:read'],
           },
         ],
       },
@@ -392,6 +420,7 @@ export function useRoutes(): RouteItem[] {
       {
         path: '/',
         redirect: '/dashboard/analysis',
+        permissions: ['dashboard:download-data:read'],
       },
       {
         name: '404',
@@ -424,7 +453,8 @@ function disableForbiddenRoutes(r: RouteItem, permissions?: Map<Permission, bool
   if (!(isLeaf(r) || isTree(r))) {
     return r;
   }
-  if (r.permissions && r.permissions.filter((required) => !permissions?.has(required)).length > 0) {
+  const hasAnyOnePermission = r.permissions?.some((p) => permissions?.get(p));
+  if (r.permissions && !hasAnyOnePermission) {
     r.disabled = true;
     if (isLeaf(r)) {
       r.component = ForbiddenPage;

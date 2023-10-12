@@ -53,6 +53,9 @@ paths:
     post:
       summary: Rules - Create
       operationId: post-rules
+      x-flagright:
+        permissions:
+          - rules:my-rules:write
       responses:
         '200':
           description: OK
@@ -99,6 +102,9 @@ paths:
     put:
       summary: Rule - Update
       operationId: put-rule-ruleId
+      x-flagright:
+        permissions:
+          - rules:my-rules:write
       responses:
         '200':
           description: OK
@@ -111,6 +117,9 @@ paths:
     delete:
       summary: Rule - Delete
       operationId: delete-rules-ruleId
+      x-flagright:
+        permissions:
+          - rules:my-rules:write
       responses:
         '200':
           description: OK
@@ -210,6 +219,10 @@ paths:
       responses:
         '200':
           description: OK
+      x-flagright:
+        permissions:
+          - users:import:write
+          - transactions:import:write
       requestBody:
         content:
           application/json:
@@ -726,7 +739,6 @@ paths:
       x-flagright:
         permissions:
           - transactions:overview:read
-          - transactions:details:read
       parameters:
         - schema:
             $ref: '#/components/schemas/TransactionsUniquesField'
@@ -760,7 +772,6 @@ paths:
       operationId: get-transaction
       x-flagright:
         permissions:
-          - transactions:overview:read
           - transactions:details:read
       responses:
         '200':
@@ -1051,6 +1062,9 @@ paths:
   '/users/{userId}/crm':
     get:
       summary: CRM Account - List
+      x-flagright:
+        permissions:
+          - users:user-overview:read
       responses:
         '200':
           description: OK
@@ -1114,6 +1128,9 @@ paths:
   '/users/{userId}/screening-status':
     get:
       summary: Screening Status
+      x-flagright:
+        permissions:
+          - users:user-overview:read
       responses:
         '200':
           description: OK
@@ -1346,6 +1363,10 @@ paths:
     post:
       summary: Generate an AI narrative
       operationId: generate-narrative
+      x-flagright:
+        permissions:
+          - users:user-overview:write
+          - case-management:case-overview:write
       responses:
         '200':
           description: OK
@@ -1363,6 +1384,10 @@ paths:
     post:
       summary: Format AI narrative
       operationId: format-narrative
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+          - case-management:case-overview:read
       responses:
         '200':
           description: OK
@@ -1380,6 +1405,10 @@ paths:
     get:
       summary: Get an AI sources
       operationId: get-ai-sources
+      x-flagright:
+        permissions:
+          - users:user-overview:write
+          - case-management:case-overview:write
       responses:
         '200':
           description: OK
@@ -1659,6 +1688,9 @@ paths:
     post:
       summary: Merchant Monitoring Scrape
       operationId: post-merchant-scrape
+      x-flagright:
+        permissions:
+          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -1676,6 +1708,9 @@ paths:
     post:
       summary: Merchant Monitoring
       operationId: post-merchant-history
+      x-flagright:
+        permissions:
+          - users:user-overview:read
       responses:
         '200':
           description: OK
@@ -2354,6 +2389,9 @@ paths:
               $ref: '#/components/schemas/AccountInvitePayload'
         required: true
       operationId: accounts-invite
+      x-flagright:
+        permissions:
+          - settings:organisation:write
     get:
       summary: Account - List
       tags: []
@@ -2367,6 +2405,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/Account'
       operationId: get-accounts
+      x-flagright:
+        permissions:
+          - settings:organisation:read
   /pulse/risk-classification:
     get:
       summary: Risk classification - GET
@@ -2837,6 +2878,9 @@ paths:
       responses:
         '200':
           description: OK
+      x-flagright:
+        permissions:
+          - transactions:overview:write
       requestBody:
         required: true
         content:
@@ -2933,6 +2977,10 @@ paths:
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
+          - transactions:overview:read
       responses:
         '200':
           description: OK
@@ -3312,7 +3360,7 @@ paths:
           description: OK
       x-flagright:
         permissions:
-          - case-management:case-details:write
+          - case-management:case-overview:write
       requestBody:
         content:
           application/json:
@@ -3688,7 +3736,7 @@ paths:
       operationId: post-cases-manual
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - case-management:case-details:write
       responses:
         '200':
           description: OK
@@ -3707,7 +3755,7 @@ paths:
       operationId: patch-cases-manual
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - case-management:case-details:write
       responses:
         '200':
           description: OK
@@ -4226,6 +4274,7 @@ paths:
       x-flagright:
         permissions:
           - simulator:rules:write
+          - simulator:risk-scoring:write
       responses:
         '200':
           description: OK
@@ -4247,6 +4296,7 @@ paths:
       x-flagright:
         permissions:
           - simulator:rules:read
+          - simulator:risk-scoring:read
       responses:
         '200':
           description: OK
@@ -4290,6 +4340,7 @@ paths:
       x-flagright:
         permissions:
           - simulator:rules:read
+          - simulator:risk-scoring:read
       responses:
         '200':
           description: OK
@@ -4313,6 +4364,7 @@ paths:
       x-flagright:
         permissions:
           - simulator:rules:read
+          - simulator:risk-scoring:read
       responses:
         '200':
           description: OK
@@ -4350,6 +4402,7 @@ paths:
       x-flagright:
         permissions:
           - simulator:rules:read
+          - simulator:risk-scoring:read
       responses:
         '200':
           description: OK
@@ -4408,7 +4461,7 @@ paths:
       operationId: get-narratives
       x-flagright:
         permissions:
-          - case-management:case-overview:read
+          - settings:organisation:read
       responses:
         '200':
           description: OK
@@ -4432,7 +4485,7 @@ paths:
       operationId: post-narrative-template
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - settings:organisation:write
       responses:
         '200':
           description: OK
@@ -4452,7 +4505,7 @@ paths:
       operationId: get-narrative-template
       x-flagright:
         permissions:
-          - case-management:case-overview:read
+          - settings:organisation:read
       responses:
         '200':
           description: OK
@@ -4471,7 +4524,7 @@ paths:
       operationId: put-narrative-template
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - settings:organisation:write
       responses:
         '200':
           description: OK
@@ -4496,7 +4549,7 @@ paths:
       operationId: delete-narrative-template
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - settings:organisation:write
       responses:
         '200':
           description: OK
@@ -4889,6 +4942,9 @@ paths:
   /questions/autocomplete:
     get:
       summary: Get question autocompletion
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
       responses:
         '200':
           description: OK
@@ -4906,6 +4962,9 @@ paths:
   '/questions/{questionId}/{variableKey}/autocomplete':
     get:
       summary: Get question variable autocompletion
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
       responses:
         '200':
           description: OK
@@ -4934,6 +4993,9 @@ paths:
     get:
       summary: Get questions
       operationId: get-questions
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
       parameters:
         - schema:
             type: string
@@ -4963,6 +5025,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/QuestionResponse'
       operationId: post-question
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
       description: ''
       parameters:
         - schema:
@@ -7149,7 +7214,6 @@ components:
         - transactions:overview:read
         - transactions:overview:write
         - transactions:details:read
-        - transactions:details:write
         - transactions:export:read
         - transactions:import:write
         - audit-log:export:read
