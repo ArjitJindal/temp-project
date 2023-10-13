@@ -64,6 +64,7 @@ export default function PopupContent(props: Props) {
     <div className={s.root}>
       <div className={s.header}>
         <Input
+          autoFocus
           suffix={search === '' && <SearchLineIcon className={s.searchIcon} />}
           placeholder="Search user name or ID"
           value={search}

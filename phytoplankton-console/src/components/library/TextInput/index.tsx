@@ -13,7 +13,6 @@ export interface Props extends InputProps<string> {
   htmlAttrs?: InputHTMLAttributes<HTMLInputElement>;
   onArrowUp?: () => void;
   onArrowDown?: () => void;
-
   testName?: string;
 }
 
@@ -36,12 +35,12 @@ export default function TextInput(props: Props) {
 
   const ref = useRef<HTMLInputElement>(null);
   usePreventWheelEvent(ref, props);
-
   return (
     <div className={s.root}>
       <input
         {...htmlAttrs}
         ref={ref}
+        autoFocus
         placeholder={placeholder}
         className={cn(s.input, s[`size-${size}`], isError && s.isError)}
         disabled={isDisabled}
