@@ -1042,6 +1042,17 @@ export class CaseRepository {
     )
   }
 
+  public async getCaseByAlertId(
+    alertId: string
+  ): Promise<CaseWithoutCaseTransactions | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return await collection.findOne<Case>(
+      { 'alerts.alertId': alertId },
+      { projection: { caseTransactions: 0 } }
+    )
+  }
+
   public async getCasesByAlertIds(
     alertIds: string[]
   ): Promise<CaseWithoutCaseTransactions[]> {

@@ -13,6 +13,7 @@ import {
 export const CaseHistory: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Cases',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }, vars) => {
     return `Cases for ${username} ${humanReadablePeriod(vars)}`
   },

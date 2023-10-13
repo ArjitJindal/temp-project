@@ -13,6 +13,7 @@ import { queryUsername } from '@/services/copilot/questions/definitions/util'
 export const Directors: TableQuestion<{ userId: string }> = {
   type: 'TABLE',
   questionId: 'Directors',
+  categories: ['BUSINESS'],
   title: async (_, { userId }) => {
     return `Directors for ${await queryUsername(userId)}`
   },

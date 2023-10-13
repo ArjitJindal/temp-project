@@ -7,6 +7,7 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 export const KycScoring: TableQuestion<{ userId: string }> = {
   type: 'TABLE',
   questionId: 'KYC Scoring',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ userId }) => {
     return `KYC risk score (KRS) for ${await queryUsername(userId)}`
   },

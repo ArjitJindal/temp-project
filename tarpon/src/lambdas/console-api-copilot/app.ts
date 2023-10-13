@@ -22,11 +22,13 @@ export const copilotHandler = lambdaApi({})(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const [caseService, userService, txnRepository] = await Promise.all([
-      CaseService.fromEvent(event),
-      UserService.fromEvent(event),
-      MongoDbTransactionRepository.fromEvent(event),
-    ])
+    const [caseService, alertsService, userService, txnRepository] =
+      await Promise.all([
+        CaseService.fromEvent(event),
+        AlertsService.fromEvent(event),
+        UserService.fromEvent(event),
+        MongoDbTransactionRepository.fromEvent(event),
+      ])
 
     const handlers = new Handlers()
 
@@ -92,9 +94,7 @@ export const copilotHandler = lambdaApi({})(
 
     handlers.registerGetQuestions(async (_ctx, request) => {
       const questionService = await QuestionService.fromEvent(event)
-      const caseService = await CaseService.fromEvent(event)
-      const alertService = await AlertsService.fromEvent(event)
-      const alert = await alertService.getAlert(request.alertId)
+      const alert = await alertsService.getAlert(request.alertId)
       if (!alert?.caseId) {
         throw new Error(`Alert ${alert?.alertId} has no case ID`)
       }
@@ -132,8 +132,9 @@ export const copilotHandler = lambdaApi({})(
 
     handlers.registerGetQuestionAutocomplete(async (ctx, request) => {
       const autocomplete = new AutocompleteService()
+      const c = await caseService.getCaseByAlertId(request.alertId)
       return {
-        suggestions: autocomplete.autocomplete(request.question || ''),
+        suggestions: autocomplete.autocomplete(request.question || '', c),
       }
     })
 

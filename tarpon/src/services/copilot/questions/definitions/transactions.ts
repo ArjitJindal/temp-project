@@ -15,6 +15,7 @@ import {
 export const Transactions: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Transactions',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async (ctx, vars) => {
     return `Transactions ${humanReadablePeriod(vars)}`
   },

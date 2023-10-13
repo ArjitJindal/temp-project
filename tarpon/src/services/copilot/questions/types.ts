@@ -39,12 +39,15 @@ export type InvestigationContext = {
   accountService: AccountsService
 }
 
+export type QuestionCategory = 'BUSINESS' | 'CONSUMER'
+
 export type Question<V extends Variables> = {
   questionId: string
   title?: (ctx: InvestigationContext, variables: V) => Promise<string>
   explainer?: string
   variableOptions: VariableOptions<V>
   defaults: (ctx: InvestigationContext) => V
+  categories: QuestionCategory[]
 }
 
 export type AggregationQuestion<V extends Variables, D> = Question<any> & {

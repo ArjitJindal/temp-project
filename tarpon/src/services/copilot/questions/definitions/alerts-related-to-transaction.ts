@@ -22,6 +22,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
 > = {
   type: 'TABLE',
   questionId: 'Alerts related to transaction',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Alerts related to transaction ${
       vars.transactionId

@@ -13,6 +13,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 export const TransactionType: BarchartQuestion<Period> = {
   type: 'BARCHART',
   questionId: 'Transactions by type',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Transactions by type ${humanReadablePeriod(vars)}`
   },

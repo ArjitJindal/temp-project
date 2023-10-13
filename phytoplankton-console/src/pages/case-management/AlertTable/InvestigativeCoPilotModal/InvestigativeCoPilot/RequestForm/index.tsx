@@ -21,10 +21,11 @@ export type FormValues = {
 interface Props {
   mutation: UseMutationResult<unknown, unknown, FormValues>;
   history: QuestionResponse[];
+  alertId: string;
 }
 
 export default function RequestForm(props: Props) {
-  const { mutation, history } = props;
+  const { mutation, history, alertId } = props;
   const mutationRes = getMutationAsyncResource(mutation);
 
   const [showMore, setShowMore] = useState<boolean>(false);
@@ -38,6 +39,7 @@ export default function RequestForm(props: Props) {
     async () => {
       const response = await api.getQuestionAutocomplete({
         question: debouncedSearch,
+        alertId,
       });
       return response.suggestions ?? [];
     },
