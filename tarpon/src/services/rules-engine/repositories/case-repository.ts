@@ -571,6 +571,14 @@ export class CaseRepository {
       })
     }
 
+    if (params.filterRuleNature && params.filterRuleNature.length > 0) {
+      conditions.push({
+        'alerts.ruleNature': {
+          $in: params.filterRuleNature,
+        },
+      })
+    }
+
     conditions.push({
       $or: [
         {
@@ -707,6 +715,7 @@ export class CaseRepository {
   ): Promise<AggregationCursor<Case>> {
     const { preLimitPipeline, postLimitPipeline } =
       await this.getCasesMongoPipeline(params, options)
+
     postLimitPipeline.push(...paginatePipeline(params))
     return this.getDenormalizedCases(preLimitPipeline.concat(postLimitPipeline))
   }

@@ -405,6 +405,7 @@ export default function CaseTable(props: Props) {
     'businessIndustryFilter',
     'riskLevels',
     'ruleQueueIds',
+    'ruleNature',
     showAssignedToFilter && 'assignedTo',
   ]);
   const filters = useCaseAlertFilters(filterIds);

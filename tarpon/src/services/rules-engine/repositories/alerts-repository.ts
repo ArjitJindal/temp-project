@@ -62,19 +62,22 @@ export class AlertsRepository {
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
     const pipeline = await this.getAlertsPipeline(params, false)
+    const countPipelineResp = await this.getAlertsPipeline(params, true)
+
+    pipeline.push(...paginatePipeline(params))
 
     const itemsPipeline = [...pipeline]
-    itemsPipeline.push(...paginatePipeline(params))
-    const cursor = collection.aggregate<AlertListResponseItem>(itemsPipeline)
-    const itemsPromise = cursor.toArray()
-    const countPipelineResp = await this.getAlertsPipeline(params, true)
     const countPipeline = [...countPipelineResp]
+
     countPipeline.push({
       $limit: COUNT_QUERY_LIMIT,
     })
     countPipeline.push({
       $count: 'count',
     })
+
+    const cursor = collection.aggregate<AlertListResponseItem>(itemsPipeline)
+    const itemsPromise = cursor.toArray()
     const countPromise = collection
       .aggregate<{ count: number }>(countPipeline)
       .next()
@@ -308,6 +311,14 @@ export class AlertsRepository {
     if (params.filterAlertStatus && params.filterAlertStatus.length > 0) {
       conditions.push({
         'alerts.alertStatus': { $in: params.filterAlertStatus },
+      })
+    }
+
+    if (params.filterRuleNature && params.filterRuleNature.length > 0) {
+      conditions.push({
+        'alerts.ruleNature': {
+          $in: params.filterRuleNature,
+        },
       })
     }
 

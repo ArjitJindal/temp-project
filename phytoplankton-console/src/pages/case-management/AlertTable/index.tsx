@@ -559,6 +559,7 @@ export default function AlertTable(props: Props) {
     showAssignedToFilter && 'assignedTo',
     'originMethodFilterId',
     'destinationMethodFilterId',
+    'ruleNature',
   ]);
   const filters = useCaseAlertFilters(filterIds);
 

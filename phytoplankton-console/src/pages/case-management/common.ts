@@ -43,6 +43,7 @@ export function useAlertQuery(
       updatedAt,
       filterClosingReason,
       ruleQueueIds,
+      ruleNature,
     } = params;
     const [sortField, sortOrder] = sort[0] ?? [];
     const preparedParams: DefaultApiGetAlertListRequest = {
@@ -96,6 +97,7 @@ export function useAlertQuery(
         : {}),
       filterClosingReason,
       filterAlertPriority: params.alertPriority,
+      filterRuleNature: ruleNature,
     };
     const result = await api.getAlertList(
       Object.entries(preparedParams).reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),

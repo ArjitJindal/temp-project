@@ -23,6 +23,7 @@ import { humanizeConstant } from '@/utils/humanize';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useRuleQueues } from '@/components/rules/util';
+import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -66,6 +67,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       filterClosingReason: params['filterClosingReason']?.join(','),
       alertPriority: params.alertPriority?.join(','),
       ruleQueueIds: params.ruleQueueIds?.join(','),
+      ruleNature: params.ruleNature?.join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -127,6 +129,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
         ',',
       ) as unknown as TableSearchParams['alertPriority'],
       ruleQueueIds: raw.ruleQueueIds?.split(','),
+      ruleNature: raw.ruleNature?.split(','),
     };
   },
 };
@@ -305,6 +308,17 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
         options: [{ value: 'default', label: 'default' }].concat(
           ruleQueues.map((v) => ({ value: v.id!, label: v.name })),
         ),
+      },
+      showFilterByDefault: true,
+    },
+    {
+      title: 'Rule Nature',
+      key: 'ruleNature',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: RULE_NATURES.map((x) => ({ value: x, label: x })),
       },
       showFilterByDefault: true,
     },
