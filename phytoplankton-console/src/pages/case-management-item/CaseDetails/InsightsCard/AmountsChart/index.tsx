@@ -8,10 +8,10 @@ import COLORS from '@/components/ui/colors';
 import { QueryResult } from '@/utils/queries/types';
 import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { capitalizeWords } from '@/utils/tags';
 import { Currency } from '@/utils/currencies';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import Money from '@/components/ui/Money';
+import { capitalizeWords } from '@/utils/humanize';
 
 const CHART_COLORS = {
   maximum: COLORS.purpleGray.tint,

@@ -1,6 +1,6 @@
 import { Tag } from 'antd';
-import _ from 'lodash';
 import React, { useEffect } from 'react';
+import { keyBy } from 'lodash';
 import style from './style.module.less';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -38,7 +38,6 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import { isTransactionType } from '@/utils/api/transactions';
 import { RESIDENCE_TYPES } from '@/utils/residence-types';
-import { capitalizeWords } from '@/utils/tags';
 import { useApi } from '@/api';
 import { TRANSACTIONS_UNIQUES, USERS_UNIQUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
@@ -49,6 +48,7 @@ import NumberInput from '@/components/library/NumberInput';
 import { getOr } from '@/utils/asyncResource';
 import { BOOLEAN_OPTIONS } from '@/utils/booleanOptions';
 import { SOURCE_OF_FUNDSS } from '@/apis/models-custom/SourceOfFunds';
+import { capitalizeWords } from '@/utils/humanize';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -234,7 +234,7 @@ const timeZonesData = timezones.map((name) => ({
 
 const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-const timeZonesDataMap = _.keyBy(timeZonesData, 'value');
+const timeZonesDataMap = keyBy(timeZonesData, 'value');
 
 export const BUSINESS_USER_SEGMENT_OPTIONS = [
   { value: 'SOLE_PROPRIETORSHIP', label: 'Sole Proprietorship' },

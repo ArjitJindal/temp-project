@@ -9,9 +9,9 @@ import { QueryResult } from '@/utils/queries/types';
 import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { capitalizeWords } from '@/utils/tags';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { Currency } from '@/utils/currencies';
+import { capitalizeWords } from '@/utils/humanize';
 
 interface Props {
   currency: Currency | null;

@@ -1,3 +1,4 @@
+import { capitalizeWords } from './humanize';
 import {
   ACHPaymentMethod,
   CardPaymentMethod,
@@ -10,7 +11,6 @@ import {
   WalletPaymentMethod,
 } from '@/apis';
 import { neverReturn } from '@/utils/lang';
-import { capitalizeWords } from '@/utils/tags';
 
 export type PaymentMethod =
   | CardPaymentMethod

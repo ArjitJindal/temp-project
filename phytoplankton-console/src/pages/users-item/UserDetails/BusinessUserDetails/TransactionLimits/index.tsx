@@ -2,7 +2,7 @@ import { Row, Select, Space, Typography } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ProDescriptions from '@ant-design/pro-descriptions';
-import _ from 'lodash';
+import { merge } from 'lodash';
 import s from './styles.module.less';
 import { message } from '@/components/library/Message';
 import { removeNil } from '@/utils/json';
@@ -17,9 +17,8 @@ import Label from '@/components/ui/Form/Layout/Label';
 import Money from '@/components/ui/Money';
 import Table from '@/components/library/Table';
 import { TransactionLimit } from '@/apis/models/TransactionLimit';
-import { PaymentMethod } from '@/utils/payments';
+import { PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
-import { paymethodOptions } from '@/utils/tags';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { TransactionLimitsPaymentMethodLimits } from '@/apis/models/TransactionLimitsPaymentMethodLimits';
 import Button from '@/components/library/Button';
@@ -104,19 +103,16 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
     [updatedCurrency, transactionLimit],
   );
   const transactionCountLimit = useMemo(
-    () => _.merge(transactionLimit?.transactionCountLimit, updatedTransactionCountLimit),
+    () => merge(transactionLimit?.transactionCountLimit, updatedTransactionCountLimit),
     [transactionLimit?.transactionCountLimit, updatedTransactionCountLimit],
   );
   const transactionAmountLimit = useMemo(
-    () => _.merge(transactionLimit?.transactionAmountLimit, updatedTransactionAmountLimit),
+    () => merge(transactionLimit?.transactionAmountLimit, updatedTransactionAmountLimit),
     [transactionLimit?.transactionAmountLimit, updatedTransactionAmountLimit],
   );
   const averageTransactionAmountLimit = useMemo(
     () =>
-      _.merge(
-        transactionLimit?.averageTransactionAmountLimit,
-        updatedAverageTransactionAmountLimit,
-      ),
+      merge(transactionLimit?.averageTransactionAmountLimit, updatedAverageTransactionAmountLimit),
     [transactionLimit?.averageTransactionAmountLimit, updatedAverageTransactionAmountLimit],
   );
   const handleSave = useCallback(async () => {
@@ -165,13 +161,13 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
               onChange={(value) => setUpdatedPaymentMethod(value)}
               showSearch={true}
             >
-              {paymethodOptions
-                .filter((option) => !existingPaymentMethods?.includes(option.value))
-                .map((option) => (
-                  <Select.Option key={option.value} value={option.value}>
-                    <PaymentMethodTag paymentMethod={option.value} />
+              {PAYMENT_METHODS.filter((option) => !existingPaymentMethods?.includes(option)).map(
+                (option) => (
+                  <Select.Option key={option} value={option}>
+                    <PaymentMethodTag paymentMethod={option} />
                   </Select.Option>
-                ))}
+                ),
+              )}
             </Select>
           </ProDescriptions.Item>
           <ProDescriptions.Item key="currency" label="Currency" valueType="text">

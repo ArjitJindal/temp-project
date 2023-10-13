@@ -1,4 +1,4 @@
-import { capitalize, toLower } from 'lodash';
+import { capitalize, startCase, toLower } from 'lodash';
 import { neverReturn } from '@/utils/lang';
 
 /*
@@ -88,4 +88,8 @@ export function firstLetterUpper(str: string): string {
  */
 export function normalizeCase(str: string): string {
   return firstLetterUpper(str.replace(/([A-Z][a-z])/g, (x) => x.toLowerCase()));
+}
+
+export function capitalizeWords(text: string): string {
+  return startCase(toLower(text));
 }

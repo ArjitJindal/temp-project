@@ -2,7 +2,8 @@ import React from 'react';
 import { List } from 'antd';
 import cn from 'clsx';
 import s from './style.module.less';
-import { paymethodOptions } from '@/utils/tags';
+import { PAYMENT_METHODS } from '@/utils/payments';
+import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   value: string[];
@@ -14,7 +15,10 @@ export default function PopupContent(props: Props) {
   return (
     <div className={s.root}>
       <List
-        dataSource={paymethodOptions}
+        dataSource={PAYMENT_METHODS.map((x) => ({
+          value: x,
+          label: humanizeConstant(x),
+        }))}
         renderItem={(item) => (
           <List.Item
             className={cn(s.item, value.includes(item.value) && s.isActive)}

@@ -47,14 +47,6 @@ const TableList: React.FC = () => {
         autoFilterDataType: { kind: 'dateTimeRange' },
       },
     }),
-    // helper.simple<'totalUsers'>({
-    //   key: 'totalUsers',
-    //   title: 'Total Users',
-    // }),
-    // helper.simple<'importedUsers'>({
-    //   key: 'importedUsers',
-    //   title: 'Imported Users',
-    // }),
     helper.simple<'status'>({
       key: 'status',
       title: 'Status',
