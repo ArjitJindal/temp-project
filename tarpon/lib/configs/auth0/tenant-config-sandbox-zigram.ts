@@ -11,7 +11,7 @@ export const Auth0SandboxZigramTenantConfig: Auth0TenantConfig = {
   allowedCallbackUrls: [WHITE_LABEL_ORIGINS.zigram.sandbox],
   branding: {
     // TODO: To be provided by Zigram
-    logoUrl: 'https://i.imgur.com/WQtpTiA.png',
+    logoUrl: 'https://imgur.com/a/IXYOWeq',
     primaryColor: '#00CC6A',
     pageBackgroundColor: '#EFF2F5',
     companyDisplayName: 'Zigram',
