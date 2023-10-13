@@ -10,8 +10,7 @@ export const Auth0SandboxZigramTenantConfig: Auth0TenantConfig = {
   allowedOrigins: [WHITE_LABEL_ORIGINS.zigram.sandbox],
   allowedCallbackUrls: [WHITE_LABEL_ORIGINS.zigram.sandbox],
   branding: {
-    // TODO: To be provided by Zigram
-    logoUrl: 'https://i.imgur.com/bnVr8At.png',
+    logoUrl: 'https://i.imgur.com/FLHZfYE.png',
     primaryColor: '#00CC6A',
     pageBackgroundColor: '#EFF2F5',
     companyDisplayName: 'Transact Comply',
