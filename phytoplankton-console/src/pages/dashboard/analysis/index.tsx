@@ -44,23 +44,20 @@ type KeyValues =
   | 'DISTRIBUTION_BY_RULE_ACTION'
   | 'TRANSACTIONS_BREAKDOWN_BY_TRS';
 
-const KEYS: KeyValues[] = [
-  'OVERVIEW',
-  'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-  'TOP_CONSUMER_USERS_BY_RULE_HITS',
-  'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-  'TOP_BUSINESS_USERS_BY_RULE_HITS',
-  'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
-  'DISTRIBUTION_BY_PAYMENT_METHOD',
-  'DISTRIBUTION_BY_TRANSACTION_TYPE',
-  'TRANSACTIONS_BREAKDOWN_BY_TRS',
-  'TOP_RULE_HITS_BY_COUNT',
-  'DISTRIBUTION_BY_RULE_PRIORITY',
-  'DISTRIBUTION_BY_RULE_ACTION',
-  'DISTRIBUTION_BY_CLOSING_REASON',
-  'DISTRIBUTION_BY_ALERT_PRIORITY',
-  'TEAM_OVERVIEW',
-];
+const KEYS = {
+  OVERVIEW: ['OVERVIEW'],
+  CONSUMER_USERS: ['CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL', 'TOP_CONSUMER_USERS_BY_RULE_HITS'],
+  BUSINESS_USERS: ['BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL', 'TOP_BUSINESS_USERS_BY_RULE_HITS'],
+  TRANSACTIONS: [
+    'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
+    'DISTRIBUTION_BY_PAYMENT_METHOD',
+    'DISTRIBUTION_BY_TRANSACTION_TYPE',
+    'TRANSACTIONS_BREAKDOWN_BY_TRS',
+  ],
+  RULES: ['TOP_RULE_HITS_BY_COUNT', 'DISTRIBUTION_BY_RULE_PRIORITY', 'DISTRIBUTION_BY_RULE_ACTION'],
+  CASE_MANAGEMENT: ['DISTRIBUTION_BY_CLOSING_REASON', 'DISTRIBUTION_BY_ALERT_PRIORITY'],
+  TEAM_MANAGEMENT: ['TEAM_OVERVIEW'],
+};
 
 const TITLES: { [key in KeyValues]: string } = {
   OVERVIEW: 'Overview',
@@ -329,8 +326,10 @@ function Analysis() {
               type="PRIMARY"
               onClick={() => {
                 setDashboardSettings(() =>
-                  KEYS.reduce((acc, key) => {
-                    acc[key] = updatedState[key];
+                  Object.keys(KEYS).reduce((acc, group) => {
+                    KEYS[group].forEach((key: KeyValues) => {
+                      acc[key] = updatedState[key];
+                    });
                     return acc;
                   }, {} as DashboardSettings),
                 );
@@ -342,24 +341,29 @@ function Analysis() {
         }
       >
         <div className={s.settingsDrawerRoot}>
-          {KEYS.map((key) => (
-            <Label
-              key={key}
-              label={TITLES[key] ?? humanizeConstant(key)}
-              position="RIGHT"
-              level={2}
-            >
-              <Checkbox
-                value={updatedState[key] == null ? true : updatedState[key]}
-                onChange={(value) => {
-                  setUpdatedState({
-                    ...updatedState,
-                    [key]: value,
-                  });
-                }}
-                extraLeftLabelMargin
-              />
-            </Label>
+          {Object.keys(KEYS).map((group) => (
+            <div className={s.settingsDrawerGroup}>
+              <div className={s.groupTitle}>{humanizeConstant(group)}</div>
+              {KEYS[group].map((key: KeyValues) => (
+                <Label
+                  key={key}
+                  label={TITLES[key] ?? humanizeConstant(key)}
+                  position="RIGHT"
+                  level={2}
+                >
+                  <Checkbox
+                    value={updatedState[key] == null ? true : updatedState[key]}
+                    onChange={(value) => {
+                      setUpdatedState({
+                        ...updatedState,
+                        [key]: value,
+                      });
+                    }}
+                    extraLeftLabelMargin
+                  />
+                </Label>
+              ))}
+            </div>
           ))}
         </div>
       </Drawer>
