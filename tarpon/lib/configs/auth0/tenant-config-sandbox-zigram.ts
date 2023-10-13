@@ -5,7 +5,7 @@ export const Auth0SandboxZigramTenantConfig: Auth0TenantConfig = {
   tenantName: 'sandbox-zigram-flagright',
   region: 'eu',
   customDomain: 'login.sandboxconsole.transactcomply.com',
-  consoleApplicationName: 'Zigram Console (Sandbox)',
+  consoleApplicationName: 'Transact Comply Console (Sandbox)',
   consoleUrl: 'https://sandboxconsole.transactcomply.com',
   allowedOrigins: [WHITE_LABEL_ORIGINS.zigram.sandbox],
   allowedCallbackUrls: [WHITE_LABEL_ORIGINS.zigram.sandbox],
@@ -14,7 +14,7 @@ export const Auth0SandboxZigramTenantConfig: Auth0TenantConfig = {
     logoUrl: 'https://i.imgur.com/bnVr8At.png',
     primaryColor: '#00CC6A',
     pageBackgroundColor: '#EFF2F5',
-    companyDisplayName: 'Zigram',
+    companyDisplayName: 'Transact Comply',
   },
   emailProvider: {
     type: 'ses',
