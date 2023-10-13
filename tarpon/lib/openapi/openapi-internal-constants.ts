@@ -9,7 +9,7 @@ export const WHITE_LABEL_ORIGINS = {
     prod: 'https://transaction.console.regtank.com',
   },
   zigram: {
-    sandbox: 'https://sandboxconsole.transactcomply.com/',
+    sandbox: 'https://sandboxconsole.transactcomply.com',
     prod: 'https://console.transactcomply.com/',
   },
 }
