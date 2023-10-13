@@ -34,6 +34,14 @@ export const accountsHandler = lambdaApi()(
       )
     })
 
+    handlers.registerAccountsResendInvite(async (ctx, request) => {
+      assertCurrentUserRole('admin')
+      return await accountsService.sendPasswordResetAndVerificationEmail(
+        request.accountId,
+        request.ResendAccountInvitePayload.email
+      )
+    })
+
     handlers.registerAccountsChangeTenant(async (ctx, request) => {
       assertCurrentUserRole('root', 'whitelabel-root')
       await accountsService.accountsChangeTenantHandler(request, ctx.userId)

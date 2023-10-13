@@ -2371,6 +2371,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
+  '/accounts/{accountId}/resend-invite':
+    parameters:
+      - schema:
+          type: string
+        name: accountId
+        in: path
+        required: true
+    post:
+      summary: Account - Resend Invite
+      operationId: accounts-resend-invite
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendAccountInvitePayload'
+        required: true
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
   /accounts:
     post:
       summary: Account - Invite
@@ -6684,6 +6708,14 @@ components:
         isEscalationContact:
           type: boolean
         reviewerId:
+          type: string
+      required:
+        - email
+    ResendAccountInvitePayload:
+      title: ResendAccountInvitePayload
+      type: object
+      properties:
+        email:
           type: string
       required:
         - email

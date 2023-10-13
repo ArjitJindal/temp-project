@@ -184,6 +184,29 @@ export default function AccountForm(props: Props) {
     },
   );
 
+  const resendInviteMutation = useMutation<unknown, unknown, { accountId: string; email: string }>(
+    async (payload) => {
+      return await api.accountsResendInvite({
+        accountId: payload.accountId,
+        ResendAccountInvitePayload: { email: payload.email },
+      });
+    },
+    {
+      onSuccess: () => {
+        message.success('Invitation resent!');
+        onSuccess();
+        hide?.();
+      },
+      onError: (e) => {
+        message.fatal(`Failed to resend invitation - ${getErrorMessage(e)}`, e);
+        hide?.();
+      },
+      onMutate: () => {
+        hide = message.loading('Resending invitation...');
+      },
+    },
+  );
+
   const onFinish = async () => {
     const { email, role, isEscalationContact, reviewerId } = values;
     if (isEdit) {
@@ -322,6 +345,23 @@ export default function AccountForm(props: Props) {
               />
             </Label>
           </div>
+        )}
+        {isEdit && (
+          <Button
+            type="SECONDARY"
+            onClick={() => {
+              if (editAccount) {
+                resendInviteMutation.mutate({
+                  accountId: editAccount.id,
+                  email: editAccount.email,
+                });
+              }
+            }}
+            requiredPermissions={['settings:organisation:write']}
+            style={{ width: 'fit-content' }}
+          >
+            Resend invitation
+          </Button>
         )}
         {isInviteDisabled === true && (
           <P variant="sml">
