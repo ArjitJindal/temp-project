@@ -135,12 +135,7 @@ export class LinkerService {
       $project: {
         _id: 1,
         count: 1,
-        users: {
-          legalEntity: 1,
-          userDetails: 1,
-          userId: 1,
-          type: 1,
-        },
+        users: { legalEntity: 1, userDetails: 1, userId: 1, type: 1 },
         actualIds: 1,
       },
     }
@@ -371,10 +366,7 @@ export class LinkerService {
     const [originPaymentMethodLinks, destinationPaymentMethodLinks] =
       await Promise.all([
         txnCollection
-          .aggregate<{
-            _id: string
-            users: InternalUser[]
-          }>([
+          .aggregate<{ _id: string; users: InternalUser[] }>([
             { $match: { originPaymentMethodId: { $in: paymentMethodIds } } },
             {
               $group: {
@@ -391,10 +383,7 @@ export class LinkerService {
           ])
           .toArray(),
         txnCollection
-          .aggregate<{
-            _id: string
-            users: InternalUser[]
-          }>([
+          .aggregate<{ _id: string; users: InternalUser[] }>([
             {
               $match: { destinationPaymentMethodId: { $in: paymentMethodIds } },
             },
@@ -542,49 +531,40 @@ async function linkingElements(
   userCollection: Collection<InternalUser>,
   userId: string
 ): Promise<[string[], string[], string[]]> {
-  const emailIds = userCollection.distinct(`${prefix}contactDetails.emailIds`, {
-    userId,
-  })
-  const contactNumbers = userCollection.distinct(
-    `${prefix}contactDetails.contactNumbers`,
-    { userId }
-  )
-
-  const adddress = await userCollection
-    .aggregate<{ address: string }>([
-      {
-        $group: {
-          _id: {
-            postcode: `${prefix}contactDetails.addresses.postcode`,
-            address: `${prefix}contactDetails.addresses.addressLines.0`,
+  const [emailIds, contactNumbers, address] = await Promise.all([
+    userCollection.distinct(`${prefix}contactDetails.emailIds`, { userId }),
+    userCollection.distinct(`${prefix}contactDetails.contactNumbers`, {
+      userId,
+    }),
+    userCollection
+      .aggregate<{ address: string }>([
+        {
+          $match: {
+            userId,
+            [`${prefix}contactDetails.addresses.postcode`]: { $exists: true },
+            [`${prefix}contactDetails.addresses.addressLines.0`]: {
+              $exists: true,
+            },
           },
         },
-      },
-      {
-        $project: {
-          _id: 0,
-          address: {
-            $concat: ['$_id.address', ',', '$_id.postcode'],
+        { $project: { address: `$${prefix}contactDetails.addresses` } },
+        { $unwind: { path: '$address' } },
+        { $unwind: { path: '$address' } },
+        {
+          $addFields: {
+            adddressLine1: { $arrayElemAt: ['$address.addressLines', 0] },
           },
         },
-      },
-      {
-        $group: {
-          _id: '$address',
+        {
+          $project: {
+            address: { $concat: ['$adddressLine1', ',', '$address.postcode'] },
+          },
         },
-      },
-      {
-        $project: {
-          _id: 0,
-          address: '$_id',
-        },
-      },
-    ])
-    .toArray()
+        { $group: { _id: '$address' } },
+        { $project: { _id: 0, address: '$_id' } },
+      ])
+      .toArray(),
+  ])
 
-  return [
-    await emailIds,
-    await contactNumbers,
-    (await adddress).map((address) => address.address),
-  ]
+  return [emailIds, contactNumbers, address.map((a) => a.address)]
 }
