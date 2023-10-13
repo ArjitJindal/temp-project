@@ -2,7 +2,9 @@ import { MongoClient } from 'mongodb'
 import { Investigation, Variables } from './types'
 import { INVESTIGATION_COLLECTION } from '@/utils/mongodb-definitions'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class InvestigationRepository {
   private readonly mongoClient: MongoClient
   private readonly tenantId: string

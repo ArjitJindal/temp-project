@@ -29,14 +29,13 @@ import {
 } from '@/apis';
 import { getUserName } from '@/utils/api/users';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
-import { paymethodOptions, transactionState, transactionType } from '@/utils/tags';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import CurrencySymbol from '@/components/ui/Currency';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import KeyValueTag from '@/components/ui/KeyValueTag';
-import { PaymentMethod } from '@/utils/payments';
+import { PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserLink from '@/components/UserLink';
@@ -65,6 +64,8 @@ import {
   COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
   COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
 } from '@/components/ui/colors';
+import { TRANSACTION_TYPES } from '@/utils/transactionType';
+import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -242,7 +243,10 @@ export const TRANSACTION_TYPE: ColumnDataType<TransactionType> = {
   stringify: (value) => `${value}`,
   autoFilterDataType: {
     kind: 'select',
-    options: transactionType,
+    options: TRANSACTION_TYPES.map((type) => ({
+      value: type,
+      label: humanizeConstant(type),
+    })),
     displayMode: 'list',
     mode: 'SINGLE',
   },
@@ -253,7 +257,10 @@ export const TRANSACTION_STATE: ColumnDataType<ApiTransactionState> = {
   stringify: (value) => `${value}`,
   autoFilterDataType: {
     kind: 'select',
-    options: transactionState,
+    options: TRANSACTION_STATES.map((type) => ({
+      value: type,
+      label: humanizeConstant(type),
+    })),
     displayMode: 'list',
     mode: 'MULTIPLE',
   },
@@ -424,7 +431,10 @@ export const PAYMENT_METHOD: ColumnDataType<PaymentMethod> = {
   },
   autoFilterDataType: {
     kind: 'select',
-    options: paymethodOptions,
+    options: PAYMENT_METHODS.map((type) => ({
+      value: type,
+      label: humanizeConstant(type),
+    })),
     displayMode: 'list',
     mode: 'SINGLE',
   },

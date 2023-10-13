@@ -7,6 +7,7 @@ export const Linkedin: PropertiesQuestion<{
 }> = {
   type: 'PROPERTIES',
   questionId: 'Linkedin',
+  categories: ['BUSINESS'],
   title: async (_, { companyName }) => {
     return `Business details from Linkedin for ${companyName}`
   },

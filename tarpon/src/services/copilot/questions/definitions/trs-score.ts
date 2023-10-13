@@ -15,6 +15,7 @@ import {
 export const TrsScore: TimeseriesQuestion<Period> = {
   type: 'TIME_SERIES',
   questionId: 'TRS score',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `TRS score distribution ${humanReadablePeriod(vars)}`
   },

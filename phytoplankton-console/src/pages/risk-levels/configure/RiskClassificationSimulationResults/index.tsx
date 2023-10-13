@@ -32,10 +32,9 @@ import { message } from '@/components/library/Message';
 import { RISK_LEVELS } from '@/utils/risk-levels';
 import { makeUrl } from '@/utils/routing';
 import COLORS from '@/components/ui/colors';
-import { capitalizeWords } from '@/utils/tags';
 import { isSuccess } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { humanizeConstant } from '@/utils/humanize';
+import { capitalizeWords, humanizeConstant } from '@/utils/humanize';
 
 type Props = {
   onClose: (toClose: boolean) => void;

@@ -7,6 +7,7 @@ export const Website: PropertiesQuestion<{
   website: string
 }> = {
   type: 'PROPERTIES',
+  categories: ['BUSINESS'],
   questionId: 'Website',
   title: async (_, { website }) => {
     return `Business details from ${website}`

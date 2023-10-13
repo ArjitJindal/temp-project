@@ -4,6 +4,7 @@ import { CrmService } from '@/services/crm'
 export const CrmInsights: PropertiesQuestion<any> = {
   type: 'PROPERTIES',
   questionId: 'CRM insights',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }) => {
     return `CRM insights for ${username}`
   },

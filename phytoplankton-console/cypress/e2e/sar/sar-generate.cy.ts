@@ -5,16 +5,10 @@ describe('SAR Generate', () => {
     cy.loginByForm();
   });
   it('should open SAR report form', async () => {
-    cy.visit('/case-management/cases?page=1&pageSize=100&showCases=ALL_ALERTS&alertStatus=OPEN');
-    const index = await promisify(
-      cy.get('td[data-cy="ruleNature"]', { timeout: 15000 }).then((data) => {
-        const ruleNatures = data.toArray();
-        for (let i = 0; i < ruleNatures.length; i++) {
-          if (ruleNatures[i].innerText === 'AML') return i;
-        }
-        return 0;
-      }),
+    cy.visit(
+      '/case-management/cases?page=1&pageSize=100&showCases=ALL_ALERTS&alertStatus=OPEN&ruleNature=AML',
     );
+    const index = await promisify(cy.get('td[data-cy="ruleNature"]', { timeout: 15000 }));
 
     cy.intercept('GET', '**/report-types').as('sarCountries');
     cy.get('a[data-cy="alert-id"]', { timeout: 15000 })

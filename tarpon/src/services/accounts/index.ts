@@ -12,6 +12,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { MongoClient } from 'mongodb'
+import { memoize } from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
@@ -220,15 +221,19 @@ export class AccountsService {
     }
   }
 
-  async getManagementClient(): Promise<ManagementClient<AppMetadata>> {
-    const options = await this.getAuth0Client()
-    return new ManagementClient(options)
-  }
+  getManagementClient: () => Promise<ManagementClient<AppMetadata>> = memoize(
+    async () => {
+      const options = await this.getAuth0Client()
+      return new ManagementClient(options)
+    }
+  )
 
-  async getAuthenticationClient() {
-    const options = await this.getAuth0Client()
-    return new AuthenticationClient(options)
-  }
+  getAuthenticationClient: () => Promise<AuthenticationClient> = memoize(
+    async () => {
+      const options = await this.getAuth0Client()
+      return new AuthenticationClient(options)
+    }
+  )
 
   async getAccountTenant(userId: string): Promise<Tenant> {
     const managementClient = await this.getManagementClient()
@@ -271,7 +276,7 @@ export class AccountsService {
     if (inviteRole === 'root') {
       throw new Forbidden(`It's not possible to create a root user`)
     }
-    const dynamoDb = await getDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const allAccounts: Account[] = await this.getTenantAccounts(organization)
 
     const existingAccount = allAccounts.filter(
@@ -313,8 +318,6 @@ export class AccountsService {
     let account: Account | null = null
     const managementClient: ManagementClient<AppMetadata> =
       await this.getManagementClient()
-
-    const authenticationClient = await this.getAuthenticationClient()
 
     try {
       const existingUser = await managementClient.getUsers({
@@ -369,6 +372,7 @@ export class AccountsService {
         email: params.email,
         account: account.id,
       })
+      await this.sendPasswordResetAndVerificationEmail(account.id, params.email)
       await this.insertAuth0UserToMongo(tenant.id, [account])
     } catch (e) {
       if (user) {
@@ -380,6 +384,18 @@ export class AccountsService {
       throw e
     }
 
+    return account
+  }
+
+  public async sendPasswordResetAndVerificationEmail(
+    user_id: string,
+    email: string
+  ): Promise<void> {
+    const managementClient: ManagementClient<AppMetadata> =
+      await this.getManagementClient()
+
+    const authenticationClient = await this.getAuthenticationClient()
+
     const consoleClient = (
       await managementClient.getClients({ app_type: ['spa'] })
     ).filter((client) => client.client_metadata?.isConsole)[0]
@@ -388,21 +404,20 @@ export class AccountsService {
     }
 
     await managementClient.sendEmailVerification({
-      user_id: user.user_id as string,
+      user_id: user_id as string,
       client_id: consoleClient.client_id,
     })
     logger.info(`Sent verification email`, {
-      email: params.email,
+      email,
     })
     await authenticationClient.requestChangePasswordEmail({
       client_id: consoleClient.client_id,
       connection: CONNECTION_NAME,
-      email: params.email,
+      email,
     })
     logger.info(`Sent password reset email`, {
-      email: params.email,
+      email,
     })
-    return account
   }
 
   public async insertAuth0UserToMongo(tenantId: string, users: Account[]) {

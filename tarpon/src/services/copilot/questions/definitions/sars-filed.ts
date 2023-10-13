@@ -17,6 +17,7 @@ import {
 export const SarsFiled: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Alerts that resulted in SAR',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Alerts that results in SARs ${humanReadablePeriod(vars)}`
   },

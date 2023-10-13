@@ -22,7 +22,9 @@ import { AccountsService } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class QuestionService {
   static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<

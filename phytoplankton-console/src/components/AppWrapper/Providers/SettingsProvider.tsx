@@ -11,13 +11,12 @@ import {
   RiskLevel,
   ManagedRoleName,
 } from '@/apis';
-import { capitalizeWords } from '@/utils/tags';
 import { useQuery } from '@/utils/queries/hooks';
 import { SETTINGS } from '@/utils/queries/keys';
 import { usePrevious } from '@/utils/hooks';
 import { isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
-import { humanizeConstant } from '@/utils/humanize';
+import { capitalizeWords, humanizeConstant } from '@/utils/humanize';
 import ErrorPage from '@/components/ErrorPage';
 import { useAccountRole } from '@/utils/user-utils';
 

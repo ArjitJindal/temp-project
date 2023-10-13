@@ -9,6 +9,7 @@ import { calculatePercentageBreakdown } from '@/services/copilot/questions/defin
 export const LinkedUsers: TableQuestion<any> = {
   type: 'TABLE',
   questionId: 'Linked users',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }) => {
     return `Linked users for ${username} over the last 30 days`
   },

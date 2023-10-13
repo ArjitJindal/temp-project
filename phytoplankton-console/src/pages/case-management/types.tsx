@@ -56,6 +56,7 @@ export type CommonCaseParams = {
   filterClosingReason?: CaseReasons[];
   alertPriority: Priority[];
   ruleQueueIds?: string[];
+  ruleNature?: string[];
 };
 
 export type TableSearchParams = CommonParams & {

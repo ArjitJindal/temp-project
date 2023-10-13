@@ -571,6 +571,14 @@ export class CaseRepository {
       })
     }
 
+    if (params.filterRuleNature && params.filterRuleNature.length > 0) {
+      conditions.push({
+        'alerts.ruleNature': {
+          $in: params.filterRuleNature,
+        },
+      })
+    }
+
     conditions.push({
       $or: [
         {
@@ -707,6 +715,7 @@ export class CaseRepository {
   ): Promise<AggregationCursor<Case>> {
     const { preLimitPipeline, postLimitPipeline } =
       await this.getCasesMongoPipeline(params, options)
+
     postLimitPipeline.push(...paginatePipeline(params))
     return this.getDenormalizedCases(preLimitPipeline.concat(postLimitPipeline))
   }
@@ -1029,6 +1038,17 @@ export class CaseRepository {
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return await collection.findOne<Case>(
       { caseId },
+      { projection: { caseTransactions: 0 } }
+    )
+  }
+
+  public async getCaseByAlertId(
+    alertId: string
+  ): Promise<CaseWithoutCaseTransactions | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return await collection.findOne<Case>(
+      { 'alerts.alertId': alertId },
       { projection: { caseTransactions: 0 } }
     )
   }

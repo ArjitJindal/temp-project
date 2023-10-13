@@ -13,6 +13,7 @@ import {
 export const AlertHistory: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Alerts',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }, vars) => {
     return `Alerts for ${username} ${humanReadablePeriod(vars)}`
   },

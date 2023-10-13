@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { RuleConfigurationFormValues } from './RuleConfigurationDrawer/RuleConfigurationForm';
 import { useApi } from '@/api';
-import { Priority, RuleInstance, RuleLabels, RuleNature } from '@/apis';
+import { Priority, RuleInstance, RuleLabels, RuleNature, TriggersOnHit } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { removeEmpty } from '@/utils/json';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
@@ -97,6 +97,9 @@ export function ruleInstanceToFormValues(
   isRiskLevelsEnabled: boolean,
   ruleInstance?: RuleInstance,
 ) {
+  const defaultTriggersOnHit: TriggersOnHit = {
+    usersToCheck: 'ALL',
+  };
   return ruleInstance
     ? {
         basicDetailsStep: {
@@ -135,17 +138,17 @@ export function ruleInstanceToFormValues(
               riskLevelsTriggersOnHit:
                 ruleInstance.riskLevelsTriggersOnHit ??
                 (ruleInstance.triggersOnHit && {
-                  VERY_HIGH: ruleInstance.triggersOnHit,
-                  HIGH: ruleInstance.triggersOnHit,
-                  MEDIUM: ruleInstance.triggersOnHit,
-                  LOW: ruleInstance.triggersOnHit,
-                  VERY_LOW: ruleInstance.triggersOnHit,
+                  VERY_HIGH: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+                  HIGH: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+                  MEDIUM: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+                  LOW: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+                  VERY_LOW: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
                 }),
             }
           : {
               ruleParameters: ruleInstance.parameters,
               ruleAction: ruleInstance.action,
-              triggersOnHit: ruleInstance.triggersOnHit,
+              triggersOnHit: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
             },
       }
     : undefined;
@@ -165,7 +168,9 @@ export function formValuesToRuleInstance(
     riskLevelsTriggersOnHit,
     triggersOnHit,
   } = ruleParametersStep;
-
+  const defaultTriggersOnHit: TriggersOnHit = {
+    usersToCheck: 'ALL',
+  };
   return {
     ...initialRuleInstance,
     ruleId: initialRuleInstance.ruleId,
@@ -215,18 +220,19 @@ export function formValuesToRuleInstance(
             : undefined,
           riskLevelsTriggersOnHit: riskLevelsTriggersOnHit
             ? {
-                VERY_HIGH: removeEmpty(riskLevelsTriggersOnHit['VERY_HIGH']),
-                HIGH: removeEmpty(riskLevelsTriggersOnHit['HIGH']),
-                MEDIUM: removeEmpty(riskLevelsTriggersOnHit['MEDIUM']),
-                LOW: removeEmpty(riskLevelsTriggersOnHit['LOW']),
-                VERY_LOW: removeEmpty(riskLevelsTriggersOnHit['VERY_LOW']),
+                VERY_HIGH:
+                  removeEmpty(riskLevelsTriggersOnHit['VERY_HIGH']) ?? defaultTriggersOnHit,
+                HIGH: removeEmpty(riskLevelsTriggersOnHit['HIGH']) ?? defaultTriggersOnHit,
+                MEDIUM: removeEmpty(riskLevelsTriggersOnHit['MEDIUM']) ?? defaultTriggersOnHit,
+                LOW: removeEmpty(riskLevelsTriggersOnHit['LOW']) ?? defaultTriggersOnHit,
+                VERY_LOW: removeEmpty(riskLevelsTriggersOnHit['VERY_LOW']) ?? defaultTriggersOnHit,
               }
             : undefined,
         }
       : {
           action: ruleAction ?? initialRuleInstance.action,
           parameters: removeEmpty(ruleParameters),
-          triggersOnHit: removeEmpty(triggersOnHit),
+          triggersOnHit: removeEmpty(triggersOnHit) ?? defaultTriggersOnHit,
         }),
   };
 }

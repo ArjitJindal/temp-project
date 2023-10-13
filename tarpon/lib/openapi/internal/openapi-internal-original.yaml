@@ -2371,6 +2371,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
+  '/accounts/{accountId}/resend-invite':
+    parameters:
+      - schema:
+          type: string
+        name: accountId
+        in: path
+        required: true
+    post:
+      summary: Account - Resend Invite
+      operationId: accounts-resend-invite
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendAccountInvitePayload'
+        required: true
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
   /accounts:
     post:
       summary: Account - Invite
@@ -3272,6 +3296,12 @@ paths:
               type: string
           in: query
           name: filterRuleQueueIds
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleNature
   /alerts/statusChange:
     patch:
       summary: Alerts - Status Change
@@ -3731,6 +3761,12 @@ paths:
               $ref: '#/components/schemas/Priority'
           in: query
           name: filterAlertPriority
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleNature
     post:
       summary: Create a Manual Case
       operationId: post-cases-manual
@@ -4959,6 +4995,11 @@ paths:
           in: query
           name: question
           required: false
+        - schema:
+            type: string
+          in: query
+          name: alertId
+          required: true
   '/questions/{questionId}/{variableKey}/autocomplete':
     get:
       summary: Get question variable autocompletion
@@ -6667,6 +6708,14 @@ components:
         isEscalationContact:
           type: boolean
         reviewerId:
+          type: string
+      required:
+        - email
+    ResendAccountInvitePayload:
+      title: ResendAccountInvitePayload
+      type: object
+      properties:
+        email:
           type: string
       required:
         - email

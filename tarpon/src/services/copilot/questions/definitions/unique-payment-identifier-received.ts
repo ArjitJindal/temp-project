@@ -15,6 +15,7 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
 > = {
   type: 'TABLE',
   questionId: 'Payment identifiers of senders',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Top ${
       vars.top

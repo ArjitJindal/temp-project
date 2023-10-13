@@ -1,15 +1,28 @@
 import { uniq } from 'lodash'
 import { questions } from '@/services/copilot/questions/definitions'
+import { Case } from '@/@types/openapi-internal/Case'
+import { traceable } from '@/core/xray'
+import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 const MAX_DISTANCE = 2
 const LIMIT = 30
+
+@traceable
 export class AutocompleteService {
   private phrases: string[] = questions.map((q) => q.questionId.toLowerCase())
 
-  autocomplete(query: string): string[] {
+  autocomplete(query: string, c?: Case | null): string[] {
     query = query.toLowerCase()
     const prefixResults: string[] = []
     const results: { phrase: string; distance: number }[] = []
+
+    const user = c?.caseUsers?.origin || c?.caseUsers?.destination
+    const userCategory = user
+      ? isBusinessUser(user as InternalUser)
+        ? 'BUSINESS'
+        : 'CONSUMER'
+      : undefined
 
     for (const completePhrase of this.phrases) {
       for (const phrase of splitStringIntoSubstrings(completePhrase)) {
@@ -35,14 +48,21 @@ export class AutocompleteService {
     ]
 
     // Repair casing
-    return uniq(combinedResults)
-      .slice(0, LIMIT)
+    const data = uniq(combinedResults)
+      .filter((r) => {
+        if (!userCategory) return true
+        const question = questions.find((q) => q.questionId.toLowerCase() === r)
+        return question && question.categories.includes(userCategory)
+      })
       .map((r) => {
         return (
           questions.find((q) => q.questionId.toLowerCase() === r)?.questionId ||
           ''
         )
       })
+      .slice(0, LIMIT)
+
+    return data
   }
 
   private calculateLevenshteinDistance(a: string, b: string): number {

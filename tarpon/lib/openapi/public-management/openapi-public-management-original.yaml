@@ -359,6 +359,10 @@ components:
           $ref: '#/components/schemas/RuleAction'
         riskLevelActions:
           $ref: '#/components/schemas/RiskLevelRuleActions'
+        triggersOnHit:
+          $ref: '#/components/schemas/TriggersOnHit'
+        riskLevelsTriggersOnHit:
+          $ref: '#/components/schemas/RiskLevelsTriggersOnHit'
         status:
           type: string
           enum:
@@ -366,6 +370,65 @@ components:
             - INACTIVE
         casePriority:
           $ref: '#/components/schemas/Priority'
+    StatusDetails:
+      title: StatusDetails
+      type: object
+      properties:
+        description:
+          type: string
+    UserDirections:
+      title: UserDirections
+      type: string
+      enum:
+        - ALL
+        - ORIGIN
+        - DESTINATION
+    UserStateDetailsInternal:
+      title: UserStateDetailsInternal
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserStateDetails
+        - $ref: '#/components/schemas/StatusDetails'
+      required:
+        - reason
+    KYCStatusDetailsInternal:
+      title: KYCStatusDetailsInternal
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatusDetails
+        - $ref: '#/components/schemas/StatusDetails'
+      required:
+        - reason
+    TriggersOnHit:
+      title: TriggersOnHit
+      type: object
+      properties:
+        usersToCheck:
+          $ref: '#/components/schemas/UserDirections'
+        userStateDetails:
+          $ref: '#/components/schemas/UserStateDetailsInternal'
+        kycStatusDetails:
+          $ref: '#/components/schemas/KYCStatusDetailsInternal'
+      required:
+        - usersToCheck
+    RiskLevelsTriggersOnHit:
+      title: RiskLevelsTriggersOnHit
+      type: object
+      properties:
+        VERY_HIGH:
+          $ref: '#/components/schemas/TriggersOnHit'
+        HIGH:
+          $ref: '#/components/schemas/TriggersOnHit'
+        MEDIUM:
+          $ref: '#/components/schemas/TriggersOnHit'
+        LOW:
+          $ref: '#/components/schemas/TriggersOnHit'
+        VERY_LOW:
+          $ref: '#/components/schemas/TriggersOnHit'
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
     RuleAction:
       type: string
       title: RuleAction

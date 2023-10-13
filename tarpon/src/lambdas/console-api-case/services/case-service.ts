@@ -282,6 +282,10 @@ export class CaseService extends CaseAlertsCommonService {
     return updatedCase as Case
   }
 
+  public async getCaseByAlertId(alertId: string): Promise<Case | null> {
+    return await this.caseRepository.getCaseByAlertId(alertId)
+  }
+
   public async createManualCaseFromUser(
     manualCaseData: CaseStatusChange,
     files: FileInfo[],

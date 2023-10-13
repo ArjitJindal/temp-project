@@ -5,6 +5,7 @@ import { queryUsername } from '@/services/copilot/questions/definitions/util'
 export const EntityLinking: EmbeddedQuestion<{ userId: string }> = {
   type: 'EMBEDDED',
   questionId: 'Entity linking',
+  categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, { userId }) => {
     return `Entity linking for ${await queryUsername(userId)}`
   },
