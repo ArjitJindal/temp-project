@@ -104,7 +104,7 @@ const WHITELABEL_BRANDING = {
   'sandboxconsole.transactcomply.com': {
     ...ZIGRAM_BRANDING,
     auth0Domain: 'login.sandboxconsole.transactcomply.com',
-    auth0ClientId: 'twQtyjrExlgXqkF14diuFhXI9rXqItL7',
+    auth0ClientId: 'qW5HsNLzyfKoKlG8orZza1EQBUqTxfj6',
   },
   'transaction.console.regtank.com': {
     ...REGTANK_BRANDING,
