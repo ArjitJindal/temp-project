@@ -17,6 +17,7 @@ interface Props extends InputProps<unknown> {
 
 export function AutoFilter(props: Props): JSX.Element {
   const { filter, value, onChange } = props;
+
   const sharedProps = {
     title: filter.title,
     key: filter.key,

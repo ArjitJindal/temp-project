@@ -61,7 +61,6 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     disabled: isDisabled,
     placeholder: placeholder,
     allowClear: props.allowClear,
-    autoFocus: true,
     onFocus: onFocus,
     onBlur: onBlur,
     filterOption: (inputValue: string, option?: Option<Value>) => {
