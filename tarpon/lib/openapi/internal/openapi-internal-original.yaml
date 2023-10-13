@@ -4975,7 +4975,7 @@ paths:
       responses:
         '200':
           description: OK
-  '/questions/{alertId}/autocomplete':
+  /questions/autocomplete:
     get:
       summary: Get question autocompletion
       x-flagright:
@@ -4997,7 +4997,7 @@ paths:
           required: false
         - schema:
             type: string
-          in: path
+          in: query
           name: alertId
           required: true
   '/questions/{questionId}/{variableKey}/autocomplete':
