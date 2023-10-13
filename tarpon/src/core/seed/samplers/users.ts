@@ -71,8 +71,10 @@ export function sampleKycStatusDetails(): KYCStatusDetails {
   }
 }
 
+export const emailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com']
+
 const emailSet = [...Array(100)].map(
-  () => `${randomName().toLowerCase()}@gmail.com`
+  () => `${randomName().toLowerCase()}@${pickRandom(emailDomains)}`
 )
 
 export const randomEmail = () => {
@@ -320,7 +322,7 @@ export function sampleBusinessUser({
         amountCurrency: pickRandom(CURRENCY_CODES),
       },
     },
-    shareHolders: Array.from({ length: 3 }, () => {
+    shareHolders: Array.from({ length: 2 }, () => {
       const name: ConsumerName = randomConsumerName()
 
       return {
@@ -336,7 +338,9 @@ export function sampleBusinessUser({
         ),
         contactDetails: {
           emailIds: [
-            `${name.firstName.toLowerCase()}.${name.middleName?.toLowerCase()}.${name.lastName?.toLowerCase()}@gmail.com`,
+            `${name.firstName.toLowerCase()}.${name.middleName?.toLowerCase()}}@${pickRandom(
+              emailDomains
+            )}`,
           ].concat(company?.contactEmails || []),
           faxNumbers: [randomPhoneNumber()],
           websites: [domain],
@@ -346,7 +350,7 @@ export function sampleBusinessUser({
         tags: [...Array(Math.ceil(randomInt(2)))].map(() => getNormalTag()),
       } as Person
     }),
-    directors: Array.from({ length: 3 }, () => {
+    directors: Array.from({ length: 2 }, () => {
       const name: ConsumerName = randomConsumerName()
 
       return {
@@ -354,7 +358,9 @@ export function sampleBusinessUser({
           legalDocument(name)
         ),
         contactDetails: {
-          emailIds: [name.firstName.toLowerCase() + '@gmail.com'],
+          emailIds: [
+            name.firstName.toLowerCase() + '@' + pickRandom(emailDomains),
+          ],
           addresses: [randomAddress()],
           contactNumbers: [randomPhoneNumber()],
           faxNumbers: [randomPhoneNumber()],
