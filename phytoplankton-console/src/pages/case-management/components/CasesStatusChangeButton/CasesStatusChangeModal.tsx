@@ -60,7 +60,7 @@ export default function CasesStatusChangeModal(props: Props) {
             ?.map((assigneeId) => users[assigneeId]?.name || assigneeId)
             .map((name) => `'${name}'`)
             .join(', ');
-          if (currentUser.reviewerId) {
+          if (currentUser?.reviewerId) {
             return;
           }
           message.success(
