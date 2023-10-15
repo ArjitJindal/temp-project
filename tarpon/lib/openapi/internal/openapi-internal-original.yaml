@@ -4498,6 +4498,7 @@ paths:
       x-flagright:
         permissions:
           - settings:organisation:read
+          - case-management:case-overview:read
       responses:
         '200':
           description: OK
