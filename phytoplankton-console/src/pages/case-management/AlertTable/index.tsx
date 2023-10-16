@@ -212,7 +212,9 @@ export default function AlertTable(props: Props) {
     [reviewAssignmentsToMutationAlerts],
   );
 
-  const icpEnabled = useFeatureEnabled('INVESTIGATIVE_COPILOT');
+  const icpFeatureEnabled = useFeatureEnabled('INVESTIGATIVE_COPILOT');
+  const icpEnabled = icpFeatureEnabled || user.role === 'root'; // TODO remove this after testing
+
   const columns = useMemo(() => {
     const mergedColumns = (
       showUserColumns: boolean,
