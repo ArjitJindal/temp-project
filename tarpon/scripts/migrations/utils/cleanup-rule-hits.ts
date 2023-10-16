@@ -2,6 +2,7 @@ import { StackConstants } from '@lib/constants'
 import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
 
 import { compact, flatten, last, uniq } from 'lodash'
+import { Collection } from 'mongodb'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
@@ -19,6 +20,7 @@ import { logger } from '@/core/logger'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
+import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 
 const TRANSACTIONS_PROCESS_BATCH_SIZE = 20
 
@@ -90,91 +92,38 @@ async function cleanupRuleHitsInternal(values: Props) {
     async (transactions) => {
       await Promise.all(
         transactions.map(async (transaction) => {
+          // Update cases in MongoDB
+          await removeTransactionFromCase(
+            casesCollection,
+            [ruleInstanceId],
+            transaction.transactionId
+          )
+
+          // Update transaction in DynamoDB
           const hitRules = transaction.hitRules.filter(
             (hitRule) => hitRule.ruleInstanceId !== ruleInstanceId
           )
-
-          const executedRules = transaction.executedRules.filter(
-            (executedRule) => executedRule.ruleInstanceId !== ruleInstanceId
-          )
-
           const primaryKey = DynamoDbKeys.TRANSACTION(
             tenantId,
             transaction.transactionId
           )
-
           const updateItemInput: UpdateCommandInput = {
             TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
             Key: primaryKey,
-            UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
+            UpdateExpression: `set #hitRules = :hitRules, #status = :status`,
             ExpressionAttributeNames: {
-              '#executedRules': 'executedRules',
               '#hitRules': 'hitRules',
+              '#status': 'status',
             },
             ExpressionAttributeValues: {
-              ':executedRules': executedRules,
               ':hitRules': hitRules,
+              ':status': getAggregatedRuleStatus(
+                hitRules.map((v) => v.ruleAction)
+              ),
             },
             ReturnValues: 'ALL_NEW',
           }
-
           await dynamoDb.send(new UpdateCommand(updateItemInput)) // threre is no batch updateItem in dynamodb
-
-          const cases = await casesCollection
-            .find({ caseTransactionsIds: transaction.transactionId })
-            .toArray() // There are maximum 2 cases possible for a transaction
-
-          await Promise.all(
-            cases.map(async (caseItem) => {
-              const alerts = (caseItem.alerts ?? [])
-                .map((alert) =>
-                  alert.ruleInstanceId === ruleInstanceId
-                    ? {
-                        ...alert,
-                        transactionIds: (alert.transactionIds ?? []).filter(
-                          (transactionId) =>
-                            transactionId !== transaction.transactionId
-                        ),
-                      }
-                    : alert
-                )
-                .filter((alert) => alert.transactionIds?.length)
-
-              const caseTransactionIds = compact(
-                uniq(flatten(alerts.map((alert) => alert?.transactionIds)))
-              )
-
-              const caseTransactions = caseItem.caseTransactions?.filter(
-                (caseTransaction) =>
-                  caseTransactionIds.includes(caseTransaction.transactionId)
-              )
-
-              if (!alerts.length) {
-                const deleteResult = await casesCollection.deleteOne({
-                  _id: caseItem._id,
-                })
-
-                logger.info(
-                  `Deleted ${deleteResult.deletedCount} case for tenant ${tenantId}`
-                )
-              } else {
-                const updateResult = await casesCollection.updateOne(
-                  { _id: caseItem._id },
-                  {
-                    $set: {
-                      alerts,
-                      caseTransactions,
-                      caseTransactionIds,
-                    },
-                  }
-                )
-
-                logger.info(
-                  `Updated ${updateResult.modifiedCount} case for tenant ${tenantId}`
-                )
-              }
-            })
-          )
         })
       )
 
@@ -204,4 +153,60 @@ async function cleanupRuleHitsInternal(values: Props) {
     startTimestamp: impactTimestampsStart,
     endTimestamp: impactTimestamps?.end ?? Number.MAX_SAFE_INTEGER,
   })
+}
+
+export async function removeTransactionFromCase(
+  casesCollection: Collection<Case>,
+  targetRuleInstanceIds: string[],
+  targetTransactionId: string
+) {
+  const cases = await casesCollection
+    .find({ caseTransactionsIds: targetTransactionId })
+    .toArray() // There are maximum 2 cases possible for a transaction
+
+  await Promise.all(
+    cases.map(async (caseItem) => {
+      const alerts = (caseItem.alerts ?? [])
+        .map((alert) =>
+          targetRuleInstanceIds.includes(alert.ruleInstanceId)
+            ? {
+                ...alert,
+                transactionIds: (alert.transactionIds ?? []).filter(
+                  (transactionId) => transactionId !== targetTransactionId
+                ),
+              }
+            : alert
+        )
+        .filter((alert) => alert.transactionIds?.length)
+
+      const caseTransactionIds = compact(
+        uniq(flatten(alerts.map((alert) => alert?.transactionIds)))
+      )
+
+      const caseTransactions = caseItem.caseTransactions?.filter(
+        (caseTransaction) =>
+          caseTransactionIds.includes(caseTransaction.transactionId)
+      )
+
+      if (!alerts.length) {
+        await casesCollection.deleteOne({
+          _id: caseItem._id,
+        })
+
+        logger.info(`Deleted case ${caseItem.caseId}`)
+      } else {
+        await casesCollection.updateOne(
+          { _id: caseItem._id },
+          {
+            $set: {
+              alerts,
+              caseTransactions,
+              caseTransactionIds,
+            },
+          }
+        )
+        logger.info(`Updated case ${caseItem.caseId}`)
+      }
+    })
+  )
 }
