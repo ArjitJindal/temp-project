@@ -43,6 +43,7 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
         icon={<BrainLineIcon />}
         isDisabled={!settings?.isAiEnabled || askLoading}
         testName="ask-copilot"
+        requiredPermissions={['copilot:narrative:write']}
       >
         Ask copilot
       </Button>
@@ -54,6 +55,7 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
         icon={<MagicLineIcon />}
         isDisabled={!settings?.isAiEnabled || formatLoading || !narrative || narrative.length < 50}
         testName="format-copilot-narrative"
+        requiredPermissions={['copilot:narrative:write']}
       >
         Format
       </Button>
@@ -63,6 +65,7 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
         onClick={() => setShowSources(true)}
         icon={<SearchIcon />}
         isDisabled={attributes.length === 0}
+        requiredPermissions={['copilot:narrative:read']}
       >
         Sources
       </Button>

@@ -211,17 +211,40 @@ paths:
             schema:
               $ref: '#/components/schemas/RuleInstance'
         required: true
-  /import:
+  /import/users:
     parameters: []
     post:
       summary: Import - Start to Import
-      operationId: post-import
+      operationId: post-import-users
       responses:
         '200':
           description: OK
       x-flagright:
         permissions:
           - users:import:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportRequest'
+            examples:
+              example-1:
+                value:
+                  type: USER
+                  format: flagright
+                  filename: filename
+                  s3Key: s3-key-in-a-bucket
+        required: true
+  /import/transactions:
+    parameters: []
+    post:
+      summary: Import - Start to Import
+      operationId: post-import-transactions
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
           - transactions:import:write
       requestBody:
         content:
@@ -236,7 +259,7 @@ paths:
                   filename: filename
                   s3Key: s3-key-in-a-bucket
         required: true
-  '/import/{importId}':
+  '/imports/{importId}':
     parameters:
       - schema:
           type: string
@@ -1365,8 +1388,7 @@ paths:
       operationId: generate-narrative
       x-flagright:
         permissions:
-          - users:user-overview:write
-          - case-management:case-overview:write
+          - copilot:narrative:write
       responses:
         '200':
           description: OK
@@ -1386,8 +1408,7 @@ paths:
       operationId: format-narrative
       x-flagright:
         permissions:
-          - users:user-overview:read
-          - case-management:case-overview:read
+          - copilot:narrative:write
       responses:
         '200':
           description: OK
@@ -1407,8 +1428,7 @@ paths:
       operationId: get-ai-sources
       x-flagright:
         permissions:
-          - users:user-overview:write
-          - case-management:case-overview:write
+          - copilot:narrative:read
       responses:
         '200':
           description: OK
@@ -2431,7 +2451,7 @@ paths:
       operationId: get-accounts
       x-flagright:
         permissions:
-          - settings:organisation:read
+          - accounts:overview:read
   /pulse/risk-classification:
     get:
       summary: Risk classification - GET
@@ -3003,7 +3023,6 @@ paths:
       operationId: get-alert-transaction-list
       x-flagright:
         permissions:
-          - case-management:case-overview:read
           - transactions:overview:read
       responses:
         '200':
@@ -4309,8 +4328,7 @@ paths:
       operationId: post-simulation
       x-flagright:
         permissions:
-          - simulator:rules:write
-          - simulator:risk-scoring:write
+          - simulator:simulations:write
       responses:
         '200':
           description: OK
@@ -4331,8 +4349,7 @@ paths:
       operationId: get-simulations
       x-flagright:
         permissions:
-          - simulator:rules:read
-          - simulator:risk-scoring:read
+          - simulator:simulations:read
       responses:
         '200':
           description: OK
@@ -4375,8 +4392,7 @@ paths:
       operationId: get-simulation-test-id
       x-flagright:
         permissions:
-          - simulator:rules:read
-          - simulator:risk-scoring:read
+          - simulator:simulations:read
       responses:
         '200':
           description: OK
@@ -4399,8 +4415,7 @@ paths:
       operationId: get-simulation-task-id-result
       x-flagright:
         permissions:
-          - simulator:rules:read
-          - simulator:risk-scoring:read
+          - simulator:simulations:read
       responses:
         '200':
           description: OK
@@ -4437,8 +4452,7 @@ paths:
       operationId: get-simulation-jobs-count
       x-flagright:
         permissions:
-          - simulator:rules:read
-          - simulator:risk-scoring:read
+          - simulator:simulations:read
       responses:
         '200':
           description: OK
@@ -4497,8 +4511,7 @@ paths:
       operationId: get-narratives
       x-flagright:
         permissions:
-          - settings:organisation:read
-          - case-management:case-overview:read
+          - narratives:narrative-templates:read
       responses:
         '200':
           description: OK
@@ -7270,13 +7283,15 @@ components:
         - lists:all:read
         - lists:all:write
         - lists:export:read
-        - simulator:rules:read
-        - simulator:rules:write
-        - simulator:risk-scoring:read
-        - simulator:risk-scoring:write
+        - simulator:simulations:read
+        - simulator:simulations:write
         - reports:schema:read
         - reports:generated:read
         - reports:generated:write
+        - copilot:narrative:read
+        - copilot:narrative:write
+        - accounts:overview:read
+        - narratives:narrative-templates:read
     CaseStatus:
       type: string
       title: CaseStatus

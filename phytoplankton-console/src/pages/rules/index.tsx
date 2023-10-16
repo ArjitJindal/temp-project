@@ -62,13 +62,13 @@ const TableList = () => {
             <PageWrapperContentContainer>
               <PageTabs isPrimary={false}>
                 <Tabs.TabPane tab="My rules" key="my-rules">
-                  <Authorized required={['simulator:rules:read']} showForbiddenPage>
+                  <Authorized required={['simulator:simulations:read']} showForbiddenPage>
                     <MyRule simulationMode={isSimulationEnabled} />
                   </Authorized>
                 </Tabs.TabPane>
 
                 <Tabs.TabPane tab="Library" key="rules-library">
-                  <Authorized required={['simulator:rules:read']} showForbiddenPage>
+                  <Authorized required={['simulator:simulations:read']} showForbiddenPage>
                     <RulesTable
                       simulationMode={isSimulationEnabled}
                       onViewRule={(rule) => {
@@ -86,7 +86,7 @@ const TableList = () => {
             </PageWrapperContentContainer>
           </Tabs.TabPane>
           <Tabs.TabPane tab="Simulation history" key="simulation-history">
-            <Authorized required={['simulator:rules:read']} showForbiddenPage>
+            <Authorized required={['simulator:simulations:read']} showForbiddenPage>
               <SimulationHistoryTable />
             </Authorized>
           </Tabs.TabPane>

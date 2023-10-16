@@ -378,7 +378,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
             type="PRIMARY"
             isLoading={buttonLoading}
             isDisabled={buttonDisabled}
-            requiredPermissions={['simulator:risk-scoring:write']}
+            requiredPermissions={['simulator:simulations:write']}
           >
             Done
           </Button>

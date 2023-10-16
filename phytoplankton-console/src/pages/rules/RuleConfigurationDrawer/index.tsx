@@ -492,7 +492,7 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
               <Button
                 isLoading={startSimulationMutation.isLoading}
                 onClick={handleStartSimulation}
-                requiredPermissions={['simulator:rules:write']}
+                requiredPermissions={['simulator:simulations:write']}
               >
                 Run simulation
               </Button>

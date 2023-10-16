@@ -55,51 +55,58 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({
     setFile(undefined);
     setErrorText(undefined);
   }, []);
-  const handleImport = useCallback(() => {
-    async function startImport() {
-      setLoading(true);
-      const hideMessage = message.loading('Importing...');
-      try {
+  const handleImport = useCallback(
+    (type: ImportRequestTypeEnum) => {
+      async function startImport() {
+        setLoading(true);
+        const hideMessage = message.loading('Importing...');
         try {
-          await api.postImport({
-            ImportRequest: {
-              type,
-              format,
-              s3Key: file?.s3Key as string,
-              filename: file?.filename as string,
-            },
-          });
-        } catch (e) {
-          // If the import takes more than 29 seconds, we ignore the error and
-          // poll for the import status
-        }
-        const importId = file?.s3Key.replace(/\//g, '') as string;
-        for (const _i of _.range(0, 100)) {
-          const importInfo = await api.getImportImportId({ importId });
-          if (importInfo) {
-            const latestStatus = _.last(importInfo.statuses);
-            if (latestStatus?.status === 'FAILED') {
-              setErrorText(importInfo.error);
-              message.fatal('Failed to import the file', new Error(importInfo.error));
-              return;
-            } else if (latestStatus?.status === 'SUCCESS') {
-              message.success(
-                `Imported ${importInfo.importedRecords} ${type.toLowerCase()} records`,
-              );
-              handleClose();
-              return;
-            }
+          try {
+            const data = {
+              ImportRequest: {
+                type,
+                format,
+                s3Key: file?.s3Key as string,
+                filename: file?.filename as string,
+              },
+            };
+
+            type === 'TRANSACTION'
+              ? await api.postImportTransactions(data)
+              : await api.postImportUsers(data);
+          } catch (e) {
+            // If the import takes more than 29 seconds, we ignore the error and
+            // poll for the import status
           }
-          await sleep(10 * 1000);
+          const importId = file?.s3Key.replace(/\//g, '') as string;
+          for (const _i of _.range(0, 100)) {
+            const importInfo = await api.getImportImportId({ importId });
+            if (importInfo) {
+              const latestStatus = _.last(importInfo.statuses);
+              if (latestStatus?.status === 'FAILED') {
+                setErrorText(importInfo.error);
+                message.fatal('Failed to import the file', new Error(importInfo.error));
+                return;
+              } else if (latestStatus?.status === 'SUCCESS') {
+                message.success(
+                  `Imported ${importInfo.importedRecords} ${type.toLowerCase()} records`,
+                );
+                handleClose();
+                return;
+              }
+            }
+            await sleep(10 * 1000);
+          }
+          message.fatal('Failed to import the file - timeout', new Error('Timeout error'));
+        } finally {
+          hideMessage && hideMessage();
+          setLoading(false);
         }
-        message.fatal('Failed to import the file - timeout', new Error('Timeout error'));
-      } finally {
-        hideMessage && hideMessage();
-        setLoading(false);
       }
-    }
-    startImport();
-  }, [api, file?.filename, file?.s3Key, format, handleClose, type]);
+      startImport();
+    },
+    [api, file?.filename, file?.s3Key, format, handleClose],
+  );
 
   return (
     <>
@@ -117,7 +124,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({
         okText="Import"
         onCancel={handleClose}
         okProps={{ isDisabled: !file, isLoading: loading, isDanger: true }}
-        onOk={handleImport}
+        onOk={() => handleImport(type)}
         writePermissions={requiredPermissions}
       >
         <Select<ImportRequestFormatEnum> value={format} onChange={setFormat}>

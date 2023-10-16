@@ -241,7 +241,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
               size="MEDIUM"
               style={{ width: '100%', position: 'relative' }}
               isDisabled={values.length >= MAX_ITERATIONS}
-              requiredPermissions={['simulator:risk-scoring:write']}
+              requiredPermissions={['simulator:simulations:write']}
             >
               <Tooltip
                 title="You can simulate a maximum of 3 iterations for this rule at once."
@@ -284,7 +284,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
                 isDisabled={state == null || simulationCount >= totalSimulations}
                 onClick={handleSimulate}
                 isLoading={handleSimulateMutation.isLoading}
-                requiredPermissions={['simulator:risk-scoring:write']}
+                requiredPermissions={['simulator:simulations:write']}
               >
                 Run simulation
               </Button>

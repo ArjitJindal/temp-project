@@ -33,7 +33,16 @@ export const fileImportHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
-    handlers.registerPostImport(
+    handlers.registerPostImportUsers(
+      async (ctx, request) =>
+        await importRepository.postFileImport(
+          request.ImportRequest,
+          tenantName,
+          getCredentialsFromEvent(event)
+        )
+    )
+
+    handlers.registerPostImportTransactions(
       async (ctx, request) =>
         await importRepository.postFileImport(
           request.ImportRequest,
