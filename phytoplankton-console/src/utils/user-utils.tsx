@@ -47,6 +47,12 @@ export function useAuth0User(): FlagrightAuth0User {
   return context.user;
 }
 
+export function useCurrentUser(): Account | null {
+  const [users] = useUsers();
+  const user = useAuth0User();
+  return users[user.userId];
+}
+
 export function useAccountRole(): UserRole {
   const user = useAuth0User();
   return parseUserRole(user?.role ?? null);

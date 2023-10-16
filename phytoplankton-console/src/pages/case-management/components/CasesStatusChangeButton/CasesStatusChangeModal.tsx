@@ -9,7 +9,7 @@ import { useApi } from '@/api';
 import { CaseStatusUpdate } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useAuth0User, useUsers } from '@/utils/user-utils';
+import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import { OTHER_REASON } from '@/components/Narrative';
 import { statusEscalated } from '@/utils/case-utils';
 import { UserStatusTriggersAdvancedOptionsForm } from '@/components/UserStatusTriggersAdvancedOptionsForm';
@@ -20,9 +20,8 @@ interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutat
 export default function CasesStatusChangeModal(props: Props) {
   const api = useApi();
   const [users] = useUsers();
-  const user = useAuth0User();
+  const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
-  const currentUser = users[user.userId];
   const updateMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {
       const hideMessage = message.loading(`Saving...`);
@@ -108,7 +107,7 @@ export default function CasesStatusChangeModal(props: Props) {
             );
           },
         });
-        if (currentUser.reviewerId) {
+        if (currentUser?.reviewerId) {
           message.warn(
             `${pluralize('Case', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${
               props.entityIds.length > 1 ? 'are' : 'is'

@@ -9,7 +9,7 @@ import { useApi } from '@/api';
 import { AlertStatusUpdateRequest, CaseStatusUpdate } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useAuth0User, useUsers } from '@/utils/user-utils';
+import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import { ALERT_CHECKLIST, CASES_ITEM } from '@/utils/queries/keys';
 import { OTHER_REASON } from '@/components/Narrative';
 import { statusEscalated } from '@/utils/case-utils';
@@ -23,9 +23,7 @@ export default function AlertsStatusChangeModal(props: Props) {
   const api = useApi();
   const queryClient = useQueryClient();
   const [users] = useUsers();
-  const user = useAuth0User();
-
-  const currentUser = users[user.userId];
+  const currentUser = useCurrentUser();
   const isChildCase = props.caseId?.includes('.');
   const updateMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {
