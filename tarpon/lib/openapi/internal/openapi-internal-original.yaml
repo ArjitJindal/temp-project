@@ -4894,9 +4894,6 @@ paths:
     get:
       summary: Get rule queues
       tags: []
-      x-flagright:
-        permissions:
-          - settings:organisation:read
       responses:
         '200':
           description: OK
