@@ -51,8 +51,9 @@ export const ConsoleApiPathToLambda: any = {
   '/rule_instances': StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule_instances/{ruleInstanceId}':
     StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
-  '/import': StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
-  '/import/{importId}': StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
+  '/import/users': StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
+  '/import/transactions': StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
+  '/imports/{importId}': StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
   '/files/getPresignedUrl':
     StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
   '/lists': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,

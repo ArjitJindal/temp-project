@@ -9,12 +9,12 @@ const testApiEndPoints = new TestApiEndpoint(fileImportHandler)
 describe.each<TestApiEndpointOptions>([
   {
     method: 'GET',
-    path: '/import/{importId}',
+    path: '/imports/{importId}',
     payload: { importId: 'importId' },
   },
   {
     method: 'POST',
-    path: '/import',
+    path: '/import/users',
     payload: { importId: 'importId' },
   },
 ])('File Import API', ({ method, path, payload }) => {
