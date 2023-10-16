@@ -11,7 +11,7 @@ export const DEFAULT_ROLES: {
     role: 'admin',
     permissions: PERMISSIONS, // Admin has all permissions
     description:
-      'Admin has unrestricted access to all features, can invite new accounts to console. A tenant can have multiple admins.',
+      'Admin has unrestricted access to all features. They can invite new accounts to the console, and there can be multiple admins.',
   },
   {
     role: 'auditor',
@@ -38,7 +38,7 @@ export const DEFAULT_ROLES: {
       'simulator:risk-scoring:read',
     ],
     description:
-      'Auditor has read-only access to Dashboard, Case Management, Rules, Risk Scoring, Audit Log and has access to download information.',
+      'Auditor has read-only access to the Dashboard, Case management, Rules, Risk scoring, and Audit log. They also have access to download information.',
   },
   {
     role: 'analyst',
@@ -64,7 +64,7 @@ export const DEFAULT_ROLES: {
       'users:user-comments:write',
     ],
     description:
-      'Analyst has unrestricted access to Case management but read-only rights to Audit Log, Rules & Risk Scoring.',
+      'Analyst has unrestricted access to case management, but only has read-only rights to Audit log, Rules and Risk scoring.',
   },
   {
     role: 'approver',
@@ -97,7 +97,7 @@ export const DEFAULT_ROLES: {
       'users:user-comments:write',
     ],
     description:
-      'Approver has unrestricted access to Case management but read-only rights to Audit Log, Rules & Risk Scoring. Alerts are received when an analyst requires approval to close a case.',
+      'Approver has unrestricted access to case management but only has read-only rights to Audit log, Rules and Risk scoring. Alerts are received when an analyst requires approval to close a case.',
   },
   {
     role: 'developer',
@@ -127,6 +127,6 @@ export const DEFAULT_ROLES: {
       'simulator:risk-scoring:read',
     ],
     description:
-      'Developer has unrestricted access to the ‘Developer’ section found under settings, and read-only access to all other features.',
+      'Developer have unrestricted access to the developer section on the console,  under settings. They have read-only access to all other features.',
   },
 ]
