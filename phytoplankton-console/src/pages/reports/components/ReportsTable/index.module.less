@@ -1,13 +1,15 @@
 @import 'src/components/ui/colors.less';
 
 .tag {
-  &.status-draft {
-    border-color: @fr-colors-v2-primary-flagrightBlue;
-    background: @fr-colors-v2-highlight-flagrightBlue;
+  &.status-DRAFT {
+    border-color: @fr-colors-purple;
+    background: @fr-colors-purpleTint;
+    color: @fr-colors-v2-gray-10;
   }
-  &.status-complete {
-    border-color: @fr-colors-v2-alert-success;
-    background: fade(@fr-colors-v2-alert-success, 10%);
+  &.status-COMPLETE {
+    border-color: @fr-colors-limeGreenShade;
+    background: @fr-colors-v2-risk-level-bg-low;
+    color: @fr-colors-v2-gray-10;
   }
 }
 

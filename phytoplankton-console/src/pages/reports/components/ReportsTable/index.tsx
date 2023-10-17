@@ -121,7 +121,7 @@ export default function ReportsTable() {
           return (
             <div className={s.status} onClick={() => setDisplayStatusInfoReport(report)}>
               {report?.status && (
-                <Tag className={cn('TEST', s.tag, s[`status-${report.status}`])}>
+                <Tag className={cn(s.tag, s[`status-${report.status}`])}>
                   {sentenceCase(report.status)}
                 </Tag>
               )}
