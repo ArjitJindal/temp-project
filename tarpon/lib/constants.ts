@@ -260,20 +260,35 @@ export const StackConstants = {
   CRON_JOB_MONTHLY: getResourceNameForTarpon('CronJobMonthlyFunction'),
 }
 
-export const SQSQueues = {
-  AUDIT_LOG_QUEUE_NAME: getResourceName('AuditLogQueue'),
-  TRANSACTION_AGGREGATION_QUEUE_NAME:
-    getResourceName('TransactionAggregationQueue') + '.fifo',
-  SLACK_ALERT_QUEUE_NAME: getResourceName('SlackAlertQueue'),
-  WEBHOOK_DELIVERY_QUEUE_NAME: getResourceName('WebhookDeliveryQueue'),
-  BATCH_JOB_QUEUE_NAME: getResourceName('BatchJobQueue'),
-  TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME:
-    getResourceName('TarponChangeCaptureRetryQueue') + '.fifo',
-  WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME:
-    getResourceName('WebhookTarponChangeCaptureRetryQueue') + '.fifo',
-  HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME:
-    getResourceName('HammerheadChangeCaptureRetryQueue') + '.fifo',
-  REQUEST_LOGGER_QUEUE_NAME: getResourceName('RequestLoggerQueue'),
+export const SQSQueues: {
+  [key: string]: { name: string; oldestMsgAgeAlarmThresholdMinutes?: number }
+} = {
+  AUDIT_LOG_QUEUE_NAME: {
+    name: getResourceName('AuditLogQueue'),
+  },
+  TRANSACTION_AGGREGATION_QUEUE_NAME: {
+    name: getResourceName('TransactionAggregationQueue') + '.fifo',
+  },
+  SLACK_ALERT_QUEUE_NAME: {
+    name: getResourceName('SlackAlertQueue'),
+  },
+  WEBHOOK_DELIVERY_QUEUE_NAME: {
+    name: getResourceName('WebhookDeliveryQueue'),
+  },
+  BATCH_JOB_QUEUE_NAME: { name: getResourceName('BatchJobQueue') },
+  TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME: {
+    name: getResourceName('TarponChangeCaptureRetryQueue') + '.fifo',
+  },
+  WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME: {
+    name: getResourceName('WebhookTarponChangeCaptureRetryQueue') + '.fifo',
+  },
+  HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME: {
+    name: getResourceName('HammerheadChangeCaptureRetryQueue') + '.fifo',
+  },
+  REQUEST_LOGGER_QUEUE_NAME: {
+    name: getResourceName('RequestLoggerQueue'),
+    oldestMsgAgeAlarmThresholdMinutes: 60,
+  },
 }
 
 export function getDeadLetterQueueName(queueName: string) {

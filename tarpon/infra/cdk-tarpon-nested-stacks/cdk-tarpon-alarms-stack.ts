@@ -196,19 +196,19 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       createSQSOldestMessageAgeAlarm(
         this,
         this.betterUptimeCloudWatchTopic,
-        sqsQueue,
-        Duration.minutes(30)
+        sqsQueue.name,
+        Duration.minutes(sqsQueue.oldestMsgAgeAlarmThresholdMinutes ?? 30)
       )
       createSQSOldestMessageAgeAlarm(
         this,
         this.betterUptimeCloudWatchTopic,
-        getDeadLetterQueueName(sqsQueue),
+        getDeadLetterQueueName(sqsQueue.name),
         Duration.minutes(5)
       )
       createSQSOldestMessageAgeAlarm(
         this,
         this.betterUptimeCloudWatchTopic,
-        `NintyMin${getDeadLetterQueueName(sqsQueue)}`,
+        `NintyMin${getDeadLetterQueueName(sqsQueue.name)}`,
         Duration.minutes(90)
       )
     }

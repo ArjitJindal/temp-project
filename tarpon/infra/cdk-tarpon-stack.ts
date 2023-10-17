@@ -139,11 +139,14 @@ export class CdkTarponStack extends cdk.Stack {
       protocol: SubscriptionProtocol.HTTPS,
     })
 
-    const slackAlertQueue = this.createQueue(SQSQueues.SLACK_ALERT_QUEUE_NAME, {
-      visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
-    })
+    const slackAlertQueue = this.createQueue(
+      SQSQueues.SLACK_ALERT_QUEUE_NAME.name,
+      {
+        visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
+      }
+    )
     const webhookDeliveryQueue = this.createQueue(
-      SQSQueues.WEBHOOK_DELIVERY_QUEUE_NAME,
+      SQSQueues.WEBHOOK_DELIVERY_QUEUE_NAME.name,
       {
         visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
         maxReceiveCount:
@@ -153,7 +156,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     const transactionAggregationQueue = this.createQueue(
-      SQSQueues.TRANSACTION_AGGREGATION_QUEUE_NAME,
+      SQSQueues.TRANSACTION_AGGREGATION_QUEUE_NAME.name,
       {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         fifo: true,
@@ -165,17 +168,20 @@ export class CdkTarponStack extends cdk.Stack {
       displayName: StackConstants.AUDIT_LOG_TOPIC_NAME,
       topicName: StackConstants.AUDIT_LOG_TOPIC_NAME,
     })
-    const auditLogQueue = this.createQueue(SQSQueues.AUDIT_LOG_QUEUE_NAME, {
-      maxReceiveCount: 3,
-    })
+    const auditLogQueue = this.createQueue(
+      SQSQueues.AUDIT_LOG_QUEUE_NAME.name,
+      {
+        maxReceiveCount: 3,
+      }
+    )
     this.auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
 
-    const batchJobQueue = this.createQueue(SQSQueues.BATCH_JOB_QUEUE_NAME)
+    const batchJobQueue = this.createQueue(SQSQueues.BATCH_JOB_QUEUE_NAME.name)
     this.batchJobQueue = batchJobQueue
 
     // Kinesis consumer retry queues
     const tarponChangeCaptureRetryQueue = this.createQueue(
-      SQSQueues.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME,
+      SQSQueues.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME.name,
       {
         fifo: true,
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
@@ -184,7 +190,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     const webhookTarponChangeCaptureRetryQueue = this.createQueue(
-      SQSQueues.WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME,
+      SQSQueues.WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME.name,
       {
         fifo: true,
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
@@ -193,7 +199,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     const hammerheadChangeCaptureRetryQueue = this.createQueue(
-      SQSQueues.HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME,
+      SQSQueues.HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME.name,
       {
         fifo: true,
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
@@ -202,7 +208,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     const requestLoggerQueue = this.createQueue(
-      SQSQueues.REQUEST_LOGGER_QUEUE_NAME,
+      SQSQueues.REQUEST_LOGGER_QUEUE_NAME.name,
       {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,

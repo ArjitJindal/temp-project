@@ -6,12 +6,13 @@ import {
   Context,
 } from 'aws-lambda'
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
+import { isEmpty } from 'lodash'
 import { logger } from '../logger'
 import { getContext } from '../utils/context'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { background } from '@/utils/background'
 import { envIs } from '@/utils/env'
-import { RequestLogger } from '@/@types/request-logger'
+import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTask } from '@/lambdas/request-logger/app'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
@@ -37,6 +38,8 @@ export const requestLoggerMiddleware = () => {
   }
 }
 
+const LOGGABLE_METHODS = ['PUT', 'POST', 'PATCH']
+
 async function logRequest(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
@@ -44,19 +47,21 @@ async function logRequest(
   context: Context
 ) {
   try {
+    const payload =
+      typeof event.body === 'string' ? JSON.parse(event.body) : event.body ?? {}
+    if (!LOGGABLE_METHODS.includes(event.httpMethod) || !isEmpty(payload)) {
+      return
+    }
     const tenantId = getContext()?.tenantId as string
     const localContext = getContext()
 
-    const data: RequestLogger = {
+    const data: ApiRequestLog = {
       context,
       method: event.httpMethod,
       path: event.path,
       timestamp: Date.now(),
       userId: localContext?.user?.id,
-      payload:
-        typeof event.body === 'string'
-          ? JSON.parse(event.body)
-          : event.body ?? {},
+      payload,
       queryStringParameters: event.queryStringParameters,
       pathParameters: event.pathParameters,
       domainName: event.requestContext.domainName,
@@ -66,17 +71,15 @@ async function logRequest(
       traceId: getContext()?.logMetadata?.traceId,
     }
 
-    if (event.httpMethod !== 'GET') {
-      const sqsMessage = new SendMessageCommand({
-        QueueUrl: process.env.REQUEST_LOGGER_QUEUE_URL as string,
-        MessageBody: JSON.stringify(data),
-      })
+    const sqsMessage = new SendMessageCommand({
+      QueueUrl: process.env.REQUEST_LOGGER_QUEUE_URL as string,
+      MessageBody: JSON.stringify(data),
+    })
 
-      if (envIs('local') || envIs('test')) {
-        await handleRequestLoggerTask(data)
-      } else {
-        await background(sqsClient.send(sqsMessage))
-      }
+    if (envIs('local') || envIs('test')) {
+      await handleRequestLoggerTask([data])
+    } else {
+      await background(sqsClient.send(sqsMessage))
     }
   } catch (error) {
     logger.error(`Failed to log request: ${(error as Error).message}`)

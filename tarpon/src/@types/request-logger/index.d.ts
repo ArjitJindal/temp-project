@@ -1,6 +1,6 @@
 import { Context } from 'aws-lambda'
 
-export type RequestLogger = {
+export type ApiRequestLog = {
   context: Context
   path: string
   method: string
