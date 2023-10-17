@@ -243,17 +243,6 @@ export default function TransactionsTable(props: Props) {
             }),
           ]
         : []),
-      ...(alert
-        ? [
-            {
-              title: 'Status',
-              defaultWidth: 80,
-              key: 'executedRules.ruleAction',
-              value: (entity) => getStatus(entity.executedRules, alert),
-              type: RULE_ACTION,
-            } as DerivedColumn<InternalTransaction, RuleAction>,
-          ]
-        : []),
       helper.simple<'type'>({
         title: 'Transaction type',
         key: 'type',
@@ -273,11 +262,23 @@ export default function TransactionsTable(props: Props) {
         type: TRANSACTION_STATE,
         filtering: true,
       }),
-      helper.simple<'status'>({
-        title: 'Status',
-        key: 'status',
-        type: RULE_ACTION,
-      }),
+      ...(alert
+        ? [
+            {
+              title: 'Status',
+              defaultWidth: 80,
+              key: 'executedRules.ruleAction',
+              value: (entity) => getStatus(entity.executedRules, alert),
+              type: RULE_ACTION,
+            } as DerivedColumn<InternalTransaction, RuleAction>,
+          ]
+        : [
+            helper.simple<'status'>({
+              title: 'Status',
+              key: 'status',
+              type: RULE_ACTION,
+            }),
+          ]),
       helper.simple<'originUserId'>({
         key: 'originUserId',
         title: 'Origin user ID',
