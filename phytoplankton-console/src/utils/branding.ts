@@ -1,12 +1,13 @@
 import FlagrightLogoSvg from '@/branding/flagright-logo.svg';
 import FlagrightDemoLogoSvg from '@/branding/flagright-logo-demo.svg';
 import FlagrightNoTextLogo from '@/branding/flagright-no-text.svg';
+import FlagrightFavicon from '@/branding/flagright-favicon.png';
 import BureauLogoSvg from '@/branding/bureau-logo.svg';
 import BureauFaviconSvg from '@/branding/bureau-favicon.svg';
 import RegtankLogoSvg from '@/branding/regtank-logo.svg';
 import RegtankFaviconSvg from '@/branding/regtank-favicon.svg';
-import ZigramLogoSvg from '@/branding/zigram-logo.svg';
-import ZigramFaviconSvg from '@/branding/zigram-favicon.svg';
+import ZigramLogo from '@/branding/zigram-logo-white.png';
+import ZigramFavicon from '@/branding/zigram-favicon.png';
 
 interface BrandingSettings {
   apiBasePath?: string;
@@ -38,7 +39,7 @@ const FLAGRIGHT_BRANDING: BrandingSettings = {
   apiDocsLinks: {
     webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
   },
-  faviconUrl: '/favicon.ico',
+  faviconUrl: FlagrightFavicon,
   systemAvatarUrl: FlagrightNoTextLogo,
 };
 
@@ -72,17 +73,16 @@ const REGTANK_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> 
 };
 
 const ZIGRAM_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
-  // TBD
   supportEmail: 'tmsupport@zigram.tech',
-  logoUrl: ZigramLogoSvg,
-  demoModeLogoUrl: ZigramLogoSvg,
-  companyName: 'Zigram',
-  notProvisionedWarning: `User does not have a provisioned Zigram Account.`,
+  logoUrl: ZigramLogo,
+  demoModeLogoUrl: ZigramLogo,
+  companyName: 'Transact Comply',
+  notProvisionedWarning: `User does not have a provisioned Transact Comply Account.`,
   apiDocsLinks: {
     webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
   },
-  faviconUrl: ZigramFaviconSvg,
-  systemAvatarUrl: ZigramFaviconSvg,
+  faviconUrl: ZigramFavicon,
+  systemAvatarUrl: ZigramFavicon,
 };
 
 const WHITELABEL_BRANDING = {
