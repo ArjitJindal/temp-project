@@ -2155,6 +2155,9 @@ paths:
             type: string
           name: unmaskApiKeyId
           in: query
+      x-flagright:
+        permissions:
+          - settings:organisation:read
       summary: Tenant - Get API Keys
       operationId: get-tenant-api-keys
       responses:
@@ -2449,9 +2452,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/Account'
       operationId: get-accounts
-      x-flagright:
-        permissions:
-          - accounts:overview:read
   /pulse/risk-classification:
     get:
       summary: Risk classification - GET
@@ -4509,9 +4509,6 @@ paths:
     get:
       summary: Get narratives
       operationId: get-narratives
-      x-flagright:
-        permissions:
-          - narratives:narrative-templates:read
       responses:
         '200':
           description: OK
@@ -4553,9 +4550,6 @@ paths:
     get:
       summary: Get narrative
       operationId: get-narrative-template
-      x-flagright:
-        permissions:
-          - settings:organisation:read
       responses:
         '200':
           description: OK
@@ -4795,9 +4789,6 @@ paths:
     get:
       summary: Get checklist templates
       tags: []
-      x-flagright:
-        permissions:
-          - settings:organisation:read
       responses:
         '200':
           description: OK
@@ -4852,9 +4843,6 @@ paths:
     get:
       summary: Get a checklist template
       operationId: get-checklist-template
-      x-flagright:
-        permissions:
-          - settings:organisation:read
       responses:
         '200':
           description: OK
@@ -4948,9 +4936,6 @@ paths:
     get:
       summary: Get a rule queue
       operationId: get-rule-queue
-      x-flagright:
-        permissions:
-          - settings:organisation:read
       responses:
         '200':
           description: OK
@@ -7287,8 +7272,6 @@ components:
         - reports:generated:write
         - copilot:narrative:read
         - copilot:narrative:write
-        - accounts:overview:read
-        - narratives:narrative-templates:read
     CaseStatus:
       type: string
       title: CaseStatus

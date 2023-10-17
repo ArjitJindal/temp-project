@@ -35,8 +35,6 @@ export const DEFAULT_ROLES: {
       'lists:all:read',
       'lists:export:read',
       'simulator:simulations:read',
-      'accounts:overview:read',
-      'narratives:narrative-templates:read',
     ],
     description:
       'Auditor has read-only access to the Dashboard, Case management, Rules, Risk scoring, and Audit log. They also have access to download information.',
@@ -65,8 +63,6 @@ export const DEFAULT_ROLES: {
       'users:user-comments:write',
       'copilot:narrative:write',
       'copilot:narrative:read',
-      'accounts:overview:read',
-      'narratives:narrative-templates:read',
     ],
     description:
       'Analyst has unrestricted access to case management, but only has read-only rights to Audit log, Rules and Risk scoring.',
@@ -99,8 +95,6 @@ export const DEFAULT_ROLES: {
       'users:user-overview:read',
       'users:user-details:read',
       'users:user-comments:write',
-      'accounts:overview:read',
-      'narratives:narrative-templates:read',
     ],
     description:
       'Approver has unrestricted access to case management but only has read-only rights to Audit log, Rules and Risk scoring. Alerts are received when an analyst requires approval to close a case.',
@@ -130,8 +124,6 @@ export const DEFAULT_ROLES: {
       'lists:all:read',
       'lists:export:read',
       'simulator:simulations:read',
-      'accounts:overview:read',
-      'narratives:narrative-templates:read',
     ],
     description:
       'Developer have unrestricted access to the developer section on the console,  under settings. They have read-only access to all other features.',
