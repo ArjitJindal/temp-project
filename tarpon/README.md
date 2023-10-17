@@ -127,7 +127,7 @@ npm run test:watch
 
 We are having Integrations tests to ensure that the APIs are working as expected. Every API has its own set of integration tests written in `Postman Collection` and stored in `test-resources/` folder.
 
-Collection Link: https://lively-firefly-529317.postman.co/workspace/Flagright-Workspace~7e6e7bab-de2f-4a94-84a0-dca68b5b3d52/collection/24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5
+[Postman API Tests Collection](https://lively-firefly-529317.postman.co/workspace/Flagright-Workspace~7e6e7bab-de2f-4a94-84a0-dca68b5b3d52/collection/25627167-9716caee-9579-4961-8254-66e40d894d09?action=share&creator=22625333)
 
 #### Running Integration Tests
 

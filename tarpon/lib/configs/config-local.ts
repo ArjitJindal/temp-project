@@ -71,7 +71,7 @@ export const config: Config = {
     SLACK_REDIRECT_URI: 'https://${ngrok_url}/slack/oauth_redirect',
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
     POSTMAN_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:PostmanAPICreds-iSFLI2`,
-    POSTMAN_COLLECTION_ID: '24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5',
+    POSTMAN_COLLECTION_ID: '25627167-9716caee-9579-4961-8254-66e40d894d09',
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
     GOOGLE_SHEETS_PRIVATE_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:GoogleSheetsPrivateKey-0WCDHP`,
     API_USAGE_GOOGLE_SHEET_ID: '14VIlFKYsJq6R-UYAj-JVdAZA9PiBK5T7IgLzcFKRKlU',
