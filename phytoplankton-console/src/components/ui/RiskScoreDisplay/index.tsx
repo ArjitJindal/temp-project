@@ -44,6 +44,7 @@ export default function RiskScoreDisplay(props: Props) {
         sortedItems={sortedItems}
         lastItem={lastItem}
         riskScoreAlgo={riskScoreAlgo}
+        defaultText={`This is default risk score value when all the risk factors are disabled.`}
       />
       <DetailsModal
         icon={icon}

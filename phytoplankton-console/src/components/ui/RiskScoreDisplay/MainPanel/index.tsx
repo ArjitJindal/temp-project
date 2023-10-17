@@ -6,6 +6,7 @@ import InformationLineIcon from '@/components/ui/icons/Remix/system/information-
 import { RISK_LEVEL_COLORS, RiskLevel, useRiskLevel } from '@/utils/risk-levels';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { useId } from '@/utils/hooks';
+import Tooltip from '@/components/library/Tooltip';
 
 export type MainPanelCustomStyles = Partial<{
   background?: string;
@@ -19,6 +20,7 @@ interface Props {
   customStyling?: MainPanelCustomStyles;
   riskScoreAlgo: (value: ValueItem) => number;
   sortedItems: ValueItem[];
+  defaultText?: string;
 }
 
 export default function MainPanel(props: Props) {
@@ -42,6 +44,13 @@ export default function MainPanel(props: Props) {
               onClickInfo?.();
             }}
           />
+        )}
+        {!onClickInfo && props.defaultText && (
+          <Tooltip title={props.defaultText}>
+            <div>
+              <InformationLineIcon className={s.infoIcon} />
+            </div>
+          </Tooltip>
         )}
       </div>
       <div className={s.currentValue}>
