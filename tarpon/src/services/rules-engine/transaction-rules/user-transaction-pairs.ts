@@ -101,7 +101,9 @@ export default class UserTransactionPairsRule extends TransactionRule<
       receiverKeyId: getReceiverKeys(
         this.tenantId,
         this.transaction,
-        this.transaction.type
+        this.filters.transactionTypesHistorical
+          ? this.transaction.type
+          : undefined
       )?.PartitionKeyID,
       senderKeyId: undefined,
     })

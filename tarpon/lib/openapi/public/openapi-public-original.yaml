@@ -1791,6 +1791,7 @@ components:
             UserId for transaction's destination. In other words, where the
             value is being transferred to.
       required:
+        - type
         - transactionId
         - timestamp
     TransactionWithRulesResult:

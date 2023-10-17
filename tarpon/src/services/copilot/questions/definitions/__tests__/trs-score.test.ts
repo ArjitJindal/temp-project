@@ -13,6 +13,7 @@ describe('Average TRS score', () => {
         await db
           .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
           .insertOne({
+            type: 'TRANSFER',
             executedRules: [],
             hitRules: [],
             status: 'ALLOW',

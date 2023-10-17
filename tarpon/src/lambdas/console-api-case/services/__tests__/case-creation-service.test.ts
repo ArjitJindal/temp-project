@@ -278,6 +278,7 @@ describe('Cases (Transaction hit)', () => {
           {
             executedRules: [],
             hitRules: [],
+            type: 'TRANSFER',
             status: 'ALLOW',
             timestamp: 0,
             transactionId: 't1',
@@ -305,6 +306,7 @@ describe('Cases (Transaction hit)', () => {
           {
             executedRules: [],
             hitRules: [],
+            type: 'TRANSFER',
             status: 'ALLOW',
             timestamp: 0,
             transactionId: 't1',

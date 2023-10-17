@@ -166,6 +166,7 @@ createArsRiskFactorTestCases(
     {
       testName: '3dsDone is undefined',
       transaction: {
+        type: 'TRANSFER',
         transactionId: uuidv4(),
         transactionState: 'SUCCESSFUL',
         originUserId: '8650a2611d0771cba03310f74bf6',

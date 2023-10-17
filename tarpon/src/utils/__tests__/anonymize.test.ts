@@ -16,6 +16,7 @@ describe('Anonymizer', () => {
           timestamp: 1,
           executedRules: [],
           hitRules: [],
+          type: 'TRANSFER',
           status: 'ALLOW',
           destinationUser: {
             userId: '12345',

@@ -211,6 +211,7 @@ createArsRiskFactorTestCases(
         }),
       ],
       transaction: {
+        type: 'TRANSFER',
         transactionId: '1',
         timestamp: dayjs().valueOf(),
         originUserId: '1',
@@ -228,6 +229,7 @@ createArsRiskFactorTestCases(
       transaction: {
         transactionId: '2',
         originUserId: '2',
+        type: 'TRANSFER',
         timestamp: dayjs().valueOf(),
       },
       expectedScore: 70,
@@ -242,6 +244,7 @@ createArsRiskFactorTestCases(
       ],
       transaction: {
         transactionId: '3',
+        type: 'TRANSFER',
         timestamp: dayjs().valueOf(),
         originUserId: '3',
       },
@@ -309,6 +312,7 @@ createArsRiskFactorTestCases(
         }),
       ],
       transaction: {
+        type: 'TRANSFER',
         transactionId: '1',
         timestamp: dayjs().valueOf(),
         originUserId: '1',
@@ -324,6 +328,7 @@ createArsRiskFactorTestCases(
         }),
       ],
       transaction: {
+        type: 'TRANSFER',
         transactionId: '2',
         originUserId: '2',
         timestamp: dayjs().valueOf(),
@@ -339,6 +344,7 @@ createArsRiskFactorTestCases(
         }),
       ],
       transaction: {
+        type: 'TRANSFER',
         transactionId: '3',
         timestamp: dayjs().valueOf(),
         originUserId: '3',

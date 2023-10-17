@@ -69,6 +69,7 @@ export class ShPaymentTransactionConverter
     const [receiverFirstName, receiverLastName] =
       rawTransaction['Creditor name'].split(' ')
     return {
+      type: 'TRANSFER',
       transactionId: rawTransaction.No,
       timestamp: dayjs(rawTransaction['Input Date']).valueOf(),
       reference: rawTransaction['Reference No'],
