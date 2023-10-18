@@ -796,7 +796,9 @@ export class MongoDbTransactionRepository
 
       // If we have filter conditions, it's for auto-complete. It's acceptable that
       // we don't filter all the documents for performance concerns.
-      filterConditions.length > 0 ? { $limit: 10000 } : {},
+      filterConditions.length > 0 || unwindPath.length > 0
+        ? { $limit: 10000 }
+        : {},
       unwindPath.length > 0
         ? {
             $unwind: {
