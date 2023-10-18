@@ -112,17 +112,25 @@ const countries = {
   },
 }
 
-const postCodes = [...Array(60)].map(() => randomInt(10000) + 10000)
+const postCodes = [...Array(5000)].map(() => randomInt(100000) + 100000)
 
 const mapAddressLineAndPostcode = postCodes.reduce(
   (acc, postcode) => ({
     ...acc,
-    [postcode]: `${randomInt(30) * 13 + 1} ${pickRandom(streets)}`,
+    [postcode]: `${randomInt(4000) + 1} ${pickRandom(streets)} ${pickRandom(
+      streets
+    )}`,
   }),
   {}
 )
 
-export const addresses: Address[] = [...Array(300)].map(() => {
+const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
+  ? Number(process.env.SEED_TRANSACTIONS_COUNT)
+  : 50
+
+export const addresses: Address[] = [
+  ...Array(Math.max(TXN_COUNT * 5, 20000)),
+].map(() => {
   const country = pickRandom(Object.keys(countries))
   const state = pickRandom(Object.keys(countries[country]))
   const postcode = pickRandom(postCodes)
@@ -136,6 +144,6 @@ export const addresses: Address[] = [...Array(300)].map(() => {
   }
 })
 
-export const phoneNumber = [...Array(300)].map(() =>
+export const phoneNumber = [...Array(1000)].map(() =>
   (Math.floor(randomInt(1000000000)) + 1000000000).toString()
 )

@@ -57,7 +57,11 @@ export function sampleTransaction({
   }
 }
 
-export const paymentMethods = [...Array(500000)].map(() =>
+const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
+  ? Number(process.env.SEED_TRANSACTIONS_COUNT)
+  : 50
+
+export const paymentMethods = [...Array(Math.max(TXN_COUNT * 3))].map(() =>
   samplePaymentDetails()
 )
 
