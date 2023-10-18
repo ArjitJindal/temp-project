@@ -2,7 +2,10 @@ export type DashboardStatsRiskLevelDistributionData = {
   _id: number
   count: number
 }
-
+export type DashboardStatsKYCDistributionData = {
+  _id: number
+  count: number
+}
 export type TimeRange = {
   startTimestamp?: number
   endTimestamp?: number

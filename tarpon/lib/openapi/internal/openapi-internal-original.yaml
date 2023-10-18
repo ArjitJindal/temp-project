@@ -1900,6 +1900,33 @@ paths:
           name: riskType
           required: true
     parameters: []
+  /dashboard_stats/kyc-status-distribution:
+    get:
+      summary: DashboardStats - KYC Status Distribution
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsKYCStatusDistribution'
+              examples: {}
+      operationId: get-dashboard-stats-kyc-status-distribution
+      description: ''
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - BUSINESS
+              - CONSUMER
+          in: query
+          name: userType
+          required: true
+    parameters: []
   /dashboard_stats/hits_per_user:
     get:
       summary: DashboardStats - Hits per user
@@ -6234,6 +6261,29 @@ components:
                 type: string
             required:
               - riskLevel
+              - count
+        total:
+          type: number
+      required:
+        - data
+    DashboardStatsKYCStatusDistribution:
+      type: object
+      x-examples: {}
+      title: DashboardStatsKYCStatusDistribution
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              kycStatus:
+                $ref: '#/components/schemas/KYCStatus'
+              percentage:
+                type: string
+              count:
+                type: number
+            required:
+              - kycStatus
               - count
         total:
           type: number
