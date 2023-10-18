@@ -91,6 +91,9 @@ export const ruleInstanceHandler = lambdaApi()(
       const newRuleInstance = await ruleService.createOrUpdateRuleInstance({
         id: request.ruleInstanceId,
         ...request.RuleInstance,
+        // NOTE: We don't allow updating rule stats from Console
+        hitCount: oldRuleInstance?.hitCount,
+        runCount: oldRuleInstance?.runCount,
       })
       if (oldRuleInstance?.queueId !== newRuleInstance.queueId) {
         await alertsRepository.updateRuleQueue(
