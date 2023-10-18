@@ -541,13 +541,15 @@ export default function AlertTable(props: Props) {
     caseId,
     qaEnabled,
   ]);
+  const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
     const data = getOr(queryResults.data, { items: [] });
-    if (data.total === 1) {
+    if (data.total === 1 && !isAutoExpand) {
+      setIsAutoExpand(true);
       const alertId = (data.items[0] as TableDataSimpleItem<TableAlertItem>).alertId;
       actionRef.current?.expandRow(alertId);
     }
-  }, [queryResults.data]);
+  }, [queryResults.data, isAutoExpand]);
   const filterIds = denseArray([
     'caseId',
     'alertPriority',
