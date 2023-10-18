@@ -12,7 +12,7 @@ import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
-import { randomAddress } from '@/core/seed/samplers/address'
+import { randomPaymentAddress } from '@/core/seed/samplers/address'
 
 export function sampleTransaction({
   originUserId,
@@ -57,11 +57,7 @@ export function sampleTransaction({
   }
 }
 
-const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
-  ? Number(process.env.SEED_TRANSACTIONS_COUNT)
-  : 50
-
-export const paymentMethods = [...Array(Math.max(TXN_COUNT * 3))].map(() =>
+export const paymentMethods = [...Array(500000)].map(() =>
   samplePaymentDetails()
 )
 
@@ -146,7 +142,7 @@ export function sampleGenericBankAccountDetails(): GenericBankAccountDetails {
       name: 'Mark Schagal',
       accountNumber: `${randomInt()}`,
       accountType: 'SAVINGS',
-      bankAddress: randomAddress(),
+      bankAddress: randomPaymentAddress(),
     },
     {
       method: 'GENERIC_BANK_ACCOUNT',
@@ -155,7 +151,7 @@ export function sampleGenericBankAccountDetails(): GenericBankAccountDetails {
       accountNumber: `${randomInt()}`,
       accountType: 'CURRENT',
       name: 'John Dow',
-      bankAddress: randomAddress(),
+      bankAddress: randomPaymentAddress(),
     },
   ])
 }

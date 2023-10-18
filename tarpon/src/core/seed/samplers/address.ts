@@ -1,7 +1,8 @@
 import { pickRandom } from '@/core/seed/samplers/prng'
-import { addresses } from '@/core/seed/data/address'
+import { addresses, paymentAddresses } from '@/core/seed/data/address'
 
 const ADDRESSES = addresses
+const PAYMENT_ADDRESSES = paymentAddresses
 const ADDRESS_USAGE = new Map<string, number>()
 export const randomAddress = () => {
   const randomAddress = pickRandom(ADDRESSES)
@@ -12,4 +13,8 @@ export const randomAddress = () => {
     ADDRESSES.splice(index, 1)
   }
   return randomAddress
+}
+
+export const randomPaymentAddress = () => {
+  return pickRandom(PAYMENT_ADDRESSES)
 }

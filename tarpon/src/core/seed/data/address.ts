@@ -124,13 +124,7 @@ const mapAddressLineAndPostcode = postCodes.reduce(
   {}
 )
 
-const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
-  ? Number(process.env.SEED_TRANSACTIONS_COUNT)
-  : 50
-
-export const addresses: Address[] = [
-  ...Array(Math.max(TXN_COUNT * 5, 20000)),
-].map(() => {
+const getAddress = (): Address => {
   const country = pickRandom(Object.keys(countries))
   const state = pickRandom(Object.keys(countries[country]))
   const postcode = pickRandom(postCodes)
@@ -142,6 +136,14 @@ export const addresses: Address[] = [
     state,
     country,
   }
+}
+
+export const addresses: Address[] = [...Array(20000)].map(() => {
+  return getAddress()
+})
+
+export const paymentAddresses = [...Array(1000)].map(() => {
+  return getAddress()
 })
 
 export const phoneNumber = [...Array(1000)].map(() =>
