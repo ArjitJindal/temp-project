@@ -113,9 +113,6 @@ export const DRS_SCORES_COLLECTION = (tenantId: string) => {
 export const DRS_SCORES_DISTRIBUTION_STATS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-drs-scores-distribution`
 }
-export const KYC_STATUS_DISTRIBUTION_STATS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-kyc-status-distribution`
-}
 
 export const KRS_SCORES_DISTRIBUTION_STATS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-krs-scores-distribution`

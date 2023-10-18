@@ -7,7 +7,6 @@ import { TeamStatsDashboardMetric } from './dashboard-metrics/team-stats'
 import { RiskLevelDistributionStatsDashboardMetric } from './dashboard-metrics/risk-level-distribution-stats'
 import { OverviewStatsDashboardMetric } from './dashboard-metrics/overview-stats'
 import { CaseStatsDashboardMetric } from './dashboard-metrics/case-stats'
-import { KYCStatusDistributionStatsDashboardMetric } from './dashboard-metrics/kyc-status-distribution-stats'
 import { DashboardStatsRiskLevelDistributionData as RiskLevelDistributionStats } from '@/@types/openapi-internal/DashboardStatsRiskLevelDistributionData'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
@@ -114,19 +113,6 @@ export class DashboardStatsRepository {
     )
   }
 
-  private async recalculateKYCStatusDistributionStats() {
-    await KYCStatusDistributionStatsDashboardMetric.refresh(this.tenantId)
-  }
-
-  public async getKYCStatusDistributionStats(
-    userType: 'BUSINESS' | 'CONSUMER'
-  ) {
-    return await KYCStatusDistributionStatsDashboardMetric.get(
-      this.tenantId,
-      userType
-    )
-  }
-
   public async refreshTransactionStats(timestampTimeRange?: TimeRange) {
     await TransactionStatsDashboardMetric.refresh(
       this.tenantId,
@@ -156,7 +142,6 @@ export class DashboardStatsRepository {
   }
 
   public async refreshUserStats() {
-    await this.recalculateKYCStatusDistributionStats()
     await this.recalculateRiskLevelDistributionStats()
   }
 

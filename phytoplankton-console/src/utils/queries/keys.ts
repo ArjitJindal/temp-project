@@ -96,12 +96,6 @@ export const USERS_STATS = (userType?: 'BUSINESS' | 'CONSUMER', riskType?: strin
   userType,
   riskType,
 ];
-export const USERS_KYC_STATUS_STATS = (userType?: 'BUSINESS' | 'CONSUMER'): QueryKey => [
-  'users',
-  'kycStatus',
-  'stats',
-  userType,
-];
 export const TRANSACTIONS_UNIQUES = (
   field: TransactionsUniquesField,
   params: {
