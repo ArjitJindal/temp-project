@@ -141,6 +141,10 @@ export const getCreateStatement = (
     }
     case 'STATUS_CHANGE': {
       const entityStatus = log?.newImage[`${entityType.toLowerCase()}Status`];
+      if (!entityStatus) {
+        return null;
+      }
+
       if (statusEscalated(entityStatus)) {
         return handleEscalatedStatus(entityStatus, log, userName, type);
       } else if (entityStatus.includes('REOPENED')) {
