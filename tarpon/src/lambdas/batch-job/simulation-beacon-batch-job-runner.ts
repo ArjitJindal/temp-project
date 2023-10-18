@@ -1,6 +1,6 @@
 import pMap from 'p-map'
 
-import { chain, uniqBy } from 'lodash'
+import { chain, compact, uniq, uniqBy } from 'lodash'
 import { SimulationTaskRepository } from '../console-api-simulation/repositories/simulation-task-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationBeaconBatchJob } from '@/@types/batch-job'
@@ -41,7 +41,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   protected async run(job: SimulationBeaconBatchJob): Promise<void> {
     this.startTimer()
     const { tenantId, awsCredentials, parameters } = job
-    const dynamoDb = await getDynamoDbClient(awsCredentials)
+    const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()
     const rulesEngineService = new RulesEngineService(tenantId, dynamoDb)
     const simulationRepository = new SimulationTaskRepository(tenantId, mongoDb)
@@ -82,12 +82,13 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
           parameters.defaultRuleInstance
         )
 
-      await simulationRepository.updateStatistics(
-        parameters.taskId,
-        simulationBeaconStatistics
-      )
-
-      await simulationRepository.updateTaskStatus(parameters.taskId, 'SUCCESS')
+      await Promise.all([
+        simulationRepository.updateStatistics(
+          parameters.taskId,
+          simulationBeaconStatistics
+        ),
+        simulationRepository.updateTaskStatus(parameters.taskId, 'SUCCESS'),
+      ])
     } catch (error) {
       await simulationRepository.updateTaskStatus(parameters.taskId, 'FAILED')
       throw error
@@ -106,26 +107,37 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       executedTransactionIds.has(t.transactionId)
     )
 
-    const totalUsers = (await this.userRepository?.getUsersCount()) ?? 0
-
     const usersByTransactionsRan = this.getUsersByTransactionsRan(
       actualTransactionsRan
     )
 
     const simulationUsersHit = this.simulationUsersHit(executionDetails)
 
-    const originalFalsePositiveUsers = defaultRuleInstance.id
-      ? await this.getFalsePositiveUserIdsByRuleInstance(defaultRuleInstance.id)
-      : []
+    const [
+      totalUsers,
+      originalFalsePositiveUsers,
+      totalTransactions,
+      transactionsHit,
+      usersHit,
+    ] = await Promise.all([
+      this.userRepository?.getUsersCount() ?? 0,
+      defaultRuleInstance.id
+        ? this.getFalsePositiveUserIdsByRuleInstance(defaultRuleInstance.id)
+        : [],
+      this.transactionRepository?.getAllTransactionsCount() ?? 0,
+      defaultRuleInstance.id
+        ? this.actualTransactionsHitCount(defaultRuleInstance.id)
+        : 0,
+      defaultRuleInstance.id
+        ? this.actualUsersHitCount(defaultRuleInstance.id)
+        : 0,
+    ])
 
     const falsePositiveCasesCountSimulated =
       this.getSimulatedTransactionsFalsePositiveCount(
         originalFalsePositiveUsers,
         executionDetails
       )
-
-    const totalTransactions =
-      (await this.transactionRepository?.getAllTransactionsCount()) ?? 0
 
     const transactionExtrapolationRatio = Math.max(
       1,
@@ -137,16 +149,8 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       totalUsers / usersByTransactionsRan
     )
 
-    const transactionsHit = defaultRuleInstance.id
-      ? await this.actualTransactionsHitCount(defaultRuleInstance.id)
-      : 0
-
     const transactionsHitSimulated =
       this.numberOfTransactionsHit(executionDetails)
-
-    const usersHit = defaultRuleInstance.id
-      ? await this.actualUsersHitCount(defaultRuleInstance.id)
-      : 0
 
     return {
       current: {
@@ -229,25 +233,106 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const missCount = totalCount - hitCount
 
     if (transactionRepository) {
-      const transactionsHit =
+      const [transactionsHit, transactionsMiss] = await Promise.all([
         hitCount > 0 && ruleInstance.id
-          ? await transactionRepository.getLastNTransactionsHitByRuleInstance(
+          ? transactionRepository.getLastNTransactionsHitByRuleInstance(
               hitCount,
               ruleInstance.id
             )
-          : []
-
-      const transactionsMiss =
+          : ([] as InternalTransaction[]),
         missCount > 0
-          ? await transactionRepository.getLastNTransactionsNotHitByRuleInstance(
+          ? transactionRepository.getLastNTransactionsNotHitByRuleInstance(
               missCount,
               ruleInstance.id
             )
-          : []
+          : ([] as InternalTransaction[]),
+      ])
 
-      return uniqBy([...transactionsHit, ...transactionsMiss], 'transactionId')
+      logger.info(
+        `Transactions hit: ${transactionsHit.length}, Transactions miss: ${transactionsMiss.length}`
+      )
+      const allTransactionsHit = await this.filterHighFrequencyUsers(
+        transactionsHit,
+        transactionRepository,
+        ruleInstance,
+        hitCount
+      )
+
+      return uniqBy(
+        [...allTransactionsHit, ...transactionsMiss],
+        'transactionId'
+      )
     }
     return []
+  }
+
+  private async filterHighFrequencyUsers(
+    transactionsHit: InternalTransaction[],
+    transactionRepository: MongoDbTransactionRepository,
+    ruleInstance: RuleInstance,
+    hitCount: number
+  ): Promise<InternalTransaction[]> {
+    const THRESHOLD_COUNT = 200_000
+
+    const uniqueDestinationUserIds = compact(
+      uniq(transactionsHit.map((t) => t.destinationUserId))
+    )
+
+    logger.info(
+      `Number of unique destination users: ${uniqueDestinationUserIds.length}`
+    )
+
+    const numberOfUsersWithHighTransactionsCount = await Promise.all(
+      uniqueDestinationUserIds.map(async (userId) => {
+        return {
+          userId,
+          count: await transactionRepository.getTransactionsCountByQuery(
+            { destinationUserId: userId },
+            THRESHOLD_COUNT
+          ),
+        }
+      })
+    )
+
+    const userIdsWithHighTransactionsCount =
+      numberOfUsersWithHighTransactionsCount
+        .filter(({ count }) => count >= THRESHOLD_COUNT)
+        .map(({ userId }) => userId)
+
+    logger.info(
+      `Number of users with high transactions count: ${numberOfUsersWithHighTransactionsCount.length}`
+    )
+
+    const transactionsHitFiltered = userIdsWithHighTransactionsCount.length
+      ? transactionsHit.filter(
+          (transaction) =>
+            transaction.destinationUserId == null ||
+            !userIdsWithHighTransactionsCount.includes(
+              transaction.destinationUserId
+            )
+        )
+      : transactionsHit
+
+    logger.info(
+      `Number of transactions hit after filtering high frequency users: ${transactionsHitFiltered.length}`
+    )
+
+    const newTransactionsHit =
+      hitCount - transactionsHitFiltered.length > 0 && ruleInstance.id
+        ? await transactionRepository.getLastNTransactionsHitByRuleInstance(
+            hitCount - transactionsHitFiltered.length,
+            ruleInstance.id,
+            userIdsWithHighTransactionsCount,
+            transactionsHitFiltered.map((t) => t.transactionId)
+          )
+        : []
+
+    logger.info(`Number of new transactions hit: ${newTransactionsHit.length}`)
+
+    const allTransactionsHit =
+      transactionsHitFiltered.concat(newTransactionsHit)
+
+    return allTransactionsHit
   }
 
   private async simulateTransactions(

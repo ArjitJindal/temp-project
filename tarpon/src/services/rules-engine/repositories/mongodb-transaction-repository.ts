@@ -379,13 +379,19 @@ export class MongoDbTransactionRepository
 
   public async getLastNTransactionsHitByRuleInstance(
     value: number,
-    ruleInstanceId: string
+    ruleInstanceId: string,
+    excludeDestinationUserIds: string[] = [],
+    excludeTransactionIds: string[] = []
   ): Promise<InternalTransaction[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
     const result = await collection
-      .find({ 'hitRules.ruleInstanceId': ruleInstanceId })
+      .find({
+        'hitRules.ruleInstanceId': ruleInstanceId,
+        destinationUserId: { $nin: excludeDestinationUserIds },
+        transactionId: { $nin: excludeTransactionIds },
+      })
       .sort({ timestamp: -1 })
       .allowDiskUse()
       .limit(value)
@@ -508,14 +514,15 @@ export class MongoDbTransactionRepository
   }
 
   public async getTransactionsCountByQuery(
-    query: Filter<InternalTransaction>
+    query: Filter<InternalTransaction>,
+    limit?: number
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
 
-    return await collection.countDocuments(query)
+    return await collection.countDocuments(query, { limit })
   }
 
   public async getAllTransactionsCount(): Promise<number> {
