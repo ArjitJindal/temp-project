@@ -19,10 +19,10 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_10,
 } from '@/components/ui/colors';
 import Donut, { DonutData } from '@/pages/dashboard/analysis/components/charts/Donut';
-import { TRANSACTION_TYPES } from '@/utils/transactionType';
 import { TransactionType } from '@/apis';
 import { humanizeConstant } from '@/utils/humanize';
 import DatePicker from '@/components/ui/DatePicker';
+import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 
 const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
 
@@ -69,6 +69,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
           onChange={(e) => setDateRange(e ?? DEFAULT_DATE_RANGE)}
         />,
       ]}
+      resizing="FIXED"
       {...props}
     >
       <AsyncResourceRenderer resource={preparedDataRes}>

@@ -64,8 +64,8 @@ import {
   COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
   COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
 } from '@/components/ui/colors';
-import { TRANSACTION_TYPES } from '@/utils/transactionType';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
+import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {

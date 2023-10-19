@@ -19,7 +19,6 @@ import {
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import COUNTRIES from '@/utils/countries';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
-import { TRANSACTION_TYPES } from '@/utils/transactionType';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { businessType, consumerType } from '@/utils/customer-type';
 import { RiskLevel } from '@/utils/risk-levels';
@@ -49,6 +48,7 @@ import { getOr } from '@/utils/asyncResource';
 import { BOOLEAN_OPTIONS } from '@/utils/booleanOptions';
 import { SOURCE_OF_FUNDSS } from '@/apis/models-custom/SourceOfFunds';
 import { capitalizeWords } from '@/utils/humanize';
+import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
