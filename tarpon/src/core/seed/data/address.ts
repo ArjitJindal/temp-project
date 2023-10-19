@@ -112,19 +112,17 @@ const countries = {
   },
 }
 
-const postCodes = [...Array(5000)].map(() => randomInt(100000) + 100000)
+const postCodes = [...Array(60)].map(() => randomInt(10000) + 10000)
 
 const mapAddressLineAndPostcode = postCodes.reduce(
   (acc, postcode) => ({
     ...acc,
-    [postcode]: `${randomInt(4000) + 1} ${pickRandom(streets)} ${pickRandom(
-      streets
-    )}`,
+    [postcode]: `${randomInt(30) * 13 + 1} ${pickRandom(streets)}`,
   }),
   {}
 )
 
-const getAddress = (): Address => {
+export const addresses: Address[] = [...Array(300)].map(() => {
   const country = pickRandom(Object.keys(countries))
   const state = pickRandom(Object.keys(countries[country]))
   const postcode = pickRandom(postCodes)
@@ -136,16 +134,8 @@ const getAddress = (): Address => {
     state,
     country,
   }
-}
-
-export const addresses: Address[] = [...Array(20000)].map(() => {
-  return getAddress()
 })
 
-export const paymentAddresses = [...Array(1000)].map(() => {
-  return getAddress()
-})
-
-export const phoneNumber = [...Array(1000)].map(() =>
+export const phoneNumber = [...Array(300)].map(() =>
   (Math.floor(randomInt(1000000000)) + 1000000000).toString()
 )

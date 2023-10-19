@@ -12,7 +12,7 @@ import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
-import { randomPaymentAddress } from '@/core/seed/samplers/address'
+import { randomAddress } from '@/core/seed/samplers/address'
 
 export function sampleTransaction({
   originUserId,
@@ -142,7 +142,7 @@ export function sampleGenericBankAccountDetails(): GenericBankAccountDetails {
       name: 'Mark Schagal',
       accountNumber: `${randomInt()}`,
       accountType: 'SAVINGS',
-      bankAddress: randomPaymentAddress(),
+      bankAddress: randomAddress(),
     },
     {
       method: 'GENERIC_BANK_ACCOUNT',
@@ -151,7 +151,7 @@ export function sampleGenericBankAccountDetails(): GenericBankAccountDetails {
       accountNumber: `${randomInt()}`,
       accountType: 'CURRENT',
       name: 'John Dow',
-      bankAddress: randomPaymentAddress(),
+      bankAddress: randomAddress(),
     },
   ])
 }
