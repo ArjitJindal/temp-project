@@ -25,6 +25,7 @@ import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CaseRepository } from '../rules-engine/repositories/case-repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { SanctionsService } from '../sanctions'
+import { ChecklistTemplatesService } from '../tenants/checklist-template-service'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -1051,6 +1052,49 @@ export class AlertsService extends CaseAlertsCommonService {
     ])
   }
 
+  private async acceptanceCriteriaPassed(alert: Alert): Promise<boolean> {
+    const ruleChecklistTemplateId = alert.ruleChecklistTemplateId
+    if (!ruleChecklistTemplateId) {
+      throw new BadRequest('No checklist for alert')
+    }
+    const checklistTemplate =
+      await this.checklistTemplateService().getChecklistTemplate(
+        ruleChecklistTemplateId
+      )
+
+    if (!checklistTemplate) {
+      throw new NotFound('Checklist template not found')
+    }
+
+    const p1FailedAllowed =
+      checklistTemplate.qaPassCriteria?.p1Errors ?? Number.MAX_SAFE_INTEGER
+    const p2FailedAllowed =
+      checklistTemplate.qaPassCriteria?.p2Errors ?? Number.MAX_SAFE_INTEGER
+    let p1sFailed = 0
+    let p2sFailed = 0
+    checklistTemplate.categories.forEach((category) => {
+      category.checklistItems.forEach((checklistItem) => {
+        const alertChecklistItem = alert.ruleChecklist?.find(
+          (rcli) => rcli.checklistItemId === checklistItem.id
+        )
+        if (!alertChecklistItem || alertChecklistItem.status === 'FAILED') {
+          if (checklistItem.level === 'P1') {
+            p1sFailed++
+          }
+          if (checklistItem.level === 'P2') {
+            p2sFailed++
+          }
+        }
+      })
+    })
+
+    return p1sFailed <= p1FailedAllowed && p2sFailed <= p2FailedAllowed
+  }
+
+  private checklistTemplateService(): ChecklistTemplatesService {
+    return new ChecklistTemplatesService(this.tenantId, this.mongoDb)
+  }
+
   async updateAlertQaStatus(
     userId: string,
     update: AlertQaStatusUpdateRequest
@@ -1097,6 +1141,16 @@ export class AlertsService extends CaseAlertsCommonService {
           timestamp: Date.now(),
           userId,
         })
+
+        const acceptanceCriteriaPassed =
+          update.checklistStatus === 'PASSED'
+            ? await this.acceptanceCriteriaPassed(alert)
+            : true
+
+        if (!acceptanceCriteriaPassed) {
+          throw new BadRequest(`Acceptance criteria not passed for alert`)
+        }
+
         await Promise.all([
           this.alertsRepository.saveAlert(alert.caseId!, alert),
           this.auditLogService.handleAuditLogForAlertQaUpdate(

@@ -1,8 +1,9 @@
 import { JSONSchemaType } from 'ajv';
 import { useMutation } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
-import { ChecklistTemplate } from '@/apis';
+import { ChecklistTemplate, Priority } from '@/apis';
 import { DefaultApiGetChecklistTemplatesRequest } from '@/apis/types/ObjectParamAPI';
 import { CrudEntitiesTable } from '@/components/library/CrudEntitiesTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -23,6 +24,7 @@ export function ChecklistTemplatesSettings() {
     },
     required: ['name'],
   };
+
   const categoryDetailsSchema: JSONSchemaType<Pick<ChecklistTemplate, 'categories'>> = {
     type: 'object',
     properties: {
@@ -55,6 +57,31 @@ export function ChecklistTemplatesSettings() {
     },
     required: ['categories'],
   };
+
+  const qaPassCriteriaSchema: JSONSchemaType<Pick<ChecklistTemplate, 'qaPassCriteria'>> = {
+    type: 'object',
+    properties: {
+      qaPassCriteria: {
+        title: 'QA pass criteria',
+        description: 'Define minimum number of P1 & P2 errors allowed to pass QA',
+        type: 'object',
+        properties: {
+          p1Errors: {
+            type: 'number',
+            title: 'P1 errors allowed',
+            nullable: true,
+          },
+          p2Errors: {
+            type: 'number',
+            title: 'P2 errors allowed',
+            nullable: true,
+          },
+        },
+        nullable: true,
+      },
+    },
+  };
+
   const statusMutation = useMutation(
     async (entity: ChecklistTemplate) => {
       return (
@@ -74,6 +101,40 @@ export function ChecklistTemplatesSettings() {
       },
     },
   );
+
+  const getErrorCount = useCallback((level: Priority, entity: ChecklistTemplate) => {
+    return entity.categories.reduce(
+      (acc, category) =>
+        acc +
+        category.checklistItems.filter((checklistItem) => checklistItem.level === level).length,
+      0,
+    );
+  }, []);
+
+  const checkErrorCount = useCallback(
+    (level: Priority, entity: ChecklistTemplate) => {
+      const qaPassCriteria = entity.qaPassCriteria?.[level === 'P1' ? 'p1Errors' : 'p2Errors'];
+      if (qaPassCriteria) {
+        if (getErrorCount(level, entity) < qaPassCriteria) {
+          message.error(`${level} errors allowed cannot be greater than ${level} errors`);
+          return false;
+        }
+      }
+      return true;
+    },
+    [getErrorCount],
+  );
+
+  const verifyChecklistTemplatePassCriteria = useCallback(
+    (entity: ChecklistTemplate) => {
+      const checkP1 = checkErrorCount('P1', entity);
+      const checkP2 = checkErrorCount('P2', entity);
+
+      return checkP1 && checkP2;
+    },
+    [checkErrorCount],
+  );
+
   return (
     <SettingsCard
       title="Investigation checklist"
@@ -86,12 +147,21 @@ export function ChecklistTemplatesSettings() {
         writePermissions={['settings:organisation:write']}
         apiOperations={{
           GET: (params) => api.getChecklistTemplates(params),
-          CREATE: (entity) => api.postChecklistTemplates({ ChecklistTemplate: entity }),
-          UPDATE: (entityId, entity) =>
-            api.putChecklistTemplates({
+          CREATE: (entity) => {
+            if (!verifyChecklistTemplatePassCriteria(entity)) {
+              return Promise.reject();
+            }
+            return api.postChecklistTemplates({ ChecklistTemplate: entity });
+          },
+          UPDATE: (entityId, entity) => {
+            if (!verifyChecklistTemplatePassCriteria(entity)) {
+              return Promise.reject();
+            }
+            return api.putChecklistTemplates({
               checklistTemplateId: entityId,
               ChecklistTemplate: entity,
-            }),
+            });
+          },
           DELETE: (entityId) => api.deleteChecklistTemplate({ checklistTemplateId: entityId }),
         }}
         columns={[
@@ -158,6 +228,14 @@ export function ChecklistTemplatesSettings() {
               description: 'Create categories and add checklist to each category',
             },
             jsonSchema: categoryDetailsSchema,
+          },
+          {
+            step: {
+              key: 'qa-pass-criteria',
+              title: 'QA pass criteria',
+              description: 'Define QA pass criteria',
+            },
+            jsonSchema: qaPassCriteriaSchema,
           },
         ]}
       />

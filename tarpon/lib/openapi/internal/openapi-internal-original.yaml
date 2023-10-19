@@ -9932,6 +9932,13 @@ components:
           enum:
             - ACTIVE
             - DRAFT
+        qaPassCriteria:
+          type: object
+          properties:
+            p1Errors:
+              type: number
+            p2Errors:
+              type: number
       required:
         - name
         - categories
