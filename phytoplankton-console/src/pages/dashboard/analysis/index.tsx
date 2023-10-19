@@ -14,6 +14,7 @@ import TransactionTRSChartCard from './components/TransactionTRSChartCard';
 import DistributionByTransactionTypeWidget from './components/Transactions/DistributionByTransactionTypeWidget';
 import s from './style.module.less';
 import RuleActionSplitCard from './components/RuleActionSplitCard';
+import UserStatusDistributionCard from './components/UserStatusDistributionCard';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
@@ -33,8 +34,10 @@ type KeyValues =
   | 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION'
   | 'TOP_RULE_HITS_BY_COUNT'
   | 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL'
+  | 'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS'
   | 'TEAM_OVERVIEW'
   | 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL'
+  | 'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS'
   | 'TOP_BUSINESS_USERS_BY_RULE_HITS'
   | 'DISTRIBUTION_BY_RULE_PRIORITY'
   | 'DISTRIBUTION_BY_CLOSING_REASON'
@@ -46,8 +49,16 @@ type KeyValues =
 
 const KEYS = {
   OVERVIEW: ['OVERVIEW'],
-  CONSUMER_USERS: ['CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL', 'TOP_CONSUMER_USERS_BY_RULE_HITS'],
-  BUSINESS_USERS: ['BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL', 'TOP_BUSINESS_USERS_BY_RULE_HITS'],
+  CONSUMER_USERS: [
+    'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+    'TOP_CONSUMER_USERS_BY_RULE_HITS',
+    'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
+  ],
+  BUSINESS_USERS: [
+    'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+    'TOP_BUSINESS_USERS_BY_RULE_HITS',
+    'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS',
+  ],
   TRANSACTIONS: [
     'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
     'DISTRIBUTION_BY_PAYMENT_METHOD',
@@ -75,6 +86,8 @@ const TITLES: { [key in KeyValues]: string } = {
   BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Business users distribution by risk levels',
   DISTRIBUTION_BY_RULE_PRIORITY: 'Distribution by rule priority',
   DISTRIBUTION_BY_RULE_ACTION: 'Distribution by rule action',
+  CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: 'Consumer users distribution by user status',
+  BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: 'Business users distribution by user status',
 };
 
 const DEFAULT_VALUES = {
@@ -93,6 +106,8 @@ const DEFAULT_VALUES = {
   DISTRIBUTION_BY_TRANSACTION_TYPE: true,
   TRANSACTIONS_BREAKDOWN_BY_TRS: true,
   DISTRIBUTION_BY_RULE_ACTION: true,
+  CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: true,
+  BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: true,
 };
 
 type DashboardSettings = Record<KeyValues, boolean>;
@@ -163,6 +178,15 @@ function Analysis() {
                 },
                 component: TopUsersHitCard,
               },
+              settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS && {
+                props: {
+                  id: 'user_status_distribution_card',
+                  title: 'Distribution by User Status',
+                  width: 'HALF' as const,
+                  userType: 'CONSUMER',
+                },
+                component: UserStatusDistributionCard,
+              },
             ].filter(notEmpty),
           },
           {
@@ -186,6 +210,15 @@ function Analysis() {
                   userType: 'BUSINESS',
                 },
                 component: TopUsersHitCard,
+              },
+              settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS && {
+                props: {
+                  id: 'user_status_distribution_card',
+                  title: 'Distribution by User Status',
+                  width: 'HALF' as const,
+                  userType: 'BUSINESS',
+                },
+                component: UserStatusDistributionCard,
               },
             ].filter(notEmpty),
           },

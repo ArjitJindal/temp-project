@@ -1,7 +1,6 @@
 import { flattenObject } from './json';
-import { RuleInstance } from '@/apis';
 
-export function arrayToCSV(data: RuleInstance[]) {
+export function arrayToCSV(data: any[]) {
   if (data.length === 0) {
     return '';
   }
@@ -11,7 +10,7 @@ export function arrayToCSV(data: RuleInstance[]) {
 
   csvRows.push(headers.join(','));
 
-  data.forEach((obj) => {
+  data.forEach((obj: any) => {
     const flatten = flattenObject(obj);
     const values = headers.map((header) => flatten[header]);
     csvRows.push(values.join(','));

@@ -10,7 +10,7 @@ import { RuleAction, RuleInstance } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Widget from '@/components/library/Widget';
-import { arrayToCSV } from '@/utils/ruleInstanceArrayToCsv';
+import { arrayToCSV } from '@/utils/arrayToCsv';
 import {
   getRuleActionLabel,
   useSettings,
