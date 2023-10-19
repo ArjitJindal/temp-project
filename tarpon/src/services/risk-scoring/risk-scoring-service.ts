@@ -278,7 +278,6 @@ export class RiskScoringService {
       userPayload.userId,
       userPayload.riskLevel!
     )
-    delete userPayload.riskLevel
   }
 
   public async calculateArsScore(

@@ -14,6 +14,7 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { Case } from '@/@types/openapi-internal/Case'
 import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function arsScoreEventHandler(
   tenantId: string,
@@ -75,14 +76,15 @@ async function drsScoreEventHandler(
   }
   logger.info(`Processing DRS Score`)
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
 
   const riskRepository = new RiskRepository(tenantId, { mongoDb })
-  const userRepository = new UserRepository(tenantId, { mongoDb })
+  const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
   const drsScoreUpdated = await riskRepository.addDrsValueToMongo(drsScore)
 
   if (drsScoreUpdated?.userId) {
-    await userRepository.updateDrsScoreOfUserMongo(
+    await userRepository.updateDrsScoreOfUser(
       drsScoreUpdated.userId,
       drsScoreUpdated
     )

@@ -60,6 +60,7 @@ import { RiskScoreDetails } from '@/@types/openapi-public/RiskScoreDetails'
 import { BusinessResponse } from '@/@types/openapi-public/BusinessResponse'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
+import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 
 export type UserOptions = {
   isWebhookRequried?: boolean
@@ -929,7 +930,7 @@ export class UserRepository {
     )
   }
 
-  public async updateDrsScoreOfUserMongo(
+  public async updateDrsScoreOfUser(
     userId: string,
     drsScore: DrsScore
   ): Promise<void> {
@@ -938,6 +939,17 @@ export class UserRepository {
       USERS_COLLECTION(this.tenantId)
     )
     await collection.updateOne({ userId }, { $set: { drsScore } })
+
+    const user = await this.getUser<
+      UserWithRulesResult | BusinessWithRulesResult
+    >(userId)
+    const riskScoringResult = await this.getRiskScoringResult(userId)
+    if (user && user.riskLevel !== riskScoringResult.craRiskLevel) {
+      await this.saveUser(
+        { ...user, riskLevel: riskScoringResult.craRiskLevel },
+        isBusinessUser(user) ? 'BUSINESS' : 'CONSUMER'
+      )
+    }
   }
 
   public async updateKrsScoreOfUserMongo(

@@ -444,6 +444,7 @@ describe('Public API - Create a Consumer User Event', () => {
     expect(response?.statusCode).toBe(200)
     expect(JSON.parse(response?.body as string)).toEqual({
       ...pickKnownEntityFields(consumerUser, User),
+      riskLevel: 'VERY_HIGH',
       tags: [{ key: 'key', value: 'value' }],
       status: 'ALLOW',
       executedRules: [],
@@ -452,6 +453,7 @@ describe('Public API - Create a Consumer User Event', () => {
     const mongoUser = await userRepository.getUserById('foo')
     expect(mongoUser).toEqual({
       ...internalConsumerUserWithComments,
+      riskLevel: 'VERY_HIGH',
       updatedAt: expect.any(Number),
       tags: [{ key: 'key', value: 'value' }],
     })
@@ -617,6 +619,7 @@ describe('Public API - Create a Business User Event', () => {
     expect(response?.statusCode).toBe(200)
     const toMatchObject = {
       ...user,
+      riskLevel: 'VERY_HIGH',
       tags: [{ key: 'key', value: 'value' }],
       legalEntity: {
         companyGeneralDetails: {

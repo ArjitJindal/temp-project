@@ -291,7 +291,7 @@ async function userHandler(
   }
 
   if (drsScore) {
-    await usersRepo.updateDrsScoreOfUserMongo(internalUser.userId, drsScore)
+    await usersRepo.updateDrsScoreOfUser(internalUser.userId, drsScore)
   }
 
   const existingUser = await usersRepo.getUserById(internalUser.userId)
