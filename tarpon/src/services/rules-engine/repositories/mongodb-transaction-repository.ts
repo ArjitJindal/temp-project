@@ -401,7 +401,9 @@ export class MongoDbTransactionRepository
 
   public async getLastNTransactionsNotHitByRuleInstance(
     value: number,
-    excludeRuleInstanceId?: string
+    excludeRuleInstanceId?: string,
+    excludeDestinationUserIds: string[] = [],
+    excludeTransactionIds: string[] = []
   ): Promise<InternalTransaction[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
@@ -409,7 +411,11 @@ export class MongoDbTransactionRepository
     const result = await collection
       .find(
         excludeRuleInstanceId
-          ? { 'hitRules.ruleInstanceId': { $ne: excludeRuleInstanceId } }
+          ? {
+              'hitRules.ruleInstanceId': { $ne: excludeRuleInstanceId },
+              destinationUserId: { $nin: excludeDestinationUserIds },
+              transactionId: { $nin: excludeTransactionIds },
+            }
           : {}
       )
       .sort({ timestamp: -1 })
