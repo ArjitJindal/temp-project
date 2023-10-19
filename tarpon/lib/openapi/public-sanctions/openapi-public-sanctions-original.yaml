@@ -85,6 +85,7 @@ components:
         searchProfileId:
           type: string
         fuzziness:
+          description: 0.5 by default
           type: number
           minimum: 0
           maximum: 1

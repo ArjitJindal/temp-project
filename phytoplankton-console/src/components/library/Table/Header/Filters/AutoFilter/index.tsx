@@ -20,6 +20,7 @@ export function AutoFilter(props: Props): JSX.Element {
 
   const sharedProps = {
     title: filter.title,
+    description: filter.description,
     key: filter.key,
     icon: filter.icon,
     value: value as any,

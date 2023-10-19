@@ -21,6 +21,7 @@ import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdv
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { apiFetch } from '@/utils/api-fetch'
 
+const DEFAULT_FUZZINESS = 0.5
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
 
@@ -209,7 +210,7 @@ export class SanctionsService {
     fuzziness: number | undefined
   ): number | undefined {
     if (fuzziness == null) {
-      return undefined
+      return DEFAULT_FUZZINESS
     }
 
     // From ComplyAdvantage: Ensure that there are no more than 1 decimal places.

@@ -165,6 +165,7 @@ export default function SanctionsTable(props: Props) {
     },
     {
       title: 'Fuzziness',
+      description: '(The default value is 0.5)',
       key: 'fuzziness',
       renderer: {
         kind: 'number',

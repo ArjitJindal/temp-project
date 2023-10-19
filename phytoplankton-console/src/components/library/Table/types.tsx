@@ -224,6 +224,7 @@ export function setByFieldAccessor<
 export interface BaseFilter {
   key: string;
   title: React.ReactNode;
+  description?: React.ReactNode;
   icon?: React.ReactNode;
   showFilterByDefault?: boolean;
 }
