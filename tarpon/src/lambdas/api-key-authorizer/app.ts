@@ -73,14 +73,11 @@ export const apiKeyAuthorizer = lambdaAuthorizer()(
     const arn = ARN.parse(event.methodArn)
     const { apiId, stage, accountId, requestId } = event.requestContext
     const apiKey = event.headers?.['x-api-key']
-    if (!apiKey) {
-      throw new Error('x-api-key header is missing')
-    }
-    const tenantId = getTenantIdFromApiKey(apiKey)
+    const tenantId = apiKey ? getTenantIdFromApiKey(apiKey) : undefined
     // NOTE: "Surprisingly", if the api key is invalid, lambda authorizer will still be executed, and
     // the api key will be validated after lambda authorizer returns.
     // To avoid error in case of invalid api key, we early return if we cannot decode the api key.
-    if (!tenantId) {
+    if (!apiKey || !tenantId) {
       return {
         principalId: 'unknown',
         policyDocument: {
