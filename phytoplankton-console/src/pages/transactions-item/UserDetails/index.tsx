@@ -26,10 +26,11 @@ interface Props {
   amountDetails: TransactionAmountDetails | undefined;
   paymentDetails: PaymentDetails | undefined;
   userId?: string;
+  ipAddress?: string;
 }
 
 export default function UserDetails(props: Props) {
-  const { type, user, userId, amountDetails, paymentDetails } = props;
+  const { type, user, userId, amountDetails, paymentDetails, ipAddress } = props;
   const isDestination = type === 'DESTINATION';
   return (
     <Card.Root className={cn(s.root, s[`type-${type}`])}>
@@ -78,6 +79,7 @@ export default function UserDetails(props: Props) {
             <Form.Layout.Label title={isDestination ? 'Country received in' : 'Country sent from'}>
               <CountryDisplay isoCode={amountDetails.country}></CountryDisplay>
             </Form.Layout.Label>
+            <Form.Layout.Label title={'IP address'}>{ipAddress}</Form.Layout.Label>
           </div>
         )}
         <PaymentDetailsComponent paymentDetails={paymentDetails} />

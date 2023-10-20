@@ -20,6 +20,7 @@ export default function SenderReceiverDetails(props: Props) {
             userId={transaction.originUserId}
             amountDetails={transaction.originAmountDetails}
             paymentDetails={transaction.originPaymentDetails}
+            ipAddress={transaction.originDeviceData?.ipAddress}
           />
           <UserDetails
             type="DESTINATION"
@@ -27,6 +28,7 @@ export default function SenderReceiverDetails(props: Props) {
             userId={transaction.originUserId}
             amountDetails={transaction.destinationAmountDetails}
             paymentDetails={transaction.destinationPaymentDetails}
+            ipAddress={transaction.destinationDeviceData?.ipAddress}
           />
         </Card.Section>
       </Card.Root>
