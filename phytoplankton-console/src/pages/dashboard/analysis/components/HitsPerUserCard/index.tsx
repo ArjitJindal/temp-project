@@ -48,8 +48,8 @@ export default function HitsPerUserCard(props: Props) {
       title: 'Rule hit',
       key: 'rulesHit',
       type: {
-        render: (rulesHit, { item: entity }) => {
-          return <>{`${rulesHit} ${pluralize('hit', rulesHit)} (${entity.percentageRulesHit}%)`}</>;
+        render: (rulesHit) => {
+          return <>{`${rulesHit} ${pluralize('hit', rulesHit)}`}</>;
         },
       },
     }),
