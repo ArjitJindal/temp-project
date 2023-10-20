@@ -8,7 +8,7 @@ import {
   getTransactionUserPastTransactionsByDirection,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
-import { TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
@@ -18,7 +18,7 @@ type AggregationData = {
 
 export type TooManyUsersForSameCardParameters = {
   uniqueUsersCountThreshold: number
-  timeWindowInDays: number
+  timeWindow: TimeWindow
 }
 
 export default class TooManyUsersForSameCardRule extends TransactionAggregationRule<
@@ -36,9 +36,9 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
           description:
             'rule is run when the users count per time window is greater than the threshold',
         },
-        timeWindowInDays: { type: 'integer', title: 'Time window (days)' },
+        timeWindow: TIME_WINDOW_SCHEMA(),
       },
-      required: ['uniqueUsersCountThreshold', 'timeWindowInDays'],
+      required: ['uniqueUsersCountThreshold', 'timeWindow'],
     }
   }
 
@@ -80,11 +80,7 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
         'origin',
         this.transactionRepository,
         {
-          timeWindow: {
-            units: this.parameters.timeWindowInDays,
-            granularity: 'day',
-            rollingBasis: true,
-          },
+          timeWindow: this.parameters.timeWindow,
           checkDirection: 'sending',
           filters: this.filters,
         },
@@ -124,11 +120,7 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
   }> {
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
       this.transaction.timestamp!,
-      {
-        units: this.parameters.timeWindowInDays,
-        granularity: 'day',
-        rollingBasis: true,
-      }
+      this.parameters.timeWindow
     )
     const userAggregationData = await this.getRuleAggregations<AggregationData>(
       'origin',
@@ -211,10 +203,7 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
   }
 
   override getMaxTimeWindow(): TimeWindow {
-    return {
-      units: this.parameters.timeWindowInDays,
-      granularity: 'day',
-    }
+    return this.parameters.timeWindow
   }
   protected getRuleAggregationVersion(): number {
     return 2

@@ -24,7 +24,10 @@ ruleVariantsTest(true, () => {
         ruleImplementationName: 'sender-location-changes-frequency',
         defaultParameters: {
           uniqueCitiesCountThreshold: 2,
-          timeWindowInDays: 1,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
         } as SenderLocationChangesFrequencyRuleParameters,
         defaultAction: 'FLAG',
       },

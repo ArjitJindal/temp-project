@@ -8,7 +8,7 @@ import {
   getTransactionUserPastTransactionsByDirection,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
-import { TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
 
 type AggregationData = {
@@ -19,7 +19,7 @@ type AggregationData = {
 export type SenderLocationChangesFrequencyRuleParameters = {
   uniqueCitiesCountThreshold: number
   // We could add more granularities like region, timezone and country
-  timeWindowInDays: number
+  timeWindow: TimeWindow
 }
 
 export default class SenderLocationChangesFrequencyRule extends TransactionAggregationRule<
@@ -37,9 +37,9 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
           description:
             'rule is run when the cities count per time window is greater than the threshold',
         },
-        timeWindowInDays: { type: 'integer', title: 'Time window (days)' },
+        timeWindow: TIME_WINDOW_SCHEMA(),
       },
-      required: ['uniqueCitiesCountThreshold', 'timeWindowInDays'],
+      required: ['uniqueCitiesCountThreshold', 'timeWindow'],
     }
   }
 
@@ -85,11 +85,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
         'origin',
         this.transactionRepository,
         {
-          timeWindow: {
-            units: this.parameters.timeWindowInDays,
-            granularity: 'day',
-            rollingBasis: true,
-          },
+          timeWindow: this.parameters.timeWindow,
           checkDirection: 'sending',
           filters: this.filters,
         },
@@ -105,11 +101,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
   }> {
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
       this.transaction.timestamp!,
-      {
-        units: this.parameters.timeWindowInDays,
-        granularity: 'day',
-        rollingBasis: true,
-      }
+      this.parameters.timeWindow
     )
     const userAggregationData = await this.getRuleAggregations<AggregationData>(
       'origin',
@@ -221,10 +213,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
   }
 
   override getMaxTimeWindow(): TimeWindow {
-    return {
-      units: this.parameters.timeWindowInDays,
-      granularity: 'day',
-    }
+    return this.parameters.timeWindow
   }
   protected getRuleAggregationVersion(): number {
     return 2

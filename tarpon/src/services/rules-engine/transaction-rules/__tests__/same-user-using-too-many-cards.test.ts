@@ -22,7 +22,10 @@ setUpRulesHooks(TEST_TENANT_ID, [
     ruleImplementationName: 'same-user-using-too-many-cards',
     defaultParameters: {
       uniqueCardsCountThreshold: 1,
-      timeWindowInDays: 1,
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+      },
     } as SameUserUsingTooManyCardsParameters,
     defaultAction: 'FLAG',
   },

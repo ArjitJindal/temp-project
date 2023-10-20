@@ -576,7 +576,10 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: TooManyUsersForSameCardParameters = {
       uniqueUsersCountThreshold: 10,
-      timeWindowInDays: 1,
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+      },
     }
     const defaultFilters: TransactionFilters = {
       originPaymentFilters: {
@@ -607,7 +610,10 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: SameUserUsingTooManyCardsParameters = {
       uniqueCardsCountThreshold: 10,
-      timeWindowInDays: 1,
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+      },
     }
     const defaultFilters: TransactionFilters = {
       originPaymentFilters: {
@@ -774,7 +780,10 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: SenderLocationChangesFrequencyRuleParameters = {
       uniqueCitiesCountThreshold: 1,
-      timeWindowInDays: 1,
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+      },
     }
     return {
       id: 'R-113',
@@ -782,7 +791,7 @@ const _RULES_LIBRARY: Array<
       name: 'User city changes too many times based on IP address',
       description: 'Users IP address show > x different cities within t days',
       descriptionTemplate:
-        "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsCount }} transactions from {{ locationsCount }} locations in more than {{ parameters.timeWindowInDays }} day(s)",
+        "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsCount }} transactions from {{ locationsCount }} locations in more than {{ parameters.timeWindow.units }} {{parameters.timeWindow.granularity}}(s)",
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'sender-location-changes-frequency',
