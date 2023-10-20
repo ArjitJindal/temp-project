@@ -4025,7 +4025,7 @@
                   "        },",
                   "        \"executedRules\": [],",
                   "        \"hitRules\": [],",
-                  "        \"riskLevel\": \"VERY_HIGH\",",
+                  "        \"riskLevel\": \"HIGH\",",
                   "        \"status\": \"ALLOW\"",
                   "    }",
                   "",
@@ -4076,7 +4076,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Wu Semiconductors\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"riskLevel\": \"HIGH\",\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Wu Semiconductors\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
             },
             "url": {
               "raw": "{{domain}}/events/business/user",
@@ -4515,7 +4515,7 @@
                   "        },",
                   "        \"executedRules\": [],",
                   "        \"hitRules\": [],",
-                  "        \"riskLevel\": \"VERY_HIGH\",",
+                  "        \"riskLevel\": \"HIGH\",",
                   "        \"status\": \"ALLOW\"",
                   "    }",
                   "",
