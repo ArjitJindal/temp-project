@@ -1,10 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import cn from 'clsx';
 import { Select as AntSelect, SelectProps } from 'antd';
 import { SelectCommonPlacement } from 'antd/lib/_util/motion';
 import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
 import { Comparable, key } from '@/utils/comparable';
+import { copyTextToClipboard } from '@/utils/browser';
+import { message } from '@/components/library/Message';
+import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 
 export interface Option<Value extends Comparable> {
   value: Value;
@@ -50,19 +53,21 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     size = 'DEFAULT',
     isError,
     isLoading,
-    onFocus,
-    onBlur,
     className,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
 
+  const [presentValue, setpresentValue] = useState<Value | Value[] | undefined>(props.value);
+  const [isFocused, setisFocused] = useState<boolean>(false);
+  const [isHovered, setisHovered] = useState<boolean>(false);
+
   const antSelectProps: SelectProps<Value | Value[], Option<Value>> = {
     disabled: isDisabled,
     placeholder: placeholder,
     allowClear: props.allowClear,
-    onFocus: onFocus,
-    onBlur: onBlur,
+    onFocus: () => setisFocused(true),
+    onBlur: () => setisFocused(false),
     filterOption: (inputValue: string, option?: Option<Value>) => {
       const searchString = inputValue.toLowerCase();
       return (
@@ -81,14 +86,63 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     value: props.value,
     onChange: (newValue: Value | Value[] | undefined) => {
       props.onChange?.(newValue as (Value & Value[]) | undefined);
+      setpresentValue(newValue);
     },
     onSearch: props.onSearch,
     defaultValue: options.filter((option) => option.isDefault).map((option) => option.value),
+    tokenSeparators: [','],
+  };
+
+  const copyText = useCallback(() => {
+    if (presentValue) {
+      const valueToCopy = Array.isArray(presentValue)
+        ? presentValue.join(',')
+        : presentValue.toString();
+      if (valueToCopy && valueToCopy.length > 0) {
+        valueToCopy && copyTextToClipboard(valueToCopy);
+        message.success('Copied');
+      }
+    }
+  }, [presentValue]);
+
+  useEffect(() => {
+    if (isFocused === true) {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+          copyText();
+        }
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [presentValue, isFocused, copyText]);
+
+  const handleMouseEnter = () => {
+    if (antSelectProps.mode !== undefined) {
+      if (Array.isArray(presentValue)) {
+        if (presentValue.length > 0) setisHovered(true);
+      } else {
+        if (presentValue) setisHovered(true);
+      }
+    }
+  };
+  const handleMouseLeave = () => {
+    if (antSelectProps.mode !== undefined) {
+      setisHovered(false);
+    }
   };
 
   return (
     <div
-      className={cn(s.root, isError && s.isError, s[`size-${size}`], className)}
+      className={cn(
+        s.root,
+        isError && s.isError,
+        s[`size-${size}`],
+        isHovered && s.ishovered,
+        className,
+      )}
       style={props.style}
       ref={selectInput}
     >
@@ -100,6 +154,16 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         dropdownMatchSelectWidth={
           selectInput.current ? selectInput.current?.getBoundingClientRect().width : true
         }
+        suffixIcon={
+          antSelectProps.mode !== undefined && (
+            <div onClick={copyText}>
+              <FileCopyLineIcon className={cn(s.copyIcon)} />
+            </div>
+          )
+        }
+        showArrow={true}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {options?.map((option) => (
           <AntSelect.Option

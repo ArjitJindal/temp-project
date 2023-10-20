@@ -10,6 +10,21 @@
       flex: 1;
     }
 
+    .ant-select-arrow {
+      all: initial;
+      z-index: 10 !important;
+      position: absolute;
+      top: 0;
+      right: 1rem;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 8px;
+      transform: scaleX(1.2);
+      color: @fr-colors-v2-gray-6;
+    }
+
     .ant-select-selector {
       min-height: 32px !important;
       align-items: center;
@@ -27,12 +42,6 @@
         border-color: @fr-colors-v2-primary-flagrightBlue !important;
         box-shadow: none !important;
       }
-    }
-
-    .ant-select-arrow {
-      font-size: 8px;
-      transform: scaleX(1.2);
-      color: @fr-colors-v2-gray-6;
     }
 
     .ant-select-disabled {
@@ -61,4 +70,15 @@
       }
     }
   }
+  &.ishovered {
+    :global {
+      .ant-select-arrow {
+        right: 2rem;
+      }
+    }
+  }
+}
+
+.copyIcon {
+  height: 0.8rem;
 }
