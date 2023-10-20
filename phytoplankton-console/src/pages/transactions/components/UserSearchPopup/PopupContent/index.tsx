@@ -58,7 +58,6 @@ export default function PopupContent(props: Props) {
     setSearch('');
     setMode(null);
   }
-
   // todo: i18n
   return (
     <div className={s.root}>

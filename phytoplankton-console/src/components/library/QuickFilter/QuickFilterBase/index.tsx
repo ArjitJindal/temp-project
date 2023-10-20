@@ -13,11 +13,19 @@ export interface Props {
     | React.ReactNode
     | ((props: { isOpen: boolean; setOpen: (isOpen: boolean) => void }) => React.ReactNode);
   analyticsName?: string;
+  innerRef?: React.RefObject<any>;
 }
 
 export default function QuickFilterBase(props: Props) {
-  const { icon, title, description, buttonText, analyticsName, children, onClear } = props;
+  const { icon, title, description, buttonText, analyticsName, children, onClear, innerRef } =
+    props;
   const [isOpen, setOpen] = useState(false);
+  const deferredFocus = () => {
+    innerRef &&
+      setTimeout(() => {
+        innerRef?.current?.focus();
+      }, 2);
+  };
   return (
     <>
       <QuickFilterButton
@@ -38,6 +46,7 @@ export default function QuickFilterBase(props: Props) {
         onClear={onClear}
         onClick={() => {
           setOpen((isOpen) => !isOpen);
+          deferredFocus();
         }}
       >
         <Popover

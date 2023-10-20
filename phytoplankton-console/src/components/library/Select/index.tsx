@@ -25,6 +25,7 @@ interface CommonProps<Value extends Comparable> {
   allowClear?: boolean;
   notFoundContent?: React.ReactNode;
   className?: string;
+  innerRef?: React.RefObject<any>;
 }
 
 export interface SingleProps<Value extends Comparable>
@@ -54,6 +55,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     isError,
     isLoading,
     className,
+    innerRef,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
@@ -148,6 +150,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     >
       <AntSelect
         {...antSelectProps}
+        ref={innerRef}
         allowClear
         loading={isLoading}
         disabled={isDisabled || isLoading}

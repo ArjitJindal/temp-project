@@ -10,6 +10,7 @@ interface Props<Value> extends QuickFilterProps, InputProps<Value> {
   debounce?: boolean;
   inputComponent: React.FunctionComponent<InputProps<Value>>;
   extraInputProps?: { [key: string]: unknown };
+  innerRef?: React.RefObject<any>;
 }
 
 export default function InputQuickFilter<Value>(props: Props<Value>) {
@@ -46,7 +47,6 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
   } else if (value != null) {
     buttonText = value;
   }
-
   return (
     <QuickFilter
       buttonText={buttonText}

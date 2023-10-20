@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { AutoFilter } from '../../../types';
 import InputQuickFilter from '@/components/library/QuickFilter/subtypes/InputQuickFilter';
@@ -18,6 +18,7 @@ interface Props extends InputProps<unknown> {
 export function AutoFilter(props: Props): JSX.Element {
   const { filter, value, onChange } = props;
 
+  const inputRef = useRef<any>(null);
   const sharedProps = {
     title: filter.title,
     description: filter.description,
@@ -25,6 +26,7 @@ export function AutoFilter(props: Props): JSX.Element {
     icon: filter.icon,
     value: value as any,
     onChange,
+    innerRef: inputRef,
   };
 
   if (filter.dataType.kind === 'dateRange') {
@@ -76,6 +78,7 @@ export function AutoFilter(props: Props): JSX.Element {
         }
         inputComponent={Select as React.FunctionComponent<InputProps<string[]>>}
         extraInputProps={{
+          innerRef: inputRef,
           options: options,
           mode: filter.dataType.mode,
         }}
@@ -96,7 +99,14 @@ export function AutoFilter(props: Props): JSX.Element {
       />
     );
   }
-  return <InputQuickFilter<string> {...sharedProps} debounce={true} inputComponent={TextInput} />;
+  return (
+    <InputQuickFilter<string>
+      {...sharedProps}
+      extraInputProps={{ innerRef: inputRef }}
+      debounce={true}
+      inputComponent={TextInput}
+    />
+  );
 }
 
 function DateRangeInput(props: InputProps<[string | undefined, string | undefined]>) {

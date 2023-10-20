@@ -13,7 +13,7 @@ export interface Props extends InputProps<string> {
   htmlAttrs?: InputHTMLAttributes<HTMLInputElement>;
   onArrowUp?: () => void;
   onArrowDown?: () => void;
-
+  innerRef?: React.RefObject<HTMLInputElement>;
   testName?: string;
 }
 
@@ -32,11 +32,11 @@ export default function TextInput(props: Props) {
     onArrowUp,
     onArrowDown,
     testName,
+    innerRef,
   } = props;
-
-  const ref = useRef<HTMLInputElement>(null);
+  const defaultRef = useRef<HTMLInputElement>(null);
+  const ref = innerRef === undefined ? defaultRef : innerRef;
   usePreventWheelEvent(ref, props);
-
   return (
     <div className={s.root}>
       <input
