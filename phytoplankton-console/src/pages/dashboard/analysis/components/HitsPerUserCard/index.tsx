@@ -1,29 +1,28 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
 import { TableItem } from './types';
-import { dayjs, Dayjs } from '@/utils/dayjs';
-import { useApi } from '@/api';
+import { Dayjs } from '@/utils/dayjs';
 import UserLink from '@/components/UserLink';
 import { getUserName } from '@/utils/api/users';
 import { TableColumn } from '@/components/library/Table/types';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { HITS_PER_USER } from '@/utils/queries/keys';
+import { PaginatedData } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { makeUrl } from '@/utils/routing';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DashboardStatsHitsPerUserData } from '@/apis';
+import { QueryResult } from '@/utils/queries/types';
 
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';
   userType: 'BUSINESS' | 'CONSUMER';
   dateRange: RangeValue<Dayjs>;
+  hitsPerUserResult: QueryResult<PaginatedData<DashboardStatsHitsPerUserData>>;
 }
 
 export default function HitsPerUserCard(props: Props) {
-  const { dateRange, direction, userType } = props;
-  const api = useApi();
+  const { dateRange, direction } = props;
 
   const helper = new ColumnHelper<TableItem>();
   const columns: TableColumn<TableItem>[] = helper.list([
@@ -41,7 +40,7 @@ export default function HitsPerUserCard(props: Props) {
       },
     }),
     helper.derived<string>({
-      title: 'User name',
+      title: 'Username',
       value: (entity: TableItem): string => getUserName(entity.user) ?? '',
     }),
     helper.simple<'rulesHit'>({
@@ -54,7 +53,7 @@ export default function HitsPerUserCard(props: Props) {
       },
     }),
     helper.display({
-      title: 'Open cases',
+      title: 'Open alerts',
       enableResizing: false,
       render: (entity) => {
         let startTimestamp;
@@ -77,7 +76,7 @@ export default function HitsPerUserCard(props: Props) {
                 },
               )}
             >
-              {entity.openCasesCount} Open {pluralize('case', entity.openCasesCount)}
+              {entity.openCasesCount} Open {pluralize('alert', entity.openCasesCount)}
             </Link>
           </>
         );
@@ -85,43 +84,17 @@ export default function HitsPerUserCard(props: Props) {
     }),
   ]);
 
-  const hitsPerUserResult = usePaginatedQuery(
-    HITS_PER_USER(dateRange, direction),
-    async (paginationParams) => {
-      let startTimestamp = dayjs().subtract(1, 'day').valueOf();
-      let endTimestamp = Date.now();
-
-      const [start, end] = dateRange ?? [];
-      if (start != null && end != null) {
-        startTimestamp = start.startOf('day').valueOf();
-        endTimestamp = end.endOf('day').valueOf();
-      }
-
-      const result = await api.getDashboardStatsHitsPerUser({
-        ...paginationParams,
-        startTimestamp,
-        endTimestamp,
-        direction,
-        userType,
-      });
-
-      return {
-        total: result.data.length,
-        items: result.data,
-      };
-    },
-  );
-
   return (
     <QueryResultsTable<TableItem>
       rowKey="userId"
       columns={columns}
-      queryResults={hitsPerUserResult}
+      queryResults={props.hitsPerUserResult}
       pagination={false}
       sizingMode="SCROLL"
       toolsOptions={{
         setting: false,
-        reload: true,
+        download: false,
+        reload: false,
       }}
       fitHeight={300}
       externalHeader={true}

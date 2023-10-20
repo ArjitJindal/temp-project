@@ -1,6 +1,18 @@
 import { flattenObject } from './json';
+import {
+  DashboardStatsHitsPerUserData,
+  InternalBusinessUser,
+  InternalConsumerUser,
+  RuleInstance,
+} from '@/apis';
 
-export function arrayToCSV(data: any[]) {
+type arrayTypes =
+  | InternalBusinessUser[]
+  | InternalConsumerUser[]
+  | DashboardStatsHitsPerUserData[]
+  | RuleInstance[];
+
+export function arrayToCSV(data: arrayTypes): string {
   if (data.length === 0) {
     return '';
   }

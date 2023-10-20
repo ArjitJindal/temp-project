@@ -17,12 +17,13 @@ interface Props<Value extends Comparable> {
   onChange: (newActive: Value) => void;
   size?: 'SMALL' | 'MEDIUM' | 'LARGE';
   items: Item<Value>[];
+  style?: React.CSSProperties;
 }
 
 export default function SegmentedControl<Value extends Comparable = string>(props: Props<Value>) {
-  const { active, onChange, size = 'MEDIUM', items } = props;
+  const { active, onChange, size = 'MEDIUM', items, style } = props;
   return (
-    <div className={cn(s.root, s[`size-${size}`])}>
+    <div className={cn(s.root, s[`size-${size}`])} style={style}>
       {items.map((item) => (
         <button
           key={key(item.value)}
