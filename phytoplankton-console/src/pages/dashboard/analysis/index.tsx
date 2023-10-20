@@ -14,6 +14,7 @@ import TransactionTRSChartCard from './components/TransactionTRSChartCard';
 import DistributionByTransactionTypeWidget from './components/Transactions/DistributionByTransactionTypeWidget';
 import s from './style.module.less';
 import RuleActionSplitCard from './components/RuleActionSplitCard';
+import DistributionByStatus from './components/CaseManagement/DistributionByStatus';
 import UserStatusDistributionCard from './components/UserStatusDistributionCard';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -45,6 +46,8 @@ type KeyValues =
   | 'DISTRIBUTION_BY_PAYMENT_METHOD'
   | 'DISTRIBUTION_BY_TRANSACTION_TYPE'
   | 'DISTRIBUTION_BY_RULE_ACTION'
+  | 'TRANSACTIONS_BREAKDOWN_BY_TRS'
+  | 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS'
   | 'TRANSACTIONS_BREAKDOWN_BY_TRS';
 
 const KEYS = {
@@ -66,7 +69,11 @@ const KEYS = {
     'TRANSACTIONS_BREAKDOWN_BY_TRS',
   ],
   RULES: ['TOP_RULE_HITS_BY_COUNT', 'DISTRIBUTION_BY_RULE_PRIORITY', 'DISTRIBUTION_BY_RULE_ACTION'],
-  CASE_MANAGEMENT: ['DISTRIBUTION_BY_CLOSING_REASON', 'DISTRIBUTION_BY_ALERT_PRIORITY'],
+  CASE_MANAGEMENT: [
+    'DISTRIBUTION_BY_CLOSING_REASON',
+    'DISTRIBUTION_BY_ALERT_PRIORITY',
+    'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS',
+  ],
   TEAM_MANAGEMENT: ['TEAM_OVERVIEW'],
 };
 
@@ -86,6 +93,7 @@ const TITLES: { [key in KeyValues]: string } = {
   BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Business users distribution by risk levels',
   DISTRIBUTION_BY_RULE_PRIORITY: 'Distribution by rule priority',
   DISTRIBUTION_BY_RULE_ACTION: 'Distribution by rule action',
+  DISTRIBUTION_BY_CASE_AND_ALERT_STATUS: 'Distribution by status',
   CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: 'Consumer users distribution by user status',
   BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: 'Business users distribution by user status',
 };
@@ -106,6 +114,7 @@ const DEFAULT_VALUES = {
   DISTRIBUTION_BY_TRANSACTION_TYPE: true,
   TRANSACTIONS_BREAKDOWN_BY_TRS: true,
   DISTRIBUTION_BY_RULE_ACTION: true,
+  DISTRIBUTION_BY_CASE_AND_ALERT_STATUS: true,
   CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: true,
   BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: true,
 };
@@ -324,6 +333,17 @@ function Analysis() {
                         title: 'Distribution by open alerts priority',
                       },
                       component: DistributionByAlertPriority,
+                    },
+                  ]
+                : []),
+              ...(settingsToDisplay.DISTRIBUTION_BY_CASE_AND_ALERT_STATUS
+                ? [
+                    {
+                      props: {
+                        id: 'distribution-by-case-and-alert-status',
+                        title: 'Distribution by status',
+                      },
+                      component: DistributionByStatus,
                     },
                   ]
                 : []),

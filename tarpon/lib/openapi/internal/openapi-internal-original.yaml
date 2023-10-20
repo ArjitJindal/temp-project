@@ -2031,6 +2031,48 @@ paths:
             type: number
           in: query
           name: endTimestamp
+  /dashboard_stats/alert_and_case_status_distribution:
+    get:
+      summary: DashboardStats - AlertAndCaseStatusDistributionStats
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsAlertAndCaseStatusDistributionStats'
+              examples: {}
+      operationId: get-dashboard-stats-alert-and-case-status-distribution-stats
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+        - schema:
+            type: string
+            enum:
+              - CASE
+              - ALERT
+          in: query
+          name: entity
+        - schema:
+            type: string
+            enum:
+              - HOUR
+              - MONTH
+              - DAY
+          in: query
+          name: granularity
+    parameters: []
   /dashboard_stats/alert_priority_distribution:
     get:
       summary: DashboardStats - AlertPriorityDistributionStats
@@ -9995,6 +10037,31 @@ components:
       required:
         - total
         - data
+    DashboardStatsAlertAndCaseStatusDistributionStats:
+      type: object
+      title: DashboardStatsAlertAndCaseStatusDistributionStats
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              count_OPEN:
+                type: number
+              count_IN_PROGRESS:
+                type: number
+              count_ON_HOLD:
+                type: number
+              count_ESCALATED:
+                type: number
+              count_CLOSED:
+                type: number
+              count_REOPENED:
+                type: number
+            required:
+              - _id
   securitySchemes:
     Authorization:
       type: http

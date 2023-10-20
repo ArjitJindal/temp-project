@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Empty } from 'antd';
-import { dayCalc, formatDate, granularityTypeTitles } from '../../utils/date-utils';
+import { useLocalStorageState } from 'ahooks';
+import ScopeSelector from '../CaseClosingReasonCard/ScopeSelector';
+import { dayCalc, formatDate, granularityTypeTitles } from '../../../utils/date-utils';
 import s from './index.module.less';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
@@ -10,7 +12,6 @@ import { map } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import Column, { ColumnData } from '@/pages/dashboard/analysis/components/charts/Column';
@@ -19,14 +20,22 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_02,
   COLORS_V2_ANALYTICS_CHARTS_03,
   COLORS_V2_ANALYTICS_CHARTS_04,
-  COLORS_V2_ANALYTICS_CHARTS_05,
+  COLORS_V2_ANALYTICS_CHARTS_06,
+  COLORS_V2_ANALYTICS_CHARTS_08,
 } from '@/components/ui/colors';
-import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import DatePicker from '@/components/ui/DatePicker';
-
+import { humanizeSnakeCase } from '@/utils/humanize';
 export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
-
 type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
+type statusType = 'OPEN' | 'CLOSED' | 'REOPENED' | 'ON_HOLD' | 'IN_PROGRESS' | 'ESCALATED';
+const statuses: statusType[] = [
+  'REOPENED',
+  'CLOSED',
+  'ESCALATED',
+  'ON_HOLD',
+  'IN_PROGRESS',
+  'OPEN',
+];
 const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
 
 const calcGranularity = (type: string): GranularityValuesType => {
@@ -38,9 +47,11 @@ const calcGranularity = (type: string): GranularityValuesType => {
   return granularityValues.HOUR as GranularityValuesType;
 };
 
-export default function TransactionTRSChartCard(props: WidgetProps) {
-  const settings = useSettings();
-
+export default function DistributionByStatus(props: WidgetProps) {
+  const [selectedSection, setSelectedSection] = useLocalStorageState(
+    'dashboard-case-and-alert-status-active-tab',
+    'CASE',
+  );
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
 
   const [granularity, setGranularity] = useState<GranularityValuesType>(
@@ -62,23 +73,24 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
   }
 
   const params = {
+    entity: selectedSection as 'CASE' | 'ALERT',
     startTimestamp,
     endTimestamp,
     granularity,
   };
 
   const queryResult = useQuery(DASHBOARD_TRANSACTIONS_STATS(params), async () => {
-    return await api.getDashboardStatsTransactions(params);
+    return await api.getDashboardStatsAlertAndCaseStatusDistributionStats(params);
   });
 
-  const preparedDataRes = map(queryResult.data, (value): ColumnData<string, number, RiskLevel> => {
-    const result: ColumnData<string, number, RiskLevel> = [];
+  const preparedDataRes = map(queryResult.data, (value): ColumnData<string, number, statusType> => {
+    const result: ColumnData<string, number, statusType> = [];
     for (const datum of value?.data ?? []) {
-      for (const riskLevel of RISK_LEVELS) {
+      for (const status of statuses) {
         result.push({
           xValue: datum._id,
-          yValue: datum[`arsRiskLevel_${riskLevel}`] ?? 0,
-          series: riskLevel,
+          yValue: datum[`count_${status}`] ?? 0,
+          series: status,
         });
       }
     }
@@ -122,22 +134,31 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
               return <Empty description="No data available for selected period" />;
             }
             return (
-              <Column<RiskLevel>
-                data={data}
-                colors={{
-                  VERY_LOW: COLORS_V2_ANALYTICS_CHARTS_01,
-                  LOW: COLORS_V2_ANALYTICS_CHARTS_04,
-                  MEDIUM: COLORS_V2_ANALYTICS_CHARTS_03,
-                  HIGH: COLORS_V2_ANALYTICS_CHARTS_05,
-                  VERY_HIGH: COLORS_V2_ANALYTICS_CHARTS_02,
-                }}
-                formatSeries={(series) => {
-                  return getRiskLevelLabel(series, settings);
-                }}
-                formatX={(xValue) => {
-                  return formatDate(xValue);
-                }}
-              />
+              <div className={s.root}>
+                <ScopeSelector
+                  selectedSection={selectedSection}
+                  setSelectedSection={setSelectedSection}
+                />
+                <Column<statusType>
+                  data={data}
+                  colors={{
+                    OPEN: COLORS_V2_ANALYTICS_CHARTS_01,
+                    IN_PROGRESS: COLORS_V2_ANALYTICS_CHARTS_04,
+                    ON_HOLD: COLORS_V2_ANALYTICS_CHARTS_03,
+                    ESCALATED: COLORS_V2_ANALYTICS_CHARTS_06,
+                    CLOSED: COLORS_V2_ANALYTICS_CHARTS_08,
+                    REOPENED: COLORS_V2_ANALYTICS_CHARTS_02,
+                  }}
+                  formatX={(xValue) => {
+                    return formatDate(xValue);
+                  }}
+                  formatSeries={(seriesValue) => {
+                    return seriesValue === 'REOPENED'
+                      ? 'Re-opened'
+                      : humanizeSnakeCase(seriesValue);
+                  }}
+                />
+              </div>
             );
           }}
         </AsyncResourceRenderer>

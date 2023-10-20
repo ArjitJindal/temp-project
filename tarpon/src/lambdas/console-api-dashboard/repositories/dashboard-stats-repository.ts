@@ -18,6 +18,7 @@ import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStats
 import { traceable } from '@/core/xray'
 import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStats'
 import { DashboardStatsAlertPriorityDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertPriorityDistributionStats'
+import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStats'
 
 @traceable
 export class DashboardStatsRepository {
@@ -178,6 +179,21 @@ export class DashboardStatsRepository {
     return CaseStatsDashboardMetric.getAlertPriorityDistributionStatistics(
       this.tenantId,
       params
+    )
+  }
+
+  async getAlertAndCaseStatusDistributionStatistics(
+    startTimestamp: number,
+    endTimestamp: number,
+    granularity?: GranularityValuesType,
+    entity?: 'CASE' | 'ALERT'
+  ): Promise<DashboardStatsAlertAndCaseStatusDistributionStats> {
+    return CaseStatsDashboardMetric.getAlertAndCaseStatusDistributionStatistics(
+      this.tenantId,
+      startTimestamp,
+      endTimestamp,
+      granularity,
+      entity
     )
   }
 }

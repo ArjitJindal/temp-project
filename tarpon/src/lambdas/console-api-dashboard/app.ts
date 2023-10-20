@@ -265,6 +265,30 @@ export const dashboardStatsHandler = lambdaApi()(
         )
       }
     )
+
+    handlers.registerGetDashboardStatsAlertAndCaseStatusDistributionStats(
+      async (ctx, request) => {
+        const client = await getMongoDbClient()
+        const { startTimestamp, endTimestamp, entity, granularity } = request
+        if (!endTimestamp) {
+          throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
+        }
+        if (!startTimestamp) {
+          throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
+        }
+        const dashboardStatsRepository = new DashboardStatsRepository(
+          ctx.tenantId,
+          { mongoDb: client }
+        )
+        return await dashboardStatsRepository.getAlertAndCaseStatusDistributionStatistics(
+          startTimestamp,
+          endTimestamp,
+          granularity,
+          entity
+        )
+      }
+    )
+
     handlers.registerGetDashboardStatsTransactionTypeDistributionStats(
       async (ctx) => {
         const client = await getMongoDbClient()
