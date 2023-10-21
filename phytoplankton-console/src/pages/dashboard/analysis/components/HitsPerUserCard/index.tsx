@@ -53,7 +53,7 @@ export default function HitsPerUserCard(props: Props) {
       },
     }),
     helper.display({
-      title: 'Open alerts',
+      title: 'Open cases',
       enableResizing: false,
       render: (entity) => {
         let startTimestamp;
@@ -76,7 +76,7 @@ export default function HitsPerUserCard(props: Props) {
                 },
               )}
             >
-              {entity.openCasesCount} Open {pluralize('alert', entity.openCasesCount)}
+              {entity.openCasesCount} Open {pluralize('case', entity.openCasesCount)}
             </Link>
           </>
         );

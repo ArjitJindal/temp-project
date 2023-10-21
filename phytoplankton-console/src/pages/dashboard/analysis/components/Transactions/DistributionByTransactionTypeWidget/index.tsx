@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Empty } from 'antd';
+import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { map } from '@/utils/asyncResource';
@@ -62,22 +63,32 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
   });
 
   return (
-    <Widget
-      extraControls={[
-        <DatePicker.RangePicker
-          value={dateRange}
-          onChange={(e) => setDateRange(e ?? DEFAULT_DATE_RANGE)}
-        />,
-      ]}
-      resizing="FIXED"
-      {...props}
-    >
-      <AsyncResourceRenderer resource={preparedDataRes}>
-        {(data) => {
-          if (data.length === 0) {
-            return <Empty description="No data available for selected period" />;
-          }
-          return (
+    <AsyncResourceRenderer resource={preparedDataRes}>
+      {(data) => {
+        if (data.length === 0) {
+          return <Empty description="No data available for selected period" />;
+        }
+        return (
+          <Widget
+            extraControls={[
+              <DatePicker.RangePicker
+                value={dateRange}
+                onChange={(e) => setDateRange(e ?? DEFAULT_DATE_RANGE)}
+              />,
+            ]}
+            onDownload={(): Promise<{ fileName: string; data: string }> => {
+              const randomID = (Math.floor(Math.random() * 90000) + 10000).toString();
+              return new Promise((resolve, _reject) => {
+                const fileData = {
+                  fileName: `distribution-by-transaction-type-${randomID}.csv`,
+                  data: exportDataForDonuts('transactionType', data),
+                };
+                resolve(fileData);
+              });
+            }}
+            resizing="FIXED"
+            {...props}
+          >
             <Donut<TransactionType>
               data={data}
               colors={{
@@ -92,9 +103,9 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
                 return humanizeConstant(series);
               }}
             />
-          );
-        }}
-      </AsyncResourceRenderer>
-    </Widget>
+          </Widget>
+        );
+      }}
+    </AsyncResourceRenderer>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Donut, { DonutData } from '../charts/Donut';
+import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_24,
   COLORS_V2_ANALYTICS_CHARTS_25,
@@ -13,8 +14,8 @@ import Widget from '@/components/library/Widget';
 import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
-import { getOr } from '@/utils/asyncResource';
 import { useFilteredRuleInstances } from '@/pages/dashboard/analysis/components/dashboardutils';
+import { dayjs } from '@/utils/dayjs';
 
 const gaugeColors = {
   ['P1']: COLORS_V2_ANALYTICS_CHARTS_24,
@@ -30,59 +31,58 @@ export default function RulePrioritySplitCard(props: Props) {
   const filteredResult = useFilteredRuleInstances(dateRange);
 
   return (
-    <Widget
-      onDownload={(): Promise<{ fileName: string; data: string }> => {
-        return new Promise((resolve, _reject) => {
-          const fileData = {
-            fileName: `rule-priority-split`,
-            data: JSON.stringify(getOr(filteredResult, [])),
+    <AsyncResourceRenderer resource={filteredResult}>
+      {(instance: RuleInstance[]) => {
+        // Counting the frequency of casePriority values
+        const priorityFrequency: {
+          [key in Priority]?: number;
+        } = instance.reduce((frequencyMap, ruleInstance) => {
+          const { casePriority } = ruleInstance;
+          return {
+            ...frequencyMap,
+            [casePriority]: (frequencyMap[casePriority] ?? 0) + 1,
           };
-          resolve(fileData);
+        }, {});
+
+        // Converting the frequency map into an array of objects
+        const priorityData: DonutData<Priority> = Object.entries(priorityFrequency).map(
+          ([priority, value]) => ({
+            series: priority as Priority,
+            value: value as number,
+          }),
+        );
+
+        priorityData.sort((a, b) => {
+          const fa = a.series.toLowerCase(),
+            fb = b.series.toLowerCase();
+
+          if (fa < fb) {
+            return -1;
+          }
+          if (fa > fb) {
+            return 1;
+          }
+          return 0;
         });
-      }}
-      resizing="FIXED"
-      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-      {...props}
-    >
-      <AsyncResourceRenderer resource={filteredResult}>
-        {(instance: RuleInstance[]) => {
-          // Counting the frequency of casePriority values
-          const priorityFrequency: {
-            [key in Priority]?: number;
-          } = instance.reduce((frequencyMap, ruleInstance) => {
-            const { casePriority } = ruleInstance;
-            return {
-              ...frequencyMap,
-              [casePriority]: (frequencyMap[casePriority] ?? 0) + 1,
-            };
-          }, {});
-
-          // Converting the frequency map into an array of objects
-          const priorityData: DonutData<Priority> = Object.entries(priorityFrequency).map(
-            ([priority, value]) => ({
-              series: priority as Priority,
-              value: value as number,
-            }),
-          );
-
-          priorityData.sort((a, b) => {
-            const fa = a.series.toLowerCase(),
-              fb = b.series.toLowerCase();
-
-            if (fa < fb) {
-              return -1;
-            }
-            if (fa > fb) {
-              return 1;
-            }
-            return 0;
-          });
-
-          return (
+        return (
+          <Widget
+            onDownload={(): Promise<{ fileName: string; data: string }> => {
+              return new Promise((resolve, _reject) => {
+                const fileData = {
+                  fileName: `distribution-by-rule-priority-${dayjs().format('YYYY_MM_DD')}.csv`,
+                  data: exportDataForDonuts('rulePriority', priorityData),
+                };
+                resolve(fileData);
+              });
+            }}
+            resizing="FIXED"
+            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+            {...props}
+          >
             <Donut<Priority> data={priorityData} colors={gaugeColors} legendPosition="RIGHT" />
-          );
-        }}
-      </AsyncResourceRenderer>
-    </Widget>
+          </Widget>
+        );
+      }}
+    </AsyncResourceRenderer>
   );
 }

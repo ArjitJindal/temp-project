@@ -1,8 +1,8 @@
 import { useLocalStorageState } from 'ahooks';
 import { RangeValue } from 'rc-picker/es/interface';
-import React, { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React, { useMemo, useState } from 'react';
 import HitsPerUserCard from './HitsPerUserCard';
+import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
@@ -11,7 +11,8 @@ import { dayjs, Dayjs } from '@/utils/dayjs';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER } from '@/utils/queries/keys';
 import { useApi } from '@/api';
-import { arrayToCSV } from '@/utils/arrayToCsv';
+import { isSuccess } from '@/utils/asyncResource';
+import { getUserName } from '@/utils/api/users';
 
 interface Props extends WidgetProps {
   userType?: 'BUSINESS' | 'CONSUMER';
@@ -60,21 +61,31 @@ const TopUsersHitCard = (props: Props) => {
       };
     },
   );
-
+  const dataToExport = useMemo(() => {
+    if (isSuccess(hitsPerUserResult.data)) {
+      const data = hitsPerUserResult.data.value.items.map((item) => {
+        return {
+          userId: item.userId,
+          userName: getUserName(item.user) ?? '',
+          ruleHit: `${item.rulesHit} hits`,
+          openCases: `${item.openCasesCount} open cases`,
+        };
+      });
+      return data;
+    }
+    return [];
+  }, [hitsPerUserResult]);
   return (
     <Widget
       {...props}
       extraControls={[<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
       onDownload={(): Promise<{ fileName: string; data: string }> => {
-        const randomID = uuidv4();
-
         return new Promise((resolve, _reject) => {
           const fileData = {
-            fileName: `top-users-hit-${randomID}.csv`,
-            data:
-              hitsPerUserResult.data.kind === 'SUCCESS'
-                ? arrayToCSV(hitsPerUserResult.data.value.items)
-                : '',
+            fileName: `top-${userType.toLowerCase()}-users-by-rule-hit-${dayjs().format(
+              'YYYY_MM_DD',
+            )}.csv`,
+            data: getCsvData(dataToExport),
           };
           resolve(fileData);
         });

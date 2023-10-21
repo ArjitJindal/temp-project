@@ -1,0 +1,56 @@
+import { orderBy } from 'lodash';
+import { CsvRow, csvValue, serialize } from '@/utils/csv';
+import { humanizeCamelCase } from '@/utils/humanize';
+
+export interface ExportData {
+  [key: string]: string | number | undefined;
+}
+
+export const exportDataForDonuts = (
+  field: string,
+  data: { series: string; value: number }[],
+): string => {
+  const parsedData = data.map((dataItem) => {
+    return {
+      [field]: dataItem.series,
+      count: dataItem.value,
+    };
+  });
+  return getCsvData(parsedData);
+};
+
+export const exportDataForTreemaps = (
+  field: string,
+  data: { name: string | null; value: number }[],
+): string => {
+  const parsedData = orderBy(data, 'value', 'desc').map((dataItem) => {
+    return {
+      [field]: dataItem.name ?? '',
+      count: dataItem.value,
+    };
+  });
+  return getCsvData(parsedData);
+};
+
+export const getCsvData = (data: ExportData[]): string => {
+  if (data && data.length) {
+    const result: CsvRow[] = [];
+    const keys = Object.keys(data[0]).map((key) => key);
+    result.push(
+      keys.map((key) => {
+        const humanizedKey = humanizeCamelCase(key);
+        return csvValue(humanizedKey);
+      }),
+    );
+    const rows = data.map((dataItem) => {
+      return keys.map((key) => {
+        return csvValue(dataItem[key]);
+      });
+    });
+    rows.map((row) => {
+      result.push(row);
+    });
+    return serialize(result);
+  }
+  return '';
+};

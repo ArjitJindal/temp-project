@@ -6,7 +6,6 @@ import WidgetBase from './WidgetBase';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import { download } from '@/utils/browser';
 import { message } from '@/components/library/Message';
-import { getErrorMessage } from '@/utils/lang';
 
 const DEFAULT_FIXED_HEIGHT = 400;
 
@@ -52,20 +51,22 @@ export function DownloadButton(props: {
   const { onDownload } = props;
   const [isLoading, setLoading] = useState(false);
   const handleClick = useCallback(() => {
-    const hideLoading = message.loading('Downloading file...');
+    const hideMessage = message.loading('Downloading file...');
     setLoading(true);
     onDownload()
-      .then(
-        ({ fileName, data }) => {
+      .then(({ data, fileName }) => {
+        if (data && data.length) {
           download(fileName, data);
-        },
-        (e) => {
-          message.error(`Unable to download file! ${getErrorMessage(e)}`);
-        },
-      )
+        } else {
+          message.info('Nothing to download');
+        }
+      })
+      .catch(() => {
+        message.error('Unable to complete the download');
+      })
       .finally(() => {
         setLoading(false);
-        hideLoading();
+        hideMessage && hideMessage();
       });
   }, [onDownload]);
   return (

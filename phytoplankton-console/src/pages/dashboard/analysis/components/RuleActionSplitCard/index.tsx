@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Donut, { DonutData } from '../charts/Donut';
+import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
   COLORS_V2_ANALYTICS_CHARTS_02,
@@ -10,7 +11,6 @@ import { RuleAction, RuleInstance } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Widget from '@/components/library/Widget';
-import { arrayToCSV } from '@/utils/arrayToCsv';
 import {
   getRuleActionLabel,
   useSettings,
@@ -19,7 +19,7 @@ import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 import { useFilteredRuleInstances } from '@/pages/dashboard/analysis/components/dashboardutils';
-import { isSuccess } from '@/utils/asyncResource';
+import { dayjs } from '@/utils/dayjs';
 
 const COLORS = {
   BLOCK: COLORS_V2_ANALYTICS_CHARTS_12,
@@ -39,53 +39,49 @@ export default function RuleActionSplitCard(props: Props) {
   const settings = useSettings();
 
   return (
-    <Widget
-      onDownload={(): Promise<{ fileName: string; data: string }> => {
-        const randomID = (Math.floor(Math.random() * 90000) + 10000).toString();
-        return new Promise((resolve, _reject) => {
-          const fileData = {
-            fileName: `rule-action-split-${randomID}.csv`,
-            data: isSuccess(filteredDataRes) ? arrayToCSV(filteredDataRes.value) : '',
-          };
-          resolve(fileData);
-        });
-      }}
-      resizing="FIXED"
-      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-      {...props}
-    >
-      <AsyncResourceRenderer resource={filteredDataRes}>
-        {(instances: RuleInstance[]) => {
-          const frequencyMap: { [key in RuleAction]?: number } = {};
-          for (const instance of instances) {
-            const { action } = instance;
-            if (action !== undefined) {
-              frequencyMap[action] = (frequencyMap[action] ?? 0) + 1;
-            }
+    <AsyncResourceRenderer resource={filteredDataRes}>
+      {(instances: RuleInstance[]) => {
+        const frequencyMap: { [key in RuleAction]?: number } = {};
+        for (const instance of instances) {
+          const { action } = instance;
+          if (action !== undefined) {
+            frequencyMap[action] = (frequencyMap[action] ?? 0) + 1;
           }
+        }
 
-          // Converting the frequency map into an array of objects
-          const data: DonutData<RuleAction> = Object.entries(frequencyMap).map(
-            ([action, value]) => ({
-              series: action as RuleAction,
-              value: value as number,
-            }),
-          );
+        // Converting the frequency map into an array of objects
+        const data: DonutData<RuleAction> = Object.entries(frequencyMap).map(([action, value]) => ({
+          series: action as RuleAction,
+          value: value as number,
+        }));
 
-          data.sort((a, b) => {
-            return RULE_ACTION_ORDER.indexOf(a.series) - RULE_ACTION_ORDER.indexOf(b.series);
-          });
-
-          return (
+        data.sort((a, b) => {
+          return RULE_ACTION_ORDER.indexOf(a.series) - RULE_ACTION_ORDER.indexOf(b.series);
+        });
+        return (
+          <Widget
+            onDownload={(): Promise<{ fileName: string; data: string }> => {
+              return new Promise((resolve, _reject) => {
+                const fileData = {
+                  fileName: `distribution-by-rule-action-${dayjs().format('YYYY_MM_DD')}.csv`,
+                  data: exportDataForDonuts('ruleAction', data),
+                };
+                resolve(fileData);
+              });
+            }}
+            resizing="FIXED"
+            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+            {...props}
+          >
             <Donut<RuleAction>
               data={data}
               colors={COLORS}
               legendPosition="RIGHT"
               formatSeries={(action) => getRuleActionLabel(action, settings) ?? action}
             />
-          );
-        }}
-      </AsyncResourceRenderer>
-    </Widget>
+          </Widget>
+        );
+      }}
+    </AsyncResourceRenderer>
   );
 }

@@ -39,32 +39,35 @@ export default function RuleHitCard() {
       title: 'Rules hit',
       key: 'hitCount',
     }),
-    helper.display({
+    helper.simple<'openCasesCount'>({
       title: 'Open cases',
-      render: (entity) => {
-        let startTimestamp;
-        let endTimestamp;
-        const [start, end] = dateRange ?? [];
-        if (start != null && end != null) {
-          startTimestamp = start.startOf('day').valueOf();
-          endTimestamp = end.endOf('day').valueOf();
-        }
-        return (
-          <>
-            <Link
-              to={makeUrl(
-                '/case-management/cases',
-                {},
-                {
-                  rulesHitFilter: entity.ruleInstanceId,
-                  createdTimestamp: `${startTimestamp},${endTimestamp}`,
-                },
-              )}
-            >
-              {entity.openCasesCount} Cases
-            </Link>
-          </>
-        );
+      key: 'openCasesCount',
+      type: {
+        render: (openCasesCount, { item }) => {
+          let startTimestamp;
+          let endTimestamp;
+          const [start, end] = dateRange ?? [];
+          if (start != null && end != null) {
+            startTimestamp = start.startOf('day').valueOf();
+            endTimestamp = end.endOf('day').valueOf();
+          }
+          return (
+            <>
+              <Link
+                to={makeUrl(
+                  '/case-management/cases',
+                  {},
+                  {
+                    rulesHitFilter: item.ruleInstanceId,
+                    createdTimestamp: `${startTimestamp},${endTimestamp}`,
+                  },
+                )}
+              >
+                {openCasesCount} Cases
+              </Link>
+            </>
+          );
+        },
       },
     }),
   ]);

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import Donut from '@/pages/dashboard/analysis/components/charts/Donut';
 import {
   DashboardStatsAlertPriorityDistributionStats,
@@ -11,7 +12,6 @@ import {
   COLORS_V2_PRIMARY_SHADES_BLUE_600,
   COLORS_V2_PRIMARY_TINTS_BLUE_900,
 } from '@/components/ui/colors';
-import { isSuccess } from '@/utils/asyncResource';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -20,6 +20,7 @@ import Widget from '@/components/library/Widget';
 import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
+import { dayjs } from '@/utils/dayjs';
 
 const PRIORITY_COLORS: Record<string, string> = {
   ['P1']: COLORS_V2_PRIMARY_TINTS_BLUE_900,
@@ -42,48 +43,42 @@ const DistributionByAlertPriority = (props: Props) => {
     return response;
   });
   const data = queryResult.data;
-  const formatedData = !isSuccess(data)
-    ? []
-    : data.value.alertPriorityData.map(
-        (item: DashboardStatsAlertPriorityDistributionStatsAlertPriorityData) => {
-          return { priority: item.priority, value: item.value };
-        },
-      );
   return (
-    <Widget
-      onDownload={(): Promise<{ fileName: string; data: string }> => {
-        return new Promise((resolve, _reject) => {
-          const fileData = {
-            fileName: `distribution-by-alert-priority`,
-            data: JSON.stringify(formatedData),
-          };
-          resolve(fileData);
-        });
-      }}
-      width="HALF"
-      resizing="FIXED"
-      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-      {...props}
-    >
-      <AsyncResourceRenderer<DashboardStatsAlertPriorityDistributionStats> resource={data}>
-        {({ alertPriorityData }) => {
-          const data = alertPriorityData.map(
-            (item: DashboardStatsAlertPriorityDistributionStatsAlertPriorityData) => {
-              return { series: item.priority ?? 'N/A', value: item.value ?? 0 };
-            },
-          );
-
-          return (
+    <AsyncResourceRenderer<DashboardStatsAlertPriorityDistributionStats> resource={data}>
+      {({ alertPriorityData }) => {
+        const data = alertPriorityData.map(
+          (item: DashboardStatsAlertPriorityDistributionStatsAlertPriorityData) => {
+            return { series: item.priority ?? 'N/A', value: item.value ?? 0 };
+          },
+        );
+        return (
+          <Widget
+            onDownload={(): Promise<{ fileName: string; data: string }> => {
+              return new Promise((resolve, _reject) => {
+                const fileData = {
+                  fileName: `distribution-by-open-alert-priority-${dayjs().format(
+                    'YYYY_MM_DD',
+                  )}.csv`,
+                  data: exportDataForDonuts('alertPriority', data),
+                };
+                resolve(fileData);
+              });
+            }}
+            width="HALF"
+            resizing="FIXED"
+            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+            {...props}
+          >
             <Donut
               shape="SEMI_CIRCLE"
               data={data}
               colors={PRIORITY_COLORS}
               legendPosition={'BOTTOM'}
             />
-          );
-        }}
-      </AsyncResourceRenderer>
-    </Widget>
+          </Widget>
+        );
+      }}
+    </AsyncResourceRenderer>
   );
 };
 

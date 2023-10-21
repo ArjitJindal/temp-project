@@ -1,7 +1,7 @@
-import { has } from 'lodash';
 import { useLocalStorageState } from 'ahooks';
 import React, { useState } from 'react';
 import s from './index.module.less';
+import { exportDataForTreemaps } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
   COLORS_V2_ANALYTICS_CHARTS_09,
@@ -15,7 +15,6 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_20,
   COLORS_V2_ANALYTICS_CHARTS_23,
 } from '@/components/ui/colors';
-import { isSuccess } from '@/utils/asyncResource';
 import ScopeSelector from '@/pages/dashboard/analysis/components/CaseManagement/CaseClosingReasonCard/ScopeSelector';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import {
@@ -31,6 +30,7 @@ import Treemap, { TreemapData } from '@/pages/dashboard/analysis/components/char
 import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
+import { dayjs } from '@/utils/dayjs';
 
 type ClosingReasons =
   | 'Other'
@@ -77,17 +77,14 @@ const CaseClosingReasonCard = (props: Props) => {
     const response = await api.getDashboardStatsClosingReasonDistributionStats(params);
     return response;
   });
-  const data = queryResult.data;
-  const formatedData = !isSuccess(data)
-    ? {
-        name: 'root',
-        children: [],
-      }
-    : {
-        name: 'root',
-        children: data.value.closingReasonsData
+  return (
+    <AsyncResourceRenderer<DashboardStatsClosingReasonDistributionStats>
+      resource={queryResult.data}
+    >
+      {({ closingReasonsData }) => {
+        const data = closingReasonsData
           ?.map((child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData) => {
-            if (child.reason && has(TREEMAP_COLORS, child.reason)) {
+            if (child.reason) {
               return {
                 name: child.reason,
                 value: child.value ?? 0,
@@ -98,42 +95,27 @@ const CaseClosingReasonCard = (props: Props) => {
           .filter(
             (child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData | null) =>
               child != null,
-          ),
-      };
-  return (
-    <Widget
-      onDownload={(): Promise<{ fileName: string; data: string }> => {
-        return new Promise((resolve, _reject) => {
-          const fileData = {
-            fileName: `distribution-by-${selectedSection.toLowerCase()}-closing-reason`,
-            data: JSON.stringify(formatedData.children),
-          };
-          resolve(fileData);
-        });
-      }}
-      resizing="FIXED"
-      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-      {...props}
-    >
-      <AsyncResourceRenderer<DashboardStatsClosingReasonDistributionStats>
-        resource={queryResult.data}
-      >
-        {({ closingReasonsData }) => {
-          const data = closingReasonsData
-            ?.map((child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData) => {
-              if (child.reason) {
-                return {
-                  name: child.reason,
-                  value: child.value ?? 0,
+          ) as TreemapData<ClosingReasons>;
+        return (
+          <Widget
+            onDownload={(): Promise<{ fileName: string; data: string }> => {
+              return new Promise((resolve, _reject) => {
+                const fileData = {
+                  fileName: `distribution-by-${selectedSection.toLowerCase()}-closing-reason-${dayjs().format(
+                    'YYYY_MM_DD',
+                  )}.csv`,
+                  data: exportDataForTreemaps(
+                    `${selectedSection.toLowerCase()}ClosingReason`,
+                    data,
+                  ),
                 };
-              }
-              return null;
-            })
-            .filter(
-              (child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData | null) =>
-                child != null,
-            ) as TreemapData<ClosingReasons>;
-          return (
+                resolve(fileData);
+              });
+            }}
+            resizing="FIXED"
+            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+            {...props}
+          >
             <div className={s.root}>
               <ScopeSelector
                 selectedSection={selectedSection}
@@ -141,10 +123,10 @@ const CaseClosingReasonCard = (props: Props) => {
               />
               <Treemap<ClosingReasons> height={280} data={data} colors={TREEMAP_COLORS} />
             </div>
-          );
-        }}
-      </AsyncResourceRenderer>
-    </Widget>
+          </Widget>
+        );
+      }}
+    </AsyncResourceRenderer>
   );
 };
 export default CaseClosingReasonCard;

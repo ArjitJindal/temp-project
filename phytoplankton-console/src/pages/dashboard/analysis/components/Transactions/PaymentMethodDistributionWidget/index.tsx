@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { exportDataForTreemaps } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_09,
   COLORS_V2_ANALYTICS_CHARTS_11,
@@ -16,7 +17,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_TOTAL_STATS } from '@/utils/queries/keys';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { getPaymentMethodTitle, PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
-import { isSuccess, map } from '@/utils/asyncResource';
+import { map } from '@/utils/asyncResource';
 import Treemap, {
   TreemapData,
   TreemapItem,
@@ -79,29 +80,32 @@ export default function PaymentMethodDistributionWidget(props: Props) {
   });
 
   return (
-    <Widget
-      extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-      onDownload={
-        isSuccess(preparedDataRes)
-          ? async () => ({
-              fileName: `distribution-by-payment-methods.json`,
-              data: JSON.stringify(preparedDataRes.value),
-            })
-          : undefined
-      }
-      resizing="FIXED"
-      {...props}
-    >
-      <AsyncResourceRenderer resource={preparedDataRes}>
-        {(preparedData) => (
-          <Treemap<PaymentMethod>
-            height={330}
-            data={preparedData}
-            colors={TREEMAP_COLORS}
-            formatTitle={(name) => (name == null ? `Other` : getPaymentMethodTitle(name))}
-          />
-        )}
-      </AsyncResourceRenderer>
-    </Widget>
+    <AsyncResourceRenderer resource={preparedDataRes}>
+      {(preparedData) => {
+        return (
+          <Widget
+            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+            onDownload={(): Promise<{ fileName: string; data: string }> => {
+              return new Promise((resolve, _reject) => {
+                const fileData = {
+                  fileName: `distribution-by-payment-methods-${dayjs().format('YYYY_MM_DD')}.csv`,
+                  data: exportDataForTreemaps('paymentMethod', preparedData),
+                };
+                resolve(fileData);
+              });
+            }}
+            resizing="FIXED"
+            {...props}
+          >
+            <Treemap<PaymentMethod>
+              height={330}
+              data={preparedData}
+              colors={TREEMAP_COLORS}
+              formatTitle={(name) => (name == null ? `Other` : getPaymentMethodTitle(name))}
+            />
+          </Widget>
+        );
+      }}
+    </AsyncResourceRenderer>
   );
 }
