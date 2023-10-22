@@ -63,7 +63,7 @@ export const initRules = () => {
       action: 'SUSPEND',
       type: 'TRANSACTION',
       ruleNameAlias: 'Transaction amount too high',
-      ruleDescriptionAlias: 'Transaction amount is >= x in PHP or equivalent',
+      ruleDescriptionAlias: 'Transaction amount is >= x in USD or equivalent',
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {
@@ -99,6 +99,75 @@ export const initRules = () => {
         MEDIUM: 'SUSPEND',
         LOW: 'SUSPEND',
         VERY_LOW: 'SUSPEND',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      runCount: 1848,
+      hitCount: 1434,
+    },
+    {
+      id: 'a45615ad',
+      checklistTemplateId: pickRandom(checklistTemplates).id,
+      ruleId: 'R-30',
+      casePriority: 'P1',
+      parameters: {
+        timeWindow: {
+          unit: 1,
+          granularity: 'day',
+        },
+        uniqueUsersCountThreshold: 10,
+      },
+      action: 'FLAG',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'High velocity user',
+      ruleDescriptionAlias: 'High velocity user',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          timeWindow: {
+            unit: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        },
+        HIGH: {
+          timeWindow: {
+            unit: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        },
+        MEDIUM: {
+          timeWindow: {
+            unit: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        },
+        LOW: {
+          timeWindow: {
+            unit: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        },
+        VERY_LOW: {
+          timeWindow: {
+            unit: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        },
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
       },
       nature: 'AML',
       labels: [],
