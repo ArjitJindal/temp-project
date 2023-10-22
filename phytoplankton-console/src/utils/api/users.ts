@@ -71,3 +71,9 @@ export function getUserLink(
     id: user.userId,
   });
 }
+
+export function isExistedUser(
+  user: InternalConsumerUser | InternalBusinessUser | MissingUser | null | undefined,
+): user is InternalConsumerUser | InternalBusinessUser {
+  return user != null && 'type' in user;
+}

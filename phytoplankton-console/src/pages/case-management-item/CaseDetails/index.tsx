@@ -8,7 +8,7 @@ import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
 import style from './index.module.less';
 import { CaseTransactionsCard } from './CaseTransactionsCard';
-import { Comment as ApiComment, Case, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { Case, Comment as ApiComment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
 import { useQueries } from '@/utils/queries/hooks';
@@ -30,6 +30,9 @@ import Linking from '@/pages/users-item/UserDetails/Linking';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import CRMMonitoring from '@/pages/users-item/UserDetails/CRMMonitoring';
+import { notEmpty } from '@/utils/array';
+import { isExistedUser } from '@/utils/api/users';
+import PaymentIdentifierDetailsCard from '@/pages/case-management-item/CaseDetails/PaymentIdentifierDetailsCard';
 import ActivityCard from '@/components/ActivityCard';
 
 interface Props {
@@ -40,25 +43,17 @@ interface Props {
 }
 
 function CaseDetails(props: Props) {
-  const { tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>();
   const { caseItem, headerStickyElRef, expandedAlertId } = props;
-  const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   useScrollToFocus();
-  const settings = useSettings();
-  const isMerchantMonitoringEnabled = useFeatureEnabled('MERCHANT_MONITORING');
   const navigate = useNavigate();
-  const isCrmEnabled = useFeatureEnabled('CRM');
-  const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
   const alertIds = (caseItem.alerts ?? [])
     .map(({ alertId }) => alertId)
     .filter((alertId): alertId is string => typeof alertId === 'string');
-
-  const alertCommentsRes = useAlertsComments(alertIds);
-  const branding = getBranding();
-
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
+  const tabs = useTabs(caseItem, expandedAlertId, alertIds);
+  const { tab = tabs[0].key } = useParams<'list' | 'id' | 'tab'>();
   return (
     <>
       <PageTabs
@@ -73,156 +68,7 @@ function CaseDetails(props: Props) {
           );
         }}
       >
-        {[
-          {
-            tab: 'User details',
-            key: 'user-details',
-            children: <UserDetails user={user} uiSettings={UI_SETTINGS} />,
-            isClosable: false,
-            isDisabled: false,
-          },
-          ...(caseItem.caseType === 'SYSTEM'
-            ? [
-                {
-                  tab: 'Alerts',
-                  key: 'alerts',
-                  children: (
-                    <AlertsCard
-                      caseItem={caseItem}
-                      expandedAlertId={expandedAlertId}
-                      title={UI_SETTINGS.cards.ALERTS.title}
-                    />
-                  ),
-                  isClosable: false,
-                  isDisabled: false,
-                },
-              ]
-            : []),
-          ...(caseItem.caseId && user && caseItem.caseType === 'MANUAL'
-            ? [
-                {
-                  tab: 'Case transactions',
-                  key: 'case-transactions',
-                  children: (
-                    <CaseTransactionsCard
-                      caseId={caseItem.caseId}
-                      caseTransactionsCount={caseItem.caseTransactionsCount ?? 0}
-                      caseType={caseItem.caseType}
-                      user={user}
-                    />
-                  ),
-                  isClosable: false,
-                  isDisabled: false,
-                },
-              ]
-            : []),
-          ...(user && isCrmEnabled
-            ? [
-                {
-                  tab: (
-                    <div className={style.icon}>
-                      {' '}
-                      <BrainIcon /> <span>&nbsp; CRM data</span>
-                    </div>
-                  ),
-                  key: 'crm-monitoring',
-                  children: <CRMMonitoring userId={user.userId!} />,
-                  isClosable: false,
-                  isDisabled: false,
-                },
-              ]
-            : []),
-          ...(user && isEntityLinkingEnabled
-            ? [
-                {
-                  tab: <div className={style.icon}>Entity linking</div>,
-                  key: 'entity-linking',
-                  children: <Linking userId={user.userId!} />,
-                  isClosable: false,
-                  isDisabled: false,
-                },
-              ]
-            : []),
-          ...(user && 'type' in user && user?.type === 'BUSINESS' && isMerchantMonitoringEnabled
-            ? [
-                {
-                  tab: !settings.isAiEnabled ? (
-                    <Tooltip
-                      title={`You need to enable ${branding.companyName} AI Features under Settings to view this tab`}
-                    >
-                      <div className={style.icon}>
-                        <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
-                      </div>
-                    </Tooltip>
-                  ) : (
-                    <div className={style.icon}>
-                      <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
-                    </div>
-                  ),
-
-                  key: 'ai-merchant-monitoring',
-                  children: <AIInsightsCard user={user as InternalBusinessUser} />,
-                  isClosable: false,
-                  isDisabled: !settings.isAiEnabled,
-                },
-              ]
-            : []),
-          ...(user?.userId
-            ? [
-                {
-                  tab: 'Transaction insights',
-                  key: 'transaction-insights',
-                  children: (
-                    <InsightsCard
-                      userId={user.userId}
-                      title={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.title}
-                    />
-                  ),
-                  isClosable: false,
-                  isDisabled: false,
-                },
-              ]
-            : []),
-          {
-            tab: 'Expected transaction limits',
-            key: 'expected-transaction-limits',
-            children: (
-              <Card.Root>
-                <ExpectedTransactionLimits
-                  user={user as InternalBusinessUser | InternalConsumerUser}
-                />
-              </Card.Root>
-            ),
-            isClosable: false,
-            isDisabled: false,
-          },
-          {
-            tab: 'Activity',
-            key: 'activity',
-            children: (
-              <AsyncResourceRenderer resource={alertCommentsRes}>
-                {(alertCommentsGroups) => (
-                  <ActivityCard
-                    caseItem={caseItem}
-                    user={user as InternalBusinessUser | InternalConsumerUser}
-                    comments={[
-                      ...alertCommentsGroups,
-                      {
-                        title: 'Other comments',
-                        type: 'CASE',
-                        id: caseItem.caseId ?? '-',
-                        comments: caseItem.comments ?? [],
-                      },
-                    ]}
-                    type="CASE"
-                  />
-                )}
-              </AsyncResourceRenderer>
-            ),
-            isClosable: false,
-            isDisabled: false,
-          },
-        ].map(({ tab, key, isDisabled, isClosable, children }) => (
+        {tabs.map(({ tab, key, isDisabled, isClosable, children }) => (
           <AntTabs.TabPane key={key} tab={tab} closable={isClosable} disabled={isDisabled ?? false}>
             <div
               style={{
@@ -270,4 +116,156 @@ function useAlertsComments(alertIds: string[]): AsyncResource<CommentGroup[]> {
   return all(commentsResources);
 }
 
+export function useTabs(caseItem: Case, expandedAlertId: string | undefined, alertIds: string[]) {
+  const { subjectType = 'USER' } = caseItem;
+  const isCrmEnabled = useFeatureEnabled('CRM');
+  const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
+  const isUserSubject = subjectType === 'USER';
+  const isPaymentSubject = subjectType === 'PAYMENT';
+  const paymentDetails =
+    caseItem.paymentDetails?.origin ?? caseItem.paymentDetails?.destination ?? undefined;
+  const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
+  const settings = useSettings();
+  const isMerchantMonitoringEnabled = useFeatureEnabled('MERCHANT_MONITORING');
+  const branding = getBranding();
+  const alertCommentsRes = useAlertsComments(alertIds);
+  return [
+    isPaymentSubject && {
+      tab: 'Payment identifier details',
+      key: 'payment-details',
+      children: <PaymentIdentifierDetailsCard paymentDetails={paymentDetails} />,
+      isClosable: false,
+      isDisabled: false,
+    },
+    isUserSubject && {
+      tab: 'User details',
+      key: 'user-details',
+      children: <UserDetails user={user} uiSettings={UI_SETTINGS} />,
+      isClosable: false,
+      isDisabled: false,
+    },
+    caseItem.caseType === 'SYSTEM' && {
+      tab: 'Alerts',
+      key: 'alerts',
+      children: (
+        <AlertsCard
+          caseItem={caseItem}
+          expandedAlertId={expandedAlertId}
+          title={UI_SETTINGS.cards.ALERTS.title}
+        />
+      ),
+      isClosable: false,
+      isDisabled: false,
+    },
+    caseItem.caseId &&
+      user &&
+      caseItem.caseType === 'MANUAL' && {
+        tab: 'Case transactions',
+        key: 'case-transactions',
+        children: (
+          <CaseTransactionsCard
+            caseId={caseItem.caseId}
+            caseTransactionsCount={caseItem.caseTransactionsCount ?? 0}
+            caseType={caseItem.caseType}
+            user={user}
+          />
+        ),
+        isClosable: false,
+        isDisabled: false,
+      },
+    user &&
+      isCrmEnabled && {
+        tab: (
+          <div className={style.icon}>
+            {' '}
+            <BrainIcon /> <span>&nbsp; CRM data</span>
+          </div>
+        ),
+        key: 'crm-monitoring',
+        children: <CRMMonitoring userId={user.userId!} />,
+        isClosable: false,
+        isDisabled: false,
+      },
+    isUserSubject &&
+      user &&
+      isEntityLinkingEnabled && {
+        tab: <div className={style.icon}>Entity linking</div>,
+        key: 'entity-linking',
+        children: <Linking userId={user.userId!} />,
+        isClosable: false,
+        isDisabled: false,
+      },
+    isUserSubject &&
+      user &&
+      'type' in user &&
+      user?.type === 'BUSINESS' &&
+      isMerchantMonitoringEnabled && {
+        tab: !settings.isAiEnabled ? (
+          <Tooltip
+            title={`You need to enable ${branding.companyName} AI Features under Settings to view this tab`}
+          >
+            <div className={style.icon}>
+              <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
+            </div>
+          </Tooltip>
+        ) : (
+          <div className={style.icon}>
+            <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
+          </div>
+        ),
+
+        key: 'ai-merchant-monitoring',
+        children: <AIInsightsCard user={user as InternalBusinessUser} />,
+        isClosable: false,
+        isDisabled: !settings.isAiEnabled,
+      },
+    isUserSubject &&
+      user?.userId && {
+        tab: 'Transaction insights',
+        key: 'transaction-insights',
+        children: (
+          <InsightsCard userId={user.userId} title={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.title} />
+        ),
+        isClosable: false,
+        isDisabled: false,
+      },
+    isExistedUser(user) && {
+      tab: 'Expected transaction limits',
+      key: 'expected-transaction-limits',
+      children: (
+        <Card.Root>
+          <ExpectedTransactionLimits user={user as InternalBusinessUser | InternalConsumerUser} />
+        </Card.Root>
+      ),
+      isClosable: false,
+      isDisabled: false,
+    },
+    {
+      tab: 'Activity',
+      key: 'activity',
+      children: (
+        <AsyncResourceRenderer resource={alertCommentsRes}>
+          {(alertCommentsGroups) => (
+            <ActivityCard
+              caseItem={caseItem}
+              user={user as InternalBusinessUser | InternalConsumerUser}
+              comments={[
+                ...alertCommentsGroups,
+                {
+                  title: 'Other comments',
+                  type: 'CASE',
+                  id: caseItem.caseId ?? '-',
+                  comments: caseItem.comments ?? [],
+                },
+              ]}
+              type="CASE"
+            />
+          )}
+        </AsyncResourceRenderer>
+      ),
+      isClosable: false,
+      isDisabled: false,
+    },
+  ].filter(notEmpty);
+}
 export default CaseDetails;

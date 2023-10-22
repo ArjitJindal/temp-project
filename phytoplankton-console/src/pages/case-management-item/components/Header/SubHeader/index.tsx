@@ -11,13 +11,14 @@ import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDisplay';
 import { CASES_ITEM } from '@/utils/queries/keys';
-import { getErrorMessage } from '@/utils/lang';
+import { getErrorMessage, neverReturn } from '@/utils/lang';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import { isOnHoldOrInProgress, statusEscalated, statusInReview } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
+import { getPaymentMethodTitle } from '@/utils/payments';
 import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
 
 interface Props {
@@ -31,7 +32,12 @@ export default function SubHeader(props: Props) {
   const api = useApi();
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
-  const caseUser = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
+  const { subjectType = 'USER', caseUsers } = caseItem;
+  const isUserSubject = subjectType === 'USER';
+  let caseUser;
+  if (isUserSubject && caseUsers) {
+    caseUser = caseUsers?.origin ?? caseUsers?.destination;
+  }
   const isCaseEscalated = statusEscalated(caseItem.caseStatus);
   const isCaseInReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem.caseStatus]);
   const otherStatuses = useMemo(
@@ -137,14 +143,9 @@ export default function SubHeader(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.attributes}>
-        <Form.Layout.Label title={'User name'}>{getUserName(caseUser)}</Form.Layout.Label>
-
-        <Form.Layout.Label title={'User ID'}>
-          <Id to={getUserLink(caseUser)} toNewTab alwaysShowCopy>
-            {caseUser?.userId}
-          </Id>
-        </Form.Layout.Label>
-
+        {caseItem.subjectType === 'PAYMENT'
+          ? paymentSubjectLabels(caseItem)
+          : userSubjectLabels(caseItem)}
         <Form.Layout.Label title={'Created at'}>
           {dayjs(caseItem.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
         </Form.Layout.Label>
@@ -241,5 +242,100 @@ export default function SubHeader(props: Props) {
         )}
       </Feature>
     </div>
+  );
+}
+
+function paymentSubjectLabels(caseItem: Case) {
+  const paymentDetails =
+    caseItem.paymentDetails?.origin ?? caseItem.paymentDetails?.destination ?? undefined;
+  const specialFields: {
+    label: string;
+    value: string | undefined;
+  }[] = [];
+  if (paymentDetails == null) {
+    // noop
+  } else if (paymentDetails.method === 'CARD') {
+    if (paymentDetails.cardLast4Digits) {
+      specialFields.push({
+        label: 'Card last 4 digits',
+        value: paymentDetails.cardLast4Digits,
+      });
+    } else if (paymentDetails.cardFingerprint) {
+      specialFields.push({
+        label: 'Card fingerprint',
+        value: paymentDetails.cardFingerprint,
+      });
+    }
+  } else if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
+    specialFields.push({
+      label: 'Bank account number',
+      value: paymentDetails.accountNumber,
+    });
+  } else if (paymentDetails.method === 'IBAN') {
+    specialFields.push({
+      label: 'IBAN',
+      value: paymentDetails.IBAN,
+    });
+  } else if (paymentDetails.method === 'ACH') {
+    specialFields.push({
+      label: 'ACH account number',
+      value: paymentDetails.accountNumber,
+    });
+  } else if (paymentDetails.method === 'SWIFT') {
+    specialFields.push({
+      label: 'SWITF account number',
+      value: paymentDetails.accountNumber,
+    });
+  } else if (paymentDetails.method === 'MPESA') {
+    specialFields.push({
+      label: 'MPESA business code',
+      value: paymentDetails.businessShortCode,
+    });
+  } else if (paymentDetails.method === 'UPI') {
+    specialFields.push({
+      label: 'UPI ID',
+      value: paymentDetails.upiID,
+    });
+  } else if (paymentDetails.method === 'WALLET') {
+    specialFields.push({
+      label: 'Wallet ID',
+      value: paymentDetails.walletId,
+    });
+  } else if (paymentDetails.method === 'CHECK') {
+    specialFields.push({
+      label: 'Check identifier/number',
+      value: [paymentDetails.checkIdentifier, paymentDetails.checkNumber]
+        .map((x) => x || '-')
+        .join('/'),
+    });
+  } else {
+    neverReturn(paymentDetails, '-');
+  }
+  return (
+    <>
+      <Form.Layout.Label title={'Payment identifier'}>
+        {paymentDetails != null ? getPaymentMethodTitle(paymentDetails.method) : '-'}
+      </Form.Layout.Label>
+      {specialFields.map(({ label, value }) => (
+        <Form.Layout.Label key={label} title={label}>
+          {value || '-'}
+        </Form.Layout.Label>
+      ))}
+    </>
+  );
+}
+
+function userSubjectLabels(caseItem: Case) {
+  const caseUser = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
+
+  return (
+    <>
+      <Form.Layout.Label title={'User name'}>{getUserName(caseUser)}</Form.Layout.Label>
+      <Form.Layout.Label title={'User ID'}>
+        <Id to={getUserLink(caseUser)} toNewTab alwaysShowCopy>
+          {caseUser?.userId}
+        </Id>
+      </Form.Layout.Label>
+    </>
   );
 }

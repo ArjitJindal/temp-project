@@ -1,4 +1,4 @@
-import { capitalizeWords } from './humanize';
+import { humanizeConstant } from './humanize';
 import {
   ACHPaymentMethod,
   CardPaymentMethod,
@@ -72,6 +72,6 @@ export function getPaymentMethodTitle(paymentMethod: PaymentMethod) {
   } else if (paymentMethod === 'CHECK') {
     return 'Check';
   } else {
-    return neverReturn(paymentMethod, capitalizeWords(paymentMethod));
+    return neverReturn(paymentMethod, humanizeConstant(paymentMethod));
   }
 }

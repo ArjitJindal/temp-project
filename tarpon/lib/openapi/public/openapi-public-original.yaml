@@ -3665,6 +3665,8 @@ components:
       type: object
       description: Details of rule execution, for internal purposes only
       properties:
+        subjectType:
+          $ref: '#/components/schemas/CaseSubjectType'
         hitDirections:
           type: array
           items:
@@ -3681,6 +3683,12 @@ components:
       enum:
         - ORIGIN
         - DESTINATION
+    CaseSubjectType:
+      title: CaseSubjectType
+      type: string
+      enum:
+        - USER
+        - PAYMENT
     RuleNature:
       type: string
       title: Rule nature type

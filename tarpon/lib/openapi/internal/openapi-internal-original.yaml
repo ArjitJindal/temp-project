@@ -7556,6 +7556,8 @@ components:
           type: string
         caseType:
           $ref: '#/components/schemas/CaseType'
+        subjectType:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CaseSubjectType
         createdBy:
           type: string
         createdTimestamp:
@@ -7578,6 +7580,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Alert'
+        paymentDetails:
+          type: object
+          properties:
+            origin:
+              oneOf:
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/CardDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/GenericBankAccountDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/IBANDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/ACHDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/SWIFTDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/MpesaDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+            destination:
+              oneOf:
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/CardDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/GenericBankAccountDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/IBANDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/ACHDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/SWIFTDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/MpesaDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
         caseUsers:
           type: object
           properties:
