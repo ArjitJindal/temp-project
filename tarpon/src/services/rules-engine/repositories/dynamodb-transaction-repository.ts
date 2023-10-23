@@ -27,7 +27,10 @@ import {
 } from './transaction-repository-interface'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import {
+  DynamoDbKeys,
+  TRANSACTION_ID_SUFFIX_DEPLOYED_TIME,
+} from '@/core/dynamodb/dynamodb-keys'
 import { getTimestampBasedIDPrefix } from '@/utils/timestampUtils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { dynamoDbQueryHelper, paginateQuery } from '@/utils/dynamodb'
@@ -36,6 +39,7 @@ import { mergeObjects } from '@/utils/object'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Undefined } from '@/utils/lang'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { envIs } from '@/utils/env'
 
 export function getNewTransactionID(transaction: Transaction) {
   return (
@@ -82,6 +86,7 @@ export class DynamoDbTransactionRepository
       transaction.transactionId
     )
 
+    const auxiliaryIndexes = this.getTransactionAuxiliaryIndexes(transaction)
     const batchWriteItemParams: BatchWriteCommandInput = {
       RequestItems: {
         [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
@@ -94,7 +99,7 @@ export class DynamoDbTransactionRepository
               },
             },
           },
-          ...this.getTransactionAuxiliaryIndices(transaction).map((item) => ({
+          ...auxiliaryIndexes.map((item) => ({
             PutRequest: {
               Item: item,
             },
@@ -103,6 +108,11 @@ export class DynamoDbTransactionRepository
       },
     }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
+
+    await this.removeOldAuxiliaryIndexesIfNeeded(
+      transaction.timestamp,
+      auxiliaryIndexes
+    )
 
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
@@ -113,7 +123,37 @@ export class DynamoDbTransactionRepository
     return transaction
   }
 
-  public getTransactionAuxiliaryIndices(transaction: Transaction) {
+  // TODO: We can remove this after 2024-04-01 assuming that a transaction event won't be created
+  // for a transaction which was created more than 6 months ago
+  private async removeOldAuxiliaryIndexesIfNeeded(
+    transactionTimestamp: number,
+    auxiliaryIndexes: Array<{ PartitionKeyID: string; SortKeyID: string }>
+  ) {
+    if (
+      transactionTimestamp > TRANSACTION_ID_SUFFIX_DEPLOYED_TIME.valueOf() ||
+      auxiliaryIndexes.length === 0 ||
+      !envIs('prod')
+    ) {
+      return
+    }
+    const batchWriteItemParams: BatchWriteCommandInput = {
+      RequestItems: {
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: auxiliaryIndexes.map(
+          (key) => ({
+            DeleteRequest: {
+              Key: {
+                PartitionKeyID: key.PartitionKeyID,
+                SortKeyID: key.SortKeyID.split('-')[0],
+              },
+            },
+          })
+        ),
+      },
+    }
+    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
+  }
+
+  public getTransactionAuxiliaryIndexes(transaction: Transaction) {
     const senderKeys = getSenderKeys(this.tenantId, transaction)
     const receiverKeys = getReceiverKeys(this.tenantId, transaction)
     const userSenderKeys = getUserSenderKeys(this.tenantId, transaction)
@@ -215,11 +255,11 @@ export class DynamoDbTransactionRepository
     ]
       .filter(Boolean)
       .map((key) => ({
+        ...transaction,
         ...(key as {
           PartitionKeyID: string
           SortKeyID: string
         }),
-        ...transaction,
       }))
   }
 

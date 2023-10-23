@@ -114,7 +114,7 @@ async function deleteTransaction(transaction: Transaction) {
         }
       ),
     transaction.timestamp,
-    // Always delete the primary transaction item at last to avoid having zombie indices that
+    // Always delete the primary transaction item at last to avoid having zombie indexes that
     // can not be deleted.
     DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),
   ].filter(Boolean) as Array<DynamoDbKey>

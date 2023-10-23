@@ -4,7 +4,7 @@ import { exit } from 'process'
 import { SQSQueues, StackConstants } from '@lib/constants'
 import { Umzug, MongoDBStorage } from 'umzug'
 import { STS, AssumeRoleCommand } from '@aws-sdk/client-sts'
-import { syncMongoDbIndices } from './always-run/sync-mongodb-indices'
+import { syncMongoDbIndexes } from './always-run/sync-mongodb-indexes'
 import { syncRulesLibrary } from './always-run/sync-rules-library'
 import { loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
@@ -136,7 +136,7 @@ async function main() {
 }
 
 async function syncData() {
-  await syncMongoDbIndices()
+  await syncMongoDbIndexes()
   await syncRulesLibrary()
   await syncListLibrary()
   await syncFeatureFlags()
