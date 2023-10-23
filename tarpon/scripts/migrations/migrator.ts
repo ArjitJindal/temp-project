@@ -30,15 +30,6 @@ export const down = async () => {
 
 type MigrationType = 'PRE_DEPLOYMENT' | 'POST_DEPLOYMENT'
 const migrationType = process.env.MIGRATION_TYPE as MigrationType
-if (migrationType !== 'PRE_DEPLOYMENT' && migrationType != 'POST_DEPLOYMENT') {
-  throw new Error(`Unknown migration type: ${migrationType}`)
-}
-const directory =
-  migrationType === 'PRE_DEPLOYMENT' ? 'pre-deployment' : 'post-deployment'
-const migrationCollection =
-  migrationType === 'PRE_DEPLOYMENT'
-    ? 'migrations-pre-deployment'
-    : 'migrations-post-deployment'
 
 loadConfigEnv()
 
@@ -85,6 +76,23 @@ async function main() {
   refreshCredentialsPeriodically()
   initializeEnvVars()
 
+  if (process.argv.includes('sync')) {
+    await syncData()
+    return
+  }
+
+  if (
+    migrationType !== 'PRE_DEPLOYMENT' &&
+    migrationType != 'POST_DEPLOYMENT'
+  ) {
+    throw new Error(`Unknown migration type: ${migrationType}`)
+  }
+  const directory =
+    migrationType === 'PRE_DEPLOYMENT' ? 'pre-deployment' : 'post-deployment'
+  const migrationCollection =
+    migrationType === 'PRE_DEPLOYMENT'
+      ? 'migrations-pre-deployment'
+      : 'migrations-post-deployment'
   const mongodb = await getMongoDbClient()
   const umzug = new Umzug({
     migrations: {
@@ -111,10 +119,7 @@ async function main() {
   }
 
   if (migrationType === 'POST_DEPLOYMENT') {
-    await syncMongoDbIndices()
-    await syncRulesLibrary()
-    await syncListLibrary()
-    await syncFeatureFlags()
+    await syncData()
 
     // Seed cypress tenant on dev
     if (envIs('dev')) {
@@ -128,6 +133,13 @@ async function main() {
       await client.close()
     }
   }
+}
+
+async function syncData() {
+  await syncMongoDbIndices()
+  await syncRulesLibrary()
+  await syncListLibrary()
+  await syncFeatureFlags()
 }
 
 main()

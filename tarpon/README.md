@@ -245,21 +245,24 @@ ENV=local npm run migration:post:up
 npm run aws-sso-login:dev
 ```
 
-2. Copy and paste the credentials printed from the previous step to the terminal
+2. Copy and paste the command printed from the previous step to the terminal
 
 ```bash
-AWS Credentials:
-====================================
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
-export AWS_SESSION_TOKEN=...
-====================================
+source .../flagright/orca/tarpon/scripts/aws/load-credentials.sh AWSAdministratorAccess-911899431626
 ```
 
 3. Run the migration with env vars `ENV`, `AWS_REGION`, `ATLAS_CREDENTIALS_SECRET_ARN` being set
 
 ```bash
 ENV=dev npm run migration:pre:up
+```
+
+### Sync static data
+
+Syncs static data like rules, lists ...etc.
+
+```bash
+ENV=dev npm run migration:sync
 ```
 
 ### Archived migrations

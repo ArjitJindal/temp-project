@@ -90,6 +90,7 @@
     "migration:post:create": "MIGRATION_TYPE=POST_DEPLOYMENT ENV=local npm run _migrator create -- --name $npm_config_name.ts --allow-extension .ts",
     "migration:post:up": "MIGRATION_TYPE=POST_DEPLOYMENT npm run _migrator up",
     "migration:post:down": "MIGRATION_TYPE=POST_DEPLOYMENT npm run _migrator down",
+    "migration:sync": "npm run _migrator sync",
     "postman:integration:sandbox": "ENV=sandbox ts-node --transpileOnly scripts/run-integration-tests.ts",
     "postman:integration:dev": "ENV=dev ts-node --transpileOnly scripts/run-integration-tests.ts",
     "postman:sync:collection": "ENV=local ts-node --transpileOnly scripts/sync-postman-collection.ts",
