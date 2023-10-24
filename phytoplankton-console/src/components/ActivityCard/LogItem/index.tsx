@@ -30,9 +30,11 @@ const LogItem = (props: Props) => {
     );
   };
   return (
-    <div className={s.root}>
-      <div className={s.time}>{time.toLowerCase()}</div>
-      <div className={s.logItem}>
+    <div data-cv="log-entry-item" className={s.root}>
+      <div data-cv="log-entry-item-date" className={s.time}>
+        {time.toLowerCase()}
+      </div>
+      <div data-cv="log-entry-item-text" className={s.logItem}>
         {getIcon(icon)}
         <div className={s.log}>{statement}</div>
       </div>

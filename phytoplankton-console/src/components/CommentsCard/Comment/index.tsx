@@ -29,11 +29,19 @@ export default function Comment(props: Props) {
         <FilesList files={comment.files ? comment.files : []} />
         <div className={styles.footer}>
           {comment.createdAt && (
-            <div className={styles.footerText} style={{ width: 'fit-content' }}>
+            <div
+              data-cy="comment-created-on"
+              className={styles.footerText}
+              style={{ width: 'fit-content' }}
+            >
               Added On: {new Date(comment.createdAt).toLocaleString()}
             </div>
           )}
-          <div className={styles.footerText} style={{ width: 'fit-content' }}>
+          <div
+            data-cy="comment-created-by"
+            className={styles.footerText}
+            style={{ width: 'fit-content' }}
+          >
             Added by: {user?.name}
           </div>
           {currentUserId === comment.userId && (
