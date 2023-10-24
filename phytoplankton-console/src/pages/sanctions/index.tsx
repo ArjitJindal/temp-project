@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router';
 import { Tabs } from 'antd';
 import { SanctionsSearchTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
+import { Activity } from './Activity';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { useI18n } from '@/locales';
@@ -27,6 +28,11 @@ const SanctionsPage: React.FC = () => {
         <Tabs.TabPane tab="Search history" key="search-history">
           <PageWrapperContentContainer>
             <SanctionsSearchHistoryTable />
+          </PageWrapperContentContainer>
+        </Tabs.TabPane>
+        <Tabs.TabPane tab="Activity" key="activity">
+          <PageWrapperContentContainer>
+            <Activity />
           </PageWrapperContentContainer>
         </Tabs.TabPane>
       </PageTabs>

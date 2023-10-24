@@ -4,6 +4,7 @@ import { isEqual, round, startCase } from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
+import { SanctionsActivityRepository } from './repositories/sanctions-activity-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
@@ -20,6 +21,7 @@ import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { apiFetch } from '@/utils/api-fetch'
+import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 
 const DEFAULT_FUZZINESS = 0.5
 const COMPLYADVANTAGE_SEARCH_API_URI =
@@ -44,6 +46,7 @@ export class SanctionsService {
   complyAdvantageSearchProfileId: string | undefined
   sanctionsSearchRepository!: SanctionsSearchRepository
   sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
+  sanctionsActivityRepository!: SanctionsActivityRepository
   tenantId: string
 
   constructor(tenantId: string) {
@@ -63,6 +66,10 @@ export class SanctionsService {
       new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
     this.apiKey = await this.getApiKey()
 
+    this.sanctionsActivityRepository = new SanctionsActivityRepository(
+      this.tenantId,
+      mongoDb
+    )
     const tenantRepository = new TenantRepository(this.tenantId, {
       dynamoDb: getDynamoDbClient(),
     })
@@ -414,5 +421,10 @@ export class SanctionsService {
       caEntityIds,
       userId
     )
+  }
+
+  public async getSanctionsScreeningStats(): Promise<SanctionsScreeningStats> {
+    await this.initialize()
+    return await this.sanctionsActivityRepository.getSanctionsScreeningStats()
   }
 }

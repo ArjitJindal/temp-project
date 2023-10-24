@@ -229,7 +229,12 @@ export function sampleConsumerUser() {
       countryOfNationality,
       name,
     },
-    executedRules: userRules,
+    executedRules: userRules.map((rule) => {
+      return {
+        ...rule,
+        ruleHit: userCounter % 2 ? true : false,
+      }
+    }),
     hitRules: getUserRules(
       `${name.firstName} ${name.middleName} ${name.lastName}`,
       'CONSUMER'
