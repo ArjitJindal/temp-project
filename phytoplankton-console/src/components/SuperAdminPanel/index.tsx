@@ -45,7 +45,7 @@ export default function SuperAdminPanel() {
       value: tenant.id,
       text: `${tenant.name} ${tenant.id} ${tenant.region}`,
       label: (
-        <div>
+        <div data-cy={tenant.name}>
           {tenant.name} <Tag color="blue">id: {tenant.id} </Tag>
           {tenant.region && <Tag color="orange">region: {tenant.region} </Tag>}
         </div>
@@ -107,7 +107,7 @@ export default function SuperAdminPanel() {
 
   return (
     <>
-      <Button size="SMALL" onClick={showModal}>
+      <Button size="SMALL" onClick={showModal} testName="superadmin-panel-button">
         {user.tenantName}
       </Button>
       <Modal
