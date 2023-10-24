@@ -24,7 +24,6 @@ interface Props {
 
 export default function CursorPagination(props: Props) {
   const { isDisabled, cursor, onPageChange, onFromChange, pageSize = DEFAULT_PAGE_SIZE } = props;
-
   return (
     <div
       style={{

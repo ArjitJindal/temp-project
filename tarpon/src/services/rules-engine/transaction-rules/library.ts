@@ -1236,10 +1236,11 @@ const _RULES_LIBRARY: Array<
       checkSender: 'all',
       checkReceiver: 'all',
     }
+
     return {
       id: 'R-123',
       type: 'TRANSACTION',
-      name: 'Too Many Counterparty Country',
+      name: 'Too many counterparty countries',
       description:
         'User is receiving or sending funds from >= X different countries in time t',
       descriptionTemplate:
