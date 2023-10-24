@@ -22,11 +22,7 @@ export default function (): JSX.Element {
       <UseCase title={'With ON/OFF label'}>
         <div>
           <div style={{ display: 'block' }}>
-            <Component
-              showOnOffLabel
-              value={labelState}
-              onChange={() => setLabelState(!labelState)}
-            />
+            <Component showLabel value={labelState} onChange={() => setLabelState(!labelState)} />
           </div>
         </div>
       </UseCase>
@@ -46,7 +42,7 @@ export default function (): JSX.Element {
             <Component disabled value={true} onChange={onChecked} />
           </div>
           <div style={{ display: 'block' }}>
-            <Component showOnOffLabel disabled value={true} onChange={onChecked} />
+            <Component showLabel disabled value={true} onChange={onChecked} />
           </div>
         </div>
       </UseCase>
@@ -56,12 +52,12 @@ export default function (): JSX.Element {
           x={['SMALL', 'DEFAULT', 'LARGE']}
           y={[true, false]}
           xLabel={'size'}
-          yLabel={'showOnOffLabel'}
+          yLabel={'showLabel'}
         >
           {(x, y) => (
             <Component
               size={x}
-              showOnOffLabel={y}
+              showLabel={y}
               value={largeState}
               onChange={() => setLargeState(!largeState)}
             />

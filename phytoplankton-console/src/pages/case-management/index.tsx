@@ -106,9 +106,14 @@ export default function CaseManagementPage() {
       title={i18n('menu.case-management')}
       actionButton={
         <div className={s.qaSwitch}>
-          <p className={s.qaSwitchTitle}>QA</p>
           {hasQaEnabled ? (
-            <Toggle value={qaMode} onChange={(value) => setQaMode(!!value)} disabled={false} />
+            <Toggle
+              value={qaMode}
+              onChange={(value) => setQaMode(!!value)}
+              disabled={false}
+              showLabel
+              label={'QA'}
+            />
           ) : (
             <Tooltip
               title={`This is an advanced feature. Contact support at ${branding.supportEmail} to access it.`}
