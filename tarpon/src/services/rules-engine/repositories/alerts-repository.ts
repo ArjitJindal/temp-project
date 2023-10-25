@@ -29,7 +29,7 @@ import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListRespon
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { hasFeature } from '@/core/utils/context'
+import { getContext, hasFeature } from '@/core/utils/context'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
@@ -37,6 +37,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
+import { Account } from '@/@types/openapi-internal/Account'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 
@@ -935,6 +936,81 @@ export class AlertsRepository {
         ],
       }
     )
+  }
+
+  public async reassignAlerts(
+    assignmentId: string,
+    reassignToUserId: string
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const user = getContext()?.user as Account
+
+    const now = Date.now()
+    const assignments: Assignment[] = [
+      {
+        assigneeUserId: reassignToUserId,
+        assignedByUserId: user.id,
+        timestamp: now,
+      },
+    ]
+
+    const keys: (keyof Alert)[] = [
+      'assignments',
+      'reviewAssignments',
+      'qaAssignment',
+    ]
+
+    const promises = keys.map((key) => {
+      return collection.updateMany(
+        {
+          [`alerts.${key}.assigneeUserId`]: assignmentId,
+        },
+        {
+          $set: {
+            [`alerts.$[alert].${key}`]: assignments,
+            updatedAt: now,
+          },
+        },
+        {
+          arrayFilters: [
+            {
+              [`alert.${key}.assigneeUserId`]: assignmentId,
+              [`alert.${key}`]: {
+                $size: 1,
+              },
+            },
+          ],
+        }
+      )
+    })
+
+    const pullPromises = keys.map((key) => {
+      return collection.updateMany(
+        {
+          [`alerts.${key}.assigneeUserId`]: assignmentId,
+        },
+        {
+          $pull: {
+            [`alerts.$[alert].${key}`]: {
+              assigneeUserId: assignmentId,
+            },
+          },
+        },
+        {
+          arrayFilters: [
+            {
+              [`alert.${key}.assigneeUserId`]: assignmentId,
+              [`alert.${key}.1`]: {
+                $exists: true,
+              },
+            },
+          ],
+        }
+      )
+    })
+
+    await Promise.all([...promises, ...pullPromises])
   }
 
   public async updateRuleQueue(ruleInstanceId: string, ruleQueueId?: string) {

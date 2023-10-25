@@ -35,7 +35,7 @@ import {
   getRiskLevelFromScore,
   getRiskScoreBoundsFromLevel,
 } from '@/services/risk-scoring/utils'
-import { hasFeature } from '@/core/utils/context'
+import { getContext, hasFeature } from '@/core/utils/context'
 import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
@@ -43,6 +43,7 @@ import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { Account } from '@/@types/openapi-internal/Account'
 
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
@@ -933,6 +934,49 @@ export class CaseRepository {
       { caseId: { $in: caseIds } },
       { $set: { reviewAssignments, assignments } }
     )
+  }
+
+  public async reassignCases(
+    assignmentId: string,
+    reassignmentId: string
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const user = getContext()?.user as Account
+    const assignmentsObject: Assignment[] = [
+      {
+        assignedByUserId: user.id,
+        assigneeUserId: reassignmentId,
+        timestamp: Date.now(),
+      },
+    ]
+
+    const keys = ['assignments', 'reviewAssignments'] as (keyof Case)[]
+
+    const pullPromises = keys.map((field) =>
+      collection.updateMany(
+        {
+          [`${field}.assigneeUserId`]: assignmentId,
+          [`${field}.1`]: { $exists: true },
+        },
+        { $pull: { [field]: { assigneeUserId: assignmentId } } }
+      )
+    )
+
+    // Reassign cases that have only one assignment
+    const promises = keys.map((field) =>
+      collection.updateMany(
+        {
+          [`${field}.assigneeUserId`]: assignmentId,
+          [field]: { $size: 1 },
+        },
+        { $set: { [field]: assignmentsObject } }
+      )
+    )
+
+    // Pull assignment from cases that have more than one assignment
+
+    await Promise.all([...promises, ...pullPromises])
   }
 
   public async updateReviewAssignmentsToAssignments(

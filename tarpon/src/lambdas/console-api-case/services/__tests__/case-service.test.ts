@@ -2456,3 +2456,96 @@ describe('Case/Alerts Service - Status Change Tests', () => {
     })
   })
 })
+
+describe('Test Cases Reassignment', () => {
+  const tenantId = getTestTenantId()
+
+  test('Case Assignments', async () => {
+    const caseService = await getCaseService(tenantId)
+    const caseId = nanoid()
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseType: 'MANUAL',
+      assignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          assignedByUserId: 'ACCOUNT-2',
+          timestamp: Date.now(),
+        },
+      ],
+    })
+
+    await caseService.caseRepository.reassignCases('ACCOUNT-1', 'ACCOUNT-3')
+
+    const updatedCase = await caseService.getCase(caseId)
+
+    expect(updatedCase?.assignments).toEqual([
+      {
+        assigneeUserId: 'ACCOUNT-3',
+        assignedByUserId: expect.any(String),
+        timestamp: expect.any(Number),
+      },
+    ])
+  })
+})
+
+describe('Test Alerts Reassignment', () => {
+  const tenantId = getTestTenantId()
+
+  test('Case Assignments', async () => {
+    const caseService = await getCaseService(tenantId)
+    const alertService = await getAlertsService(tenantId)
+    const caseId = nanoid()
+    const alertId = nanoid()
+    const alertId2 = nanoid()
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseType: 'MANUAL',
+
+      alerts: [
+        {
+          ...TEST_ALERT_1,
+          alertId,
+          assignments: [
+            {
+              assigneeUserId: 'ACCOUNT-1',
+              assignedByUserId: 'ACCOUNT-2',
+              timestamp: Date.now(),
+            },
+          ],
+        },
+        {
+          ...TEST_ALERT_1,
+          alertId: alertId2,
+          assignments: [
+            {
+              assigneeUserId: 'ACCOUNT-4',
+              assignedByUserId: 'ACCOUNT-2',
+              timestamp: Date.now(),
+            },
+          ],
+        },
+      ],
+    })
+
+    await alertService.alertsRepository.reassignAlerts('ACCOUNT-1', 'ACCOUNT-3')
+
+    const updatedCase = await caseService.getCase(caseId)
+
+    expect(updatedCase?.alerts?.[0]?.assignments).toEqual([
+      {
+        assigneeUserId: 'ACCOUNT-3',
+        assignedByUserId: expect.any(String),
+        timestamp: expect.any(Number),
+      },
+    ])
+
+    expect(updatedCase?.alerts?.[1]?.assignments).toEqual([
+      {
+        assigneeUserId: 'ACCOUNT-4',
+        assignedByUserId: expect.any(String),
+        timestamp: expect.any(Number),
+      },
+    ])
+  })
+})

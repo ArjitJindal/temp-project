@@ -6,6 +6,7 @@ import { useUser } from '@/utils/user-utils';
 import FilesList from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import Avatar from '@/components/Avatar';
+import { getAccountUserName } from '@/utils/account';
 
 interface Props {
   deletingCommentIds: string[];
@@ -42,7 +43,7 @@ export default function Comment(props: Props) {
             className={styles.footerText}
             style={{ width: 'fit-content' }}
           >
-            Added by: {user?.name}
+            Added by: {user ? getAccountUserName(user) : 'Unknown'}
           </div>
           {currentUserId === comment.userId && (
             <>

@@ -192,8 +192,16 @@ export function useUser(userId: string | null | undefined): Account | null {
   return user;
 }
 
-export function useSortedUsers(): [Account[], boolean] {
-  const [users, loading] = useUsers();
+export function useSortedUsers(
+  options: {
+    includeRootUsers?: boolean;
+    includeBlockedUsers?: boolean;
+  } = {
+    includeRootUsers: false,
+    includeBlockedUsers: false,
+  },
+): [Account[], boolean] {
+  const [users, loading] = useUsers(options);
   return [
     Object.values(users).sort((accountA, accountB) => accountA.name.localeCompare(accountB.name)),
     loading,

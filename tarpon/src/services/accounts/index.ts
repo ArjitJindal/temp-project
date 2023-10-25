@@ -7,6 +7,8 @@ import {
 } from 'aws-lambda'
 import { MongoClient } from 'mongodb'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
+import { CaseRepository } from '../rules-engine/repositories/case-repository'
+import { AlertsRepository } from '../rules-engine/repositories/alerts-repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
@@ -502,7 +504,7 @@ export class AccountsService {
     }
   }
 
-  async deleteUser(tenant: Tenant, idToDelete: string): Promise<void> {
+  async deleteUser(tenant: Tenant, idToDelete: string, reassignedTo: string) {
     const userTenant = await this.getAccountTenant(idToDelete)
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
@@ -513,22 +515,44 @@ export class AccountsService {
         `Unable to find user "${idToDelete}" in the tenant |${tenant.id}|`
       )
     }
+
+    const promises: any[] = []
+
     if (hasFeature('ESCALATION')) {
       const allUsers = await this.getTenantAccounts(tenant)
-      const reviewer = allUsers.find((u) => u.reviewerId === idToDelete)
-      if (reviewer) {
-        throw new BadRequest(
-          `Unable to delete user "${idToDelete}" because it is a reviewer of ${
-            reviewer.name ?? reviewer.email ?? reviewer.id
-          }`
-        )
-      }
-    }
-    await managementClient.updateUser({ id: idToDelete }, { blocked: true })
+      const usersWithReviewer = allUsers.filter(
+        (user) => user.reviewerId === idToDelete
+      )
 
-    await this.updateAuth0UserInMongo(tenant.id, idToDelete, {
-      blocked: true,
+      promises.push(
+        ...usersWithReviewer.map((user) =>
+          managementClient.updateUser(
+            { id: user.id },
+            { app_metadata: { reviewerId: reassignedTo } }
+          )
+        )
+      )
+    }
+
+    const caseRepository = new CaseRepository(tenant.id, {
+      mongoDb: this.mongoDb,
     })
+    const alertRepository = new AlertsRepository(tenant.id, {
+      mongoDb: this.mongoDb,
+    })
+
+    promises.push(
+      ...[
+        managementClient.updateUser({ id: idToDelete }, { blocked: true }),
+        this.updateAuth0UserInMongo(tenant.id, idToDelete, {
+          blocked: true,
+        }),
+        caseRepository.reassignCases(idToDelete, reassignedTo),
+        alertRepository.reassignAlerts(idToDelete, reassignedTo),
+      ]
+    )
+
+    await Promise.all(promises)
   }
 
   async patchUserHandler(

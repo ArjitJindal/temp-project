@@ -3,6 +3,7 @@ import { Avatar } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import s from './index.module.less';
 import { useUsers } from '@/utils/user-utils';
+import { getAccountUserName } from '@/utils/account';
 
 interface Props {
   accountId?: string;
@@ -22,7 +23,7 @@ export default function AccountTag(props: Props) {
       ) : (
         <>
           <Avatar size="small" src={users[accountId]?.picture} />
-          {users[accountId]?.name ?? accountId}
+          {getAccountUserName(users[accountId])}
         </>
       )}
     </div>

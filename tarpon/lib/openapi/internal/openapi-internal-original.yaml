@@ -2420,11 +2420,20 @@ paths:
     delete:
       summary: Account - Delete
       operationId: accounts-delete
+      x-flagright:
+        permissions:
+          - settings:organisation:write
       responses:
         '200':
           description: OK
         '403':
           description: Not enough privileges
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountDeletePayload'
+        required: true
   /me:
     get:
       summary: Get details about current user
@@ -6738,6 +6747,14 @@ components:
       required:
         - status
         - timestamp
+    AccountDeletePayload:
+      title: AccountDeletePayload
+      type: object
+      properties:
+        reassignTo:
+          type: string
+      required:
+        - reassignTo
     Account:
       title: Account
       type: object

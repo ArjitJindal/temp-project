@@ -2,6 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import createHttpError from 'http-errors'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { assertCurrentUserRole, JWTAuthorizerResult } from '@/@types/jwt'
@@ -50,8 +51,23 @@ export const accountsHandler = lambdaApi()(
 
     handlers.registerAccountsDelete(async (ctx, request) => {
       const accountId = request.accountId
+      const reassignTo = request.AccountDeletePayload.reassignTo
+
       assertCurrentUserRole('admin')
-      return await accountsService.deleteUser(organization, accountId)
+
+      if (accountId === userId) {
+        throw new createHttpError.Forbidden(
+          'You cannot delete your own account'
+        )
+      }
+
+      if (accountId === reassignTo) {
+        throw new createHttpError.Forbidden(
+          'You cannot reassign an account to itself'
+        )
+      }
+
+      await accountsService.deleteUser(organization, accountId, reassignTo)
     })
 
     handlers.registerAccountsEdit(async (ctx, request) => {

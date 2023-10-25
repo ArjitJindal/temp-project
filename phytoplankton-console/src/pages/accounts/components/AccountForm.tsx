@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import { useMutation } from '@tanstack/react-query';
 import s from './styles.module.less';
+import { useIsInviteDisabled } from './utils';
 import { CloseMessage, message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
@@ -16,7 +17,7 @@ import {
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getBranding } from '@/utils/branding';
-import { useAuth0User, useInvalidateUsers, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useInvalidateUsers } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import COLORS from '@/components/ui/colors';
 import Radio from '@/components/library/Radio';
@@ -57,30 +58,8 @@ export default function AccountForm(props: Props) {
 
   const isEdit = editAccount !== null;
 
-  const [accounts, loading] = useUsers();
   // todo: i18n
-
-  const isInviteDisabled = useMemo(() => {
-    if (isEdit) {
-      return false;
-    }
-
-    if (!maxSeats) {
-      return true;
-    }
-
-    if (loading) {
-      return null;
-    }
-
-    const existingSeats = Object.values(accounts).length;
-
-    if (existingSeats == null) {
-      return true;
-    }
-
-    return existingSeats >= maxSeats;
-  }, [maxSeats, isEdit, accounts, loading]);
+  const isInviteDisabled = useIsInviteDisabled();
 
   const [values, setValues] = useState<Partial<Account>>(defaultState);
 
@@ -116,14 +95,14 @@ export default function AccountForm(props: Props) {
   const invalidateUsers = useInvalidateUsers();
 
   const isInviteButtonDisabled = useMemo(() => {
-    if (isInviteDisabled) {
+    if (isInviteDisabled || isEdit) {
       return true;
     }
     if (!allRequiredFieldsFilled) {
       return true;
     }
     return false;
-  }, [isInviteDisabled, allRequiredFieldsFilled]);
+  }, [isInviteDisabled, allRequiredFieldsFilled, isEdit]);
 
   let hide: CloseMessage | undefined;
 
