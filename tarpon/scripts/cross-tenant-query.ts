@@ -3,13 +3,16 @@ import commandLineArgs from 'command-line-args'
 import { render } from 'prettyjson'
 import { Db } from 'mongodb'
 import { isEmpty } from 'lodash'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getConfig, loadConfigEnv } from './migrations/utils/config'
 import { TenantService } from '@/services/tenants'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { Env, PRODUCTION_ENVS } from '@/utils/env'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function runReadOnlyQueryForTenant(
   _mongoDb: Db,
+  _dynamoDb: DynamoDBDocumentClient,
   _tenantId: string
 ): Promise<any> {
   /**
@@ -37,13 +40,18 @@ async function runReadOnlyQueryForEnv(env: Env) {
   loadConfigEnv()
   const config = getConfig()
   const mongoDb = await getMongoDbClientDb(false)
+  const dynamoDb = getDynamoDbClient()
   const tenantInfos = await TenantService.getAllTenants(
     config.stage,
     config.region
   )
 
   for (const tenant of tenantInfos) {
-    const result = await runReadOnlyQueryForTenant(mongoDb, tenant.tenant.id)
+    const result = await runReadOnlyQueryForTenant(
+      mongoDb,
+      dynamoDb,
+      tenant.tenant.id
+    )
     if (!isEmpty(result)) {
       console.info(
         `\nTenant: ${tenant.tenant.name} (ID: ${tenant.tenant.id}) (region: ${tenant.tenant.region})`
