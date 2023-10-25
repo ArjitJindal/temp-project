@@ -1,4 +1,5 @@
 import { Auth0DevTenantConfig } from '@lib/configs/auth0/tenant-config-dev'
+import { cloneDeep } from 'lodash'
 import { getConfig } from './config'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -7,6 +8,7 @@ import { TenantInfo, TenantService } from '@/services/tenants'
 import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { envIs } from '@/utils/env'
+import { getFullTenantId } from '@/utils/tenant'
 
 const config = getConfig()
 
@@ -42,6 +44,11 @@ export async function migrateAllTenants(
         'No tenants found for running the migration! Fix it ASAP!'
       )
     }
+    tenantInfos = tenantInfos.flatMap((tenantInfo) => {
+      const clonedTenantInfo = cloneDeep(tenantInfo)
+      clonedTenantInfo.tenant.id = getFullTenantId(tenantInfo.tenant.id, true)
+      return [tenantInfo, clonedTenantInfo]
+    })
 
     for (const tenantInfo of tenantInfos) {
       console.info(

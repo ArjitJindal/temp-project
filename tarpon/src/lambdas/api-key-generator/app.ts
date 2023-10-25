@@ -12,8 +12,8 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
-import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
 import { createNewApiKeyForTenant } from '@/services/api-key'
+import { getFullTenantId } from '@/utils/tenant'
 
 export type ApiKeyGeneratorQueryStringParameters = {
   tenantId: string

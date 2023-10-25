@@ -11,7 +11,6 @@ import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { publishAuditLog } from '@/services/audit-log'
@@ -30,6 +29,7 @@ import {
 import { shortId } from '@/utils/id'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { getFullTenantId } from '@/utils/tenant'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 

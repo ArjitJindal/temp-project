@@ -15,6 +15,7 @@ import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewar
 import { updateLogMetadata } from '@/core/utils/context'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { logger } from '@/core/logger'
+import { getFullTenantId } from '@/utils/tenant'
 
 const UNAUTHORIZED_RESPONSE = {
   principalId: 'unknown',
@@ -85,13 +86,6 @@ export const getToken = (
     return null
   }
   return match[1]
-}
-
-export const getFullTenantId = (tenantId: string, demoMode: boolean) => {
-  if (tenantId.endsWith('-test')) {
-    return tenantId
-  }
-  return tenantId + (demoMode ? `-test` : '')
 }
 
 export const jwtAuthorizer = lambdaAuthorizer()(
