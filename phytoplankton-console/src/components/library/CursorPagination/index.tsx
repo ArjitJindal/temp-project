@@ -36,7 +36,7 @@ export default function CursorPagination(props: Props) {
     >
       <div className={s.root}>
         Found{' '}
-        {(cursor.count > cursor.limit
+        {(cursor.count >= cursor.limit
           ? `${formatNumber(cursor.limit)}+`
           : formatNumber(cursor.count)
         ).toLocaleString()}{' '}
