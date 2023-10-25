@@ -13,7 +13,7 @@ import { AsyncResource, isLoading } from '@/utils/asyncResource';
 import { Hint } from '@/components/library/Form/InputField';
 import { uploadFile } from '@/utils/file-uploader';
 
-export const MAX_COMMENT_LENGTH = 5000;
+export const MAX_COMMENT_LENGTH = 10000;
 
 export interface FormValues {
   comment: string;
