@@ -52,7 +52,6 @@ import { TransactionsAverageNumberExceededParameters } from '@/services/rules-en
 import { SamePaymentDetailsParameters } from '@/services/rules-engine/transaction-rules/same-payment-details'
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
-import { MachineLearningGenericModelParameters } from '@/services/rules-engine/transaction-rules/machine-learning-generic-model'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 
 export const DEFAULT_CURRENCY_KEYWORD = '__DEFAULT_CURRENCY__'
@@ -1535,89 +1534,6 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
-    }
-  },
-  () => {
-    const defaultParameters: MachineLearningGenericModelParameters = {
-      confidenceScore: 80,
-    }
-
-    return {
-      id: 'R-100',
-      name: 'ML Model for Fraud (generic)',
-      type: 'TRANSACTION',
-      description:
-        'Generic machine learning model trained to recognize generic fraud pattern',
-      descriptionTemplate: 'Potentially fraudulent pattern',
-      defaultParameters,
-      defaultAction: 'SUSPEND',
-      ruleImplementationName: 'machine-learning-generic-model',
-      labels: [],
-      defaultNature: 'FRAUD',
-      defaultCasePriority: 'P1',
-      requiredFeatures: ['MACHINE_LEARNING_DEMO'],
-    }
-  },
-  () => {
-    const defaultParameters: MachineLearningGenericModelParameters = {
-      confidenceScore: 80,
-    }
-
-    return {
-      id: 'R-101',
-      name: 'ML Model for Credit Card Fraud',
-      type: 'TRANSACTION',
-      description:
-        'Machine learning model trained to recognize credit card fraud',
-      descriptionTemplate: 'Potentially fraudulent pattern',
-      defaultParameters,
-      defaultAction: 'SUSPEND',
-      ruleImplementationName: 'machine-learning-credit-card-model',
-      labels: [],
-      defaultNature: 'FRAUD',
-      defaultCasePriority: 'P1',
-      requiredFeatures: ['MACHINE_LEARNING_DEMO'],
-    }
-  },
-  () => {
-    const defaultParameters: MachineLearningGenericModelParameters = {
-      confidenceScore: 80,
-    }
-
-    return {
-      id: 'R-102',
-      name: 'ML Model for ACH Chargeback Fraud',
-      type: 'TRANSACTION',
-      description:
-        'Machine learning model trained to recognize ACH Chargeback fraud',
-      descriptionTemplate: 'Potentially fraudulent pattern',
-      defaultParameters,
-      defaultAction: 'SUSPEND',
-      ruleImplementationName: 'machine-learning-ach-chargeback-model',
-      labels: [],
-      defaultNature: 'FRAUD',
-      defaultCasePriority: 'P1',
-      requiredFeatures: ['MACHINE_LEARNING_DEMO'],
-    }
-  },
-  () => {
-    const defaultParameters: MachineLearningGenericModelParameters = {
-      confidenceScore: 80,
-    }
-
-    return {
-      id: 'R-103',
-      name: 'ML Model for Anomaly detection',
-      type: 'TRANSACTION',
-      description: 'Anomaly detection model to detect suspicious activity',
-      descriptionTemplate: 'Potentially fraudulent pattern',
-      defaultParameters,
-      defaultAction: 'SUSPEND',
-      ruleImplementationName: 'machine-learning-anomaly-detection-model',
-      labels: [],
-      defaultNature: 'AML',
-      defaultCasePriority: 'P1',
-      requiredFeatures: ['MACHINE_LEARNING_DEMO'],
     }
   },
   () => {
