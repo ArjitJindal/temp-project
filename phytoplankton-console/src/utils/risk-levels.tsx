@@ -81,7 +81,7 @@ export function useRiskLevel(score: number): RiskLevel | null {
     classificationScores,
     [],
   )) {
-    if (score >= lowerBoundRiskScore && score <= upperBoundRiskScore) {
+    if (score >= lowerBoundRiskScore && score < upperBoundRiskScore) {
       return riskLevel;
     }
   }
