@@ -1,35 +1,16 @@
-import { ManagementClient, AuthenticationClient } from 'auth0'
 import { BadRequest, Conflict } from 'http-errors'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
-import { getAuth0Credentials } from '@/utils/auth0-utils'
+import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/ManagedRoleName'
 import { traceable } from '@/core/xray'
-import { envIs } from '@/utils/env'
 
 @traceable
 export class RoleService {
-  private authenticationClient: AuthenticationClient
   private config: { auth0Domain: string }
 
   constructor(config: { auth0Domain: string }) {
     this.config = config
-    const options = {
-      domain: envIs('test') ? 'test' : config.auth0Domain,
-    }
-
-    this.authenticationClient = new AuthenticationClient(options)
-  }
-
-  private async getAuth0Client() {
-    const { clientId, clientSecret } = await getAuth0Credentials(
-      this.config.auth0Domain
-    )
-    return {
-      domain: this.config.auth0Domain,
-      clientId,
-      clientSecret,
-    }
   }
 
   async getTenantRoles(tenantId: string): Promise<AccountRole[]> {
@@ -44,7 +25,9 @@ export class RoleService {
     tenantId: string,
     inputRole: AccountRole
   ): Promise<AccountRole> {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     if (isValidManagedRoleName(inputRole.name?.toLowerCase())) {
       throw new BadRequest(
         "Can't overwrite managed role, please choose a different name."
@@ -76,7 +59,9 @@ export class RoleService {
     id: string,
     inputRole: AccountRole
   ): Promise<void> {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     if (isValidManagedRoleName(inputRole.name?.toLowerCase())) {
       throw new BadRequest(
         "Can't overwrite default role, please choose a different name."
@@ -107,7 +92,9 @@ export class RoleService {
   }
 
   async deleteRole(tenantId: string, id: string): Promise<void> {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const users = await managementClient.getUsersInRole({
       id,
     })
@@ -131,7 +118,9 @@ export class RoleService {
   }
 
   async getRole(roleId: string): Promise<AccountRole> {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const role = await managementClient.getRole({ id: roleId })
 
     // Haven't implemented any error handling for a bad role ID since this is internal.
@@ -151,7 +140,9 @@ export class RoleService {
   }
 
   private async rolesByNamespace(namespace: string): Promise<AccountRole[]> {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const roles = await managementClient.getRoles({
       name_filter: `${namespace}:`,
     })
@@ -176,7 +167,9 @@ export class RoleService {
     id: string,
     inputPermissions: Permission[]
   ) {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const currentPermissions = await managementClient.getPermissionsInRole({
       id,
     })
@@ -216,7 +209,9 @@ export class RoleService {
     if (role == undefined) {
       throw new Conflict(`"${roleName}" not valid for tenant`)
     }
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const roles = await managementClient.getUserRoles({ id: userId })
     if (roles.length > 0) {
       await managementClient.removeRolesFromUser(

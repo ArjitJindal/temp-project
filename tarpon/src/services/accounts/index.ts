@@ -1,23 +1,20 @@
 import { v4 as uuidv4 } from 'uuid'
 import { BadRequest, Conflict, Forbidden } from 'http-errors'
-import {
-  ManagementClient,
-  Organization,
-  User,
-  AuthenticationClient,
-  UserMetadata,
-} from 'auth0'
+import { ManagementClient, Organization, User, UserMetadata } from 'auth0'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { MongoClient } from 'mongodb'
-import { memoize } from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
-import { getAuth0Credentials } from '@/utils/auth0-utils'
+import {
+  AppMetadata,
+  getAuth0AuthenticationClient,
+  getAuth0ManagementClient,
+} from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { RoleService } from '@/services/roles'
@@ -47,14 +44,6 @@ function getUsersManagement(managementClient: ManagementClient): {
 
 // todo: move to config?
 const CONNECTION_NAME = 'Username-Password-Authentication'
-
-export interface AppMetadata {
-  role: string
-  isEscalationContact?: boolean
-  isReviewer?: boolean
-  isReviewRequired?: boolean
-  reviewerId?: string
-}
 
 export type Account = ApiAccount
 
@@ -173,7 +162,9 @@ export class AccountsService {
       logger.error(`Unable to find tenant by id: ${tenantId}`)
       return
     }
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const organization = await managementClient.organizations.getByID({
       id: tenant.orgId,
     })
@@ -210,33 +201,10 @@ export class AccountsService {
     }
   }
 
-  private async getAuth0Client() {
-    const { clientId, clientSecret } = await getAuth0Credentials(
+  async getAccountTenant(userId: string): Promise<Tenant> {
+    const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
-    return {
-      domain: this.config.auth0Domain,
-      clientId,
-      clientSecret,
-    }
-  }
-
-  getManagementClient: () => Promise<ManagementClient<AppMetadata>> = memoize(
-    async () => {
-      const options = await this.getAuth0Client()
-      return new ManagementClient(options)
-    }
-  )
-
-  getAuthenticationClient: () => Promise<AuthenticationClient> = memoize(
-    async () => {
-      const options = await this.getAuth0Client()
-      return new AuthenticationClient(options)
-    }
-  )
-
-  async getAccountTenant(userId: string): Promise<Tenant> {
-    const managementClient = await this.getManagementClient()
 
     const usersManagement = getUsersManagement(managementClient)
     const organizations = await usersManagement.getUserOrganizations({
@@ -316,8 +284,9 @@ export class AccountsService {
   ): Promise<Account> {
     let user: User<AppMetadata, UserMetadata> | null = null
     let account: Account | null = null
-    const managementClient: ManagementClient<AppMetadata> =
-      await this.getManagementClient()
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
 
     try {
       const existingUser = await managementClient.getUsers({
@@ -392,9 +361,11 @@ export class AccountsService {
     email: string
   ): Promise<void> {
     const managementClient: ManagementClient<AppMetadata> =
-      await this.getManagementClient()
+      await getAuth0ManagementClient(this.config.auth0Domain)
 
-    const authenticationClient = await this.getAuthenticationClient()
+    const authenticationClient = await getAuth0AuthenticationClient(
+      this.config.auth0Domain
+    )
 
     const consoleClient = (
       await managementClient.getClients({ app_type: ['spa'] })
@@ -451,7 +422,7 @@ export class AccountsService {
 
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
     const managementClient: ManagementClient<AppMetadata> =
-      await this.getManagementClient()
+      await getAuth0ManagementClient(this.config.auth0Domain)
     // todo: this call can only return up to 1000 users, need to handle this
     const members = await managementClient.organizations.getMembers({
       id: tenant.orgId,
@@ -474,20 +445,22 @@ export class AccountsService {
 
   async getAccount(id: string): Promise<Account> {
     const managementClient: ManagementClient<AppMetadata> =
-      await this.getManagementClient()
+      await getAuth0ManagementClient(this.config.auth0Domain)
     return AccountsService.userToAccount(await managementClient.getUser({ id }))
   }
 
   async getAccounts(ids: string[]): Promise<Account[]> {
     const managementClient: ManagementClient<AppMetadata> =
-      await this.getManagementClient()
+      await getAuth0ManagementClient(this.config.auth0Domain)
     const q = `user_id: "${ids.join('" OR "')}"`
     const users = await managementClient.getUsers({ q })
     return users.map(AccountsService.userToAccount)
   }
 
   async getTenants(): Promise<Tenant[]> {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const organizations = await managementClient.organizations.getAll()
     return organizations.map(AccountsService.organizationToTenant)
   }
@@ -503,7 +476,9 @@ export class AccountsService {
     if (newTenant == null) {
       throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
     }
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const user = await this.getAccount(userId)
     await managementClient.organizations.removeMembers(
       { id: oldTenant.orgId },
@@ -529,7 +504,9 @@ export class AccountsService {
 
   async deleteUser(tenant: Tenant, idToDelete: string): Promise<void> {
     const userTenant = await this.getAccountTenant(idToDelete)
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
 
     if (userTenant == null || userTenant.id !== tenant.id) {
       throw new BadRequest(
@@ -576,7 +553,7 @@ export class AccountsService {
   ): Promise<Account> {
     const userTenant = await this.getAccountTenant(accountId)
     const managementClient: ManagementClient<AppMetadata> =
-      await this.getManagementClient()
+      await getAuth0ManagementClient(this.config.auth0Domain)
 
     if (userTenant == null || userTenant.id !== tenant.id) {
       throw new BadRequest(
@@ -612,7 +589,9 @@ export class AccountsService {
   }
 
   async getUserSettings(accountId: string): Promise<AccountSettings> {
-    const managementClient = await this.getManagementClient()
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const user = await managementClient.getUser({
       id: accountId,
     })
@@ -631,7 +610,9 @@ export class AccountsService {
     if (!accountId) {
       throw new BadRequest(`accountId is not provided`)
     }
-    const managementClient = await this.getManagementClient()
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     const user = await managementClient.getUser({
       id: accountId,
     })
@@ -654,7 +635,9 @@ export class AccountsService {
     tenantData: TenantCreationRequest,
     tenantId: string
   ): Promise<Organization> {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
 
     const auth0Audience = process.env.AUTH0_AUDIENCE?.split('https://')[1]
     const regionPrefix =
@@ -680,7 +663,9 @@ export class AccountsService {
   }
 
   async getOrganization(tenantName: string): Promise<Organization | null> {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     try {
       const organization = await managementClient.organizations.getByName({
         name: tenantName.toLowerCase(),
@@ -738,7 +723,9 @@ export class AccountsService {
   }
 
   async checkAuth0UserExistsMultiple(emails: string[]): Promise<boolean> {
-    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
     try {
       const users = await managementClient.getUsers({
         q: `email:(${emails.join(' OR ')})`,

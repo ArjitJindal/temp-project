@@ -26,6 +26,7 @@ const IGNORED = [
   // To use it in a lambda, add `fastGeoIpLayer` lambda layer to the lambda in cdk-tarpon-stack and
   // dynamically import it in the code.
   'fast-geoip',
+  'superagent-proxy',
 ]
 
 const ROOT_DIR = path.resolve(`${__dirname}/..`)
