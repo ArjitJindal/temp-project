@@ -10,6 +10,7 @@ import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { UserState } from '@/@types/openapi-internal/UserState'
 import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
 import {
+  getRandomIntInclusive,
   pickRandom,
   randomFloat,
   randomInt,
@@ -39,7 +40,6 @@ import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/Acquisiti
 import dayjs from '@/utils/dayjs'
 import { Person } from '@/@types/openapi-internal/Person'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
-import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
 import { SOURCE_OF_FUNDSS } from '@/@types/openapi-internal-custom/SourceOfFunds'
 import {
   businessSanctionsSearch,
@@ -241,6 +241,7 @@ export function sampleConsumerUser() {
     ),
     createdTimestamp: sampleTimestamp(),
     tags: [sampleTag()],
+    transactionLimits: sampleExpectedTransactionLimit(),
   }
 
   return user
@@ -321,12 +322,7 @@ export function sampleBusinessUser({
       },
     },
     acquisitionChannel: pickRandom(ACQUISITION_CHANNELS),
-    transactionLimits: {
-      maximumDailyTransactionLimit: {
-        amountValue: randomInt(10000),
-        amountCurrency: pickRandom(CURRENCY_CODES),
-      },
-    },
+    transactionLimits: sampleExpectedTransactionLimit(),
     shareHolders: Array.from({ length: 2 }, () => {
       const name: ConsumerName = randomConsumerName()
 
@@ -434,4 +430,52 @@ export function merchantMonitoringSummaries(
       url,
     }))
   })
+}
+
+const sampleExpectedTransactionLimit = () => {
+  return {
+    ...getTransactionLimits('Daily', 10, 5000),
+    ...getTransactionLimits('Weekly', 5000, 15000),
+    ...getTransactionLimits('Monthly', 15000, 250000),
+    ...getTransactionLimits('Quarterly', 250000, 1200000),
+    ...getTransactionLimits('Yearly', 1200000, 3500000),
+    paymentMethodLimits: {
+      ...getPaymentMethodLimits(),
+    },
+  }
+}
+
+const getTransactionLimits = (
+  timeGranularity: 'Daily' | 'Monthly' | 'Weekly' | 'Quarterly' | 'Yearly',
+  minAmount: number,
+  maxAmount: number
+) => {
+  return {
+    [`maximum${timeGranularity}TransactionLimit`]: {
+      amountValue: getRandomIntInclusive(minAmount, maxAmount),
+      amountCurrency: 'USD',
+    },
+  }
+}
+
+const getPaymentMethodLimits = () => {
+  return {
+    [pickRandom(PAYMENT_METHODS)]: {
+      transactionCountLimit: {
+        month: getRandomIntInclusive(20, 100),
+      },
+      transactionAmountLimit: {
+        month: {
+          amountValue: randomInt(100000),
+          amountCurrency: 'USD',
+        },
+      },
+      averageTransactionAmountLimit: {
+        month: {
+          amountValue: getRandomIntInclusive(1000, 3000),
+          amountCurrency: 'USD',
+        },
+      },
+    },
+  }
 }
