@@ -1341,12 +1341,6 @@ export class MongoDbTransactionRepository
         ),
       })
     }
-    if (!isEmpty(filterOptions.transactionTimeRange)) {
-      const { startTime, endTime } = filterOptions.transactionTimeRange
-      additionalFilters.push({
-        timestamp: { $gte: startTime, $lte: endTime },
-      })
-    }
     return this.getTransactionsMongoQuery(
       {
         ...timeRange,

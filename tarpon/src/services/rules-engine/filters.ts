@@ -103,14 +103,6 @@ import {
   BusinessUserSegmentRuleFilter,
   BusinessUserSegmentRuleFilterParameter,
 } from './user-filters/user-business-consumer-segment'
-import {
-  TransactionTimeRangeRuleFilter,
-  TransactionTimeRangeRuleFilterParameter,
-} from './transaction-filters/transaction-time-range'
-import {
-  TransactionTimeRangeHistoricalRuleFilter,
-  TransactionTimeRangeHistoricalRuleFilterParameter,
-} from './transaction-filters/transaction-time-range-historical'
 import { OriginPaymentFilterRuleFilter } from './transaction-filters/origin-payment-filter'
 import { DestinationPaymentFilterRuleFilter } from './transaction-filters/destination-payment-filter'
 import {
@@ -133,16 +125,14 @@ export type TransactionFilters = OriginPaymentRuleFiltersParameters &
   CheckDirectionRuleFilterParameter &
   TransactionAmountRuleFilterParameter &
   TransactionProductTypesRuleFilterParameter &
-  TransactionTagsRuleFilterParameter &
-  TransactionTimeRangeRuleFilterParameter
+  TransactionTagsRuleFilterParameter
 
 export type TransactionHistoricalFilters =
   TransactionStateHistoricalRuleFilterParameter &
     TransactionTypeHistoricalRuleFilterParameter &
     PaymentMethodHistoricalRuleFilterParameter &
     TransactionCountryHistoricalRuleFilterParameter &
-    TransactionAmountHistoricalRuleFilterParameter &
-    TransactionTimeRangeHistoricalRuleFilterParameter
+    TransactionAmountHistoricalRuleFilterParameter
 
 export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserCreationAgeRuleFilterParameter &
@@ -174,7 +164,6 @@ const _TRANSACTION_FILTERS = [
   CheckDirectionRuleFilter,
   TransactionProductTypesRuleFilter,
   TransactionTagsRuleFilter,
-  TransactionTimeRangeRuleFilter,
 ]
 
 const _TRANSACTION_HISTORICAL_FILTERS = [
@@ -183,7 +172,6 @@ const _TRANSACTION_HISTORICAL_FILTERS = [
   TransactionStateHistoricalRuleFilter,
   TransactionCountryHistoricalRuleFilter,
   TransactionAmountHistoricalRuleFilter,
-  TransactionTimeRangeHistoricalRuleFilter,
 ]
 
 // Order defined here will be reflected in console

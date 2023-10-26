@@ -31,10 +31,6 @@ export interface UiSchemaTransactionAmountRange extends UiSchemaCommon {
   'ui:subtype': 'TRANSACTION_AMOUNT_RANGE';
 }
 
-export interface UiSchemaTransactionTimeRange extends UiSchemaCommon {
-  'ui:subtype': 'TIME_RANGE';
-}
-
 export interface UiSchemaTransactionAmountThresholds extends UiSchemaCommon {
   'ui:subtype': 'TRANSACTION_AMOUNT_THRESHOLDS';
 }
@@ -86,7 +82,6 @@ export type UiSchema =
   | UiSchemaPaymentFilters
   | UiSchemaUnknown
   | UiSchemaNarrative
-  | UiSchemaTransactionTimeRange
   | UiSchemaChecklistsCategoryList;
 
 export interface ExtendedSchema extends JSONSchema4 {

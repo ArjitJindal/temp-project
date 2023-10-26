@@ -159,7 +159,6 @@ async function getTransactions(
             transactionAmountRange: filters.transactionAmountRangeHistorical,
             originPaymentMethods: filters.paymentMethodsHistorical,
             originCountries: filters.transactionCountriesHistorical,
-            transactionTimeRange: filters.transactionTimeRangeHistorical,
           },
           attributesToFetch,
           matchPaymentMethodDetails
@@ -179,7 +178,6 @@ async function getTransactions(
             transactionAmountRange: filters.transactionAmountRangeHistorical,
             destinationPaymentMethods: filters.paymentMethodsHistorical,
             destinationCountries: filters.transactionCountriesHistorical,
-            transactionTimeRange: filters.transactionTimeRangeHistorical,
           },
           attributesToFetch,
           matchPaymentMethodDetails

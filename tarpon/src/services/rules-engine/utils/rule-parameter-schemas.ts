@@ -617,34 +617,6 @@ export const TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
-export interface TransactionTimeRange {
-  startTime: number
-  endTime: number
-}
-
-export const TRANSACTION_TIME_RANGE_SCHEMA = (options?: SchemaOptions) =>
-  ({
-    type: 'object',
-    ...uiSchema(options?.uiSchema, {
-      subtype: 'TIME_RANGE',
-    }),
-    title: options?.title || 'Transaction time range',
-    description: options?.description,
-    properties: {
-      startTime: { type: 'number', nullable: true },
-      endTime: { type: 'number', nullable: true },
-    },
-    required: [],
-  } as const)
-
-export const TRANSACTION_TIME_RANGE_OPTIONAL_SCHEMA = (
-  options?: SchemaOptions
-) =>
-  ({
-    ...TRANSACTION_TIME_RANGE_SCHEMA(options),
-    nullable: true,
-  } as const)
-
 export const KEY_VALUE_PAIR_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
