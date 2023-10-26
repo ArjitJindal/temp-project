@@ -74,7 +74,7 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     return {
       all: (targetAggregationData?.all || 0) + 1,
       match:
-        (targetAggregationData?.all || 0) +
+        (targetAggregationData?.match || 0) +
         (this.matchPattern(this.transaction, direction) ? 1 : 0),
     }
   }
@@ -249,6 +249,6 @@ export default abstract class TransactionsPatternPercentageBaseRule<
   protected abstract getNeededTransactionFields(): Array<keyof Transaction>
 
   override getRuleAggregationVersion(): number {
-    return 3
+    return 4
   }
 }

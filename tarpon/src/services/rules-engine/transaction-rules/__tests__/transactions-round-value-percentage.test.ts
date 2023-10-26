@@ -93,7 +93,7 @@ ruleVariantsTest(true, () => {
             granularity: 'day',
           },
           initialTransactions: 2,
-          patternPercentageLimit: 50,
+          patternPercentageLimit: 35,
         } as TransactionsRoundValuePercentageRuleParameters,
         defaultAction: 'FLAG',
       },
@@ -106,8 +106,8 @@ ruleVariantsTest(true, () => {
           getTestTransaction({
             originUserId: '1',
             destinationUserId: '2',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
             timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
@@ -117,6 +117,7 @@ ruleVariantsTest(true, () => {
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
             timestamp: dayjs('2000-01-01T01:00:01.000Z').valueOf(),
           }),
+          // 1 / 3 = 33.33% (< 35%)
           getTestTransaction({
             originUserId: '1',
             destinationUserId: '2',
@@ -131,6 +132,7 @@ ruleVariantsTest(true, () => {
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
             timestamp: dayjs('2000-01-01T01:00:03.000Z').valueOf(),
           }),
+          // 2 / 5 = 40% (> 35%)
           getTestTransaction({
             originUserId: '4',
             destinationUserId: '2',
@@ -139,7 +141,7 @@ ruleVariantsTest(true, () => {
             timestamp: dayjs('2000-01-01T01:00:04.000Z').valueOf(),
           }),
         ],
-        expectedHits: [false, false, true, false, true],
+        expectedHits: [false, false, false, false, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(
