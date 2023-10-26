@@ -145,7 +145,7 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
         },
         {
           key: 'Risk level',
-          value: result?.riskLevel,
+          value: result?.riskLevel ?? result?.drsScore?.derivedRiskLevel,
         },
         {
           key: 'Manual risk level',
