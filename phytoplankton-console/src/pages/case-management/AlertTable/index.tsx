@@ -22,6 +22,7 @@ import {
   TableRefType,
 } from '@/components/library/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
+import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
@@ -451,7 +452,7 @@ export default function AlertTable(props: Props) {
         helper.display({
           title: 'Operations',
           enableResizing: false,
-          defaultWidth: 200,
+          defaultWidth: 220,
           render: (entity) => {
             if (!entity.alertId || !entity.caseId) {
               return <></>;
@@ -505,7 +506,7 @@ export default function AlertTable(props: Props) {
                       }
                     }}
                   >
-                    Investigate
+                    <BrainIcon style={{ width: '16px', cursor: 'pointer' }} /> Investigate
                   </Button>
                 )}
               </div>
