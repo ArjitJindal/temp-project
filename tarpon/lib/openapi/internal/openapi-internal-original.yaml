@@ -7272,7 +7272,6 @@ components:
         - RISK_SCORING
         - AUDIT_LOGS
         - SLACK_ALERTS
-        - IMPORT_FILES
         - COPILOT
         - INVESTIGATIVE_COPILOT
         - GOOGLE_SSO

@@ -26,9 +26,7 @@ export default function ExtendedRowRenderer(props: Props) {
         return (
           <span
             key={subsection.name}
-            className={
-              featureEnabled(features, subsection.section, subsection.name) ? undefined : s.disabled
-            }
+            className={featureEnabled(features, subsection.section) ? undefined : s.disabled}
           >
             {sentenceCase(subsection.name)}
           </span>
@@ -74,10 +72,7 @@ export default function ExtendedRowRenderer(props: Props) {
 }
 
 // Check permissions against feature flags.
-function featureEnabled(features: Feature[], section: string, subsection: string): boolean {
-  if (subsection == 'import' && !features.find((f) => f == 'IMPORT_FILES')) {
-    return false;
-  }
+function featureEnabled(features: Feature[], section: string): boolean {
   if (section == 'simulator' && !features.find((f) => (f as string) == 'SIMULATOR')) {
     return false;
   }

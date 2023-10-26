@@ -34,7 +34,6 @@ import ReportsList from '@/pages/reports';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
-  const isImportFilesEnabled = useFeatureEnabled('IMPORT_FILES');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
   const isSarEnabled = useFeatureEnabled('SAR');
@@ -282,32 +281,6 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      isImportFilesEnabled && {
-        path: '/import',
-        name: 'import',
-        icon: 'import',
-        position: 'top',
-        permissions: ['users:import:write', 'transactions:import:write'],
-        routes: [
-          {
-            path: '/import',
-            redirect: '/import/import-users',
-            permissions: ['users:import:write'],
-          },
-          {
-            name: 'import-users',
-            path: '/import/import-users',
-            permissions: ['users:import:write'],
-            component: UsersUsersFilesPage,
-          },
-          {
-            name: 'import-transactions',
-            path: '/import/import-transactions',
-            permissions: ['transactions:import:write'],
-            component: TransactionsFilesPage,
-          },
-        ],
-      },
       {
         name: 'lists',
         path: '/lists',
@@ -437,7 +410,6 @@ export function useRoutes(): RouteItem[] {
     lastActiveTab,
     lastActiveRuleTab,
     isRiskScoringEnabled,
-    isImportFilesEnabled,
     isSarEnabled,
     lastActiveList,
     isSanctionsEnabled,
