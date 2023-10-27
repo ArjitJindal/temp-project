@@ -914,7 +914,13 @@ export class DynamoDbTransactionRepository
         return statement
       })
       .join(' OR ')
+    const startTime = filterOptions?.transactionTimeRange?.startTime
+    const endTime = filterOptions?.transactionTimeRange?.endTime
+    let transactionTimeRangeParams = ''
 
+    if (startTime !== undefined && endTime !== undefined) {
+      transactionTimeRangeParams = '#timestamp BETWEEN :startTime AND :endTime'
+    }
     const filters = [
       originPaymentMethodsKeys &&
         !isEmpty(originPaymentMethodsKeys) &&
@@ -940,6 +946,9 @@ export class DynamoDbTransactionRepository
       filterOptions.transactionAmountRange &&
         !isEmpty(filterOptions.transactionAmountRange) &&
         transactionAmountStatement,
+      filterOptions.transactionTimeRange &&
+        !isEmpty(filterOptions.transactionTimeRange) &&
+        transactionTimeRangeParams,
     ].filter(Boolean)
 
     if (isEmpty(filters) && isEmpty(attributesToFetch)) {
@@ -960,6 +969,7 @@ export class DynamoDbTransactionRepository
           '#transactionAmount': 'transactionAmount',
           '#transactionCurrency': 'transactionCurrency',
           '#country': 'country',
+          '#timestamp': 'timestamp',
         },
         (_value, key) => filterExpression?.includes(key)
       ),
@@ -981,6 +991,10 @@ export class DynamoDbTransactionRepository
             ...Object.fromEntries(originCountriesParams || []),
             ...Object.fromEntries(destinationCountriesParams || []),
             ...Object.fromEntries(transactionAmountParams || []),
+            ...{
+              ':startTime': startTime,
+              ':endTime': endTime,
+            },
           },
       ProjectionExpression: isEmpty(attributesToFetch)
         ? undefined

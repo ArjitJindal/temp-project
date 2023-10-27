@@ -1185,7 +1185,6 @@ ruleVariantsTest(true, () => {
         defaultParameters: DEFAULT_RULE_PARAMETERS,
       },
     ])
-
     describe.each<TransactionRuleTestCase>([
       {
         name: '',
@@ -1222,6 +1221,71 @@ ruleVariantsTest(true, () => {
           }),
         ],
         expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('transaction country filter with transaction time historical filter', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        filters: {
+          transactionCountriesHistorical: ['DE'],
+          transactionTimeRangeHistorical: {
+            startTime: dayjs('2022-01-06T00:00:30.000Z').valueOf() / 1000,
+            endTime: dayjs('2022-01-06T00:02:00.000Z').valueOf() / 1000,
+          },
+        },
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: '',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: {
+              ...TEST_TRANSACTION_AMOUNT_200,
+              country: 'FR',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: dayjs('2022-01-02T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: {
+              ...TEST_TRANSACTION_AMOUNT_200,
+              country: 'DE',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: dayjs('2022-01-03T00:01:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: {
+              ...TEST_TRANSACTION_AMOUNT_200,
+              country: 'DE',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: dayjs('2022-01-04T00:02:02.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, false],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(

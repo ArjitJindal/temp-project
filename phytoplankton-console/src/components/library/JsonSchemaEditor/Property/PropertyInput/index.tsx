@@ -17,6 +17,7 @@ import CurrencyInput from './custom/CurrencyInput';
 import PaymentFiltersInput from './custom/PaymentFiltersInput';
 import TransactionAmountThresholdsInput from './custom/TransactionAmountThresholdsInput';
 import Indicator from './custom/fincen/Indicator';
+import TimeRangeInput from './custom/TimeRangeInput';
 import NarrativeInput from './custom/NarrativeInput';
 import { CheckListCategoryListsInput } from './custom/CheckListCategoryListsInput';
 import { InputProps } from '@/components/library/Form';
@@ -66,6 +67,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'FINCEN_INDICATOR') {
     return <Indicator {...props} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'TIME_RANGE') {
+    return <TimeRangeInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'CHECKLISTS_CATEGORY_LIST') {
     return <CheckListCategoryListsInput {...props} uiSchema={uiSchema} />;
