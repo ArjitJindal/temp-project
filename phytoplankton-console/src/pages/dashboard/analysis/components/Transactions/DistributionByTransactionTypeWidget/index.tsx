@@ -86,7 +86,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
                 resolve(fileData);
               });
             }}
-            resizing="FIXED"
+            resizing="AUTO"
             {...props}
           >
             <Donut<TransactionType>

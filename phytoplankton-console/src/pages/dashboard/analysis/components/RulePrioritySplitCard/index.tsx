@@ -75,7 +75,7 @@ export default function RulePrioritySplitCard(props: Props) {
                 resolve(fileData);
               });
             }}
-            resizing="FIXED"
+            resizing="AUTO"
             extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
             {...props}
           >

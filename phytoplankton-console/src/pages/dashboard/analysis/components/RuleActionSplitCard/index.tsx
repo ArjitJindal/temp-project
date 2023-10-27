@@ -69,7 +69,7 @@ export default function RuleActionSplitCard(props: Props) {
                 resolve(fileData);
               });
             }}
-            resizing="FIXED"
+            resizing="AUTO"
             extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
             {...props}
           >

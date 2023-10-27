@@ -94,7 +94,7 @@ export default function PaymentMethodDistributionWidget(props: Props) {
                 resolve(fileData);
               });
             }}
-            resizing="FIXED"
+            resizing="AUTO"
             {...props}
           >
             <Treemap<PaymentMethod>

@@ -65,7 +65,7 @@ const DistributionByAlertPriority = (props: Props) => {
               });
             }}
             width="HALF"
-            resizing="FIXED"
+            resizing="AUTO"
             extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
             {...props}
           >

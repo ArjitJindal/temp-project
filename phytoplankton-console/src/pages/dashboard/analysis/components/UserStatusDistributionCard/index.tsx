@@ -90,7 +90,7 @@ export default function UserStatusDistributionCard(props: Props) {
                 resolve(fileData);
               });
             }}
-            resizing="FIXED"
+            resizing="AUTO"
             extraControls={[
               <WidgetRangePicker
                 value={dateRange}

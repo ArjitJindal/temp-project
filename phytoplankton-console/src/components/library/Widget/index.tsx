@@ -35,7 +35,12 @@ export default function Widget(props: WidgetProps) {
           )}
         </div>
         <div className={s.childrenWrapper}>
-          <div className={s.children}>{children}</div>
+          <div
+            className={s.children}
+            style={{ overflow: resizing === 'AUTO' ? undefined : 'auto' }}
+          >
+            {children}
+          </div>
         </div>
       </div>
     </WidgetBase>

@@ -118,7 +118,7 @@ export default function TransactionsChartWidget(props: WidgetProps) {
           />
         </div>,
       ]}
-      resizing="FIXED"
+      resizing="AUTO"
       {...props}
     >
       <AsyncResourceRenderer resource={queryResult.data}>
