@@ -14,6 +14,7 @@ import TransactionTRSChartCard from './components/TransactionTRSChartCard';
 import DistributionByTransactionTypeWidget from './components/Transactions/DistributionByTransactionTypeWidget';
 import s from './style.module.less';
 import RuleActionSplitCard from './components/RuleActionSplitCard';
+import KYCStatusDistributionCard from './components/KYCStatusDistributionCard';
 import DistributionByStatus from './components/CaseManagement/DistributionByStatus';
 import UserStatusDistributionCard from './components/UserStatusDistributionCard';
 import PageWrapper from '@/components/PageWrapper';
@@ -47,6 +48,8 @@ type KeyValues =
   | 'DISTRIBUTION_BY_TRANSACTION_TYPE'
   | 'DISTRIBUTION_BY_RULE_ACTION'
   | 'TRANSACTIONS_BREAKDOWN_BY_TRS'
+  | 'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS'
+  | 'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS'
   | 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS'
   | 'TRANSACTIONS_BREAKDOWN_BY_TRS';
 
@@ -93,6 +96,8 @@ const TITLES: { [key in KeyValues]: string } = {
   BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Business users distribution by risk levels',
   DISTRIBUTION_BY_RULE_PRIORITY: 'Distribution by rule priority',
   DISTRIBUTION_BY_RULE_ACTION: 'Distribution by rule action',
+  CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS: 'Consumer users distribution by KYC status',
+  BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS: 'Business users distribution by KYC status',
   DISTRIBUTION_BY_CASE_AND_ALERT_STATUS: 'Distribution by status',
   CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: 'Consumer users distribution by user status',
   BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: 'Business users distribution by user status',
@@ -114,6 +119,8 @@ const DEFAULT_VALUES = {
   DISTRIBUTION_BY_TRANSACTION_TYPE: true,
   TRANSACTIONS_BREAKDOWN_BY_TRS: true,
   DISTRIBUTION_BY_RULE_ACTION: true,
+  CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS: true,
+  BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS: true,
   DISTRIBUTION_BY_CASE_AND_ALERT_STATUS: true,
   CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: true,
   BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: true,
@@ -187,6 +194,15 @@ function Analysis() {
                 },
                 component: TopUsersHitCard,
               },
+              settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS && {
+                props: {
+                  id: 'consumer_users_distribution_by_kyc_status',
+                  title: 'Distribution by KYC status',
+                  width: 'HALF' as const,
+                  userType: 'CONSUMER',
+                },
+                component: KYCStatusDistributionCard,
+              },
               settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS && {
                 props: {
                   id: 'user_status_distribution_card',
@@ -219,6 +235,15 @@ function Analysis() {
                   userType: 'BUSINESS',
                 },
                 component: TopUsersHitCard,
+              },
+              settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS && {
+                props: {
+                  id: 'business_users_distribution_by_kyc_status',
+                  title: 'Distribution by KYC status',
+                  width: 'HALF' as const,
+                  userType: 'BUSINESS',
+                },
+                component: KYCStatusDistributionCard,
               },
               settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS && {
                 props: {
