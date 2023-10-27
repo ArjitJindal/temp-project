@@ -4,6 +4,7 @@ import {
   CaseStatusChange,
   InternalBusinessUser,
   InternalConsumerUser,
+  Comment,
 } from '@/apis';
 
 export type TableItem = Case & {
@@ -15,4 +16,5 @@ export type TableItem = Case & {
     reasons: CaseReasons[];
     otherReason: string | null;
   } | null;
+  alertComments: Comment[];
 };

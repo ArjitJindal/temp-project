@@ -1,6 +1,18 @@
 import { every, some, uniq, map } from 'lodash';
 import { neverReturn } from './lang';
-import { AlertStatus, Assignment, CaseStatus, CaseStatusChange } from '@/apis';
+import { DEFAULT_TIME_FORMAT } from './dayjs';
+import { getAccountUserName } from './account';
+import { FLAGRIGHT_SYSTEM_USER } from './user-utils';
+import { dayjs } from '@/utils/dayjs';
+import {
+  Account,
+  Alert,
+  AlertStatus,
+  Assignment,
+  CaseStatus,
+  CaseStatusChange,
+  Comment,
+} from '@/apis';
 
 export const statusInReview = (
   status: CaseStatus | undefined,
@@ -117,3 +129,53 @@ export const getStatuses = (
       return neverReturn<CaseStatus[]>(status, []);
   }
 };
+
+export function commentsToString(comments: Comment[], users: { [userId: string]: Account }) {
+  return comments?.reduce((commentData, comment, currentIndex) => {
+    commentData += `${comment.body}`;
+    commentData += comment.createdAt
+      ? `\n\nAdded on: ${dayjs(comment.createdAt).format(DEFAULT_TIME_FORMAT)}`
+      : '';
+    commentData += comment.userId
+      ? `${comment.createdAt ? ' ' : '\n'}Added by: ${
+          comment.userId === FLAGRIGHT_SYSTEM_USER
+            ? FLAGRIGHT_SYSTEM_USER
+            : getAccountUserName(users?.[comment?.userId ?? ''])
+        }`
+      : '';
+    commentData += comment.files?.length ? `\n\n${comment.files.length} attachment(s) added` : '';
+
+    return commentData && currentIndex < comments.length - 1 ? `${commentData}\n\n\n` : commentData;
+  }, '');
+}
+
+export function casesCommentsGenerator(
+  comments: Comment[],
+  alerts: Alert[],
+  users: { [userId: string]: Account },
+) {
+  {
+    let commentData = '';
+
+    if (comments?.length) {
+      commentData += 'Other comments\n\n';
+    }
+
+    commentData += commentsToString(comments ?? [], users);
+    commentData += '\n\n';
+
+    alerts?.forEach((alert, i) => {
+      if (alert.comments?.length) {
+        commentData += `\n\nAlert ${alert.alertId}\n\n`;
+      }
+
+      commentData += commentsToString(alert.comments ?? [], users);
+
+      if (i < alerts.length - 1) {
+        commentData += '\n\n';
+      }
+    });
+
+    return commentData;
+  }
+}

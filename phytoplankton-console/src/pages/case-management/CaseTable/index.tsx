@@ -5,7 +5,12 @@ import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import AlertTable from '../AlertTable';
-import { Case, CasesAssignmentsUpdateRequest, CasesReviewAssignmentsUpdateRequest } from '@/apis';
+import {
+  Case,
+  CasesAssignmentsUpdateRequest,
+  CasesReviewAssignmentsUpdateRequest,
+  Comment,
+} from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { useAuth0User, useHasPermissions, useUsers } from '@/utils/user-utils';
 import {
@@ -59,6 +64,7 @@ import {
   statusInProgressOrOnHold,
   statusEscalated,
   statusInReview,
+  casesCommentsGenerator,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { denseArray } from '@/utils/lang';
@@ -208,6 +214,7 @@ export default function CaseTable(props: Props) {
         icon: <AccountCircleLineIcon />,
         type: {
           render: (value) => (value ? <UserKycStatusTag kycStatusDetails={value} /> : <></>),
+          stringify: (value) => value?.status ?? '',
         },
       }),
       ...((isRiskLevelsEnabled
@@ -381,6 +388,20 @@ export default function CaseTable(props: Props) {
         ],
       );
     }
+
+    mergedColumns.push(
+      helper.simple<'comments'>({
+        hideInTable: true,
+        key: 'comments',
+        title: 'Comments',
+        filtering: false,
+        exporting: true,
+        type: {
+          stringify: (comments: Comment[] | undefined, item: TableItem) =>
+            casesCommentsGenerator(comments ?? [], item.alerts ?? [], users),
+        },
+      }),
+    );
 
     return mergedColumns;
   }, [

@@ -58,6 +58,7 @@ import {
   statusInProgressOrOnHold,
   statusEscalated,
   statusInReview,
+  commentsToString,
 } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
@@ -511,6 +512,15 @@ export default function AlertTable(props: Props) {
                 )}
               </div>
             );
+          },
+        }),
+        helper.simple<'comments'>({
+          title: 'Comments',
+          key: 'comments',
+          hideInTable: true,
+          filtering: false,
+          type: {
+            stringify: (value) => commentsToString(value ?? [], users),
           },
         }),
       ]);
