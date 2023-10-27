@@ -29,7 +29,7 @@ import { TransactionsVolumeRuleParameters } from './transactions-volume'
 import { SenderLocationChangesFrequencyRuleParameters } from './sender-location-changes-frequency'
 import { CardIssuedCountryRuleParameters } from './card-issued-country'
 import { TransactionMatchesPatternRuleParameters } from './transaction-amount-pattern'
-import { CardHolderNameRuleParameter } from './card-holder-name-levensthein-distance'
+import { PaymentMethodNameRuleParameter } from './payment-method-name-levensthein-distance'
 import { HighTrafficBetweenSamePartiesParameters } from './high-traffic-between-same-parties'
 import { HighTrafficVolumeBetweenSameUsersParameters } from './high-traffic-volume-between-same-users'
 import { TransactionsRoundValuePercentageRuleParameters } from './transactions-round-value-percentage'
@@ -864,8 +864,10 @@ const _RULES_LIBRARY: Array<
     }
   },
   () => {
-    const defaultParameters: CardHolderNameRuleParameter = {
+    const defaultParameters: PaymentMethodNameRuleParameter = {
       allowedDistancePercentage: 30,
+      checkDirection: 'all',
+      ignoreEmptyName: false,
     }
     const defaultFilters: TransactionFilters | UserFilters = {
       originPaymentFilters: {
@@ -876,22 +878,22 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-118',
       type: 'TRANSACTION',
-      name: "Card holder name doesn't match user name",
+      name: "Account name doesn't match user name",
       description:
-        "Name of the card holder doesn't match the user name based on Levenshtein distance. If Levenshtein distance > x, rule is hit",
+        "Name of the account holder doesn't match the user name based on Levenshtein distance. If Levenshtein distance > x, rule is hit",
       descriptionTemplate:
-        "{{ if-sender 'Sender’s' 'Receiver’s' }} name does not match name on {{ if-sender 'sender’s' 'receiver’s' }} card ({{ cardFingerprint }})",
+        "{{ if-sender 'Sender’s' 'Receiver’s' }} name does not match name on {{ if-sender 'sender’s' 'receiver’s' }} payment method ({{ paymentMethodIdentifier }})",
       defaultParameters,
       defaultAction: 'FLAG',
       defaultFilters,
-      ruleImplementationName: 'card-holder-name-levensthein-distance',
+      ruleImplementationName: 'payment-method-name-levensthein-distance',
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       typology: 'Acquiring fraud',
-      typologyGroup: 'Card fraud',
+      typologyGroup: 'Account takeover fraud',
       typologyDescription:
-        'Attempts to use multiple stolen cards to perform a purchase/top-up wallet',
+        'Attempts to use multiple stolen account details to perform a purchase/top-up wallet',
       source: 'Card Scheme Rules',
     }
   },

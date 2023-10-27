@@ -25,7 +25,7 @@ import UserTransactionPairsRule from './user-transaction-pairs'
 import TransactionMatchesPatternRule from './transaction-amount-pattern'
 import MerchantReceiverNameRule from './merchant-receiver-name'
 import BlacklistCardIssuedCountryRule from './blacklist-card-issued-country'
-import CardHolderNameRule from './card-holder-name-levensthein-distance'
+import PaymentMethodNameNameRule from './payment-method-name-levensthein-distance'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 import HighTrafficVolumeBetweenSameUsersParameters from './high-traffic-volume-between-same-users'
 import ToomanyUsersForSameCardRule from './too-many-users-for-same-card'
@@ -86,7 +86,7 @@ export const _TRANSACTION_RULES = {
   'high-traffic-between-same-parties': HighTrafficBetweenSameParties,
   'high-traffic-volume-between-same-users':
     HighTrafficVolumeBetweenSameUsersParameters,
-  'card-holder-name-levensthein-distance': CardHolderNameRule,
+  'payment-method-name-levensthein-distance': PaymentMethodNameNameRule,
   'too-many-users-for-same-card': ToomanyUsersForSameCardRule,
   'same-user-using-too-many-cards': SameUserUsingTooManyCardsRule,
   'transactions-round-value-percentage': TransactionsRoundValuePercentageRule,
