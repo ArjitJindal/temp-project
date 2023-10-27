@@ -1107,6 +1107,7 @@ export class RulesEngineService {
     const webhooksData: ThinWebhookDeliveryTask<TransactionStatusDetails>[] =
       txns.map((txn) => ({
         event: 'TRANSACTION_STATUS_UPDATED',
+        triggeredBy: 'MANUAL',
         payload: {
           transactionId: txn?.transactionId as string,
           status: action,

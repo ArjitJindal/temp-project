@@ -930,36 +930,6 @@ export class CdkTarponStack extends cdk.Stack {
         new SqsEventSource(tarponChangeCaptureRetryQueue)
       )
 
-      const { alias: webhookTarponChangeCaptureHandlerAlias } = createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-          auditLogTopic: this.auditLogTopic,
-          batchJobQueue,
-        },
-        functionProps
-      )
-      const { alias: webhookTarponChangeCaptureHandlerRetryAlias } =
-        createFunction(
-          this,
-          lambdaExecutionRole,
-          {
-            name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
-            auditLogTopic: this.auditLogTopic,
-            batchJobQueue,
-          },
-          functionProps
-        )
-
-      this.createKinesisEventSource(
-        webhookTarponChangeCaptureHandlerAlias,
-        tarponStream
-      )
-      webhookTarponChangeCaptureHandlerRetryAlias.addEventSource(
-        new SqsEventSource(webhookTarponChangeCaptureRetryQueue)
-      )
-
       /* Hammerhead Kinesis Change capture consumer */
       const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
         createFunction(

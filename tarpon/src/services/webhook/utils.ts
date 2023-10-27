@@ -47,7 +47,7 @@ export async function getWebhookSecrets(
 const sqs = new SQSClient({})
 export type ThinWebhookDeliveryTask<T extends object = object> = Pick<
   WebhookDeliveryTask<T>,
-  'event' | 'payload'
+  'event' | 'payload' | 'triggeredBy'
 >
 
 export async function sendWebhookTasks<T extends object = object>(

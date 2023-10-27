@@ -62,14 +62,6 @@ import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 
-export type UserOptions = {
-  isWebhookRequried?: boolean
-}
-
-const USER_OPTIONS_DEFAULTS: UserOptions = {
-  isWebhookRequried: false,
-}
-
 @traceable
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -655,7 +647,6 @@ export class UserRepository {
     delete user.PartitionKeyID
     delete user.SortKeyID
     delete user.createdAt
-    delete user.isWebhookRequried
 
     return user as T
   }
@@ -706,25 +697,15 @@ export class UserRepository {
   }
 
   public async saveBusinessUser(
-    user: BusinessWithRulesResult,
-    options: UserOptions = USER_OPTIONS_DEFAULTS
+    user: BusinessWithRulesResult
   ): Promise<BusinessWithRulesResult> {
-    return (await this.saveUser(
-      user,
-      'BUSINESS',
-      options
-    )) as BusinessWithRulesResult
+    return (await this.saveUser(user, 'BUSINESS')) as BusinessWithRulesResult
   }
 
   public async saveConsumerUser(
-    user: UserWithRulesResult,
-    options: UserOptions = USER_OPTIONS_DEFAULTS
+    user: UserWithRulesResult
   ): Promise<UserWithRulesResult> {
-    return (await this.saveUser(
-      user,
-      'CONSUMER',
-      options
-    )) as UserWithRulesResult
+    return (await this.saveUser(user, 'CONSUMER')) as UserWithRulesResult
   }
 
   private sanitizeUserInPlace(user: User | Business) {
@@ -749,8 +730,7 @@ export class UserRepository {
 
   public async saveUser(
     user: UserWithRulesResult | BusinessWithRulesResult,
-    type: UserType,
-    options: UserOptions = USER_OPTIONS_DEFAULTS
+    type: UserType
   ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     this.sanitizeUserInPlace(user)
     const userId = user.userId
@@ -758,7 +738,6 @@ export class UserRepository {
       ...user,
       userId,
       type,
-      isWebhookRequried: options.isWebhookRequried,
     }
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
     const putItemInput: PutCommandInput = {
@@ -776,7 +755,6 @@ export class UserRepository {
       )
       await localTarponChangeCaptureHandler(primaryKey)
     }
-    delete newUser.isWebhookRequried
     return newUser
   }
 

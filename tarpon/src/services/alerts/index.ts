@@ -913,6 +913,7 @@ export class AlertsService extends CaseAlertsCommonService {
       if (alert) {
         webhookTasks.push({
           event: 'ALERT_CLOSED',
+          triggeredBy: 'MANUAL',
           payload: {
             alertId,
             reasons: reason,

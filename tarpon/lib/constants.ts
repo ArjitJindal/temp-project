@@ -151,10 +151,6 @@ export const StackConstants = {
   TRANSACTION_AGGREGATION_FUNCTION_NAME: getResourceNameForTarpon(
     'TransactionAggregationFunction'
   ),
-  WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
-    getResourceNameForTarpon('WebhookTarponChangeCaptureFunction'),
-  WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
-    getResourceNameForTarpon('WebhookTarponChangeCaptureRetryFunction'),
   CONSOLE_API_SANCTIONS_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSanctionsFunction'
   ),

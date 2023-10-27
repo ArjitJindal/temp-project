@@ -78,7 +78,6 @@ describe('Test Dynamo Db User Update', () => {
       type: 'CONSUMER',
       executedRules,
       hitRules,
-      isWebhookRequried: false,
     })
 
     const getUser = await userRepository.getMongoConsumerUser(userId)

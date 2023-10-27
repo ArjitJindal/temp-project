@@ -119,6 +119,7 @@ describe('Webhook delivery', () => {
         tenantId: TEST_TENANT_ID,
         webhookId: ACTIVE_WEBHOOK_ID,
         createdAt: Date.now(),
+        triggeredBy: 'SYSTEM',
       }
       const expectedPayload = getExpectedPayload(deliveryTask)
       await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
@@ -179,6 +180,7 @@ describe('Webhook delivery', () => {
         tenantId: TEST_TENANT_ID,
         webhookId: ACTIVE_WEBHOOK_ID,
         createdAt: Date.now(),
+        triggeredBy: 'SYSTEM',
       }
       const expectedPayload = getExpectedPayload(deliveryTask)
       await expect(

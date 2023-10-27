@@ -269,20 +269,6 @@ export const LAMBDAS: {
       expectedMaxSeconds: KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS,
       timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
     },
-  [StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]:
-    {
-      codePath: 'tarpon-change-webhook-consumer',
-      handlerName: 'tarponChangeWebhookHandler',
-      expectedMaxSeconds: KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS,
-      timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
-    },
-  [StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]:
-    {
-      codePath: 'tarpon-change-webhook-consumer',
-      handlerName: 'tarponChangeWebhookRetryHandler',
-      expectedMaxSeconds: KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS,
-      timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
-    },
   [StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME]: {
     codePath: 'console-api-sanctions',
     handlerName: 'sanctionsHandler',

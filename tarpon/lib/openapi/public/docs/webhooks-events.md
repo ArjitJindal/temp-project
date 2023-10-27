@@ -19,7 +19,8 @@
   "data": {
     "userId": "U-1",
     "state": "BLOCKED",
-    "reason": "updated manually"
+    "reason": "updated manually",
+    "triggeredBy": "MANUAL"
   }
 }
 ```

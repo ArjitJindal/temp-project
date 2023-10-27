@@ -11,4 +11,5 @@ export type WebhookDeliveryTask<T extends object = object> = {
   event: WebhookEventType
   createdAt: number
   payload: T
+  triggeredBy: 'MANUAL' | 'SYSTEM'
 }

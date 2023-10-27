@@ -10,9 +10,11 @@ import {
 import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { isEmpty, isEqual, pick } from 'lodash'
+import { diff } from 'deep-object-diff'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { FLAGRIGHT_SYSTEM_USER } from '../rules-engine/repositories/alerts-repository'
+import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -39,7 +41,6 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserViewConfig } from '@/lambdas/console-api-user/app'
 import { traceable } from '@/core/xray'
-import { Account } from '@/@types/openapi-internal/Account'
 import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
@@ -50,6 +51,8 @@ import { KYCStatusDetailsInternal } from '@/@types/openapi-internal/KYCStatusDet
 import { TriggersOnHit } from '@/@types/openapi-internal/TriggersOnHit'
 import { UserAuditLogService } from '@/lambdas/console-api-user/services/user-audit-log-service'
 import { background } from '@/utils/background'
+import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
+import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -413,6 +416,51 @@ export class UserService {
     return kycStatusDetails
   }
 
+  private async sendUserAndKycWebhook(
+    oldUser: User | Business,
+    newUser: User | Business,
+    isManual: boolean
+  ): Promise<void> {
+    const webhookTasks: ThinWebhookDeliveryTask<
+      UserStateDetails | KYCStatusDetails
+    >[] = []
+    if (
+      newUser.userStateDetails &&
+      diff(oldUser.userStateDetails ?? {}, newUser.userStateDetails ?? {})
+    ) {
+      const webhookUserStateDetails: UserStateDetails = {
+        ...newUser.userStateDetails,
+        userId: newUser.userId,
+      }
+
+      webhookTasks.push({
+        event: 'USER_STATE_UPDATED',
+        payload: webhookUserStateDetails,
+        triggeredBy: isManual ? 'MANUAL' : 'SYSTEM',
+      })
+    }
+
+    if (
+      newUser.kycStatusDetails &&
+      diff(oldUser.kycStatusDetails ?? {}, newUser.kycStatusDetails ?? {})
+    ) {
+      const webhookKYCStatusDetails: KYCStatusDetails = {
+        ...newUser.kycStatusDetails,
+        userId: newUser.userId,
+      }
+
+      webhookTasks.push({
+        event: 'KYC_STATUS_UPDATED',
+        payload: webhookKYCStatusDetails,
+        triggeredBy: isManual ? 'MANUAL' : 'SYSTEM',
+      })
+    }
+
+    if (webhookTasks.length > 0) {
+      await sendWebhookTasks(this.userRepository.tenantId, webhookTasks)
+    }
+  }
+
   public getKycAndUserUpdateComment(data: {
     kycRuleInstance?: RuleInstance
     userStateRuleInstance?: RuleInstance
@@ -613,13 +661,9 @@ export class UserService {
     const userToUpdate = pick(updatedUser, DYNAMO_ONLY_USER_ATTRIBUTES)
 
     if (isBusiness) {
-      await this.userRepository.saveBusinessUser(userToUpdate as Business, {
-        isWebhookRequried: true,
-      })
+      await this.userRepository.saveBusinessUser(userToUpdate as Business)
     } else {
-      await this.userRepository.saveConsumerUser(userToUpdate as User, {
-        isWebhookRequried: true,
-      })
+      await this.userRepository.saveConsumerUser(userToUpdate as User)
     }
 
     await this.userEventRepository.saveUserEvent(
@@ -640,6 +684,7 @@ export class UserService {
       comment: updateRequest.comment?.body,
       userStateRuleInstance: options?.userStateRuleInstance,
     })
+
     const userAuditLogService = new UserAuditLogService(
       this.userRepository.tenantId
     )
@@ -648,7 +693,8 @@ export class UserService {
       userAuditLogService.handleAuditLogForUserUpdate(
         updateRequest,
         user.userId
-      )
+      ),
+      this.sendUserAndKycWebhook(user, updatedUser, options?.bySystem ?? false)
     )
 
     return await this.userRepository.saveUserComment(user.userId, {
@@ -660,18 +706,6 @@ export class UserService {
       files: updateRequest.comment?.files ?? [],
       updatedAt: Date.now(),
     })
-  }
-
-  public async userUpdateComment(
-    updateRequest: UserUpdateRequest,
-    userId: string
-  ) {
-    const { id: userCommentId } = getContext()?.user as Account
-    const userComment: Comment = {
-      ...updateRequest.comment!,
-      userId: userCommentId,
-    }
-    return await this.saveUserComment(userId, userComment)
   }
 
   private async getDownloadLink(file: FileInfo): Promise<string> {

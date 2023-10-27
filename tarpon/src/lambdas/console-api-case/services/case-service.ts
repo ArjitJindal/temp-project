@@ -437,6 +437,7 @@ export class CaseService extends CaseAlertsCommonService {
     const webhookTasks: ThinWebhookDeliveryTask<CaseClosedDetails>[] =
       cases.map((case_) => ({
         event: 'CASE_CLOSED' as WebhookEventType,
+        triggeredBy: 'MANUAL',
         payload: {
           caseId: case_.caseId,
           reasons: updateRequest.reason,

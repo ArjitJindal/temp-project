@@ -4262,6 +4262,11 @@ components:
           type: string
         type:
           $ref: '#/components/schemas/WebhookEventType'
+        triggeredBy:
+          type: string
+          enum:
+            - MANUAL
+            - SYSTEM
         data:
           oneOf:
             - $ref: '#/components/schemas/UserStateDetails'
