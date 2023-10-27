@@ -45,6 +45,8 @@
 }
 
 .mainInfo {
-  display: flex;
+  display: grid;
   gap: 32px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(80px, max-content);
 }

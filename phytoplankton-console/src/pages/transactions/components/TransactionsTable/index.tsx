@@ -29,7 +29,6 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
-import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
@@ -48,13 +47,14 @@ import {
   TRANSACTION_TYPE,
   USER_NAME,
 } from '@/components/library/Table/standardDataTypes';
-import { PaymentDetails } from '@/pages/transactions-item/UserDetails/PaymentDetails';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { SelectionInfo } from '@/components/library/Table';
 import { dayjs } from '@/utils/dayjs';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { useHasPermissions } from '@/utils/user-utils';
+import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
+import { PaymentDetails } from '@/utils/api/payment-details';
 
 const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<PaymentDetails> => ({
   stringify: (value) => {
@@ -63,7 +63,7 @@ const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<Pay
   defaultWrapMode: 'WRAP',
   render: (value) => {
     if (showDetailsView) {
-      return <PaymentDetailsCard paymentDetails={value} />;
+      return <PaymentDetailsProps paymentDetails={value} />;
     }
     return <PaymentMethodTag paymentMethod={value?.method} />;
   },

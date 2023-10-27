@@ -1,11 +1,11 @@
 import cn from 'clsx';
 import { Tooltip } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
+import React from 'react';
 import s from './index.module.less';
 import Avatar from './Avatar';
 import OriginIcon from './origin-icon.react.svg';
 import DestinationIcon from './destination-icon.react.svg';
-import PaymentDetailsComponent, { PaymentDetails } from './PaymentDetails';
 import { InternalBusinessUser, InternalConsumerUser, TransactionAmountDetails } from '@/apis';
 import * as Card from '@/components/ui/Card';
 import * as Form from '@/components/ui/Form';
@@ -13,6 +13,9 @@ import { getUserName } from '@/utils/api/users';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
+import Money from '@/components/ui/Money';
+import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
+import { PaymentDetails } from '@/utils/api/payment-details';
 
 function getUnknownUserTooltipMessage(userId?: string) {
   return userId
@@ -73,8 +76,7 @@ export default function UserDetails(props: Props) {
         {amountDetails && (
           <div className={s.mainInfo}>
             <Form.Layout.Label title={isDestination ? 'Amount received' : 'Amount sent'}>
-              {amountDetails.transactionCurrency}{' '}
-              {new Intl.NumberFormat().format(amountDetails.transactionAmount ?? NaN)}
+              <Money transactionAmount={amountDetails} />
             </Form.Layout.Label>
             <Form.Layout.Label title={isDestination ? 'Country received in' : 'Country sent from'}>
               <CountryDisplay isoCode={amountDetails.country}></CountryDisplay>
@@ -82,7 +84,11 @@ export default function UserDetails(props: Props) {
             <Form.Layout.Label title={'IP address'}>{ipAddress}</Form.Layout.Label>
           </div>
         )}
-        <PaymentDetailsComponent paymentDetails={paymentDetails} />
+        <Card.Root>
+          <Card.Section>
+            <PaymentDetailsProps paymentDetails={paymentDetails} />
+          </Card.Section>
+        </Card.Root>
       </Card.Section>
     </Card.Root>
   );
