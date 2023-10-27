@@ -53,6 +53,7 @@ import { SamePaymentDetailsParameters } from '@/services/rules-engine/transactio
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
+import { BankNameChangeRuleParameters } from '@/services/rules-engine/transaction-rules/bank-name-change'
 
 export const DEFAULT_CURRENCY_KEYWORD = '__DEFAULT_CURRENCY__'
 
@@ -1576,6 +1577,29 @@ const _RULES_LIBRARY: Array<
       ruleImplementationName: 'user-address-change',
       labels: [],
       defaultNature: 'FRAUD',
+      defaultCasePriority: 'P2',
+    }
+  },
+  () => {
+    const defaultParameters: BankNameChangeRuleParameters = {
+      oldBanksThreshold: 1,
+      timeWindow: {
+        units: 30,
+        granularity: 'day',
+      },
+    }
+
+    return {
+      id: 'R-155',
+      name: 'Bank name change',
+      type: 'TRANSACTION',
+      description: 'Checks if user bank name has changed.',
+      descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} bank name has changed.`,
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'bank-name-change',
+      labels: [],
+      defaultNature: 'AML',
       defaultCasePriority: 'P2',
     }
   },

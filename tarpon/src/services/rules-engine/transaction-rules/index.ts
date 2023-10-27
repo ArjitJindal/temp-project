@@ -49,6 +49,7 @@ import UsingTooManyBanksToMakePaymentsRule from './using-too-many-banks-to-make-
 import { HighRiskIpAddressCountries } from './high-risk-ip-address-countries'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
+import BankNameChangeRule from '@/services/rules-engine/transaction-rules/bank-name-change'
 
 export class TransactionRuleBase extends TransactionRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
@@ -108,6 +109,7 @@ export const _TRANSACTION_RULES = {
   'total-transactions-volume-exceeds': TransactionVolumeExceedsTwoPeriodsRule,
   'high-risk-countries': HighRiskCountryRule,
   'high-risk-ip-address-countries': HighRiskIpAddressCountries,
+  'bank-name-change': BankNameChangeRule,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,

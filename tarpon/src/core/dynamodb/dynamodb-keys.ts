@@ -356,6 +356,19 @@ export function getPaymentMethodId(
   }
 }
 
+export function getBankname(
+  paymentMethodDetails?: PaymentDetails
+): string | undefined {
+  if (
+    paymentMethodDetails?.method === 'IBAN' ||
+    paymentMethodDetails?.method === 'SWIFT' ||
+    paymentMethodDetails?.method === 'GENERIC_BANK_ACCOUNT' ||
+    paymentMethodDetails?.method === 'ACH'
+  ) {
+    return paymentMethodDetails.bankName
+  }
+}
+
 export function getPaymentDetailsIdentifiers(
   paymentDetails: PaymentDetails
 ): { [key: string]: string | undefined } | null {
