@@ -247,6 +247,44 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         vpc,
       })
     }
+    const getE2ETestProject = (env: 'dev') =>
+      new codebuild.PipelineProject(this, `PhytoplanktonE2eTest-${env}`, {
+        buildSpec: codebuild.BuildSpec.fromObject({
+          version: '0.2',
+          phases: {
+            install: {
+              'runtime-versions': {
+                nodejs: 18,
+              },
+              commands: [
+                'cd phytoplankton-console',
+                'apt-get update',
+                'apt-get -y install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb',
+                'npm install -g aws-cdk yarn',
+                'yarn --ignore-engines',
+              ],
+            },
+            build: {
+              commands: ['ENV=dev CI=true npm run cypress:run'],
+            },
+          },
+          cache: {
+            paths: ['node_modules/**/*'],
+          },
+          env: {
+            'secrets-manager': {
+              CYPRESS_USERNAME:
+                'arn:aws:secretsmanager:eu-central-1:073830519512:secret:cypressCreds-yNKjtZ:username',
+              CYPRESS_PASSWORD:
+                'arn:aws:secretsmanager:eu-central-1:073830519512:secret:cypressCreds-yNKjtZ:password',
+            },
+          },
+        }),
+        environment: {
+          buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+        },
+        role: codeDeployRole,
+      })
 
     // Pipeline definition
     new codepipeline.Pipeline(this, PIPELINE_NAME, {
@@ -288,6 +326,16 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               input: sourceOutput,
               extraInputs: [buildOutput],
               environmentVariables: devSandboxSentryReleaseSpec.actionEnv,
+            }),
+          ],
+        },
+        {
+          stageName: 'E2E_Test_Dev',
+          actions: [
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'E2E_Test_Dev',
+              project: getE2ETestProject('dev'),
+              input: sourceOutput,
             }),
           ],
         },
