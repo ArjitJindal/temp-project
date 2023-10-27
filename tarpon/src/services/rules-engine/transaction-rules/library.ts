@@ -232,7 +232,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Too many inbound transactions under reporting limit',
       description:
-        '>= x number of low value incoming transactions just below (minus amount of z) a specific threshold (y) to a user (your user is receiving the funds). Very useful and common for structured money laundering attempts.',
+        '>= x number of consecutive low value incoming transactions just below (minus amount of z) a specific threshold (y) to a user (your user is receiving the funds). Very useful and common for structured money laundering attempts.',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transactions just under the flagging limit",
       defaultParameters,
@@ -264,7 +264,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Too many outbound transactions under reporting limit',
       description:
-        '>= x number of low value outgoing transaction(s) just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts.',
+        '>= x number of consecutive low value outgoing transaction(s) just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts.',
       descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transaction(s) just under the flagging limit`,
       defaultParameters,
       defaultAction: 'FLAG',
@@ -738,7 +738,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Unexpected IP address for user',
       description:
-        "\"IP address where the payment is initiated is outside the following expected location's for the user: user's country of residence, user's nationality country, user's previously approved transaction countries\n\nPreviously approved mean if this rule was hit and it's unsuspended on Console, log that country that was approved and add it to the whitelisted country\"",
+        "IP address where the payment is initiated is outside the following expected location's for the user: user's country of residence, user's nationality country, user's previously approved transaction countries\n\nPreviously approved mean if this rule was hit and it's unsuspended on Console, log that country that was approved and add it to the whitelisted country",
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} ip-bases country ({{ format-country ipCountry }}) is not country of origin ({{ format-country hitParty.user.userDetails.countryOfResidence }}) or country of nationality ({{ format-country hitParty.user.userDetails.countryOfNationality }})",
       defaultParameters: {},
