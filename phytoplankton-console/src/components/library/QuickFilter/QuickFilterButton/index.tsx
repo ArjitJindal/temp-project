@@ -1,5 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
+import { kebabCase } from 'lodash';
 import s from './style.module.less';
 import FilterDefaultIcon from '@/components/ui/icons/Remix/system/filter-line.react.svg';
 import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
@@ -18,6 +19,11 @@ export default function QuickFilterButton(props: Props) {
   const { icon, buttonText, onClick, isActive, onClear, children } = props;
   return (
     <button
+      data-cy={kebabCase(
+        React.isValidElement(buttonText)
+          ? buttonText?.props?.children[0] + '-button'
+          : 'quickfilter-button',
+      )}
       className={cn(s.root, isActive && s.isActive)}
       onClick={() => {
         onClick?.();

@@ -302,6 +302,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
                   })}
               </thead>
               <tbody
+                data-cy={!isLoading(dataRes) ? 'table-body' : ''}
                 className={cn(s.tableBody, isLoading(dataRes) && s.isLoading)}
                 aria-label="Table body"
               >
