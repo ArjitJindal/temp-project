@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { flatten } from 'lodash';
 import CommentsCard from '../CommentsCard';
+import DownloadFilesButton from '../library/DownloadFilesButton';
 import LogCard from './LogCard';
 import ScopeSelector from './ScopeSelector';
 import s from './index.module.less';
@@ -12,12 +14,14 @@ import {
   Case,
   CaseStatus,
   Comment,
+  FileInfo,
   InternalBusinessUser,
   InternalConsumerUser,
 } from '@/apis';
 import CommentsCardForCase, {
   CommentGroup,
 } from '@/pages/case-management-item/CaseDetails/CommentsCard';
+import { neverReturn } from '@/utils/lang';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -56,6 +60,7 @@ export default function ActivityCard(props: Props) {
   DEFAULT_ACTIVITY_LOG_PARAMS.case = type === 'CASE' && caseItem ? caseItem : undefined;
   DEFAULT_ACTIVITY_LOG_PARAMS.user = user;
   const [params, setParams] = useState<ActivityLogFilterParams>(DEFAULT_ACTIVITY_LOG_PARAMS);
+
   return (
     <Card.Root>
       <Card.Section>
@@ -67,54 +72,61 @@ export default function ActivityCard(props: Props) {
               comments: type === 'USER' ? (comments ?? []).length : totalCommentsLength,
             }}
           />
-          {selectedSection === 'LOG' && (
-            <div className={s.subHeader}>
-              {type === 'CASE' && (
-                <StatusFilterButton
-                  initialState={params?.filterCaseStatus ?? []}
+          <div className={s.subHeader}>
+            {selectedSection === 'LOG' ? (
+              <>
+                {type === 'CASE' && (
+                  <StatusFilterButton
+                    initialState={params?.filterCaseStatus ?? []}
+                    onConfirm={(value) => {
+                      setParams((prevState) => ({
+                        ...prevState,
+                        filterCaseStatus: value,
+                      }));
+                    }}
+                    title={'Case status'}
+                  />
+                )}
+                {type === 'CASE' && (
+                  <AlertIdSearchFilter
+                    initialState={params?.alertId}
+                    onConfirm={(value) => {
+                      setParams((prevState) => ({
+                        ...prevState,
+                        alertId: value,
+                      }));
+                    }}
+                  />
+                )}
+                {type === 'CASE' && (
+                  <StatusFilterButton
+                    initialState={params?.filterAlertStatus ?? []}
+                    onConfirm={(value) => {
+                      setParams((prevState) => ({
+                        ...prevState,
+                        filterAlertStatus: value,
+                      }));
+                    }}
+                    title={'Alert status'}
+                  />
+                )}
+                <ActivityByFilterButton
+                  initialState={params?.filterActivityBy ?? []}
                   onConfirm={(value) => {
                     setParams((prevState) => ({
                       ...prevState,
-                      filterCaseStatus: value,
-                    }));
-                  }}
-                  title={'Case status'}
-                />
-              )}
-              {type === 'CASE' && (
-                <AlertIdSearchFilter
-                  initialState={params?.alertId}
-                  onConfirm={(value) => {
-                    setParams((prevState) => ({
-                      ...prevState,
-                      alertId: value,
+                      filterActivityBy: value,
                     }));
                   }}
                 />
-              )}
-              {type === 'CASE' && (
-                <StatusFilterButton
-                  initialState={params?.filterAlertStatus ?? []}
-                  onConfirm={(value) => {
-                    setParams((prevState) => ({
-                      ...prevState,
-                      filterAlertStatus: value,
-                    }));
-                  }}
-                  title={'Alert status'}
-                />
-              )}
-              <ActivityByFilterButton
-                initialState={params?.filterActivityBy ?? []}
-                onConfirm={(value) => {
-                  setParams((prevState) => ({
-                    ...prevState,
-                    filterActivityBy: value,
-                  }));
-                }}
+              </>
+            ) : (
+              <DownloadFilesButton
+                files={getAllAttachments(type, user, caseItem)}
+                downloadFilename={type === 'CASE' ? caseItem?.caseId : user?.userId}
               />
-            </div>
-          )}
+            )}
+          </div>
         </div>
         {selectedSection === 'COMMENTS' &&
           (type === 'USER' && handleUserUpdate ? (
@@ -149,4 +161,31 @@ export const getEntityIds = (caseItem?: Case) => {
     });
   }
   return [...ids];
+};
+
+const getAllAttachments = (
+  entityType: 'CASE' | 'USER',
+  user?: InternalConsumerUser | InternalBusinessUser,
+  caseItem?: Case,
+) => {
+  switch (entityType) {
+    case 'CASE':
+      return (
+        flatten(
+          caseItem?.comments
+            ?.filter((comment) => comment.files != null)
+            .flatMap((comment) => comment.files),
+        ) ?? []
+      );
+    case 'USER':
+      return (
+        flatten(
+          user?.comments
+            ?.filter((comment) => comment.files != null)
+            .flatMap((comment) => comment.files),
+        ) ?? []
+      );
+    default:
+      return neverReturn<Array<FileInfo>>(entityType, []);
+  }
 };

@@ -5,6 +5,7 @@ import Button from '@/components/library/Button';
 import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import { message } from '@/components/library/Message';
 import { getBranding } from '@/utils/branding';
+import { downloadLink } from '@/utils/download-link';
 
 export const SanctionsSettings = () => {
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
@@ -12,12 +13,9 @@ export const SanctionsSettings = () => {
 
   const handleDownload = () => {
     message.success('Sanctions list download started');
-    const downloadLink = document.createElement('a');
-    downloadLink.href =
+    const downloadUrl =
       'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Data+Compliance+Overview+January+2023.xlsx';
-    // Sanctions list has been stored in a s3 bucket with the name 'phytoplankton-assets-sanctionslist'
-    downloadLink.download = 'File.xlsx';
-    downloadLink.click();
+    downloadLink(downloadUrl, 'File.xlsx');
   };
   return (
     <SettingsCard
