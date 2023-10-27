@@ -248,9 +248,8 @@ export abstract class TransactionAggregationRule<
     }
     // When testing, we want to make sure aggregation is used if the feature flag is on.
 
-    const isMoreThanOneDay =
-      duration(units, granularity).asHours() > 24 || process.env.ENV === 'local'
-
-    return isMoreThanOneDay
+    return (
+      duration(units, granularity).asHours() > 12 || process.env.ENV === 'local'
+    )
   }
 }
