@@ -152,9 +152,22 @@ export default function RequestForm(props: Props) {
               onClick={async () => {
                 setSearchText('');
                 await Promise.all(
-                  ['User details', 'TRS score', 'Transactions'].map(async (search) =>
+                  ['User details', 'Alert history'].map(async (search) =>
                     mutation.mutate({ searchString: search }),
                   ),
+                );
+                await Promise.all(
+                  [
+                    'TRS score',
+                    'Transactions',
+                    'Transaction summary',
+                    'Payment identifiers of senders',
+                    'Payment identifiers of receivers',
+                    'Users money received from',
+                    'Users  sent money',
+                    'Website',
+                    'SARs filed',
+                  ].map(async (search) => mutation.mutate({ searchString: search })),
                 );
               }}
               className={s.askAi}
