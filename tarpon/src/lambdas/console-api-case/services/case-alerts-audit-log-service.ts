@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { get } from 'lodash'
+import { getLatestInvestigationTime } from './utils'
 import {
   AuditLog,
   AuditLogSubtypeEnum,
@@ -279,6 +280,11 @@ export class CasesAlertsAuditLogService {
       if (oldValue) {
         oldImage[field] = oldValue
       }
+    }
+    if (updates.caseStatus === 'CLOSED') {
+      const investigationTime = getLatestInvestigationTime(caseEntity)
+      if (investigationTime !== null)
+        updates['investigationTime'] = investigationTime
     }
     await this.createAuditLog({
       caseId: caseId,

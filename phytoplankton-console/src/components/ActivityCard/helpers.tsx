@@ -6,7 +6,7 @@ import { DEFAULT_DATE_FORMAT, TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils
 import { firstLetterUpper, humanizeAuto } from '@/utils/humanize';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { statusEscalated } from '@/utils/case-utils';
-
+import { formatDuration, getDuration } from '@/utils/time-utils';
 export const useGetLogData = (
   logs: AuditLog[],
   users: { [userId: string]: Account },
@@ -356,13 +356,20 @@ export const handleRepoenedStatus = (entityStatus: CaseStatus, log: AuditLog, us
 export const handleClosedStatus = (entityStatus: CaseStatus, log: AuditLog, userName: string) => {
   const entityType = log.type;
   const entityId = log.entityId;
+  const investigationTime = log.newImage['investigationTime']
+    ? formatDuration(getDuration(log.newImage['investigationTime']))
+    : undefined;
   const files = log?.newImage?.files && log?.newImage?.files?.length ? 'with attachments' : '';
   switch (entityStatus) {
     case 'CLOSED': {
       return (
         <>
           {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is closed by{' '}
-          <b>{userName}</b> {files}
+          <b>{userName}</b>
+          {files}
+          {entityType === 'CASE' && investigationTime !== undefined && (
+            <span>{` (Investigation time: ${investigationTime ?? 0})`}</span>
+          )}
         </>
       );
     }
@@ -370,7 +377,10 @@ export const handleClosedStatus = (entityStatus: CaseStatus, log: AuditLog, user
       return (
         <>
           {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is closed by{' '}
-          <b>{userName}</b> {files} and is in review
+          <b>{userName}</b> {files} and is in review{' '}
+          {entityType === 'CASE' && investigationTime !== undefined && (
+            <span>{`(Investigation time: ${investigationTime ?? 0})`}</span>
+          )}
         </>
       );
     }

@@ -1,9 +1,11 @@
+import { reverse } from 'lodash'
 import { AlertCreationIntervalInstantly } from '@/@types/openapi-internal/AlertCreationIntervalInstantly'
 import { AlertCreationIntervalMonthly } from '@/@types/openapi-internal/AlertCreationIntervalMonthly'
 import { AlertCreationIntervalWeekly } from '@/@types/openapi-internal/AlertCreationIntervalWeekly'
-import dayjs, { Timezone, WEEKDAY_NUMBERS } from '@/utils/dayjs'
+import dayjs, { Timezone, WEEKDAY_NUMBERS, duration } from '@/utils/dayjs'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
+import { CaseWithoutCaseTransactions } from '@/services/rules-engine/repositories/case-repository'
 
 export function calculateCaseAvailableDate(
   now: number,
@@ -38,6 +40,41 @@ export function calculateCaseAvailableDate(
   }
   d = d.startOf('day')
   return d.valueOf()
+}
+
+export function getLatestInvestigationTime(
+  Entity: CaseWithoutCaseTransactions | null
+): number | null {
+  const statusChanges = Entity?.statusChanges
+  if (!statusChanges) return null
+  const reversedStatuses = reverse(statusChanges)
+  const lastClosedStatusIndex = reversedStatuses.findIndex(
+    (v) => v.caseStatus === 'CLOSED'
+  )
+  const lastClosedStatus = reversedStatuses[lastClosedStatusIndex]
+  if (!lastClosedStatus) {
+    return null
+  }
+
+  const slicedReversedStatuses = reversedStatuses.slice(
+    lastClosedStatusIndex + 1
+  )
+  const newClosedIndex = slicedReversedStatuses.findIndex(
+    (v) => v.caseStatus === 'CLOSED'
+  )
+  const updatedClosedIndex =
+    newClosedIndex === -1 ? slicedReversedStatuses.length - 1 : newClosedIndex
+  const firstInProgressStatus = reverse(
+    slicedReversedStatuses.slice(0, updatedClosedIndex + 1)
+  ).find((v) => v.caseStatus && v.caseStatus.endsWith('IN_PROGRESS'))
+
+  if (!firstInProgressStatus) {
+    return null
+  }
+
+  return duration(
+    dayjs(lastClosedStatus?.timestamp).diff(firstInProgressStatus?.timestamp)
+  ).asMilliseconds()
 }
 
 export function isCaseAvailable(caseItem: Case): boolean {
