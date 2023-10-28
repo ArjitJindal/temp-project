@@ -507,7 +507,7 @@ export default function AlertTable(props: Props) {
                       }
                     }}
                   >
-                    <BrainIcon style={{ width: '16px', cursor: 'pointer' }} /> Investigate
+                    <BrainIcon style={{ width: '16px', cursor: 'pointer' }} /> Forensics
                   </Button>
                 )}
               </div>
