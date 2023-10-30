@@ -245,7 +245,7 @@ export function regexMatchFilter(input: string, caseInsensitive = false) {
   }
 }
 
-async function createCollectionIfNotExist(
+export async function createCollectionIfNotExist(
   db: Db,
   collectionName: string
 ): Promise<Collection> {
