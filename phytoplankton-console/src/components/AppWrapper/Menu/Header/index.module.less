@@ -4,10 +4,7 @@
 .root {
   display: flex;
   flex-direction: column;
-
   &.isCollapsed {
-    flex-direction: column-reverse;
-    margin-top: 18px;
     .logoWrapper {
       width: 0;
       opacity: 0;
@@ -16,10 +13,13 @@
       transform: rotate(180deg);
     }
     .top {
+      display: none;
       padding-left: 18px;
       padding-right: 18px;
     }
     .bottom {
+      margin-top: 16px;
+      display: flex;
       height: 40px;
     }
   }
@@ -63,6 +63,23 @@
   transition-duration: @default-animation-speed;
   transition-property: transform;
   width: 24px;
-  height: 24px;
+  height: 24.2px;
   flex-shrink: 0;
+}
+
+.root:hover {
+  &.isCollapsed {
+    .top {
+      padding: 13px 18px;
+      .logo {
+        display: none;
+      }
+
+      display: block;
+    }
+
+    .bottom {
+      display: none;
+    }
+  }
 }
