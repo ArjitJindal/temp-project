@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { flatten } from 'lodash';
 import CommentsCard from '../CommentsCard';
 import DownloadFilesButton from '../library/DownloadFilesButton';
 import LogCard from './LogCard';
@@ -14,14 +13,12 @@ import {
   Case,
   CaseStatus,
   Comment,
-  FileInfo,
   InternalBusinessUser,
   InternalConsumerUser,
 } from '@/apis';
 import CommentsCardForCase, {
   CommentGroup,
 } from '@/pages/case-management-item/CaseDetails/CommentsCard';
-import { neverReturn } from '@/utils/lang';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -122,7 +119,11 @@ export default function ActivityCard(props: Props) {
               </>
             ) : (
               <DownloadFilesButton
-                files={getAllAttachments(type, user, caseItem)}
+                files={
+                  type === 'CASE'
+                    ? getAllAttachmentsForCase(comments as CommentGroup[])
+                    : getAllAttachmentsForUser(comments as Comment[])
+                }
                 downloadFilename={type === 'CASE' ? caseItem?.caseId : user?.userId}
               />
             )}
@@ -163,29 +164,11 @@ export const getEntityIds = (caseItem?: Case) => {
   return [...ids];
 };
 
-const getAllAttachments = (
-  entityType: 'CASE' | 'USER',
-  user?: InternalConsumerUser | InternalBusinessUser,
-  caseItem?: Case,
-) => {
-  switch (entityType) {
-    case 'CASE':
-      return (
-        flatten(
-          caseItem?.comments
-            ?.filter((comment) => comment.files != null)
-            .flatMap((comment) => comment.files),
-        ) ?? []
-      );
-    case 'USER':
-      return (
-        flatten(
-          user?.comments
-            ?.filter((comment) => comment.files != null)
-            .flatMap((comment) => comment.files),
-        ) ?? []
-      );
-    default:
-      return neverReturn<Array<FileInfo>>(entityType, []);
-  }
+const getAllAttachmentsForCase = (commentsGroup: CommentGroup[]) => {
+  const allComments = commentsGroup.flatMap((commentGroup) => commentGroup.comments);
+  return allComments.filter((comment) => comment.files != null).flatMap((comment) => comment.files);
+};
+
+const getAllAttachmentsForUser = (comments: Comment[]) => {
+  return comments.filter((comment) => comment.files != null).flatMap((comment) => comment.files);
 };
