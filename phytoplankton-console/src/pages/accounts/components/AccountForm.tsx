@@ -95,7 +95,11 @@ export default function AccountForm(props: Props) {
   const invalidateUsers = useInvalidateUsers();
 
   const isInviteButtonDisabled = useMemo(() => {
-    if (isInviteDisabled || isEdit) {
+    if (isEdit) {
+      return false;
+    }
+
+    if (isInviteDisabled) {
       return true;
     }
     if (!allRequiredFieldsFilled) {
