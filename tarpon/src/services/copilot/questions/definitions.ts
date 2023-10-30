@@ -29,6 +29,7 @@ import { EntityLinking } from '@/services/copilot/questions/definitions/entity-l
 import { TransactionSummary } from '@/services/copilot/questions/definitions/transaction-summary'
 import { CrmInsights } from '@/services/copilot/questions/definitions/crm-insights'
 import { KycScoring } from '@/services/copilot/questions/definitions/kyc-score'
+import { Recommendation } from '@/services/copilot/questions/definitions/recommendation'
 
 export const questions: (
   | TableQuestion<any>
@@ -61,6 +62,7 @@ export const questions: (
   Linkedin,
   EntityLinking,
   KycScoring,
+  Recommendation,
 ]
 
 export const queries = questions.map(({ questionId, variableOptions }) => {

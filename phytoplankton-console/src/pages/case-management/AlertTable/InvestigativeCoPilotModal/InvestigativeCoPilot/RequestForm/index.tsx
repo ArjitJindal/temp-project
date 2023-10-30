@@ -169,6 +169,11 @@ export default function RequestForm(props: Props) {
                     'SARs filed',
                   ].map(async (search) => mutation.mutate({ searchString: search })),
                 );
+                await Promise.all(
+                  ['Recommendation'].map(async (search) =>
+                    mutation.mutate({ searchString: search }),
+                  ),
+                );
               }}
               className={s.askAi}
             >

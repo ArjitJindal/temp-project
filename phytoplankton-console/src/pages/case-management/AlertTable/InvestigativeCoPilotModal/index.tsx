@@ -12,7 +12,7 @@ export default function InvestigativeCoPilotModal(props: Props) {
   const { alertId, caseUserName, onClose } = props;
   return (
     <Modal
-      title={'Investigative co-pilot'}
+      title={'AI Forensics'}
       isOpen={alertId != null}
       onCancel={onClose}
       hideFooter={true}

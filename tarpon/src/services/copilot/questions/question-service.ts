@@ -231,6 +231,7 @@ export class QuestionService {
     if (question.type === 'EMBEDDED') {
       return common
     }
+
     throw new Error(`Unsupported question type`)
   }
 
