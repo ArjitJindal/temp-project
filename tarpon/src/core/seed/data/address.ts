@@ -1,59 +1,9 @@
-import { pickRandom, randomInt } from '@/core/seed/samplers/prng'
+import { memoize } from 'lodash'
+import { mapAddressLineAndPostcode, postCodes } from '../samplers/address'
+import { pickRandom } from '@/core/seed/samplers/prng'
 import { Address } from '@/@types/openapi-internal/Address'
 
-const streets = [
-  'Maple Avenue',
-  'Chestnut Street',
-  'Willow Lane',
-  'Pinecrest Drive',
-  'Oakwood Court',
-  'Hickory Lane',
-  'Birch Street',
-  'Sycamore Avenue',
-  'Cedar Lane',
-  'Elmwood Drive',
-  'Magnolia Street',
-  'Aspen Court',
-  'Juniper Lane',
-  'Poplar Avenue',
-  'Redwood Street',
-  'Beechwood Drive',
-  'Spruce Lane',
-  'Walnut Avenue',
-  'Cherry Street',
-  'Rosewood Court',
-  'Acacia Lane',
-  'Cypress Street',
-  'Mulberry Drive',
-  'Cottonwood Avenue',
-  'Cactus Lane',
-  'Bamboo Street',
-  'Sage Court',
-  'Fernwood Drive',
-  'Palm Lane',
-  'Vine Street',
-  'Heather Avenue',
-  'Daisy Court',
-  'Lilac Lane',
-  'Tulip Street',
-  'Ivy Avenue',
-  'Dandelion Lane',
-  'Lavender Court',
-  'Sunflower Drive',
-  'Meadow Lane',
-  'Orchard Street',
-  'Rose Lane',
-  'Alder Avenue',
-  'Thistle Court',
-  'Wisteria Lane',
-  'Daffodil Street',
-  'Holly Avenue',
-  'Magnolia Court',
-  'Willow Street',
-  'Bluebell Lane',
-]
-
-const countries = {
+const getCountriesData = memoize(() => ({
   'United States': {
     'New York': ['New York City', 'Buffalo'],
     California: ['Los Angeles', 'San Francisco'],
@@ -110,32 +60,18 @@ const countries = {
     'Mexico City': ['Mexico City'],
     Jalisco: ['Guadalajara'],
   },
-}
+}))
 
-const postCodes = [...Array(60)].map(() => randomInt(10000) + 10000)
-
-const mapAddressLineAndPostcode = postCodes.reduce(
-  (acc, postcode) => ({
-    ...acc,
-    [postcode]: `${randomInt(30) * 13 + 1} ${pickRandom(streets)}`,
-  }),
-  {}
-)
-
-export const addresses: Address[] = [...Array(300)].map(() => {
-  const country = pickRandom(Object.keys(countries))
-  const state = pickRandom(Object.keys(countries[country]))
-  const postcode = pickRandom(postCodes)
-  const addressLine = mapAddressLineAndPostcode[postcode]
+export const getAddress = (): Address => {
+  const country = pickRandom(Object.keys(getCountriesData()))
+  const state = pickRandom(Object.keys(getCountriesData()[country]))
+  const postcode = pickRandom(postCodes())
+  const addressLine = mapAddressLineAndPostcode()[postcode]
   return {
     addressLines: [addressLine],
     postcode: String(postcode),
-    city: pickRandom(countries[country][state]),
+    city: pickRandom(getCountriesData()[country][state]),
     state,
     country,
   }
-})
-
-export const phoneNumber = [...Array(300)].map(() =>
-  (Math.floor(randomInt(1000000000)) + 1000000000).toString()
-)
+}

@@ -1,17 +1,9 @@
-import { transactions } from './transactions'
+import { memoize } from 'lodash'
+import { getTransactions } from './transactions'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 
-const data: ArsScore[] = []
-
-const init = () => {
-  if (data.length > 0) {
-    return
-  }
-  transactions.map((t) => {
-    if (t.arsScore) {
-      data.push(t.arsScore)
-    }
+export const getArsScores: () => ArsScore[] = memoize(() => {
+  return getTransactions().map((t) => {
+    return t.arsScore as ArsScore
   })
-}
-
-export { data, init }
+})

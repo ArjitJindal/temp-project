@@ -1,16 +1,12 @@
-import { transactions } from './transactions'
+import { memoize } from 'lodash'
+import { getTransactions } from './transactions'
 import { sampleGuid } from '@/core/seed/samplers/id'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 
 const eventId = sampleGuid()
 
-const data: TransactionEvent[] = []
-
-const init = () => {
-  if (data.length > 0) {
-    return
-  }
-  const events = transactions.flatMap((t): TransactionEvent[] => {
+const data: () => TransactionEvent[] = memoize(() => {
+  return getTransactions().flatMap((t): TransactionEvent[] => {
     return [
       {
         transactionState: 'CREATED',
@@ -46,7 +42,6 @@ const init = () => {
       },
     ]
   })
-  data.push(...events)
-}
+})
 
-export { init, data }
+export { data }

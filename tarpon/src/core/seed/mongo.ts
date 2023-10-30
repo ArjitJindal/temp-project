@@ -1,10 +1,8 @@
 import { MongoClient } from 'mongodb'
+import { chunk, cloneDeep } from 'lodash'
 import { logger } from '../logger'
-import {
-  drsScores,
-  krsScores,
-  init as riskScoresInit,
-} from './data/risk-scores'
+import { data as krsAndDrsScoreData } from './data/risk-scores'
+import { getCases } from './data/cases'
 import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
 import {
   ARS_SCORES_COLLECTION,
@@ -26,67 +24,48 @@ import {
   CHECKLIST_TEMPLATE_COLLECTION,
   COUNTER_COLLECTION,
 } from '@/utils/mongodb-definitions'
-import { init as txnInit, transactions } from '@/core/seed/data/transactions'
-import { init as caseInit, data as cases } from '@/core/seed/data/cases'
+import { getTransactions } from '@/core/seed/data/transactions'
+import { getUsers, getMerchantMonitoring } from '@/core/seed/data/users'
+import { auditlogs } from '@/core/seed/data/auditlogs'
+import { getArsScores } from '@/core/seed/data/ars_scores'
+import { getSanctions } from '@/core/seed/data/sanctions'
+import { getReports } from '@/core/seed/data/reports'
+import { getSimulations } from '@/core/seed/data/simulation'
 import {
-  init as userInit,
-  data as users,
-  merchantMonitoring,
-} from '@/core/seed/data/users'
-import { init as auditLogInit, auditlogs } from '@/core/seed/data/auditlogs'
-import { init as arsInit, data as ars } from '@/core/seed/data/ars_scores'
-import {
-  init as sanctionsInit,
-  data as sanctions,
-} from '@/core/seed/data/sanctions'
-import { init as reportsInit, data as reports } from '@/core/seed/data/reports'
-import {
-  init as simulationInit,
-  data as simulation,
-} from '@/core/seed/data/simulation'
-import {
-  init as crmInit,
-  notes,
-  engagements,
-  tasks,
-  summaries,
+  getNotes,
+  getEngagements,
+  getTasks,
+  getSummaries,
 } from '@/core/seed/data/crm'
-import {
-  init as transactionEventsInit,
-  data as transactionEvents,
-} from '@/core/seed/data/transaction_events'
+import { data as transactionEvents } from '@/core/seed/data/transaction_events'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { AccountsService } from '@/services/accounts'
 import { setAccounts } from '@/core/seed/samplers/accounts'
-import {
-  checklistTemplates,
-  initChecklistTemplate,
-} from '@/core/seed/data/checklists'
-import { initRules } from '@/core/seed/data/rules'
+import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 
-const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
-  [TRANSACTIONS_COLLECTION, transactions],
-  [CASES_COLLECTION, cases],
-  [USERS_COLLECTION, users],
-  [KRS_SCORES_COLLECTION, krsScores],
-  [AUDITLOG_COLLECTION, auditlogs],
-  [ARS_SCORES_COLLECTION, ars],
-  [DRS_SCORES_COLLECTION, drsScores],
-  [TRANSACTION_EVENTS_COLLECTION, transactionEvents],
-  [MERCHANT_MONITORING_DATA_COLLECTION, merchantMonitoring],
-  [SANCTIONS_SEARCHES_COLLECTION, sanctions],
-  [REPORT_COLLECTION, reports],
-  [CRM_ENGAGEMENTS_COLLECTION, engagements],
-  [CRM_TASKS_COLLECTION, tasks],
-  [CRM_NOTES_COLLECTION, notes],
-  [CRM_SUMMARY_COLLECTION, summaries],
-  [SIMULATION_TASK_COLLECTION, simulation],
-  [CHECKLIST_TEMPLATE_COLLECTION, checklistTemplates],
+const collections: [(tenantId: string) => string, () => unknown[]][] = [
+  [TRANSACTIONS_COLLECTION, () => getTransactions()],
+  [CASES_COLLECTION, () => getCases()],
+  [USERS_COLLECTION, () => getUsers()],
+  [KRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[0]],
+  [AUDITLOG_COLLECTION, () => auditlogs()],
+  [ARS_SCORES_COLLECTION, () => getArsScores()],
+  [DRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[1]],
+  [TRANSACTION_EVENTS_COLLECTION, () => transactionEvents()],
+  [MERCHANT_MONITORING_DATA_COLLECTION, () => getMerchantMonitoring()],
+  [SANCTIONS_SEARCHES_COLLECTION, () => getSanctions()],
+  [REPORT_COLLECTION, () => getReports()],
+  [CRM_ENGAGEMENTS_COLLECTION, () => getEngagements()],
+  [CRM_TASKS_COLLECTION, () => getTasks()],
+  [CRM_NOTES_COLLECTION, () => getNotes()],
+  [CRM_SUMMARY_COLLECTION, () => getSummaries()],
+  [SIMULATION_TASK_COLLECTION, () => getSimulations()],
+  [CHECKLIST_TEMPLATE_COLLECTION, () => getChecklistTemplates()],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
-  const db = await client.db()
+  const db = client.db()
 
   const accountsService = new AccountsService(
     { auth0Domain: process.env.AUTH0_DOMAIN as string },
@@ -128,30 +107,14 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
   await createMongoDBCollections(client, tenantId)
 
-  logger.info('Init seed data')
-  // TODO there will be a neater way of achieving this.
-  initChecklistTemplate()
-  initRules()
-  userInit()
-  txnInit()
-  riskScoresInit()
-  caseInit()
-  auditLogInit()
-  arsInit()
-  transactionEventsInit()
-  sanctionsInit()
-  reportsInit()
-  simulationInit()
-  crmInit()
-
   logger.info('Setting counters')
   const counterCollection = db.collection<EntityCounter>(
     COUNTER_COLLECTION(tenantId)
   )
   const counters: [string, number][] = [
-    ['Report', reports.length],
-    ['Case', cases.length],
-    ['Alert', cases.flatMap((c) => c.alerts).length],
+    ['Report', getReports().length],
+    ['Case', getCases().length],
+    ['Alert', getCases().flatMap((c) => c.alerts).length],
   ]
 
   for (const counter of counters) {
@@ -171,25 +134,12 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     } catch (e) {
       // ignore
     }
-    const iterator = data[Symbol.iterator]()
-    let batch: any[] = []
-    let i = 0
-    let result
-    do {
-      result = iterator.next()
-      if (!result.done) {
-        batch.push(result.value)
-      }
-      i++
-      if (result.done || batch.length === 10000) {
-        console.log(`Finished ${i} items`)
+    const collectionData = data()
+    const clonedData = cloneDeep(collectionData)
 
-        if (batch.length > 0) {
-          await collection.insertMany(batch as any)
-        }
-        batch = []
-      }
-    } while (!result.done)
+    for await (const dataChunk of chunk(clonedData, 10000)) {
+      await collection.insertMany(dataChunk as any[])
+    }
   }
 
   logger.info('Refreshing dashboard stats...')

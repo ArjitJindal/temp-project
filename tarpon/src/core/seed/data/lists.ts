@@ -1,3 +1,4 @@
+import { memoize } from 'lodash'
 import { ListType } from '@/@types/openapi-public/ListType'
 import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
 import { ListData } from '@/@types/openapi-public/ListData'
@@ -9,13 +10,9 @@ type ListTypeObject = {
   subtype: ListSubtype
   data: ListData
 }
-const data: ListTypeObject[] = []
 
-const init = () => {
-  if (data.length > 0) {
-    return
-  }
-  ;(
+const data: () => ListTypeObject[] = memoize(() => {
+  return (
     [
       'USER_ID',
       'CARD_FINGERPRINT_NUMBER',
@@ -28,8 +25,8 @@ const init = () => {
       'UPI_IDENTIFYING_NUMBER',
       'IP_ADDRESS',
     ] as const
-  ).forEach((subtype, i) => {
-    data.push({
+  ).map((subtype, i) => {
+    return {
       listId: generateChecksum(i).substring(0, 10),
       listType: 'BLACKLIST',
       subtype,
@@ -38,8 +35,8 @@ const init = () => {
           name: `"${subtype}" list`,
         },
       },
-    })
+    }
   })
-}
+})
 
-export { init, data }
+export { data }

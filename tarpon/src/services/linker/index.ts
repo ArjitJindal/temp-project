@@ -551,6 +551,12 @@ async function linkingElements(
         { $unwind: { path: '$address' } },
         { $unwind: { path: '$address' } },
         {
+          $match: {
+            'address.postcode': { $exists: true },
+            'address.addressLines.0': { $exists: true },
+          },
+        },
+        {
           $addFields: {
             adddressLine1: { $arrayElemAt: ['$address.addressLines', 0] },
           },

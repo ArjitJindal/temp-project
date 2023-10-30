@@ -1,6 +1,7 @@
 import { v4 as uuid4 } from 'uuid'
+import { memoize } from 'lodash'
 import { generateNarrative } from '../samplers/cases'
-import { data as users } from './users'
+import { getUsers } from './users'
 import { transactionRules as rules } from './rules'
 import { auditLogForCaseStatusChange } from './cases'
 import { randomInt } from '@/core/seed/samplers/prng'
@@ -18,8 +19,10 @@ const generator = function* (): Generator<AuditLog> {
       entityId: uuid4(),
     }
     // User Viewed
+    const allUsers = getUsers()
+
     if (i % 3 === 0) {
-      const userId = users[randomInt(users.length)].userId
+      const userId = allUsers[randomInt(allUsers.length)].userId
 
       fullAuditLog = {
         type: 'USER',
@@ -42,9 +45,9 @@ const generator = function* (): Generator<AuditLog> {
         newImage: {
           id: uuid4(),
           body: generateNarrative(
-            [rules[randomInt(rules.length)].ruleDescription],
+            [rules()[randomInt(rules().length)].ruleDescription],
             ['Anti-money laundering'],
-            users[randomInt(users.length)]
+            allUsers[randomInt(allUsers.length)]
           ),
         },
       }
@@ -60,9 +63,9 @@ const generator = function* (): Generator<AuditLog> {
           newImage: {
             reason: ['Anti-money laundering'],
             body: generateNarrative(
-              [rules[randomInt(rules.length)].ruleDescription],
+              [rules()[randomInt(rules().length)].ruleDescription],
               ['Anti-money laundering'],
-              users[randomInt(users.length)]
+              allUsers[randomInt(allUsers.length)]
             ),
           },
         }
@@ -75,13 +78,8 @@ const generator = function* (): Generator<AuditLog> {
 
 const generate: () => Iterable<AuditLog> = () => generator()
 
-const auditlogs: AuditLog[] = auditLogForCaseStatusChange ?? []
+const auditlogs: () => AuditLog[] = memoize(() => {
+  return [...auditLogForCaseStatusChange(), ...generate()]
+})
 
-const init = () => {
-  const data = generate()
-  for (const auditLog of data) {
-    auditlogs.push(auditLog)
-  }
-}
-
-export { init, generate, auditlogs }
+export { generate, auditlogs }

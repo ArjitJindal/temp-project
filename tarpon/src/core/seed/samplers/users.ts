@@ -1,10 +1,14 @@
 import { v4 as uuid4 } from 'uuid'
 import { ManipulateType } from 'dayjs'
-import { phoneNumber } from '../data/address'
-import { data as sanctionsHits } from '../data/sanctions'
+import { getSanctions } from '../data/sanctions'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
 import { sampleTag } from './tag'
+import {
+  sampleBusinessUserRiskScoreComponents,
+  sampleConsumerUserRiskScoreComponents,
+  sampleTransactionRiskScoreComponents,
+} from './risk_score_components'
 import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { UserState } from '@/@types/openapi-internal/UserState'
@@ -34,7 +38,7 @@ import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-cust
 import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
 import { samplePaymentDetails } from '@/core/seed/samplers/transaction'
-import { randomAddress } from '@/core/seed/samplers/address'
+import { phoneNumber, randomAddress } from '@/core/seed/samplers/address'
 import { randomUserRules, userRules } from '@/core/seed/data/rules'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import dayjs from '@/utils/dayjs'
@@ -44,12 +48,15 @@ import { SOURCE_OF_FUNDSS } from '@/@types/openapi-internal-custom/SourceOfFunds
 import {
   businessSanctionsSearch,
   consumerSanctionsSearch,
-} from '@/core/seed/data/raw-data/sanctions-search'
+} from '@/core/seed/raw-data/sanctions-search'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { USER_REGISTRATION_STATUSS } from '@/@types/openapi-internal-custom/UserRegistrationStatus'
+import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 
 export function sampleUserState(): UserState {
   return pickRandom(USER_STATES)
@@ -82,7 +89,7 @@ export const randomEmail = () => {
 }
 
 export const randomPhoneNumber = () => {
-  return pickRandom(phoneNumber)
+  return pickRandom(phoneNumber())
 }
 
 const generateRandomTimestamp = () => {
@@ -184,7 +191,7 @@ export function getUserRules(username: string, type: 'CONSUMER' | 'BUSINESS') {
       type === 'CONSUMER'
         ? consumerSanctionsSearch(username)
         : businessSanctionsSearch(username)
-    sanctionsHits.push(sanctionsSearchResult)
+    getSanctions().push(sanctionsSearchResult)
 
     r.ruleHitMeta.sanctionsDetails = [
       {
@@ -229,7 +236,7 @@ export function sampleConsumerUser() {
       countryOfNationality,
       name,
     },
-    executedRules: userRules.map((rule) => {
+    executedRules: userRules().map((rule) => {
       return {
         ...rule,
         ruleHit: userCounter % 2 ? true : false,
@@ -244,7 +251,54 @@ export function sampleConsumerUser() {
     transactionLimits: sampleExpectedTransactionLimit(),
   }
 
+  assignKrsAndDrsScores(user)
+
   return user
+}
+
+function assignKrsAndDrsScores(
+  user: InternalConsumerUser | InternalBusinessUser
+) {
+  const krsScoreComponents = isBusinessUser(user)
+    ? sampleBusinessUserRiskScoreComponents(user as InternalBusinessUser)
+    : sampleConsumerUserRiskScoreComponents(user as InternalConsumerUser)
+
+  const arsScoreComponents = sampleTransactionRiskScoreComponents()
+
+  const krsScore =
+    krsScoreComponents.reduce((acc, curr) => acc + curr.score, 0) /
+    krsScoreComponents.length
+
+  user.krsScore = {
+    createdAt: sampleTimestamp(),
+    krsScore,
+    components: krsScoreComponents,
+    riskLevel: getRiskLevelFromScore(DEFAULT_CLASSIFICATION_SETTINGS, krsScore),
+    userId: user.userId,
+  }
+
+  const drsScoreComponent = pickRandom([
+    krsScoreComponents,
+    arsScoreComponents,
+    arsScoreComponents,
+    arsScoreComponents,
+  ])
+
+  const drsScore =
+    drsScoreComponent.reduce((acc, curr) => acc + curr.score, 0) /
+    drsScoreComponent.length
+
+  user.drsScore = {
+    createdAt: sampleTimestamp(),
+    drsScore,
+    components: drsScoreComponent,
+    derivedRiskLevel: getRiskLevelFromScore(
+      DEFAULT_CLASSIFICATION_SETTINGS,
+      drsScore
+    ),
+    userId: user.userId,
+    isUpdatable: true,
+  }
 }
 
 export function sampleBusinessUser({
@@ -272,7 +326,7 @@ export function sampleBusinessUser({
       sampleTag(),
     ],
     userStateDetails: sampleUserStateDetails(),
-    executedRules: userRules,
+    executedRules: userRules(),
     hitRules: getUserRules(name, 'BUSINESS'),
     updatedAt: timestamp,
     comments: [],
@@ -377,6 +431,8 @@ export function sampleBusinessUser({
       } as Person
     }),
   }
+
+  assignKrsAndDrsScores(user)
 
   return {
     user,

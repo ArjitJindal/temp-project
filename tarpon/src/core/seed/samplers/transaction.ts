@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid'
+import { paymentMethods } from '../data/transactions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { pickRandom, randomInt } from '@/core/seed/samplers/prng'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
@@ -12,7 +13,8 @@ import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
-import { randomAddress } from '@/core/seed/samplers/address'
+import { randomPaymentAddress } from '@/core/seed/samplers/address'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export function sampleTransaction({
   originUserId,
@@ -57,15 +59,11 @@ export function sampleTransaction({
   }
 }
 
-export const paymentMethods = [...Array(500000)].map(() =>
-  samplePaymentDetails()
-)
-
 export const randomPaymentMethod = () => {
-  return pickRandom(paymentMethods)
+  return pickRandom(paymentMethods())
 }
 
-export function samplePaymentDetails() {
+export function samplePaymentDetails(): PaymentDetails | undefined {
   switch (randomInt(9)) {
     case 0:
       return sampleCardDetails()
@@ -142,7 +140,7 @@ export function sampleGenericBankAccountDetails(): GenericBankAccountDetails {
       name: 'Mark Schagal',
       accountNumber: `${randomInt()}`,
       accountType: 'SAVINGS',
-      bankAddress: randomAddress(),
+      bankAddress: randomPaymentAddress(),
     },
     {
       method: 'GENERIC_BANK_ACCOUNT',
@@ -151,7 +149,7 @@ export function sampleGenericBankAccountDetails(): GenericBankAccountDetails {
       accountNumber: `${randomInt()}`,
       accountType: 'CURRENT',
       name: 'John Dow',
-      bankAddress: randomAddress(),
+      bankAddress: randomPaymentAddress(),
     },
   ])
 }

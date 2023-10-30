@@ -22,7 +22,6 @@ async function main() {
   } catch (e) {
     console.error(e)
   }
-
   console.info('Seeding DynamoDB...')
   await seedDynamo(getDynamoDbClient(), TENANT)
 

@@ -1,4 +1,4 @@
-import { random, cloneDeep } from 'lodash'
+import { random, cloneDeep, memoize } from 'lodash'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { pickRandom, randomSubset } from '@/core/seed/samplers/prng'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -6,20 +6,17 @@ import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'
 import { SanctionsBankUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-bank-name'
 import { SanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-consumer-user'
-import { checklistTemplates } from '@/core/seed/data/checklists'
+import { getChecklistTemplates } from '@/core/seed/data/checklists'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
-  return ruleInstances.find((ri) => (ri.id = ruleInstanceId)) as RuleInstance
+  return ruleInstances().find((ri) => (ri.id = ruleInstanceId)) as RuleInstance
 }
 
-export const initRules = () => {
-  if (ruleInstances.length > 0) {
-    return
-  }
-  ruleInstances.push(
+export const ruleInstances: () => RuleInstance[] = memoize(() => {
+  return [
     {
       id: 'e8c3b853',
-      checklistTemplateId: pickRandom(checklistTemplates).id,
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-1',
       casePriority: 'P1',
       parameters: {},
@@ -52,7 +49,7 @@ export const initRules = () => {
     },
     {
       id: 'a25685ad',
-      checklistTemplateId: pickRandom(checklistTemplates).id,
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-2',
       casePriority: 'P2',
       parameters: {
@@ -110,7 +107,7 @@ export const initRules = () => {
     },
     {
       id: 'a45615ad',
-      checklistTemplateId: pickRandom(checklistTemplates).id,
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-30',
       casePriority: 'P1',
       parameters: {
@@ -179,7 +176,7 @@ export const initRules = () => {
     },
     {
       id: '2i3nflkd',
-      checklistTemplateId: pickRandom(checklistTemplates).id,
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-16',
       casePriority: 'P1',
       parameters: {},
@@ -249,7 +246,7 @@ export const initRules = () => {
     } as RuleInstance,
     {
       id: 'skn2ls',
-      checklistTemplateId: pickRandom(checklistTemplates).id,
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-32',
       casePriority: 'P1',
       parameters: {},
@@ -324,7 +321,7 @@ export const initRules = () => {
     },
     {
       id: '3oi3nlk',
-      checklistTemplateId: pickRandom(checklistTemplates).id,
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-128',
       casePriority: 'P1',
       parameters: {},
@@ -392,69 +389,64 @@ export const initRules = () => {
       updatedAt: 1688114634781,
       runCount: 340,
       hitCount: 240,
-    }
-  )
+    },
+  ]
+})
 
-  transactionRules.push(
-    ...ruleInstances
-      .filter((ri) => {
-        return ri.type === 'TRANSACTION'
+export const transactionRules: () => ExecutedRulesResult[] = memoize(() => {
+  return ruleInstances()
+    .filter((ri) => {
+      return ri.type === 'TRANSACTION'
+    })
+    .map(
+      (ri, i): ExecutedRulesResult => ({
+        ruleInstanceId: ri.id as string,
+        ruleName: ri.ruleNameAlias as string,
+        ruleAction: ri.action as RuleAction,
+        ruleId: ri.ruleId as string,
+        nature: ri.nature,
+        ruleDescription: ri.ruleDescriptionAlias as string,
+        ruleHit: true,
+        ruleHitMeta: {
+          falsePositiveDetails:
+            random(0, 10) < 4
+              ? { isFalsePositive: true, confidenceScore: random(59, 82) }
+              : { isFalsePositive: false, confidenceScore: 100 },
+          hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
+        },
       })
-      .map(
-        (ri, i): ExecutedRulesResult => ({
-          ruleInstanceId: ri.id as string,
-          ruleName: ri.ruleNameAlias as string,
-          ruleAction: ri.action as RuleAction,
-          ruleId: ri.ruleId as string,
-          nature: ri.nature,
-          ruleDescription: ri.ruleDescriptionAlias as string,
-          ruleHit: true,
-          ruleHitMeta: {
-            falsePositiveDetails:
-              random(0, 10) < 4
-                ? { isFalsePositive: true, confidenceScore: random(59, 82) }
-                : { isFalsePositive: false, confidenceScore: 100 },
-            hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
-          },
-        })
-      )
-  )
+    )
+})
 
-  userRules.push(
-    ...ruleInstances
-      .filter((ri) => {
-        return ri.type === 'USER'
+export const userRules: () => ExecutedRulesResult[] = memoize(() => {
+  return ruleInstances()
+    .filter((ri) => {
+      return ri.type === 'USER'
+    })
+    .map(
+      (ri, i): ExecutedRulesResult => ({
+        ruleInstanceId: ri.id as string,
+        ruleName: ri.ruleNameAlias as string,
+        ruleAction: ri.action as RuleAction,
+        ruleId: ri.ruleId as string,
+        nature: ri.nature,
+        ruleDescription: ri.ruleDescriptionAlias as string,
+        ruleHit: true,
+        ruleHitMeta: {
+          falsePositiveDetails:
+            random(0, 10) < 2
+              ? { isFalsePositive: true, confidenceScore: random(59, 82) }
+              : { isFalsePositive: false, confidenceScore: 100 },
+          hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
+        },
       })
-      .map(
-        (ri, i): ExecutedRulesResult => ({
-          ruleInstanceId: ri.id as string,
-          ruleName: ri.ruleNameAlias as string,
-          ruleAction: ri.action as RuleAction,
-          ruleId: ri.ruleId as string,
-          nature: ri.nature,
-          ruleDescription: ri.ruleDescriptionAlias as string,
-          ruleHit: true,
-          ruleHitMeta: {
-            falsePositiveDetails:
-              random(0, 10) < 2
-                ? { isFalsePositive: true, confidenceScore: random(59, 82) }
-                : { isFalsePositive: false, confidenceScore: 100 },
-            hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
-          },
-        })
-      )
-  )
-}
-export const ruleInstances: RuleInstance[] = []
-
-export const transactionRules: ExecutedRulesResult[] = []
-
-export const userRules: ExecutedRulesResult[] = []
+    )
+})
 
 export function randomTransactionRules(): ExecutedRulesResult[] {
-  return cloneDeep(randomSubset(transactionRules))
+  return cloneDeep(randomSubset(transactionRules()))
 }
 
 export function randomUserRules(): ExecutedRulesResult[] {
-  return cloneDeep(randomSubset(userRules))
+  return cloneDeep(randomSubset(userRules()))
 }

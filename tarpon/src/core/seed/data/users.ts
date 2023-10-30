@@ -1,3 +1,4 @@
+import { memoize } from 'lodash'
 import {
   merchantMonitoringSummaries,
   sampleBusinessUser,
@@ -8,39 +9,26 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { companies } from '@/core/seed/samplers/dictionary'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 
-const data: (InternalBusinessUser | InternalConsumerUser)[] = []
-const merchantMonitoring: MerchantMonitoringSummary[] = []
+const businessUsers: () => InternalBusinessUser[] = memoize(() => {
+  return companies.map((c) => sampleBusinessUser({ company: c }).user)
+})
 
-const init = () => {
-  if (data.length > 0) {
-    return
+const consumerUsers: () => InternalConsumerUser[] = memoize(() => {
+  return [...new Array(30)].map(() => sampleConsumerUser())
+})
+
+export const getMerchantMonitoring: () => MerchantMonitoringSummary[] = memoize(
+  () => {
+    return businessUsers().flatMap((b) =>
+      merchantMonitoringSummaries(
+        b.userId,
+        companies.find(
+          (c) => c.name === b.legalEntity.companyGeneralDetails.legalName
+        )!
+      )
+    )
   }
-  const businessUserData = companies.map(
-    (
-      c
-    ): {
-      user: InternalBusinessUser
-      merchantMonitoring: MerchantMonitoringSummary[]
-    } => {
-      const { user } = sampleBusinessUser({ company: c })
+)
 
-      return {
-        user,
-        merchantMonitoring: merchantMonitoringSummaries(user.userId, c),
-      }
-    }
-  )
-
-  merchantMonitoring.push(
-    ...businessUserData.flatMap((b) => b.merchantMonitoring)
-  )
-
-  data.push(
-    ...[
-      ...businessUserData.map((b) => b.user),
-      ...[...new Array(30)].map(() => sampleConsumerUser()),
-    ]
-  )
-}
-
-export { init, data, merchantMonitoring }
+export const getUsers: () => (InternalBusinessUser | InternalConsumerUser)[] =
+  memoize(() => [...businessUsers(), ...consumerUsers()])

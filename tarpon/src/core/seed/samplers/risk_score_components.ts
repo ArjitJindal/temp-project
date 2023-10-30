@@ -1,14 +1,14 @@
-import { transactions } from '../data/transactions'
-import { sampleTimestamp } from './timestamp'
-import { DrsScore } from '@/@types/openapi-internal/DrsScore'
+import { sampleCurrency } from './currencies'
+import { sampleCountry } from './countries'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
-import { randomFloat } from '@/core/seed/samplers/prng'
+import { pickRandom, randomFloat } from '@/core/seed/samplers/prng'
+import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
+import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 
 export function sampleConsumerUserRiskScoreComponents(
   consumer: InternalConsumerUser
@@ -114,7 +114,7 @@ export function sampleBusinessUserRiskScoreComponents(
 }
 
 export const sampleTransactionRiskScoreComponents = (
-  transaction: InternalTransaction
+  transaction?: InternalTransaction
 ): RiskScoreComponent[] => {
   const scores = [...new Array(4)].map(() =>
     Number(randomFloat(100).toFixed(2))
@@ -129,7 +129,7 @@ export const sampleTransactionRiskScoreComponents = (
       ),
       entityType: 'TRANSACTION',
       parameter: 'type',
-      value: transaction?.type,
+      value: transaction?.type ?? pickRandom(TRANSACTION_TYPES),
     },
     {
       score: scores[1],
@@ -139,7 +139,9 @@ export const sampleTransactionRiskScoreComponents = (
       ),
       entityType: 'TRANSACTION',
       parameter: 'originAmountDetails.transactionCurrency',
-      value: transaction?.originAmountDetails?.transactionCurrency,
+      value:
+        transaction?.originAmountDetails?.transactionCurrency ??
+        sampleCurrency(),
     },
     {
       score: scores[2],
@@ -149,7 +151,9 @@ export const sampleTransactionRiskScoreComponents = (
       ),
       entityType: 'TRANSACTION',
       parameter: 'originPaymentDetails.method',
-      value: transaction?.originPaymentDetails?.method,
+      value:
+        transaction?.originPaymentDetails?.method ??
+        pickRandom(PAYMENT_METHODS),
     },
     {
       score: scores[3],
@@ -159,56 +163,7 @@ export const sampleTransactionRiskScoreComponents = (
       ),
       entityType: 'TRANSACTION',
       parameter: 'destinationAmountDetails.country',
-      value: transaction?.destinationAmountDetails?.country,
+      value: transaction?.destinationAmountDetails?.country ?? sampleCountry(),
     },
   ]
-}
-
-export const getDrsAndKrsScoreDetials = (
-  krsScoreComponents: RiskScoreComponent[],
-  userId: string
-): { krsScore: KrsScore; drsScore: DrsScore } => {
-  const krsScore =
-    krsScoreComponents.reduce((acc, curr) => acc + curr.score, 0) /
-    krsScoreComponents.length
-
-  const krsUserData = {
-    createdAt: sampleTimestamp(),
-    krsScore: krsScore,
-    userId: userId,
-    riskLevel: getRiskLevelFromScore(DEFAULT_CLASSIFICATION_SETTINGS, krsScore),
-    components: krsScoreComponents,
-  } as KrsScore
-
-  const userTransactions = transactions.find(
-    (t) => t.originUserId === userId || t.destinationUserId === userId
-  )
-  const drsScoreComponents: RiskScoreComponent[] = []
-
-  drsScoreComponents.push(...krsScoreComponents)
-
-  if (userTransactions) {
-    const transactionRiskScoreComponents =
-      userTransactions.arsScore?.components ?? []
-
-    drsScoreComponents.push(...transactionRiskScoreComponents)
-  }
-
-  const drsScore =
-    drsScoreComponents.reduce((acc, curr) => acc + curr.score, 0) /
-    drsScoreComponents.length
-
-  const drsUserData = {
-    createdAt: sampleTimestamp(),
-    userId: userId,
-    derivedRiskLevel: getRiskLevelFromScore(
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      drsScore
-    ),
-    drsScore: drsScore,
-    isUpdatable: true,
-    components: drsScoreComponents,
-  } as DrsScore
-
-  return { krsScore: krsUserData, drsScore: drsUserData }
 }

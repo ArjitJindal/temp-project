@@ -1,7 +1,10 @@
-import { random } from 'lodash'
+import { memoize, random } from 'lodash'
 import { sampleTransactionRiskScoreComponents } from '../samplers/risk_score_components'
-import { data as users } from './users'
-import { sampleTransaction } from '@/core/seed/samplers/transaction'
+import { getUsers } from './users'
+import {
+  samplePaymentDetails,
+  sampleTransaction,
+} from '@/core/seed/samplers/transaction'
 import { sampleTag } from '@/core/seed/samplers/tag'
 import { sampleCountry } from '@/core/seed/samplers/countries'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -25,6 +28,7 @@ import {
 } from '@/core/seed/data/rules'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
@@ -32,8 +36,10 @@ const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
 
 const generator = function* (): Generator<InternalTransaction> {
   const userTransactionMap = new Map<string, string[]>()
-  users.forEach((u) => {
-    const filteredUsers = users.filter((thisU) => thisU.userId !== u.userId)
+  getUsers().forEach((u) => {
+    const filteredUsers = getUsers().filter(
+      (thisU) => thisU.userId !== u.userId
+    )
     const usersToTransactWith = randomSubsetOfSize(filteredUsers, 3)
     userTransactionMap.set(
       u.userId,
@@ -48,7 +54,7 @@ const generator = function* (): Generator<InternalTransaction> {
     const hitRules: ExecutedRulesResult[] =
       randomNumberGenerator() < 0.75
         ? randomTransactionRules()
-        : transactionRules.filter((r) => r.ruleAction === 'SUSPEND')
+        : transactionRules().filter((r) => r.ruleAction === 'SUSPEND')
     const randomHitRules = hitRules.map((hitRule) => {
       if (hitRule.ruleHitMeta?.falsePositiveDetails?.isFalsePositive === true) {
         const modifiedHitRule = {
@@ -66,7 +72,7 @@ const generator = function* (): Generator<InternalTransaction> {
       return hitRule
     })
     const transaction = sampleTransaction({})
-    const originUserId = users[i % users.length].userId
+    const originUserId = getUsers()[i % getUsers().length].userId
     const destinationUserId = pickRandom(
       userTransactionMap.get(originUserId) as string[]
     )
@@ -101,7 +107,7 @@ const generator = function* (): Generator<InternalTransaction> {
         arsScore: Number(randomFloat(100).toFixed(2)),
         components: sampleTransactionRiskScoreComponents(transaction),
       },
-      executedRules: transactionRules,
+      executedRules: transactionRules(),
       originAmountDetails: {
         country: sampleCountry(),
         transactionCurrency: sampleCurrency(),
@@ -118,9 +124,11 @@ const generator = function* (): Generator<InternalTransaction> {
   }
 }
 
-const generate: () => Iterable<InternalTransaction> = () => generator()
+export const paymentMethods: () => PaymentDetails[] = memoize(() => {
+  return [...Array(500000)].map(() => samplePaymentDetails() as PaymentDetails)
+})
 
-const transactions: InternalTransaction[] = []
+const generate: () => Iterable<InternalTransaction> = () => generator()
 
 export function internalToPublic(
   internal: InternalTransaction
@@ -142,14 +150,6 @@ export function internalToPublic(
   }
 }
 
-const init = () => {
-  if (transactions.length > 0) {
-    return
-  }
-  const data = generate()
-  for (const transaction of data) {
-    transactions.push(transaction)
-  }
-}
-
-export { init, generate, transactions }
+export const getTransactions: () => InternalTransaction[] = memoize(() => {
+  return [...generate()]
+})

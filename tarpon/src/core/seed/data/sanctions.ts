@@ -1,6 +1,6 @@
+import { memoize } from 'lodash'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-const data: SanctionsSearchHistory[] = []
 
-const init = () => undefined
-
-export { init, data }
+export const getSanctions: () => SanctionsSearchHistory[] = memoize(() => {
+  return []
+})

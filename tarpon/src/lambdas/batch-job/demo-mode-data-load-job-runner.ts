@@ -11,9 +11,8 @@ export class DemoModeDataLoadJobRunner extends BatchJobRunner {
     const { tenantId } = job
 
     console.log('Generate collections names and S3 keys')
-    const dynamo = await getDynamoDbClient()
+    const dynamo = getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
-
     await seedDynamo(dynamo, tenantId)
     await seedMongo(mongoDb, tenantId)
   }

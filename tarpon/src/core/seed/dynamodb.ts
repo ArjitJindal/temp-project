@@ -2,26 +2,23 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { pick } from 'lodash'
 import { syncRulesLibrary } from '../../../scripts/migrations/always-run/sync-rules-library'
 import { logger } from '../logger'
-import { init as riskScoresInit } from './data/risk-scores'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { init as userInit, data as usersData } from '@/core/seed/data/users'
+import { getUsers } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
-import { init as listsInit, data as listsData } from '@/core/seed/data/lists'
+import { data as listsData } from '@/core/seed/data/lists'
 import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 import { ListRepository } from '@/services/list/repositories/list-repository'
 import {
   internalToPublic,
-  init as txnInit,
-  transactions,
+  getTransactions,
 } from '@/core/seed/data/transactions'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { initRules, ruleInstances } from '@/core/seed/data/rules'
+import { ruleInstances } from '@/core/seed/data/rules'
 import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
-import { initChecklistTemplate } from '@/core/seed/data/checklists'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
@@ -31,12 +28,6 @@ export async function seedDynamo(
   tenantId: string
 ) {
   disableLocalChangeHandler()
-  initChecklistTemplate()
-  initRules()
-  userInit()
-  listsInit()
-  txnInit()
-  riskScoresInit()
 
   const userRepo = new UserRepository(tenantId, {
     dynamoDb: dynamoDb,
@@ -57,12 +48,13 @@ export async function seedDynamo(
     }
   }
   logger.info('Create rule instances')
-  for (const ruleInstance of ruleInstances) {
+  for (const ruleInstance of ruleInstances()) {
     await ruleRepo.createOrUpdateRuleInstance(ruleInstance)
   }
 
   logger.info('Creating users...')
-  for (const user of usersData) {
+  const users = getUsers()
+  for (const user of users) {
     const type = user.type as UserType
     const dynamoUser = pick<UserWithRulesResult | BusinessWithRulesResult>(
       user,
@@ -72,11 +64,11 @@ export async function seedDynamo(
     await userRepo.saveUser(dynamoUser, type)
   }
   logger.info('Creating lists...')
-  for (const list of listsData) {
+  for (const list of listsData()) {
     await listRepo.createList(list.listType, list.subtype, list.data)
   }
   logger.info('Creating transactions...')
-  for (const txn of transactions) {
+  for (const txn of getTransactions()) {
     const publicTxn = internalToPublic(txn)
     await txnRepo.saveTransaction(publicTxn, {
       status: getAggregatedRuleStatus(

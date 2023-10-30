@@ -1,5 +1,6 @@
-import { data as users } from './users'
-import { transactions } from '@/core/seed/data/transactions'
+import { compact, memoize } from 'lodash'
+import { getUsers } from './users'
+import { getTransactions } from '@/core/seed/data/transactions'
 import {
   sampleAuditLogForStatusChange,
   sampleTransactionUserCases,
@@ -9,22 +10,16 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
-const data: Case[] = []
-
-const auditLogForCaseStatusChange: AuditLog[] = []
-
-const init = () => {
-  if (data.length > 0) {
-    return
-  }
-  for (let i = 0; i < users.length; i += 1) {
-    const user = users[i]
+export const getCases: () => Case[] = memoize(() => {
+  const data: Case[] = []
+  for (let i = 0; i < getUsers().length; i += 1) {
+    const user = getUsers()[i]
     const transactionsForUserAsOrigin: InternalTransaction[] =
-      transactions.filter((t) => {
+      getTransactions().filter((t) => {
         return t.originUserId === user.userId
       })
     const transactionsForUserADestination: InternalTransaction[] =
-      transactions.filter((t) => {
+      getTransactions().filter((t) => {
         return t.destinationUserId === user.userId
       })
     const destinationCases: Case[] = sampleTransactionUserCases({
@@ -47,12 +42,16 @@ const init = () => {
     data.push(...destinationCases)
     data.push(...originCases)
   }
-  data.map((caseItem) => {
-    if (caseItem.caseStatus !== 'OPEN') {
-      const auditLog = sampleAuditLogForStatusChange(caseItem)
-      auditLogForCaseStatusChange.push(auditLog as AuditLog)
-    }
-  })
-}
 
-export { init, data, auditLogForCaseStatusChange }
+  return data
+})
+
+export const auditLogForCaseStatusChange: () => AuditLog[] = memoize(() => {
+  return compact<AuditLog>(
+    getCases().map((caseItem) => {
+      return caseItem?.caseStatus !== 'OPEN'
+        ? (sampleAuditLogForStatusChange(caseItem) as AuditLog)
+        : null
+    })
+  )
+})
