@@ -61,6 +61,7 @@ export default function ArrayPropertyInput(props: Props) {
     }
     return (
       <Select
+        isCopyable={true}
         mode={enumItems.length === 0 ? 'TAGS' : 'MULTIPLE'}
         options={enumItems
           .filter(isString)

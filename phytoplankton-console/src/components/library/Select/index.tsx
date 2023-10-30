@@ -26,6 +26,7 @@ interface CommonProps<Value extends Comparable> {
   notFoundContent?: React.ReactNode;
   className?: string;
   innerRef?: React.RefObject<any>;
+  isCopyable?: boolean;
 }
 
 export interface SingleProps<Value extends Comparable>
@@ -56,6 +57,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     isLoading,
     className,
     innerRef,
+    isCopyable,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
@@ -136,6 +138,10 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     }
   };
 
+  useEffect(() => {
+    if (presentValue) setisHovered(true);
+  }, [presentValue]);
+
   return (
     <div
       className={cn(
@@ -143,6 +149,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         isError && s.isError,
         s[`size-${size}`],
         isHovered && s.ishovered,
+        antSelectProps.mode !== undefined && s.extraPadding,
         className,
       )}
       style={props.style}
@@ -158,7 +165,9 @@ export default function Select<Value extends Comparable = string>(props: Props<V
           selectInput.current ? selectInput.current?.getBoundingClientRect().width : true
         }
         suffixIcon={
-          antSelectProps.mode !== undefined && (
+          isCopyable &&
+          Array.isArray(presentValue) &&
+          presentValue.length > 0 && (
             <div onClick={copyText}>
               <FileCopyLineIcon className={cn(s.copyIcon)} />
             </div>
