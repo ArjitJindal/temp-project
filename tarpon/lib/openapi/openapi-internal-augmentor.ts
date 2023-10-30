@@ -118,7 +118,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/transactions/total':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
-  '/dashboard_stats/risk-level-distribution':
+  '/dashboard_stats/users/by_time':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/kyc-status-distribution':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,

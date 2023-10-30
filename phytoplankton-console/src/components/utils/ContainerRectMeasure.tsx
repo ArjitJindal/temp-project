@@ -8,10 +8,12 @@ interface Rect {
 }
 
 interface Props {
+  className?: string;
   children: (size: Rect) => JSX.Element;
 }
 
 export default function ContainerRectMeasure(props: Props) {
+  const { className } = props;
   const [size, setSize] = useState<Rect | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -38,7 +40,11 @@ export default function ContainerRectMeasure(props: Props) {
     }
   }, [refreshSize]);
 
-  return <div ref={ref}>{size == null ? null : props.children(size)}</div>;
+  return (
+    <div ref={ref} className={className}>
+      {size == null ? null : props.children(size)}
+    </div>
+  );
 }
 
 function getOffsetTop(element: HTMLElement | null): number {

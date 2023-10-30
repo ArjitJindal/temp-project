@@ -5,7 +5,7 @@ import {
 import { BadRequest } from 'http-errors'
 import { DashboardStatsRepository } from './repositories/dashboard-stats-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
+import { assertCurrentUserRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { AccountsService } from '@/services/accounts'
 import { Account } from '@/@types/openapi-internal/Account'
@@ -155,27 +155,30 @@ export const dashboardStatsHandler = lambdaApi()(
       }
     })
 
-    handlers.registerGetDashboardStatsRiskLevelDistribution(
-      async (ctx, request) => {
-        const client = await getMongoDbClient()
-        const { userType, riskType } = request
-        const dashboardStatsRepository = new DashboardStatsRepository(
-          ctx.tenantId,
-          { mongoDb: client }
-        )
-        if (shouldRefreshAll(event)) {
-          await dashboardStatsRepository.refreshAllStats()
-        }
-        const data =
-          await dashboardStatsRepository.getRiskLevelDistributionStats(
-            userType,
-            riskType
-          )
-        return {
-          data,
-        }
+    handlers.registerGetDashboardStatsUsersByTime(async (ctx, request) => {
+      const { tenantId } = ctx
+      const { userType, startTimestamp, endTimestamp, granularity } = request
+      const mongoDb = await getMongoDbClient()
+      if (!endTimestamp) {
+        throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
       }
-    )
+      if (!startTimestamp) {
+        throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
+      }
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb,
+      })
+      if (shouldRefreshAll(event)) {
+        await dashboardStatsRepository.refreshAllStats()
+      }
+      const data = await dashboardStatsRepository.getUserTimewindowStats(
+        userType,
+        startTimestamp,
+        endTimestamp,
+        granularity ?? 'MONTH'
+      )
+      return data
+    })
 
     handlers.registerGetDashboardStatsKycStatusDistribution(
       async (ctx, request) => {

@@ -26,6 +26,7 @@ import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import DatePicker from '@/components/ui/DatePicker';
 import ContainerRectMeasure from '@/components/utils/ContainerRectMeasure';
+import { formatDate } from '@/pages/dashboard/analysis/utils/date-utils';
 
 const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
 
@@ -41,7 +42,7 @@ interface Props extends WidgetProps {
   userType?: 'BUSINESS' | 'CONSUMER';
 }
 
-export default function RiskLevelDistributionCard(props: Props) {
+export default function RiskLevelBreakdownWidget(props: Props) {
   const { userType = 'CONSUMER', ...restProps } = props;
   const api = useApi();
   const settings = useSettings();
@@ -73,28 +74,20 @@ export default function RiskLevelDistributionCard(props: Props) {
     return response;
   });
 
-  const preparedDataRes = map(
-    queryResult.data,
-    (data): ColumnData<RiskLevel, number, RiskLevel> => {
+  const preparedDataRes = map(queryResult.data, (data): ColumnData<string, number, RiskLevel> => {
+    return data.flatMap((dataItem): ColumnData<string, number, RiskLevel> => {
       return RISK_LEVELS.map((riskLevel) => {
-        const count = data.reduce(
-          (acc, x) =>
-            acc +
-              x[
-                selectedRiskType === 'KRS'
-                  ? `krsRiskLevel_${riskLevel}`
-                  : `drsRiskLevel_${riskLevel}`
-              ] ?? 0,
-          0,
-        );
         return {
-          xValue: riskLevel,
-          yValue: count,
+          xValue: dataItem._id ?? '-',
+          yValue:
+            dataItem[
+              selectedRiskType === 'KRS' ? `krsRiskLevel_${riskLevel}` : `drsRiskLevel_${riskLevel}`
+            ] ?? 0,
           series: riskLevel,
         };
       });
-    },
-  );
+    });
+  });
 
   return (
     <Widget
@@ -123,17 +116,17 @@ export default function RiskLevelDistributionCard(props: Props) {
               <div className={s.chartContainer}>
                 <ContainerRectMeasure className={s.chartContainer2}>
                   {(size) => (
-                    <Column<RiskLevel, RiskLevel>
+                    <Column<RiskLevel, string>
                       data={data}
                       colors={RISK_LEVEL_COLORS}
                       rotateLabel={false}
-                      hideLegend={true}
+                      hideLegend={false}
                       height={size.height}
                       formatSeries={(series) => {
                         return getRiskLevelLabel(series, settings);
                       }}
-                      formatX={(series) => {
-                        return getRiskLevelLabel(series, settings);
+                      formatX={(xValue) => {
+                        return formatDate(xValue);
                       }}
                     />
                   )}

@@ -4,11 +4,9 @@ import { TransactionStatsDashboardMetric } from './dashboard-metrics/transaction
 import { HitsByUserStatsDashboardMetric } from './dashboard-metrics/hits-by-user-stats'
 import { RuleHitsStatsDashboardMetric } from './dashboard-metrics/rule-stats'
 import { TeamStatsDashboardMetric } from './dashboard-metrics/team-stats'
-import { RiskLevelDistributionStatsDashboardMetric } from './dashboard-metrics/risk-level-distribution-stats'
 import { OverviewStatsDashboardMetric } from './dashboard-metrics/overview-stats'
 import { CaseStatsDashboardMetric } from './dashboard-metrics/case-stats'
 import { KYCStatusDistributionStatsDashboardMetric } from './dashboard-metrics/kyc-status-distribution-stats'
-import { DashboardStatsRiskLevelDistributionData as RiskLevelDistributionStats } from '@/@types/openapi-internal/DashboardStatsRiskLevelDistributionData'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
@@ -20,6 +18,8 @@ import { traceable } from '@/core/xray'
 import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStats'
 import { DashboardStatsAlertPriorityDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertPriorityDistributionStats'
 import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStats'
+import { UserStats } from '@/lambdas/console-api-dashboard/repositories/dashboard-metrics/user-stats'
+import { DashboardStatsUsersByTimeItem } from '@/@types/openapi-internal/DashboardStatsUsersByTimeItem'
 
 @traceable
 export class DashboardStatsRepository {
@@ -40,7 +40,7 @@ export class DashboardStatsRepository {
     await Promise.all([
       this.refreshTransactionStats(timeRange),
       this.refreshCaseStats(timeRange),
-      this.refreshUserStats(),
+      this.refreshUserStats(timeRange),
       this.refreshTeamStats(timeRange),
     ])
   }
@@ -101,17 +101,18 @@ export class DashboardStatsRepository {
     )
   }
 
-  private async recalculateRiskLevelDistributionStats() {
-    await RiskLevelDistributionStatsDashboardMetric.refresh(this.tenantId)
-  }
-  public async getRiskLevelDistributionStats(
+  public async getUserTimewindowStats(
     userType: 'BUSINESS' | 'CONSUMER',
-    riskType: 'CRA' | 'KRS'
-  ): Promise<RiskLevelDistributionStats[]> {
-    return RiskLevelDistributionStatsDashboardMetric.get(
+    startTimestamp: number,
+    endTimestamp: number,
+    granularity: GranularityValuesType
+  ): Promise<DashboardStatsUsersByTimeItem[]> {
+    return UserStats.get(
       this.tenantId,
       userType,
-      riskType
+      startTimestamp,
+      endTimestamp,
+      granularity
     )
   }
 
@@ -156,9 +157,9 @@ export class DashboardStatsRepository {
     ])
   }
 
-  public async refreshUserStats() {
+  public async refreshUserStats(caseCreatedAtTimeRange?: TimeRange) {
     await this.recalculateKYCStatusDistributionStats()
-    await this.recalculateRiskLevelDistributionStats()
+    await UserStats.refresh(this.tenantId, caseCreatedAtTimeRange)
   }
 
   public async refreshTeamStats(caseUpdatedAtTimeRange?: TimeRange) {

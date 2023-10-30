@@ -21,7 +21,7 @@ export default function Widget(props: WidgetProps) {
       <div
         className={cn(s.root, resizing === 'FIXED' && s.fixedHeight)}
         style={{
-          height: resizing === 'AUTO' ? undefined : DEFAULT_FIXED_HEIGHT,
+          minHeight: resizing === 'AUTO' ? undefined : DEFAULT_FIXED_HEIGHT,
         }}
       >
         <div className={s.header}>

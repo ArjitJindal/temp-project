@@ -29,6 +29,7 @@ import WidgetGrid from '@/components/library/WidgetGrid';
 import Widget from '@/components/library/Widget';
 import Label from '@/components/library/Label';
 import { notEmpty } from '@/utils/array';
+import RiskLevelBreakdownWidget from '@/pages/dashboard/analysis/components/RiskLevelBreakdownWidget';
 
 type KeyValues =
   | 'OVERVIEW'
@@ -36,9 +37,11 @@ type KeyValues =
   | 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION'
   | 'TOP_RULE_HITS_BY_COUNT'
   | 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL'
+  | 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL'
   | 'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS'
   | 'TEAM_OVERVIEW'
   | 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL'
+  | 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL'
   | 'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS'
   | 'TOP_BUSINESS_USERS_BY_RULE_HITS'
   | 'DISTRIBUTION_BY_RULE_PRIORITY'
@@ -93,6 +96,8 @@ const TITLES: { [key in KeyValues]: string } = {
   TOP_BUSINESS_USERS_BY_RULE_HITS: 'Top business users by rule hits',
   TRANSACTIONS_BREAKDOWN_BY_TRS: 'Transactions breakdown by TRS',
   CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Consumer users distribution by risk levels',
+  CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Users breakdown by risk levels',
+  BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Users breakdown by risk levels',
   BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Business users distribution by risk levels',
   DISTRIBUTION_BY_RULE_PRIORITY: 'Distribution by rule priority',
   DISTRIBUTION_BY_RULE_ACTION: 'Distribution by rule action',
@@ -109,6 +114,8 @@ const DEFAULT_VALUES = {
   TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION: true,
   TOP_RULE_HITS_BY_COUNT: true,
   CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: true,
+  CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL: true,
+  BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL: true,
   TEAM_OVERVIEW: true,
   DISTRIBUTION_BY_RULE_PRIORITY: true,
   DISTRIBUTION_BY_CLOSING_REASON: true,
@@ -178,13 +185,22 @@ function Analysis() {
               isRiskScoringEnabled &&
                 settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
                   props: {
-                    id: 'consumer_userS_distibution_by_cra_risk_level',
-                    title: 'Distribution by risk levels',
-                    width: 'HALF' as const,
-                    resizing: 'AUTO' as const,
-                    children: <RiskLevelDistributionCard userType="CONSUMER" />,
+                    id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+                    title: 'Breakdown by risk levels',
+                    width: 'FULL' as const,
+                    userType: 'CONSUMER',
                   },
-                  component: Widget,
+                  component: RiskLevelBreakdownWidget,
+                },
+              isRiskScoringEnabled &&
+                settingsToDisplay.CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL && {
+                  props: {
+                    id: 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
+                    title: TITLES.CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL,
+                    width: 'HALF' as const,
+                    userType: 'CONSUMER',
+                  },
+                  component: RiskLevelDistributionCard,
                 },
               settingsToDisplay.TOP_CONSUMER_USERS_BY_RULE_HITS && {
                 props: {
@@ -221,13 +237,22 @@ function Analysis() {
               isRiskScoringEnabled &&
                 settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
                   props: {
-                    id: 'business_userS_distibution_by_cra_risk_level',
-                    title: 'Distribution by risk levels',
-                    width: 'HALF' as const,
-                    children: <RiskLevelDistributionCard userType="BUSINESS" />,
-                    resizing: 'AUTO' as const,
+                    id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+                    title: 'Breakdown by risk levels',
+                    width: 'FULL' as const,
+                    userType: 'BUSINESS',
                   },
-                  component: Widget,
+                  component: RiskLevelBreakdownWidget,
+                },
+              isRiskScoringEnabled &&
+                settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
+                  props: {
+                    id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+                    title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL,
+                    width: 'HALF' as const,
+                    userType: 'BUSINESS' as const,
+                  },
+                  component: RiskLevelDistributionCard,
                 },
               settingsToDisplay.TOP_BUSINESS_USERS_BY_RULE_HITS && {
                 props: {

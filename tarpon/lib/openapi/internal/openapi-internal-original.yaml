@@ -1865,9 +1865,9 @@ paths:
           in: query
           name: endTimestamp
     parameters: []
-  /dashboard_stats/risk-level-distribution:
+  /dashboard_stats/users/by_time:
     get:
-      summary: DashboardStats - Risk Level Distribution
+      summary: DashboardStats - Users - By time
       tags: []
       x-flagright:
         permissions:
@@ -1878,10 +1878,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardStatsRiskLevelDistribution'
-              examples: {}
-      operationId: get-dashboard-stats-risk-level-distribution
-      description: ''
+                type: array
+                items:
+                  $ref: '#/components/schemas/DashboardStatsUsersByTimeItem'
+      operationId: get-dashboard-stats-users-by-time
       parameters:
         - schema:
             type: string
@@ -1892,13 +1892,21 @@ paths:
           name: userType
           required: true
         - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+        - schema:
             type: string
             enum:
-              - CRA
-              - KRS
+              - HOUR
+              - MONTH
+              - DAY
           in: query
-          name: riskType
-          required: true
+          name: granularity
     parameters: []
   /dashboard_stats/kyc-status-distribution:
     get:
@@ -6331,16 +6339,46 @@ components:
               - hitCount
       required:
         - data
-    DashboardStatsRiskLevelDistribution:
+    DashboardStatsUsersByTimeItem:
+      type: object
+      title: DashboardStatsUsersByTimeItem
+      properties:
+        _id:
+          type: string
+        drsRiskLevel_VERY_LOW:
+          type: number
+        drsRiskLevel_LOW:
+          type: number
+        drsRiskLevel_MEDIUM:
+          type: number
+        drsRiskLevel_HIGH:
+          type: number
+        drsRiskLevel_VERY_HIGH:
+          type: number
+        krsRiskLevel_VERY_LOW:
+          type: number
+        krsRiskLevel_LOW:
+          type: number
+        krsRiskLevel_MEDIUM:
+          type: number
+        krsRiskLevel_HIGH:
+          type: number
+        krsRiskLevel_VERY_HIGH:
+          type: number
+      required:
+        - data
+    DashboardStatsKRSDistribution:
       type: object
       x-examples: {}
-      title: DashboardStatsRiskLevelDistribution
+      title: DashboardStatsKRSDistribution
       properties:
         data:
           type: array
           items:
             type: object
             properties:
+              date:
+                type: string
               riskLevel:
                 $ref: '#/components/schemas/RiskLevel'
               percentage:

@@ -1,6 +1,6 @@
 import { jobRunnerHandler } from '../app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { getTestTenantIdAndCreateCollections } from '@/test-utils/tenant-test-utils'
 import { DashboardRefreshBatchJob } from '@/@types/batch-job'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -27,10 +27,9 @@ const refreshUserStatsMock = jest.spyOn(
   'refreshUserStats'
 )
 
-describe('Dashboard refresh runnder', () => {
-  const tenantId = getTestTenantId()
-
+describe('Dashboard refresh runner', () => {
   test('refreshs all the dashboard stats', async () => {
+    const tenantId = await getTestTenantIdAndCreateCollections()
     // Prepare testing data
     const latest = dayjs('2023-09-21')
     const mongoDb = await getMongoDbClient()

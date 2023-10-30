@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import style from '../style.module.less';
 import { Value as WidgetRangePickerValue } from '../components/widgets/WidgetRangePicker';
 import { useQuery } from '@/utils/queries/hooks';
-import { RULE_INSTANCES, USERS_STATS } from '@/utils/queries/keys';
+import { RULE_INSTANCES, USERS } from '@/utils/queries/keys';
 import { AsyncResource, map } from '@/utils/asyncResource';
 import { useApi } from '@/api';
 import { BusinessUsersListResponse, ConsumerUsersListResponse, RuleInstance } from '@/apis';
@@ -66,7 +66,7 @@ export function useUsersQuery(
   let start = dateRange?.startTimestamp;
   let end = dateRange?.endTimestamp;
 
-  const userStatusResults = useQuery(USERS_STATS(userType), async () => {
+  const userStatusResults = useQuery(USERS(userType, { start, end }), async () => {
     if (start === undefined) start = 0;
     if (end === undefined) end = Date.now();
     if (userType === 'CONSUMER')
