@@ -120,6 +120,11 @@ jobs:
         run: |
           cd tarpon
           QA_SUBDOMAIN=${{ steps.deploy.outputs.tarpon }} DOMAIN=https://${{ steps.deploy.outputs.tarpon }}.flagright.dev API_KEY=${{ steps.deploy.outputs.integration_test_api_key }} npm run postman:integration:dev
+      - name: Run new tarpon public api integration tests
+        if: steps.check.outputs.triggered == 'true' && steps.deploy.outputs.tarpon != 'api'
+        run: |
+          cd tarpon
+          QA_SUBDOMAIN=${{ steps.deploy.outputs.tarpon }} DOMAIN=https://${{ steps.deploy.outputs.tarpon }}.flagright.dev API_KEY=${{ steps.deploy.outputs.integration_test_api_key }} npm run test:public:dev
       - name: Set latest commit status as ${{ job.status }}
         if: always() && steps.check.outputs.triggered == 'true'
         uses: myrotvorets/set-commit-status-action@master

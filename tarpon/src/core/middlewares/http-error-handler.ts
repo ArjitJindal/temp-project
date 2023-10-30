@@ -1,5 +1,6 @@
 import * as createError from 'http-errors'
 import { logger } from '../logger'
+import { HttpError } from '@/@types/http'
 
 export const httpErrorHandler =
   () =>
@@ -17,7 +18,7 @@ export const httpErrorHandler =
               process.env.ENV === 'local' || process.env.ENV === 'dev'
                 ? error.stack
                 : undefined,
-          }),
+          } as HttpError),
           headers: {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',

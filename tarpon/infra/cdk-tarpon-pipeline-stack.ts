@@ -226,6 +226,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                       `export AWS_REGION=${config.env.region}`,
                       ...assumeRuleCommands,
                       `npm run postman:integration:${config.stage}`,
+                      `npm run test:public:${config.stage}`,
                     ],
                   },
                 }
