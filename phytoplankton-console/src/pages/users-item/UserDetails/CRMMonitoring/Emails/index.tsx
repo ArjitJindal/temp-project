@@ -4,6 +4,8 @@ import CRMCommunicationCard from '../CRMCommunicationCard';
 import s from './index.module.less';
 import { CrmAccountResponseEngagements } from '@/apis';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import Button from '@/components/library/Button';
+import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
 
 interface Props {
   emails: Array<CrmAccountResponseEngagements>;
@@ -45,6 +47,7 @@ const Emails = (props: Props) => {
             </div>
           </Panel>
         ))}
+      <Button icon={<EditLineIcon />}>Compose</Button>
     </Collapse>
   );
 };
