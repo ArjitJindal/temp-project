@@ -157,6 +157,15 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           ],
         },
         {
+          stageName: 'Approve Sandbox',
+          actions: [
+            new codepipeline_actions.ManualApprovalAction({
+              actionName: 'Approve',
+              externalEntityLink: `https://${devConfig.SITE_DOMAIN}`,
+            }),
+          ],
+        },
+        {
           stageName: 'Deploy_Sandbox',
           actions: [
             new codepipeline_actions.CodeBuildAction({
@@ -167,7 +176,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           ],
         },
         {
-          stageName: 'Approve',
+          stageName: 'Approve Production',
           actions: [
             new codepipeline_actions.ManualApprovalAction({
               actionName: 'Approve',

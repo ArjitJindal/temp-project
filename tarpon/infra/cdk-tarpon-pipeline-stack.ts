@@ -341,6 +341,15 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           ],
         },
         {
+          stageName: 'Approve Sandbox',
+          actions: [
+            new codepipeline_actions.ManualApprovalAction({
+              actionName: 'Approve',
+              externalEntityLink: sandboxConfig.application.CONSOLE_URI,
+            }),
+          ],
+        },
+        {
           stageName: 'Deploy-Sandbox',
           actions: [
             new codepipeline_actions.CodeBuildAction({
