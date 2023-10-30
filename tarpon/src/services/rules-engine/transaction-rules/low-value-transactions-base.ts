@@ -31,6 +31,8 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
         lowTransactionCount: {
           type: 'integer',
           title: 'Low-value transactions count threshold',
+          description:
+            'rule is run when the transactions count is greater or equal to threshold',
         },
       },
       required: ['lowTransactionValues', 'lowTransactionCount'],

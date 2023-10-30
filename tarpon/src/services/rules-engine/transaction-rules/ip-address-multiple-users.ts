@@ -20,6 +20,7 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
         uniqueUsersCountThreshold: {
           type: 'integer',
           title: 'Users count threshold',
+          description: 'Rule is run when users count is greater than threshold',
         },
         timeWindow: TIME_WINDOW_SCHEMA(),
       },

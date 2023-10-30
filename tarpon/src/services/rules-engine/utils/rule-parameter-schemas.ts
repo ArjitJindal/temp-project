@@ -49,7 +49,8 @@ export const TRANSACTION_COUNTERPARTIES_THRESHOLD_SCHEMA = (
     ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_COUNTERPARTIES' }),
     title: options?.title || 'Unique transaction counterparties threshold',
     description:
-      options?.description || 'Unique transaction counterparties threshold',
+      options?.description ||
+      'Rule is run when number of unique transaction counterparties is greater or equal to threshold',
     properties: {
       transactionsCounterPartiesCount: {
         type: 'integer',
@@ -451,7 +452,9 @@ export const TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA = (options?: SchemaOptions) =>
     }),
     type: 'object',
     title: options?.title || 'Transactions amount threshold',
-    description: options?.description,
+    description:
+      options?.description ||
+      'Rule is run when the transaction amount is greater or equal to threshold',
     additionalProperties: {
       type: 'number',
     },

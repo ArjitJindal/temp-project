@@ -41,7 +41,11 @@ export default class BankNameChangeRule extends TransactionAggregationRule<
       type: 'object',
       properties: {
         timeWindow: TIME_WINDOW_SCHEMA(),
-        oldBanksThreshold: { type: 'integer' },
+        oldBanksThreshold: {
+          type: 'integer',
+          description:
+            'Rule is run when count of old bank usages is greater or equal to threshold',
+        },
       },
       required: [],
     }

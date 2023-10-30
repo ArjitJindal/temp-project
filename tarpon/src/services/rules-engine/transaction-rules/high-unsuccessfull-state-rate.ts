@@ -51,6 +51,8 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
           type: 'number',
           title:
             'Maximum rate of transactions of specified state (as a percentage)',
+          description:
+            'Rule is run when the rate of transactions of specified state are greater than threshold',
           nullable: false,
         },
         minimumTransactions: {

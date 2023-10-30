@@ -44,6 +44,8 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
           type: 'number',
           title:
             'Number of times payment details need to be used to trigger the rule',
+          description:
+            'Rule is run when the number of same payment details used is greater or equal to threshold',
         },
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
