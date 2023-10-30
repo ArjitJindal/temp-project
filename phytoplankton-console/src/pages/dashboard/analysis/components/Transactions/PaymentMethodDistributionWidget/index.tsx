@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import { exportDataForTreemaps } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_09,
@@ -60,7 +60,7 @@ export default function PaymentMethodDistributionWidget(props: Props) {
   const queryResult = useQuery(DASHBOARD_TRANSACTIONS_TOTAL_STATS({}), async () => {
     return await api.getDashboardStatsTransactionsTotal(params);
   });
-
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   const preparedDataRes = map(queryResult.data, (value): TreemapData<PaymentMethod> => {
     const resultMap: {
       [key: string]: number;
@@ -83,27 +83,33 @@ export default function PaymentMethodDistributionWidget(props: Props) {
     <AsyncResourceRenderer resource={preparedDataRes}>
       {(preparedData) => {
         return (
-          <Widget
-            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-            onDownload={(): Promise<{ fileName: string; data: string }> => {
-              return new Promise((resolve, _reject) => {
-                const fileData = {
-                  fileName: `distribution-by-payment-methods-${dayjs().format('YYYY_MM_DD')}.csv`,
-                  data: exportDataForTreemaps('paymentMethod', preparedData),
-                };
-                resolve(fileData);
-              });
-            }}
-            resizing="AUTO"
-            {...props}
-          >
-            <Treemap<PaymentMethod>
-              height={330}
-              data={preparedData}
-              colors={TREEMAP_COLORS}
-              formatTitle={(name) => (name == null ? `Other` : getPaymentMethodTitle(name))}
-            />
-          </Widget>
+          <div ref={pdfRef}>
+            <Widget
+              extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+              onDownload={(): Promise<{
+                fileName: string;
+                data: string;
+                pdfRef: MutableRefObject<HTMLInputElement>;
+              }> => {
+                return new Promise((resolve, _reject) => {
+                  const fileData = {
+                    fileName: `distribution-by-payment-methods-${dayjs().format('YYYY_MM_DD')}`,
+                    data: exportDataForTreemaps('paymentMethod', preparedData),
+                    pdfRef,
+                  };
+                  resolve(fileData);
+                });
+              }}
+              resizing="AUTO"
+              {...props}
+            >
+              <Treemap<PaymentMethod>
+                data={preparedData}
+                colors={TREEMAP_COLORS}
+                formatTitle={(name) => (name == null ? `Other` : getPaymentMethodTitle(name))}
+              />
+            </Widget>
+          </div>
         );
       }}
     </AsyncResourceRenderer>

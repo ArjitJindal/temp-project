@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import Donut, { DonutData } from '../charts/Donut';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
@@ -29,7 +29,7 @@ interface Props extends WidgetProps {}
 export default function RulePrioritySplitCard(props: Props) {
   const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
   const filteredResult = useFilteredRuleInstances(dateRange);
-
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   return (
     <AsyncResourceRenderer resource={filteredResult}>
       {(instance: RuleInstance[]) => {
@@ -65,22 +65,29 @@ export default function RulePrioritySplitCard(props: Props) {
           return 0;
         });
         return (
-          <Widget
-            onDownload={(): Promise<{ fileName: string; data: string }> => {
-              return new Promise((resolve, _reject) => {
-                const fileData = {
-                  fileName: `distribution-by-rule-priority-${dayjs().format('YYYY_MM_DD')}.csv`,
-                  data: exportDataForDonuts('rulePriority', priorityData),
-                };
-                resolve(fileData);
-              });
-            }}
-            resizing="AUTO"
-            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-            {...props}
-          >
-            <Donut<Priority> data={priorityData} colors={gaugeColors} legendPosition="RIGHT" />
-          </Widget>
+          <div ref={pdfRef}>
+            <Widget
+              onDownload={(): Promise<{
+                fileName: string;
+                data: string;
+                pdfRef: MutableRefObject<HTMLInputElement>;
+              }> => {
+                return new Promise((resolve, _reject) => {
+                  const fileData = {
+                    fileName: `distribution-by-rule-priority-${dayjs().format('YYYY_MM_DD')}`,
+                    data: exportDataForDonuts('rulePriority', priorityData),
+                    pdfRef,
+                  };
+                  resolve(fileData);
+                });
+              }}
+              resizing="AUTO"
+              extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+              {...props}
+            >
+              <Donut<Priority> data={priorityData} colors={gaugeColors} legendPosition="RIGHT" />
+            </Widget>
+          </div>
         );
       }}
     </AsyncResourceRenderer>

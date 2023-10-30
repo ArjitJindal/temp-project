@@ -50,7 +50,7 @@ export default function KYCStatusDistributionCard(props: Props) {
     };
   });
   return (
-    <Widget resizing="FIXED" {...props}>
+    <Widget resizing="AUTO" {...props}>
       <AsyncResourceRenderer resource={queryResult.data}>
         {(response) => {
           if (response.total === 0) {

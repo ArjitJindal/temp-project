@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import Donut, { DonutData } from '../charts/Donut';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
@@ -37,7 +37,7 @@ export default function RuleActionSplitCard(props: Props) {
   const filteredDataRes = useFilteredRuleInstances(dateRange);
 
   const settings = useSettings();
-
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   return (
     <AsyncResourceRenderer resource={filteredDataRes}>
       {(instances: RuleInstance[]) => {
@@ -59,27 +59,34 @@ export default function RuleActionSplitCard(props: Props) {
           return RULE_ACTION_ORDER.indexOf(a.series) - RULE_ACTION_ORDER.indexOf(b.series);
         });
         return (
-          <Widget
-            onDownload={(): Promise<{ fileName: string; data: string }> => {
-              return new Promise((resolve, _reject) => {
-                const fileData = {
-                  fileName: `distribution-by-rule-action-${dayjs().format('YYYY_MM_DD')}.csv`,
-                  data: exportDataForDonuts('ruleAction', data),
-                };
-                resolve(fileData);
-              });
-            }}
-            resizing="AUTO"
-            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-            {...props}
-          >
-            <Donut<RuleAction>
-              data={data}
-              colors={COLORS}
-              legendPosition="RIGHT"
-              formatSeries={(action) => getRuleActionLabel(action, settings) ?? action}
-            />
-          </Widget>
+          <div ref={pdfRef}>
+            <Widget
+              onDownload={(): Promise<{
+                fileName: string;
+                data: string;
+                pdfRef: MutableRefObject<HTMLInputElement>;
+              }> => {
+                return new Promise((resolve, _reject) => {
+                  const fileData = {
+                    fileName: `distribution-by-rule-action-${dayjs().format('YYYY_MM_DD')}`,
+                    data: exportDataForDonuts('ruleAction', data),
+                    pdfRef,
+                  };
+                  resolve(fileData);
+                });
+              }}
+              resizing="AUTO"
+              extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+              {...props}
+            >
+              <Donut<RuleAction>
+                data={data}
+                colors={COLORS}
+                legendPosition="RIGHT"
+                formatSeries={(action) => getRuleActionLabel(action, settings) ?? action}
+              />
+            </Widget>
+          </div>
         );
       }}
     </AsyncResourceRenderer>

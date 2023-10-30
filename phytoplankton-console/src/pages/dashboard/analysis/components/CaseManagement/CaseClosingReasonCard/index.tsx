@@ -1,5 +1,5 @@
 import { useLocalStorageState } from 'ahooks';
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import s from './index.module.less';
 import { exportDataForTreemaps } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
@@ -77,6 +77,7 @@ const CaseClosingReasonCard = (props: Props) => {
     const response = await api.getDashboardStatsClosingReasonDistributionStats(params);
     return response;
   });
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   return (
     <AsyncResourceRenderer<DashboardStatsClosingReasonDistributionStats>
       resource={queryResult.data}
@@ -97,33 +98,40 @@ const CaseClosingReasonCard = (props: Props) => {
               child != null,
           ) as TreemapData<ClosingReasons>;
         return (
-          <Widget
-            onDownload={(): Promise<{ fileName: string; data: string }> => {
-              return new Promise((resolve, _reject) => {
-                const fileData = {
-                  fileName: `distribution-by-${selectedSection.toLowerCase()}-closing-reason-${dayjs().format(
-                    'YYYY_MM_DD',
-                  )}.csv`,
-                  data: exportDataForTreemaps(
-                    `${selectedSection.toLowerCase()}ClosingReason`,
-                    data,
-                  ),
-                };
-                resolve(fileData);
-              });
-            }}
-            resizing="AUTO"
-            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-            {...props}
-          >
-            <div className={s.root}>
-              <ScopeSelector
-                selectedSection={selectedSection}
-                setSelectedSection={setSelectedSection}
-              />
-              <Treemap<ClosingReasons> height={280} data={data} colors={TREEMAP_COLORS} />
-            </div>
-          </Widget>
+          <div ref={pdfRef}>
+            <Widget
+              onDownload={(): Promise<{
+                fileName: string;
+                data: string;
+                pdfRef: MutableRefObject<HTMLInputElement>;
+              }> => {
+                return new Promise((resolve, _reject) => {
+                  const fileData = {
+                    fileName: `distribution-by-${selectedSection.toLowerCase()}-closing-reason-${dayjs().format(
+                      'YYYY_MM_DD',
+                    )}`,
+                    data: exportDataForTreemaps(
+                      `${selectedSection.toLowerCase()}ClosingReason`,
+                      data,
+                    ),
+                    pdfRef: pdfRef,
+                  };
+                  resolve(fileData);
+                });
+              }}
+              resizing="AUTO"
+              extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+              {...props}
+            >
+              <div className={s.root}>
+                <ScopeSelector
+                  selectedSection={selectedSection}
+                  setSelectedSection={setSelectedSection}
+                />
+                <Treemap<ClosingReasons> height={350} data={data} colors={TREEMAP_COLORS} />
+              </div>
+            </Widget>
+          </div>
         );
       }}
     </AsyncResourceRenderer>

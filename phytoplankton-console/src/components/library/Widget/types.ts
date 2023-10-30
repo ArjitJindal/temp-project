@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { MutableRefObject } from 'react';
 
 export interface WidgetPropsRequired {
   id: string;
@@ -10,7 +10,8 @@ export interface WidgetPropsOptional {
   resizing?: 'AUTO' | 'FIXED';
   onDownload: () => Promise<{
     fileName: string;
-    data: string;
+    data?: string;
+    pdfRef?: MutableRefObject<HTMLInputElement>;
   }>;
   extraControls: React.ReactNode[];
   children: React.ReactNode;

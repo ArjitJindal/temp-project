@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import Donut from '@/pages/dashboard/analysis/components/charts/Donut';
 import {
@@ -43,6 +43,7 @@ const DistributionByAlertPriority = (props: Props) => {
     return response;
   });
   const data = queryResult.data;
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   return (
     <AsyncResourceRenderer<DashboardStatsAlertPriorityDistributionStats> resource={data}>
       {({ alertPriorityData }) => {
@@ -52,30 +53,37 @@ const DistributionByAlertPriority = (props: Props) => {
           },
         );
         return (
-          <Widget
-            onDownload={(): Promise<{ fileName: string; data: string }> => {
-              return new Promise((resolve, _reject) => {
-                const fileData = {
-                  fileName: `distribution-by-open-alert-priority-${dayjs().format(
-                    'YYYY_MM_DD',
-                  )}.csv`,
-                  data: exportDataForDonuts('alertPriority', data),
-                };
-                resolve(fileData);
-              });
-            }}
-            width="HALF"
-            resizing="AUTO"
-            extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-            {...props}
-          >
-            <Donut
-              shape="SEMI_CIRCLE"
-              data={data}
-              colors={PRIORITY_COLORS}
-              legendPosition={'BOTTOM'}
-            />
-          </Widget>
+          <div ref={pdfRef}>
+            <Widget
+              onDownload={(): Promise<{
+                fileName: string;
+                pdfRef: MutableRefObject<HTMLInputElement>;
+                data: string;
+              }> => {
+                return new Promise((resolve, _reject) => {
+                  const fileData = {
+                    fileName: `distribution-by-open-alert-priority-${dayjs().format(
+                      'YYYY_MM_DD',
+                    )}.pdf`,
+                    pdfRef: pdfRef,
+                    data: exportDataForDonuts('alertPriority', data),
+                  };
+                  resolve(fileData);
+                });
+              }}
+              width="HALF"
+              resizing="AUTO"
+              extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+              {...props}
+            >
+              <Donut
+                shape="SEMI_CIRCLE"
+                data={data}
+                colors={PRIORITY_COLORS}
+                legendPosition={'BOTTOM'}
+              />
+            </Widget>
+          </div>
         );
       }}
     </AsyncResourceRenderer>

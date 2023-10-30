@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import Donut, { DonutData } from '../charts/Donut';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
@@ -52,7 +52,7 @@ export default function UserStatusDistributionCard(props: Props) {
     endTimestamp: Date.now(),
   });
   const usersResult = useUsersQuery(userType, dateRange);
-
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   return (
     <AsyncResourceRenderer resource={usersResult.data}>
       {(users: ConsumerUsersListResponse | BusinessUsersListResponse) => {
@@ -75,40 +75,44 @@ export default function UserStatusDistributionCard(props: Props) {
         });
 
         return (
-          <Widget
-            onDownload={(): Promise<{
-              fileName: string;
-              data: string;
-            }> => {
-              return new Promise((resolve, _reject) => {
-                const fileData = {
-                  fileName: `${userType.toLowerCase()}-user-status-distribution-${dayjs().format(
-                    'YYYY_MM_DD',
-                  )}.csv`,
-                  data: exportDataForDonuts('userStatus', data),
-                };
-                resolve(fileData);
-              });
-            }}
-            resizing="AUTO"
-            extraControls={[
-              <WidgetRangePicker
-                value={dateRange}
-                onChange={(e) => {
-                  e && setDateRange(e);
-                  usersResult.refetch();
-                }}
-              />,
-            ]}
-            {...props}
-          >
-            <Donut<UserState>
-              data={data}
-              colors={COLORS}
-              legendPosition="RIGHT"
-              formatSeries={(action) => capitalizeWords(action) ?? action}
-            />
-          </Widget>
+          <div ref={pdfRef}>
+            <Widget
+              onDownload={(): Promise<{
+                fileName: string;
+                data: string;
+                pdfRef: MutableRefObject<HTMLInputElement>;
+              }> => {
+                return new Promise((resolve, _reject) => {
+                  const fileData = {
+                    fileName: `${userType.toLowerCase()}-user-status-distribution-${dayjs().format(
+                      'YYYY_MM_DD',
+                    )}`,
+                    data: exportDataForDonuts('userStatus', data),
+                    pdfRef,
+                  };
+                  resolve(fileData);
+                });
+              }}
+              resizing="AUTO"
+              extraControls={[
+                <WidgetRangePicker
+                  value={dateRange}
+                  onChange={(e) => {
+                    e && setDateRange(e);
+                    usersResult.refetch();
+                  }}
+                />,
+              ]}
+              {...props}
+            >
+              <Donut<UserState>
+                data={data}
+                colors={COLORS}
+                legendPosition="RIGHT"
+                formatSeries={(action) => capitalizeWords(action) ?? action}
+              />
+            </Widget>
+          </div>
         );
       }}
     </AsyncResourceRenderer>

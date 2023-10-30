@@ -1,11 +1,12 @@
 import cn from 'clsx';
-import React, { useCallback, useState } from 'react';
+import React, { MutableRefObject, useCallback, useState } from 'react';
 import s from './index.module.less';
 import { WidgetProps } from './types';
 import WidgetBase from './WidgetBase';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import { download } from '@/utils/browser';
 import { message } from '@/components/library/Message';
+import DownloadAsPDF from '@/components/SanctionsTable/SearchResultDetailsModal/DownloadAsPDF';
 
 const DEFAULT_FIXED_HEIGHT = 400;
 
@@ -50,29 +51,34 @@ export default function Widget(props: WidgetProps) {
 export function DownloadButton(props: {
   onDownload: () => Promise<{
     fileName: string;
-    data: string;
+    data?: string;
+    pdfRef?: MutableRefObject<HTMLInputElement>;
   }>;
 }) {
   const { onDownload } = props;
   const [isLoading, setLoading] = useState(false);
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(async () => {
     const hideMessage = message.loading('Downloading file...');
     setLoading(true);
-    onDownload()
-      .then(({ data, fileName }) => {
+
+    try {
+      const { data, fileName, pdfRef } = await onDownload();
+      if (pdfRef) {
+        await DownloadAsPDF({ pdfRef, fileName, data });
+      } else {
         if (data && data.length) {
           download(fileName, data);
         } else {
           message.info('Nothing to download');
         }
-      })
-      .catch(() => {
-        message.error('Unable to complete the download');
-      })
-      .finally(() => {
-        setLoading(false);
-        hideMessage && hideMessage();
-      });
+      }
+    } catch (err) {
+      message.fatal('Unable to complete the download!', err);
+    } finally {
+      setLoading(false);
+      hideMessage && hideMessage();
+      message.success('File successfully downloaded');
+    }
   }, [onDownload]);
   return (
     <DownloadLineIcon className={cn(s.icon, isLoading && s.isLoading)} onClick={handleClick} />

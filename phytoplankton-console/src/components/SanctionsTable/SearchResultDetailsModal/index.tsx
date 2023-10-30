@@ -32,7 +32,7 @@ export default function SearchResultDetailsModal(props: Props) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const handleDownloadClick = (): void => {
     setIsLoading(true);
-    DownloadAsPDF(pdfRef, pdfName)
+    DownloadAsPDF({ pdfRef, fileName: `${pdfName} Sanctions Details.pdf` })
       .then(() => setIsLoading(false))
       .catch((err) => {
         message.fatal(`Unable to complete the download!`, err);

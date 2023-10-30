@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Empty } from 'antd';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
@@ -61,7 +61,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
     }
     return result;
   });
-
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   return (
     <AsyncResourceRenderer resource={preparedDataRes}>
       {(data) => {
@@ -69,41 +69,48 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
           return <Empty description="No data available for selected period" />;
         }
         return (
-          <Widget
-            extraControls={[
-              <DatePicker.RangePicker
-                value={dateRange}
-                onChange={(e) => setDateRange(e ?? DEFAULT_DATE_RANGE)}
-              />,
-            ]}
-            onDownload={(): Promise<{ fileName: string; data: string }> => {
-              const randomID = (Math.floor(Math.random() * 90000) + 10000).toString();
-              return new Promise((resolve, _reject) => {
-                const fileData = {
-                  fileName: `distribution-by-transaction-type-${randomID}.csv`,
-                  data: exportDataForDonuts('transactionType', data),
-                };
-                resolve(fileData);
-              });
-            }}
-            resizing="AUTO"
-            {...props}
-          >
-            <Donut<TransactionType>
-              data={data}
-              colors={{
-                DEPOSIT: COLORS_V2_ANALYTICS_CHARTS_04,
-                TRANSFER: COLORS_V2_ANALYTICS_CHARTS_05,
-                EXTERNAL_PAYMENT: COLORS_V2_ANALYTICS_CHARTS_10,
-                WITHDRAWAL: COLORS_V2_ANALYTICS_CHARTS_01,
-                REFUND: COLORS_V2_ANALYTICS_CHARTS_02,
-                OTHER: COLORS_V2_ANALYTICS_CHARTS_07,
+          <div ref={pdfRef}>
+            <Widget
+              extraControls={[
+                <DatePicker.RangePicker
+                  value={dateRange}
+                  onChange={(e) => setDateRange(e ?? DEFAULT_DATE_RANGE)}
+                />,
+              ]}
+              onDownload={(): Promise<{
+                fileName: string;
+                data: string;
+                pdfRef: MutableRefObject<HTMLInputElement>;
+              }> => {
+                const randomID = (Math.floor(Math.random() * 90000) + 10000).toString();
+                return new Promise((resolve, _reject) => {
+                  const fileData = {
+                    fileName: `distribution-by-transaction-type-${randomID}`,
+                    data: exportDataForDonuts('transactionType', data),
+                    pdfRef,
+                  };
+                  resolve(fileData);
+                });
               }}
-              formatSeries={(series) => {
-                return humanizeConstant(series);
-              }}
-            />
-          </Widget>
+              resizing="AUTO"
+              {...props}
+            >
+              <Donut<TransactionType>
+                data={data}
+                colors={{
+                  DEPOSIT: COLORS_V2_ANALYTICS_CHARTS_04,
+                  TRANSFER: COLORS_V2_ANALYTICS_CHARTS_05,
+                  EXTERNAL_PAYMENT: COLORS_V2_ANALYTICS_CHARTS_10,
+                  WITHDRAWAL: COLORS_V2_ANALYTICS_CHARTS_01,
+                  REFUND: COLORS_V2_ANALYTICS_CHARTS_02,
+                  OTHER: COLORS_V2_ANALYTICS_CHARTS_07,
+                }}
+                formatSeries={(series) => {
+                  return humanizeConstant(series);
+                }}
+              />
+            </Widget>
+          </div>
         );
       }}
     </AsyncResourceRenderer>
