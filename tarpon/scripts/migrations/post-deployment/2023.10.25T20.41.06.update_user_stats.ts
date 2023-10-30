@@ -27,6 +27,11 @@ async function migrateTenant(tenant: Tenant) {
     DASHBOARD_USERS_STATS_COLLECTION_MONTHLY(tenant.id),
   ]
   for (const collectionName of collections) {
+    try {
+      await db.dropCollection(collectionName)
+    } catch (e) {
+      // ignore
+    }
     const collection = await createCollectionIfNotExist(db, collectionName)
     for (const { getIndexes, unique } of allIndexes[collectionName] ?? []) {
       await syncIndexes(
@@ -50,12 +55,3 @@ export const up = async () => {
 export const down = async () => {
   // skip
 }
-
-up().then(
-  () => {
-    console.log('Done')
-  },
-  (e) => {
-    console.error(e)
-  }
-)

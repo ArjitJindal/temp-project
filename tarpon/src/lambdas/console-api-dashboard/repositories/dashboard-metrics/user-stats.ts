@@ -49,7 +49,6 @@ export class UserStats {
           $group: {
             _id: {
               type: '$type',
-              scoreType: '',
               date: {
                 $dateToString: {
                   format: dateFormat,
@@ -169,7 +168,7 @@ export class UserStats {
         {
           $group: {
             _id: {
-              time: '$time',
+              date: '$time',
               krsScore: '$krsScore',
               drsScore: '$drsScore',
               type: '$type',
@@ -180,7 +179,7 @@ export class UserStats {
 
         {
           $project: {
-            date: '$_id.time',
+            date: '$_id.date',
             type: '$_id.type',
             krsScore: '$_id.krsScore',
             drsScore: '$_id.drsScore',
