@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { UseMutationResult } from '@tanstack/react-query';
 import cn from 'clsx';
 import { useDebounce } from 'ahooks';
+import { compact } from 'lodash';
 import s from './index.module.less';
 import { getMutationAsyncResource, useQuery } from '@/utils/queries/hooks';
 import { getOr, isLoading, useFinishedSuccessfully } from '@/utils/asyncResource';
@@ -18,14 +19,30 @@ export type FormValues = {
   searchString: string;
 };
 
+const SUGGESTIONS_ORDER: readonly string[] = [
+  'User details',
+  'Alerts',
+  'TRS score',
+  'Transactions',
+  'Transaction insights',
+  'Payment identifiers of senders',
+  'Payment identifiers of receivers',
+  'Users money received from',
+  'Users money sent to',
+  'Website',
+  'Alerts that resulted in SAR',
+  'Recommendation',
+];
+
 interface Props {
   mutation: UseMutationResult<unknown, unknown, FormValues>;
   history: QuestionResponse[];
   alertId: string;
+  setHistory: (history: QuestionResponse[]) => void;
 }
 
 export default function RequestForm(props: Props) {
-  const { mutation, history, alertId } = props;
+  const { mutation, history, setHistory, alertId } = props;
   const mutationRes = getMutationAsyncResource(mutation);
 
   const [showMore, setShowMore] = useState<boolean>(false);
@@ -44,6 +61,19 @@ export default function RequestForm(props: Props) {
       return response.suggestions ?? [];
     },
   );
+
+  const [isAutoPilotClicked, setIsAutoPilotClicked] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isAutoPilotClicked && history.length === SUGGESTIONS_ORDER.length) {
+      const sortedHistory = SUGGESTIONS_ORDER.map((search) =>
+        compact(history).find((question) => question?.questionId === search),
+      );
+
+      setHistory(sortedHistory as QuestionResponse[]);
+      setIsAutoPilotClicked(false);
+    }
+  }, [isAutoPilotClicked, history, setHistory, setIsAutoPilotClicked]);
 
   const suggestions = getOr(suggestionsQueryResult.data, []);
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState<number>();
@@ -151,26 +181,9 @@ export default function RequestForm(props: Props) {
               htmlType="button"
               onClick={async () => {
                 setSearchText('');
+                setIsAutoPilotClicked(true);
                 await Promise.all(
-                  ['User details', 'Alert history'].map(async (search) =>
-                    mutation.mutate({ searchString: search }),
-                  ),
-                );
-                await Promise.all(
-                  [
-                    'TRS score',
-                    'Transactions',
-                    'Transaction summary',
-                    'Payment identifiers of senders',
-                    'Payment identifiers of receivers',
-                    'Users money received from',
-                    'Users  sent money',
-                    'Website',
-                    'SARs filed',
-                  ].map(async (search) => mutation.mutate({ searchString: search })),
-                );
-                await Promise.all(
-                  ['Recommendation'].map(async (search) =>
+                  SUGGESTIONS_ORDER.map(async (search) =>
                     mutation.mutate({ searchString: search }),
                   ),
                 );
