@@ -10,6 +10,10 @@ describe('Add a comment to a case', () => {
 
     // Navigate to case
     cy.visit('/case-management/cases');
+    cy.intercept('GET', `**/cases**`).as('cases');
+    cy.wait('@cases').then((intercept) => {
+      expect(intercept.response?.statusCode).to.be.oneOf([200, 304]);
+    });
     cy.get('[data-cy="case-id"]', { timeout: 15000 }).eq(0).click();
 
     // Open comment window and fill it
