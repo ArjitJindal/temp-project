@@ -25,7 +25,6 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -36,12 +35,11 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
 import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
-import { KrsScore } from '@/@types/openapi-internal/KrsScore'
-import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { INTERNAL_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { UserService } from '@/services/users'
+import { isDemoTenant } from '@/utils/tenant'
 
 const sqs = new SQS({
   region: process.env.AWS_REGION,
@@ -55,7 +53,7 @@ async function handleNewCases(
   const mongoDb = await getMongoDbClient()
 
   const tenantRepository = new TenantRepository(tenantId, {
-    mongoDb: await getMongoDbClient(),
+    mongoDb,
   })
 
   const newAlerts = flatten(cases.map((c) => c.alerts)).filter(
@@ -68,6 +66,7 @@ async function handleNewCases(
     (c) =>
       c.createdTimestamp && c.createdTimestamp >= timestampBeforeCasesCreation
   )
+
   if (await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
     for (const caseItem of newCases) {
       logger.info(`Sending slack alert SQS message for case ${caseItem.caseId}`)
@@ -84,11 +83,12 @@ async function handleNewCases(
       await sqs.send(sqsSendMessageCommand)
     }
   }
-  const dynamoDb = await getDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const casesAlertsAuditLogService = new CasesAlertsAuditLogService(tenantId, {
     mongoDb,
     dynamoDb,
   })
+
   const propertiesToPickForCase = [
     'caseId',
     'caseType',
@@ -96,13 +96,7 @@ async function handleNewCases(
     'createdTimestamp',
     'availableAfterTimestamp',
   ]
-  await Promise.all(
-    newCases.map(async (caseItem) => {
-      await casesAlertsAuditLogService.handleAuditLogForNewCase(
-        pick(caseItem, propertiesToPickForCase)
-      )
-    })
-  )
+
   const propertiesToPickForAlert = [
     'alertId',
     'parentAlertId',
@@ -123,33 +117,42 @@ async function handleNewCases(
     'lastStatusChange',
     'updatedAt',
   ]
-  await Promise.all(
-    newAlerts.map(async (alert) => {
-      await casesAlertsAuditLogService.handleAuditLogForNewAlert(
-        pick(alert, propertiesToPickForAlert)
-      )
-    })
-  )
+
+  await Promise.all([
+    ...newCases.map(
+      async (caseItem) =>
+        await casesAlertsAuditLogService.handleAuditLogForNewCase(
+          pick(caseItem, propertiesToPickForCase)
+        )
+    ),
+    ...newAlerts.map(
+      async (alert) =>
+        await casesAlertsAuditLogService.handleAuditLogForNewAlert(
+          pick(alert, propertiesToPickForAlert)
+        )
+    ),
+  ])
 }
 
 async function transactionHandler(
   tenantId: string,
   transaction: TransactionWithRulesResult | undefined
 ) {
-  if (!transaction || !transaction.transactionId) {
+  if (!transaction || !transaction.transactionId || isDemoTenant(tenantId)) {
     return
   }
   updateLogMetadata({ transactionId: transaction.transactionId })
   logger.info(`Processing Transaction`)
 
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
 
-  const dynamoDb = await getDynamoDbClient()
   const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
   const casesRepo = new CaseRepository(tenantId, {
     mongoDb,
     dynamoDb,
   })
+
   const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
@@ -158,7 +161,17 @@ async function transactionHandler(
   const tenantRepository = new TenantRepository(tenantId, {
     dynamoDb,
   })
-  const tenantSettings = await tenantRepository.getTenantSettings()
+
+  const [transactionInMongo, tenantSettings, ruleInstances] = await Promise.all(
+    [
+      transactionsRepo.addTransactionToMongo(transaction),
+      tenantRepository.getTenantSettings(),
+      ruleInstancesRepo.getRuleInstancesByIds(
+        transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
+      ),
+    ]
+  )
+
   const caseCreationService = new CaseCreationService(
     casesRepo,
     usersRepo,
@@ -166,28 +179,19 @@ async function transactionHandler(
     transactionsRepo,
     tenantSettings
   )
+
   const riskScoringService = new RiskScoringService(tenantId, {
     dynamoDb,
     mongoDb,
   })
-  const transactionInMongo = await transactionsRepo.addTransactionToMongo(
-    transaction
-  )
+
+  const userService = new UserService(tenantId, { dynamoDb, mongoDb })
+
   logger.info(`Starting Case Creation`)
   const timestampBeforeCasesCreation = Date.now()
 
-  const ruleInstances = await ruleInstancesRepo.getRuleInstancesByIds(
-    transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
-  )
-
   const transactionUsers = await caseCreationService.getTransactionUsers(
     transaction
-  )
-
-  const cases = await caseCreationService.handleTransaction(
-    transactionInMongo,
-    ruleInstances as RuleInstance[],
-    transactionUsers
   )
 
   const ruleWithAdvancedOptions = ruleInstances.filter(
@@ -196,9 +200,13 @@ async function transactionHandler(
       !isEmpty(ruleInstance.riskLevelsTriggersOnHit)
   )
 
-  if (ruleWithAdvancedOptions?.length) {
-    const userService = new UserService(tenantId, { dynamoDb, mongoDb })
+  const cases = await caseCreationService.handleTransaction(
+    transactionInMongo,
+    ruleInstances as RuleInstance[],
+    transactionUsers
+  )
 
+  if (ruleWithAdvancedOptions?.length) {
     await userService.handleTransactionUserStatusUpdateTrigger(
       transaction,
       ruleInstances as RuleInstance[],
@@ -208,7 +216,9 @@ async function transactionHandler(
   }
 
   logger.info(`Case Creation Completed`)
-  if (await tenantHasFeature(tenantId, 'RISK_SCORING')) {
+
+  // We don't need to use `tenantHasSetting` because we already have tenantSettings from above and we can just check for the feature
+  if (tenantSettings?.features?.includes('RISK_SCORING')) {
     logger.info(`Calculating ARS & DRS`)
 
     const { originDrsScore, destinationDrsScore } =
@@ -240,7 +250,7 @@ async function userHandler(
 
   let internalUser = user as InternalUser
   const mongoDb = await getMongoDbClient()
-  const dynamoDb = await getDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
   const casesRepo = new CaseRepository(tenantId, {
     mongoDb,
@@ -265,23 +275,25 @@ async function userHandler(
     tenantSettings
   )
 
-  let krsScore: KrsScore | null = null
-  let drsScore: DrsScore | null = null
-
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-  const isRiskScoringEnabled = await tenantHasFeature(tenantId, 'RISK_SCORING')
-  const isRiskLevelsEnabled = await tenantHasFeature(tenantId, 'RISK_LEVELS')
-  if (isRiskScoringEnabled) {
-    krsScore = await riskRepository.getKrsScore(internalUser.userId)
-    if (!krsScore) {
-      logger.warn(
-        `KRS score not found for user ${internalUser.userId} for tenant ${tenantId}`
-      )
-    }
-  }
+  const isRiskScoringEnabled =
+    tenantSettings?.features?.includes('RISK_SCORING')
 
-  if (isRiskScoringEnabled || isRiskLevelsEnabled) {
-    drsScore = await riskRepository.getDrsScore(internalUser.userId)
+  const isRiskLevelsEnabled = tenantSettings?.features?.includes('RISK_LEVELS')
+
+  const [krsScore, drsScore] = await Promise.all([
+    isRiskScoringEnabled
+      ? riskRepository.getKrsScore(internalUser.userId)
+      : null,
+    isRiskScoringEnabled || isRiskLevelsEnabled
+      ? riskRepository.getDrsScore(internalUser.userId)
+      : null,
+  ])
+
+  if (!krsScore && isRiskScoringEnabled) {
+    logger.warn(
+      `KRS score not found for user ${internalUser.userId} for tenant ${tenantId}`
+    )
   }
 
   internalUser = {
@@ -290,11 +302,13 @@ async function userHandler(
     ...(drsScore && { drsScore }),
   }
 
-  if (drsScore) {
-    await usersRepo.updateDrsScoreOfUser(internalUser.userId, drsScore)
-  }
+  const [_, existingUser] = await Promise.all([
+    drsScore && isRiskScoringEnabled
+      ? usersRepo.updateDrsScoreOfUser(internalUser.userId, drsScore)
+      : null,
+    usersRepo.getUserById(internalUser.userId),
+  ])
 
-  const existingUser = await usersRepo.getUserById(internalUser.userId)
   internalUser.createdAt = existingUser?.createdAt ?? Date.now()
   internalUser.updatedAt = Date.now()
 
@@ -305,8 +319,11 @@ async function userHandler(
 
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleUser(savedUser)
-  await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
-  await casesRepo.updateUsersInCases(internalUser)
+
+  await Promise.all([
+    handleNewCases(tenantId, timestampBeforeCasesCreation, cases),
+    casesRepo.updateUsersInCases(internalUser),
+  ])
 
   if (!krsScore && isRiskScoringEnabled) {
     // Will backfill KRS score for all users without KRS score

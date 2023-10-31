@@ -29,40 +29,46 @@ async function arsScoreEventHandler(
   const riskRepository = new RiskRepository(tenantId, {
     mongoDb,
   })
-  await riskRepository.addArsValueToMongo(arsScore)
-
-  await mongoDb
-    .db()
-    .collection(TRANSACTIONS_COLLECTION(tenantId))
-    .updateOne(
-      { transactionId: arsScore.transactionId },
-      { $set: { arsScore } }
-    )
 
   const casesCollection = mongoDb
     .db()
     .collection<Case>(CASES_COLLECTION(tenantId))
 
+  await Promise.all([
+    riskRepository.addArsValueToMongo(arsScore),
+    mongoDb
+      .db()
+      .collection(TRANSACTIONS_COLLECTION(tenantId))
+      .updateOne(
+        { transactionId: arsScore.transactionId },
+        { $set: { arsScore } }
+      ),
+  ])
+
   const caseDocuments = await casesCollection
-    .find({ 'caseTransactions.transactionId': arsScore.transactionId })
+    .find({
+      'caseTransactions.transactionId': arsScore.transactionId,
+    })
     .toArray()
 
-  for (const caseDocument of caseDocuments) {
-    const caseTransactions = caseDocument?.caseTransactions
-    if (caseTransactions && caseTransactions?.length > 0) {
-      const caseTransaction = caseTransactions.find(
-        (transaction) => transaction.transactionId === arsScore.transactionId
-      )
-      if (caseTransaction) {
-        caseTransaction.arsScore = arsScore
-      }
+  await Promise.all(
+    caseDocuments.map(async (caseDocument) => {
+      const caseTransactions = caseDocument?.caseTransactions
+      if (caseTransactions && caseTransactions?.length > 0) {
+        const caseTransaction = caseTransactions.find(
+          (transaction) => transaction.transactionId === arsScore.transactionId
+        )
+        if (caseTransaction) {
+          caseTransaction.arsScore = arsScore
+        }
 
-      await casesCollection.updateOne(
-        { _id: caseDocument._id },
-        { $set: { caseTransactions } }
-      )
-    }
-  }
+        await casesCollection.updateOne(
+          { _id: caseDocument._id },
+          { $set: { caseTransactions } }
+        )
+      }
+    })
+  )
 
   logger.info(`ARS Score Processed`)
 }
@@ -81,14 +87,12 @@ async function drsScoreEventHandler(
   const riskRepository = new RiskRepository(tenantId, { mongoDb })
   const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
-  const drsScoreUpdated = await riskRepository.addDrsValueToMongo(drsScore)
-
-  if (drsScoreUpdated?.userId) {
-    await userRepository.updateDrsScoreOfUser(
-      drsScoreUpdated.userId,
-      drsScoreUpdated
-    )
-  }
+  await Promise.all([
+    riskRepository.addDrsValueToMongo(drsScore),
+    drsScore.userId
+      ? userRepository.updateDrsScoreOfUser(drsScore.userId, drsScore)
+      : undefined,
+  ])
 
   logger.info(`DRS Score Processed`)
 }
@@ -106,14 +110,12 @@ async function krsScoreEventHandler(
   const riskRepository = new RiskRepository(tenantId, { mongoDb })
   const userRepository = new UserRepository(tenantId, { mongoDb })
 
-  const krsScoreUpdated = await riskRepository.addKrsValueToMongo(krsScore)
-
-  if (krsScoreUpdated?.userId) {
-    await userRepository.updateKrsScoreOfUserMongo(
-      krsScoreUpdated.userId,
-      krsScoreUpdated
-    )
-  }
+  await Promise.all([
+    riskRepository.addKrsValueToMongo(krsScore),
+    krsScore.userId
+      ? userRepository.updateKrsScoreOfUserMongo(krsScore.userId, krsScore)
+      : undefined,
+  ])
 
   logger.info(`KRS Score Processed`)
 }

@@ -5,7 +5,6 @@ import {
   Filter,
   MongoClient,
   UpdateFilter,
-  UpdateResult,
 } from 'mongodb'
 
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -1190,22 +1189,22 @@ export class CaseRepository {
   public async updateUsersInCases(user: User | Business) {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const userUpdatePromises: Promise<Document | UpdateResult>[] = []
-    userUpdatePromises.push(
-      casesCollection.updateMany(
-        { 'caseUsers.origin.userId': user.userId },
-        { $set: { 'caseUsers.origin': user } }
-      )
-    )
-    userUpdatePromises.push(
-      casesCollection.updateMany(
-        { 'caseUsers.destination.userId': user.userId },
-        { $set: { 'caseUsers.destination': user } }
-      )
-    )
-    await Promise.all(userUpdatePromises)
-  }
 
+    await casesCollection.bulkWrite([
+      {
+        updateMany: {
+          filter: { 'caseUsers.origin.userId': user.userId },
+          update: { $set: { 'caseUsers.origin': user } },
+        },
+      },
+      {
+        updateMany: {
+          filter: { 'caseUsers.destination.userId': user.userId },
+          update: { $set: { 'caseUsers.destination': user } },
+        },
+      },
+    ])
+  }
   public async getCasesByTransactionIds(
     transactionIds: string[],
     additionalFilters?: Filter<Case>

@@ -12,6 +12,8 @@ import { DynamoDbKeys, TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
 import { getUpdateAttributesUpdateItemInput } from '@/utils/dynamodb'
 import { METADATA_COLLECTION } from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
+import { envIs } from '@/utils/env'
+import { getTestEnabledFeatures } from '@/core/utils/context'
 
 type MetadataType = 'SLACK_WEBHOOK'
 type MetadataPayload = { slackWebhookURL: string; originalResponse: any }
@@ -55,6 +57,11 @@ export class TenantRepository {
         settings.features.push('DEMO_MODE')
       }
     }
+
+    if (envIs('test')) {
+      settings.features = getTestEnabledFeatures()
+    }
+
     return settings
   }
 

@@ -93,14 +93,16 @@ export class CaseCreationService {
       destinationUserId,
       originUserId,
     })
-    return {
-      ORIGIN: !isAnyRuleHasOriginHit
+
+    const [originUser, destinationUser] = await Promise.all([
+      !isAnyRuleHasOriginHit ? undefined : this.getUser(originUserId),
+      isAnyRuleHasOriginHit && originUserId === destinationUserId
         ? undefined
-        : (await this.getUser(originUserId)) ?? undefined,
-      DESTINATION:
-        isAnyRuleHasOriginHit && originUserId === destinationUserId
-          ? undefined
-          : (await this.getUser(destinationUserId)) ?? undefined,
+        : this.getUser(destinationUserId),
+    ])
+    return {
+      ORIGIN: originUser || undefined,
+      DESTINATION: destinationUser || undefined,
     }
   }
 
@@ -709,9 +711,11 @@ export class CaseCreationService {
     const savedCases = await Promise.all(
       result.map((caseItem) => this.caseRepository.addCaseMongo(caseItem))
     )
+
     logger.info(`Updated/created cases count`, {
       count: savedCases.length,
     })
+
     return this.updateRelatedCases(savedCases)
   }
 
@@ -726,7 +730,6 @@ export class CaseCreationService {
       return []
     }
 
-    const result: Case[] = []
     const ruleInstances =
       await this.ruleInstanceRepository.getRuleInstancesByIds(
         hitRules.map((hitRule) => hitRule.ruleInstanceId)
@@ -743,7 +746,7 @@ export class CaseCreationService {
       userId: user.userId,
     })
 
-    const cases = await this.getOrCreateCases(
+    const result = await this.getOrCreateCases(
       [{ user, direction: 'ORIGIN' }],
       {
         createdTimestamp: now,
@@ -753,7 +756,6 @@ export class CaseCreationService {
       },
       ruleInstances
     )
-    result.push(...cases)
 
     const savedCases = await Promise.all(
       result.map((caseItem) => this.caseRepository.addCaseMongo(caseItem))
@@ -761,6 +763,7 @@ export class CaseCreationService {
     logger.info(`Updated/created cases count`, {
       count: savedCases.length,
     })
+
     return this.updateRelatedCases(savedCases)
   }
 

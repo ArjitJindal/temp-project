@@ -941,15 +941,13 @@ export class UserRepository {
     await collection.updateOne({ userId }, { $set: { krsScore } })
   }
 
-  public async getUsersWithoutKrsScoreCursor(): Promise<
-    FindCursor<InternalUser>
-  > {
+  public getUsersWithoutKrsScoreCursor(): FindCursor<InternalUser> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
 
-    const users = await collection
+    const users = collection
       .find({
         krsScore: { $exists: false },
       })

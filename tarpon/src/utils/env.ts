@@ -47,6 +47,7 @@ export function envIs(...envs: Env[]) {
     return process.env.ENV.startsWith(env)
   })
 }
+
 export function envIsNot(...envs: Env[]) {
   return !envs.some((env) => envIs(env))
 }

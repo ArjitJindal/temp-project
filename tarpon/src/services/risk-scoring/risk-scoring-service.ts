@@ -441,33 +441,31 @@ export class RiskScoringService {
       riskFactors || []
     )
 
-    await this.riskRepository.createOrUpdateArsScore(
-      transaction.transactionId,
-      arsScore,
-      transaction.originUserId,
-      transaction.destinationUserId,
-      components
-    )
-
-    let originDrsScore: any = null
-    let destinationDrsScore: any = null
-
-    if (transaction.originUserId) {
-      originDrsScore = await this.calculateAndUpdateDRS(
-        transaction.originUserId,
-        arsScore,
+    const [_, originDrsScore, destinationDrsScore] = await Promise.all([
+      await this.riskRepository.createOrUpdateArsScore(
         transaction.transactionId,
-        components
-      )
-    }
-    if (transaction.destinationUserId) {
-      destinationDrsScore = await this.calculateAndUpdateDRS(
-        transaction.destinationUserId,
         arsScore,
-        transaction.transactionId!,
+        transaction.originUserId,
+        transaction.destinationUserId,
         components
-      )
-    }
+      ),
+      transaction.originUserId
+        ? this.calculateAndUpdateDRS(
+            transaction.originUserId,
+            arsScore,
+            transaction.transactionId,
+            components
+          )
+        : null,
+      transaction.destinationUserId
+        ? this.calculateAndUpdateDRS(
+            transaction.destinationUserId,
+            arsScore,
+            transaction.transactionId!,
+            components
+          )
+        : null,
+    ])
 
     return { originDrsScore, destinationDrsScore }
   }
@@ -640,7 +638,7 @@ export class RiskScoringService {
 
   public async backfillUserRiskScores(): Promise<void> {
     const users: FindCursor<User> =
-      await this.userRepository.getUsersWithoutKrsScoreCursor()
+      this.userRepository.getUsersWithoutKrsScoreCursor()
 
     for await (const user of users) {
       if (!user) {
