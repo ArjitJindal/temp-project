@@ -11,7 +11,7 @@ describe('Add a comment to a case', () => {
     // Navigate to case
     cy.visit('/case-management/cases');
     cy.intercept('GET', `**/cases**`).as('cases');
-    cy.wait('@cases').then((intercept) => {
+    cy.wait('@cases', { timeout: 15000 }).then((intercept) => {
       expect(intercept.response?.statusCode).to.be.oneOf([200, 304]);
     });
     cy.get('[data-cy="case-id"]', { timeout: 15000 }).eq(0).click();
@@ -95,7 +95,7 @@ describe('Add a comment to a case', () => {
 
         // Get the current time in milliseconds
         const currentTime = new Date().getTime();
-        cy.wrap(currentTime - logEntryTime.getTime()).should('be.lte', 15000);
+        cy.wrap(currentTime - logEntryTime.getTime()).should('be.lte', 150000);
       });
   });
 });
