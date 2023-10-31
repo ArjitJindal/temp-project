@@ -23,15 +23,13 @@ describe('Check if merchant monitoring is available for a user', () => {
     cy.contains('div[role="tab"]', 'Merchant monitoring')
       .should('be.visible')
       .click({ force: true });
-
-    cy.get('[data-cy="merchant-monitoring-user-summary"]')
-      .first()
-      .should(($element) => {
-        expect($element.text().trim()).not.to.eq('');
-      });
-
-    cy.contains('button[type="button"]', 'View history').should('be.visible').click();
     cy.wait('@getMerchantMonitoringSummary', { timeout: 10000 }).then((interception) => {
+      cy.get('[data-cy="merchant-monitoring-user-summary"]')
+        .first()
+        .should(($element) => {
+          expect($element.text().trim()).not.to.eq('');
+        });
+      cy.contains('button[type="button"]', 'View history').should('be.visible').click();
       const responseData = interception.response?.body?.data;
       expect(responseData).to.be.an('array').and.to.have.length.gt(0);
       expect(responseData).to.exist;
