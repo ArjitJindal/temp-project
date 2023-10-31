@@ -102,7 +102,7 @@ export const CopilotButtonContent = ({
   const settings = useSettings();
 
   // TODO We will support alerts and transactions in a later version.
-  if (entityType !== 'CASE') {
+  if (entityType !== 'CASE' && entityType !== 'ALERT') {
     return <></>;
   }
 
