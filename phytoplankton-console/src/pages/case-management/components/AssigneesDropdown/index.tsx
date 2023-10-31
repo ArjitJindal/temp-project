@@ -31,7 +31,10 @@ export const AssigneesDropdown: React.FC<Props> = ({
     <>
       <Select<string[]>
         open={maxAssignees && assignments.length >= maxAssignees ? false : undefined}
-        className={cn(s.select, fixSelectorHeight ? s.fixSelectorHeight : '')}
+        className={
+          cn(s.select, fixSelectorHeight ? s.fixSelectorHeight : '') +
+          (assignments.length === 0 ? ' unassigned ' : '')
+        }
         mode={'multiple'}
         allowClear
         filterOption={(input, option) => {

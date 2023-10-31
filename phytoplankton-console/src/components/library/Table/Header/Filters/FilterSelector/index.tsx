@@ -23,6 +23,7 @@ export default function FilterSelector(props: Props) {
           {filters.map((filter) => (
             <Label key={filter.key} level={2} position="RIGHT" label={filter.title}>
               <Checkbox
+                testName={filter.key}
                 value={shownFilters.includes(filter.key)}
                 onChange={(checked) => {
                   onToggleFilter(filter.key, checked ?? false);
