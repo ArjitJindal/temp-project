@@ -281,7 +281,7 @@ export function useCreateRuleInstance(
         message.success(`Rule created - ${newRuleInstance.ruleId} (${newRuleInstance.id})`);
       },
       onError: async (err) => {
-        message.fatal(`Unable to create the rule - ${getErrorMessage(err)}`, err);
+        message.fatal(`Unable to create the rule - Some parameters are missing`, err);
       },
     },
   );

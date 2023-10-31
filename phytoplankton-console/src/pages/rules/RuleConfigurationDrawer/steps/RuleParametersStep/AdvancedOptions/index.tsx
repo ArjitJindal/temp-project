@@ -17,6 +17,10 @@ export const AdvancedOptions = (props: Props) => {
         <Label
           label={'Advanced options'}
           description="Configured settings will automatically apply when the rule is triggered. In the case of this rule with multiple instances, the status is updated to reflect the highest priority set."
+          required={{
+            value: false,
+            showHint: true,
+          }}
         >
           {riskLevel ? (
             <NestedForm<FormValues['riskLevelsTriggersOnHit']> name={riskLevel}>

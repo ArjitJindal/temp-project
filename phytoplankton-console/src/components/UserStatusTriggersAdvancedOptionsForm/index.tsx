@@ -50,6 +50,12 @@ export const UserStatusTriggersAdvancedOptionsForm = (
           description={
             'Select users of a transaction direction below for which the User/KYC status needs to be updated. If set to ORIGIN, then only users of origin side status are updated.'
           }
+          labelProps={{
+            required: {
+              value: true,
+              showHint: true,
+            },
+          }}
         >
           {(inputProps) => (
             <SelectionGroup<TriggersOnHit['usersToCheck']>
