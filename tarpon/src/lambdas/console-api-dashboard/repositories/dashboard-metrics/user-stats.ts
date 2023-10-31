@@ -46,6 +46,13 @@ export class UserStats {
     ) {
       return [
         {
+          $match: {
+            createdTimestamp: {
+              $exists: true,
+            },
+          },
+        },
+        {
           $group: {
             _id: {
               type: '$type',
