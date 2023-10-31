@@ -24,6 +24,7 @@ export default function Widget(props: WidgetProps) {
         style={{
           minHeight: resizing === 'AUTO' ? undefined : DEFAULT_FIXED_HEIGHT,
         }}
+        data-cy={title}
       >
         <div className={s.header}>
           {title && <div className={s.title}>{title}</div>}

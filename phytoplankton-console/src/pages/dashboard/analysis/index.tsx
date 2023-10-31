@@ -60,12 +60,16 @@ const KEYS = {
   OVERVIEW: ['OVERVIEW'],
   CONSUMER_USERS: [
     'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+    'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
     'TOP_CONSUMER_USERS_BY_RULE_HITS',
+    'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS',
     'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
   ],
   BUSINESS_USERS: [
     'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+    'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
     'TOP_BUSINESS_USERS_BY_RULE_HITS',
+    'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS',
     'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS',
   ],
   TRANSACTIONS: [
@@ -89,15 +93,15 @@ const TITLES: { [key in KeyValues]: string } = {
   TOP_RULE_HITS_BY_COUNT: 'Top rule hits by count',
   TEAM_OVERVIEW: 'Team overview',
   DISTRIBUTION_BY_CLOSING_REASON: 'Distribution by closing reason',
-  DISTRIBUTION_BY_ALERT_PRIORITY: 'Distribution by alert priority',
+  DISTRIBUTION_BY_ALERT_PRIORITY: 'Distribution by open alert priority',
   DISTRIBUTION_BY_PAYMENT_METHOD: 'Distribution by payment method',
   DISTRIBUTION_BY_TRANSACTION_TYPE: 'Distribution by transaction type',
   TOP_CONSUMER_USERS_BY_RULE_HITS: 'Top consumer users by rule hits',
   TOP_BUSINESS_USERS_BY_RULE_HITS: 'Top business users by rule hits',
   TRANSACTIONS_BREAKDOWN_BY_TRS: 'Transactions breakdown by TRS',
   CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Consumer users distribution by risk levels',
-  CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Users breakdown by risk levels',
-  BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Users breakdown by risk levels',
+  CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Consumer users breakdown by risk levels',
+  BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Business users breakdown by risk levels',
   BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Business users distribution by risk levels',
   DISTRIBUTION_BY_RULE_PRIORITY: 'Distribution by rule priority',
   DISTRIBUTION_BY_RULE_ACTION: 'Distribution by rule action',
@@ -161,7 +165,12 @@ function Analysis() {
     <PageWrapper
       title={i18n('menu.dashboard')}
       actionButton={
-        <Button type="SECONDARY" icon={<IconSetting />} onClick={() => setDrawerVisible(true)}>
+        <Button
+          type="SECONDARY"
+          testName={'dashboard-configure-button'}
+          icon={<IconSetting />}
+          onClick={() => setDrawerVisible(true)}
+        >
           Configure
         </Button>
       }
@@ -186,7 +195,7 @@ function Analysis() {
                 settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
                   props: {
                     id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-                    title: 'Breakdown by risk levels',
+                    title: TITLES.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL,
                     width: 'FULL' as const,
                     userType: 'CONSUMER',
                   },
@@ -205,7 +214,7 @@ function Analysis() {
               settingsToDisplay.TOP_CONSUMER_USERS_BY_RULE_HITS && {
                 props: {
                   id: 'top_consumer_users_by_rule_hits',
-                  title: 'Top users by rule hits',
+                  title: TITLES.TOP_CONSUMER_USERS_BY_RULE_HITS,
                   width: 'HALF' as const,
                   userType: 'CONSUMER',
                 },
@@ -214,7 +223,7 @@ function Analysis() {
               settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS && {
                 props: {
                   id: 'consumer_users_distribution_by_kyc_status',
-                  title: 'Distribution by KYC status',
+                  title: TITLES.CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS,
                   width: 'HALF' as const,
                   userType: 'CONSUMER',
                 },
@@ -223,7 +232,7 @@ function Analysis() {
               settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS && {
                 props: {
                   id: 'user_status_distribution_card',
-                  title: 'Distribution by User Status',
+                  title: TITLES.CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS,
                   width: 'HALF' as const,
                   userType: 'CONSUMER',
                 },
@@ -238,17 +247,17 @@ function Analysis() {
                 settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
                   props: {
                     id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-                    title: 'Breakdown by risk levels',
+                    title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL,
                     width: 'FULL' as const,
                     userType: 'BUSINESS',
                   },
                   component: RiskLevelBreakdownWidget,
                 },
               isRiskScoringEnabled &&
-                settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
+                settingsToDisplay.BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL && {
                   props: {
-                    id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-                    title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL,
+                    id: 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
+                    title: TITLES.BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL,
                     width: 'HALF' as const,
                     userType: 'BUSINESS' as const,
                   },
@@ -257,7 +266,7 @@ function Analysis() {
               settingsToDisplay.TOP_BUSINESS_USERS_BY_RULE_HITS && {
                 props: {
                   id: 'top_business_users_by_rule_hits',
-                  title: 'Top users by rule hits',
+                  title: TITLES.TOP_BUSINESS_USERS_BY_RULE_HITS,
                   width: 'HALF' as const,
                   userType: 'BUSINESS',
                 },
@@ -266,7 +275,7 @@ function Analysis() {
               settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS && {
                 props: {
                   id: 'business_users_distribution_by_kyc_status',
-                  title: 'Distribution by KYC status',
+                  title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS,
                   width: 'HALF' as const,
                   userType: 'BUSINESS',
                 },
@@ -275,7 +284,7 @@ function Analysis() {
               settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS && {
                 props: {
                   id: 'user_status_distribution_card',
-                  title: 'Distribution by User Status',
+                  title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS,
                   width: 'HALF' as const,
                   userType: 'BUSINESS',
                 },
@@ -289,7 +298,7 @@ function Analysis() {
               settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION && {
                 props: {
                   id: 'transaction_breakdown_by_rule_action',
-                  title: 'Transaction breakdown by rule action',
+                  title: TITLES.TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION,
                   width: 'FULL',
                 },
                 component: TransactionsChartWidget,
@@ -297,7 +306,7 @@ function Analysis() {
               settingsToDisplay.DISTRIBUTION_BY_PAYMENT_METHOD && {
                 props: {
                   id: 'distribution_by_payment_method',
-                  title: 'Distribution by transaction payment method',
+                  title: TITLES.DISTRIBUTION_BY_PAYMENT_METHOD,
                   width: 'HALF',
                 },
                 component: PaymentMethodDistributionWidget,
@@ -305,7 +314,7 @@ function Analysis() {
               settingsToDisplay.DISTRIBUTION_BY_TRANSACTION_TYPE && {
                 props: {
                   id: 'distribution_by_transaction_type',
-                  title: 'Distribution by transaction type',
+                  title: TITLES.DISTRIBUTION_BY_TRANSACTION_TYPE,
                   width: 'HALF',
                 },
                 component: DistributionByTransactionTypeWidget,
@@ -314,7 +323,7 @@ function Analysis() {
                 settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_TRS && {
                   props: {
                     id: 'transaction_breakdown_by_trs',
-                    title: 'Transaction breakdown by TRS',
+                    title: TITLES.TRANSACTIONS_BREAKDOWN_BY_TRS,
                   },
                   component: TransactionTRSChartCard,
                 },
@@ -329,7 +338,7 @@ function Analysis() {
                       props: {
                         id: 'top_rule_hits_by_count',
                         // isLegacyComponent: true,
-                        title: 'Top rule hits by count',
+                        title: TITLES.TOP_RULE_HITS_BY_COUNT,
                         children: <RuleHitCard />,
                         resizing: 'AUTO' as const,
                       },
@@ -342,7 +351,7 @@ function Analysis() {
                     {
                       props: {
                         id: 'distribution_by_rule_priority',
-                        title: 'Distribution by rule priority',
+                        title: TITLES.DISTRIBUTION_BY_RULE_PRIORITY,
                         width: 'HALF' as const,
                       },
                       component: RulePrioritySplitCard,
@@ -354,7 +363,7 @@ function Analysis() {
                     {
                       props: {
                         id: 'distribution_by_rule_action',
-                        title: 'Distribution by rule action',
+                        title: TITLES.DISTRIBUTION_BY_RULE_ACTION,
                         width: 'HALF' as const,
                       },
                       component: RuleActionSplitCard,
@@ -371,7 +380,7 @@ function Analysis() {
                     {
                       props: {
                         id: 'distribution-by-closing reason',
-                        title: 'Distribution by closing reason',
+                        title: TITLES.DISTRIBUTION_BY_CLOSING_REASON,
                         width: 'HALF',
                       },
                       component: CaseClosingReasonCard,
@@ -383,7 +392,7 @@ function Analysis() {
                     {
                       props: {
                         id: 'distribution-by-alert-priority',
-                        title: 'Distribution by open alerts priority',
+                        title: TITLES.DISTRIBUTION_BY_ALERT_PRIORITY,
                       },
                       component: DistributionByAlertPriority,
                     },
@@ -394,7 +403,7 @@ function Analysis() {
                     {
                       props: {
                         id: 'distribution-by-case-and-alert-status',
-                        title: 'Distribution by status',
+                        title: TITLES.DISTRIBUTION_BY_CASE_AND_ALERT_STATUS,
                       },
                       component: DistributionByStatus,
                     },
@@ -408,7 +417,7 @@ function Analysis() {
               settingsToDisplay.TEAM_OVERVIEW && {
                 props: {
                   id: 'team_performance',
-                  title: 'Team overview',
+                  title: TITLES.TEAM_OVERVIEW,
                 },
                 component: TeamPerformanceCard,
               },
@@ -440,6 +449,7 @@ function Analysis() {
                   }, {} as DashboardSettings),
                 );
               }}
+              testName="update-dashboard-button"
             >
               Update dashboard
             </Button>
@@ -466,6 +476,7 @@ function Analysis() {
                       });
                     }}
                     extraLeftLabelMargin
+                    testName={TITLES[key]}
                   />
                 </Label>
               ))}
