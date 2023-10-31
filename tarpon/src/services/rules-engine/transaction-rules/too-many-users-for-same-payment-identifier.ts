@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import { startCase } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
 import { RuleHitResult } from '../rule'
@@ -10,23 +11,24 @@ import {
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
-import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 
 type AggregationData = {
   userIds: string[]
 }
 
-export type TooManyUsersForSameCardParameters = {
+export type TooManyUsersForSamePaymentIdentifierParameters = {
   uniqueUsersCountThreshold: number
   timeWindow: TimeWindow
 }
 
-export default class TooManyUsersForSameCardRule extends TransactionAggregationRule<
-  TooManyUsersForSameCardParameters,
+export default class TooManyUsersForSamePaymentIdentifierRule extends TransactionAggregationRule<
+  TooManyUsersForSamePaymentIdentifierParameters,
   TransactionHistoricalFilters,
   AggregationData
 > {
-  public static getSchema(): JSONSchemaType<TooManyUsersForSameCardParameters> {
+  public static getSchema(): JSONSchemaType<TooManyUsersForSamePaymentIdentifierParameters> {
     return {
       type: 'object',
       properties: {
@@ -41,11 +43,11 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
       required: ['uniqueUsersCountThreshold', 'timeWindow'],
     }
   }
-
   public async computeRule() {
     if (
-      this.transaction.originPaymentDetails?.method !== 'CARD' ||
-      !this.transaction.originUserId
+      !this.transaction.originUserId ||
+      this.getUniqueIdentifier(this.transaction?.originPaymentDetails) ===
+        undefined
     ) {
       return
     }
@@ -59,16 +61,25 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
         direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
-          cardFingerprint: (
-            this.transaction.originPaymentDetails as CardDetails
-          ).cardFingerprint,
+          uniquePaymentIdentifier: this.getUniqueIdentifier(
+            this.transaction.originPaymentDetails
+          ),
           uniqueUserCount: userIds.size,
         },
       })
     }
     return hitResult
   }
-
+  private getUniqueIdentifier(paymentDetails: PaymentDetails | undefined) {
+    if (paymentDetails?.method === undefined) return undefined
+    const identifiers = PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentDetails?.method]
+    return identifiers
+      .map(
+        (identifier: string) =>
+          `${startCase(identifier)}: ${paymentDetails[identifier]}`
+      )
+      .join(', ')
+  }
   private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
     const { sendingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
@@ -98,7 +109,8 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
       direction === 'origin' &&
         isTransactionHistoricalFiltered &&
         this.transaction.originUserId &&
-        this.transaction.originPaymentDetails?.method === 'CARD'
+        this.getUniqueIdentifier(this.transaction?.originPaymentDetails) !==
+          undefined
     )
   }
 

@@ -23,7 +23,7 @@ import { BlacklistCardIssuedCountryRuleParameters } from './blacklist-card-issue
 import { TransactionReferenceKeywordRuleParameters } from './transaction-reference-keyword'
 import { TransactionsVelocityRuleParameters } from './transactions-velocity'
 import { IpAddressMultipleUsersRuleParameters } from './ip-address-multiple-users'
-import { TooManyUsersForSameCardParameters } from './too-many-users-for-same-card'
+import { TooManyUsersForSamePaymentIdentifierParameters } from './too-many-users-for-same-payment-identifier'
 import { SameUserUsingTooManyCardsParameters } from './same-user-using-too-many-cards'
 import { TransactionsVolumeRuleParameters } from './transactions-volume'
 import { SenderLocationChangesFrequencyRuleParameters } from './sender-location-changes-frequency'
@@ -574,37 +574,30 @@ const _RULES_LIBRARY: Array<
     }
   },
   () => {
-    const defaultParameters: TooManyUsersForSameCardParameters = {
+    const defaultParameters: TooManyUsersForSamePaymentIdentifierParameters = {
       uniqueUsersCountThreshold: 10,
       timeWindow: {
         units: 1,
         granularity: 'day',
       },
     }
-    const defaultFilters: TransactionFilters = {
-      originPaymentFilters: {
-        paymentMethods: ['CARD'],
-      },
-    }
     return {
       id: 'R-53',
       type: 'TRANSACTION',
-      name: 'Same card used by too many users',
-      description: 'Same card used by  >= x unique user IDs',
+      name: 'Same unique payment identifier used by too many users',
+      description: 'Same payment identifier used by  >= x unique user IDs',
       descriptionTemplate:
-        'Same card ({{ cardFingerprint }}) used by {{ uniqueUserCount }} unique users',
+        'Same unique payment identifier ({{ uniquePaymentIdentifier }}) used by {{ uniqueUserCount }} unique users',
       defaultParameters,
-      defaultFilters,
       defaultAction: 'FLAG',
-      ruleImplementationName: 'too-many-users-for-same-card',
+      ruleImplementationName: 'too-many-users-for-same-payment-identifier',
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       typology: 'Acquiring Fraud',
-      typologyGroup: 'Card fraud',
-      typologyDescription:
-        'Attempts to use a stolen card to perform a purchase/top-up wallet',
-      source: 'Card Scheme Rules',
+      typologyGroup: '',
+      typologyDescription: '',
+      source: '',
     }
   },
   () => {
