@@ -12,12 +12,18 @@ interface Props {
   defaultActiveFilters: string[];
   shownFilters: string[];
   onToggleFilter: (key: string, enabled: boolean) => void;
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export default function FilterSelector(props: Props) {
-  const { filters, defaultActiveFilters, shownFilters, onToggleFilter } = props;
+  const { filters, defaultActiveFilters, shownFilters, onToggleFilter, onUpdateFilterClose } =
+    props;
   return (
-    <QuickFilter title="Add filter" icon={<AddFillIcon />}>
+    <QuickFilter
+      title="Add filter"
+      icon={<AddFillIcon />}
+      onUpdateFilterClose={onUpdateFilterClose}
+    >
       <div className={style.root}>
         <div className={style.checkboxes}>
           {filters.map((filter) => (

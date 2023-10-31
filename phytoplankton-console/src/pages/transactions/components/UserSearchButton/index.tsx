@@ -14,10 +14,17 @@ interface Props {
   initialMode?: Mode;
   onConfirm: (userId: string | null, mode: Mode | null) => void;
   showOriginAndDestination?: boolean;
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export default function UserSearchButton(props: Props) {
-  const { initialMode, userId, onConfirm, showOriginAndDestination = true } = props;
+  const {
+    initialMode,
+    userId,
+    onConfirm,
+    onUpdateFilterClose,
+    showOriginAndDestination = true,
+  } = props;
   const [userRest, setUserRest] = useState<
     AsyncResource<InternalConsumerUser | InternalBusinessUser>
   >(init());
@@ -72,6 +79,7 @@ export default function UserSearchButton(props: Props) {
               onConfirm(null, null);
             }
       }
+      onUpdateFilterClose={onUpdateFilterClose}
     >
       {({ isOpen, setOpen }) => (
         <PopupContent

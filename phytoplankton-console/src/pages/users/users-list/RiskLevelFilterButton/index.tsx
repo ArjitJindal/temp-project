@@ -9,10 +9,11 @@ import { levelToAlias } from '@/utils/risk-levels';
 interface Props {
   riskLevels: RiskLevel[];
   onConfirm: (risk: RiskLevel[]) => void;
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export function RiskLevelButton(props: Props) {
-  const { riskLevels, onConfirm } = props;
+  const { riskLevels, onConfirm, onUpdateFilterClose } = props;
   const isEmpty = riskLevels.length === 0;
   const configSetting = useSettings();
   const configRiskLevelAlias = configSetting?.riskLevelAlias;
@@ -33,6 +34,7 @@ export function RiskLevelButton(props: Props) {
               onConfirm([]);
             }
       }
+      onUpdateFilterClose={onUpdateFilterClose}
     >
       <PopupContent value={riskLevels} onConfirm={onConfirm} />
     </QuickFilterBase>

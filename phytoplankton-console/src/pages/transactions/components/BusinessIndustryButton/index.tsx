@@ -6,10 +6,11 @@ import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 interface Props {
   businessIndustry: string[];
   onConfirm: (state: string[]) => void;
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export default function BusinessIndustryButton(props: Props) {
-  const { businessIndustry, onConfirm } = props;
+  const { businessIndustry, onConfirm, onUpdateFilterClose } = props;
 
   const isEmpty = businessIndustry.length === 0;
 
@@ -26,6 +27,7 @@ export default function BusinessIndustryButton(props: Props) {
               onConfirm([]);
             }
       }
+      onUpdateFilterClose={onUpdateFilterClose}
     >
       <PopupContent value={businessIndustry} onConfirm={onConfirm} />
     </QuickFilterBase>

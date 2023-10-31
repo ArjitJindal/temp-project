@@ -136,7 +136,7 @@ const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSe
     extraFilters.push({
       key: 'userRegistrationStatus',
       title: 'Registration Status',
-      renderer: ({ params, setParams }) => (
+      renderer: ({ params, setParams, onUpdateFilterClose }) => (
         <UserRegistrationStatusFilterButton
           userRegistrationStatus={params.userRegistrationStatus ?? []}
           onConfirm={(registrationStatus) => {
@@ -145,6 +145,7 @@ const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSe
               userRegistrationStatus: registrationStatus ?? undefined,
             }));
           }}
+          onUpdateFilterClose={onUpdateFilterClose}
         />
       ),
     });

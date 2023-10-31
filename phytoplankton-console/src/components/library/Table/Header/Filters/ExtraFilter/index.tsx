@@ -6,10 +6,11 @@ interface Props<Params> {
   filter: ExtraFilter<Params>;
   params: AllParams<Params>;
   onChangeParams: (newParams: AllParams<Params>) => void;
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export default function ExtraFilter<Params>(props: Props<Params>) {
-  const { filter, params, onChangeParams } = props;
+  const { filter, params, onChangeParams, onUpdateFilterClose } = props;
   const renderer = filter.renderer ?? { kind: 'string' };
 
   if (typeof renderer === 'function') {
@@ -17,8 +18,10 @@ export default function ExtraFilter<Params>(props: Props<Params>) {
       <React.Fragment>
         {renderer({
           params: params,
-          setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>
-            onChangeParams?.(cb(params)),
+          setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) => {
+            onChangeParams?.(cb(params));
+          },
+          onUpdateFilterClose: onUpdateFilterClose,
         })}
       </React.Fragment>
     );
@@ -31,6 +34,7 @@ export default function ExtraFilter<Params>(props: Props<Params>) {
       onChange={(value: unknown) => {
         onChangeParams({ ...params, [filter.key]: value });
       }}
+      onUpdateFilterClose={onUpdateFilterClose}
     />
   );
 }

@@ -9,6 +9,7 @@ export interface Props {
   buttonText?: React.ReactNode;
   icon?: React.ReactNode;
   onClear?: () => void;
+  onUpdateFilterClose?: (status: boolean) => void;
   children?:
     | React.ReactNode
     | ((props: { isOpen: boolean; setOpen: (isOpen: boolean) => void }) => React.ReactNode);
@@ -17,8 +18,18 @@ export interface Props {
 }
 
 export default function QuickFilterBase(props: Props) {
-  const { icon, title, description, buttonText, analyticsName, children, onClear, innerRef } =
-    props;
+  const {
+    icon,
+    title,
+    description,
+    buttonText,
+    analyticsName,
+    children,
+    onUpdateFilterClose,
+    onClear,
+    innerRef,
+  } = props;
+
   const [isOpen, setOpen] = useState(false);
   const deferredFocus = () => {
     innerRef &&
@@ -26,6 +37,7 @@ export default function QuickFilterBase(props: Props) {
         innerRef?.current?.focus();
       }, 2);
   };
+
   return (
     <>
       <QuickFilterButton
@@ -45,6 +57,7 @@ export default function QuickFilterBase(props: Props) {
         analyticsName={analyticsName}
         onClear={onClear}
         onClick={() => {
+          onUpdateFilterClose && onUpdateFilterClose(isOpen);
           setOpen((isOpen) => !isOpen);
           deferredFocus();
         }}
@@ -67,7 +80,10 @@ export default function QuickFilterBase(props: Props) {
               </div>
             </div>
           }
-          onVisibleChange={setOpen}
+          onVisibleChange={(isVisible) => {
+            setOpen(isVisible);
+            onUpdateFilterClose && onUpdateFilterClose(!isVisible);
+          }}
           arrowPointAtCenter={true}
           autoAdjustOverflow={true}
           placement="bottomLeft"

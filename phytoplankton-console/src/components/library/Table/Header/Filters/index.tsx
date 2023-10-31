@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AllParams, Filter, isExtraFilter } from '../../types';
 import style from './index.module.less';
 import FilterSelector from './FilterSelector';
@@ -15,15 +15,13 @@ interface Props<Params extends object> {
 
 export default function Filters<Params extends object>(props: Props<Params>) {
   const { filters, params, onChangeParams } = props;
-
-  const fulfilledFilters = filters
-    .map((filter) => filter.key)
-    .filter((key: string) => params?.[key] != null);
+  const [filterClose, setFilterClose] = useState<boolean>(true);
+  const [fulfilledFilters, setfulfilledFilters] = useState(['']);
 
   const persistedSettingsContext = usePersistedSettingsContext();
   const [filtersVisible, setFiltersVisible] = persistedSettingsContext.filtersVisibility;
 
-  const shownFilters = [...filtersVisible, ...fulfilledFilters];
+  const shownFilters = [...fulfilledFilters, ...filtersVisible];
 
   const handleResetParams = (keys: string[]) => {
     const newParams = {
@@ -44,6 +42,9 @@ export default function Filters<Params extends object>(props: Props<Params>) {
     }
   };
 
+  function onUpdateFilterClose(close: boolean) {
+    setFilterClose(close);
+  }
   const handleClickReset = () => {
     // Reset all parameters
     handleResetParams(fulfilledFilters);
@@ -51,6 +52,15 @@ export default function Filters<Params extends object>(props: Props<Params>) {
 
   const sortedFilters = [...filters];
   sortedFilters.sort((x, y) => shownFilters.indexOf(x.key) - shownFilters.indexOf(y.key));
+
+  useEffect(() => {
+    if (filterClose) {
+      const temporary = filters
+        .map((filter) => filter.key)
+        .filter((key: string) => params?.[key] != null);
+      setfulfilledFilters([...temporary]);
+    }
+  }, [filterClose, filters, params]);
 
   if (sortedFilters.length === 0) {
     return <></>;
@@ -68,6 +78,7 @@ export default function Filters<Params extends object>(props: Props<Params>) {
                 filter={filter}
                 params={params}
                 onChangeParams={onChangeParams}
+                onUpdateFilterClose={onUpdateFilterClose}
               />
             ) : (
               <AutoFilter
@@ -77,6 +88,7 @@ export default function Filters<Params extends object>(props: Props<Params>) {
                 onChange={(value: unknown) => {
                   onChangeParams?.({ ...params, [filter.key]: value });
                 }}
+                onUpdateFilterClose={onUpdateFilterClose}
               />
             ),
           )}
@@ -85,6 +97,7 @@ export default function Filters<Params extends object>(props: Props<Params>) {
           defaultActiveFilters={persistedSettingsContext.defaultState.filtersVisibility}
           shownFilters={shownFilters}
           onToggleFilter={handleToggleFilter}
+          onUpdateFilterClose={onUpdateFilterClose}
         />
         {fulfilledFilters.length > 0 && (
           <Button type="TEXT" onClick={handleClickReset} size="SMALL">

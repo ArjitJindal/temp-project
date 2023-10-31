@@ -232,6 +232,7 @@ export interface BaseFilter {
 export type ExtraFilterRendererProps<Params extends object | unknown> = {
   params: Params;
   setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) => void;
+  onUpdateFilterClose?: (status: boolean) => void;
 };
 
 export type ExtraFilterRenderer<Params extends object | unknown> = (

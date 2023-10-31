@@ -13,10 +13,11 @@ import NumberInput from '@/components/library/NumberInput';
 
 interface Props extends InputProps<unknown> {
   filter: AutoFilter;
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export function AutoFilter(props: Props): JSX.Element {
-  const { filter, value, onChange } = props;
+  const { filter, value, onChange, onUpdateFilterClose } = props;
 
   const inputRef = useRef<any>(null);
   const sharedProps = {
@@ -27,6 +28,7 @@ export function AutoFilter(props: Props): JSX.Element {
     value: value as any,
     onChange,
     innerRef: inputRef,
+    onUpdateFilterClose: onUpdateFilterClose,
   };
 
   if (filter.dataType.kind === 'dateRange') {

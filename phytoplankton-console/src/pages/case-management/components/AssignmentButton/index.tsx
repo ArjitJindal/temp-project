@@ -7,11 +7,12 @@ import { useUsers } from '@/utils/user-utils';
 interface Props {
   onConfirm: (users: string[]) => void;
   users: string[];
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export function AssignmentButton(props: Props) {
   const [users, loading] = useUsers();
-  const { onConfirm } = props;
+  const { onConfirm, onUpdateFilterClose } = props;
 
   const isEmpty = useMemo(() => (props?.users?.length ? false : true), [props.users]);
 
@@ -35,6 +36,7 @@ export function AssignmentButton(props: Props) {
               onConfirm([]);
             }
       }
+      onUpdateFilterClose={onUpdateFilterClose}
     >
       <PopupContent value={props.users} onConfirm={props.onConfirm} />
     </QuickFilterBase>

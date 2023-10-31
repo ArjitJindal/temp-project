@@ -6,10 +6,11 @@ import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 interface Props {
   userRegistrationStatus: UserRegistrationStatus[];
   onConfirm: (userRegistrationStatus: UserRegistrationStatus[]) => void;
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export function UserRegistrationStatusFilterButton(props: Props) {
-  const { userRegistrationStatus, onConfirm } = props;
+  const { userRegistrationStatus, onConfirm, onUpdateFilterClose } = props;
 
   const isEmpty = userRegistrationStatus.length === 0;
   return (
@@ -24,6 +25,7 @@ export function UserRegistrationStatusFilterButton(props: Props) {
               onConfirm([]);
             }
       }
+      onUpdateFilterClose={onUpdateFilterClose}
     >
       <PopupContent value={userRegistrationStatus} onConfirm={onConfirm} />
     </QuickFilterBase>

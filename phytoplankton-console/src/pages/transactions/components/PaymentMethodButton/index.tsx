@@ -8,10 +8,11 @@ interface Props {
   direction: 'ORIGIN' | 'DESTINATION';
   methods: string[];
   onConfirm: (state: string[]) => void;
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export default function PaymentMethodButton(props: Props) {
-  const { methods, onConfirm, direction } = props;
+  const { methods, onConfirm, direction, onUpdateFilterClose } = props;
 
   const isEmpty = methods.length === 0;
 
@@ -28,6 +29,7 @@ export default function PaymentMethodButton(props: Props) {
               onConfirm([]);
             }
       }
+      onUpdateFilterClose={onUpdateFilterClose}
     >
       <PopupContent value={methods} onConfirm={onConfirm} />
     </QuickFilterBase>

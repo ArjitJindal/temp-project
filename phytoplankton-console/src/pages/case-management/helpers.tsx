@@ -221,7 +221,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
       key: 'businessIndustryFilter',
       title: 'Business industry',
       showFilterByDefault: true,
-      renderer: ({ params, setParams }) => (
+      renderer: ({ params, setParams, onUpdateFilterClose }) => (
         <BusinessIndustryButton
           businessIndustry={params.businessIndustryFilter ?? []}
           onConfirm={(value) => {
@@ -230,6 +230,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
               businessIndustryFilter: value ?? undefined,
             }));
           }}
+          onUpdateFilterClose={onUpdateFilterClose}
         />
       ),
     },
@@ -237,7 +238,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
       key: 'assignedTo',
       title: 'Assigned to',
       showFilterByDefault: false,
-      renderer: ({ params, setParams }) => (
+      renderer: ({ params, setParams, onUpdateFilterClose }) => (
         <AssignmentButton
           users={params.assignedTo ?? []}
           onConfirm={(value) => {
@@ -246,6 +247,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
               assignedTo: value ?? undefined,
             }));
           }}
+          onUpdateFilterClose={onUpdateFilterClose}
         />
       ),
     },
@@ -286,7 +288,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
     isRiskLevelsEnabled && {
       key: 'riskLevels',
       title: 'CRA',
-      renderer: ({ params, setParams }) => (
+      renderer: ({ params, setParams, onUpdateFilterClose }) => (
         <RiskLevelButton
           riskLevels={params.riskLevels ?? []}
           onConfirm={(value) => {
@@ -295,6 +297,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
               riskLevels: value ?? undefined,
             }));
           }}
+          onUpdateFilterClose={onUpdateFilterClose}
         />
       ),
     },

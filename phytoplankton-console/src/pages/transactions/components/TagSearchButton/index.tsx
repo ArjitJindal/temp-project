@@ -7,10 +7,11 @@ import QuickFilter from '@/components/library/QuickFilter';
 interface Props {
   initialState: Value;
   onConfirm: (newState: Value) => void;
+  onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export default function TagSearchButton(props: Props) {
-  const { initialState, onConfirm } = props;
+  const { initialState, onConfirm, onUpdateFilterClose } = props;
 
   const isEmpty = initialState.key == null && initialState.value == null;
   return (
@@ -29,6 +30,7 @@ export default function TagSearchButton(props: Props) {
               });
             }
       }
+      onUpdateFilterClose={onUpdateFilterClose}
     >
       {({ setOpen }) => (
         <PopupContent
