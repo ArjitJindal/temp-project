@@ -3,9 +3,11 @@ import * as fs from 'fs'
 import path from 'path'
 import os from 'os'
 import * as Sentry from '@sentry/serverless'
+import { backOff } from 'exponential-backoff'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder, XMLParser } from 'fast-xml-parser'
-import { isEqual, omit, cloneDeep, compact, chunk, pick } from 'lodash'
+import { isEqual, omit, cloneDeep, compact, chunk, pick, last } from 'lodash'
+import SftpClient from 'ssh2-sftp-client'
 import { InternalReportType, ReportGenerator } from '../..'
 import {
   ContactOffice,
@@ -53,6 +55,8 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
 import { getAllIpAddresses } from '@/utils/ipAddress'
 import { envIs } from '@/utils/env'
+import { logger } from '@/core/logger'
+import { getSecret } from '@/utils/secrets-manager'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -527,7 +531,7 @@ export class UsSarReportGenerator implements ReportGenerator {
     }
     return constructedReportParams
   }
-  public generate(reportParams: ReportParameters): string {
+  public async generate(reportParams: ReportParameters): Promise<string> {
     const builder = new XMLBuilder({
       attributeNamePrefix: '@',
       ignoreAttributes: false,
@@ -589,6 +593,7 @@ export class UsSarReportGenerator implements ReportGenerator {
     fs.rmSync(outputFile)
     return newXmlFile
   }
+
   public async getIPAddresses(
     userIds: string[],
     transactions: InternalTransaction[]
@@ -625,6 +630,65 @@ export class UsSarReportGenerator implements ReportGenerator {
   }
 
   public async submit(report: Report) {
+    if (!envIs('sandbox')) {
+      return ''
+    }
+
+    const creds = await getSecret<{ username: string; password: string }>(
+      process.env.FINCEN_CREDENTIALS_SECRET_ARN as string
+    )
+    const sftp = new SftpClient()
+    const connection = await sftp.connect({
+      host: '166.123.230.128',
+      port: 10122,
+      username: creds.username,
+      password: creds.password,
+    })
+    const remoteFilename = `SARX.${dayjs(report.createdAt).format(
+      'YYYYMMDDhhmmss'
+    )}.${this.tenantId}`
+    const localFilePath = `${path.join('/tmp', `${report.id}.xml`)}`
+    fs.writeFileSync(localFilePath, last(report.revisions)!.output)
+
+    await connection.fastPut(localFilePath, remoteFilename, () => {})
+    logger.info(`${remoteFilename} uploaded successfully`)
+
+    const localAckFile = `${path.join('/tmp', `${remoteFilename}-ack`)}`
+    try {
+      await backOff(
+        async () => {
+          const remoteAckFilename = `Inbox/${remoteFilename}`
+          await connection.fastGet(remoteAckFilename, localAckFile, () => {})
+        },
+        {
+          startingDelay: 1000,
+          maxDelay: 5 * 1000,
+          numOfAttempts: 3,
+        }
+      )
+    } catch (e) {
+      logger.error(`Failed to get ack file from 'Inbox/'`)
+      logger.error(e)
+      try {
+        await backOff(
+          async () => {
+            const remoteAckFilename = `inbox/${remoteFilename}`
+            await connection.fastGet(remoteAckFilename, localAckFile, () => {})
+          },
+          {
+            startingDelay: 1000,
+            maxDelay: 5 * 1000,
+            numOfAttempts: 3,
+          }
+        )
+      } catch (e) {
+        logger.error(`Failed to get ack file from 'inbox/'`)
+        throw e
+      }
+    }
+    const ackFileContent = fs.readFileSync(localAckFile, 'utf8')
+    logger.info(`Ack file: ${ackFileContent}`)
+
     Sentry.withScope((scope) => {
       scope.setTags({ reportId: report.id })
       scope.setFingerprint([this.tenantId, report.id!])

@@ -113,5 +113,6 @@ export type Config = {
     GOOGLE_SHEETS_PRIVATE_KEY: string
     MERCHANT_MONITORING_SECRETS_ARN: string
     API_USAGE_GOOGLE_SHEET_ID: string
+    FINCEN_CREDENTIALS_SECRET_ARN: string
   }
 }

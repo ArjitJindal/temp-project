@@ -86,7 +86,7 @@ export class LithuaniaCTRReportGenerator implements ReportGenerator {
   public getAugmentedReportParams(report: Report): ReportParameters {
     return report.parameters
   }
-  public generate(reportParams: ReportParameters): string {
+  public async generate(reportParams: ReportParameters): Promise<string> {
     const builder = new XMLBuilder({
       attributeNamePrefix: '@_',
       ignoreAttributes: false,

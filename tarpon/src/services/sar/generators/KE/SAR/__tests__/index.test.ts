@@ -18,7 +18,7 @@ describe.skip('SAR Generation', () => {
 describe('Schema to XML', () => {
   test('Test that field order is maintained', async () => {
     const generator = new KenyaSARReportGenerator()
-    const xml = generator.generate(
+    const xml = await generator.generate(
       {
         indicators: [],
         report: {

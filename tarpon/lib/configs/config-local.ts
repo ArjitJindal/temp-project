@@ -76,5 +76,6 @@ export const config: Config = {
     GOOGLE_SHEETS_PRIVATE_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:GoogleSheetsPrivateKey-0WCDHP`,
     API_USAGE_GOOGLE_SHEET_ID: '14VIlFKYsJq6R-UYAj-JVdAZA9PiBK5T7IgLzcFKRKlU',
     MERCHANT_MONITORING_SECRETS_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:MerchantMonitoring-kr2u3Z`,
+    FINCEN_CREDENTIALS_SECRET_ARN: 'N/A',
   },
 }

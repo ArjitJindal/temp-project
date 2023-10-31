@@ -230,7 +230,7 @@ describe('FinCEN SAR Generation', () => {
   test('Should generate valid XML file', async () => {
     const generator = new UsSarReportGenerator()
     const testInputParams = generator.getAugmentedReportParams(report)
-    const xml = generator.generate(testInputParams)
+    const xml = await generator.generate(testInputParams)
     const expectedOutput = fs.readFileSync(
       path.join(__dirname, 'expected-test-output.xml'),
       'utf8'

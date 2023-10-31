@@ -1,3 +1,4 @@
+import { isNil, omitBy } from 'lodash'
 import { Report } from '@/@types/openapi-internal/Report'
 import { UsSarReportGenerator } from '@/services/sar/generators/US/SAR'
 import { KenyaSARReportGenerator } from '@/services/sar/generators/KE/SAR'
@@ -446,9 +447,12 @@ export function SampleFincenReport(
         createdAt: 1691431998435,
       },
     ],
-    hierarchy: {
-      parentId: parentReportId,
-      childIds: childIds,
-    },
+    hierarchy: omitBy(
+      {
+        parentId: parentReportId,
+        childIds: childIds,
+      },
+      isNil
+    ),
   }
 }

@@ -96,5 +96,6 @@ export const config: Config = {
     API_USAGE_GOOGLE_SHEET_ID: '1aR0OsWWHP_TDKHZoNvwmkxfCmApWPZDO_78EODig5Ps',
     GOOGLE_SHEETS_PRIVATE_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:GoogleSheetsPrivateKey-1bGyks`,
     MERCHANT_MONITORING_SECRETS_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:MerchantMonitoring-WusYHh`,
+    FINCEN_CREDENTIALS_SECRET_ARN: 'TBD',
   },
 }

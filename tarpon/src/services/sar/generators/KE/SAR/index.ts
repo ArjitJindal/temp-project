@@ -106,7 +106,10 @@ export class KenyaSARReportGenerator implements ReportGenerator {
     return report.parameters
   }
 
-  public generate(reportParams: ReportParameters, report: Report): string {
+  public async generate(
+    reportParams: ReportParameters,
+    report: Report
+  ): Promise<string> {
     const builder = new XMLBuilder()
     const xmlContent = builder.build({
       reentity_id: reportParams.report.reentity_id,

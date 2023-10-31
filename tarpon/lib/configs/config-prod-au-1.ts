@@ -96,5 +96,6 @@ export const config: Config = {
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
     GOOGLE_SHEETS_PRIVATE_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:GoogleSheetsPrivateKey-ME2RfO`,
     MERCHANT_MONITORING_SECRETS_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:MerchantMonitoring-WusYHh`,
+    FINCEN_CREDENTIALS_SECRET_ARN: 'TBD',
   },
 }

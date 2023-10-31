@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
-import { isEmpty, omitBy } from 'lodash'
+import { isNil, omitBy } from 'lodash'
 import { MetricsRepository } from '../rules-engine/repositories/metrics'
 import { RulesEngineService } from '../rules-engine'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
@@ -74,12 +74,12 @@ export class DeviceDataService {
       transactionId: deviceMetric.transactionId,
       transactionState: transaction.transactionState ?? 'CREATED',
       metaData: {
-        ...omitBy(deviceDataMapping, isEmpty),
+        ...omitBy(deviceDataMapping, isNil),
       },
       eventDescription: `Event triggered by device data`,
       updatedTransactionAttributes: {
         originDeviceData: {
-          ...omitBy(deviceDataMapping, isEmpty),
+          ...omitBy(deviceDataMapping, isNil),
         },
       },
     }

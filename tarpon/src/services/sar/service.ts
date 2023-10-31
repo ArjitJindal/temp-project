@@ -158,7 +158,7 @@ export class ReportService {
     report.id = report.id ?? (await this.reportRepository.getId())
     report.status = 'COMPLETE'
     report.revisions.push({
-      output: generator.generate(report.parameters, report) || '',
+      output: (await generator.generate(report.parameters, report)) || '',
       createdAt: Date.now(),
     })
 

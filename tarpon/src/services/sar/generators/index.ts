@@ -31,7 +31,7 @@ export interface ReportGenerator {
   getAugmentedReportParams(report?: Report): ReportParameters
 
   // Generate the report (XML)
-  generate(reportParams: ReportParameters, report: Report): string
+  generate(reportParams: ReportParameters, report: Report): Promise<string>
   submit?(report: Report): Promise<string>
 }
 
