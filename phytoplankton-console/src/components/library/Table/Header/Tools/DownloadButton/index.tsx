@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import _ from 'lodash';
+import { get } from 'lodash';
 import { message, Popover, Radio, Select } from 'antd';
 import {
+  AllParams,
   applyFieldAccessor,
   DerivedColumn,
   FieldAccessor,
@@ -12,6 +13,7 @@ import {
   TableColumn,
   TableData,
 } from '../../../types';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PAGINATION_ENABLED } from '../../../consts';
 import s from './styles.module.less';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import Button from '@/components/library/Button';
@@ -25,16 +27,24 @@ import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
 
 const MAXIMUM_EXPORT_ITEMS = 10000;
 
-type Props<Item extends object> = {
-  currentPage: number;
+type Props<Item extends object, Params extends object> = {
   onPaginateData: (params: PaginationParams) => Promise<TableData<Item>>;
   columns: TableColumn<Item>[];
-  pageSize: number;
-  pagination: boolean;
+  params: AllParams<Params>;
 };
 
-export default function DownloadButton<T extends object>(props: Props<T>) {
-  const { currentPage, columns, onPaginateData, pageSize, pagination } = props;
+export default function DownloadButton<T extends object, Params extends object>(
+  props: Props<T, Params>,
+) {
+  const {
+    columns,
+    onPaginateData,
+    params: {
+      pageSize = DEFAULT_PAGE_SIZE,
+      pagination = DEFAULT_PAGINATION_ENABLED,
+      page: currentPage = 1,
+    },
+  } = props;
 
   const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT'>('ALL');
   const [progress, setProgress] = useState<null | { page: number; totalPages?: number }>(null);
@@ -46,9 +56,26 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
 
       const columnsToExport = prepareColumns(columns);
       result.push(
-        columnsToExport.map((adjustedColumn) =>
-          csvValue(typeof adjustedColumn.title === 'string' ? adjustedColumn.title : '-'),
-        ),
+        columnsToExport.map((adjustedColumn) => {
+          let title = typeof adjustedColumn.title === 'string' ? adjustedColumn.title : '-';
+          const key = isSimpleColumn(adjustedColumn) ? adjustedColumn.key : adjustedColumn.id;
+          const filterValue = key ? get(props.params, key) : null;
+          if (filterValue) {
+            let filterValueOptions = '';
+
+            if (typeof filterValue === 'object' && Array.isArray(filterValue)) {
+              filterValueOptions = filterValue.join(', ');
+            } else if (typeof filterValue === 'string') {
+              filterValueOptions = filterValue;
+            } else if (typeof filterValue === 'number') {
+              filterValueOptions = filterValue.toString();
+            }
+
+            title += ` (Filter: ${filterValueOptions})`?.trim();
+          }
+
+          return csvValue(title);
+        }),
       );
       let totalPages = 1;
       let page = pagesMode === 'ALL' ? 1 : currentPage;
