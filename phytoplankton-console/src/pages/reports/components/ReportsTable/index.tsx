@@ -25,6 +25,7 @@ import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import COUNTRIES from '@/utils/countries';
+import { getAccountUserName } from '@/utils/account';
 
 type TableParams = AllParams<DefaultApiGetReportsRequest>;
 
@@ -83,6 +84,10 @@ export default function ReportsTable() {
             </div>
           );
         },
+        stringify(caseUser) {
+          if (caseUser === undefined) return 'Not Found';
+          return caseUser.userId;
+        },
       },
     }),
     helper.simple<'caseUser'>({
@@ -92,6 +97,10 @@ export default function ReportsTable() {
         render: (caseUser) => {
           if (caseUser === undefined) return <div>Not Found</div>;
           return <div>{getUserName(caseUser)}</div>;
+        },
+        stringify(value) {
+          if (value === undefined) return 'Not Found';
+          return getUserName(value);
         },
       },
     }),
@@ -105,6 +114,9 @@ export default function ReportsTable() {
           ) : (
             <>-</>
           );
+        },
+        stringify(value, item) {
+          return item.createdById ? getAccountUserName(users[item.createdById]) : '-';
         },
       },
     }),
@@ -144,6 +156,9 @@ export default function ReportsTable() {
       type: {
         render: (reportTypeId) => {
           return reportTypeId ? <div>{COUNTRIES[reportTypeId.split('-')[0]]}</div> : <>-</>;
+        },
+        stringify: (reportTypeId) => {
+          return reportTypeId ? COUNTRIES[reportTypeId.split('-')[0]] : '-';
         },
       },
     }),
