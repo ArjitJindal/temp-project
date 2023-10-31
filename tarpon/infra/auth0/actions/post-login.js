@@ -34,6 +34,25 @@ exports.onExecutePostLogin = async (event, api) => {
           auth0Domain = organization.metadata.auth0Domain
         }
       }
+      const roles = event.authorization.roles
+      if (roles.length === 1) {
+        let role = event.authorization.roles[0]
+        if (role.indexOf(':') > -1 && role.length - 1 > role.indexOf(':')) {
+          role = role.split(':')[1]
+        }
+        api.user.setAppMetadata('role', role)
+      } else if (roles.length > 1) {
+        const userRoles = await management.getUserRoles({ id: user_id })
+        const currentRole = userRoles.find((r) => {
+          const roleNameSplit = r.name.split(':')
+          if (roleNameSplit.length === 1) return r.name === role
+          return role.split(':')[1] === role
+        })
+        await management.removeRolesFromUser(
+          { id: user_id },
+          { roles: userRoles.filter((r) => r.id !== currentRole?.id) }
+        )
+      }
     } catch (e) {
       console.error(e)
     }
@@ -58,24 +77,5 @@ exports.onExecutePostLogin = async (event, api) => {
     )
     api.accessToken.setCustomClaim(namespace + '/demoMode', demoMode === true)
     api.accessToken.setCustomClaim(namespace + '/auth0Domain', auth0Domain)
-    const roles = event.authorization.roles
-    if (roles.length === 1) {
-      let role = event.authorization.roles[0]
-      if (role.indexOf(':') > -1 && role.length - 1 > role.indexOf(':')) {
-        role = role.split(':')[1]
-      }
-      api.user.setAppMetadata('role', role)
-    } else if (roles.length > 1) {
-      const userRoles = await management.getUserRoles({ id: user_id })
-      const currentRole = userRoles.find((r) => {
-        const roleNameSplit = r.name.split(':')
-        if (roleNameSplit.length === 1) return r.name === role
-        return role.split(':')[1] === role
-      })
-      await management.removeRolesFromUser(
-        { id: user_id },
-        { roles: userRoles.filter((r) => r.id !== currentRole?.id) }
-      )
-    }
   }
 }
