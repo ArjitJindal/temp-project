@@ -1,4 +1,10 @@
-export const CURRENCIES = [
+import { CurrencyCode } from '@/apis';
+
+export const CURRENCIES: ReadonlyArray<{
+  readonly value: CurrencyCode;
+  readonly label: string;
+  readonly symbol: string | null;
+}> = [
   {
     value: 'ADA',
     label: 'ADA (Cardano)',

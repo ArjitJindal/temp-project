@@ -4800,6 +4800,10 @@ components:
         - CVX
         - CZK
         - DAI
+        - DIF
+        - LSR
+        - SRC
+        - BRB
         - DASH
         - DCR
         - DFI
