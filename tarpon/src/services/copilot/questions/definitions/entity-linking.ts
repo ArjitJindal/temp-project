@@ -10,14 +10,9 @@ export const EntityLinking: EmbeddedQuestion<{ userId: string }> = {
     return `Entity linking for ${await queryUsername(userId)}`
   },
   variableOptions: {
-    userId: {
-      type: 'SEARCH',
-      search: searchUser,
-    },
+    userId: { type: 'SEARCH', search: searchUser },
   },
   defaults: ({ userId }) => {
-    return {
-      userId,
-    }
+    return { userId }
   },
 }

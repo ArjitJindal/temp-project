@@ -1,20 +1,17 @@
+import { searchAlert } from './common/search'
 import { EmbeddedQuestion } from '@/services/copilot/questions/types'
 
-export const Recommendation: EmbeddedQuestion<{
-  recommendation: string
-}> = {
+export const Recommendation: EmbeddedQuestion<{ alertId: string }> = {
   type: 'EMBEDDED',
   questionId: 'Recommendation',
   categories: ['CONSUMER', 'BUSINESS'],
-  title: async () => {
-    return `AI Forensics Recommendation`
+  title: async (_, { alertId }) => {
+    return `AI Forensics Recommendation for ${alertId}`
   },
   variableOptions: {
-    recommendation: 'STRING',
+    alertId: { type: 'SEARCH', search: searchAlert },
   },
-  defaults: () => {
-    return {
-      recommendation: 'AI Forensics has no recommendations.',
-    }
+  defaults: ({ alertId }) => {
+    return { alertId }
   },
 }
