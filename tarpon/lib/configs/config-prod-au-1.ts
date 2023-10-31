@@ -70,7 +70,7 @@ export const config: Config = {
     CRON_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
-    LAMBDA_VPC_ENABLED: true,
+    LAMBDA_VPC_ENABLED: false,
   },
   application: {
     CERTIFICATE_ARN:
