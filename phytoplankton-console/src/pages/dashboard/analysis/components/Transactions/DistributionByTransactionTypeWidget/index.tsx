@@ -59,7 +59,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
         series: transactionType,
       });
     }
-    return result;
+    return result.filter((widgetData) => widgetData.value !== 0);
   });
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   return (
