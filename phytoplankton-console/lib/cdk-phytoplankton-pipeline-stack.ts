@@ -158,6 +158,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
         },
         {
           stageName: 'Approve_Sandbox',
+
           actions: [
             new codepipeline_actions.ManualApprovalAction({
               actionName: 'Approve',

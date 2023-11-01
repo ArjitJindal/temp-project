@@ -350,6 +350,37 @@ export const createLambdaDurationAlarm = (
     }),
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }
+export const createLambdaInitDurationAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  lambdaName: string,
+  duration: Duration
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  return new Alarm(context, `${lambdaName}InitDuration`, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold: duration.toSeconds() * 1000,
+    evaluationPeriods: 6,
+    datapointsToAlarm: 3,
+    treatMissingData: TreatMissingData.NOT_BREACHING,
+    alarmName: `Lambda-${lambdaName}InitDuration`,
+    alarmDescription: `Covers Duration in ${lambdaName} in the AWS account. 
+    Alarm triggers when Maximum Duration exceedes ${duration.toSeconds()}s for 3 consecutive data points in 30 mins (Checked every 5 minutes). `,
+    metric: new Metric({
+      label: 'Lambda Maximum Duration',
+      namespace: 'LambdaInsights',
+      metricName: 'init_duration',
+      dimensionsMap: {
+        FunctionName: lambdaName,
+      },
+    }).with({
+      period: Duration.seconds(300),
+      statistic: 'Maximum',
+    }),
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}
 export const createLambdaThrottlingAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,

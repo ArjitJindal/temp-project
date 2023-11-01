@@ -19,6 +19,7 @@ import {
   createKinesisAlarm,
   createLambdaConsumerIteratorAgeAlarm,
   createLambdaDurationAlarm,
+  createLambdaInitDurationAlarm,
   createLambdaErrorPercentageAlarm,
   createLambdaMemoryUtilizationAlarm,
   createLambdaThrottlingAlarm,
@@ -89,6 +90,12 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         this.betterUptimeCloudWatchTopic,
         lambdaName,
         Duration.seconds(LAMBDAS[lambdaName].expectedMaxSeconds)
+      )
+      createLambdaInitDurationAlarm(
+        this,
+        this.betterUptimeCloudWatchTopic,
+        lambdaName,
+        Duration.seconds(5)
       )
       // Disable error alarm for now as there's no way to differentiate system error or client side error
       // (we should still get alerted in Sentry for system error)
