@@ -20,12 +20,15 @@ import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import { SanctionsSearchType } from '@/apis';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { humanizeCamelCase } from '@/utils/humanize';
+import { getCurrentDomain } from '@/utils/routing';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
   types?: SanctionsSearchType[];
   createdAt?: RangeValue<Dayjs>;
 };
+
+const sanctionsSerachLink = (searchId: string) => `/sanctions/search/${searchId}`;
 
 export const SanctionsSearchHistoryTable: React.FC = () => {
   const api = useApi();
@@ -65,8 +68,13 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
       key: 'request.searchTerm',
       type: {
         render: (searchTerm, { item: entity }) => (
-          <Id to={`/sanctions/search/${entity._id}`}>{searchTerm}</Id>
+          <Id to={sanctionsSerachLink(entity._id)}>{searchTerm}</Id>
         ),
+        stringify(value, item) {
+          return (
+            item.request.searchTerm + ` (${getCurrentDomain()}${sanctionsSerachLink(item._id)})`
+          );
+        },
       },
     }),
   ];

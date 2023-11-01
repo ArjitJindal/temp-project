@@ -26,7 +26,7 @@ import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import { makeUrl } from '@/utils/routing';
+import { getAlertUrl, getCurrentDomain } from '@/utils/routing';
 import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
@@ -39,9 +39,9 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import {
   ASSIGNMENTS,
   CASE_STATUS,
+  ALERT_USER_ID,
   CASEID,
   DATE,
-  ID,
   PRIORITY,
   RULE_ACTION,
   RULE_NATURE,
@@ -258,23 +258,7 @@ export default function AlertTable(props: Props) {
               if (caseId !== undefined) return <div>{alertId}</div>;
               return (
                 <>
-                  <Id
-                    to={addBackUrlToRoute(
-                      makeUrl(
-                        `/case-management/case/:caseId/:tab`,
-                        {
-                          caseId: entity.caseId,
-                          tab: 'alerts',
-                        },
-                        {
-                          expandedAlertId: alertId,
-                        },
-                      ),
-                    )}
-                    testName="alert-id"
-                  >
-                    {alertId}
-                  </Id>
+                  <Id to={addBackUrlToRoute(getAlertUrl(entity.caseId!, alertId!))}>{alertId}</Id>
                   {falsePositiveDetails &&
                     falsePositiveDetails.isFalsePositive &&
                     falsePositiveEnabled && (
@@ -287,6 +271,15 @@ export default function AlertTable(props: Props) {
                       />
                     )}
                 </>
+              );
+            },
+            stringify(value, item) {
+              return (
+                item.alertId +
+                ` (${getCurrentDomain()}${getAlertUrl(
+                  item.caseId as string,
+                  item.alertId as string,
+                )})`
               );
             },
           },
@@ -318,7 +311,7 @@ export default function AlertTable(props: Props) {
               helper.simple<'caseUserId'>({
                 title: 'User id',
                 key: 'caseUserId',
-                type: ID,
+                type: ALERT_USER_ID,
               }),
 
               helper.simple<'caseUserName'>({
@@ -521,7 +514,7 @@ export default function AlertTable(props: Props) {
           hideInTable: true,
           filtering: false,
           type: {
-            stringify: (value) => commentsToString(value ?? [], users),
+            stringify: (value) => commentsToString(value ?? [], users).trim(),
           },
         }),
       ]);

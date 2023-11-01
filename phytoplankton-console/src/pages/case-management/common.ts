@@ -109,7 +109,7 @@ export function useAlertQuery(
   });
 }
 
-function presentAlertData(data: AlertListResponseItem[]) {
+function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
   return data.map(({ alert, caseUsers, ...rest }) => {
     const caseUser = caseUsers ?? {};
     const user = caseUser?.origin?.userId
@@ -125,6 +125,7 @@ function presentAlertData(data: AlertListResponseItem[]) {
       age: pluralize('day', Math.floor(duration.asDays()), true),
       caseUserId: caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '',
       caseType: rest.caseType,
+      user: user,
     };
   });
 }

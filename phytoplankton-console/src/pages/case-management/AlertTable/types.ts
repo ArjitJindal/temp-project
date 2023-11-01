@@ -1,4 +1,4 @@
-import { Alert, CaseType } from '@/apis';
+import { Alert, CaseType, InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 
 export interface TableAlertItem extends Alert {
   alertId?: string;
@@ -8,4 +8,5 @@ export interface TableAlertItem extends Alert {
   age?: string;
   caseUserId: string;
   caseType: CaseType;
+  user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
 }

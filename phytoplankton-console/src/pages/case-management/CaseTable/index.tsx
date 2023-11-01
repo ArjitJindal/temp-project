@@ -68,6 +68,7 @@ import {
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { denseArray } from '@/utils/lang';
+import { getCurrentDomain } from '@/utils/routing';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -174,6 +175,9 @@ export default function CaseTable(props: Props) {
                 <Id to={getUserLink(user)}>{userId}</Id>
               </div>
             );
+          },
+          stringify(value, item) {
+            return `${item.user?.userId ?? ''} (${getCurrentDomain()}${getUserLink(item.user)})`;
           },
         },
       }),
@@ -399,7 +403,7 @@ export default function CaseTable(props: Props) {
         exporting: true,
         type: {
           stringify: (comments: Comment[] | undefined, item: TableItem) =>
-            casesCommentsGenerator(comments ?? [], item.alerts ?? [], users),
+            casesCommentsGenerator(comments ?? [], item.alerts ?? [], users).trim(),
         },
       }),
     );

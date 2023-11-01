@@ -27,7 +27,7 @@ import {
   Case,
   Priority,
 } from '@/apis';
-import { getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
@@ -51,7 +51,7 @@ import TextArea from '@/components/library/TextArea';
 import { humanizeConstant } from '@/utils/humanize';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import { makeUrl } from '@/utils/routing';
+import { getAlertUrl, getCaseUrl, getCurrentDomain } from '@/utils/routing';
 import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { useApi } from '@/api';
@@ -60,10 +60,6 @@ import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
 import { DurationDisplay } from '@/components/ui/DurationDisplay';
 import { getDuration, formatDuration } from '@/utils/time-utils';
-import {
-  COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
-  COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
-} from '@/components/ui/colors';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 
@@ -212,6 +208,24 @@ export const RULE_NATURE: ColumnDataType<RuleNature> = {
 
 export const ID: ColumnDataType<string> = {
   render: (value) => <Id>{value}</Id>,
+  stringify: (value) => `${value}`,
+};
+
+export const ALERT_USER_ID: ColumnDataType<string, TableAlertItem> = {
+  render: (value, { item: entity }) => {
+    return (
+      <>
+        {entity?.caseId && (
+          <Id to={addBackUrlToRoute(getUserLink(entity.user) as string)} testName="alert-user-id">
+            {value}
+          </Id>
+        )}
+      </>
+    );
+  },
+  stringify(value, item) {
+    return `${value ?? ''} (${getCurrentDomain()}${getUserLink(item?.user) as string})`;
+  },
 };
 
 export const RISK_LEVEL: ColumnDataType<RiskLevel> = {
@@ -293,80 +307,30 @@ export const MONEY: ColumnDataType<Amount> = {
   autoFilterDataType: { kind: 'dateTimeRange' },
 };
 
-export const CASEID_PRIORITY: ColumnDataType<string, Case> = {
-  render: (_value, { item: entity }) => {
-    const tagStyle = {
-      background: COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
-      borderColor: COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
-      color: 'black',
-    };
-
-    return (
-      <>
-        {entity?.caseId && (
-          <Id
-            to={addBackUrlToRoute(
-              makeUrl(`/case-management/case/:caseId`, {
-                caseId: entity.caseId,
-              }),
-            )}
-            testName="case-id"
-          >
-            {entity.caseId}
-          </Id>
-        )}
-        <div className={s.casePriority}>
-          <div style={{ marginBottom: 0 }}>
-            {entity?.priority && <p style={{ marginBottom: 0 }}>Priority: {entity.priority}</p>}
-          </div>
-          <div style={{ marginBottom: 0 }}>
-            {entity?.caseType === 'MANUAL' && <AntTag style={tagStyle}>Manual</AntTag>}
-          </div>
-        </div>
-      </>
-    );
-  },
-  defaultWrapMode: 'OVERFLOW',
-};
-
 export const CASEID: ColumnDataType<string, Case> = {
   render: (_value, { item: entity }) => {
     return (
       <>
         {entity?.caseId && (
-          <Id
-            to={addBackUrlToRoute(
-              makeUrl(`/case-management/case/:caseId`, {
-                caseId: entity.caseId,
-              }),
-            )}
-            testName="case-id"
-          >
+          <Id to={addBackUrlToRoute(getCaseUrl(entity.caseId))} testName="case-id">
             {entity.caseId}
           </Id>
         )}
       </>
     );
   },
+  stringify(value, item) {
+    return `${item?.caseId ?? ''} (${getCurrentDomain()}${getCaseUrl(value as string)})`;
+  },
 };
+
 export const ALERT_ID: ColumnDataType<string, Case> = {
   render: (alertId, { item: entity }) => {
     return (
       <>
         {entity?.caseId && (
           <Id
-            to={addBackUrlToRoute(
-              makeUrl(
-                `/case-management/case/:caseId/:tab`,
-                {
-                  caseId: entity.caseId,
-                  tab: 'alerts',
-                },
-                {
-                  expandedAlertId: alertId,
-                },
-              ),
-            )}
+            to={addBackUrlToRoute(getAlertUrl(entity.caseId, alertId as string))}
             testName="alert-id"
           >
             {alertId}
@@ -374,6 +338,12 @@ export const ALERT_ID: ColumnDataType<string, Case> = {
         )}
       </>
     );
+  },
+  stringify(value, item) {
+    return `${item?.caseId ?? ''} (${getCurrentDomain()}${getAlertUrl(
+      item?.caseId as string,
+      value as string,
+    )})`;
   },
 };
 
