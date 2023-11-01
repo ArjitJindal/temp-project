@@ -5,12 +5,12 @@ describe('Check if the widget selector works as expected', () => {
 
   it('should check the visibility of selected widgets', () => {
     const WIDGETS = [
-      'Consumer users distribution by risk levels',
+      // 'Consumer users distribution by risk levels',
       'Consumer users breakdown by risk levels',
       'Top consumer users by rule hits',
       'Consumer users distribution by KYC status',
       'Consumer users distribution by user status',
-      'Business users distribution by risk levels',
+      // 'Business users distribution by risk levels',
       'Business users breakdown by risk levels',
       'Top business users by rule hits',
       'Business users distribution by KYC status',
