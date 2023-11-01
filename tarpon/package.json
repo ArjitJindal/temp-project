@@ -30,6 +30,7 @@
     "synth:prod:au-1": "export ENV=prod:au-1 && npm run openapi:augment && cdk synth --quiet prod-tarpon",
     "synth:prod:us-1": "export ENV=prod:us-1 && npm run openapi:augment && cdk synth --quiet prod-tarpon",
     "synth:pipeline": "cdk synth --quiet tarpon-pipeline",
+    "deploy:pipline:actions": "cdk deploy tarpon-pipeline --require-approval=never",
     "deploy:dev": "export ENV=dev && cdk deploy dev-tarpon --require-approval=never && npm run cdktf:init && cdktf deploy --quiet dev-tarpon --auto-approve",
     "deploy:dev:clean": "npm run clear && npm install && ENV=dev npm run build && npm run synth:dev && npm run deploy:dev",
     "deploy:qa": "export QA_SUBDOMAIN=${QA_SUBDOMAIN:-qa$(git rev-parse --abbrev-ref HEAD | shasum | head -c5)} && npm run clear && npm install && ENV=dev npm run build && npm run synth:dev:user && ENV=dev:user cdk deploy dev-tarpon-$QA_SUBDOMAIN --require-approval never",

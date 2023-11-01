@@ -1,0 +1,42 @@
+name: Deploy Tarpon Pipline
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+    paths:
+      - "tarpon/infra/cdk-tarpon-pipeline-stack.ts"
+jobs:
+  deploy:
+    strategy:
+      matrix:
+        node-version: [18.x]
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 18x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: "tarpon/package-lock.json"
+      - run: npm ci
+        working-directory: "tarpon"
+      - name: Synth Pipline
+        run: |
+          export ENV=deploy
+          npm run synth:pipeline
+        working-directory: "tarpon"
+      - name: Deploy Tarpon Pipline
+        run: |
+          export ENV=deploy
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          echo "Create default AWS profile"
+          mkdir ~/.aws
+          printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.AWS_PIPELINE_ACCESS_KEY }}\naws_secret_access_key=${{ secrets.AWS_PIPELINE_SECRET_KEY }}" > ~/.aws/credentials
+          cat ~/.aws/credentials
+          npm run deploy:pipline:actions
+        working-directory: "tarpon"

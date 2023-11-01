@@ -341,7 +341,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           ],
         },
         {
-          stageName: 'Approve Sandbox',
+          stageName: 'Approve_Sandbox',
           actions: [
             new codepipeline_actions.ManualApprovalAction({
               actionName: 'Approve',
@@ -362,7 +362,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           ],
         },
         {
-          stageName: 'Approve',
+          stageName: 'Approve_Production',
           actions: [
             new codepipeline_actions.ManualApprovalAction({
               actionName: 'Approve',
