@@ -265,6 +265,10 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                   `npm run migration:post:up`,
                 ],
               },
+              artifacts: {
+                'base-directory': 'tarpon/cdk.out',
+                files: ['*.json'],
+              },
               ...(['dev', 'sandbox'].includes(config.stage)
                 ? {
                     post_build: {
