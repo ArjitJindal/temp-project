@@ -115,8 +115,8 @@ export default function ReportsTable() {
             <>-</>
           );
         },
-        stringify(value, item) {
-          return item.createdById ? getAccountUserName(users[item.createdById]) : '-';
+        stringify(value, items) {
+          return items.createdById ? getAccountUserName(users[items.createdById]) : '-';
         },
       },
     }),
