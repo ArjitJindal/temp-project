@@ -71,6 +71,7 @@
     "not ie <= 10"
   ],
   "dependencies": {
+    "@flagright/lib": "file:../lib",
     "@ant-design/charts": "^1.4.2",
     "@ant-design/icons": "^4.5.0",
     "@ant-design/pro-card": "1.20.13",

@@ -197,6 +197,7 @@
     "yaml": "^2.1.1"
   },
   "dependencies": {
+    "@flagright/lib": "file:../lib",
     "@aws-sdk/client-api-gateway": "^3.262.0",
     "@aws-sdk/client-cloudwatch": "^3.301.0",
     "@aws-sdk/client-dynamodb": "^3.183.0",
