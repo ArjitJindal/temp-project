@@ -29,7 +29,7 @@ const StatusChangeMenu = (props: Props) => {
   return (
     <div>
       <Dropdown options={options} optionClassName={s.option}>
-        <Button type="TETRIARY" testName="status-button" className={s.button}>
+        <Button type="TETRIARY" testName="status-options-button" className={s.button}>
           <MoreOutlined />
         </Button>
       </Dropdown>
