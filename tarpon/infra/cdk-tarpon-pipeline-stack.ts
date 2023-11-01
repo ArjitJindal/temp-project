@@ -257,7 +257,13 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 ],
               },
               build: {
-                commands: ['npm run migration:post:up'],
+                commands: [
+                  ...GENERATED_DIRS.map(
+                    (dir) =>
+                      `mv "$CODEBUILD_SRC_DIR_${buildOutput.artifactName}"/${dir} ${dir}`
+                  ),
+                  `npm run migration:post:up`,
+                ],
               },
               ...(['dev', 'sandbox'].includes(config.stage)
                 ? {
