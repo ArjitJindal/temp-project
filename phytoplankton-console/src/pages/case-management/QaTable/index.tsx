@@ -47,6 +47,7 @@ export default function QaTable(props: Props) {
       enableResizing: false,
       disableColumnShuffling: true,
       sorting: true,
+      headerTitle: 'Priority',
     }),
     helper.simple<'alertId'>({
       title: 'Alert ID',

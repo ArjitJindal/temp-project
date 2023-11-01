@@ -130,6 +130,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         type: PRIORITY,
         defaultWidth: 40,
         enableResizing: false,
+        headerTitle: 'Priority',
       }),
       helper.simple<'ruleId'>({
         title: 'ID',

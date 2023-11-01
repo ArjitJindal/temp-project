@@ -57,7 +57,12 @@ export default function DownloadButton<T extends object, Params extends object>(
       const columnsToExport = prepareColumns(columns);
       result.push(
         columnsToExport.map((adjustedColumn) => {
-          let title = typeof adjustedColumn.title === 'string' ? adjustedColumn.title : '-';
+          let title = adjustedColumn.headerTitle;
+
+          if (!title) {
+            title = typeof adjustedColumn.title === 'string' ? adjustedColumn.title : '-';
+          }
+
           const key = isSimpleColumn(adjustedColumn) ? adjustedColumn.key : adjustedColumn.id;
           const filterValue = key ? get(props.params, key) : null;
           if (filterValue) {

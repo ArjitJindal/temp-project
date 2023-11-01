@@ -126,6 +126,7 @@ export interface BaseColumn {
   defaultVisibility?: boolean;
   enableResizing?: boolean;
   disableColumnShuffling?: boolean;
+  headerTitle?: string; // In cases where there is empty title, we can use headerTitle to show title in csv
 }
 
 export interface GroupColumn<Item extends object> extends BaseColumn {

@@ -238,6 +238,7 @@ export default function AlertTable(props: Props) {
       return helper.list([
         helper.simple<'priority'>({
           title: '',
+          headerTitle: 'Priority',
           key: 'priority',
           type: PRIORITY,
           disableColumnShuffling: true,
