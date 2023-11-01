@@ -1,0 +1,40 @@
+name: Deploy Phyto Pipeline
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+    paths:
+      - "phytoplankton-console/lib/cdk-phytoplankton-pipeline-stack.ts"
+
+jobs:
+  deploy:
+    strategy:
+      matrix:
+        node-version: [18.x]
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 18x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "yarn"
+          cache-dependency-path: "phytoplankton-console/yarn.lock"
+      - run: yarn install --frozen-lockfile
+        working-directory: "phytoplankton-console"
+      - name: Synth Pipeline
+        run: npm run synth:pipeline
+        working-directory: "phytoplankton-console"
+      - name: Deploy Phyto Pipline
+        run: |
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          echo "Create default AWS profile"
+          mkdir ~/.aws
+          printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.AWS_PIPELINE_ACCESS_KEY }}\naws_secret_access_key=${{ secrets.AWS_PIPELINE_SECRET_KEY }}" > ~/.aws/credentials
+          cat ~/.aws/credentials
+          npm run deploy:pipline:actions
+        working-directory: "phytoplankton-console"
