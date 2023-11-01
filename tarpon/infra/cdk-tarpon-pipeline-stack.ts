@@ -170,17 +170,18 @@ export class CdkTarponPipelineStack extends cdk.Stack {
       logRetention: RetentionDays.TWO_MONTHS,
     })
 
+    const getAssumeRoleCommands = (config: Config) => [
+      `ASSUME_ROLE_ARN="arn:aws:iam::${config.env.account}:role/CodePipelineDeployRole"`,
+      `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy-${config.region})`,
+      'export TEMP_ROLE',
+      'export NODE_OPTIONS=--max-old-space-size=4096',
+      'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
+      'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
+      'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
+    ]
+
     const getDeployCodeBuildProject = (config: Config) => {
       const env = config.stage + (config.region ? `:${config.region}` : '')
-      const assumeRuleCommands = [
-        `ASSUME_ROLE_ARN="arn:aws:iam::${config.env.account}:role/CodePipelineDeployRole"`,
-        `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy-${config.region})`,
-        'export TEMP_ROLE',
-        'export NODE_OPTIONS=--max-old-space-size=4096',
-        'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
-        'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
-        'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
-      ]
       const shouldReleaseSentry =
         config.stage === 'prod' && config.region === 'eu-1'
       return new codebuild.PipelineProject(this, `TarponDeploy-${env}`, {
@@ -198,7 +199,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 `export ENV=${env}`,
                 `export AWS_REGION=${config.env.region}`,
                 `export AWS_ACCOUNT=${config.env.account}`,
-                ...assumeRuleCommands,
+                ...getAssumeRoleCommands(config),
               ],
             },
             build: {
@@ -209,28 +210,13 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 ),
                 ...(shouldReleaseSentry ? prodSentryReleaseSpec.commands : []),
                 `npm run migration:pre:up`,
-                ...assumeRuleCommands,
                 // Don't upload source maps to Lambda
                 'rm dist/**/*.js.map',
                 ...installTerraform,
                 `npm run synth:${env}`,
                 `npm run deploy:${env}`,
-                `npm run migration:post:up`,
               ],
             },
-            ...(['dev', 'sandbox'].includes(config.stage)
-              ? {
-                  post_build: {
-                    commands: [
-                      `export ENV=${env}`,
-                      `export AWS_REGION=${config.env.region}`,
-                      ...assumeRuleCommands,
-                      `npm run postman:integration:${config.stage}`,
-                      `npm run test:public:${config.stage}`,
-                    ],
-                  },
-                }
-              : {}),
           },
           artifacts: {
             'base-directory': 'tarpon/cdk.out',
@@ -243,11 +229,63 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           computeType: ComputeType.LARGE,
         },
         role: codeDeployRole,
-        // Max timeout: 480 minutes (https://docs.aws.amazon.com/codebuild/latest/userguide/limits.html)
-        timeout: Duration.hours(8),
         vpc,
       })
     }
+
+    const postDeplomentCodeBuildProject = (config: Config) => {
+      const env = config.stage + (config.region ? `:${config.region}` : '')
+      return new codebuild.PipelineProject(
+        this,
+        `TarponPostDeployment-${env}`,
+        {
+          buildSpec: codebuild.BuildSpec.fromObject({
+            version: '0.2',
+            phases: {
+              install: {
+                'runtime-versions': {
+                  nodejs: 18,
+                },
+                commands: [
+                  'cd tarpon',
+                  'npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
+                  `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
+                  `export ENV=${env}`,
+                  `export AWS_REGION=${config.env.region}`,
+                  `export AWS_ACCOUNT=${config.env.account}`,
+                  ...getAssumeRoleCommands(config),
+                ],
+              },
+              build: {
+                commands: ['npm run migration:post:up'],
+              },
+              ...(['dev', 'sandbox'].includes(config.stage)
+                ? {
+                    post_build: {
+                      commands: [
+                        `export ENV=${env}`,
+                        `export AWS_REGION=${config.env.region}`,
+                        ...getAssumeRoleCommands(config),
+                        `npm run postman:integration:${config.stage}`,
+                        `npm run test:public:${config.stage}`,
+                      ],
+                    },
+                  }
+                : {}),
+            },
+          }),
+          environment: {
+            buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+            computeType: ComputeType.LARGE,
+          },
+          role: codeDeployRole,
+          // Max timeout: 480 minutes (https://docs.aws.amazon.com/codebuild/latest/userguide/limits.html)
+          timeout: Duration.hours(8),
+          vpc,
+        }
+      )
+    }
+
     const getE2ETestProject = (env: 'dev') =>
       new codebuild.PipelineProject(this, `PhytoplanktonE2eTest-${env}`, {
         buildSpec: codebuild.BuildSpec.fromObject({
@@ -331,6 +369,17 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           ],
         },
         {
+          stageName: 'Post-Deploy-Dev',
+          actions: [
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Post_Deploy',
+              project: postDeplomentCodeBuildProject(devConfig),
+              input: sourceOutput,
+              environmentVariables: devSandboxSentryReleaseSpec.actionEnv,
+            }),
+          ],
+        },
+        {
           stageName: 'E2E_Test_Dev',
           actions: [
             new codepipeline_actions.CodeBuildAction({
@@ -357,6 +406,17 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               project: getDeployCodeBuildProject(sandboxConfig),
               input: sourceOutput,
               extraInputs: [buildOutput],
+              environmentVariables: devSandboxSentryReleaseSpec.actionEnv,
+            }),
+          ],
+        },
+        {
+          stageName: 'Post-Deploy-Sandbox',
+          actions: [
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Post_Deploy',
+              project: postDeplomentCodeBuildProject(sandboxConfig),
+              input: sourceOutput,
               environmentVariables: devSandboxSentryReleaseSpec.actionEnv,
             }),
           ],
@@ -413,6 +473,47 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               project: getDeployCodeBuildProject(prodUS1Config),
               input: sourceOutput,
               extraInputs: [buildOutput],
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
+            }),
+          ],
+        },
+        {
+          stageName: 'Post-Deploy-Prod',
+          actions: [
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Post_Deploy_asia-1',
+              project: postDeplomentCodeBuildProject(prodAisa1Config),
+              input: sourceOutput,
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
+            }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Post_Deploy_asia-2',
+              project: postDeplomentCodeBuildProject(prodAisa2Config),
+              input: sourceOutput,
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
+            }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Post_Deploy_eu-1',
+              project: postDeplomentCodeBuildProject(prodEU1Config),
+              input: sourceOutput,
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
+            }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Post_Deploy_eu-2',
+              project: postDeplomentCodeBuildProject(prodEU2Config),
+              input: sourceOutput,
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
+            }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Post_Deploy_au-1',
+              project: postDeplomentCodeBuildProject(prodAU1Config),
+              input: sourceOutput,
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
+            }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Post_Deploy_us-1',
+              project: postDeplomentCodeBuildProject(prodUS1Config),
+              input: sourceOutput,
               environmentVariables: prodSentryReleaseSpec.actionEnv,
             }),
           ],
