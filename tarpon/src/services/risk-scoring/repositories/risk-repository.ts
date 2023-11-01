@@ -118,6 +118,7 @@ export class RiskRepository {
     score: number,
     components?: RiskScoreComponent[]
   ): Promise<KrsScore> {
+    logger.info(`Updating KRS score for user ${userId} to ${score}`)
     const newKrsScoreItem: KrsScore = {
       krsScore: score,
       createdAt: Date.now(),
@@ -138,6 +139,8 @@ export class RiskRepository {
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(primaryKey)
     }
+
+    logger.info(`Updated KRS score for user ${userId} to ${score}`)
     return newKrsScoreItem
   }
 
@@ -148,6 +151,9 @@ export class RiskRepository {
     destinationUserId?: string,
     components?: RiskScoreComponent[]
   ): Promise<ArsScore> {
+    logger.info(
+      `Updating ARS score for transaction ${transactionId} to ${score}`
+    )
     const newArsScoreItem: ArsScore = {
       arsScore: score,
       createdAt: Date.now(),
@@ -174,6 +180,9 @@ export class RiskRepository {
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(primaryKey)
     }
+    logger.info(
+      `Updated ARS score for transaction ${transactionId} to ${score}`
+    )
     return newArsScoreItem
   }
 
@@ -221,6 +230,9 @@ export class RiskRepository {
     transactionId: string,
     components: RiskScoreComponent[]
   ): Promise<DrsScore> {
+    logger.info(
+      `Updating DRS score for user ${userId} to ${drsScore} with transaction ${transactionId}`
+    )
     const newDrsScoreItem: DrsScore = {
       drsScore,
       transactionId,
@@ -245,6 +257,9 @@ export class RiskRepository {
       await handleLocalChangeCapture(primaryKey)
     }
 
+    logger.info(
+      `Updated DRS score for user ${userId} to ${drsScore} with transaction ${transactionId}`
+    )
     return newDrsScoreItem
   }
 
@@ -272,6 +287,7 @@ export class RiskRepository {
   async createOrUpdateRiskClassificationConfig(
     riskClassificationValues: RiskClassificationScore[]
   ): Promise<RiskClassificationConfig> {
+    logger.info(`Updating risk classification config.`)
     const now = Date.now()
     const newRiskClassificationValues: RiskClassificationConfig = {
       classificationValues: riskClassificationValues,
@@ -285,6 +301,7 @@ export class RiskRepository {
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
+    logger.info(`Updated risk classification config.`)
     return newRiskClassificationValues
   }
 
@@ -310,6 +327,7 @@ export class RiskRepository {
     riskLevel: RiskLevel,
     isUpdatable?: boolean
   ) {
+    logger.info(`Updating manual risk level for user ${userId} to ${riskLevel}`)
     const now = Date.now()
     const riskClassificationValues = await this.getRiskClassificationValues()
     const newDrsRiskValue: DrsScore = {
@@ -335,12 +353,15 @@ export class RiskRepository {
       await handleLocalChangeCapture(primaryKey)
     }
 
+    logger.info(`Manual risk level updated for user ${userId} to ${riskLevel}`)
+
     return newDrsRiskValue
   }
 
   async createOrUpdateParameterRiskItem(
     parameterRiskLevels: ParameterAttributeRiskValues
   ) {
+    logger.info(`Updating parameter risk levels.`)
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
@@ -354,6 +375,7 @@ export class RiskRepository {
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
+    logger.info(`Updated parameter risk levels.`)
     return parameterRiskLevels
   }
 
@@ -361,6 +383,7 @@ export class RiskRepository {
     parameter: ParameterAttributeRiskValuesParameterEnum,
     entityType: RiskEntityType
   ) {
+    logger.info(`Deleting parameter risk item.`)
     const primaryKey = DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
       this.tenantId,
       parameter,
@@ -373,6 +396,7 @@ export class RiskRepository {
     }
 
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+    logger.info(`Deleted parameter risk item.`)
   }
 
   async getParameterRiskItem(

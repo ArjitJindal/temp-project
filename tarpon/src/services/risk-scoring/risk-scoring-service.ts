@@ -257,6 +257,7 @@ export class RiskScoringService {
     score: number
     components: RiskScoreComponent[]
   }> {
+    logger.info(`Calculating KRS score for user ${user.userId}`)
     const isUserConsumerUser = isConsumerUser(user)
     const components = await this.getRiskFactorScores(
       isUserConsumerUser ? ['CONSUMER_USER'] : ['BUSINESS'],
@@ -265,6 +266,7 @@ export class RiskScoringService {
       riskClassificationValues
     )
 
+    logger.info(`Calculated KRS score for user ${user.userId}`)
     return {
       score: components.length
         ? mean(components.map(({ score }) => score))
@@ -288,11 +290,17 @@ export class RiskScoringService {
     score: number
     components: RiskScoreComponent[]
   }> {
+    logger.info(
+      `Calculating ARS score for transaction ${transaction.transactionId}`
+    )
     const components = await this.getRiskFactorScores(
       ['TRANSACTION'],
       transaction,
       riskFactors || [],
       riskClassificationValues
+    )
+    logger.info(
+      `Calculated ARS score for transaction ${transaction.transactionId}`
     )
     return {
       score: components.length
@@ -310,6 +318,7 @@ export class RiskScoringService {
     components: RiskScoreComponent[]
     transactionId?: string
   }> {
+    logger.info(`Recalculating DRS score from ond ARS score for user ${userId}`)
     const cursor = await this.riskRepository.allArsScoresForUser(userId)
     let score = krsScore
     let components: RiskScoreComponent[] = []
@@ -320,6 +329,7 @@ export class RiskScoringService {
       components = arsScore.components ?? []
       transactionId = arsScore.transactionId
     }
+    logger.info(`Calculated DRS score from ond KRS score for user ${userId}`)
 
     return {
       score,
@@ -405,8 +415,9 @@ export class RiskScoringService {
   }
 
   public async updateInitialRiskScores(user: User | Business): Promise<number> {
-    const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
+    logger.info(`Updating initial risk score for user ${user.userId}`)
 
+    const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
     const { score, components } = await this.calculateKrsScore(
       user,
       riskClassificationValues,
@@ -426,6 +437,8 @@ export class RiskScoringService {
         components
       ),
     ])
+
+    logger.info(`Updated initial risk score for user ${user.userId}`)
 
     return score
   }
