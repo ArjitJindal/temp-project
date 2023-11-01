@@ -265,10 +265,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                   `npm run migration:post:up`,
                 ],
               },
-              artifacts: {
-                'base-directory': 'tarpon/cdk.out',
-                files: ['*.json'],
-              },
               ...(['dev', 'sandbox'].includes(config.stage)
                 ? {
                     post_build: {
@@ -284,6 +280,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 : {}),
             },
           }),
+
           environment: {
             buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
             computeType: ComputeType.LARGE,
@@ -386,6 +383,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               project: postDeplomentCodeBuildProject(devConfig),
               input: sourceOutput,
               environmentVariables: devSandboxSentryReleaseSpec.actionEnv,
+              extraInputs: [buildOutput],
             }),
           ],
         },
@@ -428,6 +426,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               project: postDeplomentCodeBuildProject(sandboxConfig),
               input: sourceOutput,
               environmentVariables: devSandboxSentryReleaseSpec.actionEnv,
+              extraInputs: [buildOutput],
             }),
           ],
         },
