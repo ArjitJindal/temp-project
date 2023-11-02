@@ -68,6 +68,7 @@ import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/Invest
 import { getOr } from '@/utils/asyncResource';
 import { RuleQueueTag } from '@/components/rules/RuleQueueTag';
 import { denseArray } from '@/utils/lang';
+import { useRuleQueues } from '@/components/rules/util';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: Array<ChecklistStatus | undefined>;
@@ -216,6 +217,8 @@ export default function AlertTable(props: Props) {
 
   const icpFeatureEnabled = useFeatureEnabled('INVESTIGATIVE_COPILOT');
   const icpEnabled = icpFeatureEnabled || user.role === 'root'; // TODO remove this after testing
+
+  const ruleQueues = useRuleQueues();
 
   const columns = useMemo(() => {
     const mergedColumns = (
@@ -442,6 +445,9 @@ export default function AlertTable(props: Props) {
             render: (ruleQueueId) => {
               return <RuleQueueTag queueId={ruleQueueId} />;
             },
+            stringify: (value) => {
+              return ruleQueues.find((queue) => queue.id === value)?.name ?? 'default';
+            },
           },
         }),
         helper.display({
@@ -545,6 +551,7 @@ export default function AlertTable(props: Props) {
     icpEnabled,
     caseId,
     qaEnabled,
+    ruleQueues,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
