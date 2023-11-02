@@ -5,17 +5,28 @@ export interface CsvValue {
 export type CsvRow = CsvValue[];
 
 export function csvValue(value: unknown): CsvValue {
-  let str;
-  if (value == null) {
-    str = '';
-  } else if (typeof value === 'number' || typeof value === 'boolean') {
-    str = `${value}`;
-  } else if (typeof value === 'string') {
-    str = `"${value.replace(/"/g, '""')}"`;
-  } else {
-    str = `"${JSON.stringify(value).replace(/"/g, '""')}"`;
+  if (value === null || value === '') {
+    return { escaped: '"-"' };
   }
-  return { escaped: str };
+
+  let str: string;
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    str = `"${value}"`;
+  } else if (typeof value === 'string') {
+    if (value.trim() === '' || value.trim() === '""') {
+      return { escaped: '"-"' };
+    }
+    str = `"${value}"`;
+  } else if (Array.isArray(value)) {
+    str = `"${value.join(', ')}"`;
+  } else {
+    str = `"${JSON.stringify(value)}"`;
+  }
+
+  str = str.replace(/"/g, '');
+
+  return { escaped: `"${str}"` };
 }
 
 export function serialize(rows: CsvRow[]): string {
