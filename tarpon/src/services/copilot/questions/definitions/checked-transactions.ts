@@ -2,9 +2,6 @@ import { sortBy } from 'lodash'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
-import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
-import { RulesEngineService } from '@/services/rules-engine'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   matchPeriod,
@@ -12,12 +9,12 @@ import {
   periodVars,
 } from '@/services/copilot/questions/definitions/util'
 
-export const TransactionLedRuleHit: TableQuestion<Period> = {
+export const CheckedTransactions: TableQuestion<Period> = {
   type: 'TABLE',
-  questionId: 'Transactions leading to rule hit',
+  questionId: 'Checked transactions',
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (ctx) => {
-    return `Transactions that led to "${ctx.alert.ruleName}" rule hit`
+    return `Checked transactions that led to "${ctx.alert.ruleName}" rule hit`
   },
   headers: [
     {
@@ -38,25 +35,26 @@ export const TransactionLedRuleHit: TableQuestion<Period> = {
     period
   ) => {
     const client = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClient()
 
-    const rir = new RuleInstanceRepository(tenantId, { dynamoDb })
-
-    const ruleInstance = await rir.getRuleInstanceById(alert.ruleInstanceId)
-    const rulesEngine = new RulesEngineService(tenantId, dynamoDb, client)
-
-    const transactionsBeforeHit = await client
+    const checkedTransactions = await client
       .db()
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .find({
-        $or: [
+        $and: [
           {
-            originUserId: userId,
+            originUserId: alert.ruleHitMeta?.hitDirections?.includes('ORIGIN')
+              ? userId
+              : { $exists: true },
           },
           {
-            destinationUserId: userId,
+            destinationUserId: alert.ruleHitMeta?.hitDirections?.includes(
+              'DESTINATION'
+            )
+              ? userId
+              : { $exists: true },
           },
         ],
+        executedRules: { $elemMatch: { ruleInstanceId: alert.ruleInstanceId } },
         createdAt: {
           $lt: alert.createdTimestamp,
         },
@@ -66,20 +64,8 @@ export const TransactionLedRuleHit: TableQuestion<Period> = {
       .limit(100)
       .toArray()
 
-    const transactionsThatLedToRuleHit = transactionsBeforeHit.filter(
-      async (transaction) => {
-        const result = await rulesEngine.computeRuleFilters(
-          ruleInstance?.filters,
-          {
-            transaction,
-          }
-        )
-        return result.isTransactionFiltered
-      }
-    )
-
     return {
-      data: sortBy(transactionsThatLedToRuleHit, 'timestamp')
+      data: sortBy(checkedTransactions, 'timestamp')
         .reverse()
         .map((t) => {
           return [
@@ -88,7 +74,7 @@ export const TransactionLedRuleHit: TableQuestion<Period> = {
             t.timestamp,
           ]
         }),
-      summary: `${transactionsThatLedToRuleHit.length} transactions were checked before the alert was created for ${username}.`,
+      summary: `${checkedTransactions.length} transactions were checked before the alert was created for ${username}.`,
     }
   },
   variableOptions: {

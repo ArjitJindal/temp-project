@@ -17,7 +17,7 @@ import { UsersReceivedMoneyFrom } from '@/services/copilot/questions/definitions
 import { UniquePaymentIdentifierSent } from '@/services/copilot/questions/definitions/unique-payment-identifier-sent'
 import { UniquePaymentIdentifierReceived } from '@/services/copilot/questions/definitions/unique-payment-identifier-received'
 import { AlertsRelatedToTransaction } from '@/services/copilot/questions/definitions/alerts-related-to-transaction'
-import { TransactionLedRuleHit } from '@/services/copilot/questions/definitions/transaction-led-rule-hit'
+import { CheckedTransactions } from '@/services/copilot/questions/definitions/checked-transactions'
 import { Transactions } from '@/services/copilot/questions/definitions/transactions'
 import { LinkedUsers } from '@/services/copilot/questions/definitions/linked-users'
 import { UserDetails } from '@/services/copilot/questions/definitions/user-details'
@@ -41,7 +41,7 @@ export const questions: (
 )[] = [
   AlertHistory,
   AlertsRelatedToTransaction,
-  TransactionLedRuleHit,
+  CheckedTransactions,
   Transactions,
   TransactionSummary,
   CrmInsights,
