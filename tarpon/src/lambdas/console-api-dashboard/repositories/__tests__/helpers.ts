@@ -5,6 +5,8 @@ import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/reposi
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
   return {
@@ -53,5 +55,14 @@ export async function getUserRepo(tenantId: string) {
   const mongoDb = await getMongoDbClient()
   return new UserRepository(tenantId, {
     mongoDb,
+  })
+}
+
+export async function getRiskRepo(tenantId: string): Promise<RiskRepository> {
+  const mongoDb = await getMongoDbClient()
+  const dynamoDb = await getDynamoDbClient()
+  return new RiskRepository(tenantId, {
+    mongoDb,
+    dynamoDb,
   })
 }

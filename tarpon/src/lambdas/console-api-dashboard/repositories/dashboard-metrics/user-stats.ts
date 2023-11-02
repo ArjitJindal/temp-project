@@ -293,7 +293,6 @@ export class UserStats {
         {
           $project: {
             _id: '$_id.date',
-            riskType: riskType,
             riskLevel: '$_id.riskLevel',
             count: '$count',
           },
@@ -302,40 +301,34 @@ export class UserStats {
       return pipeline
     }
 
-    const krsStats = await collection.aggregate(makePipeline('KRS')).toArray()
-    const krsStatsById = krsStats?.reduce(
-      (acc, x) => ({ ...acc, [x._id]: x }),
-      {}
-    )
+    const krsStats = {}
+    for await (const x of collection.aggregate(makePipeline('KRS'))) {
+      krsStats[x._id] = { ...krsStats[x._id], [x.riskLevel]: x.count ?? 0 }
+    }
 
-    const drsStats = await collection.aggregate(makePipeline('DRS')).toArray()
-    const drsStatsById = drsStats?.reduce(
-      (acc, x) => ({ ...acc, [x._id]: x }),
-      {}
-    )
+    const drsStats = {}
+    for await (const x of collection.aggregate(makePipeline('DRS'))) {
+      drsStats[x._id] = { ...drsStats[x._id], [x.riskLevel]: x.count ?? 0 }
+    }
 
-    return timeLabels.map((timeLabel) => {
-      const krsStat = krsStatsById[timeLabel]
-      const drsStat = drsStatsById[timeLabel]
-      return {
-        _id: timeLabel,
-        ...RISK_LEVELS.reduce(
-          (acc, x) => ({
-            ...acc,
-            [`krsRiskLevel_${x}`]:
-              krsStat?.riskLevel === x ? krsStat?.count : 0,
-          }),
-          {}
-        ),
-        ...RISK_LEVELS.reduce(
-          (acc, x) => ({
-            ...acc,
-            [`drsRiskLevel_${x}`]:
-              drsStat?.riskLevel === x ? drsStat?.count : 0,
-          }),
-          {}
-        ),
-      }
-    })
+    return timeLabels.map((timeLabel) => ({
+      _id: timeLabel,
+      ...RISK_LEVELS.reduce(
+        (acc, riskLevel) => ({
+          ...acc,
+          [`krsRiskLevel_${riskLevel}`]:
+            krsStats?.[timeLabel]?.[riskLevel] ?? 0,
+        }),
+        {}
+      ),
+      ...RISK_LEVELS.reduce(
+        (acc, riskLevel) => ({
+          ...acc,
+          [`drsRiskLevel_${riskLevel}`]:
+            drsStats?.[timeLabel]?.[riskLevel] ?? 0,
+        }),
+        {}
+      ),
+    }))
   }
 }

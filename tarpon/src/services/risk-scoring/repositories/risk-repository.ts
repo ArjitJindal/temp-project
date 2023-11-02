@@ -280,7 +280,7 @@ export class RiskRepository {
         : DEFAULT_CLASSIFICATION_SETTINGS
     } catch (e) {
       logger.error(e)
-      return []
+      return DEFAULT_CLASSIFICATION_SETTINGS
     }
   }
 

@@ -29,17 +29,18 @@ import WidgetGrid from '@/components/library/WidgetGrid';
 import Widget from '@/components/library/Widget';
 import Label from '@/components/library/Label';
 import { notEmpty } from '@/utils/array';
+import RiskLevelBreakdownWidget from '@/pages/dashboard/analysis/components/RiskLevelBreakdownWidget';
 
 type KeyValues =
   | 'OVERVIEW'
   | 'TOP_CONSUMER_USERS_BY_RULE_HITS'
   | 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION'
   | 'TOP_RULE_HITS_BY_COUNT'
-  // | 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL'
+  | 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL'
   | 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL'
   | 'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS'
   | 'TEAM_OVERVIEW'
-  // | 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL'
+  | 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL'
   | 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL'
   | 'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS'
   | 'TOP_BUSINESS_USERS_BY_RULE_HITS'
@@ -58,14 +59,14 @@ type KeyValues =
 const KEYS = {
   OVERVIEW: ['OVERVIEW'],
   CONSUMER_USERS: [
-    // 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+    'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
     'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
     'TOP_CONSUMER_USERS_BY_RULE_HITS',
     'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS',
     'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
   ],
   BUSINESS_USERS: [
-    // 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+    'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
     'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
     'TOP_BUSINESS_USERS_BY_RULE_HITS',
     'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS',
@@ -98,10 +99,10 @@ const TITLES: { [key in KeyValues]: string } = {
   TOP_CONSUMER_USERS_BY_RULE_HITS: 'Top consumer users by rule hits',
   TOP_BUSINESS_USERS_BY_RULE_HITS: 'Top business users by rule hits',
   TRANSACTIONS_BREAKDOWN_BY_TRS: 'Transactions breakdown by TRS',
-  // CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Consumer users distribution by risk levels',
+  CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Consumer users distribution by risk levels',
   CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Consumer users breakdown by risk levels',
   BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Business users breakdown by risk levels',
-  // BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Business users distribution by risk levels',
+  BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Business users distribution by risk levels',
   DISTRIBUTION_BY_RULE_PRIORITY: 'Distribution by rule priority',
   DISTRIBUTION_BY_RULE_ACTION: 'Distribution by rule action',
   CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS: 'Consumer users distribution by KYC status',
@@ -116,13 +117,13 @@ const DEFAULT_VALUES = {
   TOP_CONSUMER_USERS_BY_RULE_HITS: true,
   TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION: true,
   TOP_RULE_HITS_BY_COUNT: true,
-  // CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: true,
+  CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: true,
   CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL: true,
   BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL: true,
   TEAM_OVERVIEW: true,
   DISTRIBUTION_BY_RULE_PRIORITY: true,
   DISTRIBUTION_BY_CLOSING_REASON: true,
-  // BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: true,
+  BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: true,
   TOP_BUSINESS_USERS_BY_RULE_HITS: true,
   DISTRIBUTION_BY_ALERT_PRIORITY: true,
   DISTRIBUTION_BY_PAYMENT_METHOD: true,
@@ -190,16 +191,16 @@ function Analysis() {
           {
             groupTitle: 'Consumer users',
             items: [
-              // isRiskScoringEnabled &&
-              //   settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
-              //     props: {
-              //       id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-              //       title: TITLES.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL,
-              //       width: 'FULL' as const,
-              //       userType: 'CONSUMER',
-              //     },
-              //     component: RiskLevelBreakdownWidget,
-              //   },
+              isRiskScoringEnabled &&
+                settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
+                  props: {
+                    id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+                    title: TITLES.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL,
+                    width: 'FULL' as const,
+                    userType: 'CONSUMER',
+                  },
+                  component: RiskLevelBreakdownWidget,
+                },
               isRiskScoringEnabled &&
                 settingsToDisplay.CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL && {
                   props: {
@@ -242,16 +243,16 @@ function Analysis() {
           {
             groupTitle: 'Business users',
             items: [
-              // isRiskScoringEnabled &&
-              //   settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
-              //     props: {
-              //       id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-              //       title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL,
-              //       width: 'FULL' as const,
-              //       userType: 'BUSINESS',
-              //     },
-              //     component: RiskLevelBreakdownWidget,
-              //   },
+              isRiskScoringEnabled &&
+                settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
+                  props: {
+                    id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+                    title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL,
+                    width: 'FULL' as const,
+                    userType: 'BUSINESS',
+                  },
+                  component: RiskLevelBreakdownWidget,
+                },
               isRiskScoringEnabled &&
                 settingsToDisplay.BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL && {
                   props: {
