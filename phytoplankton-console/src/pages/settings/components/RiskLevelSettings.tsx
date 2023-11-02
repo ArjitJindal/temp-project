@@ -147,8 +147,8 @@ export const RiskLevelSettings: React.FC = () => {
   };
   return (
     <SettingsCard
-      title="Risk algorithms"
-      description="Select the algorithm type to be used for transaction monitoring"
+      title="Risk levels alias"
+      description="Configure risk levels display name in console."
     >
       <Table<TableItem>
         sizingMode="FULL_WIDTH"

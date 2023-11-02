@@ -12,7 +12,7 @@ export const RiskAlgorithmsSettings = () => {
   return (
     <SettingsCard
       title="Risk algorithms"
-      description="Select the algorithm type you want to use for transaction monitoring."
+      description="Select the algorithm type for transaction monitoring."
     >
       <p style={{ border: 'none' }}>
         <b>Algorithm type</b>
