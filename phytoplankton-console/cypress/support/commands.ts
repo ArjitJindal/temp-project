@@ -19,6 +19,27 @@ Cypress.Commands.add('loginByForm', (inputUsername?: string, inputPassword?: str
     /* eslint-disable-next-line cypress/no-unnecessary-waiting */
     cy.wait(3000);
   });
+  cy.checkAndSwitchToCypressTenant();
+});
+
+Cypress.Commands.add('checkAndSwitchToCypressTenant', () => {
+  cy.intercept('GET', '**/tenants').as('tenants');
+  cy.intercept('POST', '**/change_tenant').as('changeTenant');
+  cy.visit('/');
+  cy.get("button[data-cy='superadmin-panel-button']").should('be.visible').as('superadminButton');
+  cy.get('@superadminButton').then((button) => {
+    if (button.text() !== 'Cypress Tenant') {
+      cy.wait('@tenants', { timeout: 15000 }).then((tenantsInterception) => {
+        expect(tenantsInterception.response?.statusCode).to.be.oneOf([200, 304]);
+        cy.get("button[data-cy='superadmin-panel-button']").click({ force: true });
+        cy.get('.ant-modal .ant-select').first().click();
+        cy.get(`div[data-cy='Cypress Tenant']`).last().click();
+        cy.wait('@changeTenant', { timeout: 15000 }).then((changeTenantInterception) => {
+          expect(changeTenantInterception.response?.statusCode).to.eq(200);
+        });
+      });
+    }
+  });
 });
 
 Cypress.on('uncaught:exception', (err) => {
