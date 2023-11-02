@@ -15,6 +15,7 @@ import { AlertsService } from '@/services/alerts'
 import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { AI_SOURCES } from '@/services/copilot/attributes/ai-sources'
+import { Case } from '@/@types/openapi-internal/Case'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -65,7 +66,11 @@ export const copilotHandler = lambdaApi({})(
         })
       }
 
-      const _case = await caseService.getCase(entityId)
+      const _case =
+        entityType === 'CASE'
+          ? ((await caseService.getCase(entityId)) as Case)
+          : ((await caseService.getCaseByAlertId(entityId)) as Case)
+
       const user = await userService.getUser(
         _case?.caseUsers?.origin?.userId ||
           _case?.caseUsers?.destination?.userId ||
