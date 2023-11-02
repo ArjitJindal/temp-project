@@ -1,45 +1,30 @@
-/* NOTE: This test is working under a condition that there is only one alert in the case so case will also close when alert is closed */
-
-describe('Comment Alerts from Table', () => {
+describe('Close Alerts from Table', () => {
   beforeEach(() => {
     cy.loginByForm();
   });
 
-  it('should close a alert', () => {
+  it('should close and re-open an alert', () => {
     cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&alertStatus=OPEN');
 
     // Close an alert
-    cy.get('input[data-cy="row-table-checkbox"]', {
-      timeout: 15000,
-    })
-      .eq(0)
-      .click();
+    cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
     cy.caseAlertAction('Close');
     cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
     cy.multiSelect('.ant-modal', 'False positive');
-    cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
+    cy.get('.ant-modal-root .ant-modal-title').click();
     cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
     cy.get('.ant-modal-footer button').eq(1).click();
     cy.get('button[data-cy="modal-ok"]').eq(1).click();
-    cy.wait('@alert').then((interception) => {
-      expect(interception.response?.statusCode).to.eq(200);
+    cy.wait('@alert').its('response.statusCode').should('eq', 200);
 
-      // Re-open the closed alert
-      // eslint-disable-next-line cypress/no-unnecessary-waiting
-      cy.visit(
-        '/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL_ALERTS&alertStatus=CLOSED',
-      );
-      cy.get('input[data-cy="row-table-checkbox"]', {
-        timeout: 15000,
-      })
-        .eq(0)
-        .click();
-      cy.caseAlertAction('Re-Open');
-      cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
-      cy.get('button[data-cy="modal-ok"]').eq(0).click();
-      cy.wait('@alert').then((interception) => {
-        expect(interception.response?.statusCode).to.eq(200);
-      });
-    });
+    // Re-open the closed alert
+    cy.visit(
+      '/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL_ALERTS&alertStatus=CLOSED',
+    );
+    cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
+    cy.caseAlertAction('Re-Open');
+    cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
+    cy.get('button[data-cy="modal-ok"]').eq(0).click();
+    cy.wait('@alert').its('response.statusCode').should('eq', 200);
   });
 });

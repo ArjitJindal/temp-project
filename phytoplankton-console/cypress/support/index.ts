@@ -12,7 +12,12 @@ declare global {
       multiSelect(preSelector: string, text: string): Chainable<Element>;
       caseAlertAction(action: string): Chainable<Element>;
       checkAndSwitchToCypressTenant(): Chainable<Promise<Element>>;
-
+      clickTableRowLink(
+        rowIndex: number,
+        linkDataCy: string,
+        tabText: string,
+      ): Chainable<Promise<Element>>;
+      navigateToPage(url: string, pageTitle: string): Chainable<Promise<Element>>;
       /**
        * Looks for a popup message by a text
        * @param text

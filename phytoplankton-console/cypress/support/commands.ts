@@ -114,3 +114,23 @@ Cypress.Commands.add('caseAlertAction', (action: string) => {
 Cypress.Commands.add('message', (text: string) => {
   cy.get('.ant-message').contains(text);
 });
+
+Cypress.Commands.add('navigateToPage', (url: string, pageTitle: string) => {
+  cy.visit(url, { timeout: 20000 });
+  cy.get('h2', { timeout: 20000 }).contains(pageTitle);
+  cy.get('[data-test="table"]', { timeout: 20000 });
+});
+
+Cypress.Commands.add(
+  'clickTableRowLink',
+  (rowIndex: number, linkDataCy: string, tabText: string) => {
+    cy.get('[data-test="table"]')
+      .should('exist')
+      .should('be.visible')
+      .find(`a[data-cy="${linkDataCy}"]`, { timeout: 20000 })
+      .should('be.visible')
+      .eq(rowIndex)
+      .click({ force: true });
+    cy.contains('div[role="tab"]', tabText).should('be.visible');
+  },
+);
