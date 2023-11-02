@@ -20,6 +20,9 @@ interface Props<Item extends object, Params extends object> {
   onChangeParams: (newParams: AllParams<Params>) => void;
   onReload?: () => void;
   onPaginateData?: (params: PaginationParams) => Promise<TableData<Item>>;
+  pageCount?: number;
+  cursorPagination?: boolean;
+  totalPages?: number;
 }
 
 export default function Header<Item extends object, Params extends object>(
@@ -37,6 +40,8 @@ export default function Header<Item extends object, Params extends object>(
     externalHeader,
     onReload,
     onPaginateData,
+    cursorPagination,
+    totalPages,
   } = props;
 
   const autoFilters = useAutoFilters(props.columns);
@@ -80,6 +85,8 @@ export default function Header<Item extends object, Params extends object>(
             params={params}
             onReload={onReload}
             onPaginateData={onPaginateData}
+            cursorPagination={cursorPagination}
+            totalPages={totalPages}
           />
         )}
       </div>

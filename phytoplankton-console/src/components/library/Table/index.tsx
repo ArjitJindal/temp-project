@@ -234,6 +234,8 @@ function Table<Item extends object, Params extends object = CommonParams>(
         onChangeParams={handleChangeParams}
         onPaginateData={onPaginateData}
         onReload={onReload}
+        cursorPagination={cursor != null}
+        totalPages={getPageCount(params, data)}
       />
       <ScrollContainer
         maxHeight={typeof fitHeight === 'number' ? fitHeight : undefined}

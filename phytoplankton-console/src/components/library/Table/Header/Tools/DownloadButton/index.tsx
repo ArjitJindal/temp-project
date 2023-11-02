@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { get } from 'lodash';
-import { message, Popover, Radio, Select } from 'antd';
+import { message, Popover, Radio } from 'antd';
 import {
   AllParams,
   applyFieldAccessor,
@@ -31,6 +31,8 @@ type Props<Item extends object, Params extends object> = {
   onPaginateData: (params: PaginationParams) => Promise<TableData<Item>>;
   columns: TableColumn<Item>[];
   params: AllParams<Params>;
+  cursorPagination?: boolean;
+  totalPages?: number;
 };
 
 export default function DownloadButton<T extends object, Params extends object>(
@@ -44,6 +46,7 @@ export default function DownloadButton<T extends object, Params extends object>(
       pagination = DEFAULT_PAGINATION_ENABLED,
       page: currentPage = 1,
     },
+    totalPages = 1,
   } = props;
 
   const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT'>('ALL');
@@ -202,7 +205,8 @@ export default function DownloadButton<T extends object, Params extends object>(
       </div>
     );
   }
-  return (
+
+  return totalPages !== 1 || props.cursorPagination ? (
     <Popover
       placement="bottom"
       content={
@@ -221,18 +225,6 @@ export default function DownloadButton<T extends object, Params extends object>(
                 <Radio value="CURRENT">Current page</Radio>
               </Radio.Group>
             </Form.Layout.Label>
-            <Form.Layout.Label title="Format">
-              <Select
-                defaultValue="csv"
-                disabled
-                options={[
-                  {
-                    value: 'csv',
-                    label: 'CSV',
-                  },
-                ]}
-              />
-            </Form.Layout.Label>
             <Button isDisabled={progress != null} htmlType="submit" type="PRIMARY">
               {progress == null
                 ? 'Download'
@@ -249,6 +241,10 @@ export default function DownloadButton<T extends object, Params extends object>(
         <DownloadLineIcon className={s.icon} />
       </div>
     </Popover>
+  ) : (
+    <div className={s.root} onClick={handleDownload}>
+      <DownloadLineIcon className={s.icon} />
+    </div>
   );
 }
 
