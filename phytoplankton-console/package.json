@@ -57,7 +57,7 @@
     "tsc:watch": "tsc --noEmit --watch",
     "cypress:open": "node cypress-run.js open",
     "cypress:run": "node cypress-run.js run",
-    "semgrep": "semgrep scan --config ../rule.yaml"
+    "semgrep": "semgrep scan --config ../rule.yaml --error"
   },
   "lint-staged": {
     "**/*.less": "stylelint --syntax less",
