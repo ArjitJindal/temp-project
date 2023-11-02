@@ -28,7 +28,6 @@ import BlacklistCardIssuedCountryRule from './blacklist-card-issued-country'
 import PaymentMethodNameNameRule from './payment-method-name-levensthein-distance'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 import HighTrafficVolumeBetweenSameUsersParameters from './high-traffic-volume-between-same-users'
-import ToomanyUsersForSameCardRule from './too-many-users-for-same-payment-identifier'
 import TooManyUsersForSamePaymentIdentifierRule from './too-many-users-for-same-payment-identifier'
 import SameUserUsingTooManyCardsRule from './same-user-using-too-many-cards'
 import TransactionsAverageNumberExceededRule from './transactions-average-number-exceeded'
@@ -51,7 +50,6 @@ import { HighRiskIpAddressCountries } from './high-risk-ip-address-countries'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import BankNameChangeRule from '@/services/rules-engine/transaction-rules/bank-name-change'
-
 export class TransactionRuleBase extends TransactionRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
     // skip
@@ -88,7 +86,6 @@ export const _TRANSACTION_RULES = {
   'high-traffic-between-same-parties': HighTrafficBetweenSameParties,
   'high-traffic-volume-between-same-users':
     HighTrafficVolumeBetweenSameUsersParameters,
-  'too-many-users-for-same-card': ToomanyUsersForSameCardRule,
   'too-many-users-for-same-payment-identifier':
     TooManyUsersForSamePaymentIdentifierRule,
   'payment-method-name-levensthein-distance': PaymentMethodNameNameRule,
