@@ -145,7 +145,6 @@
     "@types/node": "^18.17.14",
     "@types/node-fetch": "^2.6.4",
     "@types/pluralize": "^0.0.30",
-    "@types/ssh2-sftp-client": "^9.0.2",
     "@types/unidecode": "^0.1.1",
     "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^6.6.0",

@@ -3,11 +3,11 @@ import * as fs from 'fs'
 import path from 'path'
 import os from 'os'
 import * as Sentry from '@sentry/serverless'
-import { backOff } from 'exponential-backoff'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder, XMLParser } from 'fast-xml-parser'
 import { isEqual, omit, cloneDeep, compact, chunk, pick, last } from 'lodash'
 import SftpClient from 'ssh2-sftp-client'
+import { backOff } from 'exponential-backoff'
 import { InternalReportType, ReportGenerator } from '../..'
 import {
   ContactOffice,
@@ -630,64 +630,72 @@ export class UsSarReportGenerator implements ReportGenerator {
   }
 
   public async submit(report: Report) {
-    if (!envIs('sandbox')) {
-      return ''
-    }
-
-    const creds = await getSecret<{ username: string; password: string }>(
-      process.env.FINCEN_CREDENTIALS_SECRET_ARN as string
-    )
-    const sftp = new SftpClient()
-    const connection = await sftp.connect({
-      host: '166.123.230.128',
-      port: 10122,
-      username: creds.username,
-      password: creds.password,
-    })
-    const remoteFilename = `SARX.${dayjs(report.createdAt).format(
-      'YYYYMMDDhhmmss'
-    )}.${this.tenantId}`
-    const localFilePath = `${path.join('/tmp', `${report.id}.xml`)}`
-    fs.writeFileSync(localFilePath, last(report.revisions)!.output)
-
-    await connection.fastPut(localFilePath, remoteFilename, () => {})
-    logger.info(`${remoteFilename} uploaded successfully`)
-
-    const localAckFile = `${path.join('/tmp', `${remoteFilename}-ack`)}`
-    try {
-      await backOff(
-        async () => {
-          const remoteAckFilename = `Inbox/${remoteFilename}`
-          await connection.fastGet(remoteAckFilename, localAckFile, () => {})
-        },
-        {
-          startingDelay: 1000,
-          maxDelay: 5 * 1000,
-          numOfAttempts: 3,
-        }
+    if (this.tenantId.startsWith('flagright')) {
+      const creds = await getSecret<{ username: string; password: string }>(
+        process.env.FINCEN_CREDENTIALS_SECRET_ARN as string
       )
-    } catch (e) {
-      logger.error(`Failed to get ack file from 'Inbox/'`)
-      logger.error(e)
+      const sftp = new SftpClient()
       try {
+        await sftp.connect({
+          host: '166.123.230.128',
+          port: 10122,
+          username: creds.username,
+          password: creds.password,
+        })
+        const remoteCwd = await sftp.cwd()
+        logger.info(`Remote dir: ${remoteCwd}`)
+        const remoteFilename = `SARX.${dayjs(report.createdAt).format(
+          'YYYYMMDDhhmmss'
+        )}.${this.tenantId}`
+        const localFilePath = `${path.join('/tmp', `${report.id}.xml`)}`
+        fs.writeFileSync(localFilePath, last(report.revisions)!.output)
+
+        logger.info(
+          await sftp.fastPut(
+            localFilePath,
+            path.join(remoteCwd, remoteFilename)
+          )
+        )
+        logger.info(`${remoteFilename} uploaded successfully`)
+
         await backOff(
           async () => {
-            const remoteAckFilename = `inbox/${remoteFilename}`
-            await connection.fastGet(remoteAckFilename, localAckFile, () => {})
+            const localAckFile = `${path.join('/tmp', `${remoteFilename}-ack`)}`
+            try {
+              logger.info(
+                await sftp.fastGet(
+                  path.join(remoteCwd, `Inbox/${remoteFilename}`),
+                  localAckFile
+                )
+              )
+              const ackFileContent = fs.readFileSync(localAckFile, 'utf8')
+              logger.info(`Ack file (Inbox/): ${ackFileContent}`)
+            } catch (e) {
+              logger.warn(`Failed to get ack file from Inbox/`)
+              logger.info(
+                await sftp.fastGet(
+                  path.join(remoteCwd, `inbox/${remoteFilename}`),
+                  `${remoteCwd}inbox/${remoteFilename}`,
+                  localAckFile
+                )
+              )
+              const ackFileContent = fs.readFileSync(localAckFile, 'utf8')
+              logger.info(`Ack file (inbox/): ${ackFileContent}`)
+            }
           },
           {
             startingDelay: 1000,
-            maxDelay: 5 * 1000,
+            maxDelay: 2000,
             numOfAttempts: 3,
           }
         )
       } catch (e) {
-        logger.error(`Failed to get ack file from 'inbox/'`)
-        throw e
+        logger.warning(e)
+        return ''
+      } finally {
+        await sftp.end()
       }
     }
-    const ackFileContent = fs.readFileSync(localAckFile, 'utf8')
-    logger.info(`Ack file: ${ackFileContent}`)
 
     Sentry.withScope((scope) => {
       scope.setTags({ reportId: report.id })

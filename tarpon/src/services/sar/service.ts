@@ -85,7 +85,7 @@ export class ReportService {
     c: CaseWithoutCaseTransactions,
     transactions: InternalTransaction[]
   ): Promise<Report> {
-    const generator = REPORT_GENERATORS.get(reportTypeId)
+    const generator = this.getReportGenerator(reportTypeId)
     if (!c.caseId) {
       throw new NotFound(`No case ID`)
     }
@@ -146,7 +146,7 @@ export class ReportService {
   }
 
   async completeReport(report: Report): Promise<Report> {
-    const generator = REPORT_GENERATORS.get(report.reportTypeId)
+    const generator = this.getReportGenerator(report.reportTypeId)
     if (!generator) {
       throw new BadRequest(
         `No report generator found for ${report.reportTypeId}`
@@ -187,7 +187,7 @@ export class ReportService {
     report.status = 'DRAFT'
     report.updatedAt = Date.now()
     report.parameters =
-      REPORT_GENERATORS.get(report.reportTypeId)?.getAugmentedReportParams(
+      this.getReportGenerator(report.reportTypeId)?.getAugmentedReportParams(
         report
       ) ?? report.parameters
     return withSchema(await this.reportRepository.saveOrUpdateReport(report))
@@ -199,5 +199,13 @@ export class ReportService {
     statusInfo?: string
   ): Promise<void> {
     await this.reportRepository.updateReportStatus(reportId, status, statusInfo)
+  }
+
+  private getReportGenerator(reportTypeId: string) {
+    const generator = REPORT_GENERATORS.get(reportTypeId)
+    if (generator) {
+      generator.tenantId = this.tenantId
+    }
+    return generator
   }
 }
