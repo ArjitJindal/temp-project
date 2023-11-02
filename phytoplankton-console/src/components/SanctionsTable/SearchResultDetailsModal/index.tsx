@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { Space, Tag } from 'antd';
-import _ from 'lodash';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { LoadingOutlined } from '@ant-design/icons';
+import { startCase } from 'lodash';
 import s from './index.module.less';
 import DownloadAsPDF from './DownloadAsPDF';
 import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
@@ -63,7 +63,7 @@ export default function SearchResultDetailsModal(props: Props) {
             <Form.Layout.Label title="Matched types">
               {hit.doc?.types?.map((matchType) => (
                 <Tag key={matchType} color="volcano">
-                  {_.startCase(matchType)}
+                  {startCase(matchType)}
                 </Tag>
               ))}
             </Form.Layout.Label>
@@ -80,7 +80,7 @@ export default function SearchResultDetailsModal(props: Props) {
                 {hit.doc?.name}
               </ProDescriptions.Item>
               <ProDescriptions.Item label={<b>Entity type</b>} valueType="text">
-                {_.startCase(hit.doc?.entity_type)}
+                {startCase(hit.doc?.entity_type)}
               </ProDescriptions.Item>
               <ProDescriptions.Item label={<b>AKA</b>} valueType="text">
                 {hit.doc?.aka?.map((item) => item.name).join(', ')}
@@ -116,7 +116,7 @@ export default function SearchResultDetailsModal(props: Props) {
                   <ProDescriptions.Item>
                     {sourceNote?.aml_types?.map((matchType: string) => (
                       <Tag key={matchType} color="volcano">
-                        {_.startCase(matchType)}
+                        {startCase(matchType)}
                       </Tag>
                     ))}
                   </ProDescriptions.Item>

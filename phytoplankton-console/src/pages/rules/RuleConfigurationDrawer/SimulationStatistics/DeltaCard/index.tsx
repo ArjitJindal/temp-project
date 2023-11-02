@@ -1,7 +1,7 @@
 import React from 'react';
 import { Col, Row, Tag } from 'antd';
 import cn from 'clsx';
-import _ from 'lodash';
+import { isFinite } from 'lodash';
 import s from './index.module.less';
 import { H1 } from '@/components/ui/Typography';
 import ArrowUpIcon from '@/components/ui/icons/Remix/system/arrow-up-line.react.svg';
@@ -31,7 +31,7 @@ export function DeltaCard(props: Props) {
             <H1 variant="displayLg">{Math.abs(delta).toLocaleString()}</H1>
           </Col>
           <Col>
-            {_.isFinite(deltaRatio) && (
+            {isFinite(deltaRatio) && (
               <Tag
                 className={s.tag}
                 color={delta > 0 ? 'red' : 'green'}

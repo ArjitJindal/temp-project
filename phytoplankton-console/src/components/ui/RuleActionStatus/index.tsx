@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import cn from 'clsx';
 import s from './index.module.less';
 import { RuleAction } from '@/apis';

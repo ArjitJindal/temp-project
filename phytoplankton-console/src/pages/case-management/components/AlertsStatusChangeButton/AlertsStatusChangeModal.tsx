@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import _ from 'lodash';
 import pluralize from 'pluralize';
+import { isEmpty } from 'lodash';
 import StatusChangeModal, {
   FormValues,
   Props as StatusChangeModalProps,
@@ -69,7 +69,7 @@ export default function AlertsStatusChangeModal(props: Props) {
 
           const entities = props.entityIds.join(', ');
           if (!currentUser?.reviewerId) {
-            if (_.isEmpty(transactionIds)) {
+            if (isEmpty(transactionIds)) {
               message.success(
                 `Alerts '${entities}' are added to a new child case '${childCaseId}' and escalated successfully to ${assignees}`,
               );
@@ -122,13 +122,13 @@ export default function AlertsStatusChangeModal(props: Props) {
   );
 
   const transactionIds = Object.values(props.transactionIds ?? {}).flatMap((v) => v);
-  const entityIds = _.isEmpty(transactionIds) ? props.entityIds : transactionIds;
+  const entityIds = isEmpty(transactionIds) ? props.entityIds : transactionIds;
   return (
     <StatusChangeModal
       {...props}
       key={String(props.isVisible)}
       entityIds={entityIds}
-      entityName={_.isEmpty(transactionIds) ? 'ALERT' : 'TRANSACTION'}
+      entityName={isEmpty(transactionIds) ? 'ALERT' : 'TRANSACTION'}
       updateMutation={updateMutation}
       displayCloseRelatedCases={!isChildCase}
     />

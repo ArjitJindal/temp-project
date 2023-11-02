@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
-import _ from 'lodash';
+import { isEqual as equal } from 'lodash';
 import {
   DataType,
   Entity,
@@ -64,7 +64,7 @@ export default function ValuesTable(props: Props) {
     setValues(lastValues);
   }, [lastValues]);
 
-  const isEqual = _.isEqual(
+  const isEqual = equal(
     { values, defaultRiskLevel },
     { values: lastValues, defaultRiskLevel: lastDefaultRiskLevel },
   );

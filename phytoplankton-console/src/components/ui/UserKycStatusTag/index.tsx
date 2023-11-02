@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tag } from 'antd';
-import _ from 'lodash';
+import { capitalize } from 'lodash';
 import { KYCStatusDetails } from '@/apis';
 
 interface Props {
@@ -12,7 +12,7 @@ export default function UserKycStatusTag(props: Props) {
 
   return (
     <Tag>
-      {_.capitalize(kycStatusDetails.status)}
+      {capitalize(kycStatusDetails.status)}
       {kycStatusDetails.reason && ` (${kycStatusDetails.reason})`}
     </Tag>
   );

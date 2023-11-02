@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import _ from 'lodash';
 import { useLocalStorageState } from 'ahooks';
 import RiskClassificationSimulationResults from '../RiskClassificationSimulationResults';
 import { State } from '../RiskClassificationTable';

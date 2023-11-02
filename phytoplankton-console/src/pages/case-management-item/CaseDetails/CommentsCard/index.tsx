@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import _ from 'lodash';
+import { maxBy, orderBy } from 'lodash';
 import s from './index.module.less';
 import { message } from '@/components/library/Message';
 import * as Card from '@/components/ui/Card';
@@ -36,12 +36,12 @@ export default function CommentsCard(props: Props) {
 
   const updateCaseQueryData = useUpdateCaseQueryData();
   const updatedComments = useMemo(() => {
-    return _.orderBy(
+    return orderBy(
       comments,
       [
         (x) => {
           const comments = x.comments;
-          const latestComment = _.maxBy(comments, (x) => x.updatedAt);
+          const latestComment = maxBy(comments, (x) => x.updatedAt);
           return latestComment ? latestComment.updatedAt : 0;
         },
         (x) => x.title,

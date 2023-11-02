@@ -1,5 +1,5 @@
-import _ from 'lodash';
 import { useMemo } from 'react';
+import { keyBy } from 'lodash';
 import { useQuery } from './queries/hooks';
 import { RULE_INSTANCES, RULES } from './queries/keys';
 import { Rule, RuleAction, RuleInstance, TransactionState } from '@/apis';
@@ -89,14 +89,14 @@ export function useRules(): { rules: RulesMap; ruleInstances: RuleInstanceMap } 
   );
   const rulesMap = useMemo(() => {
     if (rulesResults.data.kind === 'SUCCESS') {
-      return _.keyBy(rulesResults.data.value, 'id');
+      return keyBy(rulesResults.data.value, 'id');
     } else {
       return {};
     }
   }, [rulesResults.data]);
   const ruleInstancesMap = useMemo(() => {
     if (ruleInstanceResults.data.kind === 'SUCCESS') {
-      return _.keyBy(ruleInstanceResults.data.value, 'id');
+      return keyBy(ruleInstanceResults.data.value, 'id');
     } else {
       return {};
     }

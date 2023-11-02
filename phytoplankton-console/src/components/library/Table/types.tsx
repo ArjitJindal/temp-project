@@ -1,6 +1,6 @@
 import React from 'react';
 import { DeepKeys, DeepValue } from '@tanstack/react-table';
-import _ from 'lodash';
+import { cloneDeep, get, set } from 'lodash';
 import { PaginatedData, PaginationParams } from '@/utils/queries/hooks';
 import { Option } from '@/components/library/Select';
 import { StatePair } from '@/utils/state';
@@ -208,14 +208,14 @@ export function applyFieldAccessor<
   Item,
   Accessor extends FieldAccessor<Item> = FieldAccessor<unknown>,
 >(item: Item, accessor: Accessor): DeepValue<Item, Accessor> {
-  return _.get(item, accessor);
+  return get(item, accessor);
 }
 export function setByFieldAccessor<
   Item extends object,
   Accessor extends FieldAccessor<Item> = FieldAccessor<unknown>,
 >(item: Item, accessor: Accessor, value: DeepValue<Item, Accessor> | undefined): Item {
-  const result: Item = _.cloneDeep(item);
-  _.set(result, accessor, value);
+  const result: Item = cloneDeep(item);
+  set(result, accessor, value);
   return result;
 }
 

@@ -2,7 +2,6 @@ import { Tabs } from 'antd';
 import { useLocalStorageState } from 'ahooks';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import _ from 'lodash';
 import { ruleHeaderKeyToDescription } from './utils';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';

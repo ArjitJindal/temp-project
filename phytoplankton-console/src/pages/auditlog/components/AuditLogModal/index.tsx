@@ -1,6 +1,6 @@
 import { Typography } from 'antd';
-import _ from 'lodash';
 import { useState } from 'react';
+import { isEmpty, isEqual, startCase, toLower, uniq } from 'lodash';
 import COLORS from '@/components/ui/colors';
 import { AuditLog } from '@/apis';
 import { flattenObject, getFlattenedObjectHumanReadableKey } from '@/utils/json';
@@ -26,7 +26,7 @@ interface TableTemplateProp {
 const UNIX_TIMESTAMP_MS_REGEX = /^\d{13}$/;
 const AUTH0_USER_ID_REGEX = /^(google-oauth2|auth0)\|\S+$/;
 const RenderModalData = (value: any | undefined) => {
-  if (typeof value === 'object' && _.isEmpty(value)) {
+  if (typeof value === 'object' && isEmpty(value)) {
     return <em>Empty</em>;
   } else if (typeof value === 'number' && UNIX_TIMESTAMP_MS_REGEX.test(String(value))) {
     return <TimestampDisplay timestamp={value} />;
@@ -104,14 +104,14 @@ const summariseChanges = (
 
   const oldImageKeys = oldImage ? Object.keys(oldImage) : [];
   const newImageKeys = newImage ? Object.keys(newImage) : [];
-  const allKeys = _.uniq([...oldImageKeys, ...newImageKeys]);
+  const allKeys = uniq([...oldImageKeys, ...newImageKeys]);
   allKeys.forEach((key) => {
     const obj: TableItem = {
       key,
       oldImage: oldImage && oldImage[key] != null ? oldImage[key] : 'N/A',
       newImage: newImage && newImage[key] != null ? newImage[key] : 'N/A',
     };
-    if (oldImage && newImage && _.isEqual(oldImage[key], newImage[key])) {
+    if (oldImage && newImage && isEqual(oldImage[key], newImage[key])) {
       notChangedDetails.push(obj);
     } else {
       changedDetails.push(obj);
@@ -147,7 +147,7 @@ const AuditLogModal = (props: Props) => {
           {changedDetails.length && (
             <>
               <Typography.Title level={3}>
-                {_.startCase(_.toLower(data.type))} details changed
+                {startCase(toLower(data.type))} details changed
               </Typography.Title>
               <TableTemplate details={changedDetails} />
             </>
@@ -156,7 +156,7 @@ const AuditLogModal = (props: Props) => {
             {notChangedDetails.length > 0 && (
               <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
                 <Typography.Title level={3}>
-                  {_.startCase(_.toLower(data.type))} details not changed
+                  {startCase(toLower(data.type))} details not changed
                 </Typography.Title>
                 <TableTemplate details={notChangedDetails} />
               </div>

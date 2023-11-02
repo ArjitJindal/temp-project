@@ -1,7 +1,7 @@
 import { useRef, useState, useContext, useMemo } from 'react';
 import { Typography } from 'antd';
-import _ from 'lodash';
 import { RangeValue } from 'rc-picker/es/interface';
+import { isEqual } from 'lodash';
 import AuditLogModal from '../AuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import { TableItem, TableSearchParams } from './types';
@@ -118,7 +118,7 @@ export default function AuditLogTable() {
       value: (item) => item,
       type: {
         render: (item) => {
-          if (!item || _.isEqual(item.oldImage, item.newImage)) {
+          if (!item || isEqual(item.oldImage, item.newImage)) {
             return <Typography.Text type={'secondary'}>-</Typography.Text>;
           }
           return <AuditLogModal data={item} />;

@@ -1,7 +1,7 @@
 import React, { useContext, useMemo } from 'react';
 import { PageLoading } from '@ant-design/pro-layout';
-import _ from 'lodash';
 import { useMutation } from '@tanstack/react-query';
+import { isEmpty, toLower } from 'lodash';
 import { useApi } from '@/api';
 import {
   Feature as FeatureName,
@@ -53,7 +53,7 @@ export default function SettingsProvider(props: {
   }, [queryResults.data, previousQueryResults]);
 
   const features = useMemo(() => {
-    return !_.isEmpty(settings) ? (settings.features || []).concat(globalFeatures ?? []) : null;
+    return !isEmpty(settings) ? (settings.features || []).concat(globalFeatures ?? []) : null;
   }, [settings, globalFeatures]);
 
   const reloadSettings = () => {
@@ -148,8 +148,7 @@ export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings
 export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSettings): string {
   const riskLevel =
     settings.riskLevelAlias?.find(
-      (item) =>
-        _.toLower(item.alias).replace('_', ' ') === _.toLower(riskLevelAlias).replace('_', ' '),
+      (item) => toLower(item.alias).replace('_', ' ') === toLower(riskLevelAlias).replace('_', ' '),
     )?.level || riskLevelAlias;
   return riskLevel;
 }
@@ -191,7 +190,7 @@ export function useUpdateTenantSettings() {
     {
       retry: false,
       onSuccess: () => {
-        message.success('Settings saved');
+        message.success('Settings save');
         reloadSettings();
       },
       onError: (e) => {

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Upload from 'antd/es/upload/Upload';
-import _ from 'lodash';
+import { uniqBy } from 'lodash';
 import NarrativeTemplateSelect from '../NarrativeTemplateSelect';
 import s from './styles.module.less';
 import { message } from '@/components/library/Message';
@@ -155,7 +155,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
               uploadedFiles.push({ s3Key, filename: file.name, size: file.size });
               onChangeValues({
                 ...values,
-                files: _.uniqBy([...values.files, ...uploadedFiles], 's3Key'),
+                files: uniqBy([...values.files, ...uploadedFiles], 's3Key'),
               });
               hideMessage();
             } catch (error) {

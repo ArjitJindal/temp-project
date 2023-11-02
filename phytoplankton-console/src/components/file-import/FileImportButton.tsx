@@ -3,7 +3,7 @@ import { Alert, Divider, Select } from 'antd';
 import { useCallback, useState } from 'react';
 import Dragger from 'antd/es/upload/Dragger';
 import filesize from 'filesize';
-import _ from 'lodash';
+import { last, range } from 'lodash';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum, Permission } from '@/apis';
@@ -79,10 +79,10 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({
             // poll for the import status
           }
           const importId = file?.s3Key.replace(/\//g, '') as string;
-          for (const _i of _.range(0, 100)) {
+          for (const _i of range(0, 100)) {
             const importInfo = await api.getImportImportId({ importId });
             if (importInfo) {
-              const latestStatus = _.last(importInfo.statuses);
+              const latestStatus = last(importInfo.statuses);
               if (latestStatus?.status === 'FAILED') {
                 setErrorText(importInfo.error);
                 message.fatal('Failed to import the file', new Error(importInfo.error));

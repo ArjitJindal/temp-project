@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tag } from 'antd';
-import _ from 'lodash';
+import { capitalize } from 'lodash';
 import { UserState } from '@/apis';
 
 interface Props {
@@ -10,5 +10,5 @@ interface Props {
 export default function UserStateTag(props: Props) {
   const { userState } = props;
 
-  return <Tag>{_.capitalize(userState)}</Tag>;
+  return <Tag>{capitalize(userState)}</Tag>;
 }

@@ -1,5 +1,5 @@
 import flatten from 'flat';
-import _ from 'lodash';
+import { cloneDeep, cloneDeepWith, isEmpty, isNil, isObject, keys, startCase } from 'lodash';
 
 export function removeNil<T>(object: T): T {
   return JSON.parse(
@@ -13,22 +13,22 @@ export function removeNil<T>(object: T): T {
 }
 
 function removeEmptyInplace(object: any) {
-  if (!_.isObject(object)) {
+  if (!isObject(object)) {
     return;
   }
-  _.keys(object).forEach(function (key) {
+  keys(object).forEach(function (key) {
     const localObj = object[key];
-    if (_.isObject(localObj)) {
-      if (_.isEmpty(localObj)) {
+    if (isObject(localObj)) {
+      if (isEmpty(localObj)) {
         delete object[key];
         return;
       }
       removeEmptyInplace(localObj);
-      if (_.isEmpty(localObj)) {
+      if (isEmpty(localObj)) {
         delete object[key];
         return;
       }
-    } else if (_.isNil(localObj) || localObj === false || localObj === '') {
+    } else if (isNil(localObj) || localObj === false || localObj === '') {
       delete object[key];
       return;
     }
@@ -36,7 +36,7 @@ function removeEmptyInplace(object: any) {
 }
 
 export function removeEmpty<T>(o: T): T {
-  const object = _.cloneDeep(o);
+  const object = cloneDeep(o);
   removeEmptyInplace(object);
   return object;
 }
@@ -49,12 +49,12 @@ export function getFlattenedObjectHumanReadableKey(flattenedKey: string): string
   return flattenedKey
     .split('.')
     .filter((key) => isNaN(Number(key)))
-    .map(_.startCase)
+    .map(startCase)
     .join(' > ');
 }
 
 export function getFixedSchemaJsonForm(schema: object) {
-  return _.cloneDeepWith(schema, (value) => {
+  return cloneDeepWith(schema, (value) => {
     /**
      * antd theme doesn't allow clearing the selected enum even the field is nullable.
      * In this case, we concat the "empty" option and it'll be removed by removeNil

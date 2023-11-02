@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tag } from 'antd';
-import _ from 'lodash';
+import { startCase } from 'lodash';
 import SearchResultDetailsModal from './SearchResultDetailsModal';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import {
@@ -47,7 +47,7 @@ export default function SanctionsTable(props: Props) {
       title: 'Type',
       key: 'doc.entity_type',
       type: {
-        render: (value) => <Tag>{_.startCase(value)}</Tag>,
+        render: (value) => <Tag>{startCase(value)}</Tag>,
       },
     }),
     helper.simple<'doc.name'>({
@@ -104,7 +104,7 @@ export default function SanctionsTable(props: Props) {
             <div>
               {types?.map((matchType) => (
                 <Tag key={matchType} color="volcano">
-                  {_.startCase(matchType)}
+                  {startCase(matchType)}
                 </Tag>
               ))}
             </div>
@@ -123,7 +123,7 @@ export default function SanctionsTable(props: Props) {
           return (
             <div>
               {match_types?.map((matchType) => (
-                <Tag key={matchType}>{_.startCase(matchType)}</Tag>
+                <Tag key={matchType}>{startCase(matchType)}</Tag>
               ))}
             </div>
           );

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import _ from 'lodash';
+import { groupBy } from 'lodash';
 import { BOOLEAN, LONG_TEXT, NUMBER, RISK_LEVEL, STRING } from './standardDataTypes';
 import { AllParams, CommonParams, SimpleColumn } from './types';
 import { DEFAULT_PARAMS_STATE } from './consts';
@@ -529,7 +529,7 @@ export default function (): JSX.Element {
                 );
               }}
               data={{
-                items: Object.entries(_.groupBy(data, 'address.city')).map(([city, entries]) => ({
+                items: Object.entries(groupBy(data, 'address.city')).map(([city, entries]) => ({
                   spanBy: ['city'],
                   rows: entries.map(({ id, firstName, lastName }) => ({
                     id,

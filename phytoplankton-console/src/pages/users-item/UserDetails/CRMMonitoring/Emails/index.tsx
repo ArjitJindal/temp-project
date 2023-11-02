@@ -1,5 +1,5 @@
 import { Collapse } from 'antd';
-import _ from 'lodash';
+import { sortBy } from 'lodash';
 import CRMCommunicationCard from '../CRMCommunicationCard';
 import s from './index.module.less';
 import { CrmAccountResponseEngagements } from '@/apis';
@@ -16,7 +16,7 @@ const Emails = (props: Props) => {
   const { emails } = props;
   return (
     <Collapse defaultActiveKey={['1']} ghost>
-      {_.sortBy(emails, 'createdAt')
+      {sortBy(emails, 'createdAt')
         .reverse()
         .map((thisEmail, i) => (
           <Panel

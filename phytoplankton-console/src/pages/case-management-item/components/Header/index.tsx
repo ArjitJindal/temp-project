@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import _ from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import { CaseStatusWithDropDown } from '../../CaseStatusWithDropDown';
 import SubHeader from './SubHeader';

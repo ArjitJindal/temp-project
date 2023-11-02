@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
-import _ from 'lodash';
+import { sumBy } from 'lodash';
 import Legend from '../components/Legend';
 import s from './styles.module.less';
 import Chart from './Chart';
@@ -51,14 +51,14 @@ export default function AmountsChart(props: Props) {
                     <b>Cumulative transaction amount</b>
                   </div>
                   <div>
-                    <Money value={_.sumBy(response, (x) => x?.sum ?? 0)} currency={currency} />
+                    <Money value={sumBy(response, (x) => x?.sum ?? 0)} currency={currency} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <div>
                     <b>Total no. of Transactions</b>
                   </div>
-                  <div>{_.sumBy(response, (x) => x.count)?.toLocaleString()}</div>
+                  <div>{sumBy(response, (x) => x.count)?.toLocaleString()}</div>
                 </div>
               </div>
               <Chart

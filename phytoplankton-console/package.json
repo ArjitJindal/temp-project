@@ -56,11 +56,15 @@
     "tsc": "tsc --noEmit",
     "tsc:watch": "tsc --noEmit --watch",
     "cypress:open": "node cypress-run.js open",
-    "cypress:run": "node cypress-run.js run"
+    "cypress:run": "node cypress-run.js run",
+    "semgrep": "semgrep scan --config ../rule.yaml"
   },
   "lint-staged": {
     "**/*.less": "stylelint --syntax less",
-    "**/*.{js,jsx,ts,tsx}": "npm run lint-staged:js",
+    "**/*.{js,jsx,ts,tsx}": [
+      "npm run lint-staged:js",
+      "npm run semgrep"
+    ],
     "**/*.{js,jsx,tsx,ts,less,md,json}": [
       "prettier --write"
     ]

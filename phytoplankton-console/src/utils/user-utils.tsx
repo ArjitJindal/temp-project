@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
-import _ from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
+import { keyBy } from 'lodash';
 import { useQuery } from './queries/hooks';
 import { ACCOUNT_LIST, ACCOUNT_LIST_TEAM_MANAGEMENT } from './queries/keys';
 import { getOr } from './asyncResource';
@@ -136,7 +136,7 @@ export function useUsers(
   if (!options.includeBlockedUsers) {
     tempUsers = tempUsers.filter((user) => !user.blocked);
   }
-  return [_.keyBy(tempUsers, 'id'), usersQueryResult.isLoading];
+  return [keyBy(tempUsers, 'id'), usersQueryResult.isLoading];
 }
 
 export function useInvalidateUsers() {

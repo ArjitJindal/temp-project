@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import _ from 'lodash';
 import React from 'react';
+import { capitalize } from 'lodash';
 import s from './styles.module.less';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
@@ -53,7 +53,7 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
           }
           return (
             <div className={s.userType}>
-              <UserTypeIcon type={type} /> <span>{_.capitalize(type)}</span>
+              <UserTypeIcon type={type} /> <span>{capitalize(type)}</span>
             </div>
           );
         },

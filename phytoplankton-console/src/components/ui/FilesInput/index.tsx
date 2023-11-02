@@ -1,5 +1,5 @@
 import React from 'react';
-import _ from 'lodash';
+import { uniqBy } from 'lodash';
 import { InputProps } from '@/components/library/Form';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { FileInfo } from '@/apis';
@@ -19,7 +19,7 @@ function FilesInput(props: Props, ref: React.Ref<RemoveAllFilesRef>) {
     <UploadFilesList
       files={value}
       onFileUploaded={async (file) => {
-        onChange?.(_.uniqBy([...value, file], 's3Key'));
+        onChange?.(uniqBy([...value, file], 's3Key'));
       }}
       onFileRemoved={async (fileS3Key) => {
         onChange?.(value.filter((prevFile) => prevFile.s3Key !== fileS3Key));

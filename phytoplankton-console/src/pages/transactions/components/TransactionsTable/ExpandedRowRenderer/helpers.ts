@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { uniqBy } from 'lodash';
 import { InternalTransaction, TenantSettings } from '@/apis';
 
 export function isTransactionHasDetails(
@@ -13,7 +13,7 @@ export function isTransactionHasDetails(
 }
 
 export function getFlatSanctionsDetails(transaction: InternalTransaction) {
-  return _.uniqBy(
+  return uniqBy(
     transaction.hitRules.flatMap((hitRule) => hitRule.ruleHitMeta?.sanctionsDetails ?? []),
     (x) => x.searchId,
   );

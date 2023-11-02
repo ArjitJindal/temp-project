@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { sortBy } from 'lodash';
 import CRMCommunicationCard from '../CRMCommunicationCard';
 import { CrmAccountResponseNotes } from '@/apis';
 
@@ -10,7 +10,7 @@ const Notes = (props: Props) => {
   const { notes } = props;
   return (
     <>
-      {_.sortBy(notes, 'createdAt')
+      {sortBy(notes, 'createdAt')
         .reverse()
         .map((note, i) => (
           <CRMCommunicationCard

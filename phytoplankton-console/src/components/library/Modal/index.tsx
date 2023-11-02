@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import _ from 'lodash';
 import { Modal as AntModal, Typography } from 'antd';
 import cn from 'clsx';
 import s from './style.module.less';

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import cn from 'clsx';
 import * as TanTable from '@tanstack/react-table';
-import _ from 'lodash';
 import { Spin } from 'antd';
+import { cloneDeep, isEqual, omit } from 'lodash';
 import s from './index.module.less';
 import {
   AllParams,
@@ -126,16 +126,10 @@ function Table<Item extends object, Params extends object = CommonParams>(
   const data = useMemo(() => getOr(dataRes, { items: [] }), [dataRes]);
   const handleChangeParams = useCallback(
     (newParams: AllParams<Params>) => {
-      if (
-        newParams?.page != null &&
-        !_.isEqual(_.omit(newParams, 'page'), _.omit(params, 'page'))
-      ) {
+      if (newParams?.page != null && !isEqual(omit(newParams, 'page'), omit(params, 'page'))) {
         newParams.page = 1;
       }
-      if (
-        newParams?.from != null &&
-        !_.isEqual(_.omit(newParams, 'from'), _.omit(params, 'from'))
-      ) {
+      if (newParams?.from != null && !isEqual(omit(newParams, 'from'), omit(params, 'from'))) {
         newParams.from = '';
       }
       onChangeParams?.({ ...newParams });
@@ -174,7 +168,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
   const handleReload = useCallback(() => {
     handleResetSelection();
     if (params != null) {
-      handleChangeParamsPaginated(_.cloneDeep(params));
+      handleChangeParamsPaginated(cloneDeep(params));
     }
     if (onReload) {
       onReload();

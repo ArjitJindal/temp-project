@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import _ from 'lodash';
+import { debounce } from 'lodash';
 import QuickFilter from '../..';
 import { InputProps } from '@/components/library/Form';
 import { Props as QuickFilterProps } from '@/components/library/QuickFilter/QuickFilterBase';
@@ -19,7 +19,7 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
     value,
     onChange = () => {},
     extraInputProps,
-    debounce = false,
+    debounce: isDebounce = false,
     ...rest
   } = props;
 
@@ -29,8 +29,8 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
   }, [value]);
 
   const debouncedOnChange = useMemo(
-    () => (debounce ? _.debounce(onChange, 300) : onChange),
-    [debounce, onChange],
+    () => (isDebounce ? debounce(onChange, 300) : onChange),
+    [isDebounce, onChange],
   );
 
   const handleChange = useCallback(

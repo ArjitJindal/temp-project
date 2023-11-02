@@ -1,6 +1,5 @@
 import { Switch, Tooltip } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import _ from 'lodash';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';

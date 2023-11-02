@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import _ from 'lodash';
 import { usePrevious } from 'ahooks';
 import Header from './components/Header';
 import { Case, Comment } from '@/apis';
