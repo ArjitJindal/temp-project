@@ -2,6 +2,7 @@ import { useLocalStorageState } from 'ahooks';
 import { RangeValue } from 'rc-picker/es/interface';
 import React, { useMemo, useState } from 'react';
 import HitsPerUserCard from './HitsPerUserCard';
+import { generateCaseListUrl } from './HitsPerUserCard/utils';
 import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import Widget from '@/components/library/Widget';
@@ -12,7 +13,8 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { isSuccess } from '@/utils/asyncResource';
-import { getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users';
+import { getCurrentDomain } from '@/utils/routing';
 
 interface Props extends WidgetProps {
   userType?: 'BUSINESS' | 'CONSUMER';
@@ -65,16 +67,20 @@ const TopUsersHitCard = (props: Props) => {
     if (isSuccess(hitsPerUserResult.data)) {
       const data = hitsPerUserResult.data.value.items.map((item) => {
         return {
-          userId: item.userId,
+          userId: `${item.userId} (${getCurrentDomain()}${getUserLink(item.user)})`,
           userName: getUserName(item.user) ?? '',
           ruleHit: `${item.rulesHit} hits`,
-          openCases: `${item.openCasesCount} open cases`,
+          openCases: `${item.openCasesCount} open cases (${getCurrentDomain()}${generateCaseListUrl(
+            item.userId!,
+            direction,
+            dateRange,
+          )})`,
         };
       });
       return data;
     }
     return [];
-  }, [hitsPerUserResult]);
+  }, [hitsPerUserResult.data, direction, dateRange]);
   return (
     <Widget
       {...props}

@@ -3,13 +3,14 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
 import { TableItem } from './types';
+import { generateCaseListUrl } from './utils';
 import { Dayjs } from '@/utils/dayjs';
 import UserLink from '@/components/UserLink';
-import { getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users';
 import { TableColumn } from '@/components/library/Table/types';
 import { PaginatedData } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { makeUrl } from '@/utils/routing';
+import { getCurrentDomain } from '@/utils/routing';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardStatsHitsPerUserData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
@@ -37,6 +38,9 @@ export default function HitsPerUserCard(props: Props) {
           }
           return <UserLink user={user}>{userId}</UserLink>;
         },
+        stringify(value, item) {
+          return `${value} (${getCurrentDomain()}${getUserLink(item.user)})`;
+        },
       },
     }),
     helper.derived<string>({
@@ -50,36 +54,32 @@ export default function HitsPerUserCard(props: Props) {
         render: (rulesHit) => {
           return <>{`${rulesHit} ${pluralize('hit', rulesHit)}`}</>;
         },
+        stringify(value) {
+          return `${value} (${pluralize('hit', value)})`;
+        },
       },
     }),
-    helper.display({
+    helper.simple<'openCasesCount'>({
       title: 'Open cases',
+      key: 'openCasesCount',
       enableResizing: false,
-      render: (entity) => {
-        let startTimestamp;
-        let endTimestamp;
-        const [start, end] = dateRange ?? [];
-        if (start != null && end != null) {
-          startTimestamp = start.startOf('day').valueOf();
-          endTimestamp = end.endOf('day').valueOf();
-        }
-        return (
-          <>
-            <Link
-              to={makeUrl(
-                '/case-management/cases',
-                {},
-                {
-                  userId: entity.userId,
-                  userFilterMode: direction ? direction : 'ALL',
-                  createdTimestamp: `${startTimestamp},${endTimestamp}`,
-                },
-              )}
-            >
-              {entity.openCasesCount} Open {pluralize('case', entity.openCasesCount)}
-            </Link>
-          </>
-        );
+      type: {
+        render: (openCasesCount, { item: entity }) => {
+          return (
+            <>
+              <Link to={generateCaseListUrl(entity.userId!, direction, dateRange)}>
+                {entity.openCasesCount} Open {pluralize('case', entity.openCasesCount)}
+              </Link>
+            </>
+          );
+        },
+        stringify(value, item) {
+          return `${value} (${getCurrentDomain()}${generateCaseListUrl(
+            item.userId!,
+            direction,
+            dateRange,
+          )})`;
+        },
       },
     }),
   ]);
