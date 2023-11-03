@@ -51,7 +51,13 @@ describe('Add a comment to a user', () => {
             cy.request(actionLink!).then((response) => {
               expect(response.body).to.eq(fileContent);
             });
+          })
+          .then(() => {
+            cy.get('[data-cy="comment-delete-button"]').click();
           });
+      })
+      .then(() => {
+        cy.message('Comment deleted').should('exist');
       });
   });
 });
