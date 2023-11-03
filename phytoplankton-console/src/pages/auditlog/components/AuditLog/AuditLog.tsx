@@ -102,8 +102,10 @@ export default function AuditLogTable() {
         render: (value) => {
           return (
             <>
-              <Typography.Text>{value?.entityType}</Typography.Text>
-              <Typography.Text type={'secondary'}>{value?.entityId}</Typography.Text>
+              <Typography.Text data-cy="auditlog-primary">{value?.entityType}</Typography.Text>
+              <Typography.Text data-cy="auditlog-secondary" type={'secondary'}>
+                {value?.entityId}
+              </Typography.Text>
             </>
           );
         },

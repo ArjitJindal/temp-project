@@ -47,10 +47,12 @@ export default function PopupContent(props: Props) {
           </Checkbox>
         ))}
         <div className={s.buttons}>
-          <Button htmlType="submit" type="PRIMARY">
+          <Button htmlType="submit" type="PRIMARY" testName="auditlog-entity-confirm">
             Confirm
           </Button>
-          <Button onClick={onReset}>Reset</Button>
+          <Button testName="auditlog-entity-reset" onClick={onReset}>
+            Reset
+          </Button>
         </div>
       </div>
     </form>
