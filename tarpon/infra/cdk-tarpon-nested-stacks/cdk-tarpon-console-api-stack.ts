@@ -14,13 +14,13 @@ import {
   PolicyStatement,
   Role,
 } from 'aws-cdk-lib/aws-iam'
-import { Duration } from 'aws-cdk-lib'
 import {
   StackConstants,
   getNameForGlobalResource,
   getResourceNameForTarpon,
 } from '@lib/constants'
 import { Config } from '@lib/configs/config'
+import { Duration } from 'aws-cdk-lib'
 import { createApiGateway } from '../cdk-utils/cdk-apigateway-utils'
 import { createFunction } from '../cdk-utils/cdk-lambda-utils'
 import { createAPIGatewayThrottlingAlarm } from '../cdk-utils/cdk-cw-alarms-utils'
@@ -40,7 +40,7 @@ interface ConsoleLambdasProps extends cdk.NestedStackProps {
 
 export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
   config: Config
-
+  functionProps: Partial<FunctionProps>
   constructor(scope: Construct, id: string, props: ConsoleLambdasProps) {
     super(scope, id, props)
     this.config = props.config
@@ -68,7 +68,8 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       StackConstants.S3_TMP_BUCKET_PREFIX,
       this.config
     )
-    const functionProps: Partial<FunctionProps> = {
+
+    this.functionProps = {
       securityGroups: this.config.resource.LAMBDA_VPC_ENABLED
         ? [securityGroup]
         : undefined,
@@ -80,12 +81,10 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
           acc[key] = value
           return acc
         }, {}),
-        SM_SECRET_ARN: this.config.application.ATLAS_CREDENTIALS_SECRET_ARN,
         WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
         TMP_BUCKET: tmpBucketName,
         DOCUMENT_BUCKET: documentBucketName,
         IMPORT_BUCKET: importBucketName,
-        AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
         REQUEST_LOGGER_QUEUE_URL: requestLoggerQueue.queueUrl,
       },
     }
@@ -156,16 +155,11 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* File Import */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     const { alias: presignedUrlAlias } = createFunction(
       this,
@@ -174,8 +168,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         name: StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
-      },
-      functionProps
+      }
     )
 
     presignedUrlAlias?.role?.attachInlinePolicy(
@@ -195,70 +188,40 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* Rule Template */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Rule Instance */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Transactions view */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
-        memorySize: this.config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
+      memorySize: this.config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Accounts */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Roles */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      {
-        ...functionProps,
-        environment: {
-          ...functionProps.environment,
-        },
-      }
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Tenants */
     const { alias: tenantsFunctionAlias } = createFunction(
@@ -271,8 +234,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         memorySize: this.config.resource.TENANT_LAMBDA.MEMORY_SIZE,
         auditLogTopic,
         batchJobQueue,
-      },
-      functionProps
+      }
     )
 
     tenantsFunctionAlias.role?.attachInlinePolicy(
@@ -296,228 +258,138 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* Business users view */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
-        provisionedConcurrency:
-          this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
-        memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
+      provisionedConcurrency:
+        this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
+      memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Merchant Monitoring */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Copilot */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Consumer users view */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
-        provisionedConcurrency:
-          this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
-        memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
+      provisionedConcurrency:
+        this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
+      memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* All users view */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
-        provisionedConcurrency:
-          this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
-        memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+      provisionedConcurrency:
+        this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
+      memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* dashboard stats */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
-        provisionedConcurrency:
-          this.config.resource.DASHBOARD_LAMBDA.PROVISIONED_CONCURRENCY,
-        memorySize: this.config.resource.DASHBOARD_LAMBDA.MEMORY_SIZE,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
+      provisionedConcurrency:
+        this.config.resource.DASHBOARD_LAMBDA.PROVISIONED_CONCURRENCY,
+      memorySize: this.config.resource.DASHBOARD_LAMBDA.MEMORY_SIZE,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* List Importer */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Case */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
-        memorySize: this.config.resource.CASE_LAMBDA?.MEMORY_SIZE,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+      memorySize: this.config.resource.CASE_LAMBDA?.MEMORY_SIZE,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Webhook */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Simulation */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Device Data */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Sanctions */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
     /* Risk Classification function */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Manual User Risk Assignment function */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
     /* Parameter risk level assignment function */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /* Get Risk Scores */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
     /* Audit Log */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
     /* API Key Generator */
     const { alias: apiKeyGeneratorAlias } = createFunction(
       this,
@@ -530,10 +402,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...functionProps,
-        timeout: Duration.minutes(4),
-      }
+      { timeout: Duration.minutes(4) }
     )
 
     apiKeyGeneratorAlias.role?.attachInlinePolicy(
@@ -553,27 +422,17 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* Slack App Configuration */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
+      auditLogTopic,
+      batchJobQueue,
+    })
 
     /**
      * Outputs
