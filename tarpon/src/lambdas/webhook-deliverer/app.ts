@@ -5,7 +5,7 @@ import { SQSEvent, SQSRecord } from 'aws-lambda'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { abortableFetch } from 'abortcontroller-polyfill/dist/cjs-ponyfill'
-import fetch, { Response } from 'cross-fetch'
+import fetch, { FetchError, Response } from 'node-fetch'
 import timeoutSignal from 'timeout-signal'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -58,6 +58,7 @@ async function deliverWebhookEvent(
     data: webhookDeliveryTask.payload,
     createdTimestamp: webhookDeliveryTask.createdAt,
   }
+
   const postPayloadString = JSON.stringify(postPayload)
   const hmacSignatures = hmacs
     .map((hmac) => {
@@ -114,9 +115,15 @@ async function deliverWebhookEvent(
       }
     }
   } catch (e) {
+    logger.warn(`Failed to deliver event: ${(e as Error).message}`)
     if ((e as any)?.type === 'aborted') {
       // We don't retry if customer server fails to respond before the timeout
       logger.warn(`Request timeout after ${requestTimeoutSec} seconds`)
+      return
+    }
+
+    if (e instanceof FetchError) {
+      throw new ClientServerError(`Client server failed to respond. Will retry`)
     } else {
       throw e
     }
