@@ -19,7 +19,7 @@ import { StackConstants } from '@lib/constants'
 import { Config } from '@lib/configs/config'
 import { Duration } from 'aws-cdk-lib'
 
-export type InternalFunctionProps = {
+type InternalFunctionProps = {
   name: string
   provisionedConcurrency?: number
   layers?: Array<ILayerVersion>
@@ -32,9 +32,7 @@ export type InternalFunctionProps = {
 // We should only use the returned `func` to do the things that alias cannot do
 // (e.g add environment variables)
 export function createFunction(
-  context: Construct & { config: Config } & {
-    functionProps: Partial<FunctionProps>
-  },
+  context: Construct & { config: Config },
   role: IRole,
   internalFunctionProps: InternalFunctionProps,
   props: Partial<FunctionProps> = {}
@@ -71,10 +69,8 @@ export function createFunction(
 
   const func = new LambdaFunction(context, name, {
     ...{
-      ...context.functionProps,
       ...props,
       environment: {
-        ...context.functionProps.environment,
         ...props.environment,
         ENV: context.config.stage,
         REGION: context.config.region as string,
