@@ -15,12 +15,13 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { Case } from '@/@types/openapi-internal/Case'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { isDemoTenant } from '@/utils/tenant'
 
 async function arsScoreEventHandler(
   tenantId: string,
   arsScore: ArsScore | undefined
 ) {
-  if (!arsScore) {
+  if (!arsScore || isDemoTenant(tenantId)) {
     return
   }
   logger.info(`Processing ARS Score`)
@@ -101,7 +102,7 @@ async function krsScoreEventHandler(
   tenantId: string,
   krsScore: KrsScore | undefined
 ) {
-  if (!krsScore) {
+  if (!krsScore || isDemoTenant(tenantId)) {
     return
   }
   logger.info(`Processing KRS Score`)

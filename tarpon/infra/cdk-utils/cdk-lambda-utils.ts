@@ -91,7 +91,8 @@ export function createFunction(
         RELEASE_VERSION: process.env.RELEASE_VERSION as string,
         LAMBDA_CODE_PATH: LAMBDAS[name].codePath,
         QA_SUBDOMAIN: process.env.QA_SUBDOMAIN as string,
-        SEED_TRANSACTIONS_COUNT: '4000',
+        SEED_TRANSACTIONS_COUNT:
+          context.config.stage === 'dev' ? '1000' : '4000',
       },
     },
     functionName: name,
