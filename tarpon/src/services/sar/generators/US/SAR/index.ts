@@ -644,9 +644,9 @@ export class UsSarReportGenerator implements ReportGenerator {
         })
         const remoteCwd = await sftp.cwd()
         logger.info(`Remote dir: ${remoteCwd}`)
-        const remoteFilename = `SARX.${dayjs(report.createdAt).format(
+        const remoteFilename = `SARXST.${dayjs(report.createdAt).format(
           'YYYYMMDDhhmmss'
-        )}.${this.tenantId}`
+        )}.${creds.username}.xml`
         const localFilePath = `${path.join('/tmp', `${report.id}.xml`)}`
         fs.writeFileSync(localFilePath, last(report.revisions)!.output)
 
@@ -690,7 +690,7 @@ export class UsSarReportGenerator implements ReportGenerator {
           }
         )
       } catch (e) {
-        logger.warning(e)
+        logger.warn(e)
         return ''
       } finally {
         await sftp.end()
