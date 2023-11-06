@@ -150,4 +150,83 @@ ruleVariantsTest(false, () => {
       )
     })
   })
+
+  describe('Transaction Amount Threshold - With Historical Filters', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'first-payment',
+        defaultParameters: {
+          transactionAmountThreshold: { INR: 1000 },
+        } as FirstPaymentRuleParameter,
+        defaultAction: 'FLAG',
+        filters: {
+          transactionAmountRangeHistorical: {
+            INR: {
+              min: 1000,
+            },
+          },
+          transactionAmountRange: {
+            INR: {
+              min: 1000,
+            },
+          },
+        },
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'First payment with transaction amount above threshold and historical filter - hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '6-1',
+            destinationUserId: '6-2',
+            originAmountDetails: {
+              transactionAmount: 100,
+              transactionCurrency: 'INR',
+            },
+            destinationAmountDetails: {
+              transactionAmount: 100,
+              transactionCurrency: 'INR',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '6-1',
+            destinationUserId: '6-2',
+            originAmountDetails: {
+              transactionAmount: 10000,
+              transactionCurrency: 'INR',
+            },
+            destinationAmountDetails: {
+              transactionAmount: 10000,
+              transactionCurrency: 'INR',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '6-1',
+            destinationUserId: '6-2',
+            originAmountDetails: {
+              transactionAmount: 10000,
+              transactionCurrency: 'INR',
+            },
+            destinationAmountDetails: {
+              transactionAmount: 10000,
+              transactionCurrency: 'INR',
+            },
+          }),
+        ],
+        expectedHits: [false, true, false],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
 })

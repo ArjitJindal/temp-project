@@ -602,6 +602,7 @@ export class RulesEngineService {
     const shouldRunRule =
       isTransactionFiltered &&
       (isOriginUserFiltered || isDestinationUserFiltered)
+
     if (!isEmpty(ruleFilters)) {
       filterSegment?.close()
     }

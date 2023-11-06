@@ -1330,14 +1330,23 @@ export class MongoDbTransactionRepository
     const additionalFilters = [...filters]
     if (!isEmpty(filterOptions.transactionAmountRange)) {
       additionalFilters.push({
-        $or: Object.entries(filterOptions.transactionAmountRange).map(
-          (entry) => ({
-            'originAmountDetails.transactionCurrency': entry[0],
-            'originAmountDetails.transactionAmount': {
-              $gte: entry[1].min ?? 0,
-              $lte: entry[1].max ?? Number.MAX_SAFE_INTEGER,
+        $or: Object.entries(filterOptions.transactionAmountRange).flatMap(
+          (entry) => [
+            {
+              'originAmountDetails.transactionCurrency': entry[0],
+              'originAmountDetails.transactionAmount': {
+                $gte: entry[1].min ?? 0,
+                $lte: entry[1].max ?? Number.MAX_SAFE_INTEGER,
+              },
             },
-          })
+            {
+              'destinationAmountDetails.transactionCurrency': entry[0],
+              'destinationAmountDetails.transactionAmount': {
+                $gte: entry[1].min ?? 0,
+                $lte: entry[1].max ?? Number.MAX_SAFE_INTEGER,
+              },
+            },
+          ]
         ),
       })
     }
