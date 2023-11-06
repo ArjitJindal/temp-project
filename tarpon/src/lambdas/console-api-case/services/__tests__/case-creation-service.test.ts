@@ -1,5 +1,6 @@
 import MockDate from 'mockdate'
 import * as createError from 'http-errors'
+import { v4 as uuidv4 } from 'uuid'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -31,7 +32,6 @@ import {
 } from '@/@types/openapi-internal/RuleInstance'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
-import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { AlertCreationIntervalInstantly } from '@/@types/openapi-internal/AlertCreationIntervalInstantly'
 import { AlertCreationIntervalWeekly } from '@/@types/openapi-internal/AlertCreationIntervalWeekly'
 import { AlertCreationIntervalMonthly } from '@/@types/openapi-internal/AlertCreationIntervalMonthly'
@@ -42,6 +42,7 @@ import { CaseService } from '@/lambdas/console-api-case/services/case-service'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { CaseSubjectType } from '@/@types/openapi-public/CaseSubjectType'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 
 dynamoDbSetupHook()
@@ -140,7 +141,7 @@ describe('Cases (Transaction hit)', () => {
       const cases = await caseCreationService.handleTransaction(
         { ...transaction, ...result },
         await getHitRuleInstances(TEST_TENANT_ID, result),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transaction,
           ...result,
         })
@@ -176,7 +177,7 @@ describe('Cases (Transaction hit)', () => {
       const cases = await caseCreationService.handleTransaction(
         { ...transaction, ...result },
         await getHitRuleInstances(TEST_TENANT_ID, result),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transaction,
           ...result,
         })
@@ -346,7 +347,7 @@ describe('Cases (Transaction hit)', () => {
           ...result,
         },
         await getHitRuleInstances(TEST_TENANT_ID, result),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transaction,
           ...result,
         })
@@ -393,7 +394,7 @@ describe('Cases (Transaction hit)', () => {
             ...result,
           },
           await getHitRuleInstances(TEST_TENANT_ID, result),
-          await caseCreationService.getTransactionUsers({
+          await caseCreationService.getTransactionSubjects({
             ...transaction,
             ...result,
           })
@@ -420,7 +421,7 @@ describe('Cases (Transaction hit)', () => {
             ...result,
           },
           await getHitRuleInstances(TEST_TENANT_ID, result),
-          await caseCreationService.getTransactionUsers({
+          await caseCreationService.getTransactionSubjects({
             ...transaction,
             ...result,
           })
@@ -460,7 +461,7 @@ describe('Cases (Transaction hit)', () => {
             ...result,
           },
           await getHitRuleInstances(TEST_TENANT_ID, result),
-          await caseCreationService.getTransactionUsers({
+          await caseCreationService.getTransactionSubjects({
             ...transaction,
             ...result,
           })
@@ -487,7 +488,7 @@ describe('Cases (Transaction hit)', () => {
             ...result,
           },
           await getHitRuleInstances(TEST_TENANT_ID, result),
-          await caseCreationService.getTransactionUsers({
+          await caseCreationService.getTransactionSubjects({
             ...transaction,
             ...result,
           })
@@ -526,7 +527,7 @@ describe('Cases (Transaction hit)', () => {
           ...result,
         },
         await getHitRuleInstances(TEST_TENANT_ID, result),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transaction,
           ...result,
         })
@@ -560,7 +561,7 @@ describe('Cases (Transaction hit)', () => {
             ...result,
           },
           await getHitRuleInstances(TEST_TENANT_ID, result),
-          await caseCreationService.getTransactionUsers({
+          await caseCreationService.getTransactionSubjects({
             ...transaction,
             ...result,
           })
@@ -623,7 +624,7 @@ describe('Cases (Transaction hit)', () => {
           ...result,
         },
         await getHitRuleInstances(TEST_TENANT_ID, result),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transaction,
           ...result,
         })
@@ -663,7 +664,7 @@ describe('Cases (Transaction hit)', () => {
           ...result,
         },
         await getHitRuleInstances(TEST_TENANT_ID, result),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transaction,
           ...result,
         })
@@ -704,7 +705,7 @@ describe('Cases (Transaction hit)', () => {
           ...result,
         },
         await getHitRuleInstances(TEST_TENANT_ID, result),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transaction,
           ...result,
         })
@@ -751,7 +752,7 @@ describe('Cases (Transaction hit)', () => {
           ...results[0],
         },
         await getHitRuleInstances(TEST_TENANT_ID, results[0]),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transactions[0],
           ...results[0],
         })
@@ -762,7 +763,7 @@ describe('Cases (Transaction hit)', () => {
           ...results[1],
         },
         await getHitRuleInstances(TEST_TENANT_ID, results[1]),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transactions[1],
           ...results[1],
         })
@@ -828,7 +829,7 @@ describe('Cases (Transaction hit)', () => {
           },
         },
         await getHitRuleInstances(TEST_TENANT_ID, result),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transaction,
           ...result,
         })
@@ -846,7 +847,7 @@ describe('Cases (Transaction hit)', () => {
           ...result,
         },
         await getHitRuleInstances(TEST_TENANT_ID, result),
-        await caseCreationService.getTransactionUsers({
+        await caseCreationService.getTransactionSubjects({
           ...transaction,
           ...result,
         })
@@ -900,7 +901,7 @@ describe('Cases (User hit)', () => {
         ...result,
       },
       await getHitRuleInstances(TEST_TENANT_ID, result),
-      await caseCreationService.getTransactionUsers({
+      await caseCreationService.getTransactionSubjects({
         ...transaction,
         ...result,
       })
@@ -911,7 +912,7 @@ describe('Cases (User hit)', () => {
       type: 'CONSUMER',
       ...TEST_USER_1,
       ...userResults[0],
-    } as InternalConsumerUser
+    } as InternalUser
 
     await caseCreationService.handleUser(internalUser)
     const cases = await caseCreationService.handleUser(internalUser)
@@ -946,7 +947,7 @@ describe('Env #1', () => {
         ...result,
       },
       await getHitRuleInstances(TEST_TENANT_ID, result),
-      await caseCreationService.getTransactionUsers({
+      await caseCreationService.getTransactionSubjects({
         ...transaction,
         ...result,
       })
@@ -978,7 +979,7 @@ describe('Env #2', () => {
         ...result,
       },
       await getHitRuleInstances(TEST_TENANT_ID, result),
-      await caseCreationService.getTransactionUsers({
+      await caseCreationService.getTransactionSubjects({
         ...transaction,
         ...result,
       })
@@ -1009,7 +1010,7 @@ describe('Env #3', () => {
         ...result,
       },
       await getHitRuleInstances(TEST_TENANT_ID, result),
-      await caseCreationService.getTransactionUsers({
+      await caseCreationService.getTransactionSubjects({
         ...transaction,
         ...result,
       })
@@ -1297,7 +1298,7 @@ describe('Test delayed publishing', () => {
               ...result,
             },
             await getHitRuleInstances(TEST_TENANT_ID, result),
-            await caseCreationService.getTransactionUsers({
+            await caseCreationService.getTransactionSubjects({
               ...transaction,
               ...result,
             })
@@ -1481,6 +1482,119 @@ describe('Test delayed publishing', () => {
   })
 })
 
+describe('Test payment cases', () => {
+  beforeAll(async () => {
+    MockDate.set(TODAY)
+  })
+
+  describe('Env #1', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('Payment cases should be created', async () => {
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            caseSubjectType: 'PAYMENT',
+          },
+        ],
+        async () => {
+          const cases = await createCases(TEST_TENANT_ID)
+          expect(cases).toHaveLength(1)
+          const caseItem = cases[0]
+          expect(caseItem.subjectType).toEqual('PAYMENT')
+        }
+      )
+    })
+  })
+
+  describe('Env #2', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('Previous open case should be updated', async () => {
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+
+      const paymentDetails = {
+        method: 'CARD',
+        cardFingerprint: uuidv4(),
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+        '3dsDone': true,
+      } as const
+
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            caseSubjectType: 'PAYMENT',
+          },
+        ],
+        async () => {
+          // Create case
+          let firstCase: Case
+          {
+            const transaction = getTestTransaction({
+              transactionId: '111',
+              originPaymentDetails: paymentDetails,
+              destinationPaymentDetails: undefined,
+            })
+            const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+              transaction,
+            ])
+            expect(results).toHaveLength(1)
+            const [result] = results
+            const cases = await caseCreationService.handleTransaction(
+              {
+                ...transaction,
+                ...result,
+              },
+              await getHitRuleInstances(TEST_TENANT_ID, result),
+              await caseCreationService.getTransactionSubjects({
+                ...transaction,
+                ...result,
+              })
+            )
+            expect(cases).toHaveLength(1)
+            firstCase = cases[0]
+          }
+
+          // Add transaction, it should land into existed case
+          {
+            const transaction = getTestTransaction({
+              transactionId: '222',
+              originPaymentDetails: paymentDetails,
+              destinationPaymentDetails: undefined,
+            })
+            const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+              transaction,
+            ])
+            expect(results.length).not.toEqual(0)
+            const [result] = results
+            const cases = await caseCreationService.handleTransaction(
+              {
+                ...transaction,
+                ...result,
+              },
+              await getHitRuleInstances(TEST_TENANT_ID, result),
+              await caseCreationService.getTransactionSubjects({
+                ...transaction,
+                ...result,
+              })
+            )
+
+            expect(cases).toHaveLength(1)
+            const nextCase = cases[0]
+            expect(nextCase.caseId).toEqual(firstCase.caseId)
+            expect(nextCase.caseTransactions).toHaveLength(2)
+          }
+        }
+      )
+    })
+  })
+})
+
 /*
   Helpers
  */
@@ -1560,6 +1674,7 @@ async function underRules<R = void>(
       | AlertCreationIntervalInstantly
       | AlertCreationIntervalWeekly
       | AlertCreationIntervalMonthly
+    caseSubjectType?: CaseSubjectType
   }[],
   cb: () => Promise<R>
 ): Promise<R> {
@@ -1576,6 +1691,7 @@ async function underRules<R = void>(
           type: ruleType,
           parameters: {
             hitDirections: parameters.hitDirections,
+            caseSubjectType: parameters.caseSubjectType,
           },
           alertCreationInterval: parameters.alertCreationInterval,
         }
@@ -1608,7 +1724,7 @@ async function createCases(
       ...result,
     },
     await getHitRuleInstances(tenantId, result),
-    await caseCreationService.getTransactionUsers({
+    await caseCreationService.getTransactionSubjects({
       ...transaction,
       ...result,
     })

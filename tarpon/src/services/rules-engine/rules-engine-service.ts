@@ -2,25 +2,25 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
 import {
   compact,
-  map,
-  keyBy,
-  uniqBy,
   isEmpty,
-  last,
   isNil,
   isObject,
+  keyBy,
+  last,
+  map,
+  uniqBy,
 } from 'lodash'
 import { MongoClient } from 'mongodb'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
+import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
-import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
+import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { DynamoDbTransactionRepository } from './repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -31,13 +31,13 @@ import { Aggregators } from './aggregator'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
 import { RuleHitResult, RuleHitResultItem } from './rule'
 import {
-  TransactionFilters,
-  TransactionRuleFilterBase,
   TRANSACTION_FILTERS,
   TRANSACTION_HISTORICAL_FILTERS,
+  TransactionFilters,
+  TransactionRuleFilterBase,
+  USER_FILTERS,
   UserFilters,
   UserRuleFilterBase,
-  USER_FILTERS,
 } from './filters'
 import { USER_RULES, UserRuleBase } from './user-rules'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -52,8 +52,8 @@ import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import {
   getContext,
   hasFeature,
-  updateLogMetadata,
   publishMetric,
+  updateLogMetadata,
   withContext,
 } from '@/core/utils/context'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -79,6 +79,7 @@ import { envIs } from '@/utils/env'
 import { handleTransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
 import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
+import { notNullish } from '@/core/utils/array'
 
 const sqs = new SQSClient({})
 
@@ -638,6 +639,21 @@ export class RulesEngineService {
     })
     let ruleDescription = ruleInstance.ruleDescriptionAlias
 
+    const subjectTypes = [
+      ...new Set(
+        filteredRuleResult?.map(
+          (result) => result.caseCreationParams?.subjectType
+        )
+      ),
+    ].filter(notNullish)
+    const createCaseFor = [
+      ...new Set(
+        filteredRuleResult?.map(
+          (result) => result.caseCreationParams?.createFor
+        )
+      ),
+    ].filter(notNullish)
+
     if (!ruleDescription) {
       const ruleDescriptions = (
         ruleHit
@@ -670,6 +686,10 @@ export class RulesEngineService {
         nature: ruleInstance.nature,
         ruleHitMeta: ruleHit
           ? {
+              subjectType:
+                subjectTypes.length === 1 ? subjectTypes[0] : undefined,
+              createCaseFor:
+                createCaseFor.length === 1 ? createCaseFor[0] : undefined,
               hitDirections: ruleHitDirections,
               falsePositiveDetails: falsePositiveDetails?.length
                 ? falsePositiveDetails[0]

@@ -1,13 +1,13 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
+import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { flatten, isEmpty, pick } from 'lodash'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
-  USER_EVENTS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
+  USER_EVENTS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
@@ -190,7 +190,7 @@ async function transactionHandler(
   logger.info(`Starting Case Creation`)
   const timestampBeforeCasesCreation = Date.now()
 
-  const transactionUsers = await caseCreationService.getTransactionUsers(
+  const transactionUsers = await caseCreationService.getTransactionSubjects(
     transaction
   )
 
@@ -206,12 +206,16 @@ async function transactionHandler(
     transactionUsers
   )
 
-  if (ruleWithAdvancedOptions?.length) {
+  const { ORIGIN, DESTINATION } = transactionUsers ?? {}
+  if (
+    ruleWithAdvancedOptions?.length &&
+    (ORIGIN?.type === 'USER' || DESTINATION?.type === 'USER')
+  ) {
     await userService.handleTransactionUserStatusUpdateTrigger(
       transaction,
       ruleInstances as RuleInstance[],
-      transactionUsers?.ORIGIN ?? null,
-      transactionUsers?.DESTINATION ?? null
+      ORIGIN?.type === 'USER' ? ORIGIN?.user : null,
+      DESTINATION?.type === 'USER' ? DESTINATION?.user : null
     )
   }
 

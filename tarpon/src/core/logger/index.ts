@@ -20,7 +20,7 @@ const localLogFormat = format.combine(
 )
 
 export const winstonLogger = createLogger({
-  level: process.env.NODE_ENV === 'test' ? 'error' : isLocal ? 'debug' : 'info',
+  level: isLocal ? 'debug' : process.env.NODE_ENV === 'test' ? 'error' : 'info',
   format: isLocal ? localLogFormat : logFormat,
   transports: [new transports.Console({})],
 })

@@ -3667,6 +3667,8 @@ components:
       properties:
         subjectType:
           $ref: '#/components/schemas/CaseSubjectType'
+        createCaseFor:
+          $ref: '#/components/schemas/CaseSubjectType'
         hitDirections:
           type: array
           items:

@@ -2,7 +2,7 @@ import { JSONSchemaType } from 'ajv'
 
 import { chain, compact, uniq } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
-import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import {
@@ -12,15 +12,20 @@ import {
 import { getNonUserSenderKeys } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
+import { CaseSubjectType } from '@/@types/openapi-public/CaseSubjectType'
+
+type CreateAlertFor = 'INTERNAL_USER' | 'EXTERNAL_USER' | 'ALL'
+type UserType = 'USER' | 'NON_USER'
 
 export type MultipleSendersWithinTimePeriodRuleParameters = {
   sendersCount: number
   timeWindow: TimeWindow
+  createAlertFor: CreateAlertFor // this is a temporal solution, we will have a refactoring in a future
 }
 
 export type SenderReceiverTypes = {
-  senderTypes: Array<'USER' | 'NON_USER'>
-  receiverTypes: Array<'USER' | 'NON_USER'>
+  senderTypes: Array<UserType>
+  receiverTypes: Array<UserType>
 }
 
 type AggregationData = {
@@ -43,6 +48,14 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
             'rule is run when the senders count per time window is greater than the threshold',
         },
         timeWindow: TIME_WINDOW_SCHEMA(),
+        createAlertFor: {
+          type: 'string',
+          enum: ['INTERNAL_USER', 'EXTERNAL_USER', 'ALL'],
+          enumNames: ['Internal user', 'External user', 'All'],
+          title: 'Create alert for',
+          description:
+            'Alerts and cases are created only for specific kind of user',
+        },
       },
       required: ['sendersCount', 'timeWindow'],
     }
@@ -51,7 +64,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
   protected abstract getSenderReceiverTypes(): SenderReceiverTypes
 
   public async computeRule() {
-    const { sendersCount } = this.parameters
+    const { sendersCount, createAlertFor = 'INTERNAL_USER' } = this.parameters
     const data = await this.getData()
 
     const hitResult: RuleHitResult = []
@@ -65,12 +78,26 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     const updatedUsers = new Set([transactionUser, ...data])
 
     if (updatedUsers.size > sendersCount) {
+      let createFor: CaseSubjectType | undefined = undefined
+      if (createAlertFor != null && createAlertFor !== 'ALL') {
+        createFor = createAlertFor === 'EXTERNAL_USER' ? 'PAYMENT' : 'USER'
+      }
       hitResult.push({
         direction: 'ORIGIN',
+        caseCreationParams: {
+          subjectType:
+            this.getUserType('ORIGIN') === 'NON_USER' ? 'PAYMENT' : 'USER',
+          createFor: createFor,
+        },
         vars: super.getTransactionVars('origin'),
       })
       hitResult.push({
         direction: 'DESTINATION',
+        caseCreationParams: {
+          subjectType:
+            this.getUserType('DESTINATION') === 'NON_USER' ? 'PAYMENT' : 'USER',
+          createFor: createFor,
+        },
         vars: super.getTransactionVars('destination'),
       })
     }
@@ -92,6 +119,30 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
           ?.PartitionKeyID
       }
     }
+  }
+
+  private getUserType(
+    direction: 'ORIGIN' | 'DESTINATION'
+  ): UserType | undefined {
+    const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
+
+    if (direction === 'ORIGIN') {
+      if (senderTypes.includes('USER') && this.senderUser) {
+        return 'USER'
+      }
+      if (senderTypes.includes('NON_USER') && !this.senderUser) {
+        return 'NON_USER'
+      }
+    }
+    if (direction === 'DESTINATION') {
+      if (receiverTypes.includes('USER') && this.senderUser) {
+        return 'USER'
+      }
+      if (receiverTypes.includes('NON_USER') && !this.senderUser) {
+        return 'NON_USER'
+      }
+    }
+    return undefined
   }
 
   private async getTransactionsRawData(): Promise<AuxiliaryIndexTransaction[]> {

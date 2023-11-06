@@ -6,9 +6,8 @@ import {
   MongoClient,
   UpdateFilter,
 } from 'mongodb'
-
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { difference, isEmpty } from 'lodash'
+import { difference, isEmpty, isNil, omitBy } from 'lodash'
 import {
   lookupPipelineStage,
   paginatePipeline,
@@ -40,6 +39,8 @@ import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { traceable } from '@/core/xray'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { getPaymentDetailsIdentifiers } from '@/core/dynamodb/dynamodb-keys'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { isStatusInReview, statusEscalated } from '@/utils/helpers'
@@ -1138,6 +1139,85 @@ export class CaseRepository {
       .toArray()
 
     return cases
+  }
+
+  public async getCasesByPaymentDetails(
+    paymentDetails: PaymentDetails,
+    params: {
+      directions?: ('ORIGIN' | 'DESTINATION')[]
+      filterMaxTransactions?: number
+      filterOutCaseStatus?: CaseStatus
+      filterTransactionId?: string
+      filterAvailableAfterTimestamp?: (number | undefined)[]
+      filterCaseType?: CaseType
+    }
+  ): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const filters: Filter<Case>[] = []
+
+    if (params.filterAvailableAfterTimestamp != null) {
+      filters.push({
+        availableAfterTimestamp: { $in: params.filterAvailableAfterTimestamp },
+      })
+    }
+
+    if (params.filterOutCaseStatus != null) {
+      filters.push({
+        caseStatus: { $ne: params.filterOutCaseStatus },
+      })
+    }
+
+    if (params.filterMaxTransactions != null) {
+      filters.push({
+        [`caseTransactionsIds.${params.filterMaxTransactions - 1}`]: {
+          $exists: false,
+        },
+      })
+    }
+
+    if (params.filterCaseType != null) {
+      filters.push({
+        caseType: params.filterCaseType,
+      })
+    }
+
+    const { directions } = params
+    const paymentDetailsFilters = omitBy(
+      {
+        method: paymentDetails.method,
+        ...getPaymentDetailsIdentifiers(paymentDetails),
+      },
+      isNil
+    )
+    const directionsFilters: Filter<Case>[] = []
+    for (const direction of directions ?? ['ORIGIN', 'DESTINATION']) {
+      const directionFilters: Filter<Case>[] = []
+      for (const [key, value] of Object.entries(paymentDetailsFilters)) {
+        const directionKey = direction === 'ORIGIN' ? 'origin' : 'destination'
+        directionFilters.push({
+          [`paymentDetails.${directionKey}.${key}`]: value,
+        })
+      }
+      directionsFilters.push({ $and: directionFilters })
+    }
+    if (directionsFilters.length > 0) {
+      filters.push({
+        $or: directionsFilters,
+      })
+    }
+    if (params.filterTransactionId) {
+      filters.push({
+        'caseTransactions.transactionId': params.filterTransactionId,
+      })
+    }
+
+    const filter = {
+      ...(filters.length > 0 ? { $and: filters } : {}),
+    }
+    console.log('filter', JSON.stringify(filter))
+    return await casesCollection.find(filter).toArray()
   }
 
   public async getCasesByUserId(

@@ -1,4 +1,4 @@
-import { compact, groupBy, last, minBy, uniq, uniqBy } from 'lodash'
+import { compact, groupBy, isEqual, last, minBy, uniq, uniqBy } from 'lodash'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -27,6 +27,17 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { ChecklistTemplatesService } from '@/services/tenants/checklist-template-service'
 import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+
+type CaseSubject =
+  | {
+      type: 'USER'
+      user: InternalUser
+    }
+  | {
+      type: 'PAYMENT'
+      paymentDetails: PaymentDetails
+    }
 
 @traceable
 export class CaseCreationService {
@@ -78,15 +89,28 @@ export class CaseCreationService {
     return user
   }
 
-  public async getTransactionUsers(
+  public async getTransactionSubjects(
     transaction: TransactionWithRulesResult
-  ): Promise<Record<RuleHitDirection, InternalUser | undefined>> {
-    const { originUserId, destinationUserId } = transaction
+  ): Promise<Record<RuleHitDirection, CaseSubject | undefined>> {
+    const {
+      originUserId,
+      destinationUserId,
+      originPaymentDetails,
+      destinationPaymentDetails,
+    } = transaction
 
     // If the origin user and the destination user are the same, we can pass undefined for the destination user
     const isAnyRuleHasOriginHit = transaction.hitRules.some(
       (hitRule) =>
         hitRule.ruleHitMeta?.hitDirections?.includes('ORIGIN') ?? false
+    )
+    const originHit = transaction.hitRules.find(
+      (hitRule) =>
+        hitRule.ruleHitMeta?.hitDirections?.includes('ORIGIN') ?? false
+    )
+    const destinationHit = transaction.hitRules.find(
+      (hitRule) =>
+        hitRule.ruleHitMeta?.hitDirections?.includes('DESTINATION') ?? false
     )
 
     logger.info(`Fetching case users by ids`, {
@@ -94,15 +118,61 @@ export class CaseCreationService {
       originUserId,
     })
 
-    const [originUser, destinationUser] = await Promise.all([
-      !isAnyRuleHasOriginHit ? undefined : this.getUser(originUserId),
-      isAnyRuleHasOriginHit && originUserId === destinationUserId
-        ? undefined
-        : this.getUser(destinationUserId),
-    ])
+    let origin: CaseSubject | undefined = undefined
+    if (isAnyRuleHasOriginHit) {
+      const subjectType = originHit?.ruleHitMeta?.subjectType ?? 'USER'
+      const createFor = originHit?.ruleHitMeta?.createCaseFor
+      if (createFor == null || createFor === subjectType)
+        if (subjectType === 'USER') {
+          const user = await this.getUser(originUserId)
+          if (user != null) {
+            origin = {
+              type: 'USER',
+              user: user,
+            }
+          }
+        } else {
+          if (originPaymentDetails != null) {
+            origin = {
+              type: 'PAYMENT',
+              paymentDetails: originPaymentDetails,
+            }
+          }
+        }
+    }
+    let destination: CaseSubject | undefined
+    {
+      const subjectType = destinationHit?.ruleHitMeta?.subjectType ?? 'USER'
+      if (subjectType === 'USER') {
+        if (!(isAnyRuleHasOriginHit && originUserId === destinationUserId)) {
+          const user = await this.getUser(destinationUserId)
+          if (user != null) {
+            destination = {
+              type: 'USER',
+              user: user,
+            }
+          }
+        }
+      } else {
+        if (
+          !(
+            isAnyRuleHasOriginHit &&
+            isEqual(destinationPaymentDetails, originPaymentDetails)
+          )
+        ) {
+          if (destinationPaymentDetails != null) {
+            origin = {
+              type: 'PAYMENT',
+              paymentDetails: destinationPaymentDetails,
+            }
+          }
+        }
+      }
+    }
+
     return {
-      ORIGIN: originUser || undefined,
-      DESTINATION: destinationUser || undefined,
+      ORIGIN: origin,
+      DESTINATION: destination,
     }
   }
 
@@ -322,16 +392,33 @@ export class CaseCreationService {
     })
   }
 
-  private getNewCase(
+  private getNewUserCase(
     direction: RuleHitDirection,
     user: InternalConsumerUser | InternalBusinessUser
   ): Case {
     const caseEntity: Case = {
       caseStatus: 'OPEN',
       caseType: 'SYSTEM',
+      subjectType: 'USER',
       caseUsers: {
         origin: direction === 'ORIGIN' ? user : undefined,
         destination: direction === 'DESTINATION' ? user : undefined,
+      },
+    }
+    return caseEntity
+  }
+
+  private getNewPaymentCase(
+    direction: RuleHitDirection,
+    paymentDetails: PaymentDetails
+  ): Case {
+    const caseEntity: Case = {
+      caseStatus: 'OPEN',
+      caseType: 'SYSTEM',
+      subjectType: 'PAYMENT',
+      paymentDetails: {
+        origin: direction === 'ORIGIN' ? paymentDetails : undefined,
+        destination: direction === 'DESTINATION' ? paymentDetails : undefined,
       },
     }
     return caseEntity
@@ -442,8 +529,8 @@ export class CaseCreationService {
   }
 
   private async getOrCreateCases(
-    hitUsers: Array<{
-      user: InternalConsumerUser | InternalBusinessUser
+    hitSubjects: Array<{
+      subject: CaseSubject
       direction: RuleHitDirection
     }>,
     params: {
@@ -457,18 +544,16 @@ export class CaseCreationService {
     ruleInstances: ReadonlyArray<RuleInstance>
   ): Promise<Case[]> {
     logger.info(`Hit directions to create or update cases`, {
-      hitDirections: hitUsers.map((hitUser) => hitUser.direction),
-      hitUserIds: hitUsers.map((hitUser) => hitUser.user.userId),
+      hitDirections: hitSubjects.map((hitUser) => hitUser.direction),
     })
     const result: Case[] = []
-    for (const hitUser of hitUsers) {
-      const userId = hitUser.user.userId
+    for (const { subject, direction } of hitSubjects) {
       // keep only user related hits
       const filteredHitRules = params.hitRules.filter((hitRule) => {
         if (
           hitRule.ruleHitMeta?.hitDirections != null &&
           !hitRule.ruleHitMeta?.hitDirections.some(
-            (hitDirection) => hitDirection === hitUser.direction
+            (hitDirection) => hitDirection === direction
           )
         ) {
           return false
@@ -490,7 +575,12 @@ export class CaseCreationService {
       const hitRuleInstanceIds = filteredHitRules.map(
         (rule) => rule.ruleInstanceId
       )
-      if (userId != null) {
+
+      if (subject.type === 'USER') {
+        const userId = subject.user.userId
+        if (userId == null) {
+          continue
+        }
         if (filteredTransaction) {
           const casesHavingSameTransaction =
             await this.caseRepository.getCasesByUserId(userId, {
@@ -513,128 +603,139 @@ export class CaseCreationService {
             break
           }
         }
+      }
+      // const userId = subject.user.userId
+      const now = Date.now()
 
-        const now = Date.now()
-
-        const delayTimestamps = filteredHitRules.map((hitRule) => {
-          const ruleInstanceMatch: RuleInstance | undefined =
-            ruleInstances.find((x) => hitRule.ruleInstanceId === x.id)
-          const availableAfterTimestamp: number | undefined =
-            ruleInstanceMatch?.alertCreationInterval != null
-              ? calculateCaseAvailableDate(
-                  now,
-                  ruleInstanceMatch?.alertCreationInterval,
-                  this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
-                )
-              : undefined
-          return {
-            hitRule,
-            ruleInstance: ruleInstanceMatch,
-            availableAfterTimestamp,
-          }
-        })
-        const delayTimestampsGroups = Object.entries(
-          groupBy(delayTimestamps, (x) => x.availableAfterTimestamp)
-        ).map(([key, values]) => ({
-          availableAfterTimestamp:
-            key === 'undefined' ? undefined : parseInt(key),
-          hitRules: values.map((x) => x.hitRule).filter(notNullish),
-          ruleInstances: values.map((x) => x.ruleInstance).filter(notNullish),
-        }))
-
-        const cases = await this.caseRepository.getCasesByUserId(userId, {
-          filterOutCaseStatus: 'CLOSED',
-          filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
-          filterAvailableAfterTimestamp: delayTimestampsGroups.map(
-            ({ availableAfterTimestamp }) => availableAfterTimestamp
-          ),
-          filterCaseType: 'SYSTEM',
-        })
-
-        for (const {
+      const delayTimestamps = filteredHitRules.map((hitRule) => {
+        const ruleInstanceMatch: RuleInstance | undefined = ruleInstances.find(
+          (x) => hitRule.ruleInstanceId === x.id
+        )
+        const availableAfterTimestamp: number | undefined =
+          ruleInstanceMatch?.alertCreationInterval != null
+            ? calculateCaseAvailableDate(
+                now,
+                ruleInstanceMatch?.alertCreationInterval,
+                this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
+              )
+            : undefined
+        return {
+          hitRule,
+          ruleInstance: ruleInstanceMatch,
           availableAfterTimestamp,
-          ruleInstances,
-          hitRules,
-        } of delayTimestampsGroups) {
-          const existedCase = cases.find(
-            (x) =>
-              x.availableAfterTimestamp === availableAfterTimestamp ||
-              (x.availableAfterTimestamp == null &&
-                availableAfterTimestamp == null)
+        }
+      })
+      const delayTimestampsGroups = Object.entries(
+        groupBy(delayTimestamps, (x) => x.availableAfterTimestamp)
+      ).map(([key, values]) => ({
+        availableAfterTimestamp:
+          key === 'undefined' ? undefined : parseInt(key),
+        hitRules: values.map((x) => x.hitRule).filter(notNullish),
+        ruleInstances: values.map((x) => x.ruleInstance).filter(notNullish),
+      }))
+
+      const casesParams = {
+        filterOutCaseStatus: 'CLOSED',
+        filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
+        filterAvailableAfterTimestamp: delayTimestampsGroups.map(
+          ({ availableAfterTimestamp }) => availableAfterTimestamp
+        ),
+        filterCaseType: 'SYSTEM',
+      } as const
+      const cases =
+        subject.type === 'USER'
+          ? await this.caseRepository.getCasesByUserId(
+              subject.user.userId,
+              casesParams
+            )
+          : await this.caseRepository.getCasesByPaymentDetails(
+              subject.paymentDetails,
+              casesParams
+            )
+
+      for (const {
+        availableAfterTimestamp,
+        ruleInstances,
+        hitRules,
+      } of delayTimestampsGroups) {
+        const existedCase = cases.find(
+          (x) =>
+            x.availableAfterTimestamp === availableAfterTimestamp ||
+            (x.availableAfterTimestamp == null &&
+              availableAfterTimestamp == null)
+        )
+
+        if (existedCase) {
+          logger.info(`Existed case for user`, {
+            existedCaseId: existedCase?.caseId ?? null,
+            existedCaseTransactionsIdsLength: (
+              existedCase?.caseTransactionsIds || []
+            ).length,
+          })
+
+          const alerts = this.getOrCreateAlertsForExistingCase(
+            hitRules,
+            existedCase.alerts,
+            ruleInstances,
+            params.createdTimestamp,
+            filteredTransaction,
+            params.latestTransactionArrivalTimestamp,
+            params.checkListTemplates
           )
 
-          if (existedCase) {
-            logger.info(`Existed case for user`, {
-              existedCaseId: existedCase?.caseId ?? null,
-              existedCaseTransactionsIdsLength: (
-                existedCase?.caseTransactionsIds || []
-              ).length,
-            })
+          const caseTransactionsIds = uniq(
+            [
+              ...(existedCase.caseTransactionsIds ?? []),
+              filteredTransaction?.transactionId as string,
+            ].filter(Boolean)
+          )
 
-            const alerts = this.getOrCreateAlertsForExistingCase(
+          logger.info('Update existed case with transaction')
+          result.push({
+            ...existedCase,
+            latestTransactionArrivalTimestamp:
+              params.latestTransactionArrivalTimestamp,
+            caseTransactionsIds,
+            caseTransactions: uniqBy(
+              // NOTE: filteredTransaction comes first to replace the existing transaction
+              [
+                filteredTransaction,
+                ...(existedCase.caseTransactions ?? []),
+              ].filter(Boolean) as InternalTransaction[],
+              (t) => t.transactionId
+            ),
+            caseTransactionsCount: caseTransactionsIds.length,
+            priority: minBy(alerts, 'priority')?.priority ?? last(PRIORITYS),
+            alerts,
+            updatedAt: now,
+          })
+        } else {
+          logger.info('Create a new case for a transaction')
+          result.push({
+            ...(subject.type === 'USER'
+              ? this.getNewUserCase(direction, subject.user)
+              : this.getNewPaymentCase(direction, subject.paymentDetails)),
+            createdTimestamp:
+              availableAfterTimestamp ?? params.createdTimestamp,
+            latestTransactionArrivalTimestamp:
+              params.latestTransactionArrivalTimestamp,
+            caseTransactionsIds: filteredTransaction
+              ? [filteredTransaction.transactionId as string]
+              : [],
+            caseTransactionsCount: filteredTransaction ? 1 : 0,
+            caseTransactions: filteredTransaction ? [filteredTransaction] : [],
+            priority: params.priority,
+            availableAfterTimestamp,
+            alerts: this.getAlertsForNewCase(
               hitRules,
-              existedCase.alerts,
               ruleInstances,
               params.createdTimestamp,
-              filteredTransaction,
               params.latestTransactionArrivalTimestamp,
+              params.transaction,
               params.checkListTemplates
-            )
-
-            const caseTransactionsIds = uniq(
-              [
-                ...(existedCase.caseTransactionsIds ?? []),
-                filteredTransaction?.transactionId as string,
-              ].filter(Boolean)
-            )
-
-            logger.info('Update existed case with transaction')
-            result.push({
-              ...existedCase,
-              latestTransactionArrivalTimestamp:
-                params.latestTransactionArrivalTimestamp,
-              caseTransactionsIds,
-              caseTransactions: uniqBy(
-                // NOTE: filteredTransaction comes first to replace the existing transaction
-                [
-                  filteredTransaction,
-                  ...(existedCase.caseTransactions ?? []),
-                ].filter(Boolean) as InternalTransaction[],
-                (t) => t.transactionId
-              ),
-              caseTransactionsCount: caseTransactionsIds.length,
-              priority: minBy(alerts, 'priority')?.priority ?? last(PRIORITYS),
-              alerts,
-              updatedAt: now,
-            })
-          } else {
-            logger.info('Create a new case for a transaction')
-            result.push({
-              ...this.getNewCase(hitUser.direction, hitUser.user),
-              createdTimestamp:
-                availableAfterTimestamp ?? params.createdTimestamp,
-              latestTransactionArrivalTimestamp:
-                params.latestTransactionArrivalTimestamp,
-              caseTransactionsIds: filteredTransaction
-                ? [filteredTransaction.transactionId as string]
-                : [],
-              caseTransactionsCount: filteredTransaction ? 1 : 0,
-              caseTransactions: filteredTransaction
-                ? [filteredTransaction]
-                : [],
-              priority: params.priority,
-              availableAfterTimestamp,
-              alerts: this.getAlertsForNewCase(
-                hitRules,
-                ruleInstances,
-                params.createdTimestamp,
-                params.latestTransactionArrivalTimestamp,
-                params.transaction,
-                params.checkListTemplates
-              ),
-              updatedAt: now,
-            })
-          }
+            ),
+            updatedAt: now,
+          })
         }
       }
     }
@@ -644,7 +745,7 @@ export class CaseCreationService {
   async handleTransaction(
     transaction: InternalTransaction,
     ruleInstances: RuleInstance[],
-    transactionUsers: Record<RuleHitDirection, InternalUser | undefined>
+    transactionSubjects: Record<RuleHitDirection, CaseSubject | undefined>
   ): Promise<Case[]> {
     logger.info(`Handling transaction for case creation`, {
       transactionId: transaction.transactionId,
@@ -660,8 +761,8 @@ export class CaseCreationService {
     logger.info(`Updating cases`, {
       transactionId: transaction.transactionId,
     })
-    const hitUsers: Array<{
-      user: InternalConsumerUser | InternalBusinessUser
+    const hitSubjects: Array<{
+      subject: CaseSubject
       direction: RuleHitDirection
     }> = []
 
@@ -680,10 +781,10 @@ export class CaseCreationService {
 
     // Create a hit user for every hit direction
     for (const ruleHitDirection of hitDirections) {
-      const hitDirectionUser = transactionUsers[ruleHitDirection]
-      if (hitDirectionUser) {
-        hitUsers.push({
-          user: hitDirectionUser,
+      const hitDirectionSubject = transactionSubjects[ruleHitDirection]
+      if (hitDirectionSubject) {
+        hitSubjects.push({
+          subject: hitDirectionSubject,
           direction: ruleHitDirection,
         })
       }
@@ -695,7 +796,7 @@ export class CaseCreationService {
     )
 
     const cases = await this.getOrCreateCases(
-      hitUsers,
+      hitSubjects,
       {
         createdTimestamp: now,
         latestTransactionArrivalTimestamp: now,
@@ -719,9 +820,7 @@ export class CaseCreationService {
     return this.updateRelatedCases(savedCases)
   }
 
-  async handleUser(
-    user: InternalConsumerUser | InternalBusinessUser
-  ): Promise<Case[]> {
+  async handleUser(user: InternalUser): Promise<Case[]> {
     logger.info(`Handling user for case creation`, {
       userId: user.userId,
     })
@@ -747,7 +846,7 @@ export class CaseCreationService {
     })
 
     const result = await this.getOrCreateCases(
-      [{ user, direction: 'ORIGIN' }],
+      [{ subject: { type: 'USER', user }, direction: 'ORIGIN' }],
       {
         createdTimestamp: now,
         priority: casePriority,
