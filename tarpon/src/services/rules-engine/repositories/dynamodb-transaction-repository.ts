@@ -380,7 +380,7 @@ export class DynamoDbTransactionRepository
       Limit: 1,
     }
     const result = await paginateQuery(this.dynamoDb, queryInput)
-    return !!result.Count
+    return (result.Items?.length ?? 0) > 0
   }
 
   public async getLastNUserSendingTransactions(

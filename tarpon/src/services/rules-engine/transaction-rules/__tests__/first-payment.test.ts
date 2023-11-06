@@ -184,6 +184,7 @@ ruleVariantsTest(false, () => {
           getTestTransaction({
             originUserId: '6-1',
             destinationUserId: '6-2',
+            timestamp: new Date('2020-01-01').valueOf(),
             originAmountDetails: {
               transactionAmount: 100,
               transactionCurrency: 'INR',
@@ -196,6 +197,7 @@ ruleVariantsTest(false, () => {
           getTestTransaction({
             originUserId: '6-1',
             destinationUserId: '6-2',
+            timestamp: new Date('2021-01-01').valueOf(),
             originAmountDetails: {
               transactionAmount: 10000,
               transactionCurrency: 'INR',
@@ -208,6 +210,7 @@ ruleVariantsTest(false, () => {
           getTestTransaction({
             originUserId: '6-1',
             destinationUserId: '6-2',
+            timestamp: new Date('2022-01-01').valueOf(),
             originAmountDetails: {
               transactionAmount: 10000,
               transactionCurrency: 'INR',
