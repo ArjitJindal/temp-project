@@ -8,7 +8,7 @@ import {
 } from 'mongodb'
 
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { isEmpty } from 'lodash'
+import { difference, isEmpty } from 'lodash'
 import {
   lookupPipelineStage,
   paginatePipeline,
@@ -38,10 +38,11 @@ import { getContext, hasFeature } from '@/core/utils/context'
 import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
+import { isStatusInReview, statusEscalated } from '@/utils/helpers'
 import { Account } from '@/@types/openapi-internal/Account'
 
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
@@ -221,6 +222,53 @@ export class CaseRepository {
     }
   }
 
+  private getAssignmentFilter = (
+    key: 'reviewAssignments' | 'assignments',
+    filterAssignmentsIds: string[]
+  ): Document[] => {
+    const isUnassignedIncluded = filterAssignmentsIds.includes('Unassigned')
+    const assignmentsStatus = this.getAssignmentsStatus(key)
+    return [
+      {
+        $and: [
+          { caseStatus: { $in: assignmentsStatus } },
+          isUnassignedIncluded
+            ? {
+                $or: [
+                  {
+                    [`${key}.assigneeUserId`]: {
+                      $in: filterAssignmentsIds,
+                    },
+                  },
+                  {
+                    $or: [
+                      { [key]: { $size: 0 } },
+                      { [key]: { $exists: false } },
+                    ],
+                  },
+                ],
+              }
+            : {
+                [`${key}.assigneeUserId`]: {
+                  $in: filterAssignmentsIds,
+                },
+              },
+        ],
+      },
+    ]
+  }
+
+  private getAssignmentsStatus = (
+    key: 'reviewAssignments' | 'assignments'
+  ): CaseStatus[] => {
+    const reviewAssignmentsStatus = CASE_STATUSS.filter(
+      (status) => statusEscalated(status) || isStatusInReview(status)
+    )
+    const assignmentsStatus = difference(CASE_STATUSS, reviewAssignmentsStatus)
+
+    return key === 'assignments' ? assignmentsStatus : reviewAssignmentsStatus
+  }
+
   public async getCasesConditions(
     params: OptionalPagination<DefaultApiGetCaseListRequest>,
     riskLevelsRequired = true,
@@ -233,39 +281,18 @@ export class CaseRepository {
       params.filterAssignmentsIds.length > 0 &&
       assignments
     ) {
-      const assignmentConditions: Filter<Case>[] = []
-
-      if (
-        params.filterCaseStatus?.some((status) =>
-          shouldUseReviewAssignments(status)
-        )
-      ) {
-        assignmentConditions.push({
-          reviewAssignments: {
-            $elemMatch: {
-              assigneeUserId: { $in: params.filterAssignmentsIds },
-            },
-          },
-        })
-      }
-
-      if (
-        params.filterCaseStatus?.some(
-          (status) => !shouldUseReviewAssignments(status)
-        )
-      ) {
-        assignmentConditions.push({
-          assignments: {
-            $elemMatch: {
-              assigneeUserId: { $in: params.filterAssignmentsIds },
-            },
-          },
-        })
-      }
-
-      if (assignmentConditions?.length) {
-        conditions.push({ $or: assignmentConditions })
-      }
+      conditions.push({
+        $or: [
+          ...this.getAssignmentFilter(
+            'reviewAssignments',
+            params.filterAssignmentsIds
+          ),
+          ...this.getAssignmentFilter(
+            'assignments',
+            params.filterAssignmentsIds
+          ),
+        ],
+      })
     }
 
     if (params.afterTimestamp != null || params.beforeTimestamp != null) {

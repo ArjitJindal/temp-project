@@ -255,7 +255,7 @@ export default function CaseTable(props: Props) {
             return (
               <AssigneesDropdown
                 assignments={assignments || []}
-                editing={!(isStatusInReview || otherStatuses)}
+                editing={!(isStatusInReview || otherStatuses) && !(entity.caseStatus === 'CLOSED')}
                 onChange={(assignees) => {
                   const assignments = assignees.map((assigneeUserId) => ({
                     assignedByUserId: user.userId,
@@ -346,7 +346,7 @@ export default function CaseTable(props: Props) {
         },
       }),
     ];
-    if (params.caseStatus === 'CLOSED') {
+    if (params.caseStatus?.includes('CLOSED')) {
       mergedColumns.push(
         ...[
           helper.simple<'lastStatusChangeReasons'>({
@@ -433,6 +433,7 @@ export default function CaseTable(props: Props) {
     'ruleQueueIds',
     'ruleNature',
     showAssignedToFilter && 'assignedTo',
+    'caseStatus',
   ]);
   const filters = useCaseAlertFilters(filterIds);
   const exportPermissions = useHasPermissions(['case-management:export:read']);

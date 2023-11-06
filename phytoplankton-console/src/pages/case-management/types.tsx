@@ -1,14 +1,13 @@
 import {
-  AlertStatus,
   AuditLogType,
   CaseReasons,
-  CaseStatus,
   CaseType,
   ChecklistStatus,
   PaymentMethod,
   Priority,
   RiskLevel,
   RuleAction,
+  DerivedStatus,
   TransactionState,
   UserState,
 } from '@/apis';
@@ -34,8 +33,8 @@ export type CommonCaseParams = {
   destinationMethodFilter: PaymentMethod[];
   tagKey: string;
   tagValue: string;
-  caseStatus: CaseStatus;
-  alertStatus: AlertStatus;
+  caseStatus: DerivedStatus[];
+  alertStatus: DerivedStatus[];
   transactionId: string;
   transactionTimestamp: string[];
   amountGreaterThanFilter: number;

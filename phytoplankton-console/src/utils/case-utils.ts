@@ -1,8 +1,8 @@
-import { every, some, uniq, map } from 'lodash';
-import { neverReturn } from './lang';
+import { every, some, uniq, map, intersection } from 'lodash';
 import { DEFAULT_TIME_FORMAT } from './dayjs';
 import { getAccountUserName } from './account';
 import { FLAGRIGHT_SYSTEM_USER } from './user-utils';
+import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { dayjs } from '@/utils/dayjs';
 import {
   Account,
@@ -12,10 +12,11 @@ import {
   CaseStatus,
   CaseStatusChange,
   Comment,
+  DerivedStatus,
 } from '@/apis';
 
 export const statusInReview = (
-  status: CaseStatus | undefined,
+  status: CaseStatus | undefined | DerivedStatus,
 ): status is
   | 'IN_REVIEW_OPEN'
   | 'IN_REVIEW_CLOSED'
@@ -99,35 +100,51 @@ export const isOnHoldOrInProgress = (status: CaseStatus): boolean => {
   ].includes(status);
 };
 
-export const getStatuses = (
-  status: CaseStatus | AlertStatus | 'IN_REVIEW' | 'ON_HOLD' | 'IN_PROGRESS' | undefined,
-): (CaseStatus | AlertStatus)[] => {
-  switch (status) {
-    case undefined:
-      return [];
+export const getDerivedStatus = (s: CaseStatus | AlertStatus | DerivedStatus): DerivedStatus => {
+  switch (s) {
     case 'OPEN':
-    case 'REOPENED':
-      return ['OPEN', 'REOPENED'];
-    case 'IN_REVIEW':
-      return ['IN_REVIEW_OPEN', 'IN_REVIEW_ESCALATED', 'IN_REVIEW_CLOSED', 'IN_REVIEW_REOPENED'];
-    case 'IN_REVIEW_OPEN':
-    case 'IN_REVIEW_ESCALATED':
-    case 'IN_REVIEW_CLOSED':
-    case 'IN_REVIEW_REOPENED':
-    case 'OPEN_IN_PROGRESS':
-    case 'OPEN_ON_HOLD':
-    case 'ESCALATED_IN_PROGRESS':
-    case 'ESCALATED_ON_HOLD':
+      return 'OPEN';
     case 'CLOSED':
+      return 'CLOSED';
+    case 'REOPENED':
+      return 'REOPENED';
     case 'ESCALATED':
-      return [status];
-    case 'IN_PROGRESS':
-      return ['OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS'];
-    case 'ON_HOLD':
-      return ['OPEN_ON_HOLD', 'ESCALATED_ON_HOLD'];
-    default:
-      return neverReturn<CaseStatus[]>(status, []);
+      return 'ESCALATED';
+    case 'IN_REVIEW_OPEN':
+    case 'IN_REVIEW_CLOSED':
+    case 'IN_REVIEW_ESCALATED':
+    case 'IN_REVIEW_REOPENED':
+      return 'IN_REVIEW';
+    case 'OPEN_IN_PROGRESS':
+    case 'ESCALATED_IN_PROGRESS':
+      return 'IN_PROGRESS';
+    case 'OPEN_ON_HOLD':
+    case 'ESCALATED_ON_HOLD':
+      return 'ON_HOLD';
   }
+  return s;
+};
+
+// Explodes derived statuses to all their available statuses, for example "IN_REVIEW" becomes "IN_REVIEW_OPEN", "IN_REVIEW_CLOSED", "IN_REVIEW_ESCALATED"...
+export const getStatuses = (
+  status?: (DerivedStatus | undefined)[],
+): (CaseStatus | AlertStatus)[] => {
+  let selectedStatus;
+
+  if (status?.includes('IN_REVIEW'))
+    selectedStatus = [
+      ...['IN_REVIEW_OPEN', 'IN_REVIEW_ESCALATED', 'IN_REVIEW_CLOSED', 'IN_REVIEW_REOPENED'],
+    ];
+
+  if (status?.includes('IN_PROGRESS'))
+    selectedStatus = [...(selectedStatus ?? []), ...['OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS']];
+
+  if (status?.includes('ON_HOLD'))
+    selectedStatus = [...(selectedStatus ?? []), ...['OPEN_ON_HOLD', 'ESCALATED_ON_HOLD']];
+
+  selectedStatus = [...(selectedStatus ?? []), ...intersection(status, CASE_STATUSS)]; // Get the status which are as we store
+
+  return selectedStatus;
 };
 
 export function commentsToString(comments: Comment[], users: { [userId: string]: Account }) {

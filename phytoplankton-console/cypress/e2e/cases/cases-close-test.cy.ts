@@ -6,7 +6,7 @@ describe('Closing and Re-Opening the cases', () => {
   });
 
   it('should close a case', async () => {
-    cy.visit('/case-management/cases');
+    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
     cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
 
     const caseId = await promisify(

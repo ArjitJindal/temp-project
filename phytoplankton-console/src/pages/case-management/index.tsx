@@ -136,7 +136,9 @@ export default function CaseManagementPage() {
             }}
             values={!qaMode ? normalModeItems : qaModeItems}
           />
-          {qaMode || <StatusButtons params={params} onChangeParams={handleChangeParams} />}
+          {!qaMode && params.showCases === 'PAYMENT_APPROVALS' && (
+            <StatusButtons params={params} onChangeParams={handleChangeParams} />
+          )}
         </div>
         {getTable(params, handleChangeParams)}
       </PageWrapperContentContainer>
@@ -171,6 +173,7 @@ function getTable(
             params={params}
             onChangeParams={handleChangeParams}
             showUserFilters
+            showAssignedToFilter
           />
         </Authorized>
       );
@@ -191,7 +194,7 @@ function getTable(
       return (
         <Authorized required={['case-management:qa:read']} showForbiddenPage>
           <QaTable
-            params={{ ...params, alertStatus: 'CLOSED' }}
+            params={{ ...params, alertStatus: ['CLOSED'] }}
             onChangeParams={handleChangeParams}
           />
         </Authorized>
@@ -200,7 +203,7 @@ function getTable(
       return (
         <Authorized required={['case-management:qa:read']} showForbiddenPage>
           <QaTable
-            params={{ ...params, filterQaStatus: ['PASSED'], alertStatus: 'CLOSED' }}
+            params={{ ...params, filterQaStatus: ['PASSED'], alertStatus: ['CLOSED'] }}
             onChangeParams={handleChangeParams}
           />
         </Authorized>
@@ -209,7 +212,7 @@ function getTable(
       return (
         <Authorized required={['case-management:qa:read']} showForbiddenPage>
           <QaTable
-            params={{ ...params, filterQaStatus: ['FAILED'], alertStatus: 'CLOSED' }}
+            params={{ ...params, filterQaStatus: ['FAILED'], alertStatus: ['CLOSED'] }}
             onChangeParams={handleChangeParams}
           />
         </Authorized>

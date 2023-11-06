@@ -4,7 +4,7 @@ describe('Escalate a case from case-details', () => {
   });
 
   const selectCase = () => {
-    cy.visit('/case-management/cases');
+    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN');
     cy.get('[data-cy="case-id"]', { timeout: 15000 }).eq(0).invoke('text').as('caseId');
     cy.get('[data-cy="case-id"]').eq(0).click();
   };

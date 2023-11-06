@@ -16,14 +16,16 @@ import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndu
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
-import { AlertStatus, CaseReasons, CaseStatus, ChecklistStatus, PaymentMethod } from '@/apis';
+import { CaseReasons, ChecklistStatus, DerivedStatus, PaymentMethod } from '@/apis';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
-import { humanizeConstant } from '@/utils/humanize';
+import { humanizeConstant, humanizeSnakeCase } from '@/utils/humanize';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
+import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
+import CaseStatusTag from '@/components/library/CaseStatusTag';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -48,8 +50,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       transactionState: params.transactionState?.join(','),
       tagKey: params.tagKey ?? undefined,
       tagValue: params.tagValue ?? undefined,
-      caseStatus: params.caseStatus,
-      alertStatus: params.alertStatus,
+      caseStatus: params.caseStatus?.join(','),
+      alertStatus: params.alertStatus?.join(','),
       transactionId: params.transactionId,
       amountGreaterThanFilter: params.amountGreaterThanFilter,
       amountLessThanFilter: params.amountLessThanFilter,
@@ -101,8 +103,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
           : undefined,
       tagKey: raw.tagKey ?? undefined,
       tagValue: raw.tagValue ?? undefined,
-      caseStatus: (raw.caseStatus ?? 'OPEN') as CaseStatus,
-      alertStatus: (raw.alertStatus ?? 'OPEN') as AlertStatus,
+      caseStatus: raw.caseStatus?.split(',') as DerivedStatus[],
+      alertStatus: raw.alertStatus?.split(',') as DerivedStatus[],
       transactionId: raw.transactionId,
       amountGreaterThanFilter: raw.amountGreaterThanFilter
         ? parseInt(raw.amountGreaterThanFilter)
@@ -322,6 +324,36 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: RULE_NATURES.map((x) => ({ value: x, label: x })),
+      },
+      showFilterByDefault: true,
+    },
+    {
+      title: 'Case status',
+      key: 'caseStatus',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: DERIVED_STATUSS.map((status) => ({
+          value: status,
+          label: <CaseStatusTag caseStatus={status} />,
+          labelText: humanizeSnakeCase(status),
+        })),
+      },
+      showFilterByDefault: true,
+    },
+    {
+      title: 'Alert status',
+      key: 'alertStatus',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: DERIVED_STATUSS.map((status) => ({
+          value: status,
+          label: <CaseStatusTag caseStatus={status} />,
+          labelText: humanizeSnakeCase(status),
+        })),
       },
       showFilterByDefault: true,
     },

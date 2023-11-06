@@ -10,6 +10,8 @@ interface Props {
   onConfirm: (users: string[]) => void;
 }
 
+const UNASSIGNED = 'Unassigned';
+
 export default function PopupContent(props: Props) {
   const { value, onConfirm } = props;
   const [users, loading] = useUsers();
@@ -20,7 +22,10 @@ export default function PopupContent(props: Props) {
         return false;
       }
 
-      const userId = Object.keys(users)?.find((key) => users?.[key]?.name === user);
+      const userId =
+        user === UNASSIGNED
+          ? UNASSIGNED
+          : Object.keys(users).find((key) => users[key].name === user);
       if (!userId) {
         return false;
       }
@@ -29,11 +34,11 @@ export default function PopupContent(props: Props) {
     },
     [value, users],
   );
-
+  const options = [UNASSIGNED, ...Object.keys(users).map((key) => users[key].name)];
   return (
     <div className={s.root}>
       <List
-        dataSource={Object.keys(users).map((key) => users[key].name)}
+        dataSource={options}
         loading={loading}
         rowKey={(item) => item}
         className={s.list}
@@ -46,7 +51,10 @@ export default function PopupContent(props: Props) {
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                const userId = Object.keys(users).find((key) => users[key].name === user);
+                const userId =
+                  user === UNASSIGNED
+                    ? UNASSIGNED
+                    : Object.keys(users).find((key) => users[key].name === user);
 
                 if (!userId) {
                   return;
@@ -66,13 +74,15 @@ export default function PopupContent(props: Props) {
               }}
             >
               <div className={s.user}>
-                <Avatar
-                  size="small"
-                  className={s.avatar}
-                  style={{ backgroundColor: randomColor.background, color: randomColor.text }}
-                >
-                  {user.slice(0, 2).toUpperCase()}
-                </Avatar>
+                {user !== UNASSIGNED && (
+                  <Avatar
+                    size="small"
+                    className={s.avatar}
+                    style={{ backgroundColor: randomColor.background, color: randomColor.text }}
+                  >
+                    {user.slice(0, 2).toUpperCase()}
+                  </Avatar>
+                )}
                 <Typography.Text>{user}</Typography.Text>
               </div>
             </List.Item>

@@ -12,6 +12,7 @@ import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-lin
 export interface Option<Value extends Comparable> {
   value: Value;
   label?: React.ReactNode;
+  labelText?: string;
   isDisabled?: boolean;
   isDefault?: boolean;
 }

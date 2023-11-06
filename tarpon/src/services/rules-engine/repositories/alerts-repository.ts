@@ -3,7 +3,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 
 import { NotFound } from 'http-errors'
-import { compact } from 'lodash'
+import { compact, difference } from 'lodash'
 import { CaseRepository, getRuleQueueFilter } from './case-repository'
 import { MongoDbTransactionRepository } from './mongodb-transaction-repository'
 import {
@@ -35,8 +35,10 @@ import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
+import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
+import { ALERT_STATUSS } from '@/@types/openapi-internal-custom/AlertStatus'
+import { isStatusInReview, statusEscalated } from '@/utils/helpers'
 import { Account } from '@/@types/openapi-internal/Account'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
@@ -88,6 +90,53 @@ export class AlertsRepository {
       total: await countPromise,
       data: await itemsPromise,
     }
+  }
+
+  private getAssignmentFilter = (
+    key: 'reviewAssignments' | 'assignments',
+    filterAssignmentsIds: string[]
+  ): Document[] => {
+    const isUnassignedIncluded = filterAssignmentsIds.includes('Unassigned')
+    const assignmentsStatus = this.getAssignmentsStatus(key)
+    return [
+      {
+        $and: [
+          { ['alerts.alertStatus']: { $in: assignmentsStatus } },
+          isUnassignedIncluded
+            ? {
+                $or: [
+                  {
+                    [`alerts.${key}.assigneeUserId`]: {
+                      $in: filterAssignmentsIds,
+                    },
+                  },
+                  {
+                    $or: [
+                      { [`alerts.${key}`]: { $size: 0 } },
+                      { [`alerts.${key}`]: { $exists: false } },
+                    ],
+                  },
+                ],
+              }
+            : {
+                [`alerts.${key}.assigneeUserId`]: {
+                  $in: filterAssignmentsIds,
+                },
+              },
+        ],
+      },
+    ]
+  }
+
+  private getAssignmentsStatus = (
+    key: 'reviewAssignments' | 'assignments'
+  ): AlertStatus[] => {
+    const reviewAssignmentsStatus = ALERT_STATUSS.filter(
+      (status) => statusEscalated(status) || isStatusInReview(status)
+    )
+    const assignmentsStatus = difference(ALERT_STATUSS, reviewAssignmentsStatus)
+
+    return key === 'assignments' ? assignmentsStatus : reviewAssignmentsStatus
   }
 
   private async getAlertsPipeline(
@@ -257,41 +306,18 @@ export class AlertsRepository {
       params.filterAssignmentsIds != null &&
       params.filterAssignmentsIds?.length
     ) {
-      const assignmentsConditions: Filter<AlertListResponseItem>[] = []
-
-      if (
-        params.filterAlertStatus?.some((status) =>
-          shouldUseReviewAssignments(status)
-        )
-      ) {
-        assignmentsConditions.push({
-          'alerts.reviewAssignments': {
-            $elemMatch: {
-              assigneeUserId: { $in: params.filterAssignmentsIds },
-            },
-          },
-        })
-      }
-
-      if (
-        params.filterAlertStatus?.some(
-          (status) => !shouldUseReviewAssignments(status)
-        )
-      ) {
-        assignmentsConditions.push({
-          'alerts.assignments': {
-            $elemMatch: {
-              assigneeUserId: { $in: params.filterAssignmentsIds },
-            },
-          },
-        })
-      }
-
-      if (assignmentsConditions?.length) {
-        conditions.push({
-          $or: assignmentsConditions,
-        })
-      }
+      conditions.push({
+        $or: [
+          ...this.getAssignmentFilter(
+            'reviewAssignments',
+            params.filterAssignmentsIds
+          ),
+          ...this.getAssignmentFilter(
+            'assignments',
+            params.filterAssignmentsIds
+          ),
+        ],
+      })
     }
     if (params.filterRuleInstanceId != null) {
       conditions.push({

@@ -4,7 +4,7 @@ describe('Using Assignment filter and assigning cases', () => {
   });
 
   it('should assign single and multiple cases', async () => {
-    cy.visit('/case-management/cases');
+    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
     cy.get('tr [data-cy="_assignmentName"]')
       .first()
       .should('not.contain', 'Loading...')
@@ -60,7 +60,7 @@ describe('Using Assignment filter and assigning cases', () => {
           .eq(0)
           .should('exist')
           .click();
-        cy.get('.ant-popover-content li').first().click();
+        cy.get('.ant-popover-content li').eq(1).click();
         cy.wait('@case')
           .its('response.statusCode')
           .should('eq', 200)

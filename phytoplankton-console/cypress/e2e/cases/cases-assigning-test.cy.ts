@@ -4,7 +4,7 @@ describe('Assigning single and multiple cases', () => {
   });
 
   it('should assign single and multiple cases', () => {
-    cy.visit('/case-management/cases');
+    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
 
     cy.get('[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
 

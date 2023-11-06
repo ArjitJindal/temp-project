@@ -7493,6 +7493,17 @@ components:
         - OPEN_ON_HOLD
         - ESCALATED_IN_PROGRESS
         - ESCALATED_ON_HOLD
+    DerivedStatus:
+      type: string
+      title: Status
+      enum:
+        - OPEN
+        - CLOSED
+        - REOPENED
+        - ESCALATED
+        - IN_REVIEW
+        - IN_PROGRESS
+        - ON_HOLD
     FilterOperator:
       type: string
       title: FilterOperator

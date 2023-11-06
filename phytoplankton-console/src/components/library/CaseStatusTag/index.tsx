@@ -2,15 +2,14 @@ import React from 'react';
 import cn from 'clsx';
 import Tooltip from '../Tooltip';
 import s from './index.module.less';
-import { CaseStatus } from '@/apis';
-import { neverReturn } from '@/utils/lang';
+import { CaseStatus, DerivedStatus } from '@/apis';
 import { humanizeConstant } from '@/utils/humanize';
-import { getNextStatusFromInReview, statusInReview } from '@/utils/case-utils';
+import { getDerivedStatus, getNextStatusFromInReview, statusInReview } from '@/utils/case-utils';
 import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 
 interface Props {
-  caseStatus: CaseStatus;
-  previousStatus?: CaseStatus;
+  caseStatus: CaseStatus | DerivedStatus;
+  previousStatus?: CaseStatus | DerivedStatus;
 }
 
 export default function CaseStatusTag(props: Props) {
@@ -39,24 +38,6 @@ export default function CaseStatusTag(props: Props) {
   );
 }
 
-function getCaseStatusClassName(caseStatus: CaseStatus): string | null {
-  switch (caseStatus) {
-    case 'OPEN':
-    case 'CLOSED':
-    case 'REOPENED':
-    case 'ESCALATED':
-      return s[`caseStatus-${caseStatus}`];
-    case 'IN_REVIEW_OPEN':
-    case 'IN_REVIEW_CLOSED':
-    case 'IN_REVIEW_ESCALATED':
-    case 'IN_REVIEW_REOPENED':
-      return s[`caseStatus-IN_REVIEW`];
-    case 'OPEN_IN_PROGRESS':
-    case 'ESCALATED_IN_PROGRESS':
-      return s[`caseStatus-IN_PROGRESS`];
-    case 'OPEN_ON_HOLD':
-    case 'ESCALATED_ON_HOLD':
-      return s[`caseStatus-ON_HOLD`];
-  }
-  return neverReturn(caseStatus, null);
+function getCaseStatusClassName(caseStatus: CaseStatus | DerivedStatus): string | null {
+  return s[`caseStatus-${getDerivedStatus(caseStatus)}`];
 }

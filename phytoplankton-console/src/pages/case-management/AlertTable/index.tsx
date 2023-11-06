@@ -406,7 +406,10 @@ export default function AlertTable(props: Props) {
               return (
                 <AssigneesDropdown
                   assignments={assignments || []}
-                  editing={!(statusInReview(entity.alertStatus) || otherStatuses)}
+                  editing={
+                    !(statusInReview(entity.alertStatus) || otherStatuses) &&
+                    !(entity.alertStatus === 'CLOSED')
+                  }
                   onChange={(assignees) => {
                     const assignments: Assignment[] = assignees.map((assignee) => ({
                       assigneeUserId: assignee,
@@ -576,6 +579,7 @@ export default function AlertTable(props: Props) {
     'originMethodFilterId',
     'destinationMethodFilterId',
     'ruleNature',
+    'alertStatus',
   ]);
   const filters = useCaseAlertFilters(filterIds);
 
@@ -694,7 +698,7 @@ export default function AlertTable(props: Props) {
       const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
       const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
       const caseId = params.caseId ?? selectedCaseId;
-      const alertStatus = params.alertStatus ?? selectedAlertStatus;
+      const alertStatus = selectedAlertStatus;
       if (statusEscalated(alertStatus) && selectedTransactionIds.length) {
         return;
       }

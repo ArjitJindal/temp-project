@@ -37,7 +37,9 @@ export default function ListQuickFilter<Value extends Comparable>(props: Props<V
   const buttonText = isEmpty
     ? undefined
     : joinReactNodes(
-        options.filter((option) => valueArray.includes(option.value)).map(({ label }) => label),
+        options
+          .filter((option) => valueArray.includes(option.value))
+          .map(({ label, labelText }) => labelText ?? label),
       );
 
   return (
