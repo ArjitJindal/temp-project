@@ -32,6 +32,20 @@ export const exportDataForTreemaps = (
   return getCsvData(parsedData);
 };
 
+export const exportDataForBarGraphs = (
+  data: { xValue: string | null; yValue: number }[],
+  xField: string,
+  yField?: string,
+): string => {
+  const parsedData = orderBy(data, 'value', 'desc').map((dataItem) => {
+    return {
+      [xField]: dataItem.xValue ?? '',
+      [yField ?? 'count']: dataItem.yValue,
+    };
+  });
+  return getCsvData(parsedData);
+};
+
 export const getCsvData = (data: ExportData[]): string => {
   if (data && data.length) {
     const result: CsvRow[] = [];

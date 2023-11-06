@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { useLocalStorageState } from 'ahooks';
 import Column, { ColumnData } from '../charts/Column';
+import { exportDataForBarGraphs } from '../../utils/export-data-build-util';
 import s from './styles.module.less';
 import RiskTypeSelector, { RiskTypeSelectorValue } from './RiskTypeSelector';
 import { useApi } from '@/api';
@@ -95,54 +96,71 @@ export default function RiskLevelDistributionCard(props: Props) {
       });
     },
   );
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
 
   return (
-    <Widget
-      resizing="FIXED"
-      {...restProps}
-      extraControls={[
-        <DatePicker.RangePicker
-          value={dateRange}
-          onChange={(e) => {
-            setDateRange(e ?? DEFAULT_DATE_RANGE);
-          }}
-        />,
-      ]}
-    >
-      <AsyncResourceRenderer resource={preparedDataRes}>
-        {(data) => {
-          if (data.length === 0) {
-            return <NoData />;
-          }
-          return (
-            <div className={s.root}>
-              <RiskTypeSelector
-                selectedSection={selectedRiskType}
-                setSelectedSection={setSelectedRiskType}
-              />
-              <div className={s.chartContainer}>
-                <ContainerRectMeasure className={s.chartContainer2}>
-                  {(size) => (
-                    <Column<RiskLevel, RiskLevel>
-                      data={data}
-                      colors={RISK_LEVEL_COLORS}
-                      rotateLabel={false}
-                      hideLegend={true}
-                      height={size.height}
-                      formatSeries={(series) => {
-                        return getRiskLevelLabel(series, settings);
-                      }}
-                      formatX={(series) => {
-                        return getRiskLevelLabel(series, settings);
-                      }}
-                    />
-                  )}
-                </ContainerRectMeasure>
+    <AsyncResourceRenderer resource={preparedDataRes}>
+      {(data) => {
+        if (data.length === 0) {
+          return <NoData />;
+        }
+        return (
+          <div ref={pdfRef}>
+            <Widget
+              resizing="FIXED"
+              {...restProps}
+              extraControls={[
+                <DatePicker.RangePicker
+                  value={dateRange}
+                  onChange={(e) => {
+                    setDateRange(e ?? DEFAULT_DATE_RANGE);
+                  }}
+                />,
+              ]}
+              onDownload={(): Promise<{
+                fileName: string;
+                data: string;
+                pdfRef: MutableRefObject<HTMLInputElement>;
+              }> => {
+                return new Promise((resolve, _reject) => {
+                  const fileData = {
+                    fileName: `distribution-by-${selectedRiskType}-${dayjs().format('YYYY_MM_DD')}`,
+                    data: exportDataForBarGraphs(data, `${selectedRiskType} Risk level`),
+                    pdfRef,
+                  };
+                  resolve(fileData);
+                });
+              }}
+            >
+              <div className={s.root}>
+                <RiskTypeSelector
+                  selectedSection={selectedRiskType}
+                  setSelectedSection={setSelectedRiskType}
+                />
+                <div className={s.chartContainer}>
+                  <ContainerRectMeasure className={s.chartContainer2}>
+                    {(size) => (
+                      <Column<RiskLevel, RiskLevel>
+                        data={data}
+                        colors={RISK_LEVEL_COLORS}
+                        rotateLabel={false}
+                        hideLegend={true}
+                        height={size.height}
+                        formatSeries={(series) => {
+                          return getRiskLevelLabel(series, settings);
+                        }}
+                        formatX={(series) => {
+                          return getRiskLevelLabel(series, settings);
+                        }}
+                      />
+                    )}
+                  </ContainerRectMeasure>
+                </div>
               </div>
-            </div>
-          );
-        }}
-      </AsyncResourceRenderer>
-    </Widget>
+            </Widget>
+          </div>
+        );
+      }}
+    </AsyncResourceRenderer>
   );
 }
