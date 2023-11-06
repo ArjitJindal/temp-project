@@ -14,7 +14,7 @@ const businessUsers: () => InternalBusinessUser[] = memoize(() => {
 })
 
 const consumerUsers: () => InternalConsumerUser[] = memoize(() => {
-  return [...new Array(30)].map(() => sampleConsumerUser())
+  return [...new Array(200)].map(() => sampleConsumerUser())
 })
 
 export const getMerchantMonitoring: () => MerchantMonitoringSummary[] = memoize(

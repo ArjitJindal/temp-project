@@ -246,7 +246,7 @@ export function sampleConsumerUser() {
       `${name.firstName} ${name.middleName} ${name.lastName}`,
       'CONSUMER'
     ),
-    createdTimestamp: sampleTimestamp(),
+    createdTimestamp: sampleTimestamp(3600 * 24 * 365 * 1000),
     tags: [sampleTag()],
     transactionLimits: sampleExpectedTransactionLimit(),
   }
@@ -314,7 +314,7 @@ export function sampleBusinessUser({
   userCounter++
   const paymentMethod = samplePaymentDetails()
 
-  const timestamp = sampleTimestamp()
+  const timestamp = sampleTimestamp(3600 * 365 * 24 * 1000)
   const user: InternalBusinessUser = {
     type: 'BUSINESS',
     userId: userId,
