@@ -35,6 +35,13 @@ describe('Add a comment to a user', () => {
     // Open comments and make sure that comment is created
     cy.get('.ant-tabs-tab').contains('Activity').click();
     cy.get('[data-cy="segmented-control-comments"]').click();
+
+    // Click on download all button and check if the files are downloaded successfully
+    cy.get("button[data-cy='download-all-button']").click();
+    cy.message('Downloading attachments').should('exist');
+    cy.message('Downloading attachments').should('not.exist');
+    cy.message('Unable to complete the download').should('not.exist');
+
     cy.get('[data-cy="comment"]')
       .then(($elements) => {
         return $elements.filter((index, element) => {

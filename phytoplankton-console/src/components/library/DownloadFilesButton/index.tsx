@@ -34,6 +34,7 @@ export default function DownloadFilesButton(props: Props) {
         handleDownloadButtonClick(files);
       }}
       type="TETRIARY"
+      testName="download-all-button"
     >
       Download all attachments
     </Button>
