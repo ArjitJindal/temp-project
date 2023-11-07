@@ -51,7 +51,7 @@ export const SuspiciousActivityOtherInfo = {
   required: [],
 }
 
-function pickPartyFields(fields: string[]) {
+function pickPartyProperties(fields: string[]) {
   return pick(
     merge(
       FincenJsonSchema.definitions.PartyType.properties,
@@ -59,6 +59,22 @@ function pickPartyFields(fields: string[]) {
     ),
     fields
   )
+}
+
+function pickPartyFields(
+  fields: string[],
+  requiredFields: string[],
+  overrides = {}
+) {
+  return {
+    type: 'object',
+    properties: {
+      ...pickPartyProperties(fields),
+      ...overrides,
+    },
+    required: requiredFields,
+    ...AttributeInfos.Party,
+  }
 }
 
 function arraySchema(type: any) {
@@ -223,6 +239,51 @@ function pickPartyNameTypeCodeSubset(codes: string[]) {
   }
 }
 
+function pickPartyAssociationFields(
+  fields: string[],
+  requiredFields: string[],
+  overrides = {}
+) {
+  return {
+    type: 'object',
+    properties: {
+      ...pick(
+        merge(
+          FincenJsonSchema.definitions.PartyAssociationType.properties,
+          FincenJsonSchema.definitions.PartyAssociation.allOf[1].properties
+        ),
+        fields
+      ),
+      ...overrides,
+    },
+    required: requiredFields,
+    ...AttributeInfos.PartyAssociation,
+  }
+}
+
+function pickPartyAccountAssociationFields(
+  fields: string[],
+  requiredFields: string[],
+  overrides = {}
+) {
+  return {
+    type: 'object',
+    properties: {
+      ...pick(
+        merge(
+          FincenJsonSchema.definitions.PartyAccountAssociationType.properties,
+          FincenJsonSchema.definitions.PartyAccountAssociation.allOf[1]
+            .properties
+        ),
+        fields
+      ),
+      ...overrides,
+    },
+    required: requiredFields,
+    ...AttributeInfos.PartyAccountAssociation,
+  }
+}
+
 // Search '35 = Transmitter' in the pdf
 export const Transmitter = {
   type: 'object',
@@ -295,7 +356,7 @@ export const FilingInstitution = {
     'ui:group': 'Filing institution',
   },
   properties: merge(
-    pickPartyFields([
+    pickPartyProperties([
       'PrimaryRegulatorTypeCode',
       'OrganizationClassificationTypeSubtype',
     ]),
@@ -398,7 +459,7 @@ export const FinancialInstitution = {
   type: 'object',
   title: 'Financial Institution Where Activity Occurred',
   properties: merge(
-    pickPartyFields([
+    pickPartyProperties([
       'PayLocationIndicator',
       'SellingLocationIndicator',
       'SellingPayingLocationIndicator',
@@ -406,9 +467,43 @@ export const FinancialInstitution = {
       'LossToFinancialAmountText',
       'PrimaryRegulatorTypeCode',
       'OrganizationClassificationTypeSubtype',
-      'PartyAssociation',
     ]),
     {
+      PartyAssociation: pickPartyAssociationFields(['Party'], [], {
+        Party: pickPartyFields(
+          [
+            'ActivityPartyTypeCode',
+            'PayLocationIndicator',
+            'SellingLocationIndicator',
+            'SellingPayingLocationIndicator',
+            'Address',
+            'PartyIdentification',
+          ],
+          ['ActivityPartyTypeCode'],
+          {
+            Address: pickAddressFields(
+              [
+                'RawCityText',
+                'RawCountryCodeText',
+                'RawStateCodeText',
+                'RawStreetAddress1Text',
+                'RawZIPCode',
+              ],
+              [
+                'RawCityText',
+                'RawCountryCodeText',
+                'RawStateCodeText',
+                'RawStreetAddress1Text',
+                'RawZIPCode',
+              ]
+            ),
+            PartyIdentification: pickPartyIdentificationFields(
+              ['PartyIdentificationNumberText', 'PartyIdentificationTypeCode'],
+              ['PartyIdentificationNumberText', 'PartyIdentificationTypeCode']
+            ),
+          }
+        ),
+      }),
       PartyName: pickPartyNameFields(
         ['EntityLastNameUnknownIndicator', 'RawPartyFullName'],
         []
@@ -483,7 +578,7 @@ export const FinancialInstitution = {
 export const Subject = {
   type: 'object',
   properties: merge(
-    pickPartyFields([
+    pickPartyProperties([
       'AdmissionConfessionNoIndicator',
       'AdmissionConfessionYesIndicator',
       'AllCriticalSubjectInformationUnavailableIndicator',
@@ -499,11 +594,76 @@ export const Subject = {
       'IndividualBirthDateText',
       'PartyOccupationBusiness',
       'ElectronicAddress',
-      'PartyAssociation',
-      // TODO: Fix PartyAccountAssociation
-      // 'PartyAccountAssociation',
     ]),
     {
+      PartyAssociation: pickPartyAssociationFields(
+        [
+          'AccountantIndicator',
+          'ActionTakenDateText',
+          'AgentIndicator',
+          'AppraiserIndicator',
+          'AttorneyIndicator',
+          'BorrowerIndicator',
+          'CustomerIndicator',
+          'DirectorIndicator',
+          'EmployeeIndicator',
+          'NoRelationshipToInstitutionIndicator',
+          'OfficerIndicator',
+          'OtherPartyAssociationTypeText',
+          'OtherRelationshipIndicator',
+          'OwnerShareholderIndicator',
+          'RelationshipContinuesIndicator',
+          'ResignedIndicator',
+          'SubjectRelationshipFinancialInstitutionTINText',
+          'SuspendedBarredIndicator',
+          'TerminatedIndicator',
+        ],
+        []
+      ),
+      PartyAccountAssociation: pickPartyAccountAssociationFields(
+        ['PartyAccountAssociationTypeCode', 'Party'],
+        ['PartyAccountAssociationTypeCode', 'Party'],
+        {
+          Party: pickPartyFields(
+            [
+              'ActivityPartyTypeCode',
+              'NonUSFinancialInstitutionIndicator',
+              'PartyIdentification',
+              'Account',
+            ],
+            ['ActivityPartyTypeCode', 'Account'],
+            {
+              PartyIdentification: pickPartyIdentificationFields(
+                [
+                  'PartyIdentificationNumberText',
+                  'PartyIdentificationTypeCode',
+                ],
+                ['PartyIdentificationNumberText', 'PartyIdentificationTypeCode']
+              ),
+              Account: {
+                type: 'object',
+                properties: {
+                  AccountNumberText:
+                    FincenJsonSchema.definitions.AccountType.properties
+                      .AccountNumberText,
+                  PartyAccountAssociation: {
+                    ...FincenJsonSchema.definitions.PartyAccountAssociationType,
+                    properties: omit(
+                      FincenJsonSchema.definitions.PartyAccountAssociationType
+                        .properties,
+                      'Party'
+                    ),
+                    ...AttributeInfos.PartyAccountAssociation,
+                  },
+                },
+                required: ['AccountNumberText', 'PartyAccountAssociation'],
+                ...AttributeInfos.Account,
+              },
+            }
+          ),
+        }
+      ),
+
       PartyName: pickPartyNameFields(
         [
           'EntityLastNameUnknownIndicator',
