@@ -486,6 +486,7 @@ function makeDerivedColumnCellComponent<Item extends object>(options: {
 
   return (props: CellComponentProps<Item>) => {
     const columnValue = column.value(props.row.original.content);
+    const externalState = useContext(ExternalStateContext);
     const editContext = useEditContext<unknown>(
       false, // derived columns doesn't support editing
       props.row.original.content,
@@ -495,6 +496,7 @@ function makeDerivedColumnCellComponent<Item extends object>(options: {
       value: columnValue,
       item: props.row.original.content,
       edit: editContext,
+      external: externalState?.value ?? null,
     };
     return (
       <>

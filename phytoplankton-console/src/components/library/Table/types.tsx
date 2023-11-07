@@ -25,6 +25,7 @@ export interface ItemContext<Item> {
 export interface CellContext<Value, Item> {
   value: Value;
   item: Item;
+  external?: unknown;
 }
 
 export interface CellEditContext<Value, Item> extends CellContext<Value, Item> {
