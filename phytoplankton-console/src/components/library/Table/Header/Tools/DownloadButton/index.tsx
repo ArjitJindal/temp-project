@@ -59,31 +59,7 @@ export default function DownloadButton<T extends object, Params extends object>(
 
       const columnsToExport = prepareColumns(columns);
       result.push(
-        columnsToExport.map((adjustedColumn) => {
-          let title = adjustedColumn.headerTitle;
-
-          if (!title) {
-            title = typeof adjustedColumn.title === 'string' ? adjustedColumn.title : '-';
-          }
-
-          const key = isSimpleColumn(adjustedColumn) ? adjustedColumn.key : adjustedColumn.id;
-          const filterValue = key ? get(props.params, key) : null;
-          if (filterValue) {
-            let filterValueOptions = '';
-
-            if (typeof filterValue === 'object' && Array.isArray(filterValue)) {
-              filterValueOptions = filterValue.join(', ');
-            } else if (typeof filterValue === 'string') {
-              filterValueOptions = filterValue;
-            } else if (typeof filterValue === 'number') {
-              filterValueOptions = filterValue.toString();
-            }
-
-            title += ` (Filter: ${filterValueOptions})`?.trim();
-          }
-
-          return csvValue(title);
-        }),
+        columnsToExport.map((adjustedColumn) => csvValue(getColumnTitile(adjustedColumn, props))),
       );
       let totalPages = 1;
       let page = pagesMode === 'ALL' ? 1 : currentPage;
@@ -162,9 +138,7 @@ export default function DownloadButton<T extends object, Params extends object>(
       const result: CsvRow[] = [];
       const columnsToExport = prepareColumns(columns);
       result.push(
-        columnsToExport.map((adjustedColumn) =>
-          csvValue(typeof adjustedColumn.title === 'string' ? adjustedColumn.title : '-'),
-        ),
+        columnsToExport.map((adjustedColumn) => csvValue(getColumnTitile(adjustedColumn, props))),
       );
 
       const { total, items } = await onPaginateData({ pageSize });
@@ -268,4 +242,29 @@ function prepareColumns<T extends object>(
     }
   }
   return result;
+}
+
+function getColumnTitile<T extends object>(column: TableColumn<T>, props) {
+  let title = column.headerTitle;
+
+  if (!title) {
+    title = typeof column.title === 'string' ? column.title : '-';
+  }
+
+  const key = isSimpleColumn(column) ? column.key : column.id;
+  const filterValue = key ? get(props.params, key) : null;
+  if (filterValue) {
+    let filterValueOptions = '';
+
+    if (typeof filterValue === 'object' && Array.isArray(filterValue)) {
+      filterValueOptions = filterValue.join(', ');
+    } else if (typeof filterValue === 'string') {
+      filterValueOptions = filterValue;
+    } else if (typeof filterValue === 'number') {
+      filterValueOptions = filterValue.toString();
+    }
+
+    title += ` (Filter: ${filterValueOptions})`?.trim();
+  }
+  return title;
 }

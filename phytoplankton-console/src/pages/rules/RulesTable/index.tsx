@@ -47,7 +47,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const helper = new ColumnHelper<Rule>();
-    return [
+    return helper.list([
       helper.simple<'id'>({
         title: 'ID',
         subtitle: 'Name',
@@ -77,6 +77,10 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
                 <span style={{ fontSize: '12px', whiteSpace: 'normal' }}>{entity.name}</span>
               </>
             );
+          },
+          stringify: (id) => {
+            const recommendedSuffix = recommendedRules.includes(id ?? '') ? ' (Recommended)' : '';
+            return `${id}${recommendedSuffix}`;
           },
           defaultWrapMode: 'OVERFLOW',
         },
@@ -146,7 +150,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
           );
         },
       }),
-    ];
+    ]);
   }, [onViewRule, canWriteRules, simulationMode, onEditRule]);
 
   const [params, setParams] = useState<RulesTableParams>({

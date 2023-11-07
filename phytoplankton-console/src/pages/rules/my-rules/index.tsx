@@ -118,6 +118,16 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     [updateRuleInstanceMutation],
   );
 
+  const getRuleTags = (rule: RuleInstance): string[] => {
+    const tags: string[] = [];
+    //Hit rate tags
+    const hitCount = rule.hitCount;
+    const hitRate = rule.runCount ? ((hitCount ?? 0) / rule.runCount) * 100 : 0;
+    if (hitRate === 0) tags.push('Rule not run');
+    else if (hitRate > 10) tags.push('High hit rate');
+    return tags;
+  };
+
   const columns: TableColumn<RuleInstance>[] = useMemo((): TableColumn<RuleInstance>[] => {
     const helper = new ColumnHelper<RuleInstance>();
 
@@ -189,7 +199,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         title: 'Hit rate',
         value: (row) => {
           if (row.hitCount && row.runCount) {
-            return `${(row.hitCount / row.runCount) * 100}%`;
+            return `${((row.hitCount / row.runCount) * 100).toFixed(2)}%`;
           }
           return '0%';
         },
@@ -222,6 +232,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
           render: (queueId) => {
             return <RuleQueueTag queueId={queueId} />;
           },
+          stringify: (queueId) => queueId ?? 'default',
         },
       }),
       helper.simple<'createdAt'>({
@@ -235,6 +246,12 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         title: 'Updated at',
         sorting: true,
         type: DATE,
+      }),
+      helper.derived<string>({
+        title: 'Tags',
+        value: (entity): string => getRuleTags(entity).join(),
+        hideInTable: true,
+        exporting: true,
       }),
       helper.derived<boolean>({
         id: 'enabled',

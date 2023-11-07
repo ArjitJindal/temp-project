@@ -200,7 +200,9 @@ export function useTanstackTable<
     const columnHelper = TanTable.createColumnHelper<TableRow<Item>>();
 
     function convertColumns(columns: TableColumn<Item>[]): TanTable.ColumnDef<TableRow<Item>>[] {
-      return columns.filter((x) => !isSimpleColumn(x) || x.hideInTable !== true).map(convertColumn);
+      return columns
+        .filter((x) => (!isSimpleColumn(x) && !isDerivedColumn(x)) || x.hideInTable !== true)
+        .map(convertColumn);
     }
 
     function convertColumn(column: TableColumn<Item>): TanTable.ColumnDef<TableRow<Item>> {
