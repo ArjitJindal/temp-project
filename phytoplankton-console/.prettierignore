@@ -22,3 +22,4 @@ CNAME
 /public
 cdk.out
 config/openapi.yaml
+src/apis

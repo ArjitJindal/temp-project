@@ -52,12 +52,12 @@
     "start:local": "cross-env ENV=local WATCH=true node build",
     "start:dev": "cross-env ENV=dev WATCH=true node build",
     "test:unit": "jest src",
-    "test:all": "npm run test:unit",
     "tsc": "tsc --noEmit",
     "tsc:watch": "tsc --noEmit --watch",
     "cypress:open": "node cypress-run.js open",
     "cypress:run": "node cypress-run.js run",
-    "semgrep": "semgrep scan --config ../rule.yaml --error"
+    "semgrep": "semgrep scan --config ../rule.yaml --error",
+    "test": "npm run tsc && npm run test:unit && npm run format:check"
   },
   "lint-staged": {
     "**/*.less": "stylelint --syntax less",

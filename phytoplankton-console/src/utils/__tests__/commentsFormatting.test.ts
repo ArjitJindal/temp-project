@@ -1,6 +1,7 @@
 import { describe, expect } from '@jest/globals';
 import { casesCommentsGenerator, commentsToString } from '../case-utils';
 import { Account, Alert, Comment, FileInfo } from '@/apis';
+import { dayjs } from '@/utils/dayjs';
 
 const file: FileInfo = {
   filename: 'file1',
@@ -22,13 +23,13 @@ const testUsers: { [key: string]: Account } = {
 
 const testComment: Comment = {
   body: 'comment 1',
-  createdAt: new Date('2021-01-01').valueOf(),
+  createdAt: dayjs('2021-01-01T00:00:00.000Z').valueOf(),
   files: [file],
   userId: 'user1',
 };
 
 const testAlert: Alert = {
-  createdTimestamp: new Date('2021-01-01').valueOf(),
+  createdTimestamp: dayjs('2021-01-01T00:00:00.000Z').valueOf(),
   numberOfTransactionsHit: 1,
   priority: 'P1',
   ruleAction: 'BLOCK',
@@ -45,14 +46,14 @@ describe('comments formatting', () => {
     const data = commentsToString([testComment], testUsers);
 
     expect(data).toEqual(
-      'comment 1\n\nAdded on: 5:30:00 AM Added by: user1\n\n1 attachment(s) added',
+      'comment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added',
     );
   });
 
   test('format comments for cases', () => {
     const data = casesCommentsGenerator([testComment], [testAlert, testAlert], testUsers);
     expect(data).toEqual(
-      `Other comments\n\ncomment 1\n\nAdded on: 5:30:00 AM Added by: user1\n\n1 attachment(s) added\n\n\n\nAlert alertId1\n\ncomment 1\n\nAdded on: 5:30:00 AM Added by: user1\n\n1 attachment(s) added\n\n\ncomment 1\n\nAdded on: 5:30:00 AM Added by: user1\n\n1 attachment(s) added\n\n\n\nAlert alertId1\n\ncomment 1\n\nAdded on: 5:30:00 AM Added by: user1\n\n1 attachment(s) added\n\n\ncomment 1\n\nAdded on: 5:30:00 AM Added by: user1\n\n1 attachment(s) added`,
+      `Other comments\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\n\nAlert alertId1\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\n\nAlert alertId1\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added`,
     );
   });
 });

@@ -5,7 +5,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-export default function SettingsProviderMock(props: Props) {
+export default function SettingsProviderMock_(props: Props) {
   return (
     <SettingsContext.Provider
       value={{

@@ -19,3 +19,10 @@ rules:
       category: best-practice
       technology:
         - typescript
+  - id: ock_string
+    patterns:
+      - pattern-regex: "ock\\("
+    message: This is crazy, but files should not include "ock(" string to make it work with `esbuild-jest`. See https://github.com/aelbore/esbuild-jest/issues/57#issuecomment-1005756206 for details
+    languages:
+      - typescript
+    severity: ERROR

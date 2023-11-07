@@ -50,6 +50,8 @@ jobs:
         working-directory: "phytoplankton-console"
       - run: yarn run tsc
         working-directory: "phytoplankton-console"
+      - run: yarn run test:unit
+        working-directory: "phytoplankton-console"
       - name: Post to a Slack channel on failure
         id: slack
         uses: slackapi/slack-github-action@v1.24.0
