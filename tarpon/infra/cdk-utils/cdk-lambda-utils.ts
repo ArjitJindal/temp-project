@@ -12,39 +12,31 @@ import {
 } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 import { IRole, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
-import { Topic } from 'aws-cdk-lib/aws-sns'
-import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
 import { Config } from '@lib/configs/config'
 import { Duration } from 'aws-cdk-lib'
 
-type InternalFunctionProps = {
+export type InternalFunctionProps = {
   name: string
   provisionedConcurrency?: number
   layers?: Array<ILayerVersion>
   memorySize?: number
-  auditLogTopic: Topic
-  batchJobQueue: Queue
 }
 
 // IMPORTANT: We should use the returned `alias` for granting further roles.
 // We should only use the returned `func` to do the things that alias cannot do
 // (e.g add environment variables)
 export function createFunction(
-  context: Construct & { config: Config },
+  context: Construct & { config: Config } & {
+    functionProps: Partial<FunctionProps>
+  },
   role: IRole,
   internalFunctionProps: InternalFunctionProps,
   props: Partial<FunctionProps> = {}
 ): { alias: Alias; func: LambdaFunction } {
-  const {
-    layers,
-    name,
-    memorySize,
-    provisionedConcurrency,
-    auditLogTopic,
-    batchJobQueue,
-  } = internalFunctionProps
+  const { layers, name, memorySize, provisionedConcurrency } =
+    internalFunctionProps
   const layersArray = layers ? [...layers] : []
   if (
     !layersArray.find((layer) =>
@@ -69,8 +61,10 @@ export function createFunction(
 
   const func = new LambdaFunction(context, name, {
     ...{
+      ...context.functionProps,
       ...props,
       environment: {
+        ...context.functionProps.environment,
         ...props.environment,
         ENV: context.config.stage,
         REGION: context.config.region as string,
@@ -85,8 +79,6 @@ export function createFunction(
         },
         AWS_XRAY_CONTEXT_MISSING: 'LOG_ERROR',
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
-        BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
         // NOTE: RELEASE_VERSION and LAMBDA_CODE_PATH used for Sentry
         RELEASE_VERSION: process.env.RELEASE_VERSION as string,
         LAMBDA_CODE_PATH: LAMBDAS[name].codePath,

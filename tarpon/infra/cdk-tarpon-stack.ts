@@ -53,14 +53,6 @@ import {
   SubnetType,
   Vpc,
 } from 'aws-cdk-lib/aws-ec2'
-import {
-  Choice,
-  Condition,
-  JitterType,
-  StateMachine,
-  Succeed,
-} from 'aws-cdk-lib/aws-stepfunctions'
-import { LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks'
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager'
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53'
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
@@ -80,10 +72,18 @@ import { Config } from '@lib/configs/config'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import { getQaApiKeyId, getQaIntegrationTestApiKeyId, isQaEnv } from '@lib/qa'
 import {
+  Choice,
+  Condition,
+  JitterType,
+  StateMachine,
+  Succeed,
+} from 'aws-cdk-lib/aws-stepfunctions'
+import { LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks'
+import {
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
   LAMBDA_BATCH_JOB_RUN_TYPE,
-} from '../lib/cdk/constants'
+} from '@lib/cdk/constants'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -108,8 +108,7 @@ const deployKinesisConsumer = !isQaEnv()
 export class CdkTarponStack extends cdk.Stack {
   config: Config
   betterUptimeCloudWatchTopic: Topic
-  auditLogTopic: Topic
-  batchJobQueue: Queue
+  functionProps: Partial<FunctionProps>
 
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id, {
@@ -164,7 +163,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    this.auditLogTopic = new Topic(this, StackConstants.AUDIT_LOG_TOPIC_NAME, {
+    const auditLogTopic = new Topic(this, StackConstants.AUDIT_LOG_TOPIC_NAME, {
       displayName: StackConstants.AUDIT_LOG_TOPIC_NAME,
       topicName: StackConstants.AUDIT_LOG_TOPIC_NAME,
     })
@@ -174,10 +173,9 @@ export class CdkTarponStack extends cdk.Stack {
         maxReceiveCount: 3,
       }
     )
-    this.auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
+    auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
 
     const batchJobQueue = this.createQueue(SQSQueues.BATCH_JOB_QUEUE_NAME.name)
-    this.batchJobQueue = batchJobQueue
 
     // Kinesis consumer retry queues
     const tarponChangeCaptureRetryQueue = this.createQueue(
@@ -406,34 +404,28 @@ export class CdkTarponStack extends cdk.Stack {
      * Lambda Functions
      */
 
-    const functionProps: Partial<FunctionProps> = {
+    this.functionProps = {
       securityGroups: this.config.resource.LAMBDA_VPC_ENABLED
         ? [securityGroup]
         : undefined,
       vpc: this.config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
       environment: {
-        SM_SECRET_ARN: config.application.ATLAS_CREDENTIALS_SECRET_ARN,
+        DOCUMENT_BUCKET: documentBucketName,
         IMPORT_BUCKET: importBucketName,
         TMP_BUCKET: tmpBucketName,
-        AUTH0_DOMAIN: this.config.application.AUTH0_DOMAIN,
-        AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
         WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
         TRANSACTION_AGGREGATION_QUEUE_URL: transactionAggregationQueue.queueUrl,
         WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
           webhookTarponChangeCaptureRetryQueue.queueUrl,
         COMPLYADVANTAGE_API_KEY: process.env.COMPLYADVANTAGE_API_KEY as string,
-        COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID: config.application
-          .COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string,
         SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
         HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL:
           hammerheadChangeCaptureRetryQueue.queueUrl,
         REQUEST_LOGGER_QUEUE_URL: requestLoggerQueue.queueUrl,
         TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
           tarponChangeCaptureRetryQueue.queueUrl,
-        SLACK_CLIENT_ID: config.application.SLACK_CLIENT_ID,
-        SLACK_CLIENT_SECRET: config.application.SLACK_CLIENT_SECRET,
-        SLACK_REDIRECT_URI: config.application.SLACK_REDIRECT_URI,
-        CONSOLE_URI: config.application.CONSOLE_URI,
+        AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
+        BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
       },
     }
 
@@ -499,7 +491,7 @@ export class CdkTarponStack extends cdk.Stack {
           new PolicyStatement({
             effect: Effect.ALLOW,
             actions: ['sns:Publish'],
-            resources: [this.auditLogTopic.topicArn],
+            resources: [auditLogTopic.topicArn],
           }),
           new PolicyStatement({
             effect: Effect.ALLOW,
@@ -540,8 +532,6 @@ export class CdkTarponStack extends cdk.Stack {
         name: StackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
         provisionedConcurrency:
           config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
       })
 
     /* Transaction and Transaction Event */
@@ -557,11 +547,8 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
         ...transactionFunctionProps,
-      },
-      functionProps
+      }
     )
 
     // Configure AutoScaling for Tx Function
@@ -573,81 +560,39 @@ export class CdkTarponStack extends cdk.Stack {
       utilizationTarget: 0.7,
     })
 
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-        ...transactionFunctionProps,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
+      ...transactionFunctionProps,
+    })
 
     /*  User Event */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
+    })
 
     /* Rule Template (Public) */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
+    })
 
     /* Rule Instance (Public) */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
+    })
 
     /* Device Data (Public) */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME,
+    })
 
     /* User */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
-        layers: [fastGeoIpLayer],
-        provisionedConcurrency:
-          config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
-        memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
+      layers: [fastGeoIpLayer],
+      provisionedConcurrency:
+        config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
+      memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
+    })
 
     /* Slack App */
     const { alias: slackAlertAlias } = createFunction(
@@ -655,10 +600,7 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.SLACK_ALERT_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
+      }
     )
 
     slackAlertAlias.addEventSource(
@@ -672,10 +614,7 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
+      }
     )
 
     webhookDelivererAlias.addEventSource(
@@ -688,12 +627,10 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.TRANSACTION_AGGREGATION_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
+
         memorySize:
           this.config.resource.TRANSACTION_AGGREGATION_LAMBDA?.MEMORY_SIZE,
-      },
-      functionProps
+      }
     )
 
     transactionAggregatorAlias.addEventSource(
@@ -709,12 +646,10 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.REQUEST_LOGGER_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
+
         memorySize:
           this.config.resource.REQUEST_LOGGER_LAMBDA?.MEMORY_SIZE ?? 512,
-      },
-      functionProps
+      }
     )
 
     requestLoggerAlias.addEventSource(
@@ -731,23 +666,16 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.AUDIT_LOG_CONSUMER_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
+      }
     )
     auditLogConsumerAlias.addEventSource(new SqsEventSource(auditLogQueue))
 
-    /* Batch Job */
     const { alias: jobDecisionAlias } = createFunction(
       this,
       lambdaExecutionRole,
       {
         name: StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
+      }
     )
     const { alias: jobRunnerAlias } = createFunction(
       this,
@@ -757,10 +685,7 @@ export class CdkTarponStack extends cdk.Stack {
         memorySize:
           config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
           config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
+      }
     )
 
     const batchJobStateMachine = new StateMachine(
@@ -806,13 +731,12 @@ export class CdkTarponStack extends cdk.Stack {
         ),
       }
     )
+
     const { alias: jobTriggerConsumerAlias } = createFunction(
       this,
       lambdaExecutionRole,
       {
         name: StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
       },
       {
         environment: {
@@ -831,11 +755,9 @@ export class CdkTarponStack extends cdk.Stack {
         lambdaExecutionRole,
         {
           name: StackConstants.CRON_JOB_DAILY,
-          auditLogTopic: this.auditLogTopic,
-          batchJobQueue,
+
           memorySize: config.resource.CRON_JOB_LAMBDA?.MEMORY_SIZE,
-        },
-        functionProps
+        }
       )
 
       const apiMetricsRule = new Rule(
@@ -852,11 +774,9 @@ export class CdkTarponStack extends cdk.Stack {
         lambdaExecutionRole,
         {
           name: StackConstants.CRON_JOB_TEN_MINUTE,
-          auditLogTopic: this.auditLogTopic,
-          batchJobQueue,
+
           memorySize: config.resource.CRON_JOB_LAMBDA?.MEMORY_SIZE,
-        },
-        functionProps
+        }
       )
 
       const everyTenMinuteRule = new Rule(
@@ -878,10 +798,7 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.CRON_JOB_MONTHLY,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
+      }
     )
 
     const monthlyRule = new Rule(
@@ -904,22 +821,12 @@ export class CdkTarponStack extends cdk.Stack {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           memorySize:
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
-          auditLogTopic: this.auditLogTopic,
-          batchJobQueue,
-        },
-        functionProps
+        }
       )
       const { alias: tarponChangeCaptureKinesisConsumerRetryAlias } =
-        createFunction(
-          this,
-          lambdaExecutionRole,
-          {
-            name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
-            auditLogTopic: this.auditLogTopic,
-            batchJobQueue,
-          },
-          functionProps
-        )
+        createFunction(this, lambdaExecutionRole, {
+          name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+        })
 
       this.createKinesisEventSource(
         tarponChangeCaptureKinesisConsumerAlias,
@@ -932,30 +839,16 @@ export class CdkTarponStack extends cdk.Stack {
 
       /* Hammerhead Kinesis Change capture consumer */
       const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
-        createFunction(
-          this,
-          lambdaExecutionRole,
-          {
-            name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-            memorySize:
-              config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
-            auditLogTopic: this.auditLogTopic,
-            batchJobQueue,
-          },
-          functionProps
-        )
+        createFunction(this, lambdaExecutionRole, {
+          name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+          memorySize:
+            config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
+        })
 
       const { alias: hammerheadChangeCaptureKinesisConsumerRetryAlias } =
-        createFunction(
-          this,
-          lambdaExecutionRole,
-          {
-            name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
-            auditLogTopic: this.auditLogTopic,
-            batchJobQueue,
-          },
-          functionProps
-        )
+        createFunction(this, lambdaExecutionRole, {
+          name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+        })
 
       this.createKinesisEventSource(
         hammerheadChangeCaptureKinesisConsumerAlias,
@@ -968,16 +861,9 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     // Public Sanctions handler
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME,
+    })
 
     /**
      * API Gateway
@@ -1179,14 +1065,9 @@ export class CdkTarponStack extends cdk.Stack {
       {
         config,
         lambdaExecutionRole,
-        securityGroup,
-        vpc,
-        auditLogTopic: this.auditLogTopic,
-        batchJobQueue,
-        webhookDeliveryQueue,
+        functionProps: this.functionProps,
         domainName,
         betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
-        requestLoggerQueue,
       }
     )
 
