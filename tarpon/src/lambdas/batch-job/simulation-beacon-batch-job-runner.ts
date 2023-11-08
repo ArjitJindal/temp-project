@@ -384,7 +384,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     if (!rulesEngineService) {
       return []
     }
-    const onePercentTransactionsCount = transactions.length * 0.01
+    const onePercentTransactionsCount = Math.floor(transactions.length * 0.01)
     let processedTransactionsCount = 0
     const executionResults = await pMap(
       transactions,
