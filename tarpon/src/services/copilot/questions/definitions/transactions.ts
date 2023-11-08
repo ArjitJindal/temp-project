@@ -26,7 +26,7 @@ export const Transactions: TableQuestion<Period> = {
     },
     {
       name: 'TRS score',
-      columnType: 'NUMBER',
+      columnType: 'FLOAT',
     },
     {
       name: 'Risk level',

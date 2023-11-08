@@ -59,7 +59,7 @@ export const KycScoring: TableQuestion<{ userId: string }> = {
     },
     {
       name: 'Risk score',
-      columnType: 'NUMBER',
+      columnType: 'FLOAT',
     },
     {
       name: 'Risk level',
