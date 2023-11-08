@@ -171,7 +171,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           period: Duration.minutes(1),
         }
         const devReadConfig = {
-          threshold: 10,
+          threshold: 25,
           statistic: 'Average',
           period: Duration.minutes(5),
         }
