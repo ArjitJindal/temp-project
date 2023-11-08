@@ -12,6 +12,7 @@ import { TransactionAggregationRule } from './aggregation-rule'
 import { getBankname } from '@/core/dynamodb/dynamodb-keys'
 import { mergeObjects } from '@/utils/object'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { traceable } from '@/core/xray'
 
 export type BankNameChangeRuleParameters = {
   timeWindow: TimeWindow
@@ -31,6 +32,7 @@ const initialAggregationData = (): AggregationData => ({
   receiverPreviousBankName: '',
 })
 
+@traceable
 export default class BankNameChangeRule extends TransactionAggregationRule<
   BankNameChangeRuleParameters,
   TransactionHistoricalFilters,

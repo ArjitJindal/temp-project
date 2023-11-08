@@ -4,12 +4,14 @@ import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
+import { traceable } from '@/core/xray'
 
 export type FirstActivityAfterLongTimeRuleParameters = {
   dormancyPeriodDays: number
   checkDirection?: 'sending' | 'all'
 }
 
+@traceable
 export default class FirstActivityAfterLongTimeRule extends TransactionRule<
   FirstActivityAfterLongTimeRuleParameters,
   TransactionHistoricalFilters

@@ -19,6 +19,7 @@ import {
 } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   filteredSendingCount?: number
@@ -36,6 +37,7 @@ export type HighUnsuccessfullStateRateParameters = {
   checkReceiver: 'receiving' | 'all' | 'none'
 }
 
+@traceable
 export default class HighUnsuccessfullStateRateRule extends TransactionAggregationRule<
   HighUnsuccessfullStateRateParameters,
   TransactionHistoricalFilters,

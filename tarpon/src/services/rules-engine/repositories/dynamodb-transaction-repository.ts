@@ -40,6 +40,7 @@ import { TransactionMonitoringResult } from '@/@types/openapi-public/Transaction
 import { Undefined } from '@/utils/lang'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { envIs } from '@/utils/env'
+import { traceable } from '@/core/xray'
 
 export function getNewTransactionID(transaction: Transaction) {
   return (
@@ -48,6 +49,7 @@ export function getNewTransactionID(transaction: Transaction) {
   )
 }
 
+@traceable
 export class DynamoDbTransactionRepository
   implements RulesEngineTransactionRepositoryInterface
 {

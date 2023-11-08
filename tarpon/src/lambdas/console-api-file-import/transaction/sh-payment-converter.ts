@@ -6,6 +6,7 @@ import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { traceable } from '@/core/xray'
 
 const ShPaymentTransaction = t.type({
   No: t.string,
@@ -22,6 +23,7 @@ const ShPaymentTransaction = t.type({
 })
 type ShPaymentTransaction = t.TypeOf<typeof ShPaymentTransaction>
 
+@traceable
 export class ShPaymentTransactionConverter
   implements ConverterInterface<Transaction>
 {

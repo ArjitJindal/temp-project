@@ -64,7 +64,9 @@ import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
   alertsService: AlertsService

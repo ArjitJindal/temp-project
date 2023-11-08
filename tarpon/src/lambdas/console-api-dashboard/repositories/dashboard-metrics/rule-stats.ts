@@ -19,7 +19,9 @@ import {
 
 import { Case } from '@/@types/openapi-internal/Case'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class RuleHitsStatsDashboardMetric {
   public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
     const db = await getMongoDbClientDb()

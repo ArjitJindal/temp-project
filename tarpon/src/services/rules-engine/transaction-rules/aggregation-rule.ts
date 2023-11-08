@@ -4,12 +4,14 @@ import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import dayjs, { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
+import { traceable } from '@/core/xray'
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
 const AGGREGATION_VERSION = '2'
 
 const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
 
+@traceable
 export abstract class TransactionAggregationRule<
   P,
   T extends object = object,

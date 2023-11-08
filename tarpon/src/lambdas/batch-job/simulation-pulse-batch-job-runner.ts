@@ -17,6 +17,7 @@ import { RiskScoringService } from '@/services/risk-scoring'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getUserName } from '@/utils/helpers'
+import { traceable } from '@/core/xray'
 
 type SimulationResult = {
   userResults: Array<Omit<SimulationPulseResult, 'taskId' | 'type'>>
@@ -26,6 +27,7 @@ type SimulationResult = {
   }
 }
 
+@traceable
 export class SimulationPulseBatchJobRunner extends BatchJobRunner {
   usersRepository?: UserRepository
   riskRepository?: RiskRepository

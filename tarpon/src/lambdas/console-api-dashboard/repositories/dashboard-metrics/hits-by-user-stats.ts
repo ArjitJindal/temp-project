@@ -20,7 +20,9 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { DashboardStatsHitsPerUserData } from '@/@types/openapi-internal/DashboardStatsHitsPerUserData'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class HitsByUserStatsDashboardMetric {
   public static async refresh(
     tenantId,

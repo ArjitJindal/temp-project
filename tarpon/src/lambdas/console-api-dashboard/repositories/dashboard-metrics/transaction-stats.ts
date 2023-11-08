@@ -26,6 +26,7 @@ import {
   RISK_LEVELS,
   TRANSACTION_TYPES,
 } from '@/@types/openapi-internal-custom/all'
+import { traceable } from '@/core/xray'
 
 const TRANSACTION_STATE_KEY_TO_RULE_ACTION: Map<
   keyof DashboardStatsTransactionsCountData,
@@ -36,6 +37,7 @@ const TRANSACTION_STATE_KEY_TO_RULE_ACTION: Map<
   ['suspendedTransactions', 'SUSPEND'],
 ])
 
+@traceable
 export class TransactionStatsDashboardMetric {
   public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
     const db = await getMongoDbClientDb()

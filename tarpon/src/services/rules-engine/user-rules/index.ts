@@ -5,8 +5,10 @@ import SanctionsBusinessUserRule from './sanctions-business-user'
 import SanctionsConsumerUserRule from './sanctions-consumer-user'
 import TestAlwaysHitRule from './tests/test-always-hit-rule'
 import UserAddressChange from './user-address-change'
+import { traceable } from '@/core/xray'
 import MerchantMonitoringIndustryUserRule from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 
+@traceable
 export class UserRuleBase extends UserRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
     // skip

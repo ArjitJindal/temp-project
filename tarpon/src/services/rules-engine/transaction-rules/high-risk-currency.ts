@@ -2,11 +2,13 @@ import { JSONSchemaType } from 'ajv'
 import { RuleHitResult } from '../rule'
 import { CURRENCIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
+import { traceable } from '@/core/xray'
 
 export type HighRiskCurrencyRuleParameters = {
   highRiskCurrencies: string[]
 }
 
+@traceable
 export default class HighRiskCurrencyRule extends TransactionRule<HighRiskCurrencyRuleParameters> {
   public static getSchema(): JSONSchemaType<HighRiskCurrencyRuleParameters> {
     return {

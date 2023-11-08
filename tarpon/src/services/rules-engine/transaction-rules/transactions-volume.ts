@@ -30,6 +30,7 @@ import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   sendingCount?: number
@@ -62,6 +63,7 @@ export type TransactionsVolumeRuleParameters = {
   destinationMatchPaymentMethodDetails?: boolean
 }
 
+@traceable
 export default class TransactionsVolumeRule extends TransactionAggregationRule<
   TransactionsVolumeRuleParameters,
   TransactionHistoricalFilters,

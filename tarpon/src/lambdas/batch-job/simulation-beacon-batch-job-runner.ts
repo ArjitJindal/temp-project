@@ -17,6 +17,7 @@ import { SimulationBeaconStatisticsResult } from '@/@types/openapi-internal/Simu
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import dayjs from '@/utils/dayjs'
+import { traceable } from '@/core/xray'
 
 const MAX_TRANSACTIONS = 10000
 const TIMEOUT = 14 * 60 * 1000
@@ -26,6 +27,7 @@ type SimulatedTransactionHit = {
   executedRules: ExecutedRulesResult
 }
 
+@traceable
 export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   private transactionRepository?: MongoDbTransactionRepository
   private rulesEngineService?: RulesEngineService

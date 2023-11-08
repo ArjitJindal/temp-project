@@ -18,7 +18,9 @@ import { DashboardStatsAlertPriorityDistributionStats } from '@/@types/openapi-i
 import { notEmpty, notNullish } from '@/utils/array'
 import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStats'
 import { DashboardStatsAlertAndCaseStatusDistributionStatsData } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStatsData'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class CaseStatsDashboardMetric {
   public static async getClosingReasonDistributionStatistics(
     tenantId: string,

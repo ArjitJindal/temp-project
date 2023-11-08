@@ -4,6 +4,7 @@ import { ListRepository } from '@/services/list/repositories/list-repository'
 import { RuleHitResult } from '@/services/rules-engine/rule'
 import { ListSubtype } from '@/@types/openapi-internal/ListSubtype'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { traceable } from '@/core/xray'
 
 export type BlacklistTransactionMatchedFieldRuleParameters = {
   blacklistId: string
@@ -15,6 +16,7 @@ type TransactionField = {
   value?: string
 }
 
+@traceable
 export default class BlacklistTransactionMatchedFieldRule extends TransactionRule<BlacklistTransactionMatchedFieldRuleParameters> {
   public static getSchema(): JSONSchemaType<BlacklistTransactionMatchedFieldRuleParameters> {
     return {

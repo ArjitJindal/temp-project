@@ -5,7 +5,9 @@ import {
   BuilderKey,
   InputData,
 } from '@/services/copilot/attributes/builder'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class CaseAttributeBuilder implements AttributeBuilder {
   dependencies(): BuilderKey[] {
     return ['user']

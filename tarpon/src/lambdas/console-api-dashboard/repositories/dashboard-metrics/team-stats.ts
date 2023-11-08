@@ -18,12 +18,14 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/aler
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
+import { traceable } from '@/core/xray'
 
 interface TimestampCondition {
   $gte?: number
   $lte?: number
 }
 
+@traceable
 export class TeamStatsDashboardMetric {
   public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
     const db = await getMongoDbClientDb()

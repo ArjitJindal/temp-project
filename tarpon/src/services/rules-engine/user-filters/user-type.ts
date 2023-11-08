@@ -5,11 +5,13 @@ import { UserRuleFilter } from './filter'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { UserType } from '@/@types/user/user-type'
+import { traceable } from '@/core/xray'
 
 export type UserTypeRuleFilterParameter = {
   userType?: UserType
 }
 
+@traceable
 export class UserTypeRuleFilter extends UserRuleFilter<UserTypeRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<UserTypeRuleFilterParameter> {
     return {

@@ -4,11 +4,13 @@ import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { expandCountryGroup } from '@/utils/countries'
+import { traceable } from '@/core/xray'
 
 export type BlacklistCardIssuedCountryRuleParameters = {
   blacklistedCountries: string[]
 }
 
+@traceable
 export default class BlacklistCardIssuedCountryRule extends TransactionRule<BlacklistCardIssuedCountryRuleParameters> {
   public static getSchema(): JSONSchemaType<BlacklistCardIssuedCountryRuleParameters> {
     return {

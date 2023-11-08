@@ -19,6 +19,7 @@ import { TransactionAggregationRule } from './aggregation-rule'
 import dayjs from '@/utils/dayjs'
 import { getReceiverKeyId, getSenderKeyId } from '@/services/rules-engine/utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { traceable } from '@/core/xray'
 
 type AggregationData = { [receiverKeyId: string]: number }
 
@@ -29,6 +30,7 @@ export type HighTrafficBetweenSamePartiesParameters = {
   destinationMatchPaymentMethodDetails?: boolean
 }
 
+@traceable
 export default class HighTrafficBetweenSameParties extends TransactionAggregationRule<
   HighTrafficBetweenSamePartiesParameters,
   TransactionHistoricalFilters,

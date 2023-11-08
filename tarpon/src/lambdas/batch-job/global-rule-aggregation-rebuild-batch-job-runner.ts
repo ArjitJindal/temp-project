@@ -2,7 +2,9 @@ import { BatchJobRunner } from './batch-job-runner-base'
 import { AGGREGATORS } from '@/services/rules-engine/aggregator'
 import { GlobalRuleAggregationRebuildBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class GlobalRuleAggregationRebuildBatchJobRunner extends BatchJobRunner {
   protected async run(
     job: GlobalRuleAggregationRebuildBatchJob

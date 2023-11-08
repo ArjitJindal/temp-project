@@ -56,12 +56,14 @@ import {
   getPaymentMethodId,
 } from '@/core/dynamodb/dynamodb-keys'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
+import { traceable } from '@/core/xray'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
   uniq(TransactionWithRulesResult.getAttributeTypeMap().map((v) => v.name))
 )
 
+@traceable
 export class MongoDbTransactionRepository
   implements RulesEngineTransactionRepositoryInterface
 {

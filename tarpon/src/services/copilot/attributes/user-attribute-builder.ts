@@ -7,7 +7,9 @@ import {
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { getFullName } from '@/utils/helpers'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class UserAttributeBuilder implements AttributeBuilder {
   dependencies(): BuilderKey[] {
     return []

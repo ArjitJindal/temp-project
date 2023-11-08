@@ -19,7 +19,9 @@ import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { Address } from '@/@types/openapi-internal/Address'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class KenyaSARReportGenerator implements ReportGenerator {
   tenantId!: string
   getType(): InternalReportType {

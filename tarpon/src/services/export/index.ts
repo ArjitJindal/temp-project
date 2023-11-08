@@ -5,6 +5,7 @@ import { AggregationCursor } from 'mongodb'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from '@/utils/dayjs'
 import { shortId } from '@/utils/id'
+import { traceable } from '@/core/xray'
 
 type CsvAction<T> = T extends string | number | boolean
   ? 'INCLUDE' | 'SKIP'
@@ -71,6 +72,7 @@ export interface ExportInfo {
   downloadUrl: string
 }
 
+@traceable
 export class ExportService<T> {
   entityName: string
   s3: S3

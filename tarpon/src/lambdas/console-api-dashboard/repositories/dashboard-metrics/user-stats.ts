@@ -20,7 +20,9 @@ import { DashboardStatsUsersByTimeItem } from '@/@types/openapi-internal/Dashboa
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class UserStats {
   public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
     const dynamoDb = getDynamoDbClient()

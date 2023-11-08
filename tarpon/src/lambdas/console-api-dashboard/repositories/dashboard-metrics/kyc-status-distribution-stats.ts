@@ -10,6 +10,8 @@ import { KYC_STATUSS } from '@/@types/openapi-public-custom/KYCStatus'
 import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { DashboardStatsKYCStatusDistributionData as KYCSStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsKYCStatusDistributionData'
+import { traceable } from '@/core/xray'
+
 function createDistributionItems(
   groups: WithId<DashboardStatsKYCDistributionData>[]
 ) {
@@ -32,6 +34,7 @@ function createDistributionItems(
   return result
 }
 
+@traceable
 export class KYCStatusDistributionStatsDashboardMetric {
   public static async refresh(tenantId): Promise<void> {
     const db = await getMongoDbClientDb()

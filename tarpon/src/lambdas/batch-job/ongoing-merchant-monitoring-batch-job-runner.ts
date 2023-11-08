@@ -9,7 +9,9 @@ import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-e
 import { ONGOING_MERCHANT_MONITORING_RULE_IDS } from '@/services/rules-engine/transaction-rules/library'
 import { logger } from '@/core/logger'
 import { ensureHttps } from '@/utils/http'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class OngoingMerchantMonitoringBatchJobRunner extends BatchJobRunner {
   protected async run(job: OngoingMerchantMonitoringBatchJob): Promise<void> {
     const { tenantId } = job

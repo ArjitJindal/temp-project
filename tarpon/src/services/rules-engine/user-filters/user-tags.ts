@@ -2,6 +2,7 @@ import { JSONSchemaType } from 'ajv'
 import { KEY_VALUE_PAIR_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { tagsRuleFilter } from '../utils/rule-utils'
 import { UserRuleFilter } from './filter'
+import { traceable } from '@/core/xray'
 
 export type UserTagsRuleFilterParameter = {
   userTags?: {
@@ -9,6 +10,7 @@ export type UserTagsRuleFilterParameter = {
   }
 }
 
+@traceable
 export class UserTagsRuleFilter extends UserRuleFilter<UserTagsRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<UserTagsRuleFilterParameter> {
     return {

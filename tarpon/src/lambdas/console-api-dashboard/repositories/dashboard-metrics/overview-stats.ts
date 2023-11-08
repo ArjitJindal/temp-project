@@ -10,7 +10,9 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStatsOverview'
 import { hasFeature } from '@/core/utils/context'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class OverviewStatsDashboardMetric {
   public static async get(
     tenantId: string,

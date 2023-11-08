@@ -20,6 +20,7 @@ import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   sendingCount?: number
@@ -39,6 +40,7 @@ export type TransactionsVelocityRuleParameters = {
   destinationMatchPaymentMethodDetails?: boolean
 }
 
+@traceable
 export default class TransactionsVelocityRule extends TransactionAggregationRule<
   TransactionsVelocityRuleParameters,
   TransactionHistoricalFilters,

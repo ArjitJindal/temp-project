@@ -12,6 +12,7 @@ import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { traceable } from '@/core/xray'
 
 const CONCURRENT_BATCH_SIZE = 10
 
@@ -38,6 +39,7 @@ export async function getOngoingScreeningUserRuleInstances(
   return ruleInstances
 }
 
+@traceable
 export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
     const { tenantId, userIds } = job

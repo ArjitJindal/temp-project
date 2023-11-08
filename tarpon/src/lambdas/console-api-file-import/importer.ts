@@ -17,7 +17,9 @@ import {
 } from '@/@types/openapi-internal/ImportRequest'
 import { RulesEngineService } from '@/services/rules-engine'
 import { logger } from '@/core/logger'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class Importer {
   tenantId: string
   tenantName: string

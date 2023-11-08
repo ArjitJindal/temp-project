@@ -6,6 +6,7 @@ import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-par
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 
 import { TransactionRule } from './rule'
+import { traceable } from '@/core/xray'
 
 export type FirstPaymentRuleParameter = {
   transactionAmountThreshold?: {
@@ -13,6 +14,7 @@ export type FirstPaymentRuleParameter = {
   }
 }
 
+@traceable
 export default class FirstPaymentRule extends TransactionRule<
   FirstPaymentRuleParameter,
   TransactionHistoricalFilters

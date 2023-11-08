@@ -5,6 +5,7 @@ import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardExpiry } from '@/@types/openapi-public/CardExpiry'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { traceable } from '@/core/xray'
 
 export type BlacklistPaymentdetailsRuleParameters = {
   blacklistedIBANPaymentDetails?: string[]
@@ -17,6 +18,7 @@ export type BlacklistPaymentdetailsRuleParameters = {
   blacklistedGenericBankAccountPaymentDetails?: string[]
 }
 
+@traceable
 export default class BlacklistPaymentdetailsRule extends TransactionRule<BlacklistPaymentdetailsRuleParameters> {
   public static getSchema(): JSONSchemaType<BlacklistPaymentdetailsRuleParameters> {
     return {

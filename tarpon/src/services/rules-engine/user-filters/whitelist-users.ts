@@ -5,6 +5,7 @@ import { UserRuleFilter } from './filter'
 import { uiSchema } from '@/services/rules-engine/utils/rule-schema-utils'
 import { ListRepository } from '@/services/list/repositories/list-repository'
 import { logger } from '@/core/logger'
+import { traceable } from '@/core/xray'
 
 export type WhitelistUsersRuleFilterParameter = {
   whitelistUsers?: {
@@ -13,6 +14,7 @@ export type WhitelistUsersRuleFilterParameter = {
   }
 }
 
+@traceable
 export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<WhitelistUsersRuleFilterParameter> {
     return {

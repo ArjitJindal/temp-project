@@ -4,11 +4,13 @@ import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { expandCountryGroup } from '@/utils/countries'
+import { traceable } from '@/core/xray'
 
 export type CardIssuedCountryRuleParameters = {
   allowedCountries: string[]
 }
 
+@traceable
 export default class CardIssuedCountryRule extends TransactionRule<CardIssuedCountryRuleParameters> {
   public static getSchema(): JSONSchemaType<CardIssuedCountryRuleParameters> {
     return {

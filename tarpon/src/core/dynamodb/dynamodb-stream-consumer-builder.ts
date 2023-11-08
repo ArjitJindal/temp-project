@@ -3,6 +3,7 @@ import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { TransientRepository } from '../repositories/transient-repository'
 import { logger } from '../logger'
 import { updateLogMetadata, withContext } from '../utils/context'
+import { traceable } from '../xray'
 import {
   DynamoDbEntityUpdate,
   getDynamoDbUpdates,
@@ -61,6 +62,7 @@ type KrsScoreEventHandler = (
   newKrsValue: KrsScore | undefined
 ) => Promise<void>
 
+@traceable
 export class StreamConsumerBuilder {
   name: string
   retrySqsQueue: string

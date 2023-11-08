@@ -1,7 +1,9 @@
 import { Aggregator } from './aggregator'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class UserTransactionsCount extends Aggregator {
   public static aggregatorName = 'UserTransactionsCount'
   public async aggregate(transaction: Transaction): Promise<void> {

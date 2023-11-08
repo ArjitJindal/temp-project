@@ -13,6 +13,7 @@ import {
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
+import { traceable } from '@/core/xray'
 
 function getTargetTimeRanges(timestamps: number[]): TimeRange[] {
   if (timestamps.length === 0) {
@@ -43,6 +44,7 @@ function getTargetTimeRanges(timestamps: number[]): TimeRange[] {
   return mergedTimeRanges
 }
 
+@traceable
 export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
   protected async run(job: DashboardRefreshBatchJob): Promise<void> {
     const mongoDb = await getMongoDbClient()

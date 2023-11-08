@@ -13,6 +13,7 @@ import { formatCountry } from '@/utils/countries'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule as RuleModel } from '@/@types/openapi-internal/Rule'
+import { traceable } from '@/core/xray'
 
 export interface PartyVars {
   type?: 'origin' | 'destination'
@@ -39,6 +40,7 @@ export interface TransactionVars<P> extends Vars {
   parameters: P
 }
 
+@traceable
 export abstract class TransactionRule<
   P,
   T extends object = object

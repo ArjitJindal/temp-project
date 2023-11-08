@@ -8,9 +8,11 @@ import { getS3Client } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { assertPermissions } from '@/@types/jwt'
 import { assertUserError } from '@/utils/errors'
+import { traceable } from '@/core/xray'
 
 const { TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
 
+@traceable
 export class FileImportBatchJobRunner extends BatchJobRunner {
   protected async run(job: FileImportBatchJob): Promise<void> {
     const { tenantId, parameters, awsCredentials } = job

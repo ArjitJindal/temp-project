@@ -22,6 +22,7 @@ import { TransactionAmountLimit } from '@/@types/openapi-public/TransactionAmoun
 import { TransactionCountLimit } from '@/@types/openapi-public/TransactionCountLimit'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import dayjs from '@/utils/dayjs'
+import { traceable } from '@/core/xray'
 
 type CheckType = 'PAYMENT_METHOD' | 'ALL_TRANSACTIONS'
 const CHECK_TYPES: Array<{ value: CheckType; label: string }> = [
@@ -54,6 +55,7 @@ export type UserTransactionLimitsRuleParameter = {
   multiplierThreshold?: number
 }
 
+@traceable
 export default class UserTransactionLimitsRule extends TransactionRule<UserTransactionLimitsRuleParameter> {
   public static getSchema(): JSONSchemaType<UserTransactionLimitsRuleParameter> {
     return {

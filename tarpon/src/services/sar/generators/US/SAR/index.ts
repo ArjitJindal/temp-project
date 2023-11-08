@@ -57,6 +57,7 @@ import { getAllIpAddresses } from '@/utils/ipAddress'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getSecret } from '@/utils/secrets-manager'
+import { traceable } from '@/core/xray'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -95,6 +96,8 @@ function createNarrativeBlocks(narrative: string) {
     ActivityNarrativeText: c.join(''),
   }))
 }
+
+@traceable
 export class UsSarReportGenerator implements ReportGenerator {
   tenantId!: string
   getType(): InternalReportType {

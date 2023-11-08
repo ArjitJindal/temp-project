@@ -3,11 +3,13 @@ import { COUNTRIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
+import { traceable } from '@/core/xray'
 
 export type HighRiskIpAddressCountriesParameters = {
   highRiskCountries: CountryCode[]
 }
 
+@traceable
 export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddressCountriesParameters> {
   public static getSchema(): JSONSchemaType<HighRiskIpAddressCountriesParameters> {
     return {

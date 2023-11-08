@@ -26,6 +26,7 @@ import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
+import { traceable } from '@/core/xray'
 
 type AggregationData = { [receiverKeyId: string]: number }
 
@@ -39,6 +40,7 @@ export type HighTrafficVolumeBetweenSameUsersParameters = {
   destinationMatchPaymentMethodDetails?: boolean
 }
 
+@traceable
 export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggregationRule<
   HighTrafficVolumeBetweenSameUsersParameters,
   TransactionHistoricalFilters,

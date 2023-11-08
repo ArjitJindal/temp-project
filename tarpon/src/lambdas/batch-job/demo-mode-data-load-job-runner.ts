@@ -4,7 +4,9 @@ import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { seedMongo } from '@/core/seed/mongo'
 import { seedDynamo } from '@/core/seed/dynamodb'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class DemoModeDataLoadJobRunner extends BatchJobRunner {
   protected async run(job: DemoModeDataLoadBatchJob): Promise<void> {
     // Create collections

@@ -15,7 +15,9 @@ import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import { Report } from '@/@types/openapi-internal/Report'
 import dayjs from '@/utils/dayjs'
 import { DAY_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class LithuaniaCTRReportGenerator implements ReportGenerator {
   getType(): InternalReportType {
     return { type: 'CTR', countryCode: 'LT', directSubmission: false }

@@ -5,7 +5,9 @@ import Ajv, { ValidateFunction } from 'ajv'
 
 import { trim } from 'lodash'
 import { ConverterInterface } from './converter-interface'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class FlagrightConverter<T> implements ConverterInterface<T> {
   schemaValidate?: ValidateFunction
   schemaName: string
