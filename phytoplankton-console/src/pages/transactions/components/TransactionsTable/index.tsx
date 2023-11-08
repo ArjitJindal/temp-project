@@ -234,12 +234,14 @@ export default function TransactionsTable(props: Props) {
               type: FLOAT,
               sorting: true,
               tooltip: 'Transaction Risk Score',
+              exporting: false,
             }),
             helper.simple<'arsScore.riskLevel'>({
               title: 'TRS level',
               type: RISK_LEVEL,
               key: 'arsScore.riskLevel',
               tooltip: 'Transaction Risk Score level',
+              exporting: false,
             }),
           ]
         : []),

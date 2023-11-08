@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Switch, Tag as AntTag } from 'antd';
 import { capitalize, uniqBy } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
+import { COUNTRIES } from '@flagright/lib/src/countries';
 import { ColumnDataType, FullColumnDataType } from '../types';
 import { CloseMessage, message } from '../../Message';
 import PriorityTag from '../../PriorityTag';
@@ -379,6 +380,9 @@ export const MONEY_CURRENCIES: ColumnDataType<CurrencyCode> = {
 export const COUNTRY: ColumnDataType<ApiCountryCode> = {
   render: (value: ApiCountryCode | undefined) => {
     return <CountryDisplay isoCode={value} />;
+  },
+  stringify: (value: ApiCountryCode | undefined) => {
+    return value ? COUNTRIES[value] : '';
   },
 };
 
