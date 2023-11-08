@@ -64,6 +64,7 @@ export const config: Config = {
     },
     CASE_LAMBDA: {
       PROVISIONED_CONCURRENCY: 2,
+      MEMORY_SIZE: 1024,
     },
     BATCH_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
