@@ -4394,21 +4394,6 @@ paths:
             schema:
               $ref: '#/components/schemas/SanctionsWhitelistRequest'
         required: true
-  /sanctions/sanctions-screening-stats:
-    get:
-      summary: Get sanctions screening stats
-      tags: []
-      x-flagright:
-        permissions:
-          - sanctions:search:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SanctionsScreeningStats'
-      operationId: get-sanctions-screening-stats
   /webhooks/complyadvantage:
     post:
       summary: Receive webhook events from Comply Advantage
@@ -8416,45 +8401,6 @@ components:
         - _id
         - request
         - createdAt
-    SanctionsScreeningStats:
-      title: SanctionsScreeningStats
-      x-stoplight:
-        id: ldj2zpwhzk8s7
-      type: object
-      properties:
-        user:
-          type: object
-          properties:
-            screened:
-              type: number
-            hit:
-              type: number
-        bank:
-          type: object
-          properties:
-            screened:
-              type: number
-            hit:
-              type: number
-        iban:
-          type: object
-          properties:
-            screened:
-              type: number
-            hit:
-              type: number
-        counterPartyUser:
-          type: object
-          properties:
-            screened:
-              type: number
-            hit:
-              type: number
-      required:
-        - user
-        - iban
-        - bank
-        - counterPartyUser
     SanctionsSearchMonitoring:
       title: SanctionsSearchMonitoring
       type: object
