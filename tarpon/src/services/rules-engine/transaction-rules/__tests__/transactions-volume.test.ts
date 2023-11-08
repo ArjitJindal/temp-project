@@ -9,6 +9,7 @@ import {
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
   ruleVariantsTest,
+  testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
@@ -1558,3 +1559,82 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'transactions-volume',
+    defaultParameters: {
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+      },
+      checkSender: 'all',
+      checkReceiver: 'all',
+      transactionVolumeThreshold: {
+        EUR: 100,
+      },
+    },
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2023-01-01T01:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+      timestamp: dayjs('2023-01-01T01:30:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '2',
+      destinationUserId: '1',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2023-01-01T03:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      {
+        receivingCount: 2,
+        receivingAmount: 300,
+        receiverKeys: [],
+        senderKeys: [],
+        sendingAmount: 0,
+        sendingCount: 0,
+        hour: '2023010101',
+      },
+      {
+        sendingAmount: 100,
+        sendingCount: 1,
+        receiverKeys: [`${TEST_TENANT_ID}#transaction#type:all#user:1#all`],
+        hour: '2023010103',
+      },
+    ],
+    destination: [
+      {
+        sendingAmount: 300,
+        sendingCount: 2,
+        senderKeys: [],
+        receiverKeys: [],
+        receivingAmount: 0,
+        receivingCount: 0,
+        hour: '2023010101',
+      },
+      {
+        receivingCount: 1,
+        receivingAmount: 100,
+        senderKeys: [`${TEST_TENANT_ID}#transaction#type:all#user:2#all`],
+        hour: '2023010103',
+      },
+    ],
+  }
+)

@@ -7,6 +7,7 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
@@ -43,6 +44,15 @@ const TEST_TRANSACTION_METHODS = [
     bankName: 'Tasmanian Central Bank',
   } as GenericBankAccountDetails,
 ]
+const DEFAULT_RULE_PARAMETERS: UsingTooManyBanksToMakePaymentsRuleParameters = {
+  banksLimit: 2,
+  timeWindow: {
+    units: 5,
+    granularity: 'hour',
+  },
+  checkSender: 'all',
+  checkReceiver: 'all',
+}
 
 function getTestDifferentBankTransactions(
   transaction: Partial<Transaction | InternalTransaction> = {},
@@ -83,15 +93,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'using-too-many-banks-to-make-payments',
-        defaultParameters: {
-          banksLimit: 2,
-          timeWindow: {
-            units: 5,
-            granularity: 'hour',
-          },
-          checkSender: 'all',
-          checkReceiver: 'all',
-        } as UsingTooManyBanksToMakePaymentsRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
       },
     ])
 
@@ -157,15 +159,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'using-too-many-banks-to-make-payments',
-        defaultParameters: {
-          banksLimit: 2,
-          timeWindow: {
-            units: 5,
-            granularity: 'hour',
-          },
-          checkSender: 'all',
-          checkReceiver: 'all',
-        } as UsingTooManyBanksToMakePaymentsRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
       },
     ])
 
@@ -823,3 +817,63 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+testAggregationRebuild(
+  getTestTenantId(),
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'using-too-many-banks-to-make-payments',
+    defaultParameters: DEFAULT_RULE_PARAMETERS,
+  },
+  [
+    getTestDifferentBankTransactions(
+      {
+        originUserId: '1',
+        destinationUserId: '2',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+      },
+      0,
+      0
+    ),
+    getTestDifferentBankTransactions(
+      {
+        originUserId: '1',
+        destinationUserId: '3',
+        timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
+      },
+      1,
+      1
+    ),
+    getTestDifferentBankTransactions(
+      {
+        originUserId: '1',
+        destinationUserId: '3',
+        timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+      },
+      3,
+      3
+    ),
+  ],
+  {
+    origin: [
+      {
+        uniqueBanks: ['Swiss Bank', 'US Bank'],
+        hour: '2022010100',
+      },
+      {
+        uniqueBanks: ['US Federal Bank'],
+        hour: '2022010102',
+      },
+    ],
+    destination: [
+      {
+        uniqueBanks: ['Swiss Bank'],
+        hour: '2022010100',
+      },
+      {
+        uniqueBanks: ['US Federal Bank'],
+        hour: '2022010102',
+      },
+    ],
+  }
+)

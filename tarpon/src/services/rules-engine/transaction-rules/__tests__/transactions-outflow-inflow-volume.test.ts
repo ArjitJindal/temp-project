@@ -5,6 +5,7 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
@@ -23,6 +24,16 @@ const TEST_TRANSACTION_AMOUNT_200: TransactionAmountDetails = {
   transactionCurrency: 'USD',
   transactionAmount: 200,
 }
+const DEFAULT_RULE_PARAMETERS: TransactionsOutflowInflowVolumeRuleParameters = {
+  timeWindow: {
+    units: 1,
+    granularity: 'day',
+    rollingBasis: true,
+  },
+  outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
+  inflowTransactionTypes: ['DEPOSIT'],
+  outflowTransactionTypes: ['WITHDRAWAL'],
+}
 
 ruleVariantsTest(true, () => {
   describe('Core logic', () => {
@@ -33,16 +44,7 @@ ruleVariantsTest(true, () => {
         {
           type: 'TRANSACTION',
           ruleImplementationName: 'transactions-outflow-inflow-volume',
-          defaultParameters: {
-            timeWindow: {
-              units: 1,
-              granularity: 'day',
-              rollingBasis: true,
-            },
-            outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
-            inflowTransactionTypes: ['DEPOSIT'],
-            outflowTransactionTypes: ['WITHDRAWAL'],
-          } as TransactionsOutflowInflowVolumeRuleParameters,
+          defaultParameters: DEFAULT_RULE_PARAMETERS,
         },
       ])
 
@@ -442,3 +444,69 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'transactions-outflow-inflow-volume',
+    defaultParameters: DEFAULT_RULE_PARAMETERS,
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      type: 'TRANSFER',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '12',
+      type: 'TRANSFER',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '2',
+      destinationUserId: '1',
+      type: 'TRANSFER',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      {
+        inflowTransactionCount: 1,
+        inflow3dsDoneTransactionCount: 1,
+        inflowTransactionAmount: 100,
+        hour: '2022010100',
+      },
+      {
+        outflowTransactionCount: 1,
+        outflowTransactionAmount: 100,
+        outflow3dsDoneTransactionCount: 1,
+        hour: '2022010103',
+      },
+    ],
+    destination: [
+      {
+        outflowTransactionCount: 2,
+        outflowTransactionAmount: 200,
+        outflow3dsDoneTransactionCount: 2,
+        hour: '2022010100',
+      },
+      {
+        inflowTransactionCount: 1,
+        inflow3dsDoneTransactionCount: 1,
+        inflowTransactionAmount: 100,
+        hour: '2022010103',
+      },
+    ],
+  }
+)

@@ -159,6 +159,13 @@ export async function handleTransactionAggregationTask(
       task.isTransactionHistoricalFiltered
     )
     logger.info('Rebuilt aggregation')
+
+    logger.info('Updating aggregation...')
+    await ruleClassInstance.updateAggregation(
+      task.direction,
+      task.isTransactionHistoricalFiltered
+    )
+    logger.info('Updated aggregation')
   } else {
     logger.info('Updating aggregation...')
     await ruleClassInstance.updateAggregation(

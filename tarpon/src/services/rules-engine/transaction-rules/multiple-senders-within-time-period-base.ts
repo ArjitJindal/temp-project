@@ -1,15 +1,15 @@
 import { JSONSchemaType } from 'ajv'
 
-import { chain, compact, uniq } from 'lodash'
+import { chain, compact, mergeWith, uniq } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
-import { getNonUserSenderKeys } from '../utils'
+import { getNonUserSenderKeys, getUserSenderKeys } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
 import { CaseSubjectType } from '@/@types/openapi-public/CaseSubjectType'
@@ -113,7 +113,8 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
         this.transaction.destinationPaymentDetails)
     ) {
       if (senderTypes.includes('USER') && this.senderUser) {
-        return this.senderUser.userId
+        return getUserSenderKeys(this.tenantId, this.transaction)
+          ?.PartitionKeyID
       } else if (senderTypes.includes('NON_USER') && !this.senderUser) {
         return getNonUserSenderKeys(this.tenantId, this.transaction)
           ?.PartitionKeyID
@@ -145,31 +146,28 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     return undefined
   }
 
-  private async getTransactionsRawData(): Promise<AuxiliaryIndexTransaction[]> {
+  private async *getTransactionsRawData(): AsyncGenerator<
+    AuxiliaryIndexTransaction[]
+  > {
     const { timeWindow } = this.parameters
-    let senderTransactions: AuxiliaryIndexTransaction[] = []
 
-    if (this.shouldFetchRawData()) {
-      const { receivingTransactions } =
-        await getTransactionUserPastTransactionsByDirection(
-          this.transaction,
-          'destination',
-          this.transactionRepository,
-          {
-            timeWindow,
-            checkDirection: 'receiving',
-            matchPaymentMethodDetails: this.transaction.destinationUserId
-              ? false
-              : true,
-            filters: this.filters,
-          },
-          ['senderKeyId', 'originUserId']
-        )
-
-      senderTransactions = receivingTransactions
+    const generator = getTransactionUserPastTransactionsByDirectionGenerator(
+      this.transaction,
+      'destination',
+      this.transactionRepository,
+      {
+        timeWindow,
+        checkDirection: 'receiving',
+        matchPaymentMethodDetails: this.transaction.destinationUserId
+          ? false
+          : true,
+        filters: this.filters,
+      },
+      ['senderKeyId', 'originUserId']
+    )
+    for await (const data of generator) {
+      yield data.receivingTransactions
     }
-
-    return senderTransactions
   }
 
   public shouldUpdateUserAggregation(
@@ -180,15 +178,24 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
   }
 
   public async rebuildUserAggregation(): Promise<void> {
-    const senderTransactions = await this.getTransactionsRawData()
-    senderTransactions.push({
-      ...this.transaction,
-      senderKeyId: this.getTransactionSenderUserKey(),
-    })
-
-    const timeAggregatedResult = await this.getTimeAggregatedResult(
-      senderTransactions
-    )
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getTransactionsRawData()) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData, b: AggregationData) => {
+          return mergeWith(
+            a,
+            b,
+            (keys1: string[] | undefined, keys2: string[] | undefined) =>
+              uniq((keys1 ?? []).concat(keys2 ?? []))
+          )
+        }
+      )
+    }
 
     await this.saveRebuiltRuleAggregations('destination', timeAggregatedResult)
   }
@@ -235,19 +242,14 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
         .value()
     }
 
-    // Fallback
     if (this.shouldUseRawData()) {
-      const senderTransactions = await this.getTransactionsRawData()
-
-      const timeAggregatedResult = await this.getTimeAggregatedResult(
-        senderTransactions
-      )
-
-      await this.saveRebuiltRuleAggregations(
-        'destination',
-        timeAggregatedResult
-      )
-      return this.getUniqueSendersKeys(senderTransactions)
+      const uniqueSenderKeys = new Set<string>()
+      for await (const data of this.getTransactionsRawData()) {
+        this.getUniqueSendersKeys(data).forEach((key) =>
+          uniqueSenderKeys.add(key)
+        )
+      }
+      return Array.from(uniqueSenderKeys)
     } else {
       const sendingUserKey = await this.getTransactionSenderUserKey()
 
@@ -312,6 +314,6 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
   }
 
   protected override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

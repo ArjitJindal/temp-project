@@ -1,9 +1,10 @@
 import { JSONSchemaType } from 'ajv'
+import { mergeWith, uniq } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
@@ -65,9 +66,11 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
     return hitResult
   }
 
-  private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
-    const { sendingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
+  private async *getRawTransactionsData(): AsyncGenerator<
+    AuxiliaryIndexTransaction[]
+  > {
+    const generator =
+      await getTransactionUserPastTransactionsByDirectionGenerator(
         this.transaction,
         'origin',
         this.transactionRepository,
@@ -78,8 +81,9 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
         },
         ['timestamp', 'originPaymentDetails']
       )
-
-    return sendingTransactions
+    for await (const data of generator) {
+      yield data.sendingTransactions
+    }
   }
 
   public shouldUpdateUserAggregation(
@@ -90,14 +94,25 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
   }
 
   public async rebuildUserAggregation(): Promise<void> {
-    const sendingTransactions = await this.getRawTransactionsData()
-
-    sendingTransactions.push(this.transaction)
-
-    await this.saveRebuiltRuleAggregations(
-      'origin',
-      await this.getTimeAggregatedResult(sendingTransactions)
-    )
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData()) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData, b: AggregationData) => {
+          return mergeWith(
+            a,
+            b,
+            (keys1: string[] | undefined, keys2: string[] | undefined) =>
+              uniq((keys1 ?? []).concat(keys2 ?? []))
+          )
+        }
+      )
+    }
+    await this.saveRebuiltRuleAggregations('origin', timeAggregatedResult)
   }
 
   private async getData(): Promise<Set<string>> {
@@ -114,21 +129,18 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
       return new Set(userAggregationData.flatMap((v) => v.cardFingerprints))
     }
 
-    // Fallback
     if (this.shouldUseRawData()) {
-      const sendingTransactions = await this.getRawTransactionsData()
-      const sendingTransactionsWithCard = sendingTransactions.filter(
-        (transaction) =>
-          (transaction?.originPaymentDetails as CardDetails)?.cardFingerprint
-      )
-
-      // Update aggregations
-      await this.saveRebuiltRuleAggregations(
-        'origin',
-        await this.getTimeAggregatedResult(sendingTransactionsWithCard)
-      )
-
-      return this.getUniqueCards(sendingTransactionsWithCard)
+      const uniqueCards = new Set<string>()
+      for await (const data of this.getRawTransactionsData()) {
+        const sendingTransactionsWithCard = data.filter(
+          (transaction) =>
+            (transaction?.originPaymentDetails as CardDetails)?.cardFingerprint
+        )
+        Array.from(this.getUniqueCards(sendingTransactionsWithCard)).forEach(
+          (card) => uniqueCards.add(card)
+        )
+      }
+      return uniqueCards
     } else {
       return new Set()
     }

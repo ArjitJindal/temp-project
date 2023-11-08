@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import { sumBy } from 'lodash'
+import { mergeWith, sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
@@ -91,30 +91,29 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     return hitResult
   }
 
-  private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
+  private async *getRawTransactionsData(): AsyncGenerator<
+    AuxiliaryIndexTransaction[]
+  > {
     const { originUserId, timestamp } = this.transaction
     const { timeWindow } = this.parameters
 
-    const transactions =
-      await this.transactionRepository.getGenericUserSendingTransactions(
-        originUserId,
-        this.transaction.originPaymentDetails,
-        {
-          beforeTimestamp: timestamp,
-          afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
-        },
-        {
-          transactionStates: this.filters.transactionStatesHistorical,
-          originPaymentMethods: this.filters.paymentMethodsHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          transactionAmountRange: this.filters.transactionAmountRangeHistorical,
-          originCountries: this.filters.transactionCountriesHistorical,
-        },
-        ['timestamp', 'destinationUserId', 'destinationPaymentDetails'],
-        this.parameters.originMatchPaymentMethodDetails
-      )
-
-    return transactions
+    yield* await this.transactionRepository.getGenericUserSendingTransactionsGenerator(
+      originUserId,
+      this.transaction.originPaymentDetails,
+      {
+        beforeTimestamp: timestamp,
+        afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
+      },
+      {
+        transactionStates: this.filters.transactionStatesHistorical,
+        originPaymentMethods: this.filters.paymentMethodsHistorical,
+        transactionTypes: this.filters.transactionTypesHistorical,
+        transactionAmountRange: this.filters.transactionAmountRangeHistorical,
+        originCountries: this.filters.transactionCountriesHistorical,
+      },
+      ['timestamp', 'destinationUserId', 'destinationPaymentDetails'],
+      this.parameters.originMatchPaymentMethodDetails
+    )
   }
 
   private async getData(): Promise<number> {
@@ -138,22 +137,17 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     }
 
     if (this.shouldUseRawData()) {
-      const transactions = await this.getRawTransactionsData()
-      // Update aggregations
-      await this.saveRebuiltRuleAggregations(
-        'origin',
-        await this.getTimeAggregatedResult(transactions)
-      )
-
-      return (
-        transactions.filter(
+      let transactionsCount = 1
+      for await (const data of this.getRawTransactionsData()) {
+        transactionsCount += data.filter(
           (transaction) =>
             getReceiverKeyId(this.tenantId, transaction as Transaction, {
               matchPaymentDetails:
                 this.parameters.destinationMatchPaymentMethodDetails,
             }) === receiverKeyId
-        ).length + 1
-      )
+        ).length
+      }
+      return transactionsCount
     } else {
       return 1
     }
@@ -167,19 +161,25 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
   }
 
   public async rebuildUserAggregation(direction: 'origin' | 'destination') {
-    const transactions = await this.getRawTransactionsData()
-
-    transactions.push({
-      ...this.transaction,
-      receiverKeyId: getReceiverKeyId(this.tenantId, this.transaction, {
-        matchPaymentDetails:
-          this.parameters.destinationMatchPaymentMethodDetails,
-      }),
-    })
-
-    const data = await this.getTimeAggregatedResult(transactions)
-
-    await this.saveRebuiltRuleAggregations(direction, data)
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData()) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData, b: AggregationData) => {
+          return mergeWith(
+            a,
+            b,
+            (x: number | undefined, y: number | undefined) =>
+              (x ?? 0) + (y ?? 0)
+          )
+        }
+      )
+    }
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
   private async getTimeAggregatedResult(

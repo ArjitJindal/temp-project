@@ -1216,7 +1216,6 @@ export class CaseRepository {
     const filter = {
       ...(filters.length > 0 ? { $and: filters } : {}),
     }
-    console.log('filter', JSON.stringify(filter))
     return await casesCollection.find(filter).toArray()
   }
 

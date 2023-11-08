@@ -12,6 +12,7 @@ import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { zipGenerators, staticValueGenerator } from '@/utils/generator'
 
 export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
@@ -121,7 +122,7 @@ export function sumTransactionAmountDetails(
   }
 }
 
-async function getTransactions(
+async function* getTransactionsGenerator(
   userId: string | undefined,
   paymentDetails: PaymentDetails | undefined,
   transactionRepository: RulesEngineTransactionRepositoryInterface,
@@ -133,7 +134,7 @@ async function getTransactions(
     filters: TransactionHistoricalFilters
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-): Promise<{
+): AsyncGenerator<{
   sendingTransactions: AuxiliaryIndexTransaction[]
   receivingTransactions: AuxiliaryIndexTransaction[]
 }> {
@@ -144,9 +145,9 @@ async function getTransactions(
     matchPaymentMethodDetails,
     filters,
   } = options
-  const [sendingTransactions, receivingTransactions] = await Promise.all([
+  const sendingTransactionsGenerator =
     checkType === 'sending' || checkType === 'all'
-      ? transactionRepository.getGenericUserSendingTransactions(
+      ? transactionRepository.getGenericUserSendingTransactionsGenerator(
           userId,
           paymentDetails,
           {
@@ -164,9 +165,10 @@ async function getTransactions(
           attributesToFetch,
           matchPaymentMethodDetails
         )
-      : Promise.resolve([]),
+      : staticValueGenerator<Array<AuxiliaryIndexTransaction>>([])
+  const receivingTransactionsGenerator =
     checkType === 'receiving' || checkType === 'all'
-      ? transactionRepository.getGenericUserReceivingTransactions(
+      ? transactionRepository.getGenericUserReceivingTransactionsGenerator(
           userId,
           paymentDetails,
           {
@@ -184,15 +186,21 @@ async function getTransactions(
           attributesToFetch,
           matchPaymentMethodDetails
         )
-      : Promise.resolve([]),
-  ])
-  return {
-    sendingTransactions,
-    receivingTransactions,
+      : staticValueGenerator<Array<AuxiliaryIndexTransaction>>([])
+
+  for await (const data of zipGenerators(
+    sendingTransactionsGenerator,
+    receivingTransactionsGenerator,
+    []
+  )) {
+    yield {
+      sendingTransactions: data[0],
+      receivingTransactions: data[1],
+    }
   }
 }
 
-export async function getTransactionUserPastTransactionsByDirection(
+export async function* getTransactionUserPastTransactionsByDirectionGenerator(
   transaction: Transaction,
   direction: 'origin' | 'destination',
   transactionRepository: RulesEngineTransactionRepositoryInterface,
@@ -203,16 +211,11 @@ export async function getTransactionUserPastTransactionsByDirection(
     filters: TransactionHistoricalFilters
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-): Promise<{
+): AsyncGenerator<{
   sendingTransactions: AuxiliaryIndexTransaction[]
   receivingTransactions: AuxiliaryIndexTransaction[]
 }> {
-  const {
-    senderSendingTransactions,
-    senderReceivingTransactions,
-    receiverSendingTransactions,
-    receiverReceivingTransactions,
-  } = await getTransactionUserPastTransactions(
+  const generator = getTransactionUserPastTransactionsGenerator(
     transaction,
     transactionRepository,
     {
@@ -223,19 +226,22 @@ export async function getTransactionUserPastTransactionsByDirection(
     },
     attributesToFetch
   )
-  return {
-    sendingTransactions:
-      direction === 'origin'
-        ? senderSendingTransactions
-        : receiverSendingTransactions,
-    receivingTransactions:
-      direction === 'origin'
-        ? senderReceivingTransactions
-        : receiverReceivingTransactions,
+
+  for await (const result of generator) {
+    yield {
+      sendingTransactions:
+        direction === 'origin'
+          ? result.senderSendingTransactions
+          : result.receiverSendingTransactions,
+      receivingTransactions:
+        direction === 'origin'
+          ? result.senderReceivingTransactions
+          : result.receiverReceivingTransactions,
+    }
   }
 }
 
-export async function getTransactionUserPastTransactions(
+export async function* getTransactionUserPastTransactionsGenerator(
   transaction: Transaction,
   transactionRepository: RulesEngineTransactionRepositoryInterface,
   options: {
@@ -246,7 +252,7 @@ export async function getTransactionUserPastTransactions(
     filters: TransactionHistoricalFilters
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-): Promise<{
+): AsyncGenerator<{
   senderSendingTransactions: AuxiliaryIndexTransaction[]
   senderReceivingTransactions: AuxiliaryIndexTransaction[]
   receiverSendingTransactions: AuxiliaryIndexTransaction[]
@@ -263,9 +269,9 @@ export async function getTransactionUserPastTransactions(
     transaction.timestamp!,
     timeWindow
   )
-  const senderTransactionsPromise =
+  const senderTransactionsGenerator =
     checkSender !== 'none'
-      ? getTransactions(
+      ? getTransactionsGenerator(
           transaction.originUserId,
           transaction.originPaymentDetails,
           transactionRepository,
@@ -278,13 +284,13 @@ export async function getTransactionUserPastTransactions(
           },
           attributesToFetch
         )
-      : Promise.resolve({
+      : staticValueGenerator({
           sendingTransactions: [],
           receivingTransactions: [],
         })
-  const receiverTransactionsPromise =
+  const receiverTransactionsGenerator =
     checkReceiver !== 'none'
-      ? getTransactions(
+      ? getTransactionsGenerator(
           transaction.destinationUserId,
           transaction.destinationPaymentDetails,
           transactionRepository,
@@ -297,19 +303,22 @@ export async function getTransactionUserPastTransactions(
           },
           attributesToFetch
         )
-      : Promise.resolve({
+      : staticValueGenerator({
           sendingTransactions: [],
           receivingTransactions: [],
         })
-  const [senderTransactions, receiverTransactions] = await Promise.all([
-    senderTransactionsPromise,
-    receiverTransactionsPromise,
-  ])
-  return {
-    senderSendingTransactions: senderTransactions.sendingTransactions,
-    senderReceivingTransactions: senderTransactions.receivingTransactions,
-    receiverSendingTransactions: receiverTransactions.sendingTransactions,
-    receiverReceivingTransactions: receiverTransactions.receivingTransactions,
+
+  for await (const data of zipGenerators(
+    senderTransactionsGenerator,
+    receiverTransactionsGenerator,
+    { sendingTransactions: [], receivingTransactions: [] }
+  )) {
+    yield {
+      senderSendingTransactions: data[0].sendingTransactions,
+      senderReceivingTransactions: data[0].receivingTransactions,
+      receiverSendingTransactions: data[1].sendingTransactions,
+      receiverReceivingTransactions: data[1].receivingTransactions,
+    }
   }
 }
 

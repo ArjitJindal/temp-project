@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import TransactionAverageAmountExceededRule from './transactions-average-amount-exceeded'
-import TransactionsExceededBaseRule, {
+import TransactionsDeviationBaseRule, {
   TransactionsExceededParameters,
 } from './transactions-exceeded-base'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
@@ -20,7 +20,7 @@ export type TransactionsAverageAmountExceededParameters =
   TransactionsExceededParameters &
     TransactionsAverageAmountExceededPartialParameters
 
-export default class TransactionAverageDailyAmountExceededRule extends TransactionsExceededBaseRule<TransactionsAverageAmountExceededParameters> {
+export default class TransactionAverageDailyAmountExceededRule extends TransactionsDeviationBaseRule<TransactionsAverageAmountExceededParameters> {
   public static getSchema(): JSONSchemaType<TransactionsAverageAmountExceededParameters> {
     return TransactionAverageAmountExceededRule.getSchema()
   }

@@ -10,12 +10,22 @@ import {
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
   ruleVariantsTest,
+  testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
+
+const DEFAULT_RULE_PARAMETERS: TooManyUsersForSamePaymentIdentifierParameters =
+  {
+    uniqueUsersCountThreshold: 1,
+    timeWindow: {
+      units: 1,
+      granularity: 'day',
+    },
+  }
 
 dynamoDbSetupHook()
 
@@ -26,13 +36,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'too-many-users-for-same-payment-identifier',
-        defaultParameters: {
-          uniqueUsersCountThreshold: 1,
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-        } as TooManyUsersForSamePaymentIdentifierParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
         defaultAction: 'FLAG',
       },
     ])
@@ -72,13 +76,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'too-many-users-for-same-payment-identifier',
-        defaultParameters: {
-          uniqueUsersCountThreshold: 1,
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-        } as TooManyUsersForSamePaymentIdentifierParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
         defaultAction: 'FLAG',
       },
     ])
@@ -320,3 +318,46 @@ function samplePaymentDetails(paymentMethod: PaymentMethod, value: string) {
     ),
   } as PaymentDetails
 }
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'too-many-users-for-same-payment-identifier',
+    defaultParameters: DEFAULT_RULE_PARAMETERS,
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+      originPaymentDetails: {
+        method: 'CARD',
+        cardFingerprint: '123',
+      },
+    }),
+    getTestTransaction({
+      originUserId: '2',
+      timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
+      originPaymentDetails: {
+        method: 'CARD',
+        cardFingerprint: '123',
+      },
+    }),
+    getTestTransaction({
+      originUserId: '3',
+      timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+      originPaymentDetails: {
+        method: 'CARD',
+        cardFingerprint: '123',
+      },
+    }),
+  ],
+  {
+    origin: [
+      { userIds: ['2', '1'], hour: '2022010100' },
+      { userIds: ['3'], hour: '2022010101' },
+    ],
+    destination: undefined,
+  }
+)

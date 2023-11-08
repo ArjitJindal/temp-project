@@ -1,8 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import { sumBy } from 'lodash'
+import { mergeWith, sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import {
@@ -122,19 +122,27 @@ export default abstract class TransactionsPatternPercentageBaseRule<
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const { allTransactions, matchedTransactions } =
-      await this.getRawTransactionsData(direction)
-
-    if (this.matchPattern(this.transaction, direction)) {
-      matchedTransactions.push(this.transaction)
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData(direction)) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data.allTransactions,
+        data.matchedTransactions
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData, b: AggregationData) => {
+          return mergeWith(
+            a,
+            b,
+            (x: number | undefined, y: number | undefined) =>
+              (x ?? 0) + (y ?? 0)
+          )
+        }
+      )
     }
 
-    allTransactions.push(this.transaction)
-
-    await this.saveRebuiltRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(allTransactions, matchedTransactions)
-    )
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
   private async getData(direction: 'origin' | 'destination'): Promise<{
@@ -161,19 +169,17 @@ export default abstract class TransactionsPatternPercentageBaseRule<
         matchTransactionsCount,
       }
     }
-    // Fallback
+
     if (this.shouldUseRawData()) {
-      const { allTransactions, matchedTransactions } =
-        await this.getRawTransactionsData(direction)
-
-      await this.saveRebuiltRuleAggregations(
-        direction,
-        await this.getTimeAggregatedResult(allTransactions, matchedTransactions)
-      )
-
+      let allTransactionsCount = 1
+      let matchTransactionsCount = 1
+      for await (const data of this.getRawTransactionsData(direction)) {
+        allTransactionsCount += data.allTransactions.length
+        matchTransactionsCount += data.matchedTransactions.length
+      }
       return {
-        allTransactionsCount: allTransactions.length + 1,
-        matchTransactionsCount: matchedTransactions.length + 1,
+        allTransactionsCount,
+        matchTransactionsCount,
       }
     } else {
       return {
@@ -183,9 +189,9 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     }
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     direction: 'origin' | 'destination'
-  ): Promise<{
+  ): AsyncGenerator<{
     allTransactions: AuxiliaryIndexTransaction[]
     matchedTransactions: AuxiliaryIndexTransaction[]
   }> {
@@ -195,30 +201,33 @@ export default abstract class TransactionsPatternPercentageBaseRule<
       checkReceiver = 'all',
     } = this.parameters
 
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        this.transactionRepository,
-        {
-          timeWindow,
-          checkDirection: direction === 'origin' ? checkSender : checkReceiver,
-          filters: this.filters,
-        },
-        ['timestamp', ...this.getNeededTransactionFields()]
+    const generator = getTransactionUserPastTransactionsByDirectionGenerator(
+      this.transaction,
+      direction,
+      this.transactionRepository,
+      {
+        timeWindow,
+        checkDirection: direction === 'origin' ? checkSender : checkReceiver,
+        filters: this.filters,
+      },
+      ['timestamp', ...this.getNeededTransactionFields()]
+    )
+
+    for await (const data of generator) {
+      const allTransactions = data.sendingTransactions.concat(
+        data.receivingTransactions
       )
+      const matchedTransactions = [
+        ...data.sendingTransactions.filter((transaction) =>
+          this.matchPattern(transaction, 'origin')
+        ),
+        ...data.receivingTransactions.filter((transaction) =>
+          this.matchPattern(transaction, 'destination')
+        ),
+      ]
 
-    const allTransactions = sendingTransactions.concat(receivingTransactions)
-    const matchedTransactions = [
-      ...sendingTransactions.filter((transaction) =>
-        this.matchPattern(transaction, 'origin')
-      ),
-      ...receivingTransactions.filter((transaction) =>
-        this.matchPattern(transaction, 'destination')
-      ),
-    ]
-
-    return { allTransactions, matchedTransactions }
+      yield { allTransactions, matchedTransactions }
+    }
   }
 
   private async getTimeAggregatedResult(

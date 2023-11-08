@@ -4,7 +4,7 @@ import {
   CURRENCY_SCHEMA,
   PERCENT_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import TransactionsExceededBaseRule, {
+import TransactionsDeviationBaseRule, {
   TransactionsExceededParameters,
 } from './transactions-exceeded-base'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
@@ -24,13 +24,13 @@ export type TransactionsAverageAmountExceededParameters =
   TransactionsExceededParameters &
     TransactionsAverageAmountExceededPartialParameters
 
-export default class TransactionAverageAmountExceededRule extends TransactionsExceededBaseRule<TransactionsAverageAmountExceededParameters> {
+export default class TransactionAverageAmountExceededRule extends TransactionsDeviationBaseRule<TransactionsAverageAmountExceededParameters> {
   protected getAggregatorMethod(): 'SUM' | 'AVG' {
     return 'AVG'
   }
 
   public static getSchema(): JSONSchemaType<TransactionsAverageAmountExceededParameters> {
-    const baseSchema = TransactionsExceededBaseRule.getBaseSchema()
+    const baseSchema = TransactionsDeviationBaseRule.getBaseSchema()
 
     const partialSchema: JSONSchemaType<TransactionsAverageAmountExceededPartialParameters> =
       {

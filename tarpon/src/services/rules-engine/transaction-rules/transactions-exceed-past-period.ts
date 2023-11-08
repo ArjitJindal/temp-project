@@ -1,8 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import { sumBy } from 'lodash'
+import { mergeWith, sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import {
@@ -17,6 +17,7 @@ import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResultItem } from '../rule'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { zipGenerators } from '@/utils/generator'
 
 type AggregationData = {
   count?: number
@@ -177,20 +178,13 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       }
     }
 
-    // Fallback
     if (this.shouldUseRawData()) {
-      const {
-        transactionsPeriod1: allTransactionsPeriod1,
-        transactionsPeriod2: allTransactionsPeriod2,
-      } = await this.getRawTransactionsData(direction)
-
-      // Update aggregations
-      await this.saveRebuiltRuleAggregations(
-        direction,
-        await this.getTimeAggregatedResult(allTransactionsPeriod2)
-      )
-      const transactionsCountP1 = allTransactionsPeriod1.length + 1
-      const transactionsCountP2 = allTransactionsPeriod2.length + 1
+      let transactionsCountP1 = 1
+      let transactionsCountP2 = 1
+      for await (const data of this.getRawTransactionsData(direction)) {
+        transactionsCountP1 += data.transactionsPeriod1.length
+        transactionsCountP2 += data.transactionsPeriod2.length
+      }
       return {
         transactionsCountP1: transactionsCountP1,
         transactionsCountP2: transactionsCountP2 - transactionsCountP1,
@@ -205,9 +199,9 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     }
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     direction: 'origin' | 'destination'
-  ): Promise<{
+  ): AsyncGenerator<{
     transactionsPeriod1: AuxiliaryIndexTransaction[]
     transactionsPeriod2: AuxiliaryIndexTransaction[]
   }> {
@@ -215,9 +209,8 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       this.parameters
 
     const checkDirection = direction === 'origin' ? checkSender : checkReceiver
-
-    const [transactionsPeriod1, transactionsPeriod2] = await Promise.all([
-      getTransactionUserPastTransactionsByDirection(
+    const generatorPeriod1 =
+      getTransactionUserPastTransactionsByDirectionGenerator(
         this.transaction,
         direction,
         this.transactionRepository,
@@ -227,8 +220,9 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
           filters: this.filters,
         },
         ['timestamp']
-      ),
-      getTransactionUserPastTransactionsByDirection(
+      )
+    const generatorPeriod2 =
+      getTransactionUserPastTransactionsByDirectionGenerator(
         this.transaction,
         direction,
         this.transactionRepository,
@@ -238,16 +232,20 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
           filters: this.filters,
         },
         ['timestamp']
-      ),
-    ])
+      )
 
-    return {
-      transactionsPeriod1: transactionsPeriod1.sendingTransactions.concat(
-        transactionsPeriod1.receivingTransactions
-      ),
-      transactionsPeriod2: transactionsPeriod2.sendingTransactions.concat(
-        transactionsPeriod2.receivingTransactions
-      ),
+    for await (const data of zipGenerators(generatorPeriod1, generatorPeriod2, {
+      sendingTransactions: [],
+      receivingTransactions: [],
+    })) {
+      yield {
+        transactionsPeriod1: data[0].sendingTransactions.concat(
+          data[0].receivingTransactions
+        ),
+        transactionsPeriod2: data[1].sendingTransactions.concat(
+          data[1].receivingTransactions
+        ),
+      }
     }
   }
 
@@ -261,15 +259,26 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const { transactionsPeriod2 } = await this.getRawTransactionsData(direction)
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData(direction)) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data.transactionsPeriod2
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData, b: AggregationData) => {
+          return mergeWith(
+            a,
+            b,
+            (x: number | undefined, y: number | undefined) =>
+              (x ?? 0) + (y ?? 0)
+          )
+        }
+      )
+    }
 
-    transactionsPeriod2.push(this.transaction)
-
-    // Update aggregations
-    await this.saveRebuiltRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(transactionsPeriod2)
-    )
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
   private async getUserTransactionCount(

@@ -1,11 +1,11 @@
 import { JSONSchemaType } from 'ajv'
-import { sumBy } from 'lodash'
+import { mergeWith, sumBy, uniq } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
@@ -78,21 +78,23 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     return hitResult
   }
 
-  private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
-    const { sendingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        'origin',
-        this.transactionRepository,
-        {
-          timeWindow: this.parameters.timeWindow,
-          checkDirection: 'sending',
-          filters: this.filters,
-        },
-        ['timestamp', 'originDeviceData']
-      )
-
-    return sendingTransactions
+  private async *getRawTransactionsData(): AsyncGenerator<
+    AuxiliaryIndexTransaction[]
+  > {
+    const generator = getTransactionUserPastTransactionsByDirectionGenerator(
+      this.transaction,
+      'origin',
+      this.transactionRepository,
+      {
+        timeWindow: this.parameters.timeWindow,
+        checkDirection: 'sending',
+        filters: this.filters,
+      },
+      ['timestamp', 'originDeviceData']
+    )
+    for await (const data of generator) {
+      yield data.sendingTransactions
+    }
   }
 
   private async getData(): Promise<{
@@ -120,25 +122,24 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
       }
     }
 
-    // Fallback
     if (this.shouldUseRawData()) {
-      const sendingTransactions = await this.getRawTransactionsData()
-
-      const sendingTransactionsWithIpAddress = sendingTransactions.filter(
-        (transaction) => transaction.originDeviceData?.ipAddress
-      )
-
-      // Update aggregations
-      await this.saveRebuiltRuleAggregations(
-        'origin',
-        await this.getTimeAggregatedResult(sendingTransactionsWithIpAddress)
-      )
-
-      return {
-        uniqueIpAddresses: this.getUniqueIpAddressses(
+      let transactionsCount = 0
+      const uniqueIpAddresses = new Set<string>()
+      for await (const data of this.getRawTransactionsData()) {
+        const sendingTransactionsWithIpAddress = data.filter(
+          (transaction) => transaction.originDeviceData?.ipAddress
+        )
+        const ipAddresses = this.getUniqueIpAddressses(
           sendingTransactionsWithIpAddress
-        ),
-        transactionsCount: sendingTransactionsWithIpAddress.length,
+        )
+        Array.from(ipAddresses).forEach((ipAddress) =>
+          uniqueIpAddresses.add(ipAddress)
+        )
+        transactionsCount += sendingTransactionsWithIpAddress.length
+      }
+      return {
+        uniqueIpAddresses,
+        transactionsCount,
       }
     } else {
       return {
@@ -163,15 +164,27 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
   }
 
   public async rebuildUserAggregation(): Promise<void> {
-    const transactions = await this.getRawTransactionsData()
-
-    transactions.push(this.transaction)
-
-    // Update aggregations
-    await this.saveRebuiltRuleAggregations(
-      'origin',
-      await this.getTimeAggregatedResult(transactions)
-    )
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData()) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData | undefined, b: AggregationData | undefined) => {
+          const result: AggregationData = {
+            ipAddresses: uniq(
+              (a?.ipAddresses ?? []).concat(b?.ipAddresses ?? [])
+            ),
+            transactionsCount:
+              (a?.transactionsCount ?? 0) + (b?.transactionsCount ?? 0),
+          }
+          return result
+        }
+      )
+    }
+    await this.saveRebuiltRuleAggregations('origin', timeAggregatedResult)
   }
 
   private getUniqueIpAddressses(

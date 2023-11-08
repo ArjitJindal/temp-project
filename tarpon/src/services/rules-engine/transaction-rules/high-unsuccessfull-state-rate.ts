@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import { sumBy } from 'lodash'
+import { mergeWith, sumBy } from 'lodash'
 import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
@@ -14,11 +14,12 @@ import { getTimestampRange } from '../utils/time-utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionAggregationRule } from './aggregation-rule'
 import {
-  getTransactionUserPastTransactions,
+  getTransactionUserPastTransactionsGenerator,
   groupTransactionsByHour,
 } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { mergeObjects } from '@/utils/object'
+import { zipGenerators } from '@/utils/generator'
 import { traceable } from '@/core/xray'
 
 type AggregationData = {
@@ -147,16 +148,11 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     return hitResult
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     checkSender: 'sending' | 'all' | 'none' = this.parameters.checkSender,
     checkReceiver: 'receiving' | 'all' | 'none' = this.parameters.checkReceiver
   ) {
-    const {
-      senderSendingTransactions,
-      senderReceivingTransactions,
-      receiverSendingTransactions,
-      receiverReceivingTransactions,
-    } = await getTransactionUserPastTransactions(
+    const generatorAll = getTransactionUserPastTransactionsGenerator(
       this.transaction,
       this.transactionRepository,
       {
@@ -167,12 +163,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
       },
       ['timestamp']
     )
-    const {
-      senderSendingTransactions: senderSendingTransactionsFiltered,
-      senderReceivingTransactions: senderReceivingTransactionsFiltered,
-      receiverSendingTransactions: receiverSendingTransactionsFiltered,
-      receiverReceivingTransactions: receiverReceivingTransactionsFiltered,
-    } = await getTransactionUserPastTransactions(
+    const generatorFiltered = getTransactionUserPastTransactionsGenerator(
       this.transaction,
       this.transactionRepository,
       {
@@ -184,15 +175,25 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
       ['timestamp']
     )
 
-    return {
-      senderSendingTransactions,
-      senderReceivingTransactions,
-      receiverSendingTransactions,
-      receiverReceivingTransactions,
-      senderSendingTransactionsFiltered,
-      senderReceivingTransactionsFiltered,
-      receiverSendingTransactionsFiltered,
-      receiverReceivingTransactionsFiltered,
+    for await (const data of zipGenerators(generatorAll, generatorFiltered, {
+      senderSendingTransactions: [],
+      senderReceivingTransactions: [],
+      receiverSendingTransactions: [],
+      receiverReceivingTransactions: [],
+    })) {
+      yield {
+        senderSendingTransactions: data[0].senderSendingTransactions,
+        senderReceivingTransactions: data[0].senderReceivingTransactions,
+        receiverSendingTransactions: data[0].receiverSendingTransactions,
+        receiverReceivingTransactions: data[0].receiverReceivingTransactions,
+        senderSendingTransactionsFiltered: data[1].senderSendingTransactions,
+        senderReceivingTransactionsFiltered:
+          data[1].senderReceivingTransactions,
+        receiverSendingTransactionsFiltered:
+          data[1].receiverSendingTransactions,
+        receiverReceivingTransactionsFiltered:
+          data[1].receiverReceivingTransactions,
+      }
     }
   }
 
@@ -277,55 +278,41 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     }
 
     if (this.shouldUseRawData()) {
-      const {
-        senderSendingTransactions,
-        senderReceivingTransactions,
-        receiverSendingTransactions,
-        receiverReceivingTransactions,
-        senderSendingTransactionsFiltered,
-        senderReceivingTransactionsFiltered,
-        receiverSendingTransactionsFiltered,
-        receiverReceivingTransactionsFiltered,
-      } = await this.getRawTransactionsData(checkSender, checkReceiver)
-
-      // Update aggregations
-      await Promise.all([
-        originAggregationData
-          ? Promise.resolve()
-          : this.saveRebuiltRuleAggregations(
-              'origin',
-              await this.getTimeAggregatedResult(
-                senderSendingTransactions,
-                senderReceivingTransactions,
-                senderSendingTransactionsFiltered,
-                senderReceivingTransactionsFiltered
-              )
-            ),
-        destinationAggregationData
-          ? Promise.resolve()
-          : this.saveRebuiltRuleAggregations(
-              'destination',
-              await this.getTimeAggregatedResult(
-                receiverSendingTransactions,
-                receiverReceivingTransactions,
-                receiverSendingTransactionsFiltered,
-                receiverReceivingTransactionsFiltered
-              )
-            ),
-      ])
+      let senderSendingFullCount = 0
+      let senderReceivingFullCount = 0
+      let senderSendingFilteredCount = 0
+      let senderReceivingFilteredCount = 0
+      let receiverSendingFullCount = 0
+      let receiverReceivingFullCount = 0
+      let receiverSendingFilteredCount = 0
+      let receiverReceivingFilteredCount = 0
+      for await (const data of this.getRawTransactionsData(
+        checkSender,
+        checkReceiver
+      )) {
+        senderSendingFullCount += data.senderSendingTransactions.length
+        senderReceivingFullCount += data.senderReceivingTransactions.length
+        senderSendingFilteredCount +=
+          data.senderSendingTransactionsFiltered.length
+        senderReceivingFilteredCount +=
+          data.senderReceivingTransactionsFiltered.length
+        receiverSendingFullCount += data.receiverSendingTransactions.length
+        receiverReceivingFullCount += data.receiverReceivingTransactions.length
+        receiverSendingFilteredCount +=
+          data.receiverSendingTransactionsFiltered.length
+        receiverReceivingFilteredCount +=
+          data.receiverReceivingTransactionsFiltered.length
+      }
 
       return {
-        senderSendingFullCount: senderSendingTransactions.length,
-        senderReceivingFullCount: senderReceivingTransactions.length,
-        senderSendingFilteredCount: senderSendingTransactionsFiltered.length,
-        senderReceivingFilteredCount:
-          senderReceivingTransactionsFiltered.length,
-        receiverSendingFullCount: receiverSendingTransactions.length,
-        receiverReceivingFullCount: receiverReceivingTransactions.length,
-        receiverSendingFilteredCount:
-          receiverSendingTransactionsFiltered.length,
-        receiverReceivingFilteredCount:
-          receiverReceivingTransactionsFiltered.length,
+        senderSendingFullCount,
+        senderReceivingFullCount,
+        senderSendingFilteredCount,
+        senderReceivingFilteredCount,
+        receiverSendingFullCount,
+        receiverReceivingFullCount,
+        receiverSendingFilteredCount,
+        receiverReceivingFilteredCount,
         ...senderTransactionCounts,
         ...receiverTransactionCounts,
       }
@@ -352,53 +339,59 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     return true
   }
 
-  public async rebuildUserAggregation(
-    direction: 'origin' | 'destination',
-    isTransactionHistoricalFiltered: boolean
-  ) {
+  public async rebuildUserAggregation(direction: 'origin' | 'destination') {
     if (direction === 'origin') {
-      const {
-        senderSendingTransactions,
-        senderReceivingTransactions,
-        senderSendingTransactionsFiltered,
-        senderReceivingTransactionsFiltered,
-      } = await this.getRawTransactionsData(this.parameters.checkSender, 'none')
-      if (isTransactionHistoricalFiltered) {
-        senderSendingTransactionsFiltered.push(this.transaction)
-      }
-      senderSendingTransactions.push(this.transaction)
-      await this.saveRebuiltRuleAggregations(
-        direction,
-        await this.getTimeAggregatedResult(
-          senderSendingTransactions,
-          senderReceivingTransactions,
-          senderSendingTransactionsFiltered,
-          senderReceivingTransactionsFiltered
+      let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+      for await (const data of await this.getRawTransactionsData(
+        this.parameters.checkSender,
+        'none'
+      )) {
+        const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+          data.senderSendingTransactions,
+          data.senderReceivingTransactions,
+          data.senderSendingTransactionsFiltered,
+          data.senderReceivingTransactionsFiltered
         )
-      )
+        timeAggregatedResult = mergeWith(
+          timeAggregatedResult,
+          partialTimeAggregatedResult,
+          (a: AggregationData, b: AggregationData) => {
+            return mergeWith(
+              a,
+              b,
+              (x: number | undefined, y: number | undefined) =>
+                (x ?? 0) + (y ?? 0)
+            )
+          }
+        )
+      }
+      await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
     } else {
-      const {
-        receiverSendingTransactions,
-        receiverReceivingTransactions,
-        receiverSendingTransactionsFiltered,
-        receiverReceivingTransactionsFiltered,
-      } = await this.getRawTransactionsData(
+      let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+      for await (const data of await this.getRawTransactionsData(
         'none',
         this.parameters.checkReceiver
-      )
-      if (isTransactionHistoricalFiltered) {
-        receiverReceivingTransactionsFiltered.push(this.transaction)
-      }
-      receiverReceivingTransactions.push(this.transaction)
-      await this.saveRebuiltRuleAggregations(
-        direction,
-        await this.getTimeAggregatedResult(
-          receiverSendingTransactions,
-          receiverReceivingTransactions,
-          receiverSendingTransactionsFiltered,
-          receiverReceivingTransactionsFiltered
+      )) {
+        const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+          data.receiverSendingTransactions,
+          data.receiverReceivingTransactions,
+          data.receiverSendingTransactionsFiltered,
+          data.receiverReceivingTransactionsFiltered
         )
-      )
+        timeAggregatedResult = mergeWith(
+          timeAggregatedResult,
+          partialTimeAggregatedResult,
+          (a: AggregationData, b: AggregationData) => {
+            return mergeWith(
+              a,
+              b,
+              (x: number | undefined, y: number | undefined) =>
+                (x ?? 0) + (y ?? 0)
+            )
+          }
+        )
+      }
+      await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
     }
   }
 

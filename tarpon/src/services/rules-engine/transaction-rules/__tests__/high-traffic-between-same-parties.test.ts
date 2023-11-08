@@ -9,9 +9,18 @@ import {
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
   ruleVariantsTest,
+  testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+
+const DEFAULT_RULE_PARAMETERS: HighTrafficBetweenSamePartiesParameters = {
+  timeWindow: {
+    units: 1,
+    granularity: 'day',
+  },
+  transactionsLimit: 1,
+}
 
 dynamoDbSetupHook()
 
@@ -38,13 +47,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'high-traffic-between-same-parties',
-        defaultParameters: {
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-          transactionsLimit: 1,
-        } as HighTrafficBetweenSamePartiesParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
         defaultAction: 'FLAG',
       },
     ])
@@ -83,13 +86,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'high-traffic-between-same-parties',
-        defaultParameters: {
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-          transactionsLimit: 1,
-        } as HighTrafficBetweenSamePartiesParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
         defaultAction: 'FLAG',
       },
     ])
@@ -425,3 +422,53 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'high-traffic-between-same-parties',
+    defaultParameters: DEFAULT_RULE_PARAMETERS,
+    defaultAction: 'FLAG',
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '3',
+      timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      {
+        [`${TEST_TENANT_ID}#transaction#type:all#user:2#receiving`]: 1,
+        hour: '2022010102',
+      },
+      {
+        [`${TEST_TENANT_ID}#transaction#type:all#user:3#receiving`]: 1,
+        hour: '2022010103',
+      },
+      {
+        [`${TEST_TENANT_ID}#transaction#type:all#user:2#receiving`]: 1,
+        hour: '2022010104',
+      },
+    ],
+    destination: undefined,
+  }
+)

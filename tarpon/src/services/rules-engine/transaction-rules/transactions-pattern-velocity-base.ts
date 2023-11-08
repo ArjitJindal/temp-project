@@ -1,8 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import { mapValues, sumBy, groupBy } from 'lodash'
+import { mapValues, sumBy, groupBy, mergeWith } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import {
@@ -99,9 +99,9 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     }
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     direction: 'origin' | 'destination'
-  ): Promise<{
+  ): AsyncGenerator<{
     sendingTransactions: AuxiliaryIndexTransaction[]
     receivingTransactions: AuxiliaryIndexTransaction[]
   }> {
@@ -112,22 +112,19 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     } = this.parameters
     const checkDirection = direction === 'origin' ? checkSender : checkReceiver
 
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        this.transactionRepository,
-        {
-          timeWindow,
-          checkDirection,
-          matchPaymentMethodDetails:
-            this.isMatchPaymentMethodDetailsEnabled(direction),
-          filters: this.filters,
-        },
-        this.getNeededTransactionFields()
-      )
-
-    return { sendingTransactions, receivingTransactions }
+    yield* getTransactionUserPastTransactionsByDirectionGenerator(
+      this.transaction,
+      direction,
+      this.transactionRepository,
+      {
+        timeWindow,
+        checkDirection,
+        matchPaymentMethodDetails:
+          this.isMatchPaymentMethodDetailsEnabled(direction),
+        filters: this.filters,
+      },
+      this.getNeededTransactionFields()
+    )
   }
 
   private async getData(
@@ -163,27 +160,31 @@ export default abstract class TransactionsPatternVelocityBaseRule<
       }
     }
 
+    const userType = direction === 'origin' ? 'sender' : 'receiver'
+    let patternCount = await this.getAggregationData(
+      [this.transaction].filter((transaction) =>
+        this.matchPattern(transaction, direction, userType)
+      )
+    )
     if (!this.shouldUseRawData() && this.isAggregationSupported()) {
-      return await this.computeRawData(direction)
+      return patternCount
     } else {
-      const { sendingTransactions, receivingTransactions } =
-        await this.getRawTransactionsData(direction)
-
-      // Update aggregations
-      if (this.isAggregationSupported() && this.shouldUseRawData()) {
-        await this.saveRebuiltRuleAggregations(
-          direction,
-          await this.getTimeAggregatedResult(
-            sendingTransactions,
-            receivingTransactions
-          )
+      for await (const data of this.getRawTransactionsData(direction)) {
+        const partialPatternCount = await this.getAggregationData([
+          ...data.sendingTransactions.filter((transaction) =>
+            this.matchPattern(transaction, 'origin', userType)
+          ),
+          ...data.receivingTransactions.filter((transaction) =>
+            this.matchPattern(transaction, 'destination', userType)
+          ),
+        ])
+        patternCount = mergeWith(
+          patternCount,
+          partialPatternCount,
+          (x: number | undefined, y: number | undefined) => (x ?? 0) + (y ?? 0)
         )
       }
-      return await this.computeRawData(
-        direction,
-        sendingTransactions,
-        receivingTransactions
-      )
+      return patternCount
     }
   }
 
@@ -207,51 +208,40 @@ export default abstract class TransactionsPatternVelocityBaseRule<
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const { sendingTransactions, receivingTransactions } =
-      await this.getRawTransactionsData(direction)
-
-    if (this.transaction.originUserId || this.transaction.destinationUserId) {
-      if (direction === 'origin') {
-        sendingTransactions.push(this.transaction)
-      } else {
-        receivingTransactions.push(this.transaction)
-      }
-
-      // Update aggregations
-      if (this.isAggregationSupported()) {
-        await this.saveRebuiltRuleAggregations(
-          direction,
-          await this.getTimeAggregatedResult(
-            sendingTransactions,
-            receivingTransactions
-          )
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    const userType = direction === 'origin' ? 'sender' : 'receiver'
+    for await (const data of this.getRawTransactionsData(direction)) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data.sendingTransactions.filter((transaction) =>
+          this.matchPattern(transaction, 'origin', userType)
+        ),
+        data.receivingTransactions.filter((transaction) =>
+          this.matchPattern(transaction, 'destination', userType)
         )
-      }
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData, b: AggregationData) => {
+          return mergeWith(
+            a,
+            b,
+            (x: number | undefined, y: number | undefined) =>
+              (x ?? 0) + (y ?? 0)
+          )
+        }
+      )
     }
+
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
-  private async computeRawData(
-    direction: 'origin' | 'destination',
-    sendingTransactions: AuxiliaryIndexTransaction[] = [],
-    receivingTransactions: AuxiliaryIndexTransaction[] = []
+  private async getAggregationData(
+    transactions: AuxiliaryIndexTransaction[]
   ): Promise<AggregationData> {
-    if (direction === 'origin') {
-      sendingTransactions.push(this.transaction)
-    } else {
-      receivingTransactions.push(this.transaction)
-    }
-
-    const sendingMatchedTransactions = sendingTransactions.filter(
-      (transaction) => this.matchPattern(transaction, 'origin', 'sender')
-    )
-
-    const receivingMatchedTransactions = receivingTransactions.filter(
-      (transaction) => this.matchPattern(transaction, 'destination', 'sender')
-    )
-
     return mapValues(
       groupBy(
-        sendingMatchedTransactions.concat(receivingMatchedTransactions),
+        transactions,
         (t) => this.getTransactionGroupKey(t) || DEFAULT_GROUP_KEY
       ),
       (group) => group.length
@@ -317,6 +307,6 @@ export default abstract class TransactionsPatternVelocityBaseRule<
   }
 
   override getRuleAggregationVersion(): number {
-    return 2
+    return 3
   }
 }

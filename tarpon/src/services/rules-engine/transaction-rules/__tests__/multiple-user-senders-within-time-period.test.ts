@@ -9,9 +9,19 @@ import {
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
   ruleVariantsTest,
+  testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { setUpUsersHooks, getTestUser } from '@/test-utils/user-test-utils'
+
+const DEFAULT_RULE_PARAMETERS: MultipleSendersWithinTimePeriodRuleParameters = {
+  sendersCount: 2,
+  timeWindow: {
+    units: 30,
+    granularity: 'day',
+  },
+  createAlertFor: 'ALL',
+}
 
 dynamoDbSetupHook()
 
@@ -22,13 +32,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'multiple-user-senders-within-time-period',
-        defaultParameters: {
-          sendersCount: 2,
-          timeWindow: {
-            units: 30,
-            granularity: 'day',
-          },
-        } as MultipleSendersWithinTimePeriodRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
         defaultAction: 'FLAG',
       },
     ])
@@ -175,3 +179,55 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'multiple-user-senders-within-time-period',
+    defaultParameters: DEFAULT_RULE_PARAMETERS,
+  },
+  [
+    getTestTransaction({
+      originUserId: '2',
+      destinationUserId: '1',
+      timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '3',
+      destinationUserId: '1',
+      timestamp: dayjs('2022-01-01T01:30:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '4',
+      destinationUserId: '1',
+      timestamp: dayjs('2022-01-02T00:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '3',
+      destinationUserId: '1',
+      timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: undefined,
+    destination: [
+      {
+        senderKeys: [
+          `${TEST_TENANT_ID}#transaction#type:all#user:3#sending`,
+          `${TEST_TENANT_ID}#transaction#type:all#user:2#sending`,
+        ],
+        hour: '2022010101',
+      },
+      {
+        senderKeys: [`${TEST_TENANT_ID}#transaction#type:all#user:4#sending`],
+        hour: '2022010200',
+      },
+      {
+        senderKeys: [`${TEST_TENANT_ID}#transaction#type:all#user:3#sending`],
+        hour: '2022010300',
+      },
+    ],
+  }
+)

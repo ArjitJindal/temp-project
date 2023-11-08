@@ -1058,63 +1058,67 @@ export class MongoDbTransactionRepository
     )
   }
 
-  public async getGenericUserSendingTransactions(
+  public async *getGenericUserSendingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
-  ): Promise<Array<AuxiliaryIndexTransaction>> {
-    return userId && !matchPaymentMethodDetails
-      ? this.getUserSendingTransactions(
-          userId,
-          timeRange,
-          filterOptions,
-          attributesToFetch
-        )
-      : paymentDetails
-      ? this.getNonUserSendingTransactions(
-          paymentDetails,
-          timeRange,
-          filterOptions,
-          attributesToFetch
-        )
-      : []
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (userId && !matchPaymentMethodDetails) {
+      yield* this.getUserSendingTransactionsGenerator(
+        userId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else if (paymentDetails) {
+      yield* this.getNonUserSendingTransactionsGenerator(
+        paymentDetails,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else {
+      yield []
+    }
   }
 
-  public async getGenericUserReceivingTransactions(
+  public async *getGenericUserReceivingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
-  ): Promise<Array<AuxiliaryIndexTransaction>> {
-    return userId && !matchPaymentMethodDetails
-      ? this.getUserReceivingTransactions(
-          userId,
-          timeRange,
-          filterOptions,
-          attributesToFetch
-        )
-      : paymentDetails
-      ? this.getNonUserReceivingTransactions(
-          paymentDetails,
-          timeRange,
-          filterOptions,
-          attributesToFetch
-        )
-      : []
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (userId && !matchPaymentMethodDetails) {
+      yield* this.getUserReceivingTransactionsGenerator(
+        userId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else if (paymentDetails) {
+      yield* this.getNonUserReceivingTransactionsGenerator(
+        paymentDetails,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else {
+      yield []
+    }
   }
 
-  public async getUserSendingTransactions(
+  public async *getUserSendingTransactionsGenerator(
     userId: string,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): Promise<Array<AuxiliaryIndexTransaction>> {
-    return this.getRulesEngineTransactions(
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    yield* this.getRulesEngineTransactionsGenerator(
       [{ originUserId: { $eq: userId } }],
       timeRange,
       filterOptions,
@@ -1122,36 +1126,57 @@ export class MongoDbTransactionRepository
     )
   }
 
-  public async getNonUserSendingTransactions(
-    paymentDetails: PaymentDetails,
-    timeRange: TimeRange,
-    filterOptions: TransactionsFilterOptions,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): Promise<Array<AuxiliaryIndexTransaction>> {
-    const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
-    if (!identifiers) {
-      return []
-    }
-    return this.getRulesEngineTransactions(
-      [
-        mapKeys(
-          omitBy({ method: paymentDetails.method, ...identifiers }, isNil),
-          (_value, key) => `originPaymentDetails.${key}`
-        ),
-      ],
-      timeRange,
-      filterOptions,
-      attributesToFetch
-    )
-  }
-
-  public async getUserReceivingTransactions(
+  // TODO: Remove this after all rules support streaming
+  public async getUserSendingTransactions(
     userId: string,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<Array<AuxiliaryIndexTransaction>> {
-    return this.getRulesEngineTransactions(
+    const generator = this.getUserSendingTransactionsGenerator(
+      userId,
+      timeRange,
+      filterOptions,
+      attributesToFetch
+    )
+    const transactions: Array<AuxiliaryIndexTransaction> = []
+    for await (const data of generator) {
+      transactions.push(...data)
+    }
+    return transactions
+  }
+
+  public async *getNonUserSendingTransactionsGenerator(
+    paymentDetails: PaymentDetails,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
+    if (!identifiers) {
+      yield []
+    } else {
+      yield* this.getRulesEngineTransactionsGenerator(
+        [
+          mapKeys(
+            omitBy({ method: paymentDetails.method, ...identifiers }, isNil),
+            (_value, key) => `originPaymentDetails.${key}`
+          ),
+        ],
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
+  }
+
+  public async *getUserReceivingTransactionsGenerator(
+    userId: string,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    yield* this.getRulesEngineTransactionsGenerator(
       [{ destinationUserId: { $eq: userId } }],
       timeRange,
       filterOptions,
@@ -1159,27 +1184,48 @@ export class MongoDbTransactionRepository
     )
   }
 
-  public async getNonUserReceivingTransactions(
-    paymentDetails: PaymentDetails,
+  // TODO: Remove this after all rules support streaming
+  public async getUserReceivingTransactions(
+    userId: string,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<Array<AuxiliaryIndexTransaction>> {
-    const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
-    if (!identifiers) {
-      return []
-    }
-    return this.getRulesEngineTransactions(
-      [
-        mapKeys(
-          omitBy({ method: paymentDetails.method, ...identifiers }, isNil),
-          (_value, key) => `destinationPaymentDetails.${key}`
-        ),
-      ],
+    const generator = this.getUserReceivingTransactionsGenerator(
+      userId,
       timeRange,
       filterOptions,
       attributesToFetch
     )
+    const transactions: Array<AuxiliaryIndexTransaction> = []
+    for await (const data of generator) {
+      transactions.push(...data)
+    }
+    return transactions
+  }
+
+  public async *getNonUserReceivingTransactionsGenerator(
+    paymentDetails: PaymentDetails,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
+    if (!identifiers) {
+      yield []
+    } else {
+      yield* this.getRulesEngineTransactionsGenerator(
+        [
+          mapKeys(
+            omitBy({ method: paymentDetails.method, ...identifiers }, isNil),
+            (_value, key) => `destinationPaymentDetails.${key}`
+          ),
+        ],
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
   }
 
   public async getGenericUserSendingTransactionsCount(
@@ -1390,13 +1436,13 @@ export class MongoDbTransactionRepository
     return collection.count(query)
   }
 
-  private async getRulesEngineTransactions(
+  private async *getRulesEngineTransactionsGenerator(
     filters: Filter<InternalTransaction>[],
     timeRange: TimeRange | undefined,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     limit?: number
-  ): Promise<Array<AuxiliaryIndexTransaction>> {
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
     const query = this.getRulesEngineTransactionsQuery(
       filters,
       timeRange,
@@ -1415,7 +1461,7 @@ export class MongoDbTransactionRepository
         'destinationPaymentDetails',
       ])
     )
-    const transactions = (await collection
+    const transactions = await collection
       .find(query, {
         sort: { timestamp: -1 },
         limit,
@@ -1425,11 +1471,43 @@ export class MongoDbTransactionRepository
           finalAttributesToFetch.map((attribute) => [attribute, 1])
         )
       )
-      .toArray()) as InternalTransaction[]
-    return transactions.map((transaction) => ({
-      ...transaction,
-      senderKeyId: getSenderKeyId(this.tenantId, transaction),
-      receiverKeyId: getReceiverKeyId(this.tenantId, transaction),
-    }))
+    let transactionsBatch: AuxiliaryIndexTransaction[] = []
+    for await (const transaction of transactions) {
+      const tx = transaction as InternalTransaction
+      transactionsBatch.push({
+        ...transaction,
+        senderKeyId: getSenderKeyId(this.tenantId, tx),
+        receiverKeyId: getReceiverKeyId(this.tenantId, tx),
+      })
+      if (transactionsBatch.length === 100) {
+        yield transactionsBatch
+        transactionsBatch = []
+      }
+    }
+    if (transactionsBatch.length) {
+      yield transactionsBatch
+    }
+  }
+
+  // TODO: Remove this after all rules support streaming
+  private async getRulesEngineTransactions(
+    filters: Filter<InternalTransaction>[],
+    timeRange: TimeRange | undefined,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
+    limit?: number
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
+    const generator = this.getRulesEngineTransactionsGenerator(
+      filters,
+      timeRange,
+      filterOptions,
+      attributesToFetch,
+      limit
+    )
+    const transactions: Array<AuxiliaryIndexTransaction> = []
+    for await (const data of generator) {
+      transactions.push(...data)
+    }
+    return transactions
   }
 }

@@ -1,12 +1,12 @@
 import { JSONSchemaType } from 'ajv'
-import { startCase } from 'lodash'
+import { mergeWith, uniq, startCase } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
@@ -70,6 +70,7 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
     }
     return hitResult
   }
+
   private getUniqueIdentifier(paymentDetails: PaymentDetails | undefined) {
     if (paymentDetails?.method === undefined) return undefined
     const identifiers = PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentDetails?.method]
@@ -80,25 +81,29 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
       )
       .join(', ')
   }
-  private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
-    const { sendingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        {
-          ...this.transaction,
-          originUserId: undefined, // to force search by payment details
-          destinationUserId: undefined,
-        },
-        'origin',
-        this.transactionRepository,
-        {
-          timeWindow: this.parameters.timeWindow,
-          checkDirection: 'sending',
-          filters: this.filters,
-        },
-        ['timestamp', 'originUserId']
-      )
 
-    return sendingTransactions
+  private async *getRawTransactionsData(): AsyncGenerator<
+    AuxiliaryIndexTransaction[]
+  > {
+    const generator = getTransactionUserPastTransactionsByDirectionGenerator(
+      {
+        ...this.transaction,
+        originUserId: undefined, // to force search by payment details
+        destinationUserId: undefined,
+      },
+      'origin',
+      this.transactionRepository,
+      {
+        timeWindow: this.parameters.timeWindow,
+        checkDirection: 'sending',
+        filters: this.filters,
+      },
+      ['timestamp', 'originUserId']
+    )
+
+    for await (const data of generator) {
+      yield data.sendingTransactions
+    }
   }
 
   public shouldUpdateUserAggregation(
@@ -117,14 +122,23 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const sendingTransactions = await this.getRawTransactionsData()
-
-    sendingTransactions.push(this.transaction)
-
-    await this.saveRebuiltRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(sendingTransactions)
-    )
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData()) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData | undefined, b: AggregationData | undefined) => {
+          const result: AggregationData = {
+            userIds: uniq([...(a?.userIds ?? []), ...(b?.userIds ?? [])]),
+          }
+          return result
+        }
+      )
+    }
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
   private async getData(): Promise<{
@@ -145,23 +159,21 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
       }
     }
 
-    // Fallback
     if (this.shouldUseRawData()) {
-      const sendingTransactions = await this.getRawTransactionsData()
-      const sendingTransactionsWithOriginUserId = sendingTransactions.filter(
-        (transaction) => transaction.originUserId
-      )
-
-      // Update aggregations
-      await this.saveRebuiltRuleAggregations(
-        'origin',
-        await this.getTimeAggregatedResult(sendingTransactionsWithOriginUserId)
-      )
-
-      return {
-        userIds: this.getUniqueOriginUserIds(
+      const uniqueUserIds = new Set<string>()
+      for await (const data of this.getRawTransactionsData()) {
+        const sendingTransactionsWithOriginUserId = data.filter(
+          (transaction) => transaction.originUserId
+        )
+        const partialUserIds = this.getUniqueOriginUserIds(
           sendingTransactionsWithOriginUserId
-        ),
+        )
+        Array.from(partialUserIds).forEach((userId) =>
+          uniqueUserIds.add(userId)
+        )
+      }
+      return {
+        userIds: uniqueUserIds,
       }
     } else {
       return {

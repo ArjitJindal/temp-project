@@ -1,9 +1,10 @@
 import { JSONSchemaType } from 'ajv'
+import { mergeWith } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { RuleHitResultItem } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
@@ -144,42 +145,41 @@ export default class BankNameChangeRule extends TransactionAggregationRule<
     }
 
     if (this.shouldUseRawData()) {
-      const { sendingTransactions, receivingTransactions } =
-        await this.getRawTransactionsData(direction)
-      return {
-        ...sendingTransactions.reduce<AggregationData>(
-          (agg, txn) => bankNameChangeReducer('origin', agg, txn),
-          initialAggregationData()
-        ),
-        ...receivingTransactions.reduce<AggregationData>(
-          (agg, txn) => bankNameChangeReducer('destination', agg, txn),
-          initialAggregationData()
-        ),
+      let aggregationData = initialAggregationData()
+      for await (const data of this.getRawTransactionsData(direction)) {
+        aggregationData = aggregationDataMerger(
+          data.sendingTransactions.reduce<AggregationData>(
+            (agg, txn) => bankNameChangeReducer('origin', agg, txn),
+            initialAggregationData()
+          ),
+          data.receivingTransactions.reduce<AggregationData>(
+            (agg, txn) => bankNameChangeReducer('destination', agg, txn),
+            initialAggregationData()
+          )
+        )
       }
+      return aggregationData
     }
     return initialAggregationData()
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     direction: 'origin' | 'destination'
-  ): Promise<{
+  ): AsyncGenerator<{
     receivingTransactions: AuxiliaryIndexTransaction[]
     sendingTransactions: AuxiliaryIndexTransaction[]
   }> {
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        this.transactionRepository,
-        {
-          timeWindow: this.parameters.timeWindow,
-          checkDirection: 'all',
-          filters: this.filters,
-        },
-        ['timestamp', 'originPaymentDetails', 'destinationPaymentDetails']
-      )
-
-    return { sendingTransactions, receivingTransactions }
+    yield* getTransactionUserPastTransactionsByDirectionGenerator(
+      this.transaction,
+      direction,
+      this.transactionRepository,
+      {
+        timeWindow: this.parameters.timeWindow,
+        checkDirection: 'all',
+        filters: this.filters,
+      },
+      ['timestamp', 'originPaymentDetails', 'destinationPaymentDetails']
+    )
   }
 
   public shouldUpdateUserAggregation(
@@ -192,22 +192,20 @@ export default class BankNameChangeRule extends TransactionAggregationRule<
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const { sendingTransactions, receivingTransactions } =
-      await this.getRawTransactionsData(direction)
-
-    if (direction === 'origin') {
-      sendingTransactions.push(this.transaction)
-    } else {
-      receivingTransactions.push(this.transaction)
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData(direction)) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data.sendingTransactions,
+        data.receivingTransactions
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        aggregationDataMerger
+      )
     }
 
-    await this.saveRebuiltRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(
-        sendingTransactions,
-        receivingTransactions
-      )
-    )
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
   private async getTimeAggregatedResult(
@@ -292,4 +290,29 @@ export const bankNameChangeReducer = (
   targetAggregationData[previousBankname] = bankName
 
   return targetAggregationData
+}
+
+function aggregationDataMerger(
+  a: AggregationData | undefined,
+  b: AggregationData | undefined
+) {
+  const result: AggregationData = {
+    senderBanknameUsage:
+      mergeWith(
+        a?.senderBanknameUsage,
+        b?.senderBanknameUsage,
+        (x: number | undefined, y: number | undefined) => (x ?? 0) + (y ?? 0)
+      ) ?? {},
+    receiverBanknameUsage:
+      mergeWith(
+        a?.receiverBanknameUsage,
+        b?.receiverBanknameUsage,
+        (x: number | undefined, y: number | undefined) => (x ?? 0) + (y ?? 0)
+      ) ?? {},
+    senderPreviousBankName:
+      b?.senderPreviousBankName || a?.senderPreviousBankName || '',
+    receiverPreviousBankName:
+      b?.receiverPreviousBankName || a?.receiverPreviousBankName || '',
+  }
+  return result
 }

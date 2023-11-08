@@ -1,4 +1,4 @@
-import { inRange, random, sumBy } from 'lodash'
+import { inRange, mergeWith, random, sumBy } from 'lodash'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
@@ -10,7 +10,7 @@ import {
 import { TransactionHistoricalFilters } from '../filters'
 import {
   getTransactionsTotalAmount,
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
@@ -30,15 +30,13 @@ type AggregationData = {
   receivingAmount?: number
 }
 
+type AggregationResultStats = {
+  totalAmount?: number
+  totalCount: number
+}
 type AggregationResult = {
-  period1: {
-    totalAmount?: number
-    totalCount: number
-  }
-  period2: {
-    totalAmount?: number
-    totalCount: number
-  }
+  period1: AggregationResultStats
+  period2: AggregationResultStats
 }
 
 export type TransactionsExceededParameters = {
@@ -61,7 +59,7 @@ export type TransactionsExceededParameters = {
   }
 }
 
-export default abstract class TransactionsExceededBaseRule<
+export default abstract class TransactionsDeviationBaseRule<
   Params extends TransactionsExceededParameters
 > extends TransactionAggregationRule<
   Params,
@@ -281,9 +279,9 @@ export default abstract class TransactionsExceededBaseRule<
     }
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     direction: 'origin' | 'destination'
-  ): Promise<{
+  ): AsyncGenerator<{
     sendingTransactions: AuxiliaryIndexTransaction[]
     receivingTransactions: AuxiliaryIndexTransaction[]
   }> {
@@ -291,23 +289,17 @@ export default abstract class TransactionsExceededBaseRule<
 
     const checkDirection = direction === 'origin' ? checkSender : checkReceiver
 
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        this.transactionRepository,
-        {
-          timeWindow: this.parameters.period2,
-          checkDirection,
-          filters: this.filters,
-        },
-        ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
-      )
-
-    return {
-      sendingTransactions,
-      receivingTransactions,
-    }
+    yield* await getTransactionUserPastTransactionsByDirectionGenerator(
+      this.transaction,
+      direction,
+      this.transactionRepository,
+      {
+        timeWindow: this.parameters.period2,
+        checkDirection,
+        filters: this.filters,
+      },
+      ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
+    )
   }
 
   private async getData(
@@ -457,44 +449,43 @@ export default abstract class TransactionsExceededBaseRule<
       }
     }
 
-    // Fallback
+    let aggregationResult = await this.getAggregationResult(
+      direction === 'origin' ? [this.transaction] : [],
+      direction === 'origin' ? [] : [this.transaction]
+    )
     if (this.shouldUseRawData()) {
-      const { sendingTransactions, receivingTransactions } =
-        await this.getRawTransactionsData(direction)
-
-      // Update aggregations
-      const aggregationResult = await this.getTimeAggregatedResult(
-        sendingTransactions,
-        receivingTransactions
-      )
-
-      await this.saveRebuiltRuleAggregations(direction, aggregationResult)
-
-      return await this.computeRawData(
-        direction,
-        sendingTransactions,
-        receivingTransactions
-      )
+      for await (const data of this.getRawTransactionsData(direction)) {
+        const partialAggregationResult = await this.getAggregationResult(
+          data.sendingTransactions,
+          data.receivingTransactions
+        )
+        aggregationResult = mergeWith(
+          aggregationResult,
+          partialAggregationResult,
+          (a: AggregationResultStats, b: AggregationResultStats) => {
+            return mergeWith(
+              a,
+              b,
+              (x: number | undefined, y: number | undefined) =>
+                (x ?? 0) + (y ?? 0)
+            )
+          }
+        )
+      }
+      return aggregationResult
     } else {
-      return await this.computeRawData(direction)
+      return aggregationResult
     }
   }
 
-  private async computeRawData(
-    direction: 'origin' | 'destination',
-    sendingTransactions: AuxiliaryIndexTransaction[] = [],
-    receivingTransactions: AuxiliaryIndexTransaction[] = []
+  private async getAggregationResult(
+    sendingTransactions: AuxiliaryIndexTransaction[],
+    receivingTransactions: AuxiliaryIndexTransaction[]
   ): Promise<AggregationResult> {
     const sendingTransactionsToCheck = [...sendingTransactions]
     const receivingTransactionsToCheck = [...receivingTransactions]
     const aggregationType = this.getAggregationType()
     const { currency } = this.getMultiplierThresholds()
-
-    if (direction === 'origin') {
-      sendingTransactionsToCheck.push(this.transaction)
-    } else {
-      receivingTransactionsToCheck.push(this.transaction)
-    }
 
     const period1AmountDetails = this.getPeriod1Transactions(
       sendingTransactionsToCheck
@@ -546,21 +537,25 @@ export default abstract class TransactionsExceededBaseRule<
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const { sendingTransactions, receivingTransactions } =
-      await this.getRawTransactionsData(direction)
-
-    if (this.transaction.originUserId || this.transaction.destinationUserId) {
-      if (direction === 'origin') {
-        sendingTransactions.push(this.transaction)
-      } else {
-        receivingTransactions.push(this.transaction)
-      }
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData(direction)) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data.sendingTransactions,
+        data.receivingTransactions
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData, b: AggregationData) => {
+          return mergeWith(
+            a,
+            b,
+            (x: number | undefined, y: number | undefined) =>
+              (x ?? 0) + (y ?? 0)
+          )
+        }
+      )
     }
-
-    const timeAggregatedResult = await this.getTimeAggregatedResult(
-      sendingTransactions,
-      receivingTransactions
-    )
 
     await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }

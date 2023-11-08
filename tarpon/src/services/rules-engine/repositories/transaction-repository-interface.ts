@@ -46,23 +46,23 @@ export interface RulesEngineTransactionRepositoryInterface {
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<Array<AuxiliaryIndexTransaction>>
 
-  getGenericUserSendingTransactions(
+  getGenericUserSendingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
-  ): Promise<Array<AuxiliaryIndexTransaction>>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>>
 
-  getGenericUserReceivingTransactions(
+  getGenericUserReceivingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
-  ): Promise<Array<AuxiliaryIndexTransaction>>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>>
 
   getUserSendingTransactions(
     userId: string,
@@ -71,22 +71,8 @@ export interface RulesEngineTransactionRepositoryInterface {
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<Array<AuxiliaryIndexTransaction>>
 
-  getNonUserSendingTransactions(
-    paymentDetails: PaymentDetails,
-    timeRange: TimeRange,
-    filterOptions: TransactionsFilterOptions,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): Promise<Array<AuxiliaryIndexTransaction>>
-
   getUserReceivingTransactions(
     userId: string,
-    timeRange: TimeRange,
-    filterOptions: TransactionsFilterOptions,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): Promise<Array<AuxiliaryIndexTransaction>>
-
-  getNonUserReceivingTransactions(
-    paymentDetails: PaymentDetails,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>

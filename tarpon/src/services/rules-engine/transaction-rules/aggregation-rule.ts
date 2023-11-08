@@ -1,4 +1,4 @@
-import { mapValues, memoize } from 'lodash'
+import { mapValues } from 'lodash'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
@@ -170,7 +170,7 @@ export abstract class TransactionAggregationRule<
     logger.info('Saved rebuilt aggregations')
   }
 
-  protected async getRuleAggregations<A>(
+  public async getRuleAggregations<A>(
     direction: 'origin' | 'destination',
     afterTimestamp: number,
     beforeTimestamp: number
@@ -207,18 +207,15 @@ export abstract class TransactionAggregationRule<
     return `${AGGREGATION_VERSION}_${this.getRuleAggregationVersion()}_${ruleInstanceVersion}`
   }
 
-  getLatestAvailableAggregationVersion = memoize(
-    async (
-      userKeyId: string,
-      ruleInstanceId: string
-    ): Promise<string | undefined> => {
-      return this.aggregationRepository?.getLatestAvailableUserRuleTimeAggregationVersion(
-        userKeyId,
-        ruleInstanceId
-      )
-    },
-    (...args) => args.join('_')
-  )
+  getLatestAvailableAggregationVersion = async (
+    userKeyId: string,
+    ruleInstanceId: string
+  ): Promise<string | undefined> => {
+    return this.aggregationRepository?.getLatestAvailableUserRuleTimeAggregationVersion(
+      userKeyId,
+      ruleInstanceId
+    )
+  }
 
   private getUpdatedTTLAttribute(): number {
     const units = this.getMaxTimeWindow().units

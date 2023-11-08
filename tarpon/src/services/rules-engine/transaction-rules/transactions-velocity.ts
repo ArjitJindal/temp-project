@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import { sumBy } from 'lodash'
+import { sumBy, mergeWith } from 'lodash'
 import { TransactionHistoricalFilters } from '../filters'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
@@ -13,7 +13,7 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResultItem } from '../rule'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { getTimestampRange } from '../utils/time-utils'
@@ -132,22 +132,25 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const { sendingTransactions, receivingTransactions } =
-      await this.getRawTransactionsData(direction)
-
-    if (this.transaction.originUserId || this.transaction.destinationUserId) {
-      if (direction === 'origin') {
-        sendingTransactions.push(this.transaction)
-      } else {
-        receivingTransactions.push(this.transaction)
-      }
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData(direction)) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data.sendingTransactions,
+        data.receivingTransactions
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData, b: AggregationData) => {
+          return mergeWith(
+            a,
+            b,
+            (x: number | undefined, y: number | undefined) =>
+              (x ?? 0) + (y ?? 0)
+          )
+        }
+      )
     }
-
-    const timeAggregatedResult = await this.getTimeAggregatedResult(
-      sendingTransactions,
-      receivingTransactions
-    )
-
     await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
@@ -176,28 +179,22 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
       return transactionsCount
     }
 
-    // Fallback
     if (this.shouldUseRawData()) {
-      const { sendingTransactions, receivingTransactions } =
-        await this.getRawTransactionsData(direction)
+      let transactionsCount = 0
+      for await (const data of this.getRawTransactionsData(direction)) {
+        transactionsCount +=
+          data.sendingTransactions.length + data.receivingTransactions.length
+      }
 
-      await this.saveRebuiltRuleAggregations(
-        direction,
-        await this.getTimeAggregatedResult(
-          sendingTransactions,
-          receivingTransactions
-        )
-      )
-
-      return sendingTransactions.length + receivingTransactions.length
+      return transactionsCount
     } else {
       return 0
     }
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     direction: 'origin' | 'destination'
-  ): Promise<{
+  ): AsyncGenerator<{
     sendingTransactions: AuxiliaryIndexTransaction[]
     receivingTransactions: AuxiliaryIndexTransaction[]
   }> {
@@ -210,34 +207,34 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
       destinationMatchPaymentMethodDetails,
     } = this.parameters
 
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        this.transactionRepository,
-        {
-          timeWindow,
-          checkDirection:
-            (direction === 'origin' ? checkSender : checkReceiver) ?? 'all',
-          matchPaymentMethodDetails:
-            direction === 'origin'
-              ? originMatchPaymentMethodDetails
-              : destinationMatchPaymentMethodDetails,
-          filters: this.filters,
-        },
-        ['timestamp', 'originUserId', 'destinationUserId']
+    const generator = getTransactionUserPastTransactionsByDirectionGenerator(
+      this.transaction,
+      direction,
+      this.transactionRepository,
+      {
+        timeWindow,
+        checkDirection:
+          (direction === 'origin' ? checkSender : checkReceiver) ?? 'all',
+        matchPaymentMethodDetails:
+          direction === 'origin'
+            ? originMatchPaymentMethodDetails
+            : destinationMatchPaymentMethodDetails,
+        filters: this.filters,
+      },
+      ['timestamp', 'originUserId', 'destinationUserId']
+    )
+    for await (const data of generator) {
+      const filteredSendingTransactions = data.sendingTransactions.filter(
+        (transaction) => !onlyCheckKnownUsers || transaction.originUserId
+      )
+      const filteredReceivingTransactions = data.receivingTransactions.filter(
+        (transaction) => !onlyCheckKnownUsers || transaction.destinationUserId
       )
 
-    const filteredSendingTransactions = sendingTransactions.filter(
-      (transaction) => !onlyCheckKnownUsers || transaction.originUserId
-    )
-    const filteredReceivingTransactions = receivingTransactions.filter(
-      (transaction) => !onlyCheckKnownUsers || transaction.destinationUserId
-    )
-
-    return {
-      sendingTransactions: filteredSendingTransactions,
-      receivingTransactions: filteredReceivingTransactions,
+      yield {
+        sendingTransactions: filteredSendingTransactions,
+        receivingTransactions: filteredReceivingTransactions,
+      }
     }
   }
 

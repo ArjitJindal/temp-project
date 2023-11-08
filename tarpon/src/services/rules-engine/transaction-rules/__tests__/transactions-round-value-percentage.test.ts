@@ -7,6 +7,7 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
@@ -17,11 +18,19 @@ const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 100,
 }
-
 const TEST_TRANSACTION_AMOUNT_101: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 101,
 }
+const DEFAULT_RULE_PARAMETERS: TransactionsRoundValuePercentageRuleParameters =
+  {
+    timeWindow: {
+      units: 1,
+      granularity: 'day',
+    },
+    initialTransactions: 1,
+    patternPercentageLimit: 50,
+  }
 
 dynamoDbSetupHook()
 ruleVariantsTest(true, () => {
@@ -31,14 +40,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'transactions-round-value-percentage',
-        defaultParameters: {
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-          initialTransactions: 1,
-          patternPercentageLimit: 50,
-        } as TransactionsRoundValuePercentageRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
         defaultAction: 'FLAG',
       },
     ])
@@ -153,3 +155,46 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'transactions-round-value-percentage',
+    defaultParameters: DEFAULT_RULE_PARAMETERS,
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2023-01-01T01:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+      timestamp: dayjs('2023-01-01T01:30:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '2',
+      destinationUserId: '1',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2023-01-01T03:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      { all: 2, match: 1, hour: '2023010101' },
+      { all: 1, match: 1, hour: '2023010103' },
+    ],
+    destination: [
+      { all: 2, match: 1, hour: '2023010101' },
+      { all: 1, match: 1, hour: '2023010103' },
+    ],
+  }
+)

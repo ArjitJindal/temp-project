@@ -7,10 +7,26 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
+const DEFAULT_RULE_PARAMETERS: TransactionsExceedPastPeriodRuleParameters = {
+  multiplierThreshold: 2,
+  timeWindow1: {
+    units: 5,
+    granularity: 'hour',
+  },
+  timeWindow2: {
+    units: 10,
+    granularity: 'hour',
+  },
+  minTransactionsInTimeWindow2: 1,
+  checkSender: 'all',
+  checkReceiver: 'none',
+}
 
 dynamoDbSetupHook()
 ruleVariantsTest(true, () => {
@@ -20,20 +36,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'transactions-exceed-past-period',
-        defaultParameters: {
-          multiplierThreshold: 2,
-          timeWindow1: {
-            units: 5,
-            granularity: 'hour',
-          },
-          timeWindow2: {
-            units: 10,
-            granularity: 'hour',
-          },
-          minTransactionsInTimeWindow2: 1,
-          checkSender: 'all',
-          checkReceiver: 'none',
-        } as TransactionsExceedPastPeriodRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
       },
     ])
 
@@ -141,3 +144,50 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'transactions-exceed-past-period',
+    defaultParameters: {
+      ...DEFAULT_RULE_PARAMETERS,
+      checkSender: 'all',
+      checkReceiver: 'all',
+    },
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '3',
+      timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      timestamp: dayjs('2022-01-01T07:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      { count: 2, hour: '2022010100' },
+      { count: 1, hour: '2022010106' },
+      { count: 1, hour: '2022010107' },
+    ],
+    destination: [
+      { count: 2, hour: '2022010100' },
+      { count: 1, hour: '2022010107' },
+    ],
+  }
+)

@@ -9,8 +9,17 @@ import {
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
   ruleVariantsTest,
+  testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
+const DEFAULT_RULE_PARAMETERS: SenderLocationChangesFrequencyRuleParameters = {
+  uniqueCitiesCountThreshold: 2,
+  timeWindow: {
+    units: 1,
+    granularity: 'day',
+  },
+}
 
 dynamoDbSetupHook()
 
@@ -22,13 +31,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'sender-location-changes-frequency',
-        defaultParameters: {
-          uniqueCitiesCountThreshold: 2,
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-        } as SenderLocationChangesFrequencyRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
         defaultAction: 'FLAG',
       },
     ])
@@ -204,3 +207,54 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'sender-location-changes-frequency',
+    defaultParameters: DEFAULT_RULE_PARAMETERS,
+  },
+  [
+    getTestTransaction({
+      originUserId: '1-1',
+      timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+      originDeviceData: {
+        // City: Sungai Petani
+        ipAddress: '175.141.76.76',
+      },
+    }),
+    getTestTransaction({
+      originUserId: '1-1',
+      timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
+      originDeviceData: {
+        // City: Bourg-en-Bresse
+        ipAddress: '176.135.186.17',
+      },
+    }),
+    getTestTransaction({
+      originUserId: '1-1',
+      timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
+      originDeviceData: {
+        // City: Newcastle-under-Lyme
+        ipAddress: '160.5.125.137',
+      },
+    }),
+  ],
+  {
+    origin: [
+      {
+        ipAddresses: ['176.135.186.17', '175.141.76.76'],
+        transactionsCount: 2,
+        hour: '2022010100',
+      },
+      {
+        ipAddresses: ['160.5.125.137'],
+        transactionsCount: 1,
+        hour: '2022010112',
+      },
+    ],
+    destination: undefined,
+  }
+)

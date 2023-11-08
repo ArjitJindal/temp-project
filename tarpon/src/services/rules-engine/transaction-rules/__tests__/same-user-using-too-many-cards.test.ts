@@ -9,10 +9,18 @@ import {
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
   ruleVariantsTest,
+  testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const TEST_TENANT_ID = getTestTenantId()
+const DEFAULT_RULE_PARAMETERS: SameUserUsingTooManyCardsParameters = {
+  uniqueCardsCountThreshold: 1,
+  timeWindow: {
+    units: 1,
+    granularity: 'day',
+  },
+}
 
 dynamoDbSetupHook()
 
@@ -20,13 +28,7 @@ setUpRulesHooks(TEST_TENANT_ID, [
   {
     type: 'TRANSACTION',
     ruleImplementationName: 'same-user-using-too-many-cards',
-    defaultParameters: {
-      uniqueCardsCountThreshold: 1,
-      timeWindow: {
-        units: 1,
-        granularity: 'day',
-      },
-    } as SameUserUsingTooManyCardsParameters,
+    defaultParameters: DEFAULT_RULE_PARAMETERS,
     defaultAction: 'FLAG',
   },
 ])
@@ -181,3 +183,56 @@ ruleVariantsTest(true, () => {
     )
   })
 })
+
+{
+  const TEST_TENANT_ID = getTestTenantId()
+  testAggregationRebuild(
+    TEST_TENANT_ID,
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'same-user-using-too-many-cards',
+      defaultParameters: DEFAULT_RULE_PARAMETERS,
+    },
+    [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '456',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T08:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'IBAN',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T09:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '789',
+        },
+      }),
+    ],
+    {
+      origin: [
+        { cardFingerprints: ['456', '123'], hour: '2022010100' },
+        { cardFingerprints: [], hour: '2022010108' },
+        { cardFingerprints: ['789'], hour: '2022010109' },
+      ],
+      destination: undefined,
+    }
+  )
+}

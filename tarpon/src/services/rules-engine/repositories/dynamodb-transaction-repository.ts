@@ -33,7 +33,11 @@ import {
 } from '@/core/dynamodb/dynamodb-keys'
 import { getTimestampBasedIDPrefix } from '@/utils/timestampUtils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { dynamoDbQueryHelper, paginateQuery } from '@/utils/dynamodb'
+import {
+  dynamoDbQueryHelper,
+  paginateQuery,
+  paginateQueryGenerator,
+} from '@/utils/dynamodb'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { mergeObjects } from '@/utils/object'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
@@ -464,104 +468,144 @@ export class DynamoDbTransactionRepository
     ) || []) as Array<AuxiliaryIndexTransaction>
   }
 
-  public async getGenericUserSendingTransactions(
+  public async *getGenericUserSendingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
-  ): Promise<Array<AuxiliaryIndexTransaction>> {
-    return userId && !matchPaymentMethodDetails
-      ? this.getUserSendingTransactions(
-          userId,
-          timeRange,
-          filterOptions,
-          attributesToFetch
-        )
-      : paymentDetails
-      ? this.getNonUserSendingTransactions(
-          paymentDetails,
-          timeRange,
-          filterOptions,
-          attributesToFetch
-        )
-      : []
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (userId && !matchPaymentMethodDetails) {
+      yield* this.getUserSendingTransactionsGenerator(
+        userId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else if (paymentDetails) {
+      yield* this.getNonUserSendingTransactionsGenerator(
+        paymentDetails,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else {
+      yield []
+    }
   }
 
-  public async getGenericUserReceivingTransactions(
+  public async *getGenericUserReceivingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
-  ): Promise<Array<AuxiliaryIndexTransaction>> {
-    return userId && !matchPaymentMethodDetails
-      ? this.getUserReceivingTransactions(
-          userId,
-          timeRange,
-          filterOptions,
-          attributesToFetch
-        )
-      : paymentDetails
-      ? this.getNonUserReceivingTransactions(
-          paymentDetails,
-          timeRange,
-          filterOptions,
-          attributesToFetch
-        )
-      : []
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (userId && !matchPaymentMethodDetails) {
+      yield* this.getUserReceivingTransactionsGenerator(
+        userId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else if (paymentDetails) {
+      yield* this.getNonUserReceivingTransactionsGenerator(
+        paymentDetails,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else {
+      yield []
+    }
   }
 
+  public async *getUserSendingTransactionsGenerator(
+    userId: string,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    for (const transactionType of getTransactionTypes(
+      filterOptions?.transactionTypes
+    )) {
+      yield* this.getDynamoDBTransactionsGenerator(
+        DynamoDbKeys.USER_TRANSACTION(
+          this.tenantId,
+          userId,
+          'sending',
+          transactionType
+        ).PartitionKeyID,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
+  }
+
+  // TODO: Remove this after all rules support streaming
   public async getUserSendingTransactions(
     userId: string,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<Array<AuxiliaryIndexTransaction>> {
-    const results = await Promise.all(
-      getTransactionTypes(filterOptions?.transactionTypes).map(
-        (transactionType) =>
-          this.getDynamoDBTransactions(
-            DynamoDbKeys.USER_TRANSACTION(
-              this.tenantId,
-              userId,
-              'sending',
-              transactionType
-            ).PartitionKeyID,
-            timeRange,
-            filterOptions,
-            attributesToFetch
-          )
-      )
+    const generator = this.getUserSendingTransactionsGenerator(
+      userId,
+      timeRange,
+      filterOptions,
+      attributesToFetch
     )
-    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
+    const transactions: Array<AuxiliaryIndexTransaction> = []
+    for await (const data of generator) {
+      transactions.push(...data)
+    }
+    return transactions
   }
 
+  // TODO: Remove this after all rules support streaming
   public async getUserReceivingTransactions(
     userId: string,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<Array<AuxiliaryIndexTransaction>> {
-    const results = await Promise.all(
-      getTransactionTypes(filterOptions?.transactionTypes).map(
-        (transactionType) =>
-          this.getDynamoDBTransactions(
-            DynamoDbKeys.USER_TRANSACTION(
-              this.tenantId,
-              userId,
-              'receiving',
-              transactionType
-            ).PartitionKeyID,
-            timeRange,
-            filterOptions,
-            attributesToFetch
-          )
-      )
+    const generator = this.getUserReceivingTransactionsGenerator(
+      userId,
+      timeRange,
+      filterOptions,
+      attributesToFetch
     )
-    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
+    const transactions: Array<AuxiliaryIndexTransaction> = []
+    for await (const data of generator) {
+      transactions.push(...data)
+    }
+    return transactions
+  }
+
+  public async *getUserReceivingTransactionsGenerator(
+    userId: string,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    for (const transactionType of getTransactionTypes(
+      filterOptions?.transactionTypes
+    )) {
+      yield* this.getDynamoDBTransactionsGenerator(
+        DynamoDbKeys.USER_TRANSACTION(
+          this.tenantId,
+          userId,
+          'receiving',
+          transactionType
+        ).PartitionKeyID,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
   }
 
   public async getGenericUserSendingTransactionsCount(
@@ -706,62 +750,60 @@ export class DynamoDbTransactionRepository
     return sum(results)
   }
 
-  public async getNonUserSendingTransactions(
+  public async *getNonUserSendingTransactionsGenerator(
     paymentDetails: PaymentDetails,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): Promise<Array<AuxiliaryIndexTransaction>> {
-    const results = await Promise.all(
-      getTransactionTypes(filterOptions?.transactionTypes).map(
-        (transactionType) => {
-          const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
-            this.tenantId,
-            paymentDetails,
-            'sending',
-            transactionType
-          )?.PartitionKeyID
-          return partitionKeyId
-            ? this.getDynamoDBTransactions(
-                partitionKeyId,
-                timeRange,
-                filterOptions,
-                attributesToFetch
-              )
-            : []
-        }
-      )
-    )
-    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    for (const transactionType of getTransactionTypes(
+      filterOptions?.transactionTypes
+    )) {
+      const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+        this.tenantId,
+        paymentDetails,
+        'sending',
+        transactionType
+      )?.PartitionKeyID
+      if (partitionKeyId) {
+        yield* this.getDynamoDBTransactionsGenerator(
+          partitionKeyId,
+          timeRange,
+          filterOptions,
+          attributesToFetch
+        )
+      } else {
+        yield []
+      }
+    }
   }
 
-  public async getNonUserReceivingTransactions(
+  public async *getNonUserReceivingTransactionsGenerator(
     paymentDetails: PaymentDetails,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): Promise<Array<AuxiliaryIndexTransaction>> {
-    const results = await Promise.all(
-      getTransactionTypes(filterOptions?.transactionTypes).map(
-        (transactionType) => {
-          const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
-            this.tenantId,
-            paymentDetails,
-            'receiving',
-            transactionType
-          )?.PartitionKeyID
-          return partitionKeyId
-            ? this.getDynamoDBTransactions(
-                partitionKeyId,
-                timeRange,
-                filterOptions,
-                attributesToFetch
-              )
-            : []
-        }
-      )
-    )
-    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    for (const transactionType of getTransactionTypes(
+      filterOptions?.transactionTypes
+    )) {
+      const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+        this.tenantId,
+        paymentDetails,
+        'receiving',
+        transactionType
+      )?.PartitionKeyID
+      if (partitionKeyId) {
+        yield* this.getDynamoDBTransactionsGenerator(
+          partitionKeyId,
+          timeRange,
+          filterOptions,
+          attributesToFetch
+        )
+      } else {
+        yield []
+      }
+    }
   }
 
   public async getIpAddressTransactions(
@@ -841,6 +883,28 @@ export class DynamoDbTransactionRepository
     ) || []) as Array<AuxiliaryIndexTransaction>
   }
 
+  private async *getDynamoDBTransactionsGenerator(
+    partitionKeyId: string,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    const generator = paginateQueryGenerator(
+      this.dynamoDb,
+      this.getTransactionsQuery(
+        partitionKeyId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    )
+    for await (const data of generator) {
+      yield (data.Items?.map((item) =>
+        omit(item, ['PartitionKeyID', 'SortKeyID'])
+      ) || []) as Array<AuxiliaryIndexTransaction>
+    }
+  }
+
   private async getUserTransactionsCount(
     partitionKeyId: string,
     timeRange: TimeRange,
@@ -860,8 +924,15 @@ export class DynamoDbTransactionRepository
 
   private getTransactionFilterQueryInput(
     filterOptions: TransactionsFilterOptions = {},
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+    rawAttributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Partial<QueryCommandInput> {
+    const attributesToFetch = [...rawAttributesToFetch]
+    if (
+      attributesToFetch.length > 0 &&
+      !attributesToFetch.includes('timestamp')
+    ) {
+      attributesToFetch.push('timestamp')
+    }
     const transactionStatesParams = filterOptions.transactionStates?.map(
       (transactionState, index) => [
         `:transactionState${index}`,

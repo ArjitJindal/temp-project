@@ -7,6 +7,7 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
@@ -76,7 +77,7 @@ ruleVariantsTest(true, () => {
     })
   })
 
-  describe('Core login', () => {
+  describe('Core logic', () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     const defaultParams = getDefaultParams()
@@ -384,3 +385,73 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'high-unsuccessfull-state-rate',
+    defaultParameters: getDefaultParams(),
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+      transactionState: 'SUCCESSFUL',
+    }),
+    getTestTransaction({
+      originUserId: '2',
+      destinationUserId: '1',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T01:30:00.000Z').valueOf(),
+      transactionState: 'REFUNDED',
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T01:40:00.000Z').valueOf(),
+      transactionState: 'SUCCESSFUL',
+    }),
+    getTestTransaction({
+      originUserId: '2',
+      destinationUserId: '1',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T02:30:00.000Z').valueOf(),
+      transactionState: 'REFUNDED',
+    }),
+  ],
+  {
+    origin: [
+      {
+        filteredSendingCount: 1,
+        allReceivingCount: 2,
+        allSendingCount: 1,
+        filteredReceivingCount: 2,
+        hour: '2022010101',
+      },
+      {
+        filteredSendingCount: 1,
+        allSendingCount: 1,
+        hour: '2022010102',
+      },
+    ],
+    destination: [
+      {
+        filteredSendingCount: 2,
+        allReceivingCount: 1,
+        allSendingCount: 2,
+        filteredReceivingCount: 1,
+        hour: '2022010101',
+      },
+      {
+        allReceivingCount: 1,
+        filteredReceivingCount: 1,
+        hour: '2022010102',
+      },
+    ],
+  }
+)

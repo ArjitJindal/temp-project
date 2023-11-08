@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { sumBy } from 'lodash'
+import { mergeWith, sumBy } from 'lodash'
 import {
   COMPARATOR_SCHEMA,
   Comparator,
@@ -13,7 +13,7 @@ import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResultItem } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   getTransactionsTotalAmount,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
@@ -36,7 +36,7 @@ export type TransactionsOutflowInflowVolumeRuleParameters = {
   inflow3dsDonePercentageThreshold?: ValueComparator
 }
 
-type Result = {
+type AggregationResult = {
   outflowTransactionAmount: number
   inflowTransactionAmount: number
   outflowTransactionCount: number
@@ -45,7 +45,7 @@ type Result = {
   inflow3dsDoneTransactionCount: number
 }
 
-type AggregationData = Partial<Result>
+type AggregationData = Partial<AggregationResult>
 
 export default class TransactionsOutflowInflowVolumeRule extends TransactionAggregationRule<
   TransactionsOutflowInflowVolumeRuleParameters,
@@ -268,15 +268,15 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     } as RuleHitResultItem
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     direction: 'origin' | 'destination'
-  ): Promise<{
+  ): AsyncGenerator<{
     sendingTransactions: AuxiliaryIndexTransaction[]
     receivingTransactions: AuxiliaryIndexTransaction[]
   }> {
     const { timeWindow } = this.parameters
 
-    return await getTransactionUserPastTransactionsByDirection(
+    yield* getTransactionUserPastTransactionsByDirectionGenerator(
       this.transaction,
       direction,
       this.transactionRepository,
@@ -295,7 +295,9 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     )
   }
 
-  private async getData(direction: 'origin' | 'destination'): Promise<Result> {
+  private async getData(
+    direction: 'origin' | 'destination'
+  ): Promise<AggregationResult> {
     const { timeWindow } = this.parameters
     const { beforeTimestamp, afterTimestamp } = getTimestampRange(
       this.transaction.timestamp,
@@ -403,29 +405,26 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
       }
     }
 
-    // fallback
-
+    let aggregationResult = await this.getAggregationResult(
+      direction,
+      direction === 'origin' ? [this.transaction] : [],
+      direction === 'origin' ? [] : [this.transaction]
+    )
     if (this.shouldUseRawData()) {
-      const { sendingTransactions, receivingTransactions } =
-        await this.getRawTransactionsData(direction)
-
-      // update aggregation
-      await this.saveRebuiltRuleAggregations(
-        direction,
-        await this.getTimeAggregatedResult(
-          sendingTransactions,
-          receivingTransactions
+      for await (const data of this.getRawTransactionsData(direction)) {
+        const partialTimeAggregatedResult = await this.getAggregationResult(
+          direction,
+          data.sendingTransactions,
+          data.receivingTransactions
         )
-      )
-
-      return await this.computeRawData(
-        direction,
-        sendingTransactions,
-        receivingTransactions
-      )
-    } else {
-      return await this.computeRawData(direction)
+        aggregationResult = mergeWith(
+          aggregationResult,
+          partialTimeAggregatedResult,
+          (x: number | undefined, y: number | undefined) => (x ?? 0) + (y ?? 0)
+        )
+      }
     }
+    return aggregationResult
   }
 
   public shouldUpdateUserAggregation(
@@ -438,45 +437,33 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const { sendingTransactions, receivingTransactions } =
-      await this.getRawTransactionsData(direction)
-
-    const amountDetails =
-      direction === 'origin'
-        ? this.transaction.originAmountDetails
-        : this.transaction.destinationAmountDetails
-
-    if (amountDetails) {
-      const transaction = this.transaction
-
-      if (direction === 'origin') {
-        sendingTransactions.push(transaction)
-      } else {
-        receivingTransactions.push(transaction)
-      }
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData(direction)) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data.sendingTransactions,
+        data.receivingTransactions
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData, b: AggregationData) => {
+          return mergeWith(
+            a,
+            b,
+            (x: number | undefined, y: number | undefined) =>
+              (x ?? 0) + (y ?? 0)
+          )
+        }
+      )
     }
-
-    const timeAggregatedResult = await this.getTimeAggregatedResult(
-      sendingTransactions,
-      receivingTransactions
-    )
-
     await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
-  private async computeRawData(
+  private async getAggregationResult(
     direction: 'origin' | 'destination',
     sendingTransactions: AuxiliaryIndexTransaction[] = [],
     receivingTransactions: AuxiliaryIndexTransaction[] = []
-  ): Promise<Result> {
-    const transaction = this.transaction
-
-    if (direction === 'origin') {
-      sendingTransactions.push(transaction)
-    } else {
-      receivingTransactions.push(transaction)
-    }
-
+  ): Promise<AggregationResult> {
     const outflowAmounts = sendingTransactions
       .map((transaction) => transaction.originAmountDetails)
       .filter(Boolean) as TransactionAmountDetails[]
@@ -485,23 +472,12 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
       .map((transaction) => transaction.destinationAmountDetails)
       .filter(Boolean) as TransactionAmountDetails[]
 
-    let targetCurrency = this.getTargetCurrency()
-
-    if (direction === 'origin' && transaction.originAmountDetails) {
-      targetCurrency = transaction.originAmountDetails.transactionCurrency
-    } else if (
-      direction === 'destination' &&
-      transaction.destinationAmountDetails
-    ) {
-      targetCurrency = transaction.destinationAmountDetails.transactionCurrency
-    }
-
     const outflowTransactionCount = sendingTransactions.length
     const inflowTransactionCount = receivingTransactions.length
 
     const [outflowAmountTotal, inflowAmountTotal] = await Promise.all([
-      getTransactionsTotalAmount(outflowAmounts, targetCurrency),
-      getTransactionsTotalAmount(inflowAmounts, targetCurrency),
+      getTransactionsTotalAmount(outflowAmounts, this.getTargetCurrency()),
+      getTransactionsTotalAmount(inflowAmounts, this.getTargetCurrency()),
     ])
 
     const outflow3dsDoneTransactionCount = sendingTransactions.filter(

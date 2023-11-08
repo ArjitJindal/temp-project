@@ -9,8 +9,21 @@ import {
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
   ruleVariantsTest,
+  testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
+const DEFAULT_RULE_PARAMETERS: TooManyTransactionsToHighRiskCountryRuleParameters =
+  {
+    transactionsLimit: 2,
+    timeWindow: {
+      units: 5,
+      granularity: 'second',
+    },
+    highRiskCountries: ['DE', 'TR', 'PK'],
+    checkSender: 'all',
+    checkReceiver: 'all',
+  }
 
 dynamoDbSetupHook()
 
@@ -21,16 +34,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'too-many-transactions-to-high-risk-country',
-        defaultParameters: {
-          transactionsLimit: 2,
-          timeWindow: {
-            units: 5,
-            granularity: 'second',
-          },
-          highRiskCountries: ['DE', 'TR', 'PK'],
-          checkSender: 'all',
-          checkReceiver: 'all',
-        } as TooManyTransactionsToHighRiskCountryRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
       },
     ])
     testRuleDescriptionFormatting(
@@ -79,16 +83,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'too-many-transactions-to-high-risk-country',
-        defaultParameters: {
-          transactionsLimit: 2,
-          timeWindow: {
-            units: 5,
-            granularity: 'second',
-          },
-          highRiskCountries: ['DE', 'TR', 'PK'],
-          checkSender: 'all',
-          checkReceiver: 'all',
-        } as TooManyTransactionsToHighRiskCountryRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
       },
     ])
 
@@ -406,3 +401,67 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'too-many-transactions-to-high-risk-country',
+    defaultParameters: {
+      transactionsLimit: 2,
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+      },
+      highRiskCountries: ['DE', 'TR', 'PK'],
+      checkSender: 'all',
+      checkReceiver: 'all',
+    },
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      originAmountDetails: {
+        country: 'DE',
+        transactionAmount: 800,
+        transactionCurrency: 'EUR',
+      },
+      timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      originAmountDetails: {
+        country: 'TR',
+        transactionAmount: 800,
+        transactionCurrency: 'EUR',
+      },
+      timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      originAmountDetails: {
+        country: 'JP',
+        transactionAmount: 800,
+        transactionCurrency: 'EUR',
+      },
+      timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      originAmountDetails: {
+        country: 'DE',
+        transactionAmount: 800,
+        transactionCurrency: 'EUR',
+      },
+      timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      { sendingCount: 2, hour: '2022010100' },
+      { sendingCount: 1, hour: '2022010103' },
+    ],
+    destination: undefined,
+  }
+)

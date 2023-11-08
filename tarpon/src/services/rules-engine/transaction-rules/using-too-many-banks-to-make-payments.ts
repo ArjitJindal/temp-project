@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { compact } from 'lodash'
+import { compact, mergeWith, uniq } from 'lodash'
 import { TransactionHistoricalFilters } from '../filters'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
@@ -11,7 +11,7 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResultItem } from '../rule'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { getTimestampRange } from '../utils/time-utils'
@@ -118,22 +118,27 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const { sendingTransactions, receivingTransactions } =
-      await this.getRawTransactionsData(direction)
-
-    if (this.transaction.originUserId || this.transaction.destinationUserId) {
-      if (direction === 'origin') {
-        sendingTransactions.push(this.transaction)
-      } else {
-        receivingTransactions.push(this.transaction)
-      }
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData(direction)) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data.sendingTransactions,
+        data.receivingTransactions,
+        direction
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData | undefined, b: AggregationData | undefined) => {
+          const result: AggregationData = {
+            uniqueBanks: uniq([
+              ...(a?.uniqueBanks ?? []),
+              ...(b?.uniqueBanks ?? []),
+            ]),
+          }
+          return result
+        }
+      )
     }
-
-    const timeAggregatedResult = await this.getTimeAggregatedResult(
-      sendingTransactions,
-      receivingTransactions,
-      direction
-    )
 
     await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
@@ -165,37 +170,16 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
       return updatedUniqueBanks.size
     }
 
-    // Fallback
     if (this.shouldUseRawData()) {
-      const { sendingTransactions, receivingTransactions } =
-        await this.getRawTransactionsData(direction)
-      await this.saveRebuiltRuleAggregations(
-        direction,
-        await this.getTimeAggregatedResult(
-          sendingTransactions,
-          receivingTransactions,
+      const uniqueBanks = this.getUniqueBanks([this.transaction], direction)
+      for await (const data of this.getRawTransactionsData(direction)) {
+        const banks = this.getUniqueBanks(
+          data.sendingTransactions.concat(data.receivingTransactions),
           direction
         )
-      )
-      if (checkDirection === 'sending') {
-        return this.getUniqueBanks(
-          sendingTransactions.concat(this.transaction),
-          direction
-        ).size
-      } else if (checkDirection === 'receiving') {
-        return this.getUniqueBanks(
-          receivingTransactions.concat(this.transaction),
-          direction
-        ).size
-      } else {
-        const uniqueBanks = this.getUniqueBanks(
-          sendingTransactions
-            .concat(receivingTransactions)
-            .concat(this.transaction),
-          direction
-        )
-        return uniqueBanks.size
+        Array.from(banks).forEach((bank) => uniqueBanks.add(bank))
       }
+      return uniqueBanks.size
     } else {
       return checkDirection != 'none'
         ? direction === 'origin'
@@ -213,17 +197,17 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
     }
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     direction: 'origin' | 'destination'
-  ): Promise<{
+  ): AsyncGenerator<{
     sendingTransactions: AuxiliaryIndexTransaction[]
     receivingTransactions: AuxiliaryIndexTransaction[]
   }> {
     const { timeWindow, checkSender, checkReceiver, onlyCheckKnownUsers } =
       this.parameters
 
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
+    const generator =
+      await getTransactionUserPastTransactionsByDirectionGenerator(
         this.transaction,
         direction,
         this.transactionRepository,
@@ -242,17 +226,19 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
         ]
       )
 
-    const filteredSendingTransactions = this.filterTransactions(
-      sendingTransactions,
-      onlyCheckKnownUsers
-    )
-    const filteredReceivingTransactions = this.filterTransactions(
-      receivingTransactions,
-      onlyCheckKnownUsers
-    )
-    return {
-      sendingTransactions: filteredSendingTransactions,
-      receivingTransactions: filteredReceivingTransactions,
+    for await (const data of generator) {
+      const filteredSendingTransactions = this.filterTransactions(
+        data.sendingTransactions,
+        onlyCheckKnownUsers
+      )
+      const filteredReceivingTransactions = this.filterTransactions(
+        data.receivingTransactions,
+        onlyCheckKnownUsers
+      )
+      yield {
+        sendingTransactions: filteredSendingTransactions,
+        receivingTransactions: filteredReceivingTransactions,
+      }
     }
   }
 

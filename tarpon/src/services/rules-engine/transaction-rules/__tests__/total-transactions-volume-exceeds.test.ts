@@ -6,6 +6,7 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -18,7 +19,7 @@ const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
 
 const TEST_TRANSACTION_AMOUNT_500: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
-  transactionAmount: 1500,
+  transactionAmount: 500,
 }
 
 dynamoDbSetupHook()
@@ -135,3 +136,66 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'total-transactions-volume-exceeds',
+    defaultParameters: getDefaultParams(),
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '2',
+      destinationUserId: '1',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_500,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_500,
+      timestamp: dayjs('2022-01-01T10:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      {
+        receivingCount: 1,
+        sendingCount: 1,
+        sendingAmount: 100,
+        receivingAmount: 100,
+        hour: '2022010100',
+      },
+      {
+        sendingAmount: 500,
+        sendingCount: 1,
+        hour: '2022010110',
+      },
+    ],
+    destination: [
+      {
+        receivingCount: 1,
+        sendingCount: 1,
+        sendingAmount: 100,
+        receivingAmount: 100,
+        hour: '2022010100',
+      },
+      {
+        receivingCount: 1,
+        receivingAmount: 500,
+        hour: '2022010110',
+      },
+    ],
+  }
+)

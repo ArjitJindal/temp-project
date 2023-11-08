@@ -21,7 +21,6 @@ import TransactionNewCurrencyRule from './transaction-new-currency'
 import TransactionReferenceKeywordRule from './transaction-reference-keyword'
 import TransactionsVelocityRule from './transactions-velocity'
 import TransactionsVolumeRule from './transactions-volume'
-import UserTransactionPairsRule from './user-transaction-pairs'
 import TransactionMatchesPatternRule from './transaction-amount-pattern'
 import MerchantReceiverNameRule from './merchant-receiver-name'
 import BlacklistCardIssuedCountryRule from './blacklist-card-issued-country'
@@ -79,7 +78,6 @@ export const _TRANSACTION_RULES = {
   'transaction-new-currency': TransactionNewCurrencyRule,
   'transactions-velocity': TransactionsVelocityRule,
   'transactions-volume': TransactionsVolumeRule,
-  'user-transaction-pairs': UserTransactionPairsRule,
   'transaction-amount-pattern': TransactionMatchesPatternRule,
   'merchant-receiver-name': MerchantReceiverNameRule,
   'blacklist-card-issued-country': BlacklistCardIssuedCountryRule,

@@ -5,6 +5,7 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -873,3 +874,62 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'transactions-average-amount-exceeded',
+    defaultParameters: getDefaultParams(),
+  },
+  [
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+      timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1',
+      destinationUserId: '2',
+      originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+      destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+      timestamp: dayjs('2022-01-02T10:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      {
+        sendingAmount: 200,
+        sendingCount: 2,
+        hour: '2022010100',
+      },
+      {
+        sendingAmount: 300,
+        sendingCount: 1,
+        hour: '2022010210',
+      },
+    ],
+    destination: [
+      {
+        receivingCount: 2,
+        receivingAmount: 200,
+        hour: '2022010100',
+      },
+      {
+        receivingCount: 1,
+        receivingAmount: 300,
+        hour: '2022010210',
+      },
+    ],
+  }
+)

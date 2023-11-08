@@ -4,7 +4,7 @@ import {
   PERCENT_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
-import TransactionsExceededBaseRule, {
+import TransactionsDeviationBaseRule, {
   TransactionsExceededParameters,
 } from './transactions-exceeded-base'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
@@ -25,9 +25,9 @@ export type TransactionVolumeExceedsTwoPeriodsRuleParameters =
   TransactionVolumeExceedsTwoPeriodsRulePartialParams &
     TransactionsExceededParameters
 
-export class TransactionVolumeExceedsTwoPeriodsRule extends TransactionsExceededBaseRule<TransactionVolumeExceedsTwoPeriodsRuleParameters> {
+export class TransactionVolumeExceedsTwoPeriodsRule extends TransactionsDeviationBaseRule<TransactionVolumeExceedsTwoPeriodsRuleParameters> {
   public static getSchema(): JSONSchemaType<TransactionVolumeExceedsTwoPeriodsRulePartialParams> {
-    const baseSchema = TransactionsExceededBaseRule.getBaseSchema()
+    const baseSchema = TransactionsDeviationBaseRule.getBaseSchema()
 
     const partialSchema: JSONSchemaType<TransactionVolumeExceedsTwoPeriodsRulePartialParams> =
       {

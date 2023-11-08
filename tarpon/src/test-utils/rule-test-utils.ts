@@ -1,4 +1,4 @@
-import { omit, uniq } from 'lodash'
+import { last, omit, uniq } from 'lodash'
 import { createConsumerUser, getTestUser } from './user-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -20,13 +20,19 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
 import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
+import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
+import {
+  TRANSACTION_RULES,
+  TransactionRuleBase,
+} from '@/services/rules-engine/transaction-rules'
+import { TransactionAggregationRule } from '@/services/rules-engine/transaction-rules/aggregation-rule'
 
 const DEFAULT_DESCRIPTION = 'test rule description.'
 
 export async function createRule(
   testTenantId: string,
   rule: Partial<Rule>,
-  ruleInstance?: Partial<RuleInstance>
+  ruleInstance?: Partial<RuleInstance & { ruleInstanceId?: string }>
 ) {
   const dynamoDb = getDynamoDbClient()
   const ruleRepository = new RuleRepository(testTenantId, {
@@ -54,6 +60,7 @@ export async function createRule(
     await ruleInstanceRepository.createOrUpdateRuleInstance({
       type: rule.type,
       ruleId: createdRule.id as string,
+      id: ruleInstance?.ruleInstanceId,
       parameters: createdRule.defaultParameters,
       riskLevelParameters: createdRule.defaultRiskLevelParameters,
       action: createdRule.defaultAction,
@@ -207,7 +214,9 @@ export const SETUP_TEST_RULE_ID = 'test rule id'
 
 export function setUpRulesHooks(
   tenantId: string,
-  rules: Array<Partial<Rule> | Partial<RuleInstance>>
+  rules: Array<
+    Partial<Rule> | Partial<RuleInstance & { ruleInstanceId?: string }>
+  >
 ) {
   const cleanups: Array<() => void> = [
     async () => {
@@ -364,5 +373,91 @@ export function ruleVariantsTest(
       process.env.__INTERNAL_MONGODB_MIRROR__ = ''
     })
     jestCallback()
+  })
+}
+
+export function testAggregationRebuild(
+  tenantId: string,
+  ruleConfig: Partial<Rule & RuleInstance>,
+  transactions: Transaction[],
+  expectedRebuiltAggregation: {
+    origin: Array<any> | undefined
+    destination: Array<any> | undefined
+  }
+) {
+  describe('Test rule aggregation rebuild', () => {
+    const TEST_RULE_INSTANCE_ID = 'TEST_RULE_INSTANCE_ID'
+    const dynamoDb = getDynamoDbClient()
+    setUpRulesHooks(tenantId, [
+      { ...ruleConfig, ruleInstanceId: TEST_RULE_INSTANCE_ID },
+    ])
+    test('', async () => {
+      // Save N-1 transactions
+      const transactionRepository = new DynamoDbTransactionRepository(
+        tenantId,
+        dynamoDb
+      )
+      for (const transaction of transactions.slice(
+        0,
+        transactions.length - 1
+      )) {
+        await transactionRepository.saveTransaction(transaction)
+      }
+
+      // Update rule instance aggregation version
+      const ruleRepository = new RuleRepository(tenantId, {
+        dynamoDb: getDynamoDbClient(),
+      })
+      const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+        dynamoDb: getDynamoDbClient(),
+      })
+      const ruleInstance = (await ruleInstanceRepository.getRuleInstanceById(
+        TEST_RULE_INSTANCE_ID
+      )) as RuleInstance
+      const rule = (await ruleRepository.getRuleById(
+        ruleInstance!.ruleId
+      )) as Rule
+      await ruleInstanceRepository.createOrUpdateRuleInstance({
+        ...ruleInstance!,
+        updatedAt: Date.now(),
+      })
+
+      // Rebuild for the Nth transaction
+      const lastTransaction = last(transactions)!
+      await bulkVerifyTransactions(tenantId, [lastTransaction], {
+        autoCreateUser: true,
+      })
+
+      // Validate rebuilt aggregation
+      const RuleClass = TRANSACTION_RULES[rule.ruleImplementationName]
+      const ruleClassInstance = new (RuleClass as typeof TransactionRuleBase)(
+        tenantId,
+        {
+          transaction: lastTransaction,
+        },
+        { parameters: rule.defaultParameters, filters: ruleInstance.filters },
+        { ruleInstance, rule },
+        'DYNAMODB',
+        dynamoDb,
+        undefined
+      ) as TransactionAggregationRule<any>
+      const originAggregation = await ruleClassInstance.getRuleAggregations(
+        'origin',
+        0,
+        Number.MAX_SAFE_INTEGER
+      )
+      const destinationAggregation =
+        await ruleClassInstance.getRuleAggregations(
+          'destination',
+          0,
+          Number.MAX_SAFE_INTEGER
+        )
+      expect(expectedRebuiltAggregation.origin).toEqual(
+        originAggregation?.map((v) => omit(v, 'ttl'))
+      )
+      expect(expectedRebuiltAggregation.destination).toEqual(
+        destinationAggregation?.map((v) => omit(v, 'ttl'))
+      )
+    })
   })
 }

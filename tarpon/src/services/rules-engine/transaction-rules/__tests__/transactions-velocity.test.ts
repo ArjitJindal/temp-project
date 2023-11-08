@@ -7,6 +7,7 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
@@ -31,6 +32,16 @@ const TEST_TRANSACTION_METHOD_IBAN_2 = {
   IBAN: 'PL61109010140000071219812',
 } as IBANDetails
 
+const DEFAULT_RULE_PARAMETERS: TransactionsVelocityRuleParameters = {
+  transactionsLimit: 2,
+  timeWindow: {
+    units: 5,
+    granularity: 'hour',
+  },
+  checkSender: 'all',
+  checkReceiver: 'all',
+}
+
 dynamoDbSetupHook()
 
 ruleVariantsTest(true, () => {
@@ -41,15 +52,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'transactions-velocity',
-        defaultParameters: {
-          transactionsLimit: 2,
-          timeWindow: {
-            units: 5,
-            granularity: 'hour',
-          },
-          checkSender: 'all',
-          checkReceiver: 'all',
-        } as TransactionsVelocityRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
       },
     ])
 
@@ -99,15 +102,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'transactions-velocity',
-        defaultParameters: {
-          transactionsLimit: 2,
-          timeWindow: {
-            units: 5,
-            granularity: 'hour',
-          },
-          checkSender: 'all',
-          checkReceiver: 'all',
-        } as TransactionsVelocityRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
       },
     ])
 
@@ -687,15 +682,7 @@ ruleVariantsTest(true, () => {
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'transactions-velocity',
-        defaultParameters: {
-          transactionsLimit: 2,
-          timeWindow: {
-            units: 5,
-            granularity: 'hour',
-          },
-          checkSender: 'all',
-          checkReceiver: 'all',
-        } as TransactionsVelocityRuleParameters,
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
         filters: {
           originPaymentFilters: {
             cardPaymentChannels: ['ATM'],
@@ -853,3 +840,39 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+testAggregationRebuild(
+  getTestTenantId(),
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'transactions-velocity',
+    defaultParameters: DEFAULT_RULE_PARAMETERS,
+  },
+  [
+    getTestTransaction({
+      originUserId: '1-1',
+      destinationUserId: '1-2',
+      timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1-1',
+      destinationUserId: '1-2',
+      timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1-1',
+      destinationUserId: '1-2',
+      timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      { sendingCount: 2, hour: '2022010100' },
+      { sendingCount: 1, hour: '2022010102' },
+    ],
+    destination: [
+      { receivingCount: 2, hour: '2022010100' },
+      { receivingCount: 1, hour: '2022010102' },
+    ],
+  }
+)

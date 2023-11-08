@@ -1,9 +1,17 @@
 import { JSONSchemaType } from 'ajv'
-import { chain, compact, flatMap, isEmpty, random, sumBy, uniq } from 'lodash'
+import {
+  compact,
+  flatMap,
+  isEmpty,
+  mergeWith,
+  random,
+  sumBy,
+  uniq,
+} from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionsTotalAmount,
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByHour,
   isTransactionAmountAboveThreshold,
   sumTransactionAmountDetails,
@@ -44,7 +52,7 @@ type AggregationData = {
 type AggregationResult = {
   totalAmount: TransactionAmountDetails
   totalCount: number
-  transactionsCounterPartiesCount: number
+  transactionsCounterParties: string[]
 }
 
 export type TransactionsVolumeRuleParameters = {
@@ -137,7 +145,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       return
     }
 
-    const { totalAmount, totalCount, transactionsCounterPartiesCount } =
+    const { totalAmount, totalCount, transactionsCounterParties } =
       aggregationData
 
     if (initialTransactions && totalCount <= initialTransactions) {
@@ -147,7 +155,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     if (
       transactionsCounterPartiesThreshold?.transactionsCounterPartiesCount !=
         null &&
-      transactionsCounterPartiesCount <
+      transactionsCounterParties.length <
         transactionsCounterPartiesThreshold.transactionsCounterPartiesCount
     ) {
       return
@@ -219,9 +227,9 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     }
   }
 
-  private async getRawTransactionsData(
+  private async *getRawTransactionsData(
     direction: 'origin' | 'destination'
-  ): Promise<{
+  ): AsyncGenerator<{
     sendingTransactions: AuxiliaryIndexTransaction[]
     receivingTransactions: AuxiliaryIndexTransaction[]
   }> {
@@ -233,36 +241,31 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       destinationMatchPaymentMethodDetails,
     } = this.parameters
 
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        this.transactionRepository,
-        {
-          timeWindow,
-          checkDirection:
-            (direction === 'origin' ? checkSender : checkReceiver) ?? 'all',
-          matchPaymentMethodDetails:
-            direction === 'origin'
-              ? originMatchPaymentMethodDetails
-              : destinationMatchPaymentMethodDetails,
-          filters: this.filters,
-        },
-        [
-          'timestamp',
-          'originUserId',
-          'destinationUserId',
-          'originAmountDetails',
-          'destinationAmountDetails',
-          'originPaymentDetails',
-          'destinationPaymentDetails',
-        ]
-      )
-
-    return {
-      sendingTransactions,
-      receivingTransactions,
-    }
+    yield* getTransactionUserPastTransactionsByDirectionGenerator(
+      this.transaction,
+      direction,
+      this.transactionRepository,
+      {
+        timeWindow,
+        checkDirection:
+          (direction === 'origin' ? checkSender : checkReceiver) ?? 'all',
+        matchPaymentMethodDetails:
+          direction === 'origin'
+            ? originMatchPaymentMethodDetails
+            : destinationMatchPaymentMethodDetails,
+        filters: this.filters,
+      },
+      [
+        'timestamp',
+        'transactionId',
+        'originUserId',
+        'destinationUserId',
+        'originAmountDetails',
+        'destinationAmountDetails',
+        'originPaymentDetails',
+        'destinationPaymentDetails',
+      ]
+    )
   }
 
   private async getData(
@@ -341,82 +344,58 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
             totalAmount + (currentAmount ? currentAmount.transactionAmount : 0),
           transactionCurrency: this.getTargetCurrency(),
         },
-        transactionsCounterPartiesCount: uniq(
+        transactionsCounterParties: uniq(
           compact<string>([...userKeys, currentUserId])
-        ).length,
+        ),
       }
     }
 
-    // Fallback
+    let aggregationResult = await this.getAggregationResult(
+      direction === 'origin' ? [this.transaction] : [],
+      direction === 'origin' ? [] : [this.transaction]
+    )
     if (this.shouldUseRawData()) {
-      // Update aggregations
-
-      const { sendingTransactions, receivingTransactions } =
-        await this.getRawTransactionsData(direction)
-
-      const timeAggregatedResult = await this.getTimeAggregatedResult(
-        sendingTransactions,
-        receivingTransactions
-      )
-
-      await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
-
-      return await this.computeRawData(
-        direction,
-        timeAggregatedResult,
-        sendingTransactions,
-        receivingTransactions
-      )
+      for await (const data of this.getRawTransactionsData(direction)) {
+        const partialAggregationResult = await this.getAggregationResult(
+          data.sendingTransactions,
+          data.receivingTransactions
+        )
+        aggregationResult = {
+          totalAmount: {
+            transactionAmount:
+              (aggregationResult.totalAmount?.transactionAmount ?? 0) +
+              (partialAggregationResult.totalAmount?.transactionAmount ?? 0),
+            transactionCurrency: this.getTargetCurrency(),
+          },
+          totalCount:
+            (aggregationResult.totalCount ?? 0) +
+            (partialAggregationResult.totalCount ?? 0),
+          transactionsCounterParties: uniq([
+            ...(aggregationResult.transactionsCounterParties ?? []),
+            ...(partialAggregationResult.transactionsCounterParties ?? []),
+          ]),
+        }
+      }
+      return aggregationResult
     } else {
-      return await this.computeRawData(direction, {})
+      return aggregationResult
     }
   }
 
-  private async computeRawData(
-    direction: 'origin' | 'destination',
-    timeAggregatedResult: {
-      [key: string]: AggregationData
-    },
-    sendingTransactions: AuxiliaryIndexTransaction[] = [],
-    receivingTransactions: AuxiliaryIndexTransaction[] = []
+  private async getAggregationResult(
+    sendingTransactions: AuxiliaryIndexTransaction[],
+    receivingTransactions: AuxiliaryIndexTransaction[]
   ): Promise<AggregationResult> {
-    const { transactionVolumeThreshold } = this.parameters
-
-    const targetCurrency = Object.keys(
-      transactionVolumeThreshold
-    )[0] as CurrencyCode
-
-    if (direction === 'origin') {
-      sendingTransactions.push(this.transaction)
-    } else {
-      receivingTransactions.push(this.transaction)
-    }
-
     const sendingAmount = await getTransactionsTotalAmount(
       sendingTransactions.map((transaction) => transaction.originAmountDetails),
-      targetCurrency
+      this.getTargetCurrency()
     )
-
     const receivingAmount = await getTransactionsTotalAmount(
       receivingTransactions.map(
         (transaction) => transaction.destinationAmountDetails
       ),
-      targetCurrency
+      this.getTargetCurrency()
     )
-
-    const transactionsCounterPartiesCount = chain(timeAggregatedResult)
-      .flatMap(({ receiverKeys, senderKeys }) => [
-        ...(receiverKeys ?? []),
-        ...(senderKeys ?? []),
-        direction === 'origin'
-          ? this.getReceiverKeyId()
-          : this.getSenderKeyId(),
-      ])
-      .compact()
-      .uniq()
-      .size()
-      .value()
-
     const totalAmount = sumTransactionAmountDetails(
       sendingAmount,
       receivingAmount
@@ -425,7 +404,16 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     return {
       totalAmount,
       totalCount: sendingTransactions.length + receivingTransactions.length,
-      transactionsCounterPartiesCount,
+      transactionsCounterParties: uniq(
+        compact([
+          ...sendingTransactions.map((t) =>
+            this.getReceiverKeyId(t as Transaction)
+          ),
+          ...receivingTransactions.map((t) =>
+            this.getSenderKeyId(t as Transaction)
+          ),
+        ])
+      ),
     }
   }
 
@@ -439,22 +427,35 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination'
   ): Promise<void> {
-    const { sendingTransactions, receivingTransactions } =
-      await this.getRawTransactionsData(direction)
-
-    if (this.transaction.originUserId || this.transaction.destinationUserId) {
-      if (direction === 'origin') {
-        sendingTransactions.push(this.transaction)
-      } else {
-        receivingTransactions.push(this.transaction)
-      }
+    let timeAggregatedResult: { [key1: string]: AggregationData } = {}
+    for await (const data of this.getRawTransactionsData(direction)) {
+      const partialTimeAggregatedResult = await this.getTimeAggregatedResult(
+        data.sendingTransactions,
+        data.receivingTransactions
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData | undefined, b: AggregationData | undefined) => {
+          const result: AggregationData = {
+            sendingCount: (a?.sendingCount ?? 0) + (b?.sendingCount ?? 0),
+            sendingAmount: (a?.sendingAmount ?? 0) + (b?.sendingAmount ?? 0),
+            receivingCount: (a?.receivingCount ?? 0) + (b?.receivingCount ?? 0),
+            receivingAmount:
+              (a?.receivingAmount ?? 0) + (b?.receivingAmount ?? 0),
+            senderKeys: uniq([
+              ...(a?.senderKeys ?? []),
+              ...(b?.senderKeys ?? []),
+            ]),
+            receiverKeys: uniq([
+              ...(a?.receiverKeys ?? []),
+              ...(b?.receiverKeys ?? []),
+            ]),
+          }
+          return result
+        }
+      )
     }
-
-    const timeAggregatedResult = await this.getTimeAggregatedResult(
-      sendingTransactions,
-      receivingTransactions
-    )
-
     await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 

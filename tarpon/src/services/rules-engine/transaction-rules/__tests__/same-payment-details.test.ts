@@ -7,19 +7,22 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import {
-  PaymentDetails,
-  PaymentMethod,
-} from '@/@types/tranasction/payment-type'
-
-const PAYMENT_METHOD_1: PaymentMethod = 'CARD'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 const PAYMENT_DETAILS_1 = {
-  method: PAYMENT_METHOD_1,
+  method: 'CARD',
+  cardFingerprint: uuidv4(),
+  cardIssuedCountry: 'US',
+  transactionReferenceField: 'DEPOSIT',
+  '3dsDone': true,
+} as PaymentDetails
+const PAYMENT_DETAILS_2 = {
+  method: 'CARD',
   cardFingerprint: uuidv4(),
   cardIssuedCountry: 'US',
   transactionReferenceField: 'DEPOSIT',
@@ -44,7 +47,7 @@ function getDefaultParams(): SamePaymentDetailsParameters {
 const defaultParams = getDefaultParams()
 
 ruleVariantsTest(true, () => {
-  describe('Core login', () => {
+  describe('Core logic', () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
@@ -284,3 +287,40 @@ ruleVariantsTest(true, () => {
     })
   })
 })
+
+const TEST_TENANT_ID = getTestTenantId()
+testAggregationRebuild(
+  TEST_TENANT_ID,
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'same-payment-details',
+    defaultParameters: getDefaultParams(),
+  },
+  [
+    getTestTransaction({
+      originPaymentDetails: PAYMENT_DETAILS_1,
+      destinationPaymentDetails: PAYMENT_DETAILS_2,
+      timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originPaymentDetails: PAYMENT_DETAILS_1,
+      destinationPaymentDetails: PAYMENT_DETAILS_2,
+      timestamp: dayjs('2022-01-01T01:30:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originPaymentDetails: PAYMENT_DETAILS_2,
+      destinationPaymentDetails: PAYMENT_DETAILS_1,
+      timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
+    }),
+  ],
+  {
+    origin: [
+      { receivingCount: 2, hour: '2022010101' },
+      { sendingCount: 1, hour: '2022010103' },
+    ],
+    destination: [
+      { sendingCount: 2, hour: '2022010101' },
+      { receivingCount: 1, hour: '2022010103' },
+    ],
+  }
+)
