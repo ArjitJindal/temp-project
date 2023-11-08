@@ -1,5 +1,4 @@
 import { Credentials } from '@aws-sdk/client-sts'
-import { NodeHttpHandler } from '@aws-sdk/node-http-handler'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -28,6 +27,7 @@ import {
   DeleteRequest,
 } from '@aws-sdk/client-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
+import { StandardRetryStrategy } from '@aws-sdk/middleware-retry'
 import { getCredentialsFromEvent } from './credentials'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
@@ -161,9 +161,6 @@ export function getDynamoDbRawClient(
 ): DynamoDBClient {
   const isLocal = envIs('local', 'test')
   const rawClient = new DynamoDBClient({
-    requestHandler: new NodeHttpHandler({
-      socketTimeout: 10000, // this decreases the emfiles count, the Node.js default is 120000
-    }),
     credentials: isLocal
       ? {
           accessKeyId: 'fake',
@@ -174,7 +171,12 @@ export function getDynamoDbRawClient(
     endpoint: isLocal
       ? process.env.DYNAMODB_URI || 'http://localhost:8000'
       : undefined,
-    maxAttempts: 6, // Default is 3
+    retryStrategy: new StandardRetryStrategy(async () => 15, {
+      delayDecider: (delayBase: number, attempt: number) =>
+        // NOTE: Exponential backoff with max delay as 1s
+        // 100ms -> 200ms -> 400ms -> 800ms -> 1000ms -> 2000ms -> 2000ms
+        Math.min(2000, delayBase * 2 ** attempt),
+    }),
   })
 
   const context = getContext()
