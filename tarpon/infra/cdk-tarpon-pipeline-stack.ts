@@ -211,7 +211,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 ...(shouldReleaseSentry ? prodSentryReleaseSpec.commands : []),
                 `npm run migration:pre:up`,
                 // Don't upload source maps to Lambda
-                'rm dist/**/*.js.map',
+                'rm dist/lambdas/**/*.js.map',
                 ...installTerraform,
                 `npm run synth:${env}`,
                 `npm run deploy:${env}`,
