@@ -48,6 +48,7 @@ export const StackConstants = {
   MONGO_DB_DATABASE_NAME: 'tarpon',
   MONGO_DB_USERNAME_NAME: 'tarponUser',
   S3_DEMO_MODE_BUCKET_NAME: 'demo-mode-data-files',
+  PUBLIC_API_CANARY_TESTS_NAME: getResourceName('public-api-canary'),
   API_KEY_AUTHORIZER_BASE_ROLE_NAME: getResourceNameForTarpon(
     'ApiKeyAuthorizerBaseRole'
   ),

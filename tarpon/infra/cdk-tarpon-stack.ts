@@ -90,6 +90,7 @@ import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
 import { createAPIGatewayThrottlingAlarm } from './cdk-utils/cdk-cw-alarms-utils'
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
 import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
+import { createCanary } from './cdk-utils/cdk-synthetics-utils'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
   DEFAULT_LAMBDA_TIMEOUT_SECONDS * 6
@@ -1070,6 +1071,36 @@ export class CdkTarponStack extends cdk.Stack {
         betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
       }
     )
+
+    /**
+     * Canaries
+     */
+
+    if (!isDevUserStack && config.stage === 'dev') {
+      const canary = createCanary(
+        this,
+        StackConstants.PUBLIC_API_CANARY_TESTS_NAME,
+        5
+      )
+
+      canary.role?.attachInlinePolicy(
+        new Policy(this, getResourceNameForTarpon('CanaryPolicy'), {
+          policyName: getResourceNameForTarpon('CanaryPolicy'),
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['apigateway:*'],
+              resources: ['*'],
+            }),
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:*'],
+              resources: ['*'],
+            }),
+          ],
+        })
+      )
+    }
 
     /**
      * Outputs

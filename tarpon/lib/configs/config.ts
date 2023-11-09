@@ -114,5 +114,6 @@ export type Config = {
     MERCHANT_MONITORING_SECRETS_ARN: string
     API_USAGE_GOOGLE_SHEET_ID: string
     FINCEN_CREDENTIALS_SECRET_ARN: string
+    INTEGRATION_KEY?: string
   }
 }

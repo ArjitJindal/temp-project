@@ -2,7 +2,6 @@
 const path = require('path')
 const esbuild = require('esbuild')
 const fs = require('fs-extra')
-const enhancedResolve = require('enhanced-resolve')
 const builtinModules = require('builtin-modules')
 
 // These are transitive dependencies of our dependencies, which for some reasons
@@ -21,6 +20,8 @@ const IGNORED = [
   'mongodb-client-encryption',
   '@mongodb-js/zstd',
   'encoding',
+  'Synthetics',
+  'SyntheticsLogger',
   // The data files inside 'fast-geoip' package cannot be bundled by webpack, we exclude
   // it from being bundled and put it to a lambda layer instead.
   // To use it in a lambda, add `fastGeoIpLayer` lambda layer to the lambda in cdk-tarpon-stack and
@@ -39,10 +40,18 @@ async function main() {
     .readdirSync(`${ROOT_DIR}/src/lambdas`)
     .map((lambdaDirName) => `src/lambdas/${lambdaDirName}/app.ts`)
 
+  const canaryEntries = fs
+    .readdirSync(`${ROOT_DIR}/src/canaries`)
+    .map((canaryDirName) => {
+      return `src/canaries/${canaryDirName}/index.ts`
+    })
+
+  const allEntries = [...entries, ...canaryEntries]
+
   console.time('Bundle time')
   const bundleResults = await esbuild.build({
     platform: 'node',
-    entryPoints: entries,
+    entryPoints: allEntries,
     bundle: true,
     outdir: OUT_DIR,
     target: 'node18.17.1',
@@ -64,6 +73,16 @@ async function main() {
     path.join(OUT_DIR, 'meta.json'),
     JSON.stringify(bundleResults.metafile)
   )
+
+  const canaries = fs.readdirSync(`${ROOT_DIR}/dist/canaries`)
+  // We need to move canaries to a subfolder as per the requirements of synthetics
+  for (const canary of canaries) {
+    await fs.move(
+      `${ROOT_DIR}/dist/canaries/${canary}/index.js`,
+      `${ROOT_DIR}/dist/canaries/${canary}/nodejs/node_modules/index.js`, // The canary resource requires that the handler is present at "nodejs/node_modules"
+      { overwrite: true }
+    )
+  }
 
   console.timeEnd('Bundle time')
 

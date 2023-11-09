@@ -93,7 +93,7 @@ export function createFunction(
     role: role,
     code: process.env.INFRA_CI
       ? Code.fromInline("console.log('hello')")
-      : Code.fromAsset(`dist/${LAMBDAS[name].codePath}`),
+      : Code.fromAsset(`dist/lambdas/${LAMBDAS[name].codePath}`),
     tracing: Tracing.ACTIVE,
     timeout: Duration.seconds(LAMBDAS[name].timeoutSeconds),
     memorySize: memorySize
