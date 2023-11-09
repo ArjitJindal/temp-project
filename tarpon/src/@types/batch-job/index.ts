@@ -96,6 +96,12 @@ export type OngoingMerchantMonitoringBatchJob = {
   tenantId: string
 }
 
+/* Sync Indexes */
+export type SyncIndexesBatchJob = {
+  type: 'SYNC_INDEXES'
+  tenantId: string
+}
+
 export type BatchJob =
   | FileImportBatchJob
   | SimulationPulseBatchJob
@@ -107,6 +113,7 @@ export type BatchJob =
   | GlobalRuleAggregationRebuildBatchJob
   | DashboardRefreshBatchJob
   | OngoingMerchantMonitoringBatchJob
+  | SyncIndexesBatchJob
 
 export type BatchJobType = BatchJob['type']
 // Enforce they all have tenantId

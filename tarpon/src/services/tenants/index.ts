@@ -19,6 +19,7 @@ import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { BadRequest } from 'http-errors'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { createNewApiKeyForTenant } from '../api-key'
+import { sendBatchJobCommand } from '../batch-job'
 import { TenantRepository } from './repositories/tenant-repository'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
@@ -172,6 +173,11 @@ export class TenantService {
     const dynamoDb = this.dynamoDb
     const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
     await tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
+
+    await sendBatchJobCommand({
+      type: 'SYNC_INDEXES',
+      tenantId,
+    })
 
     return {
       tenantId,

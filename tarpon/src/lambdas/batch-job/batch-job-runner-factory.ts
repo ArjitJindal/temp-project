@@ -8,6 +8,7 @@ import { PulseDataLoadJobRunner } from './pulse-data-load-job-runner'
 import { ApiUsageMetricsBatchJobRunner } from './api-usage-metrics-batch-job-runner'
 import { GlobalRuleAggregationRebuildBatchJobRunner } from './global-rule-aggregation-rebuild-batch-job-runner'
 import { OngoingMerchantMonitoringBatchJobRunner } from './ongoing-merchant-monitoring-batch-job-runner'
+import { SyncMongoDbIndexesBatchJobRunner } from './sync-mongo-indexes-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { DashboardRefreshBatchJobRunner } from '@/lambdas/batch-job/dashboard-refresh-batch-job-runner'
 
@@ -26,6 +27,7 @@ export function getBatchJobRunner(type: BatchJobType) {
     SIMULATION_BEACON: new SimulationBeaconBatchJobRunner(),
     SIMULATION_PULSE: new SimulationPulseBatchJobRunner(),
     ONGOING_MERCHANT_MONITORING: new OngoingMerchantMonitoringBatchJobRunner(),
+    SYNC_INDEXES: new SyncMongoDbIndexesBatchJobRunner(),
   }
   return jobRunnerMap[type]
 }
