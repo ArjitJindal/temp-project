@@ -27,8 +27,8 @@ export const createTarponOverallLambdaAlarm = (
   return new Alarm(context, 'OverallLambdaErrorPercentage', {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
     threshold: 10,
-    evaluationPeriods: 3,
-    datapointsToAlarm: 3,
+    evaluationPeriods: 6,
+    datapointsToAlarm: 6,
     alarmName: 'Lambda-OverallErrorPercentage',
     alarmDescription: `Covers all lambdas in the AWS account. 
     Alarm triggers when average error percentage is higher than 10% for 3 consecutive data points in 15 mins (Checked every 5 minutes). 
