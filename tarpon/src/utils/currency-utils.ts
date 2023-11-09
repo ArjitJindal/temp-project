@@ -35,7 +35,10 @@ export async function getCurrencyExchangeRate(
     if (cachedData?.[sourceCurr]?.[targetCurr]) {
       return cachedData[sourceCurr][targetCurr]
     }
-    const dateString = date ? dayjs(date).format('YYYY-MM-DD') : 'latest'
+    let dateString = date ? dayjs(date).format('YYYY-MM-DD') : '2023-08-20' // Fallback as latest is not working
+    if (dayjs(dateString).isAfter(dayjs('2023-08-20'))) {
+      dateString = '2023-08-20'
+    }
     const apiUri = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/${dateString}/currencies/${sourceCurr}/${targetCurr}.min.json`
     const segment = await addNewSubsegment('Currency API', 'Fetch')
     try {
