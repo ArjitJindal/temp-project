@@ -488,3 +488,34 @@ export const createSQSOldestMessageAgeAlarm = (
     }),
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }
+
+export const createCanarySuccessPercentageAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  canaryName: string,
+  threshold: number
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  return new Alarm(context, `${canaryName}SuccessPercentage`, {
+    comparisonOperator: ComparisonOperator.LESS_THAN_THRESHOLD,
+    threshold,
+    evaluationPeriods: 3,
+    datapointsToAlarm: 3,
+    alarmName: `Canary-${canaryName}SuccessPercentage`,
+    alarmDescription: `Covers Success percentage in ${canaryName} in the AWS account. 
+    Alarm triggers when Success percentage is less then ${threshold}% for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
+    metric: new Metric({
+      label: 'Canary Success Percentage',
+      namespace: 'CloudWatchSynthetics',
+      metricName: 'SuccessPercent',
+      dimensionsMap: {
+        CanaryName: canaryName,
+      },
+    }).with({
+      period: Duration.seconds(300),
+      statistic: 'Average',
+    }),
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}

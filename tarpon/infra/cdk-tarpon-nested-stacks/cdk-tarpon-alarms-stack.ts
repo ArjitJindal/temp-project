@@ -13,6 +13,7 @@ import {
 import { LAMBDAS } from '@lib/lambdas'
 import { Config } from '@lib/configs/config'
 
+import { CANARIES } from '@lib/canaries'
 import {
   createAPIGatewayAlarm,
   createDynamoDBAlarm,
@@ -27,6 +28,7 @@ import {
   createTarponOverallLambdaAlarm,
   dynamoTableOperationMetrics,
   dynamoTableOperations,
+  createCanarySuccessPercentageAlarm,
 } from '../cdk-utils/cdk-cw-alarms-utils'
 
 const allLambdas = Object.keys(LAMBDAS)
@@ -247,5 +249,18 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       new inspector.CfnAssessmentTarget(this, 'InspectorAssessmentTarget', {
         assessmentTargetName: 'InspectorAssessmentTarget',
       })
+
+    /* Canaries */
+
+    if (this.config.stage === 'dev') {
+      for (const canaryName of Object.keys(CANARIES)) {
+        createCanarySuccessPercentageAlarm(
+          this,
+          this.betterUptimeCloudWatchTopic,
+          canaryName,
+          90
+        )
+      }
+    }
   }
 }
