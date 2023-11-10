@@ -421,7 +421,7 @@ export class TenantService {
       (x) => x.apiKey === unmaskingOptions.apiKeyId
     )
 
-    if (isFlagrightInternalUser()) {
+    if (!isFlagrightInternalUser()) {
       if (apiKeyViewDataIndex > -1) {
         apiKeyViewData[apiKeyViewDataIndex].count = apiKeyViewTimes + 1
       } else {
