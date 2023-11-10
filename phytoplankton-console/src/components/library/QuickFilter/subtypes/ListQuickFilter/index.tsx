@@ -78,6 +78,7 @@ export default function ListQuickFilter<Value extends Comparable>(props: Props<V
                   );
                 }
               }}
+              data-cy={option.value}
             >
               <List.Item.Meta title={option.label} />
             </List.Item>

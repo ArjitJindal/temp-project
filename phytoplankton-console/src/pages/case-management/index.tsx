@@ -25,7 +25,6 @@ import { useQaMode } from '@/utils/qa-mode';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import { Authorized } from '@/components/Authorized';
-import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
 import { DerivedStatus } from '@/apis';
 
 export default function CaseManagementPage() {
@@ -79,10 +78,8 @@ export default function CaseManagementPage() {
     pushParamsToNavigation(newParams);
   };
 
-  const getDefaultStatus = (param?: string): DerivedStatus[] => {
-    return param?.includes('MY')
-      ? DERIVED_STATUSS.filter((status) => status !== 'CLOSED')
-      : ['OPEN'];
+  const getDefaultStatus = (_param?: string): DerivedStatus[] | undefined => {
+    return ['OPEN'];
   };
 
   const settings = useSettings();
@@ -91,11 +88,11 @@ export default function CaseManagementPage() {
       ...prevState,
       ...parsedParams,
       caseStatus:
-        prevState.caseStatus === null
+        prevState.caseStatus === null && !parsedParams.caseStatus
           ? getDefaultStatus(parsedParams.showCases)
           : parsedParams.caseStatus,
       alertStatus:
-        prevState.alertStatus === null
+        prevState.alertStatus === null && !parsedParams.alertStatus
           ? getDefaultStatus(parsedParams.showCases)
           : parsedParams.alertStatus,
       page: parsedParams.page ?? 1,
