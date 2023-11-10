@@ -27,7 +27,64 @@ const PAGE_SIZE = 5;
 interface Props {
   item: QuestionResponseTable;
 }
-
+export const typeAssigner = (columnType: string | undefined) => {
+  let type: ColumnDataType<any> = UNKNOWN;
+  switch (columnType) {
+    case 'STRING': {
+      type = STRING;
+      break;
+    }
+    case 'NUMBER': {
+      type = NUMBER;
+      break;
+    }
+    case 'FLOAT': {
+      type = FLOAT;
+      break;
+    }
+    case 'LONG_TEXT': {
+      type = LONG_TEXT;
+      break;
+    }
+    case 'BOOLEAN': {
+      type = BOOLEAN;
+      break;
+    }
+    case 'ID': {
+      type = ID;
+      break;
+    }
+    case 'TRANSACTION_TYPE': {
+      type = TRANSACTION_TYPE;
+      break;
+    }
+    case 'DATE_TIME': {
+      type = DATE_TIME;
+      break;
+    }
+    case 'PAYMENT_METHOD': {
+      type = PAYMENT_METHOD;
+      break;
+    }
+    case 'TAG': {
+      type = TAG;
+      break;
+    }
+    case 'MONEY_AMOUNT': {
+      type = MONEY_AMOUNT;
+      break;
+    }
+    case 'MONEY_CURRENCY': {
+      type = MONEY_CURRENCY;
+      break;
+    }
+    case 'COUNTRY': {
+      type = COUNTRY;
+      break;
+    }
+  }
+  return type;
+};
 export default function HistoryItemTable(props: Props) {
   const { item } = props;
 
@@ -67,38 +124,10 @@ export default function HistoryItemTable(props: Props) {
       toolsOptions={false}
       rowKey="index"
       columns={(item.headers ?? []).map((header) => {
-        let type: ColumnDataType<any> = UNKNOWN;
-        if (header.columnType === 'STRING') {
-          type = STRING;
-        } else if (header.columnType === 'NUMBER') {
-          type = NUMBER;
-        } else if (header.columnType === 'FLOAT') {
-          type = FLOAT;
-        } else if (header.columnType === 'LONG_TEXT') {
-          type = LONG_TEXT;
-        } else if (header.columnType === 'BOOLEAN') {
-          type = BOOLEAN;
-        } else if (header.columnType === 'ID') {
-          type = ID;
-        } else if (header.columnType === 'TRANSACTION_TYPE') {
-          type = TRANSACTION_TYPE;
-        } else if (header.columnType === 'DATE_TIME') {
-          type = DATE_TIME;
-        } else if (header.columnType === 'PAYMENT_METHOD') {
-          type = PAYMENT_METHOD;
-        } else if (header.columnType === 'TAG') {
-          type = TAG;
-        } else if (header.columnType === 'MONEY_AMOUNT') {
-          type = MONEY_AMOUNT;
-        } else if (header.columnType === 'MONEY_CURRENCY') {
-          type = MONEY_CURRENCY;
-        } else if (header.columnType === 'COUNTRY') {
-          type = COUNTRY;
-        }
         return columnHelper.simple({
           title: header.name as string,
           key: header.name as string,
-          type: type,
+          type: typeAssigner(header.columnType),
         });
       })}
       data={tableData}
