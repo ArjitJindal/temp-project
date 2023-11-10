@@ -229,6 +229,7 @@ export interface BaseFilter {
   description?: React.ReactNode;
   icon?: React.ReactNode;
   showFilterByDefault?: boolean;
+  pinFilterToLeft?: boolean;
 }
 
 export type ExtraFilterRendererProps<Params extends object | unknown> = {

@@ -33,8 +33,8 @@ export type CommonCaseParams = {
   destinationMethodFilter: PaymentMethod[];
   tagKey: string;
   tagValue: string;
-  caseStatus: DerivedStatus[];
-  alertStatus: DerivedStatus[];
+  caseStatus: DerivedStatus[] | null;
+  alertStatus: DerivedStatus[] | null;
   transactionId: string;
   transactionTimestamp: string[];
   amountGreaterThanFilter: number;

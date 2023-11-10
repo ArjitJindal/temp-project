@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { uniq } from 'lodash';
 import { AllParams, Filter, isExtraFilter } from '../../types';
 import style from './index.module.less';
 import FilterSelector from './FilterSelector';
@@ -17,11 +18,13 @@ export default function Filters<Params extends object>(props: Props<Params>) {
   const { filters, params, onChangeParams } = props;
   const [filterClose, setFilterClose] = useState<boolean>(true);
   const [fulfilledFilters, setfulfilledFilters] = useState(['']);
-
+  const pinnedFilters = filters
+    .filter((filter) => filter.pinFilterToLeft)
+    .map((filter) => filter.key);
   const persistedSettingsContext = usePersistedSettingsContext();
   const [filtersVisible, setFiltersVisible] = persistedSettingsContext.filtersVisibility;
 
-  const shownFilters = [...fulfilledFilters, ...filtersVisible];
+  const shownFilters = uniq([...pinnedFilters, ...fulfilledFilters, ...filtersVisible]);
 
   const handleResetParams = (keys: string[]) => {
     const newParams = {

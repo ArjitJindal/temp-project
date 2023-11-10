@@ -25,6 +25,8 @@ import { useQaMode } from '@/utils/qa-mode';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import { Authorized } from '@/components/Authorized';
+import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
+import { DerivedStatus } from '@/apis';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
@@ -39,6 +41,8 @@ export default function CaseManagementPage() {
   const [params, setParams] = useState<AllParams<TableSearchParams>>({
     ...DEFAULT_PARAMS_STATE,
     ...parsedParams,
+    caseStatus: null,
+    alertStatus: null,
   });
 
   useEffect(() => {
@@ -49,12 +53,16 @@ export default function CaseManagementPage() {
     }
   }, [qaMode]);
 
+  useEffect(() => {
+    setParams((params) => ({ ...params, alertStatus: null, caseStatus: null }));
+  }, [parsedParams.showCases]);
+
   const pushParamsToNavigation = useCallback(
     (params: TableSearchParams) => {
       if (params.showCases === 'ALL' || params.showCases === 'MY') {
-        params.alertStatus = undefined;
+        params.alertStatus = null;
       } else {
-        params.caseStatus = undefined;
+        params.caseStatus = null;
       }
 
       if (params.showCases === 'MY_ALERTS' || params.showCases === 'MY') {
@@ -71,11 +79,25 @@ export default function CaseManagementPage() {
     pushParamsToNavigation(newParams);
   };
 
+  const getDefaultStatus = (param?: string): DerivedStatus[] => {
+    return param?.includes('MY')
+      ? DERIVED_STATUSS.filter((status) => status !== 'CLOSED')
+      : ['OPEN'];
+  };
+
   const settings = useSettings();
   useDeepEqualEffect(() => {
     setParams((prevState: AllParams<TableSearchParams>) => ({
       ...prevState,
       ...parsedParams,
+      caseStatus:
+        prevState.caseStatus === null
+          ? getDefaultStatus(parsedParams.showCases)
+          : parsedParams.caseStatus,
+      alertStatus:
+        prevState.alertStatus === null
+          ? getDefaultStatus(parsedParams.showCases)
+          : parsedParams.alertStatus,
       page: parsedParams.page ?? 1,
       sort: parsedParams.sort ?? [],
       pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,

@@ -50,7 +50,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       transactionState: params.transactionState?.join(','),
       tagKey: params.tagKey ?? undefined,
       tagValue: params.tagValue ?? undefined,
-      caseStatus: params.caseStatus?.join(','),
+      caseStatus: params.caseStatus === null ? params.caseStatus : params.caseStatus?.join(','),
       alertStatus: params.alertStatus?.join(','),
       transactionId: params.transactionId,
       amountGreaterThanFilter: params.amountGreaterThanFilter,
@@ -103,7 +103,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
           : undefined,
       tagKey: raw.tagKey ?? undefined,
       tagValue: raw.tagValue ?? undefined,
-      caseStatus: raw.caseStatus?.split(',') as DerivedStatus[],
+      caseStatus:
+        raw.caseStatus === null ? raw.caseStatus : (raw.caseStatus?.split(',') as DerivedStatus[]),
       alertStatus: raw.alertStatus?.split(',') as DerivedStatus[],
       transactionId: raw.transactionId,
       amountGreaterThanFilter: raw.amountGreaterThanFilter
@@ -341,6 +342,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
         })),
       },
       showFilterByDefault: true,
+      pinFilterToLeft: true,
     },
     {
       title: 'Alert status',
@@ -356,6 +358,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
         })),
       },
       showFilterByDefault: true,
+      pinFilterToLeft: true,
     },
   ]).filter((filter) => filterIds?.includes(filter.key)) as ExtraFilter<TableSearchParams>[];
 };

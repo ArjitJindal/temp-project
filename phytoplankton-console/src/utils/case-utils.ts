@@ -127,7 +127,7 @@ export const getDerivedStatus = (s: CaseStatus | AlertStatus | DerivedStatus): D
 
 // Explodes derived statuses to all their available statuses, for example "IN_REVIEW" becomes "IN_REVIEW_OPEN", "IN_REVIEW_CLOSED", "IN_REVIEW_ESCALATED"...
 export const getStatuses = (
-  status?: (DerivedStatus | undefined)[],
+  status?: (DerivedStatus | undefined)[] | null,
 ): (CaseStatus | AlertStatus)[] => {
   let selectedStatus;
 
