@@ -12,11 +12,6 @@ import { updateLogMetadata } from '@/core/utils/context'
 import { addNewSubsegment } from '@/core/xray'
 import { logger } from '@/core/logger'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const base62 = require('base-x')(
-  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-)
-
 async function getTenantScopeCredentials(
   tenantId: string,
   accountId: string,
@@ -60,16 +55,22 @@ async function getTenantScopeCredentials(
 function getTenantIdFromApiKey(apiKey: string): string | null {
   let decodedApiKey = ''
   try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const base62 = require('base-x')(
+      '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    )
     decodedApiKey = base62.decode(apiKey).toString()
   } catch (e) {
-    logger.error(
-      `Failed to decode api key: Error: ${
-        (e as Error).message
-      }: API Key: ${apiKey.substring(apiKey.length - 5)}`
-    )
+    logger.error(`Failed to decode API key: ${(e as Error)?.message}`, {
+      apiKey,
+    })
     return null
   }
-  return decodedApiKey.match(/\w+\.\w+/) ? decodedApiKey.split('.')[0] : null
+  if (!decodedApiKey.match(/\w+\.\w+/)) {
+    logger.error("The decoded API key doesn't match the pattern", { apiKey })
+    return null
+  }
+  return decodedApiKey.split('.')[0] ?? null
 }
 
 export const apiKeyAuthorizer = lambdaAuthorizer()(
@@ -80,6 +81,10 @@ export const apiKeyAuthorizer = lambdaAuthorizer()(
     const { apiId, stage, accountId, requestId } = event.requestContext
     const apiKey = event.headers?.['x-api-key']
     const tenantId = apiKey ? getTenantIdFromApiKey(apiKey) : undefined
+    if (!apiKey) {
+      logger.warn('x-api-key header is missing')
+    }
+
     // NOTE: "Surprisingly", if the api key is invalid, lambda authorizer will still be executed, and
     // the api key will be validated after lambda authorizer returns.
     // To avoid error in case of invalid api key, we early return if we cannot decode the api key.
@@ -102,7 +107,7 @@ export const apiKeyAuthorizer = lambdaAuthorizer()(
 
     updateLogMetadata({
       tenantId,
-      apiKeySuffix: apiKey.substring(apiKey.length - 5),
+      apiKeySuffix: apiKey?.substring(apiKey.length - 5),
     })
 
     const tenantScopeCredentials = await getTenantScopeCredentials(
