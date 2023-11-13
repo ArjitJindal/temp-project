@@ -39,6 +39,7 @@ const Root = (props: Props) => {
         disabled && s.disabled,
         noBorder && s.noBorder,
         showInvalidState && s.isInvalid,
+        isCollapsed && s.isCollapsed,
       )}
     >
       <Column>

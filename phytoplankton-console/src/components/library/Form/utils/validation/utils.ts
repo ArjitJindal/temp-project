@@ -1,4 +1,5 @@
 import {
+  $IS_OPTIONAL,
   $SELF_VALIDATION,
   FieldValidator,
   FieldValidators,
@@ -11,8 +12,6 @@ import {
   ObjectFieldValidator,
   ValidationError,
 } from '@/components/library/Form/utils/validation/types';
-import { removeEmpty } from '@/utils/json';
-import { isEqual } from '@/utils/lang';
 
 export interface FormValidationResult<FormValues> {
   formValidationErrors?: ValidationError[];
@@ -80,7 +79,7 @@ export function validateField<T>(
   } else {
     const objectValidator: ObjectFieldValidator<T> = fieldValidator;
     nestedResult = {};
-    if (!isEqual(removeEmpty(value), undefined)) {
+    if (!(objectValidator[$IS_OPTIONAL] && value == null)) {
       for (const key of Object.keys(objectValidator)) {
         const subfieldValidator = objectValidator[key];
         if (subfieldValidator != null) {

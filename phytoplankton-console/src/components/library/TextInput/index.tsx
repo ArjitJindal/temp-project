@@ -47,7 +47,7 @@ export default function TextInput(props: Props) {
         disabled={isDisabled}
         value={value ?? ''}
         onChange={(e) => {
-          onChange?.(e.target.value);
+          onChange?.(e.target.value || undefined);
         }}
         onFocus={onFocus ? () => onFocus() : undefined}
         onBlur={onBlur ? () => onBlur() : undefined}

@@ -94,44 +94,48 @@ export function GenericArrayPropertyInput(props: Props) {
   return (
     <div className={cn(s.root)}>
       <div className={s.items}>
-        {value.map((item, i) => (
-          <Card.Root
-            key={i}
-            className={s.root}
-            isCollapsable={true}
-            isCollapsedByDefault={true}
-            isInvalid={alwaysShowErrors && !isResultValid(validateField(subFieldValidator, item))}
-            header={{
-              title: normalizeCase(`${entityName ?? 'Item'} #${i + 1}`),
-              titleSize: 'SMALL',
-              link: (
-                <Button
-                  icon={<DeleteBin7LineIcon />}
-                  type="TEXT"
-                  size="SMALL"
-                  isDanger={true}
-                  onClick={() => {
-                    const newValue = [...value];
-                    newValue.splice(i, 1);
-                    onChange?.(newValue);
+        {value.map((item, i) => {
+          const handleDeleteItem = () => {
+            const newValue = [...value];
+            newValue.splice(i, 1);
+            onChange?.(newValue.length === 0 ? undefined : newValue);
+          };
+
+          return (
+            <Card.Root
+              key={i}
+              className={s.root}
+              isCollapsable={true}
+              isCollapsedByDefault={true}
+              isInvalid={alwaysShowErrors && !isResultValid(validateField(subFieldValidator, item))}
+              header={{
+                title: normalizeCase(`${entityName ?? 'Item'} #${i + 1}`),
+                titleSize: 'SMALL',
+                link: (
+                  <Button
+                    icon={<DeleteBin7LineIcon />}
+                    type="TEXT"
+                    size="SMALL"
+                    isDanger={true}
+                    onClick={handleDeleteItem}
+                  />
+                ),
+              }}
+            >
+              <Card.Section>
+                <PropertyInput
+                  value={item}
+                  onChange={(newValue) => {
+                    onChange?.(value.map((x, j) => (i === j ? newValue : x)));
                   }}
+                  schema={schema.items as ExtendedSchema}
                 />
-              ),
-            }}
-          >
-            <Card.Section>
-              <PropertyInput
-                value={item}
-                onChange={(newValue) => {
-                  onChange?.(value.map((x, j) => (i === j ? newValue : x)));
-                }}
-                schema={schema.items as ExtendedSchema}
-              />
-            </Card.Section>
-          </Card.Root>
-        ))}
+              </Card.Section>
+            </Card.Root>
+          );
+        })}
         <div>
-          <Button type="PRIMARY" onClick={handleClickAdd}>
+          <Button type="PRIMARY" onClick={handleClickAdd} className={s.addButton}>
             {normalizeCase(`Add ${entityName ? ` ${entityName}` : ''}`)}
           </Button>
         </div>

@@ -8,6 +8,7 @@ import {
 } from '@/components/library/JsonSchemaEditor/schema-utils';
 import {
   $IS_ARRAY_VALIDATOR,
+  $IS_OPTIONAL,
   $SELF_VALIDATION,
   FieldValidator,
 } from '@/components/library/Form/utils/validation/types';
@@ -75,8 +76,12 @@ export function makeValidators<T>(
       if (Object.keys(nestedValidators).length > 0) {
         propValidators = nestedValidators;
       }
-      if (propValidators != null && prop.isRequired) {
-        propValidators[$SELF_VALIDATION] = notEmpty;
+      if (propValidators != null) {
+        if (prop.isRequired) {
+          propValidators[$SELF_VALIDATION] = notEmpty;
+        } else {
+          propValidators[$IS_OPTIONAL] = true;
+        }
       }
     } else if (isArray(schema)) {
       const itemsSchema = schema.items ? dereferenceType(schema.items, rootSchema) : undefined;

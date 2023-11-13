@@ -5,6 +5,8 @@ export const $SELF_VALIDATION = Symbol();
 // Need this hack since array field validator is just a validator for item type
 export const $IS_ARRAY_VALIDATOR = Symbol();
 
+export const $IS_OPTIONAL = Symbol();
+
 export type ValidationError = string;
 export type ValidationResult = ValidationError | null;
 export type NestedValidationResult =
@@ -26,6 +28,7 @@ export type ObjectFieldValidator<T> = {
   [Key in keyof T]?: FieldValidator<T[Key] | undefined>;
 } & {
   [$SELF_VALIDATION]?: Validator<T | undefined | null>;
+  [$IS_OPTIONAL]?: boolean;
 };
 
 export type ArrayFieldValidator<T> = {

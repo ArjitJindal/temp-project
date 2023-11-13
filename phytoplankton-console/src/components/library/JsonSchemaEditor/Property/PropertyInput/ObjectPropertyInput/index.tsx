@@ -1,5 +1,4 @@
 import React, { useContext, useState } from 'react';
-import { isEmpty } from 'lodash';
 import PropertyList from '../../../PropertyList';
 import { ExtendedSchema } from '../../../types';
 import s from './style.module.less';
@@ -12,7 +11,11 @@ import { InputProps } from '@/components/library/Form';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
 import { Props as LabelProps } from '@/components/library/Label';
 import { PropertyContext } from '@/components/library/JsonSchemaEditor/Property';
-import { isArrayFieldValidator } from '@/components/library/Form/utils/validation/types';
+import {
+  $IS_OPTIONAL,
+  isArrayFieldValidator,
+  isObjectFieldValidator,
+} from '@/components/library/Form/utils/validation/types';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -46,10 +49,18 @@ export default function GenericObjectInput(props: Props) {
     },
     values: value ?? {},
     setValues: (newValue) => {
-      onChange?.(newValue);
+      onChange?.(
+        newValue != null && !Object.entries(newValue).some(([_, value]) => value != null)
+          ? null
+          : newValue,
+      );
     },
     fieldValidators:
-      propertyContext?.item?.isRequired || !isEmpty(value) ? subFieldValidator : undefined,
+      isObjectFieldValidator(subFieldValidator) &&
+      subFieldValidator?.[$IS_OPTIONAL] &&
+      value == null
+        ? undefined
+        : subFieldValidator,
   };
 
   return (

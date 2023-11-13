@@ -85,6 +85,7 @@ export default function Property(props: Props) {
           },
           ...labelProps,
           level: labelLevel,
+          testId: `Property/${item.name}`,
         }}
       >
         {(inputProps) =>

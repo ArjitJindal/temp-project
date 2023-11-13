@@ -10,12 +10,13 @@ module.exports = {
   testMatch: ['<rootDir>/src/**/*.test.[jt]s?(x)'],
   moduleDirectories: ['node_modules', 'jest'],
   moduleNameMapper: {
-    '^.+\\.less$': 'identity-obj-proxy',
+    '^.+[^e]\\.less$': 'identity-obj-proxy',
     '@/(.*)': '<rootDir>/src/$1',
     '@flagright/(.*)': '<rootDir>/../$1',
   },
   transform: {
-    '^.+\\.react.svg$': './jest/jest-react-svg-transformer.js',
+    '^.+\\.module\\.less$': './jest/jest-react-less-modules-transformer.js',
+    '^.+\\.react\\.svg$': './jest/jest-react-svg-transformer.js',
     '^.+\\.(svg|png)$': './jest/jest-react-file-transformer.js',
     '^.+\\.(([tj]sx?))$': [
       'esbuild-jest',

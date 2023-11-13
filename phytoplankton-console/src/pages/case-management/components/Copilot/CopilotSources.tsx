@@ -1,5 +1,5 @@
 import React from 'react';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
+import { startCase } from 'lodash';
 import s from './index.module.less';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -36,7 +36,7 @@ export default function CopilotSources(props: Props) {
               }
             }
             return {
-              key: sentenceCase(a.key),
+              key: startCase(a.key),
               value,
               secret: a.secret,
             };

@@ -1,5 +1,7 @@
 import * as TestingLibrary from '@testing-library/react';
+import { buildQueries, queries, within } from '@testing-library/react';
 import { StorybookMockProviders } from '../src/components/AppWrapper/Providers';
+import { Matcher, MatcherOptions } from '@testing-library/dom/types/matches';
 
 function ProvidersWrapper({ children }: { children: React.ReactNode }) {
   return <StorybookMockProviders>{children}</StorybookMockProviders>;
@@ -9,7 +11,42 @@ TestingLibrary.configure({
   testIdAttribute: 'data-cy',
 });
 
+const queryAllByClassName = (
+  container: HTMLElement,
+  id: Matcher,
+  options?: MatcherOptions,
+): HTMLElement[] => {
+  if (options != null) {
+    throw new Error(`queryAllByClassName: options are not supported`);
+  }
+  if (typeof id !== 'string') {
+    throw new Error(`queryAllByClassName: this query only support strings as a matcher`);
+  }
+  return Array.from(container.querySelectorAll(`.${id}`));
+};
+const getMultipleError = (c, value) => `Found multiple elements with the class of: ${value}`;
+const getMissingError = (c, value) => `Unable to find an element with the class of: ${value}`;
+
+const [queryByClassName, getAllByClassName, getByClassName, findAllByClassName, findByClassName] =
+  buildQueries(queryAllByClassName, getMultipleError, getMissingError);
+
+const customQueries = {
+  queryByClassName,
+  queryAllByClassName,
+  getByClassName,
+  getAllByClassName,
+  findAllByClassName,
+  findByClassName,
+};
+
+const allQueries = {
+  ...queries,
+  ...customQueries,
+};
+const customWithin = (element: HTMLElement) => within(element, allQueries);
+
 export * from '@testing-library/react';
+export { customWithin as within };
 
 export function render(
   ui: React.ReactElement,

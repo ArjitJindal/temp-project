@@ -4,6 +4,7 @@ import { UseCase } from '@/pages/storybook/components';
 import { ExtendedSchema } from '@/components/library/JsonSchemaEditor/types';
 import Select from '@/components/library/Select';
 import Form from '@/components/library/Form';
+import { getOrderedProps, makeValidators } from '@/components/library/JsonSchemaEditor/utils';
 
 export default function (): JSX.Element {
   const [schemaIndex, setSchemaIndex] = useState(0);
@@ -41,6 +42,53 @@ export default function (): JSX.Element {
             }}
           />
         </Form>
+      </UseCase>
+      <UseCase title="Sample schema validation">
+        {([state, setState]) => {
+          const schema: ExtendedSchema = {
+            type: 'object',
+            required: ['f1'],
+            properties: {
+              f1: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    f2: {
+                      type: 'object',
+                      required: ['f3', 'f4'],
+                      properties: {
+                        f3: {
+                          type: 'string',
+                        },
+                        f4: {
+                          type: 'string',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          };
+          const props = getOrderedProps(schema);
+          const fieldValidators = makeValidators(props);
+          return (
+            <>
+              <Form
+                initialValues={{}}
+                alwaysShowErrors={true}
+                fieldValidators={fieldValidators}
+                onChange={(_values) => {
+                  setState(_values);
+                }}
+              >
+                <Component parametersSchema={schema} />
+              </Form>
+              <textarea rows={20} readOnly value={JSON.stringify(state, null, 4)} />
+            </>
+          );
+        }}
       </UseCase>
     </>
   );
@@ -667,10 +715,19 @@ const SAMPLE_SCHEMAS: [string, ExtendedSchema][] = [
     {
       type: 'object',
       properties: {
-        stringArray: {
+        enumStringArray: {
           type: 'array',
           title: 'String array',
-          description: 'This is an example of input for string array',
+          description: 'This is an example of input for enum string array',
+          items: {
+            type: 'string',
+          },
+          required: [],
+        },
+        stringArray: {
+          type: 'array',
+          title: 'Enum string array',
+          description: 'This is an example of input for enum string array',
           items: {
             type: 'string',
             enum: ['sending', 'all', 'none'],
