@@ -11,7 +11,6 @@ import { tarponBuildOutput } from "../constants/artifcats";
 import { getSentryReleaseSpec } from "./sentry-release-spec";
 import { installTerraform } from "../constants/terraform-commands";
 import { ComputeType } from "aws-cdk-lib/aws-codebuild";
-import { checkDiffAndRunCommands } from "./diff-checker";
 
 export const tarponDeployStage = (
   scope: Construct,
@@ -32,44 +31,30 @@ export const tarponDeployStage = (
             nodejs: 18,
           },
           commands: [
-            checkDiffAndRunCommands(
-              [
-                "cd tarpon",
-                "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
-                `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
-                `export ENV=${env}`,
-                `export AWS_REGION=${config.env.region}`,
-                `export AWS_ACCOUNT=${config.env.account}`,
-                ...getAssumeRoleCommands(config),
-                "cd ..",
-              ],
-              ["echo 'No changes in tarpon'"],
-              "tarpon"
-            ),
+            "cd tarpon",
+            "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
+            `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
+            `export ENV=${env}`,
+            `export AWS_REGION=${config.env.region}`,
+            `export AWS_ACCOUNT=${config.env.account}`,
+            ...getAssumeRoleCommands(config),
+            "cd ..",
           ],
         },
         build: {
           commands: [
-            checkDiffAndRunCommands(
-              [
-                "cd tarpon",
-                ...GENERATED_DIRS.map(
-                  (dir) =>
-                    `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`
-                ),
-                ...(shouldReleaseSentry
-                  ? getSentryReleaseSpec(true).commands
-                  : []),
-                `npm run migration:pre:up`,
-                // Don't upload source maps to Lambda
-                "rm dist/lambdas/**/*.js.map",
-                ...installTerraform,
-                `npm run synth:${env}`,
-                `npm run deploy:${env}`,
-              ],
-              ["echo 'No changes in tarpon'"],
-              "tarpon"
+            "cd tarpon",
+            ...GENERATED_DIRS.map(
+              (dir) =>
+                `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`
             ),
+            ...(shouldReleaseSentry ? getSentryReleaseSpec(true).commands : []),
+            `npm run migration:pre:up`,
+            // Don't upload source maps to Lambda
+            "rm dist/lambdas/**/*.js.map",
+            ...installTerraform,
+            `npm run synth:${env}`,
+            `npm run deploy:${env}`,
           ],
         },
       },

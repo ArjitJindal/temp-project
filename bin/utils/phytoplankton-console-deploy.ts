@@ -1,6 +1,5 @@
 import { Construct } from "constructs";
 import { aws_codebuild as codebuild, aws_iam as iam } from "aws-cdk-lib";
-import { checkDiffAndRunCommands } from "./diff-checker";
 import { STACK_CONSTANTS } from "../constants/stack-constants";
 
 export const phytoplanktonDeployStage = (
@@ -18,38 +17,26 @@ export const phytoplanktonDeployStage = (
             nodejs: 18,
           },
           commands: [
-            checkDiffAndRunCommands(
-              [
-                "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
-                "npm install",
-                "cd phytoplankton-console",
-                "npm install -g aws-cdk yarn",
-                "yarn --ignore-engines",
-                `ASSUME_ROLE_ARN="${roleArn}"`,
-                `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
-                "export TEMP_ROLE",
-                'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
-                'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
-                'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
-                "cd ..",
-              ],
-              ["echo 'No changes in phytoplankton-console'"],
-              "phytoplankton-console"
-            ),
+            "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
+            "npm install",
+            "cd phytoplankton-console",
+            "npm install -g aws-cdk yarn",
+            "yarn --ignore-engines",
+            `ASSUME_ROLE_ARN="${roleArn}"`,
+            `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
+            "export TEMP_ROLE",
+            'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
+            'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
+            'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
+            "cd ..",
           ],
         },
         build: {
           commands: [
-            checkDiffAndRunCommands(
-              [
-                "cd phytoplankton-console",
-                `SENTRY_UPLOAD=true npm run build:${env}`,
-                `npm run synth:${env}`,
-                `npm run deploy:${env} -- --require-approval=never`,
-              ],
-              ["echo 'No changes in phytoplankton-console'"],
-              "phytoplankton-console"
-            ),
+            "cd phytoplankton-console",
+            `SENTRY_UPLOAD=true npm run build:${env}`,
+            `npm run synth:${env}`,
+            `npm run deploy:${env} -- --require-approval=never`,
           ],
         },
       },

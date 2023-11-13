@@ -45,7 +45,7 @@ export class CdkOrcaPipelineStack extends Stack {
     const vpc = getVpc(this);
 
     createVpcLogGroup(this, vpc, {
-      name: "codebuild",
+      name: "codebuild-orca",
       logRetention: RetentionDays.TWO_MONTHS,
     });
 

@@ -6,8 +6,8 @@
   "scripts": {
     "prepare": "husky install .husky",
     "openapi:local": "cd tarpon && npm run openapi:build && npm run openapi:prepare && cd ../phytoplankton-console && ENV=local npm run openapi:build && cd ..",
-    "deploy:pipeline": "cdk deploy orca-pipeline --require-approval never --profile=AWSAdministratorAccess-073830519512",
-    "deploy:pipeline:actions": "cdk deploy orca-pipeline --require-approval never",
+    "deploy:pipeline": "ENV=deploy cdk deploy orca-pipeline --require-approval never --profile=AWSAdministratorAccess-073830519512",
+    "deploy:pipeline:actions": "ENV=deploy cdk deploy orca-pipeline --require-approval never",
     "deploy:pipeline-test:clean": "export ENV=deploy-test && npm run aws-sso-login:deploy && npm run synth:pipeline && npm run deploy:pipeline",
     "aws-sso-login": "./scripts/aws/aws-sso-login.sh $npm_config_profile",
     "aws-sso-login:deploy": "npm run aws-sso-login --profile=AWSAdministratorAccess-073830519512",

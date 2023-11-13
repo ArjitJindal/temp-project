@@ -10,7 +10,6 @@ import { GENERATED_DIRS } from "../constants/generatedDirs";
 import { tarponBuildOutput } from "../constants/artifcats";
 import { ComputeType } from "aws-cdk-lib/aws-codebuild";
 import { IVpc } from "aws-cdk-lib/aws-ec2";
-import { checkDiffAndRunCommands } from "./diff-checker";
 
 export const postDeploymentCodeBuildProject = (
   scope: Construct,
@@ -28,57 +27,39 @@ export const postDeploymentCodeBuildProject = (
             nodejs: 18,
           },
           commands: [
-            checkDiffAndRunCommands(
-              [
-                "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
-                "npm install",
-                "cd tarpon",
-                "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
-                `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
-                `export ENV=${env}`,
-                `export AWS_REGION=${config.env.region}`,
-                `export AWS_ACCOUNT=${config.env.account}`,
-                ...getAssumeRoleCommands(config),
-                "cd ..",
-              ],
-              ["echo 'No changes in tarpon'"],
-              "tarpon"
-            ),
+            "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
+            "npm install",
+            "cd tarpon",
+            "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
+            `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
+            `export ENV=${env}`,
+            `export AWS_REGION=${config.env.region}`,
+            `export AWS_ACCOUNT=${config.env.account}`,
+            ...getAssumeRoleCommands(config),
+            "cd ..",
           ],
         },
         build: {
           commands: [
-            checkDiffAndRunCommands(
-              [
-                "cd tarpon",
-                ...GENERATED_DIRS.map(
-                  (dir) =>
-                    `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`
-                ),
-                `npm run migration:post:up`,
-                "cd ..",
-              ],
-              ["echo 'No changes in tarpon'"],
-              "tarpon"
+            "cd tarpon",
+            ...GENERATED_DIRS.map(
+              (dir) =>
+                `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`
             ),
+            `npm run migration:post:up`,
+            "cd ..",
           ],
         },
         ...(["dev", "sandbox"].includes(config.stage)
           ? {
               post_build: {
                 commands: [
-                  checkDiffAndRunCommands(
-                    [
-                      "cd tarpon",
-                      `export ENV=${env}`,
-                      `export AWS_REGION=${config.env.region}`,
-                      ...getAssumeRoleCommands(config),
-                      `npm run postman:integration:${config.stage}`,
-                      `npm run test:public:${config.stage}`,
-                    ],
-                    ["echo 'No changes in tarpon'"],
-                    "tarpon"
-                  ),
+                  "cd tarpon",
+                  `export ENV=${env}`,
+                  `export AWS_REGION=${config.env.region}`,
+                  ...getAssumeRoleCommands(config),
+                  `npm run postman:integration:${config.stage}`,
+                  `npm run test:public:${config.stage}`,
                 ],
               },
             }

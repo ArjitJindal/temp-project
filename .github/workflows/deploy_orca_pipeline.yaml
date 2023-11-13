@@ -26,7 +26,10 @@ jobs:
           cache-dependency-path: "package-lock.json"
       - run: npm install
       - name: Synth Pipeline
-        run: npm run synth:pipeline
+        run: |
+          export ENV=deploy
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          npm run synth:pipeline
       - name: Deploy Orca Pipline
         run: |
           export ENV=deploy

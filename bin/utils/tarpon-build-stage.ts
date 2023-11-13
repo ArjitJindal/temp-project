@@ -2,7 +2,6 @@ import { aws_codebuild as codebuild, aws_iam as iam } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { installTerraform } from "../constants/terraform-commands";
 import { getSentryReleaseSpec } from "./sentry-release-spec";
-import { checkDiffAndRunCommands } from "./diff-checker";
 import { GENERATED_DIRS } from "../constants/generatedDirs";
 
 export const buildTarpon = (scope: Construct, role: iam.IRole) => {
@@ -14,26 +13,13 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
           "runtime-versions": {
             nodejs: 18,
           },
-          commands: [
-            checkDiffAndRunCommands(
-              ["npm ci", "cd tarpon", "npm ci", "cd .."],
-              ["echo 'No changes in tarpon'"],
-              "tarpon"
-            ),
-          ],
+          commands: ["npm ci", "cd tarpon", "npm ci"],
         },
         build: {
           commands: [
-            checkDiffAndRunCommands(
-              [
-                "cd tarpon",
-                ...installTerraform,
-                "npm run build",
-                ...getSentryReleaseSpec(false).commands,
-              ],
-              ["echo 'No changes in tarpon'"],
-              "tarpon"
-            ),
+            ...installTerraform,
+            "npm run build",
+            ...getSentryReleaseSpec(false).commands,
           ],
         },
       },

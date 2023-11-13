@@ -1,6 +1,5 @@
 import { Construct } from "constructs";
 import { aws_iam as iam } from "aws-cdk-lib";
-import { memoize } from "lodash";
 import { DeployConfig } from "../../tarpon/lib/configs/config-deployment";
 
 export const getCodeDeployRole = (
