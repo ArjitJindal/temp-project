@@ -165,7 +165,7 @@ export function useTanstackTable<
       if (isMultiRows(item)) {
         const rows = item.rows ?? [];
         return rows.map((row, i) => ({
-          spanBy: item.spanBy,
+          spanBy: [...item.spanBy, 'SELECT_COLUMN_ID'],
           content: row,
           rowsCount: rows.length,
           rowIndex: rowIndex++,

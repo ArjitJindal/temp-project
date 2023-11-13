@@ -1,3 +1,4 @@
+import { v4 as uuid } from 'uuid';
 import { InternalTransaction } from '@/apis';
 import { DataItem } from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
 import { TableDataItem } from '@/components/library/Table/types';
@@ -42,10 +43,11 @@ export function prepareTableData(
         'destinationPaymentMethodId',
         'originPaymentMethodId',
       ],
-      rows: item.hitRules.map((rule): DataItem => {
+      rows: item.hitRules.map((rule, i): DataItem => {
+        const isFirstRow = i == 0;
         return {
           ...dataItem,
-          rowKey: item.transactionId,
+          rowKey: isFirstRow ? item.transactionId : `${item.transactionId}-${uuid()}`,
           ruleName: rule.ruleName,
           ruleDescription: rule.ruleDescription,
         };
