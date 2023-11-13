@@ -1,13 +1,11 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { pick } from 'lodash'
+import { isEqual, pick } from 'lodash'
 import { syncRulesLibrary } from '../../../scripts/migrations/always-run/sync-rules-library'
 import { logger } from '../logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getUsers } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
 import { data as listsData } from '@/core/seed/data/lists'
-import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 import { ListRepository } from '@/services/list/repositories/list-repository'
 import {
   internalToPublic,
@@ -22,6 +20,9 @@ import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { isDemoTenant } from '@/utils/tenant'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,
@@ -79,11 +80,31 @@ export async function seedDynamo(
     })
   }
 
-  logger.info('Setting tenant settings...')
-  await tenantRepo.createOrUpdateTenantSettings({
-    features: FEATURES,
-    isAiEnabled: true,
-    isPaymentApprovalEnabled: true,
-    aiSourcesDisabled: [],
-  })
+  if (isDemoTenant(tenantId)) {
+    const nonDemoTenantId = tenantId.replace(/-test$/, '')
+    const nonDemoTenantRepo = new TenantRepository(nonDemoTenantId, {
+      dynamoDb,
+    })
+    const requiredSettingNames: (keyof TenantSettings)[] = [
+      'features',
+      'isAiEnabled',
+      'isPaymentApprovalEnabled',
+      'aiSourcesDisabled',
+    ]
+    const nonDemoSettings = await nonDemoTenantRepo.getTenantSettings(
+      requiredSettingNames
+    )
+    const demoSettings = await tenantRepo.getTenantSettings(
+      requiredSettingNames
+    )
+    if (!isEqual(demoSettings, nonDemoSettings)) {
+      logger.info('Setting tenant settings...')
+      await tenantRepo.createOrUpdateTenantSettings({
+        features: nonDemoSettings.features,
+        isAiEnabled: nonDemoSettings.isAiEnabled,
+        isPaymentApprovalEnabled: nonDemoSettings.isPaymentApprovalEnabled,
+        aiSourcesDisabled: nonDemoSettings.aiSourcesDisabled,
+      })
+    }
+  }
 }
