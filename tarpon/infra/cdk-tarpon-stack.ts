@@ -1076,7 +1076,7 @@ export class CdkTarponStack extends cdk.Stack {
      * Canaries
      */
 
-    if (!isDevUserStack && config.stage === 'dev') {
+    if (!isDevUserStack && ['dev', 'sandbox'].includes(this.config.stage)) {
       const canary = createCanary(
         this,
         StackConstants.PUBLIC_API_CANARY_TESTS_NAME,

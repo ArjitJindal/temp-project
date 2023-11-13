@@ -252,7 +252,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
 
     /* Canaries */
 
-    if (this.config.stage === 'dev') {
+    if (['dev', 'sandbox'].includes(this.config.stage)) {
       for (const canaryName of Object.keys(CANARIES)) {
         createCanarySuccessPercentageAlarm(
           this,
