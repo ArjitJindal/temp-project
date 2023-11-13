@@ -15,6 +15,6 @@ export const config: DeployConfig = {
       'arn:aws:codestar-connections:eu-central-1:073830519512:connection/e7342cf6-a595-4984-a415-08f15ddbaa47',
     OWNER: 'flagright',
     REPO: 'orca',
-    BRANCH: '<your_branch_name>',
+    BRANCH: 'orca-pipline-stack',
   },
 }

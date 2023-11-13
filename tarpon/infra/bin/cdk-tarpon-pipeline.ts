@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib'
-import { config as deployConfig } from '@lib/configs/config-deployment'
-import { config as deployTestConfig } from '@lib/configs/config-deployment-test'
 import { config as localConfig } from '@lib/configs/config-local'
 import { config as devConfig } from '@lib/configs/config-dev'
 import { config as sandboxConfig } from '@lib/configs/config-sandbox'
@@ -13,7 +11,6 @@ import { config as prodConfigEu1 } from '@lib/configs/config-prod-eu-1'
 import { config as prodConfigEu2 } from '@lib/configs/config-prod-eu-2'
 import { isQaEnv } from '@lib/qa'
 import { CdkTarponStack } from '../cdk-tarpon-stack'
-import { CdkTarponPipelineStack } from '../cdk-tarpon-pipeline-stack'
 
 const app = new cdk.App()
 
@@ -64,16 +61,4 @@ if (process.env.ENV === 'prod:au-1') {
 
 if (process.env.ENV === 'prod:us-1') {
   new CdkTarponStack(app, `${prodConfigUS1.stage}-tarpon`, prodConfigUS1)
-}
-
-if (process.env.ENV === 'deploy' || process.env.ENV === 'deploy-test') {
-  const config = process.env.ENV === 'deploy' ? deployConfig : deployTestConfig
-  new CdkTarponPipelineStack(
-    app,
-    'tarpon-pipeline',
-    {
-      env: config.env,
-    },
-    config
-  )
 }

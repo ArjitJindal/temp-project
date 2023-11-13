@@ -5,10 +5,25 @@
   "main": "index.js",
   "scripts": {
     "prepare": "husky install .husky",
-    "openapi:local": "cd tarpon && npm run openapi:build && npm run openapi:prepare && cd ../phytoplankton-console && ENV=local npm run openapi:build && cd .."
+    "openapi:local": "cd tarpon && npm run openapi:build && npm run openapi:prepare && cd ../phytoplankton-console && ENV=local npm run openapi:build && cd ..",
+    "deploy:pipeline": "cdk deploy orca-pipeline --require-approval never --profile=AWSAdministratorAccess-073830519512",
+    "deploy:pipeline:actions": "cdk deploy orca-pipeline --require-approval never",
+    "deploy:pipeline-test:clean": "export ENV=deploy-test && npm run aws-sso-login:deploy && npm run synth:pipeline && npm run deploy:pipeline",
+    "aws-sso-login": "./scripts/aws/aws-sso-login.sh $npm_config_profile",
+    "aws-sso-login:deploy": "npm run aws-sso-login --profile=AWSAdministratorAccess-073830519512",
+    "sso-fallback-message": "echo 'Clear the cookies manually of START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ and try again. \nOR\nFollow the steps mentioned below:\n1. Open the START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ in a browser.\n2. Click on the AWS Account Button you see\n3. Click Deploy\n4. Click AWSAdministratorAccess | Command Line or Programmatic Access\n5. Click Copy to Clipboard in Option 1\n6. Paste the copied value in the terminal and press enter\n\nNow you should be able to run the command again' && exit 1",
+    "synth:pipeline": "cdk synth orca-pipeline"
   },
   "devDependencies": {
-    "husky": "^8.0.1"
+    "@aws-sdk/client-cloudformation": "^3.441.0",
+    "@tsconfig/node18": "^18.2.1",
+    "aws-cdk": "^2.104.0",
+    "aws-cdk-lib": "^2.104.0",
+    "constructs": "^10.3.0",
+    "husky": "^8.0.1",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.2.2"
   },
   "repository": {
     "type": "git",
@@ -19,5 +34,9 @@
   "bugs": {
     "url": "https://github.com/flagright/tarpon/issues"
   },
-  "homepage": "https://github.com/flagright/tarpon#readme"
+  "homepage": "https://github.com/flagright/tarpon#readme",
+  "dependencies": {
+    "@types/lodash": "^4.14.200",
+    "lodash": "^4.17.21"
+  }
 }

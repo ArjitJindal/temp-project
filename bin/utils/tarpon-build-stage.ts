@@ -1,0 +1,55 @@
+import { aws_codebuild as codebuild, aws_iam as iam } from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { installTerraform } from "../constants/terraform-commands";
+import { getSentryReleaseSpec } from "./sentry-release-spec";
+import { checkDiffAndRunCommands } from "./diff-checker";
+import { GENERATED_DIRS } from "../constants/generatedDirs";
+
+export const buildTarpon = (scope: Construct, role: iam.IRole) => {
+  return new codebuild.PipelineProject(scope, "BuildTarpon", {
+    buildSpec: codebuild.BuildSpec.fromObject({
+      version: "0.2",
+      phases: {
+        install: {
+          "runtime-versions": {
+            nodejs: 18,
+          },
+          commands: [
+            checkDiffAndRunCommands(
+              ["npm ci", "cd tarpon", "npm ci", "cd .."],
+              ["echo 'No changes in tarpon'"],
+              "tarpon"
+            ),
+          ],
+        },
+        build: {
+          commands: [
+            checkDiffAndRunCommands(
+              [
+                "cd tarpon",
+                ...installTerraform,
+                "npm run build",
+                ...getSentryReleaseSpec(false).commands,
+              ],
+              ["echo 'No changes in tarpon'"],
+              "tarpon"
+            ),
+          ],
+        },
+      },
+      cache: {
+        paths: ["node_modules/**/*"],
+      },
+      artifacts: {
+        "base-directory": "tarpon",
+        files: GENERATED_DIRS.map((dir) => `${dir}/**/*`),
+      },
+      env: getSentryReleaseSpec(false).env,
+    }),
+    environment: {
+      buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+      computeType: codebuild.ComputeType.LARGE,
+    },
+    role,
+  });
+};

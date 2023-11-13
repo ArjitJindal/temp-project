@@ -1,4 +1,4 @@
-name: Deploy Tarpon Pipline
+name: Deploy Orca Pipeline
 
 on:
   workflow_dispatch:
@@ -7,7 +7,8 @@ on:
     branches:
       - main
     paths:
-      - "tarpon/infra/cdk-tarpon-pipeline-stack.ts"
+      - "bin/*"
+
 jobs:
   deploy:
     strategy:
@@ -21,20 +22,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "npm"
-          cache-dependency-path: "tarpon/package-lock.json"
-      - run: npm ci
-        working-directory: "tarpon"
-      - name: Synth Pipline
-        run: |
-          export ENV=deploy
-          npm run synth:pipeline
-        working-directory: "tarpon"
-      - name: Deploy Tarpon Pipline
+          cache: "yarn"
+          cache-dependency-path: "package-lock.json"
+      - run: npm install
+      - name: Synth Pipeline
+        run: npm run synth:pipeline
+      - name: Deploy Orca Pipline
         run: |
           export ENV=deploy
           export NODE_OPTIONS="--max-old-space-size=8192"
           export AWS_ACCESS_KEY_ID=${{ secrets.AWS_PIPELINE_ACCESS_KEY }}
           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_PIPELINE_SECRET_KEY }}
-          npm run deploy:pipline:actions
-        working-directory: "tarpon"
+          npm run deploy:pipeline:actions

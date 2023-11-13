@@ -6,14 +6,17 @@ on:
     branches:
       - main
     paths:
-      - 'phytoplankton-console/**'
+      - "phytoplankton-console/**"
+      - "tarpon/**"
 jobs:
-  test:
-    uses: ./.github/workflows/test_phyto.yml
+  test_tarpon:
+    uses: "./.github/workflows/test_tarpon.yml"
+  test_phytoplankton:
+    uses: "./.github/workflows/test_phyto.yml"
   build:
-    name: Deploy Phytoplankton
-    needs: test
+    name: Deploy Orca
     runs-on: ubuntu-latest
+    needs: [test_tarpon, test_phytoplankton]
     steps:
       - name: Trigger AWS CodePipeline
         uses: zulhfreelancer/aws-codepipeline-action@v1.0.7
@@ -21,4 +24,4 @@ jobs:
           aws-region: "eu-central-1"
           aws-access-key: ${{ secrets.AWS_PIPELINE_ACCESS_KEY }}
           aws-secret-key: ${{ secrets.AWS_PIPELINE_SECRET_KEY }}
-          pipeline-name: "phytoplankton-pipeline"
+          pipeline-name: "orca-pipeline"
