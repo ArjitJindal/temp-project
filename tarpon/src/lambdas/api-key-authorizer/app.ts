@@ -10,6 +10,7 @@ import PolicyBuilder from '@/core/policies/policy-generator'
 import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewares'
 import { updateLogMetadata } from '@/core/utils/context'
 import { addNewSubsegment } from '@/core/xray'
+import { logger } from '@/core/logger'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
@@ -61,6 +62,11 @@ function getTenantIdFromApiKey(apiKey: string): string | null {
   try {
     decodedApiKey = base62.decode(apiKey).toString()
   } catch (e) {
+    logger.error(
+      `Failed to decode api key: Error: ${
+        (e as Error).message
+      }: API Key: ${apiKey.substring(apiKey.length - 5)}`
+    )
     return null
   }
   return decodedApiKey.match(/\w+\.\w+/) ? decodedApiKey.split('.')[0] : null
