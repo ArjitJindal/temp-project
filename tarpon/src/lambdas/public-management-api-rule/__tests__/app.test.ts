@@ -70,7 +70,7 @@ describe('Public Management API - Rule', () => {
         id: 'R-1',
         type: 'TRANSACTION',
         name: 'First payment of a Customer',
-        description: 'First transaction of a user',
+        description: 'First outgoing transaction of a user',
         parametersSchema: {
           type: 'object',
           properties: {
@@ -188,7 +188,7 @@ describe('Public Management API - Rule', () => {
       id: 'R-1',
       type: 'TRANSACTION',
       name: 'First payment of a Customer',
-      description: 'First transaction of a user',
+      description: 'First outgoing transaction of a user',
       parametersSchema: {
         type: 'object',
         properties: {

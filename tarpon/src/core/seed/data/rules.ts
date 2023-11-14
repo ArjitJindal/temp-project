@@ -23,7 +23,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       action: 'FLAG',
       type: 'TRANSACTION',
       ruleNameAlias: 'First payment of a Customers',
-      ruleDescriptionAlias: 'First transaction of a user',
+      ruleDescriptionAlias: 'First outgoing transaction of a user',
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {},

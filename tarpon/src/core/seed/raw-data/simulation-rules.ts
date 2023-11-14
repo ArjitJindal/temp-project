@@ -185,7 +185,7 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
       action: 'FLAG',
       type: 'TRANSACTION',
       ruleNameAlias: 'First payment of a Customer',
-      ruleDescriptionAlias: 'First transaction of a user',
+      ruleDescriptionAlias: 'First outgoing transaction of a user',
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {},
@@ -227,7 +227,7 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
             action: 'FLAG',
             type: 'TRANSACTION',
             ruleNameAlias: 'First payment of a Customer',
-            ruleDescriptionAlias: 'First transaction of a user',
+            ruleDescriptionAlias: 'First outgoing transaction of a user',
             filters: {},
             riskLevelParameters: {
               VERY_HIGH: {},
@@ -306,7 +306,7 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
       action: 'FLAG',
       type: 'TRANSACTION',
       ruleNameAlias: 'First payment of a Customer',
-      ruleDescriptionAlias: 'First transaction of a user',
+      ruleDescriptionAlias: 'First outgoing transaction of a user',
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {},
@@ -348,7 +348,7 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
             action: 'FLAG',
             type: 'TRANSACTION',
             ruleNameAlias: 'First payment of a Customer',
-            ruleDescriptionAlias: 'First transaction of a user',
+            ruleDescriptionAlias: 'First outgoing transaction of a user',
             filters: {},
             riskLevelParameters: {
               VERY_HIGH: {
@@ -448,7 +448,7 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
             action: 'FLAG',
             type: 'TRANSACTION',
             ruleNameAlias: 'First payment of a Customer',
-            ruleDescriptionAlias: 'First transaction of a user',
+            ruleDescriptionAlias: 'First outgoing transaction of a user',
             filters: {},
             riskLevelParameters: {
               VERY_HIGH: {},
@@ -528,7 +528,7 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
             action: 'FLAG',
             type: 'TRANSACTION',
             ruleNameAlias: 'First payment of a Customer',
-            ruleDescriptionAlias: 'First transaction of a user',
+            ruleDescriptionAlias: 'First outgoing transaction of a user',
             filters: {},
             riskLevelParameters: {
               VERY_HIGH: {},

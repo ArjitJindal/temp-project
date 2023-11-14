@@ -68,7 +68,7 @@ const _RULES_LIBRARY: Array<
     id: 'R-1',
     type: 'TRANSACTION',
     name: 'First payment of a Customer',
-    description: 'First transaction of a user',
+    description: 'First outgoing transaction of a user',
     descriptionTemplate:
       "{{ if-sender 'Sender’s' 'Receiver’s' }} first transaction",
     defaultParameters: {},
