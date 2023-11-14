@@ -160,7 +160,8 @@ async function* getTransactionsGenerator(
             transactionAmountRange: filters.transactionAmountRangeHistorical,
             originPaymentMethods: filters.paymentMethodsHistorical,
             originCountries: filters.transactionCountriesHistorical,
-            transactionTimeRange: filters.transactionTimeRangeHistorical,
+            transactionTimeRange24hr:
+              filters.transactionTimeRangeHistorical24hr,
           },
           attributesToFetch,
           matchPaymentMethodDetails
@@ -181,7 +182,8 @@ async function* getTransactionsGenerator(
             transactionAmountRange: filters.transactionAmountRangeHistorical,
             destinationPaymentMethods: filters.paymentMethodsHistorical,
             destinationCountries: filters.transactionCountriesHistorical,
-            transactionTimeRange: filters.transactionTimeRangeHistorical,
+            transactionTimeRange24hr:
+              filters.transactionTimeRangeHistorical24hr,
           },
           attributesToFetch,
           matchPaymentMethodDetails

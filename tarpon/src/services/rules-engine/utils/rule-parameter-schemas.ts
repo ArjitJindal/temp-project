@@ -620,9 +620,13 @@ export const TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
+export interface TimeRangeHourAndMinute {
+  utcHours: number
+  utcMinutes: number
+}
 export interface TransactionTimeRange {
-  startTime: number
-  endTime: number
+  startTime: TimeRangeHourAndMinute
+  endTime: TimeRangeHourAndMinute
 }
 
 export const TRANSACTION_TIME_RANGE_SCHEMA = (options?: SchemaOptions) =>
@@ -634,8 +638,32 @@ export const TRANSACTION_TIME_RANGE_SCHEMA = (options?: SchemaOptions) =>
     title: options?.title || 'Transaction time range',
     description: options?.description,
     properties: {
-      startTime: { type: 'number', nullable: true },
-      endTime: { type: 'number', nullable: true },
+      startTime: {
+        type: 'object',
+        properties: {
+          utcHours: {
+            type: 'integer',
+          },
+          utcMinutes: {
+            type: 'integer',
+          },
+        },
+        required: ['utcHours', 'utcMinutes'],
+        nullable: true,
+      },
+      endTime: {
+        type: 'object',
+        properties: {
+          utcHours: {
+            type: 'integer',
+          },
+          utcMinutes: {
+            type: 'integer',
+          },
+        },
+        required: ['utcHours', 'utcMinutes'],
+        nullable: true,
+      },
     },
     required: [],
   } as const)

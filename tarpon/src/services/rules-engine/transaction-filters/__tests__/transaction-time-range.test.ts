@@ -1,24 +1,134 @@
 import { TransactionTimeRangeRuleFilter } from '../transaction-time-range'
-import { TransactionTimeRangeHistoricalRuleFilter } from '../transaction-time-range-historical'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import dayjs from '@/utils/dayjs'
 
 const dynamodb = getDynamoDbClient()
 
-test('Transactions in time range', async () => {
+test('Transactions in time range for same date', async () => {
   expect(
     await new TransactionTimeRangeRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
-          timestamp: 1693407600,
+          timestamp: dayjs('2022-01-06T03:00:00.000Z').valueOf(),
         }),
       },
       {
-        transactionTimeRange: {
-          startTime: 1693403040,
-          endTime: 1693411200,
+        transactionTimeRange24hr: {
+          startTime: {
+            utcHours: 1,
+            utcMinutes: 30,
+          },
+          endTime: {
+            utcHours: 5,
+            utcMinutes: 0,
+          },
+        },
+      },
+      dynamodb
+    ).predicate()
+  ).toBe(true)
+})
+
+test('Transactions in time range for transaction date greater than filter', async () => {
+  expect(
+    await new TransactionTimeRangeRuleFilter(
+      getTestTenantId(),
+      {
+        transaction: getTestTransaction({
+          timestamp: dayjs('2022-02-06T03:00:00.000Z').valueOf(),
+        }),
+      },
+      {
+        transactionTimeRange24hr: {
+          startTime: {
+            utcHours: 1,
+            utcMinutes: 30,
+          },
+          endTime: {
+            utcHours: 5,
+            utcMinutes: 0,
+          },
+        },
+      },
+      dynamodb
+    ).predicate()
+  ).toBe(true)
+})
+
+test('Transactions in time range for transaction date equal to end time', async () => {
+  expect(
+    await new TransactionTimeRangeRuleFilter(
+      getTestTenantId(),
+      {
+        transaction: getTestTransaction({
+          timestamp: dayjs('2022-02-06T04:00:00.000Z').valueOf(),
+        }),
+      },
+      {
+        transactionTimeRange24hr: {
+          startTime: {
+            utcHours: 1,
+            utcMinutes: 30,
+          },
+          endTime: {
+            utcHours: 4,
+            utcMinutes: 0,
+          },
+        },
+      },
+      dynamodb
+    ).predicate()
+  ).toBe(true)
+})
+
+test('Transactions in time range for transaction date equal to start time', async () => {
+  expect(
+    await new TransactionTimeRangeRuleFilter(
+      getTestTenantId(),
+      {
+        transaction: getTestTransaction({
+          timestamp: dayjs('2022-02-06T02:00:00.000Z').valueOf(),
+        }),
+      },
+      {
+        transactionTimeRange24hr: {
+          startTime: {
+            utcHours: 2,
+            utcMinutes: 0,
+          },
+          endTime: {
+            utcHours: 5,
+            utcMinutes: 0,
+          },
+        },
+      },
+      dynamodb
+    ).predicate()
+  ).toBe(true)
+})
+
+test('Transactions in time range for transaction date less that the filter', async () => {
+  expect(
+    await new TransactionTimeRangeRuleFilter(
+      getTestTenantId(),
+      {
+        transaction: getTestTransaction({
+          timestamp: dayjs('2022-01-05T03:00:00.000Z').valueOf(),
+        }),
+      },
+      {
+        transactionTimeRange24hr: {
+          startTime: {
+            utcHours: 1,
+            utcMinutes: 30,
+          },
+          endTime: {
+            utcHours: 5,
+            utcMinutes: 0,
+          },
         },
       },
       dynamodb
@@ -32,33 +142,19 @@ test('Transactions not in time range', async () => {
       getTestTenantId(),
       {
         transaction: getTestTransaction({
-          timestamp: 1693396800,
+          timestamp: dayjs('2022-01-05T01:00:00.000Z').valueOf(),
         }),
       },
       {
-        transactionTimeRange: {
-          startTime: 1693403040,
-          endTime: 1693411200,
-        },
-      },
-      dynamodb
-    ).predicate()
-  ).toBe(false)
-})
-
-test('Transactions not in time range', async () => {
-  expect(
-    await new TransactionTimeRangeRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          timestamp: 1693321200,
-        }),
-      },
-      {
-        transactionTimeRange: {
-          startTime: 1693403040,
-          endTime: 1693411200,
+        transactionTimeRange24hr: {
+          startTime: {
+            utcHours: 1,
+            utcMinutes: 30,
+          },
+          endTime: {
+            utcHours: 5,
+            utcMinutes: 0,
+          },
         },
       },
       dynamodb
@@ -76,64 +172,7 @@ test('Transactions time range not defined', async () => {
         }),
       },
       {
-        transactionTimeRange: undefined,
-      },
-      dynamodb
-    ).predicate()
-  ).toBe(true)
-})
-
-test('Historical transaction in time range', async () => {
-  expect(
-    await new TransactionTimeRangeHistoricalRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          timestamp: 1693321200,
-        }),
-      },
-      {
-        transactionTimeRangeHistorical: {
-          startTime: 1693403040,
-          endTime: 1693411200,
-        },
-      },
-      dynamodb
-    ).predicate()
-  ).toBe(true)
-})
-
-test('Historical transaction not in time range', async () => {
-  expect(
-    await new TransactionTimeRangeHistoricalRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          timestamp: 1693293890,
-        }),
-      },
-      {
-        transactionTimeRangeHistorical: {
-          startTime: 1693403040,
-          endTime: 1693411200,
-        },
-      },
-      dynamodb
-    ).predicate()
-  ).toBe(false)
-})
-
-test('Historical transaction time range not defined', async () => {
-  expect(
-    await new TransactionTimeRangeHistoricalRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          timestamp: 1693293890,
-        }),
-      },
-      {
-        transactionTimeRangeHistorical: undefined,
+        transactionTimeRange24hr: undefined,
       },
       dynamodb
     ).predicate()

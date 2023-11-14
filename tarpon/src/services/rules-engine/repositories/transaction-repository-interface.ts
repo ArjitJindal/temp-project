@@ -28,7 +28,7 @@ export type TransactionsFilterOptions = {
   originCountries?: string[]
   destinationCountries?: string[]
   transactionAmountRange?: TransactionAmountRange
-  transactionTimeRange?: TransactionTimeRange
+  transactionTimeRange24hr?: TransactionTimeRange
 }
 
 export interface RulesEngineTransactionRepositoryInterface {

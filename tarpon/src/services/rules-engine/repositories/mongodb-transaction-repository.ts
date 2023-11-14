@@ -12,6 +12,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
+import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/transaction-time-range'
 import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,
@@ -1398,12 +1399,6 @@ export class MongoDbTransactionRepository
         ),
       })
     }
-    if (!isEmpty(filterOptions.transactionTimeRange)) {
-      const { startTime, endTime } = filterOptions.transactionTimeRange
-      additionalFilters.push({
-        timestamp: { $gte: startTime, $lte: endTime },
-      })
-    }
     return this.getTransactionsMongoQuery(
       {
         ...timeRange,
@@ -1471,14 +1466,24 @@ export class MongoDbTransactionRepository
           finalAttributesToFetch.map((attribute) => [attribute, 1])
         )
       )
+      .toArray()
     let transactionsBatch: AuxiliaryIndexTransaction[] = []
-    for await (const transaction of transactions) {
+    const transactionTimeRange = filterOptions.transactionTimeRange24hr
+    for (const transaction of transactions) {
       const tx = transaction as InternalTransaction
-      transactionsBatch.push({
-        ...transaction,
-        senderKeyId: getSenderKeyId(this.tenantId, tx),
-        receiverKeyId: getReceiverKeyId(this.tenantId, tx),
-      })
+      const isValid = transactionTimeRange
+        ? transactionTimeRangeRuleFilterPredicate(
+            tx.timestamp!,
+            transactionTimeRange
+          )
+        : true
+      if (isValid) {
+        transactionsBatch.push({
+          ...transaction,
+          senderKeyId: getSenderKeyId(this.tenantId, tx),
+          receiverKeyId: getReceiverKeyId(this.tenantId, tx),
+        })
+      }
       if (transactionsBatch.length === 100) {
         yield transactionsBatch
         transactionsBatch = []

@@ -2,12 +2,13 @@ import { JSONSchemaType } from 'ajv'
 import { isEmpty } from 'lodash'
 import {
   TRANSACTION_TIME_RANGE_OPTIONAL_SCHEMA,
+  TimeRangeHourAndMinute,
   TransactionTimeRange,
 } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 
 export type TransactionTimeRangeRuleFilterParameter = {
-  transactionTimeRange?: TransactionTimeRange
+  transactionTimeRange24hr?: TransactionTimeRange
 }
 
 export const transactionTimeRangeRuleFilterPredicate = (
@@ -17,8 +18,30 @@ export const transactionTimeRangeRuleFilterPredicate = (
   if (!transactionTimeRange || isEmpty(transactionTimeRange)) {
     return true
   }
-  const { startTime, endTime } = transactionTimeRange
-  return startTime <= transactionTimestamp && endTime >= transactionTimestamp
+  const startTime = getTotalMinutesFromTime(transactionTimeRange.startTime)
+  const endTime = getTotalMinutesFromTime(transactionTimeRange.endTime)
+  const transactionTime = getTotalMinutesFromTime(
+    getHoursAndMinutesFromTimestamp(transactionTimestamp)
+  )
+  return startTime <= transactionTime && transactionTime <= endTime
+}
+
+export function getHoursAndMinutesFromTimestamp(
+  timestamp: number
+): TimeRangeHourAndMinute {
+  const date = new Date(timestamp)
+  const utcHours = date.getUTCHours()
+  const utcMinutes = date.getUTCMinutes()
+  return {
+    utcHours,
+    utcMinutes,
+  }
+}
+
+export function getTotalMinutesFromTime(
+  timeRange: TimeRangeHourAndMinute
+): number {
+  return timeRange.utcHours * 60 + timeRange.utcMinutes
 }
 
 export class TransactionTimeRangeRuleFilter extends TransactionRuleFilter<TransactionTimeRangeRuleFilterParameter> {
@@ -26,8 +49,9 @@ export class TransactionTimeRangeRuleFilter extends TransactionRuleFilter<Transa
     return {
       type: 'object',
       properties: {
-        transactionTimeRange: TRANSACTION_TIME_RANGE_OPTIONAL_SCHEMA({
-          description: 'Filters transaction by the given time range',
+        transactionTimeRange24hr: TRANSACTION_TIME_RANGE_OPTIONAL_SCHEMA({
+          description:
+            'Filters transactions based on a specified time range, accounting for the time zone of your residence',
           uiSchema: {
             group: 'transaction',
           },
@@ -35,17 +59,22 @@ export class TransactionTimeRangeRuleFilter extends TransactionRuleFilter<Transa
       },
     }
   }
-
   public static getDefaultValues(): TransactionTimeRangeRuleFilterParameter {
     return {
-      transactionTimeRange: undefined,
+      transactionTimeRange24hr: undefined,
     }
   }
 
   public async predicate(): Promise<boolean> {
+    const transactionTimeRange: TransactionTimeRange | undefined =
+      this.parameters.transactionTimeRange24hr
+    if (!transactionTimeRange || isEmpty(transactionTimeRange)) {
+      return true
+    }
+
     return transactionTimeRangeRuleFilterPredicate(
       this.transaction.timestamp,
-      this.parameters.transactionTimeRange
+      transactionTimeRange
     )
   }
 }

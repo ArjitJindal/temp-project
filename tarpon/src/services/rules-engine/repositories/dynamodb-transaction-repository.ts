@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { chunk, get, isEmpty, omit, pickBy, set, sum } from 'lodash'
+import { chunk, get, isEmpty, omit, pickBy, set, sum, uniq } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
   BatchGetCommand,
@@ -19,6 +19,7 @@ import {
   getUserReceiverKeys,
   getUserSenderKeys,
 } from '../utils'
+import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/transaction-time-range'
 import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,
@@ -875,12 +876,21 @@ export class DynamoDbTransactionRepository
         partitionKeyId,
         timeRange,
         filterOptions,
-        attributesToFetch
+        uniq([...attributesToFetch, 'timestamp'])
       )
     )
-    return (result.Items?.map((item) =>
+    const transactions = (result.Items?.map((item) =>
       omit(item, ['PartitionKeyID', 'SortKeyID'])
     ) || []) as Array<AuxiliaryIndexTransaction>
+    const transactionTimeRange = filterOptions.transactionTimeRange24hr
+    return transactionTimeRange
+      ? transactions.filter((transaction) =>
+          transactionTimeRangeRuleFilterPredicate(
+            transaction.timestamp!,
+            transactionTimeRange
+          )
+        )
+      : transactions
   }
 
   private async *getDynamoDBTransactionsGenerator(
@@ -895,13 +905,22 @@ export class DynamoDbTransactionRepository
         partitionKeyId,
         timeRange,
         filterOptions,
-        attributesToFetch
+        uniq([...attributesToFetch, 'timestamp'])
       )
     )
     for await (const data of generator) {
-      yield (data.Items?.map((item) =>
+      const transactions = (data.Items?.map((item) =>
         omit(item, ['PartitionKeyID', 'SortKeyID'])
       ) || []) as Array<AuxiliaryIndexTransaction>
+      const transactionTimeRange = filterOptions.transactionTimeRange24hr
+      yield transactionTimeRange
+        ? transactions.filter((transaction) =>
+            transactionTimeRangeRuleFilterPredicate(
+              transaction.timestamp!,
+              transactionTimeRange
+            )
+          )
+        : transactions
     }
   }
 
@@ -987,13 +1006,6 @@ export class DynamoDbTransactionRepository
         return statement
       })
       .join(' OR ')
-    const startTime = filterOptions?.transactionTimeRange?.startTime
-    const endTime = filterOptions?.transactionTimeRange?.endTime
-    let transactionTimeRangeParams = ''
-
-    if (startTime !== undefined && endTime !== undefined) {
-      transactionTimeRangeParams = '#timestamp BETWEEN :startTime AND :endTime'
-    }
     const filters = [
       originPaymentMethodsKeys &&
         !isEmpty(originPaymentMethodsKeys) &&
@@ -1019,9 +1031,6 @@ export class DynamoDbTransactionRepository
       filterOptions.transactionAmountRange &&
         !isEmpty(filterOptions.transactionAmountRange) &&
         transactionAmountStatement,
-      filterOptions.transactionTimeRange &&
-        !isEmpty(filterOptions.transactionTimeRange) &&
-        transactionTimeRangeParams,
     ].filter(Boolean)
 
     if (isEmpty(filters) && isEmpty(attributesToFetch)) {
@@ -1042,7 +1051,6 @@ export class DynamoDbTransactionRepository
           '#transactionAmount': 'transactionAmount',
           '#transactionCurrency': 'transactionCurrency',
           '#country': 'country',
-          '#timestamp': 'timestamp',
         },
         (_value, key) => filterExpression?.includes(key)
       ),
@@ -1064,10 +1072,6 @@ export class DynamoDbTransactionRepository
             ...Object.fromEntries(originCountriesParams || []),
             ...Object.fromEntries(destinationCountriesParams || []),
             ...Object.fromEntries(transactionAmountParams || []),
-            ...{
-              ':startTime': startTime,
-              ':endTime': endTime,
-            },
           },
       ProjectionExpression: isEmpty(attributesToFetch)
         ? undefined

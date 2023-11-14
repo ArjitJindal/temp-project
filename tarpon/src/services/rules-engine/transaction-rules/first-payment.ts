@@ -48,7 +48,8 @@ export default class FirstPaymentRule extends TransactionRule<
           originCountries: this.filters.transactionCountriesHistorical,
           transactionAmountRange: this.filters.transactionAmountRangeHistorical,
           originPaymentMethods: this.filters.paymentMethodsHistorical,
-          transactionTimeRange: this.filters.transactionTimeRangeHistorical,
+          transactionTimeRange24hr:
+            this.filters.transactionTimeRangeHistorical24hr,
           transactionStates: this.filters.transactionStatesHistorical,
           transactionTypes: this.filters.transactionTypesHistorical,
         }

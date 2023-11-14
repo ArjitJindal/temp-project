@@ -3,9 +3,13 @@ import moment from 'moment';
 import { UiSchemaTransactionTimeRange } from '@/components/library/JsonSchemaEditor/types';
 import { InputProps } from '@/components/library/Form';
 
+export interface TimeRangeHourAndMinute {
+  utcHours: number;
+  utcMinutes: number;
+}
 interface ValueType {
-  startTime?: number;
-  endTime?: number;
+  startTime?: TimeRangeHourAndMinute;
+  endTime?: TimeRangeHourAndMinute;
 }
 
 interface Props extends InputProps<ValueType> {
@@ -16,17 +20,37 @@ const TimeRangeInput = (props: Props) => {
   const { onChange, value } = props;
   const handleTimeRangeChange = (startTime?: number, endTime?: number) => {
     onChange?.({
-      startTime: startTime,
-      endTime: endTime,
+      startTime: getHoursAndMinutesFromTimestamp(startTime),
+      endTime: getHoursAndMinutesFromTimestamp(endTime),
     });
   };
+  function getHoursAndMinutesFromTimestamp(timestamp?: number) {
+    if (!timestamp) return undefined;
+    const date = new Date(timestamp);
+    const utcHours = date.getUTCHours();
+    const utcMinutes = date.getUTCMinutes();
+    return {
+      utcHours,
+      utcMinutes,
+    };
+  }
+
+  function hoursAndMinutesToTimestamp(time: TimeRangeHourAndMinute): number {
+    const totalSeconds = time.utcHours * 3600 + time.utcMinutes * 60;
+    const timestampMilliseconds = totalSeconds * 1000;
+    const timestamp = new Date(timestampMilliseconds).getTime() / 1000;
+    return Math.floor(timestamp);
+  }
 
   return (
     <div>
       <TimePicker.RangePicker
         value={
           value?.startTime && value.endTime
-            ? [moment.unix(value?.startTime / 1000), moment.unix(value?.endTime / 1000)]
+            ? [
+                moment.unix(hoursAndMinutesToTimestamp(value?.startTime)),
+                moment.unix(hoursAndMinutesToTimestamp(value?.endTime)),
+              ]
             : null
         }
         format={'HH:mm'}

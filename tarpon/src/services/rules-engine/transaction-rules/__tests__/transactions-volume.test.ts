@@ -1242,9 +1242,15 @@ ruleVariantsTest(true, () => {
         ruleImplementationName: 'transactions-volume',
         filters: {
           transactionCountriesHistorical: ['DE'],
-          transactionTimeRangeHistorical: {
-            startTime: dayjs('2022-01-06T00:00:30.000Z').valueOf() / 1000,
-            endTime: dayjs('2022-01-06T00:02:00.000Z').valueOf() / 1000,
+          transactionTimeRangeHistorical24hr: {
+            startTime: {
+              utcHours: 0,
+              utcMinutes: 0,
+            },
+            endTime: {
+              utcHours: 1,
+              utcMinutes: 30,
+            },
           },
         },
         defaultParameters: DEFAULT_RULE_PARAMETERS,
@@ -1273,7 +1279,7 @@ ruleVariantsTest(true, () => {
               country: 'DE',
             },
             destinationAmountDetails: undefined,
-            timestamp: dayjs('2022-01-03T00:01:01.000Z').valueOf(),
+            timestamp: dayjs('2022-01-02T01:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
             originUserId: '1-1',
@@ -1283,7 +1289,78 @@ ruleVariantsTest(true, () => {
               country: 'DE',
             },
             destinationAmountDetails: undefined,
-            timestamp: dayjs('2022-01-04T00:02:02.000Z').valueOf(),
+            timestamp: dayjs('2022-01-02T02:00:00.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('transaction country filter with transaction time historical filter', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        filters: {
+          transactionCountriesHistorical: ['DE'],
+          transactionTimeRangeHistorical24hr: {
+            startTime: {
+              utcHours: 1,
+              utcMinutes: 30,
+            },
+            endTime: {
+              utcHours: 3,
+              utcMinutes: 30,
+            },
+          },
+        },
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: '',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: {
+              ...TEST_TRANSACTION_AMOUNT_200,
+              country: 'FR',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: dayjs('2022-01-02T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: {
+              ...TEST_TRANSACTION_AMOUNT_200,
+              country: 'DE',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: dayjs('2022-01-02T01:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: {
+              ...TEST_TRANSACTION_AMOUNT_200,
+              country: 'DE',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: dayjs('2022-01-02T02:00:00.000Z').valueOf(),
           }),
         ],
         expectedHits: [false, false, false],
