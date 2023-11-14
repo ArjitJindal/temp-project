@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { isEqual, pick } from 'lodash'
+import { isEmpty, isEqual, pick } from 'lodash'
 import { syncRulesLibrary } from '../../../scripts/migrations/always-run/sync-rules-library'
 import { logger } from '../logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -97,14 +97,9 @@ export async function seedDynamo(
     const demoSettings = await tenantRepo.getTenantSettings(
       requiredSettingNames
     )
-    if (!isEqual(demoSettings, nonDemoSettings)) {
+    if (!isEmpty(nonDemoSettings) && !isEqual(demoSettings, nonDemoSettings)) {
       logger.info('Setting tenant settings...')
-      await tenantRepo.createOrUpdateTenantSettings({
-        features: nonDemoSettings.features,
-        isAiEnabled: nonDemoSettings.isAiEnabled,
-        isPaymentApprovalEnabled: nonDemoSettings.isPaymentApprovalEnabled,
-        aiSourcesDisabled: nonDemoSettings.aiSourcesDisabled,
-      })
+      await tenantRepo.createOrUpdateTenantSettings(nonDemoSettings)
     }
   }
 }
