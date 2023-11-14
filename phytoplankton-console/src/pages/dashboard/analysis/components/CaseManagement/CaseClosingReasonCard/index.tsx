@@ -4,16 +4,21 @@ import s from './index.module.less';
 import { exportDataForTreemaps } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
-  COLORS_V2_ANALYTICS_CHARTS_09,
+  COLORS_V2_ANALYTICS_CHARTS_02,
+  COLORS_V2_ANALYTICS_CHARTS_04,
+  COLORS_V2_ANALYTICS_CHARTS_07,
+  COLORS_V2_ANALYTICS_CHARTS_10,
   COLORS_V2_ANALYTICS_CHARTS_11,
+  COLORS_V2_ANALYTICS_CHARTS_12,
   COLORS_V2_ANALYTICS_CHARTS_13,
   COLORS_V2_ANALYTICS_CHARTS_15,
   COLORS_V2_ANALYTICS_CHARTS_16,
-  COLORS_V2_ANALYTICS_CHARTS_17,
-  COLORS_V2_ANALYTICS_CHARTS_18,
   COLORS_V2_ANALYTICS_CHARTS_19,
   COLORS_V2_ANALYTICS_CHARTS_20,
   COLORS_V2_ANALYTICS_CHARTS_23,
+  COLORS_V2_ANALYTICS_CHARTS_25,
+  COLORS_V2_ANALYTICS_CHARTS_28,
+  COLORS_V2_ANALYTICS_CHARTS_29,
 } from '@/components/ui/colors';
 import ScopeSelector from '@/pages/dashboard/analysis/components/CaseManagement/CaseClosingReasonCard/ScopeSelector';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
@@ -43,20 +48,30 @@ type ClosingReasons =
   | 'Investigation completed'
   | 'Escalated'
   | 'User Blacklisted'
-  | 'User Terminated';
+  | 'User Terminated'
+  | 'Fraud'
+  | 'Anti-money laundering'
+  | 'Terrorist financing'
+  | 'Internal referral'
+  | 'External referral';
 
 const TREEMAP_COLORS: { [key in ClosingReasons]: string } = {
   ['False positive']: COLORS_V2_ANALYTICS_CHARTS_23,
-  ['Investigation completed']: COLORS_V2_ANALYTICS_CHARTS_17,
-  ['Documents collected']: COLORS_V2_ANALYTICS_CHARTS_18,
+  ['Investigation completed']: COLORS_V2_ANALYTICS_CHARTS_28,
+  ['Documents collected']: COLORS_V2_ANALYTICS_CHARTS_29,
   ['Suspicious activity reported (SAR)']: COLORS_V2_ANALYTICS_CHARTS_15,
   ['Documents not collected']: COLORS_V2_ANALYTICS_CHARTS_19,
-  ['Transaction Refunded']: COLORS_V2_ANALYTICS_CHARTS_09,
+  ['Transaction Refunded']: COLORS_V2_ANALYTICS_CHARTS_10,
   ['Transaction Rejected']: COLORS_V2_ANALYTICS_CHARTS_20,
   ['User Blacklisted']: COLORS_V2_ANALYTICS_CHARTS_16,
   ['User Terminated']: COLORS_V2_ANALYTICS_CHARTS_01,
   ['Escalated']: COLORS_V2_ANALYTICS_CHARTS_13,
   ['Other']: COLORS_V2_ANALYTICS_CHARTS_11,
+  ['Fraud']: COLORS_V2_ANALYTICS_CHARTS_12,
+  ['Anti-money laundering']: COLORS_V2_ANALYTICS_CHARTS_07,
+  ['Terrorist financing']: COLORS_V2_ANALYTICS_CHARTS_04,
+  ['Internal referral']: COLORS_V2_ANALYTICS_CHARTS_25,
+  ['External referral']: COLORS_V2_ANALYTICS_CHARTS_02,
 };
 
 interface Props extends WidgetProps {}
