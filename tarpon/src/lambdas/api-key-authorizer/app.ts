@@ -12,6 +12,8 @@ import { updateLogMetadata } from '@/core/utils/context'
 import { addNewSubsegment } from '@/core/xray'
 import { logger } from '@/core/logger'
 
+const API_KEY_HEADER = 'x-api-key'
+
 async function getTenantScopeCredentials(
   tenantId: string,
   accountId: string,
@@ -73,13 +75,23 @@ function getTenantIdFromApiKey(apiKey: string): string | null {
   return decodedApiKey.split('.')[0] ?? null
 }
 
+function getApiKey(event: APIGatewayRequestAuthorizerEvent) {
+  const apiKey = Object.entries(event.headers ?? {}).find(
+    (entry) => entry[0].trim().toLowerCase() === API_KEY_HEADER
+  )?.[1]
+  const multiValueApiKey = Object.entries(event.multiValueHeaders ?? {}).find(
+    (entry) => entry[0].trim().toLowerCase() === API_KEY_HEADER
+  )?.[1]?.[0]
+  return apiKey || multiValueApiKey
+}
+
 export const apiKeyAuthorizer = lambdaAuthorizer()(
   async (
     event: APIGatewayRequestAuthorizerEvent
   ): Promise<APIGatewayAuthorizerResult> => {
     const arn = ARN.parse(event.methodArn)
     const { apiId, stage, accountId, requestId } = event.requestContext
-    const apiKey = event.headers?.['x-api-key']
+    const apiKey = getApiKey(event)
     const tenantId = apiKey ? getTenantIdFromApiKey(apiKey) : undefined
 
     // NOTE: "Surprisingly", if the api key is invalid, lambda authorizer will still be executed, and
@@ -87,7 +99,12 @@ export const apiKeyAuthorizer = lambdaAuthorizer()(
     // To avoid error in case of invalid api key, we early return if we cannot decode the api key.
     if (!apiKey || !tenantId) {
       if (!apiKey) {
-        logger.warn('x-api-key header is missing')
+        // NOTE: This should never happen as the lambda authorizer will not be invoked if x-api-key header
+        // is missing.
+        logger.error('x-api-key header is missing', {
+          headers: event.headers,
+          multiValueHeaders: event.multiValueHeaders,
+        })
       }
       if (!tenantId) {
         logger.warn('Empty tenant ID', { apiKey })
