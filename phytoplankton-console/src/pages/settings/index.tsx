@@ -8,7 +8,6 @@ import { RiskLevelSettings } from './components/RiskLevelSettings';
 import { FlagrightAISettings } from './components/FlagrightAISettings';
 import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
-import NarrativeTemplates from './components/NarrativeTemplates';
 import { QuotaSettings } from './components/QuotaSettings';
 import { KYCUserStatusSettings } from './components/KYCUserStatusSettings';
 import { ApiKeysSettings } from './components/ApiKeysSettings';
@@ -20,6 +19,7 @@ import { SanctionsSettings } from './components/SanctionsSettings';
 import { ProductionAccessControl } from './components/ProductionAccessControl';
 import { AISources } from './components/AISources';
 import { RuleQueuesSettings } from './components/RuleQueuesSettings';
+import { NarrativeTemplatesSettings } from './components/NarrativeTemplateSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -59,7 +59,7 @@ export default function SettingsPage() {
         </Tabs.TabPane>
         <Tabs.TabPane tab={i18n('menu.settings.case-management')} key={'case-management'}>
           <>
-            <NarrativeTemplates />
+            <NarrativeTemplatesSettings />
             <ChecklistTemplatesSettings />
             <RuleQueuesSettings />
             <Feature name="COPILOT">

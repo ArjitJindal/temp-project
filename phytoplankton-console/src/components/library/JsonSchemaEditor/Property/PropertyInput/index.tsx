@@ -20,6 +20,7 @@ import Indicator from './custom/fincen/Indicator';
 import TimeRangeInput from './custom/TimeRangeInput';
 import NarrativeInput from './custom/NarrativeInput';
 import { CheckListCategoryListsInput } from './custom/CheckListCategoryListsInput';
+import { WebhookInput } from './custom/WebhookInput';
 import { InputProps } from '@/components/library/Form';
 
 // todo: fix any
@@ -73,6 +74,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'CHECKLISTS_CATEGORY_LIST') {
     return <CheckListCategoryListsInput {...props} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'WEBHOOK') {
+    return <WebhookInput {...props} uiSchema={uiSchema} />;
   }
 
   const schemaType = schema.oneOf ? 'object' : schema.type;

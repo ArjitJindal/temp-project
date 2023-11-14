@@ -60,6 +60,7 @@ interface Props<GetParams, Entity extends { [key: string]: any }> {
   };
   formSteps: Array<{ step: Step; jsonSchema: object }>;
   formWidth?: string;
+  extraInfo?: { label: string; redirectUrl: string };
 }
 
 export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any }>(
@@ -267,6 +268,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
         drawerMaxWidth={props.formWidth}
         formInitialValues={formInitialValues}
         isSaving={updateMutation.isLoading || creationMutation.isLoading}
+        extraInfo={props.extraInfo}
       />
     </Authorized>
   );

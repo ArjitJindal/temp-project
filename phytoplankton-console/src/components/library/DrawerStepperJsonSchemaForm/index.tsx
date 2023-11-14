@@ -29,6 +29,7 @@ interface Props<Entity> {
   isSaving?: boolean;
   onChangeVisibility: (visible: boolean) => void;
   onSubmit: (formState: Entity) => void;
+  extraInfo?: { label: string; redirectUrl: string };
 }
 
 export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
@@ -100,6 +101,7 @@ export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
             onPrevious={() => {
               setActiveStepKey(steps[activeStepIndex - 1].step.key);
             }}
+            extraInfo={props.extraInfo}
           />
         </div>
       }

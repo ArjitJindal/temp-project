@@ -15,6 +15,7 @@ interface Props {
   nextDisabled?: boolean;
   prevDisabled?: boolean;
   hidePrev?: boolean;
+  extraInfo?: { label: string; redirectUrl: string };
 }
 
 export default function StepButtons(props: Props) {
@@ -51,6 +52,15 @@ export default function StepButtons(props: Props) {
           iconRight={<ArrowRightSLineIcon />}
         >
           Next
+        </Button>
+      )}
+      {props.extraInfo && (
+        <Button
+          key="next"
+          type="SECONDARY"
+          onClick={() => window.open(props.extraInfo?.redirectUrl, '_blank')}
+        >
+          {props.extraInfo.label}
         </Button>
       )}
     </div>

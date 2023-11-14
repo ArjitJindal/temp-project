@@ -1,29 +1,25 @@
 import { Space, Switch, Tag } from 'antd';
 import { useCallback, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { PlusOutlined } from '@ant-design/icons';
-import { WebhookDetails } from './WebhookDetails';
+import { JSONSchemaType } from 'ajv';
 import SettingsCard from '@/components/library/SettingsCard';
 import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
-import Colors from '@/components/ui/colors';
-import Button from '@/components/library/Button';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
-import { WEBHOOKS_LIST } from '@/utils/queries/keys';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { message } from '@/components/library/Message';
-import Drawer from '@/components/library/Drawer';
 import { useHasPermissions } from '@/utils/user-utils';
+import { CrudEntitiesTable } from '@/components/library/CrudEntitiesTable';
+import { DefaultApiGetWebhooksRequest } from '@/apis/types/ObjectParamAPI';
+import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
+import { getBranding } from '@/utils/branding';
 
 export const WebhookSettings: React.FC = () => {
   const api = useApi();
-  const [selectedWebhook, setSelectedWebhook] = useState<WebhookConfiguration>();
   const [updatedWebhooks, setUpdatedWebhooks] = useState<{ [key: string]: WebhookConfiguration }>(
     {},
   );
   const actionRef = useRef<TableRefType>(null);
+  const branding = getBranding();
   const handleSaveWebhook = useCallback(
     async (newWebhook: WebhookConfiguration) => {
       const hideMessage = message.loading('Saving...');
@@ -41,28 +37,11 @@ export const WebhookSettings: React.FC = () => {
           await api.postWebhooks({
             WebhookConfiguration: newWebhook,
           });
-          setSelectedWebhook(undefined);
           actionRef.current?.reload();
         }
         message.success('Saved');
       } catch (e) {
         message.fatal(`Failed to save`, e);
-      } finally {
-        hideMessage();
-      }
-    },
-    [api],
-  );
-  const handleDeleteWebhook = useCallback(
-    async (webhook: WebhookConfiguration) => {
-      const hideMessage = message.loading('Deleting...');
-      try {
-        await api.deleteWebhooksWebhookId({ webhookId: webhook._id as string });
-        setSelectedWebhook(undefined);
-        actionRef.current?.reload();
-        message.success('Deleted');
-      } catch (e) {
-        message.fatal(`Failed to delete`, e);
       } finally {
         hideMessage();
       }
@@ -76,20 +55,13 @@ export const WebhookSettings: React.FC = () => {
   const columns: TableColumn<WebhookConfiguration>[] = helper.list([
     helper.derived<WebhookConfiguration>({
       title: 'Endpoint URL',
+      defaultWidth: 500,
       value: (entity): WebhookConfiguration | undefined => {
         return updatedWebhooks[entity._id as string] ?? entity;
       },
       type: {
         render: (webhook: WebhookConfiguration | undefined) => {
-          return (
-            <Link
-              to=""
-              onClick={() => setSelectedWebhook(webhook)}
-              style={{ color: Colors.brandBlue.base }}
-            >
-              {webhook?.webhookUrl}
-            </Link>
-          );
+          return <>{webhook?.webhookUrl}</>;
         },
       },
     }),
@@ -144,55 +116,83 @@ export const WebhookSettings: React.FC = () => {
       },
     }),
   ]);
-  const handleCreateWebhook = useCallback(() => {
-    setSelectedWebhook({ webhookUrl: '', events: [], enabled: true });
-  }, []);
 
-  const webhooksListResult = usePaginatedQuery(WEBHOOKS_LIST(), async (_paginationParams) => {
-    const webhooks = await api.getWebhooks(100);
-    return {
-      items: webhooks,
-      total: webhooks.length,
+  const templateDetailsSchema: JSONSchemaType<Pick<WebhookConfiguration, 'webhookUrl' | 'events'>> =
+    {
+      type: 'object',
+      properties: {
+        webhookUrl: {
+          type: 'string',
+          title: 'Endpoint URL',
+          format: 'uri',
+          pattern: '^https?://',
+        },
+        events: {
+          type: 'array',
+          title: 'Events',
+          items: {
+            type: 'string',
+            enum: WEBHOOK_EVENT_TYPES,
+          },
+        },
+        _id: {
+          title: 'Additional Properties',
+          type: 'string',
+          'ui:schema': {
+            'ui:subtype': 'WEBHOOK',
+          },
+        },
+      },
+      required: ['webhookUrl', 'events'],
     };
-  });
-
   return (
     <SettingsCard title="Webhooks" description="">
-      <QueryResultsTable<WebhookConfiguration>
-        rowKey="_id"
-        innerRef={actionRef}
-        columns={columns}
-        pagination={false}
-        queryResults={webhooksListResult}
-        extraTools={[
-          () => (
-            <Button
-              type="PRIMARY"
-              onClick={handleCreateWebhook}
-              requiredPermissions={['settings:developers:write']}
-            >
-              <PlusOutlined />
-              Add endpoint
-            </Button>
-          ),
-        ]}
-      />
-      <Drawer
-        title="Add endpoint"
-        drawerMaxWidth="960px"
-        isVisible={Boolean(selectedWebhook)}
-        onChangeVisibility={() => {
-          setSelectedWebhook(undefined);
+      <CrudEntitiesTable<DefaultApiGetWebhooksRequest, WebhookConfiguration>
+        entityName="endpoint"
+        entityIdField="_id"
+        readPermissions={['settings:organisation:read']}
+        writePermissions={['settings:organisation:write']}
+        apiOperations={{
+          GET: () => {
+            return api.getWebhooks(100).then((value) => {
+              return {
+                data: value,
+                total: value.length,
+              };
+            });
+          },
+          CREATE: (entity) => {
+            entity.enabled = true;
+            return api.postWebhooks({
+              WebhookConfiguration: entity,
+            });
+          },
+          UPDATE: (entityId, entity) => {
+            entity.enabled = true;
+            return api.postWebhooksWebhookid({
+              webhookId: entityId as string,
+              WebhookConfiguration: entity,
+            });
+          },
+          DELETE: (entityId) => api.deleteWebhooksWebhookId({ webhookId: entityId as string }),
         }}
-      >
-        {selectedWebhook && (
-          <WebhookDetails
-            webhook={selectedWebhook}
-            handleSaveWebhook={handleSaveWebhook}
-            handleDeleteWebhook={handleDeleteWebhook}
-          />
-        )}
-      </Drawer>
+        columns={columns}
+        formWidth="800px"
+        formSteps={[
+          {
+            step: {
+              key: 'template-details',
+              title: 'Template details',
+              description: 'Name the template and add description',
+            },
+            jsonSchema: templateDetailsSchema,
+          },
+        ]}
+        extraInfo={{
+          label: 'Learn more about webhooks',
+          redirectUrl: branding.apiDocsLinks.webhooks,
+        }}
+      />
     </SettingsCard>
   );
 };
