@@ -61,13 +61,13 @@ function getTenantIdFromApiKey(apiKey: string): string | null {
     )
     decodedApiKey = base62.decode(apiKey).toString()
   } catch (e) {
-    logger.error(`Failed to decode API key: ${(e as Error)?.message}`, {
+    logger.warn(`Failed to decode API key: ${(e as Error)?.message}`, {
       apiKey,
     })
     return null
   }
   if (!decodedApiKey.match(/\w+\.\w+/)) {
-    logger.error("The decoded API key doesn't match the pattern", { apiKey })
+    logger.warn("The decoded API key doesn't match the pattern", { apiKey })
     return null
   }
   return decodedApiKey.split('.')[0] ?? null
@@ -81,14 +81,18 @@ export const apiKeyAuthorizer = lambdaAuthorizer()(
     const { apiId, stage, accountId, requestId } = event.requestContext
     const apiKey = event.headers?.['x-api-key']
     const tenantId = apiKey ? getTenantIdFromApiKey(apiKey) : undefined
-    if (!apiKey) {
-      logger.warn('x-api-key header is missing')
-    }
 
     // NOTE: "Surprisingly", if the api key is invalid, lambda authorizer will still be executed, and
     // the api key will be validated after lambda authorizer returns.
     // To avoid error in case of invalid api key, we early return if we cannot decode the api key.
     if (!apiKey || !tenantId) {
+      if (!apiKey) {
+        logger.warn('x-api-key header is missing')
+      }
+      if (!tenantId) {
+        logger.warn('Empty tenant ID', { apiKey })
+      }
+
       return {
         principalId: 'unknown',
         policyDocument: {
@@ -115,6 +119,7 @@ export const apiKeyAuthorizer = lambdaAuthorizer()(
       accountId,
       requestId
     )
+    logger.info('Successfully authorized')
 
     return {
       principalId: tenantId,
