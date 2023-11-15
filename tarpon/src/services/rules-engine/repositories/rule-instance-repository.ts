@@ -11,6 +11,7 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
+import { shortId } from '@flagright/lib'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   RuleInstance,
@@ -20,7 +21,6 @@ import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
-import { shortId } from '@/utils/id'
 
 function toRuleInstance(item: any): RuleInstance {
   return {

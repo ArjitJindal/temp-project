@@ -3,8 +3,8 @@ import { S3, GetObjectCommand } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { AggregationCursor } from 'mongodb'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { shortId } from '@flagright/lib'
 import dayjs from '@/utils/dayjs'
-import { shortId } from '@/utils/id'
 import { traceable } from '@/core/xray'
 
 type CsvAction<T> = T extends string | number | boolean

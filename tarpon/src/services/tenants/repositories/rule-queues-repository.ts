@@ -1,6 +1,7 @@
 import { MongoClient, AggregationCursor } from 'mongodb'
 
 import { isNil, omitBy } from 'lodash'
+import { shortId } from '@flagright/lib'
 import {
   paginatePipeline,
   prefixRegexMatchFilter,
@@ -10,7 +11,6 @@ import { RULE_QUEUES_COLLECTION } from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
 import { RuleQueue } from '@/@types/openapi-internal/RuleQueue'
 import { DefaultApiGetRuleQueuesRequest } from '@/@types/openapi-internal/RequestParameters'
-import { shortId } from '@/utils/id'
 
 @traceable
 export class RuleQueuesRepository {

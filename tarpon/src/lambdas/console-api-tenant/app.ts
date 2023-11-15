@@ -2,6 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { shortId } from '@flagright/lib'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
@@ -26,7 +27,6 @@ import {
   RuleQueueWithId,
   RuleQueuesService,
 } from '@/services/tenants/rule-queue-service'
-import { shortId } from '@/utils/id'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getFullTenantId } from '@/utils/tenant'
