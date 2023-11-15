@@ -37,6 +37,9 @@ jobs:
         with:
           path: ~/.jest-cache
           key: jest-cache
+      - name: Build Flagright Lib
+        run: npm ci
+        working-directory: "lib"
       - run: npm ci
         working-directory: "tarpon"
       - run: npm run build:local

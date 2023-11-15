@@ -13,7 +13,7 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
           "runtime-versions": {
             nodejs: 18,
           },
-          commands: ["npm ci", "cd tarpon", "npm ci"],
+          commands: ["npm ci", "cd lib", "npm ci", "cd ../tarpon", "npm ci"],
         },
         build: {
           commands: [
