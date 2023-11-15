@@ -109,6 +109,9 @@ export default function AuditLogTable() {
             </>
           );
         },
+        stringify: (item) => {
+          return `${item?.entityType},${item?.entityId}`;
+        },
       },
     }),
     helper.simple<'action'>({
@@ -118,6 +121,7 @@ export default function AuditLogTable() {
     helper.derived({
       title: 'Changes',
       value: (item) => item,
+      exporting: false,
       type: {
         render: (item) => {
           if (!item || isEqual(item.oldImage, item.newImage)) {
@@ -125,6 +129,59 @@ export default function AuditLogTable() {
           }
           return <AuditLogModal data={item} />;
         },
+      },
+    }),
+    helper.derived({
+      title: 'Changes',
+      hideInTable: true,
+      exporting: true,
+
+      value: (item) => item,
+      type: {
+        render: (item) =>
+          !item || isEqual(item.oldImage, item.newImage) ? <div>No</div> : <div>Yes</div>,
+
+        stringify: (item) => (!item || isEqual(item.oldImage, item.newImage) ? 'No' : 'Yes'),
+      },
+    }),
+
+    helper.derived({
+      title: 'Parameter',
+      hideInTable: true,
+      exporting: true,
+      value: (item) => {
+        if (item.newImage) {
+          return Object.entries(item.newImage)
+            .map(([key]) => `${key}`)
+            .join(', ');
+        }
+        return '';
+      },
+    }),
+    helper.derived({
+      title: 'Old value',
+      hideInTable: true,
+      exporting: true,
+      value: (item) => {
+        if (item.newImage) {
+          return Object.entries(item.newImage)
+            .map(([key]) => `${key}: N/A`)
+            .join(', ');
+        }
+        return '';
+      },
+    }),
+    helper.derived({
+      title: 'New value',
+      hideInTable: true,
+      exporting: true,
+      value: (item) => {
+        if (item.newImage) {
+          return Object.entries(item.newImage)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(', ');
+        }
+        return '';
       },
     }),
     helper.simple<'user.id'>({
