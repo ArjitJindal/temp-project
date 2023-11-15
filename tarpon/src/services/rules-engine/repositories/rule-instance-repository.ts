@@ -11,7 +11,7 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { shortId } from '@flagright/lib'
+import { shortId } from '@flagright/lib/utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   RuleInstance,

@@ -1,7 +1,7 @@
 import { MongoClient, AggregationCursor } from 'mongodb'
 
 import { isNil, omitBy } from 'lodash'
-import { shortId } from '@flagright/lib'
+import { shortId } from '@flagright/lib/utils'
 import {
   paginatePipeline,
   prefixRegexMatchFilter,

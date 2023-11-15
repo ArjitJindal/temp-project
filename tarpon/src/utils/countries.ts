@@ -1,6 +1,4 @@
-import { constants } from '@flagright/lib'
-
-const COUNTRIES = constants.COUNTRIES
+import { COUNTRIES } from '@flagright/lib/constants'
 
 export type CountryCode = keyof typeof COUNTRIES
 

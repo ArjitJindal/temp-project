@@ -3,7 +3,7 @@ import { S3, GetObjectCommand } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { AggregationCursor } from 'mongodb'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { shortId } from '@flagright/lib'
+import { shortId } from '@flagright/lib/utils'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 
