@@ -15,7 +15,6 @@ import dayjs, { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
-import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import {
   BatchWriteRequestInternal,
   batchWrite,
@@ -24,6 +23,7 @@ import {
 } from '@/utils/dynamodb'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { traceable } from '@/core/xray'
+import { CurrencyService } from '@/services/currency'
 
 type UserAggregationAttributes = {
   sendingFromCountries: Set<string>
@@ -284,7 +284,8 @@ export class AggregationRepository {
     const currentTotalTransactionsAmount: TransactionAmountDetails =
       transactionsAmount.get('ALL') ?? defaultTransactionAmount
     const targetCurrency = currentTotalTransactionsAmount.transactionCurrency
-    const targetAmount = await getTargetCurrencyAmount(
+    const currencyService = new CurrencyService()
+    const targetAmount = await currencyService.getTargetCurrencyAmount(
       transactionAmountDetails,
       targetCurrency
     )
@@ -299,7 +300,7 @@ export class AggregationRepository {
         transactionsAmount.get(paymentMethod) ?? defaultTransactionAmount
       const targetCurrency =
         currentTotalPaymentMethodTransactionsAmount.transactionCurrency
-      const targetAmount = await getTargetCurrencyAmount(
+      const targetAmount = await currencyService.getTargetCurrencyAmount(
         transactionAmountDetails,
         targetCurrency
       )

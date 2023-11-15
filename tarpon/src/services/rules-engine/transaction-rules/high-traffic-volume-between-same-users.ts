@@ -25,8 +25,8 @@ import dayjs from '@/utils/dayjs'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { traceable } from '@/core/xray'
+import { CurrencyService } from '@/services/currency'
 
 type AggregationData = { [receiverKeyId: string]: number }
 
@@ -194,8 +194,9 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       afterTimestamp,
       beforeTimestamp
     )
+    const currencyService = new CurrencyService()
     if (userAggregationData) {
-      const amount = await getTargetCurrencyAmount(
+      const amount = await currencyService.getTargetCurrencyAmount(
         this.transaction.originAmountDetails!,
         this.getTargetCurrency()
       )
@@ -351,10 +352,11 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
       matchPaymentDetails: this.parameters.destinationMatchPaymentMethodDetails,
     })
+    const currencyService = new CurrencyService()
     if (!receiverKeyId) {
       return targetAggregationData ?? {}
     }
-    const amount = await getTargetCurrencyAmount(
+    const amount = await currencyService.getTargetCurrencyAmount(
       this.transaction.originAmountDetails!,
       this.getTargetCurrency()
     )

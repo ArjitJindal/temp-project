@@ -2,7 +2,6 @@ import { S3 } from '@aws-sdk/client-s3'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { Currency } from '@/utils/currency-utils'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
@@ -10,6 +9,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
 import { OptionalPagination } from '@/utils/pagination'
+import { Currency } from '@/services/currency'
 
 @traceable
 export class TransactionService {

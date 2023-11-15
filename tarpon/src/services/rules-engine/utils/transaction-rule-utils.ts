@@ -8,11 +8,11 @@ import { getTimestampRange } from './time-utils'
 import { TimeWindow } from './rule-parameter-schemas'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
-import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { zipGenerators, staticValueGenerator } from '@/utils/generator'
+import { CurrencyService } from '@/services/currency'
 
 export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
@@ -59,10 +59,12 @@ export async function checkTransactionAmountBetweenThreshold(
     return null
   }
 
+  const currencyService = new CurrencyService()
+
   const transactionCurrency = transactionAmountDefails.transactionCurrency
   const convertedTransactionAmount = thresholds[transactionCurrency]
     ? transactionAmountDefails
-    : await getTargetCurrencyAmount(
+    : await currencyService.getTargetCurrencyAmount(
         transactionAmountDefails,
         Object.keys(thresholds)[0] as CurrencyCode
       )
@@ -88,9 +90,12 @@ export async function getTransactionsTotalAmount(
     transactionAmount: 0,
     transactionCurrency: targetCurrency,
   }
+
+  const currencyService = new CurrencyService()
+
   for (const amountDetails of amountDetailsList) {
     if (amountDetails) {
-      const targetAmount = await getTargetCurrencyAmount(
+      const targetAmount = await currencyService.getTargetCurrencyAmount(
         amountDetails,
         targetCurrency
       )

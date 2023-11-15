@@ -35,10 +35,10 @@ import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
+import { CurrencyService } from '@/services/currency'
 
 type AggregationData = {
   sendingCount?: number
@@ -330,9 +330,11 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       const currentUserId =
         direction === 'origin' ? this.getReceiverKeyId() : this.getSenderKeyId()
 
+      const currencyService = new CurrencyService()
+
       const currentAmount =
         currentAmountDetails &&
-        (await getTargetCurrencyAmount(
+        (await currencyService.getTargetCurrencyAmount(
           currentAmountDetails,
           this.getTargetCurrency()
         ))
@@ -526,7 +528,10 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     if (!targetAmountDetails) {
       return null
     }
-    const targetAmount = await getTargetCurrencyAmount(
+
+    const currencyService = new CurrencyService()
+
+    const targetAmount = await currencyService.getTargetCurrencyAmount(
       targetAmountDetails,
       this.getTargetCurrency()
     )

@@ -37,7 +37,6 @@ import {
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { Currency, getCurrencyExchangeRate } from '@/utils/currency-utils'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
 import dayjs, { duration } from '@/utils/dayjs'
 import { getTimeLabels } from '@/lambdas/console-api-dashboard/utils'
@@ -58,6 +57,7 @@ import {
 } from '@/core/dynamodb/dynamodb-keys'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { traceable } from '@/core/xray'
+import { Currency, CurrencyService } from '@/services/currency'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -1008,11 +1008,13 @@ export class MongoDbTransactionRepository
     referenceCurrency: Currency
   ): Promise<number> {
     let amount = 0
+    const currencyService = new CurrencyService()
+
     if (transaction.originAmountDetails != null) {
       if (
         transaction.originAmountDetails.transactionCurrency != referenceCurrency
       ) {
-        const exchangeRate = await getCurrencyExchangeRate(
+        const exchangeRate = await currencyService.getCurrencyExchangeRate(
           transaction.originAmountDetails.transactionCurrency,
           referenceCurrency
         )

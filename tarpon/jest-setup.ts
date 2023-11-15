@@ -1,7 +1,7 @@
 import { exec, execSync } from 'child_process'
 import { TEST_DYNAMODB_TABLE_NAMES } from './src/test-utils/dynamodb-test-utils'
-import MOCKED_CURRENCY_EXCHANGE_RATES from './test-resources/mocked-currency-exchange-rates.json'
-import * as CurrencyUtils from './src/utils/currency-utils'
+import { mockedCurrencyExchangeRates as MOCKED_CURRENCY_EXCHANGE_RATES } from './test-resources/mocked-currency-exchange-rates'
+import { CurrencyExchangeUSDType, CurrencyService } from '@/services/currency'
 process.env.ENV = 'local'
 process.env.DYNAMODB_URI = 'http://localhost:7999'
 if (!process.env.EXEC_SOURCE) {
@@ -17,53 +17,11 @@ jest.mock('@lib/constants', () => ({
   },
 }))
 
-jest.mock('@/utils/currency-utils', () => {
-  const originalModule = jest.requireActual('@/utils/currency-utils')
-  return {
-    ...originalModule,
-    getCurrencyExchangeRate: jest.fn().mockImplementation((...args) => {
-      const [sourceCurrency, targetCurrency] = args
-
-      if (sourceCurrency === targetCurrency) {
-        return 1
-      }
-
-      return MOCKED_CURRENCY_EXCHANGE_RATES[sourceCurrency][targetCurrency]
-    }),
-    getTargetCurrencyAmount: jest.fn().mockImplementation((...args) => {
-      const [transactionAmountDefails, targetCurrency] = args
-      const sourceCurrency = transactionAmountDefails.transactionCurrency
-
-      if (sourceCurrency === targetCurrency) {
-        return transactionAmountDefails
-      }
-
-      const rate =
-        MOCKED_CURRENCY_EXCHANGE_RATES?.[sourceCurrency]?.[targetCurrency]
-
-      if (rate == null) {
-        throw new Error(
-          `Mocked getCurrencyExchangeRate(${sourceCurrency}, ${targetCurrency}) is not implemented`
-        )
-      }
-
-      return {
-        transactionAmount: transactionAmountDefails.transactionAmount * rate,
-        transactionCurrency: targetCurrency,
-      }
-    }),
-  }
-})
-
 jest
-  .spyOn(CurrencyUtils, 'getCurrencyExchangeRate')
-  .mockImplementation(async (...args) => {
-    const [sourceCurrency, targetCurrency] = args
-    console.log(
-      `Mocked getCurrencyExchangeRate(${sourceCurrency}, ${targetCurrency})`
-    )
-    return MOCKED_CURRENCY_EXCHANGE_RATES[sourceCurrency][targetCurrency]
-  })
+  .spyOn(CurrencyService.prototype, 'getExchangeData')
+  .mockReturnValue(
+    Promise.resolve(MOCKED_CURRENCY_EXCHANGE_RATES as CurrencyExchangeUSDType)
+  )
 
 module.exports = async function () {
   if (process.env.EXEC_SOURCE !== 'CI') {
@@ -83,7 +41,7 @@ module.exports = async function () {
       exec(
         'docker run --name local-dynamodb-test -p 7999:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb'
       )
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 10000))
     }
   }
 }

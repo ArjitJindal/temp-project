@@ -18,10 +18,10 @@ import { TransactionAggregationRule } from './aggregation-rule'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
 import { RuleHitResultItem } from '@/services/rules-engine/rule'
-import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { ExtendedJSONSchemaType } from '@/services/rules-engine/utils/rule-schema-utils'
 import { multiplierToPercents } from '@/services/rules-engine/utils/math-utils'
 import { mergeObjects } from '@/utils/object'
+import { CurrencyService } from '@/services/currency'
 
 type AggregationData = {
   sendingCount?: number
@@ -324,6 +324,8 @@ export default abstract class TransactionsDeviationBaseRule<
         beforeTimestampP1
       )
 
+    const currencyService = new CurrencyService()
+
     const {
       afterTimestamp: afterTimestampP2,
       beforeTimestamp: beforeTimestampP2,
@@ -383,7 +385,7 @@ export default abstract class TransactionsDeviationBaseRule<
 
         const currentAmount = amountDetails
           ? (
-              await getTargetCurrencyAmount(
+              await currencyService.getTargetCurrencyAmount(
                 amountDetails,
                 this.getMultiplierThresholds().currency
               )
@@ -631,12 +633,14 @@ export default abstract class TransactionsDeviationBaseRule<
       data.receivingCount = (data.receivingCount ?? 0) + 1
     }
 
+    const currencyService = new CurrencyService()
+
     if (aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT') {
       if (direction === 'origin' && this.transaction.originAmountDetails) {
         data.sendingAmount =
           (data.sendingAmount ?? 0) +
           (
-            await getTargetCurrencyAmount(
+            await currencyService.getTargetCurrencyAmount(
               this.transaction.originAmountDetails,
               currency
             )
@@ -648,7 +652,7 @@ export default abstract class TransactionsDeviationBaseRule<
         data.receivingAmount =
           (data.receivingAmount ?? 0) +
           (
-            await getTargetCurrencyAmount(
+            await currencyService.getTargetCurrencyAmount(
               this.transaction.destinationAmountDetails,
               currency
             )

@@ -20,6 +20,9 @@ rules:
       technology:
         - typescript
   - id: ock_string
+    paths:
+      include:
+        - "phytoplankton-console"
     patterns:
       - pattern-regex: "ock\\("
     message: This is crazy, but files should not include "ock(" string to make it work with `esbuild-jest`. See https://github.com/aelbore/esbuild-jest/issues/57#issuecomment-1005756206 for details

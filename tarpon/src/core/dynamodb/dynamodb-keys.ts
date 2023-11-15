@@ -178,6 +178,12 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#rule-instance`,
     SortKeyID: ruleInstanceId,
   }),
+  // Currency Cache
+  CURRENCY_CACHE: () => ({
+    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#currency-cache`,
+    SortKeyID: '1',
+  }),
+
   // Attributes: refer to UserAggregationAttributes
   USER_AGGREGATION: (tenantId: string, userId: string) => ({
     PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}`,

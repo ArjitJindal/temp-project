@@ -50,7 +50,6 @@ import {
 } from '@/services/sar/generators/US/SAR/resources/EFL_SARXBatchSchema.type'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
-import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
 import { getAllIpAddresses } from '@/utils/ipAddress'
@@ -58,6 +57,7 @@ import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getSecret } from '@/utils/secrets-manager'
 import { traceable } from '@/core/xray'
+import { CurrencyService } from '@/services/currency'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -118,6 +118,8 @@ export class UsSarReportGenerator implements ReportGenerator {
       string,
       InternalConsumerUser | InternalBusinessUser
     > = {}
+    const currencyService = new CurrencyService()
+
     for (const transaction of transactions) {
       if (transaction.originUser != null) {
         usersMap[transaction.originUser.userId] = transaction.originUser
@@ -191,10 +193,9 @@ export class UsSarReportGenerator implements ReportGenerator {
         ? Math.max(endDate, transaction.timestamp)
         : transaction.timestamp
       if (transaction.destinationAmountDetails != null) {
-        const transactionAmount = await getTargetCurrencyAmount(
+        const transactionAmount = await currencyService.getTargetCurrencyAmount(
           transaction.destinationAmountDetails,
-          'USD',
-          new Date(transaction.timestamp)
+          'USD'
         )
         totalAmount = (totalAmount ?? 0) + transactionAmount.transactionAmount
       }

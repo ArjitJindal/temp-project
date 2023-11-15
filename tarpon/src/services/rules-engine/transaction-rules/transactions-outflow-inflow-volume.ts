@@ -22,10 +22,10 @@ import { compareNumber } from '../utils/rule-schema-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { TransactionType } from '@/@types/openapi-internal/TransactionType'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
-import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { mergeObjects } from '@/utils/object'
+import { CurrencyService } from '@/services/currency'
 
 export type TransactionsOutflowInflowVolumeRuleParameters = {
   timeWindow: TimeWindow
@@ -115,8 +115,8 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     if (!amountDetails) {
       return null
     }
-
-    const amount = await getTargetCurrencyAmount(
+    const currencyService = new CurrencyService()
+    const amount = await currencyService.getTargetCurrencyAmount(
       amountDetails,
       this.getTargetCurrency()
     )
@@ -336,17 +336,18 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
         userAggregationData,
         (data) => data.inflowTransactionAmount ?? 0
       )
+      const currencyService = new CurrencyService()
 
       const [outflowTransactionAmount, inflowTransactionAmount] =
         await Promise.all([
-          getTargetCurrencyAmount(
+          currencyService.getTargetCurrencyAmount(
             {
               transactionAmount: sumOutflowAmounts,
               transactionCurrency: this.getTargetCurrency(),
             },
             currency
           ),
-          getTargetCurrencyAmount(
+          currencyService.getTargetCurrencyAmount(
             {
               transactionAmount: sumInflowAmounts,
               transactionCurrency: this.getTargetCurrency(),
