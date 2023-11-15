@@ -112,7 +112,7 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
         yValue: {
           formatter: (value) => {
             //  required because of XSS issue inside of chart library: https://www.notion.so/flagright/Pen-Test-Fix-Cross-site-scripting-stored-62fcbe075a42476aac5963fc18e845f5?pvs=4
-            return escapeHtml(formatY?.(value) ?? value);
+            return escapeHtml(formatY?.(value.toLocaleString()) ?? value.toLocaleString());
           },
         },
         series: {
