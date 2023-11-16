@@ -71,7 +71,7 @@ import { denseArray } from '@/utils/lang';
 import { useRuleQueues } from '@/components/rules/util';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
-  filterQaStatus?: Array<ChecklistStatus | undefined>;
+  filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;
 };
 
 const getSelectedCaseIdsForAlerts = (selectedItems: Record<string, TableAlertItem>) => {

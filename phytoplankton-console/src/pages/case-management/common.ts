@@ -8,7 +8,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { ALERT_LIST } from '@/utils/queries/keys';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { getStatuses } from '@/utils/case-utils';
-import { AlertListResponseItem } from '@/apis';
+import { AlertListResponseItem, ChecklistStatus } from '@/apis';
 import dayjs from '@/utils/dayjs';
 import { getUserName } from '@/utils/api/users';
 import { TableSearchParams } from '@/pages/case-management/types';
@@ -50,7 +50,7 @@ export function useAlertQuery(
       page,
       pageSize,
       ...paginationParams,
-      filterQaStatus,
+      filterQaStatus: filterQaStatus as ChecklistStatus[],
       filterOutQaStatus,
       filterAlertId: alertId,
       filterCaseId: caseId,

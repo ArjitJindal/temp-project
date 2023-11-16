@@ -113,7 +113,7 @@ export default function CaseManagementPage() {
   }
 
   const qaModeItems: Item<ScopeSelectorValue>[] = [
-    { value: 'QA_UNCHECKED_ALERTS', label: 'All closed alerts' },
+    { value: 'QA_UNCHECKED_ALERTS', label: "Closed & Not QA'd alerts" },
     { value: 'QA_PASSED_ALERTS', label: 'Passed alerts' },
     { value: 'QA_FAILED_ALERTS', label: 'Failed alerts' },
   ];
@@ -213,7 +213,7 @@ function getTable(
       return (
         <Authorized required={['case-management:qa:read']} showForbiddenPage>
           <QaTable
-            params={{ ...params, alertStatus: ['CLOSED'] }}
+            params={{ ...params, alertStatus: ['CLOSED'], filterQaStatus: ["NOT_QA'd"] }}
             onChangeParams={handleChangeParams}
           />
         </Authorized>
