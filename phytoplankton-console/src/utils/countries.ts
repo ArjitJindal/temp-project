@@ -1,7 +1,5 @@
 // According to https://www.iso.org/iso-3166-country-codes.html
-import { constants } from '@flagright/lib';
-
-const COUNTRIES = constants.COUNTRIES;
+import { COUNTRIES } from '@flagright/lib/constants';
 
 export const COUNTRY_NAME_ALIASES: { [key: string]: CountryCode } = {
   'United States': 'US',

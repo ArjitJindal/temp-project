@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Switch, Tag as AntTag } from 'antd';
 import { capitalize, uniqBy } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
-import { COUNTRIES } from '@flagright/lib/src/countries';
+import { COUNTRIES } from '@flagright/lib/constants';
 import { ColumnDataType, FullColumnDataType } from '../types';
 import { CloseMessage, message } from '../../Message';
 import PriorityTag from '../../PriorityTag';
