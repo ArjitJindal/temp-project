@@ -1,3 +1,13 @@
+/**
+ * Delete tenant data in bulk
+ * Example usage:
+ * ```
+ * ENV=dev npm run dangerous-nuke-tenant-data -- tenantId --types transaction
+ * ENV=sandbox npm run dangerous-nuke-tenant-data -- tenantId --types transaction,user
+ * ENV=prod:eu-1 npm run dangerous-nuke-tenant-data -- tenantId --types transaction,user
+ * ```
+ */
+
 import { exit } from 'process'
 import { program } from 'commander'
 import { StackConstants } from '@lib/constants'
@@ -7,6 +17,7 @@ import {
   DynamoDBDocumentClient,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
+import { loadConfigEnv } from './migrations/utils/config'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient, paginateQueryGenerator } from '@/utils/dynamodb'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -54,12 +65,14 @@ const TYPES: TYPES[] = [
 let allMongoDbCollections: string[] = []
 
 program
-  .argument('tenant ID')
-  .option('--types <string...>', TYPES.join(' | '))
+  .argument('Tenant ID')
+  .requiredOption('--types <string...>', TYPES.join(' | '))
   .parse()
 
 const tenantId = program.args[0]
-const { types } = program.opts()
+const { types = [] } = program.opts()
+
+loadConfigEnv()
 
 let mongoDb: Db
 let dynamoDb: DynamoDBDocumentClient
@@ -113,7 +126,6 @@ async function deleteTransaction(transaction: Transaction) {
           transactionId: transaction.transactionId,
         }
       ),
-    transaction.timestamp,
     // Always delete the primary transaction item at last to avoid having zombie indexes that
     // can not be deleted.
     DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),
@@ -312,9 +324,9 @@ async function deleteKrsValues() {
 }
 
 async function nukeTenantData(tenantId: string) {
-  const typesToDelete = (types || TYPES) as TYPES[]
+  const typesToDelete = types as TYPES[]
   logger.info(
-    `Starting to nuke data for tenant ${tenantId} (${typesToDelete.join(
+    `Starting to nuke data for tenant ${tenantId} (types: ${typesToDelete.join(
       ','
     )})...`
   )
