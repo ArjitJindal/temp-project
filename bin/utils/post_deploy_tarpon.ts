@@ -27,11 +27,8 @@ export const postDeploymentCodeBuildProject = (
             nodejs: 18,
           },
           commands: [
-            "cd lib",
             "npm ci",
-            "cd ..",
             "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
-            "npm install",
             "cd tarpon",
             "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
             `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,

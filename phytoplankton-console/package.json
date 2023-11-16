@@ -4,6 +4,7 @@
   "private": true,
   "description": "Flagright console",
   "scripts": {
+    "preinstall": "cd ../lib && npm install",
     "aws-sso-login": "aws sso login --profile $npm_config_profile && yawsso -p $npm_config_profile || npm run sso-fallback-message",
     "aws-sso-login:deploy": "npm run aws-sso-login --profile=AWSAdministratorAccess-073830519512",
     "aws-sso-login:dev": "npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626",

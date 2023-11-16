@@ -4,6 +4,7 @@
   "description": "![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)",
   "main": "index.js",
   "scripts": {
+    "preinstall": "cd ../lib && npm install",
     "all": "npm-run-all -l -s",
     "parallel": "npm-run-all -l -p",
     "aws-sso-login": "../scripts/aws/aws-sso-login.sh $npm_config_profile",

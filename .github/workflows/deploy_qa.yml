@@ -57,12 +57,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "tarpon/package-lock.json"
-      - name: Build Flagright Package
+      - name: Install infra dependencies
         if: steps.check.outputs.triggered == 'true'
-        run: |
-          cd lib
-          npm ci
-      - run: npm ci
+        run: npm ci
+      - name: Install dependencies for tarpon
+        run: npm ci
         if: steps.check.outputs.triggered == 'true'
         working-directory: "tarpon"
       - run: yarn install --frozen-lockfile

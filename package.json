@@ -4,6 +4,7 @@
   "description": "`phytoplankton` - Frontend code for the console `tarpon` - Our backend API `raptor` - Our ML stack",
   "main": "index.js",
   "scripts": {
+    "preinstall": "cd lib && npm install",
     "prepare": "husky install .husky",
     "openapi:local": "cd tarpon && npm run openapi:build && npm run openapi:prepare && cd ../phytoplankton-console && ENV=local npm run openapi:build && cd ..",
     "deploy:pipeline": "ENV=deploy cdk deploy orca-pipeline --require-approval never --profile=AWSAdministratorAccess-073830519512",

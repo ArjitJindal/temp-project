@@ -16,6 +16,7 @@ on:
     branches: [main]
     paths:
       - "phytoplankton-console/**"
+      - "lib/**"
   workflow_call:
 jobs:
   test:
@@ -36,9 +37,8 @@ jobs:
           node-version: 18
           cache: "yarn"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
-      - name: Build Flagright Lib
+      - name: Build Root
         run: npm ci
-        working-directory: "lib"
       - run: npm ci
         working-directory: "tarpon"
       - run: npm run openapi:prepare
