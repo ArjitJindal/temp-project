@@ -203,7 +203,7 @@ export const CreateTenantModal = (props: Props) => {
       },
       auth0Domain: {
         'ui:help':
-          'If the tenant does not belong to our white-label customer, please add "sandbox-flagright.eu.auth0.com" as the Auth0 Domain. However, if the tenant belongs to our white-label customer, please add the Auth0 domain for their specific bureau, for example, "bureau-flagright.eu.auth0.com".',
+          'If the tenant does not belong to a whitelabel customer, please add "sandbox-flagright.eu.auth0.com" as the Auth0 Domain. However, if the tenant belongs to a whitelabel customer, please add the Auth0 domain for their specific instance, such as "customerName-flagright.eu.auth0.com". Ask for the specific URL on Slack, #sales-engineering channel.',
       },
       emailsOfAdmins: {
         'ui:help': 'The emails of the admins of the tenant',
