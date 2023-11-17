@@ -29,6 +29,10 @@ interface Props {
 }
 export const typeAssigner = (columnType: string | undefined) => {
   let type: ColumnDataType<any> = UNKNOWN;
+  if (!columnType) {
+    return type;
+  }
+
   switch (columnType) {
     case 'STRING': {
       type = STRING;

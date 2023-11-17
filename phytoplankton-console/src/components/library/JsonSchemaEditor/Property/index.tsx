@@ -50,12 +50,16 @@ export default function Property(props: Props) {
     case 'string':
       labelElement = 'label';
       break;
+    default:
+      break;
   }
 
   let labelLevel: 1 | 2 | 3 | undefined = undefined;
   switch (schema.type) {
     case 'object':
       labelLevel = 1;
+      break;
+    default:
       break;
   }
 

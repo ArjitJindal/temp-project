@@ -110,14 +110,17 @@ export const getDerivedStatus = (s: CaseStatus | AlertStatus | DerivedStatus): D
       return 'REOPENED';
     case 'ESCALATED':
       return 'ESCALATED';
+    case 'IN_REVIEW':
     case 'IN_REVIEW_OPEN':
     case 'IN_REVIEW_CLOSED':
     case 'IN_REVIEW_ESCALATED':
     case 'IN_REVIEW_REOPENED':
       return 'IN_REVIEW';
+    case 'IN_PROGRESS':
     case 'OPEN_IN_PROGRESS':
     case 'ESCALATED_IN_PROGRESS':
       return 'IN_PROGRESS';
+    case 'ON_HOLD':
     case 'OPEN_ON_HOLD':
     case 'ESCALATED_ON_HOLD':
       return 'ON_HOLD';

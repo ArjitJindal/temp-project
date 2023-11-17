@@ -6,6 +6,9 @@ import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 
 export const formatData = (item: Partial<QuestionResponse>): string => {
   const result: CsvRow[] = [];
+  if (!item.questionType) {
+    return '';
+  }
   switch (item.questionType) {
     case 'TABLE': {
       if (!item?.headers) return '';
@@ -78,6 +81,8 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
       result.push(...rows);
       break;
     }
+    case 'EMBEDDED':
+      break;
   }
   return serialize(result);
 };

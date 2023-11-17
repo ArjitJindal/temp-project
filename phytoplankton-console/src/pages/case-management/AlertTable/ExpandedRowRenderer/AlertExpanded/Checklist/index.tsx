@@ -176,7 +176,7 @@ export default function Checklist(props: Props) {
           defaultWidth: 220,
           render: (status) => {
             let label = !alert.ruleQaStatus ? 'Select status' : '-';
-            switch (status.qaStatus) {
+            switch (status.qaStatus!) {
               case 'PASSED':
                 label = 'QA passed';
                 break;

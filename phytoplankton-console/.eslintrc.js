@@ -14,6 +14,7 @@ module.exports = {
     'plugin:cypress/recommended',
   ],
   plugins: ['custom-rules'],
+  ignorePatterns: ['.eslintrc.js', 'build', 'node_modules'],
   rules: {
     'no-console': ['error', { allow: ['error', 'warn'] }],
     '@typescript-eslint/no-empty-function': 'off',
@@ -30,7 +31,13 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     'import/no-duplicates': 'error',
     '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/switch-exhaustiveness-check': 'error',
     'custom-rules/enforce-paginated-query-params': 'error',
     'cypress/no-async-tests': 'off',
+  },
+  parserOptions: {
+    parser: '@typescript-eslint/parser',
+    project: './tsconfig.json',
+    tsconfigRootDir: __dirname,
   },
 };

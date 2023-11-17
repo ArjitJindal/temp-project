@@ -103,9 +103,7 @@ export default function SimplePropertyInput(props: Props) {
           max={schema.maximum}
         />
       );
-    case 'array':
-    case 'null':
-    case 'any':
+    default:
   }
 
   console.error(`Schema type "${schema.type}" is not supported`);

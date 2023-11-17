@@ -90,6 +90,8 @@ export default function PropertyInput(props: Props) {
       return <ObjectPropertyInput {...props} schema={schema} />;
     case 'array':
       return <ArrayPropertyInput {...props} schema={schema} />;
+    default:
+      break;
   }
 
   if (!isEmpty(schema)) {

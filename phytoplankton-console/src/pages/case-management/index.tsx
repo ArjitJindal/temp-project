@@ -169,6 +169,9 @@ function getTable(
   params: AllParams<TableSearchParams>,
   handleChangeParams: (newParams: AllParams<TableSearchParams>) => void,
 ) {
+  if (!params.showCases) {
+    return null;
+  }
   switch (params.showCases) {
     case 'MY_ALERTS':
       return (

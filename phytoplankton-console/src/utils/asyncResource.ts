@@ -96,6 +96,8 @@ export function map<T, R>(
 ): AsyncResource<R> {
   try {
     switch (asyncResource.kind) {
+      case 'INIT':
+        return init();
       case 'SUCCESS':
         return success(fn(asyncResource.value));
       case 'LOADING': {
@@ -153,6 +155,8 @@ export function getOr<T>(asyncResource: AsyncResource<T>, defaultValue: T): T {
       if (asyncResource.lastValue != null) {
         return asyncResource.lastValue;
       }
+      break;
+    case 'INIT':
       break;
   }
   return defaultValue;
