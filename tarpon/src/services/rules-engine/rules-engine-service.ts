@@ -79,7 +79,6 @@ import { envIs } from '@/utils/env'
 import { handleTransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
 import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
-import { notNullish } from '@/core/utils/array'
 
 const sqs = new SQSClient({})
 
@@ -639,21 +638,6 @@ export class RulesEngineService {
     })
     let ruleDescription = ruleInstance.ruleDescriptionAlias
 
-    const subjectTypes = [
-      ...new Set(
-        filteredRuleResult?.map(
-          (result) => result.caseCreationParams?.subjectType
-        )
-      ),
-    ].filter(notNullish)
-    const createCaseFor = [
-      ...new Set(
-        filteredRuleResult?.map(
-          (result) => result.caseCreationParams?.createFor
-        )
-      ),
-    ].filter(notNullish)
-
     if (!ruleDescription) {
       const ruleDescriptions = (
         ruleHit
@@ -686,10 +670,6 @@ export class RulesEngineService {
         nature: ruleInstance.nature,
         ruleHitMeta: ruleHit
           ? {
-              subjectType:
-                subjectTypes.length === 1 ? subjectTypes[0] : undefined,
-              createCaseFor:
-                createCaseFor.length === 1 ? createCaseFor[0] : undefined,
               hitDirections: ruleHitDirections,
               falsePositiveDetails: falsePositiveDetails?.length
                 ? falsePositiveDetails[0]

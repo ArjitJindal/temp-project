@@ -11,11 +11,6 @@ export type RuleHitResultItem = {
   falsePositiveDetails?: FalsePositiveDetails
   subjectType?: CaseSubjectType
   sanctionsDetails?: SanctionsDetails[]
-  // todo: remove after refactoring, it breaks the rule results abstraction
-  caseCreationParams?: {
-    subjectType?: CaseSubjectType
-    createFor?: CaseSubjectType
-  }
 }
 export type RuleHitResult = Array<RuleHitResultItem | undefined>
 

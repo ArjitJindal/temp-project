@@ -69,6 +69,14 @@ export type CaseListOptions = {
   includeCaseTransactionIds?: boolean
 }
 
+export type SubjectCasesQueryParams = {
+  directions?: ('ORIGIN' | 'DESTINATION')[]
+  filterMaxTransactions?: number
+  filterOutCaseStatus?: CaseStatus
+  filterTransactionId?: string
+  filterAvailableAfterTimestamp?: (number | undefined)[]
+  filterCaseType?: CaseType
+}
 @traceable
 export class CaseRepository {
   mongoDb: MongoClient
@@ -1143,14 +1151,7 @@ export class CaseRepository {
 
   public async getCasesByPaymentDetails(
     paymentDetails: PaymentDetails,
-    params: {
-      directions?: ('ORIGIN' | 'DESTINATION')[]
-      filterMaxTransactions?: number
-      filterOutCaseStatus?: CaseStatus
-      filterTransactionId?: string
-      filterAvailableAfterTimestamp?: (number | undefined)[]
-      filterCaseType?: CaseType
-    }
+    params: SubjectCasesQueryParams
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
@@ -1221,14 +1222,7 @@ export class CaseRepository {
 
   public async getCasesByUserId(
     userId: string,
-    params: {
-      directions?: ('ORIGIN' | 'DESTINATION')[]
-      filterMaxTransactions?: number
-      filterOutCaseStatus?: CaseStatus
-      filterTransactionId?: string
-      filterAvailableAfterTimestamp?: (number | undefined)[]
-      filterCaseType?: CaseType
-    }
+    params: SubjectCasesQueryParams
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))

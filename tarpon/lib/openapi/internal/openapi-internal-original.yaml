@@ -7672,7 +7672,7 @@ components:
         caseType:
           $ref: '#/components/schemas/CaseType'
         subjectType:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CaseSubjectType
+          $ref: '#/components/schemas/CaseSubjectType'
         createdBy:
           type: string
         createdTimestamp:
@@ -10204,6 +10204,12 @@ components:
                 type: number
             required:
               - _id
+    CaseSubjectType:
+      title: CaseSubjectType
+      type: string
+      enum:
+        - USER
+        - PAYMENT
   securitySchemes:
     Authorization:
       type: http

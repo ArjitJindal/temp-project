@@ -2,6 +2,7 @@ import { compact, groupBy, isEqual, last, minBy, uniq, uniqBy } from 'lodash'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
+  SubjectCasesQueryParams,
 } from '@/services/rules-engine/repositories/case-repository'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
@@ -28,6 +29,7 @@ import { ChecklistTemplatesService } from '@/services/tenants/checklist-template
 import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { CreateAlertFor } from '@/services/rules-engine/utils/rule-parameter-schemas'
 
 type CaseSubject =
   | {
@@ -104,14 +106,6 @@ export class CaseCreationService {
       (hitRule) =>
         hitRule.ruleHitMeta?.hitDirections?.includes('ORIGIN') ?? false
     )
-    const originHit = transaction.hitRules.find(
-      (hitRule) =>
-        hitRule.ruleHitMeta?.hitDirections?.includes('ORIGIN') ?? false
-    )
-    const destinationHit = transaction.hitRules.find(
-      (hitRule) =>
-        hitRule.ruleHitMeta?.hitDirections?.includes('DESTINATION') ?? false
-    )
 
     logger.info(`Fetching case users by ids`, {
       destinationUserId,
@@ -120,30 +114,26 @@ export class CaseCreationService {
 
     let origin: CaseSubject | undefined = undefined
     if (isAnyRuleHasOriginHit) {
-      const subjectType = originHit?.ruleHitMeta?.subjectType ?? 'USER'
-      const createFor = originHit?.ruleHitMeta?.createCaseFor
-      if (createFor == null || createFor === subjectType)
-        if (subjectType === 'USER') {
-          const user = await this.getUser(originUserId)
-          if (user != null) {
-            origin = {
-              type: 'USER',
-              user: user,
-            }
-          }
-        } else {
-          if (originPaymentDetails != null) {
-            origin = {
-              type: 'PAYMENT',
-              paymentDetails: originPaymentDetails,
-            }
+      if (originUserId) {
+        const user = await this.getUser(originUserId)
+        if (user != null) {
+          origin = {
+            type: 'USER',
+            user: user,
           }
         }
+      } else {
+        if (originPaymentDetails != null) {
+          origin = {
+            type: 'PAYMENT',
+            paymentDetails: originPaymentDetails,
+          }
+        }
+      }
     }
     let destination: CaseSubject | undefined
     {
-      const subjectType = destinationHit?.ruleHitMeta?.subjectType ?? 'USER'
-      if (subjectType === 'USER') {
+      if (destinationUserId) {
         if (!(isAnyRuleHasOriginHit && originUserId === destinationUserId)) {
           const user = await this.getUser(destinationUserId)
           if (user != null) {
@@ -161,7 +151,7 @@ export class CaseCreationService {
           )
         ) {
           if (destinationPaymentDetails != null) {
-            origin = {
+            destination = {
               type: 'PAYMENT',
               paymentDetails: destinationPaymentDetails,
             }
@@ -528,6 +518,18 @@ export class CaseCreationService {
     return checkListTemplates
   }
 
+  private async getCasesBySubject(
+    subject: CaseSubject,
+    params: SubjectCasesQueryParams
+  ) {
+    return subject.type === 'USER'
+      ? await this.caseRepository.getCasesByUserId(subject.user.userId, params)
+      : await this.caseRepository.getCasesByPaymentDetails(
+          subject.paymentDetails,
+          params
+        )
+  }
+
   private async getOrCreateCases(
     hitSubjects: Array<{
       subject: CaseSubject
@@ -551,8 +553,7 @@ export class CaseCreationService {
       // keep only user related hits
       const filteredHitRules = params.hitRules.filter((hitRule) => {
         if (
-          hitRule.ruleHitMeta?.hitDirections != null &&
-          !hitRule.ruleHitMeta?.hitDirections.some(
+          !hitRule.ruleHitMeta?.hitDirections?.some(
             (hitDirection) => hitDirection === direction
           )
         ) {
@@ -564,6 +565,21 @@ export class CaseCreationService {
         if (ruleInstance == null) {
           return false
         }
+
+        // TODO: Refactor createAlertFor
+        const createAlertFor: CreateAlertFor | undefined =
+          ruleInstance.parameters?.createAlertFor
+        if (
+          subject.type === 'PAYMENT' &&
+          createAlertFor !== 'EXTERNAL_USER' &&
+          createAlertFor !== 'ALL'
+        ) {
+          return false
+        }
+        if (subject.type === 'USER' && createAlertFor === 'EXTERNAL_USER') {
+          return false
+        }
+
         return true
       })
       const filteredTransaction = params.transaction
@@ -576,35 +592,33 @@ export class CaseCreationService {
         (rule) => rule.ruleInstanceId
       )
 
-      if (subject.type === 'USER') {
-        const userId = subject.user.userId
-        if (userId == null) {
+      if (filteredHitRules.length === 0) {
+        continue
+      }
+      if (filteredTransaction) {
+        const casesHavingSameTransaction = await this.getCasesBySubject(
+          subject,
+          {
+            filterTransactionId: filteredTransaction.transactionId,
+            filterCaseType: 'SYSTEM',
+          }
+        )
+        const casesHavingSameTransactionWithSameHitRules =
+          casesHavingSameTransaction.filter((c) => {
+            return hitRuleInstanceIds.every((ruleInstanceId) =>
+              c.alerts?.find(
+                (alert) =>
+                  alert.ruleInstanceId === ruleInstanceId &&
+                  alert.transactionIds?.includes(
+                    filteredTransaction.transactionId
+                  )
+              )
+            )
+          })
+        if (casesHavingSameTransactionWithSameHitRules.length > 0) {
           continue
         }
-        if (filteredTransaction) {
-          const casesHavingSameTransaction =
-            await this.caseRepository.getCasesByUserId(userId, {
-              filterTransactionId: filteredTransaction.transactionId,
-              filterCaseType: 'SYSTEM',
-            })
-          const casesHavingSameTransactionWithSameHitRules =
-            casesHavingSameTransaction.filter((c) => {
-              return hitRuleInstanceIds.every((ruleInstanceId) =>
-                c.alerts?.find(
-                  (alert) =>
-                    alert.ruleInstanceId === ruleInstanceId &&
-                    alert.transactionIds?.includes(
-                      filteredTransaction.transactionId
-                    )
-                )
-              )
-            })
-          if (casesHavingSameTransactionWithSameHitRules.length > 0) {
-            break
-          }
-        }
       }
-      // const userId = subject.user.userId
       const now = Date.now()
 
       const delayTimestamps = filteredHitRules.map((hitRule) => {
@@ -634,24 +648,15 @@ export class CaseCreationService {
         ruleInstances: values.map((x) => x.ruleInstance).filter(notNullish),
       }))
 
-      const casesParams = {
+      const casesParams: SubjectCasesQueryParams = {
         filterOutCaseStatus: 'CLOSED',
         filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
         filterAvailableAfterTimestamp: delayTimestampsGroups.map(
           ({ availableAfterTimestamp }) => availableAfterTimestamp
         ),
         filterCaseType: 'SYSTEM',
-      } as const
-      const cases =
-        subject.type === 'USER'
-          ? await this.caseRepository.getCasesByUserId(
-              subject.user.userId,
-              casesParams
-            )
-          : await this.caseRepository.getCasesByPaymentDetails(
-              subject.paymentDetails,
-              casesParams
-            )
+      }
+      const cases = await this.getCasesBySubject(subject, casesParams)
 
       for (const {
         availableAfterTimestamp,

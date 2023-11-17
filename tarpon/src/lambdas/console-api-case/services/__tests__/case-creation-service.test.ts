@@ -42,8 +42,8 @@ import { CaseService } from '@/lambdas/console-api-case/services/case-service'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { CaseSubjectType } from '@/@types/openapi-public/CaseSubjectType'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
+import { CreateAlertFor } from '@/services/rules-engine/utils/rule-parameter-schemas'
 
 dynamoDbSetupHook()
 
@@ -1496,7 +1496,7 @@ describe('Test payment cases', () => {
         TEST_TENANT_ID,
         [
           {
-            caseSubjectType: 'PAYMENT',
+            createAlertFor: 'EXTERNAL_USER',
           },
         ],
         async () => {
@@ -1528,7 +1528,7 @@ describe('Test payment cases', () => {
         TEST_TENANT_ID,
         [
           {
-            caseSubjectType: 'PAYMENT',
+            createAlertFor: 'EXTERNAL_USER',
           },
         ],
         async () => {
@@ -1537,7 +1537,9 @@ describe('Test payment cases', () => {
           {
             const transaction = getTestTransaction({
               transactionId: '111',
+              originUserId: undefined,
               originPaymentDetails: paymentDetails,
+              destinationUserId: undefined,
               destinationPaymentDetails: undefined,
             })
             const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
@@ -1545,16 +1547,17 @@ describe('Test payment cases', () => {
             ])
             expect(results).toHaveLength(1)
             const [result] = results
+            const subjects = await caseCreationService.getTransactionSubjects({
+              ...transaction,
+              ...result,
+            })
             const cases = await caseCreationService.handleTransaction(
               {
                 ...transaction,
                 ...result,
               },
               await getHitRuleInstances(TEST_TENANT_ID, result),
-              await caseCreationService.getTransactionSubjects({
-                ...transaction,
-                ...result,
-              })
+              subjects
             )
             expect(cases).toHaveLength(1)
             firstCase = cases[0]
@@ -1564,7 +1567,9 @@ describe('Test payment cases', () => {
           {
             const transaction = getTestTransaction({
               transactionId: '222',
+              originUserId: undefined,
               originPaymentDetails: paymentDetails,
+              destinationUserId: undefined,
               destinationPaymentDetails: undefined,
             })
             const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
@@ -1674,7 +1679,7 @@ async function underRules<R = void>(
       | AlertCreationIntervalInstantly
       | AlertCreationIntervalWeekly
       | AlertCreationIntervalMonthly
-    caseSubjectType?: CaseSubjectType
+    createAlertFor?: CreateAlertFor
   }[],
   cb: () => Promise<R>
 ): Promise<R> {
@@ -1691,7 +1696,7 @@ async function underRules<R = void>(
           type: ruleType,
           parameters: {
             hitDirections: parameters.hitDirections,
-            caseSubjectType: parameters.caseSubjectType,
+            createAlertFor: parameters.createAlertFor,
           },
           alertCreationInterval: parameters.alertCreationInterval,
         }
@@ -1712,22 +1717,24 @@ async function createCases(
 
   const transaction = getTestTransaction({
     originUserId: TEST_USER_1.userId,
+    destinationUserId: undefined,
   })
 
   const results = await bulkVerifyTransactions(tenantId, [transaction])
   expect(results.length).not.toEqual(0)
   const [result] = results
 
+  const subjects = await caseCreationService.getTransactionSubjects({
+    ...transaction,
+    ...result,
+  })
   const cases = await caseCreationService.handleTransaction(
     {
       ...transaction,
       ...result,
     },
     await getHitRuleInstances(tenantId, result),
-    await caseCreationService.getTransactionSubjects({
-      ...transaction,
-      ...result,
-    })
+    subjects
   )
   return cases
 }

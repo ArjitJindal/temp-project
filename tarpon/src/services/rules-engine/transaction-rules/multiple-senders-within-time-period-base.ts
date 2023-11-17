@@ -2,7 +2,12 @@ import { JSONSchemaType } from 'ajv'
 
 import { chain, compact, mergeWith, uniq } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
-import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import {
+  CREATE_ALERT_FOR_OPTIONAL_SCHEMA,
+  CreateAlertFor,
+  TIME_WINDOW_SCHEMA,
+  TimeWindow,
+} from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import {
@@ -12,9 +17,7 @@ import {
 import { getNonUserSenderKeys, getUserSenderKeys } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
-import { CaseSubjectType } from '@/@types/openapi-public/CaseSubjectType'
 
-type CreateAlertFor = 'INTERNAL_USER' | 'EXTERNAL_USER' | 'ALL'
 type UserType = 'USER' | 'NON_USER'
 
 export type MultipleSendersWithinTimePeriodRuleParameters = {
@@ -48,14 +51,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
             'rule is run when the senders count per time window is greater than the threshold',
         },
         timeWindow: TIME_WINDOW_SCHEMA(),
-        createAlertFor: {
-          type: 'string',
-          enum: ['INTERNAL_USER', 'EXTERNAL_USER', 'ALL'],
-          enumNames: ['Internal user', 'External user', 'All'],
-          title: 'Create alert for',
-          description:
-            'Alerts and cases are created only for specific kind of user',
-        },
+        createAlertFor: CREATE_ALERT_FOR_OPTIONAL_SCHEMA(),
       },
       required: ['sendersCount', 'timeWindow'],
     }
@@ -64,7 +60,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
   protected abstract getSenderReceiverTypes(): SenderReceiverTypes
 
   public async computeRule() {
-    const { sendersCount, createAlertFor = 'INTERNAL_USER' } = this.parameters
+    const { sendersCount } = this.parameters
     const data = await this.getData()
 
     const hitResult: RuleHitResult = []
@@ -78,26 +74,12 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     const updatedUsers = new Set([transactionUser, ...data])
 
     if (updatedUsers.size > sendersCount) {
-      let createFor: CaseSubjectType | undefined = undefined
-      if (createAlertFor != null && createAlertFor !== 'ALL') {
-        createFor = createAlertFor === 'EXTERNAL_USER' ? 'PAYMENT' : 'USER'
-      }
       hitResult.push({
         direction: 'ORIGIN',
-        caseCreationParams: {
-          subjectType:
-            this.getUserType('ORIGIN') === 'NON_USER' ? 'PAYMENT' : 'USER',
-          createFor: createFor,
-        },
         vars: super.getTransactionVars('origin'),
       })
       hitResult.push({
         direction: 'DESTINATION',
-        caseCreationParams: {
-          subjectType:
-            this.getUserType('DESTINATION') === 'NON_USER' ? 'PAYMENT' : 'USER',
-          createFor: createFor,
-        },
         vars: super.getTransactionVars('destination'),
       })
     }
@@ -136,10 +118,10 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
       }
     }
     if (direction === 'DESTINATION') {
-      if (receiverTypes.includes('USER') && this.senderUser) {
+      if (receiverTypes.includes('USER') && this.receiverUser) {
         return 'USER'
       }
-      if (receiverTypes.includes('NON_USER') && !this.senderUser) {
+      if (receiverTypes.includes('NON_USER') && !this.receiverUser) {
         return 'NON_USER'
       }
     }
