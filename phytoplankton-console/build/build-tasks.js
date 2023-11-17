@@ -1,7 +1,7 @@
 /* eslint-disable */
 const fs = require('fs-extra');
 const esbuild = require('esbuild');
-const sentryEsbuildPlugin = require('@sentry/esbuild-plugin').default;
+const { sentryEsbuildPlugin } = require('@sentry/esbuild-plugin');
 const path = require('path');
 const { execSync } = require('child_process');
 const LessImportResolvePlugin = require('./less-import-resolve-plugin.js');
@@ -52,7 +52,7 @@ async function buildStatic(env) {
 function getGitHeadHash() {
   try {
     const result = execSync('git rev-parse HEAD', { stdio: 'pipe' });
-    return result.toString();
+    return result.toString().trim();
   } catch (e) {
     console.error(
       `Unable to get Git hash for last commit, trying to use CODEBUILD_RESOLVED_SOURCE_VERSION env variable. Fail reason: "${e.message}"`,

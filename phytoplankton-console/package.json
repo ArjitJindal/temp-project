@@ -128,7 +128,7 @@
     "@aws-sdk/credential-providers": "^3.370.0",
     "@cypress/skip-test": "^2.6.1",
     "@openapitools/openapi-generator-cli": "^2.6.0",
-    "@sentry/esbuild-plugin": "^0.2.3",
+    "@sentry/esbuild-plugin": "^2.10.1",
     "@svgr/core": "^6.3.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^12.1.5",
