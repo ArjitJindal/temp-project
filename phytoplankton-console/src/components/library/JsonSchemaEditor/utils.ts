@@ -41,11 +41,17 @@ export function getOrderedProps(
     keys = Object.keys(properties); // todo: sort to always have predicted order
   }
   const required = Array.isArray(schema?.required) ? schema?.required : [];
-  const propertiesOrdered: PropertyItems = Object.entries(properties).map(([name, schema]) => ({
-    isRequired: schema?.nullable !== true && required?.includes(name),
-    name,
-    schema,
-  }));
+  const propertiesOrdered: PropertyItems = Object.entries(properties)
+    .filter(([_, schema]) => {
+      const fullSchema = dereferenceType(schema, rootSchema);
+      const uiSchema: UiSchema = fullSchema?.['ui:schema'] ?? {};
+      return uiSchema['ui:hidden'] !== true;
+    })
+    .map(([name, schema]) => ({
+      isRequired: schema?.nullable !== true && required?.includes(name),
+      name,
+      schema,
+    }));
   propertiesOrdered.sort((x, y) => keys.indexOf(x.name) - keys.indexOf(y.name));
   return propertiesOrdered;
 }

@@ -137,13 +137,13 @@ export const FincenJsonSchema = {
       required: [],
       properties: {
         CityUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'City unknown (indicator)',
           description:
             'This element declares that the city associated with the address of the party is unknown.',
         },
         CountryCodeUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'Country unknown (indicator)',
           description:
             'This element declares that country associated with the address of the party is unknown.',
@@ -182,19 +182,19 @@ export const FincenJsonSchema = {
             'This element identifies the ZIP Code or foreign postal code associated with the address of the party.',
         },
         StateCodeUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'State unknown (indicator)',
           description:
             'This element declares that state associated with the address of the party is unknown when the corresponding country is equal to US (United States), CA (Canada), or MX (Mexico).',
         },
         StreetAddressUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'Street address unknown (indicator)',
           description:
             'This element declares that the street address of the party is unknown.',
         },
         ZIPCodeUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'ZIP/Postal Code unknown (indicator)',
           description:
             'This element declares that the ZIP Code or foreign postal code associated with the address of the party is unknown.',
@@ -467,7 +467,7 @@ export const FincenJsonSchema = {
       required: [],
       properties: {
         IdentificationPresentUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'Identification unknown (indicator)',
           description:
             'This element declares that the form of identification used to verify the identity of the subject is unknown',
@@ -503,7 +503,7 @@ export const FincenJsonSchema = {
             'This element identifies the type of identification associated with the party.',
         },
         TINUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'TIN unknown (indicator)',
           description:
             'This element declares that the TIN associated with the party is unknown.',
@@ -515,13 +515,13 @@ export const FincenJsonSchema = {
       required: ['PartyNameTypeCode'],
       properties: {
         EntityLastNameUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'Entity name or Individual last name unknown (indicator)',
           description:
             'This element declares that the person legal name (if entity) or last name (if individual) is unknown.',
         },
         FirstNameUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'Individual first name unknown (indicator)',
           description:
             'This element declares that the first name of the subject is unknown.',
@@ -610,7 +610,7 @@ export const FincenJsonSchema = {
             'This element declares that all critical subject information is unavailable',
         },
         BirthDateUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'Date of birth unknown (indicator)',
           description:
             'This element identifies the date of birth associated with the subject.',
@@ -774,7 +774,7 @@ export const FincenJsonSchema = {
       required: ['SuspiciousActivityFromDateText'],
       properties: {
         AmountUnknownIndicator: {
-          $ref: '#/definitions/ValidateIndicatorType',
+          $ref: '#/definitions/ValidateUnknownIndicatorType',
           title: 'Amount unknown (indicator)',
           description:
             'This element declares that the total dollar amount involved in the FinCEN SAR for the time period being reported is unknown.',
@@ -1132,6 +1132,15 @@ export const FincenJsonSchema = {
       title: 'Indicator',
       'ui:schema': {
         'ui:subtype': 'FINCEN_INDICATOR',
+      },
+    },
+    ValidateUnknownIndicatorType: {
+      enum: ['Y', ''],
+      type: 'string',
+      title: 'Indicator',
+      'ui:schema': {
+        'ui:subtype': 'FINCEN_INDICATOR',
+        'ui:hidden': true,
       },
     },
     DateYYYYMMDDType: {

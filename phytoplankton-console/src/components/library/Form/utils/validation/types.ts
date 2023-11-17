@@ -1,9 +1,9 @@
 import { clone } from 'lodash';
 // Symbol to put field-level validation messages to validation
 // object and distinguish it from child validator
-export const $SELF_VALIDATION = Symbol();
+export const $SELF_VALIDATION = Symbol('SELF_VALIDATION');
 // Need this hack since array field validator is just a validator for item type
-export const $IS_ARRAY_VALIDATOR = Symbol();
+export const $IS_ARRAY_VALIDATOR = Symbol('IS_ARRAY_VALIDATOR');
 
 export const $IS_OPTIONAL = Symbol();
 

@@ -4,6 +4,11 @@ export interface UiSchemaCommon {
   'ui:group'?: string;
   'ui:entityName'?: string;
   'ui:order'?: [string];
+  'ui:hidden'?: boolean;
+}
+
+export interface UiSchemaUnknown extends UiSchemaCommon {
+  'ui:subtype'?: undefined;
 }
 
 export interface UiSchemaDayWindow extends UiSchemaCommon {
@@ -59,24 +64,35 @@ export interface UiSchemaCurrency extends UiSchemaCommon {
   'ui:subtype': 'CURRENCY';
 }
 
-export interface UiSchemaFincenIndicator extends UiSchemaCommon {
-  'ui:subtype': 'FINCEN_INDICATOR';
-}
-
 export interface UiSchemaNarrative extends UiSchemaCommon {
   'ui:subtype': 'NARRATIVE';
 }
 
-export interface UiSchemaUnknown extends UiSchemaCommon {
-  'ui:subtype'?: undefined;
+export interface UiSchemaFincenIndicator extends UiSchemaCommon {
+  'ui:subtype': 'FINCEN_INDICATOR';
+}
+
+export interface UiSchemaFincenSubject extends UiSchemaCommon {
+  'ui:subtype': 'FINCEN_SUBJECT';
+}
+
+export interface UiSchemaFincenPartyName extends UiSchemaCommon {
+  'ui:subtype': 'FINCEN_PARTY_NAME';
+}
+export interface UiSchemaFincenSuspiciousActivity extends UiSchemaCommon {
+  'ui:subtype': 'FINCEN_SUSPICIOUS_ACTIVITY';
+}
+
+export interface UiSchemaWebhook extends UiSchemaCommon {
+  'ui:subtype': 'WEBHOOK';
 }
 
 export type UiSchema =
+  | UiSchemaUnknown
   | UiSchemaDayWindow
   | UiSchemaTimeWindow
   | UiSchemaCountries
   | UiSchemaCountry
-  | UiSchemaFincenIndicator
   | UiSchemaAgeRange
   | UiSchemaTransactionAmountRange
   | UiSchemaTransactionAmountThresholds
@@ -84,10 +100,14 @@ export type UiSchema =
   | UiSchemaUserType
   | UiSchemaCurrency
   | UiSchemaPaymentFilters
-  | UiSchemaUnknown
   | UiSchemaNarrative
   | UiSchemaTransactionTimeRange
-  | UiSchemaChecklistsCategoryList;
+  | UiSchemaChecklistsCategoryList
+  | UiSchemaFincenIndicator
+  | UiSchemaFincenSubject
+  | UiSchemaFincenPartyName
+  | UiSchemaFincenSuspiciousActivity
+  | UiSchemaWebhook;
 
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;

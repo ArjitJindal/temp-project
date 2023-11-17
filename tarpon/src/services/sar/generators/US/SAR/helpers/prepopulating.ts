@@ -18,6 +18,7 @@ import { neverReturn } from '@/utils/lang'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CardMerchantDetails } from '@/@types/openapi-public/CardMerchantDetails'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
+import { ActivityPartyTypeCodes } from '@/services/sar/generators/US/SAR/helpers/constants'
 
 export type PartySinglePartyName = Omit<Party, 'PartyName'> & {
   PartyName: PartyNameType
@@ -27,7 +28,9 @@ export type PartySinglePartyName = Omit<Party, 'PartyName'> & {
   Helpers to convert Flagright's data structures to FinCEN data structures
  */
 
-export function indicator(value: boolean): JointReportIndicator | undefined {
+export function indicator(
+  value: boolean | undefined | null
+): JointReportIndicator | undefined {
   return value ? 'Y' : undefined
 }
 
@@ -62,7 +65,8 @@ export function financialInstitutionByPaymentDetails(
   const orgType = organizationClassificationByPaymentDetails(paymentDetails)
   const address = addressByPaymentDetails(paymentDetails)
   return {
-    ActivityPartyTypeCode: '34',
+    ActivityPartyTypeCode:
+      ActivityPartyTypeCodes.FINANCIAL_INSTITUTION_WHERE_ACTIVITY_OCCURRED,
     PartyName: partyName,
     PayLocationIndicator: indicator(directions.includes('ORIGIN')),
     SellingLocationIndicator: indicator(directions.includes('DESTINATION')),
@@ -99,7 +103,6 @@ export function partyNameByPaymentDetails(
   return {
     PartyNameTypeCode: 'L',
     RawPartyFullName: name,
-    EntityLastNameUnknownIndicator: indicator(name == null),
   }
 }
 
@@ -142,11 +145,6 @@ export function address(address: Address): AddressType {
     RawCityText: address.city,
     RawStateCodeText: address.state,
     RawStreetAddress1Text: address.addressLines.join(' \n'),
-    // CityUnknownIndicator: undefined,
-    // CountryCodeUnknownIndicator: undefined,
-    // StateCodeUnknownIndicator: undefined,
-    StreetAddressUnknownIndicator: indicator(address.addressLines.length === 0),
-    // ZIPCodeUnknownIndicator: undefined,
   }
 }
 
@@ -159,11 +157,6 @@ export function addressByCardMerchantDetails(
     RawCityText: address.city,
     RawStateCodeText: address.state,
     RawStreetAddress1Text: undefined,
-    CityUnknownIndicator: indicator(address.city == null),
-    CountryCodeUnknownIndicator: indicator(address.country == null),
-    StateCodeUnknownIndicator: indicator(address.state == null),
-    StreetAddressUnknownIndicator: indicator(true),
-    ZIPCodeUnknownIndicator: indicator(address.postCode == null),
   }
 }
 

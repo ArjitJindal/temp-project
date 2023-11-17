@@ -4,13 +4,13 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import { LoadingOutlined } from '@ant-design/icons';
 import { WebhookConfiguration, WebhookSecrets } from '@/apis';
 import { InputProps } from '@/components/library/Form';
-import { ExtendedSchema } from '@/components/library/JsonSchemaEditor/types';
+import { UiSchemaWebhook } from '@/components/library/JsonSchemaEditor/types';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import { WebhookDeliveryAttemptsTable } from '@/pages/settings/components/WebhookDeliveryAttemptsTable';
 
 export interface Props extends InputProps<WebhookConfiguration['_id']> {
-  uiSchema?: ExtendedSchema;
+  uiSchema?: UiSchemaWebhook;
 }
 
 export const WebhookInput = (props: Props) => {

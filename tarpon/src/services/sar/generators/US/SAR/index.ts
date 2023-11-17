@@ -5,7 +5,7 @@ import os from 'os'
 import * as Sentry from '@sentry/serverless'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder, XMLParser } from 'fast-xml-parser'
-import { isEqual, omit, cloneDeep, compact, chunk, pick, last } from 'lodash'
+import { chunk, cloneDeep, compact, isEqual, last, omit, pick } from 'lodash'
 import SftpClient from 'ssh2-sftp-client'
 import { backOff } from 'exponential-backoff'
 import { InternalReportType, ReportGenerator } from '../..'
@@ -22,7 +22,6 @@ import {
 } from './schema'
 import { FincenJsonSchema } from './resources/EFL_SARXBatchSchema'
 import {
-  PartySinglePartyName,
   address,
   amount,
   dateToDate,
@@ -32,6 +31,7 @@ import {
   indicator,
   partyNameByCompanyGeneralDetails,
   partyNameByConsumerName,
+  PartySinglePartyName,
   phone,
   phoneByFax,
 } from './helpers/prepopulating'
@@ -57,6 +57,11 @@ import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getSecret } from '@/utils/secrets-manager'
 import { traceable } from '@/core/xray'
+import {
+  fixPartyIndicators,
+  fixSuspiciousActivityIndicators,
+} from '@/services/sar/generators/US/SAR/helpers/postprocessing'
+import { ActivityPartyTypeCodes } from '@/services/sar/generators/US/SAR/helpers/constants'
 import { CurrencyService } from '@/services/currency'
 
 const FINCEN_BINARY = path.join(
@@ -154,7 +159,7 @@ export class UsSarReportGenerator implements ReportGenerator {
       if (user.type === 'CONSUMER') {
         subjects.push({
           ...sharedDetails,
-          ActivityPartyTypeCode: '33',
+          ActivityPartyTypeCode: ActivityPartyTypeCodes.SUBJECT,
           BirthDateUnknownIndicator: indicator(
             user.userDetails?.dateOfBirth == null
           ),
@@ -172,7 +177,7 @@ export class UsSarReportGenerator implements ReportGenerator {
       } else {
         subjects.push({
           ...sharedDetails,
-          ActivityPartyTypeCode: '33',
+          ActivityPartyTypeCode: ActivityPartyTypeCodes.SUBJECT,
           PartyName: [
             partyNameByCompanyGeneralDetails(
               user.legalEntity.companyGeneralDetails
@@ -486,7 +491,7 @@ export class UsSarReportGenerator implements ReportGenerator {
       reportParams.report.contactOffice,
       ...(reportParams.transactionMetadata?.subjects ?? []),
       ...(reportParams.transactionMetadata?.financialInstitutions ?? []),
-    ]
+    ].map(fixPartyIndicators)
 
     // Autofilling ActivityNarrativeSequenceNumber
     reportParams.report.generalInfo.ActivityNarrativeInformation =
@@ -495,12 +500,15 @@ export class UsSarReportGenerator implements ReportGenerator {
           ?.ActivityNarrativeText
       )
 
+    const suspiciousActivity = fixSuspiciousActivityIndicators(
+      reportParams.transactionMetadata?.suspiciousActivity
+    )
+
     return removeEmptyStringAndTrailingSpaces({
       EFilingBatchXML: {
         Activity: {
           Party: parties,
-          SuspiciousActivity:
-            reportParams.transactionMetadata?.suspiciousActivity,
+          SuspiciousActivity: suspiciousActivity,
           ...reportParams.report.generalInfo,
           EFilingPriorDocumentNumber: reportParams?.report?.generalInfo
             ?.EFilingPriorDocumentNumber
@@ -546,12 +554,11 @@ export class UsSarReportGenerator implements ReportGenerator {
     fs.writeFileSync(outputFile, xmlContent)
 
     // Reformat and add generated attributes
-    const reformatOutput = execSync(
-      `${FINCEN_BINARY} reformat --generate-attrs ${outputFile}`,
-      {
-        cwd: __dirname,
-      }
-    ).toString()
+    const reformatOutput = this.callFinCenBinary(
+      'reformat',
+      '--generate-attrs',
+      outputFile
+    )
     const startIndex = reformatOutput.indexOf('<fc2')
     if (startIndex === -1) {
       throw new BadRequest(reformatOutput)
@@ -584,11 +591,9 @@ export class UsSarReportGenerator implements ReportGenerator {
     const newXmlFile = newXmlBuilder.build(xmlJson)
     fs.writeFileSync(outputFile, newXmlFile)
     try {
-      execSync(`${FINCEN_BINARY} validate ${outputFile}`, {
-        cwd: __dirname,
-      })
-    } catch (e) {
-      const errorMsg = (e as any).stdout.toString()
+      this.callFinCenBinary('validate', outputFile)
+    } catch (e: unknown) {
+      const errorMsg = e instanceof Error ? e.message : ''
       const validationIndex = errorMsg.indexOf(VALIDATION_PREFIX)
       throw new BadRequest(
         errorMsg.slice(validationIndex).replace(VALIDATION_PREFIX, '')
@@ -596,6 +601,20 @@ export class UsSarReportGenerator implements ReportGenerator {
     }
     fs.rmSync(outputFile)
     return newXmlFile
+  }
+
+  private callFinCenBinary(...args: string[]): string {
+    const command = [FINCEN_BINARY, ...args].join(' ')
+    try {
+      const result = execSync(command, {
+        cwd: __dirname,
+      })
+      return result.toString()
+    } catch (e) {
+      logger.error(`Unable to execute command: ${command}`)
+      const errorMsg = (e as any).stdout.toString()
+      throw new Error(errorMsg)
+    }
   }
 
   public async getIPAddresses(

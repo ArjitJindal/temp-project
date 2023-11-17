@@ -656,8 +656,4 @@ export const AttributeInfos = {
     description:
       'This element identifies the type/category of suspicious activity, such as Structuring, Terrorist financing, Fraud, etc',
   },
-  ValidateIndicatorType: {
-    title: 'Indicator',
-    'ui:schema': { 'ui:subtype': 'FINCEN_INDICATOR' },
-  } as any,
 } as const

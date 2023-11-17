@@ -75,12 +75,17 @@
     </fc2:Party>
     <fc2:Party SeqNum="20">
       <fc2:ActivityPartyTypeCode>33</fc2:ActivityPartyTypeCode>
+      <fc2:BirthDateUnknownIndicator>Y</fc2:BirthDateUnknownIndicator>
       <fc2:PartyName SeqNum="21">
         <fc2:PartyNameTypeCode>L</fc2:PartyNameTypeCode>
         <fc2:RawPartyFullName>InnoTech</fc2:RawPartyFullName>
       </fc2:PartyName>
       <fc2:Address SeqNum="22">
         <fc2:CityUnknownIndicator>Y</fc2:CityUnknownIndicator>
+        <fc2:CountryCodeUnknownIndicator>Y</fc2:CountryCodeUnknownIndicator>
+        <fc2:StateCodeUnknownIndicator>Y</fc2:StateCodeUnknownIndicator>
+        <fc2:StreetAddressUnknownIndicator>Y</fc2:StreetAddressUnknownIndicator>
+        <fc2:ZIPCodeUnknownIndicator>Y</fc2:ZIPCodeUnknownIndicator>
       </fc2:Address>
       <fc2:PartyIdentification SeqNum="23">
         <fc2:PartyIdentificationNumberText>310309329</fc2:PartyIdentificationNumberText>
@@ -100,12 +105,17 @@
     </fc2:Party>
     <fc2:Party SeqNum="27">
       <fc2:ActivityPartyTypeCode>33</fc2:ActivityPartyTypeCode>
+      <fc2:BirthDateUnknownIndicator>Y</fc2:BirthDateUnknownIndicator>
       <fc2:PartyName SeqNum="28">
         <fc2:PartyNameTypeCode>L</fc2:PartyNameTypeCode>
         <fc2:RawPartyFullName>DataTech</fc2:RawPartyFullName>
       </fc2:PartyName>
       <fc2:Address SeqNum="29">
         <fc2:CityUnknownIndicator>Y</fc2:CityUnknownIndicator>
+        <fc2:CountryCodeUnknownIndicator>Y</fc2:CountryCodeUnknownIndicator>
+        <fc2:StateCodeUnknownIndicator>Y</fc2:StateCodeUnknownIndicator>
+        <fc2:StreetAddressUnknownIndicator>Y</fc2:StreetAddressUnknownIndicator>
+        <fc2:ZIPCodeUnknownIndicator>Y</fc2:ZIPCodeUnknownIndicator>
       </fc2:Address>
       <fc2:PartyIdentification SeqNum="30">
         <fc2:PartyIdentificationTypeCode>999</fc2:PartyIdentificationTypeCode>
@@ -129,7 +139,11 @@
         <fc2:PartyNameTypeCode>L</fc2:PartyNameTypeCode>
       </fc2:PartyName>
       <fc2:Address SeqNum="35">
+        <fc2:CityUnknownIndicator>Y</fc2:CityUnknownIndicator>
         <fc2:CountryCodeUnknownIndicator>Y</fc2:CountryCodeUnknownIndicator>
+        <fc2:StateCodeUnknownIndicator>Y</fc2:StateCodeUnknownIndicator>
+        <fc2:StreetAddressUnknownIndicator>Y</fc2:StreetAddressUnknownIndicator>
+        <fc2:ZIPCodeUnknownIndicator>Y</fc2:ZIPCodeUnknownIndicator>
       </fc2:Address>
       <fc2:PartyIdentification SeqNum="36">
         <fc2:PartyIdentificationNumberText>111111111111</fc2:PartyIdentificationNumberText>
