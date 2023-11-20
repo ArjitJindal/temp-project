@@ -20,7 +20,6 @@ import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import { SanctionsSearchType } from '@/apis';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { humanizeCamelCase } from '@/utils/humanize';
-import { getCurrentDomain } from '@/utils/routing';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
@@ -71,10 +70,9 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
           <Id to={sanctionsSerachLink(entity._id)}>{searchTerm}</Id>
         ),
         stringify(value, item) {
-          return (
-            item.request.searchTerm + ` (${getCurrentDomain()}${sanctionsSerachLink(item._id)})`
-          );
+          return item.request.searchTerm;
         },
+        link: (value, item) => sanctionsSerachLink(item._id),
       },
     }),
   ];

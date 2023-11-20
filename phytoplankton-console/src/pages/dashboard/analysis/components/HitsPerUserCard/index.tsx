@@ -38,9 +38,10 @@ export default function HitsPerUserCard(props: Props) {
           }
           return <UserLink user={user}>{userId}</UserLink>;
         },
-        stringify(value, item) {
-          return `${value} (${getCurrentDomain()}${getUserLink(item.user)})`;
+        stringify(value) {
+          return `${value}`;
         },
+        link: (value, item) => getUserLink(item.user) ?? '',
       },
     }),
     helper.derived<string>({

@@ -29,6 +29,9 @@ export function array<Value, Item = unknown>(
     stringify: (values: Value[] | undefined, item: Item) => {
       return humanizeStrings(values?.map((valueItem) => stringify(valueItem, item)) ?? []);
     },
+    link: () => {
+      return '';
+    },
   };
 }
 

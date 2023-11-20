@@ -26,7 +26,7 @@ import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import { getAlertUrl, getCurrentDomain } from '@/utils/routing';
+import { getAlertUrl } from '@/utils/routing';
 import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
@@ -277,13 +277,10 @@ export default function AlertTable(props: Props) {
               );
             },
             stringify(value, item) {
-              return (
-                item.alertId +
-                ` (${getCurrentDomain()}${getAlertUrl(
-                  item.caseId as string,
-                  item.alertId as string,
-                )})`
-              );
+              return item.alertId ?? '';
+            },
+            link: (value, item) => {
+              return getAlertUrl(item.caseId as string, item.alertId as string);
             },
           },
         }),

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { get } from 'lodash';
 import { message, Popover, Radio } from 'antd';
+import * as XLSX from 'xlsx-js-style';
 import {
   AllParams,
   applyFieldAccessor,
@@ -24,6 +25,9 @@ import { getErrorMessage } from '@/utils/lang';
 import { CsvRow, CsvValue, csvValue, serialize } from '@/utils/csv';
 import { PaginationParams } from '@/utils/queries/hooks';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
+import Select from '@/components/library/Select';
+import { xlsxValue } from '@/utils/xlsx';
+import { getCurrentDomain } from '@/utils/routing';
 
 const MAXIMUM_EXPORT_ITEMS = 10000;
 
@@ -34,6 +38,115 @@ type Props<Item extends object, Params extends object> = {
   cursorPagination?: boolean;
   totalPages?: number;
 };
+
+export function transformCSVTableRows<T extends object>(
+  items: T[],
+  columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
+  props: Props<T, any>,
+): CsvRow[] {
+  const result: CsvRow[] = [];
+
+  result.push(
+    columnsToExport.map((adjustedColumn) => csvValue(getColumnTitile(adjustedColumn, props))),
+  );
+
+  for (const row of items) {
+    const csvRow = columnsToExport.map((column): CsvValue => {
+      const columnDataType = { ...UNKNOWN, ...column.type };
+      const value = isSimpleColumn(column)
+        ? applyFieldAccessor(row, column.key)
+        : column.value(row);
+
+      return csvValue(
+        columnDataType.stringify?.(value as any, row),
+        columnDataType.link?.(value as any, row),
+      );
+    });
+    result.push(csvRow);
+  }
+
+  return result;
+}
+
+function processTableCSVDownload<T extends object>(
+  items: T[],
+  columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
+  props: Props<T, any>,
+) {
+  const rows = transformCSVTableRows(items, columnsToExport, props);
+
+  const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;
+  message.success(`Data export finished, downloading should start in a moment!`);
+  download(fileName, serialize(rows));
+}
+
+export function transformXLSXTableRows<T extends object>(
+  items: T[],
+  columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
+  props: Props<T, any>,
+) {
+  const columnTitles = columnsToExport.map((adjustedColumn) =>
+    getColumnTitile(adjustedColumn, props),
+  );
+
+  const style: XLSX.CellStyle = {
+    font: {
+      bold: true,
+    },
+  };
+
+  const rows: XLSX.CellObject[][] = [
+    columnTitles.map((title) => ({
+      t: 's',
+      v: title,
+      s: style,
+    })),
+  ];
+
+  const dataRows = items.map((row) =>
+    columnsToExport.map((column): XLSX.CellObject => {
+      const columnDataType = { ...UNKNOWN, ...column.type };
+      const value = isSimpleColumn(column)
+        ? applyFieldAccessor(row, column.key)
+        : column.value(row);
+      const link = columnDataType.link?.(value as any, row);
+
+      if (link) {
+        return {
+          t: 's',
+          v: xlsxValue(columnDataType.stringify?.(value as any, row)),
+          l: {
+            Target: `${getCurrentDomain()}${link}`,
+            Tooltip: columnDataType.stringify?.(value as any, row),
+          },
+        };
+      }
+
+      return {
+        t: 's',
+        v: xlsxValue(columnDataType.stringify?.(value as any, row)),
+      };
+    }),
+  );
+
+  rows.push(...dataRows);
+
+  return rows;
+}
+
+function processTableExcelDownload<T extends object>(
+  items: T[],
+  columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
+  props: Props<T, any>,
+) {
+  const rows = transformXLSXTableRows(items, columnsToExport, props);
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  XLSX.utils.book_append_sheet(wb, ws, 'data_sheet');
+  XLSX.writeFile(wb, `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.xlsx`);
+}
 
 export default function DownloadButton<T extends object, Params extends object>(
   props: Props<T, Params>,
@@ -51,6 +164,7 @@ export default function DownloadButton<T extends object, Params extends object>(
 
   const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT'>('ALL');
   const [progress, setProgress] = useState<null | { page: number; totalPages?: number }>(null);
+  const [format, setFormat] = useState<'csv' | 'xlsx'>('csv');
 
   const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +183,7 @@ export default function DownloadButton<T extends object, Params extends object>(
       let next = '';
       let runningTotal = 0;
       let cursorPaginated = false;
+      const allFlatData: T[] = [];
       do {
         setProgress({
           page: pagesMode === 'CURRENT' ? 1 : page,
@@ -95,16 +210,7 @@ export default function DownloadButton<T extends object, Params extends object>(
         }
 
         const flatData = flatDataItems<T>(items);
-        for (const row of flatData) {
-          const csvRow = columnsToExport.map((column): CsvValue => {
-            const columnDataType = { ...UNKNOWN, ...column.type };
-            const value = isSimpleColumn(column)
-              ? applyFieldAccessor(row, column.key)
-              : column.value(row);
-            return csvValue(columnDataType.stringify?.(value as any, row) ?? '');
-          });
-          result.push(csvRow);
-        }
+        allFlatData.push(...flatData);
         if (pagesMode === 'CURRENT') {
           break;
         }
@@ -121,9 +227,11 @@ export default function DownloadButton<T extends object, Params extends object>(
           from = next;
         }
       } while ((totalPages && page <= totalPages) || cursorPaginated);
-      const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;
-      message.success(`Data export finished, downloading should start in a moment!`);
-      download(fileName, serialize(result));
+      if (format === 'csv') {
+        processTableCSVDownload(allFlatData, columnsToExport, props);
+      } else {
+        processTableExcelDownload(allFlatData, columnsToExport, props);
+      }
     } catch (e) {
       message.error(`Unable to export data. ${getErrorMessage(e)}`);
       console.error(e);
@@ -135,11 +243,7 @@ export default function DownloadButton<T extends object, Params extends object>(
   const handleNonPaginatedDownload = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const result: CsvRow[] = [];
       const columnsToExport = prepareColumns(columns);
-      result.push(
-        columnsToExport.map((adjustedColumn) => csvValue(getColumnTitile(adjustedColumn, props))),
-      );
 
       const { total, items } = await onPaginateData({ pageSize });
       const totalItemsCount = total ?? items.length;
@@ -150,20 +254,12 @@ export default function DownloadButton<T extends object, Params extends object>(
         return;
       }
       const flatData = flatDataItems<T>(items);
-      for (const row of flatData) {
-        const csvRow = columnsToExport.map((column): CsvValue => {
-          const columnDataType = { ...UNKNOWN, ...column.type };
-          const value = isSimpleColumn(column)
-            ? applyFieldAccessor(row, column.key)
-            : column.value(row);
-          return csvValue(columnDataType.stringify?.(value as any, row) ?? '');
-        });
-        result.push(csvRow);
-      }
 
-      const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;
-      message.success(`Data export finished, downloading should start in a moment!`);
-      download(fileName, serialize(result));
+      if (format === 'csv') {
+        processTableCSVDownload(flatData, columnsToExport, props);
+      } else {
+        processTableExcelDownload(flatData, columnsToExport, props);
+      }
     } catch (e) {
       message.error(`Unable to export data. ${getErrorMessage(e)}`);
       console.error(e);
@@ -180,24 +276,41 @@ export default function DownloadButton<T extends object, Params extends object>(
     );
   }
 
-  return totalPages !== 1 || props.cursorPagination ? (
+  return (
     <Popover
       placement="bottom"
       content={
         <form onSubmit={handleDownload}>
           <div className={s.form}>
-            <Form.Layout.Label title="Data set">
-              <Radio.Group
-                onChange={(e) => {
-                  setPagesMode(e.target.value);
+            {(totalPages !== 1 || props.cursorPagination) && (
+              <Form.Layout.Label title="Data set">
+                <Radio.Group
+                  onChange={(e) => {
+                    setPagesMode(e.target.value);
+                  }}
+                  value={pagesMode}
+                >
+                  <Radio value="ALL" defaultChecked>
+                    All pages
+                  </Radio>
+                  <Radio value="CURRENT">Current page</Radio>
+                </Radio.Group>
+              </Form.Layout.Label>
+            )}
+            <Form.Layout.Label title="Format">
+              <Select<'csv' | 'xlsx'>
+                value={format}
+                style={{ width: 100 }}
+                isDisabled={progress != null}
+                options={[
+                  { value: 'csv', label: 'CSV' },
+                  { value: 'xlsx', label: 'XLSX' },
+                ]}
+                onChange={(value) => {
+                  if (value) setFormat(value);
                 }}
-                value={pagesMode}
-              >
-                <Radio value="ALL" defaultChecked>
-                  All pages
-                </Radio>
-                <Radio value="CURRENT">Current page</Radio>
-              </Radio.Group>
+                allowClear={false}
+              />
             </Form.Layout.Label>
             <Button isDisabled={progress != null} htmlType="submit" type="PRIMARY">
               {progress == null
@@ -215,10 +328,6 @@ export default function DownloadButton<T extends object, Params extends object>(
         <DownloadLineIcon className={s.icon} />
       </div>
     </Popover>
-  ) : (
-    <div className={s.root} onClick={handleDownload}>
-      <DownloadLineIcon className={s.icon} />
-    </div>
   );
 }
 
@@ -244,7 +353,7 @@ function prepareColumns<T extends object>(
   return result;
 }
 
-function getColumnTitile<T extends object>(column: TableColumn<T>, props) {
+function getColumnTitile<T extends object>(column: TableColumn<T>, props: Props<T, any>) {
   let title = column.headerTitle;
 
   if (!title) {

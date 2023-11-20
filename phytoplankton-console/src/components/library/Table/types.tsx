@@ -103,6 +103,7 @@ export interface FullColumnDataType<Value, Item = unknown> {
   render?: (value: Value | undefined, context: CellContext<Value, Item>) => JSX.Element;
   renderEdit?: (context: CellEditContext<Value, Item>) => JSX.Element;
   stringify?: (value: Value | undefined, item: Item) => string; // can be used for export // todo: make it optional
+  link?: (value: Value | undefined, item: Item) => string; // can be used for export
   defaultWrapMode?: 'WRAP' | 'OVERFLOW';
   autoFilterDataType?: AutoFilterDataType;
 }

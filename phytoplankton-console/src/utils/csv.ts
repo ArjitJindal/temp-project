@@ -1,10 +1,12 @@
+import { getCurrentDomain } from '@/utils/routing';
+
 export interface CsvValue {
   escaped: string;
 }
 
 export type CsvRow = CsvValue[];
 
-export function csvValue(value: unknown): CsvValue {
+export function csvValue(value: unknown, link?: string): CsvValue {
   if (value === null || value === '') {
     return { escaped: '"-"' };
   }
@@ -26,7 +28,7 @@ export function csvValue(value: unknown): CsvValue {
 
   str = str.replace(/"/g, '');
 
-  return { escaped: `"${str}"` };
+  return { escaped: `"${str}${link ? ` (${getCurrentDomain()}${link})` : ''}"` };
 }
 
 export function serialize(rows: CsvRow[]): string {

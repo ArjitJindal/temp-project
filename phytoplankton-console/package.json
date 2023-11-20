@@ -120,7 +120,8 @@
     "reagraph": "^4.11.1",
     "umi-request": "^1.4.0",
     "url-parse": "^1.5.10",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
     "@aws-sdk/client-secrets-manager": "^3.370.0",

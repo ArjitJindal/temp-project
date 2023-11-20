@@ -52,7 +52,7 @@ import TextArea from '@/components/library/TextArea';
 import { humanizeConstant } from '@/utils/humanize';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import { getAlertUrl, getCaseUrl, getCurrentDomain } from '@/utils/routing';
+import { getAlertUrl, getCaseUrl } from '@/utils/routing';
 import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { useApi } from '@/api';
@@ -101,6 +101,7 @@ export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   },
   defaultWrapMode: 'WRAP',
   autoFilterDataType: { kind: 'string' },
+  link: () => '',
 };
 
 export const NUMBER: ColumnDataType<number> = {
@@ -224,8 +225,11 @@ export const ALERT_USER_ID: ColumnDataType<string, TableAlertItem> = {
       </>
     );
   },
-  stringify(value, item) {
-    return `${value ?? ''} (${getCurrentDomain()}${getUserLink(item?.user) as string})`;
+  stringify(value) {
+    return `${value ?? ''}`;
+  },
+  link(value, item) {
+    return getUserLink(item?.user) as string;
   },
 };
 
@@ -321,7 +325,10 @@ export const CASEID: ColumnDataType<string, Case> = {
     );
   },
   stringify(value, item) {
-    return `${item?.caseId ?? ''} (${getCurrentDomain()}${getCaseUrl(value as string)})`;
+    return `${item?.caseId ?? ''}`;
+  },
+  link(value) {
+    return getCaseUrl(value as string);
   },
 };
 
@@ -341,10 +348,10 @@ export const ALERT_ID: ColumnDataType<string, Case> = {
     );
   },
   stringify(value, item) {
-    return `${item?.caseId ?? ''} (${getCurrentDomain()}${getAlertUrl(
-      item?.caseId as string,
-      value as string,
-    )})`;
+    return `${item?.caseId ?? ''}`;
+  },
+  link(value, item) {
+    return getAlertUrl(item?.caseId as string, value as string);
   },
 };
 

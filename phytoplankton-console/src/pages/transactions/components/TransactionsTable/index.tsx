@@ -224,6 +224,10 @@ export default function TransactionsTable(props: Props) {
               </div>
             );
           },
+          link: (value) => makeUrl(`/transactions/item/:id`, { id: value }),
+          stringify(value) {
+            return `${value}`;
+          },
         },
       }),
       ...(isRiskScoringEnabled
@@ -290,6 +294,10 @@ export default function TransactionsTable(props: Props) {
           render: (value, { item: entity }) => {
             return <Id to={getUserLink(entity.originUser)}>{value}</Id>;
           },
+          stringify(value) {
+            return `${value}`;
+          },
+          link: (value, item) => getUserLink(item.originUser) ?? '',
         },
       }),
       helper.simple<'originUser'>({
@@ -333,6 +341,10 @@ export default function TransactionsTable(props: Props) {
           ...STRING,
           render: (value, { item: entity }) => {
             return <Id to={getUserLink(entity.destinationUser)}>{value}</Id>;
+          },
+          link: (value, item) => getUserLink(item.destinationUser) ?? '',
+          stringify(value) {
+            return `${value}`;
           },
         },
       }),
