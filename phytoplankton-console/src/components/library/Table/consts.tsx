@@ -1,6 +1,7 @@
 import * as TanTable from '@tanstack/react-table';
 import React, { useMemo } from 'react';
 import { CommonParams, SelectionInfo, SortingParams, TableRow } from './types';
+import { handleRowExpand } from './internal/helpers';
 import Checkbox from '@/components/library/Checkbox';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { PaginationParams } from '@/utils/queries/hooks';
@@ -122,7 +123,7 @@ export const EXPAND_COLUMN: TanTable.ColumnDef<TableRow<unknown>> = {
         isExpanded={cell.row.getIsExpanded()}
         color="BLACK"
         size="SMALL"
-        onClick={() => cell.row.toggleExpanded()}
+        onClick={() => handleRowExpand(cell)}
       />
     );
   },

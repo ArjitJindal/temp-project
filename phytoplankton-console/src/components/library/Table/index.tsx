@@ -35,6 +35,7 @@ import InformationLineIcon from '@/components/ui/icons/Remix/system/information-
 import Alert from '@/components/library/Alert';
 import CursorPagination from '@/components/library/CursorPagination';
 import { Cursor } from '@/utils/queries/types';
+import { useId } from '@/utils/hooks';
 
 type RowHeightMode = 'FIXED' | 'AUTO';
 
@@ -143,8 +144,10 @@ function Table<Item extends object, Params extends object = CommonParams>(
     },
     [onChangeParams],
   );
+  const tableId = useId();
 
   const table = useTanstackTable<Item, Params>({
+    tableId: tableId,
     dataRes: dataRes,
     rowKey: rowKey,
     columns: columns,
@@ -189,10 +192,10 @@ function Table<Item extends object, Params extends object = CommonParams>(
         table.toggleAllRowsSelected(value);
       },
       expandRow: (id: string | undefined) => {
-        if (id !== undefined) table.getRow(id).toggleExpanded(true);
+        if (id !== undefined) table.getRow(`${tableId}-` + id).toggleExpanded(true);
       },
     }),
-    [handleReload, table],
+    [handleReload, table, tableId],
   );
 
   const isResizing = table.getState().columnSizingInfo.isResizingColumn;
@@ -202,18 +205,19 @@ function Table<Item extends object, Params extends object = CommonParams>(
 
   const Rows = table.getRowModel();
   const [rowExpanded, setrowExpanded] = useState<boolean>(false);
+  const [enableScroll, setEnableScroll] = useState<boolean>(true);
   useEffect(() => {
     if (rowExpanded) return;
     if (expandedRowId === undefined) return;
-    if (!Rows?.rowsById[expandedRowId]?.getCanExpand()) return;
-    if (Rows?.rowsById[expandedRowId]?.getIsExpanded() === false) {
-      Rows?.rowsById[expandedRowId]?.toggleExpanded(true);
+    if (!Rows?.rowsById[`${tableId}-` + expandedRowId]?.getCanExpand()) return;
+    if (Rows?.rowsById[`${tableId}-` + expandedRowId]?.getIsExpanded() === false) {
+      Rows?.rowsById[`${tableId}-` + expandedRowId]?.toggleExpanded(true);
       setrowExpanded(true);
       document
-        .getElementById(`row_${expandedRowId}`)
+        .getElementById(`row_${tableId}-${expandedRowId}`)
         ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [Rows, expandedRowId, rowExpanded]);
+  }, [Rows, expandedRowId, rowExpanded, tableId]);
 
   const showPagination =
     typeof pagination === 'boolean'
@@ -238,6 +242,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
         totalPages={getPageCount(params, data)}
       />
       <ScrollContainer
+        enableScroll={enableScroll}
         maxHeight={typeof fitHeight === 'number' ? fitHeight : undefined}
         enableHorizontalScroll={sizingMode === 'SCROLL'}
       >
@@ -367,7 +372,10 @@ function Table<Item extends object, Params extends object = CommonParams>(
                             })}
                           </tr>
                           {row.getIsExpanded() && (
-                            <tr>
+                            <tr
+                              onMouseEnter={() => setEnableScroll(false)}
+                              onMouseLeave={() => setEnableScroll(true)}
+                            >
                               <td colSpan={visibleCells.length + 1} className={s.tdExpanded}>
                                 <div
                                   className={cn(
