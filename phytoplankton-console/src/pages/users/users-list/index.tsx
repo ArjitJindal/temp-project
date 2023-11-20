@@ -102,14 +102,14 @@ const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSe
       renderer: ({ params, setParams }) => (
         <UserTagSearchButton
           initialState={{
-            key: params.tagKey ?? null,
-            value: params.tagValue ?? null,
+            key: params.tagKey,
+            value: params.tagValue,
           }}
           onConfirm={(value) => {
             setParams((state) => ({
               ...state,
-              tagKey: value.key ?? undefined,
-              tagValue: value.value ?? undefined,
+              tagKey: value.key,
+              tagValue: value.value,
             }));
           }}
         />

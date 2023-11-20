@@ -87,8 +87,8 @@ const TableList = () => {
               renderer: ({ params, setParams }) => (
                 <TagSearchButton
                   initialState={{
-                    key: params.tagKey ?? null,
-                    value: params.tagValue ?? null,
+                    key: params.tagKey ?? undefined,
+                    value: params.tagValue ?? undefined,
                   }}
                   onConfirm={(value) => {
                     setParams((state) => ({

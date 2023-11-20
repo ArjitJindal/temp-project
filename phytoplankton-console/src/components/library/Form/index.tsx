@@ -8,6 +8,7 @@ import {
   FormValidationResult,
   validateForm,
 } from '@/components/library/Form/utils/validation/utils';
+import { StatePair } from '@/utils/state';
 
 export interface FormRef<FormValues> {
   getValues: () => FormValues;
@@ -18,12 +19,13 @@ export interface FormRef<FormValues> {
 }
 
 interface ChildrenProps<FormValues> {
+  valuesState: StatePair<FormValues>;
   validationResult: FormValidationResult<FormValues> | null;
 }
 
 interface Props<FormValues> {
   id?: string;
-  initialValues: FormValues;
+  initialValues?: FormValues;
   children: React.ReactNode | ((props: ChildrenProps<FormValues>) => React.ReactNode);
   formValidators?: Validator<FormValues>[];
   fieldValidators?: FieldValidators<FormValues>;
@@ -36,7 +38,7 @@ interface Props<FormValues> {
 function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormValues>>) {
   const {
     id,
-    initialValues,
+    initialValues = {} as FormValues,
     children,
     fieldValidators,
     formValidators,
@@ -129,7 +131,9 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
       }}
     >
       <FormContext.Provider value={formContext as FormContextValue<unknown>}>
-        {typeof children === 'function' ? children({ validationResult }) : children}
+        {typeof children === 'function'
+          ? children({ validationResult, valuesState: [formValues, setFormValues] })
+          : children}
       </FormContext.Provider>
     </form>
   );

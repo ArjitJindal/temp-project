@@ -1,4 +1,4 @@
-import { Divider, Form, Input, Select, Tag } from 'antd';
+import { Divider, Input, Select, Tag } from 'antd';
 import { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
@@ -12,11 +12,11 @@ import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { BatchJobNames, Feature, TenantSettings } from '@/apis';
-import { useAuth0User, clearAuth0LocalStorage, useAccountRole } from '@/utils/user-utils';
+import { clearAuth0LocalStorage, useAccountRole, useAuth0User } from '@/utils/user-utils';
 import {
-  useUpdateTenantSettings,
   useFeatures,
   useSettings,
+  useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { FEATURES } from '@/apis/models-custom/Feature';
 import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';
@@ -118,26 +118,24 @@ export default function SuperAdminPanel() {
         onCancel={handleCancel}
         onOk={role === 'root' ? handleSave : undefined}
       >
-        <Form<{ currentTenantId: string; searchProfileId: string }>
-          name="basic"
-          initialValues={{ currentTenantId: user.tenantId }}
-        >
-          <Form.Item label="Tenant">
-            <Select
-              disabled={tenantOptions.length === 0}
-              options={tenantOptions}
-              onChange={handleChangeTenant}
-              value={user.tenantId}
-              filterOption={(input, option) =>
-                (option?.text?.toLowerCase() ?? '').includes(input.toLowerCase().trim())
-              }
-              showSearch={true}
-            />
-            Tenant ID: <b>{`${user.tenantId}`}</b>
-          </Form.Item>
-        </Form>
+        <Label label="Tenant">
+          <Select
+            disabled={tenantOptions.length === 0}
+            options={tenantOptions}
+            onChange={handleChangeTenant}
+            value={user.tenantId}
+            filterOption={(input, option) =>
+              (option?.text?.toLowerCase() ?? '').includes(input.toLowerCase().trim())
+            }
+            showSearch={true}
+          />
+          <div>
+            Current tenant ID: <b>{`${user.tenantId}`}</b>
+          </div>
+        </Label>
         {role === 'root' && (
           <>
+            <br />
             <Button
               type="SECONDARY"
               size="SMALL"

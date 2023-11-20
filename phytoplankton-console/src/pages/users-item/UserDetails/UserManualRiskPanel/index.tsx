@@ -1,4 +1,4 @@
-import { Form, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
@@ -123,40 +123,38 @@ export default function UserManualRiskPanel(props: Props) {
   };
 
   return (
-    <Form.Item name="field" style={{ margin: 0 }}>
-      <div className={s.root}>
-        <RiskLevelSwitch
-          isDisabled={isLocked || isLoading(syncState) || isFailed(syncState)}
-          value={getOr(
-            map(
-              syncState,
-              ({ manualRiskLevel, derivedRiskLevel }) =>
-                manualRiskLevel || derivedRiskLevel || undefined,
-            ),
-            useRiskLevel(
-              (drsScore && drsScore.length
-                ? drsScore[drsScore.length - 1].drsScore
-                : undefined) as number,
-            ) ?? undefined,
-          )}
-          onChange={handleChangeRiskLevel}
-        />
-        <Tooltip
-          title={
-            isLocked
-              ? 'Click here to unlock the assigned risk level. This lets the system automatically update the user risk level again'
-              : 'Click here to lock user risk level. This prevents the system from changing the user risk level automatically.'
-          }
-          placement="bottomLeft"
-          arrowPointAtCenter
-        >
-          {isLocked ? (
-            <LockLineIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
-          ) : (
-            <UnlockIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
-          )}
-        </Tooltip>
-      </div>
-    </Form.Item>
+    <div className={s.root}>
+      <RiskLevelSwitch
+        isDisabled={isLocked || isLoading(syncState) || isFailed(syncState)}
+        value={getOr(
+          map(
+            syncState,
+            ({ manualRiskLevel, derivedRiskLevel }) =>
+              manualRiskLevel || derivedRiskLevel || undefined,
+          ),
+          useRiskLevel(
+            (drsScore && drsScore.length
+              ? drsScore[drsScore.length - 1].drsScore
+              : undefined) as number,
+          ) ?? undefined,
+        )}
+        onChange={handleChangeRiskLevel}
+      />
+      <Tooltip
+        title={
+          isLocked
+            ? 'Click here to unlock the assigned risk level. This lets the system automatically update the user risk level again'
+            : 'Click here to lock user risk level. This prevents the system from changing the user risk level automatically.'
+        }
+        placement="bottomLeft"
+        arrowPointAtCenter
+      >
+        {isLocked ? (
+          <LockLineIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
+        ) : (
+          <UnlockIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
+        )}
+      </Tooltip>
+    </div>
   );
 }

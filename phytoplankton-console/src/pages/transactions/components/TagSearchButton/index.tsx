@@ -24,10 +24,7 @@ export default function TagSearchButton(props: Props) {
         isEmpty
           ? undefined
           : () => {
-              onConfirm({
-                key: null,
-                value: null,
-              });
+              onConfirm({});
             }
       }
       onUpdateFilterClose={onUpdateFilterClose}

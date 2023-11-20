@@ -1,4 +1,17 @@
 rules:
+  - id: antd_no_form
+    pattern: import { Form } from 'antd'
+    message: use "import Form from '@/components/library/Form'" instead
+    paths:
+      include:
+        - "phytoplankton-console"
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
   - id: lodash
     pattern: import _ from 'lodash'
     message: import { ... } from 'lodash' instead

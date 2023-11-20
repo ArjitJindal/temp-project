@@ -1,9 +1,11 @@
-import { Checkbox, Form as AntForm } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import s from './style.module.less';
+import Form from '@/components/library/Form';
 import Button from '@/components/library/Button';
+import Checkbox from '@/components/library/Checkbox';
 import { useUsers } from '@/utils/user-utils';
+import Label from '@/components/library/Label';
 
 interface Props {
   initialState: string[] | [];
@@ -15,49 +17,43 @@ export default function PopupContent(props: Props) {
   const { initialState, onCancel, onConfirm } = props;
   const [users, loadingUsers] = useUsers();
 
-  const [state, setState] = useState<string[]>(initialState);
-
-  useEffect(() => {
-    setState(initialState);
-  }, [initialState]);
-
   return (
-    <AntForm
-      onFinish={() => {
+    <Form<string[]>
+      initialValues={initialState}
+      onSubmit={(state) => {
         onConfirm(state);
       }}
     >
-      <div className={s.root}>
-        {loadingUsers ? (
-          <LoadingOutlined />
-        ) : (
-          Object.values(users).map((key) => {
-            return (
-              <Checkbox
-                onChange={(e) => {
-                  setState((prev) => {
-                    if (e.target.checked) {
-                      return [...prev, key.id];
-                    }
-                    return prev.filter((item) => item !== key.id);
-                  });
-                }}
-                key={key.id}
-                checked={state.includes(key.id)}
-                style={{ margin: '0' }}
-              >
-                {key.name ?? key.id}
-              </Checkbox>
-            );
-          })
-        )}
-        <div className={s.buttons}>
-          <Button htmlType="submit" type="PRIMARY">
-            Confirm
-          </Button>
-          <Button onClick={onCancel}>Reset</Button>
+      {({ valuesState: [values, setValues] }) => (
+        <div className={s.root}>
+          {loadingUsers ? (
+            <LoadingOutlined />
+          ) : (
+            Object.values(users).map((key) => (
+              <Label label={key.name ?? key.id} position="RIGHT" level={2}>
+                <Checkbox
+                  onChange={(value) => {
+                    setValues((prev) => {
+                      if (value) {
+                        return [...prev, key.id];
+                      }
+                      return prev.filter((item) => item !== key.id);
+                    });
+                  }}
+                  key={key.id}
+                  value={values.includes(key.id)}
+                />
+              </Label>
+            ))
+          )}
+          <div className={s.buttons}>
+            <Button htmlType="submit" type="PRIMARY">
+              Confirm
+            </Button>
+            <Button onClick={onCancel}>Reset</Button>
+          </div>
         </div>
-      </div>
-    </AntForm>
+      )}
+    </Form>
   );
 }

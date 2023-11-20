@@ -1,7 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
 import { Dropdown as AntDropdown, Menu as AntMenu } from 'antd';
-import { Placement } from '@ant-design/pro-form/lib/interface';
 import s from './index.module.less';
 import ArrowDownFilled from '@/components/ui/icons/Remix/system/arrow-down-s-fill.react.svg';
 import ArrowDownLine from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
@@ -13,6 +12,14 @@ export interface DropdownOption<T extends string | number | boolean = string> {
   label?: string | React.ReactNode;
   isDisabled?: boolean;
 }
+
+type Placement =
+  | 'topLeft'
+  | 'topCenter'
+  | 'topRight'
+  | 'bottomLeft'
+  | 'bottomCenter'
+  | 'bottomRight';
 
 interface Props<T extends string | number = string> {
   onSelect?: (option: DropdownOption<T>) => void;

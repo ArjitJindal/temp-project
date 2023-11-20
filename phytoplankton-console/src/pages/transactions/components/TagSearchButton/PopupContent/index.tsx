@@ -1,13 +1,15 @@
-import { Form as AntForm, Input, Select } from 'antd';
-import React, { useState } from 'react';
+import { Select } from 'antd';
+import React from 'react';
 import s from './style.module.less';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import { Value } from '@/pages/transactions/components/TagSearchButton/types';
-import * as Form from '@/components/ui/Form';
+import Form from '@/components/library/Form';
 import Button from '@/components/library/Button';
+import InputField from '@/components/library/Form/InputField';
+import TextInput from '@/components/library/TextInput';
 
 interface Props {
   initialState: Value;
@@ -25,40 +27,32 @@ export default function PopupContent(props: Props) {
     });
   });
 
-  const [state, setState] = useState<Value>(initialState);
-
   return (
-    <AntForm
-      onFinish={() => {
-        onConfirm(state);
+    <Form<Value>
+      initialValues={initialState}
+      onSubmit={(values) => {
+        onConfirm(values);
       }}
     >
       <div className={s.root}>
-        <Form.Layout.Label title="Tag key">
-          <Select<string>
-            style={{ width: '100%' }}
-            showSearch={true}
-            allowClear={true}
-            className={s.select}
-            loading={isLoading(result.data)}
-            options={(getOr(result.data, []) as unknown as Array<string>)
-              .filter((key) => key?.length > 0)
-              .map((key) => ({ label: key, value: key }))}
-            value={state.key}
-            onChange={(value) => {
-              setState((state) => ({ ...state, key: value }));
-            }}
-          />
-        </Form.Layout.Label>
-        <Form.Layout.Label title="Tag value">
-          <Input
-            allowClear={true}
-            value={state.value ?? ''}
-            onChange={(e) => {
-              setState((state) => ({ ...state, value: e.target.value }));
-            }}
-          />
-        </Form.Layout.Label>
+        <InputField<Value, 'key'> name={'key'} label={'Tag key'} labelProps={{ level: 2 }}>
+          {(inputProps) => (
+            <Select<string>
+              style={{ width: '100%' }}
+              showSearch={true}
+              allowClear={true}
+              className={s.select}
+              loading={isLoading(result.data)}
+              options={(getOr(result.data, []) as unknown as Array<string>)
+                .filter((key) => key?.length > 0)
+                .map((key) => ({ label: key, value: key }))}
+              {...inputProps}
+            />
+          )}
+        </InputField>
+        <InputField<Value, 'value'> name={'value'} label={'Tag value'} labelProps={{ level: 2 }}>
+          {(inputProps) => <TextInput allowClear={true} {...inputProps} />}
+        </InputField>
         <div className={s.buttons}>
           <Button htmlType="submit" type="PRIMARY">
             Confirm
@@ -66,6 +60,6 @@ export default function PopupContent(props: Props) {
           <Button onClick={onCancel}>Cancel</Button>
         </div>
       </div>
-    </AntForm>
+    </Form>
   );
 }
