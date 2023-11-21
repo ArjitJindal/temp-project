@@ -77,15 +77,18 @@ export function getUserDerivedRiskFactorHandler(
   entityType: RiskEntityType,
   parameter: ParameterAttributeRiskValuesParameterEnum
 ) {
-  return USER_RISK_FACTOR_HANDLERS_MAP[getRiskFactorKey(entityType, parameter)]
-    ?.handler
+  const handler =
+    USER_RISK_FACTOR_HANDLERS_MAP[getRiskFactorKey(entityType, parameter)]
+  return handler ? handler.handler : undefined
 }
 
 export function getTransactionDerivedRiskFactorHandler(
   entityType: RiskEntityType,
   parameter: ParameterAttributeRiskValuesParameterEnum
 ) {
-  return TRANSACTION_RISK_FACTOR_HANDLERS_MAP[
-    getRiskFactorKey(entityType, parameter)
-  ]?.handler
+  const handler =
+    TRANSACTION_RISK_FACTOR_HANDLERS_MAP[
+      getRiskFactorKey(entityType, parameter)
+    ]
+  return handler ? handler.handler : undefined
 }

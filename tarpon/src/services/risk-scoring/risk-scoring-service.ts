@@ -512,6 +512,12 @@ export class RiskScoringService {
             parameterAttributeDetails.riskEntityType,
             parameterAttributeDetails.parameter
           )
+          if (!handler) {
+            logger.error(
+              `No handler found for risk factor ${parameterAttributeDetails.parameter}`
+            )
+            continue
+          }
           derivedValues = await handler(
             entity as User,
             parameterAttributeDetails.parameter
@@ -521,6 +527,12 @@ export class RiskScoringService {
             parameterAttributeDetails.riskEntityType,
             parameterAttributeDetails.parameter
           )
+          if (!handler) {
+            logger.error(
+              `No handler found for risk factor ${parameterAttributeDetails.parameter}`
+            )
+            continue
+          }
           derivedValues = await handler(
             entity as Transaction,
             await this.getUsersFromTransaction(entity as Transaction),
