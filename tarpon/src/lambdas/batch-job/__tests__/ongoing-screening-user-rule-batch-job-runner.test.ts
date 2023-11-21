@@ -121,10 +121,10 @@ describe('Batch Job Sanctions Screening Rule', () => {
         {
           ruleAction: 'SUSPEND',
           nature: 'SCREENING',
-          ruleName: 'Screening on Consumer users',
+          ruleName: 'Screening consumer users.',
           ruleId: 'R-16',
           ruleDescription:
-            'Sanctions/PEP/Adverse media screening on Consumer users.',
+            'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
           ruleHitMeta: {
             hitDirections: ['ORIGIN'],
             sanctionsDetails: [
@@ -141,11 +141,11 @@ describe('Batch Job Sanctions Screening Rule', () => {
         {
           ruleAction: 'SUSPEND',
           nature: 'SCREENING',
-          ruleName: 'Screening on Consumer users',
+          ruleName: 'Screening consumer users.',
           ruleHit: true,
           ruleId: 'R-16',
           ruleDescription:
-            'Sanctions/PEP/Adverse media screening on Consumer users.',
+            'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
           ruleHitMeta: {
             hitDirections: ['ORIGIN'],
             sanctionsDetails: [
@@ -216,11 +216,11 @@ describe('Batch Job Sanctions Screening Rule', () => {
         {
           ruleAction: 'SUSPEND',
           nature: 'SCREENING',
-          ruleName: 'Screening on Consumer users',
+          ruleName: 'Screening consumer users.',
           ruleHit: false,
           ruleId: 'R-16',
           ruleDescription:
-            'Sanctions/PEP/Adverse media screening on Consumer users.',
+            'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
           labels: [],
         },
       ],

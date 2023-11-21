@@ -67,8 +67,8 @@ const _RULES_LIBRARY: Array<
   () => ({
     id: 'R-1',
     type: 'TRANSACTION',
-    name: 'First payment of a Customer',
-    description: 'First outgoing transaction of a user',
+    name: 'First transaction of a user.',
+    description: 'First transaction of a user.',
     descriptionTemplate:
       "{{ if-sender 'Sender’s' 'Receiver’s' }} first transaction",
     defaultParameters: {},
@@ -93,7 +93,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-2',
       type: 'TRANSACTION',
-      name: 'Transaction amount too high',
+      name: 'Transaction amount too high.',
       description: `Transaction amount is >= x in ${DEFAULT_CURRENCY_KEYWORD} or equivalent`,
       descriptionTemplate:
         'Transaction amount is {{ format-money limit currency }} or more',
@@ -119,9 +119,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-3',
       type: 'TRANSACTION',
-      name: 'Unexpected origin or destination country',
+      name: 'Transaction to or from a new country',
       description:
-        'Transaction to or from a country that has not been used before by this user. Trigger the rule after x transactions have been completed. x configurable - mostly relevant for when you are moving between countries.',
+        "Transactions to or from a new country. Trigger the rule after 'x' transactions have been completed. This is relevant when moving between countries.",
       descriptionTemplate:
         "User tried to {{ if-sender 'send' 'receive' }} money {{ if-sender 'from' 'to' }} {{ if-sender origin.amount.country destination.amount.country }} more than {{ parameters.initialTransactions }} times. User has not {{ if-sender 'sent' 'received' }} any money {{ if-sender 'from' 'to' }} {{ if-sender origin.amount.country destination.payment.country }} prior",
       defaultParameters,
@@ -145,9 +145,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-4',
       type: 'TRANSACTION',
-      name: 'Unexpected origin or destination currency',
+      name: 'Transaction including a new currency.',
       description:
-        'Transaction to or from a currency that has not been used before by this user. Trigger the rule after x transactions have been completed. x configurable - mostly relevant for when you are moving between different currencies.',
+        "Transactions to or from a new currency. Trigger the rule after 'x' transactions have been completed. This is relevant when moving between countries.",
       descriptionTemplate:
         "User tried to {{ if-sender 'send' 'receive' }} money in {{ hitParty.amount.currency }} more than {{ parameters.initialTransactions }} times. User has not {{ if-sender 'sent' 'received' }} any money in {{ hitParty.amount.currency }} prior",
       defaultParameters,
@@ -172,9 +172,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-5',
       type: 'TRANSACTION',
-      name: 'Dormant accounts',
+      name: 'Dormant account.',
       description:
-        'If a user has made a transaction after being inactive for time t, suspend user & transactions',
+        "If a user has made a transaction after being inactive for time 't'",
       descriptionTemplate:
         'User made a transaction from an account which was dormant for {{ parameters.dormancyPeriodDays }} days',
       defaultParameters,
@@ -199,9 +199,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-6',
       type: 'TRANSACTION',
-      name: 'High risk currency',
+      name: 'Transaction including a high risk currency.',
       description:
-        'Transaction includes a currency that is designated as high risk. Mostly relevant for when you are moving funds between different currencies. This rule uses a customizable list.',
+        'Transactions including high-risk currencies, often involved in fund transfers b/w currencies, use a customizable list.',
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} currency ({{ hitParty.amount.currency }}) is a High Risk",
       defaultParameters,
@@ -231,9 +231,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-7',
       type: 'TRANSACTION',
-      name: 'Too many inbound transactions under reporting limit',
+      name: 'Too many transactions under reporting limit received by a user.',
       description:
-        '>= x number of consecutive low value incoming transactions just below (minus amount of z) a specific threshold (y) to a user (your user is receiving the funds). Very useful and common for structured money laundering attempts.',
+        '>= ‘x’ number of consecutive low value incoming transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts..',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transactions just under the flagging limit",
       defaultParameters,
@@ -263,9 +263,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-8',
       type: 'TRANSACTION',
-      name: 'Too many outbound transactions under reporting limit',
+      name: 'Too many transactions under reporting limit sent by a user.',
       description:
-        '>= x number of consecutive low value outgoing transaction(s) just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts.',
+        '>= ‘x’ number of consecutive low value outgoing transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts.',
       descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transaction(s) just under the flagging limit`,
       defaultParameters,
       defaultAction: 'FLAG',
@@ -291,9 +291,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-9',
       type: 'TRANSACTION',
-      name: 'Too many customers for a single counterparty',
+      name: 'Too many users transacting with a single counterparty.',
       description:
-        'More than x users transacting with a single counterparty over a set period of time t (E.g. Nigerian prince scam outbound)',
+        'More than ‘x’ users transacting with a single counterparty over a period of time ‘t’ (E.g. Nigerian prince scam outbound).',
       descriptionTemplate:
         'More than {{ parameters.sendersCount }} users transacting with a single counterparty over a set period of {{ format-time-window parameters.timeWindow }}',
       defaultParameters,
@@ -324,9 +324,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-10',
       type: 'TRANSACTION',
-      name: 'Too many counterparties for a single customer',
+      name: 'Too many counterparties transacting with a single user.',
       description:
-        'More than x counterparties transacting with a single user over a set period of time t (E.g. Nigerian prince scam inbound)',
+        'More than x counterparties transacting with a single user over a period of time t (E.g. Nigerian prince scam inbound).',
       descriptionTemplate:
         'More than {{ parameters.sendersCount }} counterparties transacting with a single user over a set period of {{ format-time-window parameters.timeWindow }}',
       defaultParameters,
@@ -358,8 +358,8 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-13',
       type: 'TRANSACTION',
-      name: 'Blacklisted Merchant receiver name',
-      description: 'Merchant name is in the blacklist',
+      name: 'Blacklisted receiver’s wallet name.',
+      description: 'Receiver’s wallet name is blacklisted.',
       descriptionTemplate: '{{ receiverName }} is blacklisted',
       defaultParameters,
       defaultFilters,
@@ -401,6 +401,8 @@ const _RULES_LIBRARY: Array<
       source: '',
     }
   },
+
+  // TODO: Change Rule Description once rule is split into two
   () => {
     const defaultParameters: UsingTooManyBanksToMakePaymentsRuleParameters = {
       banksLimit: 20,
@@ -455,8 +457,8 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-22',
       type: 'TRANSACTION',
-      name: 'Blacklisted card-issued country',
-      description: 'Card-issued country is in the blacklist',
+      name: 'Blacklisted card-issued country.',
+      description: 'Card-issued country is in the blacklist.',
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} card is issued from {{ if-sender origin.payment.country destination.payment.country }}, a blacklisted country",
       defaultParameters,
@@ -496,8 +498,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-24',
       type: 'TRANSACTION',
-      name: 'Reference field keyword',
-      description: 'Payment reference field includes a keyword in blacklist',
+      name: 'Blacklisted Tx reference field.',
+      description:
+        'Transaction reference field includes a keyword in blacklist.',
       descriptionTemplate:
         'Keyword “{{ keyword }}” in reference is blacklisted',
       defaultParameters,
@@ -515,6 +518,7 @@ const _RULES_LIBRARY: Array<
         'Prohibited countries policy, Prohibited industries Policy, Sanctions Policy',
     }
   },
+  // TODO: Change Rule Description once rule is split into two
   () => {
     const defaultParameters: TransactionsVelocityRuleParameters = {
       transactionsLimit: 100,
@@ -557,8 +561,8 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-52',
       type: 'TRANSACTION',
-      name: 'Same IP address for too many users',
-      description: 'Same IP address for >= x unique user IDs',
+      name: 'Same IP address for too many users.',
+      description: "Same IP address for >= 'x' unique user IDs in time 't'",
       descriptionTemplate:
         'Same ip address ({{ ipAddress }}) used by {{ uniqueUsersCount }} unique users',
       defaultParameters,
@@ -586,8 +590,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-53',
       type: 'TRANSACTION',
-      name: 'Same unique payment identifier used by too many users',
-      description: 'Same payment identifier used by  >= x unique user IDs',
+      name: 'Same unique payment identifier used by too many users.',
+      description:
+        "Same payment identifier used by >= 'x' unique user IDs in time 't'",
       descriptionTemplate:
         'Same unique payment identifier ({{ uniquePaymentIdentifier }}) used by {{ uniqueUserCount }} unique users',
       defaultParameters,
@@ -618,9 +623,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-54',
       type: 'TRANSACTION',
-      name: 'Same user using too many cards',
+      name: 'Same user using too many cards.',
       description:
-        'Same user using >= x unique cards counted by card fingerprint id',
+        'Same user using >= ‘x’ unique cards counted by card fingerprint id in time ‘t’.',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} used {{ uniqueCardsCount }} unique cards above the limit of {{ parameters.uniqueCardsCountThreshold }}",
       defaultParameters,
@@ -637,6 +642,7 @@ const _RULES_LIBRARY: Array<
       source: 'Card Scheme Rules',
     }
   },
+  // TODO: Change Rule Description once rule is split into two
   () => {
     const defaultParameters: TransactionsVolumeRuleParameters = {
       transactionVolumeThreshold: {
@@ -732,9 +738,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-88',
       type: 'TRANSACTION',
-      name: 'Unexpected IP address for user',
+      name: 'Unexpected IP address for user.',
       description:
-        "IP address where the payment is initiated is outside the following expected location's for the user: user's country of residence, user's nationality country, user's previously approved transaction countries\n\nPreviously approved mean if this rule was hit and it's unsuspended on Console, log that country that was approved and add it to the whitelisted country",
+        "IP address where the payment is initiated is outside the following expected location's for the user.",
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} ip-bases country ({{ format-country ipCountry }}) is not country of origin ({{ format-country hitParty.user.userDetails.countryOfResidence }}) or country of nationality ({{ format-country hitParty.user.userDetails.countryOfNationality }})",
       defaultParameters: {},
@@ -783,8 +789,8 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-113',
       type: 'TRANSACTION',
-      name: 'User city changes too many times based on IP address',
-      description: 'Users IP address show > x different cities within t days',
+      name: 'User location changed too many times based on IP address.',
+      description: 'Users IP address changes > ‘x’ within time ‘t’.',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsCount }} transactions from {{ locationsCount }} locations in more than {{ parameters.timeWindow.units }} {{parameters.timeWindow.granularity}}(s)",
       defaultParameters,
@@ -840,9 +846,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-117',
       type: 'TRANSACTION',
-      name: 'Transaction amount matches a pattern',
+      name: 'Transaction amount matches a pattern.',
       description:
-        'If a transaction amount is ending in a certain pattern, rule is hit. E.g. Amount ends in 999 or 000. This rule also accounts for decimals.',
+        'Transaction amount ends in a pattern, such as 999 or 000, including decimals.',
       descriptionTemplate:
         'Transaction amount of {{ format-money hitParty.amount }} matches a blacklisted pattern ending with {{ matchPattern }}',
       defaultParameters,
@@ -859,6 +865,8 @@ const _RULES_LIBRARY: Array<
         '1) Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism 2) AUSTRAC:Stored value cards: money laundering and terrorism financing risk assessment 2017',
     }
   },
+
+  // TODO: Change Rule description once rule is splitted into two
   () => {
     const defaultParameters: PaymentMethodNameRuleParameter = {
       allowedDistancePercentage: 30,
@@ -904,9 +912,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-119',
       type: 'TRANSACTION',
-      name: 'High traffic between the same parties',
+      name: 'High velocity between the same parties.',
       description:
-        'Same receiver and destination details are used >= x times in time t',
+        'Same parties transacting among themselves >= ‘x’ times in ‘t’',
       descriptionTemplate:
         '{{ delta }} transactions above the limit of {{ parameters.transactionsLimit }} between same Sender and Receiver in {{ format-time-window parameters.timeWindow }}',
       defaultParameters,
@@ -924,6 +932,7 @@ const _RULES_LIBRARY: Array<
         'UK National risk assessment of money laundering and terrorist financing 2020',
     }
   },
+  // TODO: Change Rule Descriptions once rule is split into two
   () => {
     const defaultParameters: TransactionsAverageAmountExceededParameters = {
       period1: {
@@ -967,6 +976,7 @@ const _RULES_LIBRARY: Array<
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
+  // TODO: Change Rule Description once rule is split into two
   () => {
     const defaultParameters: TransactionsAverageNumberExceededParameters = {
       period1: {
@@ -1006,6 +1016,7 @@ const _RULES_LIBRARY: Array<
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
+  // TODO: Change Rule Description once rule is split into two
   () => {
     const defaultParameters: TransactionsAverageAmountExceededParameters = {
       period1: {
@@ -1049,6 +1060,7 @@ const _RULES_LIBRARY: Array<
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
+  // TODO: Change rule description when rule is split into two
   () => {
     const defaultParameters: TransactionVolumeExceedsTwoPeriodsRuleParameters =
       {
@@ -1103,9 +1115,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-126',
       type: 'TRANSACTION',
-      name: 'High volume between same parties',
+      name: 'High volume between the same parties.',
       description:
-        'Same receiver and destination details are used for transactions in the amount of >= x in time t',
+        'Same parties transacting among themselves of amount >= ‘x’ in ‘t’',
       descriptionTemplate:
         'Transaction volume {{ format-money volumeDelta.transactionAmount volumeDelta.transactionCurrency }} above their expected amount of {{ format-money volumeThreshold.transactionAmount volumeThreshold.transactionCurrency }} between two users in {{ format-time-window parameters.timeWindow }}',
       defaultParameters,
@@ -1223,6 +1235,7 @@ const _RULES_LIBRARY: Array<
         '1) FATF Emerging Terrorist Financing Risks 2) US Advisory on Human Rights Abuses Enabled by Corrupt Senior Foreign Political Figures and their Financial Facilitators',
     }
   },
+  // TODO: Change Rule Description when Rule is Split into two
   () => {
     const defaultParameters: TooManyCounterpartyCountryRuleParameters = {
       timeWindow: {
@@ -1328,8 +1341,8 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-129',
       type: 'TRANSACTION',
-      name: 'Blacklist payment details',
-      description: 'Payment details are in the blacklist',
+      name: 'Blacklisted payment details',
+      description: 'Payment details that are in the blacklist.',
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} payment details are in blacklisted payment details",
       defaultParameters,
@@ -1345,6 +1358,7 @@ const _RULES_LIBRARY: Array<
       source: 'Prohibited countries policy, Sanctions Policy',
     }
   },
+  // TODO: Change Rule Description when Rule is Split into two
   () => {
     const defaultParameters: TransactionsExceedPastPeriodRuleParameters = {
       multiplierThreshold: 100,
@@ -1388,10 +1402,9 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-132',
-      name: 'Blacklist transaction related value',
+      name: 'Blacklisted User ID',
       type: 'TRANSACTION',
-      description:
-        'Blacklist specific values for a variable type such as card fingerprint, bank account number etc.',
+      description: 'User ID’s that are in the blacklist.',
       descriptionTemplate:
         '{{ value }} is blacklisted in Blacklist ID {{ blackListId }} for {{ variableType }} field.',
       defaultParameters,
@@ -1419,10 +1432,10 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-41',
-      name: 'Transaction outflow and inflow pattern',
+      name: 'Transaction’s sending volume compared to receiving volume.',
       type: 'TRANSACTION',
       description:
-        'Compare transaction outflow volume with transaction inflow volume.',
+        'Compare transaction’s sending volume with receiving’s volume.',
       descriptionTemplate:
         'Transaction outflow volume ({{ format-money outflowAmount }}) is {{ format-comparator parameters.outflowInflowComparator }} transaction inflow volume ({{ format-money inflowAmount }})',
       defaultParameters,
@@ -1448,12 +1461,12 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-128',
-      name: 'Screening on Business legal entity & shareholders & directors',
+      name: 'Business user screening - Shareholders, dirs & legal name.',
       type: 'USER',
       description:
-        'Sanctions/PEP/Adverse media screening on Business legal entity & shareholders & directors',
+        'Business legal entity & shareholders & directors screening for Sanctions/PEP/Adverse media screening.',
       descriptionTemplate:
-        'Sanctions/PEP/Adverse media screening on Business legal entity & shareholders & directors',
+        'Business legal entity & shareholders & directors screening for Sanctions/PEP/Adverse media screening.',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-business-user',
@@ -1472,12 +1485,12 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-32',
-      name: 'Screening on Bank name',
+      name: 'Screening bank names.',
       type: 'USER',
       description:
-        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution option available in rule configuration.',
+        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution is possible.',
       descriptionTemplate:
-        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution option available in rule configuration.',
+        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution is possible.',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-bank-name',
@@ -1495,12 +1508,12 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-169',
-      name: 'Sanctions transactions counterparty',
+      name: 'Tx’s counterparty screening',
       type: 'TRANSACTION',
       description:
-        'Sanctions/PEP/Adverse media screening on transaction counterparty.',
+        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media.',
       descriptionTemplate:
-        'Sanctions/PEP/Adverse media screening on transaction counterparty.',
+        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media .',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-counterparty',
@@ -1520,11 +1533,12 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-16',
-      name: 'Screening on Consumer users',
+      name: 'Screening consumer users.',
       type: 'USER',
-      description: 'Sanctions/PEP/Adverse media screening on Consumer users.',
+      description:
+        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
       descriptionTemplate:
-        'Sanctions/PEP/Adverse media screening on Consumer users.',
+        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-consumer-user',
@@ -1541,10 +1555,10 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-17',
-      name: 'Inconsistent business industry on a platform',
+      name: 'Business industry change.',
       type: 'USER',
       description:
-        'Checks if industry has changed for a business user on an external platform',
+        'Checks if industry has changed for a business user on an external platforms.',
       descriptionTemplate:
         'Business industry for user has changed on {{ sourceType }}',
       defaultParameters,
@@ -1562,10 +1576,10 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-61',
-      name: 'User address change',
+      name: 'User address change.',
       type: 'USER',
       description:
-        'Check if user address has changed. For Business users (Legal Entity > Contact Details > Address) is used. For Consumer users (Contact Details  > Address) is used.',
+        'Check if user address has changed.For business users its legal entity’s address is used. For consumer users their own address is used.',
       descriptionTemplate: 'User address has changed.',
       defaultParameters,
       defaultAction: 'FLAG',
@@ -1588,7 +1602,7 @@ const _RULES_LIBRARY: Array<
       id: 'R-155',
       name: 'Bank name change',
       type: 'TRANSACTION',
-      description: 'Checks if user bank name has changed.',
+      description: 'If user’s bank name is changed > ‘x’ times in ‘t’',
       descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} bank name has changed.`,
       defaultParameters,
       defaultAction: 'FLAG',

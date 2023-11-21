@@ -69,8 +69,8 @@ describe('Public Management API - Rule', () => {
       {
         id: 'R-1',
         type: 'TRANSACTION',
-        name: 'First payment of a Customer',
-        description: 'First outgoing transaction of a user',
+        name: 'First transaction of a user.',
+        description: 'First transaction of a user.',
         parametersSchema: {
           type: 'object',
           properties: {
@@ -96,7 +96,7 @@ describe('Public Management API - Rule', () => {
       {
         id: 'R-2',
         type: 'TRANSACTION',
-        name: 'Transaction amount too high',
+        name: 'Transaction amount too high.',
         description: 'Transaction amount is >= x in USD or equivalent',
         parametersSchema: {
           type: 'object',
@@ -187,8 +187,8 @@ describe('Public Management API - Rule', () => {
     expect(JSON.parse(response.body)).toMatchObject({
       id: 'R-1',
       type: 'TRANSACTION',
-      name: 'First payment of a Customer',
-      description: 'First outgoing transaction of a user',
+      name: 'First transaction of a user.',
+      description: 'First transaction of a user.',
       parametersSchema: {
         type: 'object',
         properties: {
