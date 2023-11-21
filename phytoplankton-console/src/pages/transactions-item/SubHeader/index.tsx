@@ -49,9 +49,7 @@ export default function SubHeader(props: Props) {
       <Feature name="RISK_SCORING">
         <div className={s.risks}>
           <ActionRiskDisplay transactionId={transaction.transactionId} />
-          <Feature name="MACHINE_LEARNING_DEMO">
-            <AIRiskDisplay transaction={transaction} />
-          </Feature>
+          <AIRiskDisplay transaction={transaction} />
         </div>
       </Feature>
     </div>

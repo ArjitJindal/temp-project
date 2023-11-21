@@ -28,7 +28,7 @@ import { makeUrl } from '@/utils/routing';
 import { useHasPermissions } from '@/utils/user-utils';
 
 export default function SettingsPage() {
-  const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
+  const isRIskScoreENabled = useFeatureEnabled('RISK_SCORING');
   const isDevelopersReadEnabled = useHasPermissions(['settings:developers:read']);
 
   const { section = 'system' } = useParams<'section'>() as {
@@ -81,7 +81,7 @@ export default function SettingsPage() {
           <RuleActionSettings />
         </Tabs.TabPane>
         <Tabs.TabPane tab={i18n('menu.settings.risk-scoring')} key={'risk-scoring'}>
-          {isMLDemoEnabled ? <RiskAlgorithmsSettings /> : ''}
+          {isRIskScoreENabled ? <RiskAlgorithmsSettings /> : ''}
           <RiskLevelSettings />
         </Tabs.TabPane>
         <Tabs.TabPane tab={i18n('menu.settings.notifications')} key={'notifications'}>

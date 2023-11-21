@@ -24,7 +24,7 @@ const merchantMonitoringCollectionName =
 const exampleDate = new Date('2021-01-01T00:00:00.000Z')
 
 dynamoDbSetupHook()
-withFeatureHook(['MACHINE_LEARNING_DEMO'])
+withFeatureHook(['AI_RISK_SCORE'])
 
 beforeAll(async () => {
   const mongoDb = await getMongoDbClient()

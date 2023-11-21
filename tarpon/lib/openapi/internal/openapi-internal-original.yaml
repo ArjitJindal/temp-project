@@ -7356,7 +7356,6 @@ components:
         - ENTITY_LINKING
         - ESCALATION
         - IBAN_RESOLUTION
-        - MACHINE_LEARNING_DEMO
         - MERCHANT_MONITORING
         - SAR
         - QA
