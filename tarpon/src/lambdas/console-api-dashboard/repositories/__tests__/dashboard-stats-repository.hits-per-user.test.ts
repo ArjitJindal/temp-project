@@ -1,6 +1,7 @@
 import {
   getCaseRepo,
   getStatsRepo,
+  getTransactionsRepo,
   getUserRepo,
   hitRule,
   notHitRule,
@@ -38,6 +39,8 @@ describe('Verify hits-per-user statistics', () => {
       originUserId,
       destinationUserId,
     }
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
+    await transactionRepository.addTransactionToMongo(transaction)
     const userRepository = await getUserRepo(TENANT_ID)
     await userRepository.saveUserMongo(
       getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
@@ -68,6 +71,9 @@ describe('Verify hits-per-user statistics', () => {
     await statsRepository.recalculateHitsByUser('DESTINATION', {
       startTimestamp: timestamp,
     })
+    await statsRepository.refreshTransactionStats({
+      startTimestamp: timestamp,
+    })
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
@@ -78,10 +84,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHit: 1,
-          rulesHit: hitRules.length,
+          transactionsHitCount: 1,
           casesCount: 1,
           openCasesCount: 1,
+          transactionsCount: 1,
         }),
       ])
     }
@@ -95,10 +101,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHit: 1,
-          rulesHit: hitRules.length,
+          transactionsHitCount: 1,
           casesCount: 1,
           openCasesCount: 1,
+          transactionsCount: 1,
         }),
       ])
     }
@@ -128,6 +134,8 @@ describe('Verify hits-per-user statistics', () => {
       originUserId: originUserId,
       destinationUserId: destinationUserId,
     }
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
+    await transactionRepository.addTransactionToMongo(transaction)
 
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
@@ -153,10 +161,14 @@ describe('Verify hits-per-user statistics', () => {
         type: 'BUSINESS',
       }) as InternalUser
     )
+
     await statsRepository.recalculateHitsByUser('ORIGIN', {
       startTimestamp: timestamp,
     })
     await statsRepository.recalculateHitsByUser('DESTINATION', {
+      startTimestamp: timestamp,
+    })
+    await statsRepository.refreshTransactionStats({
       startTimestamp: timestamp,
     })
     {
@@ -169,10 +181,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHit: 1,
-          rulesHit: hitRules.length,
+          transactionsHitCount: 1,
           casesCount: 1,
           openCasesCount: 1,
+          transactionsCount: 1,
         }),
       ])
     }
@@ -186,8 +198,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHit: 1,
-          rulesHit: hitRules.length,
+          transactionsHitCount: 1,
+          transactionsCount: 1,
           casesCount: 1,
           openCasesCount: 1,
         }),
@@ -210,6 +222,7 @@ describe('Verify hits-per-user statistics', () => {
     const hitRulesCount = 3
     const transactionsCount = 10
 
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
     for (let i = 0; i < transactionsCount; i += 1) {
       const hitRules = [...new Array(hitRulesCount)].map(() => hitRule())
       const timestamp = initialTimestamp + 3600 * 1000 * i
@@ -237,6 +250,8 @@ describe('Verify hits-per-user statistics', () => {
         },
         caseType: 'SYSTEM',
       })
+
+      await transactionRepository.addTransactionToMongo(transaction)
       const userRepository = await getUserRepo(TENANT_ID)
       await userRepository.saveUserMongo(
         getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
@@ -247,10 +262,14 @@ describe('Verify hits-per-user statistics', () => {
           type: 'BUSINESS',
         }) as InternalUser
       )
+
       await statsRepository.recalculateHitsByUser('ORIGIN', {
         startTimestamp: timestamp,
       })
       await statsRepository.recalculateHitsByUser('DESTINATION', {
+        startTimestamp: timestamp,
+      })
+      await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })
     }
@@ -264,8 +283,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHit: transactionsCount,
-          rulesHit: hitRulesCount * transactionsCount,
+          transactionsHitCount: transactionsCount,
+          transactionsCount: transactionsCount,
           casesCount: transactionsCount,
           openCasesCount: transactionsCount,
         }),
@@ -281,8 +300,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHit: transactionsCount,
-          rulesHit: hitRulesCount * transactionsCount,
+          transactionsHitCount: transactionsCount,
+          transactionsCount: transactionsCount,
           casesCount: transactionsCount,
           openCasesCount: transactionsCount,
         }),
@@ -306,6 +325,7 @@ describe('Verify hits-per-user statistics', () => {
 
     const hitRules = [hitRule()]
 
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
     for (let i = 0; i < casesCount; i += 1) {
       const timestamp = initialTimestamp + 3600 * 1000 * i
       const transaction = {
@@ -332,6 +352,7 @@ describe('Verify hits-per-user statistics', () => {
         },
         caseType: 'SYSTEM',
       })
+      await transactionRepository.addTransactionToMongo(transaction)
       const userRepository = await getUserRepo(TENANT_ID)
       await userRepository.saveUserMongo(
         getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
@@ -342,10 +363,14 @@ describe('Verify hits-per-user statistics', () => {
           type: 'BUSINESS',
         }) as InternalUser
       )
+
       await statsRepository.recalculateHitsByUser('ORIGIN', {
         startTimestamp: timestamp,
       })
       await statsRepository.recalculateHitsByUser('DESTINATION', {
+        startTimestamp: timestamp,
+      })
+      await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })
     }
@@ -359,8 +384,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHit: casesCount,
-          rulesHit: casesCount,
+          transactionsHitCount: casesCount,
+          transactionsCount: casesCount,
           casesCount: casesCount,
           openCasesCount: casesCount,
         }),
@@ -376,8 +401,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHit: casesCount,
-          rulesHit: casesCount,
+          transactionsHitCount: casesCount,
+          transactionsCount: casesCount,
           casesCount: casesCount,
           openCasesCount: casesCount,
         }),
@@ -412,10 +437,14 @@ describe('Verify hits-per-user statistics', () => {
       caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
     })
+
     await statsRepository.recalculateHitsByUser('ORIGIN', {
       startTimestamp: timestamp,
     })
     await statsRepository.recalculateHitsByUser('DESTINATION', {
+      startTimestamp: timestamp,
+    })
+    await statsRepository.refreshTransactionStats({
       startTimestamp: timestamp,
     })
     {
@@ -447,6 +476,7 @@ describe('Verify hits-per-user statistics', () => {
     const originUserId = 'test-user-id'
     const destinationUserId = 'test-user-id-2'
     const hitRules = [hitRule()]
+    const transactionsRepository = await getTransactionsRepo(TENANT_ID)
     const transactions = [
       {
         ...getTestTransaction({
@@ -469,6 +499,9 @@ describe('Verify hits-per-user statistics', () => {
         destinationUserId,
       },
     ]
+
+    await transactionsRepository.addTransactionToMongo(transactions[0])
+    await transactionsRepository.addTransactionToMongo(transactions[1])
 
     const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
     await caseRepository.addCaseMongo({
@@ -501,6 +534,10 @@ describe('Verify hits-per-user statistics', () => {
     await statsRepository.recalculateHitsByUser('DESTINATION', {
       startTimestamp: createdTimestamp,
     })
+    await statsRepository.refreshTransactionStats({
+      startTimestamp: createdTimestamp,
+    })
+
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T11:00:00.000Z').valueOf(),
@@ -511,8 +548,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHit: 2,
-          rulesHit: hitRules.length * 2,
+          transactionsHitCount: 1,
+          transactionsCount: 1,
           casesCount: 1,
           openCasesCount: 1,
         }),
@@ -528,12 +565,261 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHit: 2,
-          rulesHit: hitRules.length * 2,
+          transactionsHitCount: 1,
+          transactionsCount: 1,
           casesCount: 1,
           openCasesCount: 1,
         }),
       ])
+    }
+  })
+
+  test('Multiple transactions across hours', async () => {
+    const TENANT_ID = getTestTenantId()
+    await createConsumerUsers(TENANT_ID, [
+      getTestUser({ userId: 'test-user-id' }),
+      getTestUser({ userId: 'test-user-id-2' }),
+    ])
+    const caseRepository = await getCaseRepo(TENANT_ID)
+    const statsRepository = await getStatsRepo(TENANT_ID)
+    const originUserId = 'test-user-id'
+    const destinationUserId = 'test-user-id-2'
+    const hitRules = [hitRule()]
+    const transactionsRepository = await getTransactionsRepo(TENANT_ID)
+    const transactions = [
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T12:00:00.000Z').valueOf(),
+        }),
+        hitRules: hitRules,
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T13:00:00.000Z').valueOf(),
+        }),
+        hitRules: hitRules,
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T14:00:00.000Z').valueOf(),
+        }),
+        hitRules: hitRules,
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T15:00:00.000Z').valueOf(),
+        }),
+        hitRules: [],
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T16:00:00.000Z').valueOf(),
+        }),
+        hitRules: hitRules,
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+    ]
+    for (let i = 0; i < transactions.length; i++) {
+      await transactionsRepository.addTransactionToMongo(transactions[i])
+    }
+
+    const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
+    await caseRepository.addCaseMongo({
+      caseType: 'SYSTEM',
+      caseId: 'C-1',
+      createdTimestamp,
+      caseTransactions: transactions,
+      caseTransactionsIds: transactions.map((t) => t.transactionId),
+      caseUsers: {
+        origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
+        destination: getTestUser({
+          userId: destinationUserId,
+          type: 'BUSINESS',
+        }),
+      },
+    })
+    const userRepository = await getUserRepo(TENANT_ID)
+    await userRepository.saveUserMongo(
+      getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
+    )
+    await userRepository.saveUserMongo(
+      getTestUser({
+        userId: destinationUserId,
+        type: 'BUSINESS',
+      }) as InternalUser
+    )
+    await statsRepository.recalculateHitsByUser('ORIGIN', {
+      startTimestamp: createdTimestamp,
+    })
+    await statsRepository.recalculateHitsByUser('DESTINATION', {
+      startTimestamp: createdTimestamp,
+    })
+    await statsRepository.refreshTransactionStats({
+      startTimestamp: createdTimestamp,
+      endTimestamp: dayjs('2022-01-30T17:00:00.000Z').valueOf(),
+    })
+
+    {
+      const stats = await statsRepository.getHitsByUserStats(
+        dayjs('2022-01-30T11:00:00.000Z').valueOf(),
+        dayjs('2022-01-30T17:00:00.000Z').valueOf(),
+        'ORIGIN',
+        'BUSINESS'
+      )
+      expect(stats).toEqual([
+        expect.objectContaining({
+          userId: originUserId,
+          transactionsHitCount: 4,
+          transactionsCount: 5,
+          casesCount: 1,
+          openCasesCount: 1,
+        }),
+      ])
+    }
+    {
+      const stats = await statsRepository.getHitsByUserStats(
+        dayjs('2022-01-30T11:00:00.000Z').valueOf(),
+        dayjs('2022-01-30T15:00:00.000Z').valueOf(),
+        'DESTINATION',
+        'BUSINESS'
+      )
+      expect(stats).toEqual([
+        expect.objectContaining({
+          userId: destinationUserId,
+          transactionsHitCount: 3,
+          transactionsCount: 4,
+          casesCount: 1,
+          openCasesCount: 1,
+        }),
+      ])
+    }
+  })
+
+  test('Multiple transactions across hours with no hits', async () => {
+    const TENANT_ID = getTestTenantId()
+    await createConsumerUsers(TENANT_ID, [
+      getTestUser({ userId: 'test-user-id' }),
+      getTestUser({ userId: 'test-user-id-2' }),
+    ])
+    const statsRepository = await getStatsRepo(TENANT_ID)
+    const originUserId = 'test-user-id'
+    const destinationUserId = 'test-user-id-2'
+    const hitRules = [hitRule()]
+    const transactionsRepository = await getTransactionsRepo(TENANT_ID)
+    const transactions = [
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T12:00:00.000Z').valueOf(),
+        }),
+        hitRules: [],
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T13:00:00.000Z').valueOf(),
+        }),
+        hitRules: [],
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T14:00:00.000Z').valueOf(),
+        }),
+        hitRules: [],
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T15:00:00.000Z').valueOf(),
+        }),
+        hitRules: [],
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T16:00:00.000Z').valueOf(),
+        }),
+        hitRules: [],
+        executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
+        originUserId,
+        destinationUserId,
+      },
+    ]
+    for (let i = 0; i < transactions.length; i++) {
+      await transactionsRepository.addTransactionToMongo(transactions[i])
+    }
+
+    const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
+    const userRepository = await getUserRepo(TENANT_ID)
+    await userRepository.saveUserMongo(
+      getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
+    )
+    await userRepository.saveUserMongo(
+      getTestUser({
+        userId: destinationUserId,
+        type: 'BUSINESS',
+      }) as InternalUser
+    )
+    await statsRepository.recalculateHitsByUser('ORIGIN', {
+      startTimestamp: createdTimestamp,
+    })
+    await statsRepository.recalculateHitsByUser('DESTINATION', {
+      startTimestamp: createdTimestamp,
+    })
+    await statsRepository.refreshTransactionStats({
+      startTimestamp: createdTimestamp,
+      endTimestamp: dayjs('2022-01-30T17:00:00.000Z').valueOf(),
+    })
+
+    {
+      const stats = await statsRepository.getHitsByUserStats(
+        dayjs('2022-01-30T11:00:00.000Z').valueOf(),
+        dayjs('2022-01-30T17:00:00.000Z').valueOf(),
+        'ORIGIN',
+        'BUSINESS'
+      )
+      expect(stats).toEqual([])
+    }
+    {
+      const stats = await statsRepository.getHitsByUserStats(
+        dayjs('2022-01-30T11:00:00.000Z').valueOf(),
+        dayjs('2022-01-30T15:00:00.000Z').valueOf(),
+        'DESTINATION',
+        'BUSINESS'
+      )
+      expect(stats).toEqual([])
     }
   })
 })

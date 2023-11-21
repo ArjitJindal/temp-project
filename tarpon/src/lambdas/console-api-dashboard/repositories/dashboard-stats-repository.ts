@@ -49,7 +49,7 @@ export class DashboardStatsRepository {
     direction: 'ORIGIN' | 'DESTINATION',
     timeRange?: TimeRange
   ) {
-    await HitsByUserStatsDashboardMetric.refresh(
+    await HitsByUserStatsDashboardMetric.refreshCaseStats(
       this.tenantId,
       direction,
       timeRange
@@ -130,10 +130,22 @@ export class DashboardStatsRepository {
   }
 
   public async refreshTransactionStats(timestampTimeRange?: TimeRange) {
-    await TransactionStatsDashboardMetric.refresh(
-      this.tenantId,
-      timestampTimeRange
-    )
+    await Promise.all([
+      TransactionStatsDashboardMetric.refresh(
+        this.tenantId,
+        timestampTimeRange
+      ),
+      HitsByUserStatsDashboardMetric.refreshTransactionsStats(
+        this.tenantId,
+        'DESTINATION',
+        timestampTimeRange
+      ),
+      HitsByUserStatsDashboardMetric.refreshTransactionsStats(
+        this.tenantId,
+        'ORIGIN',
+        timestampTimeRange
+      ),
+    ])
   }
 
   public async getTransactionCountStats(

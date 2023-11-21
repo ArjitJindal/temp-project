@@ -1,4 +1,3 @@
-import { round } from 'lodash'
 import { getAffectedInterval } from '../../utils'
 import { CASE_GROUP_KEYS, CASE_PROJECT_KEYS, TimeRange } from '../types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
@@ -12,6 +11,7 @@ import {
 import {
   CASES_COLLECTION,
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
+  TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 
@@ -20,11 +20,12 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { DashboardStatsHitsPerUserData } from '@/@types/openapi-internal/DashboardStatsHitsPerUserData'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { traceable } from '@/core/xray'
 
 @traceable
 export class HitsByUserStatsDashboardMetric {
-  public static async refresh(
+  public static async refreshCaseStats(
     tenantId,
     direction: 'ORIGIN' | 'DESTINATION',
     timeRange?: TimeRange
@@ -35,8 +36,10 @@ export class HitsByUserStatsDashboardMetric {
       direction === 'ORIGIN'
         ? 'caseUsers.origin.userId'
         : 'caseUsers.destination.userId'
+
     const aggregationCollection =
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenantId)
+
     await db.collection(aggregationCollection).createIndex(
       {
         direction: 1,
@@ -58,18 +61,23 @@ export class HitsByUserStatsDashboardMetric {
         },
       }
     }
-    const pipeline = [
+
+    const mergePipeline = [
+      {
+        $merge: {
+          into: aggregationCollection,
+          on: ['direction', 'date', 'userId'],
+          whenMatched: 'merge',
+          whenNotMatched: 'insert',
+        },
+      },
+    ]
+
+    const casesPipeline = [
       {
         $match: {
           ...timestampMatch,
-          // NOTE: We only aggregate the stats for known users
           [userFieldName]: { $ne: null },
-        },
-      },
-      {
-        $unwind: {
-          path: '$caseTransactions',
-          preserveNullAndEmptyArrays: false,
         },
       },
       {
@@ -87,12 +95,6 @@ export class HitsByUserStatsDashboardMetric {
             },
             userId: `$${userFieldName}`,
           },
-          rulesHit: {
-            $sum: { $size: { $ifNull: ['$caseTransactions.hitRules', []] } },
-          },
-          transactionsHit: {
-            $sum: 1,
-          },
           ...CASE_GROUP_KEYS,
         },
       },
@@ -102,23 +104,129 @@ export class HitsByUserStatsDashboardMetric {
           date: '$_id.date',
           userId: '$_id.userId',
           direction,
-          rulesHit: '$rulesHit',
-          transactionsHit: '$transactionsHit',
           ...CASE_PROJECT_KEYS,
         },
       },
+      ...mergePipeline,
+    ]
+
+    const lastUpdatedAt = Date.now()
+
+    // Execute the cases aggregation pipeline
+    await casesCollection
+      .aggregate(withUpdatedAt(casesPipeline, lastUpdatedAt))
+      .next()
+
+    await cleanUpStaleData(
+      aggregationCollection,
+      'date',
+      lastUpdatedAt,
+      timeRange,
+      'HOUR',
+      { direction }
+    )
+  }
+
+  public static async refreshTransactionsStats(
+    tenantId,
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange?: TimeRange
+  ): Promise<void> {
+    const db = await getMongoDbClientDb()
+    const transactionsCollection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(tenantId)
+    )
+    const aggregationCollection =
+      DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenantId)
+
+    await db.collection(aggregationCollection).createIndex(
+      {
+        direction: 1,
+        date: -1,
+        userId: 1,
+      },
+      {
+        unique: true,
+      }
+    )
+    let tranasctionTimestampMatch: any = undefined
+    if (timeRange) {
+      const { start, end } = getAffectedInterval(timeRange, 'HOUR')
+      tranasctionTimestampMatch = {
+        timestamp: {
+          $gte: start,
+          $lt: end,
+        },
+      }
+    }
+
+    const mergePipeline = [
       {
         $merge: {
           into: aggregationCollection,
           on: ['direction', 'date', 'userId'],
           whenMatched: 'merge',
+          whenNotMatched: 'insert',
         },
       },
     ]
+
+    const transactionsPipeline = [
+      {
+        $match: {
+          ...tranasctionTimestampMatch,
+          [`${direction.toLowerCase()}UserId`]: { $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            date: {
+              $dateToString: {
+                format: HOUR_DATE_FORMAT,
+                date: {
+                  $toDate: {
+                    $toLong: '$timestamp',
+                  },
+                },
+              },
+            },
+            userId: `$${direction.toLowerCase()}UserId`,
+          },
+          transactionsHitCount: {
+            $sum: {
+              $cond: {
+                if: {
+                  $gt: [{ $size: { $ifNull: ['$hitRules', []] } }, 0],
+                },
+                then: 1,
+                else: 0,
+              },
+            },
+          },
+          transactionsCount: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: false,
+          date: '$_id.date',
+          userId: '$_id.userId',
+          direction,
+          transactionsHitCount: '$transactionsHitCount',
+          transactionsCount: '$transactionsCount',
+        },
+      },
+      ...mergePipeline,
+    ]
+
     const lastUpdatedAt = Date.now()
-    await casesCollection
-      .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+
+    // Execute the transactions aggregation pipeline
+    await transactionsCollection
+      .aggregate(withUpdatedAt(transactionsPipeline, lastUpdatedAt))
       .next()
+
     await cleanUpStaleData(
       aggregationCollection,
       'date',
@@ -153,22 +261,6 @@ export class HitsByUserStatsDashboardMetric {
       },
     }
 
-    const totalRulesHits = await collection
-      .aggregate<{
-        _id: null
-        totalRulesHits: number
-      }>([
-        condition,
-        {
-          $group: {
-            _id: null,
-            totalRulesHits: { $sum: '$rulesHit' },
-          },
-        },
-      ])
-      .next()
-      .then((result) => result?.totalRulesHits ?? 0)
-
     const userTypeCondition = {
       $match: {
         'user.type': userType,
@@ -178,29 +270,29 @@ export class HitsByUserStatsDashboardMetric {
     const result = await collection
       .aggregate<{
         _id: string
-        transactionsHit: number
-        rulesHit: number
         user: InternalConsumerUser | InternalBusinessUser | null
         casesCount: number
         openCasesCount: number
+        transactionsCount: number
+        transactionsHitCount: number
       }>(
         [
           condition,
           {
             $group: {
               _id: `$userId`,
-              transactionsHit: { $sum: '$transactionsHit' },
-              rulesHit: { $sum: '$rulesHit' },
               casesCount: { $sum: '$casesCount' },
               openCasesCount: { $sum: '$openCasesCount' },
+              transactionsCount: { $sum: '$transactionsCount' },
+              transactionsHitCount: { $sum: '$transactionsHitCount' },
             },
           },
           {
-            $sort: { rulesHit: -1 },
+            $sort: { transactionsHitCount: -1 },
           },
           {
             $match: {
-              rulesHit: {
+              transactionsHitCount: {
                 $gte: 1,
               },
             },
@@ -227,15 +319,15 @@ export class HitsByUserStatsDashboardMetric {
         { allowDiskUse: true }
       )
       .toArray()
-
-    return result.map((x) => ({
-      userId: x._id,
-      user: x.user ?? undefined,
-      transactionsHit: x.transactionsHit,
-      rulesHit: x.rulesHit,
-      casesCount: x.casesCount,
-      openCasesCount: x.openCasesCount,
-      percentageRulesHit: round((x.rulesHit / totalRulesHits) * 100, 2),
-    }))
+    return result.map((x) => {
+      return {
+        userId: x._id,
+        user: x.user ?? undefined,
+        transactionsHitCount: x.transactionsHitCount,
+        casesCount: x.casesCount,
+        openCasesCount: x.openCasesCount,
+        transactionsCount: x.transactionsCount,
+      }
+    })
   }
 }

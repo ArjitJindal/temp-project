@@ -2,6 +2,7 @@
 import { RangeValue } from 'rc-picker/es/interface';
 import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
+import { round } from 'lodash';
 import { TableItem } from './types';
 import { generateCaseListUrl } from './utils';
 import { Dayjs } from '@/utils/dayjs';
@@ -48,12 +49,17 @@ export default function HitsPerUserCard(props: Props) {
       title: 'Username',
       value: (entity: TableItem): string => getUserName(entity.user) ?? '',
     }),
-    helper.simple<'rulesHit'>({
-      title: 'Rule hit',
-      key: 'rulesHit',
+    helper.simple<'transactionsHitCount'>({
+      title: 'Transactions hit',
+      key: 'transactionsHitCount',
       type: {
-        render: (rulesHit) => {
-          return <>{`${rulesHit} ${pluralize('hit', rulesHit)}`}</>;
+        render: (transactionsHitCount, { item }) => {
+          return (
+            <>{`${transactionsHitCount} ${pluralize('hit', transactionsHitCount)} (${round(
+              (item.transactionsHitCount / item.transactionsCount) * 100,
+              2,
+            )}%)`}</>
+          );
         },
         stringify(value) {
           return `${value} (${pluralize('hit', value)})`;

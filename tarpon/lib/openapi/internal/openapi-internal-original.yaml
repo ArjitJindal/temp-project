@@ -6548,7 +6548,7 @@ components:
             properties:
               userId:
                 type: string
-              transactionsHit:
+              transactionsHitCount:
                 type: number
               user:
                 oneOf:
@@ -6560,12 +6560,12 @@ components:
                 type: number
               openCasesCount:
                 type: number
-              percentageRulesHit:
+              transactionsCount:
                 type: number
             required:
               - originUserId
-              - transactionsHit
-              - percentageRulesHit
+              - transactionsHitCount
+              - transactionsCount
       required:
         - data
     DashboardTeamStatsItem:

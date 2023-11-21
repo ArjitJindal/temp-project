@@ -113,23 +113,34 @@ export function sampleTransactionUserCases(params: {
     return []
   }
 
+  let user = destination
+  let userType = 'DESTINATION'
+  let userId = destination?.userId
+  if (origin) {
+    user = origin
+    userType = 'ORIGIN'
+    userId = origin?.userId
+  }
+
+  const caseTransactions = transactions.filter(
+    (transaction) => transaction[`${userType.toLowerCase()}UserId`] === userId
+  )
+
   let ruleHits = uniqBy(
-    transactions.flatMap((t) => t.hitRules),
+    caseTransactions.flatMap((t) => t.hitRules),
     'ruleInstanceId'
   ).filter((rh) => {
     if (rh.ruleHitMeta?.hitDirections?.includes('ORIGIN') && origin) {
       return true
-    }
-    if (rh.ruleHitMeta?.hitDirections?.includes('DESTINATION') && destination) {
+    } else if (
+      rh.ruleHitMeta?.hitDirections?.includes('DESTINATION') &&
+      destination
+    ) {
       return true
     }
     return false
   })
 
-  let user = destination
-  if (origin) {
-    user = origin
-  }
   ruleHits = ruleHits.concat(user?.hitRules ?? [])
 
   return RULE_NATURES.map((nature): Case => {
@@ -151,7 +162,7 @@ export function sampleTransactionUserCases(params: {
       createdTimestamp: sampleTimestamp(),
       latestTransactionArrivalTimestamp: sampleTimestamp(),
       comments: [],
-      caseTransactionsCount: transactions.length,
+      caseTransactionsCount: caseTransactions.length,
       statusChanges: getStatusChangesObject(
         caseStatus ?? 'OPEN',
         getRandomUser().assigneeUserId
@@ -184,8 +195,8 @@ export function sampleTransactionUserCases(params: {
           destination?.drsScore?.manualRiskLevel ??
           destination?.drsScore?.derivedRiskLevel,
       },
-      caseTransactions: transactions,
-      caseTransactionsIds: transactions.map((t) => t.transactionId!),
+      caseTransactions,
+      caseTransactionsIds: caseTransactions.map((t) => t.transactionId!),
       alerts: ruleHits
         .filter((rh) => rh.nature === nature)
         .map((ruleHit) =>
@@ -195,7 +206,7 @@ export function sampleTransactionUserCases(params: {
             transactions:
               ruleHit.nature === 'SCREENING'
                 ? []
-                : transactions.filter(
+                : caseTransactions.filter(
                     (t) =>
                       !!t.hitRules.find(
                         (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
