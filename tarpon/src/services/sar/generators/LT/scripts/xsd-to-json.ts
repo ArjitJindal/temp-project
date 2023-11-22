@@ -2,10 +2,10 @@ import * as fs from 'fs'
 import path from 'path'
 import { XMLParser } from 'fast-xml-parser'
 import { isObject, keys, omit, pick } from 'lodash'
+import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { removeUnnecessaryOneOf } from '../../../utils/augmentations/removeUnnecessaryOneOf'
 import { transactionTypes } from '../common'
 import { CURRENCY_CODES } from '@/@types/openapi-internal-custom/CurrencyCode'
-import { COUNTRY_CODES } from '@/utils/countries'
 const CTR_XML_SCHEMA = fs.readFileSync(
   path.join(__dirname, '..', 'CTR', 'resources', 'schema.xsd'),
   'utf8'

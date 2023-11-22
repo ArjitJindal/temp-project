@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Tag } from 'antd';
 import { startCase } from 'lodash';
+import { COUNTRIES } from '@flagright/lib/constants';
 import SearchResultDetailsModal from './SearchResultDetailsModal';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import {
@@ -10,7 +11,6 @@ import {
   TableData,
   ToolRenderer,
 } from '@/components/library/Table/types';
-import COUNTRIES from '@/utils/countries';
 import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';

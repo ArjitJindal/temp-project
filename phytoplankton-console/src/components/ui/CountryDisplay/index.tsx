@@ -1,6 +1,6 @@
 import { Space } from 'antd';
 import ReactCountryFlag from 'react-country-flag';
-import COUNTRIES, { COUNTRY_NAME_TO_CODE } from '@/utils/countries';
+import { COUNTRIES, COUNTRY_NAME_TO_CODE } from '@flagright/lib/constants';
 
 interface Props {
   // Alpha-2 code

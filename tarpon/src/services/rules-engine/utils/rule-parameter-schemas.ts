@@ -1,7 +1,7 @@
 import { lowerCase, startCase } from 'lodash'
+import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
-import { COUNTRY_CODES } from '@/utils/countries'
 import {
   uiSchema,
   UiSchemaParams,

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Space, Tag } from 'antd';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import cn from 'clsx';
+import { COUNTRIES } from '@flagright/lib/constants';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import { Report, ReportStatus } from '@/apis';
@@ -24,7 +25,6 @@ import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
-import COUNTRIES from '@/utils/countries';
 import { getAccountUserName } from '@/utils/account';
 
 type TableParams = AllParams<DefaultApiGetReportsRequest>;

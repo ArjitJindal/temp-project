@@ -1,14 +1,14 @@
 import {
   AddressType,
   CumulativeAmount,
+  DateOfBirth,
   ElectronicAddressType,
+  InstitutionTypeCode,
+  JointReportIndicator,
   OrganizationClassificationTypeSubtypeType,
+  Party,
   PartyNameType,
   PhoneNumberType,
-  JointReportIndicator,
-  DateOfBirth,
-  Party,
-  InstitutionTypeCode,
 } from '../resources/EFL_SARXBatchSchema.type'
 import { ConsumerName } from '@/@types/openapi-internal/ConsumerName'
 import { CompanyGeneralDetails } from '@/@types/openapi-internal/CompanyGeneralDetails'
@@ -19,6 +19,10 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CardMerchantDetails } from '@/@types/openapi-public/CardMerchantDetails'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { ActivityPartyTypeCodes } from '@/services/sar/generators/US/SAR/helpers/constants'
+import {
+  normalizeCountryCode,
+  normalizeCountryRegionCode,
+} from '@/utils/countries'
 
 export type PartySinglePartyName = Omit<Party, 'PartyName'> & {
   PartyName: PartyNameType
@@ -138,12 +142,37 @@ export function organizationClassificationByPaymentDetails(
     : undefined
 }
 
+export function addressCountryCode(
+  countryText: string | undefined
+): AddressType['RawCountryCodeText'] | undefined {
+  if (countryText == null) {
+    return undefined
+  }
+  const countryCode = normalizeCountryCode(countryText)
+  return countryCode || undefined
+}
+
+export function addressStateCode(
+  countryText: string | undefined,
+  stateText: string | undefined
+): AddressType['RawStateCodeText'] | undefined {
+  if (countryText == null || stateText == null) {
+    return undefined
+  }
+  const countryCode = normalizeCountryCode(countryText)
+  let stateCode: string | undefined
+  if (countryCode) {
+    stateCode = normalizeCountryRegionCode(countryCode, stateText) ?? undefined
+  }
+  return stateCode
+}
+
 export function address(address: Address): AddressType {
   return {
     RawZIPCode: address.postcode,
-    RawCountryCodeText: address.country,
+    RawCountryCodeText: addressCountryCode(address.country),
     RawCityText: address.city,
-    RawStateCodeText: address.state,
+    RawStateCodeText: addressStateCode(address.country, address.state),
     RawStreetAddress1Text: address.addressLines.join(' \n'),
   }
 }
@@ -153,9 +182,9 @@ export function addressByCardMerchantDetails(
 ): AddressType {
   return {
     RawZIPCode: address.postCode,
-    RawCountryCodeText: address.country,
+    RawCountryCodeText: addressCountryCode(address.country),
     RawCityText: address.city,
-    RawStateCodeText: address.state,
+    RawStateCodeText: addressStateCode(address.country, address.state),
     RawStreetAddress1Text: undefined,
   }
 }

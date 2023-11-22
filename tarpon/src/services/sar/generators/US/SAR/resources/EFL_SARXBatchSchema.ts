@@ -166,6 +166,10 @@ export const FincenJsonSchema = {
         RawStateCodeText: {
           $ref: '#/definitions/RestrictString3',
           title: 'State/Territory/Province (code)',
+          'ui:schema': {
+            'ui:subtype': 'COUNTRY_REGION',
+            'ui:countryField': 'RawCountryCodeText',
+          },
           description:
             'This element identifies the state/territory/province associated with the address of the party when the corresponding country is equal to US (United States), CA (Canada), MX (Mexico), or a U.S. Territory.',
         },

@@ -1,6 +1,7 @@
 import { Tag } from 'antd';
 import React, { useEffect } from 'react';
 import { keyBy } from 'lodash';
+import { COUNTRIES } from '@flagright/lib/constants';
 import style from './style.module.less';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -17,7 +18,6 @@ import {
   riskValueTimeRange,
   RiskValueType,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
-import COUNTRIES from '@/utils/countries';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { businessType, consumerType } from '@/utils/customer-type';

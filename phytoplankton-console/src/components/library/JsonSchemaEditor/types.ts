@@ -23,6 +23,11 @@ export interface UiSchemaCountries extends UiSchemaCommon {
   'ui:subtype': 'COUNTRIES';
 }
 
+export interface UiSchemaCountryRegion extends UiSchemaCommon {
+  'ui:subtype': 'COUNTRY_REGION';
+  'ui:countryField'?: string;
+}
+
 export interface UiSchemaCountry extends UiSchemaCommon {
   'ui:subtype': 'COUNTRY';
 }
@@ -93,6 +98,7 @@ export type UiSchema =
   | UiSchemaTimeWindow
   | UiSchemaCountries
   | UiSchemaCountry
+  | UiSchemaCountryRegion
   | UiSchemaAgeRange
   | UiSchemaTransactionAmountRange
   | UiSchemaTransactionAmountThresholds

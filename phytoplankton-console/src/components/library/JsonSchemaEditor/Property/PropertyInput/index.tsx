@@ -21,6 +21,7 @@ import TimeRangeInput from './custom/TimeRangeInput';
 import NarrativeInput from './custom/NarrativeInput';
 import { CheckListCategoryListsInput } from './custom/CheckListCategoryListsInput';
 import { WebhookInput } from './custom/WebhookInput';
+import CountryRegion from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CountryRegion';
 import { InputProps } from '@/components/library/Form';
 
 // todo: fix any
@@ -74,6 +75,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'CHECKLISTS_CATEGORY_LIST') {
     return <CheckListCategoryListsInput {...props} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'COUNTRY_REGION') {
+    return <CountryRegion {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'WEBHOOK') {
     return <WebhookInput {...props} uiSchema={uiSchema} />;

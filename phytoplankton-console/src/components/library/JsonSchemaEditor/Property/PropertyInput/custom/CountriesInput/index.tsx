@@ -1,7 +1,7 @@
 import React from 'react';
+import { COUNTRIES, CountryCode } from '@flagright/lib/constants';
 import { UiSchemaCountries, UiSchemaCountry } from '../../../../types';
 import { InputProps } from '@/components/library/Form';
-import COUNTRIES, { CountryCode } from '@/utils/countries';
 import Select, { Option } from '@/components/library/Select';
 
 const OPTIONS = Object.entries(COUNTRIES).map(

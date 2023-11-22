@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import ReactCountryFlag from 'react-country-flag';
+import { COUNTRIES } from '@flagright/lib/constants';
 import LocationInfoCard from './LocationInfoCard';
 import DeviceInformation from './DeviceInformation';
 import DeviceSettings from './DeviceSettings';
 import OtherInformation from './OtherInformation';
 import * as Card from '@/components/ui/Card';
 import { DeviceMetric } from '@/apis';
-import COUNTRIES from '@/utils/countries';
 import LANGUAGES, { LanguageCode } from '@/utils/languages';
 
 type Props = {
