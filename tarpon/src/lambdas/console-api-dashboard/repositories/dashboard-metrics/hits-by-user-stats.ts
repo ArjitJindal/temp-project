@@ -81,6 +81,11 @@ export class HitsByUserStatsDashboardMetric {
         },
       },
       {
+        $project: {
+          caseTransactions: 0,
+        },
+      },
+      {
         $group: {
           _id: {
             date: {
@@ -114,7 +119,9 @@ export class HitsByUserStatsDashboardMetric {
 
     // Execute the cases aggregation pipeline
     await casesCollection
-      .aggregate(withUpdatedAt(casesPipeline, lastUpdatedAt))
+      .aggregate(withUpdatedAt(casesPipeline, lastUpdatedAt), {
+        allowDiskUse: true,
+      })
       .next()
 
     await cleanUpStaleData(
@@ -224,7 +231,9 @@ export class HitsByUserStatsDashboardMetric {
 
     // Execute the transactions aggregation pipeline
     await transactionsCollection
-      .aggregate(withUpdatedAt(transactionsPipeline, lastUpdatedAt))
+      .aggregate(withUpdatedAt(transactionsPipeline, lastUpdatedAt), {
+        allowDiskUse: true,
+      })
       .next()
 
     await cleanUpStaleData(
