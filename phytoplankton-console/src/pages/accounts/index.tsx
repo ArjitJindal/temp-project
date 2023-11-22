@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Tabs } from 'antd';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import Roles from './Roles';
 import Team from './Team';
@@ -24,18 +23,27 @@ export default function () {
         onChange={(section) => {
           navigate(makeUrl(`/accounts/:section`, { section }), { replace: true });
         }}
-      >
-        <Tabs.TabPane tab={sentenceCase(i18n('menu.accounts.team'))} key={'team'}>
-          <Authorized required={['settings:organisation:read']} showForbiddenPage>
-            <Team />
-          </Authorized>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab={sentenceCase(i18n('menu.accounts.roles'))} key={'roles'}>
-          <Authorized required={['settings:organisation:read']} showForbiddenPage>
-            <Roles />
-          </Authorized>
-        </Tabs.TabPane>
-      </PageTabs>
+        items={[
+          {
+            key: 'team',
+            title: sentenceCase(i18n('menu.accounts.team')),
+            children: (
+              <Authorized required={['settings:organisation:read']} showForbiddenPage>
+                <Team />
+              </Authorized>
+            ),
+          },
+          {
+            key: 'roles',
+            title: sentenceCase(i18n('menu.accounts.roles')),
+            children: (
+              <Authorized required={['settings:organisation:read']} showForbiddenPage>
+                <Roles />
+              </Authorized>
+            ),
+          },
+        ]}
+      />
     </PageWrapper>
   );
 }

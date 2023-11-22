@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'ahooks';
 import { EditOutlined } from '@ant-design/icons';
-import { Tabs, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import { cloneDeep, isEqual, merge } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import {
@@ -43,6 +43,7 @@ import { H4 } from '@/components/ui/Typography';
 import Label from '@/components/library/Label';
 import { getErrorMessage } from '@/utils/lang';
 import { useQuery } from '@/utils/queries/hooks';
+import { notEmpty } from '@/utils/array';
 
 interface RuleConfigurationDrawerProps {
   rule?: Rule | null;
@@ -507,69 +508,66 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
         type="card"
         activeKey={`${activeTabIndex}`}
         onChange={handleChangeIterationTab}
-        destroyInactiveTabPane
-      >
-        {iterations.map((iteration, i) => {
-          return (
-            <Tabs.TabPane tab={`Iteration ${i + 1}`} key={`${i}`}>
-              {isLoading ? (
-                <LoadingCard loadingMessage="Running the simulation for a subset of transactions & generating results for you." />
-              ) : (
-                <>
-                  {jobId && (
-                    <div>
-                      <Label label={iteration.name}>{iteration.description}</Label>
-                    </div>
-                  )}
-                  {jobId && (
-                    <div className={s.result}>
-                      {isSuccess(jobResult.data) ? (
-                        <SimulationStatistics iteration={jobResult.data.value.iterations[i]} />
-                      ) : undefined}
-                      <H4>Changed rule parameters</H4>
-                    </div>
-                  )}
-                  <RuleConfigurationForm
-                    key={iteration.ruleInstance?.ruleId}
-                    readOnly={Boolean(jobId)}
-                    ref={iterationFormRefs[i]}
-                    rule={rule}
-                    formInitialValues={merge(
-                      ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
-                      {
-                        basicDetailsStep: {
-                          simulationIterationName: iteration.name,
-                          simulationIterationDescription: iteration.description,
-                        },
+        items={[
+          ...iterations.map((iteration, i) => ({
+            title: `Iteration ${i + 1}`,
+            key: `${i}`,
+            children: isLoading ? (
+              <LoadingCard loadingMessage="Running the simulation for a subset of transactions & generating results for you." />
+            ) : (
+              <>
+                {jobId && (
+                  <div>
+                    <Label label={iteration.name}>{iteration.description}</Label>
+                  </div>
+                )}
+                {jobId && (
+                  <div className={s.result}>
+                    {isSuccess(jobResult.data) ? (
+                      <SimulationStatistics iteration={jobResult.data.value.iterations[i]} />
+                    ) : undefined}
+                    <H4>Changed rule parameters</H4>
+                  </div>
+                )}
+                <RuleConfigurationForm
+                  key={iteration.ruleInstance?.ruleId}
+                  readOnly={Boolean(jobId)}
+                  ref={iterationFormRefs[i]}
+                  rule={rule}
+                  formInitialValues={merge(
+                    ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
+                    {
+                      basicDetailsStep: {
+                        simulationIterationName: iteration.name,
+                        simulationIterationDescription: iteration.description,
                       },
-                    )}
-                    simulationMode={true}
-                    activeStepKey={activeStepKey}
-                    showValidationError={showValidationError}
-                    onSubmit={() => {}}
-                    onActiveStepKeyChange={setActiveStepKey}
-                  />
-                </>
-              )}
-            </Tabs.TabPane>
-          );
-        })}
-        {iterations.length < MAX_SIMULATION_ITERATIONS && !isShowingResults && (
-          <Tabs.TabPane
-            tab={
-              <Tooltip
-                title="You can simulate a maximum of 3 iterations for this rule at once."
-                placement="bottom"
-              >
-                <div onClick={handleDuplicate} className={s.duplicateButton}>
-                  <AddLineIcon width={20} /> <span>Duplicate</span>
-                </div>
-              </Tooltip>
-            }
-            key={DUPLICATE_TAB_KEY}
-          ></Tabs.TabPane>
-        )}
-      </PageTabs>
+                    },
+                  )}
+                  simulationMode={true}
+                  activeStepKey={activeStepKey}
+                  showValidationError={showValidationError}
+                  onSubmit={() => {}}
+                  onActiveStepKeyChange={setActiveStepKey}
+                />
+              </>
+            ),
+          })),
+          iterations.length < MAX_SIMULATION_ITERATIONS &&
+            !isShowingResults && {
+              key: DUPLICATE_TAB_KEY,
+              title: (
+                <Tooltip
+                  title="You can simulate a maximum of 3 iterations for this rule at once."
+                  placement="bottom"
+                >
+                  <div onClick={handleDuplicate} className={s.duplicateButton}>
+                    <AddLineIcon width={20} /> <span>Duplicate</span>
+                  </div>
+                </Tooltip>
+              ),
+            },
+        ].filter(notEmpty)}
+      />
     </Drawer>
   );
 }

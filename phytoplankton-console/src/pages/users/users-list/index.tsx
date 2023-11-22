@@ -1,4 +1,3 @@
-import { Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
@@ -279,17 +278,12 @@ export default function UsersList() {
         onChange={(key) => {
           navigate(makeUrl(`/users/list/:list/all`, { list: key }), { replace: true });
         }}
-      >
-        <Tabs.TabPane tab={'All users'} key="all">
-          <UsersTab type={list} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Consumer users" key="consumer">
-          <UsersTab type={list} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Business users" key="business">
-          <UsersTab type={list} />
-        </Tabs.TabPane>
-      </PageTabs>
+        items={[
+          { title: 'All users', key: 'all', children: <UsersTab type={list} /> },
+          { title: 'Consumer users', key: 'consumer', children: <UsersTab type={list} /> },
+          { title: 'Business users', key: 'business', children: <UsersTab type={list} /> },
+        ]}
+      />
     </PageWrapper>
   );
 }

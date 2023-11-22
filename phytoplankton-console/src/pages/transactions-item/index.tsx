@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Tabs as AntTabs } from 'antd';
 
 //components
 import SubHeader from './SubHeader';
@@ -97,7 +96,7 @@ export default function TransactionsItem() {
           <PageTabs
             sticky={entityHeaderHeight}
             activeKey={tab}
-            onTabClick={(newTab) => {
+            onChange={(newTab) => {
               navigate(
                 keepBackUrl(
                   makeUrl('/transactions/item/:id/:tab', { id: transactionId, tab: newTab }),
@@ -107,33 +106,23 @@ export default function TransactionsItem() {
                 },
               );
             }}
-          >
-            {[
+            items={[
               {
-                tab: 'Transaction details',
+                title: 'Transaction details',
                 key: 'transaction-details',
                 children: <SenderReceiverDetails transaction={transaction} />,
                 isClosable: false,
                 isDisabled: false,
               },
               {
-                tab: 'Transaction events',
+                title: 'Transaction events',
                 key: 'transaction-events',
                 children: <TransactionEventsCard events={transaction.events ?? []} />,
                 isClosable: false,
                 isDisabled: false,
               },
-            ].map(({ tab, key, isDisabled, isClosable, children }) => (
-              <AntTabs.TabPane
-                key={key}
-                tab={tab}
-                closable={isClosable}
-                disabled={isDisabled ?? false}
-              >
-                <div>{children}</div>
-              </AntTabs.TabPane>
-            ))}
-          </PageTabs>
+            ]}
+          />
         </PageWrapper>
       )}
     </AsyncResourceRenderer>

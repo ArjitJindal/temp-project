@@ -199,7 +199,7 @@ function Case3(): JSX.Element {
           }}
           tabs={[
             {
-              tab: 'First tab',
+              title: 'First tab',
               key: 'first',
               children: (
                 <>
@@ -209,7 +209,7 @@ function Case3(): JSX.Element {
               ),
             },
             {
-              tab: 'Second tab',
+              title: 'Second tab',
               key: 'second',
               children: (
                 <>

@@ -97,7 +97,7 @@ function RiskBasedThresholds(props: Props) {
   const tabItems: TabItem[] = useMemo(() => {
     return RISK_LEVELS.map((riskLevel) => {
       const tabItem: TabItem = {
-        tab: (
+        title: (
           <div className={s.riskLevelTabLabel}>
             {capitalize(getRiskLevelLabel(riskLevel, settings))}
           </div>

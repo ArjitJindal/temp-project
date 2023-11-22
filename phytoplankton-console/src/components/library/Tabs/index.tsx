@@ -4,7 +4,7 @@ import cn from 'clsx';
 import s from './index.module.less';
 
 export interface TabItem {
-  tab: React.ReactNode;
+  title: React.ReactNode;
   key: string;
   children?: React.ReactNode;
   isClosable?: boolean;
@@ -43,13 +43,13 @@ export default function Tabs(props: Props) {
       }
     >
       {items.map((item: TabItem) => {
-        const { tab, key, children, isClosable, isDisabled, Icon } = item;
+        const { title, key, children, isClosable, isDisabled, Icon } = item;
         return (
           <AntTabs.TabPane
             tab={
               <span className={cn(s.root, s.tab_span)}>
                 {Icon && <div className={cn(s.root, s.icon)}>{Icon}</div>}
-                <span>{tab}</span>
+                <span>{title}</span>
               </span>
             }
             key={key}

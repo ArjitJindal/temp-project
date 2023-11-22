@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import { Tabs } from 'antd';
 import { useNavigate, useParams } from 'react-router';
 import s from './index.module.less';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
@@ -66,18 +65,27 @@ export default function CreatedLists() {
               )}
             </div>
           }
-        >
-          <Tabs.TabPane tab="Whitelists" key="whitelist">
-            <PageWrapperContentContainer>
-              <ListTable ref={whitelistsTableRef} listType="WHITELIST" />
-            </PageWrapperContentContainer>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Blacklists" key="blacklist">
-            <PageWrapperContentContainer>
-              <ListTable ref={blacklistsTableRef} listType="BLACKLIST" />
-            </PageWrapperContentContainer>
-          </Tabs.TabPane>
-        </PageTabs>
+          items={[
+            {
+              key: 'whitelist',
+              title: 'Whitelists',
+              children: (
+                <PageWrapperContentContainer>
+                  <ListTable ref={whitelistsTableRef} listType="WHITELIST" />
+                </PageWrapperContentContainer>
+              ),
+            },
+            {
+              key: 'blacklist',
+              title: 'Blacklists',
+              children: (
+                <PageWrapperContentContainer>
+                  <ListTable ref={blacklistsTableRef} listType="BLACKLIST" />
+                </PageWrapperContentContainer>
+              ),
+            },
+          ]}
+        />
       </PageWrapper>
       <NewListDrawer
         listType={listType}

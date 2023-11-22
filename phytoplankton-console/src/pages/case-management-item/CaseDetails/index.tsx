@@ -1,5 +1,4 @@
 import React from 'react';
-import { Tabs as AntTabs } from 'antd';
 import { useNavigate, useParams } from 'react-router';
 import AIInsightsCard from './AIInsightsCard';
 import { CommentGroup } from './CommentsCard';
@@ -34,6 +33,7 @@ import { notEmpty } from '@/utils/array';
 import { isExistedUser } from '@/utils/api/users';
 import PaymentIdentifierDetailsCard from '@/pages/case-management-item/CaseDetails/PaymentIdentifierDetailsCard';
 import ActivityCard from '@/components/ActivityCard';
+import { TabItem } from '@/components/library/Tabs';
 
 interface Props {
   caseItem: Case;
@@ -59,7 +59,7 @@ function CaseDetails(props: Props) {
       <PageTabs
         sticky={entityHeaderHeight}
         activeKey={tab}
-        onTabClick={(newTab) => {
+        onChange={(newTab) => {
           navigate(
             keepBackUrl(
               makeUrl('/case-management/case/:id/:tab', { id: caseItem.caseId, tab: newTab }),
@@ -67,9 +67,9 @@ function CaseDetails(props: Props) {
             { replace: true },
           );
         }}
-      >
-        {tabs.map(({ tab, key, isDisabled, isClosable, children }) => (
-          <AntTabs.TabPane key={key} tab={tab} closable={isClosable} disabled={isDisabled ?? false}>
+        items={tabs.map((tab) => ({
+          ...tab,
+          children: (
             <div
               style={{
                 minHeight: `calc(100vh - ${
@@ -77,11 +77,11 @@ function CaseDetails(props: Props) {
                 }px)`,
               }}
             >
-              {children}
+              {tab.children}
             </div>
-          </AntTabs.TabPane>
-        ))}
-      </PageTabs>
+          ),
+        }))}
+      />
     </>
   );
 }
@@ -116,7 +116,11 @@ function useAlertsComments(alertIds: string[]): AsyncResource<CommentGroup[]> {
   return all(commentsResources);
 }
 
-export function useTabs(caseItem: Case, expandedAlertId: string | undefined, alertIds: string[]) {
+export function useTabs(
+  caseItem: Case,
+  expandedAlertId: string | undefined,
+  alertIds: string[],
+): TabItem[] {
   const { subjectType = 'USER' } = caseItem;
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
@@ -131,21 +135,21 @@ export function useTabs(caseItem: Case, expandedAlertId: string | undefined, ale
   const alertCommentsRes = useAlertsComments(alertIds);
   return [
     isPaymentSubject && {
-      tab: 'Payment identifier details',
+      title: 'Payment identifier details',
       key: 'payment-details',
       children: <PaymentIdentifierDetailsCard paymentDetails={paymentDetails} />,
       isClosable: false,
       isDisabled: false,
     },
     isUserSubject && {
-      tab: 'User details',
+      title: 'User details',
       key: 'user-details',
       children: <UserDetails user={user} uiSettings={UI_SETTINGS} />,
       isClosable: false,
       isDisabled: false,
     },
     caseItem.caseType === 'SYSTEM' && {
-      tab: 'Alerts',
+      title: 'Alerts',
       key: 'alerts',
       children: (
         <AlertsCard
@@ -160,7 +164,7 @@ export function useTabs(caseItem: Case, expandedAlertId: string | undefined, ale
     caseItem.caseId &&
       user &&
       caseItem.caseType === 'MANUAL' && {
-        tab: 'Case transactions',
+        title: 'Case transactions',
         key: 'case-transactions',
         children: (
           <CaseTransactionsCard
@@ -175,7 +179,7 @@ export function useTabs(caseItem: Case, expandedAlertId: string | undefined, ale
       },
     user &&
       isCrmEnabled && {
-        tab: (
+        title: (
           <div className={style.icon}>
             {' '}
             <BrainIcon /> <span>&nbsp; CRM data</span>
@@ -189,7 +193,7 @@ export function useTabs(caseItem: Case, expandedAlertId: string | undefined, ale
     isUserSubject &&
       user &&
       isEntityLinkingEnabled && {
-        tab: <div className={style.icon}>Entity linking</div>,
+        title: <div className={style.icon}>Entity linking</div>,
         key: 'entity-linking',
         children: <Linking userId={user.userId!} />,
         isClosable: false,
@@ -200,7 +204,7 @@ export function useTabs(caseItem: Case, expandedAlertId: string | undefined, ale
       'type' in user &&
       user?.type === 'BUSINESS' &&
       isMerchantMonitoringEnabled && {
-        tab: !settings.isAiEnabled ? (
+        title: !settings.isAiEnabled ? (
           <Tooltip
             title={`You need to enable ${branding.companyName} AI Features under Settings to view this tab`}
           >
@@ -221,7 +225,7 @@ export function useTabs(caseItem: Case, expandedAlertId: string | undefined, ale
       },
     isUserSubject &&
       user?.userId && {
-        tab: 'Transaction insights',
+        title: 'Transaction insights',
         key: 'transaction-insights',
         children: (
           <InsightsCard userId={user.userId} title={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.title} />
@@ -230,7 +234,7 @@ export function useTabs(caseItem: Case, expandedAlertId: string | undefined, ale
         isDisabled: false,
       },
     isExistedUser(user) && {
-      tab: 'Expected transaction limits',
+      title: 'Expected transaction limits',
       key: 'expected-transaction-limits',
       children: (
         <Card.Root>
@@ -241,7 +245,7 @@ export function useTabs(caseItem: Case, expandedAlertId: string | undefined, ale
       isDisabled: false,
     },
     {
-      tab: 'Activity',
+      title: 'Activity',
       key: 'activity',
       children: (
         <AsyncResourceRenderer resource={alertCommentsRes}>

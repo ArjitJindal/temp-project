@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from 'react-router';
-import { Tabs } from 'antd';
 import { SanctionsSearchTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
@@ -18,18 +17,27 @@ const SanctionsPage: React.FC = () => {
         onChange={(key) => {
           navigate(`/sanctions/${key}`, { replace: true });
         }}
-      >
-        <Tabs.TabPane tab="Search" key="search">
-          <PageWrapperContentContainer>
-            <SanctionsSearchTable searchId={searchId} />
-          </PageWrapperContentContainer>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Search history" key="search-history">
-          <PageWrapperContentContainer>
-            <SanctionsSearchHistoryTable />
-          </PageWrapperContentContainer>
-        </Tabs.TabPane>
-      </PageTabs>
+        items={[
+          {
+            key: 'search',
+            title: 'Search',
+            children: (
+              <PageWrapperContentContainer>
+                <SanctionsSearchTable searchId={searchId} />
+              </PageWrapperContentContainer>
+            ),
+          },
+          {
+            key: 'search-history',
+            title: 'Search history',
+            children: (
+              <PageWrapperContentContainer>
+                <SanctionsSearchHistoryTable />
+              </PageWrapperContentContainer>
+            ),
+          },
+        ]}
+      />
     </PageWrapper>
   );
 };

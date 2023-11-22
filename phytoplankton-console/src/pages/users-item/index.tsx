@@ -1,4 +1,3 @@
-import { Tabs as AntTabs } from 'antd';
 import { useNavigate, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -95,30 +94,29 @@ export default function UserItem() {
           <PageTabs
             sticky={entityHeaderHeight}
             activeKey={tab}
-            onTabClick={(newTab) => {
+            onChange={(newTab) => {
               navigate(
-                keepBackUrl(makeUrl('/users/list/:list/:id/:tab', { id, list, tab: newTab })),
+                keepBackUrl(makeUrl('/users/list/:list/:id/:tab', { id, list, title: newTab })),
                 {
                   replace: true,
                 },
               );
             }}
-          >
-            {[
+            items={[
               {
-                tab: 'User details',
+                title: 'User details',
                 key: 'user-details',
                 children: <UserDetails user={user} uiSettings={UI_SETTINGS} />,
                 isClosable: false,
                 isDisabled: false,
               },
               {
-                tab: 'User events',
+                title: 'User events',
                 key: 'user-events',
                 children: <UserEvents userId={user.userId} />,
               },
               {
-                tab: 'Alerts',
+                title: 'Alerts',
                 key: 'alerts',
                 children: <AlertsCard userId={user.userId} />,
                 isClosable: false,
@@ -127,7 +125,7 @@ export default function UserItem() {
               ...(isCrmEnabled
                 ? [
                     {
-                      tab: (
+                      title: (
                         <div className={s.icon}>
                           {' '}
                           <BrainIcon /> <span>&nbsp; CRM data</span>
@@ -143,7 +141,7 @@ export default function UserItem() {
               ...(isEntityLinkingEnabled
                 ? [
                     {
-                      tab: <div className={s.icon}>Entity linking</div>,
+                      title: <div className={s.icon}>Entity linking</div>,
                       key: 'entity-linking',
                       children: <Linking userId={user.userId} />,
                       isClosable: false,
@@ -154,7 +152,7 @@ export default function UserItem() {
               ...(user.type === 'BUSINESS' && isMerchantMonitoringEnabled
                 ? [
                     {
-                      tab: (
+                      title: (
                         <div className={s.icon}>
                           {' '}
                           <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
@@ -168,7 +166,7 @@ export default function UserItem() {
                   ]
                 : []),
               {
-                tab: 'Expected transaction limits',
+                title: 'Expected transaction limits',
                 key: 'expected-transaction-limits',
                 children: (
                   <Card.Root>
@@ -179,21 +177,21 @@ export default function UserItem() {
                 isDisabled: false,
               },
               {
-                tab: 'Transaction history',
+                title: 'Transaction history',
                 key: 'transaction-history',
                 children: <UserTransactionHistoryTable userId={user.userId} />,
                 isClosable: false,
                 isDisabled: false,
               },
               {
-                tab: 'Transaction insights',
+                title: 'Transaction insights',
                 key: 'transaction-insights',
                 children: <InsightsCard userId={user.userId} />,
                 isClosable: false,
                 isDisabled: false,
               },
               {
-                tab: 'Activity',
+                title: 'Activity',
                 key: 'activity',
                 children: (
                   <ActivityCard
@@ -206,13 +204,9 @@ export default function UserItem() {
                 isClosable: false,
                 isDisabled: false,
               },
-            ].map(({ tab, key, isDisabled, isClosable, children }) => (
-              <AntTabs.TabPane
-                key={key}
-                tab={tab}
-                closable={isClosable}
-                disabled={isDisabled ?? false}
-              >
+            ].map((item) => ({
+              ...item,
+              children: (
                 <div
                   className={s.sizeWrapper}
                   style={{
@@ -221,11 +215,11 @@ export default function UserItem() {
                     }px)`,
                   }}
                 >
-                  {children}
+                  {item.children}
                 </div>
-              </AntTabs.TabPane>
-            ))}
-          </PageTabs>
+              ),
+            }))}
+          />
         </PageWrapper>
       )}
     </AsyncResourceRenderer>

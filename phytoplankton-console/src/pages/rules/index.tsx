@@ -1,4 +1,3 @@
-import { Tabs } from 'antd';
 import { useLocalStorageState } from 'ahooks';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
@@ -56,20 +55,87 @@ const TableList = () => {
       onSimulationModeChange={setIsSimulationEnabled}
     >
       {isSimulationEnabled ? (
-        <PageTabs>
-          <Tabs.TabPane tab="New simulation" key="new-simulation">
-            <PageWrapperContentContainer>
-              <PageTabs isPrimary={false}>
-                <Tabs.TabPane tab="My rules" key="my-rules">
-                  <Authorized required={['simulator:simulations:read']} showForbiddenPage>
-                    <MyRule simulationMode={isSimulationEnabled} />
+        <PageTabs
+          items={[
+            {
+              title: 'New simulation',
+              key: 'new-simulation',
+              children: (
+                <PageWrapperContentContainer>
+                  <PageTabs
+                    isPrimary={false}
+                    items={[
+                      {
+                        title: 'My rules',
+                        key: 'my-rules',
+                        children: (
+                          <Authorized required={['simulator:simulations:read']} showForbiddenPage>
+                            <MyRule simulationMode={isSimulationEnabled} />
+                          </Authorized>
+                        ),
+                      },
+                      {
+                        title: 'Library',
+                        key: 'rules-library',
+                        children: (
+                          <Authorized required={['simulator:simulations:read']} showForbiddenPage>
+                            <RulesTable
+                              simulationMode={isSimulationEnabled}
+                              onViewRule={(rule) => {
+                                setCurrentRule(rule);
+                                setRuleReadOnly(false);
+                              }}
+                              onEditRule={(rule) => {
+                                setCurrentRule(rule);
+                                setRuleReadOnly(false);
+                              }}
+                            />
+                          </Authorized>
+                        ),
+                      },
+                    ]}
+                  />
+                </PageWrapperContentContainer>
+              ),
+            },
+            {
+              title: 'Simulation history',
+              key: 'simulation-history',
+              children: (
+                <Authorized required={['simulator:simulations:read']} showForbiddenPage>
+                  <SimulationHistoryTable />
+                </Authorized>
+              ),
+            },
+          ]}
+        />
+      ) : (
+        <PageTabs
+          activeKey={rule}
+          onChange={(key) => {
+            navigate(`/rules/${key}`, { replace: true });
+            setCurrentHeaderId(`menu.rules.${key}`);
+            setCurrentHeaderDescription(ruleHeaderKeyToDescription(key));
+          }}
+          items={[
+            {
+              title: 'My rules',
+              key: 'my-rules',
+              children: (
+                <PageWrapperContentContainer>
+                  <Authorized required={['rules:my-rules:read']}>
+                    <MyRule />
                   </Authorized>
-                </Tabs.TabPane>
-
-                <Tabs.TabPane tab="Library" key="rules-library">
-                  <Authorized required={['simulator:simulations:read']} showForbiddenPage>
+                </PageWrapperContentContainer>
+              ),
+            },
+            {
+              title: 'Library',
+              key: 'rules-library',
+              children: (
+                <PageWrapperContentContainer>
+                  <Authorized required={['rules:library:read']}>
                     <RulesTable
-                      simulationMode={isSimulationEnabled}
                       onViewRule={(rule) => {
                         setCurrentRule(rule);
                         setRuleReadOnly(false);
@@ -80,49 +146,11 @@ const TableList = () => {
                       }}
                     />
                   </Authorized>
-                </Tabs.TabPane>
-              </PageTabs>
-            </PageWrapperContentContainer>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Simulation history" key="simulation-history">
-            <Authorized required={['simulator:simulations:read']} showForbiddenPage>
-              <SimulationHistoryTable />
-            </Authorized>
-          </Tabs.TabPane>
-        </PageTabs>
-      ) : (
-        <PageTabs
-          activeKey={rule}
-          onChange={(key) => {
-            navigate(`/rules/${key}`, { replace: true });
-            setCurrentHeaderId(`menu.rules.${key}`);
-            setCurrentHeaderDescription(ruleHeaderKeyToDescription(key));
-          }}
-        >
-          <Tabs.TabPane tab="My rules" key="my-rules">
-            <PageWrapperContentContainer>
-              <Authorized required={['rules:my-rules:read']}>
-                <MyRule />
-              </Authorized>
-            </PageWrapperContentContainer>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Library" key="rules-library">
-            <PageWrapperContentContainer>
-              <Authorized required={['rules:library:read']}>
-                <RulesTable
-                  onViewRule={(rule) => {
-                    setCurrentRule(rule);
-                    setRuleReadOnly(false);
-                  }}
-                  onEditRule={(rule) => {
-                    setCurrentRule(rule);
-                    setRuleReadOnly(false);
-                  }}
-                />
-              </Authorized>
-            </PageWrapperContentContainer>
-          </Tabs.TabPane>
-        </PageTabs>
+                </PageWrapperContentContainer>
+              ),
+            },
+          ]}
+        />
       )}
       {isSimulationEnabled && currentRule ? (
         <RuleConfigurationSimulationDrawer

@@ -7,7 +7,7 @@ import RiskClassificationTable, { parseApiState } from '../RiskClassificationTab
 import s from './styles.module.less';
 import { H4, H5, P } from '@/components/ui/Typography';
 import Drawer from '@/components/library/Drawer';
-import Tabs from '@/components/library/Tabs';
+import Tabs, { TabItem } from '@/components/library/Tabs';
 import {
   RiskLevel,
   SimulationPostResponse,
@@ -394,7 +394,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
           {(data) => {
             const { iterations } = data;
 
-            const items = iterations.map((iteration) => ({
+            const items: TabItem[] = iterations.map((iteration) => ({
               isClosable: false,
               isDisabled: false,
               key: iteration.taskId ?? '',
@@ -404,7 +404,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
                 ) : (
                   <>{iteration.taskId && <IterationComponent iteration={iteration} />}</>
                 ),
-              tab: iteration.name,
+              title: iteration.name,
             }));
 
             return (iterations as SimulationPulseIteration[]).find(

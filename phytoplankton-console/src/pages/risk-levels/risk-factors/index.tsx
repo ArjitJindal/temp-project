@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import { Tabs } from 'antd';
 import { useNavigate, useParams } from 'react-router';
 import ParametersTable from './ParametersTable';
 import {
@@ -15,10 +14,10 @@ import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import {
+  Entity,
   ParameterName,
   ParameterSettings,
   ParameterValues,
-  Entity,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import { ParameterAttributeRiskValues } from '@/apis';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
@@ -192,35 +191,48 @@ export default function () {
           onChange={(key) => {
             navigate(makeUrl(`/risk-levels/risk-factors/:type`, { type: key }), { replace: true });
           }}
-        >
-          <Tabs.TabPane tab="Consumer" key="consumer">
-            <ParametersTable
-              parameters={USER_RISK_PARAMETERS}
-              parameterSettings={valuesResources['CONSUMER_USER']}
-              onRefresh={onRefresh}
-              onSaveValues={onSaveValues}
-              onActivate={onActivate}
-            />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Business" key="business">
-            <ParametersTable
-              parameters={BUSINESS_RISK_PARAMETERS}
-              parameterSettings={valuesResources['BUSINESS']}
-              onRefresh={onRefresh}
-              onSaveValues={onSaveValues}
-              onActivate={onActivate}
-            />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Transaction" key="transaction">
-            <ParametersTable
-              parameters={TRANSACTION_RISK_PARAMETERS}
-              parameterSettings={valuesResources['TRANSACTION']}
-              onRefresh={onRefresh}
-              onSaveValues={onSaveValues}
-              onActivate={onActivate}
-            />
-          </Tabs.TabPane>
-        </PageTabs>
+          items={[
+            {
+              key: 'consumer',
+              title: 'Consumer',
+              children: (
+                <ParametersTable
+                  parameters={USER_RISK_PARAMETERS}
+                  parameterSettings={valuesResources['CONSUMER_USER']}
+                  onRefresh={onRefresh}
+                  onSaveValues={onSaveValues}
+                  onActivate={onActivate}
+                />
+              ),
+            },
+            {
+              key: 'business',
+              title: 'Business',
+              children: (
+                <ParametersTable
+                  parameters={BUSINESS_RISK_PARAMETERS}
+                  parameterSettings={valuesResources['BUSINESS']}
+                  onRefresh={onRefresh}
+                  onSaveValues={onSaveValues}
+                  onActivate={onActivate}
+                />
+              ),
+            },
+            {
+              key: 'transaction',
+              title: 'Transaction',
+              children: (
+                <ParametersTable
+                  parameters={TRANSACTION_RISK_PARAMETERS}
+                  parameterSettings={valuesResources['TRANSACTION']}
+                  onRefresh={onRefresh}
+                  onSaveValues={onSaveValues}
+                  onActivate={onActivate}
+                />
+              ),
+            },
+          ]}
+        />
       </PageWrapper>
     </Feature>
   );

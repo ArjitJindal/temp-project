@@ -24,7 +24,7 @@ export const SimulateRiskClassification = (props: Props): JSX.Element => {
   const ref = useRef<SimulationRef>(null);
   const tabItems: TabItem[] = [
     {
-      tab: 'New simulation',
+      title: 'New simulation',
       children: (
         <NewSimulation
           ref={ref}
@@ -41,7 +41,7 @@ export const SimulateRiskClassification = (props: Props): JSX.Element => {
       isClosable: false,
     },
     {
-      tab: 'Simulation history',
+      title: 'Simulation history',
       children: <SimulationHistory setResult={setResult} setOpen={setOpen} />,
       key: 'HISTORY',
       isClosable: false,

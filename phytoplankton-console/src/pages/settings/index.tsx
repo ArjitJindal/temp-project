@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from 'react-router';
-import { Tabs } from 'antd';
 import { RuleActionSettings } from './components/RuleActionSettings';
 import { PaymentApprovalSettings } from './components/PaymentApprovalSettings';
 import { WebhookSettings } from './components/WebhookSettings';
@@ -28,7 +27,7 @@ import { makeUrl } from '@/utils/routing';
 import { useHasPermissions } from '@/utils/user-utils';
 
 export default function SettingsPage() {
-  const isRIskScoreENabled = useFeatureEnabled('RISK_SCORING');
+  const isRiskScoreEnabled = useFeatureEnabled('RISK_SCORING');
   const isDevelopersReadEnabled = useHasPermissions(['settings:developers:read']);
 
   const { section = 'system' } = useParams<'section'>() as {
@@ -52,57 +51,88 @@ export default function SettingsPage() {
         onChange={(section) => {
           navigate(makeUrl(`/settings/:section`, { section }), { replace: true });
         }}
-      >
-        <Tabs.TabPane tab={i18n('menu.settings.system')} key={'system'}>
-          <DefaultValuesSettings />
-          <ProductionAccessControl />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab={i18n('menu.settings.case-management')} key={'case-management'}>
-          <>
-            <NarrativeTemplatesSettings />
-            <ChecklistTemplatesSettings />
-            <RuleQueuesSettings />
-            <Feature name="COPILOT">
-              <AISources />
-            </Feature>
-          </>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab={i18n('menu.settings.transactions')} key={'transactions'}>
-          <>
-            <PaymentApprovalSettings />
-            <TransactionStateSettings />
-          </>
-        </Tabs.TabPane>
-
-        <Tabs.TabPane tab={i18n('menu.settings.users')} key={'users'}>
-          <KYCUserStatusSettings />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab={i18n('menu.settings.rules')} key={'rules'}>
-          <RuleActionSettings />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab={i18n('menu.settings.risk-scoring')} key={'risk-scoring'}>
-          {isRIskScoreENabled ? <RiskAlgorithmsSettings /> : ''}
-          <RiskLevelSettings />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab={i18n('menu.settings.notifications')} key={'notifications'}>
-          <SlackNotificationsSettings />
-          <EmailNotificationsSettings />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab={i18n('menu.settings.addons')} key={'addons'}>
-          <FlagrightAISettings />
-          <ProfessionalServicesSettings />
-          <SanctionsSettings />
-        </Tabs.TabPane>
-        <Tabs.TabPane
-          tab={i18n('menu.settings.developers')}
-          key={'developers'}
-          disabled={!isDevelopersReadEnabled}
-        >
-          <ApiKeysSettings />
-          <QuotaSettings />
-          <WebhookSettings />
-        </Tabs.TabPane>
-      </PageTabs>
+        items={[
+          {
+            title: i18n('menu.settings.system'),
+            key: 'system',
+            children: (
+              <>
+                <DefaultValuesSettings />
+                <ProductionAccessControl />
+              </>
+            ),
+          },
+          {
+            title: i18n('menu.settings.case-management'),
+            key: 'case-management',
+            children: (
+              <>
+                <NarrativeTemplatesSettings />
+                <ChecklistTemplatesSettings />
+                <RuleQueuesSettings />
+                <Feature name="COPILOT">
+                  <AISources />
+                </Feature>
+              </>
+            ),
+          },
+          {
+            title: i18n('menu.settings.transactions'),
+            key: 'transactions',
+            children: (
+              <>
+                <PaymentApprovalSettings />
+                <TransactionStateSettings />
+              </>
+            ),
+          },
+          { title: i18n('menu.settings.users'), key: 'users', children: <KYCUserStatusSettings /> },
+          { title: i18n('menu.settings.rules'), key: 'rules', children: <RuleActionSettings /> },
+          {
+            title: i18n('menu.settings.risk-scoring'),
+            key: 'risk-scoring',
+            children: (
+              <>
+                {isRiskScoreEnabled ? <RiskAlgorithmsSettings /> : ''}
+                <RiskLevelSettings />
+              </>
+            ),
+          },
+          {
+            title: i18n('menu.settings.notifications'),
+            key: 'notifications',
+            children: (
+              <>
+                <SlackNotificationsSettings />
+                <EmailNotificationsSettings />
+              </>
+            ),
+          },
+          {
+            title: i18n('menu.settings.addons'),
+            key: 'addons',
+            children: (
+              <>
+                <FlagrightAISettings />
+                <ProfessionalServicesSettings />
+                <SanctionsSettings />
+              </>
+            ),
+          },
+          {
+            title: i18n('menu.settings.developers'),
+            key: 'developers',
+            isDisabled: !isDevelopersReadEnabled,
+            children: (
+              <>
+                <ApiKeysSettings />
+                <QuotaSettings />
+                <WebhookSettings />
+              </>
+            ),
+          },
+        ]}
+      />
     </PageWrapper>
   );
 }

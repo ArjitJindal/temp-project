@@ -6,24 +6,24 @@ import { UseCase } from '@/pages/storybook/components';
 
 export default function (): JSX.Element {
   const [items, setItems] = useState<TabItem[]>([
-    { tab: 'Iteration 1', children: 'Content of Tab 1', key: '1' },
-    { tab: 'Iteration 2', children: 'Content of Tab 2', key: '2' },
-    { tab: 'Iteration 3', children: 'Content of Tab 3', key: '3' },
+    { title: 'Iteration 1', children: 'Content of Tab 1', key: '1' },
+    { title: 'Iteration 2', children: 'Content of Tab 2', key: '2' },
+    { title: 'Iteration 3', children: 'Content of Tab 3', key: '3' },
     {
-      tab: 'Iteration 4',
+      title: 'Iteration 4',
       children: 'Content of Tab 4',
       key: '4',
       isClosable: false,
       Icon: <Flask />,
     },
     {
-      tab: 'Iteration 5',
+      title: 'Iteration 5',
       children: 'Content of Tab 5',
       key: '5',
       isDisabled: true,
     },
     {
-      tab: 'Iteration 6',
+      title: 'Iteration 6',
       children: 'Content of Tab 6',
       key: '6',
       isClosable: false,
@@ -42,7 +42,7 @@ export default function (): JSX.Element {
     const newActiveKey = `${Number(counter) + 1}`;
     const newPanes = [...items];
     newPanes.push({
-      tab: `Iteration ${newActiveKey}`,
+      title: `Iteration ${newActiveKey}`,
       children: `Content of Tab ${newActiveKey}`,
       key: newActiveKey,
       isClosable: true,
