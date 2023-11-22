@@ -87,6 +87,12 @@ async function main() {
   ) {
     throw new Error(`Unknown migration type: ${migrationType}`)
   }
+
+  console.info(`Running ${migrationType} migrations`)
+  if (migrationType === 'POST_DEPLOYMENT') {
+    console.info(`Sync data before POST_DEPLOYMENT step`)
+    await syncData()
+  }
   const directory =
     migrationType === 'PRE_DEPLOYMENT' ? 'pre-deployment' : 'post-deployment'
   const migrationCollection =
@@ -119,8 +125,6 @@ async function main() {
   }
 
   if (migrationType === 'POST_DEPLOYMENT') {
-    await syncData()
-
     // Seed cypress tenant on dev
     if (envIs('dev')) {
       const tenant = 'cypress-tenant'
