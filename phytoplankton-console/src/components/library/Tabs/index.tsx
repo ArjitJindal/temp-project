@@ -28,7 +28,6 @@ export default function Tabs(props: Props) {
   return (
     <AntTabs
       activeKey={activeKey}
-      style={{ maxHeight: props.tabHeight, overflow: 'auto' }}
       type={props?.type}
       size={props?.size}
       className={cn(props.type === 'line' ? s.root : '')}

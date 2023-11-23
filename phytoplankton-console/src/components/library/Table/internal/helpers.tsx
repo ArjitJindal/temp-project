@@ -119,7 +119,6 @@ export function useTanstackTable<
   Item extends object,
   Params extends object = CommonParams,
 >(options: {
-  tableId: string;
   dataRes: AsyncResource<TableData<Item>>;
   rowKey: FieldAccessor<Item>;
   columns: TableColumn<Item>[];
@@ -149,7 +148,6 @@ export function useTanstackTable<
     isSortable,
     defaultSorting,
     onExpandedMetaChange,
-    tableId,
   } = options;
   const extraTableContext = usePersistedSettingsContext();
   const [columnOrder] = extraTableContext.columnOrder;
@@ -349,7 +347,7 @@ export function useTanstackTable<
     data: preparedData,
     columns: allColumns,
     getRowId: (originalRow: TableRow<Item>): string => {
-      return `${tableId}-${applyFieldAccessor(originalRow.content, rowKey as FieldAccessor<Item>)}`;
+      return `${applyFieldAccessor(originalRow.content, rowKey as FieldAccessor<Item>)}`;
     },
 
     getCoreRowModel: TanTable.getCoreRowModel(),
@@ -585,20 +583,4 @@ export function flatDataItems<T extends object>(
     }
   }
   return result;
-}
-
-export function handleRowExpand(cell: TanTable.Cell<TableRow<unknown>, unknown>) {
-  const isSomeRowsExpanded = cell.getContext().table.getIsSomeRowsExpanded();
-  const presentRowExpanded = cell.row.getIsExpanded();
-  if (presentRowExpanded) {
-    cell.row.toggleExpanded();
-    return;
-  }
-  if (isSomeRowsExpanded) {
-    cell.getContext().table.toggleAllRowsExpanded(false);
-  }
-  cell.row.toggleExpanded();
-  document
-    .getElementById(`row_${cell.row.id}`)
-    ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }

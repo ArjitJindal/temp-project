@@ -157,5 +157,5 @@ export default function AlertExpanded(props: Props) {
     transactionsResponse,
   ]);
 
-  return <Tabs items={items} type="line" tabHeight={350} />;
+  return <Tabs items={items} type="line" />;
 }

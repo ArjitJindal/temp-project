@@ -851,7 +851,7 @@ export default function AlertTable(props: Props) {
         expandedRowId={expandedAlertId}
         tableId={isEmbedded ? 'alerts-list-embedded' : 'alerts-list'}
         rowKey={'alertId'}
-        fitHeight={isEmbedded ? 600 : true}
+        fitHeight={isEmbedded ? 500 : true}
         hideFilters={isEmbedded}
         innerRef={actionRef}
         columns={columns}
