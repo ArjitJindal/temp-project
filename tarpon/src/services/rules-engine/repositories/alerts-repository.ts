@@ -151,47 +151,50 @@ export class AlertsRepository {
     const caseConditions: Filter<Case>[] =
       await caseRepository.getCasesConditions(params, false, false)
 
+    if (params.filterOutCaseStatus != null) {
+      caseConditions.push({
+        caseStatus: { $nin: params.filterOutCaseStatus },
+      })
+    }
+    if (params.filterCaseStatus != null) {
+      caseConditions.push({
+        caseStatus: { $in: params.filterCaseStatus },
+      })
+    }
+
+    if (
+      params.filterCaseAfterCreatedTimestamp != null &&
+      params.filterCaseBeforeCreatedTimestamp != null
+    ) {
+      caseConditions.push({
+        createdTimestamp: {
+          $lte: params.filterCaseBeforeCreatedTimestamp,
+          $gte: params.filterCaseAfterCreatedTimestamp,
+        },
+      })
+    }
+
     const pipeline: Document[] = [
       ...(caseConditions.length > 0
         ? [{ $match: { $and: caseConditions } }]
         : []),
     ]
 
-    if (
-      params.filterCaseAfterCreatedTimestamp != null &&
-      params.filterCaseBeforeCreatedTimestamp != null
-    ) {
-      pipeline.push({
-        $match: {
-          createdTimestamp: {
-            $lte: params.filterCaseBeforeCreatedTimestamp,
-            $gte: params.filterCaseAfterCreatedTimestamp,
-          },
-        },
-      })
-    }
-
-    pipeline.push({
-      $unwind: {
-        path: '$alerts',
-      },
-    })
-
-    const conditions: Filter<AlertListResponseItem>[] = []
+    const alertConditions: Filter<AlertListResponseItem>[] = []
 
     if (params.filterCaseId != null) {
-      conditions.push({
+      alertConditions.push({
         'alerts.caseId': params.filterCaseId,
       })
     }
     if (params.filterAction != null) {
-      conditions.push({
+      alertConditions.push({
         'alerts.ruleAction': params.filterAction,
       })
     }
 
     if (params.filterRulesHit?.length) {
-      conditions.push({
+      alertConditions.push({
         'alerts.ruleInstanceId': {
           $in: params.filterRulesHit,
         },
@@ -199,7 +202,7 @@ export class AlertsRepository {
     }
 
     if (params.filterAlertPriority?.length) {
-      conditions.push({
+      alertConditions.push({
         'alerts.priority': {
           $in: params.filterAlertPriority,
         },
@@ -210,12 +213,12 @@ export class AlertsRepository {
       const filterQaStatus = params.filterQaStatus.map((status) =>
         (status as string) === "NOT_QA'd" ? undefined : status
       )
-      conditions.push({
+      alertConditions.push({
         'alerts.ruleQaStatus': { $in: filterQaStatus },
       })
     }
     if (params.filterOutQaStatus) {
-      conditions.push({
+      alertConditions.push({
         'alerts.ruleQaStatus': { $nin: params.filterOutQaStatus },
       })
     }
@@ -224,7 +227,7 @@ export class AlertsRepository {
       params.filterAlertBeforeCreatedTimestamp != null &&
       params.filterAlertAfterCreatedTimestamp != null
     ) {
-      conditions.push({
+      alertConditions.push({
         'alerts.createdTimestamp': {
           $lte: params.filterAlertBeforeCreatedTimestamp,
           $gte: params.filterAlertAfterCreatedTimestamp,
@@ -238,7 +241,7 @@ export class AlertsRepository {
     ) {
       console.log('start', params.filterAlertsByLastUpdatedStartTimestamp)
       console.log('end', params.filterAlertsByLastUpdatedEndTimestamp)
-      conditions.push({
+      alertConditions.push({
         'alerts.updatedAt': {
           $gte: params.filterAlertsByLastUpdatedStartTimestamp,
           $lte: params.filterAlertsByLastUpdatedEndTimestamp,
@@ -247,7 +250,7 @@ export class AlertsRepository {
     }
 
     if (params.filterClosingReason != null) {
-      conditions.push({
+      alertConditions.push({
         $and: [
           {
             'alerts.alertStatus': 'CLOSED',
@@ -262,14 +265,14 @@ export class AlertsRepository {
     }
 
     if (params.filterOriginPaymentMethods) {
-      conditions.push({
+      alertConditions.push({
         'alerts.originPaymentMethods': {
           $in: params.filterOriginPaymentMethods,
         },
       })
     }
     if (params.filterDestinationPaymentMethods) {
-      conditions.push({
+      alertConditions.push({
         'alerts.destinationPaymentMethods': {
           $in: params.filterDestinationPaymentMethods,
         },
@@ -277,23 +280,13 @@ export class AlertsRepository {
     }
 
     if (params.filterAlertId != null) {
-      conditions.push({
+      alertConditions.push({
         'alerts.alertId': prefixRegexMatchFilter(params.filterAlertId),
-      })
-    }
-    if (params.filterOutCaseStatus != null) {
-      conditions.push({
-        caseStatus: { $not: { $in: [params.filterOutCaseStatus] } },
-      })
-    }
-    if (params.filterCaseStatus != null) {
-      conditions.push({
-        caseStatus: { $in: [params.filterCaseStatus] },
       })
     }
 
     if (params.filterQaAssignmentsIds?.length) {
-      conditions.push({
+      alertConditions.push({
         'alerts.qaAssignment': {
           $elemMatch: {
             assigneeUserId: { $in: params.filterQaAssignmentsIds },
@@ -301,12 +294,11 @@ export class AlertsRepository {
         },
       })
     }
-
     if (
       params.filterAssignmentsIds != null &&
       params.filterAssignmentsIds?.length
     ) {
-      conditions.push({
+      alertConditions.push({
         $or: [
           ...this.getAssignmentFilter(
             'reviewAssignments',
@@ -320,36 +312,35 @@ export class AlertsRepository {
       })
     }
     if (params.filterRuleInstanceId != null) {
-      conditions.push({
+      alertConditions.push({
         'alerts.ruleInstanceId': { $in: params.filterRuleInstanceId },
       })
     }
-
     if (params.filterRuleQueueIds != null) {
-      conditions.push(getRuleQueueFilter(params.filterRuleQueueIds))
+      alertConditions.push(getRuleQueueFilter(params.filterRuleQueueIds))
     }
 
     if (params.filterOutAlertStatus && params.filterOutAlertStatus.length > 0) {
-      conditions.push({
+      alertConditions.push({
         'alerts.alertStatus': { $nin: params.filterOutAlertStatus },
       })
     }
 
     if (params.filterAlertStatus && params.filterAlertStatus.length > 0) {
-      conditions.push({
+      alertConditions.push({
         'alerts.alertStatus': { $in: params.filterAlertStatus },
       })
     }
 
     if (params.filterRuleNature && params.filterRuleNature.length > 0) {
-      conditions.push({
+      alertConditions.push({
         'alerts.ruleNature': {
           $in: params.filterRuleNature,
         },
       })
     }
 
-    conditions.push({
+    alertConditions.push({
       $or: [
         {
           // Need to compare to null, because mongo sometimes replaces undefined with null when saves objects
@@ -363,10 +354,24 @@ export class AlertsRepository {
       ],
     })
 
-    if (conditions.length > 0) {
+    if (alertConditions.length > 0) {
       pipeline.push({
         $match: {
-          $and: conditions,
+          $and: alertConditions,
+        },
+      })
+    }
+
+    pipeline.push({
+      $unwind: {
+        path: '$alerts',
+      },
+    })
+
+    if (alertConditions.length > 0) {
+      pipeline.push({
+        $match: {
+          $and: alertConditions,
         },
       })
     }
