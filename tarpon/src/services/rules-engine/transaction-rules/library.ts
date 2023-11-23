@@ -679,33 +679,6 @@ const _RULES_LIBRARY: Array<
     }
   },
   () => {
-    const defaultParameters: TransactionAmountRuleParameters = {
-      transactionAmountThreshold: {
-        [DEFAULT_CURRENCY_KEYWORD]: 10000,
-      },
-    }
-    return {
-      id: 'R-75',
-      type: 'TRANSACTION',
-      name: 'Currency transaction report needed',
-      description:
-        'If a transaction amount is more than x - a "CTR" is required by law. x depends on jurisdiction. EU is 10,000 euro; US is 10,000 USD',
-      descriptionTemplate:
-        "CTR required since {{ if-sender 'sending' 'receiving' }} {{ format-money hitParty.amount }} is above {{ format-money limit currency }}",
-      defaultParameters,
-      defaultAction: 'FLAG',
-      ruleImplementationName: 'transaction-amount',
-      labels: [],
-      defaultNature: 'AML',
-      defaultCasePriority: 'P1',
-      typology: 'Objective transaction reporting',
-      typologyGroup: 'Objective transaction reporting',
-      typologyDescription:
-        'Objective reporting required by AML Laws and regulations for transactions meeting certain criteria',
-      source: 'Local laws and regulations',
-    }
-  },
-  () => {
     const defaultParameters: HighRiskIpAddressCountriesParameters = {
       highRiskCountries: ['RU', 'SY', 'RO', 'UA'],
     }

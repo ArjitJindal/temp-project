@@ -110,7 +110,6 @@ export const ruleNarratives = [
     narrative:
       'The customer activity was alerted by our transaction monitoring system on mm/dd/yyyy by the rule "Customer money flow is above the expected volume". The customer received/sent from mm/dd/yyyy to mm/dd/yyyy X number of transactions totalling ________.   The counterparty(ies) of the transactions was/were reviewed and material adverse media was identified via public search ( then explain what exactly adverse media says ). The customer was asked to explain and provide supporting documentation for an increase in the volume/value of transactions  ______ on mm/dd/yyyy. The customer did not provide a relevant explanation/is not responsive/or the provided explanations and documentation are not in line with the KYC information we hold on the customer. The activity does not make economic sense and, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing.',
   },
-  { id: 'R-75', narrative: 'N/A' },
   {
     id: 'R-77',
     narrative:

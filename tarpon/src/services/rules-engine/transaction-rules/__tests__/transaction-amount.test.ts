@@ -58,58 +58,6 @@ describe('R-2 description formatting', () => {
   )
 })
 
-describe('R-75 description formatting', () => {
-  const TEST_TENANT_ID = getTestTenantId()
-
-  setUpRulesHooks(TEST_TENANT_ID, [
-    {
-      type: 'TRANSACTION',
-      ruleImplementationName: 'transaction-amount',
-      defaultParameters: {
-        transactionAmountThreshold: { USD: 1000, EUR: 1000 },
-      } as TransactionAmountRuleParameters,
-      defaultAction: 'FLAG',
-    },
-  ])
-
-  setUpUsersHooks(TEST_TENANT_ID, [
-    getTestUser({
-      userId: '1',
-      userDetails: {
-        name: {
-          firstName: '1',
-        },
-      },
-    }),
-    getTestUser({
-      userId: 'description-1',
-      userDetails: {
-        name: {
-          firstName: '1',
-        },
-      },
-    }),
-  ])
-
-  testRuleDescriptionFormatting(
-    'first',
-    TEST_TENANT_ID,
-    [
-      getTestTransaction({
-        originUserId: 'description-1',
-        originAmountDetails: {
-          transactionAmount: 10000,
-          transactionCurrency: 'EUR',
-        },
-      }),
-    ],
-    {
-      descriptionTemplate: getRuleByRuleId('R-75').descriptionTemplate,
-    },
-    ['CTR required since sending 10000.00 EUR is above 1000.00 EUR.']
-  )
-})
-
 describe('Core logic', () => {
   const TEST_TENANT_ID = getTestTenantId()
 

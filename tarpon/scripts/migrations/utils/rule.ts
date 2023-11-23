@@ -11,6 +11,9 @@ import {
   TransactionHistoricalFilters,
   UserFilters,
 } from '@/services/rules-engine/filters'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { replaceMagicKeyword } from '@/utils/object'
+import { DEFAULT_CURRENCY_KEYWORD } from '@/services/rules-engine/transaction-rules/library'
 
 function isRule(rule: Rule | RuleInstance) {
   return !!(rule as Rule).defaultParameters
@@ -340,4 +343,120 @@ async function deleteUnusedFilterPrivate(
       console.info(`Updated 'rule instance' ${ruleInstance.id}`)
     }
   }
+}
+export async function migrateRuleInstance(
+  sourceRuleId: string,
+  targetRuleId: string,
+  converterCallback: (
+    ruleInstance: RuleInstance,
+    sourceRule: Rule,
+    targetRule: Rule
+  ) => RuleInstance
+) {
+  await migrateAllTenants((tenant) =>
+    migrateRuleInstancePrivate(
+      sourceRuleId,
+      targetRuleId,
+      converterCallback,
+      tenant.id
+    )
+  )
+}
+
+function defaultRuleMigrationBehavior(
+  ruleInstance: RuleInstance,
+  sourceRule: Rule,
+  targetRule: Rule
+): RuleInstance {
+  const tempRuleInstance: RuleInstance = {
+    ...ruleInstance,
+    ruleId: targetRule.id,
+    typology: targetRule.typology,
+    typologyDescription: targetRule.typologyDescription,
+    typologyGroup: targetRule.typologyGroup,
+    source: targetRule.source,
+    labels: targetRule.labels,
+  }
+
+  if (ruleInstance.ruleDescriptionAlias === sourceRule.description) {
+    tempRuleInstance.ruleDescriptionAlias = targetRule.description
+  }
+
+  if (ruleInstance.ruleNameAlias === sourceRule.name) {
+    tempRuleInstance.ruleNameAlias = targetRule.name
+  }
+
+  return tempRuleInstance
+}
+
+async function migrateRuleInstancePrivate(
+  sourceRuleId: string, // Rule Id not Rule Instance Id
+  targetRuleId: string, // Rule Id not Rule Instance Id
+  converterCallback: (
+    ruleInstance: RuleInstance,
+    sourceRule: Rule,
+    targetRule: Rule
+  ) => RuleInstance,
+  tenantId: string
+) {
+  if (sourceRuleId === targetRuleId) {
+    throw new Error(
+      `Source rule id and target rule id cannot be the same for tenant ${tenantId}`
+    )
+  }
+
+  const dynamoDb = getDynamoDbClient()
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+  const ruleRepository = new RuleRepository(tenantId, {
+    dynamoDb,
+  })
+  const tenantRepository = new TenantRepository(tenantId, {
+    dynamoDb,
+  })
+  const rules = await ruleRepository.getRulesByIds([sourceRuleId, targetRuleId])
+  const sourceRule = rules.find((rule) => rule.id === sourceRuleId)
+  const targetRule = rules.find((rule) => rule.id === targetRuleId)
+  const tenantSettings = await tenantRepository.getTenantSettings()
+  if (!sourceRule || !targetRule) {
+    throw new Error(
+      `Rule ${sourceRuleId} or ${targetRuleId} not found for tenant ${tenantId}`
+    )
+  }
+
+  const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
+  for (const ruleInstance of ruleInstances) {
+    if (ruleInstance.ruleId === sourceRuleId) {
+      const newRuleInstance = converterCallback(
+        defaultRuleMigrationBehavior(ruleInstance, sourceRule, targetRule),
+        sourceRule,
+        targetRule
+      )
+
+      await ruleInstanceRepository.createOrUpdateRuleInstance(
+        replaceMagicKeyword(
+          newRuleInstance,
+          DEFAULT_CURRENCY_KEYWORD,
+          tenantSettings?.defaultValues?.currency ?? 'USD'
+        ) as RuleInstance
+      )
+      console.info(`Updated 'rule instance' ${ruleInstance.id}`)
+    }
+  }
+}
+
+export const deleteRules = async (ruleIds: string[]) => {
+  const tenantId = FLAGRIGHT_TENANT_ID
+  const dynamoDb = getDynamoDbClient()
+  const ruleRepository = new RuleRepository(tenantId, {
+    dynamoDb,
+  })
+
+  await Promise.all(
+    ruleIds.map(async (ruleId) => {
+      await ruleRepository.deleteRule(ruleId)
+      console.info(`Deleted 'rule' ${ruleId}`)
+    })
+  )
 }
