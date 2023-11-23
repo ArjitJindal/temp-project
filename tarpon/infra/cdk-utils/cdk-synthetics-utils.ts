@@ -14,11 +14,15 @@ import { Config } from '@lib/configs/config'
 export const createCanary = (
   scope: Construct & { config: Config },
   name: string,
-  minutes: number
+  minutes: number,
+  test: boolean = false
 ) => {
+  const code = Code.fromAsset(
+    path.join(`dist`, `canaries`, `${CANARIES[name].path}`)
+  )
   const canary = new Canary(scope, name, {
     schedule: Schedule.rate(Duration.minutes(minutes)),
-    canaryName: name,
+    canaryName: `${test ? 'test-canary' : name}`,
     startAfterCreation: true,
     successRetentionPeriod: Duration.days(7),
     failureRetentionPeriod: Duration.days(14),
@@ -36,11 +40,8 @@ export const createCanary = (
       },
     },
     runtime: Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_0,
-
     test: Test.custom({
-      code: Code.fromAsset(
-        path.join(`dist`, `canaries`, `${CANARIES[name].path}`)
-      ),
+      code,
       handler: `index.handler`,
     }),
   })

@@ -48,6 +48,8 @@
     "deploy:prod:au-1:clean": "npm run clear && npm install && npm run build && npm run synth:prod:au-1 && npm run deploy:prod:au-1",
     "deploy:prod:us-1": "export ENV=prod:us-1 && cdk deploy prod-tarpon  --require-approval=never",
     "deploy:prod:us-1:clean": "npm run clear && npm install && npm run build && npm run synth:prod:us-1 && npm run deploy:prod:us-1",
+    "deploy:test:canary": "export ENV=dev && export CANARY=true && npm run clear && npm install && npm run build && cdk synth --quiet dev-tarpon-test-canary && cdk deploy --quiet dev-tarpon-test-canary --auto-approve --require-approval=never",
+    "delete:test:canary": "export ENV=dev && export CANARY=true && cdk destroy --quiet dev-tarpon-test-canary --force",
     "test": "jest --forceExit --config jest.config.ts",
     "test:silent": "npm run test -- --silent",
     "test:ci": "EXEC_SOURCE=CI NODE_OPTIONS='--max-old-space-size=12288' npm run test -- --silent --ci --cacheDirectory ~/.jest-cache",

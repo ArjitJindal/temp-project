@@ -346,3 +346,10 @@ For example, if you want to use the transactions from tenant A
    npm run cross-tenant-query:sandbox
    npm run cross-tenant-query:prod
    ```
+
+### To Test the Canaries
+
+- To test a canary, run `npm run deploy:test:canary` then go to the AWS console and check the canary status.
+- Test canaries will run once every 30 minutes.
+- To test canary again and again manually stop and start the canary from the AWS console.
+- Once testing is done, run `npm run delete:test:canary` to delete the canary.

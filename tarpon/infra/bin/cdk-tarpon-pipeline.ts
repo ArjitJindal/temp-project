@@ -11,6 +11,7 @@ import { config as prodConfigEu1 } from '@lib/configs/config-prod-eu-1'
 import { config as prodConfigEu2 } from '@lib/configs/config-prod-eu-2'
 import { isQaEnv } from '@lib/qa'
 import { CdkTarponStack } from '../cdk-tarpon-stack'
+import { CdkTarponTestCanaryStack } from '../cdk-deploy-test-canary-stack'
 
 const app = new cdk.App()
 
@@ -18,7 +19,17 @@ if (process.env.ENV === 'local') {
   new CdkTarponStack(app, `${localConfig.stage}-tarpon`, localConfig)
 }
 
-if (process.env.ENV === 'dev') {
+if (process.env.ENV === 'dev' && process.env.CANARY === 'true') {
+  console.log('Deploying canary')
+  console.log(devConfig.stage)
+  new CdkTarponTestCanaryStack(
+    app,
+    `${devConfig.stage}-tarpon-test-canary`,
+    devConfig
+  )
+}
+
+if (process.env.ENV === 'dev' && process.env.CANARY !== 'true') {
   new CdkTarponStack(app, `${devConfig.stage}-tarpon`, devConfig)
 }
 
