@@ -96,7 +96,7 @@ export default function UserItem() {
             activeKey={tab}
             onChange={(newTab) => {
               navigate(
-                keepBackUrl(makeUrl('/users/list/:list/:id/:tab', { id, list, title: newTab })),
+                keepBackUrl(makeUrl('/users/list/:list/:id/:tab', { id, list, tab: newTab })),
                 {
                   replace: true,
                 },
