@@ -37,7 +37,7 @@ export const config: Config = {
       MEMORY_SIZE: 1024,
     },
     TRANSACTION_AGGREGATION_LAMBDA: {
-      MEMORY_SIZE: 4096,
+      MEMORY_SIZE: 1024,
     },
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE: 512,

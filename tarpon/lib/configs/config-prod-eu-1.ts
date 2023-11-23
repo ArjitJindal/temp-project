@@ -40,8 +40,7 @@ export const config: Config = {
       MEMORY_SIZE: 512,
     },
     TRANSACTION_AGGREGATION_LAMBDA: {
-      // TODO: Downscale after FR-2863
-      MEMORY_SIZE: 10240,
+      MEMORY_SIZE: 2048,
     },
     TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: 5,
