@@ -73,6 +73,7 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
   BOOLEAN: DEFAULT_RENDERER,
   _3DS_STATUS: DEFAULT_RENDERER,
   SOURCE_OF_FUNDS: DEFAULT_RENDERER,
+  AMOUNT_RANGE: DEFAULT_RENDERER,
 };
 
 export function findParameter(

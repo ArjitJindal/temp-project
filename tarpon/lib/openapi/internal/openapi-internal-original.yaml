@@ -7163,6 +7163,7 @@ components:
             - $ref: '#/components/schemas/RiskParameterValueMultiple'
             - $ref: '#/components/schemas/RiskParameterValueTimeRange'
             - $ref: '#/components/schemas/RiskParameterValueDayRange'
+            - $ref: '#/components/schemas/RiskParameterValueAmountRange'
       required:
         - content
     RiskParameterValueLiteral:
@@ -7224,6 +7225,24 @@ components:
         - startHour
         - endHour
         - timezone
+    RiskParameterValueAmountRange:
+      title: RiskParameterValueAmountRange
+      properties:
+        kind:
+          type: string
+          enum:
+            - AMOUNT_RANGE
+        start:
+          type: number
+        end:
+          type: number
+        currency:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+      required:
+        - kind
+        - start
+        - end
+        - currency
     RiskParameterValueDayRange:
       title: RiskParameterValueDayRange
       properties:
@@ -7305,6 +7324,8 @@ components:
             - occupation
             - reasonForAccountOpening
             - sourceOfFunds
+            - originAmountDetails.transactionAmount
+            - destinationAmountDetails.transactionAmount
         isActive:
           type: boolean
         isDerived:

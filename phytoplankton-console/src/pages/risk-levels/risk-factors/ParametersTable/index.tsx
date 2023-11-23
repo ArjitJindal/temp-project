@@ -76,7 +76,10 @@ export default function ParametersTable(props: Props) {
                     return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
                   case 'DAY_RANGE':
                     return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
+                  case 'AMOUNT_RANGE':
+                    return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
                 }
+
                 return neverReturn(type, <Tag>{type}</Tag>);
               },
             },

@@ -11,6 +11,7 @@ import {
   ParameterName,
   ParameterValues,
   RiskLevelTable,
+  riskValueAmountRange,
   riskValueDayRange,
   riskValueLiteral,
   riskValueMultiple,
@@ -19,11 +20,12 @@ import {
   RiskValueType,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
-import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
+import { CURRENCIES, CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { businessType, consumerType } from '@/utils/customer-type';
 import { RiskLevel } from '@/utils/risk-levels';
 import Slider from '@/components/library/Slider';
 import {
+  RiskParameterValueAmountRange,
   RiskParameterValueDayRange,
   RiskParameterValueDayRangeEndGranularityEnum,
   RiskParameterValueDayRangeStartGranularityEnum,
@@ -38,7 +40,7 @@ import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import { isTransactionType } from '@/utils/api/transactions';
 import { RESIDENCE_TYPES } from '@/utils/residence-types';
 import { useApi } from '@/api';
-import { TRANSACTIONS_UNIQUES, USERS_UNIQUES } from '@/utils/queries/keys';
+import { SETTINGS, TRANSACTIONS_UNIQUES, USERS_UNIQUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import { timezones } from '@/utils/timezones';
 import { _3DS_DONE_OPTIONS } from '@/utils/3dsOptions';
@@ -49,7 +51,6 @@ import { BOOLEAN_OPTIONS } from '@/utils/booleanOptions';
 import { SOURCE_OF_FUNDSS } from '@/apis/models-custom/SourceOfFunds';
 import { capitalizeWords } from '@/utils/humanize';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
-
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
   value?: RiskValueContentByType<T> | null;
@@ -78,6 +79,8 @@ type RiskValueContentByType<T extends RiskValueType> = T extends 'LITERAL'
   ? RiskParameterValueTimeRange
   : T extends 'DAY_RANGE'
   ? RiskParameterValueDayRange
+  : T extends 'AMOUNT_RANGE'
+  ? RiskParameterValueAmountRange
   : never;
 
 export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
@@ -101,6 +104,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   BANK_NAMES: 'MULTIPLE',
   _3DS_STATUS: 'LITERAL',
   SOURCE_OF_FUNDS: 'MULTIPLE',
+  AMOUNT_RANGE: 'AMOUNT_RANGE',
 };
 
 export const DEFAULT_RISK_LEVEL = 'VERY_HIGH';
@@ -573,6 +577,28 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isNullableAllowed: true,
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
   },
+  {
+    parameter: 'originAmountDetails.transactionAmount',
+    title: 'Origin transaction amount',
+    description: 'Risk based on origin transaction amount',
+    entity: 'TRANSACTION',
+    dataType: 'AMOUNT_RANGE',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    isNullableAllowed: false,
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
+  {
+    parameter: 'destinationAmountDetails.transactionAmount',
+    title: 'Destination transaction amount',
+    description: 'Risk based on destination transaction amount',
+    entity: 'TRANSACTION',
+    dataType: 'AMOUNT_RANGE',
+    parameterType: 'VARIABLE',
+    isDerived: true,
+    isNullableAllowed: true,
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
 ];
 
 export const ALL_RISK_PARAMETERS = [
@@ -901,6 +927,76 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   SOURCE_OF_FUNDS: ((props) => {
     return <MultipleSelect options={SOURCE_OF_FUNDS_OPTIONS} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
+  AMOUNT_RANGE: ((props) => {
+    const api = useApi();
+    const queryData = useQuery(SETTINGS(), () => api.getTenantsSettings());
+    const defaultCurrency =
+      props.existedValues?.at(-1)?.currency ??
+      getOr(queryData.data, {}).defaultValues?.currency ??
+      'USD';
+    return (
+      <>
+        <div className={style.amount_container}>
+          <div className={style.amountCurrencyContainer}>
+            <Label label={<div className={style.currencyLabel}>Currency</div>} element="div">
+              <Select
+                isDisabled={props.disabled}
+                value={props.value?.currency ?? defaultCurrency}
+                options={CURRENCIES_SELECT_OPTIONS}
+                onChange={(newValue) => {
+                  props.onChange(
+                    riskValueAmountRange(
+                      props.value?.start ?? 0,
+                      props.value?.end ?? 0,
+                      newValue ?? defaultCurrency,
+                    ),
+                  );
+                }}
+              />
+            </Label>
+          </div>
+          <div className={style.amountRangeLabel}>
+            <Label label="From" element="div">
+              <NumberInput
+                isDisabled={props.disabled}
+                min={0}
+                value={props.value?.start ?? 0}
+                htmlAttrs={{ type: 'number', style: { width: 100 } }}
+                onChange={(value) =>
+                  props.onChange(
+                    riskValueAmountRange(
+                      value ?? 0,
+                      props.value?.end ?? 0,
+                      props.value?.currency ?? defaultCurrency,
+                    ),
+                  )
+                }
+              />
+            </Label>
+          </div>
+          <div className={style.amountRangeLabel}>
+            <Label label="To" element="div">
+              <NumberInput
+                isDisabled={props.disabled}
+                min={0}
+                value={props.value?.end ?? 0}
+                htmlAttrs={{ type: 'number', style: { width: 100 } }}
+                onChange={(value) =>
+                  props.onChange(
+                    riskValueAmountRange(
+                      props.value?.start ?? 0,
+                      value ?? 0,
+                      props.value?.currency ?? defaultCurrency,
+                    ),
+                  )
+                }
+              />
+            </Label>
+          </div>
+        </div>
+      </>
+    );
+  }) as InputRenderer<'AMOUNT_RANGE'>,
 };
 
 const DEFAULT_MULTIPLE_RENDERER: ValueRenderer<'MULTIPLE'> = ({ value }) => {
@@ -1111,7 +1207,39 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
     return <span>{value?.content === true ? 'Yes' : 'No'}</span>;
   }) as ValueRenderer<'LITERAL'>,
   SOURCE_OF_FUNDS: DEFAULT_MULTIPLE_RENDERER,
+  AMOUNT_RANGE: (({ value }) => {
+    if (value == null) return null;
+    const currency = CURRENCIES.find((currency) => currency.value === value?.currency);
+    const currencySymbol = currency?.symbol ?? `${currency?.value} `;
+    return (
+      <div style={{ display: 'grid', gridAutoFlow: 'column', gap: '.5rem', paddingTop: '32px' }}>
+        <p style={{ marginBottom: 0 }}>
+          {currencySymbol}
+          {value?.start} - {currencySymbol}
+          {value?.end}
+        </p>
+      </div>
+    );
+  }) as ValueRenderer<'AMOUNT_RANGE'>,
 };
+
+type Information<T extends RiskValueType> = (params: {
+  newParameterName: ParameterName;
+  newValue: RiskValueContentByType<T>;
+  newRiskLevel: RiskLevel | null;
+  previousValues: ParameterValues;
+  defaultCurrency: string | null;
+}) => null | string;
+
+export const NEW_VALUE_INFOS: Information<any>[] = [
+  ({ newValue, defaultCurrency }) => {
+    if (newValue.kind === 'AMOUNT_RANGE') {
+      if (newValue.currency !== defaultCurrency)
+        return 'Transactions in other currencies will be auto converted for the defined value range.';
+    }
+    return null;
+  },
+];
 
 type Validation<T extends RiskValueType> = (params: {
   newParameterName: ParameterName;
@@ -1126,7 +1254,9 @@ export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
       newParameterName === 'userDetails.dateOfBirth' ||
       newParameterName === 'legalEntity.companyRegistrationDetails.dateOfRegistration' ||
       newParameterName === 'createdTimestamp' ||
-      newParameterName === 'timestamp'
+      newParameterName === 'timestamp' ||
+      newParameterName === 'originAmountDetails.transactionAmount' ||
+      newParameterName === 'destinationAmountDetails.transactionAmount'
     ) {
       if (newValue.kind === 'RANGE') {
         const { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
@@ -1209,6 +1339,22 @@ export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
         if (hasOverlaps) {
           return 'Time ranges should not overlap';
         }
+      } else if (newValue.kind === 'AMOUNT_RANGE') {
+        if (newValue.start > newValue.end) return 'Lower value must be less than the upper value.';
+        const overlaps = previousValues.some(({ parameterValue }) => {
+          if (parameterValue.content.kind !== 'AMOUNT_RANGE') return false;
+          return (
+            parameterValue.content.end > newValue.start &&
+            parameterValue.content.start < newValue.end
+          );
+        });
+        if (overlaps) return 'Value ranges should not overlap.';
+        const differentCurrencies = previousValues.some(({ parameterValue }) => {
+          if (parameterValue.content.kind !== 'AMOUNT_RANGE') return false;
+          return parameterValue.content.currency !== newValue.currency;
+        });
+        if (differentCurrencies)
+          return 'You can only set values in one currency. Transactions in other currencies will be auto converted for the defined value range.';
       }
     }
     return null;

@@ -11,6 +11,8 @@ import {
   RiskLevel,
   RiskParameterValueTimeRange,
   RiskParameterValueDayRange,
+  RiskParameterValueAmountRange,
+  CurrencyCode,
 } from '@/apis';
 
 export type RiskValueContent = RiskParameterValue['content'];
@@ -58,6 +60,19 @@ export function riskValueMultiple(values: RiskParameterValueLiteral[]): RiskPara
   return {
     kind: 'MULTIPLE',
     values,
+  };
+}
+
+export function riskValueAmountRange(
+  start: number,
+  end: number,
+  currency: CurrencyCode,
+): RiskParameterValueAmountRange {
+  return {
+    kind: 'AMOUNT_RANGE',
+    start,
+    end,
+    currency,
   };
 }
 
@@ -118,4 +133,5 @@ export type DataType =
   | 'USER_REGISTRATION_STATUS'
   | 'BANK_NAMES'
   | '_3DS_STATUS'
-  | 'SOURCE_OF_FUNDS';
+  | 'SOURCE_OF_FUNDS'
+  | 'AMOUNT_RANGE';

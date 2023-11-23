@@ -268,6 +268,48 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isNullableAllowed: true,
       parameterType: 'VARIABLE',
     },
+    {
+      parameter: 'originAmountDetails.transactionAmount',
+      isActive: true,
+      isDerived: true,
+      riskEntityType: 'TRANSACTION',
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'AMOUNT_RANGE',
+              start: 110000,
+              end: 130000,
+              currency: 'USD',
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      parameterType: 'VARIABLE',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    },
+    {
+      parameter: 'destinationAmountDetails.transactionAmount',
+      isActive: true,
+      isDerived: true,
+      riskEntityType: 'TRANSACTION',
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'AMOUNT_RANGE',
+              start: 110000,
+              end: 130000,
+              currency: 'USD',
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      parameterType: 'VARIABLE',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    },
   ]
 export const TEST_ITERABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'shareHolders',

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Button } from 'antd';
+import { Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
 import { isEqual as equal } from 'lodash';
 import {
@@ -13,18 +13,23 @@ import {
 import {
   DEFAULT_RISK_LEVEL,
   INPUT_RENDERERS,
+  NEW_VALUE_INFOS,
   NEW_VALUE_VALIDATIONS,
   VALUE_RENDERERS,
 } from '../consts';
 import style from './style.module.less';
 import { RiskLevel } from '@/apis';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
-import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
+import { AsyncResource, getOr, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
 import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
 import { useHasPermissions } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { levelToAlias } from '@/utils/risk-levels';
+import { useApi } from '@/api';
+import { SETTINGS } from '@/utils/queries/keys';
+import { useQuery } from '@/utils/queries/hooks';
+import Alert from '@/components/library/Alert';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -41,6 +46,7 @@ interface Props {
 const labelsExist: { [key in DataType]?: { input: boolean; value: boolean } } = {
   DAY_RANGE: { input: true, value: true },
   TIME_RANGE: { input: true, value: false },
+  AMOUNT_RANGE: { input: true, value: true },
 };
 
 const labelExistsStyle = (dataType: DataType, type: 'input' | 'value'): React.CSSProperties => {
@@ -57,7 +63,9 @@ export default function ValuesTable(props: Props) {
   const lastDefaultRiskLevel = useLastSuccessValue(currentDefaultRiskLevel, DEFAULT_RISK_LEVEL);
   const [values, setValues] = useState(lastValues);
   const [defaultRiskLevel, setDefaultRiskLevel] = useState(lastDefaultRiskLevel);
-
+  const api = useApi();
+  const queryData = useQuery(SETTINGS(), () => api.getTenantsSettings());
+  const defaultCurrency = getOr(queryData.data, {}).defaultValues?.currency ?? 'USD';
   const hasWritePermissions = useHasPermissions(['risk-scoring:risk-factors:write']);
 
   useEffect(() => {
@@ -113,6 +121,20 @@ export default function ValuesTable(props: Props) {
         newRiskLevel: newRiskLevel ?? null,
         newParameterName: parameter,
         previousValues: values,
+      });
+    },
+    null,
+  );
+
+  const newValueInfoMessage = NEW_VALUE_INFOS.reduce<string | null>(
+    (acc, information): string | null => {
+      if (newValue == null || acc != null) return acc;
+      return information({
+        newValue: newValue,
+        newRiskLevel: newRiskLevel ?? null,
+        newParameterName: parameter,
+        previousValues: values,
+        defaultCurrency: defaultCurrency,
       });
     },
     null,
@@ -272,9 +294,14 @@ export default function ValuesTable(props: Props) {
             </>
           )}
         </>
-        {newValueValidationMessage != null && (
-          <Alert message={newValueValidationMessage} type="error" />
-        )}
+        <div className={style.alertBox}>
+          {newValueInfoMessage != null && newValueValidationMessage == null && (
+            <Alert children={newValueInfoMessage} type="info" />
+          )}
+          {newValueValidationMessage != null && (
+            <Alert children={newValueValidationMessage} type="error" />
+          )}
+        </div>
       </div>
       <div className={style.footer}>
         <Button disabled={loading || isEqual || !hasWritePermissions} onClick={handleCancel}>
