@@ -48,6 +48,7 @@ describe('Sanctions Service', () => {
           body: JSON.stringify({
             search_term: 'Foo Bar',
             fuzziness: 0.5,
+            search_profile: '65032c2f-d579-4ef6-8464-c8fbe9df11bb',
             filters: { country_codes: ['DE', 'FR'], birth_year: 1992 },
           }),
           method: 'POST',

@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-
-import { isEqual, round, startCase } from 'lodash'
+import { round, startCase } from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
@@ -20,11 +19,50 @@ import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { apiFetch } from '@/utils/api-fetch'
+import { envIs } from '@/utils/env'
+import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 
 const DEFAULT_FUZZINESS = 0.5
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
 
+function getSearchTypesKey(
+  types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES
+) {
+  const searchTypes = types.length ? types : SANCTIONS_SEARCH_TYPES
+  return searchTypes.sort().reverse().join('-')
+}
+
+const SEARCH_PROFILE_IDS = {
+  prod: {
+    [getSearchTypesKey(['SANCTIONS'])]: '01c3b373-c01a-48b2-96f7-3fcf17dd0c91',
+    [getSearchTypesKey(['SANCTIONS', 'PEP'])]:
+      '8b51ca9d-4b45-4de7-bac8-3bebcf6041ab',
+    [getSearchTypesKey(['SANCTIONS', 'ADVERSE_MEDIA'])]:
+      '919d1abb-2add-46c1-b73a-0fbae79aee6d',
+    [getSearchTypesKey(['PEP'])]: 'a9b22101-e5d5-477c-b2c7-2f875ebbd5d8',
+    [getSearchTypesKey(['PEP', 'ADVERSE_MEDIA'])]:
+      'e04c41ad-d3f0-4562-9b51-9d00a8965f16',
+    [getSearchTypesKey(['ADVERSE_MEDIA'])]:
+      '5a67aa5f-4ec8-4a61-af3a-78e3c132a24d',
+    [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'])]:
+      '15cb1d65-7f06-4eb3-84f5-f0cb9f1d4c8f',
+  },
+  sandbox: {
+    [getSearchTypesKey(['SANCTIONS'])]: 'b5d54657-4370-45a2-acdd-a40956e02ef4',
+    [getSearchTypesKey(['SANCTIONS', 'PEP'])]:
+      '65032c2f-d579-4ef6-8464-c8fbe9df11bb',
+    [getSearchTypesKey(['SANCTIONS', 'ADVERSE_MEDIA'])]:
+      '12517f27-42d7-4d43-85c4-b28835d284c7',
+    [getSearchTypesKey(['PEP'])]: '9d9036f4-89c5-4e60-880a-3c5aacfbe3ed',
+    [getSearchTypesKey(['PEP', 'ADVERSE_MEDIA'])]:
+      '2fd847d0-a49b-4321-b0d8-6c42fa64c040',
+    [getSearchTypesKey(['ADVERSE_MEDIA'])]:
+      '1e99cb5e-36d2-422b-be1f-0024999b92b7',
+    [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'])]:
+      'd563b827-7baa-4a0c-a2ae-7e38e5051cf2',
+  },
+}
 function getSanctionsSearchResponse(
   rawComplyAdvantageResponse: ComplyAdvantageSearchResponse,
   searchId: string
@@ -115,10 +153,14 @@ export class SanctionsService {
     // Normalize search term
     request.searchTerm = startCase(request.searchTerm.toLowerCase())
     request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
+    request.types = request.types?.length
+      ? request.types
+      : SANCTIONS_SEARCH_TYPES
 
     const result = options?.searchIdToReplace
       ? null
       : await this.sanctionsSearchRepository.getSearchResultByParams(request)
+
     if (result?.response) {
       return this.filterOutWhitelistEntites(result?.response, options?.userId)
     }
@@ -138,9 +180,11 @@ export class SanctionsService {
       request,
       responseWithId
     )
+
     if (request.monitoring) {
       await this.updateSearch(searchId, request.monitoring)
     }
+
     return this.filterOutWhitelistEntites(responseWithId, options?.userId)
   }
 
@@ -363,29 +407,16 @@ export class SanctionsService {
     }
   }
 
-  private pickSearchProfileId(
-    types?: SanctionsSearchType[]
-  ): string | undefined {
-    if (process.env.ENV !== 'prod') {
-      return
+  private pickSearchProfileId(types: SanctionsSearchType[] = []) {
+    const profiles = SEARCH_PROFILE_IDS[envIs('prod') ? 'prod' : 'sandbox']
+    const key = getSearchTypesKey(types)
+    const profileId = profiles[key]
+
+    if (!profileId) {
+      logger.error(`Cannot find search profile for types ${types}`)
     }
-    if (isEqual(types, ['SANCTIONS'] as SanctionsSearchType[])) {
-      return '01c3b373-c01a-48b2-96f7-3fcf17dd0c91'
-    } else if (isEqual(types, ['SANCTIONS', 'PEP'] as SanctionsSearchType[])) {
-      return '8b51ca9d-4b45-4de7-bac8-3bebcf6041ab'
-    } else if (
-      isEqual(types, ['SANCTIONS', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
-    ) {
-      return '919d1abb-2add-46c1-b73a-0fbae79aee6d'
-    } else if (isEqual(types, ['PEP'] as SanctionsSearchType[])) {
-      return 'a9b22101-e5d5-477c-b2c7-2f875ebbd5d8'
-    } else if (
-      isEqual(types, ['PEP', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
-    ) {
-      return 'e04c41ad-d3f0-4562-9b51-9d00a8965f16'
-    } else if (isEqual(types, ['ADVERSE_MEDIA'] as SanctionsSearchType[])) {
-      return '5a67aa5f-4ec8-4a61-af3a-78e3c132a24d'
-    }
+
+    return profileId
   }
 
   public async addWhitelistEntities(

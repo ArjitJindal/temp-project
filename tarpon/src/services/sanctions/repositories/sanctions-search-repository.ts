@@ -77,6 +77,9 @@ export class SanctionsSearchRepository {
     } = request
 
     const paramFilters = Object.entries(params).map(([k, v]) => {
+      if (typeof v === 'object' && Array.isArray(v) && v.length > 0) {
+        return { [`request.${k}`]: { $all: v, $size: v.length } }
+      }
       return { [`request.${k}`]: v }
     })
 
