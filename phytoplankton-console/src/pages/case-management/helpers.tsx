@@ -12,7 +12,6 @@ import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { ExtraFilter } from '@/components/library/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
-import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
@@ -22,7 +21,7 @@ import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { humanizeConstant, humanizeSnakeCase } from '@/utils/humanize';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useRuleQueues } from '@/components/rules/util';
+import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
 import CaseStatusTag from '@/components/library/CaseStatusTag';
@@ -141,6 +140,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const ruleOptions = useRuleOptions();
   const ruleQueues = useRuleQueues();
+  const businessIndustries = useBusinessIndustries();
   return denseArray([
     {
       title: 'Case ID',
@@ -224,18 +224,12 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
       key: 'businessIndustryFilter',
       title: 'Business industry',
       showFilterByDefault: true,
-      renderer: ({ params, setParams, onUpdateFilterClose }) => (
-        <BusinessIndustryButton
-          businessIndustry={params.businessIndustryFilter ?? []}
-          onConfirm={(value) => {
-            setParams((state) => ({
-              ...state,
-              businessIndustryFilter: value ?? undefined,
-            }));
-          }}
-          onUpdateFilterClose={onUpdateFilterClose}
-        />
-      ),
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: businessIndustries.map((x) => ({ value: x, label: x })),
+      },
     },
     {
       key: 'assignedTo',
