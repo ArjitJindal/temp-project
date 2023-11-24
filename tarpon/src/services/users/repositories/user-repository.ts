@@ -589,26 +589,32 @@ export class UserRepository {
   public async getMongoBusinessUser(
     userId: string
   ): Promise<InternalBusinessUser | null> {
-    const mongoUser = this.getMongoUser(userId)
-    // todo: add 'type' field to users and check
+    const mongoUser = this.getMongoUser(userId, 'BUSINESS')
     return mongoUser as unknown as InternalBusinessUser | null
   }
 
   public async getMongoConsumerUser(
     userId: string
   ): Promise<InternalConsumerUser | null> {
-    const mongoUser = this.getMongoUser(userId)
-    // todo: add 'type' field to users and check
+    const mongoUser = this.getMongoUser(userId, 'CONSUMER')
     return mongoUser as unknown as InternalConsumerUser | null
   }
 
-  public async getMongoUser(userId: string): Promise<InternalUser | null> {
+  public async getMongoUser(
+    userId: string,
+    userType?: 'BUSINESS' | 'CONSUMER'
+  ): Promise<InternalUser | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
 
-    return await collection.findOne({ userId })
+    const matchCondition: Filter<InternalBusinessUser | InternalConsumerUser> =
+      { userId }
+    if (userType) {
+      matchCondition.type = userType
+    }
+    return await collection.findOne(matchCondition as Filter<InternalUser>)
   }
 
   public async getMongoUsersByIds(userIds: string[]): Promise<InternalUser[]> {

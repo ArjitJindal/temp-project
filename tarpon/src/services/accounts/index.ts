@@ -463,7 +463,23 @@ export class AccountsService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
-    const organizations = await managementClient.organizations.getAll()
+    let pageNumber = 0
+    const limitPerPage = 100
+    let organizations: Organization[] = []
+    let morePagesAvailable = true
+
+    while (morePagesAvailable) {
+      const pagedOrganizations = await managementClient.organizations.getAll({
+        per_page: limitPerPage,
+        page: pageNumber,
+        include_totals: true,
+      })
+
+      organizations = [...organizations, ...pagedOrganizations.organizations]
+      pageNumber++
+      morePagesAvailable = pagedOrganizations.total > organizations.length
+    }
+
     return organizations.map(AccountsService.organizationToTenant)
   }
 
