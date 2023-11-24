@@ -168,6 +168,23 @@ export class CdkOrcaPipelineStack extends Stack {
           ],
         },
         {
+          stageName: "Post_Deploy_Sandbox",
+          actions: [
+            new codepipline_actions.CodeBuildAction({
+              actionName: "Post_Deploy_Sandbox",
+              project: postDeploymentCodeBuildProject(
+                this,
+                sandboxConfig,
+                role,
+                vpc
+              ),
+              input: sourceOutput,
+              environmentVariables: getSentryReleaseSpec(false).actionEnv,
+              extraInputs: [tarponBuildOutput],
+            }),
+          ],
+        },
+        {
           stageName: "Approve_Production",
           actions: [
             new codepipline_actions.ManualApprovalAction({
