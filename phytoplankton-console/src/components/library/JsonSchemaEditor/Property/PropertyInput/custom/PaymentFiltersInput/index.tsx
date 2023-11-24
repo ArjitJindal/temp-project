@@ -23,6 +23,7 @@ export const requiredPaymentMethodMap: Record<string, PaymentMethod> = {
   walletType: 'WALLET',
   cardIssuedCountries: 'CARD',
   cardPaymentChannels: 'CARD',
+  mccCodes: 'CARD',
 };
 
 export default function PaymentFiltersInput(props: Props) {

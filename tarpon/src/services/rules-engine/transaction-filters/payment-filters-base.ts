@@ -14,6 +14,7 @@ export type PaymentRuleFiltersChildParameters = {
   walletType?: string
   cardIssuedCountries?: string[]
   cardPaymentChannels?: string[]
+  mccCodes?: string[]
 }
 
 export type OriginPaymentRuleFiltersParameters = {
@@ -59,6 +60,16 @@ const checkPaymentMethod = (
           return false
         }
         return filterPaymentChannels.includes(paymentChannel)
+      }
+
+      const mccCode = paymentDetails?.merchantDetails?.MCC
+      const filterMccCodes = parameters?.mccCodes
+
+      if (filterMccCodes?.length) {
+        if (!mccCode) {
+          return false
+        }
+        return filterMccCodes.includes(mccCode)
       }
 
       return true
@@ -110,6 +121,17 @@ export abstract class PaymentFilterRuleFilterBase<
             },
           }),
           cardPaymentChannels: CARD_PAYMENT_CHANNELS_OPTIONAL_SCHEMA({}),
+          mccCodes: {
+            type: 'array',
+            title: 'MCC Codes',
+            description:
+              'Add MCC codes to only run this rule for certain MCC codes',
+            items: {
+              type: 'string',
+            },
+            uniqueItems: true,
+            nullable: true,
+          },
         },
       }
 
