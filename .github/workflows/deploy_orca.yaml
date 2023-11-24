@@ -1,4 +1,4 @@
-name: Deploy Phytoplankton
+name: Deploy Orca
 on:
   workflow_dispatch:
   pull_request:
