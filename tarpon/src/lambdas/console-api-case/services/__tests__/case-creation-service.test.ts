@@ -230,12 +230,14 @@ describe('Cases (Transaction hit)', () => {
         casePriority: 'P1',
         nature: 'AML',
         labels: [],
+        checksFor: [],
       },
       {
         ruleId: 'NEW_RULE_HIT',
         casePriority: 'P1',
         nature: 'AML',
         labels: [],
+        checksFor: [],
       },
     ]
 

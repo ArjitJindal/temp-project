@@ -49,6 +49,7 @@ function toRuleInstance(item: any): RuleInstance {
     triggersOnHit: item.triggersOnHit,
     riskLevelsTriggersOnHit: item.riskLevelsTriggersOnHit,
     queueId: item.queueId,
+    checksFor: item.checksFor,
   }
 }
 
