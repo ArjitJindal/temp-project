@@ -104,9 +104,16 @@ export class CurrencyService {
   }
 
   private async getCache(): Promise<CurrencyExchangeUSDType | undefined> {
-    return !isEmpty(cachedData) && cachedData.date && cachedData.usd
-      ? (cachedData as CurrencyExchangeUSDType)
-      : await this.repository.getCache()
+    if (!isEmpty(cachedData) && cachedData.date && cachedData.usd) {
+      return cachedData as CurrencyExchangeUSDType
+    }
+
+    const dynamoCachedData = await this.repository.getCache()
+    if ((!cachedData.date || !cachedData.usd) && dynamoCachedData) {
+      set(cachedData, 'date', dynamoCachedData?.date)
+      set(cachedData, 'usd', dynamoCachedData?.usd)
+    }
+    return dynamoCachedData
   }
 
   public resetLocalCache(): void {
