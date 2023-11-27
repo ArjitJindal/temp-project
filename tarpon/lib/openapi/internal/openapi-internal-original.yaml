@@ -5506,10 +5506,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Feature'
-        checksFor:
-          type: array
-          items:
-            type: string
       required:
         - id
         - type
@@ -5522,7 +5518,6 @@ components:
         - labels
         - defaultNature
         - defaultCasePriority
-        - checksFor
     RuleFilters:
       title: RuleFilter
       type: object
@@ -5685,16 +5680,11 @@ components:
             - $ref: '#/components/schemas/AlertCreationIntervalInstantly'
             - $ref: '#/components/schemas/AlertCreationIntervalWeekly'
             - $ref: '#/components/schemas/AlertCreationIntervalMonthly'
-        checksFor:
-          type: array
-          items:
-            type: string
       required:
         - ruleId
         - casePriority
         - nature
         - labels
-        - checksFor
     RuleAction:
       type: string
       title: RuleAction

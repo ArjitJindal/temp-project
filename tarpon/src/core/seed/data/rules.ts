@@ -46,7 +46,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688115753059,
       runCount: 1848,
       hitCount: 8,
-      checksFor: ['1st transaction'],
     },
     {
       id: 'a25685ad',
@@ -58,7 +57,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
           USD: 10000,
         },
       },
-      checksFor: ['Transaction amount'],
       action: 'SUSPEND',
       type: 'TRANSACTION',
       ruleNameAlias: 'Transaction amount too high',
@@ -112,7 +110,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-30',
       casePriority: 'P1',
-      checksFor: ['No. of transactions', 'Time'],
       parameters: {
         timeWindow: {
           unit: 1,
@@ -246,7 +243,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688114634781,
       runCount: 295,
       hitCount: 102,
-      checksFor: ['Username', 'User’s Y.O.B'],
     } as RuleInstance,
     {
       id: 'skn2ls',
@@ -260,7 +256,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleDescriptionAlias:
         'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution option available in rule configuration.',
       filters: {},
-      checksFor: ['User’s bank name'],
       riskLevelParameters: {
         VERY_HIGH: {
           transactionAmountThreshold: {
@@ -331,7 +326,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       casePriority: 'P1',
       parameters: {},
       action: 'SUSPEND',
-      checksFor: ['Entity name'],
       type: 'USER',
       ruleNameAlias:
         'Screening on Business legal entity & shareholders & directors',

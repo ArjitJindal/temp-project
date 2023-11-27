@@ -10,7 +10,6 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
     defaultRuleInstance: {
       id: '2b9ec5b2',
       ruleId: 'R-2',
-      checksFor: ['Transaction amount'],
       casePriority: 'P1',
       parameters: {
         transactionAmountThreshold: {
@@ -77,7 +76,6 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
           ruleInstance: {
             id: '2b9ec5b2',
             ruleId: 'R-2',
-            checksFor: ['Transaction amount'],
             casePriority: 'P1',
             parameters: {
               transactionAmountThreshold: {
@@ -183,7 +181,6 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
       id: '0afc5eba',
       ruleId: 'R-1',
       casePriority: 'P1',
-      checksFor: ['1st transaction'],
       parameters: {},
       action: 'FLAG',
       type: 'TRANSACTION',
@@ -225,7 +222,6 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
           ruleInstance: {
             id: '0afc5eba',
             ruleId: 'R-1',
-            checksFor: ['1st transaction'],
             casePriority: 'P1',
             parameters: {},
             action: 'FLAG',
@@ -305,7 +301,6 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
     defaultRuleInstance: {
       id: 'a86206ad',
       ruleId: 'R-1',
-      checksFor: ['1st transaction'],
       casePriority: 'P1',
       parameters: {},
       action: 'FLAG',
@@ -348,7 +343,6 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
           ruleInstance: {
             id: 'a86206ad',
             ruleId: 'R-1',
-            checksFor: ['1st transaction'],
             casePriority: 'P1',
             parameters: {},
             action: 'FLAG',
@@ -449,7 +443,6 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
           ruleInstance: {
             id: 'a86206ad',
             ruleId: 'R-1',
-            checksFor: ['1st transaction'],
             casePriority: 'P1',
             parameters: {},
             action: 'FLAG',
@@ -530,7 +523,6 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
           ruleInstance: {
             id: 'a86206ad',
             ruleId: 'R-1',
-            checksFor: ['1st transaction'],
             casePriority: 'P1',
             parameters: {},
             action: 'FLAG',

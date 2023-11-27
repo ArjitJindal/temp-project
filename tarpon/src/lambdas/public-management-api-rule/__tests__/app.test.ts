@@ -31,7 +31,6 @@ describe('Public Management API - Rule', () => {
       id: TEST_RULE_INSTANCE_ID,
       ruleId: 'R-1',
       parameters: {},
-      checksFor: ['Transaction amount'],
       ruleNameAlias: 'Foo bar',
       riskLevelParameters: {
         VERY_HIGH: {},
@@ -236,7 +235,6 @@ describe('Public Management API - Rule', () => {
         MEDIUM: {},
         LOW: {},
       },
-      checksFor: ['Transaction amount'],
       action: 'BLOCK',
       riskLevelActions: {
         VERY_LOW: 'ALLOW',
@@ -267,7 +265,6 @@ describe('Public Management API - Rule', () => {
         action: 'SUSPEND',
         status: 'ACTIVE',
         casePriority: 'P1',
-        checksFor: ['Transaction amount'],
       }),
       null as any,
       null as any
@@ -286,7 +283,6 @@ describe('Public Management API - Rule', () => {
       updatedAt: expect.any(Number),
       runCount: 0,
       hitCount: 0,
-      checksFor: ['Transaction amount'],
     })
     const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
       'NEW_RULE_INSTANCE_ID'
@@ -366,7 +362,6 @@ describe('Public Management API - Rule', () => {
       hitCount: 0,
       nature: 'AML',
       labels: [],
-      checksFor: ['Transaction amount'],
     })
     const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
       TEST_RULE_INSTANCE_ID

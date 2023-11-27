@@ -484,7 +484,6 @@ describe('Verify Transaction for Simulation', () => {
         type: 'TRANSACTION',
         nature: 'AML',
         labels: [],
-        checksFor: [],
       }
     )
     expect(result).toEqual({

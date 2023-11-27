@@ -53,7 +53,6 @@ export async function createRule(
     labels: [],
     defaultCasePriority: 'P1',
     defaultNature: 'AML',
-    checksFor: [],
     ...rule,
   })
 
@@ -70,7 +69,6 @@ export async function createRule(
       casePriority: createdRule.defaultCasePriority as Priority,
       nature: createdRule.defaultNature,
       labels: createdRule.labels,
-      checksFor: createdRule.checksFor,
       ...ruleInstance,
     })
 

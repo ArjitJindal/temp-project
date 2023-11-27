@@ -14,7 +14,6 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { LONG_TEXT, RULE_ACTION } from '@/components/library/Table/standardDataTypes';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { RULE_ACTION_VALUES } from '@/utils/rules';
-import RuleChecksForTag from '@/components/library/RuleChecksForTag';
 
 interface RulesTableParams extends CommonParams {}
 
@@ -111,26 +110,6 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
         title: 'Typology',
         key: 'typology',
         defaultWidth: 250,
-      }),
-      helper.simple<'checksFor'>({
-        title: 'Checks for',
-        key: 'checksFor',
-        defaultWidth: 300,
-        type: {
-          render: (checksFor) => {
-            return (
-              <div className={style.checksForRoot}>
-                {checksFor?.map((checkFor) => (
-                  <RuleChecksForTag key={checkFor} checksFor={checkFor} />
-                ))}
-              </div>
-            );
-          },
-          stringify: (checksFor) => {
-            return checksFor?.join(', ') ?? '-';
-          },
-          defaultWrapMode: 'WRAP',
-        },
       }),
       helper.simple<'typologyGroup'>({
         title: 'Typology group',
