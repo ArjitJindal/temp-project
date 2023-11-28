@@ -534,6 +534,26 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
   },
   {
+    parameter: 'originMccCode',
+    title: 'Origin MCC code',
+    description: 'Risk value based on Origin MCC code',
+    entity: 'TRANSACTION',
+    dataType: 'STRING',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
+  {
+    parameter: 'destinationMccCode',
+    title: 'Destination MCC code',
+    description: 'Risk value based on Destination MCC code',
+    entity: 'TRANSACTION',
+    dataType: 'STRING',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
+  {
     parameter: 'originPaymentDetails.bankName',
     title: 'Origin bank name',
     description:

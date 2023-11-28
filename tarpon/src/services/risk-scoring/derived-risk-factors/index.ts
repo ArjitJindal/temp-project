@@ -11,6 +11,7 @@ import { KRS_USER_TYPE_RISK_HANDLERS } from './user-type'
 import { ARS_BANK_NAME_RISK_HANDLERS } from './bank-name'
 import { ARS_SAR_FILED_RISK_HANDLERS } from './sar-filed'
 import { ARS_TRANSACTION_AMOUNT_RISK_HANDLERS } from './transaction-amount'
+import { ARS_MCC_CODE_RISK_HANDLERS } from './mcc-code'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
@@ -68,6 +69,7 @@ const TRANSACTION_RISK_FACTOR_HANDLERS: Array<
   ...ARS_BANK_NAME_RISK_HANDLERS,
   ...ARS_SAR_FILED_RISK_HANDLERS,
   ...ARS_TRANSACTION_AMOUNT_RISK_HANDLERS,
+  ...ARS_MCC_CODE_RISK_HANDLERS,
 ]
 
 const TRANSACTION_RISK_FACTOR_HANDLERS_MAP = keyBy(

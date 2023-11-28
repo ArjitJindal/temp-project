@@ -7326,6 +7326,8 @@ components:
             - sourceOfFunds
             - originAmountDetails.transactionAmount
             - destinationAmountDetails.transactionAmount
+            - originMccCode
+            - destinationMccCode
         isActive:
           type: boolean
         isDerived:
