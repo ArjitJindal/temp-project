@@ -44,6 +44,7 @@ import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from './total-transa
 import { HighRiskCountryRuleParameters } from './high-risk-countries'
 import { UsingTooManyBanksToMakePaymentsRuleParameters } from './using-too-many-banks-to-make-payments'
 import { HighRiskIpAddressCountriesParameters } from './high-risk-ip-address-countries'
+import { TransactionRiskScoreRuleParameters } from './transaction-risk-score'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -728,6 +729,33 @@ const _RULES_LIBRARY: Array<
       typologyDescription:
         'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
       source: 'Japan Reference Cases on Suspicious Transactions 2020',
+    }
+  },
+  () => {
+    return {
+      id: 'R-89',
+      type: 'TRANSACTION',
+      name: 'Transaction risk score exceeds expected limit',
+      description:
+        'For a given user, compares the expected transaction risk score',
+      descriptionTemplate:
+        "{{ if-sender 'Sender' 'Receiver' }} transaction risk score {{ hitParty.riskScore }} exceeds expected limit of {{ riskScoreThreshold }}",
+      defaultParameters: {
+        riskScoreThreshold: 90,
+      } as TransactionRiskScoreRuleParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'transaction-risk-score',
+      labels: [],
+      checksFor: ['Transaction risk score'],
+      defaultNature: 'FRAUD',
+      defaultCasePriority: 'P1',
+      defaultFalsePositiveCheckEnabled: true,
+      typology: 'Account takeover fraud',
+      typologyGroup: 'Account takeover fraud',
+      typologyDescription:
+        'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
+      source: 'Japan Reference Cases on Suspicious Transactions 2020',
+      requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS', 'DEMO_RULES'],
     }
   },
   () => {

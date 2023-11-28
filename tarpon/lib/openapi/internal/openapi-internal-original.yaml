@@ -7374,6 +7374,7 @@ components:
         - SANCTIONS
         - FALSE_POSITIVE_CHECK
         - DEMO_MODE
+        - DEMO_RULES
         - SIMULATOR
         - CRM
         - ENTITY_LINKING
