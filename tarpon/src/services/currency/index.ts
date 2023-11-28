@@ -26,11 +26,12 @@ export class CurrencyService {
 
   public async getExchangeData(): Promise<CurrencyExchangeUSDType> {
     const data = await apiFetch<CurrencyExchangeUSDType>(
-      `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/usd.min.json`
+      `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/${dayjs().format(
+        'YYYY-MM-DD'
+      )}/currencies/usd.min.json`
     )
 
     logger.info(`Fetched currency exchange data from CDN`)
-
     return data.result
   }
 
