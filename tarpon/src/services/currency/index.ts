@@ -61,6 +61,7 @@ export class CurrencyService {
   }
 
   private isCacheExpired(exchangeData: CurrencyExchangeUSDType): boolean {
+    logger.info(`Currency cache has expired: ${exchangeData.date}`)
     return dayjs(exchangeData.date).isBefore(dayjs().subtract(1, 'day'))
   }
 
@@ -109,7 +110,7 @@ export class CurrencyService {
     }
 
     const dynamoCachedData = await this.repository.getCache()
-    if ((!cachedData.date || !cachedData.usd) && dynamoCachedData) {
+    if (dynamoCachedData && dynamoCachedData.date && dynamoCachedData.usd) {
       set(cachedData, 'date', dynamoCachedData?.date)
       set(cachedData, 'usd', dynamoCachedData?.usd)
     }
