@@ -735,6 +735,14 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const alerts = await this.alertsRepository.getAlertsByIds(alertIds)
 
+    const alertsNotFound = alertIds.filter(
+      (alertId) => !alerts.find((alert) => alert.alertId === alertId)
+    )
+
+    if (alertsNotFound.length) {
+      throw new NotFound(`Alerts not found: ${alertsNotFound.join(', ')}`)
+    }
+
     const isInProgressOrOnHold =
       statusUpdateRequest.alertStatus.endsWith('ON_HOLD') ||
       statusUpdateRequest.alertStatus.endsWith('IN_PROGRESS')

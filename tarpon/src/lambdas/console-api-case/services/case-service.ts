@@ -528,6 +528,14 @@ export class CaseService extends CaseAlertsCommonService {
 
     const cases = await this.caseRepository.getCasesByIds(caseIds)
 
+    const casesNotFound = caseIds.filter(
+      (caseId) => !cases.find((c) => c.caseId === caseId)
+    )
+
+    if (casesNotFound.length) {
+      throw new NotFound(`Cases ${casesNotFound.join(', ')} not found`)
+    }
+
     await background(this.updateKycAndUserState(cases, updates))
 
     const accountsService = new AccountsService(

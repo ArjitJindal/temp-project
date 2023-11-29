@@ -1075,6 +1075,16 @@ export class RulesEngineService {
       throw new Error('No transactions')
     }
 
+    const transactionsNotFound = transactionIds.filter(
+      (txnId) => !txns.find((txn) => txn?.transactionId === txnId)
+    )
+
+    if (transactionsNotFound.length) {
+      throw new Error(
+        `Transactions not found: ${transactionsNotFound.join(', ')}`
+      )
+    }
+
     await Promise.all(
       txns.flatMap((transaction) => {
         if (!transaction) {
