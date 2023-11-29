@@ -34,6 +34,7 @@ export interface FormValues {
   falsePositiveCheckEnabled?: boolean;
   checklistTemplateId?: string;
   queueId?: string;
+  checksFor: string[];
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -46,6 +47,7 @@ export const INITIAL_VALUES: FormValues = {
   alertCreationInterval: {
     type: 'INSTANTLY',
   },
+  checksFor: [],
 };
 
 interface Props {

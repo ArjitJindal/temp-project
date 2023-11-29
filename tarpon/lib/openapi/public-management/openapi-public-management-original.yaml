@@ -334,10 +334,15 @@ components:
           type: number
         updatedAt:
           type: number
+        checksFor:
+          type: array
+          items:
+            type: string
       required:
         - id
         - type
         - ruleId
+        - checksFor
     RuleInstanceUpdatable:
       title: RuleInstanceUpdatable
       type: object
@@ -567,6 +572,10 @@ components:
           $ref: '#/components/schemas/Priority'
         defaultNature:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
+        checksFor:
+          type: array
+          items:
+            type: string
       required:
         - id
         - type
@@ -577,6 +586,7 @@ components:
         - labels
         - defaultCasePriority
         - defaultNature
+        - checksFor
     ErrorMessage:
       title: ErrorMessage
       x-stoplight:

@@ -165,6 +165,7 @@ const TableList = () => {
             casePriority: currentRule.defaultCasePriority,
             filters: currentRule.defaultFilters,
             labels: [],
+            checksFor: currentRule.checksFor,
           }}
           isVisible={currentRule != null}
           onChangeVisibility={(isVisible) => {

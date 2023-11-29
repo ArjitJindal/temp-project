@@ -335,6 +335,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
         casePriority: rule?.defaultCasePriority ?? BASIC_DETAILS_STEP_INITIAL_VALUES.casePriority,
         ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
         falsePositiveCheckEnabled: rule?.defaultFalsePositiveCheckEnabled ?? false,
+        checksFor: rule?.checksFor ?? BASIC_DETAILS_STEP_INITIAL_VALUES.checksFor,
       },
       standardFiltersStep: rule?.defaultFilters ?? STANDARD_FILTERS_STEP_INITIAL_VALUES,
       ruleParametersStep: ruleParametersStep,
@@ -353,5 +354,6 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
     rule?.defaultRiskLevelActions,
     rule?.defaultAction,
     rule?.defaultFalsePositiveCheckEnabled,
+    rule?.checksFor,
   ]);
 }

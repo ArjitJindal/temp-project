@@ -29,6 +29,7 @@ const getRuleInstance = (threshold: number, id?: string): RuleInstance => {
     id,
     type: 'TRANSACTION',
     ruleId: 'R-2',
+    checksFor: ['Transaction amount'],
     ruleNameAlias: 'Transaction amount too high',
     ruleDescriptionAlias: 'Transaction amount is >= x in USD or equivalent',
     filters: {},
