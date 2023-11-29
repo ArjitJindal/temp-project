@@ -2,9 +2,12 @@ import { RequestOptions, IncomingMessage } from 'http'
 import * as AWS from 'aws-sdk'
 import synthetics from 'Synthetics' // eslint-disable-line
 import logger from 'SyntheticsLogger' // eslint-disable-line
-import { memoize } from 'lodash'
+import { isEqual, memoize, omit } from 'lodash'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { TransactionState } from '@/@types/openapi-public/TransactionState'
 
 const awsApiGateway = new AWS.APIGateway()
 
@@ -18,6 +21,11 @@ interface GatewayError {
 }
 
 interface UnauthorizedError {
+  message: string
+}
+
+interface NotFoundError {
+  error: string
   message: string
 }
 
@@ -140,6 +148,27 @@ const getTestTransactionSuccess = async () => {
     },
   }
 
+  const transactionEventPayload: TransactionEvent = {
+    transactionId: transactionPayload.transactionId,
+    timestamp: Date.now(),
+    transactionState: 'REFUNDED',
+    updatedTransactionAttributes: {
+      originPaymentDetails: {
+        method: 'CARD',
+        cardAuthenticated: true,
+        cardIssuedCountry: 'AE',
+        cardBrand: 'VISA',
+        cardFunding: 'DEBIT',
+        cardExpiry: {
+          month: 12,
+          year: 2023,
+        },
+        cardFingerprint: 'cRBAUn3Vqtzpf2uq',
+        cardLast4Digits: '2018',
+      },
+    },
+  }
+
   await Promise.all([
     // Transaction tests
     executeHttpStep<Transaction, TransactionMonitoringResult>(
@@ -154,7 +183,10 @@ const getTestTransactionSuccess = async () => {
             reject('Transaction ID does not match')
           }
 
-          if (data.executedRules.length === 0) {
+          if (
+            data.executedRules === undefined ||
+            data.executedRules.length === 0
+          ) {
             reject('No rules executed')
           }
         },
@@ -383,6 +415,268 @@ const getTestTransactionSuccess = async () => {
         },
       }
     ),
+
+    //Transaction Events
+    executeHttpStep<TransactionEvent, TransactionEventMonitoringResult>(
+      'Update transaction state with attributes',
+      '/events/transaction',
+      transactionEventPayload,
+      {
+        statusCode: 200,
+        statusMessage: 'OK',
+        dataCallback: (inputPayload, data, reject) => {
+          const uuidRegex =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+          if (
+            data.transaction.transactionState !== inputPayload.transactionState
+          ) {
+            reject('Transaction state does not match')
+          }
+
+          if (
+            !isEqual(
+              data.transaction?.originPaymentDetails,
+              inputPayload.updatedTransactionAttributes?.originPaymentDetails
+            )
+          ) {
+            reject('Transaction update attributes does not match')
+          }
+
+          if (
+            data.executedRules === undefined ||
+            data.executedRules.length === 0
+          ) {
+            reject('No rules executed')
+          }
+
+          if (!uuidRegex.test(data.eventId)) {
+            reject('Invalid transaction event id.')
+          }
+        },
+      }
+    ),
+    executeHttpStep<Partial<TransactionEvent>, ValidationError>(
+      'Transaction Id not provided',
+      '/events/transaction',
+      omit(transactionEventPayload, ['transactionId']),
+      {
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        dataCallback: (_, data, reject) => {
+          if (
+            data.validationErrors !==
+            '[object has missing required properties (["transactionId"])]'
+          ) {
+            reject('Validation error does not match')
+          }
+
+          if (data.message !== 'Invalid request body') {
+            reject('Message does not match')
+          }
+        },
+      }
+    ),
+    executeHttpStep<Partial<TransactionEvent>, ValidationError>(
+      'Invalid transaction state',
+      '/events/transaction',
+      {
+        ...transactionEventPayload,
+        transactionState: 'INVALID' as TransactionState,
+      },
+      {
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        dataCallback: (_, data, reject) => {
+          if (
+            data.validationErrors !==
+            '[instance value ("INVALID") not found in enum (possible values: ["CREATED","PROCESSING","SENT","EXPIRED","DECLINED","SUSPENDED","REFUNDED","SUCCESSFUL"])]'
+          ) {
+            reject('Validation error does not match')
+          }
+
+          if (data.message !== 'Invalid request body') {
+            reject('Message does not match')
+          }
+        },
+      }
+    ),
+    executeHttpStep<Partial<TransactionEvent>, ValidationError>(
+      'Invalid country',
+      '/events/transaction',
+      {
+        ...transactionEventPayload,
+        updatedTransactionAttributes: {
+          ...transactionEventPayload.updatedTransactionAttributes,
+          originPaymentDetails: {
+            ...transactionEventPayload.updatedTransactionAttributes!
+              .originPaymentDetails,
+            cardIssuedCountry: 'AB' as any,
+          } as any,
+        },
+      },
+      {
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        dataCallback: (_, data, reject) => {
+          if (
+            data.validationErrors !==
+            '[instance failed to match exactly one schema (matched 0 out of 9)]'
+          ) {
+            reject('Validation error does not match')
+          }
+
+          if (data.message !== 'Invalid request body') {
+            reject('Message does not match')
+          }
+        },
+      }
+    ),
+    executeHttpStep<Partial<TransactionEvent>, ValidationError>(
+      'Timestamp provided as string',
+      '/events/transaction',
+      {
+        ...transactionEventPayload,
+        timestamp: '1664985327329' as any,
+      },
+      {
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        dataCallback: (_, data, reject) => {
+          if (
+            data.validationErrors !==
+            '[instance type (string) does not match any allowed primitive type (allowed: ["integer","number"])]'
+          ) {
+            reject('Validation error does not match')
+          }
+
+          if (data.message !== 'Invalid request body') {
+            reject('Message does not match')
+          }
+        },
+      }
+    ),
+    executeHttpStep<Partial<TransactionEvent>, NotFoundError>(
+      'Invalid transaction id',
+      '/events/transaction',
+      {
+        ...transactionEventPayload,
+        transactionId: 'T-invalid',
+      },
+      {
+        statusCode: 404,
+        statusMessage: 'Not Found',
+        dataCallback: (inputPayload, data, reject) => {
+          const transactionId = inputPayload.transactionId
+          if (data.message !== `Transaction ${transactionId} not found`) {
+            reject('Message does not match')
+          }
+          if (data.error !== `NotFoundError`) {
+            reject('Error message does not match')
+          }
+        },
+      }
+    ),
+    executeHttpStep<TransactionEvent, TransactionEventMonitoringResult>(
+      'Update transaction state without update attributes',
+      '/events/transaction',
+      transactionEventPayload,
+      {
+        statusCode: 200,
+        statusMessage: 'OK',
+        dataCallback: (inputPayload, data, reject) => {
+          const uuidRegex =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+          if (
+            data.transaction.transactionState !== inputPayload.transactionState
+          ) {
+            reject('Transaction state does not match')
+          }
+
+          if (
+            data.executedRules === undefined ||
+            data.executedRules.length === 0
+          ) {
+            reject('No rules executed')
+          }
+
+          if (!uuidRegex.test(data.eventId)) {
+            reject('Invalid transaction event id.')
+          }
+        },
+      }
+    ),
+    executeHttpStep<Partial<TransactionEvent>, ValidationError>(
+      'Transaction state not provided',
+      '/events/transaction',
+      omit(transactionEventPayload, ['transactionState']),
+      {
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        dataCallback: (_, data, reject) => {
+          if (
+            data.validationErrors !==
+            '[object has missing required properties (["transactionState"])]'
+          ) {
+            reject('Validation error does not match')
+          }
+
+          if (data.message !== 'Invalid request body') {
+            reject('Message does not match')
+          }
+        },
+      }
+    ),
+    executeHttpStep<Partial<TransactionEvent>, ValidationError>(
+      'Empty body',
+      '/events/transaction',
+      {},
+      {
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        dataCallback: (_, data, reject) => {
+          if (
+            data.validationErrors !==
+            '[object has missing required properties (["timestamp","transactionId","transactionState"])]'
+          ) {
+            reject('Validation error does not match')
+          }
+
+          if (data.message !== 'Invalid request body') {
+            reject('Message does not match')
+          }
+        },
+      }
+    ),
+    executeHttpStep<Partial<TransactionEvent>, UnauthorizedError>(
+      'Incorrect domain',
+      '/events/transaction',
+      transactionEventPayload,
+      {
+        statusCode: 403,
+        statusMessage: 'Forbidden',
+        dataCallback: (_, data, reject) => {
+          if (data.message !== 'Forbidden') {
+            reject('Error message does not match')
+          }
+        },
+      },
+      { incorrectDomain: true }
+    ),
+    executeHttpStep<Partial<TransactionEvent>, UnauthorizedError>(
+      'No api key',
+      '/events/transaction',
+      {},
+      {
+        statusCode: 401,
+        statusMessage: 'Unauthorized',
+        dataCallback: (_, data, reject) => {
+          if (data.message !== 'Unauthorized') {
+            reject('Error message does not match')
+          }
+        },
+      },
+      { noApiKey: true }
+    ),
   ])
 
   await Promise.all([
@@ -404,7 +698,10 @@ const getTestTransactionSuccess = async () => {
           reject('Message is incorrect or missing')
         }
 
-        if (data.executedRules.length === 0) {
+        if (
+          data.executedRules === undefined ||
+          data.executedRules.length === 0
+        ) {
           reject('No rules executed')
         }
       },
