@@ -9,7 +9,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import Tabs from '@/components/library/Tabs';
+import Tabs, { TabItem } from '@/components/library/Tabs';
 import DisplayCheckedTransactions from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
@@ -81,9 +81,9 @@ export default function AlertExpanded(props: Props) {
   });
 
   const items = useMemo(() => {
-    const tabs: any[] = [];
+    const tabs: TabItem[] = [];
     tabs.push({
-      tab: 'Transactions details',
+      title: 'Transactions details',
       key: 'transactions',
       children: (
         <>
@@ -134,13 +134,13 @@ export default function AlertExpanded(props: Props) {
     });
     if (alert.ruleChecklistTemplateId && alert?.alertId) {
       tabs.push({
-        tab: 'Checklist',
+        title: 'Checklist',
         key: 'checklist',
         children: <Checklist alert={alert} />,
       });
     }
     tabs.push({
-      tab: 'Comments',
+      title: 'Comments',
       key: 'comments',
       children: <Comments alertId={alertId ?? null} alertsRes={alertResponse.data} />,
     });
