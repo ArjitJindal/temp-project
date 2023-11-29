@@ -1,18 +1,21 @@
-import React, { useRef, useCallback, useEffect, useState } from 'react';
+import { Select as AntSelect } from 'antd';
 import cn from 'clsx';
-import { Select as AntSelect, SelectProps } from 'antd';
-import { SelectCommonPlacement } from 'antd/lib/_util/motion';
+import { uniq } from 'lodash';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import s from './style.module.less';
+import { parseSearchString, filterOption, SEPARATOR } from './helpers';
 import { InputProps } from '@/components/library/Form';
-import { Comparable, key } from '@/utils/comparable';
-import { copyTextToClipboard } from '@/utils/browser';
 import { message } from '@/components/library/Message';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
+import { copyTextToClipboard } from '@/utils/browser';
+import { Comparable, key } from '@/utils/comparable';
+import { neverReturn } from '@/utils/lang';
 
 export interface Option<Value extends Comparable> {
   value: Value;
   label?: React.ReactNode;
   labelText?: string;
+  alternativeLabels?: string[]; // Used for search
   isDisabled?: boolean;
   isDefault?: boolean;
 }
@@ -22,7 +25,7 @@ interface CommonProps<Value extends Comparable> {
   size?: 'DEFAULT' | 'LARGE';
   options: Option<Value>[];
   style?: React.CSSProperties;
-  dropdownPlacement?: SelectCommonPlacement;
+  dropdownPlacement?: 'bottomLeft' | 'bottomRight' | 'topLeft' | 'topRight';
   allowClear?: boolean;
   notFoundContent?: React.ReactNode;
   className?: string;
@@ -59,62 +62,56 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     className,
     innerRef,
     isCopyable,
+    value,
+    onChange,
+    allowClear = true,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
+  const [searchValue, setSearchValue] = useState('');
 
-  const [presentValue, setpresentValue] = useState<Value | Value[] | undefined>(props.value);
-  const [isFocused, setisFocused] = useState<boolean>(false);
-  const [isHovered, setisHovered] = useState<boolean>(false);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
 
-  const antSelectProps: SelectProps<Value | Value[], Option<Value>> = {
-    disabled: isDisabled,
-    placeholder: placeholder,
-    allowClear: props.allowClear,
-    onFocus: () => setisFocused(true),
-    onBlur: () => setisFocused(false),
-    filterOption: (inputValue: string, option?: Option<Value>) => {
-      const searchString = inputValue.toLowerCase();
-      return (
-        (option?.label?.toString().toLowerCase().includes(searchString) ||
-          option?.value?.toString().toLowerCase().includes(searchString) ||
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          option?.children?.toString().toLowerCase().includes(searchString)) ??
-        false
-      );
+  const handleSearchString = useCallback(
+    (searchString: string, skipUnknown: boolean) => {
+      const parsedValues = parseSearchString(options, searchString, skipUnknown);
+      let newValue;
+      if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
+        newValue = uniq([...(props.value ?? []), ...parsedValues] as Value[]);
+      } else if (props.mode === 'SINGLE' || props.mode == null) {
+        newValue = parsedValues[0];
+      } else {
+        newValue = neverReturn(props.mode, props.value);
+      }
+      onChange?.(newValue as (Value & Value[]) | undefined);
+      setSearchValue('');
     },
-    showSearch: true,
-    notFoundContent: props.notFoundContent,
-    placement: props.dropdownPlacement,
-    mode: props.mode === 'MULTIPLE' ? 'multiple' : props.mode === 'TAGS' ? 'tags' : undefined,
-    value: props.value,
-    onChange: (newValue: Value | Value[] | undefined) => {
-      props.onChange?.(newValue as (Value & Value[]) | undefined);
-      setpresentValue(newValue);
-    },
-    onSearch: props.onSearch,
-    defaultValue: options.filter((option) => option.isDefault).map((option) => option.value),
-    tokenSeparators: [','],
-  };
+    [props.value, props.mode, options, onChange],
+  );
 
-  const copyText = useCallback(() => {
-    if (presentValue) {
-      const valueToCopy = Array.isArray(presentValue)
-        ? presentValue.join(',')
-        : presentValue.toString();
+  const filteredOptions = useMemo(
+    () => options.filter((option) => filterOption(searchValue, option)),
+    [searchValue, options],
+  );
+
+  const handleCopyText = useCallback(() => {
+    if (props.value) {
+      const valueToCopy = Array.isArray(props.value)
+        ? props.value.join(',')
+        : props.value.toString();
       if (valueToCopy && valueToCopy.length > 0) {
         valueToCopy && copyTextToClipboard(valueToCopy);
         message.success('Copied');
       }
     }
-  }, [presentValue]);
+  }, [props.value]);
 
   useEffect(() => {
-    if (isFocused === true) {
+    if (isFocused) {
       const handleKeyDown = (event: KeyboardEvent) => {
         if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
-          copyText();
+          handleCopyText();
         }
       };
       document.addEventListener('keydown', handleKeyDown);
@@ -122,26 +119,14 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         document.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [presentValue, isFocused, copyText]);
+  }, [isFocused, handleCopyText]);
 
   const handleMouseEnter = () => {
-    if (antSelectProps.mode !== undefined) {
-      if (Array.isArray(presentValue)) {
-        if (presentValue.length > 0) setisHovered(true);
-      } else {
-        if (presentValue) setisHovered(true);
-      }
-    }
+    setIsHovered(true);
   };
   const handleMouseLeave = () => {
-    if (antSelectProps.mode !== undefined) {
-      setisHovered(false);
-    }
+    setIsHovered(false);
   };
-
-  useEffect(() => {
-    if (presentValue) setisHovered(true);
-  }, [presentValue]);
 
   return (
     <div
@@ -149,17 +134,43 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         s.root,
         isError && s.isError,
         s[`size-${size}`],
-        isHovered && s.ishovered,
-        antSelectProps.mode !== undefined && s.extraPadding,
+        (props.mode === 'MULTIPLE' || props.mode === 'TAGS') && s.extraPadding,
         className,
       )}
       style={props.style}
       ref={selectInput}
     >
       <AntSelect
-        {...antSelectProps}
         ref={innerRef}
-        allowClear
+        placeholder={placeholder}
+        allowClear={allowClear}
+        onFocus={() => {
+          setIsFocused(true);
+        }}
+        onBlur={() => {
+          setIsFocused(false);
+          handleSearchString(searchValue, props.mode !== 'TAGS');
+          setSearchValue('');
+        }}
+        filterOption={() => true}
+        showSearch={true}
+        notFoundContent={props.notFoundContent}
+        placement={props.dropdownPlacement}
+        mode={props.mode === 'MULTIPLE' ? 'multiple' : props.mode === 'TAGS' ? 'tags' : undefined}
+        value={value}
+        onChange={(newValue: Value | Value[] | undefined) => {
+          props.onChange?.(newValue as (Value & Value[]) | undefined);
+          setSearchValue('');
+        }}
+        onSearch={(searchString) => {
+          setSearchValue(searchString);
+          if (searchString.includes(SEPARATOR)) {
+            handleSearchString(searchString, props.mode !== 'TAGS');
+          }
+        }}
+        defaultValue={filteredOptions
+          .filter((option) => option.isDefault)
+          .map((option) => option.value)}
         loading={isLoading}
         disabled={isDisabled || isLoading}
         dropdownMatchSelectWidth={
@@ -167,18 +178,20 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         }
         suffixIcon={
           isCopyable &&
-          Array.isArray(presentValue) &&
-          presentValue.length > 0 && (
-            <div onClick={copyText}>
-              <FileCopyLineIcon className={cn(s.copyIcon)} />
-            </div>
+          Array.isArray(props.value) &&
+          props.value.length > 0 && (
+            <FileCopyLineIcon
+              onClick={handleCopyText}
+              className={cn(s.copyIcon, isHovered && s.isVisible)}
+            />
           )
         }
         showArrow={true}
+        searchValue={searchValue}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {options?.map((option) => (
+        {filteredOptions?.map((option) => (
           <AntSelect.Option
             key={key(option.value)}
             value={option.value}
