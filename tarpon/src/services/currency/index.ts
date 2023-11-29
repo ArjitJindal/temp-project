@@ -62,7 +62,6 @@ export class CurrencyService {
   }
 
   private isCacheExpired(exchangeData: CurrencyExchangeUSDType): boolean {
-    logger.info(`Currency cache has expired: ${exchangeData.date}`)
     return dayjs(exchangeData.date).isBefore(dayjs().subtract(1, 'day'))
   }
 
