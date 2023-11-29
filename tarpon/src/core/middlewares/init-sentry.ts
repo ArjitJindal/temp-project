@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/serverless'
 import * as createError from 'http-errors'
 
-import { RewriteFrames } from '@sentry/integrations'
+import { RewriteFrames, Debug } from '@sentry/integrations'
 
 import { isEqual } from 'lodash'
 import { getContext } from '../utils/context'
@@ -26,6 +26,7 @@ export const initSentry =
         new RewriteFrames({
           prefix: `app:///${process.env.LAMBDA_CODE_PATH}/`,
         }) as any,
+        new Debug(),
       ],
 
       beforeSend(event, hint) {

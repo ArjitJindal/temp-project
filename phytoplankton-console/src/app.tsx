@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import * as Sentry from '@sentry/react';
-import { BrowserTracing } from '@sentry/tracing';
+import { BrowserTracing } from '@sentry/browser';
 import { Navigate, Route, Routes } from 'react-router';
+import { Debug } from '@sentry/integrations';
 import AppWrapper from '@/components/AppWrapper';
 
 import { useRoutes } from '@/services/routing';
@@ -14,7 +15,7 @@ import { getBranding } from '@/utils/branding';
 Sentry.init({
   dsn: SENTRY_DSN,
   release: process.env.RELEASE,
-  integrations: [new BrowserTracing()],
+  integrations: [new BrowserTracing(), new Debug()],
   tracesSampleRate: 0.05,
   environment: process.env.ENV_NAME,
   enabled: process.env.ENV_NAME !== 'local',
