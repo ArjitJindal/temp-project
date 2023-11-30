@@ -181,6 +181,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
                 }}
                 isDisabled={activeStepIndex === RULE_CONFIGURATION_STEPS.length - 1}
                 iconRight={<ArrowRightSLineIcon />}
+                testName="drawer-next-button"
               >
                 Next
               </Button>
@@ -209,6 +210,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
                       formRef?.current?.submit();
                     }}
                     requiredPermissions={['rules:my-rules:write']}
+                    testName="drawer-create-save-button"
                   >
                     {props.type === 'CREATE' ? 'Done' : 'Save'}
                   </Button>

@@ -302,6 +302,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 type="SECONDARY"
                 isDisabled={!canWriteRules}
                 isLoading={deleting}
+                testName="rule-edit-button"
               >
                 Edit
               </Button>
@@ -320,6 +321,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 icon={<FileCopyLineIcon />}
                 isDisabled={!canWriteRules}
                 isLoading={deleting}
+                testName="rule-duplicate-button"
               >
                 Duplicate
               </Button>
@@ -342,6 +344,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                     type="TETRIARY"
                     isDisabled={!canWriteRules}
                     isLoading={deleting}
+                    testName="rule-delete-button"
                   >
                     Delete
                   </Button>

@@ -30,6 +30,7 @@ export default function RuleActionSelector(props: Props) {
                   onChange?.(option.value);
                 }
               }}
+              testName="rule-action-selector"
               {...rest}
             />
           </div>

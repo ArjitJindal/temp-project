@@ -164,6 +164,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
                 requiredPermissions={
                   simulationMode ? ['simulator:simulations:write'] : ['rules:my-rules:write']
                 }
+                testName="configure-rule-button"
               >
                 {simulationMode ? 'New simulation' : 'Configure'}
               </Button>

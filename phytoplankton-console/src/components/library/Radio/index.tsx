@@ -2,10 +2,12 @@ import React, { useRef } from 'react';
 import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
 
-interface Props extends InputProps<boolean> {}
+interface Props extends InputProps<boolean> {
+  testName?: string;
+}
 
 export default function Radio(props: Props) {
-  const { isDisabled, value, onChange, isError: _isError, ...rest } = props;
+  const { isDisabled, value, onChange, isError: _isError, testName, ...rest } = props;
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div className={s.root}>
@@ -18,6 +20,7 @@ export default function Radio(props: Props) {
         onChange={(e) => {
           onChange?.(e.target.checked);
         }}
+        data-cy={testName}
         {...rest}
       />
       <div className={s.content}></div>
