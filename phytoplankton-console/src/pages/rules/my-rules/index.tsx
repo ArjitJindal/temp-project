@@ -215,7 +215,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 <Tooltip
                   title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}
                 >
-                  {percent?.toFixed(2)}%
+                  {(percent ?? 0).toFixed(2)}%
                 </Tooltip>
 
                 <RuleHitInsightsTag percentage={percent} runs={ruleInstance.runCount} />
