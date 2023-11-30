@@ -9,3 +9,6 @@ frontend:
 
 raptor:
   - raptor/**
+
+pipeline:
+  - bin/**
