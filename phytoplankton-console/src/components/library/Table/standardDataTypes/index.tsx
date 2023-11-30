@@ -151,6 +151,7 @@ export const STRING: ColumnDataType<string> = {
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
           }}
+          enableEmptyString
         />
       </div>
     );

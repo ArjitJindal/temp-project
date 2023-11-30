@@ -15,6 +15,7 @@ export interface Props extends InputProps<string> {
   onArrowDown?: () => void;
   innerRef?: React.RefObject<HTMLInputElement>;
   testName?: string;
+  enableEmptyString?: boolean;
 }
 
 export default function TextInput(props: Props) {
@@ -33,6 +34,7 @@ export default function TextInput(props: Props) {
     onArrowDown,
     testName,
     innerRef,
+    enableEmptyString = false,
   } = props;
   const defaultRef = useRef<HTMLInputElement>(null);
   const ref = innerRef === undefined ? defaultRef : innerRef;
@@ -47,6 +49,10 @@ export default function TextInput(props: Props) {
         disabled={isDisabled}
         value={value ?? ''}
         onChange={(e) => {
+          if (enableEmptyString && e.target.value === '') {
+            onChange?.(e.target.value);
+            return;
+          }
           onChange?.(e.target.value || undefined);
         }}
         onFocus={onFocus ? () => onFocus() : undefined}
