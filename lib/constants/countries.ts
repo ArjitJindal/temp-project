@@ -372,13 +372,13 @@ export const COUNTRY_REGIONS = {
   },
 };
 
-export const COUNTRY_ALIASES: { [key in CountryCode]?: string[] } = {
-  US: ["United States"],
-  GB: ["United Kingdom"],
-  MD: ["Republic of Moldova"],
-  CZ: ["Czech Republic"],
-  TR: ["Turkey"],
-  RU: ["Russia"],
+export const COUNTRY_NAME_ALIASES: { [key: string]: CountryCode } = {
+  "United States": "US",
+  "United Kingdom": "GB",
+  "Republic of Moldova": "MD",
+  "Czech Republic": "CZ",
+  Turkey: "TR",
+  Russia: "RU",
 };
 
 export const COUNTRY_GROUPS: { [key: string]: string[] } = {
@@ -422,7 +422,5 @@ export const COUNTRY_CODES = Object.keys(COUNTRIES).concat(
 
 export const COUNTRY_NAME_TO_CODE = Object.fromEntries([
   ...Object.entries(COUNTRIES).map(([code, name]) => [name, code]),
-  ...Object.entries(COUNTRY_ALIASES).flatMap(([code, names]) =>
-    names.map((name) => [name, code])
-  ),
+  ...Object.entries(COUNTRY_NAME_ALIASES).map(([name, code]) => [name, code]),
 ]);

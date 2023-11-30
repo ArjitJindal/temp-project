@@ -1,7 +1,7 @@
 import { Tag } from 'antd';
 import React, { useEffect } from 'react';
 import { keyBy } from 'lodash';
-import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
+import { COUNTRIES } from '@flagright/lib/constants';
 import style from './style.module.less';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -629,41 +629,23 @@ export const ALL_RISK_PARAMETERS = [
 
 const MultipleSelect: React.FC<
   InputRendererProps<'MULTIPLE'> & {
-    options: Array<{ value: string; label: string; alternativeLabels?: string[] }>;
+    options: Array<{ value: string; label: string }>;
   }
 > = (props) => {
   const { value, disabled, onChange, options, existedValues = [] } = props;
   const disabledOptions: string[] = existedValues.flatMap((x) =>
     x.values.map((y) => `${y.content}`),
   );
-  const optionsFixed = options.map((x) => ({
-    ...x,
-    isDisabled: disabledOptions.includes(x.value),
-  }));
   return (
     <Select<string>
       style={{ width: '100%' }}
       value={value?.values.map(({ content }) => `${content}`) ?? []}
       onChange={(value) => {
-        // const fixedValue = value
-        //   ?.map((x) => x.trim())
-        //   .map((x) => {
-        //     const optionFound = optionsFixed
-        //       .filter((x) => !x.isDisabled)
-        //       .find(
-        //         ({ value, label, alternativeLabels }) =>
-        //           value.toLowerCase() === x.toLowerCase() ||
-        //           label.toLowerCase() === x.toLowerCase() ||
-        //           alternativeLabels?.some((altLabel) => altLabel.toLowerCase() === x.toLowerCase()),
-        //       );
-        //     return optionFound?.value ?? x;
-        //   })
-        //   .filter(notEmpty);
         onChange(riskValueMultiple((value as string[]).map((x) => riskValueLiteral(x))));
       }}
       isDisabled={disabled}
-      options={optionsFixed}
-      mode="MULTIPLE"
+      options={options.map((x) => ({ ...x, isDisabled: disabledOptions.includes(x.value) }))}
+      mode="TAGS"
     />
   );
 };
@@ -703,11 +685,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   COUNTRY: ((props) => {
     return (
       <MultipleSelect
-        options={Object.entries(COUNTRIES).map(([countryCode, name]) => ({
-          value: countryCode,
-          label: name,
-          alternativeLabels: COUNTRY_ALIASES[countryCode] ?? [],
-        }))}
+        options={Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] }))}
         {...props}
       />
     );
