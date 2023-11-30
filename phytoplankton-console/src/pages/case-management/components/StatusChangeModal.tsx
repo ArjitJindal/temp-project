@@ -8,7 +8,7 @@ import Modal from '@/components/library/Modal';
 import Checkbox from '@/components/library/Checkbox';
 import Narrative, { CLOSING_REASONS, COMMON_REASONS } from '@/components/Narrative';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
-import { getMutationAsyncResource } from '@/utils/queries/hooks';
+import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import Label from '@/components/library/Label';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';

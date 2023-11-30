@@ -5,7 +5,7 @@ import * as Card from '@/components/ui/Card';
 import { Alert, Comment as ApiComment } from '@/apis';
 import Comment from '@/components/CommentsCard/Comment';
 import { useAuth0User } from '@/utils/user-utils';
-import { getMutationAsyncResource } from '@/utils/queries/hooks';
+import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import CommentEditor, {
   CommentEditorRef,
   FormValues as CommentEditorFormValues,

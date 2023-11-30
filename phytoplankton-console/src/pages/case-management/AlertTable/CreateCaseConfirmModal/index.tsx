@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCreateNewCaseMutation } from '@/pages/case-management/AlertTable/helpers';
-import { getMutationAsyncResource } from '@/utils/queries/hooks';
+import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
 

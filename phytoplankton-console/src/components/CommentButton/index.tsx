@@ -11,7 +11,7 @@ import CommentEditor, {
 } from '@/components/CommentEditor';
 import WechatLineIcon from '@/components/ui/icons/Remix/logos/wechat-line.react.svg';
 import { getErrorMessage } from '@/utils/lang';
-import { getMutationAsyncResource } from '@/utils/queries/hooks';
+import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { Comment, Permission } from '@/apis';
 
 interface Props {

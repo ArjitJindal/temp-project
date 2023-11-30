@@ -8,7 +8,7 @@ import CommentEditor, {
   FormValues as CommentEditorFormValues,
 } from '@/components/CommentEditor';
 import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
-import { getMutationAsyncResource } from '@/utils/queries/hooks';
+import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
 
 interface Props {

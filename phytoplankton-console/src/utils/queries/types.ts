@@ -1,4 +1,6 @@
+import { UseMutationResult } from '@tanstack/react-query';
 import * as ar from '@/utils/asyncResource';
+import { AsyncResource } from '@/utils/asyncResource';
 import { PaginationParams } from '@/utils/queries/hooks';
 
 export interface Cursor {
@@ -21,7 +23,6 @@ export interface QueryResult<Data> {
   paginate?: (params: PaginationParams) => Promise<Data>;
   loadingNext?: boolean;
   cursor?: Cursor;
-  isLoading: boolean;
 }
 
 export function map<T, R>(
@@ -29,11 +30,19 @@ export function map<T, R>(
   fn: (value: T) => R,
   loadingFn?: (lastValue: T | null) => R,
 ): QueryResult<R> {
-  const { paginate, data, refetch, isLoading } = res;
+  const { paginate, data, refetch } = res;
   return {
     data: ar.map(data, fn, loadingFn),
     refetch,
     paginate: paginate ? async (page) => fn(await paginate(page)) : undefined,
-    isLoading,
   };
 }
+
+export type Mutation<
+  TData = unknown,
+  TError = unknown,
+  TVariables = unknown,
+  TContext = unknown,
+> = Pick<UseMutationResult<TData, TError, TVariables, TContext>, 'mutate' | 'mutateAsync'> & {
+  dataResource: AsyncResource;
+};

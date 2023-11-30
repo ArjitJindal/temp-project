@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { QueryFunction, QueryKey } from '@tanstack/query-core';
 import { useQueries as useQueriesRQ, useQuery as useQueryRQ } from '@tanstack/react-query';
-import {
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from '@tanstack/react-query/src/types';
+import { UseQueryOptions, UseQueryResult } from '@tanstack/react-query/src/types';
 import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react-query/src/useQueries';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
-import { AsyncResource, failed, init, loading, success } from '@/utils/asyncResource';
+import { failed, loading, success } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 
 export function useQuery<
@@ -45,20 +41,17 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
     return {
       data: loading<TData>(results.data ?? null),
       refetch: results.refetch,
-      isLoading: results.isLoading,
     };
   }
   if (results.isFetching) {
     return {
       data: loading<TData>(results.data),
       refetch: results.refetch,
-      isLoading: results.isLoading,
     };
   }
   if (results.isSuccess) {
     return {
       data: success<TData>(results.data),
-      isLoading: results.isLoading,
       refetch: results.refetch,
     };
   }
@@ -66,28 +59,9 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
     return {
       data: failed<TData>(getErrorMessage(results.error)),
       refetch: results.refetch,
-      isLoading: results.isLoading,
     };
   }
   throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);
-}
-
-export function getMutationAsyncResource<
-  TData = unknown,
-  TError = unknown,
-  TVariables = unknown,
-  TContext = unknown,
->(mutation: UseMutationResult<TData, TError, TVariables, TContext>): AsyncResource {
-  if (mutation.isIdle) {
-    return init();
-  }
-  if (mutation.isLoading) {
-    return loading();
-  }
-  if (mutation.isError) {
-    return failed(getErrorMessage(mutation.error));
-  }
-  return success(null);
 }
 
 export type PaginatedData<T> = {

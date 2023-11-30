@@ -9,7 +9,7 @@ import HistoryItemLayout from './HistoryItemLayout';
 import { getErrorMessage, neverReturn } from '@/utils/lang';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
-import { getMutationAsyncResource } from '@/utils/queries/hooks';
+import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { isLoading } from '@/utils/asyncResource';
 import HistoryItemBarchart from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBarchart';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';

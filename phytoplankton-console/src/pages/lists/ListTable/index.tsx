@@ -10,9 +10,9 @@ import { makeUrl } from '@/utils/routing';
 import { getErrorMessage } from '@/utils/lang';
 import { TableColumn } from '@/components/library/Table/types';
 import { useQuery } from '@/utils/queries/hooks';
+import { map } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { LISTS_OF_TYPE } from '@/utils/queries/keys';
-import { map } from '@/utils/asyncResource';
 import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -173,11 +173,9 @@ function ListTable(props: Props, ref: ListTableRef) {
   return (
     <>
       <QueryResultsTable
-        queryResults={{
-          data: map(queryResults.data, (items) => ({ items })),
-          refetch: queryResults.refetch,
-          isLoading: queryResults.isLoading,
-        }}
+        queryResults={map(queryResults, (items) => ({
+          items,
+        }))}
         rowKey="listId"
         columns={columns}
         pagination={false}

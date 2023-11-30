@@ -13,7 +13,8 @@ import {
   TableRefType,
 } from '@/components/library/Table/types';
 import { useRules } from '@/utils/rules';
-import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import RuleConfigurationDrawer, {
