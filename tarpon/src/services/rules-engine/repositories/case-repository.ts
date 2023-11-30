@@ -1345,7 +1345,7 @@ export class CaseRepository {
         arrayFilters: [
           {
             'alert.ruleChecklist.done': { $ne: 'DONE' },
-            'alert.ruleChecklist': { $exists: true },
+            'alert.ruleChecklist': { $exists: true, $ne: null },
           },
           { 'item.done': { $ne: 'DONE' }, item: { $exists: true } },
         ],

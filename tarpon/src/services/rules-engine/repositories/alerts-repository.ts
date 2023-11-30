@@ -239,8 +239,6 @@ export class AlertsRepository {
       params.filterAlertsByLastUpdatedEndTimestamp != null &&
       params.filterAlertsByLastUpdatedStartTimestamp != null
     ) {
-      console.log('start', params.filterAlertsByLastUpdatedStartTimestamp)
-      console.log('end', params.filterAlertsByLastUpdatedEndTimestamp)
       alertConditions.push({
         'alerts.updatedAt': {
           $gte: params.filterAlertsByLastUpdatedStartTimestamp,
@@ -527,6 +525,9 @@ export class AlertsRepository {
         'alerts.alertId': {
           $in: alertIds,
         },
+        'alerts.ruleChecklist': {
+          $ne: null,
+        },
       },
       {
         $set: {
@@ -541,6 +542,7 @@ export class AlertsRepository {
             },
             'alert.ruleChecklist': {
               $exists: true,
+              $ne: null,
             },
           },
           {
