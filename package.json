@@ -19,7 +19,7 @@
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "^3.441.0",
     "@tsconfig/node18": "^18.2.1",
-    "aws-cdk": "^2.104.0",
+    "aws-cdk": "~2.106.0",
     "aws-cdk-lib": "~2.106.0",
     "constructs": "^10.3.0",
     "husky": "^8.0.1",
