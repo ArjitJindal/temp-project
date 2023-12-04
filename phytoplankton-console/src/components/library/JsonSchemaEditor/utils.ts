@@ -43,6 +43,9 @@ export function getOrderedProps(
   const required = Array.isArray(schema?.required) ? schema?.required : [];
   const propertiesOrdered: PropertyItems = Object.entries(properties)
     .filter(([_, schema]) => {
+      if (rootSchema == null) {
+        return true;
+      }
       const fullSchema = dereferenceType(schema, rootSchema);
       const uiSchema: UiSchema = fullSchema?.['ui:schema'] ?? {};
       return uiSchema['ui:hidden'] !== true;
