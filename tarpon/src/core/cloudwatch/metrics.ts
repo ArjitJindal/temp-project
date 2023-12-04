@@ -39,6 +39,11 @@ export const RULE_EXECUTION_TIME_MS_METRIC: Metric = {
   name: 'RuleExecutionTimeMs',
   kind: 'GAUGE',
 }
+export const RULE_HIT_PERCENTAGE: Metric = {
+  namespace: 'flagright/RulesEngine',
+  name: 'RuleHitPercentage',
+  kind: 'GAUGE',
+}
 
 export const CUSTOM_API_USAGE_METRIC_NAMES = {
   TRANSACTION_COUNT_METRIC_NAME: 'TransactionsCount',

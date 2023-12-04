@@ -16,6 +16,7 @@ import {
   ARS_KEY_IDENTIFIER,
   DRS_KEY_IDENTIFIER,
   DEVICE_DATA_METRICS_KEY_IDENTIFIER,
+  RULE_INSTANCE_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -23,6 +24,7 @@ import { User } from '@/@types/openapi-public/User'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
+import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 
 type DynamoDbEntityType =
   | 'TRANSACTION'
@@ -30,6 +32,7 @@ type DynamoDbEntityType =
   | 'TRANSACTION_EVENT'
   | 'CONSUMER_USER_EVENT'
   | 'BUSINESS_USER_EVENT'
+  | 'RULE_INSTANCE'
   | 'KRS_VALUE'
   | 'ARS_VALUE'
   | 'DRS_VALUE'
@@ -139,6 +142,15 @@ function getDynamoDbEntityMetadata(
     return {
       type: 'DRS_VALUE',
       entityId: `DRS_VALUE:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(RULE_INSTANCE_IDENTIFIER)) {
+    const entityId = (entity as RuleInstance).id
+    if (!entityId) {
+      return null
+    }
+    return {
+      type: 'RULE_INSTANCE',
+      entityId: `RULE_INSTANCE:${entityId}`,
     }
   }
   return null

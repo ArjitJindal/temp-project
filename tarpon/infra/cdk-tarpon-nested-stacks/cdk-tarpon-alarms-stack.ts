@@ -29,6 +29,7 @@ import {
   dynamoTableOperationMetrics,
   dynamoTableOperations,
   createCanarySuccessPercentageAlarm,
+  createRuleHitRateAlarm,
 } from '../cdk-utils/cdk-cw-alarms-utils'
 
 const allLambdas = Object.keys(LAMBDAS)
@@ -249,6 +250,8 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       new inspector.CfnAssessmentTarget(this, 'InspectorAssessmentTarget', {
         assessmentTargetName: 'InspectorAssessmentTarget',
       })
+
+    createRuleHitRateAlarm(this, this.betterUptimeCloudWatchTopic, 25)
 
     /* Canaries */
 

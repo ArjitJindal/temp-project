@@ -18,6 +18,7 @@ import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
+import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 
 const sqsClient = new SQSClient({})
 
@@ -61,6 +62,11 @@ type KrsScoreEventHandler = (
   oldKrsValue: KrsScore | undefined,
   newKrsValue: KrsScore | undefined
 ) => Promise<void>
+type RuleInstanceHandler = (
+  tenantId: string,
+  oldRuleInstance: RuleInstance | undefined,
+  newRuleInstance: RuleInstance | undefined
+) => Promise<void>
 
 @traceable
 export class StreamConsumerBuilder {
@@ -75,6 +81,7 @@ export class StreamConsumerBuilder {
   arsScoreEventHandler?: ArsScoreEventHandler
   drsScoreEventHandler?: DrsScoreEventHandler
   krsScoreEventHandler?: KrsScoreEventHandler
+  ruleInstanceHandler?: RuleInstanceHandler
 
   constructor(name: string, retrySqsQueue: string) {
     this.name = name
@@ -126,6 +133,12 @@ export class StreamConsumerBuilder {
     krsScoreEventHandler: KrsScoreEventHandler
   ): StreamConsumerBuilder {
     this.krsScoreEventHandler = krsScoreEventHandler
+    return this
+  }
+  public setRuleInstanceHandler(
+    ruleInstanceHandler: RuleInstanceHandler
+  ): StreamConsumerBuilder {
+    this.ruleInstanceHandler = ruleInstanceHandler
     return this
   }
   public async handleDynamoDbUpdate(update: DynamoDbEntityUpdate) {
@@ -186,6 +199,12 @@ export class StreamConsumerBuilder {
         update.tenantId,
         update.OldImage as KrsScore,
         update.NewImage as KrsScore
+      )
+    } else if (update.type === 'RULE_INSTANCE' && this.ruleInstanceHandler) {
+      await this.ruleInstanceHandler(
+        update.tenantId,
+        update.OldImage as RuleInstance,
+        update.NewImage as RuleInstance
       )
     }
   }

@@ -37,6 +37,7 @@ export const TRANSACTION_EVENT_KEY_IDENTIFIER = 'transaction-event#'
 export const KRS_KEY_IDENTIFIER = '#krs-value'
 export const ARS_KEY_IDENTIFIER = '#ars-value'
 export const DRS_KEY_IDENTIFIER = '#drs-value'
+export const RULE_INSTANCE_IDENTIFIER = 'rule-instance#'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number

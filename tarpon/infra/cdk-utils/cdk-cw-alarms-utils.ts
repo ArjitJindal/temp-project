@@ -350,6 +350,32 @@ export const createLambdaDurationAlarm = (
     }),
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }
+export const createRuleHitRateAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  thresholdPerc: number
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  return new Alarm(context, `RuleHitAlarm`, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold: thresholdPerc,
+    evaluationPeriods: 6,
+    datapointsToAlarm: 3,
+    treatMissingData: TreatMissingData.NOT_BREACHING,
+    alarmName: `Rule-HitPercentageTooHigh`,
+    alarmDescription: `Alarm triggers when rule hit percentage exceeds ${thresholdPerc}s for 10 consecutive data points in 30 mins (Checked every 5 minutes). `,
+    metric: new Metric({
+      label: 'Rule Hit Percentage Too High',
+      namespace: TARPON_CUSTOM_METRIC_NAMESPACE,
+      metricName: 'RuleHitPercentage',
+    }).with({
+      period: Duration.seconds(300),
+      statistic: 'Maximum',
+    }),
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}
 export const createLambdaInitDurationAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
