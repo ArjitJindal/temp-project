@@ -56,62 +56,6 @@ type KeyValues =
   | 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS'
   | 'TRANSACTIONS_BREAKDOWN_BY_TRS';
 
-const KEYS = {
-  OVERVIEW: ['OVERVIEW'],
-  CONSUMER_USERS: [
-    'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-    'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
-    'TOP_CONSUMER_USERS_BY_RULE_HITS',
-    'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS',
-    'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
-  ],
-  BUSINESS_USERS: [
-    'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-    'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
-    'TOP_BUSINESS_USERS_BY_RULE_HITS',
-    'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS',
-    'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS',
-  ],
-  TRANSACTIONS: [
-    'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
-    'DISTRIBUTION_BY_PAYMENT_METHOD',
-    'DISTRIBUTION_BY_TRANSACTION_TYPE',
-    'TRANSACTIONS_BREAKDOWN_BY_TRS',
-  ],
-  RULES: ['TOP_RULE_HITS_BY_COUNT', 'DISTRIBUTION_BY_RULE_PRIORITY', 'DISTRIBUTION_BY_RULE_ACTION'],
-  CASE_MANAGEMENT: [
-    'DISTRIBUTION_BY_CLOSING_REASON',
-    'DISTRIBUTION_BY_ALERT_PRIORITY',
-    'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS',
-  ],
-  TEAM_MANAGEMENT: ['TEAM_OVERVIEW'],
-};
-
-const TITLES: { [key in KeyValues]: string } = {
-  OVERVIEW: 'Overview',
-  TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION: 'Transactions breakdown by rule action',
-  TOP_RULE_HITS_BY_COUNT: 'Top rule hits by count',
-  TEAM_OVERVIEW: 'Team overview',
-  DISTRIBUTION_BY_CLOSING_REASON: 'Distribution by closing reason',
-  DISTRIBUTION_BY_ALERT_PRIORITY: 'Distribution by open alert priority',
-  DISTRIBUTION_BY_PAYMENT_METHOD: 'Distribution by payment method',
-  DISTRIBUTION_BY_TRANSACTION_TYPE: 'Distribution by transaction type',
-  TOP_CONSUMER_USERS_BY_RULE_HITS: 'Top consumer users by transaction hits',
-  TOP_BUSINESS_USERS_BY_RULE_HITS: 'Top business users by transaction hits',
-  TRANSACTIONS_BREAKDOWN_BY_TRS: 'Transactions breakdown by TRS',
-  CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Consumer users distribution by risk levels',
-  CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Consumer users breakdown by risk levels',
-  BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL: 'Business users breakdown by risk levels',
-  BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL: 'Business users distribution by risk levels',
-  DISTRIBUTION_BY_RULE_PRIORITY: 'Distribution by rule priority',
-  DISTRIBUTION_BY_RULE_ACTION: 'Distribution by rule action',
-  CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS: 'Consumer users distribution by KYC status',
-  BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS: 'Business users distribution by KYC status',
-  DISTRIBUTION_BY_CASE_AND_ALERT_STATUS: 'Distribution by status',
-  CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: 'Consumer users distribution by user status',
-  BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: 'Business users distribution by user status',
-};
-
 const DEFAULT_VALUES = {
   OVERVIEW: true,
   TOP_CONSUMER_USERS_BY_RULE_HITS: true,
@@ -137,6 +81,217 @@ const DEFAULT_VALUES = {
   BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: true,
 };
 
+type WidgetType = {
+  groupTitle: string;
+  id: string;
+  title: string;
+  component: (props) => JSX.Element;
+  width?: 'FULL' | 'HALF';
+  userType?: 'CONSUMER' | 'BUSINESS';
+  requiredFeatures?: string[];
+  resizing?: 'AUTO';
+  children?: React.ReactNode;
+};
+
+type WidgetGroup = WidgetType[];
+
+interface Widgets {
+  OVERVIEW: WidgetGroup;
+  CONSUMER_USERS: WidgetGroup;
+  BUSINESS_USERS: WidgetGroup;
+  TRANSACTIONS: WidgetGroup;
+  RULES: WidgetGroup;
+  CASE_MANAGEMENT: WidgetGroup;
+  TEAM_MANAGEMENT: WidgetGroup;
+}
+
+interface WidgetProps {
+  id: string;
+}
+
+const WIDGETS: Widgets = {
+  OVERVIEW: [
+    {
+      groupTitle: 'Overview',
+      id: 'OVERVIEW',
+      title: 'Overview',
+      component: OverviewCard,
+    },
+  ],
+  CONSUMER_USERS: [
+    {
+      groupTitle: 'Consumer users',
+      id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+      title: 'Consumer users distribution by risk levels',
+      component: RiskLevelBreakdownWidget,
+      width: 'FULL' as const,
+      userType: 'CONSUMER',
+      requiredFeatures: ['RISK_SCORING'],
+    },
+    {
+      groupTitle: 'Consumer users',
+      id: 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
+      title: 'Consumer users breakdown by risk levels',
+      component: RiskLevelDistributionCard,
+      width: 'HALF' as const,
+      userType: 'CONSUMER',
+      requiredFeatures: ['RISK_SCORING'],
+    },
+
+    {
+      groupTitle: 'Consumer users',
+      id: 'TOP_CONSUMER_USERS_BY_RULE_HITS',
+      title: 'Top consumer users by rule hits',
+      component: TopUsersHitCard,
+      width: 'HALF' as const,
+      userType: 'CONSUMER',
+    },
+    {
+      groupTitle: 'Consumer users',
+      id: 'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS',
+      title: 'Consumer users distribution by KYC status',
+      component: KYCStatusDistributionCard,
+      width: 'HALF' as const,
+      userType: 'CONSUMER',
+    },
+    {
+      groupTitle: 'Consumer users',
+      id: 'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
+      title: 'Consumer users distribution by user status',
+      component: UserStatusDistributionCard,
+      width: 'HALF' as const,
+      userType: 'CONSUMER',
+    },
+  ],
+  BUSINESS_USERS: [
+    {
+      groupTitle: 'Business users',
+      id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+      title: 'Business users distribution by risk levels',
+      component: RiskLevelBreakdownWidget,
+      width: 'FULL' as const,
+      userType: 'BUSINESS' as const,
+      requiredFeatures: ['RISK_SCORING'],
+    },
+    {
+      groupTitle: 'Business users',
+      id: 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
+      title: 'Business users breakdown by risk levels',
+      component: RiskLevelDistributionCard,
+      width: 'HALF' as const,
+      userType: 'BUSINESS',
+      requiredFeatures: ['RISK_SCORING'],
+    },
+    {
+      groupTitle: 'Business users',
+      id: 'TOP_BUSINESS_USERS_BY_RULE_HITS',
+      title: 'Top business users by rule hits',
+      component: TopUsersHitCard,
+      width: 'HALF' as const,
+      userType: 'BUSINESS',
+    },
+    {
+      groupTitle: 'Business users',
+      id: 'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS',
+      title: 'Business users distribution by KYC status',
+      component: KYCStatusDistributionCard,
+      width: 'HALF' as const,
+      userType: 'BUSINESS',
+    },
+    {
+      groupTitle: 'Business users',
+      id: 'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS',
+      title: 'Business users distribution by user status',
+      component: UserStatusDistributionCard,
+      width: 'HALF' as const,
+      userType: 'BUSINESS',
+    },
+  ],
+
+  TRANSACTIONS: [
+    {
+      groupTitle: 'Transactions',
+      id: 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
+      title: 'Transactions breakdown by rule action',
+      component: TransactionsChartWidget,
+      width: 'FULL',
+    },
+    {
+      groupTitle: 'Transactions',
+      id: 'DISTRIBUTION_BY_PAYMENT_METHOD',
+      title: 'Distribution by payment method',
+      component: PaymentMethodDistributionWidget,
+      width: 'HALF',
+    },
+    {
+      groupTitle: 'Transactions',
+      id: 'DISTRIBUTION_BY_TRANSACTION_TYPE',
+      title: 'Distribution by transaction type',
+      component: DistributionByTransactionTypeWidget,
+      width: 'HALF',
+    },
+    {
+      groupTitle: 'Transactions',
+      id: 'TRANSACTIONS_BREAKDOWN_BY_TRS',
+      title: 'Transactions breakdown by TRS',
+      component: TransactionTRSChartCard,
+      requiredFeatures: ['RISK_SCORING'],
+    },
+  ],
+  RULES: [
+    {
+      groupTitle: 'Rules',
+      id: 'TOP_RULE_HITS_BY_COUNT',
+      title: 'Top rule hits by count',
+      component: Widget,
+      children: <RuleHitCard />,
+      resizing: 'AUTO' as const,
+    },
+    {
+      groupTitle: 'Rules',
+      id: 'DISTRIBUTION_BY_RULE_PRIORITY',
+      title: 'Distribution by rule priority',
+      component: RulePrioritySplitCard,
+      width: 'HALF' as const,
+    },
+    {
+      groupTitle: 'Rules',
+      id: 'DISTRIBUTION_BY_RULE_ACTION',
+      title: 'Distribution by rule action',
+      component: RuleActionSplitCard,
+      width: 'HALF' as const,
+    },
+  ],
+  CASE_MANAGEMENT: [
+    {
+      groupTitle: 'Case management',
+      id: 'DISTRIBUTION_BY_CLOSING_REASON',
+      title: 'Distribution by closing reason',
+      component: CaseClosingReasonCard,
+      width: 'HALF',
+    },
+    {
+      groupTitle: 'Case management',
+      id: 'DISTRIBUTION_BY_ALERT_PRIORITY',
+      title: 'Distribution by open alert priority',
+      component: DistributionByAlertPriority,
+    },
+    {
+      groupTitle: 'Case management',
+      id: 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS',
+      title: 'Distribution by status',
+      component: DistributionByStatus,
+    },
+  ],
+  TEAM_MANAGEMENT: [
+    {
+      groupTitle: 'Team management',
+      id: 'TEAM_OVERVIEW',
+      title: 'Team overview',
+      component: TeamPerformanceCard,
+    },
+  ],
+};
 type DashboardSettings = Record<KeyValues, boolean>;
 
 function Analysis() {
@@ -161,6 +316,35 @@ function Analysis() {
     };
   }, [dashboardSettings]);
 
+  const renderWidgets = (widgets: WidgetGroup, featureFlags: Record<string, boolean>) => {
+    return widgets
+      .filter(
+        (widget) =>
+          (!widget.requiredFeatures ||
+            widget.requiredFeatures.every((feature) => featureFlags[feature])) &&
+          settingsToDisplay[widget.id],
+      )
+      .map((widget) => {
+        const widgetProps: WidgetProps = {
+          ...widget,
+        };
+
+        return {
+          props: widgetProps,
+          component: widget.component,
+        };
+      })
+      .filter(notEmpty);
+  };
+
+  const isWidgetVisible = (widget: WidgetType, featureFlags: Record<string, boolean>) => {
+    if (widget.requiredFeatures) {
+      return widget.requiredFeatures.every((feature) => featureFlags[feature]);
+    }
+
+    return true;
+  };
+
   return (
     <PageWrapper
       title={i18n('menu.dashboard')}
@@ -176,255 +360,12 @@ function Analysis() {
       }
     >
       <WidgetGrid
-        groups={[
-          {
-            groupTitle: 'Overview',
-            items: [
-              settingsToDisplay.OVERVIEW && {
-                props: {
-                  id: 'overview',
-                },
-                component: OverviewCard,
-              },
-            ].filter(notEmpty),
-          },
-          {
-            groupTitle: 'Consumer users',
-            items: [
-              isRiskScoringEnabled &&
-                settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
-                  props: {
-                    id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-                    title: TITLES.CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL,
-                    width: 'FULL' as const,
-                    userType: 'CONSUMER',
-                  },
-                  component: RiskLevelBreakdownWidget,
-                },
-              isRiskScoringEnabled &&
-                settingsToDisplay.CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL && {
-                  props: {
-                    id: 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
-                    title: TITLES.CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL,
-                    width: 'HALF' as const,
-                    userType: 'CONSUMER',
-                  },
-                  component: RiskLevelDistributionCard,
-                },
-              settingsToDisplay.TOP_CONSUMER_USERS_BY_RULE_HITS && {
-                props: {
-                  id: 'top_consumer_users_by_rule_hits',
-                  title: TITLES.TOP_CONSUMER_USERS_BY_RULE_HITS,
-                  width: 'HALF' as const,
-                  userType: 'CONSUMER',
-                },
-                component: TopUsersHitCard,
-              },
-              settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS && {
-                props: {
-                  id: 'consumer_users_distribution_by_kyc_status',
-                  title: TITLES.CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS,
-                  width: 'HALF' as const,
-                  userType: 'CONSUMER',
-                },
-                component: KYCStatusDistributionCard,
-              },
-              settingsToDisplay.CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS && {
-                props: {
-                  id: 'user_status_distribution_card',
-                  title: TITLES.CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS,
-                  width: 'HALF' as const,
-                  userType: 'CONSUMER',
-                },
-                component: UserStatusDistributionCard,
-              },
-            ].filter(notEmpty),
-          },
-          {
-            groupTitle: 'Business users',
-            items: [
-              isRiskScoringEnabled &&
-                settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL && {
-                  props: {
-                    id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-                    title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL,
-                    width: 'FULL' as const,
-                    userType: 'BUSINESS',
-                  },
-                  component: RiskLevelBreakdownWidget,
-                },
-              isRiskScoringEnabled &&
-                settingsToDisplay.BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL && {
-                  props: {
-                    id: 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
-                    title: TITLES.BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL,
-                    width: 'HALF' as const,
-                    userType: 'BUSINESS' as const,
-                  },
-                  component: RiskLevelDistributionCard,
-                },
-              settingsToDisplay.TOP_BUSINESS_USERS_BY_RULE_HITS && {
-                props: {
-                  id: 'top_business_users_by_rule_hits',
-                  title: TITLES.TOP_BUSINESS_USERS_BY_RULE_HITS,
-                  width: 'HALF' as const,
-                  userType: 'BUSINESS',
-                },
-                component: TopUsersHitCard,
-              },
-              settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS && {
-                props: {
-                  id: 'business_users_distribution_by_kyc_status',
-                  title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS,
-                  width: 'HALF' as const,
-                  userType: 'BUSINESS',
-                },
-                component: KYCStatusDistributionCard,
-              },
-              settingsToDisplay.BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS && {
-                props: {
-                  id: 'user_status_distribution_card',
-                  title: TITLES.BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS,
-                  width: 'HALF' as const,
-                  userType: 'BUSINESS',
-                },
-                component: UserStatusDistributionCard,
-              },
-            ].filter(notEmpty),
-          },
-          {
-            groupTitle: 'Transactions',
-            items: [
-              settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION && {
-                props: {
-                  id: 'transaction_breakdown_by_rule_action',
-                  title: TITLES.TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION,
-                  width: 'FULL',
-                },
-                component: TransactionsChartWidget,
-              },
-              settingsToDisplay.DISTRIBUTION_BY_PAYMENT_METHOD && {
-                props: {
-                  id: 'distribution_by_payment_method',
-                  title: TITLES.DISTRIBUTION_BY_PAYMENT_METHOD,
-                  width: 'HALF',
-                },
-                component: PaymentMethodDistributionWidget,
-              },
-              settingsToDisplay.DISTRIBUTION_BY_TRANSACTION_TYPE && {
-                props: {
-                  id: 'distribution_by_transaction_type',
-                  title: TITLES.DISTRIBUTION_BY_TRANSACTION_TYPE,
-                  width: 'HALF',
-                },
-                component: DistributionByTransactionTypeWidget,
-              },
-              isRiskScoringEnabled &&
-                settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_TRS && {
-                  props: {
-                    id: 'transaction_breakdown_by_trs',
-                    title: TITLES.TRANSACTIONS_BREAKDOWN_BY_TRS,
-                  },
-                  component: TransactionTRSChartCard,
-                },
-            ].filter(notEmpty),
-          },
-          {
-            groupTitle: 'Rules',
-            items: [
-              ...(settingsToDisplay.TOP_RULE_HITS_BY_COUNT
-                ? [
-                    {
-                      props: {
-                        id: 'top_rule_hits_by_count',
-                        // isLegacyComponent: true,
-                        title: TITLES.TOP_RULE_HITS_BY_COUNT,
-                        children: <RuleHitCard />,
-                        resizing: 'AUTO' as const,
-                      },
-                      component: Widget,
-                    },
-                  ]
-                : []),
-              ...(settingsToDisplay.DISTRIBUTION_BY_RULE_PRIORITY
-                ? [
-                    {
-                      props: {
-                        id: 'distribution_by_rule_priority',
-                        title: TITLES.DISTRIBUTION_BY_RULE_PRIORITY,
-                        width: 'HALF' as const,
-                      },
-                      component: RulePrioritySplitCard,
-                    },
-                  ]
-                : []),
-              ...(settingsToDisplay.DISTRIBUTION_BY_RULE_ACTION
-                ? [
-                    {
-                      props: {
-                        id: 'distribution_by_rule_action',
-                        title: TITLES.DISTRIBUTION_BY_RULE_ACTION,
-                        width: 'HALF' as const,
-                      },
-                      component: RuleActionSplitCard,
-                    },
-                  ]
-                : []),
-            ].filter(notEmpty),
-          },
-          {
-            groupTitle: 'Case management',
-            items: [
-              ...(settingsToDisplay.DISTRIBUTION_BY_CLOSING_REASON
-                ? [
-                    {
-                      props: {
-                        id: 'distribution-by-closing reason',
-                        title: TITLES.DISTRIBUTION_BY_CLOSING_REASON,
-                        width: 'HALF',
-                      },
-                      component: CaseClosingReasonCard,
-                    },
-                  ]
-                : []),
-              ...(settingsToDisplay.DISTRIBUTION_BY_ALERT_PRIORITY
-                ? [
-                    {
-                      props: {
-                        id: 'distribution-by-alert-priority',
-                        title: TITLES.DISTRIBUTION_BY_ALERT_PRIORITY,
-                      },
-                      component: DistributionByAlertPriority,
-                    },
-                  ]
-                : []),
-              ...(settingsToDisplay.DISTRIBUTION_BY_CASE_AND_ALERT_STATUS
-                ? [
-                    {
-                      props: {
-                        id: 'distribution-by-case-and-alert-status',
-                        title: TITLES.DISTRIBUTION_BY_CASE_AND_ALERT_STATUS,
-                      },
-                      component: DistributionByStatus,
-                    },
-                  ]
-                : []),
-            ],
-          },
-          {
-            groupTitle: 'Team management',
-            items: [
-              settingsToDisplay.TEAM_OVERVIEW && {
-                props: {
-                  id: 'team_performance',
-                  title: TITLES.TEAM_OVERVIEW,
-                },
-                component: TeamPerformanceCard,
-              },
-            ].filter(notEmpty),
-          },
-        ]}
+        groups={Object.keys(WIDGETS).map((groupKey) => ({
+          groupTitle: humanizeConstant(groupKey),
+          items: renderWidgets(WIDGETS[groupKey], { RISK_SCORING: isRiskScoringEnabled }),
+        }))}
       />
+
       <Drawer
         title="Configure dashboard"
         description="Select chart from below to add it to your dashboard."
@@ -441,9 +382,9 @@ function Analysis() {
               type="PRIMARY"
               onClick={() => {
                 setDashboardSettings(() =>
-                  Object.keys(KEYS).reduce((acc, group) => {
-                    KEYS[group].forEach((key: KeyValues) => {
-                      acc[key] = updatedState[key];
+                  Object.keys(WIDGETS).reduce((acc, group) => {
+                    WIDGETS[group].forEach((widget: WidgetType) => {
+                      acc[widget.id] = updatedState[widget.id];
                     });
                     return acc;
                   }, {} as DashboardSettings),
@@ -457,29 +398,28 @@ function Analysis() {
         }
       >
         <div className={s.settingsDrawerRoot}>
-          {Object.keys(KEYS).map((group) => (
-            <div className={s.settingsDrawerGroup}>
+          {Object.keys(WIDGETS).map((group) => (
+            <div className={s.settingsDrawerGroup} key={group}>
               <div className={s.groupTitle}>{humanizeConstant(group)}</div>
-              {KEYS[group].map((key: KeyValues) => (
-                <Label
-                  key={key}
-                  label={TITLES[key] ?? humanizeConstant(key)}
-                  position="RIGHT"
-                  level={2}
-                >
-                  <Checkbox
-                    value={updatedState[key] == null ? true : updatedState[key]}
-                    onChange={(value) => {
-                      setUpdatedState({
-                        ...updatedState,
-                        [key]: value,
-                      });
-                    }}
-                    extraLeftLabelMargin
-                    testName={TITLES[key]}
-                  />
-                </Label>
-              ))}
+              {WIDGETS[group].map((widget: WidgetType) => {
+                if (!isWidgetVisible(widget, { RISK_SCORING: isRiskScoringEnabled })) return null;
+
+                return (
+                  <Label key={widget.id} label={widget.title} position="RIGHT" level={2}>
+                    <Checkbox
+                      value={updatedState[widget.id] == null ? true : updatedState[widget.id]}
+                      onChange={(value) => {
+                        setUpdatedState({
+                          ...updatedState,
+                          [widget.id]: value,
+                        });
+                      }}
+                      extraLeftLabelMargin
+                      testName={widget.title}
+                    />
+                  </Label>
+                );
+              })}
             </div>
           ))}
         </div>
