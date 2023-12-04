@@ -4,7 +4,7 @@ import { capitalize } from 'lodash';
 import s from './styles.module.less';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
-import { getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
@@ -26,6 +26,9 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
       type: {
         render: (userId, { item: entity }) => {
           return <UserLink user={entity}>{userId}</UserLink>;
+        },
+        link: (userId, entity) => {
+          return getUserLink(entity) ?? '#';
         },
       },
     }),

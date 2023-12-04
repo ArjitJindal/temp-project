@@ -24,6 +24,9 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
             </Id>
           );
         },
+        link(value, item) {
+          return getUserLink(item) ?? '#';
+        },
       },
     }),
     helper.simple<'legalEntity.companyGeneralDetails.legalName'>({

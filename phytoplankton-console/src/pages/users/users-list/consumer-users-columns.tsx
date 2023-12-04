@@ -23,6 +23,9 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
             </Id>
           );
         },
+        link(value, item) {
+          return getUserLink(item) ?? '#';
+        },
       },
     }),
     helper.simple<'userDetails'>({
