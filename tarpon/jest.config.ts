@@ -22,4 +22,13 @@ module.exports = {
       },
     ],
   },
+  collectCoverage: true,
+  collectCoverageFrom: [
+    '<rootDir>/src/lambdas/**/*.ts',
+    '<rootDir>/src/services/**/*.ts',
+    '<rootDir>/src/utils/**/*.ts',
+    '!<rootDir>/node_modules/**',
+  ],
+  coverageReporters: ['json-summary', 'text'],
+  reporters: ['default', 'jest-junit'],
 }
