@@ -5,9 +5,11 @@ import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { NarrativeResponseAttributes } from '@/apis';
 import Tooltip from '@/components/library/Tooltip';
+
 type Props = {
   attributes: NarrativeResponseAttributes[];
 };
+
 export default function CopilotSources(props: Props) {
   const helper = new ColumnHelper<{ key: string; value: any; secret: boolean }>();
   const { attributes } = props;

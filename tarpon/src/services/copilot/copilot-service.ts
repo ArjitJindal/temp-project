@@ -69,6 +69,8 @@ const ObfuscatableAttributePlaceholders: Partial<Record<AIAttribute, string>> =
     websites: 'www.google.com',
   }
 
+const COMPULSORY_HIDDEN_ATTRIBUTES: AIAttribute[] = ['name']
+
 @traceable
 export class CopilotService {
   private readonly tenantId: string
@@ -83,7 +85,7 @@ export class CopilotService {
     const tenantId = event.requestContext.authorizer.principalId
     const connections = {
       mongoDb: await getMongoDbClient(),
-      dynamoDb: await getDynamoDbClientByEvent(event),
+      dynamoDb: getDynamoDbClientByEvent(event),
     }
     return new this(tenantId, connections)
   }
@@ -139,10 +141,14 @@ export class CopilotService {
     const tenantSettings = await tenantRepository.getTenantSettings([
       'aiSourcesDisabled',
     ])
+
     const aiSourcesEnabled = difference(
       AI_ATTRIBUTES,
-      tenantSettings.aiSourcesDisabled ?? []
+      (tenantSettings.aiSourcesDisabled ?? []).concat(
+        COMPULSORY_HIDDEN_ATTRIBUTES
+      )
     )
+
     return aiSourcesEnabled
   }
 
