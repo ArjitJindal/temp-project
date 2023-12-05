@@ -7,12 +7,12 @@ describe('Check if the widget selector works as expected', () => {
     const WIDGETS = [
       'Consumer users distribution by risk levels',
       'Consumer users breakdown by risk levels',
-      'Top consumer users by transaction hits',
+      'Top consumer users by rule hits',
       'Consumer users distribution by KYC status',
       'Consumer users distribution by user status',
       'Business users distribution by risk levels',
       'Business users breakdown by risk levels',
-      'Top business users by transaction hits',
+      'Top business users by rule hits',
       'Business users distribution by KYC status',
       'Business users distribution by user status',
       'Transactions breakdown by rule action',
@@ -27,7 +27,14 @@ describe('Check if the widget selector works as expected', () => {
       'Distribution by status',
       'Team overview',
     ];
+
     cy.visit('/');
+    //enabling RISK_SCORING FF
+    cy.get('[data-cy="superadmin-panel-button"]').click();
+    cy.get('.ant-modal .ant-select-selector').eq(1).should('be.visible').click();
+    cy.contains('RISK_SCORING').click();
+    cy.get('[data-cy="modal-ok"]').click({ force: true });
+    cy.get('.ant-modal-content').find('svg').first().click();
     cy.get('button[data-cy="dashboard-configure-button"]').click();
 
     // Make all widgets invisible
