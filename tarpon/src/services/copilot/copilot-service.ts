@@ -12,6 +12,7 @@ import {
   AttributeSet,
   DefaultAttributeBuilders,
 } from './attributes/builder'
+import { AI_SOURCES } from './attributes/ai-sources'
 import { NarrativeResponse } from '@/@types/openapi-internal/NarrativeResponse'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -68,8 +69,6 @@ const ObfuscatableAttributePlaceholders: Partial<Record<AIAttribute, string>> =
     name: 'Robert Marsh',
     websites: 'www.google.com',
   }
-
-const COMPULSORY_HIDDEN_ATTRIBUTES: AIAttribute[] = ['name']
 
 @traceable
 export class CopilotService {
@@ -142,10 +141,14 @@ export class CopilotService {
       'aiSourcesDisabled',
     ])
 
+    const compulsoryHidden = AI_SOURCES.filter((s) => s.isPii).map(
+      (s) => s.sourceName
+    )
+
     const aiSourcesEnabled = difference(
       AI_ATTRIBUTES,
       (tenantSettings.aiSourcesDisabled ?? []).concat(
-        COMPULSORY_HIDDEN_ATTRIBUTES
+        compulsoryHidden as AIAttribute[]
       )
     )
 
