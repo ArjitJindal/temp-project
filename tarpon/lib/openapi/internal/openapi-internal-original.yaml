@@ -3168,14 +3168,6 @@ paths:
           in: query
           name: beforeTimestamp
         - schema:
-            type: number
-          in: query
-          name: afterTransactionTimestamp
-        - schema:
-            type: number
-          in: query
-          name: beforeTransactionTimestamp
-        - schema:
             type: array
             items:
               $ref: '#/components/schemas/ChecklistStatus'
@@ -3232,18 +3224,6 @@ paths:
             items:
               type: string
           in: query
-          name: filterOriginCurrencies
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterDestinationCurrencies
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
           name: filterBusinessIndustries
         - schema:
             type: string
@@ -3271,12 +3251,6 @@ paths:
             type: string
           in: query
           name: filterDestinationUserId
-        - schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/RuleAction'
-          in: query
-          name: filterStatus
         - schema:
             type: array
             items:
@@ -3314,31 +3288,11 @@ paths:
           in: query
           name: filterTransactionTagValue
         - schema:
-            type: string
-          in: query
-          name: filterTransactionId
-        - schema:
             type: array
             items:
               type: string
           in: query
           name: filterTransactionIds
-        - schema:
-            type: number
-          in: query
-          name: filterTransactionAmoutAbove
-        - schema:
-            type: number
-          in: query
-          name: filterTransactionAmoutBelow
-        - schema:
-            type: string
-          in: query
-          name: filterOriginCountry
-        - schema:
-            type: string
-          in: query
-          name: filterDestinationCountry
         - schema:
             type: array
             items:
@@ -3675,14 +3629,6 @@ paths:
           in: query
           name: beforeTimestamp
         - schema:
-            type: number
-          in: query
-          name: afterTransactionTimestamp
-        - schema:
-            type: number
-          in: query
-          name: beforeTransactionTimestamp
-        - schema:
             type: string
           in: query
           name: filterId
@@ -3690,10 +3636,6 @@ paths:
             type: string
           in: query
           name: filterIdExact
-        - schema:
-            $ref: '#/components/schemas/RuleAction'
-          in: query
-          name: filterOutStatus
         - schema:
             type: array
             items:
@@ -3721,18 +3663,6 @@ paths:
             items:
               type: string
           in: query
-          name: filterOriginCurrencies
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterDestinationCurrencies
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
           name: filterBusinessIndustries
         - schema:
             type: string
@@ -3754,12 +3684,6 @@ paths:
             type: string
           in: query
           name: filterDestinationUserId
-        - schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/RuleAction'
-          in: query
-          name: filterStatus
         - schema:
             type: array
             items:
@@ -3791,31 +3715,11 @@ paths:
           in: query
           name: filterTransactionTagValue
         - schema:
-            type: string
-          in: query
-          name: filterTransactionId
-        - schema:
             type: array
             items:
               type: string
           in: query
           name: filterTransactionIds
-        - schema:
-            type: number
-          in: query
-          name: filterTransactionAmoutAbove
-        - schema:
-            type: number
-          in: query
-          name: filterTransactionAmoutBelow
-        - schema:
-            type: string
-          in: query
-          name: filterOriginCountry
-        - schema:
-            type: string
-          in: query
-          name: filterDestinationCountry
         - schema:
             type: array
             items:

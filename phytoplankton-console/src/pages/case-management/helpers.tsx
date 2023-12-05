@@ -34,15 +34,11 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       alertId: params.alertId,
       timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
       createdTimestamp: params.createdTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
-      transactionTimestamp: params.transactionTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
       caseId: params.caseId,
       rulesHitFilter: params.rulesHitFilter?.join(','),
       rulesExecutedFilter: params.rulesExecutedFilter?.join(','),
-      originCurrenciesFilter: params.originCurrenciesFilter?.join(','),
-      destinationCurrenciesFilter: params.destinationCurrenciesFilter?.join(','),
       userId: params.userId,
       userFilterMode: params.userFilterMode,
-      type: params.type,
       status: params.status?.join(','),
       originMethodFilter: params.originMethodFilter?.join(','),
       destinationMethodFilter: params.destinationMethodFilter?.join(','),
@@ -51,11 +47,6 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       tagValue: params.tagValue ?? undefined,
       caseStatus: params.caseStatus === null ? params.caseStatus : params.caseStatus?.join(','),
       alertStatus: params.alertStatus?.join(','),
-      transactionId: params.transactionId,
-      amountGreaterThanFilter: params.amountGreaterThanFilter,
-      amountLessThanFilter: params.amountLessThanFilter,
-      originCountryFilter: params.originCountryFilter,
-      destinationCountryFilter: params.destinationCountryFilter,
       filterTypes: params.filterTypes?.join(','),
       businessIndustryFilter: params.businessIndustryFilter?.join(','),
       caseTypesFilter: params.caseTypesFilter?.join(','),
@@ -81,18 +72,12 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       createdTimestamp: raw.createdTimestamp
         ? raw.createdTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
-      transactionTimestamp: raw.transactionTimestamp
-        ? raw.transactionTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
-        : undefined,
       caseId: raw.caseId,
       alertId: raw.alertId,
       rulesHitFilter: raw.rulesHitFilter?.split(','),
       rulesExecutedFilter: raw.rulesExecutedFilter?.split(','),
-      originCurrenciesFilter: raw.originCurrenciesFilter?.split(','),
-      destinationCurrenciesFilter: raw.destinationCurrenciesFilter?.split(','),
       userId: raw.userId,
       userFilterMode: isMode(raw.userFilterMode) ? raw.userFilterMode : undefined,
-      type: raw.type,
       status: raw.status ? raw.status.split(',').filter(isRuleAction) : undefined,
       originMethodFilter: raw.originMethodFilter?.split(',') as PaymentMethod[],
       destinationMethodFilter: raw.destinationMethodFilter?.split(',') as PaymentMethod[],
@@ -105,15 +90,6 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       caseStatus:
         raw.caseStatus === null ? raw.caseStatus : (raw.caseStatus?.split(',') as DerivedStatus[]),
       alertStatus: raw.alertStatus?.split(',') as DerivedStatus[],
-      transactionId: raw.transactionId,
-      amountGreaterThanFilter: raw.amountGreaterThanFilter
-        ? parseInt(raw.amountGreaterThanFilter)
-        : undefined,
-      amountLessThanFilter: raw.amountLessThanFilter
-        ? parseInt(raw.amountLessThanFilter)
-        : undefined,
-      originCountryFilter: raw.originCountryFilter,
-      destinationCountryFilter: raw.destinationCountryFilter,
       filterTypes: raw.filterTypes?.split(',') as unknown as TableSearchParams['filterTypes'],
       businessIndustryFilter: raw.businessIndustryFilter?.split(','),
       caseTypesFilter: raw.caseTypesFilter?.split(

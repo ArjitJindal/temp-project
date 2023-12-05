@@ -22,11 +22,8 @@ export type CommonCaseParams = {
   caseCreatedTimestamp: string[];
   rulesHitFilter: Array<string>;
   rulesExecutedFilter: Array<string>;
-  originCurrenciesFilter: Array<string>;
-  destinationCurrenciesFilter: Array<string>;
   userFilterMode: UserSearchMode;
   userId: string;
-  type: string;
   status: RuleAction[];
   transactionState: TransactionState[];
   originMethodFilter: PaymentMethod[];
@@ -35,12 +32,6 @@ export type CommonCaseParams = {
   tagValue: string;
   caseStatus: DerivedStatus[] | null;
   alertStatus: DerivedStatus[] | null;
-  transactionId: string;
-  transactionTimestamp: string[];
-  amountGreaterThanFilter: number;
-  amountLessThanFilter: number;
-  originCountryFilter: string;
-  destinationCountryFilter: string;
   businessIndustryFilter: string[];
   filterTypes: AuditLogType[];
   userStates: UserState[];

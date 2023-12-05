@@ -320,18 +320,6 @@ export class CaseRepository {
     }
 
     if (
-      params.beforeTransactionTimestamp != null &&
-      params.afterTransactionTimestamp != null
-    ) {
-      conditions.push({
-        'caseTransactions.timestamp': {
-          $lte: params.beforeTransactionTimestamp,
-          $gte: params.afterTransactionTimestamp,
-        },
-      })
-    }
-
-    if (
       params.filterCasesByLastUpdatedEndTimestamp != null &&
       params.filterCasesByLastUpdatedStartTimestamp != null
     ) {
@@ -349,27 +337,13 @@ export class CaseRepository {
     if (params.filterIdExact != null) {
       conditions.push({ caseId: params.filterIdExact })
     }
-    if (params.transactionType != null) {
-      conditions.push({
-        'caseTransactions.type': prefixRegexMatchFilter(params.transactionType),
-      })
-    }
-    if (params.filterOutStatus != null) {
-      conditions.push({
-        'caseTransactions.status': { $nin: [params.filterOutStatus] },
-      })
-    }
+
     if (
       params.filterOutCaseStatus != null &&
       params.filterOutCaseStatus.length > 0
     ) {
       conditions.push({
         caseStatus: { $nin: params.filterOutCaseStatus },
-      })
-    }
-    if (params.filterStatus != null) {
-      conditions.push({
-        'caseTransactions.status': { $in: params.filterStatus },
       })
     }
 
@@ -456,15 +430,9 @@ export class CaseRepository {
       }
     }
 
-    if (params.filterTransactionId != null) {
-      conditions.push({
-        'caseTransactions.transactionId': { $in: [params.filterTransactionId] },
-      })
-    }
-
     if (params.filterTransactionIds != null) {
       conditions.push({
-        'caseTransactions.transactionId': { $in: params.filterTransactionIds },
+        caseTransactionsIds: { $in: params.filterTransactionIds },
       })
     }
 
@@ -478,20 +446,6 @@ export class CaseRepository {
       conditions.push(getRuleQueueFilter(params.filterRuleQueueIds))
     }
 
-    if (params.filterOriginCurrencies != null) {
-      conditions.push({
-        'caseTransactions.originAmountDetails.transactionCurrency': {
-          $in: params.filterOriginCurrencies,
-        },
-      })
-    }
-    if (params.filterDestinationCurrencies != null) {
-      conditions.push({
-        'caseTransactions.destinationAmountDetails.transactionCurrency': {
-          $in: params.filterDestinationCurrencies,
-        },
-      })
-    }
     if (params.filterOriginPaymentMethods != null) {
       conditions.push({
         'caseTransactions.originPaymentDetails.method': {
@@ -499,60 +453,11 @@ export class CaseRepository {
         },
       })
     }
+
     if (params.filterDestinationPaymentMethods != null) {
       conditions.push({
         'caseTransactions.destinationPaymentDetails.method': {
           $in: params.filterDestinationPaymentMethods,
-        },
-      })
-    }
-
-    if (params.filterTransactionAmoutAbove != null) {
-      conditions.push({
-        $or: [
-          {
-            'caseTransactions.originAmountDetails.transactionAmount': {
-              $gte: params.filterTransactionAmoutAbove,
-            },
-          },
-          {
-            'caseTransactions.destinationAmountDetails.transactionAmount': {
-              $gte: params.filterTransactionAmoutAbove,
-            },
-          },
-        ],
-      })
-    }
-
-    if (params.filterTransactionAmoutBelow != null) {
-      conditions.push({
-        $or: [
-          {
-            'caseTransactions.originAmountDetails.transactionAmount': {
-              $lte: params.filterTransactionAmoutBelow,
-            },
-          },
-          {
-            'caseTransactions.destinationAmountDetails.transactionAmount': {
-              $lte: params.filterTransactionAmoutBelow,
-            },
-          },
-        ],
-      })
-    }
-
-    if (params.filterOriginCountry != null) {
-      conditions.push({
-        'caseTransactions.originAmountDetails.country': {
-          $in: [params.filterOriginCountry],
-        },
-      })
-    }
-
-    if (params.filterDestinationCountry != null) {
-      conditions.push({
-        'caseTransactions.destinationAmountDetails.country': {
-          $in: [params.filterDestinationCountry],
         },
       })
     }
@@ -564,6 +469,7 @@ export class CaseRepository {
         },
       })
     }
+
     if (params.filterTransactionTagKey || params.filterTransactionTagValue) {
       const elemCondition: { [attr: string]: Filter<Tag> } = {}
       if (params.filterTransactionTagKey) {
@@ -1210,7 +1116,7 @@ export class CaseRepository {
     }
     if (params.filterTransactionId) {
       filters.push({
-        'caseTransactions.transactionId': params.filterTransactionId,
+        caseTransactionsIds: params.filterTransactionId,
       })
     }
 
@@ -1275,7 +1181,7 @@ export class CaseRepository {
 
     if (params.filterTransactionId) {
       filters.push({
-        'caseTransactions.transactionId': params.filterTransactionId,
+        caseTransactionsIds: params.filterTransactionId,
       })
     }
 
@@ -1365,7 +1271,7 @@ export class CaseRepository {
       originDrsScore != null &&
         collection.updateOne(
           {
-            'caseTransactions.transactionId': transactionId,
+            caseTransactionsIds: transactionId,
             'caseUsers.origin': { $ne: null },
           },
           {
@@ -1377,7 +1283,7 @@ export class CaseRepository {
       destinationDrsScore != null &&
         collection.updateOne(
           {
-            'caseTransactions.transactionId': transactionId,
+            caseTransactionsIds: transactionId,
             'caseUsers.destination': { $ne: null },
           },
           {
