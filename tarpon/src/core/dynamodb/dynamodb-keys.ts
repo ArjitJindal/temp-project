@@ -405,6 +405,12 @@ export function getPaymentDetailsIdentifiers(
     }
   } else {
     // All fields need to be non-empty
+    if (identifierFields.length === 0) {
+      logger.error(
+        `Payment identifier fields not found for ${paymentDetails.method}`
+      )
+    }
+
     if (
       (identifierFields as string[]).find(
         (field) => !(paymentDetails as any)[field]
