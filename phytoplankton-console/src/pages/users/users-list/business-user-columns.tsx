@@ -101,6 +101,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       type: DATE,
       key: 'createdTimestamp',
       sorting: true,
+      filtering: true,
     }),
   ];
 }

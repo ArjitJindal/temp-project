@@ -88,6 +88,7 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
       id: 'createdTimestamp',
       tooltip: 'Date and time when user was created.',
       sorting: true,
+      filtering: true,
     }),
   ];
 }
