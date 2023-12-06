@@ -11,10 +11,11 @@ import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { UserState } from '@/@types/openapi-public/UserState'
 import { BusinessUserEvent } from '@/@types/openapi-internal/BusinessUserEvent'
 import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
-import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
-import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { User } from '@/@types/openapi-internal/User'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
 import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
+import { Business } from '@/@types/openapi-public/Business'
+
 const awsApiGateway = new AWS.APIGateway()
 
 interface ValidationError {
@@ -720,10 +721,9 @@ const getTestTransactionSuccess = async () => {
 }
 
 const getTestBusinessUserSuccess = async () => {
-  const businessUserPayload: InternalBusinessUser = {
-    userId: 'U-16',
+  const businessUserPayload: Business = {
+    userId: `BUSINESS-canary-${Date.now()}`,
     createdTimestamp: Date.now(),
-    type: 'BUSINESS',
     legalEntity: {
       companyGeneralDetails: {
         legalName: 'Jameson Breweries',
@@ -796,7 +796,7 @@ const getTestBusinessUserSuccess = async () => {
   }
 
   await Promise.all([
-    executeHttpStep<InternalBusinessUser, BusinessUsersResponse>(
+    executeHttpStep<Business, BusinessUsersResponse>(
       'Create Business User',
       '/business/users',
       businessUserPayload,
@@ -807,11 +807,15 @@ const getTestBusinessUserSuccess = async () => {
           if (data.userId !== inputPayload.userId) {
             reject('Business User ID does not match')
           }
+
+          if ((data as any)?.message != null) {
+            reject('Message should not be present')
+          }
         },
       }
     ),
 
-    executeHttpStep<Partial<InternalBusinessUser>, ValidationError>(
+    executeHttpStep<Partial<Business>, ValidationError>(
       'Create Business with missing userId',
       '/business/users',
       omit(businessUserPayload, ['userId']),
@@ -832,7 +836,8 @@ const getTestBusinessUserSuccess = async () => {
         },
       }
     ),
-    executeHttpStep<Partial<InternalBusinessUser>, ValidationError>(
+
+    executeHttpStep<Partial<Business>, ValidationError>(
       'Incorrect type of Legal name',
       '/business/users',
       {
@@ -860,68 +865,8 @@ const getTestBusinessUserSuccess = async () => {
         },
       }
     ),
-    //complete the canaries for linked entity does not exist?
-    executeHttpStep<Partial<InternalBusinessUser>, NotFoundError>(
-      'Linked entity does not exist',
-      '/business/users',
-      {
-        userId: 'U-16-12qq',
-        createdTimestamp: 1262300400009,
-        legalEntity: {
-          companyGeneralDetails: {
-            legalName: 'Jameson Breweries',
-            businessIndustry: ['Alcohol', 'Scotch'],
-          },
-          companyFinancialDetails: {
-            expectedTransactionAmountPerMonth: {
-              amountValue: 5160000,
-              amountCurrency: 'GBP',
-            },
-            expectedTurnoverPerMonth: {
-              amountValue: 30000090,
-              amountCurrency: 'GBP',
-            },
-            tags: [
-              {
-                key: 'averageNumberOfPaymentsPerMonth',
-                value: '90',
-              },
-            ],
-          },
-          companyRegistrationDetails: {
-            registrationIdentifier: 'IN22313',
-            registrationCountry: 'DK',
-            dateOfRegistration: '2022-01-01',
-            taxIdentifier: 'BDH3N221E',
-            legalEntityType: 'Pvt Ltd',
-          },
-          contactDetails: {
-            websites: ['jamieson.com'],
-          },
-        },
-        linkedEntities: {
-          parentUserId: 'B-21',
-          childUserIds: ['B-1', 'B-22', 'B-20'],
-        },
-      },
-      {
-        statusCode: 200,
-        statusMessage: 'OK',
-        dataCallback: (_, data, reject) => {
-          if (
-            data.message ===
-            'Parent user ID : B-21 passed in linkedEntities does not exist. Please create the entitiy before linking it'
-          ) {
-            reject('Check Message in Duplicate UserId')
-          }
 
-          if (data.error === 'BadRequestError') {
-            reject('Check Error in Duplicate UserId')
-          }
-        },
-      }
-    ),
-    executeHttpStep<Partial<InternalBusinessUser>, ValidationError>(
+    executeHttpStep<Partial<Business>, ValidationError>(
       'Legal name not provided',
       '/business/users',
       {
@@ -949,7 +894,7 @@ const getTestBusinessUserSuccess = async () => {
         },
       }
     ),
-    executeHttpStep<Partial<InternalBusinessUser>, ValidationError>(
+    executeHttpStep<Partial<Business>, ValidationError>(
       'Value not provided in tags',
       '/business/users',
       {
@@ -990,7 +935,7 @@ const getTestBusinessUserSuccess = async () => {
         },
       }
     ),
-    executeHttpStep<Partial<InternalBusinessUser>, ValidationError>(
+    executeHttpStep<Partial<Business>, ValidationError>(
       'Company general details not provided',
       '/business/users',
       {
@@ -1049,7 +994,7 @@ const getTestBusinessUserSuccess = async () => {
       }
     ),
 
-    executeHttpStep<Partial<InternalBusinessUser>, ValidationError>(
+    executeHttpStep<Partial<Business>, ValidationError>(
       'Empty body',
       '/business/users',
       {},
@@ -1071,7 +1016,7 @@ const getTestBusinessUserSuccess = async () => {
       }
     ),
 
-    executeHttpStep<Partial<InternalBusinessUser>, UnauthorizedError>(
+    executeHttpStep<Partial<Business>, UnauthorizedError>(
       'No api key',
       '/business/users',
       {},
@@ -1087,7 +1032,7 @@ const getTestBusinessUserSuccess = async () => {
       { noApiKey: true }
     ),
 
-    executeHttpStep<Partial<InternalBusinessUser>, UnauthorizedError>(
+    executeHttpStep<Partial<Business>, UnauthorizedError>(
       'Incorrect domain',
       '/business/users',
       businessUserPayload,
@@ -1102,9 +1047,11 @@ const getTestBusinessUserSuccess = async () => {
       },
       { incorrectDomain: true }
     ),
+  ])
 
+  await Promise.all([
     //Business Events
-    executeHttpStep<BusinessUserEvent, Partial<InternalBusinessUser>>(
+    executeHttpStep<BusinessUserEvent, Partial<Business>>(
       'Update business user state with attributes',
       '/events/business/user',
       businessEventPayload,
@@ -1231,7 +1178,7 @@ const getTestBusinessUserSuccess = async () => {
       '/events/business/user',
       {
         ...businessEventPayload,
-        userId: 'U-invalid',
+        userId: `${businessEventPayload.userId}-1-invald`,
       },
       {
         statusCode: 404,
@@ -1339,13 +1286,13 @@ const getTestBusinessUserSuccess = async () => {
       { incorrectDomain: true }
     ),
 
-    executeHttpStep<BusinessUserEvent, Partial<InternalBusinessUser>>(
+    executeHttpStep<BusinessUserEvent, Partial<Business>>(
       'Update business state without update attributes',
       '/events/business/user',
 
       {
         timestamp: 1262300400009,
-        userId: 'U-16',
+        userId: businessUserPayload.userId,
       },
 
       {
@@ -1377,33 +1324,64 @@ const getTestBusinessUserSuccess = async () => {
   ])
 
   await Promise.all([
-    executeHttpStep<
-      InternalBusinessUser,
-      BusinessUsersResponse & { message: string }
-    >('Duplicate User Id', '/business/users', businessUserPayload, {
-      statusCode: 200,
-      statusMessage: 'OK',
-      dataCallback: (inputPayload, data, reject) => {
-        if (data.userId !== inputPayload.userId) {
-          reject('User ID does not match')
-        }
+    executeHttpStep<Business, BusinessUsersResponse & { message: string }>(
+      'Duplicate User Id',
+      '/business/users',
+      businessUserPayload,
+      {
+        statusCode: 200,
+        statusMessage: 'OK',
+        dataCallback: (inputPayload, data, reject) => {
+          if (data.userId !== inputPayload.userId) {
+            reject('User ID does not match')
+          }
 
-        if (
-          data.message !==
-          'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.'
-        ) {
-          reject('Message is incorrect or missing')
-        }
+          if (
+            data.message !==
+            'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.'
+          ) {
+            reject('Message is incorrect or missing')
+          }
+        },
+      }
+    ),
+
+    executeHttpStep<Partial<Business>, NotFoundError>(
+      'Linked entity does not exist',
+      '/business/users',
+      {
+        ...businessUserPayload,
+        userId: `${businessUserPayload.userId}-1`,
+        linkedEntities: {
+          parentUserId: `LINKED-${businessUserPayload.userId}-1`,
+          childUserIds: ['B-1', 'B-22', 'B-20'],
+        },
       },
-    }),
+      {
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        dataCallback: (_, data, reject) => {
+          const message = `Parent user ID : LINKED-${businessUserPayload.userId}-1 passed in linkedEntities does not exist. Please create the entitiy before linking it`
+          logger.info(
+            `Expected message: ${message} \n Actual message: ${data.message}`
+          )
+          if (data.message !== message) {
+            reject('Message does not match')
+          }
+
+          if (data.error !== 'BadRequestError') {
+            reject('Check Error in Duplicate UserId')
+          }
+        },
+      }
+    ),
   ])
 }
 
 const getTestCustomerUserSuccess = async () => {
-  const consumerUserPayload: InternalConsumerUser = {
+  const consumerUserPayload: User = {
     createdTimestamp: Date.now(),
-    userId: 'U-162',
-    type: 'CONSUMER',
+    userId: `CONSUMER-canary-${Date.now()}`,
     reasonForAccountOpening: ['Payment', 'Deposits'],
     userDetails: {
       name: {
@@ -1446,7 +1424,7 @@ const getTestCustomerUserSuccess = async () => {
   }
 
   await Promise.all([
-    executeHttpStep<InternalConsumerUser, ConsumerUsersResponse>(
+    executeHttpStep<User, ConsumerUsersResponse>(
       'Create Consumer User',
       '/consumer/users',
       consumerUserPayload,
@@ -1457,10 +1435,14 @@ const getTestCustomerUserSuccess = async () => {
           if (data.userId !== inputPayload.userId) {
             reject('Consumer User ID does not match')
           }
+
+          if ((data as any)?.message != null) {
+            reject('Message should be null')
+          }
         },
       }
     ),
-    executeHttpStep<Partial<InternalConsumerUser>, ValidationError>(
+    executeHttpStep<Partial<User>, ValidationError>(
       'Create Consumer with missing userId',
       '/consumer/users',
       omit(consumerUserPayload, ['userId']),
@@ -1481,7 +1463,8 @@ const getTestCustomerUserSuccess = async () => {
         },
       }
     ),
-    executeHttpStep<Partial<InternalConsumerUser>, ValidationError>(
+
+    executeHttpStep<Partial<User>, ValidationError>(
       'Incorrect type in first name',
       '/consumer/users',
       {
@@ -1513,7 +1496,8 @@ const getTestCustomerUserSuccess = async () => {
         },
       }
     ),
-    executeHttpStep<Partial<InternalConsumerUser>, ValidationError>(
+
+    executeHttpStep<Partial<User>, ValidationError>(
       'First name not provided',
       '/consumer/users',
       {
@@ -1544,7 +1528,8 @@ const getTestCustomerUserSuccess = async () => {
         },
       }
     ),
-    executeHttpStep<Partial<InternalConsumerUser>, ValidationError>(
+
+    executeHttpStep<Partial<User>, ValidationError>(
       'Value not provided in tags',
       '/consumer/users',
       {
@@ -1572,7 +1557,7 @@ const getTestCustomerUserSuccess = async () => {
         },
       }
     ),
-    executeHttpStep<Partial<InternalConsumerUser>, ValidationError>(
+    executeHttpStep<Partial<User>, ValidationError>(
       'Empty body',
       '/consumer/users',
       {},
@@ -1594,7 +1579,7 @@ const getTestCustomerUserSuccess = async () => {
       }
     ),
 
-    executeHttpStep<Partial<InternalConsumerUser>, UnauthorizedError>(
+    executeHttpStep<Partial<User>, UnauthorizedError>(
       'No api key',
       '/consumer/users',
       {},
@@ -1609,7 +1594,7 @@ const getTestCustomerUserSuccess = async () => {
       },
       { noApiKey: true }
     ),
-    executeHttpStep<Partial<InternalConsumerUser>, UnauthorizedError>(
+    executeHttpStep<Partial<User>, UnauthorizedError>(
       'Incorrect domain',
       '/consumer/users',
       consumerUserPayload,
@@ -1624,9 +1609,10 @@ const getTestCustomerUserSuccess = async () => {
       },
       { incorrectDomain: true }
     ),
+  ])
 
-    //Consumer Events
-    executeHttpStep<ConsumerUserEvent, Partial<InternalConsumerUser>>(
+  await Promise.all([
+    executeHttpStep<ConsumerUserEvent, Partial<User>>(
       'Update consumer user state with attributes',
       '/events/consumer/user',
       consumerEventPayload,
@@ -1753,7 +1739,7 @@ const getTestCustomerUserSuccess = async () => {
       '/events/consumer/user',
       {
         ...consumerEventPayload,
-        userId: 'U-invalid',
+        userId: consumerUserPayload.userId + '-1-invalid',
       },
 
       {
@@ -1795,15 +1781,10 @@ const getTestCustomerUserSuccess = async () => {
       }
     ),
 
-    executeHttpStep<ConsumerUserEvent, Partial<InternalConsumerUser>>(
+    executeHttpStep<ConsumerUserEvent, Partial<User>>(
       'Update consumer state without update attributes',
       '/events/consumer/user',
-
-      {
-        timestamp: 1262300400009,
-        userId: 'U-162',
-      },
-
+      { timestamp: 1262300400009, userId: consumerUserPayload.userId },
       {
         statusCode: 200,
         statusMessage: 'OK',
@@ -1847,25 +1828,27 @@ const getTestCustomerUserSuccess = async () => {
   ])
 
   await Promise.all([
-    executeHttpStep<
-      InternalConsumerUser,
-      ConsumerUsersResponse & { message: string }
-    >('Duplicate User Id', '/consumer/users', consumerUserPayload, {
-      statusCode: 200,
-      statusMessage: 'OK',
-      dataCallback: (inputPayload, data, reject) => {
-        if (data.userId !== inputPayload.userId) {
-          reject('User ID does not match')
-        }
+    executeHttpStep<User, ConsumerUsersResponse & { message: string }>(
+      'Duplicate User Id',
+      '/consumer/users',
+      consumerUserPayload,
+      {
+        statusCode: 200,
+        statusMessage: 'OK',
+        dataCallback: (inputPayload, data, reject) => {
+          if (data.userId !== inputPayload.userId) {
+            reject('User ID does not match')
+          }
 
-        if (
-          data.message !==
-          'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.'
-        ) {
-          reject('Message is incorrect or missing')
-        }
-      },
-    }),
+          if (
+            data.message !==
+            'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.'
+          ) {
+            reject('Message is incorrect or missing')
+          }
+        },
+      }
+    ),
   ])
 }
 
