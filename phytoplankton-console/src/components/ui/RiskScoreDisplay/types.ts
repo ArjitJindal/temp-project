@@ -6,4 +6,5 @@ export interface ValueItem {
   createdAt: number;
   manualRiskLevel?: RiskLevel;
   components?: Array<RiskScoreComponent>;
+  transactionId?: string;
 }

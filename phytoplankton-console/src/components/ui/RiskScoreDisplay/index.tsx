@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import DetailsModal from './DetailsModal';
 import MainPanel, { MainPanelCustomStyles } from './MainPanel';
 import { ValueItem } from './types';
+import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   icon: React.ReactNode;
@@ -34,6 +35,8 @@ export default function RiskScoreDisplay(props: Props) {
   const sortedItems = useMemo(() => sortByDate(values), [values]);
   const lastItem = sortedItems[values.length - 1];
   const components = lastItem?.components;
+  const isManualUpdate = lastItem?.transactionId === 'MANUAL_UPDATE' && lastItem?.manualRiskLevel;
+
   return (
     <>
       <MainPanel
@@ -44,7 +47,13 @@ export default function RiskScoreDisplay(props: Props) {
         sortedItems={sortedItems}
         lastItem={lastItem}
         riskScoreAlgo={riskScoreAlgo}
-        defaultText={`This is default risk score value when all the risk factors are disabled.`}
+        defaultText={
+          !isManualUpdate
+            ? `This is default risk score value when all the risk factors are disabled.`
+            : `The CRA of this user has been manually set to ${humanizeConstant(
+                lastItem?.manualRiskLevel ?? '',
+              )}.`
+        }
       />
       <DetailsModal
         icon={icon}
