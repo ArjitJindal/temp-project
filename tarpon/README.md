@@ -121,40 +121,6 @@ Re-run the changed tests automatically
 npm run test:watch
 ```
 
-### Integration Tests
-
-#### Introduction
-
-We are having Integrations tests to ensure that the APIs are working as expected. Every API has its own set of integration tests written in `Postman Collection` and stored in `test-resources/` folder.
-
-[Postman API Tests Collection](https://lively-firefly-529317.postman.co/workspace/Flagright-Workspace~7e6e7bab-de2f-4a94-84a0-dca68b5b3d52/collection/25627167-9716caee-9579-4961-8254-66e40d894d09?action=share&creator=22625333)
-
-#### Running Integration Tests
-
-For Dev environment:
-
-```bash
-npm run postman:integration:dev
-```
-
-For Sandbox environment:
-
-```bash
-npm run postman:integration:sandbox
-```
-
-We have integration tests for the following APIs:
-
-- Public API Transactions
-
-#### Sync Postman collection
-
-We can write tests in Postman and sync them to the repo using the following command this will sync the collection to `test-resources/` folder. But only the tests will be synced, not the environment variables. Environment variables are needed to be managed in code as required under `scripts/run-integration-tests.ts`.
-
-```bash
-npm run postman:sync:collection
-```
-
 ## Deploy
 
 In order to deploy to a new account (or the first time you're deploying), you have to run `cdk bootstrap` like so:
@@ -347,7 +313,13 @@ For example, if you want to use the transactions from tenant A
    npm run cross-tenant-query:prod
    ```
 
-### To Test the Canaries
+### Integration Tests
+
+#### Introduction
+
+We are having Integrations tests to ensure that the APIs are working as expected. We now use AWS Cloudwatch Synthetics to run the tests. The tests are run every 5 minutes. The tests are run in the dev and sandbox environments.
+
+#### To Test the Canaries
 
 - To test a canary, run `npm run deploy:test:canary` then go to the AWS console and check the canary status.
 - Test canaries will run once every 30 minutes.

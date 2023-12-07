@@ -58,7 +58,6 @@ export const postDeploymentCodeBuildProject = (
                   `export ENV=${env}`,
                   `export AWS_REGION=${config.env.region}`,
                   ...getAssumeRoleCommands(config),
-                  `npm run postman:integration:${config.stage}`,
                 ],
               },
             }
