@@ -1,6 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
 import { cloneDeep } from 'lodash'
-import { BadRequest } from 'http-errors'
+import { NotFound } from 'http-errors'
 import { backOff } from 'exponential-backoff'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionAggregationTask } from '@/services/rules-engine'
@@ -26,6 +26,7 @@ import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { logger } from '@/core/logger'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export async function handleTransactionAggregationTask(
   task: TransactionAggregationTask
@@ -48,16 +49,16 @@ export async function handleTransactionAggregationTask(
     dynamoDb,
   })
 
-  const [ruleInstance, transaction] = await Promise.all([
-    ruleInstanceRepository.getRuleInstanceById(task.ruleInstanceId),
-    backOff(
+  let transaction: Transaction | undefined
+  try {
+    transaction = await backOff(
       async () => {
         const transactionId = task.transactionId
         const transaction = await transactionRepository.getTransactionById(
           transactionId
         )
         if (!transaction) {
-          throw new BadRequest(`Transaction ${transactionId} not found`)
+          throw new NotFound(`Transaction ${transactionId} not found`)
         }
         return transaction
       },
@@ -66,22 +67,22 @@ export async function handleTransactionAggregationTask(
         numOfAttempts: 3,
         startingDelay: 1000,
         maxDelay: 5000,
-        retry: (e, attempt) => {
-          if (attempt === 3) {
-            logger.error(
-              `Failed to get transaction ${task.transactionId}: ${e.message}`
-            )
-
-            return false
-          }
-          logger.warn(
-            `Failed to get transaction ${task.transactionId}: ${e.message}`
-          )
-          return true
-        },
       }
-    ),
-  ])
+    )
+  } catch (e) {
+    if (e instanceof NotFound) {
+      logger.error(
+        `Failed to get transaction ${task.transactionId}: ${e.message}`
+      )
+      return
+    } else {
+      throw e
+    }
+  }
+
+  const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
+    task.ruleInstanceId
+  )
 
   updateLogMetadata(task)
   if (!ruleInstance) {
