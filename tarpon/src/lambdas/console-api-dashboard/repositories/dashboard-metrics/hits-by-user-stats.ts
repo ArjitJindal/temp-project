@@ -262,7 +262,7 @@ export class HitsByUserStatsDashboardMetric {
 
     const condition = {
       $match: {
-        ...(direction ? { direction } : {}),
+        ...(direction ? { direction } : { direction: { $exists: true } }),
         date: {
           $gte: startDate,
           $lte: endDate,
@@ -286,7 +286,12 @@ export class HitsByUserStatsDashboardMetric {
         transactionsHitCount: number
       }>(
         [
-          condition,
+          {
+            $match: {
+              ...condition.$match,
+              transactionsCount: { $gt: 0 },
+            },
+          },
           {
             $group: {
               _id: `$userId`,
@@ -297,14 +302,15 @@ export class HitsByUserStatsDashboardMetric {
             },
           },
           {
+            $match: {
+              transactionsHitCount: { $gt: 0 },
+            },
+          },
+          {
             $sort: { transactionsHitCount: -1 },
           },
           {
-            $match: {
-              transactionsHitCount: {
-                $gte: 1,
-              },
-            },
+            $limit: 10,
           },
           lookupPipelineStage(
             {
@@ -315,19 +321,17 @@ export class HitsByUserStatsDashboardMetric {
             },
             true
           ),
+          userTypeCondition,
           {
             $set: {
               user: { $first: '$user' },
             },
           },
-          userTypeCondition,
-          {
-            $limit: 10,
-          },
         ],
         { allowDiskUse: true }
       )
       .toArray()
+
     return result.map((x) => {
       return {
         userId: x._id,
