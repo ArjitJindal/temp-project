@@ -149,7 +149,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         s.root,
         isError && s.isError,
         s[`size-${size}`],
-        isHovered && s.ishovered,
+        isHovered && isCopyable && s.ishovered,
         antSelectProps.mode !== undefined && s.extraPadding,
         className,
       )}
