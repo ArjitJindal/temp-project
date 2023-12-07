@@ -64,20 +64,6 @@ jobs:
       - name: Run Tests
         run: npm run test:ci
         working-directory: "tarpon"
-      - name: Jest code Coverage
-        uses: MishaKav/jest-coverage-comment@main
-        with:
-          coverage-summary-path: tarpon/coverage/coverage-summary.json
-          title: Jest Code Coverage
-          summary-title: Summary
-          badge-title: Coverage
-          hide-comment: false
-          create-new-comment: false
-          hide-summary: false
-          junitxml-title: Tests summary
-          junitxml-path: tarpon/junit.xml
-          coverage-title: Coverage
-          coverage-path: tarpon/coverage.txt
       - name: Post to a Slack channel on failure
         id: slack
         uses: slackapi/slack-github-action@v1.24.0
