@@ -30,7 +30,7 @@ jobs:
       - name: Use Node.js 18x
         uses: actions/setup-node@v3
         with:
-          node-version: 18.17.1
+          node-version: 18
           cache: "npm"
           cache-dependency-path: "tarpon/package-lock.json"
       - name: Cache jest results
