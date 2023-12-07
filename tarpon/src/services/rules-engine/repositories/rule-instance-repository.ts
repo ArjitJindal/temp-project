@@ -21,7 +21,6 @@ import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
-
 function toRuleInstance(item: any): RuleInstance {
   return {
     id: item.id,
@@ -44,11 +43,11 @@ function toRuleInstance(item: any): RuleInstance {
     falsePositiveCheckEnabled: item.falsePositiveCheckEnabled,
     nature: item.nature,
     labels: item.labels,
-    alertCreationInterval: item.alertCreationInterval,
     checklistTemplateId: item.checklistTemplateId,
     triggersOnHit: item.triggersOnHit,
     riskLevelsTriggersOnHit: item.riskLevelsTriggersOnHit,
     queueId: item.queueId,
+    alertConfig: item.alertConfig,
     checksFor: item.checksFor,
   }
 }
@@ -103,7 +102,7 @@ export class RuleInstanceRepository {
       updatedAt: now,
       runCount: ruleInstance.runCount || 0,
       hitCount: ruleInstance.hitCount || 0,
-      alertCreationInterval: ruleInstance.alertCreationInterval,
+      alertConfig: ruleInstance.alertConfig,
     }
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,

@@ -288,3 +288,8 @@ export const COPILOT_SUGGESTIONS = (requestString: string): QueryKey => [
 export const RULE_QUEUES = (params?: AnyParameters): QueryKey =>
   ['rule-queues', params].filter(Boolean);
 export const RULE_QUEUE = (queueId?: string): QueryKey => ['rule-queue', queueId];
+
+export const RULE_ALERT_ASSIGNEES = (assigneeType: string): QueryKey => [
+  'rule-alert-assignees',
+  assigneeType,
+];

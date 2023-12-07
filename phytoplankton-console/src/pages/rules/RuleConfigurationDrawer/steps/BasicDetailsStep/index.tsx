@@ -20,6 +20,8 @@ import { CHECKLIST_TEMPLATES } from '@/utils/queries/keys';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
 import { useRuleQueues } from '@/components/rules/util';
+import Alert from '@/components/library/Alert';
+import { useRoles, useUsers } from '@/utils/user-utils';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -28,12 +30,15 @@ export interface FormValues {
   casePriority: Priority;
   ruleLabels: RuleLabels[];
   ruleInstanceId?: string;
-  alertCreationInterval?: AlertCreationInterval;
   simulationIterationName?: string;
   simulationIterationDescription?: string;
   falsePositiveCheckEnabled?: boolean;
   checklistTemplateId?: string;
   queueId?: string;
+  alertAssigneesType?: 'EMAIL' | 'ROLE';
+  alertCreationInterval?: AlertCreationInterval;
+  alertAssignees?: string[];
+  alertAssigneeRole?: string;
   checksFor: string[];
 }
 
@@ -47,6 +52,7 @@ export const INITIAL_VALUES: FormValues = {
   alertCreationInterval: {
     type: 'INSTANTLY',
   },
+  alertAssigneesType: 'EMAIL',
   checksFor: [],
 };
 
@@ -64,6 +70,8 @@ export default function BasicDetailsStep(props: Props) {
       return <SimulationIterationDetails />;
     } else if (activeTab === 'checklist_details') {
       return <ChecklistDetails />;
+    } else if (activeTab === 'alert_creation_details') {
+      return <AlertCreationDetails />;
     }
   }, [activeTab, props]);
 
@@ -140,14 +148,6 @@ function RuleDetails(props: Props) {
             />
           )}
         </InputField>
-
-        <InputField<FormValues, 'alertCreationInterval'>
-          name={'alertCreationInterval'}
-          label={'Alert creation interval'}
-          labelProps={{ element: 'div', required: { value: true, showHint: false } }}
-        >
-          {(inputProps) => <CreationIntervalInput {...inputProps} />}
-        </InputField>
         {rule.defaultFalsePositiveCheckEnabled != null && isFalsePositiveCheckEnabled && (
           <InputField<FormValues, 'falsePositiveCheckEnabled'>
             name={'falsePositiveCheckEnabled'}
@@ -217,6 +217,113 @@ function SimulationIterationDetails() {
         >
           {(inputProps) => <TextArea {...inputProps} placeholder={'Enter iteration description'} />}
         </InputField>
+      </PropertyListLayout>
+    </>
+  );
+}
+
+function AlertCreationDetails() {
+  const {
+    values: { alertAssigneesType: assigneeTypeSet },
+  } = useFormContext<FormValues>();
+  const [alertAssigneesType, setAssigneesType] = useState<'EMAIL' | 'ROLE' | ''>(
+    assigneeTypeSet ?? '',
+  );
+  const [users] = useUsers({ includeBlockedUsers: false, includeRootUsers: true });
+  const [roles] = useRoles();
+  const options = useMemo(() => {
+    if (alertAssigneesType === 'EMAIL') {
+      return Object.values(users).map((user) => ({ label: user?.email, value: user?.id }));
+    } else {
+      return roles
+        .map((role) => ({ label: role?.name ?? '', value: role?.id ?? '' }))
+        .filter((data) => data.label !== '');
+    }
+  }, [users, roles, alertAssigneesType]);
+  return (
+    <>
+      <StepHeader
+        title="Alert creation details"
+        description="Define how alerts are created when this rule is hit."
+      />
+      <PropertyListLayout>
+        <InputField<FormValues, 'alertCreationInterval'>
+          name={'alertCreationInterval'}
+          label={'Alert creation interval'}
+          labelProps={{ element: 'div', required: { value: true, showHint: false } }}
+        >
+          {(inputProps) => <CreationIntervalInput {...inputProps} />}
+        </InputField>
+        <InputField<FormValues, 'alertAssigneesType'>
+          name={'alertAssigneesType'}
+          label={'Alert assigned to'}
+          labelProps={{ required: { value: false, showHint: true } }}
+        >
+          {(inputProps) => {
+            return (
+              <SelectionGroup<'EMAIL' | 'ROLE'>
+                mode="SINGLE"
+                options={[
+                  { label: 'Account', value: 'EMAIL' },
+                  { label: 'Role', value: 'ROLE' },
+                ]}
+                {...inputProps}
+                onChange={(value) => {
+                  if (value) {
+                    setAssigneesType(value);
+                  }
+                  if (inputProps.onChange) {
+                    inputProps.onChange(value);
+                  }
+                }}
+              />
+            );
+          }}
+        </InputField>
+        {alertAssigneesType === 'EMAIL' && (
+          <>
+            <InputField<FormValues, 'alertAssignees'>
+              name={'alertAssignees'}
+              label={'Assign to email ID'}
+            >
+              {(inputProps) => (
+                <Select
+                  value={options.length ? inputProps.value : undefined}
+                  placeholder={'Select account(s) email ID'}
+                  options={options}
+                  mode={'MULTIPLE'}
+                  {...inputProps}
+                />
+              )}
+            </InputField>
+            <Alert type="info">
+              Please note if one or more accounts are selected, the alert will be automatically
+              assigned and distributed equally.
+            </Alert>
+          </>
+        )}
+        {alertAssigneesType === 'ROLE' && (
+          <>
+            <InputField<FormValues, 'alertAssigneeRole'>
+              name={'alertAssigneeRole'}
+              label={'Assign to role'}
+            >
+              {(inputProps) => (
+                <Select
+                  value={options.length ? inputProps.value : undefined}
+                  placeholder={'Select role'}
+                  options={options}
+                  mode={'SINGLE'}
+                  {...inputProps}
+                />
+              )}
+            </InputField>
+            <Alert type="info">
+              Please note that the alert is automatically assigned and equally distributed among the
+              accounts within the role.
+            </Alert>
+          </>
+        )}
       </PropertyListLayout>
     </>
   );

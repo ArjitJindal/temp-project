@@ -5584,11 +5584,20 @@ components:
           type: string
         queueId:
           type: string
-        alertCreationInterval:
-          oneOf:
-            - $ref: '#/components/schemas/AlertCreationIntervalInstantly'
-            - $ref: '#/components/schemas/AlertCreationIntervalWeekly'
-            - $ref: '#/components/schemas/AlertCreationIntervalMonthly'
+        alertConfig:
+          type: object
+          properties:
+            alertCreationInterval:
+              oneOf:
+                - $ref: '#/components/schemas/AlertCreationIntervalInstantly'
+                - $ref: '#/components/schemas/AlertCreationIntervalWeekly'
+                - $ref: '#/components/schemas/AlertCreationIntervalMonthly'
+            alertAssignees:
+              type: array
+              items:
+                type: string
+            alertAssigneeRole:
+              type: string
         checksFor:
           type: array
           items:

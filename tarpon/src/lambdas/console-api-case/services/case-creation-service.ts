@@ -1,4 +1,14 @@
-import { compact, groupBy, isEqual, last, minBy, uniq, uniqBy } from 'lodash'
+import {
+  compact,
+  groupBy,
+  isEqual,
+  last,
+  memoize,
+  minBy,
+  sample,
+  uniq,
+  uniqBy,
+} from 'lodash'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -29,6 +39,9 @@ import { ChecklistTemplatesService } from '@/services/tenants/checklist-template
 import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { RoleService } from '@/services/roles'
+import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
+import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CreateAlertFor } from '@/services/rules-engine/utils/rule-parameter-schemas'
 
 type CaseSubject =
@@ -48,7 +61,6 @@ export class CaseCreationService {
   ruleInstanceRepository: RuleInstanceRepository
   transactionRepository: MongoDbTransactionRepository
   tenantSettings: TenantSettings
-
   constructor(
     caseRepository: CaseRepository,
     userRepository: UserRepository,
@@ -166,7 +178,7 @@ export class CaseCreationService {
     }
   }
 
-  public separateExistingAndNewAlerts(
+  public async separateExistingAndNewAlerts(
     hitRules: HitRulesDetails[],
     ruleInstances: readonly RuleInstance[],
     alerts: Alert[],
@@ -174,7 +186,7 @@ export class CaseCreationService {
     latestTransactionArrivalTimestamp?: number,
     transaction?: InternalTransaction,
     checkListTemplates?: ChecklistTemplate[]
-  ): { existingAlerts: Alert[]; newAlerts: Alert[] } {
+  ): Promise<{ existingAlerts: Alert[]; newAlerts: Alert[] }> {
     // Get the rule hits that are new for this transaction
     const newRuleHits = hitRules.filter(
       (hitRule) =>
@@ -184,7 +196,7 @@ export class CaseCreationService {
     // Get the alerts that are new for this transaction
     const newAlerts =
       newRuleHits.length > 0
-        ? this.getAlertsForNewCase(
+        ? await this.getAlertsForNewCase(
             newRuleHits,
             ruleInstances,
             createdTimestamp,
@@ -209,7 +221,7 @@ export class CaseCreationService {
     }
   }
 
-  private getOrCreateAlertsForExistingCase(
+  private async getOrCreateAlertsForExistingCase(
     hitRules: HitRulesDetails[],
     alerts: Alert[] | undefined,
     ruleInstances: readonly RuleInstance[],
@@ -219,15 +231,16 @@ export class CaseCreationService {
     checkListTemplates?: ChecklistTemplate[]
   ) {
     if (alerts) {
-      const { existingAlerts, newAlerts } = this.separateExistingAndNewAlerts(
-        hitRules,
-        ruleInstances,
-        alerts,
-        createdTimestamp,
-        latestTransactionArrivalTimestamp,
-        latestTransaction,
-        checkListTemplates
-      )
+      const { existingAlerts, newAlerts } =
+        await this.separateExistingAndNewAlerts(
+          hitRules,
+          ruleInstances,
+          alerts,
+          createdTimestamp,
+          latestTransactionArrivalTimestamp,
+          latestTransaction,
+          checkListTemplates
+        )
 
       const updatedExistingAlerts =
         existingAlerts.length > 0
@@ -253,70 +266,77 @@ export class CaseCreationService {
     }
   }
 
-  private getAlertsForNewCase(
+  private async getAlertsForNewCase(
     hitRules: HitRulesDetails[],
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
     latestTransactionArrivalTimestamp?: number,
     transaction?: InternalTransaction,
     checkListTemplates?: ChecklistTemplate[]
-  ): Alert[] {
-    const alerts: Alert[] = hitRules.map((hitRule: HitRulesDetails) => {
-      const ruleInstanceMatch: RuleInstance | null =
-        ruleInstances.find(
-          (ruleInstance) => hitRule.ruleInstanceId === ruleInstance.id
-        ) ?? null
+  ): Promise<Alert[]> {
+    const alerts: Alert[] = await Promise.all(
+      hitRules.map(async (hitRule: HitRulesDetails) => {
+        const ruleInstanceMatch: RuleInstance | null =
+          ruleInstances.find(
+            (ruleInstance) => hitRule.ruleInstanceId === ruleInstance.id
+          ) ?? null
 
-      const now = Date.now()
-      const availableAfterTimestamp: number | undefined =
-        ruleInstanceMatch?.alertCreationInterval != null
-          ? calculateCaseAvailableDate(
-              now,
-              ruleInstanceMatch?.alertCreationInterval,
-              this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
-            )
-          : undefined
-      const ruleChecklist = checkListTemplates?.find(
-        (x) => x.id === ruleInstanceMatch?.checklistTemplateId
-      )
-      return {
-        createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
-        latestTransactionArrivalTimestamp,
-        updatedAt: now,
-        alertStatus: 'OPEN',
-        ruleId: hitRule.ruleId,
-        availableAfterTimestamp: availableAfterTimestamp,
-        ruleInstanceId: hitRule.ruleInstanceId,
-        ruleName: hitRule.ruleName,
-        ruleDescription: hitRule.ruleDescription,
-        ruleAction: hitRule.ruleAction,
-        ruleHitMeta: hitRule.ruleHitMeta,
-        ruleNature: hitRule.nature,
-        ruleQueueId: ruleInstanceMatch?.queueId,
-        numberOfTransactionsHit: transaction ? 1 : 0,
-        transactionIds: transaction ? [transaction.transactionId] : [],
-        priority: (ruleInstanceMatch?.casePriority ??
-          last(PRIORITYS)) as Priority,
-        originPaymentMethods: transaction?.originPaymentDetails?.method
-          ? [transaction?.originPaymentDetails?.method]
-          : [],
-        destinationPaymentMethods: transaction?.destinationPaymentDetails
-          ?.method
-          ? [transaction?.destinationPaymentDetails?.method]
-          : [],
-        ruleChecklistTemplateId: ruleInstanceMatch?.checklistTemplateId,
-        ruleChecklist: ruleChecklist?.categories.flatMap(
-          (category) =>
-            category.checklistItems.map(
-              (item) =>
-                ({
-                  checklistItemId: item.id,
-                  done: 'NOT_STARTED',
-                } as ChecklistItemValue)
-            ) ?? []
-        ),
-      }
-    })
+        const now = Date.now()
+        const availableAfterTimestamp: number | undefined =
+          ruleInstanceMatch?.alertConfig?.alertCreationInterval != null
+            ? calculateCaseAvailableDate(
+                now,
+                ruleInstanceMatch?.alertConfig?.alertCreationInterval,
+                this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
+              )
+            : undefined
+        const ruleChecklist = checkListTemplates?.find(
+          (x) => x.id === ruleInstanceMatch?.checklistTemplateId
+        )
+        const assignee = await this.getRuleAlertAssignee(
+          ruleInstanceMatch?.alertConfig?.alertAssignees,
+          ruleInstanceMatch?.alertConfig?.alertAssigneeRole
+        )
+        return {
+          createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
+          latestTransactionArrivalTimestamp,
+          updatedAt: now,
+          alertStatus: 'OPEN',
+          ruleId: hitRule.ruleId,
+          availableAfterTimestamp: availableAfterTimestamp,
+          ruleInstanceId: hitRule.ruleInstanceId,
+          ruleName: hitRule.ruleName,
+          ruleDescription: hitRule.ruleDescription,
+          ruleAction: hitRule.ruleAction,
+          ruleHitMeta: hitRule.ruleHitMeta,
+          ruleNature: hitRule.nature,
+          ruleQueueId: ruleInstanceMatch?.queueId,
+          numberOfTransactionsHit: transaction ? 1 : 0,
+          transactionIds: transaction ? [transaction.transactionId] : [],
+          priority: (ruleInstanceMatch?.casePriority ??
+            last(PRIORITYS)) as Priority,
+          originPaymentMethods: transaction?.originPaymentDetails?.method
+            ? [transaction?.originPaymentDetails?.method]
+            : [],
+          destinationPaymentMethods: transaction?.destinationPaymentDetails
+            ?.method
+            ? [transaction?.destinationPaymentDetails?.method]
+            : [],
+          ruleChecklistTemplateId: ruleInstanceMatch?.checklistTemplateId,
+          ruleChecklist: ruleChecklist?.categories.flatMap(
+            (category) =>
+              category.checklistItems.map(
+                (item) =>
+                  ({
+                    checklistItemId: item.id,
+                    done: 'NOT_STARTED',
+                  } as ChecklistItemValue)
+              ) ?? []
+          ),
+          assignments: assignee ? [assignee] : [],
+        }
+      })
+    )
 
     return alerts
   }
@@ -626,10 +646,10 @@ export class CaseCreationService {
           (x) => hitRule.ruleInstanceId === x.id
         )
         const availableAfterTimestamp: number | undefined =
-          ruleInstanceMatch?.alertCreationInterval != null
+          ruleInstanceMatch?.alertConfig?.alertCreationInterval != null
             ? calculateCaseAvailableDate(
                 now,
-                ruleInstanceMatch?.alertCreationInterval,
+                ruleInstanceMatch?.alertConfig?.alertCreationInterval,
                 this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
               )
             : undefined
@@ -678,7 +698,7 @@ export class CaseCreationService {
             ).length,
           })
 
-          const alerts = this.getOrCreateAlertsForExistingCase(
+          const alerts = await this.getOrCreateAlertsForExistingCase(
             hitRules,
             existedCase.alerts,
             ruleInstances,
@@ -731,7 +751,7 @@ export class CaseCreationService {
             caseTransactions: filteredTransaction ? [filteredTransaction] : [],
             priority: params.priority,
             availableAfterTimestamp,
-            alerts: this.getAlertsForNewCase(
+            alerts: await this.getAlertsForNewCase(
               hitRules,
               ruleInstances,
               params.createdTimestamp,
@@ -895,5 +915,31 @@ export class CaseCreationService {
         })
       })
     )
+  }
+
+  getUsersByRole = memoize(async (assignedRole) => {
+    const roleService = new RoleService({
+      auth0Domain: process.env.AUTH0_DOMAIN as string,
+    })
+    return (await roleService.getUsersByRole(assignedRole))
+      .map((user) => user?.user_id)
+      .filter((user) => user !== undefined && user !== '')
+  })
+
+  async getRuleAlertAssignee(assignees?: string[], assignedRole?: string) {
+    let assigneeId: string | undefined
+    if ((assignees?.length ?? 0) >= 1) {
+      assigneeId = sample(assignees)
+    } else if (assignedRole) {
+      const roleUsers = await this.getUsersByRole(assignedRole)
+      assigneeId = sample(roleUsers)
+    }
+    return assigneeId
+      ? ({
+          assigneeUserId: assigneeId,
+          assignedByUserId: FLAGRIGHT_SYSTEM_USER,
+          timestamp: Date.now(),
+        } as Assignment)
+      : null
   }
 }

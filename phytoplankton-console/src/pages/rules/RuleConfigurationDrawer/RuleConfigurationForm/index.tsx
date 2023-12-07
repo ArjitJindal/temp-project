@@ -137,6 +137,7 @@ const RuleConfigurationForm = (
           ...(simulationMode ? [{ key: 'simulation_details', title: 'Simulation details' }] : []),
           { key: 'rule_details', title: 'Rule details' },
           ...(simulationMode ? [] : [{ key: 'checklist_details', title: 'Checklist details' }]),
+          { key: 'alert_creation_details', title: 'Alert creation details' },
         ],
       },
       {

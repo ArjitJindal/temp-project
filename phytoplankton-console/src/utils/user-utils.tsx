@@ -2,10 +2,10 @@ import React, { useContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { keyBy } from 'lodash';
 import { useQuery } from './queries/hooks';
-import { ACCOUNT_LIST, ACCOUNT_LIST_TEAM_MANAGEMENT } from './queries/keys';
+import { ACCOUNT_LIST, ACCOUNT_LIST_TEAM_MANAGEMENT, ROLES_LIST } from './queries/keys';
 import { getOr, isLoading } from './asyncResource';
 import { useApi } from '@/api';
-import { Account, Permission } from '@/apis';
+import { Account, AccountRole, Permission } from '@/apis';
 
 // todo: rename file and utils to use "account" instead of "user" in names
 export enum UserRole {
@@ -105,6 +105,14 @@ export function isAtLeast(user: FlagrightAuth0User | Account | null, role: UserR
 
 export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
   return isAtLeast(user, UserRole.ADMIN);
+}
+
+export function useRoles(): [AccountRole[], boolean] {
+  const api = useApi();
+  const rolesQueryResult = useQuery(ROLES_LIST(), async () => {
+    return await api.getRoles();
+  });
+  return [getOr(rolesQueryResult.data, []), isLoading(rolesQueryResult.data)];
 }
 
 export function useUsers(

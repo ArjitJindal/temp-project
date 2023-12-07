@@ -107,13 +107,20 @@ export function ruleInstanceToFormValues(
           ruleDescription: ruleInstance.ruleDescriptionAlias,
           ruleNature: ruleInstance.nature,
           casePriority: ruleInstance.casePriority,
-          alertCreationInterval: ruleInstance.alertCreationInterval,
           ruleLabels: ruleInstance.labels,
           ruleInstanceId: ruleInstance.id,
           falsePositiveCheckEnabled: ruleInstance.falsePositiveCheckEnabled,
           queueId: ruleInstance.queueId,
           checksFor: ruleInstance.checksFor,
           checklistTemplateId: ruleInstance.checklistTemplateId,
+          alertCreationInterval: ruleInstance.alertConfig?.alertCreationInterval,
+          alertAssigneesType: ruleInstance.alertConfig?.alertAssigneeRole
+            ? 'ROLE'
+            : ruleInstance.alertConfig?.alertAssignees
+            ? 'EMAIL'
+            : undefined,
+          alertAssignees: ruleInstance.alertConfig?.alertAssignees,
+          alertAssigneeRole: ruleInstance.alertConfig?.alertAssigneeRole,
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
         ruleParametersStep: isRiskLevelsEnabled
@@ -179,13 +186,23 @@ export function formValuesToRuleInstance(
     ruleDescriptionAlias: basicDetailsStep.ruleDescription,
     filters: removeEmpty(standardFiltersStep),
     casePriority: basicDetailsStep.casePriority,
-    alertCreationInterval: basicDetailsStep.alertCreationInterval,
     nature: basicDetailsStep.ruleNature,
     labels: basicDetailsStep.ruleLabels,
     checksFor: basicDetailsStep.checksFor,
     falsePositiveCheckEnabled: basicDetailsStep.falsePositiveCheckEnabled,
     queueId: basicDetailsStep.queueId,
     checklistTemplateId: basicDetailsStep.checklistTemplateId,
+    alertConfig: {
+      alertAssignees:
+        basicDetailsStep.alertAssigneesType == 'EMAIL'
+          ? basicDetailsStep.alertAssignees
+          : undefined,
+      alertAssigneeRole:
+        basicDetailsStep.alertAssigneesType == 'ROLE'
+          ? basicDetailsStep.alertAssigneeRole
+          : undefined,
+      alertCreationInterval: basicDetailsStep.alertCreationInterval,
+    },
     ...(isRiskLevelsEnabled
       ? {
           riskLevelParameters: riskLevelParameters

@@ -272,7 +272,7 @@ describe('Cases (Transaction hit)', () => {
       const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const { newAlerts, existingAlerts } =
-        caseCreationService.separateExistingAndNewAlerts(
+        await caseCreationService.separateExistingAndNewAlerts(
           hitRules,
           ruleInstances,
           alerts,
@@ -300,7 +300,7 @@ describe('Cases (Transaction hit)', () => {
       const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const { existingAlerts } =
-        caseCreationService.separateExistingAndNewAlerts(
+        await caseCreationService.separateExistingAndNewAlerts(
           justRehitRules,
           ruleInstances,
           alerts,
@@ -1602,6 +1602,33 @@ describe('Test payment cases', () => {
   })
 })
 
+describe('Test alert auto assignment', () => {
+  beforeAll(async () => {
+    MockDate.set(TODAY)
+  })
+
+  describe('alert assignment to email', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+    test('Assign alert to a user', async () => {
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertAssignees: ['TESTERID'],
+          },
+        ],
+        async () => {
+          const alerts = await createAlerts(TEST_TENANT_ID)
+          for (const alert of alerts) {
+            expect(alert.assignments?.at(0)?.assigneeUserId).toEqual('TESTERID')
+          }
+        }
+      )
+    })
+  })
+})
+
 /*
   Helpers
  */
@@ -1682,6 +1709,8 @@ async function underRules<R = void>(
       | AlertCreationIntervalWeekly
       | AlertCreationIntervalMonthly
     createAlertFor?: CreateAlertFor
+    alertAssignees?: string[]
+    alertAssigneeRole?: string
   }[],
   cb: () => Promise<R>
 ): Promise<R> {
@@ -1700,7 +1729,11 @@ async function underRules<R = void>(
             hitDirections: parameters.hitDirections,
             createAlertFor: parameters.createAlertFor,
           },
-          alertCreationInterval: parameters.alertCreationInterval,
+          alertConfig: {
+            alertAssigneeRole: parameters.alertAssigneeRole,
+            alertAssignees: parameters.alertAssignees,
+            alertCreationInterval: parameters.alertCreationInterval,
+          },
         }
       )
     })
