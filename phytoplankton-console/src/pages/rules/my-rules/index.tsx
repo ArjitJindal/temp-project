@@ -384,7 +384,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
       result.sort((a, b) => {
         let result = 0;
         if (key === 'ruleId') {
-          result = parseInt(a.ruleId.split('-')[1]) - parseInt(b.ruleId.split('-')[1]);
+          result = parseInt(a.ruleId?.split('-')[1]) - parseInt(b.ruleId?.split('-')[1]);
         } else if (key === 'hitCount') {
           result =
             (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
