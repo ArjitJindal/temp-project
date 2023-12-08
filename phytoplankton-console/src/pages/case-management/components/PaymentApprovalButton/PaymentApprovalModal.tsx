@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
 import Modal from '../../../../components/library/Modal/index';
 import s from './index.module.less';
 import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
@@ -14,6 +13,7 @@ import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import TextArea from '@/components/library/TextArea';
 import Select from '@/components/library/Select';
+import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   visible: boolean;
@@ -75,7 +75,7 @@ export default function PaymentApprovalModal({
 
   return (
     <Modal
-      title={`${sentenceCase(action)} transaction`}
+      title={`${humanizeConstant(action)} transaction`}
       okText={'Confirm'}
       isOpen={visible}
       onOk={() => formRef.current?.submit()}

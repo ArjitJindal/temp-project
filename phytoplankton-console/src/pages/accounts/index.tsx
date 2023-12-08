@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
+import { startCase } from 'lodash';
 import Roles from './Roles';
 import Team from './Team';
 import PageWrapper from '@/components/PageWrapper';
@@ -26,7 +26,7 @@ export default function () {
         items={[
           {
             key: 'team',
-            title: sentenceCase(i18n('menu.accounts.team')),
+            title: startCase(i18n('menu.accounts.team')),
             children: (
               <Authorized required={['settings:organisation:read']} showForbiddenPage>
                 <Team />
@@ -35,7 +35,7 @@ export default function () {
           },
           {
             key: 'roles',
-            title: sentenceCase(i18n('menu.accounts.roles')),
+            title: startCase(i18n('menu.accounts.roles')),
             children: (
               <Authorized required={['settings:organisation:read']} showForbiddenPage>
                 <Roles />

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Space, Tag } from 'antd';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
 import cn from 'clsx';
 import { COUNTRIES } from '@flagright/lib/constants';
 import s from './index.module.less';
@@ -26,6 +25,7 @@ import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { getAccountUserName } from '@/utils/account';
+import { humanizeConstant } from '@/utils/humanize';
 
 type TableParams = AllParams<DefaultApiGetReportsRequest>;
 
@@ -134,7 +134,7 @@ export default function ReportsTable() {
             <div className={s.status} onClick={() => setDisplayStatusInfoReport(report)}>
               {report?.status && (
                 <Tag className={cn(s.tag, s[`status-${report.status}`])}>
-                  {sentenceCase(report.status)}
+                  {humanizeConstant(report.status)}
                 </Tag>
               )}
             </div>
@@ -176,7 +176,7 @@ export default function ReportsTable() {
       <Modal
         title={
           displayStatusInfoReport &&
-          `Report ${displayStatusInfoReport.id} status information (${sentenceCase(
+          `Report ${displayStatusInfoReport.id} status information (${humanizeConstant(
             displayStatusInfoReport.status,
           )})`
         }
@@ -216,7 +216,7 @@ export default function ReportsTable() {
               mode="SINGLE"
               style={{ width: 200 }}
               value={statusUpdate!.status}
-              options={REPORT_STATUSS.map((v) => ({ label: sentenceCase(v), value: v }))}
+              options={REPORT_STATUSS.map((v) => ({ label: humanizeConstant(v), value: v }))}
               onChange={(v) => {
                 setStatusUpdate(
                   (prev) =>

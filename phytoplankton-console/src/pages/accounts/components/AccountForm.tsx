@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
+import { startCase } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import s from './styles.module.less';
 import { useIsInviteDisabled } from './utils';
@@ -256,7 +256,7 @@ export default function AccountForm(props: Props) {
                 allowClear={false}
                 options={roles.map((name) => ({
                   value: name.name,
-                  label: sentenceCase(name.name as string),
+                  label: startCase(name.name as string),
                 }))}
                 value={values.role}
                 onChange={(value) => {

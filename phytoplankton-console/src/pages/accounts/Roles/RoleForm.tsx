@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
+import { startCase } from 'lodash';
 import { permissionsToRows } from './utils';
 import s from './RoleForm.module.less';
 import { AccountRole, Permission } from '@/apis';
@@ -114,8 +114,8 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
     >
       {!isEditing && (
         <>
-          <h3 className={s.title}>{sentenceCase(role?.name as string)}</h3>
-          <h4>{sentenceCase(role?.description as string)}</h4>
+          <h3 className={s.title}>{startCase(role?.name as string)}</h3>
+          <h4>{startCase(role?.description as string)}</h4>
         </>
       )}
       {isEditing && (

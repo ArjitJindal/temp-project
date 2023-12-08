@@ -1,6 +1,6 @@
 import { Tag } from 'antd';
 import React from 'react';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
+import { startCase } from 'lodash';
 import COLORS, { ColorSet } from '@/components/ui/colors';
 
 interface Props {
@@ -25,7 +25,7 @@ function getColor(role: string): ColorSet {
 }
 
 export function getRoleTitle(role: string) {
-  return sentenceCase(role);
+  return startCase(role);
 }
 
 export default function RoleTag(props: Props): JSX.Element {

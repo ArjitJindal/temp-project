@@ -226,7 +226,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
     },
     {
       key: 'originMethodFilterId',
-      title: 'Origin Method',
+      title: 'Origin method',
       showFilterByDefault: false,
       renderer: ({ params, setParams }) => (
         <PaymentMethodButton
@@ -243,7 +243,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
     },
     {
       key: 'destinationMethodFilterId',
-      title: 'Destination Method',
+      title: 'Destination method',
       showFilterByDefault: false,
       renderer: ({ params, setParams }) => (
         <PaymentMethodButton
@@ -288,7 +288,7 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
       showFilterByDefault: true,
     },
     {
-      title: 'Rule Nature',
+      title: 'Rule nature',
       key: 'ruleNature',
       renderer: {
         kind: 'select',

@@ -1,8 +1,8 @@
 import React from 'react';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
 import PopupContent from './PopupContent';
 import BankCardFillIcon from '@/components/ui/icons/Remix/business/bank-card-fill.react.svg';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
+import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   direction: 'ORIGIN' | 'DESTINATION';
@@ -20,7 +20,7 @@ export default function PaymentMethodButton(props: Props) {
     <QuickFilterBase
       icon={<BankCardFillIcon />}
       analyticsName={`${direction.toLowerCase()}-payment-method-filter`}
-      title={`${sentenceCase(direction)} Payment Method`}
+      title={`${humanizeConstant(direction)} payment method`}
       buttonText={isEmpty ? undefined : methods.join(', ')}
       onClear={
         isEmpty

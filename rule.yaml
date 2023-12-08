@@ -32,6 +32,16 @@ rules:
       category: best-practice
       technology:
         - typescript
+  - id: ant_sentence_case
+    pattern: import { sentenceCase } from '@antv/x6/es/util/string/format';
+    message: Use "import { startCase } from 'lodash'" instead
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
   - id: ock_string
     paths:
       include:

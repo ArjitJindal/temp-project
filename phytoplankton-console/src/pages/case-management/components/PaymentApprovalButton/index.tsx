@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
 import PaymentApprovalModal from './PaymentApprovalModal';
 import Button from '@/components/library/Button';
 import { RuleAction } from '@/apis';
+import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   ids: string[];
@@ -22,7 +22,7 @@ export default function PaymentApprovalButton({ ids, action, onSuccess }: Props)
         isDisabled={!ids.length}
         requiredPermissions={['transactions:overview:write']}
       >
-        {sentenceCase(action)}
+        {humanizeConstant(action)}
       </Button>
 
       <PaymentApprovalModal

@@ -1,4 +1,4 @@
-import { sentenceCase } from '@antv/x6/es/util/string/format';
+import { startCase } from 'lodash';
 import React from 'react';
 import s from './index.module.less';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -28,7 +28,7 @@ export default function ExtendedRowRenderer(props: Props) {
             key={subsection.name}
             className={featureEnabled(features, subsection.section) ? undefined : s.disabled}
           >
-            {sentenceCase(subsection.name)}
+            {startCase(subsection.name)}
           </span>
         );
       },
@@ -43,7 +43,7 @@ export default function ExtendedRowRenderer(props: Props) {
             {subsection.actions.map((action) => (
               <Label
                 level={action.name === 'read' ? 2 : !onChange ? 3 : 2}
-                label={sentenceCase(action.name)}
+                label={startCase(action.name)}
                 position={'RIGHT'}
                 key={action.key}
               >

@@ -1,5 +1,4 @@
 import { Tag } from 'antd';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
 import React from 'react';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
@@ -9,6 +8,7 @@ import User3Line from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import GovernmentLineIcon from '@/components/ui/icons/Remix/buildings/government-line.react.svg';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
+import { humanizeConstant } from '@/utils/humanize';
 
 type UserProps = {
   user: InternalBusinessUser | InternalConsumerUser;
@@ -27,7 +27,7 @@ export const UserCard = (props: UserProps) => {
               borderColor: '#78CBEB',
             }}
           >
-            {sentenceCase(user.type)}
+            {humanizeConstant(user.type)}
           </Tag>
         </div>
       </Form.Layout.Label>

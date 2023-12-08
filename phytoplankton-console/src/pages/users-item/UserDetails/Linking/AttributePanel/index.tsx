@@ -1,5 +1,5 @@
 import { Tag } from 'antd';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
+import { startCase } from 'lodash';
 import React from 'react';
 import * as Card from '@/components/ui/Card';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
@@ -28,7 +28,7 @@ export const AttributePanel = (props: AttributePanelProps) => {
                   borderColor: '#78CBEB',
                 }}
               >
-                {sentenceCase(type)}
+                {startCase(type)}
               </Tag>
             </div>
           </Form.Layout.Label>

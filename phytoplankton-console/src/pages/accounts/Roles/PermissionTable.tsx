@@ -1,5 +1,5 @@
 import React from 'react';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
+import { startCase } from 'lodash';
 import Table from '@/components/library/Table';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { PermissionRow } from '@/pages/accounts/Roles/types';
@@ -12,7 +12,7 @@ const roleColumns: TableColumn<PermissionRow>[] = helper.list([
   helper.derived<string>({
     id: 'name',
     title: 'Feature',
-    value: (item) => sentenceCase(item.name),
+    value: (item) => startCase(item.name),
   }),
 ]);
 

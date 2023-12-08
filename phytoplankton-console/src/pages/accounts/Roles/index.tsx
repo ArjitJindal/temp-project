@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { sentenceCase } from '@antv/x6/es/util/string/format';
+import { startCase } from 'lodash';
 import { Card } from 'antd';
 import { LockFilled } from '@ant-design/icons';
 import s from './index.module.less';
@@ -49,7 +49,7 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
         }
         items={roles.map((r) => ({
           key: r.id as string,
-          title: sentenceCase(r.name as string),
+          title: startCase(r.name as string),
           icon: isValidManagedRoleName(r.name) && (
             <span className={s.icon}>
               <LockFilled />
