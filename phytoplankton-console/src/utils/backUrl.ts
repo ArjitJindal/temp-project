@@ -3,7 +3,10 @@ import { makeUrl, parseQueryString, parseRoute } from '@/utils/routing';
 
 const PARAMETER_NAME = 'backUrl';
 
-export function addBackUrlToRoute(route: string): string {
+export function addBackUrlToRoute(route: string | undefined): string | undefined {
+  if (route == null) {
+    return undefined;
+  }
   const { pathname, queryParams } = parseRoute(route);
   queryParams[PARAMETER_NAME] = `${location.pathname}${location.search}`;
   return makeUrl(pathname, {}, queryParams);

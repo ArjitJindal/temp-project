@@ -63,6 +63,7 @@ import { DurationDisplay } from '@/components/ui/DurationDisplay';
 import { getDuration, formatDuration } from '@/utils/time-utils';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
+import { Option } from '@/components/library/Select';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -219,7 +220,7 @@ export const ALERT_USER_ID: ColumnDataType<string, TableAlertItem> = {
     return (
       <>
         {entity?.caseId && (
-          <Id to={addBackUrlToRoute(getUserLink(entity.user) as string)} testName="alert-user-id">
+          <Id to={addBackUrlToRoute(getUserLink(entity?.user))} testName="alert-user-id">
             {value}
           </Id>
         )}
@@ -230,7 +231,7 @@ export const ALERT_USER_ID: ColumnDataType<string, TableAlertItem> = {
     return `${value ?? ''}`;
   },
   link(value, item) {
-    return getUserLink(item?.user) as string;
+    return getUserLink(item?.user);
   },
 };
 
@@ -506,7 +507,7 @@ export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
   },
   autoFilterDataType: {
     kind: 'select',
-    options: uniqBy(
+    options: uniqBy<Option<string>>(
       (options?.statusesToShow ?? CASE_STATUSS).map((status) => ({
         value: status,
         label: humanizeConstant(
