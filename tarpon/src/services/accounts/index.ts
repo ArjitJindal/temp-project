@@ -413,26 +413,37 @@ export class AccountsService {
   }
 
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
-    const managementClient: ManagementClient<AppMetadata> =
-      await getAuth0ManagementClient(this.config.auth0Domain)
-    // todo: this call can only return up to 1000 users, need to handle this
-    const members = await managementClient.organizations.getMembers({
-      id: tenant.orgId,
-      include_totals: false,
-    })
+    const accounts: Account[] = []
+    let totalCount = 0
+    let page = 0
 
-    const ids = members.map((x) => x.user_id)
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const managementClient: ManagementClient<AppMetadata> =
+        await getAuth0ManagementClient(this.config.auth0Domain)
+      const result = await managementClient.organizations.getMembers({
+        id: tenant.orgId,
+        include_totals: true,
+        per_page: 50,
+        page,
+      })
+      const ids = result.members.map((x) => x.user_id)
+      if (ids.length == 0) {
+        break
+      }
 
-    if (ids.length == 0) {
-      return []
+      const users = await managementClient.getUsers({
+        q: `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`,
+      })
+
+      accounts.push(...users.map(AccountsService.userToAccount))
+      totalCount += result.members.length
+      if (totalCount >= result.total) {
+        break
+      }
+      page += 1
     }
-
-    // todo: this call support maximum 50 items per page, need to paginate
-    const users = await managementClient.getUsers({
-      q: `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`,
-    })
-
-    return users.map(AccountsService.userToAccount)
+    return accounts
   }
 
   async getAccount(id: string): Promise<Account> {
