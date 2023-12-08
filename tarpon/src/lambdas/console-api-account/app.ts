@@ -37,8 +37,7 @@ export const accountsHandler = lambdaApi()(
 
     handlers.registerAccountsResendInvite(async (ctx, request) => {
       assertCurrentUserRole('admin')
-      return await accountsService.sendPasswordResetAndVerificationEmail(
-        request.accountId,
+      return await accountsService.sendPasswordResetEmail(
         request.ResendAccountInvitePayload.email
       )
     })

@@ -343,7 +343,7 @@ export class AccountsService {
         email: params.email,
         account: account.id,
       })
-      await this.sendPasswordResetAndVerificationEmail(account.id, params.email)
+      await this.sendPasswordResetEmail(params.email)
       await this.insertAuth0UserToMongo(tenant.id, [account])
     } catch (e) {
       if (user) {
@@ -358,10 +358,7 @@ export class AccountsService {
     return account
   }
 
-  public async sendPasswordResetAndVerificationEmail(
-    user_id: string,
-    email: string
-  ): Promise<void> {
+  public async sendPasswordResetEmail(email: string): Promise<void> {
     const managementClient: ManagementClient<AppMetadata> =
       await getAuth0ManagementClient(this.config.auth0Domain)
 
@@ -376,13 +373,6 @@ export class AccountsService {
       throw new Error('Cannot find Auth0 Console client!')
     }
 
-    await managementClient.sendEmailVerification({
-      user_id: user_id as string,
-      client_id: consoleClient.client_id,
-    })
-    logger.info(`Sent verification email`, {
-      email,
-    })
     await authenticationClient.requestChangePasswordEmail({
       client_id: consoleClient.client_id,
       connection: CONNECTION_NAME,
