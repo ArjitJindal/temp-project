@@ -88,6 +88,10 @@ export interface UiSchemaFincenSuspiciousActivity extends UiSchemaCommon {
   'ui:subtype': 'FINCEN_SUSPICIOUS_ACTIVITY';
 }
 
+export interface UiSchemaFincenPhoneNumber extends UiSchemaCommon {
+  'ui:subtype': 'FINCEN_PHONE_NUMBER';
+}
+
 export interface UiSchemaWebhook extends UiSchemaCommon {
   'ui:subtype': 'WEBHOOK';
 }
@@ -113,6 +117,7 @@ export type UiSchema =
   | UiSchemaFincenSubject
   | UiSchemaFincenPartyName
   | UiSchemaFincenSuspiciousActivity
+  | UiSchemaFincenPhoneNumber
   | UiSchemaWebhook;
 
 export interface ExtendedSchema extends JSONSchema4 {

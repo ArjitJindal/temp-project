@@ -727,6 +727,9 @@ export const FincenJsonSchema = {
       type: 'object',
     },
     PhoneNumberType: {
+      'ui:schema': {
+        'ui:subtype': 'FINCEN_PHONE_NUMBER',
+      },
       required: [],
       properties: {
         PhoneNumberExtensionText: {

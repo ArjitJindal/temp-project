@@ -80,6 +80,7 @@ function pickPartyFields(
 function arraySchema(type: any) {
   let schema: any = {
     type: 'array',
+    items: type,
   }
   if (has(type, 'title')) {
     schema = {
@@ -91,33 +92,6 @@ function arraySchema(type: any) {
     schema = {
       ...schema,
       description: type.description,
-    }
-  }
-  if (has(type, 'properties')) {
-    schema = {
-      ...schema,
-      items: {
-        ...schema.items,
-        properties: type.properties,
-      },
-    }
-  }
-  if (has(type, 'required')) {
-    schema = {
-      ...schema,
-      items: {
-        ...schema.items,
-        required: type.required,
-      },
-    }
-  }
-  if (has(type, 'type')) {
-    schema = {
-      ...schema,
-      items: {
-        ...schema.items,
-        type: type.type,
-      },
     }
   }
   return schema
@@ -148,6 +122,7 @@ const FlagrightAlternatePartyName = {
 
 function pickAddressFields(fields: string[], requiredFields: string[]) {
   return {
+    ...FincenJsonSchema.definitions.AddressType,
     type: 'object',
     properties: pick(
       FincenJsonSchema.definitions.AddressType.properties,
@@ -160,6 +135,7 @@ function pickAddressFields(fields: string[], requiredFields: string[]) {
 
 function pickPhoneNumberFields(fields: string[], requiredFields: string[]) {
   return {
+    ...FincenJsonSchema.definitions.PhoneNumberType,
     type: 'object',
     properties: pick(
       FincenJsonSchema.definitions.PhoneNumberType.properties,
