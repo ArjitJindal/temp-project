@@ -18,7 +18,7 @@ export function EmptyEntitiesInfo(props: Props) {
     <Card
       bordered={false}
       bodyStyle={{
-        height: 500,
+        height: 287,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
