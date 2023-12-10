@@ -1,5 +1,5 @@
 import * as TestingLibrary from '@testing-library/react';
-import { buildQueries, queries, within } from '@testing-library/react';
+import { buildQueries, queries, within, screen } from '@testing-library/react';
 import { StorybookMockProviders } from '../src/components/AppWrapper/Providers';
 import { Matcher, MatcherOptions } from '@testing-library/dom/types/matches';
 
@@ -44,9 +44,13 @@ const allQueries = {
   ...customQueries,
 };
 const customWithin = (element: HTMLElement) => within(element, allQueries);
+const customScreen = {
+  ...within(document.body, allQueries),
+  debug: screen.debug,
+};
 
 export * from '@testing-library/react';
-export { customWithin as within };
+export { customWithin as within, customScreen as screen };
 
 export function render(
   ui: React.ReactElement,

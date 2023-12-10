@@ -1,7 +1,7 @@
 import { Tag } from 'antd';
 import React, { useEffect } from 'react';
 import { keyBy } from 'lodash';
-import { COUNTRIES } from '@flagright/lib/constants';
+import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import style from './style.module.less';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -629,13 +629,17 @@ export const ALL_RISK_PARAMETERS = [
 
 const MultipleSelect: React.FC<
   InputRendererProps<'MULTIPLE'> & {
-    options: Array<{ value: string; label: string }>;
+    options: Array<{ value: string; label: string; alternativeLabels?: string[] }>;
   }
 > = (props) => {
   const { value, disabled, onChange, options, existedValues = [] } = props;
   const disabledOptions: string[] = existedValues.flatMap((x) =>
     x.values.map((y) => `${y.content}`),
   );
+  const optionsFixed = options.map((x) => ({
+    ...x,
+    isDisabled: disabledOptions.includes(x.value),
+  }));
   return (
     <Select<string>
       style={{ width: '100%' }}
@@ -644,8 +648,8 @@ const MultipleSelect: React.FC<
         onChange(riskValueMultiple((value as string[]).map((x) => riskValueLiteral(x))));
       }}
       isDisabled={disabled}
-      options={options.map((x) => ({ ...x, isDisabled: disabledOptions.includes(x.value) }))}
-      mode="TAGS"
+      options={optionsFixed}
+      mode="MULTIPLE"
     />
   );
 };
@@ -685,7 +689,11 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   COUNTRY: ((props) => {
     return (
       <MultipleSelect
-        options={Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] }))}
+        options={Object.entries(COUNTRIES).map(([countryCode, name]) => ({
+          value: countryCode,
+          label: name,
+          alternativeLabels: COUNTRY_ALIASES[countryCode] ?? [],
+        }))}
         {...props}
       />
     );

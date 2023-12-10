@@ -18,5 +18,8 @@ export function compare(a: Comparable, b: Comparable): boolean {
   if (typeof a !== typeof b) {
     return false;
   }
+  if (typeof a === 'string' && typeof b === 'string') {
+    return a.toLocaleLowerCase() === b.toLocaleLowerCase();
+  }
   return a === b;
 }
