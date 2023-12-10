@@ -124,7 +124,9 @@ export default function RiskLevelDistributionCard(props: Props) {
               }> => {
                 return new Promise((resolve, _reject) => {
                   const fileData = {
-                    fileName: `distribution-by-${selectedRiskType}-${dayjs().format('YYYY_MM_DD')}`,
+                    fileName: `${userType.toLowerCase()}-users-breakdown-by-risk-levels-${selectedRiskType}-${dayjs().format(
+                      'YYYY_MM_DD',
+                    )}`,
                     data: exportDataForBarGraphs(data, `${selectedRiskType} Risk level`),
                     pdfRef,
                   };

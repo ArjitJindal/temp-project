@@ -86,7 +86,9 @@ export default function KYCStatusDistributionCard(props: Props) {
               }> => {
                 return new Promise((resolve, _reject) => {
                   const fileData = {
-                    fileName: `distribution-by-kyc-status-${dayjs().format('YYYY_MM_DD')}`,
+                    fileName: `${userType.toLowerCase()}-users-distribution-by-kyc-status-${dayjs().format(
+                      'YYYY_MM_DD',
+                    )}`,
                     data: exportDataForBarGraphs(data, 'KYC status', 'Percentage'),
                     pdfRef,
                   };
