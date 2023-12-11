@@ -11,20 +11,19 @@ import DownloadAsPDF from '@/components/SanctionsTable/SearchResultDetailsModal/
 const DEFAULT_FIXED_HEIGHT = 400;
 
 function Widget(props: WidgetProps, ref: React.Ref<HTMLInputElement>) {
-  const { title, extraControls, onDownload, children, width, resizing = 'AUTO' } = props;
+  const { id, title, extraControls, onDownload, children, width, resizing = 'AUTO' } = props;
   const controls = [
     ...(extraControls ?? []),
     ...(onDownload ? [<DownloadButton onDownload={onDownload} />] : []),
   ];
 
   return (
-    <WidgetBase ref={ref} width={width}>
+    <WidgetBase ref={ref} width={width} id={id}>
       <div
         className={cn(s.root, resizing === 'FIXED' && s.fixedHeight)}
         style={{
           minHeight: resizing === 'AUTO' ? undefined : DEFAULT_FIXED_HEIGHT,
         }}
-        data-cy={title}
       >
         <div className={s.header}>
           {title && <div className={s.title}>{title}</div>}

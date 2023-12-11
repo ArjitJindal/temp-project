@@ -416,7 +416,7 @@ function Analysis() {
                         });
                       }}
                       extraLeftLabelMargin
-                      testName={widget.title}
+                      testName={widget.id}
                     />
                   </Label>
                 );
