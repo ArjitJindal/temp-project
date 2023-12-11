@@ -5,9 +5,10 @@ import {
   InternalBusinessUser,
   InternalConsumerUser,
   Comment,
+  Alert,
 } from '@/apis';
 
-export type TableItem = Case & {
+export type TableItem = Omit<Case, 'alerts'> & {
   index: number;
   userId: string | null;
   user: InternalConsumerUser | InternalBusinessUser | null;
@@ -17,4 +18,5 @@ export type TableItem = Case & {
     otherReason: string | null;
   } | null;
   alertComments: Comment[];
+  alerts?: Omit<Alert, 'transactionIds'>[];
 };

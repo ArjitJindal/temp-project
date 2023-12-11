@@ -1,6 +1,6 @@
 import { Alert, CaseType, InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 
-export interface TableAlertItem extends Alert {
+export interface TableAlertItem extends Omit<Alert, 'transactionIds'> {
   alertId?: string;
   caseId?: string;
   caseCreatedTimestamp?: number;

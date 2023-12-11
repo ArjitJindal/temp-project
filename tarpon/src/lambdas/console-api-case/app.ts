@@ -80,7 +80,10 @@ export const casesHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetCaseList(
-      async (ctx, request) => await caseService.getCases(request)
+      async (ctx, request) =>
+        await caseService.getCases(request, {
+          hideAlertTransactionIds: true,
+        })
     )
 
     handlers.registerPatchCasesStatusChange(async (ctx, request) => {
@@ -191,7 +194,10 @@ export const casesHandler = lambdaApi()(
     )
 
     handlers.registerGetAlertList(
-      async (ctx, request) => await alertsService.getAlerts(request)
+      async (ctx, request) =>
+        await alertsService.getAlerts(request, {
+          hideTransactionIds: true,
+        })
     )
 
     handlers.registerPostCasesManual(async (ctx, request) => {

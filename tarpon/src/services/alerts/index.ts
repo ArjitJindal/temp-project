@@ -147,7 +147,8 @@ export class AlertsService extends CaseAlertsCommonService {
   }
 
   public async getAlerts(
-    params: DefaultApiGetAlertListRequest
+    params: DefaultApiGetAlertListRequest,
+    options?: { hideTransactionIds?: boolean }
   ): Promise<AlertListResponse> {
     const caseGetSegment = await addNewSubsegment(
       'Case Service',
@@ -155,7 +156,7 @@ export class AlertsService extends CaseAlertsCommonService {
     )
 
     try {
-      return await this.alertsRepository.getAlerts(params)
+      return await this.alertsRepository.getAlerts(params, options)
     } finally {
       caseGetSegment?.close()
     }

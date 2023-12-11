@@ -59,13 +59,20 @@ export class AlertsRepository {
   }
 
   public async getAlerts(
-    params: OptionalPagination<DefaultApiGetAlertListRequest>
+    params: OptionalPagination<DefaultApiGetAlertListRequest>,
+    options?: { hideTransactionIds?: boolean }
   ): Promise<AlertListResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    const pipeline = await this.getAlertsPipeline(params, false)
-    const countPipelineResp = await this.getAlertsPipeline(params, true)
+    const pipeline = await this.getAlertsPipeline(params, {
+      hideTransactionIds: options?.hideTransactionIds,
+      countOnly: false,
+    })
+    const countPipelineResp = await this.getAlertsPipeline(params, {
+      hideTransactionIds: options?.hideTransactionIds,
+      countOnly: true,
+    })
 
     pipeline.push(...paginatePipeline(params))
 
@@ -141,7 +148,7 @@ export class AlertsRepository {
 
   private async getAlertsPipeline(
     params: OptionalPagination<DefaultApiGetAlertListRequest>,
-    countOnly = true
+    options?: { hideTransactionIds?: boolean; countOnly?: boolean }
   ): Promise<Document[]> {
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -374,7 +381,7 @@ export class AlertsRepository {
       })
     }
 
-    if (!countOnly) {
+    if (!options?.countOnly) {
       pipeline.push(
         ...[
           lookupPipelineStage({
@@ -422,6 +429,14 @@ export class AlertsRepository {
           'caseUsers.destination.type': 1,
         },
       })
+
+      if (options?.hideTransactionIds) {
+        pipeline.push({
+          $project: {
+            'alert.transactionIds': 0,
+          },
+        })
+      }
     }
     return pipeline
   }

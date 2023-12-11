@@ -67,6 +67,7 @@ export function getRuleQueueFilter(ruleQueueIds: string[]) {
 
 export type CaseListOptions = {
   includeCaseTransactionIds?: boolean
+  hideAlertTransactionIds?: boolean
 }
 
 export type SubjectCasesQueryParams = {
@@ -649,6 +650,15 @@ export class CaseRepository {
           : {}),
       },
     })
+
+    if (options.hideAlertTransactionIds) {
+      postLimitPipeline.push({
+        $project: {
+          'alerts.transactionIds': 0,
+        },
+      })
+    }
+
     return { preLimitPipeline, postLimitPipeline }
   }
 
