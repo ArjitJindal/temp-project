@@ -180,24 +180,6 @@ export const dashboardStatsHandler = lambdaApi()(
       return data
     })
 
-    handlers.registerGetDashboardStatsKycStatusDistribution(
-      async (ctx, request) => {
-        const client = await getMongoDbClient()
-        const { userType } = request
-        const dashboardStatsRepository = new DashboardStatsRepository(
-          ctx.tenantId,
-          { mongoDb: client }
-        )
-        if (shouldRefreshAll(event)) {
-          await dashboardStatsRepository.refreshAllStats()
-        }
-        const data =
-          await dashboardStatsRepository.getKYCStatusDistributionStats(userType)
-        return {
-          data,
-        }
-      }
-    )
     handlers.registerGetDashboardTeamStats(async (ctx, request) => {
       const client = await getMongoDbClient()
       const { auth0Domain } = event.requestContext.authorizer

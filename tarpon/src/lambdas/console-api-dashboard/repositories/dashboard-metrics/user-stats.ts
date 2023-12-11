@@ -1,30 +1,68 @@
-import { getAffectedInterval, getTimeLabels } from '../../utils'
+import { keyBy } from 'lodash'
+import { getTimeLabels } from '../../utils'
 import { GranularityValuesType, TimeRange } from '../types'
+import {
+  cleanUpStaleData,
+  getAttributeCountStatsPipeline,
+  getAttributeSumStatsDerivedPipeline,
+  withUpdatedAt,
+} from './utils'
 import dayjs from '@/utils/dayjs'
 import {
   DAY_DATE_FORMAT_JS,
   getMongoDbClientDb,
-  HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
   MONTH_DATE_FORMAT_JS,
 } from '@/utils/mongodb-utils'
 import {
-  DASHBOARD_USERS_STATS_COLLECTION_DAILY,
-  DASHBOARD_USERS_STATS_COLLECTION_HOURLY,
-  DASHBOARD_USERS_STATS_COLLECTION_MONTHLY,
+  DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_DAILY,
+  DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_HOURLY,
+  DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_MONTHLY,
+  DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_DAILY,
+  DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_HOURLY,
+  DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_MONTHLY,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { DashboardStatsUsersByTimeItem } from '@/@types/openapi-internal/DashboardStatsUsersByTimeItem'
+import { DashboardStatsUsersStats } from '@/@types/openapi-internal/DashboardStatsUsersStats'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { traceable } from '@/core/xray'
+import { USER_TYPES, UserType } from '@/@types/user/user-type'
+
+function getCollectionsByUserType(
+  tenantId: string,
+  userType: 'BUSINESS' | 'CONSUMER'
+) {
+  if (userType === 'CONSUMER') {
+    return {
+      hourlyCollectionName:
+        DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_HOURLY(tenantId),
+      dailyCollectionName:
+        DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_DAILY(tenantId),
+      monthlyCollectionName:
+        DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_MONTHLY(tenantId),
+    }
+  } else {
+    return {
+      hourlyCollectionName:
+        DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_HOURLY(tenantId),
+      dailyCollectionName:
+        DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_DAILY(tenantId),
+      monthlyCollectionName:
+        DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_MONTHLY(tenantId),
+    }
+  }
+}
 
 @traceable
 export class UserStats {
-  public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
+  public static async refresh(
+    tenantId,
+    userCreatedTimeRange?: TimeRange
+  ): Promise<void> {
+    const lastUpdatedAt = Date.now()
     const dynamoDb = getDynamoDbClient()
     const riskRepository = new RiskRepository(tenantId, {
       dynamoDb,
@@ -36,206 +74,176 @@ export class UserStats {
     const usersCollection = db.collection<InternalTransaction>(
       USERS_COLLECTION(tenantId)
     )
-    const hourlyCollectionName =
-      DASHBOARD_USERS_STATS_COLLECTION_HOURLY(tenantId)
-    const dailyCollectionName = DASHBOARD_USERS_STATS_COLLECTION_DAILY(tenantId)
-    const monthlyCollectionName =
-      DASHBOARD_USERS_STATS_COLLECTION_MONTHLY(tenantId)
+    for (const userType of USER_TYPES) {
+      const {
+        hourlyCollectionName,
+        dailyCollectionName,
+        monthlyCollectionName,
+      } = getCollectionsByUserType(tenantId, userType)
 
-    function getAggregationPipeline(
-      dateFormat: string,
-      aggregationCollection: string
-    ) {
-      return [
-        {
-          $match: {
-            createdTimestamp: {
-              $exists: true,
-            },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              type: '$type',
-              date: {
-                $dateToString: {
-                  format: dateFormat,
-                  date: {
-                    $toDate: {
-                      $toLong: '$createdTimestamp',
-                    },
-                  },
+      const riskScoreAttributeFieldMapper = {
+        $switch: {
+          branches: riskClassification.map((item) => ({
+            case: {
+              $and: [
+                {
+                  // TODO: Come up with a better way to avoid using the "targetFields" implementation detail
+                  $gte: ['$targetFields', item.lowerBoundRiskScore],
                 },
-              },
-              krsScore: {
-                $switch: {
-                  branches: riskClassification.map((item) => ({
-                    case: {
-                      $and: [
-                        {
-                          $gte: [
-                            '$krsScore.krsScore',
-                            item.lowerBoundRiskScore,
-                          ],
-                        },
-                        {
-                          $lt: ['$krsScore.krsScore', item.upperBoundRiskScore],
-                        },
-                      ],
-                    },
-                    then: item.riskLevel,
-                  })),
-                  default: 'LOW',
+                {
+                  $lt: ['$targetFields', item.upperBoundRiskScore],
                 },
-              },
-              drsScore: {
-                $switch: {
-                  branches: riskClassification.map((item) => ({
-                    case: {
-                      $and: [
-                        {
-                          $gte: [
-                            '$drsScore.drsScore',
-                            item.lowerBoundRiskScore,
-                          ],
-                        },
-                        {
-                          $lt: ['$drsScore.drsScore', item.upperBoundRiskScore],
-                        },
-                      ],
-                    },
-                    then: item.riskLevel,
-                  })),
-                  default: 'LOW',
-                },
-              },
+              ],
             },
-            count: { $sum: 1 },
-          },
+            then: item.riskLevel,
+          })),
+          default: 'LOW',
         },
-        {
-          $addFields:
-            /**
-             * newField: The new field name.
-             * expression: The new field expression.
-             */
-            {
-              date: '$_id.date',
-              type: '$_id.type',
-              krsScore: '$_id.krsScore',
-              drsScore: '$_id.drsScore',
-              count: '$count',
-            },
-        },
-        {
-          $merge: {
-            into: aggregationCollection,
-            on: ['date', 'type', 'krsScore', 'drsScore'],
-            whenMatched: 'merge',
-          },
-        },
-      ]
-
-      // todo: implement cleaning?
-      // const lastUpdatedAt = Date.now()
-      // await usersCollection
-      //   .aggregate(withUpdatedAt(pipeline, lastUpdatedAt), { allowDiskUse: true })
-      //   .next()
-      // await cleanUpStaleData(aggregationCollection, 'date', lastUpdatedAt)
-    }
-
-    await usersCollection
-      .aggregate(getAggregationPipeline(HOUR_DATE_FORMAT, hourlyCollectionName))
-      .next()
-
-    const getDerivedAggregationPipeline = (
-      granularity: 'DAY' | 'MONTH',
-      timeRange?: TimeRange
-    ) => {
-      let timestampMatch: any = undefined
-      if (timeRange) {
-        const { start, end } = getAffectedInterval(timeRange, granularity)
-        const format =
-          granularity === 'DAY' ? HOUR_DATE_FORMAT_JS : DAY_DATE_FORMAT_JS
-        timestampMatch = {
-          date: {
-            $gte: dayjs(start).format(format),
-            $lt: dayjs(end).format(format),
-          },
-        }
       }
-      return [
-        { $match: { ...timestampMatch } },
-        {
-          $addFields: {
-            time: {
-              $substr: ['$date', 0, granularity === 'DAY' ? 10 : 7],
-            },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              date: '$time',
-              krsScore: '$krsScore',
-              drsScore: '$drsScore',
-              type: '$type',
-            },
-            count: { $sum: '$count' },
-          },
-        },
 
-        {
-          $project: {
-            date: '$_id.date',
-            type: '$_id.type',
-            krsScore: '$_id.krsScore',
-            drsScore: '$_id.drsScore',
-            count: '$count',
-          },
-        },
-        {
-          $merge: {
-            into:
-              granularity === 'DAY'
-                ? dailyCollectionName
-                : monthlyCollectionName,
-            on: ['date', 'type', 'krsScore', 'drsScore'],
-            whenMatched: 'merge',
-          },
-        },
-      ]
+      await usersCollection
+        .aggregate(
+          withUpdatedAt(
+            [
+              { $match: { type: userType } },
+              ...getAttributeCountStatsPipeline(
+                hourlyCollectionName,
+                'HOUR',
+                'createdTimestamp',
+                'krsRiskLevel',
+                ['krsScore.krsScore'],
+                userCreatedTimeRange,
+                { attributeFieldMapper: riskScoreAttributeFieldMapper }
+              ),
+            ],
+            lastUpdatedAt
+          ),
+          {
+            allowDiskUse: true,
+          }
+        )
+        .next()
+      await usersCollection
+        .aggregate(
+          withUpdatedAt(
+            [
+              { $match: { type: userType } },
+              ...getAttributeCountStatsPipeline(
+                hourlyCollectionName,
+                'HOUR',
+                'createdTimestamp',
+                'drsRiskLevel',
+                ['drsScore.drsScore'],
+                userCreatedTimeRange,
+                { attributeFieldMapper: riskScoreAttributeFieldMapper }
+              ),
+            ],
+            lastUpdatedAt
+          ),
+          {
+            allowDiskUse: true,
+          }
+        )
+        .next()
+      await usersCollection
+        .aggregate(
+          withUpdatedAt(
+            [
+              { $match: { type: userType } },
+              ...getAttributeCountStatsPipeline(
+                hourlyCollectionName,
+                'HOUR',
+                'createdTimestamp',
+                'kycStatus',
+                ['kycStatusDetails.status'],
+                userCreatedTimeRange
+              ),
+            ],
+            lastUpdatedAt
+          ),
+          {
+            allowDiskUse: true,
+          }
+        )
+        .next()
+
+      await db
+        .collection<DashboardStatsUsersStats>(hourlyCollectionName)
+        .aggregate(
+          withUpdatedAt(
+            getAttributeSumStatsDerivedPipeline(
+              dailyCollectionName,
+              'DAY',
+              userCreatedTimeRange
+            ),
+            lastUpdatedAt
+          ),
+          {
+            allowDiskUse: true,
+          }
+        )
+        .next()
+
+      await db
+        .collection<DashboardStatsUsersStats>(dailyCollectionName)
+        .aggregate(
+          withUpdatedAt(
+            getAttributeSumStatsDerivedPipeline(
+              monthlyCollectionName,
+              'MONTH',
+              userCreatedTimeRange
+            ),
+            lastUpdatedAt
+          ),
+          {
+            allowDiskUse: true,
+          }
+        )
+        .next()
+
+      await Promise.all([
+        cleanUpStaleData(
+          hourlyCollectionName,
+          '_id',
+          lastUpdatedAt,
+          userCreatedTimeRange,
+          'HOUR'
+        ),
+        cleanUpStaleData(
+          dailyCollectionName,
+          '_id',
+          lastUpdatedAt,
+          userCreatedTimeRange,
+          'DAY'
+        ),
+        cleanUpStaleData(
+          monthlyCollectionName,
+          '_id',
+          lastUpdatedAt,
+          userCreatedTimeRange,
+          'MONTH'
+        ),
+      ])
     }
-
-    await db
-      .collection<DashboardStatsUsersByTimeItem>(hourlyCollectionName)
-      .aggregate(getDerivedAggregationPipeline('DAY', timeRange))
-      .next()
-
-    await db
-      .collection<DashboardStatsUsersByTimeItem>(dailyCollectionName)
-      .aggregate(getDerivedAggregationPipeline('MONTH', timeRange))
-      .next()
   }
 
   public static async get(
     tenantId: string,
-    userType: 'BUSINESS' | 'CONSUMER',
+    userType: UserType,
     startTimestamp: number,
     endTimestamp: number,
     granularity?: GranularityValuesType
-  ): Promise<DashboardStatsUsersByTimeItem[]> {
+  ): Promise<DashboardStatsUsersStats[]> {
     const db = await getMongoDbClientDb()
+    const { hourlyCollectionName, dailyCollectionName, monthlyCollectionName } =
+      getCollectionsByUserType(tenantId, userType)
 
     let collection
     let timeLabels: string[]
     let timeFormat: string
 
     if (granularity === 'DAY') {
-      collection = db.collection<DashboardStatsUsersByTimeItem>(
-        DASHBOARD_USERS_STATS_COLLECTION_DAILY(tenantId)
-      )
+      collection = db.collection<DashboardStatsUsersStats>(dailyCollectionName)
       timeLabels = getTimeLabels(
         DAY_DATE_FORMAT_JS,
         startTimestamp,
@@ -244,8 +252,8 @@ export class UserStats {
       )
       timeFormat = DAY_DATE_FORMAT_JS
     } else if (granularity === 'MONTH') {
-      collection = db.collection<DashboardStatsUsersByTimeItem>(
-        DASHBOARD_USERS_STATS_COLLECTION_MONTHLY(tenantId)
+      collection = db.collection<DashboardStatsUsersStats>(
+        monthlyCollectionName
       )
       timeLabels = getTimeLabels(
         MONTH_DATE_FORMAT_JS,
@@ -255,9 +263,7 @@ export class UserStats {
       )
       timeFormat = MONTH_DATE_FORMAT_JS
     } else {
-      collection = db.collection<DashboardStatsUsersByTimeItem>(
-        DASHBOARD_USERS_STATS_COLLECTION_HOURLY(tenantId)
-      )
+      collection = db.collection<DashboardStatsUsersStats>(hourlyCollectionName)
       timeLabels = getTimeLabels(
         HOUR_DATE_FORMAT_JS,
         startTimestamp,
@@ -270,67 +276,24 @@ export class UserStats {
     const startDate = dayjs(startTimestamp).format(timeFormat)
     const endDate = dayjs(endTimestamp).format(timeFormat)
 
-    function makePipeline(riskType: 'KRS' | 'DRS') {
-      const pipeline = [
-        {
-          $match: {
-            type: userType,
-            date: {
-              $gte: startDate,
-              $lte: endDate,
-            },
-          },
+    const dashboardStats = await collection
+      .find({
+        _id: {
+          $gte: startDate,
+          $lte: endDate,
         },
-        {
-          $group: {
-            _id: {
-              date: '$date',
-              riskLevel: riskType === 'KRS' ? '$krsScore' : '$drsScore',
-            },
-            count: {
-              $sum: '$count',
-            },
-          },
-        },
-        {
-          $project: {
-            _id: '$_id.date',
-            riskLevel: '$_id.riskLevel',
-            count: '$count',
-          },
-        },
-      ]
-      return pipeline
-    }
+      })
+      .sort({ _id: 1 })
+      .allowDiskUse()
+      .toArray()
 
-    const krsStats = {}
-    for await (const x of collection.aggregate(makePipeline('KRS'))) {
-      krsStats[x._id] = { ...krsStats[x._id], [x.riskLevel]: x.count ?? 0 }
-    }
-
-    const drsStats = {}
-    for await (const x of collection.aggregate(makePipeline('DRS'))) {
-      drsStats[x._id] = { ...drsStats[x._id], [x.riskLevel]: x.count ?? 0 }
-    }
-
-    return timeLabels.map((timeLabel) => ({
-      _id: timeLabel,
-      ...RISK_LEVELS.reduce(
-        (acc, riskLevel) => ({
-          ...acc,
-          [`krsRiskLevel_${riskLevel}`]:
-            krsStats?.[timeLabel]?.[riskLevel] ?? 0,
-        }),
-        {}
-      ),
-      ...RISK_LEVELS.reduce(
-        (acc, riskLevel) => ({
-          ...acc,
-          [`drsRiskLevel_${riskLevel}`]:
-            drsStats?.[timeLabel]?.[riskLevel] ?? 0,
-        }),
-        {}
-      ),
-    }))
+    const dashboardStatsById = keyBy(dashboardStats, '_id')
+    return timeLabels.map((timeLabel) => {
+      const stat = dashboardStatsById[timeLabel]
+      return {
+        _id: timeLabel,
+        ...stat,
+      }
+    })
   }
 }

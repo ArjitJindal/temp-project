@@ -57,50 +57,68 @@ export const USER_EVENTS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-user-events`
 }
 
+/**
+ * Dashboard collections
+ */
 export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY = (
   tenantId: string
 ) => {
   return `${tenantId}-dashboard-transaction-stats-monthly`
 }
-
 export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY = (
   tenantId: string
 ) => {
   return `${tenantId}-dashboard-transaction-stats-daily`
 }
-
 export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY = (
   tenantId: string
 ) => {
   return `${tenantId}-dashboard-transaction-stats-hourly`
 }
-
 export const DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY = (
   tenantId: string
 ) => {
   return `${tenantId}-dashboard-rule-stats-hourly`
 }
-
 export const DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY = (
   tenantId: string
 ) => {
   return `${tenantId}-dashboard-hits-by-user-stats-hourly`
 }
-
-export const DASHBOARD_USERS_STATS_COLLECTION_HOURLY = (tenantId: string) => {
-  return `${tenantId}-dashboard-users-stats-hourly`
+export const DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_HOURLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-consumer-user-stats-hourly`
 }
-export const DASHBOARD_USERS_STATS_COLLECTION_DAILY = (tenantId: string) => {
-  return `${tenantId}-dashboard-users-stats-daily`
+export const DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_DAILY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-consumer-user-stats-daily`
 }
-export const DASHBOARD_USERS_STATS_COLLECTION_MONTHLY = (tenantId: string) => {
-  return `${tenantId}-dashboard-users-stats-monthly`
+export const DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_MONTHLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-business-users-stats-monthly`
+}
+export const DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_HOURLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-business-users-stats-hourly`
+}
+export const DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_DAILY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-business-users-stats-daily`
+}
+export const DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_MONTHLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-consumer-user-stats-monthly`
 }
 
 export const DASHBOARD_TEAM_CASES_STATS_HOURLY = (tenantId: string) => {
   return `${tenantId}-dashboard-team-cases-stats-hourly`
 }
-
 export const DASHBOARD_TEAM_ALERTS_STATS_HOURLY = (tenantId: string) => {
   return `${tenantId}-dashboard-team-alerts-stats-hourly`
 }
@@ -118,21 +136,6 @@ export const ARS_SCORES_COLLECTION = (tenantId: string) => {
 }
 export const DRS_SCORES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-dynamic-risk-values`
-}
-
-export const DRS_SCORES_DISTRIBUTION_STATS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-drs-scores-distribution`
-}
-export const KYC_STATUS_DISTRIBUTION_STATS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-kyc-status-distribution`
-}
-
-export const KRS_SCORES_DISTRIBUTION_STATS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-krs-scores-distribution`
-}
-
-export const DASHBOARD_USER_STATS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-dashboard-user-stats`
 }
 
 export const IMPORT_COLLECTION = (tenantId: string) => {
@@ -455,24 +458,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenantId)]: [
       {
         getIndexes: () => [{ date: -1, accountId: 1, status: 1 }],
-        unique: true,
-      },
-    ],
-    [DASHBOARD_USERS_STATS_COLLECTION_HOURLY(tenantId)]: [
-      {
-        getIndexes: () => [{ date: -1, type: 1, krsScore: 1, drsScore: 1 }],
-        unique: true,
-      },
-    ],
-    [DASHBOARD_USERS_STATS_COLLECTION_DAILY(tenantId)]: [
-      {
-        getIndexes: () => [{ date: -1, type: 1, krsScore: 1, drsScore: 1 }],
-        unique: true,
-      },
-    ],
-    [DASHBOARD_USERS_STATS_COLLECTION_MONTHLY(tenantId)]: [
-      {
-        getIndexes: () => [{ date: -1, type: 1, krsScore: 1, drsScore: 1 }],
         unique: true,
       },
     ],

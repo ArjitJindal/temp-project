@@ -1,34 +1,21 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React, { MutableRefObject, useRef, useState } from 'react';
-import { RangeValue } from 'rc-picker/es/interface';
-import { useLocalStorageState } from 'ahooks';
-import Column, { ColumnData } from '../charts/Column';
-import { exportDataForBarGraphs } from '../../utils/export-data-build-util';
-import s from './styles.module.less';
-import RiskTypeSelector, { RiskTypeSelectorValue } from './RiskTypeSelector';
-import { useApi } from '@/api';
-import { RISK_LEVELS } from '@/utils/risk-levels';
-import { useQuery } from '@/utils/queries/hooks';
-import { USERS_STATS } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
-import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { map } from '@/utils/asyncResource';
-import { RiskLevel } from '@/apis';
+import { useMemo, useState } from 'react';
+import DistributionChartWidget from '../widgets/DistributionChartWidget';
 import {
+  COLORS_V2_PRIMARY_SHADES_BLUE_50,
   COLORS_V2_PRIMARY_SHADES_BLUE_100,
   COLORS_V2_PRIMARY_SHADES_BLUE_300,
-  COLORS_V2_PRIMARY_SHADES_BLUE_50,
   COLORS_V2_PRIMARY_SHADES_BLUE_600,
   COLORS_V2_PRIMARY_TINTS_BLUE_900,
 } from '@/components/ui/colors';
-import { Dayjs, dayjs } from '@/utils/dayjs';
-import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
-import DatePicker from '@/components/ui/DatePicker';
-import ContainerRectMeasure from '@/components/utils/ContainerRectMeasure';
-
-const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
+import { useQuery } from '@/utils/queries/hooks';
+import { USERS_STATS } from '@/utils/queries/keys';
+import { useApi } from '@/api';
+import { DashboardStatsUsersStats, RiskLevel } from '@/apis';
+import { dayjs } from '@/utils/dayjs';
+import { RISK_LEVELS } from '@/utils/risk-levels';
+import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const RISK_LEVEL_COLORS = {
   VERY_LOW: COLORS_V2_PRIMARY_SHADES_BLUE_50,
@@ -42,127 +29,52 @@ interface Props extends WidgetProps {
   userType?: 'BUSINESS' | 'CONSUMER';
 }
 
-export default function RiskLevelDistributionCard(props: Props) {
-  const { userType = 'CONSUMER', ...restProps } = props;
-  const api = useApi();
-  const settings = useSettings();
-  const [selectedRiskType, setSelectedRiskType] = useLocalStorageState<RiskTypeSelectorValue>(
-    `dashboard-${userType}-risk-type-active-tab`,
-    'CRA',
-  );
+export function RiskLevelDistributionCard(props: Props) {
+  return <RiskLevelDistributionCardBase {...props} groupBy="VALUE" />;
+}
 
-  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
-    dayjs().subtract(1, 'year'),
-    dayjs(),
-  ]);
+export function RiskLevelBreakdownCard(props: Props) {
+  return <RiskLevelDistributionCardBase {...props} groupBy="TIME" />;
+}
 
-  let startTimestamp = dayjs().subtract(1, 'year').valueOf();
-  let endTimestamp = Date.now();
-  const [start, end] = dateRange ?? [];
-  if (start != null && end != null) {
-    startTimestamp = start.startOf('day').valueOf();
-    endTimestamp = end.endOf('day').valueOf();
-  }
-
+function RiskLevelDistributionCardBase(props: Props & { groupBy: 'VALUE' | 'TIME' }) {
+  const { userType = 'CONSUMER', groupBy, ...restProps } = props;
+  const [timeRange, setTimeRange] = useState({
+    startTimestamp: dayjs().subtract(1, 'year').valueOf(),
+    endTimestamp: dayjs().valueOf(),
+  });
   const params = {
     userType: userType,
-    startTimestamp,
-    endTimestamp,
+    startTimestamp: timeRange.startTimestamp,
+    endTimestamp: timeRange.endTimestamp,
   };
+  const settings = useSettings();
+  const api = useApi();
   const queryResult = useQuery(USERS_STATS(params), async () => {
-    const response = await api.getDashboardStatsUsersByTime(params);
-    return response;
+    return await api.getDashboardStatsUsersByTime(params);
   });
-
-  const preparedDataRes = map(
-    queryResult.data,
-    (data): ColumnData<RiskLevel, number, RiskLevel> => {
-      return RISK_LEVELS.map((riskLevel) => {
-        const count = data.reduce(
-          (acc, x) =>
-            acc +
-              x[
-                selectedRiskType === 'KRS'
-                  ? `krsRiskLevel_${riskLevel}`
-                  : `drsRiskLevel_${riskLevel}`
-              ] ?? 0,
-          0,
-        );
-        return {
-          xValue: riskLevel,
-          yValue: count,
-          series: riskLevel,
-        };
-      });
-    },
-  );
-  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
+  const valueNames = useMemo(
+    () =>
+      Object.fromEntries(
+        RISK_LEVELS.map((riskLevel) => [riskLevel, getRiskLevelLabel(riskLevel, settings)]),
+      ),
+    [settings],
+  ) as { [key in RiskLevel]: string };
 
   return (
-    <AsyncResourceRenderer resource={preparedDataRes}>
-      {(data) => {
-        if (data.length === 0) {
-          return <NoData />;
-        }
-        return (
-          <div ref={pdfRef}>
-            <Widget
-              resizing="FIXED"
-              {...restProps}
-              extraControls={[
-                <DatePicker.RangePicker
-                  value={dateRange}
-                  onChange={(e) => {
-                    setDateRange(e ?? DEFAULT_DATE_RANGE);
-                  }}
-                />,
-              ]}
-              onDownload={(): Promise<{
-                fileName: string;
-                data: string;
-                pdfRef: MutableRefObject<HTMLInputElement>;
-              }> => {
-                return new Promise((resolve, _reject) => {
-                  const fileData = {
-                    fileName: `${userType.toLowerCase()}-users-breakdown-by-risk-levels-${selectedRiskType}-${dayjs().format(
-                      'YYYY_MM_DD',
-                    )}`,
-                    data: exportDataForBarGraphs(data, `${selectedRiskType} Risk level`),
-                    pdfRef,
-                  };
-                  resolve(fileData);
-                });
-              }}
-            >
-              <div className={s.root}>
-                <RiskTypeSelector
-                  selectedSection={selectedRiskType}
-                  setSelectedSection={setSelectedRiskType}
-                />
-                <div className={s.chartContainer}>
-                  <ContainerRectMeasure className={s.chartContainer2}>
-                    {(size) => (
-                      <Column<RiskLevel, RiskLevel>
-                        data={data}
-                        colors={RISK_LEVEL_COLORS}
-                        rotateLabel={false}
-                        hideLegend={true}
-                        height={size.height}
-                        formatSeries={(series) => {
-                          return getRiskLevelLabel(series, settings);
-                        }}
-                        formatX={(series) => {
-                          return getRiskLevelLabel(series, settings);
-                        }}
-                      />
-                    )}
-                  </ContainerRectMeasure>
-                </div>
-              </div>
-            </Widget>
-          </div>
-        );
-      }}
-    </AsyncResourceRenderer>
+    <DistributionChartWidget<DashboardStatsUsersStats, RiskLevel>
+      groups={[
+        { name: 'CRA', attributeName: 'CRA', attributeDataPrefix: 'drsRiskLevel' },
+        { name: 'KRS', attributeName: 'KRS', attributeDataPrefix: 'krsRiskLevel' },
+      ]}
+      groupBy={groupBy}
+      valueColors={RISK_LEVEL_COLORS}
+      values={RISK_LEVELS}
+      queryResult={queryResult}
+      timeRange={timeRange}
+      onTimeRangeChange={setTimeRange}
+      valueNames={valueNames}
+      {...restProps}
+    />
   );
 }

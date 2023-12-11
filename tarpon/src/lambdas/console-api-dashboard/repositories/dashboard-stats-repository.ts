@@ -6,7 +6,6 @@ import { RuleHitsStatsDashboardMetric } from './dashboard-metrics/rule-stats'
 import { TeamStatsDashboardMetric } from './dashboard-metrics/team-stats'
 import { OverviewStatsDashboardMetric } from './dashboard-metrics/overview-stats'
 import { CaseStatsDashboardMetric } from './dashboard-metrics/case-stats'
-import { KYCStatusDistributionStatsDashboardMetric } from './dashboard-metrics/kyc-status-distribution-stats'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
@@ -19,7 +18,7 @@ import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-i
 import { DashboardStatsAlertPriorityDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertPriorityDistributionStats'
 import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStats'
 import { UserStats } from '@/lambdas/console-api-dashboard/repositories/dashboard-metrics/user-stats'
-import { DashboardStatsUsersByTimeItem } from '@/@types/openapi-internal/DashboardStatsUsersByTimeItem'
+import { DashboardStatsUsersStats } from '@/@types/openapi-internal/DashboardStatsUsersStats'
 
 @traceable
 export class DashboardStatsRepository {
@@ -106,26 +105,13 @@ export class DashboardStatsRepository {
     startTimestamp: number,
     endTimestamp: number,
     granularity: GranularityValuesType
-  ): Promise<DashboardStatsUsersByTimeItem[]> {
+  ): Promise<DashboardStatsUsersStats[]> {
     return UserStats.get(
       this.tenantId,
       userType,
       startTimestamp,
       endTimestamp,
       granularity
-    )
-  }
-
-  private async recalculateKYCStatusDistributionStats() {
-    await KYCStatusDistributionStatsDashboardMetric.refresh(this.tenantId)
-  }
-
-  public async getKYCStatusDistributionStats(
-    userType: 'BUSINESS' | 'CONSUMER'
-  ) {
-    return await KYCStatusDistributionStatsDashboardMetric.get(
-      this.tenantId,
-      userType
     )
   }
 
@@ -169,9 +155,8 @@ export class DashboardStatsRepository {
     ])
   }
 
-  public async refreshUserStats(caseCreatedAtTimeRange?: TimeRange) {
-    await this.recalculateKYCStatusDistributionStats()
-    await UserStats.refresh(this.tenantId, caseCreatedAtTimeRange)
+  public async refreshUserStats(userCreatedTimestampTimeRange?: TimeRange) {
+    await UserStats.refresh(this.tenantId, userCreatedTimestampTimeRange)
   }
 
   public async refreshTeamStats(caseUpdatedAtTimeRange?: TimeRange) {

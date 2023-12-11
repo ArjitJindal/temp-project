@@ -9,11 +9,13 @@ import { Case } from '@/@types/openapi-internal/Case'
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
+  USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 function getTargetTimeRanges(timestamps: number[]): TimeRange[] {
   if (timestamps.length === 0) {
@@ -118,8 +120,28 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
 
       // User stats
       (async () => {
-        await dashboardStatsRepository.refreshUserStats()
-        logger.info(`Refreshed user stats`)
+        const usersCollection = db.collection<InternalUser>(
+          USERS_COLLECTION(job.tenantId)
+        )
+        const users = await (
+          await usersCollection.find(
+            {
+              updatedAt: {
+                $gte: checkTimeRange?.startTimestamp ?? 0,
+                $lt: checkTimeRange?.endTimestamp ?? Number.MAX_SAFE_INTEGER,
+              },
+            },
+            { projection: { createdTimestamp: 1 } }
+          )
+        ).toArray()
+        const targetTimeRanges = getTargetTimeRanges(
+          users.map((c) => c.createdTimestamp!)
+        )
+
+        for (const timeRange of targetTimeRanges) {
+          await dashboardStatsRepository.refreshUserStats(timeRange)
+          logger.info(`Refreshed user stats - ${JSON.stringify(timeRange)}`)
+        }
       })(),
     ]
 

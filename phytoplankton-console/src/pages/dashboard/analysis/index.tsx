@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useLocalStorageState } from 'ahooks';
+import { kebabCase } from 'lodash';
 import TransactionsChartWidget from './components/TransactionsChartWidget';
 import PaymentMethodDistributionWidget from './components/Transactions/PaymentMethodDistributionWidget';
 import RuleHitCard from './components/RulesHitCard';
 import TopUsersHitCard from './components/TopUsersHitCard';
-import RiskLevelDistributionCard from './components/RiskLevelDistributionCard';
+import {
+  RiskLevelDistributionCard,
+  RiskLevelBreakdownCard,
+} from './components/RiskLevelDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
 import OverviewCard from './components/OverviewCard';
 import RulePrioritySplitCard from './components/RulePrioritySplitCard';
@@ -29,7 +33,7 @@ import WidgetGrid from '@/components/library/WidgetGrid';
 import Widget from '@/components/library/Widget';
 import Label from '@/components/library/Label';
 import { notEmpty } from '@/utils/array';
-import RiskLevelBreakdownWidget from '@/pages/dashboard/analysis/components/RiskLevelBreakdownWidget';
+import { WidgetProps } from '@/components/library/Widget/types';
 
 type KeyValues =
   | 'OVERVIEW'
@@ -105,10 +109,6 @@ interface Widgets {
   TEAM_MANAGEMENT: WidgetGroup;
 }
 
-interface WidgetProps {
-  id: string;
-}
-
 const WIDGETS: Widgets = {
   OVERVIEW: [
     {
@@ -122,8 +122,8 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Consumer users',
       id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-      title: 'Consumer users distribution by risk levels',
-      component: RiskLevelBreakdownWidget,
+      title: 'Users distribution by risk levels',
+      component: RiskLevelBreakdownCard,
       width: 'FULL' as const,
       userType: 'CONSUMER',
       requiredFeatures: ['RISK_SCORING'],
@@ -131,7 +131,7 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Consumer users',
       id: 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
-      title: 'Consumer users breakdown by risk levels',
+      title: 'Users breakdown by risk levels',
       component: RiskLevelDistributionCard,
       width: 'HALF' as const,
       userType: 'CONSUMER',
@@ -141,7 +141,7 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Consumer users',
       id: 'TOP_CONSUMER_USERS_BY_RULE_HITS',
-      title: 'Top consumer users by rule hits',
+      title: 'Top users by rule hits',
       component: TopUsersHitCard,
       width: 'HALF' as const,
       userType: 'CONSUMER',
@@ -149,7 +149,7 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Consumer users',
       id: 'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS',
-      title: 'Consumer users distribution by KYC status',
+      title: 'Users distribution by KYC status',
       component: KYCStatusDistributionCard,
       width: 'HALF' as const,
       userType: 'CONSUMER',
@@ -157,7 +157,7 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Consumer users',
       id: 'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
-      title: 'Consumer users distribution by user status',
+      title: 'Users distribution by user status',
       component: UserStatusDistributionCard,
       width: 'HALF' as const,
       userType: 'CONSUMER',
@@ -167,8 +167,8 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Business users',
       id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-      title: 'Business users distribution by risk levels',
-      component: RiskLevelBreakdownWidget,
+      title: 'Users distribution by risk levels',
+      component: RiskLevelBreakdownCard,
       width: 'FULL' as const,
       userType: 'BUSINESS' as const,
       requiredFeatures: ['RISK_SCORING'],
@@ -176,7 +176,7 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Business users',
       id: 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
-      title: 'Business users breakdown by risk levels',
+      title: 'Users breakdown by risk levels',
       component: RiskLevelDistributionCard,
       width: 'HALF' as const,
       userType: 'BUSINESS',
@@ -185,7 +185,7 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Business users',
       id: 'TOP_BUSINESS_USERS_BY_RULE_HITS',
-      title: 'Top business users by rule hits',
+      title: 'Top users by rule hits',
       component: TopUsersHitCard,
       width: 'HALF' as const,
       userType: 'BUSINESS',
@@ -193,7 +193,7 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Business users',
       id: 'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS',
-      title: 'Business users distribution by KYC status',
+      title: 'Users distribution by KYC status',
       component: KYCStatusDistributionCard,
       width: 'HALF' as const,
       userType: 'BUSINESS',
@@ -201,7 +201,7 @@ const WIDGETS: Widgets = {
     {
       groupTitle: 'Business users',
       id: 'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS',
-      title: 'Business users distribution by user status',
+      title: 'Users distribution by user status',
       component: UserStatusDistributionCard,
       width: 'HALF' as const,
       userType: 'BUSINESS',
@@ -243,7 +243,7 @@ const WIDGETS: Widgets = {
       groupTitle: 'Rules',
       id: 'TOP_RULE_HITS_BY_COUNT',
       title: 'Top rule hits by count',
-      component: Widget,
+      component: Widget as (props) => JSX.Element,
       children: <RuleHitCard />,
       resizing: 'AUTO' as const,
     },
@@ -327,6 +327,7 @@ function Analysis() {
       .map((widget) => {
         const widgetProps: WidgetProps = {
           ...widget,
+          downloadFilenamePrefix: kebabCase(`${widget.userType ?? ''} ${widget.title}`.trim()),
         };
 
         return {

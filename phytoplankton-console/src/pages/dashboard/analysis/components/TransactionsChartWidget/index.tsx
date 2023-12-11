@@ -128,26 +128,22 @@ export default function TransactionsChartWidget(props: WidgetProps) {
               return [
                 {
                   xValue: item._id,
-                  yValue: item.stoppedTransactions ?? 0,
+                  yValue: item.status_BLOCK ?? 0,
                   series: 'BLOCK',
                 },
                 {
                   xValue: item._id,
-                  yValue: item.suspendedTransactions ?? 0,
+                  yValue: item.status_SUSPEND ?? 0,
                   series: 'SUSPEND',
                 },
                 {
                   xValue: item._id,
-                  yValue: item.flaggedTransactions ?? 0,
+                  yValue: item.status_FLAG ?? 0,
                   series: 'FLAG',
                 },
                 {
                   xValue: item._id,
-                  yValue:
-                    (item.totalTransactions ?? 0) -
-                    (item.stoppedTransactions ?? 0) -
-                    (item.suspendedTransactions ?? 0) -
-                    (item.flaggedTransactions ?? 0),
+                  yValue: item.status_ALLOW ?? 0,
                   series: 'ALLOW',
                 },
               ];

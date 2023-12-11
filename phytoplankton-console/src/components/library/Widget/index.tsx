@@ -10,7 +10,7 @@ import DownloadAsPDF from '@/components/SanctionsTable/SearchResultDetailsModal/
 
 const DEFAULT_FIXED_HEIGHT = 400;
 
-export default function Widget(props: WidgetProps) {
+function Widget(props: WidgetProps, ref: React.Ref<HTMLInputElement>) {
   const { title, extraControls, onDownload, children, width, resizing = 'AUTO' } = props;
   const controls = [
     ...(extraControls ?? []),
@@ -18,7 +18,7 @@ export default function Widget(props: WidgetProps) {
   ];
 
   return (
-    <WidgetBase width={width}>
+    <WidgetBase ref={ref} width={width}>
       <div
         className={cn(s.root, resizing === 'FIXED' && s.fixedHeight)}
         style={{
@@ -48,6 +48,8 @@ export default function Widget(props: WidgetProps) {
     </WidgetBase>
   );
 }
+
+export default React.forwardRef(Widget);
 
 export function DownloadButton(props: {
   onDownload: () => Promise<{

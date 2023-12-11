@@ -98,11 +98,23 @@ export function getDateFormatByGranularity(
   granularity: 'HOUR' | 'DAY' | 'MONTH'
 ) {
   if (granularity === 'HOUR') {
-    return HOUR_DATE_FORMAT_JS
+    return HOUR_DATE_FORMAT
   } else if (granularity === 'DAY') {
     return DAY_DATE_FORMAT
   } else if (granularity === 'MONTH') {
     return MONTH_DATE_FORMAT
+  }
+}
+
+export function getDateFormatJsByGranularity(
+  granularity: 'HOUR' | 'DAY' | 'MONTH'
+) {
+  if (granularity === 'HOUR') {
+    return HOUR_DATE_FORMAT_JS
+  } else if (granularity === 'DAY') {
+    return DAY_DATE_FORMAT_JS
+  } else if (granularity === 'MONTH') {
+    return MONTH_DATE_FORMAT_JS
   }
 }
 

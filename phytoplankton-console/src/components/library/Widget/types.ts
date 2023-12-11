@@ -13,6 +13,7 @@ export interface WidgetPropsOptional {
     data?: string;
     pdfRef?: MutableRefObject<HTMLInputElement>;
   }>;
+  downloadFilenamePrefix?: string;
   extraControls: React.ReactNode[];
   children: React.ReactNode;
 }

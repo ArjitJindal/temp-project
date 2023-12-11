@@ -5,7 +5,13 @@ import s from './index.module.less';
 
 type Props = Pick<WidgetProps, 'children' | 'width'>;
 
-export default function WidgetBase(props: Props) {
+function WidgetBase(props: Props, ref: React.Ref<HTMLInputElement>) {
   const { children, width = 'FULL' } = props;
-  return <div className={cn(s.root, s[`width-${width}`])}>{children}</div>;
+  return (
+    <div ref={ref} className={cn(s.root, s[`width-${width}`])}>
+      {children}
+    </div>
+  );
 }
+
+export default React.forwardRef(WidgetBase);

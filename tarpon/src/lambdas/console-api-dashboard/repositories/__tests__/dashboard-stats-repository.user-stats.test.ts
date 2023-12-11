@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid'
+import { isNil, omitBy } from 'lodash'
 import { getRiskRepo, getStatsRepo, getUserRepo } from './helpers'
 import { getTestTenantIdAndCreateCollections } from '@/test-utils/tenant-test-utils'
 import dayjs from '@/utils/dayjs'
@@ -67,13 +68,7 @@ describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
         )
         expect(result).toEqual(
           expect.arrayContaining([
-            expectedStats(riskType, '2023-01-01T00', {
-              VERY_LOW: 0,
-              LOW: 0,
-              MEDIUM: 0,
-              HIGH: 0,
-              VERY_HIGH: 0,
-            }),
+            expectedStats(riskType, '2023-01-01T00', {}),
             expectedStats(riskType, '2023-01-01T01', {
               VERY_HIGH: 5,
             }),
@@ -89,13 +84,7 @@ describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
             expectedStats(riskType, '2023-01-01T05', {
               VERY_LOW: 5,
             }),
-            expectedStats(riskType, '2023-01-01T06', {
-              VERY_LOW: 0,
-              LOW: 0,
-              MEDIUM: 0,
-              HIGH: 0,
-              VERY_HIGH: 0,
-            }),
+            expectedStats(riskType, '2023-01-01T06', {}),
           ])
         )
       })
@@ -131,20 +120,8 @@ describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
             HIGH: 5,
             VERY_HIGH: 5,
           }),
-          expectedStats(riskType, '2023-02', {
-            VERY_LOW: 0,
-            LOW: 0,
-            MEDIUM: 0,
-            HIGH: 0,
-            VERY_HIGH: 0,
-          }),
-          expectedStats(riskType, '2023-03', {
-            VERY_LOW: 0,
-            LOW: 0,
-            MEDIUM: 0,
-            HIGH: 0,
-            VERY_HIGH: 0,
-          }),
+          expectedStats(riskType, '2023-02', {}),
+          expectedStats(riskType, '2023-03', {}),
         ])
       })
     })
@@ -299,12 +276,17 @@ function expectedStats(
     VERY_LOW?: number
   }
 ) {
-  return expect.objectContaining({
-    _id: date,
-    [`${riskType.toLowerCase()}RiskLevel_HIGH`]: stats.HIGH ?? 0,
-    [`${riskType.toLowerCase()}RiskLevel_LOW`]: stats.LOW ?? 0,
-    [`${riskType.toLowerCase()}RiskLevel_MEDIUM`]: stats.MEDIUM ?? 0,
-    [`${riskType.toLowerCase()}RiskLevel_VERY_HIGH`]: stats.VERY_HIGH ?? 0,
-    [`${riskType.toLowerCase()}RiskLevel_VERY_LOW`]: stats.VERY_LOW ?? 0,
-  })
+  return expect.objectContaining(
+    omitBy(
+      {
+        _id: date,
+        [`${riskType.toLowerCase()}RiskLevel_HIGH`]: stats.HIGH,
+        [`${riskType.toLowerCase()}RiskLevel_LOW`]: stats.LOW,
+        [`${riskType.toLowerCase()}RiskLevel_MEDIUM`]: stats.MEDIUM,
+        [`${riskType.toLowerCase()}RiskLevel_VERY_HIGH`]: stats.VERY_HIGH,
+        [`${riskType.toLowerCase()}RiskLevel_VERY_LOW`]: stats.VERY_LOW,
+      },
+      isNil
+    )
+  )
 }

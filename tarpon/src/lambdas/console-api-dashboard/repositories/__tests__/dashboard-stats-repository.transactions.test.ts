@@ -39,10 +39,7 @@ describe('Verify transactions counting statistics', () => {
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30',
-        totalTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
+        status_ALLOW: 1,
       }),
     ])
   })
@@ -87,10 +84,9 @@ describe('Verify transactions counting statistics', () => {
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30',
-        flaggedTransactions: 1,
-        stoppedTransactions: 1,
-        suspendedTransactions: 1,
-        totalTransactions: 3,
+        status_FLAG: 1,
+        status_BLOCK: 1,
+        status_SUSPEND: 1,
       }),
     ])
   })
@@ -126,10 +122,7 @@ describe('Verify transactions counting statistics', () => {
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30',
-        flaggedTransactions: 0,
-        stoppedTransactions: 1,
-        suspendedTransactions: 0,
-        totalTransactions: 1,
+        status_BLOCK: 1,
       }),
     ])
   })
@@ -158,10 +151,7 @@ describe('Verify transactions counting statistics', () => {
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30',
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
-        totalTransactions: 1,
+        status_ALLOW: 1,
       }),
     ])
   })
@@ -193,24 +183,15 @@ describe('Verify transactions counting statistics', () => {
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30T01',
-        totalTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
+        status_ALLOW: 1,
       }),
       expect.objectContaining({
         _id: '2022-01-30T02',
-        totalTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
+        status_ALLOW: 1,
       }),
       expect.objectContaining({
         _id: '2022-01-30T03',
-        totalTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
+        status_ALLOW: 1,
       }),
     ])
   })
@@ -244,24 +225,15 @@ describe('Verify transactions counting statistics', () => {
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30T01',
-        totalTransactions: 1,
-        suspendedTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
+        status_SUSPEND: 1,
       }),
       expect.objectContaining({
         _id: '2022-01-30T02',
-        totalTransactions: 1,
-        suspendedTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
+        status_SUSPEND: 1,
       }),
       expect.objectContaining({
         _id: '2022-01-30T03',
-        totalTransactions: 1,
-        suspendedTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
+        status_SUSPEND: 1,
       }),
     ])
   })
@@ -295,38 +267,21 @@ describe('Verify transactions counting statistics', () => {
     expect(hourlyStats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30T00',
-        totalTransactions: 0,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
       }),
       expect.objectContaining({
         _id: '2022-01-30T01',
-        totalTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 1,
-        suspendedTransactions: 0,
+        status_BLOCK: 1,
       }),
       expect.objectContaining({
         _id: '2022-01-30T02',
-        totalTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 1,
-        suspendedTransactions: 0,
+        status_BLOCK: 1,
       }),
       expect.objectContaining({
         _id: '2022-01-30T03',
-        totalTransactions: 1,
-        flaggedTransactions: 0,
-        stoppedTransactions: 1,
-        suspendedTransactions: 0,
+        status_BLOCK: 1,
       }),
       expect.objectContaining({
         _id: '2022-01-30T04',
-        totalTransactions: 0,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
       }),
     ])
     const dailyStats = await statsRepository.getTransactionCountStats(
@@ -337,24 +292,13 @@ describe('Verify transactions counting statistics', () => {
     expect(dailyStats).toEqual([
       expect.objectContaining({
         _id: '2022-01-29',
-        totalTransactions: 0,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
       }),
       expect.objectContaining({
         _id: '2022-01-30',
-        totalTransactions: 3,
-        flaggedTransactions: 0,
-        stoppedTransactions: 3,
-        suspendedTransactions: 0,
+        status_BLOCK: 3,
       }),
       expect.objectContaining({
         _id: '2022-01-31',
-        totalTransactions: 0,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
       }),
     ])
     const monthlyStats = await statsRepository.getTransactionCountStats(
@@ -365,17 +309,10 @@ describe('Verify transactions counting statistics', () => {
     expect(monthlyStats).toEqual([
       expect.objectContaining({
         _id: '2022-01',
-        totalTransactions: 3,
-        flaggedTransactions: 0,
-        stoppedTransactions: 3,
-        suspendedTransactions: 0,
+        status_BLOCK: 3,
       }),
       expect.objectContaining({
         _id: '2022-02',
-        totalTransactions: 0,
-        flaggedTransactions: 0,
-        stoppedTransactions: 0,
-        suspendedTransactions: 0,
       }),
     ])
   })
@@ -413,10 +350,6 @@ describe('Verify transactions counting ARS risk levels', () => {
       expect.objectContaining({
         _id: '2022-01-30',
         arsRiskLevel_VERY_HIGH: 1,
-        arsRiskLevel_HIGH: 0,
-        arsRiskLevel_MEDIUM: 0,
-        arsRiskLevel_LOW: 0,
-        arsRiskLevel_VERY_LOW: 0,
       }),
     ])
   })
@@ -500,15 +433,7 @@ describe('Verify transactions counting payment methods', () => {
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30',
-        paymentMethods_ACH: 0,
         paymentMethods_CARD: 1,
-        paymentMethods_GENERIC_BANK_ACCOUNT: 0,
-        paymentMethods_IBAN: 0,
-        paymentMethods_SWIFT: 0,
-        paymentMethods_UPI: 0,
-        paymentMethods_WALLET: 0,
-        paymentMethods_MPESA: 0,
-        paymentMethods_CHECK: 0,
       }),
     ])
   })
@@ -545,15 +470,7 @@ describe('Verify transactions counting payment methods', () => {
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30',
-        paymentMethods_ACH: 0,
         paymentMethods_CARD: 1,
-        paymentMethods_GENERIC_BANK_ACCOUNT: 0,
-        paymentMethods_IBAN: 0,
-        paymentMethods_SWIFT: 0,
-        paymentMethods_UPI: 0,
-        paymentMethods_WALLET: 0,
-        paymentMethods_MPESA: 0,
-        paymentMethods_CHECK: 0,
       }),
     ])
   })
@@ -596,15 +513,7 @@ describe('Verify transactions counting payment methods', () => {
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30',
-        paymentMethods_ACH: 0,
         paymentMethods_CARD: 2,
-        paymentMethods_GENERIC_BANK_ACCOUNT: 0,
-        paymentMethods_IBAN: 0,
-        paymentMethods_SWIFT: 0,
-        paymentMethods_UPI: 0,
-        paymentMethods_WALLET: 0,
-        paymentMethods_MPESA: 0,
-        paymentMethods_CHECK: 0,
       }),
     ])
   })

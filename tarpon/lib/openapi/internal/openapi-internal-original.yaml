@@ -1880,7 +1880,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DashboardStatsUsersByTimeItem'
+                  $ref: '#/components/schemas/DashboardStatsUsersStats'
       operationId: get-dashboard-stats-users-by-time
       parameters:
         - schema:
@@ -1907,33 +1907,6 @@ paths:
               - DAY
           in: query
           name: granularity
-    parameters: []
-  /dashboard_stats/kyc-status-distribution:
-    get:
-      summary: DashboardStats - KYC Status Distribution
-      tags: []
-      x-flagright:
-        permissions:
-          - dashboard:download-data:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardStatsKYCStatusDistribution'
-              examples: {}
-      operationId: get-dashboard-stats-kyc-status-distribution
-      description: ''
-      parameters:
-        - schema:
-            type: string
-            enum:
-              - BUSINESS
-              - CONSUMER
-          in: query
-          name: userType
-          required: true
     parameters: []
   /dashboard_stats/hits_per_user:
     get:
@@ -6107,13 +6080,13 @@ components:
             properties:
               _id:
                 type: string
-              totalTransactions:
+              status_ALLOW:
                 type: number
-              flaggedTransactions:
+              status_FLAG:
                 type: number
-              stoppedTransactions:
+              status_BLOCK:
                 type: number
-              suspendedTransactions:
+              status_SUSPEND:
                 type: number
               paymentMethods_ACH:
                 type: number
@@ -6247,9 +6220,9 @@ components:
               - hitCount
       required:
         - data
-    DashboardStatsUsersByTimeItem:
+    DashboardStatsUsersStats:
       type: object
-      title: DashboardStatsUsersByTimeItem
+      title: DashboardStatsUsersStats
       properties:
         _id:
           type: string
@@ -6272,6 +6245,16 @@ components:
         krsRiskLevel_HIGH:
           type: number
         krsRiskLevel_VERY_HIGH:
+          type: number
+        kycStatus_SUCCESSFUL:
+          type: number
+        kycStatus_FAILED:
+          type: number
+        kycStatus_NOT_STARTED:
+          type: number
+        kycStatus_IN_PROGRESS:
+          type: number
+        kycStatus_MANUAL_REVIEW:
           type: number
       required:
         - data

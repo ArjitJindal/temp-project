@@ -6,7 +6,10 @@ import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/reposi
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  TRANSACTIONS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongodb-definitions'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 dynamoDbSetupHook()
@@ -80,6 +83,17 @@ describe('Dashboard refresh runner', () => {
       transactionsCollection.insertOne({
         transactionId: 'T-3',
         timestamp: latest.subtract(1, 'day').subtract(1, 'hour').valueOf(),
+        updatedAt: latest.valueOf(),
+      }),
+    ])
+    const usersCollection = mongoDb.db().collection(USERS_COLLECTION(tenantId))
+    await Promise.all([
+      usersCollection.insertOne({
+        userId: 'U-1',
+        updatedAt: latest.valueOf(),
+      }),
+      usersCollection.insertOne({
+        userId: 'U-2',
         updatedAt: latest.valueOf(),
       }),
     ])
