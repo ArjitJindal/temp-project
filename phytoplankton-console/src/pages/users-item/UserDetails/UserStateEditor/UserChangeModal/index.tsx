@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef } from '@/components/library/Form';
@@ -24,6 +24,8 @@ import TextArea from '@/components/library/TextArea';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
 import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
 import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectParamAPI';
+import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+
 interface Props {
   isVisible: boolean;
   onClose: () => void;
@@ -79,6 +81,7 @@ export default function UserChangeModal(props: Props) {
   }, []);
   const api = useApi();
 
+  const queryClient = useQueryClient();
   let messageLoading: CloseMessage | undefined;
   const mutation = useMutation(
     async (values: FormValues) => {
@@ -116,13 +119,14 @@ export default function UserChangeModal(props: Props) {
       return { userStatus, updatedComment };
     },
     {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         message.success(`User status updated`);
         ref.current?.setValues(DEFAULT_INITIAL_VALUES);
         onOkay(data.userStatus!, data.updatedComment);
         removeFiles();
         onClose();
         messageLoading?.();
+        await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
       },
       onError: (error) => {
         message.error(`Error Changing User Status: ${(error as Error).message}`);

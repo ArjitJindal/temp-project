@@ -13,7 +13,7 @@ import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import { OTHER_REASON } from '@/components/Narrative';
 import { statusEscalated } from '@/utils/case-utils';
 import { UserStatusTriggersAdvancedOptionsForm } from '@/components/UserStatusTriggersAdvancedOptionsForm';
-import { ALERT_CHECKLIST } from '@/utils/queries/keys';
+import { ALERT_CHECKLIST, AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {}
 
@@ -107,6 +107,7 @@ export default function CasesStatusChangeModal(props: Props) {
             );
           },
         });
+        await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
         if (currentUser?.reviewerId) {
           message.warn(
             `${pluralize('Case', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${

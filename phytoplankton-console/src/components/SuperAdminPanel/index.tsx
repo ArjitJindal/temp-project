@@ -85,7 +85,7 @@ export default function SuperAdminPanel() {
       return;
     }
     mutateTenantSettings.mutate({
-      ...(features && features.length && { features }),
+      ...(features && { features }),
       ...(limits && { limits }),
       ...(complyAdvantageSearchProfileId && { complyAdvantageSearchProfileId }),
     });
@@ -148,7 +148,11 @@ export default function SuperAdminPanel() {
             </Button>
             <Divider />
             <div className={s.field}>
-              <Label label="Features" description="Enabled features of the tenant" element="div">
+              <Label
+                label="Features"
+                description="Enabled features of the tenant"
+                testId="features-select"
+              >
                 <Select<Feature[]>
                   mode="multiple"
                   options={FEATURES.map((feature) => ({ label: feature, value: feature }))}

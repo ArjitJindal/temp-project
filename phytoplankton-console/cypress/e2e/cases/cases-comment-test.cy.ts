@@ -8,9 +8,11 @@ describe('Add a comment to a case', () => {
     const fileName = `file_${Date.now()}.txt`;
     const fileContent = `file content of ${fileName}`;
 
+    cy.toggleFeature('AUDIT_LOGS', true);
+
     // Navigate to case
-    cy.visit('/case-management/cases');
     cy.intercept('GET', `**/cases**`).as('cases');
+    cy.visit('/case-management/cases');
     cy.wait('@cases', { timeout: 15000 }).then((intercept) => {
       expect(intercept.response?.statusCode).to.be.oneOf([200, 304]);
     });

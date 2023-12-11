@@ -134,3 +134,35 @@ Cypress.Commands.add(
     cy.contains('div[role="tab"]', tabText).should('be.visible');
   },
 );
+
+Cypress.Commands.add('toggleFeature', (feature: string, enable: boolean) => {
+  // Open super admin panel
+  cy.get("button[data-cy='superadmin-panel-button']").click();
+  cy.get('[role="dialog"]').should('be.visible');
+
+  cy.get('.ant-select-selection-overflow').then((item) => {
+    // item.children()
+    const enabledFeaturesElements = item.children().filter((index, element) => {
+      const $element = Cypress.$(element);
+      return $element.text().trim() === feature;
+    });
+    const isFeatureEnabled = enabledFeaturesElements.length > 0;
+    if (enable && !isFeatureEnabled) {
+      // Open select
+      cy.multiSelect('[data-cy="features-select"]', feature);
+      cy.get('[data-cy="features-select"]').find('.ant-select-selector').click();
+      cy.get('[data-cy="features-select"]').find('input[type=search]').type(feature);
+
+      // Select feature
+      cy.get('.ant-select-dropdown .rc-virtual-list-holder-inner > div').contains(feature).click();
+    } else if (!enable && isFeatureEnabled) {
+      Cypress.$(enabledFeaturesElements.get(0)).find('.ant-select-selection-item-remove').click();
+    }
+
+    // Click save, wait for success message and close dialog
+    cy.get('[data-cy="modal-ok"]').click();
+    cy.message('Settings save').should('exist');
+    cy.get('[data-cy="modal-close"]').click();
+    cy.get('[role="dialog"]').should('not.be.visible');
+  });
+});

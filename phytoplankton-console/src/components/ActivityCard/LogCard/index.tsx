@@ -1,47 +1,36 @@
 import React from 'react';
-import { flatten } from 'lodash';
-import LogContainer from '../LogContainer';
 import { clusteredByDate } from '../helpers';
 import { ActivityLogFilterParams } from '..';
+import LogContainer from './LogContainer';
 import s from './index.module.less';
+import { LogItemData } from './LogContainer/LogItem';
 import { useQuery } from '@/utils/queries/hooks';
-import { AuditLogListResponse } from '@/apis';
-import { useApi } from '@/api';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { P } from '@/components/ui/Typography';
 
 interface Props {
-  entityIds: string[];
+  logQueryRequest: (params: ActivityLogFilterParams) => Promise<LogItemData[]>;
   params: ActivityLogFilterParams;
-  type: 'USER' | 'CASE';
 }
 
 const LogCard = (props: Props) => {
-  const { entityIds, params, type } = props;
-  const api = useApi();
-  const { data: resource } = useQuery<AuditLogListResponse>(AUDIT_LOGS_LIST(params), async () => {
-    const { alertId, filterCaseStatus, filterAlertStatus, filterActivityBy } = params;
-    const response = await api.getAuditlog({
-      sortField: 'timestamp',
-      sortOrder: 'descend',
-      searchEntityId: alertId ? [alertId] : entityIds,
-      filterActions: ['CREATE', 'UPDATE', 'ESCALATE'],
-      filterActionTakenBy: filterActivityBy,
-      alertStatus: flatten(filterAlertStatus),
-      caseStatus: flatten(filterCaseStatus),
-      includeRootUserRecords: true,
-      pageSize: 100,
-    });
-    return response;
+  const { logQueryRequest, params } = props;
+  const queryResult = useQuery<LogItemData[]>(AUDIT_LOGS_LIST(params), async () => {
+    const logItemData = await logQueryRequest(params);
+    return logItemData;
   });
   return (
-    <AsyncResourceRenderer resource={resource}>
-      {(resourceData) => {
-        const logsMap = clusteredByDate(resourceData.data);
+    <AsyncResourceRenderer resource={queryResult.data}>
+      {(logItems) => {
+        if (logItems.length === 0) {
+          return <P>No log entries found</P>;
+        }
+        const logsMap = clusteredByDate(logItems);
         return (
           <div className={s.root}>
             {Array.from(logsMap).map(([date, logs]) => (
-              <LogContainer date={date} logs={logs} type={type} />
+              <LogContainer key={date} date={date} logs={logs} />
             ))}
           </div>
         );

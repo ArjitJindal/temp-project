@@ -1,18 +1,28 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { flatten } from 'lodash';
+import { useQueryClient } from '@tanstack/react-query';
 import AIInsightsCard from './AIInsightsCard';
-import { CommentGroup } from './CommentsCard';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
 import style from './index.module.less';
 import { CaseTransactionsCard } from './CaseTransactionsCard';
-import { Case, Comment as ApiComment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
+import {
+  Case,
+  Comment as ApiComment,
+  InternalBusinessUser,
+  InternalConsumerUser,
+  Account,
+  AuditLog,
+  Alert,
+} from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
 import { useQueries } from '@/utils/queries/hooks';
-import { ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
-import { all, AsyncResource, map } from '@/utils/asyncResource';
+import { ALERT_ITEM_COMMENTS, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
+import { all, AsyncResource, map, success } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
@@ -34,11 +44,25 @@ import { isExistedUser } from '@/utils/api/users';
 import PaymentIdentifierDetailsCard from '@/pages/case-management-item/CaseDetails/PaymentIdentifierDetailsCard';
 import ActivityCard from '@/components/ActivityCard';
 import { TabItem } from '@/components/library/Tabs';
+import StatusFilterButton from '@/components/ActivityCard/Filters/StatusFilterButton';
+import AlertIdSearchFilter from '@/components/ActivityCard/Filters/AlertIdSearchFIlter';
+import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
+import {
+  getCreateStatement,
+  isActionUpdate,
+  isActionCreate,
+  isActionEscalate,
+} from '@/components/ActivityCard/helpers';
+import { useUsers } from '@/utils/user-utils';
+import Avatar from '@/components/Avatar';
+import { CommentGroup } from '@/components/CommentsCard';
+import { message } from '@/components/library/Message';
 
 interface Props {
   caseItem: Case;
   expandedAlertId?: string;
-  onReload: () => void;
   headerStickyElRef: HTMLDivElement | null;
 }
 
@@ -106,8 +130,7 @@ function useAlertsComments(alertIds: string[]): AsyncResource<CommentGroup[]> {
       const alertId = alertIds[i];
       return map(x.data, (comments: ApiComment[]) => ({
         title: `Alert: ${alertId}`,
-        id: alertId ?? '',
-        type: 'ALERT',
+        id: `alert-${alertId ?? ''}`,
         comments,
       }));
     },
@@ -122,6 +145,7 @@ export function useTabs(
   alertIds: string[],
 ): TabItem[] {
   const { subjectType = 'USER' } = caseItem;
+  const api = useApi();
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
   const isUserSubject = subjectType === 'USER';
@@ -133,6 +157,67 @@ export function useTabs(
   const isMerchantMonitoringEnabled = useFeatureEnabled('MERCHANT_MONITORING');
   const branding = getBranding();
   const alertCommentsRes = useAlertsComments(alertIds);
+  const entityIds = getEntityIds(caseItem);
+  const [users, _] = useUsers();
+
+  const queryClient = useQueryClient();
+
+  const deleteCommentMutation = useMutation<
+    unknown,
+    unknown,
+    { commentId: string; groupId: string }
+  >(
+    async (variables) => {
+      if (caseItem.caseId == null) {
+        throw new Error(`Case is is null`);
+      }
+      const { commentId, groupId } = variables;
+      if (groupId.startsWith('alert-')) {
+        const parentId = groupId.replace('alert-', '');
+        await api.deleteAlertsComment({ alertId: parentId, commentId });
+      } else {
+        await api.deleteCasesCaseIdCommentsCommentId({ caseId: caseItem.caseId, commentId });
+      }
+    },
+    {
+      onSuccess: (data, variables) => {
+        message.success('Comment deleted!');
+        const { commentId, groupId } = variables;
+        if (groupId.startsWith('alert-')) {
+          const alertId = groupId.replace('alert-', '');
+          queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+            if (!alert) {
+              return undefined;
+            }
+            return {
+              ...alert,
+              comments: (alert?.comments ?? []).filter((comment) => comment.id !== commentId),
+            };
+          });
+          queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) => {
+            if (comments == null) {
+              return comments;
+            }
+            return comments.filter((comment) => comment.id !== commentId);
+          });
+        } else if (caseItem.caseId) {
+          queryClient.setQueryData<Case>(
+            CASES_ITEM(caseItem.caseId),
+            (caseItem: Case | undefined) => {
+              if (caseItem == null) {
+                return caseItem;
+              }
+              return {
+                ...caseItem,
+                comments: caseItem.comments?.filter((comment) => comment.id !== commentId),
+              };
+            },
+          );
+        }
+      },
+    },
+  );
+
   return [
     isPaymentSubject && {
       title: 'Payment identifier details',
@@ -251,18 +336,78 @@ export function useTabs(
         <AsyncResourceRenderer resource={alertCommentsRes}>
           {(alertCommentsGroups) => (
             <ActivityCard
-              caseItem={caseItem}
-              user={user as InternalBusinessUser | InternalConsumerUser}
-              comments={[
-                ...alertCommentsGroups,
-                {
-                  title: 'Other comments',
-                  type: 'CASE',
-                  id: caseItem.caseId ?? '-',
-                  comments: caseItem.comments ?? [],
+              logs={{
+                request: async (params) => {
+                  const { alertId, filterCaseStatus, filterAlertStatus, filterActivityBy } = params;
+                  const response = await api.getAuditlog({
+                    sortField: 'timestamp',
+                    sortOrder: 'descend',
+                    searchEntityId: alertId ? [alertId] : entityIds,
+                    filterActions: ['CREATE', 'UPDATE', 'ESCALATE'],
+                    filterActionTakenBy: filterActivityBy,
+                    alertStatus: flatten(filterAlertStatus),
+                    caseStatus: flatten(filterCaseStatus),
+                    includeRootUserRecords: true,
+                    pageSize: 100,
+                  });
+                  return getLogData(response.data, users, 'CASE');
                 },
-              ]}
-              type="CASE"
+                filters: ([params, setParams]) => (
+                  <>
+                    <StatusFilterButton
+                      initialState={params?.filterCaseStatus ?? []}
+                      onConfirm={(value) => {
+                        setParams((prevState) => ({
+                          ...prevState,
+                          filterCaseStatus: value,
+                        }));
+                      }}
+                      title={'Case status'}
+                    />
+                    <AlertIdSearchFilter
+                      initialState={params?.alertId}
+                      onConfirm={(value) => {
+                        setParams((prevState) => ({
+                          ...prevState,
+                          alertId: value,
+                        }));
+                      }}
+                    />
+                    <StatusFilterButton
+                      initialState={params?.filterAlertStatus ?? []}
+                      onConfirm={(value) => {
+                        setParams((prevState) => ({
+                          ...prevState,
+                          filterAlertStatus: value,
+                        }));
+                      }}
+                      title={'Alert status'}
+                    />
+                    <ActivityByFilterButton
+                      initialState={params?.filterActivityBy ?? []}
+                      onConfirm={(value) => {
+                        setParams((prevState) => ({
+                          ...prevState,
+                          filterActivityBy: value,
+                        }));
+                      }}
+                    />
+                  </>
+                ),
+              }}
+              comments={{
+                deleteCommentMutation: deleteCommentMutation,
+                dataRes: success(
+                  [
+                    ...alertCommentsGroups,
+                    {
+                      title: 'Case comments',
+                      id: caseItem.caseId ?? '-',
+                      comments: caseItem.comments ?? [],
+                    },
+                  ] ?? [],
+                ),
+              }}
             />
           )}
         </AsyncResourceRenderer>
@@ -272,4 +417,70 @@ export function useTabs(
     },
   ].filter(notEmpty);
 }
+
+export function getEntityIds(caseItem?: Case): string[] {
+  const ids = new Set<string | undefined>();
+  if (caseItem) {
+    ids.add(caseItem?.caseId);
+    caseItem?.alerts?.forEach((alert) => {
+      ids.add(alert.alertId);
+    });
+  }
+  return [...ids].filter(notEmpty);
+}
+
+const getLogData = (
+  logs: AuditLog[],
+  users: { [userId: string]: Account },
+  type: 'USER' | 'CASE',
+): LogItemData[] => {
+  const logItemData: LogItemData[] = logs
+    .map((log) => {
+      let currentUser: Account | null = null;
+      if (log?.user?.id && users[log?.user?.id]) {
+        currentUser = users[log?.user?.id];
+      }
+      const getIcon = (type: string) => {
+        return type === 'CASE' ? (
+          <CaseIcon width={20} height={20} />
+        ) : (
+          <Avatar size="small" user={currentUser} />
+        );
+      };
+
+      const createStatement = getCreateStatement(log, users, type);
+      if (isActionUpdate(log)) {
+        return createStatement
+          ? {
+              timestamp: log.timestamp,
+              user: log.user,
+              icon: getIcon('USER'),
+              statement: createStatement,
+            }
+          : null;
+      } else if (isActionCreate(log)) {
+        return createStatement
+          ? {
+              timestamp: log.timestamp,
+              user: log.user,
+              icon: getIcon(type),
+              statement: createStatement,
+            }
+          : null;
+      } else if (isActionEscalate(log)) {
+        return createStatement
+          ? {
+              timestamp: log.timestamp,
+              user: log.user,
+              icon: getIcon('CASE'),
+              statement: createStatement,
+            }
+          : null;
+      }
+      return null;
+    })
+    .filter((log) => log !== null) as LogItemData[];
+  return logItemData;
+};
+
 export default CaseDetails;

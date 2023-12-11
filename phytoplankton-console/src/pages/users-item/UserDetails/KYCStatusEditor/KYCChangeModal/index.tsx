@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef } from '@/components/library/Form';
@@ -25,6 +25,8 @@ import { humanizeConstant } from '@/utils/humanize';
 import TextArea from '@/components/library/TextArea';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
 import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
+import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+
 interface Props {
   isVisible: boolean;
   onClose: () => void;
@@ -91,6 +93,8 @@ export default function KYCChangeModal(props: Props) {
   const api = useApi();
 
   let messageLoading: CloseMessage | undefined;
+
+  const queryClient = useQueryClient();
   const mutation = useMutation(
     async (values: FormValues) => {
       const { files, comment, otherReason, reason, kycStatus } = values;
@@ -126,13 +130,14 @@ export default function KYCChangeModal(props: Props) {
       return { kycStatus, updatedComment };
     },
     {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         message.success(`KYC status updated`);
         ref.current?.setValues(DEFAULT_INITIAL_VALUES);
         onOkay(data.kycStatus, data.updatedComment);
         removeFiles();
         onClose();
         messageLoading?.();
+        await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
       },
       onError: (error) => {
         message.error(`Error Changing KYC Status: ${(error as Error).message}`);

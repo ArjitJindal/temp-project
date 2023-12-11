@@ -1,11 +1,21 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { message } from '@/components/library/Message';
 import { Case } from '@/apis';
 import { useApi } from '@/api';
 import { CASES_ITEM_ALERT_LIST, CASES_LIST } from '@/utils/queries/keys';
 import { getErrorMessage } from '@/utils/lang';
+import { Mutation } from '@/utils/queries/types';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 
-const useCreateNewCaseMutation = ({ onResetSelection }: { onResetSelection: () => void }) => {
+function useCreateNewCaseMutation({ onResetSelection }: { onResetSelection: () => void }): Mutation<
+  unknown,
+  unknown,
+  {
+    sourceCaseId: string;
+    alertIds: string[];
+  },
+  unknown
+> {
   const api = useApi();
   const queryClient = useQueryClient();
 
@@ -47,6 +57,6 @@ const useCreateNewCaseMutation = ({ onResetSelection }: { onResetSelection: () =
     },
   );
   return createNewCaseMutation;
-};
+}
 
 export { useCreateNewCaseMutation };

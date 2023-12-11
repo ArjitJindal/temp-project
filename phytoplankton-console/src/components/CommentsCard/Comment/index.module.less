@@ -1,8 +1,16 @@
-@import '../../../components/ui/colors.less';
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
 
 .root {
   display: flex;
   gap: 12px;
+  transition-property: opacity;
+  transition-duration: @default-animation-speed;
+
+  &.isDeleting {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
 
 .right {

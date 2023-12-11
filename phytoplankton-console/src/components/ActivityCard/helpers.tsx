@@ -1,54 +1,12 @@
 import { ReactElement } from 'react';
 import { capitalize, has } from 'lodash';
-import { LogItemData } from './LogItem';
+import { LogItemData } from './LogCard/LogContainer/LogItem';
 import { Account, AuditLog, Case, CaseStatus } from '@/apis';
-import { DEFAULT_DATE_FORMAT, TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
+import { DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
 import { firstLetterUpper, humanizeAuto } from '@/utils/humanize';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { statusEscalated } from '@/utils/case-utils';
 import { formatDuration, getDuration } from '@/utils/time-utils';
-export const useGetLogData = (
-  logs: AuditLog[],
-  users: { [userId: string]: Account },
-  type: 'USER' | 'CASE',
-): LogItemData[] => {
-  const logItemData: LogItemData[] = logs
-    .map((log) => {
-      const time = dayjs(log.timestamp).format(TIME_FORMAT_WITHOUT_SECONDS);
-      const createStatement = getCreateStatement(log, users, type);
-      if (isActionUpdate(log)) {
-        return createStatement
-          ? {
-              time: time,
-              user: log.user,
-              icon: 'USER',
-              statement: createStatement,
-            }
-          : null;
-      } else if (isActionCreate(log)) {
-        return createStatement
-          ? {
-              time: time,
-              user: log.user,
-              icon: type,
-              statement: createStatement,
-            }
-          : null;
-      } else if (isActionEscalate(log)) {
-        return createStatement
-          ? {
-              time: time,
-              user: log.user,
-              icon: 'CASE',
-              statement: createStatement,
-            }
-          : null;
-      }
-      return null;
-    })
-    .filter((log) => log !== null) as LogItemData[];
-  return logItemData;
-};
 
 export const isActionUpdate = (log: AuditLog): boolean => {
   return log.action === 'UPDATE';
@@ -240,7 +198,7 @@ export const getAssignee = (newImage: any, users: { [userId: string]: Account })
   return userIds?.map((userId: string) => users[userId]);
 };
 
-export const clusteredByDate = (logs: AuditLog[]) => {
+export const clusteredByDate = (logs: LogItemData[]) => {
   const map = new Map();
   for (const log of logs) {
     const curentTimestamp = log.timestamp;

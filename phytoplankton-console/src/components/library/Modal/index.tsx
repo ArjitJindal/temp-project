@@ -80,7 +80,7 @@ export default function Modal(props: Props) {
                   {title}
                 </Typography.Title>
               </div>
-              <button className={s.close} onClick={onCancel}>
+              <button className={s.close} onClick={onCancel} data-cy="modal-close">
                 <CloseCircleLineIcon />
               </button>
             </div>

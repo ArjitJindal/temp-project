@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CaseStatusWithDropDown } from '../../CaseStatusWithDropDown';
 import SubHeader from './SubHeader';
 import StatusChangeMenu from './StatusChangeMenu';
@@ -9,9 +9,10 @@ import CasesStatusChangeButton from '@/pages/case-management/components/CasesSta
 import CommentButton from '@/components/CommentButton';
 import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
 import { useHasPermissions } from '@/utils/user-utils';
-import { CloseMessage, message } from '@/components/library/Message';
+import { message } from '@/components/library/Message';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag';
+import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
 interface Props {
   caseItem: Case;
@@ -27,37 +28,42 @@ export default function Header(props: Props) {
   const isReopenEnabled = useHasPermissions(['case-management:case-reopen:write']);
 
   const api = useApi();
+  const queryClient = useQueryClient();
 
   const previousStatus = useMemo(() => {
     return findLastStatusForInReview(caseItem.statusChanges ?? []);
   }, [caseItem]);
 
   const isReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem]);
-  let messageText: CloseMessage | undefined;
   const statusChangeMutation = useMutation(
     async (newStatus: CaseStatus) => {
       if (caseId == null) {
         throw new Error(`Case ID is not defined`);
       }
-      messageText = message.loading('Changing case status...');
-      await api.patchCasesStatusChange({
-        CasesStatusUpdateRequest: {
-          caseIds: [caseId],
-          updates: {
-            reason: [],
-            caseStatus: newStatus,
+      const hideMessage = message.loading('Changing case status...');
+      try {
+        await api.patchCasesStatusChange({
+          CasesStatusUpdateRequest: {
+            caseIds: [caseId],
+            updates: {
+              reason: [],
+              caseStatus: newStatus,
+            },
           },
-        },
-      });
+        });
+      } finally {
+        hideMessage();
+      }
     },
     {
-      onSuccess: () => {
+      onSuccess: async () => {
+        if (caseId != null) {
+          await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
+        }
         onReload();
-        messageText?.();
       },
       onError: () => {
         message.error('Failed to change case status');
-        messageText?.();
       },
     },
   );

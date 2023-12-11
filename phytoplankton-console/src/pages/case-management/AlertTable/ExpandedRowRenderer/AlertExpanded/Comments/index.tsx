@@ -1,11 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
 import { Alert, Comment as ApiComment } from '@/apis';
 import Comment from '@/components/CommentsCard/Comment';
 import { useAuth0User } from '@/utils/user-utils';
-import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
+import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
 import CommentEditor, {
   CommentEditorRef,
   FormValues as CommentEditorFormValues,
@@ -14,8 +14,9 @@ import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { AsyncResource } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { ALERT_ITEM } from '@/utils/queries/keys';
+import { ALERT_ITEM, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 
 interface Props {
   alertId: string | null;
@@ -50,7 +51,7 @@ export default function Comments(props: Props) {
       onSuccess: async (newComment, { alertId }) => {
         message.success('Comment successfully added!');
         commentEditorRef.current?.reset();
-        await queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+        queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
           if (!alert) {
             return undefined;
           }
@@ -59,6 +60,9 @@ export default function Comments(props: Props) {
             comments: [...(alert?.comments ?? []), newComment],
           };
         });
+        queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) => {
+          return [...(comments ?? []), newComment];
+        });
       },
       onError: async (error) => {
         message.fatal(`Unable to add comment! ${getErrorMessage(error)}`, error);
@@ -66,28 +70,21 @@ export default function Comments(props: Props) {
     },
   );
 
-  const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
-
   const commentDeleteMutation = useMutation<
     unknown,
     unknown,
     { alertId: string; commentId: string }
   >(
     async ({ alertId, commentId }): Promise<void> => {
-      setDeletingCommentIds((prevState) => [...prevState, commentId]);
-      try {
-        await api.deleteAlertsComment({
-          alertId,
-          commentId,
-        });
-      } finally {
-        setDeletingCommentIds((prevState) => prevState.filter((id) => id !== commentId));
-      }
+      await api.deleteAlertsComment({
+        alertId,
+        commentId,
+      });
     },
     {
       onSuccess: async (_, { alertId, commentId }) => {
         message.success('Comment deleted!');
-        await queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+        queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
           if (!alert) {
             return undefined;
           }
@@ -95,6 +92,12 @@ export default function Comments(props: Props) {
             ...alert,
             comments: (alert?.comments ?? []).filter((comment) => comment.id !== commentId),
           };
+        });
+        queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) => {
+          if (comments == null) {
+            return comments;
+          }
+          return comments.filter((comment) => comment.id !== commentId);
         });
       },
       onError: (error) => {
@@ -115,15 +118,17 @@ export default function Comments(props: Props) {
                     key={comment.id}
                     comment={comment}
                     currentUserId={currentUserId}
-                    deletingCommentIds={deletingCommentIds}
-                    onDelete={() => {
-                      if (comment.id != null && alertId != null) {
-                        commentDeleteMutation.mutate({
-                          alertId,
-                          commentId: comment.id,
-                        });
-                      }
-                    }}
+                    deleteCommentMutation={adaptMutationVariables(
+                      commentDeleteMutation,
+                      (variables: {
+                        commentId: string;
+                      }): { alertId: string; commentId: string } => {
+                        if (alertId == null) {
+                          throw new Error(`Unable to delete comment, alertId is empty`);
+                        }
+                        return { ...variables, alertId };
+                      },
+                    )}
                   />
                 ))}
               </div>
@@ -135,7 +140,7 @@ export default function Comments(props: Props) {
             <CommentEditor
               ref={commentEditorRef}
               values={commentFormValues}
-              submitRes={getMutationAsyncResource(commentSubmitMutation)}
+              submitRes={commentSubmitMutation.dataResource}
               placeholder={'Add your narrative as a comment here'}
               onChangeValues={setCommentFormValues}
               onSubmit={(values) => {

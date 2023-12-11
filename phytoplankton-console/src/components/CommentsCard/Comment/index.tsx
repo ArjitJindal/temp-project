@@ -1,5 +1,6 @@
 import * as Ant from 'antd';
-import React from 'react';
+import React, { useState } from 'react';
+import cn from 'clsx';
 import styles from './index.module.less';
 import { Comment as ApiComment } from '@/apis';
 import { useUser } from '@/utils/user-utils';
@@ -7,19 +8,34 @@ import FilesList from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import Avatar from '@/components/Avatar';
 import { getAccountUserName } from '@/utils/account';
+import { Mutation } from '@/utils/queries/types';
 
 interface Props {
-  deletingCommentIds: string[];
   currentUserId: string | undefined;
   comment: ApiComment;
-  onDelete: () => void;
+  deleteCommentMutation: Mutation<unknown, unknown, { commentId: string }>;
 }
 
 export default function Comment(props: Props) {
-  const { comment, currentUserId, deletingCommentIds, onDelete } = props;
+  const { comment, currentUserId, deleteCommentMutation } = props;
   const user = useUser(comment.userId);
+
+  const [isDeleting, setDeleting] = useState(false);
+
+  const handleClickDelete = async () => {
+    if (comment.id == null) {
+      throw new Error(`Unable to delete comment, id is empty`);
+    }
+    setDeleting(true);
+    try {
+      await deleteCommentMutation.mutateAsync({ commentId: comment.id });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
-    <div className={styles.root} data-cy="comment">
+    <div className={cn(styles.root, isDeleting && styles.isDeleting)} data-cy="comment">
       <div className={styles.left}>
         <Avatar user={user} size={'large'} />
       </div>
@@ -46,21 +62,15 @@ export default function Comment(props: Props) {
             Added by: {user ? getAccountUserName(user) : 'Unknown'}
           </div>
           {currentUserId === comment.userId && (
-            <>
-              {comment.id && deletingCommentIds.includes(comment.id) ? (
-                <span>Deleting...</span>
-              ) : (
-                <Ant.Tooltip key="delete" title="Delete" className={styles.footerText}>
-                  <span
-                    onClick={() => deletingCommentIds.length === 0 && onDelete()}
-                    style={{ cursor: 'pointer' }}
-                    data-cy="comment-delete-button"
-                  >
-                    Delete
-                  </span>
-                </Ant.Tooltip>
-              )}
-            </>
+            <Ant.Tooltip key="delete" title="Delete" className={styles.footerText}>
+              <span
+                onClick={handleClickDelete}
+                style={{ cursor: 'pointer' }}
+                data-cy="comment-delete-button"
+              >
+                Delete
+              </span>
+            </Ant.Tooltip>
           )}
         </div>
       </div>

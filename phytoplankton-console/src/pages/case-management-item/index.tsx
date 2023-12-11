@@ -9,7 +9,7 @@ import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { ALERT_LIST, CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_LIST, CASES_ITEM, AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { isSuccess } from '@/utils/asyncResource';
@@ -48,7 +48,8 @@ function CaseManagementItemPage() {
     return queryResults.data;
   }, [previousQueryResults, queryResults.data]);
 
-  const handleCommentAdded = (newComment: Comment) => {
+  const handleCommentAdded = async (newComment: Comment) => {
+    await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
     updateCaseQueryData(caseId, (caseItem) => {
       if (caseItem == null) {
         return caseItem;
@@ -84,7 +85,6 @@ function CaseManagementItemPage() {
         >
           <CaseDetails
             caseItem={caseItem}
-            onReload={onReload}
             headerStickyElRef={headerStickyElRef}
             expandedAlertId={expandedAlertId ? expandedAlertId : ''}
           />

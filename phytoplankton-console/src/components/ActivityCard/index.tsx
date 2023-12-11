@@ -1,31 +1,27 @@
 import { useState } from 'react';
-import CommentsCard from '../CommentsCard';
-import DownloadFilesButton from '../library/DownloadFilesButton';
-import LogCard from './LogCard';
-import ScopeSelector from './ScopeSelector';
+import CommentsCard, { CommentGroup } from '../CommentsCard';
+import ScopeSelector, { ScopeSelectorValue } from './ScopeSelector';
 import s from './index.module.less';
-import ActivityByFilterButton from './Filters/ActivityByFilterButton';
-import StatusFilterButton from './Filters/StatusFilterButton';
-import AlertIdSearchFilter from './Filters/AlertIdSearchFIlter';
+import LogCard from './LogCard';
 import * as Card from '@/components/ui/Card';
-import {
-  AlertStatus,
-  Case,
-  CaseStatus,
-  Comment,
-  InternalBusinessUser,
-  InternalConsumerUser,
-} from '@/apis';
-import CommentsCardForCase, {
-  CommentGroup,
-} from '@/pages/case-management-item/CaseDetails/CommentsCard';
+import { AlertStatus, Case, CaseStatus, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { Mutation } from '@/utils/queries/types';
+import { StatePair } from '@/utils/state';
+import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
+import { map, getOr, AsyncResource } from '@/utils/asyncResource';
+import DownloadFilesButton from '@/components/library/DownloadFilesButton';
+
+export type Tab = ScopeSelectorValue;
 
 interface Props {
-  user: InternalConsumerUser | InternalBusinessUser;
-  handleUserUpdate?: (userItem: InternalConsumerUser | InternalBusinessUser) => void;
-  type: 'USER' | 'CASE';
-  caseItem?: Case;
-  comments: Array<Comment> | CommentGroup[];
+  logs: {
+    request: (params: ActivityLogFilterParams) => Promise<LogItemData[]>;
+    filters?: (params: StatePair<ActivityLogFilterParams>) => React.ReactNode;
+  };
+  comments: {
+    dataRes: AsyncResource<CommentGroup[]>;
+    deleteCommentMutation: Mutation<unknown, unknown, { commentId: string; groupId: string }>;
+  };
 }
 
 export interface ActivityLogFilterParams {
@@ -47,17 +43,13 @@ const DEFAULT_ACTIVITY_LOG_PARAMS: ActivityLogFilterParams = {
 };
 
 export default function ActivityCard(props: Props) {
-  const { user, handleUserUpdate, type, caseItem, comments } = props;
-  const [selectedSection, setSelectedSection] = useState('COMMENTS');
-  const entityIds = type === 'CASE' ? getEntityIds(caseItem) : [user.userId];
-  const totalCommentsLength =
-    type === 'CASE'
-      ? (comments as CommentGroup[]).reduce((acc, group) => acc + group.comments.length, 0)
-      : 0;
-  DEFAULT_ACTIVITY_LOG_PARAMS.case = type === 'CASE' && caseItem ? caseItem : undefined;
-  DEFAULT_ACTIVITY_LOG_PARAMS.user = user;
+  const { comments, logs } = props;
+  const [selectedSection, setSelectedSection] = useState<Tab>('COMMENTS');
   const [params, setParams] = useState<ActivityLogFilterParams>(DEFAULT_ACTIVITY_LOG_PARAMS);
 
+  const totalCommentsLengthRes = map(comments.dataRes, (comments) =>
+    comments.reduce((acc, group) => acc + group.comments.length, 0),
+  );
   return (
     <Card.Root>
       <Card.Section>
@@ -66,109 +58,30 @@ export default function ActivityCard(props: Props) {
             selectedSection={selectedSection}
             setSelectedSection={setSelectedSection}
             count={{
-              comments: type === 'USER' ? (comments ?? []).length : totalCommentsLength,
+              comments: getOr(totalCommentsLengthRes, 0),
             }}
           />
           <div className={s.subHeader}>
             {selectedSection === 'LOG' ? (
-              <>
-                {type === 'CASE' && (
-                  <StatusFilterButton
-                    initialState={params?.filterCaseStatus ?? []}
-                    onConfirm={(value) => {
-                      setParams((prevState) => ({
-                        ...prevState,
-                        filterCaseStatus: value,
-                      }));
-                    }}
-                    title={'Case status'}
-                  />
-                )}
-                {type === 'CASE' && (
-                  <AlertIdSearchFilter
-                    initialState={params?.alertId}
-                    onConfirm={(value) => {
-                      setParams((prevState) => ({
-                        ...prevState,
-                        alertId: value,
-                      }));
-                    }}
-                  />
-                )}
-                {type === 'CASE' && (
-                  <StatusFilterButton
-                    initialState={params?.filterAlertStatus ?? []}
-                    onConfirm={(value) => {
-                      setParams((prevState) => ({
-                        ...prevState,
-                        filterAlertStatus: value,
-                      }));
-                    }}
-                    title={'Alert status'}
-                  />
-                )}
-                <ActivityByFilterButton
-                  initialState={params?.filterActivityBy ?? []}
-                  onConfirm={(value) => {
-                    setParams((prevState) => ({
-                      ...prevState,
-                      filterActivityBy: value,
-                    }));
-                  }}
-                />
-              </>
+              props.logs.filters?.([params, setParams])
             ) : (
-              <DownloadFilesButton
-                files={
-                  type === 'CASE'
-                    ? getAllAttachmentsForCase(comments as CommentGroup[])
-                    : getAllAttachmentsForUser(comments as Comment[])
-                }
-                downloadFilename={type === 'CASE' ? caseItem?.caseId : user?.userId}
-              />
+              <DownloadFilesButton files={getAllAttachments(getOr(comments.dataRes, []))} />
             )}
           </div>
         </div>
-        {selectedSection === 'COMMENTS' &&
-          (type === 'USER' && handleUserUpdate ? (
-            <CommentsCard
-              id={user.userId}
-              comments={(comments ?? []) as Comment[]}
-              onCommentsUpdate={(newComments) => {
-                handleUserUpdate({ ...user, comments: newComments });
-              }}
-              commentType={type}
-            />
-          ) : (
-            <CommentsCardForCase
-              id={caseItem?.caseId}
-              comments={(comments ?? []) as CommentGroup[]}
-            />
-          ))}
-        {selectedSection === 'LOG' && (
-          <LogCard entityIds={entityIds as string[]} params={params} type={type} />
+        {selectedSection === 'COMMENTS' && (
+          <CommentsCard
+            commentsQuery={comments.dataRes}
+            deleteCommentMutation={comments.deleteCommentMutation}
+          />
         )}
+        {selectedSection === 'LOG' && <LogCard logQueryRequest={logs.request} params={params} />}
       </Card.Section>
     </Card.Root>
   );
 }
 
-export const getEntityIds = (caseItem?: Case) => {
-  const ids = new Set();
-  if (caseItem) {
-    ids.add(caseItem?.caseId);
-    caseItem?.alerts?.forEach((alert) => {
-      ids.add(alert.alertId);
-    });
-  }
-  return [...ids];
-};
-
-const getAllAttachmentsForCase = (commentsGroup: CommentGroup[]) => {
+const getAllAttachments = (commentsGroup: CommentGroup[]) => {
   const allComments = commentsGroup.flatMap((commentGroup) => commentGroup.comments);
   return allComments.filter((comment) => comment.files != null).flatMap((comment) => comment.files);
-};
-
-const getAllAttachmentsForUser = (comments: Comment[]) => {
-  return comments.filter((comment) => comment.files != null).flatMap((comment) => comment.files);
 };

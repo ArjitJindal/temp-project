@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import UserDetails from './UserDetails';
 import Header from './Header';
 import s from './index.module.less';
@@ -15,7 +15,7 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useQuery } from '@/utils/queries/hooks';
 import { UI_SETTINGS } from '@/pages/users-item/ui-settings';
-import { USERS_ITEM_BY_TYPE } from '@/utils/queries/keys';
+import { USERS_ITEM } from '@/utils/queries/keys';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsCard';
@@ -26,7 +26,7 @@ import { useElementSize } from '@/utils/browser';
 import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
-import ActivityCard from '@/components/ActivityCard';
+import UserActivityCard from '@/pages/users-item/UserDetails/UserActivityCard';
 
 export default function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
@@ -38,27 +38,18 @@ export default function UserItem() {
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
   const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
-    USERS_ITEM_BY_TYPE(list as string, id as string),
+    USERS_ITEM(id as string),
     () => {
       if (id == null) {
         throw new Error(`Id is not defined`);
       }
-      return list === 'consumer'
-        ? api.getConsumerUsersItem({ userId: id })
-        : api.getBusinessUsersItem({ userId: id });
+      return api.getUsersItem({ userId: id });
     },
   );
 
-  const handleUserUpdate = (userItem: InternalConsumerUser | InternalBusinessUser) => {
-    queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-      USERS_ITEM_BY_TYPE(list as string, id as string),
-      userItem,
-    );
-  };
-
   const handleNewComment = (newComment: Comment) => {
     queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-      USERS_ITEM_BY_TYPE(list as string, id as string),
+      USERS_ITEM(id as string),
       (user) => {
         if (user == null) {
           return user;
@@ -193,14 +184,7 @@ export default function UserItem() {
               {
                 title: 'Activity',
                 key: 'activity',
-                children: (
-                  <ActivityCard
-                    user={user}
-                    type={'USER'}
-                    handleUserUpdate={handleUserUpdate}
-                    comments={user.comments as Comment[]}
-                  />
-                ),
+                children: <UserActivityCard user={user} />,
                 isClosable: false,
                 isDisabled: false,
               },

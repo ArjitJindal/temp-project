@@ -18,6 +18,7 @@ declare global {
         tabText: string,
       ): Chainable<Promise<Element>>;
       navigateToPage(url: string, pageTitle: string): Chainable<Promise<Element>>;
+      toggleFeature(feature: string, enabled: boolean): Chainable<Promise<Element>>;
       /**
        * Looks for a popup message by a text
        * @param text
