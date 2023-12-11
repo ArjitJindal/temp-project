@@ -11,13 +11,19 @@ async function migrateTenant(tenant: Tenant) {
   })
   const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
   for (const ruleInstance of ruleInstances) {
-    await ruleInstanceRepository.createOrUpdateRuleInstance({
-      alertConfig: {
-        alertCreationInterval:
-          ruleInstance['alertCreationInterval'] ??
-          ruleInstance.alertConfig?.alertCreationInterval,
-      },
-    } as RuleInstance)
+    if (!ruleInstance.ruleId) {
+      // For fixing the incorrectly created rule instances by #2717
+      await ruleInstanceRepository.deleteRuleInstance(ruleInstance.id!)
+    } else {
+      await ruleInstanceRepository.createOrUpdateRuleInstance({
+        ...ruleInstance,
+        alertConfig: {
+          alertCreationInterval:
+            ruleInstance['alertCreationInterval'] ??
+            ruleInstance.alertConfig?.alertCreationInterval,
+        },
+      } as RuleInstance)
+    }
   }
 }
 
