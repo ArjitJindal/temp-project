@@ -7,6 +7,7 @@ import {
 import { groupBy } from 'lodash'
 
 import unidecode from 'unidecode'
+import { logger } from '../logger'
 import dayjs from '@/utils/dayjs'
 
 export type Metric = {
@@ -129,11 +130,18 @@ export const publishMetrics = async (metrics: Array<MetricsData>) => {
   const metricsByNamespace = groupBy(metricData, 'Namespace')
 
   for (const [namespace, metrics] of Object.entries(metricsByNamespace)) {
-    await cloudWatchClient.send(
-      new PutMetricDataCommand({
-        MetricData: metrics,
-        Namespace: namespace,
+    try {
+      await cloudWatchClient.send(
+        new PutMetricDataCommand({
+          MetricData: metrics,
+          Namespace: namespace,
+        })
+      )
+    } catch (e) {
+      logger.error(`Error publishing metrics: ${(e as Error)?.message}`, {
+        namespace,
+        metrics: JSON.stringify(metrics),
       })
-    )
+    }
   }
 }
