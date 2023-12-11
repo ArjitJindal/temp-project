@@ -15,4 +15,4 @@ jobs:
         with:
           GH_PAT: ${{ secrets.FLAGRIGHT_API_SYNC_PAT }}
           ORIGINAL_MESSAGE: true
-          COMMIT_BODY: minor
+          COMMIT_BODY: patch
