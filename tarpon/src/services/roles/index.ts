@@ -77,7 +77,7 @@ export class RoleService {
 
     await this.updateRolePermissions(id, inputRole.permissions || [])
 
-    const users = await this.getUsersByRole(inputRole.name ?? '')
+    const users = await this.getUsersByRole(inputRole.id ?? '')
     await Promise.all(
       users.map((u) => {
         return managementClient.updateUser(
@@ -93,11 +93,9 @@ export class RoleService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
-
     const role = await managementClient.getRole({ id })
 
-    const users = await this.getUsersByRole(role.name ?? '')
-
+    const users = await this.getUsersByRole(role.id ?? '')
     if (isInNamespace('default', role.name) || role.name == 'root') {
       throw new BadRequest(`Can't delete managed role`)
     }
