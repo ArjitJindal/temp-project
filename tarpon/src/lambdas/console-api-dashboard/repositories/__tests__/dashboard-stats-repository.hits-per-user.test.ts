@@ -13,6 +13,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 dynamoDbSetupHook()
 
@@ -54,7 +55,6 @@ describe('Verify hits-per-user statistics', () => {
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
       createdTimestamp: timestamp,
-      caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
       caseUsers: {
         origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
@@ -64,6 +64,7 @@ describe('Verify hits-per-user statistics', () => {
         }),
       },
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await statsRepository.recalculateHitsByUser('ORIGIN', {
       startTimestamp: timestamp,
@@ -140,7 +141,6 @@ describe('Verify hits-per-user statistics', () => {
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
       createdTimestamp: timestamp,
-      caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
       caseUsers: {
         origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
@@ -150,6 +150,7 @@ describe('Verify hits-per-user statistics', () => {
         }),
       },
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     const userRepository = await getUserRepo(TENANT_ID)
     await userRepository.saveUserMongo(
@@ -239,7 +240,6 @@ describe('Verify hits-per-user statistics', () => {
       await caseRepository.addCaseMongo({
         caseId: `C-${i}`,
         createdTimestamp: timestamp,
-        caseTransactions: [transaction],
         caseTransactionsIds: [transaction.transactionId],
         caseUsers: {
           origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
@@ -249,6 +249,7 @@ describe('Verify hits-per-user statistics', () => {
           }),
         },
         caseType: 'SYSTEM',
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       })
 
       await transactionRepository.addTransactionToMongo(transaction)
@@ -341,7 +342,6 @@ describe('Verify hits-per-user statistics', () => {
       await caseRepository.addCaseMongo({
         caseId: `C-${i}`,
         createdTimestamp: timestamp,
-        caseTransactions: [transaction],
         caseTransactionsIds: [transaction.transactionId],
         caseUsers: {
           origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
@@ -351,6 +351,7 @@ describe('Verify hits-per-user statistics', () => {
           }),
         },
         caseType: 'SYSTEM',
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       })
       await transactionRepository.addTransactionToMongo(transaction)
       const userRepository = await getUserRepo(TENANT_ID)
@@ -434,8 +435,8 @@ describe('Verify hits-per-user statistics', () => {
     await caseRepository.addCaseMongo({
       caseType: 'SYSTEM',
       caseId: 'C-1',
-      caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await statsRepository.recalculateHitsByUser('ORIGIN', {
@@ -508,7 +509,6 @@ describe('Verify hits-per-user statistics', () => {
       caseType: 'SYSTEM',
       caseId: 'C-1',
       createdTimestamp,
-      caseTransactions: transactions,
       caseTransactionsIds: transactions.map((t) => t.transactionId),
       caseUsers: {
         origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
@@ -517,6 +517,7 @@ describe('Verify hits-per-user statistics', () => {
           type: 'BUSINESS',
         }),
       },
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     const userRepository = await getUserRepo(TENANT_ID)
     await userRepository.saveUserMongo(
@@ -647,7 +648,6 @@ describe('Verify hits-per-user statistics', () => {
       caseType: 'SYSTEM',
       caseId: 'C-1',
       createdTimestamp,
-      caseTransactions: transactions,
       caseTransactionsIds: transactions.map((t) => t.transactionId),
       caseUsers: {
         origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
@@ -656,6 +656,7 @@ describe('Verify hits-per-user statistics', () => {
           type: 'BUSINESS',
         }),
       },
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     const userRepository = await getUserRepo(TENANT_ID)
     await userRepository.saveUserMongo(

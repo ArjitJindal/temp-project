@@ -26,6 +26,7 @@ import { CaseRepository } from '../rules-engine/repositories/case-repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { SanctionsService } from '../sanctions'
 import { ChecklistTemplatesService } from '../tenants/checklist-template-service'
+import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -216,6 +217,10 @@ export class AlertsService extends CaseAlertsCommonService {
       { auth0Domain: process.env.AUTH0_DOMAIN as string },
       { mongoDb: this.mongoDb }
     )
+    const transactionsRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb
+    )
     const accounts = await accountsService.getAllActiveAccounts()
     const currentUserId = getContext()?.user?.id
     const currentUserAccount = accounts.find((a) => a.id === currentUserId)
@@ -397,13 +402,14 @@ export class AlertsService extends CaseAlertsCommonService {
     const childCaseId = `${c.caseId}.${childNumber}`
 
     // filter out transactions that were escalated from the case
-    const filteredTransactionsForNewCase = c.caseTransactions?.filter(
-      (transaction) =>
-        transaction.hitRules.some((ruleInstance) =>
-          escalatedAlertsDetails
-            ?.map((eA) => eA.ruleInstanceId)
-            .includes(ruleInstance.ruleInstanceId)
-        )
+    const filteredTransactionsForNewCase = (
+      await transactionsRepo.getTransactionsByIds(c.caseTransactionsIds || [])
+    )?.filter((transaction) =>
+      transaction.hitRules.some((ruleInstance) =>
+        escalatedAlertsDetails
+          ?.map((eA) => eA.ruleInstanceId)
+          .includes(ruleInstance.ruleInstanceId)
+      )
     )
 
     const filteredTransactionIdsForNewCase =
@@ -412,13 +418,14 @@ export class AlertsService extends CaseAlertsCommonService {
       )
 
     // filter out transactions that will be in existing case
-    const filteredTransactionsForExistingCase = c.caseTransactions?.filter(
-      (transaction) =>
-        transaction.hitRules.some((ruleInstance) =>
-          remainingAlerts
-            ?.map((rA) => rA.ruleInstanceId)
-            .includes(ruleInstance.ruleInstanceId)
-        )
+    const filteredTransactionsForExistingCase = (
+      await transactionsRepo.getTransactionsByIds(c.caseTransactionsIds || [])
+    ).filter((transaction) =>
+      transaction.hitRules.some((ruleInstance) =>
+        remainingAlerts
+          ?.map((rA) => rA.ruleInstanceId)
+          .includes(ruleInstance.ruleInstanceId)
+      )
     )
 
     const filteredTransactionIdsForExistingCase =
@@ -467,7 +474,6 @@ export class AlertsService extends CaseAlertsCommonService {
       createdTimestamp: currentTimestamp,
       caseStatus: 'ESCALATED',
       reviewAssignments,
-      caseTransactions: filteredTransactionsForNewCase,
       caseTransactionsIds: filteredTransactionIdsForNewCase,
       caseHierarchyDetails: { parentCaseId: caseId },
       lastStatusChange: undefined,
@@ -482,7 +488,6 @@ export class AlertsService extends CaseAlertsCommonService {
     const updatedExistingCase: Case = {
       ...c,
       alerts: remainingAlerts,
-      caseTransactions: filteredTransactionsForExistingCase,
       caseTransactionsIds: filteredTransactionIdsForExistingCase,
       caseHierarchyDetails: caseHierarchyDetailsForOriginalCase,
     }
@@ -733,10 +738,13 @@ export class AlertsService extends CaseAlertsCommonService {
     }
     let isReview = false
 
-    const alerts = await this.alertsRepository.getAlertsByIds(alertIds)
+    const [alerts, cases] = await Promise.all([
+      this.alertsRepository.getAlertsByIds(alertIds),
+      caseRepository.getCasesByAlertIds(alertIds),
+    ])
 
     const alertsNotFound = alertIds.filter(
-      (alertId) => !alerts.find((alert) => alert.alertId === alertId)
+      (alertId) => !alerts.find((alert) => alert?.alertId === alertId)
     )
 
     if (alertsNotFound.length) {
@@ -770,8 +778,6 @@ export class AlertsService extends CaseAlertsCommonService {
 
       isReview = true
     }
-
-    const cases = await caseRepository.getCasesByAlertIds(alertIds)
 
     const caseIds = cases.map((c) => c.caseId!)
     const commentBody = this.getAlertStatusChangeCommentBody(

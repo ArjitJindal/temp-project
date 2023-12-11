@@ -448,7 +448,7 @@ export class CaseRepository {
 
     if (params.filterOriginPaymentMethods != null) {
       conditions.push({
-        'caseTransactions.originPaymentDetails.method': {
+        'caseAggregates.originPaymentMethods': {
           $in: params.filterOriginPaymentMethods,
         },
       })
@@ -456,7 +456,7 @@ export class CaseRepository {
 
     if (params.filterDestinationPaymentMethods != null) {
       conditions.push({
-        'caseTransactions.destinationPaymentDetails.method': {
+        'caseAggregates.destinationPaymentMethods': {
           $in: params.filterDestinationPaymentMethods,
         },
       })
@@ -481,7 +481,7 @@ export class CaseRepository {
         )
       }
       conditions.push({
-        'caseTransactions.tags': {
+        'caseAggregates.tags': {
           $elemMatch: elemCondition,
         },
       })
@@ -642,6 +642,7 @@ export class CaseRepository {
         falsePositiveDetails: 1,
         alerts: 1,
         caseType: 1,
+        caseAggregates: 1,
         caseHierarchyDetails: 1,
         ...(options.includeCaseTransactionIds
           ? { caseTransactionsIds: 1 }

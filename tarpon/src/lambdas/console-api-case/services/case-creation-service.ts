@@ -43,6 +43,8 @@ import { RoleService } from '@/services/roles'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CreateAlertFor } from '@/services/rules-engine/utils/rule-parameter-schemas'
+import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 type CaseSubject =
   | {
@@ -414,6 +416,7 @@ export class CaseCreationService {
         origin: direction === 'ORIGIN' ? user : undefined,
         destination: direction === 'DESTINATION' ? user : undefined,
       },
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     }
     return caseEntity
   }
@@ -430,8 +433,38 @@ export class CaseCreationService {
         origin: direction === 'ORIGIN' ? paymentDetails : undefined,
         destination: direction === 'DESTINATION' ? paymentDetails : undefined,
       },
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     }
     return caseEntity
+  }
+
+  private getCaseAggregatesFromTransactions(
+    transactions: InternalTransaction[]
+  ): CaseAggregates {
+    const originPaymentMethods = uniq(
+      compact(
+        transactions.flatMap(
+          ({ originPaymentDetails }) => originPaymentDetails?.method ?? []
+        )
+      )
+    )
+    const destinationPaymentMethods = uniq(
+      compact(
+        transactions.flatMap(
+          ({ destinationPaymentDetails }) =>
+            destinationPaymentDetails?.method ?? []
+        )
+      )
+    )
+    const tags = uniq(
+      compact(transactions.flatMap(({ tags }) => tags ?? []))
+    ).sort()
+
+    return {
+      originPaymentMethods,
+      destinationPaymentMethods,
+      tags,
+    }
   }
 
   public async createNewCaseFromAlerts(
@@ -486,10 +519,12 @@ export class CaseCreationService {
         ? [...(sourceCase.relatedCases ?? []), sourceCase.caseId]
         : sourceCase.relatedCases,
       caseUsers: sourceCase.caseUsers,
-      caseTransactions: newCaseAlertsTransactions,
       caseTransactionsIds,
       caseTransactionsCount: caseTransactionsIds.length,
       updatedAt: now,
+      caseAggregates: this.getCaseAggregatesFromTransactions(
+        newCaseAlertsTransactions ?? []
+      ),
     })
 
     const oldCaseTransactionsIds = uniq(
@@ -500,11 +535,13 @@ export class CaseCreationService {
     await this.caseRepository.addCaseMongo({
       ...sourceCase,
       alerts: oldCaseAlerts,
-      caseTransactions: oldCaseAlertsTransactions,
       caseTransactionsIds: oldCaseTransactionsIds,
       caseTransactionsCount: oldCaseTransactionsIds.length,
       priority: minBy(oldCaseAlerts, 'priority')?.priority ?? last(PRIORITYS),
       updatedAt: now,
+      caseAggregates: this.getCaseAggregatesFromTransactions(
+        oldCaseAlertsTransactions ?? []
+      ),
     })
     return newCase
   }
@@ -721,6 +758,11 @@ export class CaseCreationService {
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
             caseTransactionsIds,
+            caseAggregates:
+              this.getCaseAggregatesFromTransactionsWithExistingAggregates(
+                [filteredTransaction as InternalTransaction],
+                existedCase.caseAggregates
+              ),
             caseTransactions: uniqBy(
               // NOTE: filteredTransaction comes first to replace the existing transaction
               [
@@ -744,11 +786,22 @@ export class CaseCreationService {
               availableAfterTimestamp ?? params.createdTimestamp,
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
+            caseAggregates: {
+              originPaymentMethods: filteredTransaction?.originPaymentDetails
+                ?.method
+                ? [filteredTransaction?.originPaymentDetails?.method]
+                : [],
+              destinationPaymentMethods: filteredTransaction
+                ?.destinationPaymentDetails?.method
+                ? [filteredTransaction?.destinationPaymentDetails?.method]
+                : [],
+              tags: filteredTransaction?.tags ?? [],
+            },
+            caseTransactions: filteredTransaction ? [filteredTransaction] : [],
             caseTransactionsIds: filteredTransaction
               ? [filteredTransaction.transactionId as string]
               : [],
             caseTransactionsCount: filteredTransaction ? 1 : 0,
-            caseTransactions: filteredTransaction ? [filteredTransaction] : [],
             priority: params.priority,
             availableAfterTimestamp,
             alerts: await this.getAlertsForNewCase(
@@ -765,6 +818,38 @@ export class CaseCreationService {
       }
     }
     return result
+  }
+
+  private getCaseAggregatesFromTransactionsWithExistingAggregates(
+    transactions: InternalTransaction[],
+    caseAggregates: CaseAggregates
+  ): CaseAggregates {
+    const originPaymentMethods = uniq(
+      compact(
+        transactions.map(
+          (transaction) => transaction?.originPaymentDetails?.method
+        )
+      ).concat(caseAggregates.originPaymentMethods)
+    )
+
+    const destinationPaymentMethods = uniq(
+      compact(
+        transactions.map(
+          (transaction) => transaction?.destinationPaymentDetails?.method
+        )
+      ).concat(caseAggregates.destinationPaymentMethods)
+    )
+    const tags = compact(
+      uniq(
+        compact(transactions.flatMap((transaction) => transaction?.tags ?? []))
+      ).concat(caseAggregates.tags)
+    )
+
+    return {
+      originPaymentMethods,
+      destinationPaymentMethods,
+      tags,
+    }
   }
 
   async handleTransaction(

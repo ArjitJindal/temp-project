@@ -24,6 +24,7 @@ import * as Context from '@/core/utils/context'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import dayjs from '@/utils/dayjs'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',
@@ -209,6 +210,7 @@ describe('Case service', () => {
         reviewAssignments: [],
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
         caseType: 'SYSTEM',
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       })
 
       await caseService.escalateCase('C-1', {
@@ -271,6 +273,7 @@ describe('Case service', () => {
         reviewAssignments: [{ assigneeUserId: 'U-2', timestamp: t }],
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
         caseType: 'SYSTEM',
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       })
       await caseService.escalateCase('C-2', { reason: ['Documents collected'] })
       const c = await caseService.getCase('C-2')
@@ -302,11 +305,27 @@ describe('Case service', () => {
         reviewAssignments: [],
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
         caseTransactionsIds: CASE_TRANSACTION_IDS,
-        caseTransactions: CASE_TRANSACTIONS,
         caseHierarchyDetails: {
           childTransactionIds: ['T-101'],
         },
         caseType: 'SYSTEM',
+        caseAggregates: CASE_TRANSACTIONS.reduce((acc, t) => {
+          if (t.originPaymentDetails?.method) {
+            acc.originPaymentMethods.push(t.originPaymentDetails.method)
+          }
+
+          if (t.destinationPaymentDetails?.method) {
+            acc.destinationPaymentMethods.push(
+              t.destinationPaymentDetails.method
+            )
+          }
+
+          if (t.tags?.length) {
+            acc.tags.push(...t.tags)
+          }
+
+          return acc
+        }, cloneDeep(DEFAULT_CASE_AGGREGATES)),
       })
 
       const alertsService = await getAlertsService(TEST_TENANT_ID)
@@ -415,6 +434,7 @@ describe('Case service', () => {
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
         caseHierarchyDetails: { parentCaseId: 'parent-case-id' },
         caseType: 'SYSTEM',
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       }
       const childCase: Case = {
         caseId: childCaseId,
@@ -423,6 +443,7 @@ describe('Case service', () => {
         alerts: [],
         caseHierarchyDetails: { parentCaseId: parentCaseId },
         caseType: 'SYSTEM',
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       }
       await caseService.caseRepository.addCaseMongo(parentCase)
       await caseService.caseRepository.addCaseMongo(childCase)
@@ -445,6 +466,7 @@ describe('Case service', () => {
         comments: [],
         caseType: 'SYSTEM',
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       })
 
       await alertsService.escalateAlerts('C-2', {
@@ -512,6 +534,7 @@ describe('Post APIs Alerts Tests', () => {
       caseStatus: 'OPEN',
       caseType: 'SYSTEM',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     const COMMENT_ID_1 = 'some-random-id'
@@ -605,7 +628,7 @@ describe('Post APIs Alerts Tests', () => {
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
       caseType: 'SYSTEM',
-
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
       alerts: [TEST_ALERT_1],
     })
 
@@ -699,6 +722,7 @@ describe('Post APIs Alerts Tests', () => {
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await alertsService.updateAlertsStatus(['A-1'], {
@@ -800,6 +824,7 @@ describe('Post APIs Alerts Tests', () => {
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await alertsService.updateAlertsStatus(['A-1'], {
@@ -868,6 +893,7 @@ describe('Post APIs Alerts Tests', () => {
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     const USER_ID_1 = nanoid()
@@ -920,6 +946,7 @@ describe('Case Service - Post Api Tests', () => {
       caseStatus: 'OPEN',
       alerts: [],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.updateCasesStatus(['C-1-2'], {
@@ -973,6 +1000,7 @@ describe('Case Service - Post Api Tests', () => {
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.updateCasesStatus(['C-1-1'], {
@@ -1071,6 +1099,7 @@ describe('Case Service - Post Api Tests', () => {
       assignments: undefined,
       reviewAssignments: undefined,
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.updateCasesAssignments(
@@ -1113,6 +1142,7 @@ describe('Case Service - Post Api Tests', () => {
       assignments: undefined,
       reviewAssignments: undefined,
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.updateCasesReviewAssignments(
@@ -1155,6 +1185,7 @@ describe('Case Service - Post Api Tests', () => {
       assignments: undefined,
       reviewAssignments: undefined,
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.caseRepository.addCaseMongo({
@@ -1165,6 +1196,7 @@ describe('Case Service - Post Api Tests', () => {
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       assignments: undefined,
       reviewAssignments: undefined,
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.updateCasesAssignments(
@@ -1224,6 +1256,7 @@ describe('Case Service - Post Api Tests', () => {
       assignments: undefined,
       reviewAssignments: undefined,
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.caseRepository.addCaseMongo({
@@ -1234,6 +1267,7 @@ describe('Case Service - Post Api Tests', () => {
       assignments: undefined,
       reviewAssignments: undefined,
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.updateCasesReviewAssignments(
@@ -1293,6 +1327,7 @@ describe('Case Service - Post Api Tests', () => {
       assignments: undefined,
       reviewAssignments: undefined,
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.updateCasesStatus(['C-1-6'], {
@@ -1492,6 +1527,7 @@ describe('Case Service - Post Api Tests', () => {
         },
       ],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     // Add assignments to the case
@@ -1544,6 +1580,7 @@ describe('Case Service - Post Api Tests', () => {
         },
       ],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     // Add assignments to the case
@@ -1596,6 +1633,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseService.updateCasesStatus(['C-1-5'], {
       caseStatus: 'CLOSED',
@@ -1676,6 +1714,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseService.escalateCase('C-1-5', {
       assignments: [
@@ -1774,6 +1813,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.updateCasesStatus([caseId], {
@@ -1902,6 +1942,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseService.updateCasesStatus([caseId], {
       caseStatus: 'CLOSED',
@@ -1939,7 +1980,9 @@ describe('Test Review Approvals Send Back Flow', () => {
         },
       ],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
+
     await caseService.escalateCase(caseId, {
       reason: ['False positive'],
       otherReason: 'This is a duplicate case',
@@ -2055,6 +2098,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseService.escalateCase(caseId, {
       reason: ['False positive'],
@@ -2147,6 +2191,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         },
       ],
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await alertsService.updateAlertsStatus([testAlertId], {
       alertStatus: 'CLOSED',
@@ -2216,6 +2261,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'OPEN',
       alerts: cloneDeep(testAlerts),
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await alertsService.escalateAlerts(caseId, {
@@ -2244,6 +2290,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         alertId: alert.alertId + '2',
       })),
       caseType: 'SYSTEM',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await alertsService.escalateAlerts(caseId2, {
@@ -2334,6 +2381,7 @@ describe('Case/Alerts Service - Status Change Tests', () => {
         reason: ['False positive'],
         timestamp: Date.now(),
       },
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.updateCasesStatus([caseId], {
@@ -2407,6 +2455,7 @@ describe('Case/Alerts Service - Status Change Tests', () => {
           },
         },
       ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await alertService.updateAlertsStatus([alertId], {
@@ -2473,6 +2522,7 @@ describe('Test Cases Reassignment', () => {
           timestamp: Date.now(),
         },
       ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await caseService.caseRepository.reassignCases('ACCOUNT-1', 'ACCOUNT-3')
@@ -2501,7 +2551,6 @@ describe('Test Alerts Reassignment', () => {
     await caseService.caseRepository.addCaseMongo({
       caseId,
       caseType: 'MANUAL',
-
       alerts: [
         {
           ...TEST_ALERT_1,
@@ -2526,6 +2575,7 @@ describe('Test Alerts Reassignment', () => {
           ],
         },
       ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
     await alertService.alertsRepository.reassignAlerts('ACCOUNT-1', 'ACCOUNT-3')

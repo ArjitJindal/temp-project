@@ -1,9 +1,15 @@
-import { getCaseRepo, getStatsRepo, hitRule } from './helpers'
+import {
+  getCaseRepo,
+  getStatsRepo,
+  getTransactionsRepo,
+  hitRule,
+} from './helpers'
 import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 dynamoDbSetupHook()
 
@@ -12,6 +18,7 @@ describe('Verify case stats', () => {
     const TENANT_ID = getTestTenantId()
     const caseRepository = await getCaseRepo(TENANT_ID)
     const statsRepository = await getStatsRepo(TENANT_ID)
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
 
     const originUserId = 'test-user-id'
     const destinationUserId = 'test-user-id-2'
@@ -39,13 +46,18 @@ describe('Verify case stats', () => {
       },
     ]
 
+    await Promise.all(
+      transactions.map((t) => transactionRepository.addTransactionToMongo(t))
+    )
+
     const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
       caseType: 'SYSTEM',
       createdTimestamp,
-      caseTransactions: transactions,
       caseTransactionsIds: transactions.map((t) => t.transactionId),
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
+      updatedAt: createdTimestamp,
     })
     await statsRepository.recalculateRuleHitStats({
       startTimestamp: createdTimestamp,
@@ -70,6 +82,7 @@ test(`Multiple cases`, async () => {
   const TENANT_ID = getTestTenantId()
   const caseRepository = await getCaseRepo(TENANT_ID)
   const statsRepository = await getStatsRepo(TENANT_ID)
+  const transactionRepository = await getTransactionsRepo(TENANT_ID)
 
   const timestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
 
@@ -84,28 +97,34 @@ test(`Multiple cases`, async () => {
     executedRules: [hitRule()],
     originUserId: originUserId,
     destinationUserId: destinationUserId,
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
   }
+
+  await transactionRepository.addTransactionToMongo(transaction)
 
   await caseRepository.addCaseMongo({
     caseId: 'C-1',
     createdTimestamp: timestamp,
     caseType: 'SYSTEM',
-    caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
+    updatedAt: timestamp,
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-2',
     createdTimestamp: timestamp,
     caseType: 'SYSTEM',
-    caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
+    updatedAt: timestamp,
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
     caseType: 'SYSTEM',
     createdTimestamp: timestamp,
-    caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
+    updatedAt: timestamp,
   })
   await statsRepository.recalculateRuleHitStats({ startTimestamp: timestamp })
   const stats = await statsRepository.getRuleHitCountStats(
@@ -127,6 +146,7 @@ test(`Multiple cases - opened and closed`, async () => {
   const TENANT_ID = getTestTenantId()
   const caseRepository = await getCaseRepo(TENANT_ID)
   const statsRepository = await getStatsRepo(TENANT_ID)
+  const transactionRepository = await getTransactionsRepo(TENANT_ID)
 
   const timestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
 
@@ -143,37 +163,43 @@ test(`Multiple cases - opened and closed`, async () => {
     destinationUserId: destinationUserId,
   }
 
+  await transactionRepository.addTransactionToMongo(transaction)
+
   await caseRepository.addCaseMongo({
     caseId: 'C-1',
     createdTimestamp: timestamp,
     caseType: 'SYSTEM',
     caseStatus: 'OPEN',
-    caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
+    updatedAt: timestamp,
   })
   await caseRepository.addCaseMongo({
     caseType: 'SYSTEM',
     caseId: 'C-2',
     createdTimestamp: timestamp,
     caseStatus: 'CLOSED',
-    caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
+    updatedAt: timestamp,
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
     caseType: 'SYSTEM',
     createdTimestamp: timestamp,
     caseStatus: 'OPEN',
-    caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
+    updatedAt: timestamp,
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-4',
     caseType: 'SYSTEM',
     createdTimestamp: timestamp,
     caseStatus: 'REOPENED',
-    caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
+    updatedAt: timestamp,
   })
   await statsRepository.recalculateRuleHitStats({ startTimestamp: timestamp })
   const stats = await statsRepository.getRuleHitCountStats(

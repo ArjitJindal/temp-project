@@ -7609,6 +7609,26 @@ components:
             type: string
       required:
         - caseIds
+    CaseAggregates:
+      title: CaseAggregates
+      type: object
+      properties:
+        originPaymentMethods:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+        destinationPaymentMethods:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+      required:
+        - originPaymentMethods
+        - destinationPaymentMethods
+        - tags
     Case:
       title: Case
       type: object
@@ -7629,14 +7649,14 @@ components:
           type: number
         caseStatus:
           $ref: '#/components/schemas/CaseStatus'
-        caseTransactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/InternalTransaction'
         caseTransactionsIds:
           type: array
           items:
             type: string
+        caseTransactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalTransaction'
         alerts:
           type: array
           items:
@@ -7717,8 +7737,11 @@ components:
           $ref: '#/components/schemas/CaseHierarchyDetails'
         caseTransactionsCount:
           type: number
+        caseAggregates:
+          $ref: '#/components/schemas/CaseAggregates'
       required:
         - caseType
+        - caseAggregates
     Alert:
       title: Alert
       type: object

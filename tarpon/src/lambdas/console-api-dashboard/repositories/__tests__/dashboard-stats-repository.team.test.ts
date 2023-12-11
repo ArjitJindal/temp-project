@@ -10,6 +10,7 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 dynamoDbSetupHook()
 
@@ -1460,10 +1461,10 @@ function emptyCase(): Case {
     caseId: `C-${counter++}`,
     caseStatus: 'OPEN',
     createdTimestamp: Date.now(),
-    caseTransactions: [],
     caseTransactionsIds: [],
     statusChanges: [],
     assignments: [],
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
   }
 }
 

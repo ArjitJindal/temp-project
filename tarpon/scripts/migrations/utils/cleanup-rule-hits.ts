@@ -183,11 +183,6 @@ export async function removeTransactionFromCase(
         uniq(flatten(alerts.map((alert) => alert?.transactionIds)))
       )
 
-      const caseTransactions = caseItem.caseTransactions?.filter(
-        (caseTransaction) =>
-          caseTransactionIds.includes(caseTransaction.transactionId)
-      )
-
       if (!alerts.length) {
         await casesCollection.deleteOne({
           _id: caseItem._id,
@@ -200,7 +195,6 @@ export async function removeTransactionFromCase(
           {
             $set: {
               alerts,
-              caseTransactions,
               caseTransactionIds,
             },
           }

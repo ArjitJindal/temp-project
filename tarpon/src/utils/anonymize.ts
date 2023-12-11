@@ -173,6 +173,11 @@ const users: RecursivePartial<InternalUser> = {
   shareHolders: [person],
   directors: [person],
   tags: [tag],
+  userDetails: {
+    countryOfNationality: 'faker.address.countryCode' as CountryCode,
+    countryOfResidence: 'faker.address.countryCode' as CountryCode,
+    name: name,
+  },
 }
 
 type LegacyPaymentDetailsFields = { bankId: string }
@@ -240,7 +245,6 @@ const auditLog: RecursivePartial<AuditLog> = {
 
 const caseCase: RecursivePartial<Case> = {
   caseUsers,
-  caseTransactions: [transactions],
 }
 
 const userEvent: RecursivePartial<ConsumerUserEvent | BusinessUserEvent> = {

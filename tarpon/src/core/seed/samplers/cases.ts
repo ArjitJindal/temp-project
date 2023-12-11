@@ -1,4 +1,4 @@
-import { last, uniqBy } from 'lodash'
+import { last, uniq, uniqBy } from 'lodash'
 import { v4 as uuid4 } from 'uuid'
 import { compile } from 'handlebars'
 import { randomBool } from 'fp-ts/Random'
@@ -26,6 +26,7 @@ import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue
 import { RULE_NATURES } from '@/@types/openapi-internal-custom/RuleNature'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { CHECKLIST_DONE_STATUSS } from '@/@types/openapi-internal-custom/ChecklistDoneStatus'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
 let counter = 1
 let alertCounter = 1
@@ -195,7 +196,24 @@ export function sampleTransactionUserCases(params: {
           destination?.drsScore?.manualRiskLevel ??
           destination?.drsScore?.derivedRiskLevel,
       },
-      caseTransactions,
+      caseAggregates: {
+        originPaymentMethods:
+          uniq(
+            caseTransactions
+              .filter((t) => t.originPaymentDetails?.method)
+              .map((t) => t.originPaymentDetails?.method) as PaymentMethod[]
+          ) ?? [],
+        destinationPaymentMethods:
+          uniq(
+            caseTransactions
+              .filter((t) => t.destinationPaymentDetails?.method)
+              .map(
+                (t) => t.destinationPaymentDetails?.method
+              ) as PaymentMethod[]
+          ) ?? [],
+        tags: uniq(caseTransactions.flatMap((t) => t.tags ?? [])),
+      },
+
       caseTransactionsIds: caseTransactions.map((t) => t.transactionId!),
       alerts: ruleHits
         .filter((rh) => rh.nature === nature)

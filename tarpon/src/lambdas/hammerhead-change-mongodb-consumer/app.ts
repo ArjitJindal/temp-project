@@ -1,10 +1,7 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import {
-  CASES_COLLECTION,
-  TRANSACTIONS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
@@ -12,7 +9,6 @@ import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { Case } from '@/@types/openapi-internal/Case'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isDemoTenant } from '@/utils/tenant'
@@ -34,10 +30,6 @@ async function arsScoreEventHandler(
     mongoDb,
   })
 
-  const casesCollection = mongoDb
-    .db()
-    .collection<Case>(CASES_COLLECTION(tenantId))
-
   await Promise.all([
     riskRepository.addArsValueToMongo(arsScore),
     mongoDb
@@ -48,31 +40,6 @@ async function arsScoreEventHandler(
         { $set: { arsScore } }
       ),
   ])
-
-  const caseDocuments = await casesCollection
-    .find({
-      'caseTransactions.transactionId': arsScore.transactionId,
-    })
-    .toArray()
-
-  await Promise.all(
-    caseDocuments.map(async (caseDocument) => {
-      const caseTransactions = caseDocument?.caseTransactions
-      if (caseTransactions && caseTransactions?.length > 0) {
-        const caseTransaction = caseTransactions.find(
-          (transaction) => transaction.transactionId === arsScore.transactionId
-        )
-        if (caseTransaction) {
-          caseTransaction.arsScore = arsScore
-        }
-
-        await casesCollection.updateOne(
-          { _id: caseDocument._id },
-          { $set: { caseTransactions } }
-        )
-      }
-    })
-  )
 
   logger.info(`ARS Score Processed`)
 }

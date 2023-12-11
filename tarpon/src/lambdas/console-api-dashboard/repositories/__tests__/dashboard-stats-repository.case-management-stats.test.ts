@@ -3,6 +3,7 @@ import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 dynamoDbSetupHook()
 
@@ -23,6 +24,7 @@ describe('Verify case and alerts closing reason stats', () => {
       createdTimestamp: timestamp,
       caseType: 'SYSTEM',
       caseStatus: 'OPEN',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseRepository.addCaseMongo({
       caseType: 'SYSTEM',
@@ -34,6 +36,7 @@ describe('Verify case and alerts closing reason stats', () => {
         userId,
         timestamp,
       },
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseRepository.addCaseMongo({
       caseId: 'C-3',
@@ -45,6 +48,7 @@ describe('Verify case and alerts closing reason stats', () => {
         userId,
         timestamp,
       },
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseRepository.addCaseMongo({
       caseId: 'C-4',
@@ -56,6 +60,7 @@ describe('Verify case and alerts closing reason stats', () => {
         userId,
         timestamp,
       },
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     const entityType: EntityType = 'CASE'
     const stats = await statsRepository.getClosingReasonDistributionStatistics(
@@ -109,6 +114,7 @@ describe('Verify case and alerts closing reason stats', () => {
       createdTimestamp: timestamp,
       caseType: 'SYSTEM',
       caseStatus: 'OPEN',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseRepository.addCaseMongo({
       caseType: 'SYSTEM',
@@ -155,6 +161,7 @@ describe('Verify case and alerts closing reason stats', () => {
           },
         },
       ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseRepository.addCaseMongo({
       caseId: 'C-3',
@@ -174,6 +181,7 @@ describe('Verify case and alerts closing reason stats', () => {
           priority: 'P1',
         },
       ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseRepository.addCaseMongo({
       caseId: 'C-4',
@@ -235,6 +243,7 @@ describe('Verify case and alerts closing reason stats', () => {
           },
         },
       ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     const stats = await statsRepository.getAlertPriorityDistributionStatistics()
     expect(stats).toEqual({
@@ -280,6 +289,7 @@ describe('Verify case and alerts closing reason stats', () => {
       createdTimestamp: timestamp,
       caseType: 'SYSTEM',
       caseStatus: 'OPEN',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseRepository.addCaseMongo({
       caseType: 'SYSTEM',
@@ -326,6 +336,7 @@ describe('Verify case and alerts closing reason stats', () => {
           },
         },
       ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseRepository.addCaseMongo({
       caseId: 'C-3',
@@ -345,6 +356,7 @@ describe('Verify case and alerts closing reason stats', () => {
           priority: 'P1',
         },
       ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     await caseRepository.addCaseMongo({
       caseId: 'C-4',
@@ -406,6 +418,7 @@ describe('Verify case and alerts closing reason stats', () => {
           },
         },
       ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
     const entityType: EntityType = 'ALERT'
     const stats = await statsRepository.getClosingReasonDistributionStatistics(

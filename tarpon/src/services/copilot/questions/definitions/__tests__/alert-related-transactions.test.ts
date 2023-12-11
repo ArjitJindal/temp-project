@@ -2,6 +2,7 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { testQuestion } from '@/services/copilot/questions/definitions/__tests__/util'
 import { AlertsRelatedToTransaction } from '@/services/copilot/questions/definitions/alerts-related-to-transaction'
 import { ReportRepository } from '@/services/sar/repositories/report-repository'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 describe('Alerts related to transactions', () => {
   test('One alert returned', async () => {
@@ -43,6 +44,7 @@ describe('Alerts related to transactions', () => {
               },
             },
           ],
+          caseAggregates: DEFAULT_CASE_AGGREGATES,
         })
         const rr = new ReportRepository(tenantId, mongoDb)
         await rr.saveOrUpdateReport({

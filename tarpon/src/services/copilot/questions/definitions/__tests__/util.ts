@@ -10,6 +10,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AccountsService } from '@/services/accounts'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 jest.mock('@/services/accounts')
 
 export async function testQuestion<V extends Variables, D>(
@@ -22,7 +23,11 @@ export async function testQuestion<V extends Variables, D>(
   const mongoDb = await getMongoDbClient()
   await seed(tenantId, mongoDb)
 
-  const c: Case = { caseId: 'C-1', caseType: 'SYSTEM' }
+  const c: Case = {
+    caseId: 'C-1',
+    caseType: 'SYSTEM',
+    caseAggregates: DEFAULT_CASE_AGGREGATES,
+  }
   const alert: Alert = {
     createdTimestamp: 0,
     numberOfTransactionsHit: 0,

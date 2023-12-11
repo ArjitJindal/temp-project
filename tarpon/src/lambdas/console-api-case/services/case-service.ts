@@ -6,7 +6,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
-import { capitalize, isEqual, isEmpty, compact } from 'lodash'
+import { capitalize, isEqual, isEmpty, compact, uniq } from 'lodash'
 import { MongoClient } from 'mongodb'
 import pluralize from 'pluralize'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
@@ -343,6 +343,15 @@ export class CaseService extends CaseAlertsCommonService {
       caseTransactionsIds: transactions.map((t) => t.transactionId),
       statusChanges: [statusChange],
       lastStatusChange: statusChange,
+      caseAggregates: {
+        originPaymentMethods: compact(
+          uniq(transactions.map((t) => t.originPaymentDetails?.method))
+        ),
+        destinationPaymentMethods: compact(
+          uniq(transactions.map((t) => t.destinationPaymentDetails?.method))
+        ),
+        tags: compact(uniq(transactions.flatMap((t) => t.tags))),
+      },
     })
 
     const comment = this.getManualCaseComment(

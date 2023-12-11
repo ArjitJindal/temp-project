@@ -1,6 +1,7 @@
 import { CaseHistory } from '@/services/copilot/questions/definitions/case-history'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { testQuestion } from '@/services/copilot/questions/definitions/__tests__/util'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 describe('Case history', () => {
   test('One case returned', async () => {
@@ -19,6 +20,7 @@ describe('Case history', () => {
           createdTimestamp: new Date(
             new Date().setDate(new Date().getDate() - 5)
           ).valueOf(),
+          caseAggregates: DEFAULT_CASE_AGGREGATES,
         })
       },
       (data) => {

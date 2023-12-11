@@ -7,6 +7,7 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 dynamoDbSetupHook()
 
@@ -40,6 +41,7 @@ describe('Dashboard refresh runner', () => {
         createdTimestamp: latest.valueOf(),
         updatedAt: latest.valueOf(),
         caseType: 'SYSTEM',
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       }),
       // C-2 and C-3 should be merged into one time range
       caseRepository.addCaseMongo({
@@ -47,6 +49,7 @@ describe('Dashboard refresh runner', () => {
         createdTimestamp: latest.subtract(1, 'day').valueOf(),
         updatedAt: latest.valueOf(),
         caseType: 'SYSTEM',
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       }),
       caseRepository.addCaseMongo({
         caseId: 'C-3',
@@ -56,6 +59,7 @@ describe('Dashboard refresh runner', () => {
           .valueOf(),
         updatedAt: latest.valueOf(),
         caseType: 'SYSTEM',
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
       }),
     ])
     const transactionsCollection = mongoDb

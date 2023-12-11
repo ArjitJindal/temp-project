@@ -27,6 +27,7 @@ import {
   UserState,
   Case,
   Priority,
+  Alert,
 } from '@/apis';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
@@ -314,7 +315,7 @@ export const MONEY: ColumnDataType<Amount> = {
   autoFilterDataType: { kind: 'dateTimeRange' },
 };
 
-export const CASEID: ColumnDataType<string, Case> = {
+export const CASEID: ColumnDataType<string, Pick<Case, 'caseId'>> = {
   render: (_value, { item: entity }) => {
     return (
       <>
@@ -334,7 +335,7 @@ export const CASEID: ColumnDataType<string, Case> = {
   },
 };
 
-export const ALERT_ID: ColumnDataType<string, Case> = {
+export const ALERT_ID: ColumnDataType<string, Pick<Alert, 'caseId'>> = {
   render: (alertId, { item: entity }) => {
     return (
       <>

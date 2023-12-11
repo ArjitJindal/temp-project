@@ -1,4 +1,5 @@
 import { ObjectId, WithId } from 'mongodb'
+import { DEFAULT_CASE_AGGREGATES } from '../case'
 import { anonymize } from '@/utils/anonymize'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
@@ -10,42 +11,41 @@ describe('Anonymizer', () => {
     const anonymizedCase = anonymize<WithId<Case>>('cases', {
       _id: new ObjectId('734033c379f3c58f5d21f29d'),
       caseType: 'SYSTEM',
-      caseTransactions: [
-        {
-          transactionId: '12345',
-          timestamp: 1,
-          executedRules: [],
-          hitRules: [],
-          type: 'TRANSFER',
-          status: 'ALLOW',
-          destinationUser: {
-            userId: '12345',
-            createdTimestamp: 0,
-            type: 'CONSUMER',
-            legalDocuments: [
-              {
-                documentType: 'passport',
-                documentNumber: '12345678',
-                documentIssuedCountry: 'GB',
-              },
-              {
-                documentType: 'visa',
-                documentNumber: 'somevisathing',
-                documentIssuedCountry: 'DE',
-              },
-              {
-                documentType: 'visa',
-                documentNumber: '12345678',
-                documentIssuedCountry: 'DE',
-              },
-            ],
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
+      caseTransactionsIds: ['12345'],
+      caseUsers: {
+        origin: {
+          type: 'CONSUMER',
+          userId: '123',
+          createdTimestamp: 0,
+          userDetails: {
+            name: {
+              firstName: 'John',
+              lastName: 'Smith',
+            },
           },
+          legalDocuments: [
+            {
+              documentType: 'PASSPORT',
+              documentNumber: '12345678',
+              documentIssuedCountry: 'GB',
+            },
+            {
+              documentType: 'VISA',
+              documentNumber: 'somevisathing',
+              documentIssuedCountry: 'GB',
+            },
+            {
+              documentType: 'PASSPORT',
+              documentNumber: '12345678',
+              documentIssuedCountry: 'GB',
+            },
+          ],
         },
-      ],
+      },
     })
 
-    const user = anonymizedCase.caseTransactions?.shift()
-      ?.destinationUser as InternalConsumerUser
+    const user = anonymizedCase.caseUsers?.origin as InternalConsumerUser
     const doc1 = user?.legalDocuments?.pop()?.documentNumber
     const doc2 = user?.legalDocuments?.pop()?.documentNumber
     const doc3 = user?.legalDocuments?.pop()?.documentNumber

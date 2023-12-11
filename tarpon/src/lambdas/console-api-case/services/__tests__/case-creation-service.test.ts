@@ -44,6 +44,8 @@ import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { CreateAlertFor } from '@/services/rules-engine/utils/rule-parameter-schemas'
+import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 
 dynamoDbSetupHook()
 
@@ -76,6 +78,10 @@ async function getServices(tenantId: string) {
     transactionRepository,
     tenantSettings
   )
+  const dynamoDbTranasactionRepository = new DynamoDbTransactionRepository(
+    tenantId,
+    dynamoDb
+  )
   const s3 = getS3ClientByEvent(null as any)
   const alertsRepository = new AlertsRepository(tenantId, {
     mongoDb,
@@ -93,6 +99,7 @@ async function getServices(tenantId: string) {
     caseCreationService,
     alertsService,
     caseService,
+    dynamoDbTranasactionRepository,
   }
 }
 
@@ -432,7 +439,7 @@ describe('Cases (Transaction hit)', () => {
         expect(cases).toHaveLength(1)
         const nextCase = cases[0]
         expect(nextCase.caseId).toEqual(firstCase.caseId)
-        expect(nextCase.caseTransactions).toHaveLength(2)
+        expect(nextCase.caseTransactionsIds).toHaveLength(2)
       }
     })
   })
@@ -499,7 +506,7 @@ describe('Cases (Transaction hit)', () => {
         expect(results.length).toEqual(1)
         const nextCase = cases[0]
         expect(firstCase.caseId).toEqual(nextCase.caseId)
-        expect(nextCase.caseTransactions).toHaveLength(2)
+        expect(nextCase.caseTransactionsIds).toHaveLength(2)
       }
     })
   })
@@ -810,7 +817,8 @@ describe('Cases (Transaction hit)', () => {
     setupUsers(TEST_TENANT_ID)
 
     test('New transaction update should replace the transaction in an existing case', async () => {
-      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+      const { caseCreationService, dynamoDbTranasactionRepository } =
+        await getServices(TEST_TENANT_ID)
 
       const transaction = getTestTransaction({
         originUserId: TEST_USER_1.userId,
@@ -837,11 +845,17 @@ describe('Cases (Transaction hit)', () => {
         })
       )
 
+      const case1TxnId = cases[0].caseTransactionsIds?.at(0)
+      let savedCase1Txn: TransactionWithRulesResult | null | undefined
+      if (case1TxnId) {
+        savedCase1Txn = await dynamoDbTranasactionRepository.getTransactionById(
+          case1TxnId
+        )
+      }
+
       expect(cases.length).toEqual(1)
-      expect(cases[0]?.caseTransactions).toHaveLength(1)
-      expect(cases[0].caseTransactions?.[0]?.hitRules).toEqual([
-        result.hitRules[0],
-      ])
+      expect(cases[0]?.caseTransactionsIds).toHaveLength(1)
+      expect(savedCase1Txn?.hitRules[0]).toEqual(result.hitRules[0])
 
       const cases2 = await caseCreationService.handleTransaction(
         {
@@ -854,10 +868,19 @@ describe('Cases (Transaction hit)', () => {
           ...result,
         })
       )
+
+      const case2TxnId = cases2[0]?.caseTransactionsIds?.at(0)
+      let savedCase2Txn: TransactionWithRulesResult | null | undefined
+      if (case2TxnId) {
+        savedCase2Txn = await dynamoDbTranasactionRepository.getTransactionById(
+          case2TxnId
+        )
+      }
+
       expect(cases2.length).toEqual(1)
       expect(cases2[0].caseId).toBe(cases[0].caseId)
-      expect(cases2[0]?.caseTransactions).toHaveLength(1)
-      expect(cases2[0].caseTransactions?.[0]?.hitRules).toEqual(result.hitRules)
+      expect(cases2[0]?.caseTransactionsIds).toHaveLength(1)
+      expect(savedCase2Txn?.hitRules).toEqual(result.hitRules)
     })
   })
 })
@@ -1594,7 +1617,7 @@ describe('Test payment cases', () => {
             expect(cases).toHaveLength(1)
             const nextCase = cases[0]
             expect(nextCase.caseId).toEqual(firstCase.caseId)
-            expect(nextCase.caseTransactions).toHaveLength(2)
+            expect(nextCase.caseTransactionsIds).toHaveLength(2)
           }
         }
       )

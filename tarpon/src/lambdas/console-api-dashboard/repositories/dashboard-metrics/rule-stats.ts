@@ -15,6 +15,7 @@ import {
 import {
   CASES_COLLECTION,
   DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
+  TRANSACTIONS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 
 import { Case } from '@/@types/openapi-internal/Case'
@@ -29,10 +30,11 @@ export class RuleHitsStatsDashboardMetric {
     const aggregationCollection =
       DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
     let timestampMatch: any = undefined
+
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampMatch = {
-        createdTimestamp: {
+        updatedAt: {
           $gte: start,
           $lt: end,
         },
@@ -40,6 +42,22 @@ export class RuleHitsStatsDashboardMetric {
     }
     const pipeline = [
       { $match: { ...timestampMatch } },
+      {
+        $lookup: {
+          from: TRANSACTIONS_COLLECTION(tenantId),
+          localField: 'caseTransactionsIds',
+          foreignField: 'transactionId',
+          as: 'caseTransactions',
+          pipeline: [
+            {
+              $project: {
+                transactionId: 1,
+                hitRules: 1,
+              },
+            },
+          ],
+        },
+      },
       {
         $unwind: {
           path: '$caseTransactions',
@@ -120,6 +138,7 @@ export class RuleHitsStatsDashboardMetric {
     await casesCollection
       .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
       .next()
+
     await cleanUpStaleData(
       aggregationCollection,
       '_id',
