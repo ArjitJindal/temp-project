@@ -285,7 +285,7 @@ describe('Webhook delivery', () => {
           await new Promise((resolve) =>
             setTimeout(
               resolve,
-              Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC) * 2 * 1000
+              Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC ?? 10) * 2 * 1000
             )
           )
         }

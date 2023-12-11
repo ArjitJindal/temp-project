@@ -116,6 +116,10 @@ async function deliverWebhookEvent(
     }
   } catch (e) {
     logger.warn(`Failed to deliver event: ${(e as Error).message}`)
+    if ((e as any)?.name === 'AbortError') {
+      logger.warn(`Request timeout after ${requestTimeoutSec} seconds`)
+      return
+    }
     if ((e as any)?.type === 'aborted') {
       // We don't retry if customer server fails to respond before the timeout
       logger.warn(`Request timeout after ${requestTimeoutSec} seconds`)
