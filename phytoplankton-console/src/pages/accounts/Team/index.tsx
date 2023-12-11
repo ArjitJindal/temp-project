@@ -292,6 +292,7 @@ export default function Team() {
             style={{ width: 300 }}
             mode="SINGLE"
             onChange={(value) => setReassignTo(value ?? null)}
+            value={reassignTo}
           />
           <Button
             type="PRIMARY"
