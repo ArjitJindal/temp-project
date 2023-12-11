@@ -7,7 +7,6 @@ import {
   minBy,
   sample,
   uniq,
-  uniqBy,
 } from 'lodash'
 import {
   CaseRepository,
@@ -768,14 +767,6 @@ export class CaseCreationService {
                 [filteredTransaction as InternalTransaction],
                 existedCase.caseAggregates
               ),
-            caseTransactions: uniqBy(
-              // NOTE: filteredTransaction comes first to replace the existing transaction
-              [
-                filteredTransaction,
-                ...(existedCase.caseTransactions ?? []),
-              ].filter(Boolean) as InternalTransaction[],
-              (t) => t.transactionId
-            ),
             caseTransactionsCount: caseTransactionsIds.length,
             priority: minBy(alerts, 'priority')?.priority ?? last(PRIORITYS),
             alerts,
@@ -802,7 +793,6 @@ export class CaseCreationService {
                 : [],
               tags: filteredTransaction?.tags ?? [],
             },
-            caseTransactions: filteredTransaction ? [filteredTransaction] : [],
             caseTransactionsIds: filteredTransaction
               ? [filteredTransaction.transactionId as string]
               : [],

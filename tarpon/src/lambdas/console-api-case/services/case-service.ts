@@ -326,7 +326,6 @@ export class CaseService extends CaseAlertsCommonService {
     const case_ = await this.caseRepository.addCaseMongo({
       caseType: 'MANUAL',
       caseStatus: 'OPEN',
-      caseTransactions: transactions,
       caseUsers: {
         origin: caseUser,
         originUserRiskLevel:

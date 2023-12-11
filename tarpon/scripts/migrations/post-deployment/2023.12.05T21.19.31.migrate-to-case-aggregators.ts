@@ -6,13 +6,16 @@ import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { Case } from '@/@types/openapi-internal/Case'
 import { logger } from '@/core/logger'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
 
   const casesCollectionName = CASES_COLLECTION(tenant.id)
   const db = mongoDb.db()
-  const casesCollection = db.collection<Case>(casesCollectionName)
+  const casesCollection = db.collection<
+    Case & { caseTransactions?: InternalTransaction[] }
+  >(casesCollectionName)
 
   const cases = casesCollection.find({
     caseAggregates: { $exists: false },

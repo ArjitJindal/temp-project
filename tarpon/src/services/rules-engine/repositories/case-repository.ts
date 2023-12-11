@@ -153,7 +153,6 @@ export class CaseRepository {
       { caseId },
       {
         $push: {
-          caseTransactions: { $each: transactions },
           comments: comment,
           caseTransactionsIds: {
             $each: transactions.map((transaction) => transaction.transactionId),
@@ -1032,10 +1031,7 @@ export class CaseRepository {
   ): Promise<CaseWithoutCaseTransactions | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return await collection.findOne<Case>(
-      { caseId },
-      { projection: { caseTransactions: 0 } }
-    )
+    return await collection.findOne<Case>({ caseId })
   }
 
   public async getCaseByAlertId(
@@ -1043,10 +1039,7 @@ export class CaseRepository {
   ): Promise<CaseWithoutCaseTransactions | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return await collection.findOne<Case>(
-      { 'alerts.alertId': alertId },
-      { projection: { caseTransactions: 0 } }
-    )
+    return await collection.findOne<Case>({ 'alerts.alertId': alertId })
   }
 
   public async getCasesByAlertIds(
@@ -1055,12 +1048,7 @@ export class CaseRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const cases = await collection
-      .find(
-        {
-          'alerts.alertId': { $in: alertIds },
-        },
-        { projection: { caseTransactions: 0 } }
-      )
+      .find({ 'alerts.alertId': { $in: alertIds } })
       .toArray()
 
     return cases
@@ -1241,14 +1229,7 @@ export class CaseRepository {
   ): Promise<Array<CaseWithoutCaseTransactions>> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return await casesCollection
-      .find(
-        {
-          caseId: { $in: caseIds },
-        },
-        { projection: { caseTransactions: 0 } }
-      )
-      .toArray()
+    return await casesCollection.find({ caseId: { $in: caseIds } }).toArray()
   }
 
   public async markAllChecklistItemsAsDone(caseIds: string[]) {

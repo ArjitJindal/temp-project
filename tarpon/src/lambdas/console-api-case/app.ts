@@ -211,8 +211,8 @@ export const casesHandler = lambdaApi()(
       await casesAlertsAuditLogService.createAuditLog({
         caseId: case_?.caseId ?? '',
         logAction: 'CREATE',
-        caseDetails: { ...case_, caseTransactions: undefined }, // Removed case transactions to prevent sqs message size limit
-        newImage: { ...case_, caseTransactions: undefined }, // Removed case transactions to prevent sqs message size limit
+        caseDetails: case_, // Removed case transactions to prevent sqs message size limit
+        newImage: case_,
         oldImage: {},
         subtype: 'MANUAL_CASE_CREATION',
       })
@@ -232,18 +232,9 @@ export const casesHandler = lambdaApi()(
       await casesAlertsAuditLogService.createAuditLog({
         caseId: case_?.caseId ?? '',
         logAction: 'UPDATE',
-        caseDetails: {
-          ...newCase,
-          caseTransactions: undefined, // Removed case transactions to prevent sqs message size limit
-        },
-        newImage: {
-          ...newCase,
-          caseTransactions: undefined, // Removed case transactions to prevent sqs message size limit
-        },
-        oldImage: {
-          ...case_,
-          caseTransactions: undefined, // Removed case transactions to prevent sqs message size limit
-        },
+        caseDetails: newCase,
+        newImage: newCase,
+        oldImage: case_,
         subtype: 'MANUAL_CASE_TRANSACTIONS_ADDITION',
       })
 
@@ -400,7 +391,6 @@ export const casesHandler = lambdaApi()(
 )
 
 function caseResponse(c: Case): Case {
-  c.caseTransactions = undefined
   c.caseTransactionsIds = undefined
   c.alerts?.map((a) => {
     a.transactionIds = []

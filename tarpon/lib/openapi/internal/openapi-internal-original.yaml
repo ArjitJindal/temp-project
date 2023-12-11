@@ -7636,10 +7636,6 @@ components:
           type: array
           items:
             type: string
-        caseTransactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/InternalTransaction'
         alerts:
           type: array
           items:
