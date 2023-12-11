@@ -284,12 +284,12 @@ function AlertCreationDetails() {
           <>
             <InputField<FormValues, 'alertAssignees'>
               name={'alertAssignees'}
-              label={'Assign to email ID'}
+              label={'Assign to account(s)'}
             >
               {(inputProps) => (
                 <Select
                   value={options.length ? inputProps.value : undefined}
-                  placeholder={'Select account(s) email ID'}
+                  placeholder={'Select account(s)'}
                   options={options}
                   mode={'MULTIPLE'}
                   {...inputProps}
