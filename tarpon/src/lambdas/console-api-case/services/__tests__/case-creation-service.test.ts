@@ -44,6 +44,7 @@ import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { CreateAlertFor } from '@/services/rules-engine/utils/rule-parameter-schemas'
+import { getAlertRepo } from '@/lambdas/console-api-dashboard/repositories/__tests__/helpers'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 
@@ -440,6 +441,45 @@ describe('Cases (Transaction hit)', () => {
         const nextCase = cases[0]
         expect(nextCase.caseId).toEqual(firstCase.caseId)
         expect(nextCase.caseTransactionsIds).toHaveLength(2)
+
+        // Close the first alert in the case and assert transction not added
+        const alertRepo = await getAlertRepo(TEST_TENANT_ID)
+        const alert = nextCase.alerts?.at(0)
+        await alertRepo.updateAlertsStatus(
+          [alert?.alertId as string],
+          [nextCase.caseId as string],
+          {
+            timestamp: Date.now().valueOf(),
+            userId: 'test',
+            caseStatus: 'CLOSED',
+          }
+        )
+        const nextTransaction = getTestTransaction({
+          transactionId: '333',
+          originUserId: TEST_USER_1.userId,
+          destinationUserId: undefined,
+        })
+        const nextResults = await bulkVerifyTransactions(TEST_TENANT_ID, [
+          nextTransaction,
+        ])
+        const [nextResult] = nextResults
+        const finalCases = await caseCreationService.handleTransaction(
+          {
+            ...nextTransaction,
+            ...nextResult,
+          },
+          await getHitRuleInstances(TEST_TENANT_ID, nextResult),
+          await caseCreationService.getTransactionSubjects({
+            ...nextTransaction,
+            ...nextResult,
+          })
+        )
+        const finalCase = finalCases[0]
+        expect(finalCase.alerts).toHaveLength(2)
+        expect(finalCase.alerts?.at(0)?.transactionIds?.at(0)).toEqual('333')
+        expect(
+          finalCase.alerts?.at(1)?.transactionIds?.indexOf('333') === -1
+        ).toBeTruthy()
       }
     })
   })

@@ -735,15 +735,20 @@ export class CaseCreationService {
             ).length,
           })
 
-          const alerts = await this.getOrCreateAlertsForExistingCase(
+          const unclosedAlerts =
+            existedCase.alerts?.filter((a) => a.alertStatus !== 'CLOSED') ?? []
+          const closedAlerts =
+            existedCase.alerts?.filter((a) => a.alertStatus === 'CLOSED') ?? []
+          const updatedAlerts = await this.getOrCreateAlertsForExistingCase(
             hitRules,
-            existedCase.alerts,
+            unclosedAlerts,
             ruleInstances,
             params.createdTimestamp,
             filteredTransaction,
             params.latestTransactionArrivalTimestamp,
             params.checkListTemplates
           )
+          const alerts = [...updatedAlerts, ...closedAlerts]
 
           const caseTransactionsIds = uniq(
             [

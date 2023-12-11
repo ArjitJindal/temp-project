@@ -7,6 +7,7 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 
 export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
   return {
@@ -41,6 +42,14 @@ export async function getCaseRepo(tenantId: string) {
   const mongoDb = await getMongoDbClient()
   return new CaseRepository(tenantId, {
     mongoDb,
+  })
+}
+export async function getAlertRepo(tenantId: string) {
+  const mongoDb = await getMongoDbClient()
+  const dynamoDb = await getDynamoDbClient()
+  return new AlertsRepository(tenantId, {
+    mongoDb,
+    dynamoDb,
   })
 }
 
