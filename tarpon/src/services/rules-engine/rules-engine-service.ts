@@ -16,6 +16,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
+import { Subsegment } from 'aws-xray-sdk-core'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -607,10 +608,16 @@ export class RulesEngineService {
       filterSegment?.close()
     }
 
-    let runSegment: any = undefined
+    let runSegment: Subsegment | undefined = undefined
     if (shouldRunRule && tracing) {
       runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
     }
+
+    const periodicLog = setInterval(() => {
+      logger.warn(`Rule ${ruleInstance.ruleId} is taking too long to execute`)
+      runSegment?.flush()
+    }, 5000)
+
     const ruleResult = shouldRunRule
       ? await ruleClassInstance.computeRule()
       : null
@@ -623,6 +630,7 @@ export class RulesEngineService {
         )
       : []
     runSegment?.close()
+    clearInterval(periodicLog)
 
     const ruleHit =
       (filteredRuleResult && filteredRuleResult.length > 0) ?? false
