@@ -48,7 +48,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
-export const MAX_TRANSACTION_IN_A_CASE = 50_000
+export const MAX_TRANSACTION_IN_A_CASE = 10_000
 
 export function getRuleQueueFilter(ruleQueueIds: string[]) {
   return {
