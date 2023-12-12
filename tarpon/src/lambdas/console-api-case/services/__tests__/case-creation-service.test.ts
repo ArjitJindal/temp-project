@@ -623,7 +623,7 @@ describe('Cases (Transaction hit)', () => {
       }
 
       const case1 = (await addTransaction(0, true)) as Case
-      case1.caseTransactionsIds = [...new Array(999)].map(
+      case1.caseTransactionsIds = [...new Array(49_999)].map(
         (_, counter) => `fake_transaction_${counter}`
       )
       await caseCreationService.caseRepository.addCaseMongo(case1)
