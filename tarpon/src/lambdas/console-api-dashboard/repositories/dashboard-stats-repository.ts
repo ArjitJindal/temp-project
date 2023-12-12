@@ -6,6 +6,7 @@ import { RuleHitsStatsDashboardMetric } from './dashboard-metrics/rule-stats'
 import { TeamStatsDashboardMetric } from './dashboard-metrics/team-stats'
 import { OverviewStatsDashboardMetric } from './dashboard-metrics/overview-stats'
 import { CaseStatsDashboardMetric } from './dashboard-metrics/case-stats'
+import { LatestTeamStatsDashboardMetric } from './dashboard-metrics/latest-team-stats'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
@@ -18,6 +19,7 @@ import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-i
 import { DashboardStatsAlertPriorityDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertPriorityDistributionStats'
 import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStats'
 import { UserStats } from '@/lambdas/console-api-dashboard/repositories/dashboard-metrics/user-stats'
+import { DashboardLatestTeamStatsItem } from '@/@types/openapi-internal/DashboardLatestTeamStatsItem'
 import { DashboardStatsUsersStats } from '@/@types/openapi-internal/DashboardStatsUsersStats'
 
 @traceable
@@ -41,6 +43,7 @@ export class DashboardStatsRepository {
       this.refreshCaseStats(timeRange),
       this.refreshUserStats(timeRange),
       this.refreshTeamStats(timeRange),
+      this.refreshLatestTeamStats(timeRange),
     ])
   }
 
@@ -166,6 +169,13 @@ export class DashboardStatsRepository {
     )
   }
 
+  public async refreshLatestTeamStats(caseCreatedAtTimeRange?: TimeRange) {
+    await LatestTeamStatsDashboardMetric.refresh(
+      this.tenantId,
+      caseCreatedAtTimeRange
+    )
+  }
+
   async getOverviewStatistics(
     accountIds: string[]
   ): Promise<DashboardStatsOverview> {
@@ -208,5 +218,12 @@ export class DashboardStatsRepository {
       granularity,
       entity
     )
+  }
+
+  public async getLatestTeamStatistics(
+    scope: 'CASES' | 'ALERTS',
+    accountIds?: Array<string>
+  ): Promise<DashboardLatestTeamStatsItem[]> {
+    return LatestTeamStatsDashboardMetric.get(this.tenantId, scope, accountIds)
   }
 }

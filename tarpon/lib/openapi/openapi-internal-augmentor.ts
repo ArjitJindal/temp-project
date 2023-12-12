@@ -128,6 +128,8 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/overview':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
+  '/dashboard_stats/latest_team':
+    StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/closing_reason_distribution':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/alert_priority_distribution':

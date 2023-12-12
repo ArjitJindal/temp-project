@@ -10,6 +10,7 @@ import {
   RiskLevelBreakdownCard,
 } from './components/RiskLevelDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
+import LatestTeamOverview from './components/LatestTeamOverview';
 import OverviewCard from './components/OverviewCard';
 import RulePrioritySplitCard from './components/RulePrioritySplitCard';
 import CaseClosingReasonCard from './components/CaseManagement/CaseClosingReasonCard';
@@ -58,7 +59,8 @@ type KeyValues =
   | 'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS'
   | 'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS'
   | 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS'
-  | 'TRANSACTIONS_BREAKDOWN_BY_TRS';
+  | 'TRANSACTIONS_BREAKDOWN_BY_TRS'
+  | 'LATEST_TEAM_OVERVIEW';
 
 const DEFAULT_VALUES = {
   OVERVIEW: true,
@@ -83,6 +85,7 @@ const DEFAULT_VALUES = {
   DISTRIBUTION_BY_CASE_AND_ALERT_STATUS: true,
   CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: true,
   BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: true,
+  LATEST_TEAM_OVERVIEW: true,
 };
 
 type WidgetType = {
@@ -289,6 +292,12 @@ const WIDGETS: Widgets = {
       id: 'TEAM_OVERVIEW',
       title: 'Team overview',
       component: TeamPerformanceCard,
+    },
+    {
+      groupTitle: 'Team management',
+      id: 'LATEST_TEAM_OVERVIEW',
+      title: 'Latest team overview',
+      component: LatestTeamOverview,
     },
   ],
 };

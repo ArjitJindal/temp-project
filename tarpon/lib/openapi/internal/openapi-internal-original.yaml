@@ -1989,6 +1989,33 @@ paths:
               $ref: '#/components/schemas/CaseStatus'
           in: query
           name: caseStatus
+  /dashboard_stats/latest_team:
+    get:
+      summary: DashboardStats - Latest Team
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DashboardLatestTeamStatsItem'
+      operationId: get-dashboard-latest-team-stats
+      description: ''
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - CASES
+              - ALERTS
+          in: query
+          name: scope
+          required: true
   /dashboard_stats/overview:
     get:
       summary: DashboardStats - Overview
@@ -6500,6 +6527,28 @@ components:
         - accountId
         - assignedTo
         - closedBy
+    DashboardLatestTeamStatsItem:
+      type: object
+      title: DashboardLatestTeamStatsItem
+      properties:
+        accountId:
+          type: string
+        open:
+          type: number
+        closed:
+          type: number
+        avgInvestigationTime:
+          type: number
+        onHold:
+          type: number
+        escalated:
+          type: number
+        inProgress:
+          type: number
+        inReview:
+          type: number
+      required:
+        - accountId
     Comment:
       title: Comment
       type: object

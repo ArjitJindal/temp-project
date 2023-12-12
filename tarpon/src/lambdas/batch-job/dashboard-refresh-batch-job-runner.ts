@@ -81,6 +81,7 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
 
         for (const timeRange of targetTimeRanges) {
           await dashboardStatsRepository.refreshCaseStats(timeRange)
+          await dashboardStatsRepository.refreshLatestTeamStats(timeRange)
           logger.info(`Refreshed case stats - ${JSON.stringify(timeRange)}`)
         }
       })(),

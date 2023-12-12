@@ -123,6 +123,14 @@ export const DASHBOARD_TEAM_ALERTS_STATS_HOURLY = (tenantId: string) => {
   return `${tenantId}-dashboard-team-alerts-stats-hourly`
 }
 
+export const DASHBOARD_LATEST_TEAM_CASES_STATS_HOURLY = (tenantId: string) => {
+  return `${tenantId}-dashboard-latest-team-cases-stats-hourly`
+}
+
+export const DASHBOARD_LATEST_TEAM_ALERTS_STATS_HOURLY = (tenantId: string) => {
+  return `${tenantId}-dashboard-latest-team-alerts-stats-hourly`
+}
+
 export const REPORT_COLLECTION = (tenandId: string) => {
   return `${tenandId}-report`
 }

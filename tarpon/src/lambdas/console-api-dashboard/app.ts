@@ -305,6 +305,29 @@ export const dashboardStatsHandler = lambdaApi()(
         return null // TODO: to be re-enabled again by FR-3219
       }
     )
+
+    handlers.registerGetDashboardLatestTeamStats(async (ctx, request) => {
+      const client = await getMongoDbClient()
+      const { auth0Domain } = event.requestContext.authorizer
+      const { scope } = request
+      const { tenantId, userId } = ctx
+      const mongoDb = await getMongoDbClient()
+      const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+      const organization = await accountsService.getAccountTenant(userId)
+      const accounts: Account[] = await accountsService.getTenantAccounts(
+        organization
+      )
+      const accountIds = accounts
+        .filter((account) => account.role !== 'root')
+        .map((account) => account.id)
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb: client,
+      })
+      return await dashboardStatsRepository.getLatestTeamStatistics(
+        scope,
+        accountIds
+      )
+    })
     return await handlers.handle(event)
   }
 )
