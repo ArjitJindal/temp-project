@@ -17,13 +17,15 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     {
       id: 'e8c3b853',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
-      ruleId: 'R-1',
-      casePriority: 'P1',
+      ruleId: 'R-8',
+      casePriority: 'P2',
       parameters: {},
       action: 'FLAG',
       type: 'TRANSACTION',
-      ruleNameAlias: 'First payment of a Customers',
-      ruleDescriptionAlias: 'First outgoing transaction of a user',
+      ruleNameAlias:
+        'Too many transactions under reporting limit sent by a user.',
+      ruleDescriptionAlias:
+        '>= ‘x’ number of consecutive low value outgoing transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts.',
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {},
@@ -46,7 +48,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688115753059,
       runCount: 1848,
       hitCount: 8,
-      checksFor: ['1st transaction'],
+      checksFor: ['Transaction amount', 'No. of transactions'],
     },
     {
       id: 'a25685ad',
