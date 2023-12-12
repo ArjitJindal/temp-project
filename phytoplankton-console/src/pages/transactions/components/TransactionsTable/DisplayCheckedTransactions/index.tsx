@@ -37,16 +37,21 @@ const DisplayCheckedTransactions = (props: Props) => {
   const queryResult = useCursorQuery(
     TRANSACTIONS_LIST({ ...params, caseUserId }),
     async ({ from }) => {
+      const hitDirections = props.alert.ruleHitMeta?.hitDirections;
       return await api.getTransactionsList({
         ...transactionParamsToRequest(params),
         start: from,
-        filterDestinationUserId: props.alert.ruleHitMeta?.hitDirections?.includes('DESTINATION')
-          ? caseUserId
-          : undefined,
-        filterOriginUserId: props.alert.ruleHitMeta?.hitDirections?.includes('ORIGIN')
-          ? caseUserId
-          : undefined,
-        filterUserId: !props.alert.ruleHitMeta?.hitDirections ? caseUserId : undefined,
+        ...(hitDirections?.length === 1
+          ? {
+              filterDestinationUserId: hitDirections?.includes('DESTINATION')
+                ? caseUserId
+                : undefined,
+              filterOriginUserId: hitDirections?.includes('ORIGIN') ? caseUserId : undefined,
+            }
+          : {
+              filterUserId: caseUserId,
+            }),
+
         filterRuleInstancesExecuted: [alert.ruleInstanceId],
       });
     },
