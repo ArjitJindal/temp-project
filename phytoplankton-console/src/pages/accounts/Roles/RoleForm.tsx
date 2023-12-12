@@ -45,8 +45,8 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
     }
     setLoading(true);
     try {
-      if (!isValidManagedRoleName(roleName)) {
-        message.error('Role name must be a valid role name');
+      if (isValidManagedRoleName(roleName)) {
+        message.error('Role name should not match with default roles');
         return;
       }
       const AccountRole = { name: roleName, description, permissions: [...permissions] };
