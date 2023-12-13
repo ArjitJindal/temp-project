@@ -181,7 +181,7 @@ async function transactionHandler(
       const hitCount = ruleInstance.hitCount || 0
       const runCount = ruleInstance.runCount || 0
       const hitPercentage = (hitCount * 100) / runCount
-      if (hitPercentage > RULE_HIT_ERROR_PERCENTAGE) {
+      if (hitPercentage > RULE_HIT_ERROR_PERCENTAGE && Math.random() < 0.05) {
         logger.error(
           `Rule ${ruleInstance.id} hit rate is is over the threshold of ${RULE_HIT_ERROR_PERCENTAGE}%`,
           {
