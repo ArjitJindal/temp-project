@@ -12,6 +12,19 @@ import { isRedirect, isTree, RouteItem } from '@/services/routing/types';
 import './global.less';
 import { getBranding } from '@/utils/branding';
 
+interface Error {
+  cause: unknown;
+  status: number;
+  statusCode: number;
+  expose: boolean;
+  headers?:
+    | {
+        [key: string]: string;
+      }
+    | undefined;
+  [key: string]: any;
+}
+
 Sentry.init({
   dsn: SENTRY_DSN,
   release: process.env.RELEASE,
@@ -19,6 +32,13 @@ Sentry.init({
   tracesSampleRate: 0.05,
   environment: process.env.ENV_NAME,
   enabled: process.env.ENV_NAME !== 'local',
+  beforeSend(event, hint) {
+    const error = hint?.originalException as Error;
+    if (error && error.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
+      return null;
+    }
+    return event;
+  },
 });
 
 function renderRoutes(routes: RouteItem[]) {
