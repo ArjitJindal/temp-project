@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
@@ -12,9 +12,11 @@ import { PRIORITYS } from '@/apis/models-custom/Priority';
 import Confirm from '@/components/utils/Confirm';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
+import { CHECKLIST_TEMPLATES } from '@/utils/queries/keys';
 
 export function ChecklistTemplatesSettings() {
   const api = useApi();
+  const queryClient = useQueryClient();
   const tableHelper = new ColumnHelper<ChecklistTemplate>();
   const templateDetailsSchema: JSONSchemaType<Pick<ChecklistTemplate, 'name' | 'description'>> = {
     type: 'object',
@@ -147,11 +149,15 @@ export function ChecklistTemplatesSettings() {
         writePermissions={['settings:organisation:write']}
         apiOperations={{
           GET: (params) => api.getChecklistTemplates(params),
-          CREATE: (entity) => {
+          CREATE: async (entity) => {
             if (!verifyChecklistTemplatePassCriteria(entity)) {
               return Promise.reject();
             }
-            return api.postChecklistTemplates({ ChecklistTemplate: entity });
+            const data = await api.postChecklistTemplates({ ChecklistTemplate: entity });
+            queryClient.invalidateQueries({
+              predicate: (query) => query.queryKey[0] === CHECKLIST_TEMPLATES()[0],
+            });
+            return data;
           },
           UPDATE: (entityId, entity) => {
             if (!verifyChecklistTemplatePassCriteria(entity)) {
