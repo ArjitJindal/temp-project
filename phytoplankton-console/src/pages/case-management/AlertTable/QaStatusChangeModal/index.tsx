@@ -4,7 +4,7 @@ import pluralize from 'pluralize';
 import Button from '@/components/library/Button';
 import { CaseReasons, ChecklistStatus } from '@/apis';
 import Modal from '@/components/library/Modal';
-import Narrative, { CLOSING_REASONS, FormValues, OTHER_REASON } from '@/components/Narrative';
+import Narrative, { FormValues, OTHER_REASON } from '@/components/Narrative';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 
@@ -108,9 +108,11 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
           entityIds={alertIds}
           entityType={'ALERT'}
           placeholder={'Enter your additional comments here, if any.'}
-          possibleReasons={[...CLOSING_REASONS, OTHER_REASON]}
+          possibleReasons={[OTHER_REASON]}
           onSubmit={onSubmit}
           showErrors={showError}
+          otherReason={OTHER_REASON}
+          isCopilotEnabled={false}
         />
       </Modal>
     </>

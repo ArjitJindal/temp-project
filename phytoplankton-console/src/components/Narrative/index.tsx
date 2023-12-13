@@ -61,6 +61,7 @@ type NarrativeProps<R> = {
   extraFields?: React.ReactNode;
   otherReason?: R;
   advancedOptions?: React.ReactNode;
+  isCopilotEnabled?: boolean;
 };
 
 export default function Narrative<R extends string>(props: NarrativeProps<R>) {
@@ -77,10 +78,11 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
     showErrors,
     otherReason,
     advancedOptions,
+    isCopilotEnabled = true,
   } = props;
 
   const [uploadingCount, setUploadingCount] = useState(0);
-  const showCopilot = useFeatureEnabled('COPILOT');
+  const showCopilot = useFeatureEnabled('COPILOT') && isCopilotEnabled;
   const isOtherReason = otherReason ? values.values.reasons?.includes(otherReason) : false;
 
   return (
