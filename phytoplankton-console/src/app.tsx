@@ -28,7 +28,9 @@ interface Error {
 Sentry.init({
   dsn: SENTRY_DSN,
   release: process.env.RELEASE,
-  integrations: [new BrowserTracing(), new Debug()],
+  integrations: [new BrowserTracing(), new Debug(), new Sentry.Replay()],
+  replaysOnErrorSampleRate: 1.0,
+  replaysSessionSampleRate: 0.1,
   tracesSampleRate: 0.05,
   environment: process.env.ENV_NAME,
   enabled: process.env.ENV_NAME !== 'local',
