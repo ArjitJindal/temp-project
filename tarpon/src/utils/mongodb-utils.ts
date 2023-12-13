@@ -10,7 +10,6 @@ import {
   WithId,
 } from 'mongodb'
 
-import { backOff } from 'exponential-backoff'
 import { isEqual } from 'lodash'
 import { escapeStringRegexp } from './regex'
 import { getSecret } from './secrets-manager'
@@ -310,22 +309,20 @@ export async function syncIndexes<T>(
   const currentIndexes = await collection.indexes()
 
   // Remove orphaned indexes
-  await Promise.all(
-    currentIndexes.map(async (current) => {
-      // Dont drop ID index
-      if (current.name === '_id_') {
-        return
-      }
+  for (const index of currentIndexes) {
+    // Dont drop ID index
+    if (index.name === '_id_') {
+      continue
+    }
 
-      // If index is not desired, delete it
-      if (!indexes.find((desired) => isEqual(desired, current.key))) {
-        await backOff(async () => await collection.dropIndex(current.name))
-        logger.info(
-          `Dropped index - ${current.name} (${collection.collectionName})`
-        )
-      }
-    })
-  )
+    // If index is not desired, delete it
+    if (!indexes.find((desired) => isEqual(desired, index.key))) {
+      await collection.dropIndex(index.name)
+      logger.info(
+        `Dropped index - ${index.name} (${collection.collectionName})`
+      )
+    }
+  }
 
   const indexesToCreate = indexes.filter(
     (desired) =>
@@ -337,16 +334,14 @@ export async function syncIndexes<T>(
   }
 
   if (indexesToCreate.length > 0) {
-    await Promise.all(
-      indexesToCreate.map(async (index) => {
-        await backOff(async () => await collection.createIndex(index, options))
-        logger.info(
-          `Created index - ${JSON.stringify(index)} (${
-            collection.collectionName
-          })`
-        )
-      })
-    )
+    for (const index of indexesToCreate) {
+      await collection.createIndex(index, options)
+      logger.info(
+        `Created index - ${JSON.stringify(index)} (${
+          collection.collectionName
+        })`
+      )
+    }
   }
 }
 
