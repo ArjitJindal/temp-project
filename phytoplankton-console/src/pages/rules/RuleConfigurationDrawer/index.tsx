@@ -44,6 +44,7 @@ import Label from '@/components/library/Label';
 import { getErrorMessage } from '@/utils/lang';
 import { useQuery } from '@/utils/queries/hooks';
 import { notEmpty } from '@/utils/array';
+import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 
 interface RuleConfigurationDrawerProps {
   rule?: Rule | null;
@@ -359,6 +360,9 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
       },
     },
   );
+
+  const [isDemoModeRes] = useDemoMode();
+
   const jobResult = useQuery(
     SIMULATION_JOB(jobId!),
     () =>
@@ -369,6 +373,8 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
       refetchInterval: (data) =>
         allIterationsCompleted(data?.iterations || [])
           ? false
+          : isDemoModeRes
+          ? 1000
           : POLL_STATUS_INTERVAL_SECONDS * 1000,
       enabled: Boolean(jobId),
     },

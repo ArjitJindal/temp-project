@@ -1,7 +1,8 @@
 import { Filter, MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 
-import { omit } from 'lodash'
+import { omit, random } from 'lodash'
+import { demoRuleSimulation } from '../utils/demo-rule-simulation'
 import { paginatePipeline } from '@/utils/mongodb-utils'
 import { SIMULATION_TASK_COLLECTION } from '@/utils/mongodb-definitions'
 import { SimulationPulseJob } from '@/@types/openapi-internal/SimulationPulseJob'
@@ -24,6 +25,8 @@ import { SimulationBeaconIteration } from '@/@types/openapi-internal/SimulationB
 import { SimulationJob } from '@/@types/openapi-internal/SimulationJob'
 import { isCurrentUserAtLeastRole } from '@/@types/jwt'
 import { traceable } from '@/core/xray'
+import { isDemoTenant } from '@/utils/tenant'
+import { TXN_COUNT } from '@/core/seed/data/transactions'
 
 @traceable
 export class SimulationTaskRepository {
@@ -162,6 +165,54 @@ export class SimulationTaskRepository {
           ) as SimulationBeaconIteration[],
         } as SimulationBeaconJob
       }
+
+      if (isDemoTenant(this.tenantId) && simulationRequest.type === 'BEACON') {
+        const demoJob = demoRuleSimulation
+
+        demoJob.jobId = jobId
+        demoJob.createdAt = now
+        demoJob.createdBy = createdByUser?.id
+
+        demoJob.defaultRuleInstance = simulationRequest.defaultRuleInstance
+
+        demoJob.iterations = demoJob.iterations.map((iteration, index) => {
+          return {
+            ...iteration,
+            type: 'BEACON',
+            parameters: {
+              ruleInstance: simulationRequest.parameters[index].ruleInstance,
+              sampling: {
+                transactionsCount: TXN_COUNT,
+              },
+              name: simulationRequest.parameters[index].name,
+              description: simulationRequest.parameters[index].description,
+              type: simulationRequest.parameters[index].type,
+            },
+            statistics: {
+              current: {
+                falsePositivesCases: random(20, 40),
+                totalCases: random(250, 300),
+                transactionsHit: random(2500, 3000),
+                usersHit: random(250, 300),
+              },
+              simulated: {
+                falsePositivesCases: random(20, 40),
+                totalCases: random(250, 300),
+                transactionsHit: random(2500, 3000),
+                usersHit: random(250, 300),
+              },
+            },
+          } as SimulationBeaconIteration
+        })
+
+        await collection.insertOne({
+          _id: demoJob.jobId as any,
+          ...demoJob,
+        })
+
+        return { jobId: demoJob.jobId, taskIds }
+      }
+
       await collection.insertOne({
         _id: job.jobId as any,
         ...job,

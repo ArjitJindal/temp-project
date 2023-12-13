@@ -15,6 +15,7 @@ import { getCredentialsFromEvent } from '@/utils/credentials'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { isDemoTenant } from '@/utils/tenant'
 
 export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
   async (
@@ -68,32 +69,37 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
         }
       }
       for (let i = 0; i < taskIds.length; i++) {
-        if (taskIds[i] && simulationParameters.parameters[i])
-          await sendBatchJobCommand(
-            simulationParameters.type === 'PULSE'
-              ? {
-                  type: 'SIMULATION_PULSE',
-                  tenantId,
-                  parameters: {
-                    taskId: taskIds[i],
-                    jobId,
-                    ...simulationParameters.parameters[i],
-                  },
-                  awsCredentials: getCredentialsFromEvent(event),
-                }
-              : {
-                  type: 'SIMULATION_BEACON',
-                  tenantId,
-                  parameters: {
-                    taskId: taskIds[i],
-                    jobId,
-                    defaultRuleInstance:
-                      simulationParameters.defaultRuleInstance,
-                    ...simulationParameters.parameters[i],
-                  },
-                  awsCredentials: getCredentialsFromEvent(event),
-                }
-          )
+        if (taskIds[i] && simulationParameters.parameters[i]) {
+          if (
+            simulationParameters.type === 'BEACON' &&
+            !isDemoTenant(tenantId)
+          ) {
+            await sendBatchJobCommand({
+              type: 'SIMULATION_BEACON',
+              tenantId,
+              parameters: {
+                taskId: taskIds[i],
+                jobId,
+                defaultRuleInstance: simulationParameters.defaultRuleInstance,
+                ...simulationParameters.parameters[i],
+              },
+              awsCredentials: getCredentialsFromEvent(event),
+            })
+          }
+
+          if (simulationParameters.type === 'PULSE') {
+            await sendBatchJobCommand({
+              type: 'SIMULATION_PULSE',
+              tenantId,
+              parameters: {
+                taskId: taskIds[i],
+                jobId,
+                ...simulationParameters.parameters[i],
+              },
+              awsCredentials: getCredentialsFromEvent(event),
+            })
+          }
+        }
       }
       return { taskIds, jobId }
     })
