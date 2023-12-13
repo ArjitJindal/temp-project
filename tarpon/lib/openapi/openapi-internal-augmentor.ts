@@ -45,6 +45,7 @@ export const ConsoleApiPathToLambda: any = {
   '/roles': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
   '/roles/{roleId}': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
   '/apikey': StackConstants.CONSOLE_API_API_KEY_GENERATOR_FUNCTION_NAME,
+  '/rule-logic-config': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rules': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rule-filters': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rules/{ruleId}': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,

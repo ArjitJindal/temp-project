@@ -25,6 +25,20 @@ paths:
           name: usagePlanId
           description: AWS Gateway usage plan ID
       description: Generate a new Tarpon API key for a tenant
+  /rule-logic-config:
+    get:
+      summary: Rule logic config - Get
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleLogicConfig'
+      operationId: get-rule-logic-config
+      description: ''
+    parameters: []
   /rules:
     get:
       summary: Rules - List
@@ -5334,6 +5348,22 @@ components:
         - createdAt
         - drsScore
         - isUpdatable
+    RuleLogicConfig:
+      title: RuleLogicConfig
+      type: object
+      properties:
+        variables:
+          type: array
+          items:
+            type: object
+        operators:
+          type: array
+          items:
+            type: object
+        functions:
+          type: array
+          items:
+            type: object
     Rule:
       title: Rule
       type: object
@@ -5364,6 +5394,8 @@ components:
           type: string
         description:
           type: string
+        defaultLogic:
+          type: object
         parametersSchema:
           type: object
         defaultParameters:
@@ -5528,6 +5560,8 @@ components:
           type: string
         casePriority:
           $ref: '#/components/schemas/Priority'
+        logic:
+          type: object
         parameters:
           type: object
         action:
@@ -7339,6 +7373,7 @@ components:
         - SAR
         - QA
         - AI_RISK_SCORE
+        - RULES_ENGINE_V8
       description: ''
     ManagedRoleName:
       type: string

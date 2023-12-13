@@ -2,6 +2,7 @@ import { capitalize, toLower } from 'lodash';
 import { useMemo } from 'react';
 import s from './style.module.less';
 import { AdvancedOptions } from './AdvancedOptions';
+import { RuleLogicEditorV8 } from './RuleLogicEditorV8';
 import {
   RiskLevelRuleActions,
   RiskLevelRuleParameters,
@@ -14,7 +15,11 @@ import {
 import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
 import StepHeader from '@/pages/rules/RuleConfigurationDrawer/StepHeader';
 import { RISK_LEVELS } from '@/utils/risk-levels';
-import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  getRiskLevelLabel,
+  useFeatureEnabled,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import RuleActionSelector from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/RuleActionSelector';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import NestedForm from '@/components/library/Form/NestedForm';
@@ -22,8 +27,11 @@ import InputField from '@/components/library/Form/InputField';
 import { useFieldState, useFormState } from '@/components/library/Form/utils/hooks';
 import ApplyRiskLevels from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/ApplyRiskLevels';
 import Tabs, { TabItem } from '@/components/library/Tabs';
+import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
+import GenericFormField, { FormFieldRenderProps } from '@/components/library/Form/GenericFormField';
 
 export interface FormValues {
+  ruleLogic?: object;
   ruleParameters?: unknown;
   ruleAction?: RuleAction;
   riskLevelParameters?: RiskLevelRuleParameters;
@@ -50,22 +58,32 @@ export default function RuleParametersStep(props: Props) {
 
   return (
     <>
-      {activeTab === 'rule_specific_filters' && <RuleSpecificFilters {...props} />}
+      {activeTab === 'rule_specific_parameters' && <RuleSpecificParameters {...props} />}
       {activeTab === 'risk_based_thresholds' && <RiskBasedThresholds {...props} />}
     </>
   );
 }
 
-function RuleSpecificFilters(props: Props) {
+function RuleSpecificParameters(props: Props) {
   const { rule } = props;
+  const user = useAuth0User();
+  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
 
   return (
     <>
       <StepHeader
-        title={'Rule-specific filters'}
-        description={'Configure filters that are specific for this rule'}
+        title={'Rule-specific parameters'}
+        description={'Configure parameters that are specific for this rule'}
       />
       <PropertyListLayout>
+        {v8Enabled && isSuperAdmin(user) && (
+          <GenericFormField<FormValues> name={'ruleLogic'}>
+            {(props: FormFieldRenderProps<any>) => (
+              <RuleLogicEditorV8 jsonLogic={props.value} onChange={props.onChange!} />
+            )}
+          </GenericFormField>
+        )}
+
         <NestedForm name={'ruleParameters'}>
           <JsonSchemaEditor parametersSchema={rule.parametersSchema} />
         </NestedForm>

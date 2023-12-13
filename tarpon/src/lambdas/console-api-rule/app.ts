@@ -14,6 +14,7 @@ import { RuleAuditLogService } from '@/services/rules-engine/rules-audit-log-ser
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { RULE_VARIABLES } from '@/services/rules-engine/v8-variables'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -31,6 +32,14 @@ export const ruleHandler = lambdaApi()(
     const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
 
     const handlers = new Handlers()
+
+    handlers.registerGetRuleLogicConfig(async () => {
+      return {
+        variables: RULE_VARIABLES,
+        operators: [],
+        functions: [],
+      }
+    })
 
     handlers.registerGetRules(async () => await ruleService.getAllRules())
 

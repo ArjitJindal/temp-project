@@ -154,6 +154,7 @@ export function ruleInstanceToFormValues(
                 }),
             }
           : {
+              ruleLogic: ruleInstance.logic,
               ruleParameters: ruleInstance.parameters,
               ruleAction: ruleInstance.action,
               triggersOnHit: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
@@ -170,6 +171,7 @@ export function formValuesToRuleInstance(
   const { basicDetailsStep, standardFiltersStep, ruleParametersStep } = formValues;
   const {
     ruleAction,
+    ruleLogic,
     ruleParameters,
     riskLevelParameters,
     riskLevelActions,
@@ -249,6 +251,7 @@ export function formValuesToRuleInstance(
             : undefined,
         }
       : {
+          logic: ruleLogic,
           action: ruleAction ?? initialRuleInstance.action,
           parameters: removeEmpty(ruleParameters),
           triggersOnHit: removeEmpty(triggersOnHit) ?? defaultTriggersOnHit,

@@ -41,6 +41,7 @@ import {
   UserRuleFilterBase,
 } from './filters'
 import { USER_RULES, UserRuleBase } from './user-rules'
+import { evaluate } from './v8-engine'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -563,64 +564,98 @@ export class RulesEngineService {
         ? transaction.destinationUserId
         : undefined,
     }
-    const ruleClassInstance = transactionWithValidUserId
-      ? new (RuleClass as typeof TransactionRuleBase)(
-          this.tenantId,
-          {
-            transaction: transactionWithValidUserId,
-            senderUser,
-            receiverUser,
-          },
-          { parameters, filters: ruleFilters },
-          { ruleInstance, rule },
-          mode,
-          this.dynamoDb,
-          mode === 'MONGODB' ? await getMongoDbClient() : undefined
-        )
-      : new (RuleClass as typeof UserRuleBase)(
-          this.tenantId,
-          { user: senderUser!, ongoingScreeningMode },
-          { parameters, filters: ruleFilters },
-          await getMongoDbClient(),
-          this.dynamoDb
-        )
-
     const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`
-    let filterSegment: any = undefined
-    if (!isEmpty(ruleFilters) && tracing) {
-      filterSegment = await addNewSubsegment(segmentNamespace, 'Rule Filtering')
+
+    let ruleClassInstance: TransactionRuleBase | UserRuleBase | undefined
+    let isTransactionHistoricalFiltered = false
+    let isOriginUserFiltered = false
+    let isDestinationUserFiltered = false
+    let ruleResult: RuleHitResult | undefined
+    if (hasFeature('RULES_ENGINE_V8') && ruleInstance.logic) {
+      if (transactionWithValidUserId) {
+        // TODO: handle hit directions
+        isOriginUserFiltered = true
+        isDestinationUserFiltered = true
+        const { hit, varData } = await evaluate(ruleInstance.logic, {
+          transaction: transactionWithValidUserId,
+        })
+        if (hit) {
+          ruleResult = [
+            {
+              direction: 'ORIGIN',
+              vars: varData,
+            },
+            {
+              direction: 'DESTINATION',
+              vars: varData,
+            },
+          ]
+        }
+      }
+    } else {
+      ruleClassInstance = transactionWithValidUserId
+        ? new (RuleClass as typeof TransactionRuleBase)(
+            this.tenantId,
+            {
+              transaction: transactionWithValidUserId,
+              senderUser,
+              receiverUser,
+            },
+            { parameters, filters: ruleFilters },
+            { ruleInstance, rule },
+            mode,
+            this.dynamoDb,
+            mode === 'MONGODB' ? await getMongoDbClient() : undefined
+          )
+        : new (RuleClass as typeof UserRuleBase)(
+            this.tenantId,
+            { user: senderUser!, ongoingScreeningMode },
+            { parameters, filters: ruleFilters },
+            await getMongoDbClient(),
+            this.dynamoDb
+          )
+      let filterSegment: any = undefined
+      if (!isEmpty(ruleFilters) && tracing) {
+        filterSegment = await addNewSubsegment(
+          segmentNamespace,
+          'Rule Filtering'
+        )
+      }
+      const filtersResult = await this.computeRuleFilters(ruleFilters, {
+        transaction,
+        senderUser,
+        receiverUser,
+      })
+      isTransactionHistoricalFiltered =
+        filtersResult.isTransactionHistoricalFiltered
+      isOriginUserFiltered = filtersResult.isOriginUserFiltered
+      isDestinationUserFiltered = filtersResult.isDestinationUserFiltered
+
+      const shouldRunRule =
+        filtersResult.isTransactionFiltered &&
+        (isOriginUserFiltered || isDestinationUserFiltered)
+
+      if (!isEmpty(ruleFilters)) {
+        filterSegment?.close()
+      }
+
+      let runSegment: Subsegment | undefined = undefined
+      if (shouldRunRule && tracing) {
+        runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
+      }
+
+      const periodicLog = setInterval(() => {
+        logger.warn(`Rule ${ruleInstance.ruleId} is taking too long to execute`)
+        runSegment?.flush()
+      }, 5000)
+
+      ruleResult = shouldRunRule
+        ? await ruleClassInstance.computeRule()
+        : undefined
+      runSegment?.close()
+      clearInterval(periodicLog)
     }
-    const {
-      isTransactionFiltered,
-      isTransactionHistoricalFiltered,
-      isOriginUserFiltered,
-      isDestinationUserFiltered,
-    } = await this.computeRuleFilters(ruleFilters, {
-      transaction,
-      senderUser,
-      receiverUser,
-    })
-    const shouldRunRule =
-      isTransactionFiltered &&
-      (isOriginUserFiltered || isDestinationUserFiltered)
 
-    if (!isEmpty(ruleFilters)) {
-      filterSegment?.close()
-    }
-
-    let runSegment: Subsegment | undefined = undefined
-    if (shouldRunRule && tracing) {
-      runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
-    }
-
-    const periodicLog = setInterval(() => {
-      logger.warn(`Rule ${ruleInstance.ruleId} is taking too long to execute`)
-      runSegment?.flush()
-    }, 5000)
-
-    const ruleResult = shouldRunRule
-      ? await ruleClassInstance.computeRule()
-      : null
     const filteredRuleResult = ruleResult
       ? this.getFilteredRuleResult(
           ruleResult,
@@ -629,8 +664,6 @@ export class RulesEngineService {
           isDestinationUserFiltered
         )
       : []
-    runSegment?.close()
-    clearInterval(periodicLog)
 
     const ruleHit =
       (filteredRuleResult && filteredRuleResult.length > 0) ?? false

@@ -115,6 +115,7 @@ export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
 ];
 export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey =>
   ['sanctions', 'search', searchId].filter(Boolean);
+export const RULE_LOGIC_CONFIG = (): QueryKey => ['rule-logic-config'];
 export const RULES = (): QueryKey => ['rules'];
 export const RULE_INSTANCES = (): QueryKey => ['rule-instances'];
 export const RULE_FILTERS = (): QueryKey => ['rule-filters'];

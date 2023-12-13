@@ -180,7 +180,7 @@ const RuleConfigurationForm = (
         description: 'Configure filters & risk thresholds that are specific for this rule',
         tabs: isRiskLevelsEnabled
           ? [{ key: 'risk_based_thresholds', title: 'Risk-based thresholds' }]
-          : [{ key: 'rule_specific_filters', title: 'Rule-specific filters' }],
+          : [{ key: 'rule_specific_parameters', title: 'Rule-specific parameters' }],
       },
     ],
     [
