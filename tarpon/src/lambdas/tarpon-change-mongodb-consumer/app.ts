@@ -45,6 +45,8 @@ const sqs = new SQS({
   region: process.env.AWS_REGION,
 })
 
+const RULE_HIT_ERROR_PERCENTAGE = 50
+
 async function handleNewCases(
   tenantId: string,
   timestampBeforeCasesCreation: number,
@@ -171,6 +173,18 @@ async function transactionHandler(
       ),
     ]
   )
+
+  // Log error if the hit rate % is over a threshold.
+  ruleInstances.forEach((ruleInstance) => {
+    const hitCount = ruleInstance.hitCount || 0
+    const runCount = ruleInstance.runCount || 0
+    const hitPercentage = (hitCount * 100) / runCount
+    if (hitPercentage > RULE_HIT_ERROR_PERCENTAGE) {
+      logger.error(
+        `Rule ${ruleInstance.ruleId} hit rate is ${hitPercentage}%, which is over the threshold of ${RULE_HIT_ERROR_PERCENTAGE}%`
+      )
+    }
+  })
 
   const caseCreationService = new CaseCreationService(
     casesRepo,

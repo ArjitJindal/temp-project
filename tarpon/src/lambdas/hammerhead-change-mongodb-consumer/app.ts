@@ -12,9 +12,6 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isDemoTenant } from '@/utils/tenant'
-import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
-import { publishMetric } from '@/core/utils/context'
-import { RULE_HIT_PERCENTAGE } from '@/core/cloudwatch/metrics'
 
 async function arsScoreEventHandler(
   tenantId: string,
@@ -90,25 +87,6 @@ async function krsScoreEventHandler(
 
   logger.info(`KRS Score Processed`)
 }
-async function ruleInstanceHandler(
-  tenantId: string,
-  ruleInstance: RuleInstance | undefined
-) {
-  if (!ruleInstance || isDemoTenant(tenantId)) {
-    return
-  }
-  logger.info(`Processing Rule Instance`)
-  const hitCount = ruleInstance.hitCount || 0
-  const runCount = ruleInstance.runCount || 0
-  const hitPercentage = (hitCount * 100) / runCount
-
-  publishMetric(RULE_HIT_PERCENTAGE, hitPercentage, {
-    tenantId,
-    ruleInstanceid: ruleInstance.id,
-  })
-
-  logger.info(`Rule instance processed`)
-}
 
 const hammerheadBuilder = new StreamConsumerBuilder(
   path.basename(__dirname) + '-hammerhead',
@@ -122,9 +100,6 @@ const hammerheadBuilder = new StreamConsumerBuilder(
   )
   .setKrsScoreEventHandler((tenantId, oldKrsScore, newKrsScore) =>
     krsScoreEventHandler(tenantId, newKrsScore)
-  )
-  .setRuleInstanceHandler((tenantId, oldRuleInstance, newRuleInstance) =>
-    ruleInstanceHandler(tenantId, newRuleInstance)
   )
 
 const hammerheadKinesisHandler = hammerheadBuilder.buildKinesisStreamHandler()
