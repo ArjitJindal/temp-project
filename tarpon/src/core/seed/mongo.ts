@@ -129,11 +129,6 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   for (const [collectionNameFn, data] of collections) {
     logger.info(`Re-create collection: ${collectionNameFn(tenantId)}`)
     const collection = db.collection(collectionNameFn(tenantId) as string)
-    try {
-      await collection.drop()
-    } catch (e) {
-      // ignore
-    }
     const collectionData = data()
     const clonedData = cloneDeep(collectionData)
 
