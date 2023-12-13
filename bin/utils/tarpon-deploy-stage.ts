@@ -3,6 +3,7 @@ import {
   aws_codebuild as codebuild,
   aws_iam as iam,
   aws_ec2 as ec2,
+  Duration,
 } from "aws-cdk-lib";
 import { Config } from "../../tarpon/lib/configs/config";
 import { getAssumeRoleCommands } from "./assume-role-commands";
@@ -70,6 +71,7 @@ export const tarponDeployStage = (
       computeType: ComputeType.LARGE,
     },
     role,
+    timeout: Duration.hours(8),
     vpc,
   });
 };
