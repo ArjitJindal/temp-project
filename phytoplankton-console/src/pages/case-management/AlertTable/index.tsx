@@ -261,7 +261,12 @@ export default function AlertTable(props: Props) {
               if (caseId !== undefined) return <div>{alertId}</div>;
               return (
                 <>
-                  <Id to={addBackUrlToRoute(getAlertUrl(entity.caseId!, alertId!))}>{alertId}</Id>
+                  <Id
+                    to={addBackUrlToRoute(getAlertUrl(entity.caseId!, alertId!))}
+                    testName="alert-id"
+                  >
+                    {alertId}
+                  </Id>
                   {falsePositiveDetails &&
                     falsePositiveDetails.isFalsePositive &&
                     falsePositiveEnabled && (

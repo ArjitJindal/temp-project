@@ -1,12 +1,17 @@
-import promisify from 'cypress-promise';
 describe('Case rule filter testing', () => {
   beforeEach(() => {
     cy.loginByForm();
   });
 
-  it('should filter according to rule name', async () => {
+  it('should filter according to rule name', () => {
     cy.visit('/case-management/cases');
     cy.get('[data-cy="segmented-control-all-alerts"]').should('exist').click();
+    cy.get('[data-cy="rules-filter"]')
+      .filter(':contains("Alert status")')
+      .eq(0)
+      .should('exist')
+      .click();
+    cy.get('li[data-cy="OPEN"]').should('exist').first().click();
     cy.get('[data-cy="rules-filter"]')
       .filter(':contains("Add filter")')
       .eq(0)
@@ -17,22 +22,28 @@ describe('Case rule filter testing', () => {
         cy.get('[data-cy="rulesHitFilter-checkbox"]').click();
       }
     });
+
     cy.get('[data-cy="rules-filter"]').filter(':contains("Rules")').eq(0).should('exist').click();
     cy.get('.ant-popover .ant-select-selector').should('exist').first().click();
-    const text = await promisify(
-      cy.get('.ant-select-item-option').first().should('exist').invoke('text'),
-    );
-    cy.get('.ant-select-item-option').first().should('exist').click();
-    cy.get('h2').first().click();
-    cy.get('[data-cy="ruleName"]')
+
+    cy.get('.ant-select-item-option')
+      .first()
       .should('exist')
-      .each(async (ele) => {
-        cy.wrap(ele)
+      .invoke('text')
+      .then((text) => {
+        cy.get('.ant-select-item-option').first().click();
+        cy.get('td[data-cy="ruleName"]')
+          .contains('Screening on Consumer users')
           .should('exist')
-          .invoke('text')
-          .then((innerText) => {
-            expect(text).include(innerText);
+          .each((ele) => {
+            cy.wrap(ele)
+              .should('exist')
+              .invoke('text')
+              .then((innerText) => {
+                expect(text).to.include(innerText);
+              });
           });
+        // })
       });
   });
 });

@@ -22,7 +22,10 @@ describe('Rule create and delete', () => {
     cy.get('td[data-cy="ruleId"]', { timeout: 15000 }).each((element, index) => {
       const ruleId = element[0].innerText;
       if (ruleId.includes(ruleInstanceId)) {
-        cy.get('button[data-cy="rule-delete-button"]').eq(index).click();
+        cy.get('button[data-cy="rule-delete-button"]')
+          .eq(+index)
+          .should('exist')
+          .click({ force: true });
         cy.get('div .ant-modal-header').should('contain', ruleInstanceId);
         cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click({ force: true });
         cy.message(`Rule deleted`).should('exist');

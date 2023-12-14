@@ -1,5 +1,3 @@
-import promisify from 'cypress-promise';
-
 describe('SAR Generate', () => {
   beforeEach(() => {
     cy.loginByForm();
@@ -8,12 +6,11 @@ describe('SAR Generate', () => {
     cy.visit(
       '/case-management/cases?page=1&pageSize=100&showCases=ALL_ALERTS&alertStatus=OPEN&ruleNature=AML',
     );
-    const index = await promisify(cy.get('td[data-cy="ruleNature"]', { timeout: 15000 }));
 
     cy.intercept('GET', '**/report-types').as('sarCountries');
     cy.get('a[data-cy="alert-id"]', { timeout: 15000 })
       .should('be.visible')
-      .eq(+index)
+      .eq(0)
       .click({ force: true });
 
     const SarCountrywithReports = [
