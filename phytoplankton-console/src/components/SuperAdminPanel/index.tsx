@@ -46,6 +46,7 @@ const featureDescriptions: Record<Feature, string> = {
   SAR: 'Enables SAR',
   QA: 'Enables QA in case management',
   AI_RISK_SCORE: 'Enables AI risk score in Demo mode only',
+  RULES_ENGINE_V8: 'Enables new rules Engine V8 (Experimental)',
 };
 
 export default function SuperAdminPanel() {

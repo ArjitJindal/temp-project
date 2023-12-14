@@ -190,7 +190,7 @@ export function useUpdateTenantSettings() {
     {
       retry: false,
       onSuccess: () => {
-        message.success('Settings save');
+        message.success('Settings saved');
         reloadSettings();
       },
       onError: (e) => {

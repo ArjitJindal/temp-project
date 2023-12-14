@@ -161,7 +161,7 @@ Cypress.Commands.add('toggleFeature', (feature: string, enable: boolean) => {
 
     // Click save, wait for success message and close dialog
     cy.get('[data-cy="modal-ok"]').click();
-    cy.message('Settings save').should('exist');
+    cy.message('Settings saved').should('exist');
     cy.get('[data-cy="modal-close"]').click();
     cy.get('[role="dialog"]').should('not.be.visible');
   });
