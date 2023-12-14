@@ -50,24 +50,27 @@ export default function (): JSX.Element {
             required: ['f1'],
             properties: {
               f1: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    f2: {
-                      type: 'object',
-                      required: ['f3', 'f4'],
-                      properties: {
-                        f3: {
-                          type: 'string',
-                        },
-                        f4: {
-                          type: 'string',
-                        },
-                      },
-                    },
+                'ui:schema': {
+                  'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
+                },
+                required: ['ElectronicAddressText', 'ElectronicAddressTypeCode'],
+                properties: {
+                  ElectronicAddressText: {
+                    // $ref: '#/definitions/RestrictString517',
+                    type: 'string',
+                    title: 'Electronic address',
+                    description:
+                      'This element identifies the subject`s email address or website URL (Uniform Resource Locator) address.',
+                  },
+                  ElectronicAddressTypeCode: {
+                    // $ref: '#/definitions/ValidateElectronicAddressTypeCode',
+                    type: 'string',
+                    title: 'Electronic address type (code)',
+                    description:
+                      'This element identifies the type of electronic address recorded for the subject; specifically whether it is an email address or a website URL (Uniform Resource Locator) address.',
                   },
                 },
+                type: 'object',
               },
             },
           };

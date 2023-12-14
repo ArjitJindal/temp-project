@@ -24,6 +24,7 @@ import { WebhookInput } from './custom/WebhookInput';
 import CountryRegion from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CountryRegion';
 import { InputProps } from '@/components/library/Form';
 import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/PhoneNumber';
+import ElectronicAddress from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/ElectronicAddress';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -73,6 +74,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'FINCEN_PHONE_NUMBER') {
     return <PhoneNumber {...props} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'FINCEN_ELECTRONIC_ADDRESS') {
+    return <ElectronicAddress {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'TIME_RANGE') {
     return <TimeRangeInput {...props} uiSchema={uiSchema} />;

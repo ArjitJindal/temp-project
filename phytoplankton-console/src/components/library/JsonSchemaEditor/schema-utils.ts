@@ -35,7 +35,8 @@ export function dereferenceType(type: ExtendedSchema, rootSchema?: ExtendedSchem
       throw new Error(`Only local refs ('#/...') are supported`);
     }
     if (rootSchema == null) {
-      throw new Error(`Unable to dereference, rootSchema is not defined`);
+      console.warn(`Unable to dereference, rootSchema is not defined`);
+      return type;
     }
     const pathArray = path.substring('#/'.length).split('/');
     const result = get(rootSchema, pathArray);

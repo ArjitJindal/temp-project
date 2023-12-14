@@ -284,6 +284,9 @@ export const FincenJsonSchema = {
       type: 'object',
     },
     ElectronicAddressType: {
+      'ui:schema': {
+        'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
+      },
       required: ['ElectronicAddressText', 'ElectronicAddressTypeCode'],
       properties: {
         ElectronicAddressText: {

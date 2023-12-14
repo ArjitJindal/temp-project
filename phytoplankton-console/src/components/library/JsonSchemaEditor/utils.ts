@@ -11,6 +11,7 @@ import {
   $IS_OPTIONAL,
   $SELF_VALIDATION,
   FieldValidator,
+  Validator,
 } from '@/components/library/Form/utils/validation/types';
 import {
   maxLength,
@@ -106,7 +107,7 @@ export function makeValidators<T>(
         }
       }
     } else {
-      const validators: any[] = [];
+      const validators: Validator<unknown>[] = [];
       if (prop.isRequired) {
         validators.push(notEmpty);
       }
