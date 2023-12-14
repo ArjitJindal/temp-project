@@ -208,7 +208,7 @@ ENV=local npm run migration:post:up
 1. Refresh aws credentials
 
 ```
-npm run login dev
+npm run aws-sso-login:dev
 ```
 
 2. Copy and paste the command printed from the previous step to the terminal

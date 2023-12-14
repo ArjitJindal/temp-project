@@ -33,7 +33,7 @@ export async function getSecret<T>(secretId: string): Promise<T> {
   } catch (e) {
     if (process.env.ENV === 'local') {
       console.error(
-        `❗❗Please run 'npm run login dev' to refresh the aws credentials for the Dev account!`
+        `❗❗Please run 'npm run aws-sso-login:dev' to refresh the aws credentials for the Dev account!`
       )
     }
     throw new WrappedError(`No secret found for secret ${secretId}`, e)
