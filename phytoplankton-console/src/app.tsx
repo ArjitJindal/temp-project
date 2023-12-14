@@ -13,15 +13,14 @@ import './global.less';
 import { getBranding } from '@/utils/branding';
 
 interface Error {
-  cause: unknown;
-  status: number;
-  statusCode: number;
-  expose: boolean;
+  code?: number;
+  body?: string;
   headers?:
     | {
         [key: string]: string;
       }
     | undefined;
+  httpMessage?: string;
   [key: string]: any;
 }
 
@@ -36,7 +35,7 @@ Sentry.init({
   enabled: process.env.ENV_NAME !== 'local',
   beforeSend(event, hint) {
     const error = hint?.originalException as Error;
-    if (error && error.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
+    if (error && error.code && error.code >= 400 && error.code < 500) {
       return null;
     }
     return event;
