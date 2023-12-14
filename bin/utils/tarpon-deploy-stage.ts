@@ -19,7 +19,7 @@ export const tarponDeployStage = (
   role: iam.IRole,
   vpc: ec2.IVpc
 ) => {
-  const env = config.stage + (config.region ? `:${config.region}` : "");
+  const env = config.stage + (config.region ? ` ${config.region}` : "");
   const shouldReleaseSentry =
     config.stage === "prod" && config.region === "eu-1";
 
@@ -55,8 +55,8 @@ export const tarponDeployStage = (
             // Don't upload source maps to Lambda
             "rm dist/lambdas/**/*.js.map",
             ...installTerraform,
-            `npm run synth:${env}`,
-            `npm run deploy:${env}`,
+            `npm run synth ${env}`,
+            `npm run deploy ${env}`,
           ],
         },
       },
