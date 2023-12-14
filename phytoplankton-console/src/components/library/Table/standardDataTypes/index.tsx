@@ -125,7 +125,7 @@ export const NUMBER: ColumnDataType<number> = {
 };
 
 export const FLOAT: ColumnDataType<number> = {
-  render: (value) => <span>{(value ?? 0).toFixed(2)}</span>,
+  render: (value) => <span>{(value ?? 0.0)?.toFixed(2)}</span>,
   renderEdit: (context) => {
     const [state] = context.edit.state;
     return (
@@ -139,7 +139,7 @@ export const FLOAT: ColumnDataType<number> = {
       </div>
     );
   },
-  stringify: (value) => `${(value ?? 0).toFixed(2)}`,
+  stringify: (value) => `${(value ?? 0.0)?.toFixed(2)}`,
 };
 
 export const STRING: ColumnDataType<string> = {

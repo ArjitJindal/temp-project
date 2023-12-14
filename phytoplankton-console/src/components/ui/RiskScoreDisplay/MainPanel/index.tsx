@@ -54,7 +54,7 @@ export default function MainPanel(props: Props) {
         )}
       </div>
       <div className={s.currentValue}>
-        <span>{(currentScore ?? 0).toFixed(2) ?? 'N/A'}</span>
+        <span>{(currentScore ?? 0.0)?.toFixed(2) ?? 'N/A'}</span>
       </div>
       <div>{currentRiskLevel && <RiskLevelTag level={currentRiskLevel} />}</div>
       {sortedScores.length > 1 && <Chart riskLevel={currentRiskLevel} values={sortedScores} />}
