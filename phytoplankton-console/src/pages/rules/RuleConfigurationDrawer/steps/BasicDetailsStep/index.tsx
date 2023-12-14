@@ -333,19 +333,15 @@ function ChecklistDetails() {
   const api = useApi();
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, { wait: 500 });
-  const {
-    values: { checklistTemplateId },
-  } = useFormContext<FormValues>();
+
   const params = {
     filterName: debouncedSearchTerm,
-    filterId: debouncedSearchTerm ? undefined : checklistTemplateId,
   };
-  const queryResult = useQuery<ChecklistTemplatesResponse>(
-    CHECKLIST_TEMPLATES(params),
-    async () => {
-      return api.getChecklistTemplates(params);
-    },
+
+  const queryResult = useQuery<ChecklistTemplatesResponse>(CHECKLIST_TEMPLATES(params), async () =>
+    api.getChecklistTemplates(params),
   );
+
   const options = useMemo(() => {
     return isSuccess(queryResult.data)
       ? queryResult.data.value.data
@@ -356,6 +352,7 @@ function ChecklistDetails() {
           }))
       : [];
   }, [queryResult.data]);
+
   return (
     <>
       <StepHeader
