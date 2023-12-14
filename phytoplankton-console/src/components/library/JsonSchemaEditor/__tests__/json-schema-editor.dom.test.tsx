@@ -241,6 +241,50 @@ describe('Objects validation', () => {
       await expectArrayItemError(item, false);
     }
   });
+
+  test('Empty additionalProperties should be considered invalid if isRequired is true', async () => {
+    const schema: ExtendedSchema = {
+      type: 'object',
+      required: ['f1'],
+      properties: {
+        f1: {
+          type: 'object',
+          additionalProperties: {
+            type: 'string',
+          },
+        },
+      },
+    };
+
+    render(<RenderSchema alwaysShowErrors={true} schema={schema} />);
+    const f1 = await findInputField('f1');
+    await userEvent.click(f1);
+    await userEvent.keyboard('abc');
+    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}');
+    await expectFieldError(f1, true);
+  });
+
+  test('Empty additionalProperties should be considered valid if isRequired is false', async () => {
+    const schema: ExtendedSchema = {
+      type: 'object',
+      required: ['f1'],
+      properties: {
+        f1: {
+          type: 'object',
+          additionalProperties: {
+            type: 'string',
+          },
+        },
+      },
+    };
+
+    render(<RenderSchema alwaysShowErrors={true} schema={schema} />);
+    const f1 = await findInputField('f1');
+    await userEvent.click(f1);
+    await userEvent.keyboard('abc');
+    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}');
+    await expectFieldError(f1, true);
+  });
 });
 
 /*

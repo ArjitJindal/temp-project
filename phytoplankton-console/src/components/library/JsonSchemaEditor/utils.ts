@@ -81,17 +81,16 @@ export function makeValidators<T>(
     let propValidators;
     const schema = dereferenceType(prop.schema, rootSchema);
     if (isObject(schema)) {
+      propValidators = {};
       const orderedProps = getOrderedProps(schema, rootSchema);
       const nestedValidators = makeValidators(orderedProps, rootSchema);
       if (Object.keys(nestedValidators).length > 0) {
         propValidators = nestedValidators;
       }
-      if (propValidators != null) {
-        if (prop.isRequired) {
-          propValidators[$SELF_VALIDATION] = notEmpty;
-        } else {
-          propValidators[$IS_OPTIONAL] = true;
-        }
+      if (prop.isRequired) {
+        propValidators[$SELF_VALIDATION] = notEmpty;
+      } else {
+        propValidators[$IS_OPTIONAL] = true;
       }
     } else if (isArray(schema)) {
       const itemsSchema = schema.items ? dereferenceType(schema.items, rootSchema) : undefined;
