@@ -24,6 +24,30 @@ import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
 
+const featureDescriptions: Record<Feature, string> = {
+  RISK_LEVELS: 'Enable risk levels',
+  RISK_SCORING: 'Enables risk scoring',
+  AUDIT_LOGS: 'Enables audit log',
+  SLACK_ALERTS: 'Enables slack alerts for cases',
+  COPILOT: 'Enables AI copilot feature in case management',
+  INVESTIGATIVE_COPILOT: 'Enables AI forensics',
+  GOOGLE_SSO: 'Enable google log in',
+  SANCTIONS: 'Enables sanctions',
+  FALSE_POSITIVE_CHECK: 'Demo feature for false positive check',
+  DEMO_MODE: 'Enables demo mode',
+  DEMO_RULES: 'Enable demo rules, they don’t work actually',
+  SIMULATOR: 'Enables simulator for rules & risk levels',
+  CRM: 'Enables CRM data',
+  ENTITY_LINKING: 'Enables entity linking ',
+  ESCALATION: 'Enables case escalations flow',
+  IBAN_RESOLUTION:
+    'Resolve IBAN numbers from 3rd party website. Used in Certain Screening and Counterparty rules',
+  MERCHANT_MONITORING: 'Enables merchant monitoring in users & case details',
+  SAR: 'Enables SAR',
+  QA: 'Enables QA in case management',
+  AI_RISK_SCORE: 'Enables AI risk score in Demo mode only',
+};
+
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
@@ -155,7 +179,13 @@ export default function SuperAdminPanel() {
               >
                 <Select<Feature[]>
                   mode="multiple"
-                  options={FEATURES.map((feature) => ({ label: feature, value: feature }))}
+                  options={FEATURES.map((feature) => {
+                    return {
+                      label: feature,
+                      value: feature,
+                      title: featureDescriptions[feature] || feature,
+                    };
+                  })}
                   onChange={setFeatures}
                   allowClear
                   disabled={!initialFeatures}
