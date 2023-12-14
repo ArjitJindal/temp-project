@@ -374,7 +374,7 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
         allIterationsCompleted(data?.iterations || [])
           ? false
           : isDemoModeRes
-          ? 1000
+          ? 8000
           : POLL_STATUS_INTERVAL_SECONDS * 1000,
       enabled: Boolean(jobId),
     },
