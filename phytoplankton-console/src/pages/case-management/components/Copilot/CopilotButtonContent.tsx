@@ -35,40 +35,72 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
 
   return (
     <div className={s.buttons}>
-      <Button
-        isLoading={askLoading}
-        className={s.copilotAskButton}
-        onClick={onAskClick}
-        type={'TEXT'}
-        icon={<BrainLineIcon />}
-        isDisabled={!settings?.isAiEnabled || askLoading}
-        testName="ask-copilot"
-        requiredPermissions={['copilot:narrative:write']}
+      <Tooltip
+        title={
+          settings.isAiEnabled
+            ? `Use AI to generate the narrative template`
+            : `Enable AI Features to generate a narrative`
+        }
       >
-        Ask copilot
-      </Button>
-      <Button
-        isLoading={formatLoading}
-        className={s.copilotFormatButton}
-        onClick={onFormatClick}
-        type={'TEXT'}
-        icon={<MagicLineIcon />}
-        isDisabled={!settings?.isAiEnabled || formatLoading || !narrative || narrative.length < 50}
-        testName="format-copilot-narrative"
-        requiredPermissions={['copilot:narrative:write']}
+        <span>
+          <Button
+            isLoading={askLoading}
+            className={s.copilotAskButton}
+            onClick={onAskClick}
+            type={'TEXT'}
+            icon={<BrainLineIcon />}
+            isDisabled={!settings?.isAiEnabled || askLoading}
+            testName="ask-copilot"
+            requiredPermissions={['copilot:narrative:write']}
+          >
+            Ask copilot
+          </Button>
+        </span>
+      </Tooltip>
+      <Tooltip
+        title={
+          settings.isAiEnabled
+            ? `Use AI to format your narrative`
+            : `Enable AI Features to generate a narrative`
+        }
       >
-        Format
-      </Button>
-      <Button
-        className={s.copilotShowSourcesButton}
-        type={'TEXT'}
-        onClick={() => setShowSources(true)}
-        icon={<SearchIcon />}
-        isDisabled={attributes.length === 0}
-        requiredPermissions={['copilot:narrative:read']}
+        <span>
+          <Button
+            isLoading={formatLoading}
+            className={s.copilotFormatButton}
+            onClick={onFormatClick}
+            type={'TEXT'}
+            icon={<MagicLineIcon />}
+            isDisabled={
+              !settings?.isAiEnabled || formatLoading || !narrative || narrative.length < 50
+            }
+            testName="format-copilot-narrative"
+            requiredPermissions={['copilot:narrative:write']}
+          >
+            Format
+          </Button>
+        </span>
+      </Tooltip>
+      <Tooltip
+        title={
+          settings.isAiEnabled
+            ? `Discover the data that was used to generate the narrative.`
+            : `Enable AI Features to generate a narrative`
+        }
       >
-        Sources
-      </Button>
+        <span>
+          <Button
+            className={s.copilotShowSourcesButton}
+            type={'TEXT'}
+            onClick={() => setShowSources(true)}
+            icon={<SearchIcon />}
+            isDisabled={attributes.length === 0}
+            requiredPermissions={['copilot:narrative:read']}
+          >
+            Sources
+          </Button>
+        </span>
+      </Tooltip>
       <Modal
         title="ⓘ Copilot Sources"
         okText="Back"
