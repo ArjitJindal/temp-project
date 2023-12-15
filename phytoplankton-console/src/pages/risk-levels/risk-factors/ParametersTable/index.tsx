@@ -22,6 +22,7 @@ import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { LONG_TEXT } from '@/components/library/Table/standardDataTypes';
 import { RiskLevel } from '@/utils/risk-levels';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   parameters: RiskLevelTable;
@@ -41,7 +42,7 @@ interface Props {
 export default function ParametersTable(props: Props) {
   const { parameters, parameterSettings, onRefresh, onSaveValues, onActivate } = props;
   const canEdit = useHasPermissions(['risk-scoring:risk-levels:write']);
-
+  const settings = useSettings();
   useEffect(() => {
     for (const parameter of parameters) {
       onRefresh(parameter.parameter, parameter.entity);
@@ -130,7 +131,9 @@ export default function ParametersTable(props: Props) {
           }),
         ])}
         data={{
-          items: parameters,
+          items: parameters.filter(
+            (x) => !x?.requiredFeatures || x.requiredFeatures.every((f) => settings?.features?.[f]),
+          ),
         }}
         renderExpanded={(item) => (
           <ValuesTable

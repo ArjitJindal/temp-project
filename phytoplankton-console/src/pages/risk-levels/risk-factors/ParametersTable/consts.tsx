@@ -585,6 +585,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     isNullableAllowed: true,
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    requiredFeatures: ['SAR', 'DEMO_MODE'],
   },
   {
     parameter: 'destinationUserSarFiled',
@@ -596,6 +597,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     isNullableAllowed: true,
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    requiredFeatures: ['SAR', 'DEMO_MODE'],
   },
   {
     parameter: 'originAmountDetails.transactionAmount',

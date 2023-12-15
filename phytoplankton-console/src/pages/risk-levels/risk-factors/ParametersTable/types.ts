@@ -13,6 +13,7 @@ import {
   RiskParameterValueDayRange,
   RiskParameterValueAmountRange,
   CurrencyCode,
+  Feature,
 } from '@/apis';
 
 export type RiskValueContent = RiskParameterValue['content'];
@@ -110,6 +111,7 @@ export interface RiskLevelTableItem {
   risklevel?: RiskLevel;
   isNullableAllowed?: boolean;
   defaultRiskLevel: RiskLevel;
+  requiredFeatures?: Feature[];
 }
 
 export type RiskLevelTable = RiskLevelTableItem[];

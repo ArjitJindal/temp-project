@@ -229,46 +229,6 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       parameterType: 'VARIABLE',
     },
     {
-      parameter: 'originUserSarFiled',
-      isActive: true,
-      isDerived: true,
-      riskEntityType: 'TRANSACTION',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
-      riskLevelAssignmentValues: [
-        {
-          parameterValue: {
-            content: {
-              kind: 'LITERAL',
-              content: false,
-            },
-          },
-          riskLevel: 'MEDIUM',
-        },
-      ],
-      isNullableAllowed: true,
-      parameterType: 'VARIABLE',
-    },
-    {
-      parameter: 'destinationUserSarFiled',
-      isActive: true,
-      isDerived: true,
-      riskEntityType: 'TRANSACTION',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
-      riskLevelAssignmentValues: [
-        {
-          parameterValue: {
-            content: {
-              kind: 'LITERAL',
-              content: false,
-            },
-          },
-          riskLevel: 'MEDIUM',
-        },
-      ],
-      isNullableAllowed: true,
-      parameterType: 'VARIABLE',
-    },
-    {
       parameter: 'originAmountDetails.transactionAmount',
       isActive: true,
       isDerived: true,
