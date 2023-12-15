@@ -159,6 +159,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     return tableHelper.display({
       id: '_action',
       title: 'Action',
+      enableResizing: false,
       render: (entity) => {
         const readOnly =
           isReadOnly ||
@@ -201,7 +202,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
         );
       },
       defaultSticky: 'RIGHT',
-      defaultWidth: 200,
+      defaultWidth: 201,
     });
   }, [
     deletionMutation,
