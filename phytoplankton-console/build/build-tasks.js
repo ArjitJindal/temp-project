@@ -128,10 +128,15 @@ async function buildCode(env, options) {
             sentryEsbuildPlugin({
               org: 'flagright-data-technologies-in',
               project: 'phytoplankton-console',
-              release,
+              release: {
+                name: release,
+                setCommits: {
+                  auto: true,
+                },
+                cleanArtifacts: true,
+              },
               include: './dist',
               authToken: process.env.SENTRY_AUTH_TOKEN,
-              cleanArtifacts: true,
             }),
           ]),
     ],

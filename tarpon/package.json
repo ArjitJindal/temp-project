@@ -1,7 +1,7 @@
 {
   "name": "tarpon",
   "version": "1.0.0",
-  "description": "![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)",
+  "description": "![tarpons](https://github.com/flagright/orca/blob/main/tarpons.png)",
   "main": "index.js",
   "scripts": {
     "preinstall": "cd ../lib && npm install",
@@ -106,14 +106,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flagright/tarpon.git"
+    "url": "git+https://github.com/flagright/orca.git"
   },
   "author": "Flagright Data Technologies Inc.",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/flagright/tarpon/issues"
+    "url": "https://github.com/flagright/orca/issues"
   },
-  "homepage": "https://github.com/flagright/tarpon#readme",
+  "homepage": "https://github.com/flagright/orca#readme",
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "^3.245.0",
     "@aws-sdk/credential-providers": "^3.382.0",

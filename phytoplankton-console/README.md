@@ -65,7 +65,7 @@ Console should be available under https://flagright.local:8001/ (ignore warning 
 
 ## Running It Locally With Tarpon API
 
-Setup [tarpon](https://github.com/flagright/tarpon) package in you local. Set up steps and running tarpon locally in the [Tarpon README] (https://github.com/flagright/tarpon#tarpon).
+Setup [tarpon](https://github.com/flagright/orca) package in you local. Set up steps and running tarpon locally in the [Tarpon README] (https://github.com/flagright/orca#tarpon).
 
 Summary, after Tarpon dependencies are setup (including local DDB instance and MongoDB), in the `tarpon` repo:
 
