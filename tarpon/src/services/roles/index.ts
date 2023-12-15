@@ -144,8 +144,9 @@ export class RoleService {
     })
     // We store roles in the form namespace:role on Auth0. Default roles are stored in the "default" namespace.
     const validRoles = roles.filter(
-      (r) => r.name && r.name.match(/^[0-9a-z]+:.+$/i)
+      (r) => r.name && r.name.match(/^[0-9a-z-_]+:.+$/i)
     )
+
     return validRoles.map((role) => {
       if (role.name == undefined) {
         throw new Error('Role name cannot be null')
