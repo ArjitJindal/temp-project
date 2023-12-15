@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { pick, merge, mergeWith, isNil, isArray } from 'lodash'
+import { pick, merge, mergeWith, isNil, isArray, uniqWith } from 'lodash'
 import { stringify } from 'safe-stable-stringify'
 
 export const replaceMagicKeyword = (
@@ -80,4 +80,15 @@ export function getAllValuesByKey<V>(key: string, obj: object): V[] {
   }
   traverse(obj)
   return values
+}
+
+export const dedupObjectArray = <T extends object>(array: T[]): T[] => {
+  const isEqual = (a: T, b: T) => {
+    return (
+      Object.keys(a).length === Object.keys(b).length &&
+      Object.keys(a).every((key) => a[key] === b[key])
+    )
+  }
+
+  return uniqWith(array, isEqual)
 }

@@ -642,7 +642,6 @@ export class CaseRepository {
         falsePositiveDetails: 1,
         alerts: 1,
         caseType: 1,
-        caseAggregates: 1,
         caseHierarchyDetails: 1,
         ...(options.includeCaseTransactionIds
           ? { caseTransactionsIds: 1 }

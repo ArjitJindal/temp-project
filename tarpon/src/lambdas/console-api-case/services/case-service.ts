@@ -65,6 +65,7 @@ import { Priority } from '@/@types/openapi-internal/Priority'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { traceable } from '@/core/xray'
+import { dedupObjectArray } from '@/utils/object'
 
 @traceable
 export class CaseService extends CaseAlertsCommonService {
@@ -349,7 +350,9 @@ export class CaseService extends CaseAlertsCommonService {
         destinationPaymentMethods: compact(
           uniq(transactions.map((t) => t.destinationPaymentDetails?.method))
         ),
-        tags: compact(uniq(transactions.flatMap((t) => t.tags))),
+        tags: compact(
+          dedupObjectArray(transactions.flatMap((t) => t.tags ?? []))
+        ),
       },
     })
 

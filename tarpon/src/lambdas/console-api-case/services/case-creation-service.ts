@@ -44,6 +44,7 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CreateAlertFor } from '@/services/rules-engine/utils/rule-parameter-schemas'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { dedupObjectArray } from '@/utils/object'
 
 type CaseSubject =
   | {
@@ -455,7 +456,7 @@ export class CaseCreationService {
         )
       )
     )
-    const tags = uniq(
+    const tags = dedupObjectArray(
       compact(transactions.flatMap(({ tags }) => tags ?? []))
     ).sort()
 
@@ -791,7 +792,7 @@ export class CaseCreationService {
                 ?.destinationPaymentDetails?.method
                 ? [filteredTransaction?.destinationPaymentDetails?.method]
                 : [],
-              tags: filteredTransaction?.tags ?? [],
+              tags: dedupObjectArray(compact(filteredTransaction?.tags ?? [])),
             },
             caseTransactionsIds: filteredTransaction
               ? [filteredTransaction.transactionId as string]
@@ -834,9 +835,10 @@ export class CaseCreationService {
         )
       ).concat(caseAggregates.destinationPaymentMethods)
     )
-    const tags = compact(
-      uniq(
-        compact(transactions.flatMap((transaction) => transaction?.tags ?? []))
+
+    const tags = dedupObjectArray(
+      compact(
+        transactions.flatMap((transaction) => transaction?.tags ?? [])
       ).concat(caseAggregates.tags)
     )
 

@@ -1,4 +1,4 @@
-import { mergeEntities } from '@/utils/object'
+import { mergeEntities, dedupObjectArray } from '@/utils/object'
 
 describe('mergeEntities', () => {
   test('array arent merged', async () => {
@@ -59,5 +59,43 @@ describe('mergeEntities', () => {
     expect(mergeEntities(obj1, obj2)).toStrictEqual({
       somearray: [],
     })
+  })
+})
+
+describe('dedupObjectArray', () => {
+  test('should return empty array when input is empty', () => {
+    const array: object[] = []
+    expect(dedupObjectArray(array)).toStrictEqual([])
+  })
+
+  test('should return same array when no duplicates are present', () => {
+    const array = [
+      { a: 1, b: 2 },
+      { a: 2, b: 3 },
+      { a: 3, b: 4 },
+    ]
+    expect(dedupObjectArray(array)).toStrictEqual(array)
+  })
+
+  test('should remove duplicate objects from array', () => {
+    const array = [
+      { a: 1, b: 2 },
+      { a: 1, b: 2 },
+      { a: 2, b: 3 },
+    ]
+    const expected = [
+      { a: 1, b: 2 },
+      { a: 2, b: 3 },
+    ]
+    expect(dedupObjectArray(array)).toStrictEqual(expected)
+  })
+
+  test('should consider objects with same keys but different values as unique', () => {
+    const array = [
+      { a: 1, b: 2 },
+      { a: 2, b: 2 },
+      { a: 1, b: 3 },
+    ]
+    expect(dedupObjectArray(array)).toStrictEqual(array)
   })
 })

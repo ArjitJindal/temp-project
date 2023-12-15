@@ -27,6 +27,7 @@ import { RULE_NATURES } from '@/@types/openapi-internal-custom/RuleNature'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { CHECKLIST_DONE_STATUSS } from '@/@types/openapi-internal-custom/ChecklistDoneStatus'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
+import { dedupObjectArray } from '@/utils/object'
 
 let counter = 1
 let alertCounter = 1
@@ -211,7 +212,7 @@ export function sampleTransactionUserCases(params: {
                 (t) => t.destinationPaymentDetails?.method
               ) as PaymentMethod[]
           ) ?? [],
-        tags: uniq(caseTransactions.flatMap((t) => t.tags ?? [])),
+        tags: dedupObjectArray(caseTransactions.flatMap((t) => t.tags ?? [])),
       },
 
       caseTransactionsIds: caseTransactions.map((t) => t.transactionId!),
