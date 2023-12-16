@@ -3,9 +3,9 @@ import { envIs } from '@/utils/env'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { RiskScoringService } from '@/services/risk-scoring'
 import dayjs from '@/utils/dayjs'
+import { tenantHasFeature } from '@/core/utils/context'
 
 async function migrateTenant(tenant: Tenant) {
   if (envIs('dev')) {

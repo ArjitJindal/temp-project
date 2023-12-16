@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
 import { round, startCase } from 'lodash'
-import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
@@ -14,13 +13,13 @@ import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/Sancti
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { logger } from '@/core/logger'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { apiFetch } from '@/utils/api-fetch'
 import { envIs } from '@/utils/env'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
+import { tenantSettings } from '@/core/utils/context'
 
 const DEFAULT_FUZZINESS = 0.5
 const COMPLYADVANTAGE_SEARCH_API_URI =
@@ -100,11 +99,7 @@ export class SanctionsService {
     this.sanctionsWhitelistEntityRepository =
       new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
     this.apiKey = await this.getApiKey()
-
-    const tenantRepository = new TenantRepository(this.tenantId, {
-      dynamoDb: getDynamoDbClient(),
-    })
-    const settings = await tenantRepository.getTenantSettings()
+    const settings = await tenantSettings(this.tenantId)
     this.complyAdvantageSearchProfileId =
       settings.complyAdvantageSearchProfileId
   }

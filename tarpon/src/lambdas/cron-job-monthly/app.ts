@@ -1,5 +1,5 @@
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
+import { tenantHasFeature } from '@/core/utils/context'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { TenantService } from '@/services/tenants'
 import { FlagrightRegion, Stage } from '@/utils/env'

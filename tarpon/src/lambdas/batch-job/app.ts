@@ -61,6 +61,7 @@ export const jobRunnerHandler = lambdaConsumer()(async (job: BatchJob) => {
     await initializeTenantContext(job.tenantId)
     updateLogMetadata({
       type: job.type,
+      tenantId: job.tenantId,
     })
     return getBatchJobRunner(job.type).execute(job)
   })

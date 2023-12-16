@@ -14,7 +14,7 @@ import {
 } from '@aws-sdk/client-cloudwatch'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
-import { cloneDeep, isNil, omitBy } from 'lodash'
+import { cloneDeep, isEmpty, isNil, omitBy } from 'lodash'
 import { logger, winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import {
@@ -28,6 +28,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Metric } from '@/core/cloudwatch/metrics'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { envIs } from '@/utils/env'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 
 type LogMetaData = {
   tenantId?: string
@@ -39,6 +40,7 @@ export type ContextUser =
 
 export type Context = LogMetaData & {
   requestId?: string
+  settings?: TenantSettings
   features?: Feature[]
   logMetadata?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }
@@ -143,8 +145,7 @@ export async function initializeTenantContext(tenantId: string) {
   }
   const dynamoDb = getDynamoDbClient()
   const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
-  const features = (await tenantRepository.getTenantSettings(['features']))
-    ?.features
+  const tenantSettings = await tenantRepository.getTenantSettings()
   context.tenantId = tenantId
   if (!context.logMetadata) {
     context.logMetadata = {}
@@ -154,7 +155,8 @@ export async function initializeTenantContext(tenantId: string) {
   }
   context.logMetadata.tenantId = tenantId
   context.metricDimensions.tenantId = tenantId
-  context.features = features
+  context.features = tenantSettings?.features
+  context.settings = tenantSettings ?? {}
 }
 
 export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
@@ -175,6 +177,13 @@ export function updateTenantFeatures(features: Feature[]) {
   const context = asyncLocalStorage.getStore()
   if (context) {
     context.features = features
+  }
+}
+
+export function updateTenantSettings(settings: TenantSettings) {
+  const context = asyncLocalStorage.getStore()
+  if (context) {
+    context.settings = settings
   }
 }
 
@@ -293,4 +302,47 @@ export function getTestEnabledFeatures(): Feature[] | undefined {
   return process.env.ENV === 'local'
     ? (process.env.TEST_ENABLED_FEATURES?.split(',') as Feature[])
     : undefined
+}
+
+// Function for finaind tenant specific feature - to be used in global systems without context like Kinesis Consumers
+// For lambdas in console API or public API, use `useFeature` from context instead
+export async function tenantHasFeature(
+  tenantId: string,
+  feature: Feature
+): Promise<boolean> {
+  let features = getContext()?.features
+  if (!features) {
+    const tenantRepository = new TenantRepository(tenantId, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    features =
+      (await tenantRepository.getTenantSettings(['features']))?.features ?? []
+    updateTenantFeatures(features)
+  }
+
+  return (
+    features?.includes(feature) ||
+    getTestEnabledFeatures()?.includes(feature) ||
+    false
+  )
+}
+
+export async function tenantSettings(
+  tenantId: string
+): Promise<TenantSettings> {
+  const contextSettings = getContext()?.settings
+  if (contextSettings && !isEmpty(contextSettings)) {
+    return contextSettings
+  }
+
+  const tenantRepository = await new TenantRepository(tenantId, {
+    dynamoDb: getDynamoDbClient(),
+  })
+  const settings = await tenantRepository.getTenantSettings()
+
+  if (isEmpty(contextSettings) && settings) {
+    updateTenantSettings(settings)
+    updateTenantFeatures(settings.features ?? [])
+  }
+  return settings
 }

@@ -10,9 +10,9 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
+import { tenantHasFeature } from '@/core/utils/context'
 
 const CONCURRENT_BATCH_SIZE = 10
 
@@ -49,6 +49,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       dynamoDb,
     })
     const userRepository = new UserRepository(tenantId, {
+      dynamoDb,
       mongoDb,
     })
 
@@ -61,11 +62,10 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
     )
     const users = await userRepository.getMongoUsersByIds(userIds)
+    const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
+
     let processedUsers = 0
     for (const usersChunk of chunk(users, CONCURRENT_BATCH_SIZE)) {
-      const dynamoDb = getDynamoDbClient()
-      const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
-      const userRepository = new UserRepository(tenantId, { dynamoDb })
       await pMap(
         usersChunk,
         async (user) => {
