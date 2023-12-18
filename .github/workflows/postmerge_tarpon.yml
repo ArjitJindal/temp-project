@@ -1,0 +1,50 @@
+name: Postmerge tarpon
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "tarpon/**"
+      - "lib/**"
+    types:
+      - closed
+jobs:
+  update_coverage_stats:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Use Node.js 18x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.17.1
+          cache: "npm"
+          cache-dependency-path: "tarpon/package-lock.json"
+      - name: Cache jest results
+        uses: actions/cache@v3
+        with:
+          path: ~/.jest-cache
+          key: jest-cache
+      - name: Build Flagright Lib
+        run: npm ci
+        working-directory: "lib"
+      - run: npm ci
+        working-directory: "tarpon"
+      - run: npm run build:local
+        working-directory: "tarpon"
+      - name: Update coverage stats
+        run: npm run test:coverage
+        working-directory: "tarpon"
+      - name: Commit changes
+        working-directory: "tarpon"
+        run: |
+          git config --global user.email "github-actions@flagright.com"
+          git config --global user.name "Github Actions"
+          git add coverage-stats.json
+          git diff-index --quiet HEAD || git commit -m 'Update coverage stats'
+      - name: Push changes
+        run: git push

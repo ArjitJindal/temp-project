@@ -27,4 +27,14 @@ module.exports = {
   },
   transformIgnorePatterns: [`node_modules/(?!${includeEsModules.join('|')})`],
   setupFilesAfterEnv: ['<rootDir>/jest/jest-setup.js'],
+  coverageReporters: ['clover', 'json', 'lcov', 'text', 'json-summary'],
+  collectCoverageFrom: [
+    '**/*.{ts,tsx}',
+    '!**/node_modules/**',
+    '!**/src/apis/**',
+    '!**/cypress/**',
+    '!**/jest/**',
+    '!**/@types/**',
+    '!**/cypress.config.ts',
+  ],
 };
