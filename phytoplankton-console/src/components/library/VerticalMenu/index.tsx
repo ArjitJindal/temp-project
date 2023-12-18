@@ -25,6 +25,7 @@ export default function VerticalMenu(props: Props) {
         {props.additionalMenuTop}
         {items.map((item) => (
           <div
+            data-cy="configure-roles"
             key={item.key}
             className={cn(s.item, active === item.key && s.isActive, item.isInvalid && s.isInvalid)}
             onClick={() => onChange(item.key)}

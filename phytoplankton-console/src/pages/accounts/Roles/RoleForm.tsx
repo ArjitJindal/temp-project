@@ -143,6 +143,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
       <ButtonGroup>
         {canEdit && !isEditing && (
           <Button
+            testName="edit-role"
             onClick={() => setEdit(true)}
             requiredPermissions={['settings:organisation:write']}
           >
@@ -151,17 +152,22 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
         )}
         {isEditing && (
           <>
-            <Button htmlType={'submit'} isLoading={isLoading}>
+            <Button htmlType={'submit'} isLoading={isLoading} testName="save-role">
               Save
             </Button>
             {role?.id && (
-              <Button type={'SECONDARY'} isLoading={isLoading} onClick={onDelete}>
+              <Button
+                type={'SECONDARY'}
+                isLoading={isLoading}
+                onClick={onDelete}
+                testName="delete-role"
+              >
                 Delete
               </Button>
             )}
           </>
         )}
-        <Button type={'SECONDARY'} onClick={onExpand}>
+        <Button type={'SECONDARY'} onClick={onExpand} testName="show-all">
           {allExpanded ? 'Collapse all' : 'Show all'}
         </Button>
       </ButtonGroup>
