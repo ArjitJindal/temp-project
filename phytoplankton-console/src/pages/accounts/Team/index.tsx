@@ -38,6 +38,7 @@ import CheckCircleOutlined from '@/components/ui/icons/Remix/system/checkbox-cir
 import MinusCircleOutlined from '@/components/ui/icons/Remix/system/indeterminate-circle-line.react.svg';
 import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-2-line.react.svg';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
+import Confirm from '@/components/utils/Confirm';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
@@ -209,16 +210,47 @@ export default function Team() {
               >
                 Edit
               </Button>
-              <Button
-                type="TETRIARY"
-                onClick={() => {
-                  setDeletedUserId(item.id);
-                }}
-                isDisabled={item.blocked}
-                icon={<DeleteOutlined />}
-              >
-                Delete
-              </Button>
+              {accounts.length === 1 && user.role === UserRole.ROOT ? (
+                <Confirm
+                  text="This is the only user in the tenant."
+                  title="Are you sure you want to delete this user?"
+                  onConfirm={() => {
+                    deactiveUserMutation.mutate({
+                      userId: item.id,
+                      reassignTo: user.userId, // reassign to self if superuser is the only user
+                    });
+                  }}
+                >
+                  {({ onClick }) => (
+                    <Button
+                      type="TETRIARY"
+                      onClick={onClick}
+                      isDisabled={item.blocked}
+                      icon={<DeleteOutlined />}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Confirm>
+              ) : (
+                <Button
+                  type="TETRIARY"
+                  onClick={() => {
+                    if (accounts.length === 1 && user.role === UserRole.ROOT) {
+                      deactiveUserMutation.mutate({
+                        userId: item.id,
+                        reassignTo: user.userId, // reassign to self if superuser is the only user
+                      });
+                    } else {
+                      setDeletedUserId(item.id);
+                    }
+                  }}
+                  isDisabled={item.blocked}
+                  icon={<DeleteOutlined />}
+                >
+                  Delete
+                </Button>
+              )}
             </div>
           );
         },
