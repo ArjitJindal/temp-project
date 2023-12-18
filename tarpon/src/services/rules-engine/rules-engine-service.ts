@@ -22,6 +22,7 @@ import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
+import { RiskScoringService } from '../risk-scoring'
 import { DynamoDbTransactionRepository } from './repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -81,6 +82,8 @@ import { envIs } from '@/utils/env'
 import { handleTransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
 import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
+import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
+import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 
 const sqs = new SQSClient({})
 
@@ -154,6 +157,7 @@ export class RulesEngineService {
   riskRepository: RiskRepository
   userRepository: UserRepository
   tenantRepository: TenantRepository
+  riskScoringService: RiskScoringService
 
   constructor(
     tenantId: string,
@@ -184,6 +188,10 @@ export class RulesEngineService {
     })
     this.tenantRepository = new TenantRepository(tenantId, {
       dynamoDb,
+    })
+    this.riskScoringService = new RiskScoringService(tenantId, {
+      dynamoDb,
+      mongoDb,
     })
   }
 
@@ -222,13 +230,37 @@ export class RulesEngineService {
         transaction.transactionId
       )
 
-    const { executedRules, hitRules, transactionAggregationTasks } =
-      await this.verifyTransactionInternal(transaction)
+    const {
+      executedRules,
+      hitRules,
+      transactionAggregationTasks,
+      transactionRiskScoreDetails,
+    } = await this.verifyTransactionInternal(transaction)
+
+    const riskScoreDetails: TransactionRiskScoringResult | undefined =
+      transactionRiskScoreDetails
+        ? {
+            trsRiskLevel: transactionRiskScoreDetails.riskLevel,
+            trsScore: transactionRiskScoreDetails.score,
+          }
+        : undefined
+
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
       'Save Transaction/Event'
     )
     const initialTransactionState = transaction.transactionState || 'CREATED'
+
+    if (hasFeature('SYNC_TRS_CALCULATION') && transactionRiskScoreDetails) {
+      await this.riskRepository.createOrUpdateArsScore(
+        transaction.transactionId,
+        transactionRiskScoreDetails.score,
+        transaction.originUserId,
+        transaction.destinationUserId,
+        transactionRiskScoreDetails.components
+      )
+    }
+
     const savedTransaction = await this.transactionRepository.saveTransaction(
       {
         ...transaction,
@@ -238,6 +270,7 @@ export class RulesEngineService {
         status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
         executedRules,
         hitRules,
+        riskScoreDetails,
       }
     )
 
@@ -251,6 +284,7 @@ export class RulesEngineService {
       {
         executedRules,
         hitRules,
+        riskScoreDetails,
       }
     )
 
@@ -272,6 +306,7 @@ export class RulesEngineService {
       executedRules,
       hitRules,
       status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
+      riskScoreDetails,
     }
   }
 
@@ -438,6 +473,11 @@ export class RulesEngineService {
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
     transactionAggregationTasks: TransactionAggregationTaskEntry[]
+    transactionRiskScoreDetails?: {
+      score: number
+      riskLevel: RiskLevel
+      components: RiskScoreComponent[]
+    }
   }> {
     const getInitialDataSegment = await addNewSubsegment(
       'Rules Engine',
@@ -448,9 +488,14 @@ export class RulesEngineService {
       transaction
     )
     const senderUserRiskLevelPromise = this.getUserRiskLevel(senderUser)
+    const transactionRiskDetails = hasFeature('SYNC_TRS_CALCULATION')
+      ? this.riskScoringService.calculateArsScore(transaction)
+      : undefined
 
-    const ruleInstances =
-      await this.ruleInstanceRepository.getActiveRuleInstances('TRANSACTION')
+    const [ruleInstances, transactionRisk] = await Promise.all([
+      this.ruleInstanceRepository.getActiveRuleInstances('TRANSACTION'),
+      transactionRiskDetails,
+    ])
 
     const rulesById = keyBy(
       await this.ruleRepository.getRulesByIds(
@@ -473,6 +518,7 @@ export class RulesEngineService {
             transaction,
             senderUser,
             receiverUser,
+            transactionRiskScore: transactionRisk?.score,
           })
         )
       )
@@ -508,7 +554,18 @@ export class RulesEngineService {
     )
 
     updateStatsSegment?.close()
-    return { ...executedAndHitRulesResult, transactionAggregationTasks }
+    const riskDetails = await transactionRiskDetails
+    return {
+      ...executedAndHitRulesResult,
+      transactionAggregationTasks,
+      ...(riskDetails && {
+        transactionRiskScoreDetails: {
+          riskLevel: riskDetails.riskLevel,
+          score: riskDetails.score,
+          components: riskDetails.components,
+        },
+      }),
+    }
   }
 
   private async verifyRuleIdempotent(options: {
@@ -521,6 +578,7 @@ export class RulesEngineService {
     receiverUser?: User | Business
     ongoingScreeningMode?: boolean
     tracing?: boolean
+    transactionRiskScore?: number
   }) {
     const {
       rule,
@@ -532,6 +590,7 @@ export class RulesEngineService {
       database,
       ongoingScreeningMode,
       tracing,
+      transactionRiskScore,
     } = options
     const { parameters, action } = this.getUserSpecificParameters(
       senderUserRiskLevel,
@@ -600,6 +659,7 @@ export class RulesEngineService {
               transaction: transactionWithValidUserId,
               senderUser,
               receiverUser,
+              transactionRiskScore,
             },
             { parameters, filters: ruleFilters },
             { ruleInstance, rule },
@@ -731,6 +791,7 @@ export class RulesEngineService {
     transaction: Transaction
     senderUser?: User | Business
     receiverUser?: User | Business
+    transactionRiskScore?: number
   }): Promise<
     | {
         result?: ExecutedRulesResult | undefined

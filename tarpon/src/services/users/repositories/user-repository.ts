@@ -56,7 +56,7 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { SortOrder } from '@/@types/openapi-internal/SortOrder'
 import { UserResponse } from '@/@types/openapi-public/UserResponse'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { RiskScoreDetails } from '@/@types/openapi-public/RiskScoreDetails'
+import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 import { BusinessResponse } from '@/@types/openapi-public/BusinessResponse'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
@@ -470,7 +470,7 @@ export class UserRepository {
 
   private async getRiskScoringResult(
     userId: string
-  ): Promise<RiskScoreDetails> {
+  ): Promise<UserRiskScoreDetails> {
     const riskScoringService = new RiskScoringService(this.tenantId, {
       dynamoDb: this.dynamoDb,
       mongoDb: this.mongoDb,

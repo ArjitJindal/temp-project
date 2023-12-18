@@ -162,6 +162,7 @@ export class RiskRepository {
       transactionId,
       components,
     }
+
     const primaryKey = DynamoDbKeys.ARS_VALUE_ITEM(
       this.tenantId,
       transactionId,

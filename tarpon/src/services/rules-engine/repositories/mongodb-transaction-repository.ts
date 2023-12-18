@@ -58,6 +58,7 @@ import {
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { traceable } from '@/core/xray'
 import { Currency, CurrencyService } from '@/services/currency'
+import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -88,7 +89,8 @@ export class MongoDbTransactionRepository
   }
 
   async addTransactionToMongo(
-    transaction: TransactionWithRulesResult
+    transaction: TransactionWithRulesResult,
+    arsScore?: ArsScore
   ): Promise<InternalTransaction> {
     const db = this.mongoDb.db()
     const transactionsCollection = db.collection<InternalTransaction>(
@@ -103,6 +105,7 @@ export class MongoDbTransactionRepository
       destinationPaymentMethodId: getPaymentMethodId(
         transaction.destinationPaymentDetails
       ),
+      ...(arsScore ? { arsScore } : {}),
     }
 
     const existingTransaction = await this.getTransactionById(
@@ -1516,5 +1519,17 @@ export class MongoDbTransactionRepository
       transactions.push(...data)
     }
     return transactions
+  }
+
+  public async updateArsScore(
+    transactionId: string,
+    arsScore: ArsScore
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+
+    await collection.updateOne({ transactionId }, { $set: { arsScore } })
   }
 }

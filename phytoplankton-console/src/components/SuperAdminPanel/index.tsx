@@ -24,7 +24,7 @@ import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
 
-const featureDescriptions: Record<Feature, string> = {
+const featureDescriptions: { [key in Feature]: string } = {
   RISK_LEVELS: 'Enable risk levels',
   RISK_SCORING: 'Enables risk scoring',
   AUDIT_LOGS: 'Enables audit log',
@@ -47,6 +47,7 @@ const featureDescriptions: Record<Feature, string> = {
   QA: 'Enables QA in case management',
   AI_RISK_SCORE: 'Enables AI risk score in Demo mode only',
   RULES_ENGINE_V8: 'Enables new rules Engine V8 (Experimental)',
+  SYNC_TRS_CALCULATION: 'Allows to sync TRS calculation along with API call',
 };
 
 export default function SuperAdminPanel() {

@@ -10,6 +10,7 @@ import { CurrencyService } from '../currency'
 import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
+  getRiskLevelFromScore,
   getRiskScoreFromLevel,
   riskLevelPrecendence,
 } from './utils'
@@ -36,6 +37,9 @@ import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent
 import { traceable } from '@/core/xray'
 import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { RiskScoreDetails } from '@/@types/openapi-internal/RiskScoreDetails'
+import { ArsScore } from '@/@types/openapi-internal/ArsScore'
+import { tenantHasFeature } from '@/core/utils/context'
 
 function getDefaultRiskValue(
   riskClassificationValues: Array<RiskClassificationScore>
@@ -251,7 +255,7 @@ export class RiskScoringService {
     tenantId: string,
     connections: {
       dynamoDb?: DynamoDBDocumentClient
-      mongoDb: MongoClient
+      mongoDb?: MongoClient
     }
   ) {
     this.tenantId = tenantId
@@ -272,10 +276,7 @@ export class RiskScoringService {
     user: User | Business,
     riskClassificationValues: RiskClassificationScore[],
     riskFactors: ParameterAttributeRiskValues[]
-  ): Promise<{
-    score: number
-    components: RiskScoreComponent[]
-  }> {
+  ): Promise<RiskScoreDetails> {
     logger.info(`Calculating KRS score for user ${user.userId}`)
     const isUserConsumerUser = isConsumerUser(user)
     const components = await this.getRiskFactorScores(
@@ -301,14 +302,42 @@ export class RiskScoringService {
     )
   }
 
-  public async calculateArsScore(
+  public async simulateArsScore(
     transaction: Transaction,
     riskClassificationValues: RiskClassificationScore[],
     riskFactors: ParameterAttributeRiskValues[]
-  ): Promise<{
-    score: number
-    components: RiskScoreComponent[]
-  }> {
+  ): Promise<RiskScoreDetails> {
+    return this.calculateArsScoreInternal(
+      transaction,
+      riskClassificationValues,
+      riskFactors
+    )
+  }
+
+  public async calculateArsScore(
+    transaction: Transaction
+  ): Promise<RiskScoreDetails & { riskLevel: RiskLevel }> {
+    const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
+
+    const ars = await this.calculateArsScoreInternal(
+      transaction,
+      riskClassificationValues,
+      riskFactors || []
+    )
+
+    const riskLevel = getRiskLevelFromScore(riskClassificationValues, ars.score)
+
+    return {
+      ...ars,
+      riskLevel,
+    }
+  }
+
+  private async calculateArsScoreInternal(
+    transaction: Transaction,
+    riskClassificationValues: RiskClassificationScore[],
+    riskFactors: ParameterAttributeRiskValues[]
+  ): Promise<RiskScoreDetails> {
     logger.info(
       `Calculating ARS score for transaction ${transaction.transactionId}`
     )
@@ -332,11 +361,7 @@ export class RiskScoringService {
   public async reCalculateDrsScoreFromOldArsScores(
     userId: string,
     krsScore: number
-  ): Promise<{
-    score: number
-    components: RiskScoreComponent[]
-    transactionId?: string
-  }> {
+  ): Promise<RiskScoreDetails & { transactionId?: string }> {
     logger.info(`Recalculating DRS score from ond ARS score for user ${userId}`)
     const cursor = await this.riskRepository.allArsScoresForUser(userId)
     let score = krsScore
@@ -462,31 +487,62 @@ export class RiskScoringService {
     return score
   }
 
+  public async getArsScore(transactionId: string): Promise<ArsScore> {
+    const arsScore = await this.riskRepository.getArsScore(transactionId)
+
+    if (!arsScore) {
+      throw new Error(`No ARS score found for transaction ${transactionId}`)
+    }
+
+    return arsScore
+  }
+
+  private async getArsDetails(
+    transaction: Transaction
+  ): Promise<RiskScoreDetails> {
+    const syncRiskScoringEnabled = await this.syncRiskScoringEnabled()
+
+    if (syncRiskScoringEnabled) {
+      const { arsScore, components = [] } = await this.getArsScore(
+        transaction.transactionId
+      )
+
+      return { score: arsScore, components }
+    }
+
+    return this.calculateArsScore(transaction)
+  }
+
+  private syncRiskScoringEnabled = memoize(async () => {
+    return await tenantHasFeature(this.tenantId, 'SYNC_TRS_CALCULATION')
+  })
+
   public async updateDynamicRiskScores(transaction: Transaction): Promise<{
     originDrsScore: number | undefined | null
     destinationDrsScore: number | undefined | null
   }> {
-    const { riskClassificationValues, riskFactors } = await this.getRiskConfig()
-    const { score: arsScore, components } = await this.calculateArsScore(
-      transaction,
-      riskClassificationValues,
-      riskFactors || []
+    const syncRiskScoringEnabled = await this.syncRiskScoringEnabled()
+
+    const { score: arsScore, components } = await this.getArsDetails(
+      transaction
     )
 
     const [_, originDrsScore, destinationDrsScore] = await Promise.all([
-      await this.riskRepository.createOrUpdateArsScore(
-        transaction.transactionId,
-        arsScore,
-        transaction.originUserId,
-        transaction.destinationUserId,
-        components
-      ),
+      !syncRiskScoringEnabled
+        ? await this.riskRepository.createOrUpdateArsScore(
+            transaction.transactionId,
+            arsScore,
+            transaction.originUserId,
+            transaction.destinationUserId,
+            components
+          )
+        : null,
       transaction.originUserId
         ? this.calculateAndUpdateDRS(
             transaction.originUserId,
             arsScore,
             transaction.transactionId,
-            components
+            components ?? []
           )
         : null,
       transaction.destinationUserId
@@ -744,18 +800,24 @@ export class RiskScoringService {
 
   getUsersFromTransaction = memoize(
     async (transaction: Transaction) => {
-      const userIds = [
-        transaction.originUserId,
-        transaction.destinationUserId,
-      ].filter(Boolean) as string[]
-      const users = await this.userRepository.getMongoUsersByIds(userIds)
+      const getUserOrNull = async (
+        userId: string | undefined
+      ): Promise<User | Business | null> => {
+        if (!userId) return null
+
+        return (
+          (await this.userRepository.getUser<User | Business>(userId)) ?? null
+        )
+      }
+
+      const [originUser, destinationUser] = await Promise.all([
+        getUserOrNull(transaction.originUserId),
+        getUserOrNull(transaction.destinationUserId),
+      ])
+
       return {
-        originUser: users.find(
-          (user) => user.userId === transaction.originUserId
-        ),
-        destinationUser: users.find(
-          (user) => user.userId === transaction.destinationUserId
-        ),
+        originUser,
+        destinationUser,
       }
     },
     (transaction) => transaction.transactionId

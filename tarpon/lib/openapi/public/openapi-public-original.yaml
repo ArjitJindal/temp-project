@@ -1871,6 +1871,8 @@ components:
                 $ref: '#/components/schemas/HitRulesDetails'
             status:
               $ref: '#/components/schemas/RuleAction'
+            riskScoreDetails:
+              $ref: '#/components/schemas/TransactionRiskScoringResult'
           required:
             - executedRules
             - hitRules
@@ -2015,6 +2017,8 @@ components:
               description: Transaction ID that the results pertain to
             status:
               $ref: '#/components/schemas/RuleAction'
+            riskScoreDetails:
+              $ref: '#/components/schemas/TransactionRiskScoringResult'
           required:
             - transactionId
             - status
@@ -2176,6 +2180,18 @@ components:
       required:
         - executedRules
         - hitRules
+    TransactionRiskScoringResult:
+      title: TransactionRiskScoringResult
+      type: object
+      properties:
+        trsScore:
+          type: number
+          description: Transaction risk scoring score
+        trsRiskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+      required:
+        - trsScore
+        - trsRiskLevel
     ExecutedRulesResult:
       title: ExecutedRulesResult
       type: object
@@ -3135,7 +3151,7 @@ components:
           type: string
           description: user ID the risk score pertains to
         riskScoreDetails:
-          $ref: '#/components/schemas/RiskScoreDetails'
+          $ref: '#/components/schemas/UserRiskScoreDetails'
         hitRules:
           type: array
           items:
@@ -3164,7 +3180,7 @@ components:
           type: string
           description: user ID the risk score pertains to
         riskScoreDetails:
-          $ref: '#/components/schemas/RiskScoreDetails'
+          $ref: '#/components/schemas/UserRiskScoreDetails'
         hitRules:
           type: array
           items:
@@ -5130,8 +5146,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/HitRulesDetails'
-    RiskScoreDetails:
-      title: RiskScoreDetails
+    UserRiskScoreDetails:
+      title: UserRiskScoreDetails
       x-stoplight:
         id: 4b3f3f522e84a3
       type: object
@@ -5151,7 +5167,7 @@ components:
         - type: object
           properties:
             riskScoreDetails:
-              $ref: '#/components/schemas/RiskScoreDetails'
+              $ref: '#/components/schemas/UserRiskScoreDetails'
     BusinessWithRulesResult:
       title: BusinessWithRulesResult
       description: Model for business payload with rules result
@@ -5174,7 +5190,7 @@ components:
         - type: object
           properties:
             riskScoreDetails:
-              $ref: '#/components/schemas/RiskScoreDetails'
+              $ref: '#/components/schemas/UserRiskScoreDetails'
     BooleanString:
       title: Boolean string value
       type: string

@@ -1,7 +1,6 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
@@ -12,30 +11,37 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isDemoTenant } from '@/utils/tenant'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
+import { tenantHasFeature } from '@/core/utils/context'
 
 async function arsScoreEventHandler(
   tenantId: string,
   arsScore: ArsScore | undefined
 ) {
-  if (!arsScore || isDemoTenant(tenantId)) {
+  const transactionId = arsScore?.transactionId
+  if (!arsScore || isDemoTenant(tenantId) || !transactionId) {
     return
   }
   logger.info(`Processing ARS Score`)
   const mongoDb = await getMongoDbClient()
+  const isSyncRiskScoringEnabled = await tenantHasFeature(
+    tenantId,
+    'SYNC_TRS_CALCULATION'
+  )
 
   const riskRepository = new RiskRepository(tenantId, {
     mongoDb,
   })
+  const transactionRepository = new MongoDbTransactionRepository(
+    tenantId,
+    mongoDb
+  )
 
   await Promise.all([
     riskRepository.addArsValueToMongo(arsScore),
-    mongoDb
-      .db()
-      .collection(TRANSACTIONS_COLLECTION(tenantId))
-      .updateOne(
-        { transactionId: arsScore.transactionId },
-        { $set: { arsScore } }
-      ),
+    ...(isSyncRiskScoringEnabled
+      ? [transactionRepository.updateArsScore(transactionId, arsScore)]
+      : []),
   ])
 
   logger.info(`ARS Score Processed`)

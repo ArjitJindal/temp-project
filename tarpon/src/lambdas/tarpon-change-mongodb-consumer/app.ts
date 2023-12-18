@@ -164,16 +164,27 @@ async function transactionHandler(
   const tenantRepository = new TenantRepository(tenantId, {
     dynamoDb,
   })
+  const riskScoringService = new RiskScoringService(tenantId, {
+    dynamoDb,
+    mongoDb,
+  })
 
-  const [transactionInMongo, tenantSettings, ruleInstances] = await Promise.all(
-    [
-      transactionsRepo.addTransactionToMongo(transaction),
-      tenantRepository.getTenantSettings(),
-      ruleInstancesRepo.getRuleInstancesByIds(
-        transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
-      ),
-    ]
+  const tenantSettings = await tenantRepository.getTenantSettings()
+
+  const isSyncRiskScoringEnabled = tenantSettings.features?.includes(
+    'SYNC_TRS_CALCULATION'
   )
+
+  const arsScore = isSyncRiskScoringEnabled
+    ? await riskScoringService.getArsScore(transaction.transactionId)
+    : undefined
+
+  const [transactionInMongo, ruleInstances] = await Promise.all([
+    transactionsRepo.addTransactionToMongo(transaction, arsScore),
+    ruleInstancesRepo.getRuleInstancesByIds(
+      transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
+    ),
+  ])
 
   // Log error if the hit rate % is over a threshold.
   if (envIs('prod')) {
@@ -203,11 +214,6 @@ async function transactionHandler(
     transactionsRepo,
     tenantSettings
   )
-
-  const riskScoringService = new RiskScoringService(tenantId, {
-    dynamoDb,
-    mongoDb,
-  })
 
   const userService = new UserService(tenantId, { dynamoDb, mongoDb })
 

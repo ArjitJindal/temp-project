@@ -761,7 +761,7 @@ const _RULES_LIBRARY: Array<
       description:
         'For a given user, compares the expected transaction risk score',
       descriptionTemplate:
-        "{{ if-sender 'Sender' 'Receiver' }} transaction risk score {{ hitParty.riskScore }} exceeds expected limit of {{ riskScoreThreshold }}",
+        'Transaction risk score: {{ riskScore }} exceeds the expected limit of {{ parameters.riskScoreThreshold }}',
       defaultParameters: {
         riskScoreThreshold: 90,
       } as TransactionRiskScoreRuleParameters,

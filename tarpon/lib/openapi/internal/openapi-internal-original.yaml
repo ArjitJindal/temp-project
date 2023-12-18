@@ -7374,6 +7374,7 @@ components:
         - QA
         - AI_RISK_SCORE
         - RULES_ENGINE_V8
+        - SYNC_TRS_CALCULATION
       description: ''
     ManagedRoleName:
       type: string
@@ -10242,6 +10243,19 @@ components:
       enum:
         - USER
         - PAYMENT
+    RiskScoreDetails:
+      title: RiskScoreDetails
+      type: object
+      properties:
+        score:
+          type: number
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskScoreComponent'
+      required:
+        - score
+        - components
   securitySchemes:
     Authorization:
       type: http

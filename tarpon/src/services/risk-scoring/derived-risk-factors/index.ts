@@ -40,8 +40,8 @@ export type TransactionRiskFactorValueHandler<T> = {
   handler: (
     transaction: Transaction,
     users: {
-      originUser: Business | User | undefined
-      destinationUser: Business | User | undefined
+      originUser: Business | User | null
+      destinationUser: Business | User | null
     },
     parameter: ParameterAttributeRiskValuesParameterEnum,
     tenantId: string

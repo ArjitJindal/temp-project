@@ -346,6 +346,7 @@ describe('Verify transactions counting ARS risk levels', () => {
       dayjs('2022-01-30T18:00:00.000Z').valueOf(),
       'DAY'
     )
+
     expect(stats).toEqual([
       expect.objectContaining({
         _id: '2022-01-30',

@@ -58,6 +58,7 @@ export abstract class TransactionRule<
   transactionRepository: RulesEngineTransactionRepositoryInterface
   aggregationRepository?: AggregationRepository
   mode: 'DYNAMODB' | 'MONGODB'
+  transactionRiskScore?: number
 
   constructor(
     tenantId: string,
@@ -65,6 +66,7 @@ export abstract class TransactionRule<
       transaction: Transaction
       senderUser?: User | Business
       receiverUser?: User | Business
+      transactionRiskScore?: number
     },
     params: {
       parameters: P
@@ -90,6 +92,7 @@ export abstract class TransactionRule<
     this.dynamoDb = dynamoDb
     this.mongoDb = mongoDb
     this.mode = mode
+    this.transactionRiskScore = data.transactionRiskScore
 
     if (mode === 'DYNAMODB' && dynamoDb) {
       this.transactionRepository = new DynamoDbTransactionRepository(

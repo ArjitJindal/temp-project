@@ -285,7 +285,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
 
       for (const transaction of userTransactions) {
         const { score: arsScore } =
-          await this.riskScoringService!.calculateArsScore(
+          await this.riskScoringService!.simulateArsScore(
             transaction,
             newClassificationValues,
             parameterAttributeRiskValues

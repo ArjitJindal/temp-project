@@ -8,7 +8,21 @@ export interface TransactionRiskScoreRuleParameters {
 
 export class TransactionRiskScoreRule extends TransactionRule<TransactionRiskScoreRuleParameters> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
-    // skip
+    if (this.transactionRiskScore == null) {
+      return
+    }
+
+    if (this.transactionRiskScore >= this.parameters.riskScoreThreshold) {
+      return [
+        {
+          direction: 'ORIGIN',
+          vars: {
+            riskScore: this.transactionRiskScore,
+          },
+        },
+      ]
+    }
+
     return
   }
 
