@@ -1,0 +1,23 @@
+{
+  "language": "typescript",
+  "app": "npx ts-node main.ts",
+  "projectId": "c33bd5b9-2599-4133-aceb-6ac5bdaec23a",
+  "sendCrashReports": "true",
+  "terraformProviders": [
+    "hashicorp/aws@5.23.1",
+    "databricks/databricks@1.29.0"
+  ],
+  "terraformModules": [
+    {
+      "name": "vpc",
+      "source": "terraform-aws-modules/vpc/aws",
+      "version": "~> 3.2.0"
+    },
+    {
+      "name": "databricks",
+      "source": "databricks/examples/databricks",
+      "version": "~> 0.2.10"
+    }
+  ],
+  "context": {}
+}
