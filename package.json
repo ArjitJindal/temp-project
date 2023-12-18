@@ -29,14 +29,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flagright/orca.git"
+    "url": "git+https://github.com/flagright/tarpon.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/flagright/orca/issues"
+    "url": "https://github.com/flagright/tarpon/issues"
   },
-  "homepage": "https://github.com/flagright/orca#readme",
+  "homepage": "https://github.com/flagright/tarpon#readme",
   "dependencies": {
     "@types/lodash": "^4.14.200",
     "lodash": "^4.17.21"

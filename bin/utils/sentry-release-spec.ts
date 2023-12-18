@@ -10,7 +10,7 @@ export const getSentryReleaseSpec = (production: boolean) => {
         : `./node_modules/.bin/sentry-cli releases files ${getReleaseVersionTarpon(
             "latest-version"
           )} delete --all`,
-      `./node_modules/.bin/sentry-cli releases set-commits $RELEASE_VERSION --commit flagright/orca@$RELEASE_COMMIT`,
+      `./node_modules/.bin/sentry-cli releases set-commits $RELEASE_VERSION --commit flagright/tarpon@$RELEASE_COMMIT`,
       `./node_modules/.bin/sentry-cli releases files $RELEASE_VERSION upload-sourcemaps --ext js --ext map --ignore-file .sentryignore dist`,
       `./node_modules/.bin/sentry-cli releases finalize $RELEASE_VERSION`,
     ].filter(Boolean) as string[],
