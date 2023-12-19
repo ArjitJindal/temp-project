@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import s from './index.module.less';
 
 interface Props<TypeX, TypeY> {
-  x?: TypeX[];
-  y?: TypeY[];
+  x?: readonly TypeX[];
+  y?: readonly TypeY[];
   xLabel?: string;
   yLabel?: string;
   children: (x: TypeX, y: TypeY) => React.ReactNode;

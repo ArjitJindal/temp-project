@@ -1,5 +1,4 @@
 import React, { useContext, useMemo } from 'react';
-import { PageLoading } from '@ant-design/pro-layout';
 import { useMutation } from '@tanstack/react-query';
 import { isEmpty, toLower } from 'lodash';
 import { useApi } from '@/api';
@@ -19,6 +18,7 @@ import { message } from '@/components/library/Message';
 import { capitalizeWords, humanizeConstant } from '@/utils/humanize';
 import ErrorPage from '@/components/ErrorPage';
 import { useAccountRole } from '@/utils/user-utils';
+import { PageLoading } from '@/components/PageLoading';
 
 interface ContextValue {
   features: FeatureName[];

@@ -1,5 +1,3 @@
-import { Spin } from 'antd';
-
 import React, { useEffect, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { EdgeArrowPosition, EdgeInterpolation } from 'reagraph';
@@ -7,6 +5,7 @@ import s from '../index.module.less';
 import { EntityLinkingGraph } from '../EntityLinkingGraph';
 import * as Card from '@/components/ui/Card';
 import { Graph, GraphEdges, GraphNodes } from '@/apis';
+import Spinner from '@/components/library/Spinner';
 
 interface Props {
   userId: string;
@@ -60,7 +59,7 @@ export default function UserGraph(props: Props) {
       {!entity && (
         <Card.Section>
           <div className={s.spinContainer}>
-            <Spin />
+            <Spinner />
           </div>
         </Card.Section>
       )}

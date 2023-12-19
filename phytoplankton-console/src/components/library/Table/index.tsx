@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import cn from 'clsx';
 import * as TanTable from '@tanstack/react-table';
-import { Spin } from 'antd';
 import { cloneDeep, isEqual, omit } from 'lodash';
 import s from './index.module.less';
 import {
@@ -35,6 +34,7 @@ import InformationLineIcon from '@/components/ui/icons/Remix/system/information-
 import Alert from '@/components/library/Alert';
 import CursorPagination from '@/components/library/CursorPagination';
 import { Cursor } from '@/utils/queries/types';
+import Spinner from '@/components/library/Spinner';
 
 type RowHeightMode = 'FIXED' | 'AUTO';
 
@@ -317,7 +317,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
                           style={{ paddingLeft: containerWidth / 2 }}
                           colSpan={table.getAllFlatColumns().length}
                         >
-                          {isLoading(dataRes) ? <Spin /> : 'No data to display'}
+                          {isLoading(dataRes) ? <Spinner /> : 'No data to display'}
                         </td>
                       </tr>
                     )}

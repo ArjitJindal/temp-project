@@ -62,7 +62,18 @@
         in your browser
       </div>
     </noscript>
-    <div id="root"></div>
-    <script src="/{{ bundleJs }}"></script>
+
+    <div id="root">
+      {{ inlineLoader }}
+    </div>
+
+    <script type="text/javascript">
+      var stylesheet = document.createElement('link');
+      stylesheet.href = '/{{ bundleCss }}';
+      stylesheet.rel = 'stylesheet';
+      stylesheet.type = 'text/css';
+      document.getElementsByTagName('head')[0].appendChild(stylesheet);
+    </script>
+    <script async defer src="/{{ bundleJs }}"></script>
   </body>
 </html>

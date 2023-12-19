@@ -1,12 +1,13 @@
 import React from 'react';
 import pluralize from 'pluralize';
-import { List, Spin } from 'antd';
+import { List } from 'antd';
 import { User } from '../../types';
 import s from './style.module.less';
 import UserItem from './UserItem';
 import { AsyncResource } from '@/utils/asyncResource';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import Spinner from '@/components/library/Spinner';
 
 interface Props {
   selectedUser: User | null;
@@ -35,7 +36,7 @@ export default function UserList(props: Props) {
           resource={usersRes}
           renderLoading={() => (
             <div className={s.spinner}>
-              <Spin />
+              <Spinner />
             </div>
           )}
         >

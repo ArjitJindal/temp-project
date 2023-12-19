@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Select, Spin } from 'antd';
+import { Select } from 'antd';
 import { useDebounce } from 'ahooks';
 import { DefaultOptionType } from 'antd/es/select';
 import { Metadata } from '../../helpers';
@@ -16,6 +16,7 @@ import { getOr, isLoading } from '@/utils/asyncResource';
 import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { neverThrow } from '@/utils/lang';
 import { InputProps } from '@/components/library/Form';
+import Spinner from '@/components/library/Spinner';
 
 interface Props extends InputProps<string[]> {
   onChangeMeta?: (meta: Metadata) => void;
@@ -130,7 +131,7 @@ function SearchInput(
       showSearch
       filterOption={false}
       onSearch={setSearch}
-      notFoundContent={isLoading(queryResult.data) ? <Spin size="small" /> : null}
+      notFoundContent={isLoading(queryResult.data) ? <Spinner size="SMALL" /> : null}
       options={getOr(queryResult.data, [])}
       loading={isLoading(queryResult.data)}
       tokenSeparators={[SEPARATOR]}

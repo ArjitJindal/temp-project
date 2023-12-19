@@ -1,5 +1,6 @@
-import { Card, Space, Spin } from 'antd';
+import { Card, Space } from 'antd';
 import { P } from '../Typography';
+import Spinner from '@/components/library/Spinner';
 
 export function LoadingCard(props: { loadingMessage?: string }) {
   return (
@@ -9,7 +10,7 @@ export function LoadingCard(props: { loadingMessage?: string }) {
       bodyStyle={{ height: 'inherit', width: 'inherit', display: 'flex', alignItems: 'center' }}
     >
       <Space direction="vertical" style={{ textAlign: 'center', width: 'inherit' }}>
-        <Spin size="large" />
+        <Spinner size="LARGE" />
         {props.loadingMessage && <P>{props.loadingMessage}</P>}
       </Space>
     </Card>

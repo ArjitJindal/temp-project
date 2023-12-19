@@ -85,6 +85,9 @@ async function main() {
     context: {
       bundleJs: bundleJs,
       bundleCss: bundleCss,
+      inlineLoader: await fs.readFile(
+        path.join(env.PROJECT_DIR, env.SRC_FOLDER, 'inline/loader.html'),
+      ),
       ...config.define,
     },
   });

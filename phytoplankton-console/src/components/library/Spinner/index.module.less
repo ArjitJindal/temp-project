@@ -1,0 +1,92 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  width: calc(100% - 14px);
+  flex: 1;
+  padding: 0 8px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.slider {
+  height: 16px !important;
+  flex: 1;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+
+  &:not(.disabled) {
+    &.single {
+      :global {
+        .ant-slider-handle {
+          background-color: @fr-colors-v2-primary-flagrightBlue !important;
+        }
+      }
+    }
+    &:not(.startExclusive) {
+      :global {
+        .ant-slider-handle.ant-slider-handle-1 {
+          background-color: @fr-colors-v2-primary-flagrightBlue !important;
+        }
+      }
+    }
+    &:not(.endExclusive) {
+      :global {
+        .ant-slider-handle.ant-slider-handle-2 {
+          background-color: @fr-colors-v2-primary-flagrightBlue !important;
+        }
+      }
+    }
+  }
+
+  &.disabled {
+    pointer-events: none;
+
+    :global {
+      .ant-slider-track {
+        background-color: @fr-colors-gray-3 !important;
+      }
+    }
+
+    &:not(.single) {
+      :global {
+        .ant-slider-handle {
+          border-color: @fr-colors-gray-3 !important;
+        }
+      }
+    }
+    &:not(.startExclusive) {
+      :global {
+        .ant-slider-handle.ant-slider-handle-1 {
+          background-color: @fr-colors-gray-3 !important;
+          border-color: @fr-colors-gray-3 !important;
+        }
+      }
+    }
+    &:not(.endExclusive) {
+      :global {
+        .ant-slider-handle {
+          background-color: @fr-colors-gray-3 !important;
+          border-color: @fr-colors-gray-3 !important;
+        }
+      }
+    }
+  }
+
+  :global {
+    .ant-slider-rail {
+      height: 8px;
+      border-radius: 8px;
+      background-color: @fr-colors-purpleGrayTint !important;
+    }
+    .ant-slider-track {
+      height: 8px;
+      border-radius: 8px;
+      background-color: @fr-colors-v2-primary-flagrightBlue !important;
+    }
+    .ant-slider-handle {
+      margin-top: -3px;
+      border-color: @fr-colors-v2-primary-flagrightBlue !important;
+    }
+  }
+}

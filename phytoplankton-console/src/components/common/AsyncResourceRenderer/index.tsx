@@ -1,7 +1,8 @@
 import React from 'react';
-import { Alert, Spin } from 'antd';
+import { Alert } from 'antd';
 import s from './index.module.less';
 import * as ar from '@/utils/asyncResource';
+import Spinner from '@/components/library/Spinner';
 
 interface Props<T> {
   resource: ar.AsyncResource<T>;
@@ -18,11 +19,11 @@ export function AsyncResourceRenderer<T>(props: Props<T>): JSX.Element {
     renderInit = () => <></>,
     renderLoading = (lastState: T | null) => {
       if (lastState != null) {
-        return <Spin>{children(lastState)}</Spin>;
+        return <Spinner>{children(lastState)}</Spinner>;
       }
       return (
         <div className={s.spinContainer}>
-          <Spin />
+          <Spinner />
         </div>
       );
     },

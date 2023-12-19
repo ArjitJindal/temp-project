@@ -1,11 +1,15 @@
 import React from 'react';
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
-import { PageLoading } from '@ant-design/pro-layout';
 import { getBranding } from '@/utils/branding';
+import { PageLoading } from '@/components/PageLoading';
 
 const AuthenticationRequiredWrapper = withAuthenticationRequired(
   (({ children: innerChildren }) => innerChildren) as React.FC,
-  { onRedirecting: () => <PageLoading /> },
+  {
+    onRedirecting: () => {
+      return <PageLoading />;
+    },
+  },
 );
 
 const branding = getBranding();

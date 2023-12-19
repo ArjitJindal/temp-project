@@ -11,6 +11,7 @@ import { getBranding } from '@/utils/branding';
 import { USER_INFO } from '@/utils/queries/keys';
 import { Permission } from '@/apis';
 import { IHeap } from '@/@types/heap';
+import { PageLoading } from '@/components/PageLoading';
 
 const branding = getBranding();
 
@@ -61,7 +62,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
   );
 
   return (
-    <AsyncResourceRenderer resource={userRes}>
+    <AsyncResourceRenderer resource={userRes} renderLoading={() => <PageLoading />}>
       {(user) => {
         if (user === 'ORPHAN') {
           // todo: make proper logout button
