@@ -200,6 +200,7 @@ export default function Team() {
           return (
             <div className={s.buttons}>
               <Button
+                testName="accounts-edit-button"
                 type="SECONDARY"
                 onClick={() => {
                   setEditAccount(item);
@@ -223,6 +224,7 @@ export default function Team() {
                 >
                   {({ onClick }) => (
                     <Button
+                      testName="accounts-delete-button"
                       type="TETRIARY"
                       onClick={onClick}
                       isDisabled={item.blocked}
@@ -234,6 +236,7 @@ export default function Team() {
                 </Confirm>
               ) : (
                 <Button
+                  testName="accounts-delete-button"
                   type="TETRIARY"
                   onClick={() => {
                     if (accounts.length === 1 && user.role === UserRole.ROOT) {
@@ -327,6 +330,7 @@ export default function Team() {
             value={reassignTo}
           />
           <Button
+            testName="delete-account"
             type="PRIMARY"
             isDisabled={!reassignTo}
             onClick={() => {

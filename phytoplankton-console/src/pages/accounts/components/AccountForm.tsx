@@ -223,6 +223,7 @@ export default function AccountForm(props: Props) {
             Cancel
           </Button>
           <Button
+            testName="accounts-invite"
             type="PRIMARY"
             onClick={() => {
               onFinish();
@@ -238,6 +239,7 @@ export default function AccountForm(props: Props) {
       <div className={s.container}>
         <Label label="Email" level={4}>
           <TextInput
+            testName="accounts-email"
             isDisabled={isEdit}
             allowClear={false}
             value={values.email}
