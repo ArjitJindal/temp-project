@@ -1,6 +1,7 @@
 import { lowerCase, startCase } from 'lodash'
 import { TRANSACTION_TYPE } from './transaction-type'
 import { RuleVariable } from './types'
+import { TRANSACTION_PRODUCT_TYPE } from './transaction-product-types'
 import {
   TRANSACTION_DESTINATION_COUNTRY,
   TRANSACTION_ORIGIN_COUNTRY,
@@ -21,6 +22,7 @@ function withNamespace(variable: RuleVariable) {
 
 export const RULE_VARIABLES: RuleVariable[] = [
   TRANSACTION_TYPE,
+  TRANSACTION_PRODUCT_TYPE,
   TRANSACTION_ORIGIN_COUNTRY,
   TRANSACTION_DESTINATION_COUNTRY,
 ].map((v) => withNamespace(v))
