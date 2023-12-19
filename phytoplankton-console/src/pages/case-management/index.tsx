@@ -139,7 +139,7 @@ export default function CaseManagementPage() {
               placement="topLeft"
             >
               <div>
-                <Toggle value={qaMode} disabled={true} />
+                <Toggle value={qaMode} disabled={true} showLabel label={'QA'} />
               </div>
             </Tooltip>
           )}
