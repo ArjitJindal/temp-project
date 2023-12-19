@@ -34,6 +34,9 @@ export const CONFIG_MAP = {
 };
 
 export function getTarponConfig(stage: string, region: string) {
+  if (region === "user") {
+    return devConfig
+  }
   // Ignored as we already throw an exception when not valid, and the typing doesn't compute.
   // @ts-ignore
   const cfg = CONFIG_MAP[stage]?.[region];
