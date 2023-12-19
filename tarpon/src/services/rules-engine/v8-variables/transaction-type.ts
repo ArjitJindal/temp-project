@@ -1,4 +1,5 @@
 import { lowerCase, startCase } from 'lodash'
+import { SelectFieldSettings } from '@react-awesome-query-builder/core'
 import { TransactionRuleVariable } from './types'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -16,7 +17,7 @@ export const TRANSACTION_TYPE: TransactionRuleVariable<TransactionType> = {
         value: type,
         title: startCase(lowerCase(type)),
       })),
-    },
+    } as SelectFieldSettings,
   },
   load: async (transaction: Transaction) => {
     return transaction.type

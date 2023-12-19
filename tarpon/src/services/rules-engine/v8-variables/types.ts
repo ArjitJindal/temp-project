@@ -7,6 +7,7 @@ export interface RuleVariable {
   uiDefinition: FieldOrGroup
   load: (...args: any[]) => Promise<any>
 }
+
 export interface TransactionRuleVariable<ReturnType> extends RuleVariable {
   entity: 'TRANSACTION'
   load: (transaction: Transaction) => Promise<ReturnType>
