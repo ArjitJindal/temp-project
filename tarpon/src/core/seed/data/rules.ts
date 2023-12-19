@@ -9,6 +9,7 @@ import { SanctionsConsumerUserRuleParameters } from '@/services/rules-engine/use
 import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { TransactionsVelocityRuleParameters } from '@/services/rules-engine/transaction-rules/transactions-velocity'
 import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
+import { LowValueTransactionsRuleParameters } from '@/services/rules-engine/transaction-rules/low-value-transactions-base'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
   return ruleInstances().find((ri) => (ri.id = ruleInstanceId)) as RuleInstance
@@ -28,13 +29,61 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         'Too many transactions under reporting limit sent by a user.',
       ruleDescriptionAlias:
         '>= ‘x’ number of consecutive low value outgoing transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts.',
-      filters: {},
+      filters: {
+        lowTransactionCount: 10,
+        lowTransactionValues: {
+          USD: {
+            max: 1000,
+            min: 100,
+          },
+        },
+      } as LowValueTransactionsRuleParameters,
       riskLevelParameters: {
-        VERY_HIGH: {},
-        HIGH: {},
-        MEDIUM: {},
-        LOW: {},
-        VERY_LOW: {},
+        VERY_HIGH: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        HIGH: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        MEDIUM: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        LOW: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        VERY_LOW: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
       },
       riskLevelActions: {
         VERY_HIGH: 'FLAG',
@@ -51,9 +100,9 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       runCount: 1848,
       hitCount: 8,
       checksFor: ['Transaction amount', 'No. of transactions'],
-    },
+    } as RuleInstance,
     {
-      id: 'a25685ad',
+      id: 'a25685ad-2',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-2',
       casePriority: 'P2',
@@ -73,28 +122,28 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
           transactionAmountThreshold: {
             USD: 10000,
           },
-        },
+        } as TransactionAmountRuleParameters,
         HIGH: {
           transactionAmountThreshold: {
             USD: 10000,
           },
-        },
+        } as TransactionAmountRuleParameters,
         MEDIUM: {
           transactionAmountThreshold: {
             USD: 10000,
           },
-        },
+        } as TransactionAmountRuleParameters,
         LOW: {
           transactionAmountThreshold: {
             USD: 10000,
           },
-        },
+        } as TransactionAmountRuleParameters,
         VERY_LOW: {
           transactionAmountThreshold: {
             USD: 10000,
             ADA: 1000,
           },
-        },
+        } as TransactionAmountRuleParameters,
       },
       riskLevelActions: {
         VERY_HIGH: 'SUSPEND',
@@ -110,9 +159,9 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688114634781,
       runCount: 1848,
       hitCount: 1434,
-    },
+    } as RuleInstance,
     {
-      id: 'a45615ad',
+      id: 'a45615ad-1',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-30',
       casePriority: 'P1',
@@ -192,7 +241,11 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-16',
       casePriority: 'P1',
-      parameters: {},
+      parameters: {
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
+      } as SanctionsConsumerUserRuleParameters,
       action: 'BLOCK',
       type: 'USER',
       ruleNameAlias: 'Screening on Consumer users',
@@ -201,42 +254,26 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         HIGH: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         MEDIUM: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         LOW: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         VERY_LOW: {
-          transactionAmountThreshold: {
-            USD: 10000,
-            ADA: 1000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
@@ -263,7 +300,12 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-32',
       casePriority: 'P1',
-      parameters: {},
+      parameters: {
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
+        resolveIban: false,
+      } as SanctionsBankUserRuleParameters,
       action: 'SUSPEND',
       type: 'USER',
       ruleNameAlias: 'Screening on Bank name',
@@ -273,51 +315,35 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       checksFor: ['User’s bank name'],
       riskLevelParameters: {
         VERY_HIGH: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
           resolveIban: false,
         } as SanctionsBankUserRuleParameters,
         HIGH: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
           resolveIban: false,
-        },
+        } as SanctionsBankUserRuleParameters,
         MEDIUM: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
           resolveIban: false,
-        },
+        } as SanctionsBankUserRuleParameters,
         LOW: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
           resolveIban: false,
-        },
+        } as SanctionsBankUserRuleParameters,
         VERY_LOW: {
-          transactionAmountThreshold: {
-            USD: 10000,
-            ADA: 1000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
           resolveIban: false,
-        },
+        } as SanctionsBankUserRuleParameters,
       },
       riskLevelActions: {
         VERY_HIGH: 'SUSPEND',
@@ -333,13 +359,18 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688114634781,
       runCount: 603,
       hitCount: 340,
-    },
+    } as RuleInstance,
     {
       id: '3oi3nlk',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-128',
       casePriority: 'P1',
-      parameters: {},
+      parameters: {
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
+        entityTypes: ['BANK_NAME'],
+      } as SanctionsBusinessUserRuleParameters,
       action: 'SUSPEND',
       checksFor: ['Entity name'],
       type: 'USER',
@@ -350,46 +381,35 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
+          entityTypes: ['BANK_NAME'],
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
         } as SanctionsBusinessUserRuleParameters,
         HIGH: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
+          entityTypes: ['BANK_NAME'],
         } as SanctionsBusinessUserRuleParameters,
         MEDIUM: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
-        },
+          entityTypes: ['BANK_NAME'],
+        } as SanctionsBusinessUserRuleParameters,
         LOW: {
-          transactionAmountThreshold: {
-            USD: 10000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
-        },
+          entityTypes: ['BANK_NAME'],
+        } as SanctionsBusinessUserRuleParameters,
         VERY_LOW: {
-          transactionAmountThreshold: {
-            USD: 10000,
-            ADA: 1000,
-          },
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
-        },
+          entityTypes: ['BANK_NAME'],
+        } as SanctionsBusinessUserRuleParameters,
       },
       riskLevelActions: {
         VERY_HIGH: 'SUSPEND',
@@ -405,7 +425,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688114634781,
       runCount: 340,
       hitCount: 240,
-    },
+    } as RuleInstance,
   ]
 })
 
