@@ -14,6 +14,7 @@ import { background } from '@/utils/background'
 import { envIs } from '@/utils/env'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTask } from '@/lambdas/request-logger/app'
+import { getErrorMessage } from '@/utils/lang'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
@@ -47,8 +48,20 @@ async function logRequest(
   context: Context
 ) {
   try {
-    const payload =
-      typeof event.body === 'string' ? JSON.parse(event.body) : event.body ?? {}
+    const payload = (() => {
+      if (typeof event.body === 'string') {
+        try {
+          return JSON.parse(event.body)
+        } catch (error) {
+          logger.error(`Unable to parse string: ${getErrorMessage(error)}`, {
+            body: event.body.slice(0, 100),
+          })
+        }
+      } else {
+        return event.body ?? {}
+      }
+    })()
+
     if (!LOGGABLE_METHODS.includes(event.httpMethod) || !isEmpty(payload)) {
       return
     }
