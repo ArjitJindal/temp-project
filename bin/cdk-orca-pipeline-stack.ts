@@ -13,22 +13,17 @@ import { getSentryReleaseSpec } from "./utils/sentry-release-spec";
 import { getVpc } from "./utils/vpc";
 import { sourceOutput, tarponBuildOutput } from "./constants/artifcats";
 import { tarponDeployStage } from "./utils/tarpon-deploy-stage";
-import { config as devConfig } from "../tarpon/lib/configs/config-dev";
-import { config as sandboxConfig } from "../tarpon/lib/configs/config-sandbox";
-import { config as prodConfigAsia1 } from "../tarpon/lib/configs/config-prod-asia-1";
-import { config as prodConfigAsia2 } from "../tarpon/lib/configs/config-prod-asia-2";
-import { config as prodConfigEu1 } from "../tarpon/lib/configs/config-prod-eu-1";
-import { config as prodConfigEu2 } from "../tarpon/lib/configs/config-prod-eu-2";
-import { config as prodConfigUs1 } from "../tarpon/lib/configs/config-prod-us-1";
-import { config as prodConfigAu1 } from "../tarpon/lib/configs/config-prod-au-1";
-import { getCodeDeployRole } from "./utils/code-deploy-role";
-import { phytoplanktonDeployStage } from "./utils/phytoplankton-console-deploy";
+import { config as devConfig } from "@flagright/lib/config/config-dev";
+import { config as sandboxConfig } from "@flagright/lib/config/config-sandbox";
 import { config as phytoDevConfig } from "../phytoplankton-console/lib/configs/config-dev";
 import { config as phytoSandboxConfig } from "../phytoplankton-console/lib/configs/config-sandbox";
 import { config as phytoProdConfig } from "../phytoplankton-console/lib/configs/config-prod";
+import { getCodeDeployRole } from "./utils/code-deploy-role";
+import { phytoplanktonDeployStage } from "./utils/phytoplankton-console-deploy";
 import { getE2ETestProject } from "./utils/e2e_test_stage";
 import { postDeploymentCodeBuildProject } from "./utils/post_deploy_tarpon";
-
+import { PRODUCTION_REGIONS } from "@flagright/lib/constants/deploy";
+import { getTarponConfig } from "@flagright/lib/constants/config";
 const PIPLINE_NAME = "orca-pipeline";
 
 export type CdkOrcaPipelineStackProps = StackProps;
@@ -38,7 +33,7 @@ export class CdkOrcaPipelineStack extends Stack {
     scope: Construct,
     id: string,
     props: CdkOrcaPipelineStackProps,
-    deployConfig: DeployConfig
+    deployConfig: DeployConfig,
   ) {
     super(scope, id, props);
 
@@ -104,7 +99,7 @@ export class CdkOrcaPipelineStack extends Stack {
                 this,
                 "dev",
                 DEV_CODE_DEPLOY_ROLE_ARN,
-                role
+                role,
               ),
             }),
           ],
@@ -118,7 +113,7 @@ export class CdkOrcaPipelineStack extends Stack {
                 this,
                 devConfig,
                 role,
-                vpc
+                vpc,
               ),
               input: sourceOutput,
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
@@ -161,7 +156,7 @@ export class CdkOrcaPipelineStack extends Stack {
                 this,
                 "sandbox",
                 SANDBOX_CODE_DEPLOY_ROLE_ARN,
-                role
+                role,
               ),
               input: sourceOutput,
             }),
@@ -176,7 +171,7 @@ export class CdkOrcaPipelineStack extends Stack {
                 this,
                 sandboxConfig,
                 role,
-                vpc
+                vpc,
               ),
               input: sourceOutput,
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
@@ -196,47 +191,23 @@ export class CdkOrcaPipelineStack extends Stack {
         {
           stageName: "Deploy_Prod",
           actions: [
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Tarpon_EU_1",
-              project: tarponDeployStage(this, prodConfigEu1, role, vpc),
-              input: sourceOutput,
-              extraInputs: [tarponBuildOutput],
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Tarpon_EU_2",
-              project: tarponDeployStage(this, prodConfigEu2, role, vpc),
-              input: sourceOutput,
-              extraInputs: [tarponBuildOutput],
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Tarpon_US_1",
-              project: tarponDeployStage(this, prodConfigUs1, role, vpc),
-              input: sourceOutput,
-              extraInputs: [tarponBuildOutput],
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Tarpon_AU_1",
-              project: tarponDeployStage(this, prodConfigAu1, role, vpc),
-              input: sourceOutput,
-              extraInputs: [tarponBuildOutput],
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Tarpon_ASIA_1",
-              project: tarponDeployStage(this, prodConfigAsia1, role, vpc),
-              input: sourceOutput,
-              extraInputs: [tarponBuildOutput],
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Tarpon_ASIA_2",
-              project: tarponDeployStage(this, prodConfigAsia2, role, vpc),
-              input: sourceOutput,
-              extraInputs: [tarponBuildOutput],
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
+            ...PRODUCTION_REGIONS.flatMap((region) => {
+              return [
+                new codepipline_actions.CodeBuildAction({
+                  actionName: `Deploy_Tarpon_${region
+                    .toUpperCase()
+                    .replace("-", "_")}`,
+                  project: tarponDeployStage(
+                    this,
+                    getTarponConfig("prod", region),
+                    role,
+                    vpc,
+                  ),
+                  input: sourceOutput,
+                  extraInputs: [tarponBuildOutput],
+                  environmentVariables: getSentryReleaseSpec(false).actionEnv,
+                }),
+              ];
             }),
             new codepipline_actions.CodeBuildAction({
               actionName: "Deploy_Phytoplankton_Console",
@@ -244,7 +215,7 @@ export class CdkOrcaPipelineStack extends Stack {
                 this,
                 "prod",
                 PROD_CODE_DEPLOY_ROLE_ARN,
-                role
+                role,
               ),
               input: sourceOutput,
             }),
@@ -253,77 +224,21 @@ export class CdkOrcaPipelineStack extends Stack {
         {
           stageName: "Post_Deploy_Prod",
           actions: [
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Post_Deploy_Prod_EU_1",
-              project: postDeploymentCodeBuildProject(
-                this,
-                prodConfigEu1,
-                role,
-                vpc
-              ),
-              input: sourceOutput,
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Post_Deploy_Prod_EU_2",
-              project: postDeploymentCodeBuildProject(
-                this,
-                prodConfigEu2,
-                role,
-                vpc
-              ),
-              input: sourceOutput,
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Post_Deploy_Prod_US_1",
-              project: postDeploymentCodeBuildProject(
-                this,
-                prodConfigUs1,
-                role,
-                vpc
-              ),
-              input: sourceOutput,
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Post_Deploy_Prod_AU_1",
-              project: postDeploymentCodeBuildProject(
-                this,
-                prodConfigAu1,
-                role,
-                vpc
-              ),
-              input: sourceOutput,
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Post_Deploy_Prod_ASIA_1",
-              project: postDeploymentCodeBuildProject(
-                this,
-                prodConfigAsia1,
-                role,
-                vpc
-              ),
-              input: sourceOutput,
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: "Post_Deploy_Prod_ASIA_2",
-              project: postDeploymentCodeBuildProject(
-                this,
-                prodConfigAsia2,
-                role,
-                vpc
-              ),
-              input: sourceOutput,
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
+            ...PRODUCTION_REGIONS.map((region) => {
+              return new codepipline_actions.CodeBuildAction({
+                actionName: `Post_Deploy_Prod_${region
+                  .toUpperCase()
+                  .replace("-", "_")}`,
+                project: postDeploymentCodeBuildProject(
+                  this,
+                  getTarponConfig("prod", region),
+                  role,
+                  vpc,
+                ),
+                input: sourceOutput,
+                environmentVariables: getSentryReleaseSpec(false).actionEnv,
+                extraInputs: [tarponBuildOutput],
+              });
             }),
           ],
         },

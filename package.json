@@ -8,12 +8,10 @@
     "prepare": "husky install .husky",
     "openapi:local": "cd tarpon && npm run openapi:build && npm run openapi:prepare && cd ../phytoplankton-console && ENV=local npm run openapi:build && cd ..",
     "deploy:pipeline": "ENV=deploy cdk deploy orca-pipeline --require-approval never --profile=AWSAdministratorAccess-073830519512",
-    "deploy:pipeline:clean": "export ENV=deploy && npm run aws-sso-login:deploy && npm run synth:pipeline && npm run deploy:pipeline",
+    "deploy:pipeline:clean": "export ENV=deploy && npm run aws-login deploy && npm run synth:pipeline && npm run deploy:pipeline",
     "deploy:pipeline:actions": "ENV=deploy cdk deploy orca-pipeline --require-approval never",
-    "deploy:pipeline-test:clean": "export ENV=deploy-test && npm run aws-sso-login:deploy && npm run synth:pipeline && npm run deploy:pipeline",
-    "aws-sso-login": "./scripts/aws/aws-sso-login.sh $npm_config_profile",
-    "aws-sso-login:deploy": "npm run aws-sso-login --profile=AWSAdministratorAccess-073830519512",
-    "sso-fallback-message": "echo 'Clear the cookies manually of START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ and try again. \nOR\nFollow the steps mentioned below:\n1. Open the START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ in a browser.\n2. Click on the AWS Account Button you see\n3. Click Deploy\n4. Click AWSAdministratorAccess | Command Line or Programmatic Access\n5. Click Copy to Clipboard in Option 1\n6. Paste the copied value in the terminal and press enter\n\nNow you should be able to run the command again' && exit 1",
+    "deploy:pipeline-test:clean": "export ENV=deploy-test && npm run aws-login deploy && npm run synth:pipeline && npm run deploy:pipeline",
+    "aws-login": "npx ts-node ./lib/scripts/aws-login.ts",
     "synth:pipeline": "cdk synth orca-pipeline"
   },
   "devDependencies": {
@@ -37,7 +35,13 @@
     "url": "https://github.com/flagright/tarpon/issues"
   },
   "homepage": "https://github.com/flagright/tarpon#readme",
+  "lint-staged": {
+    "{lib,bin,scripts}/*.{js,ts}": [
+      "prettier --write"
+    ]
+  },
   "dependencies": {
+    "@flagright/lib": "file:lib",
     "@types/lodash": "^4.14.200",
     "lodash": "^4.17.21"
   }

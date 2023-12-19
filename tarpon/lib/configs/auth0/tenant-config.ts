@@ -1,4 +1,5 @@
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
+import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { Auth0DevTenantConfig } from './tenant-config-dev'
 import { Auth0ProdTenantConfig } from './tenant-config-prod'
 import { Auth0ProdBureauTenantConfig } from './tenant-config-prod-bureau'
@@ -7,7 +8,6 @@ import { Auth0SandboxBureauTenantConfig } from './tenant-config-sandbox-bureau'
 import { Auth0SandboxRegtankTenantConfig } from './tenant-config-sandbox-regtank'
 import { Auth0SandboxZigramTenantConfig } from './tenant-config-sandbox-zigram'
 import { Auth0ProdRegtankTenantConfig } from './tenant-config-prod-regtank'
-import { FlagrightRegion } from '@/utils/env'
 
 const REGION_TENANT_CONFIGS: { [key: string]: Auth0TenantConfig[] } = {
   'asia-1': [Auth0ProdRegtankTenantConfig],
@@ -15,7 +15,7 @@ const REGION_TENANT_CONFIGS: { [key: string]: Auth0TenantConfig[] } = {
 }
 
 export function getAuth0TenantConfigs(
-  stage: 'local' | 'dev' | 'sandbox' | 'prod',
+  stage: Stage,
   region?: FlagrightRegion
 ): Auth0TenantConfig[] {
   switch (stage) {

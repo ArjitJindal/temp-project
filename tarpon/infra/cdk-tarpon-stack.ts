@@ -68,7 +68,7 @@ import {
   DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   DEFAULT_LAMBDA_TIMEOUT_SECONDS,
 } from '@lib/lambdas'
-import { Config } from '@lib/configs/config'
+import { Config } from '@flagright/lib/config/config'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import { getQaApiKeyId, getQaIntegrationTestApiKeyId, isQaEnv } from '@lib/qa'
 import {

@@ -3,13 +3,13 @@ process.env.AWS_XRAY_CONTEXT_MISSING = 'IGNORE_ERROR'
 import { exit } from 'process'
 import commandLineArgs from 'command-line-args'
 
+import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { loadConfigEnv } from '../migrations/utils/config'
 import { ApiUsageMetricsService } from '@/services/metrics/api-usage-metrics-service'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantBasic } from '@/services/accounts'
 import { TenantService } from '@/services/tenants'
-import { FlagrightRegion, Stage } from '@/utils/env'
 
 const optionDefinitions = [
   { name: 'tenantId', type: String },

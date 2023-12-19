@@ -1,9 +1,9 @@
+import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
-import { FlagrightRegion, Stage } from '@/utils/env'
 
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(

@@ -11,7 +11,7 @@ import {
   StackConstants,
 } from '@lib/constants'
 import { LAMBDAS } from '@lib/lambdas'
-import { Config } from '@lib/configs/config'
+import { Config } from '@flagright/lib/config/config'
 
 import { CANARIES } from '@lib/canaries'
 import {

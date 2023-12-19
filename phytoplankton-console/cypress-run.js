@@ -35,7 +35,7 @@ async function getCypressCreds() {
     };
   } catch (e) {
     console.error(
-      `❗❗Please run 'npm run aws-sso-login:dev' to refresh the aws credentials for the Dev account!`,
+      `❗❗Please run 'npm run aws-login dev' to refresh the aws credentials for the Dev account!`,
     );
     throw e;
   }

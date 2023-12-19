@@ -5,7 +5,7 @@ import {
   aws_ec2 as ec2,
   Duration,
 } from "aws-cdk-lib";
-import { Config } from "../../tarpon/lib/configs/config";
+import { Config } from "@flagright/lib/config/config";
 import { getAssumeRoleCommands } from "./assume-role-commands";
 import { GENERATED_DIRS } from "../constants/generatedDirs";
 import { tarponBuildOutput } from "../constants/artifcats";
@@ -17,7 +17,7 @@ export const tarponDeployStage = (
   scope: Construct,
   config: Config,
   role: iam.IRole,
-  vpc: ec2.IVpc
+  vpc: ec2.IVpc,
 ) => {
   const env = config.stage + (config.region ? `:${config.region}` : "");
   const shouldReleaseSentry =
@@ -48,7 +48,7 @@ export const tarponDeployStage = (
             "cd tarpon",
             ...GENERATED_DIRS.map(
               (dir) =>
-                `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`
+                `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`,
             ),
             ...(shouldReleaseSentry ? getSentryReleaseSpec(true).commands : []),
             `npm run migration:pre:up`,

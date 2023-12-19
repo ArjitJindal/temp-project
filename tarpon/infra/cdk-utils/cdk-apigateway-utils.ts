@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { Config } from '@lib/configs/config'
+import { Config } from '@flagright/lib/config/config'
 import { StackConstants, getResourceName, getSuffix } from '@lib/constants'
 import { RemovalPolicy } from 'aws-cdk-lib'
 import {

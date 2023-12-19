@@ -10,10 +10,10 @@ import { render } from 'prettyjson'
 import { Db } from 'mongodb'
 import { isEmpty, mergeWith, sortBy, startCase } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { PRODUCTION_REGIONS, Env } from '@flagright/lib/constants/deploy'
 import { getConfig, loadConfigEnv } from './migrations/utils/config'
 import { TenantService } from '@/services/tenants'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { Env, PRODUCTION_ENVS } from '@/utils/env'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import {
@@ -169,8 +169,8 @@ async function main() {
   } else if (env === 'sandbox') {
     await runReadOnlyQueryForEnv('sandbox')
   } else if (env === 'prod') {
-    for (const env of PRODUCTION_ENVS) {
-      await runReadOnlyQueryForEnv(env)
+    for (const region of PRODUCTION_REGIONS) {
+      await runReadOnlyQueryForEnv(`prod:${region}`)
     }
   }
 

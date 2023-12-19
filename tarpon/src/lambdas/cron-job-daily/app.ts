@@ -1,4 +1,5 @@
 import { chunk, groupBy, mapValues } from 'lodash'
+import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { getOngoingScreeningUserRuleInstances } from '../batch-job/ongoing-screening-user-rule-batch-job-runner'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -7,7 +8,6 @@ import { sendBatchJobCommand } from '@/services/batch-job'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
-import { FlagrightRegion, Stage } from '@/utils/env'
 
 const ONGOING_SCREENING_USERS_BATCH_SIZE = 100
 

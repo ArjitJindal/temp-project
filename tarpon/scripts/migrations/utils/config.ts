@@ -1,46 +1,13 @@
-import { config as localConfig } from '@lib/configs/config-local'
-import { config as devConfig } from '@lib/configs/config-dev'
-import { config as sandboxConfig } from '@lib/configs/config-sandbox'
-import { config as prodConfigAsia2 } from '@lib/configs/config-prod-asia-2'
-import { config as prodConfigAsia1 } from '@lib/configs/config-prod-asia-1'
-import { config as prodConfigEu1 } from '@lib/configs/config-prod-eu-1'
-import { config as prodConfigEu2 } from '@lib/configs/config-prod-eu-2'
-import { config as prodConfigAu1 } from '@lib/configs/config-prod-au-1'
-import { config as prodConfigUS1 } from '@lib/configs/config-prod-us-1'
-import { Env } from '@/utils/env'
+import { getTarponConfig } from '@flagright/lib/constants/config'
+import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 
 export function getConfig() {
   if (!process.env.ENV) {
     process.env.ENV = 'local'
     console.warn("ENV unspecified. Using 'local'.")
   }
-  let env = process.env.ENV as Env
-  if (env === 'prod') {
-    env = `${env}:${process.env.REGION}` as Env
-  }
-
-  switch (env) {
-    case 'local':
-      return localConfig
-    case 'dev':
-      return devConfig
-    case 'sandbox':
-      return sandboxConfig
-    case 'prod:asia-1':
-      return prodConfigAsia1
-    case 'prod:asia-2':
-      return prodConfigAsia2
-    case 'prod:eu-1':
-      return prodConfigEu1
-    case 'prod:eu-2':
-      return prodConfigEu2
-    case 'prod:au-1':
-      return prodConfigAu1
-    case 'prod:us-1':
-      return prodConfigUS1
-    default:
-      throw new Error(`Unknown env: ${process.env.ENV}`)
-  }
+  const env = process.env.ENV as Stage
+  return getTarponConfig(env, (process.env.REGION as FlagrightRegion) || 'eu-1')
 }
 
 export function loadConfigEnv() {

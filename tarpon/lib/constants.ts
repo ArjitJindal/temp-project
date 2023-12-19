@@ -1,4 +1,4 @@
-import { Config } from './configs/config'
+import { Config } from '@flagright/lib/config/config'
 
 export function getSuffix(): string {
   let suffix = ''

@@ -17,7 +17,7 @@ import {
   getNameForGlobalResource,
   getResourceNameForTarpon,
 } from '@lib/constants'
-import { Config } from '@lib/configs/config'
+import { Config } from '@flagright/lib/config/config'
 import { Duration } from 'aws-cdk-lib'
 import { createApiGateway } from '../cdk-utils/cdk-apigateway-utils'
 import { createFunction } from '../cdk-utils/cdk-lambda-utils'

@@ -2,7 +2,7 @@ import { TerraformStack } from 'cdktf'
 import { Construct } from 'constructs'
 import * as cdktf from 'cdktf'
 import * as aws from '@cdktf/providers/aws'
-import { Config } from '@lib/configs/config'
+import { Config } from '@flagright/lib/config/config'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { createAuth0TenantResources } from './auth0/cdktf-auth0-resources'
 

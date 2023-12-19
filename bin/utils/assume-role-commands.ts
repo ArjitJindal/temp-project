@@ -1,4 +1,4 @@
-import { Config } from "../../tarpon/lib/configs/config";
+import { Config } from "@flagright/lib/config/config";
 
 export const getAssumeRoleCommands = (config: Config) => [
   `ASSUME_ROLE_ARN="arn:aws:iam::${config.env.account}:role/CodePipelineDeployRole"`,

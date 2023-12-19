@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import { Construct } from 'constructs'
 import { Resource } from 'aws-cdk-lib'
 import { Effect, IRole, Policy, PolicyStatement } from 'aws-cdk-lib/aws-iam'
-import { Config } from '@lib/configs/config'
+import { Config } from '@flagright/lib/config/config'
 
 export function grantMongoDbAccess(
   context: Construct & { config: Config },

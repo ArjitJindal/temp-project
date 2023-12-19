@@ -1,4 +1,4 @@
-import { Config } from '@lib/configs/config'
+import { Config } from '@flagright/lib/config/config'
 import { Stack } from 'aws-cdk-lib'
 import { Construct } from 'constructs'
 import { StackConstants, getResourceNameForTarpon } from '@lib/constants'

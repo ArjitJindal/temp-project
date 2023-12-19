@@ -18,6 +18,7 @@ import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { BadRequest } from 'http-errors'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
+import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { createNewApiKeyForTenant } from '../api-key'
 import { sendBatchJobCommand } from '../batch-job'
 import { TenantRepository } from './repositories/tenant-repository'
@@ -32,7 +33,7 @@ import { traceable } from '@/core/xray'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantUsageData } from '@/@types/openapi-internal/TenantUsageData'
 import dayjs from '@/utils/dayjs'
-import { FlagrightRegion, envIs } from '@/utils/env'
+import { envIs } from '@/utils/env'
 import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
 import { isFlagrightInternalUser } from '@/@types/jwt'
 
@@ -43,8 +44,6 @@ export type TenantInfo = {
 }
 
 export const USAGE_PLAN_REGEX = /tarpon:(.*):(.*)/
-
-type Stage = 'local' | 'dev' | 'sandbox' | 'prod'
 
 @traceable
 export class TenantService {

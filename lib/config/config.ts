@@ -1,7 +1,7 @@
 import { Duration, Environment } from 'aws-cdk-lib'
 import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
-import { FlagrightRegion, Stage } from '@/utils/env'
+import { FlagrightRegion, Stage } from '../constants/deploy'
 
 type ApiGatewayConfig = {
   CACHE?: {

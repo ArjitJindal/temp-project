@@ -9,7 +9,7 @@ import {
 import { Construct } from 'constructs'
 import { Duration } from 'aws-cdk-lib'
 import { CANARIES } from '@lib/canaries'
-import { Config } from '@lib/configs/config'
+import { Config } from '@flagright/lib/config/config'
 
 export const createCanary = (
   scope: Construct & { config: Config },

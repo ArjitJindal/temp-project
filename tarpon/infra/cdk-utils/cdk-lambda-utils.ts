@@ -14,7 +14,7 @@ import { Construct } from 'constructs'
 import { IRole, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
-import { Config } from '@lib/configs/config'
+import { Config } from '@flagright/lib/config/config'
 import { Duration } from 'aws-cdk-lib'
 
 export type InternalFunctionProps = {

@@ -9,7 +9,7 @@ import { ConsoleApiPathToLambda } from '@lib/openapi/openapi-internal-augmentor'
 import { PublicManagementApiPathToLambda } from '@lib/openapi/openapi-public-management-augmentor'
 import { PublicDeviceDataApiPathToLambda } from '@lib/openapi/openapi-public-device-data-augmentor'
 import { PublicSanctionsApiPathToLambda } from '@lib/openapi/openapi-public-sanctions-augmentor'
-import { config } from '@lib/configs/config-local'
+import { config } from '@flagright/lib/config/config-local'
 import chalk from 'chalk'
 
 function loadConfigToEnvs() {

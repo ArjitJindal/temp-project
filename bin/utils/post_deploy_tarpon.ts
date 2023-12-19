@@ -1,4 +1,4 @@
-import { Config } from "../../tarpon/lib/configs/config";
+import { Config } from "@flagright/lib/config/config";
 import {
   aws_codebuild as codebuild,
   aws_iam as iam,
