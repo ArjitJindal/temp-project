@@ -777,7 +777,7 @@ const _RULES_LIBRARY: Array<
       typologyDescription:
         'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
       source: 'Japan Reference Cases on Suspicious Transactions 2020',
-      requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS', 'DEMO_RULES'],
+      requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS', 'SYNC_TRS_CALCULATION'],
     }
   },
   () => {
