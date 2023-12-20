@@ -101,6 +101,17 @@ export default function (): JSX.Element {
           </div>
         </div>
       </UseCase>
+      <UseCase title={'Line'}>
+        <div>
+          <div style={{ display: 'block' }}>
+            <Component
+              type="line"
+              items={items}
+              tabBarGutter={5} //The gap between tabs
+            />
+          </div>
+        </div>
+      </UseCase>
       <UseCase title={'Editable Card'}>
         <div>
           <div style={{ display: 'block' }}>

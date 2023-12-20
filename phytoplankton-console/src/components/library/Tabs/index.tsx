@@ -12,7 +12,7 @@ export interface TabItem {
   Icon?: React.ReactNode;
 }
 
-interface Props extends Pick<TabsProps, 'type' | 'activeKey' | 'onChange'> {
+export interface Props extends Pick<TabsProps, 'type' | 'activeKey' | 'onChange'> {
   items: TabItem[];
   addIcon?: React.ReactNode;
   tabHeight?: string | number;
@@ -30,7 +30,7 @@ export default function Tabs(props: Props) {
       activeKey={activeKey}
       type={props?.type}
       size={props?.size}
-      className={cn(props.type === 'line' ? s.root : '')}
+      className={cn(s.root, props.type === 'line' && s.line)}
       addIcon={addIcon}
       defaultActiveKey="1"
       tabBarGutter={tabBarGutter}
@@ -45,9 +45,10 @@ export default function Tabs(props: Props) {
         const { title, key, children, isClosable, isDisabled, Icon } = item;
         return (
           <AntTabs.TabPane
+            className={s.tab}
             tab={
-              <span className={cn(s.root, s.tab_span)}>
-                {Icon && <div className={cn(s.root, s.icon)}>{Icon}</div>}
+              <span className={cn(s.tab_span)}>
+                {Icon && <div className={cn(s.icon)}>{Icon}</div>}
                 <span>{title}</span>
               </span>
             }
