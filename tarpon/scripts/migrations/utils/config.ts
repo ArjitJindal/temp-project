@@ -1,13 +1,13 @@
 import { getTarponConfig } from '@flagright/lib/constants/config'
-import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
+import { stageAndRegion } from '@flagright/lib/utils/env'
 
 export function getConfig() {
   if (!process.env.ENV) {
     process.env.ENV = 'local'
     console.warn("ENV unspecified. Using 'local'.")
   }
-  const env = process.env.ENV as Stage
-  return getTarponConfig(env, (process.env.REGION as FlagrightRegion) || 'eu-1')
+  const [stage, region] = stageAndRegion()
+  return getTarponConfig(stage, region)
 }
 
 export function loadConfigEnv() {
@@ -15,7 +15,7 @@ export function loadConfigEnv() {
   Object.entries(config.application).forEach((entry) => {
     process.env[entry[0]] = String(entry[1])
   })
-  process.env.ENV = config.stage
+  process.env.ENV = `${config.stage}:${config.region || 'eu-1'}`
   process.env.REGION = config.region
   process.env.AWS_REGION = config.env.region
 }
