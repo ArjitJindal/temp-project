@@ -68,7 +68,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       },
     }),
     helper.simple<'legalEntity.companyFinancialDetails.expectedTransactionAmountPerMonth'>({
-      title: 'Expected transaction amount per month',
+      title: 'Expected total transaction volume per month',
       key: 'legalEntity.companyFinancialDetails.expectedTransactionAmountPerMonth',
       type: MONEY,
       defaultWidth: 200,
