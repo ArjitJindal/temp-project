@@ -11,11 +11,11 @@ type SharedProps = {
 export function H1(
   props: SharedProps &
     HTMLAttributes<HTMLHeadingElement> & {
-      variant: 'displayXl' | 'displayLg' | 'displayReg';
+      variant?: 'displayXl' | 'displayLg' | 'displayReg';
       children?: React.ReactNode;
     },
 ) {
-  const { className, variant, ...rest } = props;
+  const { className, variant = 'displayReg', ...rest } = props;
   return (
     <h1 {...rest} className={cn(s.h1, s[`variant-${variant}`], className)}>
       {props.children}

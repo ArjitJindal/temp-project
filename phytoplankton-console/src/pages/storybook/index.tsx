@@ -56,6 +56,7 @@ import WidgetGrid from '@/components/library/WidgetGrid/story';
 import Narrative from '@/components/Narrative/story';
 import Line from '@/pages/dashboard/analysis/components/charts/Line/story';
 import SettingsCard from '@/components/library/SettingsCard/story';
+import Typography from '@/components/ui/Typography/story';
 import Spinner from '@/components/library/Spinner/story';
 
 const config: Config = [
@@ -235,6 +236,10 @@ const config: Config = [
     key: 'misc',
     title: 'Misc',
     components: [
+      {
+        key: '@/components/ui/Typography',
+        story: Typography,
+      },
       {
         key: '@/components/ui/FilesDraggerInput',
         story: FilesDraggerInput,
