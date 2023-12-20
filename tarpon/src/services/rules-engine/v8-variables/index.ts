@@ -1,4 +1,5 @@
 import { lowerCase, startCase } from 'lodash'
+import { TRANSACTION_STATE } from './transaction-state'
 import { TRANSACTION_TYPE } from './transaction-type'
 import { RuleVariable } from './types'
 import { USER_AGE_DAYS, USER_AGE_MONTHS, USER_AGE_YEARS } from './user-age'
@@ -23,6 +24,7 @@ function withNamespace(variable: RuleVariable) {
 
 export const RULE_VARIABLES: RuleVariable[] = [
   TRANSACTION_TYPE,
+  TRANSACTION_STATE,
   USER_AGE_DAYS,
   USER_AGE_MONTHS,
   USER_AGE_YEARS,
