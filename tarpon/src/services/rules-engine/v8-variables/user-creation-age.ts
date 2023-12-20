@@ -1,6 +1,5 @@
 import { lowerCase } from 'lodash'
 import { NumberFieldSettings } from '@react-awesome-query-builder/core'
-import { isConsumerUser, isBusinessUser } from '../utils/user-rule-utils'
 import { UserRuleVariable } from './types'
 import { AgeConfig } from './common'
 import { User } from '@/@types/openapi-internal/User'
@@ -11,23 +10,8 @@ const calculateAge = (
   user: User | Business,
   unit: 'days' | 'months' | 'years'
 ): number | undefined => {
-  const consumerUser = user as User
-  const businessUser = user as Business
-
-  const userDetails = isConsumerUser(user) ? consumerUser.userDetails : null
-  const registrationDate = isBusinessUser(user)
-    ? businessUser.legalEntity?.companyRegistrationDetails?.dateOfRegistration
-    : null
-
-  if (userDetails?.dateOfBirth) {
-    return dayjs().diff(dayjs(userDetails.dateOfBirth), unit)
-  }
-
-  if (registrationDate) {
-    return dayjs().diff(dayjs(registrationDate), unit)
-  }
-
-  return
+  const createdTimestamp = user.createdTimestamp
+  return dayjs().diff(dayjs(createdTimestamp), unit)
 }
 
 const createAgeVariable = (
@@ -37,7 +21,7 @@ const createAgeVariable = (
   key,
   entity: 'USER',
   uiDefinition: {
-    label: `user age (${lowerCase(config.label)})`,
+    label: `User age on platform: (${lowerCase(config.label)})`,
     type: 'number',
     preferWidgets: ['slider', 'rangeslider'],
     valueSources: ['value', 'field', 'func'],
@@ -54,15 +38,15 @@ const createAgeVariable = (
   load: async (user: User | Business) => calculateAge(user, config.unit),
 })
 
-export const USER_AGE_DAYS = createAgeVariable(
+export const USER_CREATION_AGE_DAYS = createAgeVariable(
   { label: 'Days', unit: 'days' },
-  'userAgeDays'
+  'userCreationAgeDays'
 )
-export const USER_AGE_MONTHS = createAgeVariable(
+export const USER_CREATION_AGE_MONTHS = createAgeVariable(
   { label: 'Months', unit: 'months' },
-  'userAgeMonths'
+  'userCreationAgeMonths'
 )
-export const USER_AGE_YEARS = createAgeVariable(
+export const USER_CREATION_AGE_YEARS = createAgeVariable(
   { label: 'Years', unit: 'years' },
-  'userAgeYears'
+  'userCreationAgeYears'
 )

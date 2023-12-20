@@ -8,6 +8,11 @@ import {
   TRANSACTION_ORIGIN_COUNTRY,
 } from './transaction-country'
 import { TRANSACTION_PRODUCT_TYPE } from './transaction-product-types'
+import {
+  USER_CREATION_AGE_DAYS,
+  USER_CREATION_AGE_MONTHS,
+  USER_CREATION_AGE_YEARS,
+} from './user-creation-age'
 
 function withNamespace(variable: RuleVariable) {
   return {
@@ -28,6 +33,9 @@ export const RULE_VARIABLES: RuleVariable[] = [
   USER_AGE_DAYS,
   USER_AGE_MONTHS,
   USER_AGE_YEARS,
+  USER_CREATION_AGE_DAYS,
+  USER_CREATION_AGE_MONTHS,
+  USER_CREATION_AGE_YEARS,
   TRANSACTION_PRODUCT_TYPE,
   TRANSACTION_ORIGIN_COUNTRY,
   TRANSACTION_DESTINATION_COUNTRY,
