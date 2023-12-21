@@ -572,6 +572,15 @@ export const Subject = {
       'ElectronicAddress',
     ]),
     {
+      Gender: {
+        type: 'string',
+        'ui:schema': {
+          'ui:subtype': 'FINCEN_GENDER',
+          'ui:maleIndicatorField': 'FemaleGenderIndicator',
+          'ui:femaleIndicatorField': 'MaleGenderIndicator',
+          'ui:unknownIndicatorField': 'UnknownGenderIndicator',
+        },
+      },
       PartyAssociation: pickPartyAssociationFields(
         [
           'AccountantIndicator',
@@ -639,7 +648,6 @@ export const Subject = {
           ),
         }
       ),
-
       PartyName: pickPartyNameFields(
         [
           'EntityLastNameUnknownIndicator',
