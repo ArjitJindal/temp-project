@@ -3,51 +3,51 @@ import {
   StackProps,
   aws_codepipeline as codepipline,
   aws_codepipeline_actions as codepipline_actions,
-} from "aws-cdk-lib";
-import { Construct } from "constructs";
-import { DeployConfig } from "../tarpon/lib/configs/config-deployment";
-import { createVpcLogGroup } from "../tarpon/infra/cdk-utils/cdk-log-group-utils";
-import { RetentionDays } from "aws-cdk-lib/aws-logs";
-import { buildTarpon } from "./utils/tarpon-build-stage";
-import { getSentryReleaseSpec } from "./utils/sentry-release-spec";
-import { getVpc } from "./utils/vpc";
-import { sourceOutput, tarponBuildOutput } from "./constants/artifcats";
-import { tarponDeployStage } from "./utils/tarpon-deploy-stage";
-import { config as devConfig } from "@flagright/lib/config/config-dev";
-import { config as sandboxConfig } from "@flagright/lib/config/config-sandbox";
-import { config as phytoDevConfig } from "../phytoplankton-console/lib/configs/config-dev";
-import { config as phytoSandboxConfig } from "../phytoplankton-console/lib/configs/config-sandbox";
-import { config as phytoProdConfig } from "../phytoplankton-console/lib/configs/config-prod";
-import { getCodeDeployRole } from "./utils/code-deploy-role";
-import { phytoplanktonDeployStage } from "./utils/phytoplankton-console-deploy";
-import { getE2ETestProject } from "./utils/e2e_test_stage";
-import { postDeploymentCodeBuildProject } from "./utils/post_deploy_tarpon";
-import { PRODUCTION_REGIONS } from "@flagright/lib/constants/deploy";
-import { getTarponConfig } from "@flagright/lib/constants/config";
-const PIPLINE_NAME = "orca-pipeline";
+} from 'aws-cdk-lib'
+import { Construct } from 'constructs'
+import { DeployConfig } from '../tarpon/lib/configs/config-deployment'
+import { createVpcLogGroup } from '../tarpon/infra/cdk-utils/cdk-log-group-utils'
+import { RetentionDays } from 'aws-cdk-lib/aws-logs'
+import { buildTarpon } from './utils/tarpon-build-stage'
+import { getSentryReleaseSpec } from './utils/sentry-release-spec'
+import { getVpc } from './utils/vpc'
+import { sourceOutput, tarponBuildOutput } from './constants/artifcats'
+import { tarponDeployStage } from './utils/tarpon-deploy-stage'
+import { config as devConfig } from '@flagright/lib/config/config-dev'
+import { config as sandboxConfig } from '@flagright/lib/config/config-sandbox'
+import { config as phytoDevConfig } from '../phytoplankton-console/lib/configs/config-dev'
+import { config as phytoSandboxConfig } from '../phytoplankton-console/lib/configs/config-sandbox'
+import { config as phytoProdConfig } from '../phytoplankton-console/lib/configs/config-prod'
+import { getCodeDeployRole } from './utils/code-deploy-role'
+import { phytoplanktonDeployStage } from './utils/phytoplankton-console-deploy'
+import { getE2ETestProject } from './utils/e2e_test_stage'
+import { postDeploymentCodeBuildProject } from './utils/post_deploy_tarpon'
+import { PRODUCTION_REGIONS } from '@flagright/lib/constants/deploy'
+import { getTarponConfig } from '@flagright/lib/constants/config'
+const PIPLINE_NAME = 'orca-pipeline'
 
-export type CdkOrcaPipelineStackProps = StackProps;
+export type CdkOrcaPipelineStackProps = StackProps
 
 export class CdkOrcaPipelineStack extends Stack {
   constructor(
     scope: Construct,
     id: string,
     props: CdkOrcaPipelineStackProps,
-    deployConfig: DeployConfig,
+    deployConfig: DeployConfig
   ) {
-    super(scope, id, props);
+    super(scope, id, props)
 
-    const vpc = getVpc(this);
+    const vpc = getVpc(this)
 
     createVpcLogGroup(this, vpc, {
-      name: "codebuild-orca",
+      name: 'codebuild-orca',
       logRetention: RetentionDays.TWO_MONTHS,
-    });
+    })
 
-    const role = getCodeDeployRole(this, deployConfig);
-    const DEV_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${phytoDevConfig.env.account}:role/CodePipelineDeployRole`;
-    const SANDBOX_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${phytoSandboxConfig.env.account}:role/CodePipelineDeployRole`;
-    const PROD_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${phytoProdConfig.env.account}:role/CodePipelineDeployRole`;
+    const role = getCodeDeployRole(this, deployConfig)
+    const DEV_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${phytoDevConfig.env.account}:role/CodePipelineDeployRole`
+    const SANDBOX_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${phytoSandboxConfig.env.account}:role/CodePipelineDeployRole`
+    const PROD_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${phytoProdConfig.env.account}:role/CodePipelineDeployRole`
 
     // CodePipeline
 
@@ -55,15 +55,15 @@ export class CdkOrcaPipelineStack extends Stack {
       pipelineName: PIPLINE_NAME,
       stages: [
         {
-          stageName: "Source",
+          stageName: 'Source',
           actions: [
             new codepipline_actions.CodeStarConnectionsSourceAction({
-              actionName: "GitHub_Source",
+              actionName: 'GitHub_Source',
               repo: deployConfig.github.REPO,
               connectionArn: deployConfig.github.GITHUB_CONNECTION_ARN,
               output: sourceOutput,
               owner: deployConfig.github.OWNER,
-              variablesNamespace: "SourceVariables",
+              variablesNamespace: 'SourceVariables',
               triggerOnPush: false,
               branch: deployConfig.github.BRANCH,
               codeBuildCloneOutput: true,
@@ -71,10 +71,10 @@ export class CdkOrcaPipelineStack extends Stack {
           ],
         },
         {
-          stageName: "Build",
+          stageName: 'Build',
           actions: [
             new codepipline_actions.CodeBuildAction({
-              actionName: "Build",
+              actionName: 'Build',
               input: sourceOutput,
               project: buildTarpon(this, role),
               outputs: [tarponBuildOutput],
@@ -83,37 +83,37 @@ export class CdkOrcaPipelineStack extends Stack {
           ],
         },
         {
-          stageName: "Deploy_Dev",
+          stageName: 'Deploy_Dev',
           actions: [
             new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Tarpon",
+              actionName: 'Deploy_Tarpon',
               input: sourceOutput,
               project: tarponDeployStage(this, devConfig, role, vpc),
               extraInputs: [tarponBuildOutput],
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
             }),
             new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Phytoplankton_Console",
+              actionName: 'Deploy_Phytoplankton_Console',
               input: sourceOutput,
               project: phytoplanktonDeployStage(
                 this,
-                "dev",
+                'dev',
                 DEV_CODE_DEPLOY_ROLE_ARN,
-                role,
+                role
               ),
             }),
           ],
         },
         {
-          stageName: "Post_Deploy_Dev",
+          stageName: 'Post_Deploy_Dev',
           actions: [
             new codepipline_actions.CodeBuildAction({
-              actionName: "Post_Deploy_Dev",
+              actionName: 'Post_Deploy_Dev',
               project: postDeploymentCodeBuildProject(
                 this,
                 devConfig,
                 role,
-                vpc,
+                vpc
               ),
               input: sourceOutput,
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
@@ -122,56 +122,56 @@ export class CdkOrcaPipelineStack extends Stack {
           ],
         },
         {
-          stageName: "E2E_Test_Dev",
+          stageName: 'E2E_Test_Dev',
           actions: [
             new codepipline_actions.CodeBuildAction({
-              actionName: "E2E_Test_Dev",
-              project: getE2ETestProject(this, "dev", role),
+              actionName: 'E2E_Test_Dev',
+              project: getE2ETestProject(this, 'dev', role),
               input: sourceOutput,
             }),
           ],
         },
         {
-          stageName: "Approve_Sandbox",
+          stageName: 'Approve_Sandbox',
           actions: [
             new codepipline_actions.ManualApprovalAction({
-              actionName: "Approve_Sandbox",
+              actionName: 'Approve_Sandbox',
               externalEntityLink: `https://${phytoDevConfig.SITE_DOMAIN}`,
             }),
           ],
         },
         {
-          stageName: "Deploy_Sandbox",
+          stageName: 'Deploy_Sandbox',
           actions: [
             new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Tarpon",
+              actionName: 'Deploy_Tarpon',
               project: tarponDeployStage(this, sandboxConfig, role, vpc),
               input: sourceOutput,
               extraInputs: [tarponBuildOutput],
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
             }),
             new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Phytoplankton_Console",
+              actionName: 'Deploy_Phytoplankton_Console',
               project: phytoplanktonDeployStage(
                 this,
-                "sandbox",
+                'sandbox',
                 SANDBOX_CODE_DEPLOY_ROLE_ARN,
-                role,
+                role
               ),
               input: sourceOutput,
             }),
           ],
         },
         {
-          stageName: "Post_Deploy_Sandbox",
+          stageName: 'Post_Deploy_Sandbox',
           actions: [
             new codepipline_actions.CodeBuildAction({
-              actionName: "Post_Deploy_Sandbox",
+              actionName: 'Post_Deploy_Sandbox',
               project: postDeploymentCodeBuildProject(
                 this,
                 sandboxConfig,
                 role,
-                vpc,
+                vpc
               ),
               input: sourceOutput,
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
@@ -180,69 +180,69 @@ export class CdkOrcaPipelineStack extends Stack {
           ],
         },
         {
-          stageName: "Approve_Production",
+          stageName: 'Approve_Production',
           actions: [
             new codepipline_actions.ManualApprovalAction({
-              actionName: "Approve_Production",
+              actionName: 'Approve_Production',
               externalEntityLink: `https://${phytoSandboxConfig.SITE_DOMAIN}`,
             }),
           ],
         },
         {
-          stageName: "Deploy_Prod",
+          stageName: 'Deploy_Prod',
           actions: [
             ...PRODUCTION_REGIONS.flatMap((region) => {
               return [
                 new codepipline_actions.CodeBuildAction({
                   actionName: `Deploy_Tarpon_${region
                     .toUpperCase()
-                    .replace("-", "_")}`,
+                    .replace('-', '_')}`,
                   project: tarponDeployStage(
                     this,
-                    getTarponConfig("prod", region),
+                    getTarponConfig('prod', region),
                     role,
-                    vpc,
+                    vpc
                   ),
                   input: sourceOutput,
                   extraInputs: [tarponBuildOutput],
                   environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
-              ];
+              ]
             }),
             new codepipline_actions.CodeBuildAction({
-              actionName: "Deploy_Phytoplankton_Console",
+              actionName: 'Deploy_Phytoplankton_Console',
               project: phytoplanktonDeployStage(
                 this,
-                "prod",
+                'prod',
                 PROD_CODE_DEPLOY_ROLE_ARN,
-                role,
+                role
               ),
               input: sourceOutput,
             }),
           ],
         },
         {
-          stageName: "Post_Deploy_Prod",
+          stageName: 'Post_Deploy_Prod',
           actions: [
             ...PRODUCTION_REGIONS.map((region) => {
               return new codepipline_actions.CodeBuildAction({
                 actionName: `Post_Deploy_Prod_${region
                   .toUpperCase()
-                  .replace("-", "_")}`,
+                  .replace('-', '_')}`,
                 project: postDeploymentCodeBuildProject(
                   this,
-                  getTarponConfig("prod", region),
+                  getTarponConfig('prod', region),
                   role,
-                  vpc,
+                  vpc
                 ),
                 input: sourceOutput,
                 environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 extraInputs: [tarponBuildOutput],
-              });
+              })
             }),
           ],
         },
       ],
-    });
+    })
   }
 }

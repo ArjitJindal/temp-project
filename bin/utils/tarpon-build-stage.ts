@@ -1,33 +1,33 @@
-import { aws_codebuild as codebuild, aws_iam as iam } from "aws-cdk-lib";
-import { Construct } from "constructs";
-import { installTerraform } from "../constants/terraform-commands";
-import { getSentryReleaseSpec } from "./sentry-release-spec";
-import { GENERATED_DIRS } from "../constants/generatedDirs";
+import { aws_codebuild as codebuild, aws_iam as iam } from 'aws-cdk-lib'
+import { Construct } from 'constructs'
+import { installTerraform } from '../constants/terraform-commands'
+import { getSentryReleaseSpec } from './sentry-release-spec'
+import { GENERATED_DIRS } from '../constants/generatedDirs'
 
 export const buildTarpon = (scope: Construct, role: iam.IRole) => {
-  return new codebuild.PipelineProject(scope, "BuildTarpon", {
+  return new codebuild.PipelineProject(scope, 'BuildTarpon', {
     buildSpec: codebuild.BuildSpec.fromObject({
-      version: "0.2",
+      version: '0.2',
       phases: {
         install: {
-          "runtime-versions": {
+          'runtime-versions': {
             nodejs: 18,
           },
-          commands: ["npm ci", "cd lib", "npm ci", "cd ../tarpon", "npm ci"],
+          commands: ['npm ci', 'cd lib', 'npm ci', 'cd ../tarpon', 'npm ci'],
         },
         build: {
           commands: [
             ...installTerraform,
-            "npm run build",
+            'npm run build',
             ...getSentryReleaseSpec(false).commands,
           ],
         },
       },
       cache: {
-        paths: ["node_modules/**/*"],
+        paths: ['node_modules/**/*'],
       },
       artifacts: {
-        "base-directory": "tarpon",
+        'base-directory': 'tarpon',
         files: GENERATED_DIRS.map((dir) => `${dir}/**/*`),
       },
       env: getSentryReleaseSpec(false).env,
@@ -37,5 +37,5 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
       computeType: codebuild.ComputeType.LARGE,
     },
     role,
-  });
-};
+  })
+}

@@ -9,5 +9,4 @@ src/@types/openapi*
 *.py
 *.txt
 *.xsd
-**/bin/*
 *.xml

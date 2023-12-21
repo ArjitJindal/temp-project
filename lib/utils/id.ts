@@ -1,5 +1,5 @@
-import { customAlphabet } from "nanoid";
+import { customAlphabet } from 'nanoid'
 
 export function shortId(length = 8) {
-  return customAlphabet("1234567890abcdef", length)();
+  return customAlphabet('1234567890abcdef', length)()
 }

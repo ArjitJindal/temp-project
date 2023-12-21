@@ -36,13 +36,14 @@
   },
   "homepage": "https://github.com/flagright/tarpon#readme",
   "lint-staged": {
-    "{lib,bin,scripts}/*.{js,ts}": [
+    "{lib,bin,scripts}/**/*.{js,ts}": [
       "prettier --write"
     ]
   },
   "dependencies": {
     "@flagright/lib": "file:lib",
     "@types/lodash": "^4.14.200",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "prettier": "^3.1.1"
   }
 }

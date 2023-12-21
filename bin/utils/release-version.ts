@@ -1,3 +1,3 @@
 export function getReleaseVersionTarpon(version: string) {
-  return `tarpon:${version}`;
+  return `tarpon:${version}`
 }

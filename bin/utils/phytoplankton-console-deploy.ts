@@ -1,39 +1,39 @@
-import { Construct } from "constructs";
-import { aws_codebuild as codebuild, aws_iam as iam } from "aws-cdk-lib";
-import { STACK_CONSTANTS } from "../constants/stack-constants";
+import { Construct } from 'constructs'
+import { aws_codebuild as codebuild, aws_iam as iam } from 'aws-cdk-lib'
+import { STACK_CONSTANTS } from '../constants/stack-constants'
 
 export const phytoplanktonDeployStage = (
   scope: Construct,
-  env: "dev" | "sandbox" | "prod",
+  env: 'dev' | 'sandbox' | 'prod',
   roleArn: string,
   codeDeployRole: iam.IRole
 ) => {
   return new codebuild.PipelineProject(scope, `PhytoplanktonBuild-${env}`, {
     buildSpec: codebuild.BuildSpec.fromObject({
-      version: "0.2",
+      version: '0.2',
       phases: {
         install: {
-          "runtime-versions": {
+          'runtime-versions': {
             nodejs: 18,
           },
           commands: [
-            "npm ci",
-            "npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2",
-            "cd phytoplankton-console",
-            "npm install -g aws-cdk yarn",
-            "yarn --ignore-engines",
+            'npm ci',
+            'npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
+            'cd phytoplankton-console',
+            'npm install -g aws-cdk yarn',
+            'yarn --ignore-engines',
             `ASSUME_ROLE_ARN="${roleArn}"`,
             `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
-            "export TEMP_ROLE",
+            'export TEMP_ROLE',
             'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
             'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
             'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
-            "cd ..",
+            'cd ..',
           ],
         },
         build: {
           commands: [
-            "cd phytoplankton-console",
+            'cd phytoplankton-console',
             `SENTRY_UPLOAD=true npm run build:${env}`,
             `npm run synth:${env}`,
             `npm run deploy:${env} -- --require-approval=never`,
@@ -41,10 +41,10 @@ export const phytoplanktonDeployStage = (
         },
       },
       cache: {
-        paths: ["node_modules/**/*"],
+        paths: ['node_modules/**/*'],
       },
       env: {
-        "secrets-manager": {
+        'secrets-manager': {
           SENTRY_AUTH_TOKEN: STACK_CONSTANTS.SENTRY_AUTH_TOKEN,
         },
       },
@@ -53,5 +53,5 @@ export const phytoplanktonDeployStage = (
       buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
     },
     role: codeDeployRole,
-  });
-};
+  })
+}

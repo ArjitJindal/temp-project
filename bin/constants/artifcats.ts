@@ -1,4 +1,4 @@
-import { aws_codepipeline as codepipline } from "aws-cdk-lib";
+import { aws_codepipeline as codepipline } from 'aws-cdk-lib'
 
-export const sourceOutput = new codepipline.Artifact("SourceOutput");
-export const tarponBuildOutput = new codepipline.Artifact("TarponBuildOutput");
+export const sourceOutput = new codepipline.Artifact('SourceOutput')
+export const tarponBuildOutput = new codepipline.Artifact('TarponBuildOutput')

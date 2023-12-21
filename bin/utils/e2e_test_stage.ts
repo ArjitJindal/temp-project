@@ -1,37 +1,37 @@
-import { aws_codebuild as codebuild, aws_iam as iam } from "aws-cdk-lib";
-import { Construct } from "constructs";
-import { STACK_CONSTANTS } from "../constants/stack-constants";
+import { aws_codebuild as codebuild, aws_iam as iam } from 'aws-cdk-lib'
+import { Construct } from 'constructs'
+import { STACK_CONSTANTS } from '../constants/stack-constants'
 
 export const getE2ETestProject = (
   scope: Construct,
-  env: "dev",
+  env: 'dev',
   codeDeployRole: iam.IRole
 ) => {
   return new codebuild.PipelineProject(scope, `PhytoplanktonE2eTest-${env}`, {
     buildSpec: codebuild.BuildSpec.fromObject({
-      version: "0.2",
+      version: '0.2',
       phases: {
         install: {
-          "runtime-versions": {
+          'runtime-versions': {
             nodejs: 18,
           },
           commands: [
-            "cd phytoplankton-console",
-            "apt-get update",
-            "apt-get -y install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb",
-            "npm install -g aws-cdk yarn",
-            "yarn --ignore-engines",
+            'cd phytoplankton-console',
+            'apt-get update',
+            'apt-get -y install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb',
+            'npm install -g aws-cdk yarn',
+            'yarn --ignore-engines',
           ],
         },
         build: {
-          commands: ["ENV=dev CI=true npm run cypress:run"],
+          commands: ['ENV=dev CI=true npm run cypress:run'],
         },
       },
       cache: {
-        paths: ["node_modules/**/*"],
+        paths: ['node_modules/**/*'],
       },
       env: {
-        "secrets-manager": {
+        'secrets-manager': {
           CYPRESS_USERNAME: STACK_CONSTANTS.CYPRESS_USERNAME,
           CYPRESS_PASSWORD: STACK_CONSTANTS.CYPRESS_PASSWORD,
         },
@@ -41,5 +41,5 @@ export const getE2ETestProject = (
       buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
     },
     role: codeDeployRole,
-  });
-};
+  })
+}
