@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import { SanctionsService } from '..'
 import { SanctionsSearchRepository } from '../repositories/sanctions-search-repository'
 import { MOCK_CA_SEARCH_RESPONSE } from '../../../test-utils/resources/mock-ca-search-response'
@@ -7,6 +8,8 @@ import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearc
 import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-utils'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { SanctionsSearchHistoryMetadataEntities } from '@/@types/openapi-internal/SanctionsSearchHistoryMetadataEntities'
+import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
@@ -171,6 +174,85 @@ describe('Sanctions Service', () => {
       expect(mockFetch).toBeCalledTimes(0)
       expect(result.total).toBeGreaterThan(0)
       expect(result.items?.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Get sanctions stats', () => {
+    test('Get sanctions stats', async () => {
+      const service = new SanctionsService(TEST_TENANT_ID)
+      const request: SanctionsSearchRequest = {
+        searchTerm: '  fOO   Bar  ',
+        fuzziness: 0.5,
+        countryCodes: ['DE', 'FR'],
+        yearOfBirth: 1992,
+        types: ['SANCTIONS', 'PEP'],
+        monitoring: { enabled: true },
+      }
+      const addHitResults = async (
+        entity: SanctionsSearchHistoryMetadataEntities
+      ): Promise<SanctionsSearchResponse> => {
+        return await service.search(request, {
+          metadata: {
+            entity: entity,
+          },
+          searchIdToReplace: uuidv4(),
+        })
+      }
+      const response = await addHitResults('USER')
+      await addHitResults('IBAN')
+      await addHitResults('BANK')
+      await addHitResults('EXTERNAL_USER')
+      await addHitResults('EXTERNAL_USER')
+      const sanctionsSearchRepository = new SanctionsSearchRepository(
+        TEST_TENANT_ID,
+        await getMongoDbClient()
+      )
+      const addOnlyScreenedResult = (
+        entity: SanctionsSearchHistoryMetadataEntities
+      ) => {
+        return sanctionsSearchRepository.saveSearchResult({
+          request,
+          response: {
+            ...response,
+            searchId: uuidv4(),
+            data: [],
+          },
+          metadata: {
+            entity: entity,
+          },
+        })
+      }
+      await addOnlyScreenedResult('USER')
+      await addOnlyScreenedResult('USER')
+      await addOnlyScreenedResult('BANK')
+      await addOnlyScreenedResult('BANK')
+      await addOnlyScreenedResult('IBAN')
+      await addOnlyScreenedResult('IBAN')
+      await addOnlyScreenedResult('EXTERNAL_USER')
+      await addOnlyScreenedResult('EXTERNAL_USER')
+      await addOnlyScreenedResult('USER')
+      await addOnlyScreenedResult('EXTERNAL_USER')
+
+      const result =
+        await sanctionsSearchRepository.getSanctionsScreeningStats()
+      expect(result).toEqual({
+        user: {
+          hitCount: 1,
+          screenedCount: 4,
+        },
+        bank: {
+          hitCount: 2,
+          screenedCount: 6,
+        },
+        iban: {
+          hitCount: 1,
+          screenedCount: 3,
+        },
+        counterPartyUser: {
+          hitCount: 2,
+          screenedCount: 5,
+        },
+      })
     })
   })
 })

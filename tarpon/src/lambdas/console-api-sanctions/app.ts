@@ -53,6 +53,10 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       }
     })
 
+    handlers.registerGetSanctionsScreeningStats(async (_ctx, _request) => {
+      return await sanctionsService.getSanctionsScreeningStats()
+    })
+
     return await handlers.handle(event)
   }
 )

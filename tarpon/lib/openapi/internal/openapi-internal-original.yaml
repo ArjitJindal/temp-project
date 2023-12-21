@@ -4271,6 +4271,21 @@ paths:
               $ref: '#/components/schemas/SanctionsSearchType'
           in: query
           name: types
+  /sanctions/stats:
+    get:
+      summary: Get sanctions screening stats
+      tags: []
+      x-flagright:
+        permissions:
+          - sanctions:search:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsScreeningStats'
+      operationId: get-sanctions-screening-stats
   '/sanctions/search/{searchId}':
     get:
       summary: Get single search history
@@ -8373,6 +8388,23 @@ components:
           type: object
       required:
         - searchTerm
+    SanctionsSearchHistoryMetadata:
+      title: SanctionsSearchHistoryMetadata
+      type: object
+      properties:
+        entity:
+          $ref: '#/components/schemas/SanctionsSearchHistoryMetadataEntities'
+        ruleInstanceIds:
+          type: array
+          items:
+            type: string
+    SanctionsSearchHistoryMetadataEntities:
+      type: string
+      enum:
+        - USER
+        - BANK
+        - IBAN
+        - EXTERNAL_USER
     SanctionsSearchType:
       title: SanctionsSearchType
       type: string
@@ -8430,6 +8462,8 @@ components:
           type: number
         updatedAt:
           type: number
+        metadata:
+          $ref: '#/components/schemas/SanctionsSearchHistoryMetadata'
       required:
         - _id
         - request
@@ -8446,6 +8480,45 @@ components:
           type: string
       required:
         - enabled
+    SanctionsScreeningStats:
+      title: SanctionsScreeningStats
+      x-stoplight:
+        id: ldj2zpwhzk8s7
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            screenedCount:
+              type: number
+            hitCount:
+              type: number
+        bank:
+          type: object
+          properties:
+            screenedCount:
+              type: number
+            hitCount:
+              type: number
+        iban:
+          type: object
+          properties:
+            screenedCount:
+              type: number
+            hitCount:
+              type: number
+        counterPartyUser:
+          type: object
+          properties:
+            screenedCount:
+              type: number
+            hitCount:
+              type: number
+      required:
+        - user
+        - iban
+        - bank
+        - counterPartyUser
     SanctionsWhitelistRequest:
       title: SanctionsWhitelistRequest
       type: object

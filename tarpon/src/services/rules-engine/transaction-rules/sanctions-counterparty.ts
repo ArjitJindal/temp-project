@@ -194,14 +194,21 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
           iban,
           entityType,
         }): Promise<SanctionsDetails | undefined> => {
-          const result = await sanctionsService.search({
-            searchTerm: name,
-            types: this.parameters.screeningTypes || [],
-            fuzziness: fuzziness / 100,
-            monitoring: {
-              enabled: false,
+          const result = await sanctionsService.search(
+            {
+              searchTerm: name,
+              types: this.parameters.screeningTypes || [],
+              fuzziness: fuzziness / 100,
+              monitoring: {
+                enabled: false,
+              },
             },
-          })
+            {
+              metadata: {
+                entity: 'EXTERNAL_USER',
+              },
+            }
+          )
 
           if (result.data.length > 0) {
             return {

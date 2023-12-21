@@ -12,6 +12,8 @@ import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSe
 import dayjs from '@/utils/dayjs'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { traceable } from '@/core/xray'
+import { SanctionsSearchHistoryMetadata } from '@/@types/openapi-internal/SanctionsSearchHistoryMetadata'
+import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -36,29 +38,56 @@ export class SanctionsSearchRepository {
     this.mongoDb = mongoDb
   }
 
-  public async saveSearchResult(
-    request: SanctionsSearchRequest,
-    response: SanctionsSearchResponse,
-    createdAt?: number,
+  public async saveSearchResult(props: {
+    request: SanctionsSearchRequest
+    response: SanctionsSearchResponse
+    createdAt?: number
     updatedAt?: number
-  ): Promise<void> {
+    metadata?: SanctionsSearchHistoryMetadata
+  }): Promise<void> {
+    const { request, response, createdAt, updatedAt, metadata } = props
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
 
-    await collection.replaceOne(
+    await collection.updateOne(
       { _id: response.searchId },
       {
-        request,
-        response,
-        createdAt: createdAt ?? Date.now(),
-        updatedAt: updatedAt ?? Date.now(),
-        ...(!request.monitoring?.enabled && {
-          expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
-        }),
+        $set: {
+          request,
+          response,
+          createdAt: createdAt ?? Date.now(),
+          updatedAt: updatedAt ?? Date.now(), // Always set to the current time when updating
+          ...(!request.monitoring?.enabled && {
+            expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
+          }),
+          ...(metadata && {
+            metadata,
+          }),
+        },
       },
       { upsert: true }
+    )
+  }
+
+  public async saveSearchResultMetadata(props: {
+    searchId: string
+    metadata?: SanctionsSearchHistoryMetadata
+  }): Promise<void> {
+    const { searchId, metadata } = props
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsSearchHistory>(
+      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    )
+
+    await collection.updateOne(
+      { _id: searchId },
+      {
+        $set: {
+          metadata: metadata,
+        },
+      }
     )
   }
 
@@ -219,5 +248,69 @@ export class SanctionsSearchRepository {
       { _id: searchId },
       { $set: { 'request.monitoring': monitoring } }
     )
+  }
+
+  private extractStats(stats, entityType) {
+    const stat = stats.find((stat) => stat._id === entityType)
+    const bankStat = stats.find((stat) => stat._id === 'IBAN')
+
+    return stat
+      ? {
+          hitCount:
+            entityType === 'BANK'
+              ? stat.hitCount + (bankStat?.hitCount ?? 0)
+              : stat.hitCount,
+          screenedCount:
+            entityType === 'BANK'
+              ? stat.screenedCount + (bankStat?.screenedCount ?? 0)
+              : stat.screenedCount,
+        }
+      : {
+          hitCount: 0,
+          screenedCount: 0,
+        }
+  }
+
+  public async getSanctionsScreeningStats(): Promise<SanctionsScreeningStats> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsSearchHistory>(
+      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    )
+    const result = await collection
+      .aggregate([
+        {
+          $match: {
+            metadata: { $exists: true },
+          },
+        },
+        {
+          $group: {
+            _id: '$metadata.entity',
+            hitCount: {
+              $sum: {
+                $cond: {
+                  if: { $gt: [{ $size: '$response.data' }, 0] },
+                  then: 1,
+                  else: 0,
+                },
+              },
+            },
+            screenedCount: { $sum: 1 },
+          },
+        },
+      ])
+      .toArray()
+
+    const user = this.extractStats(result, 'USER')
+    const counterPartyUser = this.extractStats(result, 'EXTERNAL_USER')
+    const iban = this.extractStats(result, 'IBAN')
+    const bank = this.extractStats(result, 'BANK')
+
+    return {
+      user,
+      bank,
+      iban,
+      counterPartyUser,
+    }
   }
 }

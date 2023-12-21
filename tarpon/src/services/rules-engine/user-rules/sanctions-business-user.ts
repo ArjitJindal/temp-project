@@ -113,7 +113,12 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               fuzziness: fuzziness / 100,
               monitoring: { enabled: ongoingScreening },
             },
-            { userId: this.user.userId }
+            {
+              userId: this.user.userId,
+              metadata: {
+                entity: 'USER',
+              },
+            }
           )
           if (result.data && result.data.length > 0) {
             const resultDetails: SanctionsDetails = {

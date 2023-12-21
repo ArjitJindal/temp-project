@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { SanctionsSearchTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
+import { Activity } from './activity';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { useI18n } from '@/locales';
@@ -33,6 +34,15 @@ const SanctionsPage: React.FC = () => {
             children: (
               <PageWrapperContentContainer>
                 <SanctionsSearchHistoryTable />
+              </PageWrapperContentContainer>
+            ),
+          },
+          {
+            key: 'activity',
+            title: 'Activity',
+            children: (
+              <PageWrapperContentContainer>
+                <Activity />
               </PageWrapperContentContainer>
             ),
           },

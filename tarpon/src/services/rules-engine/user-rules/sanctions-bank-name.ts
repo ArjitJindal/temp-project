@@ -109,7 +109,12 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 fuzziness: fuzziness / 100,
                 monitoring: { enabled: ongoingScreening },
               },
-              { userId: this.user.userId }
+              {
+                userId: this.user.userId,
+                metadata: {
+                  entity: resolveIban ? 'IBAN' : 'BANK',
+                },
+              }
             )
             let sanctionsDetails: SanctionsDetails
             if (result.data && result.data.length > 0) {

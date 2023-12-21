@@ -17,6 +17,8 @@ import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { apiFetch } from '@/utils/api-fetch'
+import { SanctionsSearchHistoryMetadata } from '@/@types/openapi-internal/SanctionsSearchHistoryMetadata'
+import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import { envIs } from '@/utils/env'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { tenantSettings } from '@/core/utils/context'
@@ -124,12 +126,12 @@ export class SanctionsService {
     }
     const response = await this.complyAdvantageMonitoredSearch(caSearchId)
     if (response) {
-      await this.sanctionsSearchRepository.saveSearchResult(
-        result.request,
-        getSanctionsSearchResponse(response, result._id),
-        result.createdAt,
-        Date.now()
-      )
+      await this.sanctionsSearchRepository.saveSearchResult({
+        request: result.request,
+        response: getSanctionsSearchResponse(response, result._id),
+        createdAt: result.createdAt,
+        updatedAt: Date.now(),
+      })
       logger.info(
         `Updated monitored search (search ID: ${caSearchId}) for tenant ${this.tenantId}`
       )
@@ -141,6 +143,7 @@ export class SanctionsService {
     options?: {
       searchIdToReplace?: string
       userId?: string
+      metadata?: SanctionsSearchHistoryMetadata
     }
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
@@ -157,6 +160,12 @@ export class SanctionsService {
       : await this.sanctionsSearchRepository.getSearchResultByParams(request)
 
     if (result?.response) {
+      if (!result.metadata) {
+        await this.sanctionsSearchRepository.saveSearchResultMetadata({
+          searchId: result.response.searchId,
+          metadata: options?.metadata,
+        })
+      }
       return this.filterOutWhitelistEntites(result?.response, options?.userId)
     }
 
@@ -171,16 +180,19 @@ export class SanctionsService {
     })
 
     const responseWithId = getSanctionsSearchResponse(response, searchId)
-    await this.sanctionsSearchRepository.saveSearchResult(
-      request,
-      responseWithId
+    const sanctionsResponse = await this.filterOutWhitelistEntites(
+      responseWithId,
+      options?.userId
     )
-
+    await this.sanctionsSearchRepository.saveSearchResult({
+      request,
+      response: responseWithId,
+      metadata: options?.metadata,
+    })
     if (request.monitoring) {
       await this.updateSearch(searchId, request.monitoring)
     }
-
-    return this.filterOutWhitelistEntites(responseWithId, options?.userId)
+    return sanctionsResponse
   }
 
   private async filterOutWhitelistEntites(
@@ -331,6 +343,11 @@ export class SanctionsService {
     }
 
     return result
+  }
+
+  public async getSanctionsScreeningStats(): Promise<SanctionsScreeningStats> {
+    await this.initialize()
+    return await this.sanctionsSearchRepository.getSanctionsScreeningStats()
   }
 
   public async getSearchHistoriesByIds(
