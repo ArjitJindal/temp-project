@@ -17,6 +17,7 @@ declare global {
         linkDataCy: string,
         tabText: string,
       ): Chainable<Promise<Element>>;
+      enableFeatureFlag(feature: string): Chainable<Promise<Element>>;
       navigateToPage(url: string, pageTitle: string): Chainable<Promise<Element>>;
       toggleFeature(feature: string, enabled: boolean): Chainable<Promise<Element>>;
       /**

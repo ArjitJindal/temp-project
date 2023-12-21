@@ -22,6 +22,12 @@ Cypress.Commands.add('loginByForm', (inputUsername?: string, inputPassword?: str
   cy.checkAndSwitchToCypressTenant();
 });
 
+Cypress.Commands.add('enableFeatureFlag', (text) => {
+  cy.get('button[data-cy="superadmin-panel-button"]').click();
+  cy.get('.ant-select-selection-overflow').type(text);
+  cy.get('button[data-cy="modal-ok"]').click({ force: true });
+});
+
 Cypress.Commands.add('checkAndSwitchToCypressTenant', () => {
   cy.intercept('GET', '**/tenants').as('tenants');
   cy.intercept('POST', '**/change_tenant').as('changeTenant');

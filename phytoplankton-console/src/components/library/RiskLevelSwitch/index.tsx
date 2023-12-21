@@ -18,6 +18,7 @@ export default function RiskLevelSwitch(props: Props): JSX.Element {
         const isCurrent = level === value;
         return (
           <label
+            data-cy={`risk-level-${level}`}
             key={level}
             className={cn(s.button, isReadonly && s.isReadonly)}
             style={

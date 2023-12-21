@@ -241,6 +241,7 @@ export default function ValuesTable(props: Props) {
               </div>
               <div style={labelExistsStyle(dataType, 'value')}>
                 <Button
+                  data-cy="delete-risk-factor"
                   className={style.deleteButton}
                   type="text"
                   disabled={
@@ -279,6 +280,7 @@ export default function ValuesTable(props: Props) {
               </div>
               <div style={labelExistsStyle(dataType, 'input')}>
                 <Button
+                  data-cy="add-risk-factor"
                   disabled={
                     loading ||
                     !newValue ||
@@ -308,6 +310,7 @@ export default function ValuesTable(props: Props) {
           Cancel
         </Button>
         <Button
+          data-cy="save-risk-factor"
           disabled={loading || !hasWritePermissions || isEqual}
           onClick={handleSave}
           type="primary"
