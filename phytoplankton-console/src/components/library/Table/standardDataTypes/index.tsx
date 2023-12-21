@@ -65,6 +65,7 @@ import { getDuration, formatDuration } from '@/utils/time-utils';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import { Option } from '@/components/library/Select';
+import { formatNumber } from '@/utils/number';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -107,7 +108,7 @@ export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
 };
 
 export const NUMBER: ColumnDataType<number> = {
-  render: (value) => <span>{value ?? 0}</span>,
+  render: (value) => <span>{formatNumber(value ?? 0)}</span>,
   renderEdit: (context) => {
     const [state] = context.edit.state;
     return (
