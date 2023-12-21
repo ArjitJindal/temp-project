@@ -8,6 +8,10 @@ import {
   isValidManagedRoleName,
 } from '@/@types/openapi-internal-custom/ManagedRoleName'
 
+export function isRoleAboveAdmin(role: string) {
+  return isAbove(role, 'admin')
+}
+
 export function isCurrentUserAtLeastRole(requiredRole: ManagedRoleName) {
   return isAtLeastRole(currentUser(), requiredRole)
 }
@@ -24,6 +28,12 @@ export function isAtLeastRole(
     }
   }
   return true
+}
+
+export function assertCurrentUserRoleAboveAdmin() {
+  return assertCurrentUserRole(
+    ...MANAGED_ROLE_NAMES.slice(0, MANAGED_ROLE_NAMES.indexOf('admin'))
+  )
 }
 
 export function assertCurrentUserRole(...requiredRoles: ManagedRoleName[]) {
@@ -47,16 +57,27 @@ export function assertCurrentUserRole(...requiredRoles: ManagedRoleName[]) {
   }
 }
 
+function isAbove(role1: string, role2: string) {
+  return (
+    MANAGED_ROLE_NAMES.indexOf(role1 as ManagedRoleName) <
+    MANAGED_ROLE_NAMES.indexOf(role2 as ManagedRoleName)
+  )
+}
+
+function isAtLeast(role1: string, role2: string) {
+  return (
+    MANAGED_ROLE_NAMES.indexOf(role1 as ManagedRoleName) <=
+    MANAGED_ROLE_NAMES.indexOf(role2 as ManagedRoleName)
+  )
+}
+
 export function assertRole(user: ContextUser, requiredRole: ManagedRoleName) {
   if (!user) {
     throw new Forbidden('Unknown user')
   }
 
   const { role } = user
-  if (
-    !isValidManagedRoleName(role) ||
-    MANAGED_ROLE_NAMES.indexOf(role) > MANAGED_ROLE_NAMES.indexOf(requiredRole)
-  ) {
+  if (!isValidManagedRoleName(role) || !isAtLeast(role, requiredRole)) {
     throw new Forbidden(
       `You need to have at least "${requiredRole}" role to perform this action`
     )

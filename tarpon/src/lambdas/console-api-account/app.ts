@@ -5,7 +5,11 @@ import {
 import createHttpError from 'http-errors'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { assertCurrentUserRole, JWTAuthorizerResult } from '@/@types/jwt'
+import {
+  assertCurrentUserRole,
+  assertCurrentUserRoleAboveAdmin,
+  JWTAuthorizerResult,
+} from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
@@ -43,7 +47,7 @@ export const accountsHandler = lambdaApi()(
     })
 
     handlers.registerAccountsChangeTenant(async (ctx, request) => {
-      assertCurrentUserRole('root', 'whitelabel-root')
+      assertCurrentUserRoleAboveAdmin()
       await accountsService.accountsChangeTenantHandler(request, ctx.userId)
       return
     })

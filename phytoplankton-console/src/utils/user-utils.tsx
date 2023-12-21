@@ -89,6 +89,10 @@ export function isSuperAdmin(user: FlagrightAuth0User | Account | null) {
   return isAtLeast(user, UserRole.ROOT);
 }
 
+export function isAbove(user: FlagrightAuth0User | Account | null, role: UserRole) {
+  return ROLES_ORDER.indexOf(getUserRole(user)) < ROLES_ORDER.indexOf(role);
+}
+
 export function isAtLeast(user: FlagrightAuth0User | Account | null, role: UserRole) {
   if (ROLES_ORDER.indexOf(getUserRole(user)) > ROLES_ORDER.indexOf(role)) {
     return false;

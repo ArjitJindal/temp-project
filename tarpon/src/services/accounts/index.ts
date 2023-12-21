@@ -23,11 +23,10 @@ import { RoleService } from '@/services/roles'
 import { getContext, hasFeature } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ACCOUNTS_COLLECTION } from '@/utils/mongodb-definitions'
-import { JWTAuthorizerResult } from '@/@types/jwt'
+import { JWTAuthorizerResult, isRoleAboveAdmin } from '@/@types/jwt'
 import {
   DefaultApiAccountsChangeTenantRequest,
   DefaultApiAccountsEditRequest,
-  DefaultApiAccountsInviteRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { traceable } from '@/core/xray'
@@ -89,46 +88,6 @@ export class AccountsService {
     this.roleService = new RoleService({
       auth0Domain: this.config.auth0Domain,
     })
-  }
-
-  public async accountsInviteHandler(
-    request: DefaultApiAccountsInviteRequest,
-    tenantId: string,
-    organization: Tenant
-  ): Promise<Account> {
-    const {
-      role: inviteRole = 'analyst',
-      email,
-      isEscalationContact,
-    } = request.AccountInvitePayload
-
-    const rolesService = new RoleService({
-      auth0Domain: this.config.auth0Domain,
-    })
-
-    if (inviteRole === 'root') {
-      throw new Forbidden(`It's not possible to create a root user`)
-    }
-    const dynamoDb = await getDynamoDbClient()
-    const allAccounts: Account[] = await this.getTenantAccounts(organization)
-    const existingAccount = allAccounts.filter(
-      (account) => account.role !== 'root' && account.blocked === false
-    )
-    const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
-    const tenantSettings = await tenantRepository.getTenantSettings()
-    if (
-      tenantSettings?.limits?.seats &&
-      existingAccount.length >= tenantSettings?.limits?.seats
-    ) {
-      throw new Forbidden(`You have reached the maximum number of users`)
-    }
-    const user = await this.createAccountInOrganization(organization, {
-      email,
-      role: inviteRole,
-      isEscalationContact,
-    })
-    await rolesService.setRole(tenantId, user.id, inviteRole)
-    return user
   }
 
   public async getAllActiveAccounts(): Promise<Account[]> {
@@ -248,20 +207,19 @@ export class AccountsService {
     }
     const dynamoDb = getDynamoDbClient()
     const allAccounts: Account[] = await this.getTenantAccounts(organization)
-
     const existingAccount = allAccounts.filter(
-      (account) => account.role !== 'root' && account.blocked === false
+      (account) => !isRoleAboveAdmin(account.role) && account.blocked === false
     )
-
     const tenantRepository = new TenantRepository(organization.id, { dynamoDb })
-
     const tenantSettings = await tenantRepository.getTenantSettings()
 
     if (
       tenantSettings?.limits?.seats &&
       existingAccount.length >= tenantSettings?.limits?.seats
     ) {
-      throw new Forbidden(`You have reached the maximum number of users`)
+      throw new Forbidden(
+        `You have reached the maximum number of users (${existingAccount.length} / ${tenantSettings?.limits?.seats})`
+      )
     }
 
     const user = await this.createAccountInOrganization(organization, {

@@ -5,7 +5,11 @@ import {
 import { shortId } from '@flagright/lib/utils'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
+import {
+  JWTAuthorizerResult,
+  assertCurrentUserRole,
+  assertCurrentUserRoleAboveAdmin,
+} from '@/@types/jwt'
 import { Tenant } from '@/@types/openapi-internal/Tenant'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
@@ -47,7 +51,7 @@ export const tenantsHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetTenantsList(async () => {
-      assertCurrentUserRole('root', 'whitelabel-root')
+      assertCurrentUserRoleAboveAdmin()
       const tenants = await accountsService.getTenants()
       const data = tenants.map(
         (tenant): Tenant => ({
