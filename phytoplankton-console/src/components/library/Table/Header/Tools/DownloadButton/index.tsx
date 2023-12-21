@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { get } from 'lodash';
 import { message, Popover, Radio } from 'antd';
 import * as XLSX from 'xlsx-js-style';
@@ -25,11 +25,11 @@ import { getErrorMessage } from '@/utils/lang';
 import { CsvRow, CsvValue, csvValue, serialize } from '@/utils/csv';
 import { PaginationParams } from '@/utils/queries/hooks';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
-import Select from '@/components/library/Select';
 import { xlsxValue } from '@/utils/xlsx';
 import { getCurrentDomain } from '@/utils/routing';
+import Alert from '@/components/library/Alert';
 
-const MAXIMUM_EXPORT_ITEMS = 10000;
+const MAXIMUM_EXPORT_ITEMS = 25000;
 
 type Props<Item extends object, Params extends object> = {
   onPaginateData: (params: PaginationParams) => Promise<TableData<Item>>;
@@ -162,10 +162,15 @@ export default function DownloadButton<T extends object, Params extends object>(
     totalPages = 1,
   } = props;
 
-  const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT'>('ALL');
+  const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT' | 'UP_TO_10000'>('CURRENT');
   const [progress, setProgress] = useState<null | { page: number; totalPages?: number }>(null);
   const [format, setFormat] = useState<'csv' | 'xlsx'>('csv');
-
+  const [isDownloadError, setIsDownloadError] = useState<boolean>(false);
+  useEffect(() => {
+    if (isDownloadError) {
+      setPagesMode('UP_TO_10000');
+    }
+  }, [isDownloadError]);
   const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -206,6 +211,7 @@ export default function DownloadButton<T extends object, Params extends object>(
           message.error(
             `There is too much items to export (> ${MAXIMUM_EXPORT_ITEMS}). Try to change filters or export only current page.`,
           );
+          setIsDownloadError(true);
           return;
         }
 
@@ -251,6 +257,7 @@ export default function DownloadButton<T extends object, Params extends object>(
         message.error(
           `There is too much items to export (> ${MAXIMUM_EXPORT_ITEMS}). Try to change filters or export only current page.`,
         );
+        setIsDownloadError(true);
         return;
       }
       const flatData = flatDataItems<T>(items);
@@ -278,41 +285,58 @@ export default function DownloadButton<T extends object, Params extends object>(
 
   return (
     <Popover
-      placement="bottom"
+      placement="bottomRight"
+      arrowPointAtCenter
       content={
         <form onSubmit={handleDownload}>
           <div className={s.form}>
             {(totalPages !== 1 || props.cursorPagination) && (
-              <Form.Layout.Label title="Data set">
+              <Form.Layout.Label title="Download data">
                 <Radio.Group
                   onChange={(e) => {
                     setPagesMode(e.target.value);
                   }}
                   value={pagesMode}
                 >
-                  <Radio value="ALL" defaultChecked>
-                    All pages
+                  <Radio value="CURRENT" defaultChecked>
+                    Current page
                   </Radio>
-                  <Radio value="CURRENT">Current page</Radio>
+                  <Radio value="ALL">All pages</Radio>
+                  {isDownloadError && <Radio value="UP_TO_10000">Upto 10,000 rows</Radio>}
                 </Radio.Group>
               </Form.Layout.Label>
             )}
+            {pagesMode === 'ALL' && (
+              <Alert type="info">
+                This option downloads up to 25,000 rows. Browser capacity may also impact the
+                download.
+              </Alert>
+            )}
+            {pagesMode === 'UP_TO_10000' && (
+              <Alert type="error">
+                Download failed for all pages due to browser capacity. Please try downloading for up
+                to 10,000 rows.
+              </Alert>
+            )}
             <Form.Layout.Label title="Format">
-              <Select<'csv' | 'xlsx'>
-                value={format}
-                style={{ width: 100 }}
-                isDisabled={progress != null}
-                options={[
-                  { value: 'csv', label: 'CSV' },
-                  { value: 'xlsx', label: 'XLSX' },
-                ]}
-                onChange={(value) => {
-                  if (value) setFormat(value);
+              <Radio.Group
+                onChange={(e) => {
+                  setFormat(e.target.value);
                 }}
-                allowClear={false}
-              />
+                value={format}
+              >
+                <Radio value="csv" defaultChecked>
+                  CSV
+                </Radio>
+                <Radio value="xlsx">XLSX</Radio>
+              </Radio.Group>
             </Form.Layout.Label>
-            <Button isDisabled={progress != null} htmlType="submit" type="PRIMARY">
+            <Button
+              isDisabled={progress != null}
+              htmlType="submit"
+              type="PRIMARY"
+              className={s.download}
+            >
               {progress == null
                 ? 'Download'
                 : `Downloading (${progress.page}${
