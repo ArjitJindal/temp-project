@@ -205,7 +205,7 @@ export class CdkOrcaPipelineStack extends Stack {
                   ),
                   input: sourceOutput,
                   extraInputs: [tarponBuildOutput],
-                  environmentVariables: getSentryReleaseSpec(false).actionEnv,
+                  environmentVariables: getSentryReleaseSpec(true).actionEnv,
                 }),
               ]
             }),
@@ -236,7 +236,7 @@ export class CdkOrcaPipelineStack extends Stack {
                   vpc
                 ),
                 input: sourceOutput,
-                environmentVariables: getSentryReleaseSpec(false).actionEnv,
+                environmentVariables: getSentryReleaseSpec(true).actionEnv,
                 extraInputs: [tarponBuildOutput],
               })
             }),
