@@ -9,7 +9,7 @@ import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { ALERT_LIST, CASES_ITEM, AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { ALERT_LIST, CASES_ITEM, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { isSuccess } from '@/utils/asyncResource';
@@ -49,7 +49,7 @@ function CaseManagementItemPage() {
   }, [previousQueryResults, queryResults.data]);
 
   const handleCommentAdded = async (newComment: Comment) => {
-    await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
+    await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
     updateCaseQueryData(caseId, (caseItem) => {
       if (caseItem == null) {
         return caseItem;

@@ -86,6 +86,18 @@ export const AUDIT_LOGS_LIST = (searchParams: AnyParameters): QueryKey => [
   'audit-logs',
   searchParams,
 ];
+export const USER_AUDIT_LOGS_LIST = (userId: string, searchParams: AnyParameters): QueryKey => [
+  'users',
+  userId,
+  'audit-logs',
+  searchParams,
+];
+export const CASE_AUDIT_LOGS_LIST = (caseId: string, searchParams: AnyParameters): QueryKey => [
+  'cases',
+  caseId,
+  'audit-logs',
+  searchParams,
+];
 export const TRANSACTIONS_STATS = (
   type: 'by-type' | 'by-date',
   searchParams: AnyParameters,

@@ -12,7 +12,7 @@ import { useHasPermissions } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag';
-import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
 interface Props {
   caseItem: Case;
@@ -58,7 +58,7 @@ export default function Header(props: Props) {
     {
       onSuccess: async () => {
         if (caseId != null) {
-          await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
+          await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
         }
         onReload();
       },

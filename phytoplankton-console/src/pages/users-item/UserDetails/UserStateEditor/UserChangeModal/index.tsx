@@ -24,7 +24,7 @@ import TextArea from '@/components/library/TextArea';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
 import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
 import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectParamAPI';
-import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
 interface Props {
   isVisible: boolean;
@@ -126,7 +126,7 @@ export default function UserChangeModal(props: Props) {
         removeFiles();
         onClose();
         messageLoading?.();
-        await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
+        await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));
       },
       onError: (error) => {
         message.error(`Error Changing User Status: ${(error as Error).message}`);

@@ -23,7 +23,7 @@ import { DrsScore } from '@/apis';
 import LockLineIcon from '@/components/ui/icons/Remix/system/lock-line.react.svg';
 import UnlockIcon from '@/components/ui/icons/Remix/system/lock-unlock-line.react.svg';
 import { useQuery } from '@/utils/queries/hooks';
-import { USERS_ITEM_RISKS_DRS, AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { USERS_ITEM_RISKS_DRS, USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
 interface Props {
   userId: string;
@@ -92,7 +92,7 @@ export default function UserManualRiskPanel(props: Props) {
           setSyncState(success(response));
         }
         setIsLocked(!isLocked);
-        await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
+        await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
       })
       .catch((e) => {
         console.error(e);
@@ -115,7 +115,7 @@ export default function UserManualRiskPanel(props: Props) {
           // todo: i18n
           message.success('User risk updates successfully!');
           setSyncState(success(response));
-          await queryClient.invalidateQueries(AUDIT_LOGS_LIST({}));
+          await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
         })
         .catch((e) => {
           console.error(e);
