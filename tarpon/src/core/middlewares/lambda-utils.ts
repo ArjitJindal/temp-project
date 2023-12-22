@@ -1,4 +1,5 @@
 import { logger } from '../logger'
+import { getContext } from '../utils/context'
 
 let registered = false
 
@@ -11,6 +12,14 @@ export function registerUnhandledErrorHandler() {
   registered = true
   process.removeAllListeners('unhandledRejection')
   process.on('unhandledRejection', (reason) => {
+    const contextTraceId = getContext()?.rawTraceId
+    const currentTraceId = process.env._X_AMZN_TRACE_ID
+    if (contextTraceId !== currentTraceId) {
+      logger.warn(
+        `The current context's trace ID (${contextTraceId}) is different than the current one (${currentTraceId})`
+      )
+      return
+    }
     logger.error(`Unhandled Promise Rejection: ${reason}`, reason)
   })
 }

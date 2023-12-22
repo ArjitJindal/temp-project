@@ -40,6 +40,7 @@ export type ContextUser =
 
 export type Context = LogMetaData & {
   requestId?: string
+  rawTraceId?: string
   settings?: TenantSettings
   features?: Feature[]
   logMetadata?: { [key: string]: string | undefined }
@@ -100,6 +101,7 @@ export async function getInitialContext(
       tenantId,
       tenantName,
       requestId: (event as APIGatewayEvent).requestContext?.requestId,
+      rawTraceId: process.env._X_AMZN_TRACE_ID,
       logMetadata: {
         tenantId,
         tenantName,
