@@ -1,6 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { isEmpty, isEqual, pick } from 'lodash'
-import { syncRulesLibrary } from '../../../scripts/migrations/always-run/sync-rules-library'
 import { logger } from '../logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getUsers } from '@/core/seed/data/users'
@@ -23,6 +22,7 @@ import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithR
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { isDemoTenant } from '@/utils/tenant'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { RuleService } from '@/services/rules-engine'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -41,7 +41,7 @@ export async function seedDynamo(
   const ruleRepo = new RuleInstanceRepository(tenantId, { dynamoDb })
 
   logger.info('Creating rules...')
-  await syncRulesLibrary()
+  await RuleService.syncRulesLibrary()
 
   logger.info('Clear rule instances')
   const existingRuleInstances = await ruleRepo.getAllRuleInstances()

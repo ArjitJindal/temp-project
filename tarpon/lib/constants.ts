@@ -255,6 +255,21 @@ export const StackConstants = {
     'RequestLoggerFunction'
   ),
   CRON_JOB_MONTHLY: getResourceNameForTarpon('CronJobMonthlyFunction'),
+  FARGATE_BATCH_JOB_TASK_DEFINITION_NAME: getResourceNameForTarpon(
+    'FargateBatchJobTaskDefinition'
+  ),
+  FARGATE_BATCH_JOB_DOCKER_IMAGE_ASSET_NAME: getResourceNameForTarpon(
+    'FargateBatchJobDockerImageAsset'
+  ),
+  FARGATE_BATCH_JOB_CLUSTER_NAME: getResourceNameForTarpon(
+    'FargateBatchJobCluster'
+  ),
+  FARGATE_BATCH_JOB_CONTAINER_NAME: getResourceNameForTarpon(
+    'FargateBatchJobContainer'
+  ),
+  FARGATE_BATCH_JOB_XRAY_CONTAINER_NAME: getResourceNameForTarpon(
+    'FargateBatchJobXrayContainer'
+  ),
 }
 
 export const SQSQueues: {

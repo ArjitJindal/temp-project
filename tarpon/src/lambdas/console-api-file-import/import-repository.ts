@@ -3,7 +3,7 @@ import { Credentials } from 'aws-lambda'
 import { IMPORT_COLLECTION } from '@/utils/mongodb-definitions'
 import { FileImport } from '@/@types/openapi-internal/FileImport'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
-import { sendBatchJobCommand } from '@/services/batch-job'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { traceable } from '@/core/xray'
 
 @traceable

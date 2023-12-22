@@ -17,7 +17,7 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
-import { sendBatchJobCommand } from '@/services/batch-job'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { publishAuditLog } from '@/services/audit-log'
 import { envIs, envIsNot } from '@/utils/env'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
@@ -226,6 +226,17 @@ export const tenantsHandler = lambdaApi()(
               awsCredentials: getCredentialsFromEvent(event),
             })
           }
+          break
+        }
+
+        case 'TEST_FARGATE': {
+          await sendBatchJobCommand({
+            type: 'TEST_FARGATE',
+            tenantId: tenantId,
+            parameters: {
+              message: 'Hello from Flagright Console API',
+            },
+          })
           break
         }
 

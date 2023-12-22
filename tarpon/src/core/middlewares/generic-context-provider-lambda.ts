@@ -1,6 +1,6 @@
 import { withContext } from '../utils/context'
 
-export const genericContextProvider =
+export const genericContextProviderLambda =
   () =>
   (handler: CallableFunction): any =>
   async (event: any, context: any, callback: any): Promise<any> => {

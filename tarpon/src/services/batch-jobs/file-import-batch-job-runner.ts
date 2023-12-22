@@ -1,6 +1,3 @@
-import { Importer } from '../console-api-file-import/importer'
-import { FileImportConfig } from '../console-api-file-import/app'
-import { ImportRepository } from '../console-api-file-import/import-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { FileImportBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -9,6 +6,9 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { assertPermissions } from '@/@types/jwt'
 import { assertUserError } from '@/utils/errors'
 import { traceable } from '@/core/xray'
+import { FileImportConfig } from '@/lambdas/console-api-file-import/app'
+import { ImportRepository } from '@/lambdas/console-api-file-import/import-repository'
+import { Importer } from '@/lambdas/console-api-file-import/importer'
 
 const { TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
 

@@ -36,7 +36,7 @@ import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalCon
 import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { INTERNAL_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
-import { sendBatchJobCommand } from '@/services/batch-job'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { UserService } from '@/services/users'
 import { isDemoTenant } from '@/utils/tenant'

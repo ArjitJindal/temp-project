@@ -1,10 +1,13 @@
 import { compose } from './compose'
-import { genericContextProvider } from './generic-context-provider'
-import { initSentry } from './init-sentry'
+import { genericContextProviderLambda } from './generic-context-provider-lambda'
+import { initSentryLambda } from './init-sentry-lambda'
 import { registerUnhandledErrorHandler } from './lambda-utils'
 
 export const lambdaConsumer = () => {
   registerUnhandledErrorHandler()
-  const middlewares = [genericContextProvider(), initSentry()] as const
+  const middlewares = [
+    genericContextProviderLambda(),
+    initSentryLambda(),
+  ] as const
   return compose(...middlewares)
 }

@@ -9,7 +9,7 @@ import { SimulationTaskRepository } from './repositories/simulation-task-reposit
 import { SimulationResultRepository } from './repositories/simulation-result-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { sendBatchJobCommand } from '@/services/batch-job'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'

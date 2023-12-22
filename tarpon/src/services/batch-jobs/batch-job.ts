@@ -1,7 +1,7 @@
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { BatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
-import { getBatchJobRunner } from '@/lambdas/batch-job/batch-job-runner-factory'
+import { getBatchJobRunner } from '@/services/batch-jobs/batch-job-runner-factory'
 import { envIs } from '@/utils/env'
 
 const sqsClient = new SQSClient({})

@@ -4,16 +4,15 @@
 import path from 'path'
 import { execSync } from 'child_process'
 import fetch from 'node-fetch'
-
 import fs from 'fs-extra'
 import { omit } from 'lodash'
-import { syncRulesLibrary } from '../migrations/always-run/sync-rules-library'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
+import { RuleService } from '@/services/rules-engine'
 
 process.env.ENV = 'local'
 
@@ -169,7 +168,7 @@ async function main() {
   if (ruleInstanceIds.length > 0) {
     execSync('npm run recreate-local-ddb --table=TarponRule >/dev/null 2>&1')
     console.info('Recreated TarponRule DynamoDB table')
-    await syncRulesLibrary()
+    await RuleService.syncRulesLibrary()
     await createRuleInstancesLocally(ruleInstanceIds)
   }
 

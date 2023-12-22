@@ -29,6 +29,7 @@ export const createCanary = (
     environmentVariables: {
       ENV: scope.config.stage,
       REGION: scope.config.region as string,
+      RELEASE_VERSION: process.env.RELEASE_VERSION as string,
       ...{
         ...Object.entries(scope.config.application).reduce(
           (acc: Record<string, string>, [key, value]) => ({

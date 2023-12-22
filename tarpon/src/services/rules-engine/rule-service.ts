@@ -1,8 +1,11 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
 
-import { isEmpty } from 'lodash'
-import { DEFAULT_CURRENCY_KEYWORD } from './transaction-rules/library'
+import { isEmpty, set } from 'lodash'
+import {
+  DEFAULT_CURRENCY_KEYWORD,
+  RULES_LIBRARY,
+} from './transaction-rules/library'
 import {
   TRANSACTION_FILTERS,
   TRANSACTION_FILTER_DEFAULT_VALUES,
@@ -25,6 +28,8 @@ import { hasFeatures } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 import { RuleFilters } from '@/@types/openapi-internal/RuleFilters'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
   (attribute) => attribute.name
@@ -50,6 +55,23 @@ export class RuleService {
   ) {
     this.ruleRepository = ruleRepository
     this.ruleInstanceRepository = ruleInstanceRepository
+  }
+
+  public static async syncRulesLibrary() {
+    const dynamoDb = getDynamoDbClient()
+    const ruleRepository = new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
+    for (const rule of RULES_LIBRARY) {
+      // If ui:order is not defined, set the order to be the order defined in each rule
+      if (!rule.parametersSchema?.['ui:schema']?.['ui:order']) {
+        set(
+          rule.parametersSchema,
+          `ui:schema.ui:order`,
+          Object.keys(rule.parametersSchema.properties)
+        )
+      }
+      await ruleRepository.createOrUpdateRule(rule)
+      console.info(`Synced rule ${rule.id} (${rule.name})`)
+    }
   }
 
   async getAllRuleFilters(): Promise<RuleFilters> {

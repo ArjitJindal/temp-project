@@ -6138,6 +6138,7 @@ components:
         - ONGOING_MERCHANT_MONITORING
         - PULSE_USERS_BACKFILL_RISK_SCORE
         - DEMO_MODE_DATA_LOAD
+        - TEST_FARGATE
     DashboardStatsTransactionsCount:
       type: object
       x-examples:

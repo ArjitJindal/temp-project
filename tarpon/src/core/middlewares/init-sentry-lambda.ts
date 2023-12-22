@@ -1,14 +1,10 @@
 import * as Sentry from '@sentry/serverless'
-import * as createError from 'http-errors'
-
 import { RewriteFrames, Debug } from '@sentry/integrations'
-
-import { isEqual } from 'lodash'
 import { getContext } from '../utils/context'
+import { SENTRY_INIT_CONFIG } from '@/utils/sentry'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { SENTRY_DSN } from '@/core/constants'
 
-export const initSentry =
+export const initSentryLambda =
   () =>
   (handler: CallableFunction): CallableFunction => {
     if (process.env.ENV === 'local') {
@@ -18,38 +14,20 @@ export const initSentry =
     }
 
     Sentry.AWSLambda.init({
-      dsn: SENTRY_DSN, // I think we can hardcode this for now since it is same for all lambdas
-      tracesSampleRate: 0,
-      environment: process.env.ENV || 'local',
-      release: process.env.RELEASE_VERSION,
+      ...SENTRY_INIT_CONFIG,
       integrations: [
         new RewriteFrames({
           prefix: `app:///${process.env.LAMBDA_CODE_PATH}/`,
         }) as any,
         new Debug(),
       ],
-
-      beforeSend(event, hint) {
-        const error = hint?.originalException
-        if (error instanceof createError.HttpError && error.statusCode < 500) {
-          return null
-        }
-        const context = getContext()
-        const lastError = context?.lastError
-        if (lastError && isEqual(error, lastError)) {
-          console.warn('Found duplicated error. Skip sending to Sentry.')
-          return null
-        }
-        if (error instanceof Error && context) {
-          context.lastError = error
-        }
-        return event
-      },
     })
 
     return Sentry.AWSLambda.wrapHandler(
       async (event: any, ...args): Promise<any> => {
-        Sentry.configureScope((scope) => scope.clear())
+        const scope = Sentry.getCurrentScope()
+        scope.clear()
+
         if (event.requestContext?.authorizer) {
           const { userId, verifiedEmail } = event.requestContext
             .authorizer as unknown as JWTAuthorizerResult
@@ -58,6 +36,7 @@ export const initSentry =
             email: verifiedEmail ?? undefined,
           })
         }
+
         Sentry.setTags(getContext()?.logMetadata || {})
         Sentry.setContext(
           'query',

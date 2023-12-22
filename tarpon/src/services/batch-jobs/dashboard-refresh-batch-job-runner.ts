@@ -1,6 +1,4 @@
 import { last, uniq } from 'lodash'
-import { TimeRange } from '../console-api-dashboard/repositories/types'
-import { getAffectedInterval } from '../console-api-dashboard/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { DashboardRefreshBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -16,6 +14,8 @@ import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { getAffectedInterval } from '@/lambdas/console-api-dashboard/utils'
+import { TimeRange } from '@/lambdas/console-api-dashboard/repositories/types'
 
 function getTargetTimeRanges(timestamps: number[]): TimeRange[] {
   if (timestamps.length === 0) {

@@ -1,13 +1,13 @@
 import { chunk, groupBy, mapValues } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
-import { getOngoingScreeningUserRuleInstances } from '../batch-job/ongoing-screening-user-rule-batch-job-runner'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantInfo, TenantService } from '@/services/tenants'
-import { sendBatchJobCommand } from '@/services/batch-job'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
+import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 
 const ONGOING_SCREENING_USERS_BATCH_SIZE = 100
 

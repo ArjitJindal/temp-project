@@ -102,6 +102,15 @@ export type SyncIndexesBatchJob = {
   tenantId: string
 }
 
+/* Test Fargate Job */
+export type TestFargateJob = {
+  type: 'TEST_FARGATE'
+  tenantId: string
+  parameters: {
+    message: string
+  }
+}
+
 export type BatchJob =
   | FileImportBatchJob
   | SimulationPulseBatchJob
@@ -114,6 +123,7 @@ export type BatchJob =
   | DashboardRefreshBatchJob
   | OngoingMerchantMonitoringBatchJob
   | SyncIndexesBatchJob
+  | TestFargateJob
 
 export type BatchJobType = BatchJob['type']
 // Enforce they all have tenantId

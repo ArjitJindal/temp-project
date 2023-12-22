@@ -75,15 +75,27 @@ import {
   Choice,
   Condition,
   JitterType,
+  JsonPath,
   StateMachine,
   Succeed,
 } from 'aws-cdk-lib/aws-stepfunctions'
-import { LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks'
+import {
+  EcsFargateLaunchTarget,
+  EcsRunTask,
+  LambdaInvoke,
+} from 'aws-cdk-lib/aws-stepfunctions-tasks'
 import {
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
+  FARGATE_BATCH_JOB_RUN_TYPE,
   LAMBDA_BATCH_JOB_RUN_TYPE,
+  BATCH_JOB_PAYLOAD_ENV_VAR,
 } from '@lib/cdk/constants'
+import {
+  Cluster,
+  ContainerImage,
+  FargatePlatformVersion,
+} from 'aws-cdk-lib/aws-ecs'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -91,6 +103,11 @@ import { createAPIGatewayThrottlingAlarm } from './cdk-utils/cdk-cw-alarms-utils
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
 import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
 import { createCanary } from './cdk-utils/cdk-synthetics-utils'
+import {
+  addFargateContainer,
+  createDockerImage,
+  createFargateTaskDefinition,
+} from './cdk-utils/cdk-fargate-utils'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
   DEFAULT_LAMBDA_TIMEOUT_SECONDS * 6
@@ -430,15 +447,17 @@ export class CdkTarponStack extends cdk.Stack {
       },
     }
 
-    let roleName = `flagrightLambdaExecutionRole${getSuffix()}`
+    let lambdaRoleName = `flagrightLambdaExecutionRole${getSuffix()}`
+    let ecsRoleName = `flagrightEcsTaskExecutionRole${getSuffix()}`
 
     // On production the role name was set without a suffix, it's dangerous for us
     // to change without downtime.
     if (this.config.stage === 'prod' && config.region !== 'asia-2') {
-      roleName += `-${config.region}`
+      lambdaRoleName += `-${config.region}`
+      ecsRoleName += `-${config.region}`
     }
     const lambdaExecutionRole = new Role(this, `lambda-role`, {
-      roleName,
+      roleName: lambdaRoleName,
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName(
@@ -453,79 +472,97 @@ export class CdkTarponStack extends cdk.Stack {
       ],
     })
 
-    // Give role access to all secrets
-    lambdaExecutionRole.attachInlinePolicy(
-      new Policy(this, id, {
-        policyName: `${lambdaExecutionRole.roleName}-MongoDbPolicy`,
-        statements: [
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['secretsmanager:*'],
-            resources: ['*'],
-          }),
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['dynamodb:*'],
-            resources: [
-              hammerheadDynamoDbTable.tableArn,
-              tarponRuleDynamoDbTable.tableArn,
-              transientDynamoDbTable.tableArn,
-              tarponRuleDynamoDbTable.tableArn,
-              tarponDynamoDbTable.tableArn,
-            ],
-          }),
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['sqs:*'],
-            resources: [
-              auditLogQueue.queueArn,
-              tarponChangeCaptureRetryQueue.queueArn,
-              batchJobQueue.queueArn,
-              webhookTarponChangeCaptureRetryQueue.queueArn,
-              hammerheadChangeCaptureRetryQueue.queueArn,
-              webhookDeliveryQueue.queueArn,
-              slackAlertQueue.queueArn,
-              transactionAggregationQueue.queueArn,
-              requestLoggerQueue.queueArn,
-            ],
-          }),
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['sns:Publish'],
-            resources: [auditLogTopic.topicArn],
-          }),
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: [
-              's3:GetBucket*',
-              's3:GetObject*',
-              's3:List*',
-              's3:PutObject',
-              's3:PutObjectAcl',
-            ],
-            resources: [
-              s3TmpBucket.bucketArn,
-              s3ImportBucket.bucketArn,
-              s3DocumentBucket.bucketArn,
-              s3demoModeBucket.bucketArn,
-            ],
-          }),
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['states:StartExecution'],
-            resources: ['*'],
-          }),
+    const ecsTaskExecutionRole = new Role(this, `ecs-role`, {
+      roleName: ecsRoleName,
+      assumedBy: new ServicePrincipal('ecs-tasks.amazonaws.com'),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName(
+          'service-role/AmazonECSTaskExecutionRolePolicy'
+        ),
+      ],
+    })
 
-          // TODO remove after initial deployment
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['sts:AssumeRole'],
-            resources: ['*'],
-          }),
-        ],
-      })
-    )
+    const policy = new Policy(this, id, {
+      policyName: `${lambdaExecutionRole.roleName}-MongoDbPolicy`,
+      statements: [
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['secretsmanager:*'],
+          resources: ['*'],
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['dynamodb:*'],
+          resources: [
+            hammerheadDynamoDbTable.tableArn,
+            tarponRuleDynamoDbTable.tableArn,
+            transientDynamoDbTable.tableArn,
+            tarponRuleDynamoDbTable.tableArn,
+            tarponDynamoDbTable.tableArn,
+          ],
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['sqs:*'],
+          resources: [
+            auditLogQueue.queueArn,
+            tarponChangeCaptureRetryQueue.queueArn,
+            batchJobQueue.queueArn,
+            webhookTarponChangeCaptureRetryQueue.queueArn,
+            hammerheadChangeCaptureRetryQueue.queueArn,
+            webhookDeliveryQueue.queueArn,
+            slackAlertQueue.queueArn,
+            transactionAggregationQueue.queueArn,
+            requestLoggerQueue.queueArn,
+          ],
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['sns:Publish'],
+          resources: [auditLogTopic.topicArn],
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: [
+            's3:GetBucket*',
+            's3:GetObject*',
+            's3:List*',
+            's3:PutObject',
+            's3:PutObjectAcl',
+          ],
+          resources: [
+            s3TmpBucket.bucketArn,
+            s3ImportBucket.bucketArn,
+            s3DocumentBucket.bucketArn,
+            s3demoModeBucket.bucketArn,
+          ],
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['states:StartExecution'],
+          resources: ['*'],
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['ecs:*'],
+          resources: ['*'],
+        }),
+
+        // TODO remove after initial deployment
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['sts:AssumeRole'],
+          resources: ['*'],
+        }),
+      ],
+    })
+
+    // Give role access to all secrets
+    lambdaExecutionRole.attachInlinePolicy(policy)
+    ecsTaskExecutionRole.attachInlinePolicy(policy)
+
     Metric.grantPutMetricData(lambdaExecutionRole)
+    Metric.grantPutMetricData(ecsTaskExecutionRole)
 
     /* API Key Authorizer */
     const { alias: apiKeyAuthorizerAlias, func: apiKeyAuthorizerFunction } =
@@ -689,6 +726,38 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const fargateBatchJobTaskDefinition = createFargateTaskDefinition(
+      this,
+      StackConstants.FARGATE_BATCH_JOB_TASK_DEFINITION_NAME,
+      { role: ecsTaskExecutionRole }
+    )
+
+    const fargateBatchJobContainer = addFargateContainer(
+      this,
+      StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
+      fargateBatchJobTaskDefinition,
+      {
+        image: ContainerImage.fromDockerImageAsset(
+          createDockerImage(
+            this,
+            StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
+            {
+              path:
+                process.env.INFRA_CI === 'true'
+                  ? 'src/fargate'
+                  : 'dist/fargate',
+            }
+          )
+        ),
+      }
+    )
+
+    const batchJobCluster = new Cluster(
+      this,
+      StackConstants.FARGATE_BATCH_JOB_CLUSTER_NAME,
+      { vpc }
+    )
+
     const batchJobStateMachine = new StateMachine(
       this,
       getResourceNameForTarpon('BatchJobStateMachine'),
@@ -700,35 +769,75 @@ export class CdkTarponStack extends cdk.Stack {
             lambdaFunction: jobDecisionAlias,
           }
         ).next(
-          new Choice(
-            this,
-            getResourceNameForTarpon('BatchJobRunTypeChoice')
-          ).when(
-            Condition.stringEquals(
-              `$.Payload.${BATCH_JOB_RUN_TYPE_RESULT_KEY}`,
-              LAMBDA_BATCH_JOB_RUN_TYPE
-            ),
-            new LambdaInvoke(
-              this,
-              getResourceNameForTarpon('BatchJobLambdaRunner'),
-              {
-                lambdaFunction: jobRunnerAlias,
-                inputPath: `$.Payload.${BATCH_JOB_PAYLOAD_RESULT_KEY}`,
-              }
-            )
-              .addRetry({
-                interval: Duration.seconds(30),
-                maxDelay: Duration.hours(1),
-                maxAttempts: 15,
-                jitterStrategy: JitterType.FULL,
-              })
-              .next(
-                new Succeed(
-                  this,
-                  getResourceNameForTarpon('BatchJobRunSucceed')
-                )
+          new Choice(this, getResourceNameForTarpon('BatchJobRunTypeChoice'))
+            .when(
+              Condition.stringEquals(
+                `$.Payload.${BATCH_JOB_RUN_TYPE_RESULT_KEY}`,
+                LAMBDA_BATCH_JOB_RUN_TYPE
+              ),
+              new LambdaInvoke(
+                this,
+                getResourceNameForTarpon('BatchJobLambdaRunner'),
+                {
+                  lambdaFunction: jobRunnerAlias,
+                  inputPath: `$.Payload.${BATCH_JOB_PAYLOAD_RESULT_KEY}`,
+                }
               )
-          )
+                .addRetry({
+                  interval: Duration.seconds(30),
+                  maxDelay: Duration.hours(1),
+                  maxAttempts: 15,
+                  jitterStrategy: JitterType.FULL,
+                })
+                .next(
+                  new Succeed(
+                    this,
+                    getResourceNameForTarpon('BatchJobRunSucceedLambda')
+                  )
+                )
+            )
+            .when(
+              Condition.stringEquals(
+                `$.Payload.${BATCH_JOB_RUN_TYPE_RESULT_KEY}`,
+                FARGATE_BATCH_JOB_RUN_TYPE
+              ),
+              new EcsRunTask(
+                this,
+                getResourceNameForTarpon('BatchJobFargateRunner'),
+                {
+                  cluster: batchJobCluster,
+                  taskDefinition: fargateBatchJobTaskDefinition,
+                  launchTarget: new EcsFargateLaunchTarget({
+                    platformVersion: FargatePlatformVersion.LATEST,
+                  }),
+                  inputPath: `$.Payload.${BATCH_JOB_PAYLOAD_RESULT_KEY}`,
+                  containerOverrides: [
+                    {
+                      containerDefinition: fargateBatchJobContainer,
+                      environment: [
+                        {
+                          name: BATCH_JOB_PAYLOAD_ENV_VAR,
+                          value: JsonPath.jsonToString(JsonPath.stringAt('$')),
+                        },
+                      ],
+                      command: ['node', 'index.js'],
+                    },
+                  ],
+                }
+              )
+                .addRetry({
+                  interval: Duration.seconds(30),
+                  maxDelay: Duration.hours(1),
+                  maxAttempts: 2, // Update when ready
+                  jitterStrategy: JitterType.FULL,
+                })
+                .next(
+                  new Succeed(
+                    this,
+                    getResourceNameForTarpon('BatchJobRunSucceedFargate')
+                  )
+                )
+            )
         ),
       }
     )

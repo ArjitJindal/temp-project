@@ -5,7 +5,6 @@ import { SQSQueues, StackConstants } from '@lib/constants'
 import { Umzug, MongoDBStorage } from 'umzug'
 import { STS, AssumeRoleCommand } from '@aws-sdk/client-sts'
 import { syncMongoDbIndexes } from './always-run/sync-mongodb-indexes'
-import { syncRulesLibrary } from './always-run/sync-rules-library'
 import { loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
 import { syncFeatureFlags } from './utils/tenant'
@@ -14,6 +13,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { seedDynamo } from '@/core/seed/dynamodb'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { seedMongo } from '@/core/seed/mongo'
+import { RuleService } from '@/services/rules-engine'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
@@ -141,7 +141,7 @@ async function main() {
 
 async function syncData() {
   await syncMongoDbIndexes()
-  await syncRulesLibrary()
+  await RuleService.syncRulesLibrary()
   await syncListLibrary()
   await syncFeatureFlags()
 }

@@ -1,9 +1,9 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { syncRulesLibrary } from '../always-run/sync-rules-library'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
+import { RuleService } from '@/services/rules-engine'
 
 async function migrateTenant(tenant: Tenant) {
   const dynamoDb = getDynamoDbClient()
@@ -35,7 +35,7 @@ async function migrateTenant(tenant: Tenant) {
 }
 
 export const up = async () => {
-  await syncRulesLibrary()
+  await RuleService.syncRulesLibrary()
   await migrateAllTenants(migrateTenant)
 }
 export const down = async () => {

@@ -11,3 +11,4 @@ src/@types/openapi*
 *.xsd
 **/bin/*
 *.xml
+Dockerfile

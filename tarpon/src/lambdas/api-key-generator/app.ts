@@ -10,7 +10,7 @@ import {
 } from '@/utils/mongodb-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { sendBatchJobCommand } from '@/services/batch-job'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { createNewApiKeyForTenant } from '@/services/api-key'
 import { getFullTenantId } from '@/utils/tenant'

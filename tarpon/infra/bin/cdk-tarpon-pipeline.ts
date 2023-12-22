@@ -2,14 +2,14 @@
 import * as cdk from 'aws-cdk-lib'
 import { config as devConfig } from '@flagright/lib/config/config-dev'
 import { isQaEnv } from '@lib/qa'
-import {getTarponConfig} from "@flagright/lib/constants/config"
+import { getTarponConfig } from "@flagright/lib/constants/config"
 import { stageAndRegion } from "@flagright/lib/utils/env";
 import { CdkTarponStack } from '../cdk-tarpon-stack'
 import { CdkTarponTestCanaryStack } from '../cdk-deploy-test-canary-stack'
 
 const app = new cdk.App()
 
-if (process.env.ENV === 'dev' && process.env.CANARY === 'true') {
+if (process.env.ENV === 'dev' && process.env.TYPE === 'canary') {
   console.log('Deploying canary')
   new CdkTarponTestCanaryStack(
     app,

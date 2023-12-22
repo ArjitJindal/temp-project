@@ -1,6 +1,4 @@
 import { countBy, isEmpty } from 'lodash'
-import { SimulationTaskRepository } from '../console-api-simulation/repositories/simulation-task-repository'
-import { SimulationResultRepository } from '../console-api-simulation/repositories/simulation-result-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationPulseBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -18,6 +16,8 @@ import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/Paramete
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getUserName } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
+import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
+import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
 
 type SimulationResult = {
   userResults: Array<Omit<SimulationPulseResult, 'taskId' | 'type'>>

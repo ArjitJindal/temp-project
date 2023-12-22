@@ -36,7 +36,7 @@ const OUT_DIR = 'dist'
 async function main() {
   console.log('Bundling...')
   console.time('Total build time')
-  const entries = fs
+  const lambdaEntries = fs
     .readdirSync(`${ROOT_DIR}/src/lambdas`)
     .map((lambdaDirName) => `src/lambdas/${lambdaDirName}/app.ts`)
 
@@ -46,7 +46,11 @@ async function main() {
       return `src/canaries/${canaryDirName}/index.ts`
     })
 
-  const allEntries = [...entries, ...canaryEntries]
+  const fargateEntries = fs.readdirSync(`${ROOT_DIR}/src/fargate`).map(() => {
+    return `src/fargate/index.ts`
+  })
+
+  const allEntries = [...canaryEntries, ...fargateEntries, ...lambdaEntries]
 
   console.time('Bundle time')
   const bundleResults = await esbuild.build({
@@ -66,24 +70,6 @@ async function main() {
   })
 
   console.log('Generated bundles:')
-  for (const [file, info] of Object.entries(bundleResults.metafile.outputs)) {
-    console.log(`  ${file}: ${info.bytes.toLocaleString('en-US')} bytes`)
-  }
-  await fs.writeFile(
-    path.join(OUT_DIR, 'meta.json'),
-    JSON.stringify(bundleResults.metafile)
-  )
-
-  const canaries = fs.readdirSync(`${ROOT_DIR}/dist/canaries`)
-  // We need to move canaries to a subfolder as per the requirements of synthetics
-  for (const canary of canaries) {
-    await fs.move(
-      `${ROOT_DIR}/dist/canaries/${canary}/index.js`,
-      `${ROOT_DIR}/dist/canaries/${canary}/nodejs/node_modules/index.js`, // The canary resource requires that the handler is present at "nodejs/node_modules"
-      { overwrite: true }
-    )
-  }
-
   console.timeEnd('Bundle time')
 
   await Promise.all([
@@ -115,6 +101,30 @@ async function main() {
       )
     })(),
   ])
+
+  for (const [file, info] of Object.entries(bundleResults.metafile.outputs)) {
+    console.log(`  ${file}: ${info.bytes.toLocaleString('en-US')} bytes`)
+  }
+  await fs.writeFile(
+    path.join(OUT_DIR, 'meta.json'),
+    JSON.stringify(bundleResults.metafile)
+  )
+
+  const canaries = fs.readdirSync(`${ROOT_DIR}/dist/canaries`)
+  // We need to move canaries to a subfolder as per the requirements of synthetics
+  for (const canary of canaries) {
+    await fs.move(
+      `${ROOT_DIR}/dist/canaries/${canary}/index.js`,
+      `${ROOT_DIR}/dist/canaries/${canary}/nodejs/node_modules/index.js`, // The canary resource requires that the handler is present at "nodejs/node_modules"
+      { overwrite: true }
+    )
+  }
+
+  await fs.copy(
+    `${ROOT_DIR}/src/fargate/Dockerfile`,
+    `${ROOT_DIR}/dist/fargate/Dockerfile`,
+    { overwrite: true }
+  )
 
   console.timeEnd('Total build time')
 }

@@ -1,7 +1,7 @@
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantService } from '@/services/tenants'
-import { sendBatchJobCommand } from '@/services/batch-job'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 

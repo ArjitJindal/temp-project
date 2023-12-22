@@ -1,7 +1,7 @@
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { tenantHasFeature } from '@/core/utils/context'
-import { sendBatchJobCommand } from '@/services/batch-job'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { TenantService } from '@/services/tenants'
 
 export const cronJobMonthlyHandler = lambdaConsumer()(async () => {
