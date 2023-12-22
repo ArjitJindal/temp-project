@@ -104,7 +104,9 @@ Cypress.Commands.add('multiSelect', (preSelector, text) => {
   cy.get(`.ant-select .ant-select-selection-search input`)
     .invoke('attr', 'id')
     .then((_) => {
-      cy.get(`${preSelector} .ant-select .ant-select-selection-search input`).eq(0).type(`${text}`);
+      cy.get(`${preSelector} .ant-select .ant-select-selection-search input`)
+        .eq(0)
+        .type(`${text}`, { force: true });
       cy.get(`div[title="${text}"]`).click();
     });
 });
