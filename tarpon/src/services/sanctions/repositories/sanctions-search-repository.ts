@@ -254,21 +254,16 @@ export class SanctionsSearchRepository {
     const stat = stats.find((stat) => stat._id === entityType)
     const bankStat = stats.find((stat) => stat._id === 'IBAN')
 
-    return stat
-      ? {
-          hitCount:
-            entityType === 'BANK'
-              ? stat.hitCount + (bankStat?.hitCount ?? 0)
-              : stat.hitCount,
-          screenedCount:
-            entityType === 'BANK'
-              ? stat.screenedCount + (bankStat?.screenedCount ?? 0)
-              : stat.screenedCount,
-        }
-      : {
-          hitCount: 0,
-          screenedCount: 0,
-        }
+    return {
+      hitCount:
+        entityType === 'BANK'
+          ? (stat?.hitCount ?? 0) + (bankStat?.hitCount ?? 0)
+          : stat?.hitCount ?? 0,
+      screenedCount:
+        entityType === 'BANK'
+          ? (stat?.screenedCount ?? 0) + (bankStat?.screenedCount ?? 0)
+          : stat?.screenedCount ?? 0,
+    }
   }
 
   public async getSanctionsScreeningStats(): Promise<SanctionsScreeningStats> {
