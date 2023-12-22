@@ -5,13 +5,10 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { deleteUnwantedKeys } from '@/utils/object'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials>
 >
-
-const keys = ['PartitionKeyID', 'SortKeyID'] as const
 
 export const jsonSerializer =
   () =>
@@ -39,8 +36,6 @@ export const jsonSerializer =
       headers = response.headers
       body = response.body
     } else if (response) {
-      deleteUnwantedKeys(response, keys, 4)
-
       body = JSON.stringify(response)
     } else {
       body = JSON.stringify(null)

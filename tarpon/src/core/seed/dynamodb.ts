@@ -24,6 +24,8 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { isDemoTenant } from '@/utils/tenant'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 
+export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
+
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,
   tenantId: string

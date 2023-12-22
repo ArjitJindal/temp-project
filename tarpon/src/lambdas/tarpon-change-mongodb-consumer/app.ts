@@ -1,7 +1,7 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
-import { flatten, isEmpty, pick } from 'lodash'
+import { flatten, isEmpty, pick, omit } from 'lodash'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -41,6 +41,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { UserService } from '@/services/users'
 import { isDemoTenant } from '@/utils/tenant'
 import { envIs } from '@/utils/env'
+import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 
 const sqs = new SQS({
   region: process.env.AWS_REGION,
@@ -180,7 +181,10 @@ async function transactionHandler(
     : undefined
 
   const [transactionInMongo, ruleInstances] = await Promise.all([
-    transactionsRepo.addTransactionToMongo(transaction, arsScore),
+    transactionsRepo.addTransactionToMongo(
+      omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult,
+      arsScore
+    ),
     ruleInstancesRepo.getRuleInstancesByIds(
       transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
     ),
@@ -348,7 +352,7 @@ async function userHandler(
 
   const savedUser = await usersRepo.saveUserMongo({
     ...pick(existingUser, INTERNAL_ONLY_USER_ATTRIBUTES),
-    ...internalUser,
+    ...(omit(internalUser, DYNAMO_KEYS) as InternalUser),
   })
 
   const timestampBeforeCasesCreation = Date.now()
@@ -389,7 +393,12 @@ async function userEventHandler(
   // TODO: Update user status: https://flagright.atlassian.net/browse/FDT-150
   await userEventCollection.replaceOne(
     { eventId: userEvent.eventId },
-    { ...userEvent, createdAt: Date.now() },
+    {
+      ...(omit(userEvent, DYNAMO_KEYS) as
+        | InternalConsumerUserEvent
+        | InternalBusinessUserEvent),
+      createdAt: Date.now(),
+    },
     { upsert: true }
   )
 }
@@ -410,7 +419,9 @@ async function deviceDataMetricsHandler(
   const metricsRepository = new MetricsRepository(tenantId, {
     mongoDb: mongoDb,
   })
-  await metricsRepository.saveMetricMongo(deviceMetrics)
+  await metricsRepository.saveMetricMongo(
+    omit(deviceMetrics, DYNAMO_KEYS) as DeviceMetric
+  )
 }
 
 async function transactionEventHandler(
@@ -434,7 +445,10 @@ async function transactionEventHandler(
 
   await transactionEventCollection.replaceOne(
     { eventId: transactionEvent.eventId },
-    { ...transactionEvent, createdAt: Date.now() },
+    {
+      ...(omit(transactionEvent, DYNAMO_KEYS) as InternalTransactionEvent),
+      createdAt: Date.now(),
+    },
     { upsert: true }
   )
 }

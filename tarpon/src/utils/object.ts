@@ -92,27 +92,3 @@ export const dedupObjectArray = <T extends object>(array: T[]): T[] => {
 
   return uniqWith(array, isEqual)
 }
-
-export const deleteUnwantedKeys = (
-  obj: any,
-  keys: readonly string[] = [],
-  maxDepth: number = 2,
-  depth = 0
-) => {
-  if (!keys.length || maxDepth <= 0 || typeof obj !== 'object' || obj == null) {
-    return
-  }
-
-  if (depth >= maxDepth) {
-    return
-  }
-
-  if (Array.isArray(obj)) {
-    obj.forEach((item) => deleteUnwantedKeys(item, keys, maxDepth, depth + 1))
-  } else if (typeof obj === 'object' && obj !== null) {
-    keys.forEach((key) => delete obj[key])
-    Object.values(obj).forEach((value) =>
-      deleteUnwantedKeys(value, keys, maxDepth, depth + 1)
-    )
-  }
-}

@@ -1,8 +1,4 @@
-import {
-  mergeEntities,
-  dedupObjectArray,
-  deleteUnwantedKeys,
-} from '@/utils/object'
+import { mergeEntities, dedupObjectArray } from '@/utils/object'
 
 describe('mergeEntities', () => {
   test('array arent merged', async () => {
@@ -101,91 +97,5 @@ describe('dedupObjectArray', () => {
       { a: 1, b: 3 },
     ]
     expect(dedupObjectArray(array)).toStrictEqual(array)
-  })
-})
-
-describe('deleteUnwantedKeys', () => {
-  test('should delete specified keys from an object', () => {
-    const obj = { a: 1, b: 2, c: 3 }
-    deleteUnwantedKeys(obj, ['b', 'c'])
-    expect(obj).toStrictEqual({ a: 1 })
-  })
-
-  test('should delete specified keys from nested objects', () => {
-    const obj = { a: 1, b: { c: 2, d: 3 }, e: 4 }
-    deleteUnwantedKeys(obj, ['c', 'e'])
-    expect(obj).toStrictEqual({ a: 1, b: { d: 3 } })
-  })
-
-  test('should not delete keys beyond the specified max depth', () => {
-    const obj = { a: 1, b: { c: { d: 4 } } }
-    deleteUnwantedKeys(obj, ['d'], 2)
-    expect(obj).toStrictEqual({ a: 1, b: { c: { d: 4 } } })
-  })
-
-  test('should delete specified keys from an array of objects', () => {
-    const obj = [
-      { a: 1, b: 2 },
-      { a: 3, b: 4 },
-    ]
-    deleteUnwantedKeys(obj, ['b'])
-    expect(obj).toStrictEqual([{ a: 1 }, { a: 3 }])
-  })
-
-  test('should not delete keys if no keys are specified', () => {
-    const obj = { a: 1, b: 2, c: 3 }
-    deleteUnwantedKeys(obj)
-    expect(obj).toStrictEqual({ a: 1, b: 2, c: 3 })
-  })
-
-  test('should not delete keys if the object is null', () => {
-    const obj = null
-    deleteUnwantedKeys(obj, ['a'])
-    expect(obj).toBeNull()
-  })
-
-  test('should not delete keys beyond the specified max depth', () => {
-    const obj = {
-      total: 200,
-      data: [
-        {
-          _id: '6578839de3cd6665bbaf9703',
-          type: 'CONSUMER',
-          krsScore: {
-            krsScore: 66.24,
-            PartitionKeyID: 'flagright#user#primary',
-            SortKeyID: 'U-162',
-          },
-          drsScore: {
-            drsScore: 30.3125,
-            PartitionKeyID: 'flagright#user#primary',
-            SortKeyID: 'U-162',
-          },
-          PartitionKeyID: 'flagright#user#primary',
-          SortKeyID: 'U-162',
-          userSegment: 'RETAIL',
-          comments: [],
-        },
-      ],
-    }
-
-    deleteUnwantedKeys(obj, ['PartitionKeyID', 'SortKeyID'], 4)
-    expect(obj).toStrictEqual({
-      total: 200,
-      data: [
-        {
-          _id: '6578839de3cd6665bbaf9703',
-          type: 'CONSUMER',
-          krsScore: {
-            krsScore: 66.24,
-          },
-          drsScore: {
-            drsScore: 30.3125,
-          },
-          userSegment: 'RETAIL',
-          comments: [],
-        },
-      ],
-    })
   })
 })

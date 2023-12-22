@@ -1,5 +1,6 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
+import { omit } from 'lodash'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
@@ -13,6 +14,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isDemoTenant } from '@/utils/tenant'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { tenantHasFeature } from '@/core/utils/context'
+import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 
 async function arsScoreEventHandler(
   tenantId: string,
@@ -36,6 +38,8 @@ async function arsScoreEventHandler(
     tenantId,
     mongoDb
   )
+
+  arsScore = omit(arsScore, DYNAMO_KEYS) as ArsScore
 
   await Promise.all([
     riskRepository.addArsValueToMongo(arsScore),
@@ -61,6 +65,8 @@ async function drsScoreEventHandler(
   const riskRepository = new RiskRepository(tenantId, { mongoDb })
   const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
+  drsScore = omit(drsScore, DYNAMO_KEYS) as DrsScore
+
   await Promise.all([
     riskRepository.addDrsValueToMongo(drsScore),
     drsScore.userId
@@ -83,6 +89,8 @@ async function krsScoreEventHandler(
 
   const riskRepository = new RiskRepository(tenantId, { mongoDb })
   const userRepository = new UserRepository(tenantId, { mongoDb })
+
+  krsScore = omit(krsScore, DYNAMO_KEYS) as KrsScore
 
   await Promise.all([
     riskRepository.addKrsValueToMongo(krsScore),
