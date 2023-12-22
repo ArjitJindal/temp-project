@@ -67,8 +67,9 @@ export const tarponDeployStage = (
       env: shouldReleaseSentry ? getSentryReleaseSpec(true).env : undefined,
     }),
     environment: {
-      buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+      buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
       computeType: ComputeType.LARGE,
+      privileged: true,
     },
     role,
     timeout: Duration.hours(8),

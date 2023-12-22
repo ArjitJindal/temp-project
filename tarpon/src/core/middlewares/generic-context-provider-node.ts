@@ -10,8 +10,6 @@ export const genericContextProviderNode =
         AWSXRay.setContextMissingStrategy('IGNORE_ERROR')
         return handler(event, context)
       },
-      {
-        logMetadata: { region: process.env.AWS_REGION },
-      }
+      { logMetadata: { region: process.env.AWS_REGION } }
     )
   }

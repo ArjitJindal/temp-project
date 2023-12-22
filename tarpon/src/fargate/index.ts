@@ -26,3 +26,11 @@ const handler = nodeConsumer()(async () => {
 })
 
 void handler()
+  .then(() => {
+    logger.info('Batch job completed')
+    process.exit(0) // Lets ensure we exit with success: Some times it may happen container is not stopped
+  })
+  .catch((error) => {
+    logger.error('Batch job failed', error)
+    process.exit(1) // Failure
+  })
