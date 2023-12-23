@@ -16,12 +16,13 @@ interface Props {
   steps: Step[];
   active: string;
   className?: string;
+  layout?: 'HORIZONTAL' | 'VERTICAL';
   onChange: (key: string) => void;
   children?: (active: string) => React.ReactNode;
 }
 
 export default function Stepper(props: Props) {
-  const { active, steps, className, onChange, children } = props;
+  const { layout = 'HORIZONTAL', active, steps, className, onChange, children } = props;
   const number = steps.findIndex(({ key }) => key === active);
 
   const handleStepClick = (stepKey: string) => {
@@ -29,7 +30,7 @@ export default function Stepper(props: Props) {
   };
 
   return (
-    <div className={cn(s.root, className)}>
+    <div className={cn(s.root, className, s[`layout-${layout}`])}>
       <div className={s.steps}>
         {steps.map((step, i) => {
           const isPassed = i < number;

@@ -2,12 +2,38 @@
 @import 'src/components/ui/animation';
 
 .root {
+  --step-gap: 24px;
+  --step-number-size: 24px;
+
   display: flex;
   flex-direction: column;
   gap: 24px;
   flex: 1;
 
+  &.layout-VERTICAL {
+    .steps {
+      --step-gap: 32px;
+
+      flex-direction: column;
+    }
+
+    .step:not(:last-child) {
+      &::before {
+        content: ' ';
+        display: block;
+        height: calc(100% + var(--step-gap));
+        width: 1px;
+        background: @fr-colors-v2-gray-2;
+        left: calc(var(--step-number-size) / 2);
+        position: absolute;
+        transform: translateX(-50%);
+      }
+    }
+  }
+
   .step {
+    position: relative;
+
     * {
       transition-duration: @default-animation-speed;
       transition-timing-function: @default-animation-function;
@@ -27,7 +53,7 @@
 
 .steps {
   display: flex;
-  gap: 24px;
+  gap: var(--step-gap);
   grid-auto-flow: column;
 }
 
@@ -76,8 +102,8 @@
 }
 
 .stepNumber {
-  width: 24px;
-  height: 24px;
+  width: var(--step-number-size);
+  height: var(--step-number-size);
   border-radius: 50%;
   background: @fr-colors-v2-gray-2;
   display: flex;
@@ -85,6 +111,7 @@
   align-items: center;
   flex-shrink: 0;
   padding: 3px;
+  z-index: 1;
 }
 
 .stepTitle {
