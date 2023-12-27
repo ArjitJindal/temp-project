@@ -6,12 +6,14 @@ import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { getTimestampRange } from '../utils/time-utils'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
+import { traceable } from '@/core/xray'
 
 export type IpAddressMultipleUsersRuleParameters = {
   uniqueUsersCountThreshold: number
   timeWindow: TimeWindow
 }
 
+@traceable
 export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddressMultipleUsersRuleParameters> {
   public static getSchema(): JSONSchemaType<IpAddressMultipleUsersRuleParameters> {
     return {

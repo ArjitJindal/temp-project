@@ -17,6 +17,7 @@ import {
   groupTransactionsByHour,
 } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   sendingCount?: number
@@ -30,6 +31,7 @@ export type SamePaymentDetailsParameters = {
   checkReceiver: 'receiving' | 'all' | 'none'
 }
 
+@traceable
 export default class SamePaymentDetailsRule extends TransactionAggregationRule<
   SamePaymentDetailsParameters,
   TransactionHistoricalFilters,

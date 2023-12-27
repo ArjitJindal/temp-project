@@ -10,6 +10,7 @@ import {
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   ipAddresses: string[]
@@ -22,6 +23,7 @@ export type SenderLocationChangesFrequencyRuleParameters = {
   timeWindow: TimeWindow
 }
 
+@traceable
 export default class SenderLocationChangesFrequencyRule extends TransactionAggregationRule<
   SenderLocationChangesFrequencyRuleParameters,
   TransactionHistoricalFilters,

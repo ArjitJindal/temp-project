@@ -3,11 +3,13 @@ import { INITIAL_TRANSACTIONS_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { TransactionRule } from './rule'
+import { traceable } from '@/core/xray'
 
 export type TransactionNewCountryRuleParameters = {
   initialTransactions: number
 }
 
+@traceable
 export default class TransactionNewCountryRule extends TransactionRule<TransactionNewCountryRuleParameters> {
   public static getSchema(): JSONSchemaType<TransactionNewCountryRuleParameters> {
     return {

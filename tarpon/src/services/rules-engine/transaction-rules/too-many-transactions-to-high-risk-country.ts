@@ -6,6 +6,7 @@ import TransactionsPatternVelocityBaseRule, {
 } from './transactions-pattern-velocity-base'
 import { expandCountryGroup } from '@/utils/countries'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { traceable } from '@/core/xray'
 
 type TooManyTransactionsToHighRiskCountryRulePartialParameters = {
   highRiskCountries?: string[]
@@ -15,6 +16,7 @@ export type TooManyTransactionsToHighRiskCountryRuleParameters =
   TransactionsPatternVelocityRuleParameters &
     TooManyTransactionsToHighRiskCountryRulePartialParameters
 
+@traceable
 export default class TooManyTransactionsToHighRiskCountryRule extends TransactionsPatternVelocityBaseRule<TooManyTransactionsToHighRiskCountryRuleParameters> {
   highRiskCountries: string[] | undefined
   highRiskCountriesExclusive: string[] | undefined

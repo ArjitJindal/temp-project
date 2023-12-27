@@ -5,6 +5,7 @@ import TransactionsDeviationBaseRule, {
   TransactionsExceededParameters,
 } from './transactions-exceeded-base'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { traceable } from '@/core/xray'
 
 type TransactionsAverageNumberExceededPartialParameters = {
   multiplierThreshold: number
@@ -18,6 +19,7 @@ export type TransactionsAverageNumberExceededParameters =
   TransactionsExceededParameters &
     TransactionsAverageNumberExceededPartialParameters
 
+@traceable
 export default class TransactionAverageNumberExceededRule extends TransactionsDeviationBaseRule<TransactionsAverageNumberExceededParameters> {
   protected getAggregatorMethod(): 'SUM' | 'AVG' {
     return 'AVG'

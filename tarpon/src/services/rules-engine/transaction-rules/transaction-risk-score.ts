@@ -1,11 +1,13 @@
 import { JSONSchemaType } from 'ajv'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
+import { traceable } from '@/core/xray'
 
 export interface TransactionRiskScoreRuleParameters {
   riskScoreThreshold: number
 }
 
+@traceable
 export class TransactionRiskScoreRule extends TransactionRule<TransactionRiskScoreRuleParameters> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
     if (this.transactionRiskScore == null) {

@@ -2,11 +2,13 @@ import { JSONSchemaType } from 'ajv'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
+import { traceable } from '@/core/xray'
 
 export type MerchantReceiverNameRuleParameters = {
   merchantNames: string[]
 }
 
+@traceable
 export default class MerchantReceiverNameRule extends TransactionRule<MerchantReceiverNameRuleParameters> {
   public static getSchema(): JSONSchemaType<MerchantReceiverNameRuleParameters> {
     return {

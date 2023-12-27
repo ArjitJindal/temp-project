@@ -8,6 +8,7 @@ import TransactionsDeviationBaseRule, {
   TransactionsExceededParameters,
 } from './transactions-exceeded-base'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
+import { traceable } from '@/core/xray'
 
 type TransactionVolumeExceedsTwoPeriodsRulePartialParams = {
   multiplierThreshold: {
@@ -25,6 +26,7 @@ export type TransactionVolumeExceedsTwoPeriodsRuleParameters =
   TransactionVolumeExceedsTwoPeriodsRulePartialParams &
     TransactionsExceededParameters
 
+@traceable
 export class TransactionVolumeExceedsTwoPeriodsRule extends TransactionsDeviationBaseRule<TransactionVolumeExceedsTwoPeriodsRuleParameters> {
   public static getSchema(): JSONSchemaType<TransactionVolumeExceedsTwoPeriodsRulePartialParams> {
     const baseSchema = TransactionsDeviationBaseRule.getBaseSchema()

@@ -18,6 +18,7 @@ import { RuleHitResultItem } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   all?: number
@@ -34,6 +35,7 @@ export type TransactionsPatternPercentageRuleParameters = {
   checkReceiver?: 'receiving' | 'all' | 'none'
 }
 
+@traceable
 export default abstract class TransactionsPatternPercentageBaseRule<
   T extends TransactionsPatternPercentageRuleParameters
 > extends TransactionAggregationRule<

@@ -8,6 +8,7 @@ import { RuleHitResult } from '../rule'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
+import { traceable } from '@/core/xray'
 
 export type IpAddressUnexpectedLocationRuleParameters = {
   transactionAmountThreshold?: {
@@ -15,6 +16,7 @@ export type IpAddressUnexpectedLocationRuleParameters = {
   }
 }
 
+@traceable
 export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpAddressUnexpectedLocationRuleParameters> {
   public static getSchema(): JSONSchemaType<IpAddressUnexpectedLocationRuleParameters> {
     return {

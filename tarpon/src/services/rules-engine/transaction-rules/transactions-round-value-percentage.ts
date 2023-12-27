@@ -3,10 +3,12 @@ import TransactionsPatternPercentageBaseRule, {
   TransactionsPatternPercentageRuleParameters,
 } from './transactions-pattern-percentage-base'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { traceable } from '@/core/xray'
 
 export type TransactionsRoundValuePercentageRuleParameters =
   TransactionsPatternPercentageRuleParameters
 
+@traceable
 export default class TransactionsRoundValuePercentageRule extends TransactionsPatternPercentageBaseRule<TransactionsRoundValuePercentageRuleParameters> {
   public static getSchema(): JSONSchemaType<TransactionsRoundValuePercentageRuleParameters> {
     return TransactionsPatternPercentageBaseRule.getBaseSchema()

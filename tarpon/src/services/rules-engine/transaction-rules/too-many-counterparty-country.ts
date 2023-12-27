@@ -4,6 +4,7 @@ import TransactionsPatternVelocityBaseRule, {
   TransactionsPatternVelocityRuleParameters,
 } from './transactions-pattern-velocity-base'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { traceable } from '@/core/xray'
 
 type TooManyCounterpartyCountryRulePartialParameters = {
   transactionsLimit: number
@@ -11,6 +12,8 @@ type TooManyCounterpartyCountryRulePartialParameters = {
 export type TooManyCounterpartyCountryRuleParameters =
   TransactionsPatternVelocityRuleParameters &
     TooManyCounterpartyCountryRulePartialParameters
+
+@traceable
 export default class TooManyCounterpartyCountryRule extends TransactionsPatternVelocityBaseRule<TooManyCounterpartyCountryRuleParameters> {
   public static getSchema(): JSONSchemaType<TooManyCounterpartyCountryRuleParameters> {
     const baseSchema = TransactionsPatternVelocityBaseRule.getBaseSchema()

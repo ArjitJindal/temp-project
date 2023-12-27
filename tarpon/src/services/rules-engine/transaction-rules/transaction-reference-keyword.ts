@@ -3,12 +3,14 @@ import * as levenshtein from 'fast-levenshtein'
 import { RuleHitResult } from '../rule'
 import { LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
+import { traceable } from '@/core/xray'
 
 export type TransactionReferenceKeywordRuleParameters = {
   keywords: string[]
   allowedDistance?: number
 }
 
+@traceable
 export default class TransactionReferenceKeywordRule extends TransactionRule<TransactionReferenceKeywordRuleParameters> {
   public static getSchema(): JSONSchemaType<TransactionReferenceKeywordRuleParameters> {
     return {

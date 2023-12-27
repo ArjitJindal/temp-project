@@ -1,12 +1,14 @@
 import { JSONSchemaType } from 'ajv'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
+import { traceable } from '@/core/xray'
 
 export type TransactionMatchesPatternRuleParameters = {
   patterns: string[]
   checkDecimal?: boolean
 }
 
+@traceable
 export default class TransactionMatchesPatternRule extends TransactionRule<TransactionMatchesPatternRuleParameters> {
   public static getSchema(): JSONSchemaType<TransactionMatchesPatternRuleParameters> {
     return {

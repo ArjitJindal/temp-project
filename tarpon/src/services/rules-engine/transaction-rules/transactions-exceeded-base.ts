@@ -22,6 +22,7 @@ import { ExtendedJSONSchemaType } from '@/services/rules-engine/utils/rule-schem
 import { multiplierToPercents } from '@/services/rules-engine/utils/math-utils'
 import { mergeObjects } from '@/utils/object'
 import { CurrencyService } from '@/services/currency'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   sendingCount?: number
@@ -59,6 +60,7 @@ export type TransactionsExceededParameters = {
   }
 }
 
+@traceable
 export default abstract class TransactionsDeviationBaseRule<
   Params extends TransactionsExceededParameters
 > extends TransactionAggregationRule<

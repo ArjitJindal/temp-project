@@ -18,6 +18,7 @@ import { RuleHitResultItem } from '../rule'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { zipGenerators } from '@/utils/generator'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   count?: number
@@ -35,6 +36,7 @@ export type TransactionsExceedPastPeriodRuleParameters = {
   checkReceiver?: 'receiving' | 'all' | 'none'
 }
 
+@traceable
 export default class TransactionsExceedPastPeriodRule extends TransactionAggregationRule<
   TransactionsExceedPastPeriodRuleParameters,
   TransactionHistoricalFilters,

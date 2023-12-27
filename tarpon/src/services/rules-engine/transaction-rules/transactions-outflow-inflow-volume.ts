@@ -26,6 +26,7 @@ import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { mergeObjects } from '@/utils/object'
 import { CurrencyService } from '@/services/currency'
+import { traceable } from '@/core/xray'
 
 export type TransactionsOutflowInflowVolumeRuleParameters = {
   timeWindow: TimeWindow
@@ -47,6 +48,7 @@ type AggregationResult = {
 
 type AggregationData = Partial<AggregationResult>
 
+@traceable
 export default class TransactionsOutflowInflowVolumeRule extends TransactionAggregationRule<
   TransactionsOutflowInflowVolumeRuleParameters,
   TransactionHistoricalFilters,

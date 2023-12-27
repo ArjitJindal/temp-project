@@ -17,6 +17,7 @@ import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsD
 import { SanctionsService } from '@/services/sanctions'
 import { formatConsumerName } from '@/utils/helpers'
 import { notNullish } from '@/core/utils/array'
+import { traceable } from '@/core/xray'
 
 export type SanctionsCounterPartyRuleParameters = {
   transactionAmountThreshold?: {
@@ -27,6 +28,7 @@ export type SanctionsCounterPartyRuleParameters = {
   resolveIban?: boolean
 }
 
+@traceable
 export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterPartyRuleParameters> {
   public static getSchema(): JSONSchemaType<SanctionsCounterPartyRuleParameters> {
     return {

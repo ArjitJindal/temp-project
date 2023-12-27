@@ -6,6 +6,7 @@ import { User } from '@/@types/openapi-public/User'
 import { formatConsumerName } from '@/utils/helpers'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { traceable } from '@/core/xray'
 
 export type PaymentMethodNameRuleParameter = {
   allowedDistancePercentage: number
@@ -13,6 +14,7 @@ export type PaymentMethodNameRuleParameter = {
   checkDirection?: 'sending' | 'receiving' | 'all'
 }
 
+@traceable
 export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMethodNameRuleParameter> {
   public static getSchema(): JSONSchemaType<PaymentMethodNameRuleParameter> {
     return {

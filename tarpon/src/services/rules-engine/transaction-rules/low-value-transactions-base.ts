@@ -11,12 +11,14 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { everyAsync } from '@/core/utils/array'
+import { traceable } from '@/core/xray'
 
 export type LowValueTransactionsRuleParameters = {
   lowTransactionValues: TransactionAmountRange
   lowTransactionCount: number
 }
 
+@traceable
 export default abstract class LowValueTransactionsRule extends TransactionRule<
   LowValueTransactionsRuleParameters,
   TransactionHistoricalFilters

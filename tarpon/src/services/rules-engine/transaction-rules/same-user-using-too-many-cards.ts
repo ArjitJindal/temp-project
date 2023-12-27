@@ -11,6 +11,7 @@ import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { getTimestampRange } from '../utils/time-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   cardFingerprints: string[]
@@ -21,6 +22,7 @@ export type SameUserUsingTooManyCardsParameters = {
   timeWindow: TimeWindow
 }
 
+@traceable
 export default class SameUserUsingTooManyCardsRule extends TransactionAggregationRule<
   SameUserUsingTooManyCardsParameters,
   TransactionHistoricalFilters,

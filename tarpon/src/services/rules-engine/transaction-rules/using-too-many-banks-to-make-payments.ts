@@ -22,6 +22,7 @@ import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
 import { ACHDetails } from '@/@types/openapi-public/ACHDetails'
 import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
+import { traceable } from '@/core/xray'
 type AggregationData = {
   uniqueBanks?: string[]
 }
@@ -43,6 +44,7 @@ export type UsingTooManyBanksToMakePaymentsRuleParameters = {
   onlyCheckKnownUsers?: boolean
 }
 
+@traceable
 export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggregationRule<
   UsingTooManyBanksToMakePaymentsRuleParameters,
   TransactionHistoricalFilters,

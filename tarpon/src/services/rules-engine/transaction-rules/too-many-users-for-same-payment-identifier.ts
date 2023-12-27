@@ -13,6 +13,7 @@ import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
+import { traceable } from '@/core/xray'
 
 type AggregationData = {
   userIds: string[]
@@ -23,6 +24,7 @@ export type TooManyUsersForSamePaymentIdentifierParameters = {
   timeWindow: TimeWindow
 }
 
+@traceable
 export default class TooManyUsersForSamePaymentIdentifierRule extends TransactionAggregationRule<
   TooManyUsersForSamePaymentIdentifierParameters,
   TransactionHistoricalFilters,

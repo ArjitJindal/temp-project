@@ -4,6 +4,7 @@ import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rul
 import { TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
+import { traceable } from '@/core/xray'
 
 export type TransactionAmountRuleParameters = {
   transactionAmountThreshold: {
@@ -11,6 +12,7 @@ export type TransactionAmountRuleParameters = {
   }
 }
 
+@traceable
 export default class TransactionAmountRule extends TransactionRule<TransactionAmountRuleParameters> {
   public static getSchema(): JSONSchemaType<TransactionAmountRuleParameters> {
     return {

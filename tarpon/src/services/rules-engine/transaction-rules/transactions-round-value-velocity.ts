@@ -5,6 +5,7 @@ import TransactionsPatternVelocityBaseRule, {
   TransactionsPatternVelocityRuleParameters,
 } from './transactions-pattern-velocity-base'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { traceable } from '@/core/xray'
 
 type TransactionsRoundValueVelocityRulePartialParameters = {
   sameAmount?: boolean
@@ -16,6 +17,7 @@ export type TransactionsRoundValueVelocityRuleParameters =
   TransactionsPatternVelocityRuleParameters &
     TransactionsRoundValueVelocityRulePartialParameters
 
+@traceable
 export default class TransactionsRoundValueVelocityRule extends TransactionsPatternVelocityBaseRule<TransactionsRoundValueVelocityRuleParameters> {
   public static getSchema(): JSONSchemaType<TransactionsRoundValueVelocityRuleParameters> {
     const baseSchema = TransactionsPatternVelocityBaseRule.getBaseSchema()

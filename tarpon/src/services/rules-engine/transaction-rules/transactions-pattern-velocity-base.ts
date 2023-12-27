@@ -19,6 +19,7 @@ import { getTimestampRange } from '../utils/time-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
 
 const DEFAULT_GROUP_KEY = 'all'
 
@@ -37,6 +38,7 @@ export type TransactionsPatternVelocityRuleParameters = {
   initialTransactions?: number
 }
 
+@traceable
 export default abstract class TransactionsPatternVelocityBaseRule<
   T extends TransactionsPatternVelocityRuleParameters
 > extends TransactionAggregationRule<

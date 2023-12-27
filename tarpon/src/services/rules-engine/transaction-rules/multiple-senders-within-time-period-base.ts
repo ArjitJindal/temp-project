@@ -17,6 +17,7 @@ import {
 import { getNonUserSenderKeys, getUserSenderKeys } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
+import { traceable } from '@/core/xray'
 
 type UserType = 'USER' | 'NON_USER'
 
@@ -35,6 +36,7 @@ type AggregationData = {
   senderKeys?: string[]
 }
 
+@traceable
 export default abstract class MultipleSendersWithinTimePeriodRuleBase extends TransactionAggregationRule<
   MultipleSendersWithinTimePeriodRuleParameters,
   TransactionHistoricalFilters,
