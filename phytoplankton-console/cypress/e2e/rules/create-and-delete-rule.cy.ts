@@ -19,19 +19,16 @@ describe('Rule create and delete', () => {
   });
   function deleteRule(ruleInstanceId: string) {
     cy.visit('/rules/my-rules');
-    cy.get('td[data-cy="ruleId"]', { timeout: 15000 }).each((element, index) => {
-      const ruleId = element[0].innerText;
-      if (ruleId.includes(ruleInstanceId)) {
-        cy.get('button[data-cy="rule-delete-button"]')
-          .eq(+index)
-          .should('exist')
-          .click({ force: true });
-        cy.get('div .ant-modal-header').should('contain', ruleInstanceId);
-        cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click({ force: true });
-        cy.message(`Rule deleted`).should('exist');
-      }
-    });
+    cy.get('th').contains('Updated at').click({ force: true });
+    cy.get('th').contains('Updated at').click({ force: true });
+
+    cy.get('button[data-cy="rule-delete-button"]').first().should('exist').click({ force: true });
+
+    cy.get('div .ant-modal-header').should('contain', ruleInstanceId);
+    cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click({ force: true });
+    cy.message(`Rule deleted`).should('exist');
   }
+
   function editRule(ruleInstanceId: string) {
     cy.visit('/rules/my-rules');
     cy.get('td[data-cy="ruleId"]', { timeout: 15000 }).each((element, index) => {
