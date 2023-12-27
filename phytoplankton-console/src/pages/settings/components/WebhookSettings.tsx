@@ -148,6 +148,7 @@ export const WebhookSettings: React.FC = () => {
   return (
     <SettingsCard title="Webhooks" description="">
       <CrudEntitiesTable<DefaultApiGetWebhooksRequest, WebhookConfiguration>
+        tableId="webhooks-table"
         entityName="endpoint"
         entityIdField="_id"
         readPermissions={['settings:organisation:read']}

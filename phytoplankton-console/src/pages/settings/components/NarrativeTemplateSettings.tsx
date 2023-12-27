@@ -25,6 +25,7 @@ export function NarrativeTemplatesSettings() {
       description="Define your own narrative templates to use in your case management."
     >
       <CrudEntitiesTable<DefaultApiGetNarrativesRequest, NarrativeTemplate>
+        tableId="narrative-templates-table"
         entityName="narrative template"
         entityIdField="id"
         readPermissions={['settings:organisation:read']}

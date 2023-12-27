@@ -30,6 +30,7 @@ export default function (): JSX.Element {
     <>
       <UseCase title={'CRUD table'}>
         <CrudEntitiesTable<any, Entity>
+          tableId="crud-entities-table"
           entityName="entity"
           entityIdField="id"
           apiOperations={{

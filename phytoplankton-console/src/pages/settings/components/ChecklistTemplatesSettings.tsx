@@ -143,6 +143,7 @@ export function ChecklistTemplatesSettings() {
       description="Define investigation checklist for analysts to refer while investigation an alert"
     >
       <CrudEntitiesTable<DefaultApiGetChecklistTemplatesRequest, ChecklistTemplate>
+        tableId="checklist-templates"
         entityName="template"
         entityIdField="id"
         readPermissions={['settings:organisation:read']}

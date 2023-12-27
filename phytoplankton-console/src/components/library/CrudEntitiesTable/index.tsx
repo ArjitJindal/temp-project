@@ -49,6 +49,7 @@ function getDrawerDescription(drawerMode: DrawerMode, entityName: string): strin
 
 interface Props<GetParams, Entity extends { [key: string]: any }> {
   entityName: string;
+  tableId: string;
   entityIdField: keyof Entity;
   readPermissions?: Permission[];
   writePermissions?: Permission[];
@@ -236,6 +237,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
           ) : (
             <QueryResultsTable<Entity, AllParams<GetParams>>
               rowKey={props.entityIdField as any}
+              tableId={props.tableId}
               hideFilters={true}
               params={params}
               onChangeParams={setParams}

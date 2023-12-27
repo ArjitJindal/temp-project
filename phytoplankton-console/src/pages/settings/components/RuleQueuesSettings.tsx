@@ -24,6 +24,7 @@ export function RuleQueuesSettings() {
       description="Define queues for the alerts. You can select a queue when setting up a rule."
     >
       <CrudEntitiesTable<DefaultApiGetRuleQueuesRequest, RuleQueue>
+        tableId="rule-queues-table"
         entityName="queue"
         entityIdField="id"
         readPermissions={['settings:organisation:read']}
