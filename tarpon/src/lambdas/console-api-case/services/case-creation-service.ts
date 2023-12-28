@@ -825,7 +825,7 @@ export class CaseCreationService {
         transactions.map(
           (transaction) => transaction?.originPaymentDetails?.method
         )
-      ).concat(caseAggregates.originPaymentMethods)
+      ).concat(caseAggregates?.originPaymentMethods ?? [])
     )
 
     const destinationPaymentMethods = uniq(
@@ -833,13 +833,13 @@ export class CaseCreationService {
         transactions.map(
           (transaction) => transaction?.destinationPaymentDetails?.method
         )
-      ).concat(caseAggregates.destinationPaymentMethods)
+      ).concat(caseAggregates?.destinationPaymentMethods ?? [])
     )
 
     const tags = dedupObjectArray(
       compact(
         transactions.flatMap((transaction) => transaction?.tags ?? [])
-      ).concat(caseAggregates.tags)
+      ).concat(caseAggregates?.tags ?? [])
     )
 
     return {
