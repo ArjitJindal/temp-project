@@ -6,17 +6,29 @@ import {
   InternalConsumerUser,
   Comment,
   Alert,
+  RiskLevel,
 } from '@/apis';
 
-export type TableItem = Omit<Case, 'alerts'> & {
+export type TableUser =
+  | Pick<
+      InternalConsumerUser,
+      'type' | 'userDetails' | 'userId' | 'userStateDetails' | 'kycStatusDetails'
+    >
+  | Pick<
+      InternalBusinessUser,
+      'type' | 'legalEntity' | 'userId' | 'userStateDetails' | 'kycStatusDetails'
+    >;
+
+export type TableItem = Omit<Case, 'alerts' | 'caseUsers'> & {
   index: number;
   userId: string | null;
-  user: InternalConsumerUser | InternalBusinessUser | null;
+  user: TableUser | null;
   lastStatusChange?: CaseStatusChange;
   lastStatusChangeReasons: {
     reasons: CaseReasons[];
     otherReason: string | null;
   } | null;
   alertComments: Comment[];
-  alerts?: Omit<Alert, 'transactionIds'>[];
+  alerts?: Omit<Alert, 'transactionIds' | 'ruleChecklist'>[];
+  userRiskLevel?: RiskLevel;
 };

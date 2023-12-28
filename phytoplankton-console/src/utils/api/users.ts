@@ -4,10 +4,12 @@ import {
   InternalBusinessUser,
   InternalConsumerUser,
   KYCStatus,
+  LegalEntity,
   MissingUser,
   UserDetails,
 } from '@/apis';
 import { UserState } from '@/apis/models/UserState';
+import { TableUser } from '@/pages/case-management/CaseTable/types';
 import { makeUrl } from '@/utils/routing';
 
 export const USER_STATES: UserState[] = [
@@ -41,13 +43,11 @@ export function getFullName(userDetails: UserDetails | undefined): string {
   return formatConsumerName(userDetails?.name);
 }
 
-export function businessName(user: InternalBusinessUser): string {
-  return user.legalEntity?.companyGeneralDetails?.legalName;
+export function businessName(legalEntity: LegalEntity): string {
+  return legalEntity?.companyGeneralDetails?.legalName;
 }
 
-export function getUserName(
-  user?: InternalConsumerUser | InternalBusinessUser | MissingUser | null,
-) {
+export function getUserName(user?: TableUser | MissingUser | null): string {
   if (user == null || !('type' in user)) {
     return '-';
   }
@@ -55,14 +55,12 @@ export function getUserName(
     return getFullName(user.userDetails);
   }
   if (user.type === 'BUSINESS') {
-    return businessName(user);
+    return businessName(user.legalEntity);
   }
   return neverReturn(user, '-');
 }
 
-export function getUserLink(
-  user?: InternalConsumerUser | InternalBusinessUser | MissingUser | null,
-): string | undefined {
+export function getUserLink(user?: TableUser | null): string | undefined {
   if (user == null || !('type' in user)) {
     return undefined;
   }

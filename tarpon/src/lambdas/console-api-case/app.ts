@@ -82,7 +82,7 @@ export const casesHandler = lambdaApi()(
     handlers.registerGetCaseList(
       async (ctx, request) =>
         await caseService.getCases(request, {
-          hideAlertTransactionIds: true,
+          hideOptionalData: true,
         })
     )
 

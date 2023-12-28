@@ -59,7 +59,7 @@ import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { useApi } from '@/api';
 import { CaseStatusWithDropDown } from '@/pages/case-management-item/CaseStatusWithDropDown';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
-import { TableItem } from '@/pages/case-management/CaseTable/types';
+import { TableItem, TableUser } from '@/pages/case-management/CaseTable/types';
 import { DurationDisplay } from '@/components/ui/DurationDisplay';
 import { getDuration, formatDuration } from '@/utils/time-utils';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
@@ -241,7 +241,18 @@ export const RISK_LEVEL: ColumnDataType<RiskLevel> = {
   render: (value) => <RiskLevelTag level={value} />,
 };
 
-export const USER_NAME: FullColumnDataType<InternalConsumerUser | InternalBusinessUser> = {
+export const CASE_USER_NAME: FullColumnDataType<TableUser> = {
+  render: (user, _) => {
+    const userName = getUserName(user);
+    return user ? <UserLink user={user}>{userName}</UserLink> : <>{userName}</>;
+  },
+  stringify: (value) => getUserName(value),
+  defaultWrapMode: 'WRAP',
+};
+
+export const TRANSACTION_USER_NAME: FullColumnDataType<
+  InternalConsumerUser | InternalBusinessUser
+> = {
   render: (user, _) => {
     const userName = getUserName(user);
     return user ? <UserLink user={user}>{userName}</UserLink> : <>{userName}</>;

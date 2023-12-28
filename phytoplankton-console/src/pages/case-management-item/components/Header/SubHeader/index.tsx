@@ -20,6 +20,7 @@ import { getUserLink, getUserName } from '@/utils/api/users';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { getPaymentMethodTitle } from '@/utils/payments';
 import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
+import { TableUser } from '@/pages/case-management/CaseTable/types';
 
 interface Props {
   caseItem: Case;
@@ -325,7 +326,9 @@ function paymentSubjectLabels(caseItem: Case) {
 }
 
 function userSubjectLabels(caseItem: Case) {
-  const caseUser = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
+  const caseUser = (caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined) as
+    | TableUser
+    | undefined;
 
   return (
     <>

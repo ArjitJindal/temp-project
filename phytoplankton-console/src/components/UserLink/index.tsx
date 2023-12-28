@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { getUserLink } from '@/utils/api/users';
+import { TableUser } from '@/pages/case-management/CaseTable/types';
 
 interface Props {
-  user: InternalBusinessUser | InternalConsumerUser;
+  user: TableUser;
   children?: string;
   testName?: string;
 }

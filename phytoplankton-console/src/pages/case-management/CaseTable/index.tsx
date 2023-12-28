@@ -49,7 +49,7 @@ import {
   NUMBER,
   PRIORITY,
   RISK_LEVEL,
-  USER_NAME,
+  CASE_USER_NAME,
 } from '@/components/library/Table/standardDataTypes';
 import { RiskLevel } from '@/utils/risk-levels';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -185,7 +185,7 @@ export default function CaseTable(props: Props) {
         title: 'User name',
         id: '_userName',
         key: 'user',
-        type: USER_NAME,
+        type: CASE_USER_NAME,
         sorting: true,
       }),
       helper.simple<'caseTransactionsCount'>({
@@ -226,9 +226,7 @@ export default function CaseTable(props: Props) {
         ? [
             helper.derived<RiskLevel>({
               param: 'riskLevels',
-              value: (entity): RiskLevel | undefined =>
-                entity?.caseUsers?.originUserRiskLevel ??
-                entity?.caseUsers?.destinationUserRiskLevel,
+              value: (entity): RiskLevel | undefined => entity?.userRiskLevel,
               type: RISK_LEVEL,
               title: 'User risk level',
             } as DerivedColumn<TableItem, RiskLevel>),

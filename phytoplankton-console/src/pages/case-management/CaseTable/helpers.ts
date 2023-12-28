@@ -27,6 +27,8 @@ export function useTableData(
           ...item,
           assignments: statusEscalated(item.caseStatus) ? item.reviewAssignments : item.assignments,
           alertComments: item.alerts?.flatMap((alert) => alert.comments ?? []) ?? [],
+          userRiskLevel:
+            item.caseUsers?.originUserRiskLevel ?? item.caseUsers?.destinationUserRiskLevel,
         };
         return dataItem;
       },

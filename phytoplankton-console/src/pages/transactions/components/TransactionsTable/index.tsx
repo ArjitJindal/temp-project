@@ -45,7 +45,7 @@ import {
   TAGS,
   TRANSACTION_STATE,
   TRANSACTION_TYPE,
-  USER_NAME,
+  TRANSACTION_USER_NAME,
 } from '@/components/library/Table/standardDataTypes';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -303,7 +303,7 @@ export default function TransactionsTable(props: Props) {
       helper.simple<'originUser'>({
         key: 'originUser',
         title: 'Origin user name',
-        type: USER_NAME,
+        type: TRANSACTION_USER_NAME,
         tooltip: 'Origin is the Sender in a transaction',
       }),
       {
@@ -351,7 +351,7 @@ export default function TransactionsTable(props: Props) {
       helper.simple<'destinationUser'>({
         title: 'Destination user name',
         key: 'destinationUser',
-        type: USER_NAME,
+        type: TRANSACTION_USER_NAME,
         tooltip: 'Destination is the Receiver in a transaction',
       }),
       helper.simple<'destinationPaymentDetails'>({

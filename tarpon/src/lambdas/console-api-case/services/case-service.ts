@@ -370,7 +370,7 @@ export class CaseService extends CaseAlertsCommonService {
 
   public async getCases(
     params: DefaultApiGetCaseListRequest,
-    options?: { hideAlertTransactionIds?: boolean }
+    options?: { hideOptionalData?: boolean }
   ): Promise<CasesListResponse> {
     const result = await this.caseRepository.getCases(params, options)
 

@@ -67,7 +67,7 @@ export function getRuleQueueFilter(ruleQueueIds: string[]) {
 
 export type CaseListOptions = {
   includeCaseTransactionIds?: boolean
-  hideAlertTransactionIds?: boolean
+  hideOptionalData?: boolean
 }
 
 export type SubjectCasesQueryParams = {
@@ -649,10 +649,21 @@ export class CaseRepository {
       },
     })
 
-    if (options.hideAlertTransactionIds) {
+    if (options.hideOptionalData) {
       postLimitPipeline.push({
         $project: {
           'alerts.transactionIds': 0,
+          'alerts.ruleChecklist': 0,
+          'caseUsers.origin.executedRules': 0,
+          'caseUsers.destination.executedRules': 0,
+          'caseUsers.origin.hitRules': 0,
+          'caseUsers.destination.hitRules': 0,
+          'caseUsers.origin.comments': 0,
+          'caseUsers.destination.comments': 0,
+          'caseUsers.origin.drsScore': 0,
+          'caseUsers.destination.drsScore': 0,
+          'caseUsers.origin.krsScore': 0,
+          'caseUsers.destination.krsScore': 0,
         },
       })
     }

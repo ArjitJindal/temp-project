@@ -1,4 +1,5 @@
 import pluralize from 'pluralize';
+import { TableUser } from './CaseTable/types';
 import { QueryResult } from '@/utils/queries/types';
 import { AllParams, TableData } from '@/components/library/Table/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
@@ -121,11 +122,11 @@ function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
     return {
       ...alert,
       caseCreatedTimestamp: rest.caseCreatedTimestamp,
-      caseUserName: getUserName(user),
+      caseUserName: getUserName(user as TableUser | undefined),
       age: pluralize('day', Math.floor(duration.asDays()), true),
       caseUserId: caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '',
       caseType: rest.caseType,
-      user: user,
+      user: user as TableUser | undefined,
     };
   });
 }

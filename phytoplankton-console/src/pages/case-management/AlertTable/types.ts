@@ -1,6 +1,7 @@
-import { Alert, CaseType, InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
+import { TableUser } from '../CaseTable/types';
+import { Alert, CaseType } from '@/apis';
 
-export interface TableAlertItem extends Omit<Alert, 'transactionIds'> {
+export interface TableAlertItem extends Omit<Alert, 'transactionIds' | 'ruleChecklist'> {
   alertId?: string;
   caseId?: string;
   caseCreatedTimestamp?: number;
@@ -8,5 +9,5 @@ export interface TableAlertItem extends Omit<Alert, 'transactionIds'> {
   age?: string;
   caseUserId: string;
   caseType: CaseType;
-  user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
+  user?: TableUser;
 }
