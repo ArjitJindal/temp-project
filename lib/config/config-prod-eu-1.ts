@@ -33,7 +33,7 @@ export const config: Config = {
       PROVISIONED_CONCURRENCY: 3,
     },
     TRANSACTION_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 30,
+      PROVISIONED_CONCURRENCY: 32,
       MEMORY_SIZE: 1024,
     },
     REQUEST_LOGGER_LAMBDA: {
