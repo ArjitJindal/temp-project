@@ -13,7 +13,6 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isDemoTenant } from '@/utils/tenant'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
-import { tenantHasFeature } from '@/core/utils/context'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 
 async function arsScoreEventHandler(
@@ -26,14 +25,11 @@ async function arsScoreEventHandler(
   }
   logger.info(`Processing ARS Score`)
   const mongoDb = await getMongoDbClient()
-  const isSyncRiskScoringEnabled = await tenantHasFeature(
-    tenantId,
-    'SYNC_TRS_CALCULATION'
-  )
 
   const riskRepository = new RiskRepository(tenantId, {
     mongoDb,
   })
+
   const transactionRepository = new MongoDbTransactionRepository(
     tenantId,
     mongoDb
@@ -43,9 +39,7 @@ async function arsScoreEventHandler(
 
   await Promise.all([
     riskRepository.addArsValueToMongo(arsScore),
-    ...(isSyncRiskScoringEnabled
-      ? [transactionRepository.updateArsScore(transactionId, arsScore)]
-      : []),
+    transactionRepository.updateArsScore(transactionId, arsScore), // If transaction id does not exist, it will not result in an error
   ])
 
   logger.info(`ARS Score Processed`)
