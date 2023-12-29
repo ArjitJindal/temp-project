@@ -43,7 +43,7 @@ async function migrateTenant(tenant: Tenant) {
 
     if (arsScore) {
       await transactionsCollection.updateOne(
-        { id: transaction.transactionId },
+        { transactionId: transaction.transactionId },
         { $set: { arsScore } }
       )
     }
