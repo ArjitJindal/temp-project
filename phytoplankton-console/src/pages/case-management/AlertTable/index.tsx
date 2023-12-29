@@ -187,6 +187,10 @@ export default function AlertTable(props: Props) {
     actionRef.current?.reload();
   }, []);
 
+  useEffect(() => {
+    reloadTable();
+  }, [params.alertStatus, reloadTable]);
+
   const handleAlertAssignments = useCallback(
     (updateRequest: AlertsAssignmentsUpdateRequest) => {
       const { alertIds, assignments } = updateRequest;
@@ -219,6 +223,7 @@ export default function AlertTable(props: Props) {
   const columns = useMemo(() => {
     const mergedColumns = (
       showUserColumns: boolean,
+      hideAlertStatusFilters: boolean,
       handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
       handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
       handleInvestigateAlert:
@@ -341,6 +346,7 @@ export default function AlertTable(props: Props) {
         helper.simple<'alertStatus'>({
           title: 'Alert status',
           key: 'alertStatus',
+          filtering: !hideAlertStatusFilters,
           type: CASE_STATUS<TableAlertItem>({
             statusesToShow: CASE_STATUSS,
             reload,
@@ -526,6 +532,7 @@ export default function AlertTable(props: Props) {
     };
     const col = mergedColumns(
       showUserFilters,
+      hideAlertStatusFilters,
       handleAlertAssignments,
       handleAlertsReviewAssignments,
       icpEnabled ? setInvestigativeAlert : undefined,
@@ -539,6 +546,7 @@ export default function AlertTable(props: Props) {
   }, [
     users,
     showUserFilters,
+    hideAlertStatusFilters,
     handleAlertAssignments,
     handleAlertsReviewAssignments,
     user.userId,
@@ -573,7 +581,7 @@ export default function AlertTable(props: Props) {
     'originMethodFilterId',
     'destinationMethodFilterId',
     'ruleNature',
-    !hideAlertStatusFilters && 'alertStatus',
+    'alertStatus',
   ]);
   const filters = useCaseAlertFilters(filterIds);
 

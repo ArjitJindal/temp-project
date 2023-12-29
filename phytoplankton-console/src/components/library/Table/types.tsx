@@ -142,9 +142,9 @@ export interface DisplayColumn<Item extends object> extends BaseColumn {
 export interface DataColumn extends BaseColumn {
   children?: never;
   sorting?: boolean | 'desc'; // false by default
-  filtering?: boolean; // false by default
+  filtering?: boolean; // true by default
   exporting?: boolean; // true by default
-  hideInTable?: boolean;
+  hideInTable?: boolean; // todo: do we need this?
 }
 
 export interface SimpleColumn<Item extends object, Accessor extends FieldAccessor<Item>>
