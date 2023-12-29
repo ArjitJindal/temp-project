@@ -126,4 +126,5 @@ export interface JWTAuthorizerResult extends Credentials {
   encodedPermissions: string
   verifiedEmail: string
   auth0Domain: string
+  dangerousTenantDelete: boolean
 }

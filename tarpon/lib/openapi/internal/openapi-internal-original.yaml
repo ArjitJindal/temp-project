@@ -4852,6 +4852,22 @@ paths:
             schema:
               $ref: '#/components/schemas/ChecklistTemplate'
         required: true
+  '/tenants/delete_tenant/{tenantId}':
+    parameters:
+      - schema:
+          type: string
+        name: tenantId
+        in: path
+        required: true
+    delete:
+      summary: Delete a tenant
+      operationId: delete-tenant
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
   '/tenants/settings/checklist-templates/{checklistTemplateId}':
     parameters:
       - schema:
@@ -6855,6 +6871,8 @@ components:
           type: boolean
         reviewerId:
           type: string
+        dangerousTenantDelete:
+          type: boolean
       required:
         - id
         - role

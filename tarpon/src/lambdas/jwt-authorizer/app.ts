@@ -161,6 +161,10 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     const demoMode =
       process.env.ENV === 'sandbox' &&
       verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/demoMode`] === true
+    const dangerousTenantDelete =
+      verifiedDecoded[
+        `${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/dangerousTenantDelete`
+      ] === true
     const fullTenantId = getFullTenantId(tenantId, demoMode)
     const tenantScopeCredentials = await getTenantScopeCredentials(
       fullTenantId,
@@ -200,6 +204,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
         tenantName,
         encodedPermissions,
         auth0Domain,
+        dangerousTenantDelete,
       } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
     }
   }

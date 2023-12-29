@@ -28,6 +28,7 @@ export interface FlagrightAuth0User {
   tenantConsoleApiUrl: string;
   demoMode: boolean;
   permissions?: Map<Permission, boolean>;
+  dangerousTenantDelete?: boolean;
 }
 
 export const NAMESPACE = 'https://flagright.com';

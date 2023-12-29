@@ -34,6 +34,7 @@ import {
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getFullTenantId } from '@/utils/tenant'
+import { logger } from '@/core/logger'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
@@ -287,6 +288,19 @@ export const tenantsHandler = lambdaApi()(
         id: request.ruleQueueId,
       } as RuleQueueWithId)
     })
+
+    handlers.registerDeleteTenant(async (ctx, request) => {
+      assertCurrentUserRole('root')
+      if (envIsNot('dev')) {
+        logger.error('Tenant deletion is only allowed in dev environment only')
+        return
+      }
+      await sendBatchJobCommand({
+        type: 'TENANT_DELETION',
+        tenantId: request.tenantId,
+      })
+    })
+
     handlers.registerDeleteRuleQueue(async (ctx, request) => {
       const dynamoDb = getDynamoDbClient()
       const alertsRepository = new AlertsRepository(tenantId, {

@@ -70,6 +70,8 @@ export const localDev =
           encodedPermissions,
           role: userInfo[CUSTOM_CLAIMS_NS + '/role'],
           auth0Domain: 'dev-flagright.eu.auth0.com',
+          dangerousTenantDelete:
+            userInfo[`${CUSTOM_CLAIMS_NS}/dangerousTenantDelete`] === true,
           ...authorizer,
         }
         event.requestContext.authorizer = jwtAuthorizerResult

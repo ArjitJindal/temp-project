@@ -38,6 +38,8 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
       const userId = user[`${NAMESPACE}/userId`] ?? null;
       const permissionsList: Permission[] = user[`permissions`] ?? [];
       const permissions = new Map<Permission, boolean>();
+      const dangerousTenantDelete = user[`${NAMESPACE}/dangerousTenantDelete`] ?? false;
+
       permissionsList.map((p) => permissions.set(p, true));
 
       if (tenantConsoleApiUrl == null || tenantId == null || tenantName == null) {
@@ -55,6 +57,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
         verifiedEmail: verifiedEmail ?? null,
         demoMode: demoMode === true,
         permissions,
+        dangerousTenantDelete,
       };
 
       return appUser;

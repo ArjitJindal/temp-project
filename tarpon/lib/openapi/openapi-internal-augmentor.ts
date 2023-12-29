@@ -28,6 +28,8 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/checklist-templates/{checklistTemplateId}':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/delete_tenant/{tenantId}':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/rule-queues':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/rule-queues/{ruleQueueId}':

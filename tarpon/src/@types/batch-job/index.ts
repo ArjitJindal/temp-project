@@ -111,6 +111,12 @@ export type TestFargateJob = {
   }
 }
 
+/* Tenant Deletion */
+export type TenantDeletionBatchJob = {
+  type: 'TENANT_DELETION'
+  tenantId: string
+}
+
 export type BatchJob =
   | FileImportBatchJob
   | SimulationPulseBatchJob
@@ -124,6 +130,7 @@ export type BatchJob =
   | OngoingMerchantMonitoringBatchJob
   | SyncIndexesBatchJob
   | TestFargateJob
+  | TenantDeletionBatchJob
 
 export type BatchJobType = BatchJob['type']
 // Enforce they all have tenantId

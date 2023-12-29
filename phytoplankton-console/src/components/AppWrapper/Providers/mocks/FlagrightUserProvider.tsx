@@ -20,6 +20,7 @@ export default function FlagrightUserProviderMock_(props: { children: React.Reac
           tenantConsoleApiUrl: 'https://example.com/mock',
           demoMode: false,
           permissions,
+          dangerousTenantDelete: false,
         },
       }}
     >

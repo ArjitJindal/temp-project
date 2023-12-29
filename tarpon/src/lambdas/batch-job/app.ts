@@ -61,6 +61,7 @@ export const jobDecisionHandler = async (
     ONGOING_MERCHANT_MONITORING: 'LAMBDA',
     SYNC_INDEXES: 'LAMBDA',
     TEST_FARGATE: 'FARGATE',
+    TENANT_DELETION: 'FARGATE',
   }
 
   return {

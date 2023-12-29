@@ -1,3 +1,4 @@
+import { TenantDeletionBatchJobRunner } from './tenant-deletion-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -30,6 +31,7 @@ export function getBatchJobRunner(type: BatchJobType) {
     ONGOING_MERCHANT_MONITORING: new OngoingMerchantMonitoringBatchJobRunner(),
     SYNC_INDEXES: new SyncMongoDbIndexesBatchJobRunner(),
     TEST_FARGATE: new TestFargateBatchJobRunner(),
+    TENANT_DELETION: new TenantDeletionBatchJobRunner(),
   }
   return jobRunnerMap[type]
 }

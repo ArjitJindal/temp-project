@@ -10,7 +10,14 @@ exports.onExecutePostLogin = async (event, api) => {
     email_verified,
   } = event.user
   let { demoMode } = user_metadata
-  let { role, tenantId, tenantName, consoleApiUrl, apiAudience } = app_metadata
+  let {
+    role,
+    tenantId,
+    tenantName,
+    consoleApiUrl,
+    apiAudience,
+    dangerousTenantDelete,
+  } = app_metadata
   let auth0Domain = ''
 
   if (event.authorization) {
@@ -77,5 +84,9 @@ exports.onExecutePostLogin = async (event, api) => {
     )
     api.accessToken.setCustomClaim(namespace + '/demoMode', demoMode === true)
     api.accessToken.setCustomClaim(namespace + '/auth0Domain', auth0Domain)
+    api.accessToken.setCustomClaim(
+      namespace + '/dangerousTenantDelete',
+      dangerousTenantDelete === true
+    )
   }
 }
