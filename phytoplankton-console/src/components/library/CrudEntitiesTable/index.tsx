@@ -168,6 +168,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
         return (
           <Space>
             <Button
+              testName="edit-button"
               size="MEDIUM"
               type="SECONDARY"
               icon={<EditLineIcon />}
@@ -187,6 +188,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
               >
                 {({ onClick }) => (
                   <Button
+                    testName="delete-button"
                     size="MEDIUM"
                     type="TETRIARY"
                     icon={<DeleteLineIcon />}

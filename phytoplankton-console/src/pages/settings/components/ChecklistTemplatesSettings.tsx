@@ -203,6 +203,7 @@ export function ChecklistTemplatesSettings() {
                 >
                   {({ onClick }) => (
                     <Button
+                      testName="status-button"
                       size="SMALL"
                       type="TETRIARY"
                       isDisabled={isActive}

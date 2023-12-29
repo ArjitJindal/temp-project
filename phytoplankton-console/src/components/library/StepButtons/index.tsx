@@ -24,6 +24,7 @@ export default function StepButtons(props: Props) {
     <div className={s.root}>
       {!hidePrev && (
         <Button
+          testName="previous-button"
           key="previous"
           type="SECONDARY"
           isDisabled={prevDisabled}
@@ -35,6 +36,7 @@ export default function StepButtons(props: Props) {
       )}
       {nextDisabled && actionProps ? (
         <Button
+          testName="action-button"
           key="submit"
           type="PRIMARY"
           onClick={actionProps.onAction}
@@ -45,6 +47,7 @@ export default function StepButtons(props: Props) {
         </Button>
       ) : (
         <Button
+          testName="next-button"
           key="next"
           type="SECONDARY"
           isDisabled={nextDisabled}

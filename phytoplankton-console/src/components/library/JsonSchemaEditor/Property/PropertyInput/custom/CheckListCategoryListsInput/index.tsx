@@ -151,7 +151,10 @@ export const CheckListCategoryListsInput = (props: Props) => {
                           {checkListItemEditableIndex?.categoryIndex === categoryIndex &&
                           checkListItemEditableIndex?.checklistItemIndex === checklistItemIndex ? (
                             <div className={s.editableChecklistItem}>
-                              <div className={s.editableChecklistItemInput}>
+                              <div
+                                className={s.editableChecklistItemInput}
+                                data-cy="checklist-item-text-area"
+                              >
                                 <TextArea
                                   {...props}
                                   value={name}
@@ -161,6 +164,7 @@ export const CheckListCategoryListsInput = (props: Props) => {
 
                               <div className={s.editableChecklistItemButtons}>
                                 <Button
+                                  testName="check-button"
                                   type="TEXT"
                                   onClick={() => {
                                     addCheclistItemToCategory(
@@ -208,6 +212,7 @@ export const CheckListCategoryListsInput = (props: Props) => {
                     })}
                     <div className={s.addNewChecklistItemButton}>
                       <Button
+                        testName="add-new-checklist-item-button"
                         type="TEXT"
                         key={priorityIndex}
                         icon={<AddIcon />}
@@ -250,6 +255,7 @@ export const CheckListCategoryListsInput = (props: Props) => {
       })}
       {!value?.length && (
         <Button
+          testName="add-new-category-button"
           type="SECONDARY"
           className={s.button}
           onClick={() => onChange?.([...(value ?? []), { name: '', checklistItems: [] }])}

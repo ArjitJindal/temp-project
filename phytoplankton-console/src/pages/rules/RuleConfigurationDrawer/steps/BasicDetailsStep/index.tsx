@@ -365,6 +365,7 @@ function ChecklistDetails() {
         <InputField<FormValues, 'checklistTemplateId'>
           name="checklistTemplateId"
           label="Checklist template"
+          data-cy="checklist-template-dropdown"
         >
           {(inputProps) => (
             <Select
