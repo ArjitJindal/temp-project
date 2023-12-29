@@ -26,17 +26,20 @@ async function migrateTenant(tenant: Tenant) {
     arsScore: { $exists: false },
   })
 
-  console.info(
-    `Found ${await transactionsWithoutArsScore.count()} transactions without ARS score`
-  )
+  const count = await transactionsWithoutArsScore.count()
+
+  console.info(`Found ${count} transactions without ARS score`)
 
   const riskRepository = new RiskRepository(tenant.id, {
     mongoDb,
     dynamoDb,
   })
 
+  let i = 0
   for await (const transaction of transactionsWithoutArsScore) {
-    const arsScore = await riskRepository.getArsScore(transaction.transactionId)
+    const arsScore = await riskRepository.getArsValueFromMongo(
+      transaction.transactionId
+    )
 
     if (arsScore) {
       await transactionsCollection.updateOne(
@@ -44,6 +47,12 @@ async function migrateTenant(tenant: Tenant) {
         { $set: { arsScore } }
       )
     }
+
+    console.info(
+      `ARS Score Processed for transaction ${
+        transaction.transactionId
+      } (${++i} / ${count})`
+    )
   }
 }
 
