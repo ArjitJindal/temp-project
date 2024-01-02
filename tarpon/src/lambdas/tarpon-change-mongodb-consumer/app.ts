@@ -40,14 +40,11 @@ import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { UserService } from '@/services/users'
 import { isDemoTenant } from '@/utils/tenant'
-import { envIs } from '@/utils/env'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 
 const sqs = new SQS({
   region: process.env.AWS_REGION,
 })
-
-const RULE_HIT_ERROR_PERCENTAGE = 50
 
 async function handleNewCases(
   tenantId: string,
@@ -189,27 +186,6 @@ async function transactionHandler(
       transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
     ),
   ])
-
-  // Log error if the hit rate % is over a threshold.
-  if (envIs('prod')) {
-    ruleInstances.forEach((ruleInstance) => {
-      const hitCount = ruleInstance.hitCount || 0
-      const runCount = ruleInstance.runCount || 0
-      const hitPercentage = (hitCount * 100) / runCount
-      if (hitPercentage > RULE_HIT_ERROR_PERCENTAGE && Math.random() < 0.05) {
-        logger.error(
-          `Rule ${ruleInstance.id} hit rate is is over the threshold of ${RULE_HIT_ERROR_PERCENTAGE}%`,
-          {
-            hitPercentage,
-            hitCount,
-            runCount,
-            id: ruleInstance.id,
-            ruleId: ruleInstance.ruleId,
-          }
-        )
-      }
-    })
-  }
 
   const caseCreationService = new CaseCreationService(
     casesRepo,
