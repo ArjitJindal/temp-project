@@ -187,10 +187,6 @@ export default function AlertTable(props: Props) {
     actionRef.current?.reload();
   }, []);
 
-  useEffect(() => {
-    reloadTable();
-  }, [params.alertStatus, reloadTable]);
-
   const handleAlertAssignments = useCallback(
     (updateRequest: AlertsAssignmentsUpdateRequest) => {
       const { alertIds, assignments } = updateRequest;
