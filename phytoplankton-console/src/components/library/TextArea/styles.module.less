@@ -1,9 +1,56 @@
-@import '../../ui/colors.less';
+@import 'src/components/ui/colors';
 
-.textArea {
-  :global {
-    .ant-input::placeholder {
-      color: @fr-colors-v2-gray-6;
+#textarea(@rules) {
+  &.bareInput,
+  > textarea {
+    @rules();
+  }
+}
+
+.root {
+  #textarea({
+    outline: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+
+    &, &:hover {
+      border: 1px solid @fr-colors-v2-gray-2;
     }
+
+    &:disabled {
+      pointer-events: none;
+      border-color: @fr-colors-v2-state-disabled;
+      background: @fr-colors-v2-gray-1;
+
+      &::placeholder {
+        color: fade(@fr-colors-v2-state-disabled, 85%);
+      }
+    }
+  });
+
+  &:not(.isError) {
+    &:not(:disabled) {
+      #textarea({
+        &:focus {
+          border-color: @fr-colors-v2-primary-flagrightBlue;
+        }
+      });
+    }
+  }
+
+  &.isError {
+    #textarea({
+      &:not(:disabled) {
+        &,
+        &:hover,
+        &:focus {
+          border-color: @fr-colors-v2-alert-critical;
+        }
+      }
+
+      &::placeholder {
+        color: @fr-colors-v2-gray-6;
+      }
+    });
   }
 }

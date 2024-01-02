@@ -1,4 +1,4 @@
-import React, { InputHTMLAttributes, useEffect, useRef } from 'react';
+import React, { InputHTMLAttributes, useEffect, useRef, useCallback, useState } from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
 import CrossIcon from './cross.react.svg';
@@ -39,8 +39,27 @@ export default function TextInput(props: Props) {
   const defaultRef = useRef<HTMLInputElement>(null);
   const ref = innerRef === undefined ? defaultRef : innerRef;
   usePreventWheelEvent(ref, props);
+
+  const [isFocused, setFocused] = useState(false);
+  const handleFocus = useCallback(() => {
+    onFocus?.();
+    setFocused(true);
+  }, [onFocus]);
+  const handleBlur = useCallback(() => {
+    onBlur?.();
+    setFocused(false);
+  }, [onBlur]);
+
   return (
-    <div className={s.root}>
+    <div
+      className={cn(
+        s.root,
+        s[`size-${size}`],
+        isError && s.isError,
+        isDisabled && s.isDisabled,
+        isFocused && s.isFocused,
+      )}
+    >
       <input
         {...htmlAttrs}
         ref={ref}
@@ -55,8 +74,8 @@ export default function TextInput(props: Props) {
           }
           onChange?.(e.target.value || undefined);
         }}
-        onFocus={onFocus ? () => onFocus() : undefined}
-        onBlur={onBlur ? () => onBlur() : undefined}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         data-cy={testName}
         onKeyDown={
           onArrowUp || onArrowDown
@@ -72,6 +91,8 @@ export default function TextInput(props: Props) {
       />
       {allowClear && (
         <CrossIcon
+          aria-label="Clear"
+          role="button"
           className={cn(s.clearIcon, value != null && s.isVisible)}
           onClick={() => {
             onChange?.(undefined);

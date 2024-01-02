@@ -6,6 +6,17 @@ const includeEsModules = ['nanoid', 'antd', '@babel/runtime', '@ant-design/icons
 process.env.TZ = 'Etc/UTC';
 
 module.exports = {
+  globals: {
+    API_BASE_PATH: undefined,
+    AUTH0_AUDIENCE: undefined,
+    AUTH0_DOMAIN: undefined,
+    AUTH0_CLIENT_ID: undefined,
+    FEATURES_ENABLED: undefined,
+    EXPORT_ENTRIES_LIMIT: undefined,
+    SENTRY_DSN: undefined,
+    SLACK_CLIENT_ID: undefined,
+    IS_SENTRY_INSTANCE: undefined,
+  },
   testEnvironment: 'jsdom',
   testMatch: ['<rootDir>/src/**/*.test.[jt]s?(x)'],
   moduleDirectories: ['node_modules', 'jest'],
@@ -26,7 +37,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [`node_modules/(?!${includeEsModules.join('|')})`],
-  setupFilesAfterEnv: ['<rootDir>/jest/jest-setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest/jest-setup.ts'],
   coverageReporters: ['clover', 'json', 'lcov', 'text', 'json-summary'],
   collectCoverageFrom: [
     '**/*.{ts,tsx}',

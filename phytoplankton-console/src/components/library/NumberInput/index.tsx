@@ -1,70 +1,67 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import TextInput, { Props as TextInputProps } from '@/components/library/TextInput';
 import { InputProps } from '@/components/library/Form';
+import { usePrevious } from '@/utils/hooks';
 
-interface Props extends Omit<TextInputProps, keyof InputProps<string>>, InputProps<number> {
+export { default as Styles } from '../TextInput/style.module.less';
+
+export interface Props extends Omit<TextInputProps, keyof InputProps<string>>, InputProps<number> {
   min?: number;
   max?: number;
   step?: number;
 }
 
 export default function NumberInput(props: Props) {
-  const { value, onChange, min, max, step = 1, onBlur, ...rest } = props;
-  const valueText = value != null ? `${value}` : undefined;
-  const [localValue, setLocalValue] = useState<string | undefined>(valueText);
+  const { value, onChange, onBlur, min, max, step = 1, ...rest } = props;
+  const textValue =
+    value != null
+      ? `${value.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })}`
+      : undefined;
 
+  const [inputText, setInputText] = useState<string | undefined>(textValue);
+
+  const prevInputText = usePrevious(inputText);
   useEffect(() => {
-    setLocalValue(valueText);
-  }, [valueText]);
+    if (prevInputText != inputText) {
+      if (inputText == null) {
+        onChange?.(undefined);
+      } else {
+        let newNumberValue = Number(inputText) || undefined;
+        if (newNumberValue != null) {
+          newNumberValue = min != null ? Math.max(min, newNumberValue) : newNumberValue;
+          newNumberValue = max != null ? Math.min(max, newNumberValue) : newNumberValue;
+          onChange?.(newNumberValue);
+        }
+      }
+    }
+  }, [max, min, onChange, prevInputText, inputText]);
 
-  const handleConfirmChange = useCallback(
-    (newValue: number | undefined) => {
-      setLocalValue(`${newValue ?? ''}`);
-      onChange?.(newValue);
-    },
-    [onChange],
-  );
-
-  const handleCancelChange = useCallback(() => {
-    setLocalValue(`${value ?? ''}`);
-  }, [value]);
+  const prevValue = usePrevious(value);
+  useEffect(() => {
+    if (value != prevValue) {
+      setInputText(textValue);
+    }
+  }, [value, prevValue, textValue]);
 
   const handleBlur = useCallback(() => {
+    setInputText(textValue);
     onBlur?.();
-    if (localValue == null || localValue === '') {
-      handleConfirmChange(undefined);
-      return;
-    }
-    let number = Number(localValue) ?? null;
-    if (number == null) {
-      handleCancelChange();
-      return;
-    }
+  }, [onBlur, textValue]);
 
-    number = min != null ? Math.max(min, number) : number;
-    number = max != null ? Math.min(max, number) : number;
-
-    handleConfirmChange(number);
-  }, [onBlur, localValue, min, max, handleConfirmChange, handleCancelChange]);
-
-  const handleChange = (newValue: string | undefined) => {
-    if (newValue == null) {
-      handleConfirmChange(newValue);
-    } else {
-      setLocalValue(newValue);
+  const handleChange = useCallback((newValue: string | undefined) => {
+    if (newValue == null || newValue.match(/^[-+]?[0-9,.]*$/)) {
+      setInputText(newValue?.replace(',', '.'));
     }
-  };
+  }, []);
 
   return (
     <TextInput
       {...rest}
-      value={localValue}
+      value={inputText}
       onChange={handleChange}
       onBlur={handleBlur}
       htmlAttrs={{
-        type: 'number',
-        min: min,
-        max: max,
+        inputMode: 'numeric',
         step,
         ...rest.htmlAttrs,
       }}

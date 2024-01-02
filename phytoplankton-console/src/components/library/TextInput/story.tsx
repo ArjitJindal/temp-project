@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
+import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 
 export default function (): JSX.Element {
-  const [value, setValue] = useState<string | undefined>();
+  const [value, setValue] = useState<string | undefined>('input value');
   return (
     <>
       <UseCase title={'Basic case'}>
@@ -36,14 +37,19 @@ export default function (): JSX.Element {
         />
       </UseCase>
       <UseCase title={'Error'}>
-        <Component
-          isError={true}
-          placeholder={'Placeholder example'}
-          value={value}
-          onChange={(newValue) => {
-            setValue(newValue);
-          }}
-        />
+        <PropertyMatrix x={[false, true]} xLabel="Disabled">
+          {(isDisabled) => (
+            <Component
+              isError={true}
+              isDisabled={isDisabled}
+              placeholder={'Placeholder example'}
+              value={value}
+              onChange={(newValue) => {
+                setValue(newValue);
+              }}
+            />
+          )}
+        </PropertyMatrix>
       </UseCase>
       <UseCase title={'Clearable'}>
         <Component

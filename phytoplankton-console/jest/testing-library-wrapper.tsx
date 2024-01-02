@@ -1,6 +1,5 @@
 import * as TestingLibrary from '@testing-library/react';
-import { buildQueries, queries, within, screen } from '@testing-library/react';
-import { StorybookMockProviders } from '../src/components/AppWrapper/Providers';
+import { StorybookMockProviders } from '@/components/AppWrapper/Providers';
 import { Matcher, MatcherOptions } from '@testing-library/dom/types/matches';
 
 function ProvidersWrapper({ children }: { children: React.ReactNode }) {
@@ -28,7 +27,7 @@ const getMultipleError = (c, value) => `Found multiple elements with the class o
 const getMissingError = (c, value) => `Unable to find an element with the class of: ${value}`;
 
 const [queryByClassName, getAllByClassName, getByClassName, findAllByClassName, findByClassName] =
-  buildQueries(queryAllByClassName, getMultipleError, getMissingError);
+  TestingLibrary.buildQueries(queryAllByClassName, getMultipleError, getMissingError);
 
 const customQueries = {
   queryByClassName,
@@ -40,16 +39,17 @@ const customQueries = {
 };
 
 const allQueries = {
-  ...queries,
+  ...TestingLibrary.queries,
   ...customQueries,
 };
-const customWithin = (element: HTMLElement) => within(element, allQueries);
+const customWithin = (element: HTMLElement) => TestingLibrary.within(element, allQueries);
 const customScreen = {
-  ...within(document.body, allQueries),
-  debug: screen.debug,
+  ...TestingLibrary.within(document.body, allQueries),
+  debug: TestingLibrary.screen.debug,
 };
 
 export * from '@testing-library/react';
+
 export { customWithin as within, customScreen as screen };
 
 export function render(

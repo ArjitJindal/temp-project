@@ -23,7 +23,7 @@ export default function TextArea(props: Props) {
     onChange,
     rows,
     placeholder,
-    isError: _isError, // todo: implement
+    isError,
     isDisabled,
     onFocus,
     onBlur,
@@ -37,7 +37,7 @@ export default function TextArea(props: Props) {
       maxLength={maxLength}
       rows={rows}
       placeholder={placeholder}
-      className={cn(s.textArea, className)}
+      className={cn(s.root, className, isError && s.isError, !showCount && s.bareInput)}
       disabled={isDisabled}
       ref={props.ref}
       onFocus={onFocus ? () => onFocus() : undefined}

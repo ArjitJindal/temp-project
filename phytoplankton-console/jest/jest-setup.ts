@@ -1,18 +1,10 @@
 import * as React from 'react';
 import '@testing-library/jest-dom';
+import './jest-matchers';
+import '../src/@types/globals.d.ts';
 import { beforeAll } from '@jest/globals';
 
 global.React = React;
-global.API_BASE_PATH = undefined;
-global.AUTH0_AUDIENCE = undefined;
-global.AUTH0_DOMAIN = undefined;
-global.AUTH0_CLIENT_ID = undefined;
-global.AUTH0_CLIENT_ID = undefined;
-global.FEATURES_ENABLED = undefined;
-global.EXPORT_ENTRIES_LIMIT = undefined;
-global.SENTRY_DSN = undefined;
-global.SLACK_CLIENT_ID = undefined;
-global.IS_SENTRY_INSTANCE = undefined;
 
 beforeAll(() => {
   global.matchMedia = () => {
@@ -21,6 +13,12 @@ beforeAll(() => {
       media: '',
       addListener: () => {},
       removeListener: () => {},
+      onchange: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => {
+        return false;
+      },
     };
   };
   global.ResizeObserver = class ResizeObserver {
