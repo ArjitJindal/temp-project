@@ -54,6 +54,7 @@ import {
   isActionUpdate,
   isActionCreate,
   isActionEscalate,
+  isActionDelete,
 } from '@/components/ActivityCard/helpers';
 import { useUsers } from '@/utils/user-utils';
 import Avatar from '@/components/Avatar';
@@ -343,7 +344,7 @@ export function useTabs(
                     sortField: 'timestamp',
                     sortOrder: 'descend',
                     searchEntityId: alertId ? [alertId] : entityIds,
-                    filterActions: ['CREATE', 'UPDATE', 'ESCALATE'],
+                    filterActions: ['CREATE', 'UPDATE', 'ESCALATE', 'DELETE'],
                     filterActionTakenBy: filterActivityBy,
                     alertStatus: flatten(filterAlertStatus),
                     caseStatus: flatten(filterCaseStatus),
@@ -473,6 +474,15 @@ const getLogData = (
               timestamp: log.timestamp,
               user: log.user,
               icon: getIcon('CASE'),
+              statement: createStatement,
+            }
+          : null;
+      } else if (isActionDelete(log)) {
+        return createStatement
+          ? {
+              timestamp: log.timestamp,
+              user: log.user,
+              icon: getIcon(type),
               statement: createStatement,
             }
           : null;

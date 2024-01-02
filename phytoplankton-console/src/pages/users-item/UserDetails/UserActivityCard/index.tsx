@@ -12,6 +12,7 @@ import {
   isActionUpdate,
   isActionCreate,
   isActionEscalate,
+  isActionDelete,
 } from '@/components/ActivityCard/helpers';
 import { AuditLog, Account, InternalConsumerUser, InternalBusinessUser } from '@/apis';
 import { success } from '@/utils/asyncResource';
@@ -74,7 +75,7 @@ export default function UserActivityCard(props: Props) {
             sortField: 'timestamp',
             sortOrder: 'descend',
             searchEntityId: [user.userId],
-            filterActions: ['CREATE', 'UPDATE', 'ESCALATE'],
+            filterActions: ['CREATE', 'UPDATE', 'ESCALATE', 'DELETE'],
             filterActionTakenBy: filterActivityBy,
             alertStatus: flatten(filterAlertStatus),
             caseStatus: flatten(filterCaseStatus),
@@ -144,7 +145,7 @@ const getLogData = (
           ? {
               timestamp: log.timestamp,
               user: log.user,
-              icon: getIcon(type),
+              icon: getIcon(log.subtype === 'COMMENT' ? 'USER' : type),
               statement: createStatement,
             }
           : null;
@@ -154,6 +155,15 @@ const getLogData = (
               timestamp: log.timestamp,
               user: log.user,
               icon: getIcon('CASE'),
+              statement: createStatement,
+            }
+          : null;
+      } else if (isActionDelete(log)) {
+        return createStatement
+          ? {
+              timestamp: log.timestamp,
+              user: log.user,
+              icon: getIcon('USER'),
               statement: createStatement,
             }
           : null;

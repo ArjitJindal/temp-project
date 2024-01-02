@@ -20,6 +20,10 @@ export const isActionEscalate = (log: AuditLog): boolean => {
   return log.action === 'ESCALATE';
 };
 
+export const isActionDelete = (log: AuditLog): boolean => {
+  return log.action === 'DELETE';
+};
+
 export const getCreateStatement = (
   log: AuditLog,
   users: { [userId: string]: Account },
@@ -33,9 +37,19 @@ export const getCreateStatement = (
   const assignees = getAssignee(log?.newImage, users) ?? [];
   switch (subtype) {
     case 'COMMENT': {
-      return log?.newImage?.files && log?.newImage?.files?.length ? (
+      let actionStatement: string = '';
+      if (log.action === 'CREATE' && log?.newImage) {
+        actionStatement = 'added';
+      } else if (log.action === 'UPDATE' && log?.newImage) {
+        actionStatement = 'edited';
+      } else if (log.action === 'DELETE') {
+        actionStatement = 'deleted';
+      } else {
+        actionStatement = '';
+      }
+      return (log.action === 'CREATE' && log?.newImage) || log.action !== 'CREATE' ? (
         <>
-          <b>{firstLetterUpper(userName)}</b> attached files
+          <b>{firstLetterUpper(userName)}</b> {actionStatement} a comment{' '}
         </>
       ) : null;
     }

@@ -173,7 +173,7 @@ export const allUsersViewHandler = lambdaApi()(
         comment
       )
       await userAuditLogService.handleAuditLogForAddComment(
-        userId,
+        request.userId,
         createdComment
       )
       return createdComment
@@ -189,7 +189,7 @@ export const allUsersViewHandler = lambdaApi()(
 
         if (comment) {
           await userAuditLogService.handleAuditLogForDeleteComment(
-            userId,
+            request.userId,
             comment
           )
         }
