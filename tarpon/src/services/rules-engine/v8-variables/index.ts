@@ -13,6 +13,7 @@ import {
   USER_CREATION_AGE_MONTHS,
   USER_CREATION_AGE_YEARS,
 } from './user-creation-age'
+import { TRANSACTION_ID } from './transaction-id'
 
 function withNamespace(variable: RuleVariable) {
   return {
@@ -39,6 +40,7 @@ export const RULE_VARIABLES: RuleVariable[] = [
   TRANSACTION_PRODUCT_TYPE,
   TRANSACTION_ORIGIN_COUNTRY,
   TRANSACTION_DESTINATION_COUNTRY,
+  TRANSACTION_ID,
 ].map((v) => withNamespace(v))
 
 export function getRuleVariableByKey(key: string): RuleVariable | undefined {

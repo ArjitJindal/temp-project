@@ -75,10 +75,10 @@ async function renameRuleParameterPrivate(
     if (
       (ruleImplementationNames &&
         !ruleImplementationNames.includes(
-          rulesById[ruleId].ruleImplementationName
+          rulesById[ruleId].ruleImplementationName!
         )) ||
       excludedRuleImplementationNames.includes(
-        rulesById[ruleId].ruleImplementationName
+        rulesById[ruleId].ruleImplementationName!
       )
     ) {
       continue
@@ -170,10 +170,10 @@ async function deleteUnusedRuleParameterPrivate(
     if (
       (ruleImplementationNames &&
         !ruleImplementationNames.includes(
-          rulesById[ruleId].ruleImplementationName
+          rulesById[ruleId].ruleImplementationName!
         )) ||
       excludedRuleImplementationNames.includes(
-        rulesById[ruleId].ruleImplementationName
+        rulesById[ruleId].ruleImplementationName!
       )
     ) {
       continue

@@ -127,7 +127,7 @@ export function sumTransactionAmountDetails(
   }
 }
 
-async function* getTransactionsGenerator(
+export async function* getTransactionsGenerator(
   userId: string | undefined,
   paymentDetails: PaymentDetails | undefined,
   transactionRepository: RulesEngineTransactionRepositoryInterface,

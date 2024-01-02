@@ -553,6 +553,20 @@ const _RULES_LIBRARY: Array<
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsDif }} more transaction(s) above the limit of {{ parameters.transactionsLimit }} in {{ format-time-window parameters.timeWindow }}",
       defaultParameters,
+      defaultLogic: { and: [{ '>': [{ var: 'agg:R-30' }, 100] }] },
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:R-30',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING_RECEIVING',
+          aggregationFieldKey: 'TRANSACTION:id',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 1, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-velocity',
       labels: [],

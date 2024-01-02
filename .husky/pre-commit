@@ -1,9 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "check tarpon"
-cd tarpon; npx lint-staged; cd ../
-echo "check phyto"
-cd phytoplankton-console; npx lint-staged; cd ..
 echo "check root"
 npx lint-staged

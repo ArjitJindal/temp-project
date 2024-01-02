@@ -221,6 +221,24 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#aggregation#${RULE_INSTANCE_PREFIX}${ruleInstanceId}#${direction}#${version}#marker`,
     SortKeyID: transactionId,
   }),
+  V8_RULE_USER_TIME_AGGREGATION_TX_MARKER: (
+    tenantId: string,
+    direction: 'origin' | 'destination',
+    version: string,
+    transactionId: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#rule-agg#${direction}#${version}#${transactionId}`,
+    SortKeyID: '1',
+  }),
+  // TODO (V8): Improve user key ID format for V8 only
+  V8_RULE_USER_TIME_AGGREGATION_READY_MARKER: (
+    tenantId: string,
+    userKeyId: string,
+    version: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#rule-agg#${version}#${USER_ID_PREFIX}${userKeyId}`,
+    SortKeyID: '1',
+  }),
   RULE_USER_TIME_AGGREGATION: (
     tenantId: string,
     userKeyId: string,
@@ -229,6 +247,15 @@ export const DynamoDbKeys = {
     timeLabel?: string
   ) => ({
     PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userKeyId}#${RULE_INSTANCE_PREFIX}${ruleInstanceId}#${version}`,
+    SortKeyID: timeLabel,
+  }),
+  V8_RULE_USER_TIME_AGGREGATION: (
+    tenantId: string,
+    userKeyId: string,
+    version: string,
+    timeLabel?: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#rule-agg#${USER_ID_PREFIX}${userKeyId}#${version}`,
     SortKeyID: timeLabel,
   }),
   // Attributes: refer to User / Business

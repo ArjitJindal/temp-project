@@ -5395,6 +5395,87 @@ components:
           type: array
           items:
             type: object
+    RuleAggregationType:
+      title: RuleAggregationType
+      type: string
+      enum:
+        - USER_TRANSACTIONS
+        - PAYMENT_DETAILS_TRSANCTIONS
+    RuleAggregationTransactionDirection:
+      title: RuleAggregationTransactionDirection
+      type: string
+      enum:
+        - SENDING
+        - RECEIVING
+        - SENDING_RECEIVING
+    RuleAggregationFunc:
+      title: RuleAggregationFunc
+      type: string
+      enum:
+        - SUM
+        - COUNT
+        - AVG
+    RuleAggregationVariable:
+      title: AggregationVariable
+      type: object
+      properties:
+        key:
+          type: string
+        type:
+          $ref: '#/components/schemas/RuleAggregationType'
+        direction:
+          $ref: '#/components/schemas/RuleAggregationTransactionDirection'
+        aggregationFieldKey:
+          type: string
+        aggregationFunc:
+          $ref: '#/components/schemas/RuleAggregationFunc'
+        timeWindow:
+          type: object
+          properties:
+            start:
+              $ref: '#/components/schemas/RuleAggregationTimeWindow'
+            end:
+              $ref: '#/components/schemas/RuleAggregationTimeWindow'
+          required:
+            - start
+            - end
+        filtersLogic:
+          type: object
+      required:
+        - key
+        - type
+        - aggregationFieldKey
+        - aggregationFunc
+        - timeWindow
+    RuleAggregationTimeWindow:
+      title: RuleAggregationTimeWindow
+      type: object
+      properties:
+        units:
+          type: number
+        granularity:
+          type: string
+          enum:
+            - second
+            - minute
+            - hour
+            - day
+            - week
+            - month
+            - year
+            - fiscal_year
+        rollingBasis:
+          type: boolean
+        fiscalYear:
+          type: object
+          properties:
+            startDay:
+              type: number
+            startMonth:
+              type: number
+      required:
+        - units
+        - granularity
     Rule:
       title: Rule
       type: object
@@ -5427,6 +5508,10 @@ components:
           type: string
         defaultLogic:
           type: object
+        defaultLogicAggregationVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAggregationVariable'
         parametersSchema:
           type: object
         defaultParameters:
@@ -5483,9 +5568,7 @@ components:
         - name
         - description
         - parametersSchema
-        - defaultParameters
         - defaultAction
-        - ruleImplementationName
         - labels
         - defaultNature
         - defaultCasePriority
@@ -5593,6 +5676,10 @@ components:
           $ref: '#/components/schemas/Priority'
         logic:
           type: object
+        logicAggregationVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAggregationVariable'
         parameters:
           type: object
         action:

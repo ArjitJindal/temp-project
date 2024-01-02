@@ -7,7 +7,8 @@ export const TRANSACTION_PRODUCT_TYPE: TransactionRuleVariable<
   entity: 'TRANSACTION',
   uiDefinition: {
     label: 'product type',
-    type: 'string',
+    type: 'text',
+    valueSources: ['value', 'field', 'func'],
   },
   load: async (transaction) => {
     return transaction.productType

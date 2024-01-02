@@ -42,7 +42,7 @@ import {
   UserRuleFilterBase,
 } from './filters'
 import { USER_RULES, UserRuleBase } from './user-rules'
-import { evaluate } from './v8-engine'
+import { RuleJsonLogicEvaluator } from './v8-engine'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -84,6 +84,7 @@ import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResp
 import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
+import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 
 const sqs = new SQSClient({})
 
@@ -99,9 +100,16 @@ export type TransactionAggregationTask = {
   tenantId: string
   isTransactionHistoricalFiltered: boolean
 }
+export type V8TransactionAggregationTask = {
+  v8: true
+  aggregationVariable: RuleAggregationVariable
+  transaction: Transaction
+  direction: 'origin' | 'destination'
+  tenantId: string
+}
 export type TransactionAggregationTaskEntry = {
   userKeyId: string
-  payload: TransactionAggregationTask
+  payload: TransactionAggregationTask | V8TransactionAggregationTask
 }
 
 export function getExecutedAndHitRulesResult(
@@ -158,6 +166,7 @@ export class RulesEngineService {
   userRepository: UserRepository
   tenantRepository: TenantRepository
   riskScoringService: RiskScoringService
+  ruleLogicEvaluator: RuleJsonLogicEvaluator
 
   constructor(
     tenantId: string,
@@ -193,6 +202,10 @@ export class RulesEngineService {
       dynamoDb,
       mongoDb,
     })
+    this.ruleLogicEvaluator = new RuleJsonLogicEvaluator(
+      this.tenantId,
+      this.dynamoDb
+    )
   }
 
   public static async fromEvent(
@@ -596,15 +609,6 @@ export class RulesEngineService {
       senderUserRiskLevel,
       ruleInstance
     )
-    const ruleImplementationName = rule.ruleImplementationName
-    const RuleClass = transaction
-      ? TRANSACTION_RULES[ruleImplementationName]
-      : USER_RULES[ruleImplementationName]
-    if (!RuleClass) {
-      throw new Error(
-        `${ruleImplementationName} rule implementation not found!`
-      )
-    }
     const ruleFilters = ruleInstance.filters as TransactionFilters & UserFilters
     const mode =
       database === 'MONGODB' || process.env.__INTERNAL_MONGODB_MIRROR__
@@ -632,12 +636,19 @@ export class RulesEngineService {
     let ruleResult: RuleHitResult | undefined
     if (hasFeature('RULES_ENGINE_V8') && ruleInstance.logic) {
       if (transactionWithValidUserId) {
-        // TODO: handle hit directions
+        // TODO (V8): handle hit directions
         isOriginUserFiltered = true
         isDestinationUserFiltered = true
-        const { hit, varData } = await evaluate(ruleInstance.logic, {
-          transaction: transactionWithValidUserId,
-        })
+
+        const { hit, varData } = await this.ruleLogicEvaluator.evaluate(
+          ruleInstance.logic,
+          ruleInstance.logicAggregationVariables ?? [],
+          {
+            transaction: transactionWithValidUserId,
+            senderUser,
+            receiverUser,
+          }
+        )
         if (hit) {
           ruleResult = [
             {
@@ -652,6 +663,15 @@ export class RulesEngineService {
         }
       }
     } else {
+      const ruleImplementationName = rule.ruleImplementationName!
+      const RuleClass = transaction
+        ? TRANSACTION_RULES[ruleImplementationName]
+        : USER_RULES[ruleImplementationName]
+      if (!RuleClass) {
+        throw new Error(
+          `${ruleImplementationName} rule implementation not found!`
+        )
+      }
       ruleClassInstance = transactionWithValidUserId
         ? new (RuleClass as typeof TransactionRuleBase)(
             this.tenantId,
@@ -821,6 +841,28 @@ export class RulesEngineService {
           publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
           logger.info(`Completed rule`)
 
+          // TODO (V8): Update aggregaion variables only once if used by multiple rules
+          await Promise.all(
+            ruleInstance.logicAggregationVariables?.flatMap(async (aggVar) => {
+              return [
+                await this.ruleLogicEvaluator.updateAggregationVariable(
+                  aggVar,
+                  {
+                    transaction: options.transaction,
+                  },
+                  'origin'
+                ),
+                await this.ruleLogicEvaluator.updateAggregationVariable(
+                  aggVar,
+                  {
+                    transaction: options.transaction,
+                  },
+                  'destination'
+                ),
+              ]
+            }) ?? []
+          )
+
           const transactionAggregationTasks =
             ruleClassInstance instanceof TransactionAggregationRule
               ? await this.handleTransactionRuleAggregation(
@@ -899,8 +941,9 @@ export class RulesEngineService {
   private async sendTransactionAggregationTasks(
     task: TransactionAggregationTaskEntry
   ) {
+    const payload = task.payload as TransactionAggregationTask
     if (envIs('local') || envIs('test')) {
-      await handleTransactionAggregationTask(task.payload)
+      await handleTransactionAggregationTask(payload)
       return
     }
 
@@ -909,7 +952,7 @@ export class RulesEngineService {
       QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL!,
       MessageGroupId: generateChecksum(task.userKeyId),
       MessageDeduplicationId: generateChecksum(
-        `${task.userKeyId}:${task.payload.ruleInstanceId}:${task.payload.transactionId}`
+        `${task.userKeyId}:${payload.ruleInstanceId}:${payload.transactionId}`
       ),
     })
 

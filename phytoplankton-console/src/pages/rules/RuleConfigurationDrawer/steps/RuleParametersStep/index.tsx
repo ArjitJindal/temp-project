@@ -10,6 +10,7 @@ import {
   Rule,
   RuleAction,
   TriggersOnHit,
+  RuleAggregationVariable,
 } from '@/apis';
 
 import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
@@ -32,6 +33,7 @@ import GenericFormField, { FormFieldRenderProps } from '@/components/library/For
 
 export interface FormValues {
   ruleLogic?: object;
+  ruleLogicAggregationVariables?: RuleAggregationVariable[];
   ruleParameters?: unknown;
   ruleAction?: RuleAction;
   riskLevelParameters?: RiskLevelRuleParameters;
@@ -68,6 +70,9 @@ function RuleSpecificParameters(props: Props) {
   const { rule } = props;
   const user = useAuth0User();
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
+  const logicAggregationVariablesField = useFieldState<FormValues, 'ruleLogicAggregationVariables'>(
+    'ruleLogicAggregationVariables',
+  );
 
   return (
     <>
@@ -79,7 +84,11 @@ function RuleSpecificParameters(props: Props) {
         {v8Enabled && isSuperAdmin(user) && (
           <GenericFormField<FormValues> name={'ruleLogic'}>
             {(props: FormFieldRenderProps<any>) => (
-              <RuleLogicEditorV8 jsonLogic={props.value} onChange={props.onChange!} />
+              <RuleLogicEditorV8
+                jsonLogic={props.value}
+                aggregationVariables={logicAggregationVariablesField?.value}
+                onChange={props.onChange!}
+              />
             )}
           </GenericFormField>
         )}

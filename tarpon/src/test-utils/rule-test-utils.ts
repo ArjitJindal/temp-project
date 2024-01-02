@@ -62,6 +62,8 @@ export async function createRule(
       type: rule.type,
       ruleId: createdRule.id as string,
       id: ruleInstance?.ruleInstanceId,
+      logic: createdRule.defaultLogic,
+      logicAggregationVariables: createdRule.defaultLogicAggregationVariables,
       parameters: createdRule.defaultParameters,
       riskLevelParameters: createdRule.defaultRiskLevelParameters,
       action: createdRule.defaultAction,
@@ -431,7 +433,7 @@ export function testAggregationRebuild(
       })
 
       // Validate rebuilt aggregation
-      const RuleClass = TRANSACTION_RULES[rule.ruleImplementationName]
+      const RuleClass = TRANSACTION_RULES[rule.ruleImplementationName!]
       const ruleClassInstance = new (RuleClass as typeof TransactionRuleBase)(
         tenantId,
         {

@@ -1,15 +1,49 @@
 import { AsyncLogicEngine } from 'json-logic-engine'
 import memoizeOne from 'memoize-one'
 import DataLoader from 'dataloader'
-import { isEqual, uniq } from 'lodash'
+import { isEqual, mergeWith, uniq } from 'lodash'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
 import { RULE_FUNCTIONS } from '../v8-functions'
 import { RULE_OPERATORS } from '../v8-operators'
 import { getRuleVariableByKey } from '../v8-variables'
+import { getReceiverKeyId, getSenderKeyId } from '../utils'
+import { getTimestampRange } from '../utils/time-utils'
+import { TimeWindow } from '../utils/rule-parameter-schemas'
+import { getRuleVariableAggregator } from '../v8-variable-aggregators'
+import {
+  TransactionAggregationTaskEntry,
+  V8TransactionAggregationTask,
+} from '../rules-engine-service'
+import {
+  getTransactionsGenerator,
+  groupTransactionsByHour,
+} from '../utils/transaction-rule-utils'
+import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
+import {
+  AggregationData,
+  AggregationRepository,
+  getAggVarHash,
+} from './aggregation-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import { getAllValuesByKey } from '@/utils/object'
+import { generateChecksum, getAllValuesByKey } from '@/utils/object'
+import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { Business } from '@/@types/openapi-public/Business'
+import { User } from '@/@types/openapi-public/User'
+import { logger } from '@/core/logger'
+import dayjs from '@/utils/dayjs'
+import { envIs } from '@/utils/env'
+import { handleV8TransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
+import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
+
+const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
+
+const sqs = new SQSClient({})
 
 type RuleData = {
   transaction: Transaction
+  senderUser?: User | Business
+  receiverUser?: User | Business
 }
 
 const jsonLogicEngine = new AsyncLogicEngine()
@@ -20,39 +54,449 @@ RULE_OPERATORS.forEach((v) =>
   jsonLogicEngine.addMethod(v.key, v.implementation)
 )
 
-const getDataLoader = memoizeOne((data: RuleData) => {
-  return new DataLoader(async (variableKeys: readonly string[]) => {
-    return Promise.all(
-      variableKeys.map(async (variableKey) => {
-        const variable = getRuleVariableByKey(variableKey)
-        if (variable?.entity === 'TRANSACTION') {
-          return variable.load(data.transaction)
+const getDataLoader = memoizeOne(
+  (data: RuleData, dynamoDb: DynamoDBDocumentClient) => {
+    return new DataLoader(async (variableKeys: readonly string[]) => {
+      return Promise.all(
+        variableKeys.map(async (variableKey) => {
+          const variable = getRuleVariableByKey(variableKey)
+          if (variable?.entity === 'TRANSACTION') {
+            return variable.load(data.transaction, dynamoDb)
+          }
+          // TODO (V8): hanlde other entities
+          return null
+        })
+      )
+    })
+  },
+  // Don't take dynamoDb into account
+  (a, b) => isEqual(a[0], b[0])
+)
+
+function isAggregationVariable(key: string): boolean {
+  return key.startsWith('agg:')
+}
+
+export class RuleJsonLogicEvaluator {
+  private tenantId: string
+  private dynamoDb: DynamoDBDocumentClient
+  private aggregationRepository: AggregationRepository
+
+  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
+    this.tenantId = tenantId
+    this.dynamoDb = dynamoDb
+    this.aggregationRepository = new AggregationRepository(
+      this.tenantId,
+      this.dynamoDb
+    )
+  }
+
+  public async evaluate(
+    jsonLogic: object,
+    aggregationVariables: RuleAggregationVariable[],
+    data: RuleData
+  ): Promise<{
+    hit: boolean
+    varData: {
+      [key: string]: unknown
+    }
+  }> {
+    const entityVarDataloader = getDataLoader(data, this.dynamoDb)
+    const variableKeys = uniq(getAllValuesByKey<string>('var', jsonLogic))
+    const entityVariableKeys = variableKeys.filter(
+      (k) => !isAggregationVariable(k)
+    )
+    const aggVariableKeys = variableKeys.filter(isAggregationVariable)
+    const entityVarEntries = await Promise.all(
+      entityVariableKeys.map(async (key) => [
+        key,
+        await entityVarDataloader.load(key),
+      ])
+    )
+    const aggVarEntries = await Promise.all(
+      aggVariableKeys.map(async (key) => {
+        const aggVariable = aggregationVariables.find((v) => v.key === key)
+        if (!aggVariable) {
+          logger.error(`Aggregation variable ${key} not found`)
+          return [key, null]
         }
-        // TODO: hanlde other entities
-        return null
+        return [
+          key,
+          await this.loadAggregationData(
+            aggVariable,
+            data,
+            entityVarDataloader
+          ),
+        ]
       })
     )
-  })
-}, isEqual)
-
-export async function evaluate(
-  jsonLogic: object,
-  data: RuleData
-): Promise<{
-  hit: boolean
-  varData: {
-    [key: string]: unknown
+    const varData = Object.fromEntries(entityVarEntries.concat(aggVarEntries))
+    const hit = await jsonLogicEngine.run(jsonLogic, varData)
+    return {
+      hit,
+      varData,
+    }
   }
-}> {
-  const dataloader = getDataLoader(data)
-  const variableKeys = uniq(getAllValuesByKey<string>('var', jsonLogic))
-  const entries = await Promise.all(
-    variableKeys.map(async (key) => [key, await dataloader.load(key)])
-  )
-  const varData = Object.fromEntries(entries)
-  const hit = await jsonLogicEngine.run(jsonLogic, varData)
-  return {
-    hit,
-    varData,
+
+  private getUserKeyId(
+    transaction: Transaction,
+    direction: 'origin' | 'destination',
+    type: RuleAggregationType
+  ) {
+    return direction === 'origin'
+      ? getSenderKeyId(this.tenantId, transaction, {
+          disableDirection: true,
+          matchPaymentDetails: type === 'PAYMENT_DETAILS_TRSANCTIONS',
+        })
+      : getReceiverKeyId(this.tenantId, transaction, {
+          disableDirection: true,
+          matchPaymentDetails: type === 'PAYMENT_DETAILS_TRSANCTIONS',
+        })
+  }
+
+  /**
+   * Aggregation related
+   */
+
+  public async rebuildOrUpdateAggregationVariable(
+    aggregationVariable: RuleAggregationVariable,
+    data: RuleData,
+    direction: 'origin' | 'destination'
+  ) {
+    const userKeyId = this.getUserKeyId(
+      data.transaction,
+      direction,
+      aggregationVariable.type
+    )
+    if (!userKeyId) {
+      return
+    }
+    const ready = await this.aggregationRepository.isAggregationVariableReady(
+      aggregationVariable,
+      userKeyId
+    )
+    if (!ready) {
+      await this.rebuildAggregationVariable(
+        aggregationVariable,
+        data,
+        direction,
+        userKeyId
+      )
+    }
+    await this.updateAggregationVariableInternal(
+      aggregationVariable,
+      data,
+      direction,
+      userKeyId
+    )
+  }
+
+  public async rebuildAggregationVariable(
+    aggregationVariable: RuleAggregationVariable,
+    data: RuleData,
+    direction: 'origin' | 'destination',
+    userKeyId: string
+  ) {
+    logger.info('Rebuilding aggregation...')
+    const aggFunc = getRuleVariableAggregator(
+      aggregationVariable.aggregationFunc
+    )
+    const transactionRepository = new DynamoDbTransactionRepository(
+      this.tenantId,
+      this.dynamoDb
+    )
+    const { afterTimestamp, beforeTimestamp } = this.getTimeRange(
+      data.transaction.timestamp!,
+      aggregationVariable.timeWindow.start as TimeWindow,
+      aggregationVariable.timeWindow.end as TimeWindow
+    )
+    const generator = getTransactionsGenerator(
+      direction == 'origin'
+        ? data.transaction.originUserId
+        : data.transaction.destinationUserId,
+      direction == 'origin'
+        ? data.transaction.originPaymentDetails
+        : data.transaction.destinationPaymentDetails,
+      transactionRepository,
+      {
+        afterTimestamp,
+        beforeTimestamp,
+        checkType:
+          aggregationVariable.direction === 'SENDING'
+            ? 'sending'
+            : aggregationVariable.direction === 'RECEIVING'
+            ? 'receiving'
+            : 'all',
+        matchPaymentMethodDetails:
+          aggregationVariable.type === 'PAYMENT_DETAILS_TRSANCTIONS',
+        filters: {},
+      },
+      // TODO (V8): Optimize to only fetch the required attributes
+      Transaction.attributeTypeMap
+        .map((v) => v.name)
+        .concat(['senderKeyId', 'receiverKeyId']) as Array<keyof Transaction>
+    )
+    let timeAggregatedResult: { [hour: string]: AggregationData } = {}
+    for await (const data of generator) {
+      const transactions = data.sendingTransactions.concat(
+        data.receivingTransactions
+      )
+
+      // Filter transactions by filtersLogic
+      const targetTransactions: Transaction[] = []
+      for (const transaction of transactions) {
+        const isTransactionFiltered =
+          await this.isDataIncludedInAggregationVariable(aggregationVariable, {
+            transaction: transaction as Transaction,
+          })
+        if (isTransactionFiltered) {
+          targetTransactions.push(transaction as Transaction)
+        }
+      }
+
+      // Update aggregation result
+      const partialTimeAggregatedResult = await groupTransactionsByHour(
+        targetTransactions,
+        async (groupTransactions) => ({
+          value: await aggFunc.aggregate(groupTransactions),
+        })
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData | undefined, b: AggregationData | undefined) => {
+          return {
+            value: aggFunc.merge(
+              a?.value ?? aggFunc.init(),
+              b?.value ?? aggFunc.init()
+            ),
+          }
+        }
+      )
+    }
+    await this.aggregationRepository.rebuildUserTimeAggregations(
+      userKeyId,
+      aggregationVariable,
+      timeAggregatedResult
+    )
+    await this.aggregationRepository.setAggregationVariableReady(
+      aggregationVariable,
+      userKeyId
+    )
+    logger.info('Rebuilt aggregation')
+  }
+
+  public async updateAggregationVariable(
+    aggregationVariable: RuleAggregationVariable,
+    data: RuleData,
+    direction: 'origin' | 'destination'
+  ) {
+    const userKeyId = this.getUserKeyId(
+      data.transaction,
+      direction,
+      aggregationVariable.type
+    )
+    if (!userKeyId) {
+      return
+    }
+
+    const ready = await this.aggregationRepository.isAggregationVariableReady(
+      aggregationVariable,
+      userKeyId
+    )
+    if (!ready) {
+      const task: TransactionAggregationTaskEntry = {
+        userKeyId,
+        payload: {
+          v8: true,
+          aggregationVariable,
+          transaction: data.transaction,
+          direction,
+          tenantId: this.tenantId,
+        },
+      }
+      if (envIs('local') || envIs('test')) {
+        await handleV8TransactionAggregationTask(
+          task.payload as V8TransactionAggregationTask
+        )
+        return
+      }
+
+      const command = new SendMessageCommand({
+        MessageBody: JSON.stringify(task.payload),
+        QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL!,
+        MessageGroupId: generateChecksum(task.userKeyId),
+        MessageDeduplicationId: generateChecksum(
+          `${task.userKeyId}:${getAggVarHash(aggregationVariable)}:${
+            data.transaction.transactionId
+          }`
+        ),
+      })
+      await sqs.send(command)
+      return
+    }
+    await this.updateAggregationVariableInternal(
+      aggregationVariable,
+      data,
+      direction,
+      userKeyId
+    )
+  }
+
+  private async updateAggregationVariableInternal(
+    aggregationVariable: RuleAggregationVariable,
+    data: RuleData,
+    direction: 'origin' | 'destination',
+    userKeyId: string
+  ) {
+    logger.info('Updating aggregation...')
+    const isNewDataFiltered = await this.isDataIncludedInAggregationVariable(
+      aggregationVariable,
+      data
+    )
+    const entityVarDataloader = getDataLoader(data, this.dynamoDb)
+    const newDataValue = await entityVarDataloader.load(
+      aggregationVariable.aggregationFieldKey
+    )
+    if (!isNewDataFiltered || !newDataValue) {
+      return
+    }
+    const shouldSkipUpdateAggregation =
+      await this.aggregationRepository.isTransactionApplied(
+        aggregationVariable,
+        direction,
+        data.transaction.transactionId
+      )
+    if (shouldSkipUpdateAggregation) {
+      logger.warn('Skip updating aggregations.')
+      return
+    }
+
+    const aggFunc = getRuleVariableAggregator(
+      aggregationVariable.aggregationFunc
+    )
+    const targetAggregations =
+      (await this.aggregationRepository.getUserRuleTimeAggregations(
+        userKeyId,
+        aggregationVariable,
+        data.transaction.timestamp!,
+        data.transaction.timestamp! + 1,
+        AGGREGATION_TIME_FORMAT
+      )) ?? []
+    if ((targetAggregations?.length ?? 0) > 1) {
+      throw new Error('Should only get one target aggregation')
+    }
+    const targetAggregation = targetAggregations?.[0] ?? {
+      hour: dayjs(data.transaction.timestamp).format(AGGREGATION_TIME_FORMAT),
+      value: aggFunc.init(),
+    }
+    const updatedTargetAggregation = await aggFunc.reduce(
+      targetAggregation.value,
+      newDataValue
+    )
+    await this.aggregationRepository.rebuildUserTimeAggregations(
+      userKeyId,
+      aggregationVariable,
+      { [targetAggregation.hour]: { value: updatedTargetAggregation } }
+    )
+    await this.aggregationRepository.setTransactionApplied(
+      aggregationVariable,
+      direction,
+      data.transaction.transactionId
+    )
+    logger.info('Updated aggregation')
+  }
+
+  // TODO (V8): Load same aggregation data only once from multiple rules
+  private async loadAggregationData(
+    aggregationVariable: RuleAggregationVariable,
+    data: RuleData,
+    entityVarDataloader: DataLoader<string, unknown>
+  ) {
+    const { transaction } = data
+    const { aggregationFunc } = aggregationVariable
+
+    // TODO (V8): Handle origin/destinaiton user
+    const userKeyId = this.getUserKeyId(
+      transaction,
+      'origin',
+      aggregationVariable.type
+    )
+    if (!userKeyId) {
+      return null
+    }
+
+    const { afterTimestamp, beforeTimestamp } = this.getTimeRange(
+      data.transaction.timestamp!,
+      aggregationVariable.timeWindow.start as TimeWindow,
+      aggregationVariable.timeWindow.end as TimeWindow
+    )
+    const aggData =
+      (await this.aggregationRepository.getUserRuleTimeAggregations(
+        userKeyId,
+        aggregationVariable,
+        afterTimestamp,
+        beforeTimestamp,
+        AGGREGATION_TIME_FORMAT
+      )) ?? []
+    const aggFunc = getRuleVariableAggregator(aggregationFunc)
+    const result = aggData.reduce((acc, cur) => {
+      return aggFunc.merge(acc, cur.value as any)
+    }, aggFunc.init())
+
+    const isNewDataFiltered = await this.isDataIncludedInAggregationVariable(
+      aggregationVariable,
+      data
+    )
+    if (
+      isNewDataFiltered &&
+      this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
+    ) {
+      const newDataValue = await entityVarDataloader.load(
+        aggregationVariable.aggregationFieldKey
+      )
+      if (newDataValue) {
+        // NOTE: Merge the incoming transaction/user into the aggregation result
+        return aggFunc.reduce(result, newDataValue)
+      }
+    }
+    return result
+  }
+
+  private async isDataIncludedInAggregationVariable(
+    aggregationVariable: RuleAggregationVariable,
+    data: RuleData
+  ) {
+    return (
+      !aggregationVariable.filtersLogic ||
+      (await this.evaluate(aggregationVariable.filtersLogic, [], data)).hit
+    )
+  }
+
+  private isNewDataWithinTimeWindow(
+    data: RuleData,
+    afterTimestamp: number,
+    beforeTimestamp: number
+  ): boolean {
+    return (
+      data.transaction.timestamp! >= afterTimestamp &&
+      data.transaction.timestamp! <= beforeTimestamp
+    )
+  }
+
+  private getTimeRange(
+    currentTimestamp: number,
+    timeWindowFrom: TimeWindow,
+    timeWindowTo: TimeWindow
+  ) {
+    const { afterTimestamp } = getTimestampRange(
+      currentTimestamp,
+      timeWindowFrom
+    )
+    const { afterTimestamp: beforeTimestamp } = getTimestampRange(
+      currentTimestamp,
+      timeWindowTo
+    )
+    return { afterTimestamp, beforeTimestamp }
   }
 }

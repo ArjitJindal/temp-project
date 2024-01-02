@@ -155,6 +155,7 @@ export function ruleInstanceToFormValues(
             }
           : {
               ruleLogic: ruleInstance.logic,
+              ruleLogicAggregationVariables: ruleInstance.logicAggregationVariables ?? [],
               ruleParameters: ruleInstance.parameters,
               ruleAction: ruleInstance.action,
               triggersOnHit: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
@@ -172,6 +173,7 @@ export function formValuesToRuleInstance(
   const {
     ruleAction,
     ruleLogic,
+    ruleLogicAggregationVariables,
     ruleParameters,
     riskLevelParameters,
     riskLevelActions,
@@ -252,6 +254,7 @@ export function formValuesToRuleInstance(
         }
       : {
           logic: ruleLogic,
+          logicAggregationVariables: ruleLogicAggregationVariables,
           action: ruleAction ?? initialRuleInstance.action,
           parameters: removeEmpty(ruleParameters),
           triggersOnHit: removeEmpty(triggersOnHit) ?? defaultTriggersOnHit,

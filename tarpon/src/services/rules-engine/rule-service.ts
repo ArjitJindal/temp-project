@@ -150,7 +150,7 @@ export class RuleService {
       rule.defaultRiskLevelParameters
     )
     RuleService.validateRuleParametersSchema(
-      ALL_RULES[rule.ruleImplementationName].getSchema(),
+      ALL_RULES[rule.ruleImplementationName!].getSchema(),
       rule.defaultParameters,
       rule.defaultRiskLevelParameters
     )
@@ -172,7 +172,7 @@ export class RuleService {
       ruleInstance.riskLevelParameters
     )
     RuleService.validateRuleParametersSchema(
-      ALL_RULES[rule.ruleImplementationName].getSchema(),
+      ALL_RULES[rule.ruleImplementationName!].getSchema(),
       ruleInstance.parameters,
       ruleInstance.riskLevelParameters
     )

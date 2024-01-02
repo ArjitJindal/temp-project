@@ -14,10 +14,10 @@ export const replaceMagicKeyword = (
     )
   )
 
-export function generateChecksum(obj: any) {
+export function generateChecksum(obj: any, length = 64) {
   const hash = crypto.createHash('sha256')
   hash.update(stringify(obj) ?? '')
-  return hash.digest('hex')
+  return hash.digest('hex').slice(0, length)
 }
 
 type NotPromiseType<T> = T extends Promise<any> ? never : T

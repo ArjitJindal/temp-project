@@ -1,9 +1,11 @@
 import { SQSEvent } from 'aws-lambda'
-import { cloneDeep } from 'lodash'
 import { NotFound } from 'http-errors'
 import { backOff } from 'exponential-backoff'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { TransactionAggregationTask } from '@/services/rules-engine'
+import {
+  TransactionAggregationTask,
+  V8TransactionAggregationTask,
+} from '@/services/rules-engine'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -27,6 +29,20 @@ import { Business } from '@/@types/openapi-internal/Business'
 import { logger } from '@/core/logger'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
+
+export async function handleV8TransactionAggregationTask(
+  task: V8TransactionAggregationTask
+) {
+  const dynamoDb = getDynamoDbClient()
+  const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
+  task.transaction
+  await ruleEvaluator.rebuildOrUpdateAggregationVariable(
+    task.aggregationVariable,
+    { transaction: task.transaction },
+    task.direction
+  )
+}
 
 export async function handleTransactionAggregationTask(
   task: TransactionAggregationTask
@@ -84,7 +100,6 @@ export async function handleTransactionAggregationTask(
     task.ruleInstanceId
   )
 
-  updateLogMetadata(task)
   if (!ruleInstance) {
     logger.error(`Rule instance ${task.ruleInstanceId} not found`)
     return
@@ -118,7 +133,7 @@ export async function handleTransactionAggregationTask(
     senderUserRisk?.derivedRiskLevel ??
     DEFAULT_RISK_LEVEL
 
-  const RuleClass = TRANSACTION_RULES[ruleImplementationName]
+  const RuleClass = TRANSACTION_RULES[ruleImplementationName!]
 
   const mode = 'DYNAMODB'
 
@@ -181,17 +196,34 @@ export const transactionAggregationHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     await Promise.all(
       event.Records.map(async (record) => {
-        const task = JSON.parse(record.body) as TransactionAggregationTask
-        const context = cloneDeep(getContext() || {})
-        context.tenantId = task.tenantId
-        context.metricDimensions = {
-          ...context.metricDimensions,
-          ruleInstanceId: task.ruleInstanceId,
-        }
-        await withContext(async () => {
-          await initializeTenantContext(task.tenantId)
-          await handleTransactionAggregationTask(task)
-        }, context)
+        const task = JSON.parse(record.body) as
+          | TransactionAggregationTask
+          | V8TransactionAggregationTask
+        await withContext(
+          async () => {
+            updateLogMetadata(task)
+            await initializeTenantContext(task.tenantId)
+
+            if ((task as V8TransactionAggregationTask).v8) {
+              const v8Task = task as V8TransactionAggregationTask
+              await handleV8TransactionAggregationTask(v8Task)
+            } else {
+              const legacyTask = task as TransactionAggregationTask
+              const context = getContext()
+              if (context) {
+                context.metricDimensions = {
+                  ...context.metricDimensions,
+                  ruleInstanceId: legacyTask.ruleInstanceId,
+                }
+              }
+              await handleTransactionAggregationTask(legacyTask)
+            }
+          },
+          {
+            ...(getContext() ?? {}),
+            tenantId: task.tenantId,
+          }
+        )
       })
     )
   }

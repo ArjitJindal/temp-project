@@ -15,8 +15,8 @@ describe.each(RULES_LIBRARY)('Rule library integrity', (rule) => {
   test(`${rule.id}: ${rule.name}`, () => {
     const ruleImplementation =
       rule.type === 'TRANSACTION'
-        ? TRANSACTION_RULES[rule.ruleImplementationName]
-        : USER_RULES[rule.ruleImplementationName]
+        ? TRANSACTION_RULES[rule.ruleImplementationName!]
+        : USER_RULES[rule.ruleImplementationName!]
     expect(ruleImplementation).not.toBeUndefined()
     const schema = ruleImplementation.getSchema()
     expect(() =>
@@ -63,8 +63,8 @@ describe('', () => {
         }
         const ruleImplementation =
           rule.type === 'TRANSACTION'
-            ? TRANSACTION_RULES[rule.ruleImplementationName]
-            : USER_RULES[rule.ruleImplementationName]
+            ? TRANSACTION_RULES[rule.ruleImplementationName!]
+            : USER_RULES[rule.ruleImplementationName!]
         const schema = ruleImplementation.getSchema()
         expect(() =>
           RuleService.validateRuleParametersSchema(
