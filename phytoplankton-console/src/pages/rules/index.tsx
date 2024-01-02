@@ -15,6 +15,7 @@ import { Rule } from '@/apis';
 import { useHasPermissions } from '@/utils/user-utils';
 import { SimulationPageWrapper } from '@/components/SimulationPageWrapper';
 import { Authorized } from '@/components/Authorized';
+import ScenarioConfigurationDrawer from '@/pages/rules/ScenarioConfigurationDrawer';
 
 const TableList = () => {
   const { rule = 'rules-library' } = useParams<'rule'>();
@@ -36,6 +37,7 @@ const TableList = () => {
     'SIMULATION_RULES',
     false,
   );
+  const [isScenarioBuilderOpen, setScenarioBuilderOpen] = useState(false);
 
   useEffect(() => {
     if (!currentRule) {
@@ -53,6 +55,9 @@ const TableList = () => {
       }
       isSimulationModeEnabled={isSimulationEnabled}
       onSimulationModeChange={setIsSimulationEnabled}
+      onCreateScenario={() => {
+        setScenarioBuilderOpen(true);
+      }}
     >
       {isSimulationEnabled ? (
         <PageTabs
@@ -152,6 +157,11 @@ const TableList = () => {
           ]}
         />
       )}
+      <ScenarioConfigurationDrawer
+        isVisible={isScenarioBuilderOpen}
+        onChangeVisibility={setScenarioBuilderOpen}
+        type={'CREATE'}
+      />
       {isSimulationEnabled && currentRule ? (
         <RuleConfigurationSimulationDrawer
           rule={currentRule}

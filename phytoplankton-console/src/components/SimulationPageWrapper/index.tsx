@@ -1,10 +1,11 @@
-import { forwardRef, useImperativeHandle, useMemo } from 'react';
-import Toggle from '../library/Toggle';
+import React, { forwardRef, useImperativeHandle, useMemo } from 'react';
 import AsyncResourceRenderer from '../common/AsyncResourceRenderer';
 import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import { H4, P } from '../ui/Typography';
 import PageWrapper, { PageWrapperProps } from '../PageWrapper';
 import s from './styles.module.less';
+import Button from '@/components/library/Button';
+import Toggle from '@/components/library/Toggle';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { getBranding } from '@/utils/branding';
@@ -18,6 +19,7 @@ export type SimulationPageWrapperRef = {
 export type SimulationPageWrapperProps = PageWrapperProps & {
   isSimulationModeEnabled: boolean;
   onSimulationModeChange: (value: boolean | undefined) => void;
+  onCreateScenario?: () => void;
 };
 
 const SimulationUsageCard = (props: { usageCount: number }) => {
@@ -46,6 +48,7 @@ export const SimulationPageWrapper = forwardRef<
 >((props, ref) => {
   const api = useApi();
   const isSimulationFeatureEnabled = useFeatureEnabled('SIMULATOR');
+  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const simulationCountResults = useQuery(SIMULATION_COUNT(), async () => {
     if (!isSimulationFeatureEnabled) {
       return { runJobsCount: 0 };
@@ -80,22 +83,29 @@ export const SimulationPageWrapper = forwardRef<
               {(data) => <SimulationUsageCard usageCount={data.runJobsCount} />}
             </AsyncResourceRenderer>
           )}
-          <div className={s.simulationSwitch}>
-            <p className={s.simulationSwitchTitle}>Simulator</p>
-            {!isSimulationFeatureEnabled ? (
-              <div>
-                <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="left">
-                  <span>
-                    <Toggle disabled={true} />
-                  </span>
-                </Tooltip>
-              </div>
-            ) : (
-              <Toggle
-                value={props.isSimulationModeEnabled}
-                onChange={props.onSimulationModeChange}
-                disabled={false}
-              />
+          <div className={s.right}>
+            <div className={s.simulationSwitch}>
+              <p className={s.simulationSwitchTitle}>Simulator</p>
+              {!isSimulationFeatureEnabled ? (
+                <div>
+                  <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="left">
+                    <span>
+                      <Toggle disabled={true} />
+                    </span>
+                  </Tooltip>
+                </div>
+              ) : (
+                <Toggle
+                  value={props.isSimulationModeEnabled}
+                  onChange={props.onSimulationModeChange}
+                  disabled={false}
+                />
+              )}
+            </div>
+            {v8Enabled && props.onCreateScenario && (
+              <Button type="SECONDARY" onClick={props.onCreateScenario}>
+                Create scenario
+              </Button>
             )}
           </div>
         </div>
