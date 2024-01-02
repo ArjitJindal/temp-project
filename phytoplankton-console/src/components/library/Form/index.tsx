@@ -9,6 +9,7 @@ import {
   validateForm,
 } from '@/components/library/Form/utils/validation/utils';
 import { StatePair } from '@/utils/state';
+import Portal from '@/components/library/Portal';
 
 export interface FormRef<FormValues> {
   getValues: () => FormValues;
@@ -31,12 +32,14 @@ interface Props<FormValues> {
   fieldValidators?: FieldValidators<FormValues>;
   className?: string;
   alwaysShowErrors?: boolean;
+  portalled?: boolean; // useful for creating nested forms
   onSubmit?: (values: FormValues, state: { isValid: boolean }) => void;
   onChange?: (state: { values: FormValues; isValid: boolean }) => void;
 }
 
 function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormValues>>) {
   const {
+    portalled,
     id,
     initialValues = {} as FormValues,
     children,
@@ -52,11 +55,15 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
   const formRef = useRef<HTMLFormElement>(null);
 
-  const handleSubmit = useCallback(() => {
-    onSubmit?.(formValues, {
-      isValid: isFormValid,
-    });
-  }, [formValues, isFormValid, onSubmit]);
+  const handleSubmit = useCallback(
+    (e?: React.FormEvent) => {
+      e?.preventDefault();
+      onSubmit?.(formValues, {
+        isValid: isFormValid,
+      });
+    },
+    [formValues, isFormValid, onSubmit],
+  );
 
   useImperativeHandle(
     ref,
@@ -120,21 +127,28 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
     }
   }, [isFormValid, formValues, formValidators, fieldValidators]);
 
+  const result = (
+    <FormContext.Provider value={formContext as FormContextValue<unknown>}>
+      {typeof children === 'function'
+        ? children({ validationResult, valuesState: [formValues, setFormValues] })
+        : children}
+    </FormContext.Provider>
+  );
+
+  if (portalled) {
+    return (
+      <>
+        <Portal>
+          <form id={id} ref={formRef} onSubmit={handleSubmit} />
+        </Portal>
+        {result}
+      </>
+    );
+  }
+
   return (
-    <form
-      id={id}
-      ref={formRef}
-      className={cn(s.form, className)}
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleSubmit();
-      }}
-    >
-      <FormContext.Provider value={formContext as FormContextValue<unknown>}>
-        {typeof children === 'function'
-          ? children({ validationResult, valuesState: [formValues, setFormValues] })
-          : children}
-      </FormContext.Provider>
+    <form id={id} ref={formRef} className={cn(s.form, className)} onSubmit={handleSubmit}>
+      {result}
     </form>
   );
 }

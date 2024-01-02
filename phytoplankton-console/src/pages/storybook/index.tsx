@@ -58,12 +58,17 @@ import Line from '@/pages/dashboard/analysis/components/charts/Line/story';
 import SettingsCard from '@/components/library/SettingsCard/story';
 import Typography from '@/components/ui/Typography/story';
 import Spinner from '@/components/library/Spinner/story';
+import Tag from '@/components/library/Tag/story';
 
 const config: Config = [
   {
     key: 'library',
     title: 'Library',
     components: [
+      {
+        key: 'Tag',
+        story: Tag,
+      },
       {
         key: 'TransactionTypeTag',
         story: TransactionTypeTag,

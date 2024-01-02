@@ -9,7 +9,7 @@ interface ChildrenProps {
   onClick: Confirm;
 }
 
-interface Props {
+export interface Props {
   title?: string;
   text: string | React.ReactNode;
   res?: AsyncResource;

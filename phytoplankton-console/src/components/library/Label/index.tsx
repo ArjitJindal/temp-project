@@ -5,15 +5,17 @@ import { InputProps } from '@/components/library/Form';
 
 export interface Props extends InputProps<string> {
   label: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   position?: 'TOP' | 'RIGHT' | 'LEFT';
   level?: 1 | 2 | 3 | 4;
   description?: string;
   element?: 'label' | 'div';
-  required?: {
-    value: boolean;
-    showHint: boolean;
-  };
+  required?:
+    | {
+        value: boolean;
+        showHint: boolean;
+      }
+    | boolean;
   testId?: string;
 }
 
@@ -31,7 +33,8 @@ export default function Label(props: Props) {
     },
     testId,
   } = props;
-  const { value: isRequired, showHint } = required;
+  const isRequired = (typeof required === 'boolean' ? required : required?.value) === true;
+  const showHint = (typeof required === 'boolean' ? required : required?.showHint) === true;
   const labelEl = (
     <div className={cn(s.label, s[`level-${level}`])}>
       {label}
