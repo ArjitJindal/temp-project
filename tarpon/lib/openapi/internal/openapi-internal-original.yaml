@@ -7478,8 +7478,8 @@ components:
         - RISK_SCORING
         - AUDIT_LOGS
         - SLACK_ALERTS
-        - COPILOT
-        - INVESTIGATIVE_COPILOT
+        - NARRATIVE_COPILOT
+        - AI_FORENSICS
         - GOOGLE_SSO
         - SANCTIONS
         - FALSE_POSITIVE_CHECK
@@ -7488,7 +7488,7 @@ components:
         - SIMULATOR
         - CRM
         - ENTITY_LINKING
-        - ESCALATION
+        - ADVANCED_WORKFLOWS
         - IBAN_RESOLUTION
         - MERCHANT_MONITORING
         - SAR

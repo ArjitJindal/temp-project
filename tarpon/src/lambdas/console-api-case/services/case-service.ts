@@ -572,7 +572,7 @@ export class CaseService extends CaseAlertsCommonService {
       isReviewRequired &&
       !isInProgressOrOnHold &&
       !skipReview &&
-      hasFeature('ESCALATION') &&
+      hasFeature('ADVANCED_WORKFLOWS') &&
       !isLastInReview
     ) {
       const caseStatusToChange = `IN_REVIEW_${updates.caseStatus?.replace(
@@ -605,7 +605,9 @@ export class CaseService extends CaseAlertsCommonService {
           files: updates.files,
           userId: statusChange.userId,
         }),
-        ...(isReview && accountUser.reviewerId && hasFeature('ESCALATION')
+        ...(isReview &&
+        accountUser.reviewerId &&
+        hasFeature('ADVANCED_WORKFLOWS')
           ? [
               this.caseRepository.updateInReviewAssignmentsOfCases(
                 caseIds,
@@ -627,7 +629,7 @@ export class CaseService extends CaseAlertsCommonService {
             ]
           : []),
         ...(casesWithPreviousEscalations?.length &&
-        hasFeature('ESCALATION') &&
+        hasFeature('ADVANCED_WORKFLOWS') &&
         updates?.caseStatus === 'CLOSED'
           ? [
               this.caseRepository.updateReviewAssignmentsToAssignments(

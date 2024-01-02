@@ -493,7 +493,7 @@ export class AccountsService {
 
     const promises: any[] = []
 
-    if (hasFeature('ESCALATION')) {
+    if (hasFeature('ADVANCED_WORKFLOWS')) {
       const allUsers = await this.getTenantAccounts(tenant)
       const usersWithReviewer = allUsers.filter(
         (user) => user.reviewerId === idToDelete

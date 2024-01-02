@@ -10,7 +10,7 @@ const testApiEndPointsCases = new TestApiEndpoint(casesHandler)
 const testApiEndPointsAlerts = new TestApiEndpoint(casesHandler)
 
 dynamoDbSetupHook()
-withFeatureHook(['ESCALATION'])
+withFeatureHook(['ADVANCED_WORKFLOWS'])
 
 process.env.MAXIMUM_ALLOWED_EXPORT_SIZE = '1000'
 

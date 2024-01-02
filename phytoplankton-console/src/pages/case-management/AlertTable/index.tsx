@@ -111,7 +111,7 @@ export default function AlertTable(props: Props) {
     showAssignedToFilter,
     expandedAlertId,
   } = props;
-  const escalationEnabled = useFeatureEnabled('ESCALATION');
+  const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const sarEnabled = useFeatureEnabled('SAR');
   const [qaMode] = useQaMode();
   const qaEnabled = useQaEnabled();
@@ -215,7 +215,7 @@ export default function AlertTable(props: Props) {
     [reviewAssignmentsToMutationAlerts],
   );
 
-  const icpFeatureEnabled = useFeatureEnabled('INVESTIGATIVE_COPILOT');
+  const icpFeatureEnabled = useFeatureEnabled('AI_FORENSICS');
   const icpEnabled = icpFeatureEnabled || user.role === 'root'; // TODO remove this after testing
 
   const ruleQueues = useRuleQueues();

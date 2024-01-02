@@ -36,7 +36,7 @@ export const DECLINE_STATUS_TRANSITIONS: Partial<
 export const ApproveSendBackButton = (props: Props) => {
   const { ids, onReload, type, isDisabled } = props;
   return (
-    <Feature name="ESCALATION">
+    <Feature name="ADVANCED_WORKFLOWS">
       {type === 'CASE' ? (
         <>
           {!props.isApproveHidden && (

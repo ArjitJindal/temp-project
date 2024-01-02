@@ -82,7 +82,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
   } = props;
 
   const [uploadingCount, setUploadingCount] = useState(0);
-  const showCopilot = useFeatureEnabled('COPILOT') && isCopilotEnabled;
+  const showCopilot = useFeatureEnabled('NARRATIVE_COPILOT') && isCopilotEnabled;
   const isOtherReason = otherReason ? values.values.reasons?.includes(otherReason) : false;
 
   return (

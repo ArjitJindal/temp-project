@@ -346,7 +346,7 @@ export const casesHandler = lambdaApi()(
     })
 
     handlers.registerPostCasesCaseIdEscalate(async (ctx, request) => {
-      if (!hasFeature('ESCALATION')) {
+      if (!hasFeature('ADVANCED_WORKFLOWS')) {
         throw new Forbidden('Feature not enabled')
       }
       const { caseId, CaseEscalationRequest: escalationRequest } = request

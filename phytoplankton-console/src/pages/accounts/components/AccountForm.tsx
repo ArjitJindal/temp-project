@@ -65,7 +65,7 @@ export default function AccountForm(props: Props) {
 
   const features = useFeatures();
 
-  const isEscalationsEnabled = useMemo(() => features.includes('ESCALATION'), [features]);
+  const isEscalationsEnabled = useMemo(() => features.includes('ADVANCED_WORKFLOWS'), [features]);
 
   const [isReviewRequired, setIsReviewRequired] = useState(false);
 
@@ -272,7 +272,7 @@ export default function AccountForm(props: Props) {
             </Label>
           )}
         </AsyncResourceRenderer>
-        <Feature name="ESCALATION">
+        <Feature name="ADVANCED_WORKFLOWS">
           <div>
             <P style={{ color: COLORS.purpleGray.base, fontSize: 14, marginBottom: '0.5rem' }}>
               Review permissions

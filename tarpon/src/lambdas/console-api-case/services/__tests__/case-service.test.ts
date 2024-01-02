@@ -103,7 +103,7 @@ const TEST_ALERT_3: Alert = {
 
 dynamoDbSetupHook()
 
-withFeatureHook(['ESCALATION'])
+withFeatureHook(['ADVANCED_WORKFLOWS'])
 
 jest.mock('@/services/accounts', () => {
   const originalModule = jest.requireActual<

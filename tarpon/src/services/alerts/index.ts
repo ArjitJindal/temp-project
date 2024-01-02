@@ -763,7 +763,7 @@ export class AlertsService extends CaseAlertsCommonService {
       !isInProgressOrOnHold &&
       !skipReview &&
       !isLastInReview &&
-      hasFeature('ESCALATION')
+      hasFeature('ADVANCED_WORKFLOWS')
     ) {
       if (!userAccount.reviewerId) {
         throw new Error(`User account reviewerId is null`)
@@ -826,7 +826,7 @@ export class AlertsService extends CaseAlertsCommonService {
               ),
             ]
           : []),
-        ...(hasFeature('ESCALATION') &&
+        ...(hasFeature('ADVANCED_WORKFLOWS') &&
         alertsWithPreviousEscalations.length &&
         statusUpdateRequest?.alertStatus === 'CLOSED'
           ? [

@@ -42,7 +42,7 @@ const useOptions = (props: Props) => {
   const caseClosedBefore = Boolean(
     caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
   );
-  const escalationEnabled = useFeatureEnabled('ESCALATION');
+  const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const isReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem]);
   const previousStatus = useMemo(() => {
     return findLastStatusForInReview(caseItem.statusChanges ?? []);

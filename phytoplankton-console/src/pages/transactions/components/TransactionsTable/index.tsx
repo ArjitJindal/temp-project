@@ -175,7 +175,7 @@ export const getStatus = (
 export default function TransactionsTable(props: Props) {
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
-  const escalationEnabled = useFeatureEnabled('ESCALATION');
+  const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const sarEnabled = useFeatureEnabled('SAR');
 
   const {

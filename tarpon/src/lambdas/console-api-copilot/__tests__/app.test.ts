@@ -7,7 +7,7 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const testApiEndPointsCases = new TestApiEndpoint(copilotHandler)
 
-withFeatureHook(['COPILOT'])
+withFeatureHook(['NARRATIVE_COPILOT'])
 
 describe.each<TestApiEndpointOptions>([
   {

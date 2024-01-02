@@ -14,7 +14,7 @@ export const Recommendation = ({ alertId }: { alertId: string }) => {
   const alertQuery = useQuery(ALERT_ITEM(alertId), async () => {
     return await api.getAlert({ alertId });
   });
-  const isEscalationEnabled = useFeatureEnabled('ESCALATION');
+  const isEscalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
 
   return (
     <>

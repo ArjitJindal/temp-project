@@ -418,7 +418,7 @@ export default function CaseTable(props: Props) {
     caseReviewAssignmentUpdateMutation,
   ]);
 
-  const escalationEnabled = useFeatureEnabled('ESCALATION');
+  const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const filterIds = denseArray([
     'caseId',
     'alertPriority',

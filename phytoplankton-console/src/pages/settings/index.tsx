@@ -70,7 +70,7 @@ export default function SettingsPage() {
                 <NarrativeTemplatesSettings />
                 <ChecklistTemplatesSettings />
                 <RuleQueuesSettings />
-                <Feature name="COPILOT">
+                <Feature name="NARRATIVE_COPILOT">
                   <AISources />
                 </Feature>
               </>

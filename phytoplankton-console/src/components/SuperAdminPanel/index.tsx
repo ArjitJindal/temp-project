@@ -19,36 +19,56 @@ import {
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { FEATURES } from '@/apis/models-custom/Feature';
 import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';
 import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
 
-const featureDescriptions: { [key in Feature]: string } = {
-  RISK_LEVELS: 'Enable risk levels',
-  RISK_SCORING: 'Enables risk scoring',
-  AUDIT_LOGS: 'Enables audit log',
-  SLACK_ALERTS: 'Enables slack alerts for cases',
-  COPILOT: 'Enables AI copilot feature in case management',
-  INVESTIGATIVE_COPILOT: 'Enables AI forensics',
-  GOOGLE_SSO: 'Enable google log in',
-  SANCTIONS: 'Enables sanctions',
-  FALSE_POSITIVE_CHECK: 'Demo feature for false positive check',
-  DEMO_MODE: 'Enables demo mode',
-  DEMO_RULES: 'Enable demo rules, they don’t work actually',
-  SIMULATOR: 'Enables simulator for rules & risk levels',
-  CRM: 'Enables CRM data',
-  ENTITY_LINKING: 'Enables entity linking ',
-  ESCALATION: 'Enables case escalations flow',
-  IBAN_RESOLUTION:
-    'Resolve IBAN numbers from 3rd party website. Used in Certain Screening and Counterparty rules',
-  MERCHANT_MONITORING: 'Enables merchant monitoring in users & case details',
-  SAR: 'Enables SAR',
-  QA: 'Enables QA in case management',
-  AI_RISK_SCORE: 'Enables AI risk score in Demo mode only',
-  RULES_ENGINE_V8: 'Enables new rules Engine V8 (Experimental)',
-  SYNC_TRS_CALCULATION: 'Allows to sync TRS calculation along with API call',
+const featureDescriptions: { [key in Feature]: { title: string; description: string } } = {
+  RISK_LEVELS: { title: 'Risk Levels', description: 'Enable risk levels' },
+  RISK_SCORING: { title: ' Risk Scoring', description: 'Enables risk scoring' },
+  AUDIT_LOGS: { title: 'Audit Logs', description: 'Enables audit log' },
+  SLACK_ALERTS: { title: 'Slack Alerts', description: 'Enables slack alerts for cases' },
+  NARRATIVE_COPILOT: {
+    title: 'Narrative Copilot',
+    description: 'Enables AI copilot feature in case management',
+  },
+  AI_FORENSICS: { title: 'AI Forensics', description: 'Enables AI forensics' },
+  GOOGLE_SSO: { title: "Google SSO (Don't Use)", description: 'Enable google log in' },
+  SANCTIONS: { title: 'Sanctions', description: 'Enables sanctions' },
+  FALSE_POSITIVE_CHECK: {
+    title: 'False Positive Check',
+    description: 'Demo feature for false positive check',
+  },
+  DEMO_MODE: { title: 'Demo Mode', description: 'Enables demo mode' },
+  DEMO_RULES: { title: 'Demo Rules', description: 'Enable demo rules, they don’t work actually' },
+  SIMULATOR: { title: 'Simulator', description: 'Enables simulator for rules & risk levels' },
+  CRM: { title: "CRM (Don't Use)", description: 'Enables CRM data' },
+  ENTITY_LINKING: { title: 'Entity Linking', description: 'Enables entity linking' },
+  ADVANCED_WORKFLOWS: { title: 'Advanced Workflows', description: 'Enables case escalations flow' },
+  IBAN_RESOLUTION: {
+    title: 'IBAN Resolution',
+    description:
+      'Resolve IBAN numbers from 3rd party website. Used in Certain Screening and Counterparty rules',
+  },
+  MERCHANT_MONITORING: {
+    title: 'Merchant Monitoring',
+    description: 'Enables merchant monitoring in users & case details',
+  },
+  SAR: { title: 'SAR', description: 'Enables SAR' },
+  QA: { title: 'QA', description: 'Enables QA in case management' },
+  AI_RISK_SCORE: {
+    title: "AI Risk Score (Don't Use)",
+    description: 'Enables AI risk score in Demo mode only',
+  },
+  RULES_ENGINE_V8: {
+    title: 'Rules Engine V8',
+    description: 'Enables new rules Engine V8 (Experimental)',
+  },
+  SYNC_TRS_CALCULATION: {
+    title: 'Sync TRS Calculation',
+    description: 'Allows to sync TRS calculation along with API call',
+  },
 };
 
 export default function SuperAdminPanel() {
@@ -183,11 +203,11 @@ export default function SuperAdminPanel() {
               >
                 <Select<Feature[]>
                   mode="multiple"
-                  options={FEATURES.map((feature) => {
+                  options={Object.keys(featureDescriptions).map((featureKey) => {
                     return {
-                      label: feature,
-                      value: feature,
-                      title: featureDescriptions[feature] || feature,
+                      label: featureDescriptions[featureKey].title,
+                      value: featureKey,
+                      title: featureDescriptions[featureKey].description,
                     };
                   })}
                   onChange={setFeatures}

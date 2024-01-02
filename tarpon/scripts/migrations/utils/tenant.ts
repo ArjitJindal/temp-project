@@ -86,3 +86,24 @@ export async function syncFeatureFlags() {
     })
   })
 }
+export async function renameFeatureFlags(mappings: {
+  [oldFeatureName: string]: Feature
+}) {
+  await migrateAllTenants(async (tenant: Tenant) => {
+    const dynamoDb = await getDynamoDbClient()
+    const tenantRepository = new TenantRepository(tenant.id, {
+      dynamoDb,
+    })
+    const tenantSettings = await tenantRepository.getTenantSettings([
+      'features',
+    ])
+    if (!tenantSettings.features) {
+      return
+    }
+    await tenantRepository.createOrUpdateTenantSettings({
+      features: tenantSettings.features.map(
+        (feature) => mappings[feature] ?? feature
+      ),
+    })
+  })
+}
