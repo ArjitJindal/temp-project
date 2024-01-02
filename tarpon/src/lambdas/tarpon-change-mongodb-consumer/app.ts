@@ -363,7 +363,7 @@ async function userHandler(
     casesRepo.updateUsersInCases(internalUser),
   ])
 
-  if (!krsScore && isRiskScoringEnabled) {
+  if (!krsScore && isRiskScoringEnabled && !isDemoTenant(tenantId)) {
     // Will backfill KRS score for all users without KRS score
     await sendBatchJobCommand({
       type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
