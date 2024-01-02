@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { shortId } from '@flagright/lib/utils'
+import createHttpError from 'http-errors'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -34,7 +35,6 @@ import {
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getFullTenantId } from '@/utils/tenant'
-import { logger } from '@/core/logger'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
@@ -292,8 +292,9 @@ export const tenantsHandler = lambdaApi()(
     handlers.registerDeleteTenant(async (ctx, request) => {
       assertCurrentUserRole('root')
       if (envIsNot('dev')) {
-        logger.error('Tenant deletion is only allowed in dev environment only')
-        return
+        throw new createHttpError.Forbidden(
+          'Cannot delete tenant in non-dev environment'
+        )
       }
       await sendBatchJobCommand({
         type: 'TENANT_DELETION',

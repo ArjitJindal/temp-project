@@ -3,7 +3,6 @@ import {
   ListObjectsCommand,
   S3Client,
 } from '@aws-sdk/client-s3'
-import { chunk } from 'lodash'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
@@ -18,30 +17,36 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteS3Files(tenantId: string) {
-    const response = await s3Client.send(
-      new ListObjectsCommand({
-        Bucket: process.env.DOCUMENT_BUCKET,
-        Prefix: `${tenantId}/`,
-      })
-    )
+    let marker: string | undefined
 
-    const keys = response.Contents?.map((content) => content.Key) ?? []
+    do {
+      const response = await s3Client.send(
+        new ListObjectsCommand({
+          Bucket: process.env.DOCUMENT_BUCKET,
+          Prefix: `${tenantId}/`,
+          MaxKeys: 1000,
+          Marker: marker,
+        })
+      )
 
-    logger.info(`Deleting ${keys.length} files from S3`)
+      const objects = response.Contents?.map((content) => ({
+        Key: content.Key,
+      }))
 
-    const chunks = chunk(keys, 1000)
-    let i = 0
-    for (const chunk of chunks) {
       await s3Client.send(
         new DeleteObjectsCommand({
           Bucket: process.env.DOCUMENT_BUCKET,
           Delete: {
-            Objects: chunk.map((key) => ({ Key: key })),
+            Objects: objects,
           },
         })
       )
-      i += chunk.length
-      logger.info(`Deleted ${i} / ${keys.length} files from S3`)
-    }
+
+      marker = response.NextMarker
+
+      logger.info(`Deleted ${objects?.length} files.`)
+    } while (marker)
+
+    logger.info(`Deleted S3 files.`)
   }
 }
