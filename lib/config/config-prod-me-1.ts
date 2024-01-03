@@ -1,5 +1,5 @@
 /**
- * Australia (Sydney)
+ * UAE (Abu Dhabi)
  * (Full list of regions: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
  */
 
@@ -8,11 +8,11 @@ import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Config } from './config'
 
 const account = '870721492449'
-const region = 'ap-southeast-2'
+const region = 'me-central-1'
 
 export const config: Config = {
   stage: 'prod',
-  region: 'au-1',
+  region: 'me-1',
   env: { account, region },
   resource: {
     CLOUD_WATCH: {
@@ -90,7 +90,7 @@ export const config: Config = {
     SLACK_CLIENT_ID: '2800969986821.3767916979623',
     SLACK_CLIENT_SECRET: 'c4263c5996fb4b219f4cf79e7bc05b1a',
     SLACK_REDIRECT_URI:
-      'https://au-1.api.flagright.com/console/slack/oauth_redirect',
+      'https://me-1.api.flagright.com/console/slack/oauth_redirect',
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
     API_USAGE_GOOGLE_SHEET_ID: '1aR0OsWWHP_TDKHZoNvwmkxfCmApWPZDO_78EODig5Ps',
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
