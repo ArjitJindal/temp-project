@@ -30,10 +30,10 @@ describe('Check if the widget selector works as expected', () => {
     ];
 
     cy.visit('/');
-    //enabling RISK_SCORING FF
+    //enabling Risk Scoring feature flag
     cy.get('[data-cy="superadmin-panel-button"]').click();
     cy.get('.ant-modal .ant-select-selector').eq(1).should('be.visible').click();
-    cy.contains('RISK_SCORING').click();
+    cy.contains('Risk Scoring').click();
     cy.get('[data-cy="modal-ok"]').click({ force: true });
     cy.get('.ant-modal-content').find('svg').first().click();
     cy.get('button[data-cy="dashboard-configure-button"]').click();
