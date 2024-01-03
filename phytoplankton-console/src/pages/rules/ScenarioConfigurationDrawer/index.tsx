@@ -120,7 +120,7 @@ export default function ScenarioConfigurationDrawer(props: RuleConfigurationDraw
                 }}
                 isDisabled={activeStepIndex === STEPS.length - 1}
                 iconRight={<ArrowRightSLineIcon />}
-                testName="drawer-next-button"
+                testName="drawer-next-button-scenario-configuration"
               >
                 Next
               </Button>

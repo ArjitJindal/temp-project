@@ -8,7 +8,7 @@ describe('Add a comment to a case', () => {
     const fileName = `file_${Date.now()}.txt`;
     const fileContent = `file content of ${fileName}`;
 
-    cy.toggleFeature('AUDIT_LOGS', true);
+    cy.toggleFeature('Audit Logs', true);
 
     // Navigate to case
     cy.intercept('GET', `**/cases**`).as('cases');
