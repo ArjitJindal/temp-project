@@ -76,7 +76,7 @@ describe('Add a comment to a case', () => {
         const textValue = log.find('[data-cv="log-entry-item-text"]').text().trim();
         const timeValue = log.find('[data-cv="log-entry-item-date"]').text().trim();
 
-        cy.wrap(textValue).should('include', 'System attached files');
+        cy.wrap(textValue).should('include', 'System deleted a comment');
 
         // Parse timeValue into a JavaScript Date object
         const timeParts = timeValue.split(':');
