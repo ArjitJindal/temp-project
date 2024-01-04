@@ -20,10 +20,10 @@ export const databricksDeployStage = (
               nodejs: 18,
             },
             commands: [
-              'cd databricks',
+              'cd databricks/infra',
               'npm install',
               ...getAssumeRoleCommands(config),
-              'cd ..',
+              'cd ../..',
             ],
           },
           build: {
