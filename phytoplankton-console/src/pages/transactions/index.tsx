@@ -105,6 +105,7 @@ const TableList = () => {
           params={params}
           onChangeParams={handleChangeParams}
           fitHeight
+          isExpandable
         />
       </PageWrapperContentContainer>
     </PageWrapper>

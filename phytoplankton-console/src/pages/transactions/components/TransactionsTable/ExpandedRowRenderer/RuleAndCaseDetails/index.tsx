@@ -37,7 +37,7 @@ export default function RuleAndCaseDetails(props: Props) {
   const queryResults = usePaginatedQuery<Alert>(ALERT_LIST(fullParams), async ({ page }) => {
     const response = await api.getAlertList({
       ...fullParams,
-      page: page,
+      page: page ?? fullParams.page,
       filterAction: action ? action : undefined,
     });
     return {
@@ -67,6 +67,7 @@ export default function RuleAndCaseDetails(props: Props) {
         columns={columns}
         queryResults={queryResults}
         params={params}
+        pagination={true}
         onChangeParams={setParams}
         extraFilters={[
           {
