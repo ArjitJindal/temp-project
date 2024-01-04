@@ -28,8 +28,6 @@ const cidrBlock = '10.4.0.0/16'
 const databricksClientId = 'cb9efcf2-ffd5-484a-badc-6317ba4aef91'
 const databricksAccountId = 'e2fae071-88c7-4b3e-90cd-2f4c5ced45a7'
 const awsAccountId = AWS_ACCOUNTS[stage]
-const awsProfile = `AWSAdministratorAccess-${awsAccountId}`
-
 class DatabricksStack extends TerraformStack {
   config: Config
   mws: TerraformProvider
@@ -46,7 +44,6 @@ class DatabricksStack extends TerraformStack {
 
     // Providers
     new aws.provider.AwsProvider(this, 'aws', {
-      profile: awsProfile,
       region: awsRegion,
     })
 
