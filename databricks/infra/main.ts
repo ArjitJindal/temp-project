@@ -28,6 +28,7 @@ const cidrBlock = '10.4.0.0/16'
 const databricksClientId = 'cb9efcf2-ffd5-484a-badc-6317ba4aef91'
 const databricksAccountId = 'e2fae071-88c7-4b3e-90cd-2f4c5ced45a7'
 const awsAccountId = AWS_ACCOUNTS[stage]
+
 class DatabricksStack extends TerraformStack {
   config: Config
   mws: TerraformProvider
@@ -188,6 +189,16 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
+    new databricks.artifactAllowlist.ArtifactAllowlist(this, 'allow-list', {
+      artifactType: 'LIBRARY_MAVEN',
+      artifactMatcher: [
+        {
+          matchType: 'PREFIX_MATCH',
+          artifact: 'org.mongodb.spark:mongo-spark-connector_2.12',
+        },
+      ],
+    })
+
     const mainCatalog = new databricks.catalog.Catalog(this, 'main-catalog', {
       provider: workspaceProvider,
       metastoreId: metastoreId,
@@ -213,13 +224,7 @@ class DatabricksStack extends TerraformStack {
       grant: [
         {
           principal: regionalAdminGroupName,
-          privileges: [
-            'USE_CATALOG',
-            'CREATE_SCHEMA',
-            'USE_SCHEMA',
-            'CREATE_VOLUME',
-            'CREATE_TABLE',
-          ],
+          privileges: ['ALL_PRIVILEGES'],
         },
       ],
       dependsOn: [metastoreAssignment],
@@ -268,54 +273,108 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
-    const scope = new databricks.secretScope.SecretScope(this, 'secret-scope', {
+    const mongoSecret =
+      new aws.dataAwsSecretsmanagerSecret.DataAwsSecretsmanagerSecret(
+        this,
+        'mongo-secret',
+        {
+          arn: this.config.application.ATLAS_CREDENTIALS_SECRET_ARN,
+        }
+      )
+    const mongoSecretVersion =
+      new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
+        this,
+        'mongo-secret-version',
+        {
+          secretId: mongoSecret.id,
+        }
+      )
+
+    const mongoScope = new databricks.secretScope.SecretScope(
+      this,
+      'mongo-secret-scope',
+      {
+        provider: workspaceProvider,
+        name: 'mongo',
+      }
+    )
+
+    const mongoSecretValue = Fn.jsondecode(mongoSecretVersion.secretString)
+
+    new databricks.secret.Secret(this, 'mongo-username', {
       provider: workspaceProvider,
-      name: 'kinesis',
+      key: 'mongo-username',
+      stringValue: Fn.lookup(mongoSecretValue, 'username'),
+      scope: mongoScope.id,
     })
+
+    new databricks.secret.Secret(this, 'mongo-password', {
+      provider: workspaceProvider,
+      key: 'mongo-password',
+      stringValue: Fn.lookup(mongoSecretValue, 'password'),
+      scope: mongoScope.id,
+    })
+    new databricks.secret.Secret(this, 'mongo-host', {
+      provider: workspaceProvider,
+      key: 'mongo-host',
+      stringValue: Fn.lookup(mongoSecretValue, 'host'),
+      scope: mongoScope.id,
+    })
+
+    const kinesisScope = new databricks.secretScope.SecretScope(
+      this,
+      'secret-scope',
+      {
+        provider: workspaceProvider,
+        name: 'kinesis',
+      }
+    )
 
     new databricks.secret.Secret(this, 'aws-access-key', {
       provider: workspaceProvider,
       key: 'aws-access-key',
       stringValue: accessKey.id,
-      scope: scope.id,
+      scope: kinesisScope.id,
     })
 
     new databricks.secret.Secret(this, 'aws-secret-key', {
       provider: workspaceProvider,
       key: 'aws-secret-key',
       stringValue: accessKey.secret,
-      scope: scope.id,
+      scope: kinesisScope.id,
     })
 
     const clusterConfig = {
       label: 'default',
-      numWorkers: 1,
       nodeTypeId: 'm5d.large',
-      sparkVersion: '12.2.x-scala2.12',
-      dataSecurityMode: 'USER_ISOLATION',
+      dataSecurityMode: 'SINGLE_USER',
       sparkEnvVars: {
         KINESIS_REGION: awsRegion,
         KINESIS_STREAM: kinesisStreamName,
       },
       autoterminationMinutes: 15,
-      autoscale: {
-        minWorkers: 1,
-        maxWorkers: 1,
-      },
       awsAttributes: {
         instanceProfileArn: instanceProfile.id,
         zoneId: awsRegion,
+      },
+      customTags: {
+        ResourceClass: 'SingleNode',
+      },
+      sparkConf: {
+        'spark.databricks.cluster.profile': 'singleNode',
+        'spark.master': 'local[*]',
       },
     }
 
     new databricks.cluster.Cluster(this, 'cluster', {
       ...clusterConfig,
       provider: workspaceProvider,
+      sparkVersion: '13.3.x-scala2.12',
       clusterName: 'Shared Autoscaling',
       library: [
         {
           maven: {
-            coordinates: 'org.mongodb.spark:mongo-spark-connector_2.12:10.2.1',
+            coordinates: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1',
           },
         },
         {
