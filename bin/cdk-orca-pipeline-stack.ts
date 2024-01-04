@@ -24,6 +24,7 @@ import { getE2ETestProject } from './utils/e2e_test_stage'
 import { postDeploymentCodeBuildProject } from './utils/post_deploy_tarpon'
 import { PRODUCTION_REGIONS } from '@flagright/lib/constants/deploy'
 import { getTarponConfig } from '@flagright/lib/constants/config'
+import { databricksDeployStage } from './utils/databricks-deploy'
 const PIPLINE_NAME = 'orca-pipeline'
 
 export type CdkOrcaPipelineStackProps = StackProps
@@ -102,6 +103,11 @@ export class CdkOrcaPipelineStack extends Stack {
                 role
               ),
             }),
+            new codepipline_actions.CodeBuildAction({
+              actionName: 'Deploy_Databricks',
+              project: databricksDeployStage(this, devConfig, role),
+              input: sourceOutput,
+            }),
           ],
         },
         {
@@ -160,6 +166,11 @@ export class CdkOrcaPipelineStack extends Stack {
               ),
               input: sourceOutput,
             }),
+            new codepipline_actions.CodeBuildAction({
+              actionName: 'Deploy_Databricks',
+              project: databricksDeployStage(this, sandboxConfig, role),
+              input: sourceOutput,
+            }),
           ],
         },
         {
@@ -206,6 +217,17 @@ export class CdkOrcaPipelineStack extends Stack {
                   input: sourceOutput,
                   extraInputs: [tarponBuildOutput],
                   environmentVariables: getSentryReleaseSpec(true).actionEnv,
+                }),
+                new codepipline_actions.CodeBuildAction({
+                  actionName: `Deploy_Databricks_${region
+                    .toUpperCase()
+                    .replace('-', '_')}`,
+                  project: databricksDeployStage(
+                    this,
+                    getTarponConfig('prod', region),
+                    role
+                  ),
+                  input: sourceOutput,
                 }),
               ]
             }),

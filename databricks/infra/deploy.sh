@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Usage: sh deploy.sh [stage] [region] -- [additional arguments for cdktf deploy]
+
+STAGE=$1
+REGION=$2
+shift 2  # This shifts the first two arguments out, leaving any additional ones.
+
+([ -d ".gen" ] && echo "CDKTF already initialised" || cdktf get --quiet)
+
+if [ -z "$STAGE" ] || [ -z "$REGION" ]; then
+    echo "Stage and region are required."
+    exit 1
+fi
+
+echo "Deploying to stage: $STAGE, region: $REGION"
+STAGE=$STAGE REGION=$REGION cdktf deploy "$@"
