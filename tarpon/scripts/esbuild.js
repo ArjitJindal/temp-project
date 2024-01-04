@@ -67,6 +67,7 @@ async function main() {
     minifyIdentifiers: false,
     external: ['aws-sdk', ...builtinModules, ...IGNORED],
     loader: { '.node': 'file' },
+    keepNames: true,
   })
 
   console.log('Generated bundles:')
