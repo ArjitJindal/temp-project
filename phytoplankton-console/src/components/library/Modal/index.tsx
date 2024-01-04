@@ -76,7 +76,7 @@ export default function Modal(props: Props) {
             <div className={s.mainHeader}>
               <div className={s.headerLeft}>
                 {icon && <div className={s.icon}>{icon}</div>}
-                <Typography.Title level={3} className={s.title}>
+                <Typography.Title data-cy="modal-title" level={3} className={s.title}>
                   {title}
                 </Typography.Title>
               </div>

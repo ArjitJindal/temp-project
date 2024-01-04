@@ -24,7 +24,7 @@ describe('Rule create and delete', () => {
 
     cy.get('button[data-cy="rule-delete-button"]').first().should('exist').click({ force: true });
 
-    cy.get('div .ant-modal-header').should('contain', ruleInstanceId);
+    cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
     cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click({ force: true });
     cy.message(`Rule deleted`).should('exist');
   }
