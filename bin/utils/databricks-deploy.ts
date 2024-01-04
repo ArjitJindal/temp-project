@@ -2,6 +2,7 @@ import { Construct } from 'constructs'
 import { Config } from '@flagright/lib/config/config'
 import { aws_codebuild as codebuild, aws_iam as iam } from 'aws-cdk-lib'
 import { getAssumeRoleCommands } from './assume-role-commands'
+import { installTerraform } from '../constants/terraform-commands'
 
 export const databricksDeployStage = (
   scope: Construct,
@@ -28,6 +29,7 @@ export const databricksDeployStage = (
           },
           build: {
             commands: [
+              ...installTerraform,
               'cd databricks/infra',
               `npm run deploy -- ${config.stage} ${
                 config.region || 'eu-1'
