@@ -3,6 +3,7 @@ import { Config } from '@flagright/lib/config/config'
 import { aws_codebuild as codebuild, aws_iam as iam } from 'aws-cdk-lib'
 import { getAssumeRoleCommands } from './assume-role-commands'
 import { installTerraform } from '../constants/terraform-commands'
+import { ComputeType } from 'aws-cdk-lib/aws-codebuild'
 
 export const databricksDeployStage = (
   scope: Construct,
@@ -43,6 +44,7 @@ export const databricksDeployStage = (
       }),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+        computeType: ComputeType.LARGE,
       },
       role: codeDeployRole,
     }
