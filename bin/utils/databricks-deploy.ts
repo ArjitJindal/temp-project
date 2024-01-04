@@ -1,42 +1,46 @@
-import { Construct } from "constructs";
-import { Config } from "../../tarpon/lib/configs/config";
-import { aws_codebuild as codebuild, aws_iam as iam } from "aws-cdk-lib";
-import { getAssumeRoleCommands } from "./assume-role-commands";
+import { Construct } from 'constructs'
+import { Config } from '@flagright/lib/config/config'
+import { aws_codebuild as codebuild, aws_iam as iam } from 'aws-cdk-lib'
+import { getAssumeRoleCommands } from './assume-role-commands'
 
 export const databricksDeployStage = (
   scope: Construct,
   config: Config,
-  codeDeployRole: iam.IRole,
+  codeDeployRole: iam.IRole
 ) => {
-  return new codebuild.PipelineProject(scope, `DatabricksBuild-${config.stage}-${config.region}`, {
-    buildSpec: codebuild.BuildSpec.fromObject({
-      version: "0.2",
-      phases: {
-        install: {
-          "runtime-versions": {
-            nodejs: 18,
+  return new codebuild.PipelineProject(
+    scope,
+    `DatabricksBuild-${config.stage}-${config.region}`,
+    {
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          install: {
+            'runtime-versions': {
+              nodejs: 18,
+            },
+            commands: [
+              'cd databricks',
+              'npm install',
+              getAssumeRoleCommands(config),
+              'cd ..',
+            ],
           },
-          commands: [
-            "cd databricks",
-            "npm install",
-            getAssumeRoleCommands(config),
-            "cd ..",
-          ],
+          build: {
+            commands: [
+              'cd databricks',
+              `npm run deploy -- ${config.stage} ${config.region} --auto-approve`,
+            ],
+          },
         },
-        build: {
-          commands: [
-            "cd databricks",
-            `npm run deploy -- ${config.stage} ${config.region} --auto-approve`,
-          ],
+        cache: {
+          paths: ['node_modules/**/*'],
         },
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
       },
-      cache: {
-        paths: ["node_modules/**/*"],
-      },
-    }),
-    environment: {
-      buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
-    },
-    role: codeDeployRole,
-  });
-};
+      role: codeDeployRole,
+    }
+  )
+}
