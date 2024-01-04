@@ -13,6 +13,7 @@ import {
   USER_CREATION_AGE_MONTHS,
   USER_CREATION_AGE_YEARS,
 } from './user-creation-age'
+import { USER_ACQUISITION_CHANNEL } from './user-acquisition-channel'
 import { TRANSACTION_ID } from './transaction-id'
 
 function withNamespace(variable: RuleVariable) {
@@ -34,6 +35,7 @@ export const RULE_VARIABLES: RuleVariable[] = [
   USER_AGE_DAYS,
   USER_AGE_MONTHS,
   USER_AGE_YEARS,
+  USER_ACQUISITION_CHANNEL,
   USER_CREATION_AGE_DAYS,
   USER_CREATION_AGE_MONTHS,
   USER_CREATION_AGE_YEARS,
