@@ -15,12 +15,20 @@ export interface RuleVariable {
   load: (...args: any[]) => Promise<any>
 }
 
-export interface TransactionRuleVariable<ReturnType> extends RuleVariable {
+export interface TransactionRuleVariable<ReturnType = unknown>
+  extends RuleVariable {
   entity: 'TRANSACTION'
   load: (transaction: Transaction) => Promise<ReturnType>
 }
 
-export interface UserRuleVariable<ReturnType> extends RuleVariable {
-  entity: 'USER'
-  load: (user: User | Business) => Promise<ReturnType>
+export interface ConsumerUserRuleVariable<ReturnType = unknown>
+  extends RuleVariable {
+  entity: 'CONSUMER_USER'
+  load: (user: User) => Promise<ReturnType>
+}
+
+export interface BusinessUserRuleVariable<ReturnType = unknown>
+  extends RuleVariable {
+  entity: 'BUSINESS_USER'
+  load: (user: Business) => Promise<ReturnType>
 }

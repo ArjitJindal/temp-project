@@ -1,7 +1,9 @@
-import { lowerCase } from 'lodash'
-import { NumberFieldSettings } from '@react-awesome-query-builder/core'
-import { UserRuleVariable } from './types'
-import { AgeConfig } from './common'
+import {
+  FieldOrGroup,
+  NumberFieldSettings,
+} from '@react-awesome-query-builder/core'
+import { BusinessUserRuleVariable, ConsumerUserRuleVariable } from './types'
+import { AgeUnit } from './user-age'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import dayjs from '@/utils/dayjs'
@@ -14,39 +16,50 @@ const calculateAge = (
   return dayjs().diff(dayjs(createdTimestamp), unit)
 }
 
-const createAgeVariable = (
-  config: AgeConfig,
-  key: string
-): UserRuleVariable<number | undefined> => ({
-  key,
-  entity: 'USER',
-  uiDefinition: {
-    label: `User age on platform: (${lowerCase(config.label)})`,
-    type: 'number',
-    preferWidgets: ['slider', 'rangeslider'],
-    valueSources: ['value', 'field', 'func'],
-    fieldSettings: {
-      min: 0,
-      max: 120,
-      step: 1,
-      marks: {
-        0: '0',
-        120: '120',
-      },
-    } as NumberFieldSettings,
-  },
-  load: async (user: User | Business) => calculateAge(user, config.unit),
+const getUiDefinition = (unit: AgeUnit): FieldOrGroup => ({
+  label: `age on platform (${unit})`,
+  type: 'number',
+  preferWidgets: ['slider', 'rangeslider'],
+  valueSources: ['value', 'field', 'func'],
+  fieldSettings: {
+    min: 0,
+    max: 120,
+    step: 1,
+    marks: {
+      0: '0',
+      120: '120',
+    },
+  } as NumberFieldSettings,
 })
 
-export const USER_CREATION_AGE_DAYS = createAgeVariable(
-  { label: 'Days', unit: 'days' },
-  'userCreationAgeDays'
-)
-export const USER_CREATION_AGE_MONTHS = createAgeVariable(
-  { label: 'Months', unit: 'months' },
-  'userCreationAgeMonths'
-)
-export const USER_CREATION_AGE_YEARS = createAgeVariable(
-  { label: 'Years', unit: 'years' },
-  'userCreationAgeYears'
-)
+const createConsumerCreationAgeVariable = (
+  key: string,
+  unit: AgeUnit
+): ConsumerUserRuleVariable<number | undefined> => ({
+  key,
+  entity: 'CONSUMER_USER',
+  uiDefinition: getUiDefinition(unit),
+  load: async (user: User) => calculateAge(user, unit),
+})
+const createBusinessCreationAgeVariable = (
+  key: string,
+  unit: AgeUnit
+): BusinessUserRuleVariable<number | undefined> => ({
+  key,
+  entity: 'BUSINESS_USER',
+  uiDefinition: getUiDefinition(unit),
+  load: async (user: User) => calculateAge(user, unit),
+})
+
+export const CONSUMER_USER_CREATION_AGE_DAYS =
+  createConsumerCreationAgeVariable('creationAgeDays', 'days')
+export const CONSUMER_USER_CREATION_AGE_MONTHS =
+  createConsumerCreationAgeVariable('creationAgeMonths', 'months')
+export const CONSUMER_USER_CREATION_AGE_YEARS =
+  createConsumerCreationAgeVariable('creationAgeYears', 'years')
+export const BUSINESS_USER_CREATION_AGE_DAYS =
+  createBusinessCreationAgeVariable('creationAgeDays', 'days')
+export const BUSINESS_USER_CREATION_AGE_MONTHS =
+  createBusinessCreationAgeVariable('creationAgeMonths', 'months')
+export const BUSINESS_USER_CREATION_AGE_YEARS =
+  createBusinessCreationAgeVariable('creationAgeYears', 'years')

@@ -1,20 +1,38 @@
 import { lowerCase, startCase } from 'lodash'
 import { TRANSACTION_STATE } from './transaction-state'
 import { TRANSACTION_TYPE } from './transaction-type'
-import { RuleVariable } from './types'
-import { USER_AGE_DAYS, USER_AGE_MONTHS, USER_AGE_YEARS } from './user-age'
+import {
+  BusinessUserRuleVariable,
+  ConsumerUserRuleVariable,
+  RuleVariable,
+  TransactionRuleVariable,
+} from './types'
 import {
   TRANSACTION_DESTINATION_COUNTRY,
   TRANSACTION_ORIGIN_COUNTRY,
 } from './transaction-country'
 import { TRANSACTION_PRODUCT_TYPE } from './transaction-product-types'
 import {
-  USER_CREATION_AGE_DAYS,
-  USER_CREATION_AGE_MONTHS,
-  USER_CREATION_AGE_YEARS,
+  CONSUMER_USER_CREATION_AGE_DAYS,
+  CONSUMER_USER_CREATION_AGE_MONTHS,
+  CONSUMER_USER_CREATION_AGE_YEARS,
+  BUSINESS_USER_CREATION_AGE_DAYS,
+  BUSINESS_USER_CREATION_AGE_MONTHS,
+  BUSINESS_USER_CREATION_AGE_YEARS,
 } from './user-creation-age'
-import { USER_ACQUISITION_CHANNEL } from './user-acquisition-channel'
+import {
+  CONSUMER_USER_ACQUISITION_CHANNEL,
+  BUSINESS_USER_ACQUISITION_CHANNEL,
+} from './user-acquisition-channel'
 import { TRANSACTION_ID } from './transaction-id'
+import {
+  BUSINESS_USER_AGE_DAYS,
+  BUSINESS_USER_AGE_MONTHS,
+  BUSINESS_USER_AGE_YEARS,
+  CONSUMER_USER_AGE_DAYS,
+  CONSUMER_USER_AGE_MONTHS,
+  CONSUMER_USER_AGE_YEARS,
+} from './user-age'
 
 function withNamespace(variable: RuleVariable) {
   return {
@@ -29,20 +47,36 @@ function withNamespace(variable: RuleVariable) {
   }
 }
 
-export const RULE_VARIABLES: RuleVariable[] = [
+const TRANSACTION_VARIABLES: TransactionRuleVariable[] = [
   TRANSACTION_TYPE,
   TRANSACTION_STATE,
-  USER_AGE_DAYS,
-  USER_AGE_MONTHS,
-  USER_AGE_YEARS,
-  USER_ACQUISITION_CHANNEL,
-  USER_CREATION_AGE_DAYS,
-  USER_CREATION_AGE_MONTHS,
-  USER_CREATION_AGE_YEARS,
   TRANSACTION_PRODUCT_TYPE,
   TRANSACTION_ORIGIN_COUNTRY,
   TRANSACTION_DESTINATION_COUNTRY,
   TRANSACTION_ID,
+]
+const USER_VARIABLES: Array<
+  ConsumerUserRuleVariable | BusinessUserRuleVariable
+> = [
+  CONSUMER_USER_AGE_DAYS,
+  CONSUMER_USER_AGE_MONTHS,
+  CONSUMER_USER_AGE_YEARS,
+  CONSUMER_USER_CREATION_AGE_DAYS,
+  CONSUMER_USER_CREATION_AGE_MONTHS,
+  CONSUMER_USER_CREATION_AGE_YEARS,
+  CONSUMER_USER_ACQUISITION_CHANNEL,
+  BUSINESS_USER_AGE_DAYS,
+  BUSINESS_USER_AGE_MONTHS,
+  BUSINESS_USER_AGE_YEARS,
+  BUSINESS_USER_CREATION_AGE_DAYS,
+  BUSINESS_USER_CREATION_AGE_MONTHS,
+  BUSINESS_USER_CREATION_AGE_YEARS,
+  BUSINESS_USER_ACQUISITION_CHANNEL,
+]
+
+export const RULE_VARIABLES: RuleVariable[] = [
+  ...TRANSACTION_VARIABLES,
+  ...USER_VARIABLES,
 ].map((v) => withNamespace(v))
 
 export function getRuleVariableByKey(key: string): RuleVariable | undefined {

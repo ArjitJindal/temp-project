@@ -1,7 +1,7 @@
 import {
-  USER_CREATION_AGE_DAYS,
-  USER_CREATION_AGE_MONTHS,
-  USER_CREATION_AGE_YEARS,
+  CONSUMER_USER_CREATION_AGE_DAYS,
+  CONSUMER_USER_CREATION_AGE_MONTHS,
+  CONSUMER_USER_CREATION_AGE_YEARS,
 } from '../user-creation-age'
 import dayjs from '@/utils/dayjs'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -16,7 +16,7 @@ test('User creation age in days', async () => {
       },
     },
   })
-  const age = await USER_CREATION_AGE_DAYS.load(user)
+  const age = await CONSUMER_USER_CREATION_AGE_DAYS.load(user)
 
   expect(age).toBe(5)
 })
@@ -31,7 +31,7 @@ test('User creation age in months', async () => {
       },
     },
   })
-  const age = await USER_CREATION_AGE_MONTHS.load(user)
+  const age = await CONSUMER_USER_CREATION_AGE_MONTHS.load(user)
   expect(age).toBe(5)
 })
 
@@ -45,7 +45,7 @@ test('User creation age in yexars', async () => {
       },
     },
   })
-  const age = await USER_CREATION_AGE_YEARS.load(user)
+  const age = await CONSUMER_USER_CREATION_AGE_YEARS.load(user)
 
   expect(age).toBe(5)
 })

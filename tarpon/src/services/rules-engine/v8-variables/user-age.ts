@@ -1,68 +1,96 @@
-import { lowerCase } from 'lodash'
-import { NumberFieldSettings } from '@react-awesome-query-builder/core'
+import {
+  FieldOrGroup,
+  NumberFieldSettings,
+} from '@react-awesome-query-builder/core'
 import { isConsumerUser, isBusinessUser } from '../utils/user-rule-utils'
-import { UserRuleVariable } from './types'
-import { AgeConfig } from './common'
+import { BusinessUserRuleVariable, ConsumerUserRuleVariable } from './types'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import dayjs from '@/utils/dayjs'
 
-const calculateAge = (
-  user: User | Business,
+export type AgeUnit = 'days' | 'months' | 'years'
+
+const calculateConsumerUserAge = (
+  user: User,
   unit: 'days' | 'months' | 'years'
 ): number | undefined => {
-  const consumerUser = user as User
-  const businessUser = user as Business
-
-  const userDetails = isConsumerUser(user) ? consumerUser.userDetails : null
-  const registrationDate = isBusinessUser(user)
-    ? businessUser.legalEntity?.companyRegistrationDetails?.dateOfRegistration
-    : null
-
-  if (userDetails?.dateOfBirth) {
-    return dayjs().diff(dayjs(userDetails.dateOfBirth), unit)
+  if (!isConsumerUser(user)) {
+    return
   }
-
+  if (user.userDetails?.dateOfBirth) {
+    return dayjs().diff(dayjs(user.userDetails.dateOfBirth), unit)
+  }
+}
+const calculateBusinessUserAge = (
+  user: Business,
+  unit: 'days' | 'months' | 'years'
+): number | undefined => {
+  if (!isBusinessUser(user)) {
+    return
+  }
+  const registrationDate =
+    user.legalEntity?.companyRegistrationDetails?.dateOfRegistration
   if (registrationDate) {
     return dayjs().diff(dayjs(registrationDate), unit)
   }
-
-  return
 }
 
-const createAgeVariable = (
-  config: AgeConfig,
-  key: string
-): UserRuleVariable<number | undefined> => ({
-  key,
-  entity: 'USER',
-  uiDefinition: {
-    label: `user age (${lowerCase(config.label)})`,
-    type: 'number',
-    preferWidgets: ['slider', 'rangeslider'],
-    valueSources: ['value', 'field', 'func'],
-    fieldSettings: {
-      min: 0,
-      max: 120,
-      step: 1,
-      marks: {
-        0: '0',
-        120: '120',
-      },
-    } as NumberFieldSettings,
-  },
-  load: async (user: User | Business) => calculateAge(user, config.unit),
+const getUiDefinition = (unit: AgeUnit): FieldOrGroup => ({
+  label: `age (${unit})`,
+  type: 'number',
+  preferWidgets: ['slider', 'rangeslider'],
+  valueSources: ['value', 'field', 'func'],
+  fieldSettings: {
+    min: 0,
+    max: 120,
+    step: 1,
+    marks: {
+      0: '0',
+      120: '120',
+    },
+  } as NumberFieldSettings,
 })
 
-export const USER_AGE_DAYS = createAgeVariable(
-  { label: 'Days', unit: 'days' },
-  'userAgeDays'
+const createConsumerAgeVariable = (
+  key: string,
+  unit: AgeUnit
+): ConsumerUserRuleVariable<number | undefined> => ({
+  key,
+  entity: 'CONSUMER_USER',
+  uiDefinition: getUiDefinition(unit),
+  load: async (user: User) => calculateConsumerUserAge(user, unit),
+})
+const createBusinessAgeVariable = (
+  key: string,
+  unit: AgeUnit
+): BusinessUserRuleVariable<number | undefined> => ({
+  key,
+  entity: 'BUSINESS_USER',
+  uiDefinition: getUiDefinition(unit),
+  load: async (user: Business) => calculateBusinessUserAge(user, unit),
+})
+
+export const CONSUMER_USER_AGE_DAYS = createConsumerAgeVariable(
+  'ageDays',
+  'days'
 )
-export const USER_AGE_MONTHS = createAgeVariable(
-  { label: 'Months', unit: 'months' },
-  'userAgeMonths'
+export const CONSUMER_USER_AGE_MONTHS = createConsumerAgeVariable(
+  'ageMonths',
+  'months'
 )
-export const USER_AGE_YEARS = createAgeVariable(
-  { label: 'Years', unit: 'years' },
-  'userAgeYears'
+export const CONSUMER_USER_AGE_YEARS = createConsumerAgeVariable(
+  'ageYears',
+  'years'
+)
+export const BUSINESS_USER_AGE_DAYS = createBusinessAgeVariable(
+  'ageDays',
+  'days'
+)
+export const BUSINESS_USER_AGE_MONTHS = createBusinessAgeVariable(
+  'ageMonths',
+  'months'
+)
+export const BUSINESS_USER_AGE_YEARS = createBusinessAgeVariable(
+  'ageYears',
+  'years'
 )
