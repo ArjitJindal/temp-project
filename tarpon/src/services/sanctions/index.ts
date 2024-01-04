@@ -160,12 +160,6 @@ export class SanctionsService {
       : await this.sanctionsSearchRepository.getSearchResultByParams(request)
 
     if (result?.response) {
-      if (!result.metadata) {
-        await this.sanctionsSearchRepository.saveSearchResultMetadata({
-          searchId: result.response.searchId,
-          metadata: options?.metadata,
-        })
-      }
       return this.filterOutWhitelistEntites(result?.response, options?.userId)
     }
 
