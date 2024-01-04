@@ -72,6 +72,7 @@ import { Config } from '@flagright/lib/config/config'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import { getQaApiKeyId, getQaIntegrationTestApiKeyId, isQaEnv } from '@lib/qa'
 import {
+  Chain,
   Choice,
   Condition,
   JitterType,
@@ -726,37 +727,75 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    const fargateBatchJobTaskDefinition = createFargateTaskDefinition(
-      this,
-      StackConstants.FARGATE_BATCH_JOB_TASK_DEFINITION_NAME,
-      { role: ecsTaskExecutionRole }
-    )
+    let ecsBatchJobTask: Chain | null = null
+    if (!isQaEnv()) {
+      const fargateBatchJobTaskDefinition = createFargateTaskDefinition(
+        this,
+        StackConstants.FARGATE_BATCH_JOB_TASK_DEFINITION_NAME,
+        { role: ecsTaskExecutionRole }
+      )
 
-    const fargateBatchJobContainer = addFargateContainer(
-      this,
-      StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
-      fargateBatchJobTaskDefinition,
-      {
-        image: ContainerImage.fromDockerImageAsset(
-          createDockerImage(
-            this,
-            StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
+      const fargateBatchJobContainer = addFargateContainer(
+        this,
+        StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
+        fargateBatchJobTaskDefinition,
+        {
+          image: ContainerImage.fromDockerImageAsset(
+            createDockerImage(
+              this,
+              StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
+              {
+                path:
+                  process.env.INFRA_CI === 'true'
+                    ? 'src/fargate'
+                    : 'dist/fargate',
+              }
+            )
+          ),
+        }
+      )
+      const batchJobCluster = new Cluster(
+        this,
+        StackConstants.FARGATE_BATCH_JOB_CLUSTER_NAME,
+        { vpc }
+      )
+      ecsBatchJobTask = new EcsRunTask(
+        this,
+        getResourceNameForTarpon('BatchJobFargateRunner'),
+        {
+          cluster: batchJobCluster,
+          taskDefinition: fargateBatchJobTaskDefinition,
+          launchTarget: new EcsFargateLaunchTarget({
+            platformVersion: FargatePlatformVersion.LATEST,
+          }),
+          inputPath: `$.Payload.${BATCH_JOB_PAYLOAD_RESULT_KEY}`,
+          containerOverrides: [
             {
-              path:
-                process.env.INFRA_CI === 'true'
-                  ? 'src/fargate'
-                  : 'dist/fargate',
-            }
+              containerDefinition: fargateBatchJobContainer,
+              environment: [
+                {
+                  name: BATCH_JOB_PAYLOAD_ENV_VAR,
+                  value: JsonPath.jsonToString(JsonPath.stringAt('$')),
+                },
+              ],
+              command: ['node', 'index.js'],
+            },
+          ],
+        }
+      )
+        .addRetry({
+          interval: Duration.seconds(30),
+          maxDelay: Duration.hours(1),
+          maxAttempts: 2, // Update when ready
+          jitterStrategy: JitterType.FULL,
+        })
+        .next(
+          new Succeed(
+            this,
+            getResourceNameForTarpon('BatchJobRunSucceedFargate')
           )
-        ),
-      }
-    )
-
-    const batchJobCluster = new Cluster(
-      this,
-      StackConstants.FARGATE_BATCH_JOB_CLUSTER_NAME,
-      { vpc }
-    )
+        )
+    }
 
     const batchJobStateMachine = new StateMachine(
       this,
@@ -801,41 +840,10 @@ export class CdkTarponStack extends cdk.Stack {
                 `$.Payload.${BATCH_JOB_RUN_TYPE_RESULT_KEY}`,
                 FARGATE_BATCH_JOB_RUN_TYPE
               ),
-              new EcsRunTask(
-                this,
-                getResourceNameForTarpon('BatchJobFargateRunner'),
-                {
-                  cluster: batchJobCluster,
-                  taskDefinition: fargateBatchJobTaskDefinition,
-                  launchTarget: new EcsFargateLaunchTarget({
-                    platformVersion: FargatePlatformVersion.LATEST,
-                  }),
-                  inputPath: `$.Payload.${BATCH_JOB_PAYLOAD_RESULT_KEY}`,
-                  containerOverrides: [
-                    {
-                      containerDefinition: fargateBatchJobContainer,
-                      environment: [
-                        {
-                          name: BATCH_JOB_PAYLOAD_ENV_VAR,
-                          value: JsonPath.jsonToString(JsonPath.stringAt('$')),
-                        },
-                      ],
-                      command: ['node', 'index.js'],
-                    },
-                  ],
-                }
-              )
-                .addRetry({
-                  interval: Duration.seconds(30),
-                  maxDelay: Duration.hours(1),
-                  maxAttempts: 2, // Update when ready
-                  jitterStrategy: JitterType.FULL,
-                })
-                .next(
-                  new Succeed(
-                    this,
-                    getResourceNameForTarpon('BatchJobRunSucceedFargate')
-                  )
+              ecsBatchJobTask ??
+                new Succeed(
+                  this,
+                  getResourceNameForTarpon('DummyBatchJobRunSucceedFargate')
                 )
             )
         ),
