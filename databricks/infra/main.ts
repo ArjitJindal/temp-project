@@ -190,6 +190,7 @@ class DatabricksStack extends TerraformStack {
     )
 
     new databricks.artifactAllowlist.ArtifactAllowlist(this, 'allow-list', {
+      provider: workspaceProvider,
       artifactType: 'LIBRARY_MAVEN',
       artifactMatcher: [
         {
