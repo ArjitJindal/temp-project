@@ -29,7 +29,9 @@ export const databricksDeployStage = (
           build: {
             commands: [
               'cd databricks',
-              `npm run deploy -- ${config.stage} ${config.region} --auto-approve`,
+              `npm run deploy -- ${config.stage} ${
+                config.region || 'eu-1'
+              } --auto-approve`,
             ],
           },
         },
