@@ -1,5 +1,9 @@
 import { Construct } from 'constructs'
+<<<<<<< HEAD
 import { Config } from '@flagright/lib/config/config'
+=======
+import { Config } from '../../tarpon/lib/configs/config'
+>>>>>>> dd64d2331 (Spread assume role commands)
 import { aws_codebuild as codebuild, aws_iam as iam } from 'aws-cdk-lib'
 import { getAssumeRoleCommands } from './assume-role-commands'
 
@@ -22,7 +26,7 @@ export const databricksDeployStage = (
             commands: [
               'cd databricks',
               'npm install',
-              getAssumeRoleCommands(config),
+              ...getAssumeRoleCommands(config),
               'cd ..',
             ],
           },
