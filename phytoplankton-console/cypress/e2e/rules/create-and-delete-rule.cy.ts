@@ -12,7 +12,7 @@ describe('Rule create and delete', () => {
     cy.wait('@createdRule').then((interception) => {
       expect(interception.response?.statusCode).to.eq(200);
       const ruleInstanceId = interception.response?.body?.id;
-      cy.message(`Rule created - R-1 (${ruleInstanceId})`).should('exist');
+      cy.message(`Rule created - ${ruleInstanceId} (R-1)`).should('exist');
       editRule(ruleInstanceId);
       deleteRule(ruleInstanceId);
     });
