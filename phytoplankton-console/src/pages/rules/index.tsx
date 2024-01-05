@@ -161,6 +161,7 @@ const TableList = () => {
       <RuleConfigurationDrawerV8
         isVisible={isRuleBuilderOpen}
         onChangeVisibility={setRuleBuilderOpen}
+        onRuleInstanceUpdated={() => setRuleBuilderOpen(false)}
         type={'CREATE'}
       />
       {currentRule &&
