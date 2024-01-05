@@ -53,11 +53,8 @@ export function traceable(target: any) {
       target.prototype[key] = async function (...args: any[]) {
         if (!target.segmentInProgress) {
           target.segmentInProgress = true
-          const serviceName = target?.constructor?.name || 'unknown'
-          const segment = await addNewSubsegment(
-            `${serviceName}: serviceMethod`,
-            key
-          )
+          const serviceName = target?.name || 'unknown'
+          const segment = await addNewSubsegment(serviceName, key)
           try {
             return await originalMethod.apply(this, args)
           } catch (err: any) {
