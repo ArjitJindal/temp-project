@@ -90,7 +90,6 @@ interface Props {
   params: AlertTableParams;
   onChangeParams?: (newState: AlertTableParams) => void;
   isEmbedded?: boolean;
-  hideAlertStatusFilters?: boolean;
   showUserFilters?: boolean;
   caseId?: string;
   escalatedTransactionIds?: string[];
@@ -105,7 +104,6 @@ export default function AlertTable(props: Props) {
     params: externalParams,
     onChangeParams,
     isEmbedded = false,
-    hideAlertStatusFilters = false,
     showUserFilters = false,
     expandTransactions = true,
     showAssignedToFilter,
@@ -219,7 +217,6 @@ export default function AlertTable(props: Props) {
   const columns = useMemo(() => {
     const mergedColumns = (
       showUserColumns: boolean,
-      hideAlertStatusFilters: boolean,
       handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
       handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
       handleInvestigateAlert:
@@ -342,7 +339,6 @@ export default function AlertTable(props: Props) {
         helper.simple<'alertStatus'>({
           title: 'Alert status',
           key: 'alertStatus',
-          filtering: !hideAlertStatusFilters,
           type: CASE_STATUS<TableAlertItem>({
             statusesToShow: CASE_STATUSS,
             reload,
@@ -528,7 +524,6 @@ export default function AlertTable(props: Props) {
     };
     const col = mergedColumns(
       showUserFilters,
-      hideAlertStatusFilters,
       handleAlertAssignments,
       handleAlertsReviewAssignments,
       icpEnabled ? setInvestigativeAlert : undefined,
@@ -542,7 +537,6 @@ export default function AlertTable(props: Props) {
   }, [
     users,
     showUserFilters,
-    hideAlertStatusFilters,
     handleAlertAssignments,
     handleAlertsReviewAssignments,
     user.userId,

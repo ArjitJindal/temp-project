@@ -177,7 +177,6 @@ function getTable(
       return (
         <Authorized required={['case-management:case-overview:read']} showForbiddenPage>
           <AlertTable
-            hideAlertStatusFilters={true}
             escalatedTransactionIds={[]}
             params={params}
             onChangeParams={handleChangeParams}
@@ -190,7 +189,6 @@ function getTable(
       return (
         <Authorized required={['case-management:case-overview:read']} showForbiddenPage>
           <AlertTable
-            hideAlertStatusFilters={true}
             escalatedTransactionIds={[]}
             params={params}
             onChangeParams={handleChangeParams}
