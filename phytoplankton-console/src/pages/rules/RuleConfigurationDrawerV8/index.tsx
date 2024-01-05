@@ -147,7 +147,7 @@ export default function RuleConfigurationDrawerV8(props: RuleConfigurationDrawer
                 }}
                 isDisabled={activeStepIndex === STEPS.length - 1}
                 iconRight={<ArrowRightSLineIcon />}
-                testName="drawer-next-button"
+                testName="drawer-next-button-v8"
               >
                 Next
               </Button>
