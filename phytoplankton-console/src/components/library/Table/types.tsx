@@ -2,8 +2,8 @@ import React from 'react';
 import { DeepKeys, DeepValue } from '@tanstack/react-table';
 import { cloneDeep, get, set } from 'lodash';
 import { PaginatedData, PaginationParams } from '@/utils/queries/hooks';
-import { Option } from '@/components/library/Select';
 import { StatePair } from '@/utils/state';
+import { AutoFilterDataType } from '@/components/library/Filter/types';
 
 /*
   Contexts
@@ -61,6 +61,8 @@ export interface SortingParams {
 
 export interface CommonParams extends PaginationParams, SortingParams {}
 
+export type PaginatedParams<Params> = Params & PaginationParams;
+export type SortedParams<Params> = Params & SortingParams;
 export type AllParams<Params> = Params & CommonParams;
 
 /*
@@ -220,64 +222,6 @@ export function setByFieldAccessor<
   set(result, accessor, value);
   return result;
 }
-
-/*
-  Filters
- */
-export interface BaseFilter {
-  key: string;
-  title: React.ReactNode;
-  description?: React.ReactNode;
-  icon?: React.ReactNode;
-  showFilterByDefault?: boolean;
-  pinFilterToLeft?: boolean;
-}
-
-export type ExtraFilterRendererProps<Params extends object | unknown> = {
-  params: Params;
-  setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) => void;
-  onUpdateFilterClose?: (status: boolean) => void;
-};
-
-export type ExtraFilterRenderer<Params extends object | unknown> = (
-  props: ExtraFilterRendererProps<Params>,
-) => React.ReactNode;
-
-export interface ExtraFilter<Params extends object | unknown> extends BaseFilter {
-  kind?: 'EXTRA';
-  renderer: ExtraFilterRenderer<Params> | AutoFilterDataType | undefined;
-}
-
-export function isExtraFilter<Params extends object | unknown>(
-  filter: Filter<Params>,
-): filter is ExtraFilter<Params> {
-  return filter.kind == null || filter.kind === 'EXTRA';
-}
-
-export type AutoFilterDataType =
-  | { kind: 'string' }
-  | { kind: 'number'; max?: number; min?: number; step?: number }
-  | { kind: 'dateRange' }
-  | { kind: 'dateTimeRange' }
-  | {
-      kind: 'select';
-      options: Option<string>[];
-      mode: 'SINGLE' | 'MULTIPLE' | 'TAGS';
-      displayMode: 'select' | 'list';
-    };
-
-export interface AutoFilter extends BaseFilter {
-  kind: 'AUTO';
-  dataType: AutoFilterDataType;
-}
-
-export function isAutoFilter<Params extends object | unknown>(
-  filter: Filter<Params>,
-): filter is AutoFilter {
-  return filter.kind === 'AUTO';
-}
-
-export type Filter<Params extends object | unknown> = AutoFilter | ExtraFilter<Params>;
 
 /*
   Tools

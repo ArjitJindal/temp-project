@@ -16,7 +16,7 @@ import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl, parseQueryString } from '@/utils/routing';
-import { CommonParams, ExtraFilter, TableColumn } from '@/components/library/Table/types';
+import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { USERS } from '@/utils/queries/keys';
@@ -26,6 +26,7 @@ import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchBu
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { BOOLEAN, DATE, FLOAT, RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
 
 export interface UserSearchParams extends CommonParams {
   riskLevels?: RiskLevel[];
@@ -75,8 +76,10 @@ function getRiskScoringColumns(): TableColumn<InternalUser>[] {
   ]);
 }
 
-const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSearchParams>[] => {
-  const extraFilters: ExtraFilter<UserSearchParams>[] = [
+const extraFilters = (
+  list: 'business' | 'consumer' | 'all',
+): ExtraFilterProps<UserSearchParams>[] => {
+  const extraFilters: ExtraFilterProps<UserSearchParams>[] = [
     {
       key: 'userId',
       title: 'User ID/Name',

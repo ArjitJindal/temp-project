@@ -3,7 +3,6 @@ import { get } from 'lodash';
 import { message, Popover, Radio } from 'antd';
 import * as XLSX from 'xlsx-js-style';
 import {
-  AllParams,
   applyFieldAccessor,
   DerivedColumn,
   FieldAccessor,
@@ -13,6 +12,7 @@ import {
   SimpleColumn,
   TableColumn,
   TableData,
+  PaginatedParams,
 } from '../../../types';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PAGINATION_ENABLED } from '../../../consts';
 import s from './styles.module.less';
@@ -34,7 +34,7 @@ const MAXIMUM_EXPORT_ITEMS = 25000;
 type Props<Item extends object, Params extends object> = {
   onPaginateData: (params: PaginationParams) => Promise<TableData<Item>>;
   columns: TableColumn<Item>[];
-  params: AllParams<Params>;
+  params: PaginatedParams<Params>;
   cursorPagination?: boolean;
   totalPages?: number;
 };

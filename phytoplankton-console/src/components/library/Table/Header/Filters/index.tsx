@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { uniq } from 'lodash';
-import { AllParams, Filter, isExtraFilter } from '../../types';
+import { AllParams } from '../../types';
 import style from './index.module.less';
 import FilterSelector from './FilterSelector';
-import { AutoFilter } from './AutoFilter';
-import ExtraFilter from './ExtraFilter';
 import Button from '@/components/library/Button';
 import { usePersistedSettingsContext } from '@/components/library/Table/internal/settings';
+import Filter from '@/components/library/Filter';
+import { FilterProps } from '@/components/library/Filter/types';
 
 interface Props<Params extends object> {
-  filters: Filter<Params>[];
-  params: AllParams<Params>;
-  onChangeParams: (newParams: AllParams<Params>) => void;
+  filters: FilterProps<Params>[];
+  params: Params;
+  onChangeParams: (newParams: Params) => void;
 }
 
 export default function Filters<Params extends object>(props: Props<Params>) {
@@ -74,27 +74,15 @@ export default function Filters<Params extends object>(props: Props<Params>) {
       <div className={style.items}>
         {sortedFilters
           .filter(({ key }) => shownFilters.includes(key))
-          .map((filter) =>
-            isExtraFilter(filter) ? (
-              <ExtraFilter
-                key={filter.key}
-                filter={filter}
-                params={params}
-                onChangeParams={onChangeParams}
-                onUpdateFilterClose={onUpdateFilterClose}
-              />
-            ) : (
-              <AutoFilter
-                key={filter.key}
-                filter={filter}
-                value={params?.[filter.key]}
-                onChange={(value: unknown) => {
-                  onChangeParams?.({ ...params, [filter.key]: value });
-                }}
-                onUpdateFilterClose={onUpdateFilterClose}
-              />
-            ),
-          )}
+          .map((filter) => (
+            <Filter
+              key={filter.key}
+              filter={filter}
+              params={params}
+              onChangeParams={onChangeParams}
+              onUpdateFilterClose={onUpdateFilterClose}
+            />
+          ))}
         <FilterSelector
           filters={filters}
           defaultActiveFilters={persistedSettingsContext.defaultState.filtersVisibility}

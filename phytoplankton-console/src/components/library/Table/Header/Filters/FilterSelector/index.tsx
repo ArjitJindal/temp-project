@@ -1,6 +1,6 @@
 import React from 'react';
-import { BaseFilter } from '../../../types';
 import style from './style.module.less';
+import { BaseFilter } from '@/components/library/Filter/types';
 import QuickFilter from '@/components/library/QuickFilter';
 import Label from '@/components/library/Label';
 import Checkbox from '@/components/library/Checkbox';

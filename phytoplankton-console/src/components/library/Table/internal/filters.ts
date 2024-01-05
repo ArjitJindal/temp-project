@@ -1,20 +1,19 @@
 import { useMemo } from 'react';
 import { UNKNOWN } from '../standardDataTypes';
 import {
-  AutoFilter,
-  AutoFilterDataType,
   flatColumns,
   getColumnId,
   isSimpleColumn,
   TableColumn,
 } from '@/components/library/Table/types';
+import { AutoFilterProps, AutoFilterDataType } from '@/components/library/Filter/types';
 
-export function useAutoFilters<T extends object>(columns: TableColumn<T>[]): AutoFilter[] {
+export function useAutoFilters<T extends object>(columns: TableColumn<T>[]): AutoFilterProps[] {
   return useMemo(() => {
     return flatColumns(columns)
       .filter(isSimpleColumn)
       .filter((column) => (column.filtering && typeof column.key === 'string') ?? false)
-      .map((column): AutoFilter => {
+      .map((column): AutoFilterProps => {
         const { type = UNKNOWN } = column;
         const dataType: AutoFilterDataType = type.autoFilterDataType
           ? type.autoFilterDataType

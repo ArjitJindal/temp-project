@@ -16,6 +16,7 @@ export default function UseCase(props: Props) {
   const [bgColor, setBgColor] = useState('transparent');
   const [fullWidth, setFullWidth] = useState(false);
   const [stretchMode, setStretchMode] = useState(true);
+  const [showState, setShowState] = useState(false);
   return (
     <div
       className={s.root}
@@ -29,6 +30,9 @@ export default function UseCase(props: Props) {
           <StretchMode value={stretchMode} onChange={setStretchMode} />
           <FullWidth value={fullWidth} onChange={setFullWidth} />
           <ChangeColor value={bgColor} onChange={setBgColor} />
+          {typeof children === 'function' && (
+            <ShowState value={showState} onChange={setShowState} />
+          )}
         </div>
       </div>
       <div className={s.content} style={{ background: bgColor }}>
@@ -41,6 +45,11 @@ export default function UseCase(props: Props) {
           {typeof children === 'function' ? children(state) : children}
         </div>
       </div>
+      {showState && (
+        <div className={s.internals}>
+          <pre>{JSON.stringify(state[0], null, 2)}</pre>
+        </div>
+      )}
       {description && <div className={s.description}>{description}</div>}
     </div>
   );
@@ -91,6 +100,21 @@ function StretchMode(props: { value: boolean; onChange: (newValue: boolean) => v
       }}
     >
       S
+    </div>
+  );
+}
+
+function ShowState(props: { value: boolean; onChange: (newValue: boolean) => void }) {
+  return (
+    <div
+      title="Show use case state"
+      className={cn(s.button, s.fullWidth, props.value && s.isEnabled)}
+      style={{}}
+      onClick={() => {
+        props.onChange(!props.value);
+      }}
+    >
+      I
     </div>
   );
 }

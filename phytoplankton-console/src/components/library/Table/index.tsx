@@ -6,7 +6,6 @@ import s from './index.module.less';
 import {
   AllParams,
   CommonParams,
-  ExtraFilter,
   FieldAccessor,
   SelectionAction,
   SortingParamsItem,
@@ -35,6 +34,8 @@ import Alert from '@/components/library/Alert';
 import CursorPagination from '@/components/library/CursorPagination';
 import { Cursor } from '@/utils/queries/types';
 import Spinner from '@/components/library/Spinner';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
+import { pickSortingParams } from '@/components/library/Table/paramsHelpers';
 
 type RowHeightMode = 'FIXED' | 'AUTO';
 
@@ -58,7 +59,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   hideFilters?: boolean;
   rowHeightMode?: RowHeightMode;
   disableSorting?: boolean;
-  extraFilters?: ExtraFilter<Params>[];
+  extraFilters?: ExtraFilterProps<Params>[];
   extraTools?: ToolRenderer[];
   isExpandable?: (item: TableRow<Item>) => boolean;
   renderExpanded?: (item: Item) => JSX.Element;
@@ -231,7 +232,12 @@ function Table<Item extends object, Params extends object = CommonParams>(
         extraTools={extraTools}
         toolsOptions={toolsOptions}
         externalHeader={externalHeader}
-        onChangeParams={handleChangeParams}
+        onChangeParams={(newParams) => {
+          handleChangeParams({
+            ...pickSortingParams(params),
+            ...newParams,
+          });
+        }}
         onPaginateData={onPaginateData}
         onReload={onReload}
         cursorPagination={cursor != null}

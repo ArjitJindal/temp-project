@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import { AutoFilter } from '../../../types';
 import InputQuickFilter from '@/components/library/QuickFilter/subtypes/InputQuickFilter';
 import { InputProps } from '@/components/library/Form';
 import DatePicker from '@/components/ui/DatePicker';
@@ -10,14 +9,14 @@ import ListQuickFilter from '@/components/library/QuickFilter/subtypes/ListQuick
 import Select from '@/components/library/Select';
 import { joinReactNodes } from '@/utils/react';
 import NumberInput from '@/components/library/NumberInput';
+import { AutoFilterProps } from '@/components/library/Filter/types';
 
 interface Props extends InputProps<unknown> {
-  filter: AutoFilter;
-  onUpdateFilterClose?: (status: boolean) => void;
+  filter: AutoFilterProps;
 }
 
 export function AutoFilter(props: Props): JSX.Element {
-  const { filter, value, onChange, onUpdateFilterClose } = props;
+  const { filter, value, onChange } = props;
 
   const inputRef = useRef<any>(null);
   const sharedProps = {
@@ -28,7 +27,6 @@ export function AutoFilter(props: Props): JSX.Element {
     value: value as any,
     onChange,
     innerRef: inputRef,
-    onUpdateFilterClose: onUpdateFilterClose,
   };
 
   if (filter.dataType.kind === 'dateRange') {

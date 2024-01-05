@@ -12,7 +12,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TEAM_STATS } from '@/utils/queries/keys';
 import { AlertStatus, CaseStatus, DashboardTeamStatsItem } from '@/apis';
-import { AutoFilter } from '@/components/library/Table/Header/Filters/AutoFilter';
+import { AutoFilter } from '@/components/library/Filter/AutoFilter';
 import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';

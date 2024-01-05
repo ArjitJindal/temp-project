@@ -4,8 +4,9 @@ import { Updater } from '@tanstack/react-table';
 import { SELECT_COLUMN_ID } from '../consts';
 import { useLocalStorageOptionally } from './helpers';
 import { useAutoFilters } from './filters';
-import { ExtraFilter, Filter, getColumnId, TableColumn } from '@/components/library/Table/types';
+import { getColumnId, TableColumn } from '@/components/library/Table/types';
 import { applyUpdater, StatePair } from '@/utils/state';
+import { FilterProps, ExtraFilterProps } from '@/components/library/Filter/types';
 
 export type ColumnOrder = string[];
 export type FiltersVisibility = string[];
@@ -29,7 +30,7 @@ export const PersistedSettingsContext = React.createContext<PersistedSettingsCon
 export function PersistedSettingsProvider<Item extends object, Params>(props: {
   tableId: string | null;
   columns: TableColumn<Item>[];
-  extraFilters?: ExtraFilter<Params>[];
+  extraFilters?: ExtraFilterProps<Params>[];
   children: React.ReactNode;
 }) {
   const { tableId, extraFilters = [], columns } = props;
@@ -62,7 +63,7 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
       },
       filtersVisibility: allFilters
         .filter((filter) => filter.showFilterByDefault !== false)
-        .map((filter: Filter<Params>) => filter.key),
+        .map((filter: FilterProps<Params>) => filter.key),
       columnOrder: columns
         .map((column) => getColumnId(column))
         .filter((id) => id !== SELECT_COLUMN_ID)

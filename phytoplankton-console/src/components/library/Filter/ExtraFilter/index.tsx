@@ -1,11 +1,11 @@
 import React from 'react';
-import { AllParams, ExtraFilter } from '../../../types';
-import { AutoFilter } from '@/components/library/Table/Header/Filters/AutoFilter';
+import { AutoFilter } from '@/components/library/Filter/AutoFilter';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
 
 interface Props<Params> {
-  filter: ExtraFilter<Params>;
-  params: AllParams<Params>;
-  onChangeParams: (newParams: AllParams<Params>) => void;
+  filter: ExtraFilterProps<Params>;
+  params: Params;
+  onChangeParams: (newParams: Params) => void;
   onUpdateFilterClose?: (status: boolean) => void;
 }
 
@@ -18,7 +18,7 @@ export default function ExtraFilter<Params>(props: Props<Params>) {
       <React.Fragment>
         {renderer({
           params: params,
-          setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) => {
+          setParams: (cb: (oldState: Params) => Params) => {
             onChangeParams?.(cb(params));
           },
           onUpdateFilterClose: onUpdateFilterClose,
@@ -34,7 +34,6 @@ export default function ExtraFilter<Params>(props: Props<Params>) {
       onChange={(value: unknown) => {
         onChangeParams({ ...params, [filter.key]: value });
       }}
-      onUpdateFilterClose={onUpdateFilterClose}
     />
   );
 }

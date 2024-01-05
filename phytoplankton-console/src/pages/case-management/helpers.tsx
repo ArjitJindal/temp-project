@@ -8,7 +8,6 @@ import { isRuleAction, isTransactionState, useRuleOptions } from '@/utils/rules'
 import { TableSearchParams } from '@/pages/case-management/types';
 import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
-import { ExtraFilter } from '@/components/library/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
@@ -24,6 +23,7 @@ import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
 import CaseStatusTag from '@/components/library/CaseStatusTag';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -111,7 +111,9 @@ export const queryAdapter: Adapter<TableSearchParams> = {
   },
 };
 
-export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSearchParams>[] => {
+export const useCaseAlertFilters = (
+  filterIds?: string[],
+): ExtraFilterProps<TableSearchParams>[] => {
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const ruleOptions = useRuleOptions();
   const ruleQueues = useRuleQueues();
@@ -329,5 +331,5 @@ export const useCaseAlertFilters = (filterIds?: string[]): ExtraFilter<TableSear
       showFilterByDefault: true,
       pinFilterToLeft: true,
     },
-  ]).filter((filter) => filterIds?.includes(filter.key)) as ExtraFilter<TableSearchParams>[];
+  ]).filter((filter) => filterIds?.includes(filter.key)) as ExtraFilterProps<TableSearchParams>[];
 };

@@ -42,6 +42,8 @@ import FilesDraggerInput from '@/components/ui/FilesDraggerInput/story';
 import FilesList from '@/components/files/FilesList/story';
 import EmptyDataInfo from '@/components/library/EmptyDataInfo/story';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag/story';
+import SearchBar from '@/components/library/SearchBar/story';
+import ExpandContainer from '@/components/library/ExpandContainer/story';
 import { Category, Config } from '@/pages/storybook/types';
 import {
   CATEGORY_ROUTE,
@@ -58,6 +60,7 @@ import Line from '@/pages/dashboard/analysis/components/charts/Line/story';
 import SettingsCard from '@/components/library/SettingsCard/story';
 import Typography from '@/components/ui/Typography/story';
 import Spinner from '@/components/library/Spinner/story';
+import Filter from '@/components/library/Filter/story';
 import Tag from '@/components/library/Tag/story';
 
 const config: Config = [
@@ -65,6 +68,18 @@ const config: Config = [
     key: 'library',
     title: 'Library',
     components: [
+      {
+        key: 'SearchBar',
+        story: SearchBar,
+      },
+      {
+        key: 'Filter',
+        story: Filter,
+      },
+      {
+        key: 'ExpandContainer',
+        story: ExpandContainer,
+      },
       {
         key: 'Tag',
         story: Tag,

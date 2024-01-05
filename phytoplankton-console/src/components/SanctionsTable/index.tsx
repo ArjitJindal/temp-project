@@ -4,13 +4,7 @@ import { startCase } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
 import SearchResultDetailsModal from './SearchResultDetailsModal';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import {
-  AllParams,
-  ExtraFilter,
-  TableColumn,
-  TableData,
-  ToolRenderer,
-} from '@/components/library/Table/types';
+import { AllParams, TableColumn, TableData, ToolRenderer } from '@/components/library/Table/types';
 import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -18,6 +12,7 @@ import { FLOAT } from '@/components/library/Table/standardDataTypes';
 import { QueryResult } from '@/utils/queries/types';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { humanizeSnakeCase } from '@/utils/humanize';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
 
 interface TableSearchParams {
   searchTerm?: string;
@@ -137,7 +132,7 @@ export default function SanctionsTable(props: Props) {
     }),
   ]);
 
-  const extraFilters: ExtraFilter<TableSearchParams>[] = [
+  const extraFilters: ExtraFilterProps<TableSearchParams>[] = [
     {
       title: 'Search term',
       key: 'searchTerm',

@@ -4,7 +4,7 @@ import s from './style.module.less';
 import QuickFilterButton from '@/components/library/QuickFilter/QuickFilterButton';
 
 export interface Props {
-  title: React.ReactNode;
+  title: string;
   description?: React.ReactNode;
   buttonText?: React.ReactNode;
   icon?: React.ReactNode;

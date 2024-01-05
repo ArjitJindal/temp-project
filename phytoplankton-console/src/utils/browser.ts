@@ -18,6 +18,20 @@ export function download(filename: string, text: string) {
   document.body.removeChild(element);
 }
 
+export function isDeepChild(parent: HTMLElement | null, el: HTMLElement | null) {
+  if (parent == null || el == null) {
+    return false;
+  }
+  let next: HTMLElement | null = el;
+  while (next != null) {
+    if (next == parent) {
+      return true;
+    }
+    next = next.parentElement;
+  }
+  return false;
+}
+
 export function useElementSize(el: HTMLElement | null): { width: number; height: number } | null {
   const [rect, setRect] = useState<{ width: number; height: number } | null>(null);
   useEffect(() => {

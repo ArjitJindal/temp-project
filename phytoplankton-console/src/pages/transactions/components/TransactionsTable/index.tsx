@@ -16,7 +16,6 @@ import {
   ColumnDataType,
   CommonParams,
   DerivedColumn,
-  ExtraFilter,
   SelectionAction,
   SimpleColumn,
   TableColumn,
@@ -55,6 +54,7 @@ import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAP
 import { useHasPermissions } from '@/utils/user-utils';
 import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
 import { PaymentDetails } from '@/utils/api/payment-details';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
 
 const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<PaymentDetails> => ({
   stringify: (value) => {
@@ -137,7 +137,7 @@ export const transactionParamsToRequest = (
 
 type Props = {
   tableRef?: React.Ref<TableRefType>;
-  extraFilters?: ExtraFilter<TransactionsTableParams>[];
+  extraFilters?: ExtraFilterProps<TransactionsTableParams>[];
   queryResult: QueryResult<TableData<InternalTransaction>>;
   params?: TransactionsTableParams;
   onChangeParams?: (newState: AllParams<TransactionsTableParams>) => void;
@@ -395,7 +395,7 @@ export default function TransactionsTable(props: Props) {
     ]);
   }, [alert, showDetailsView, isRiskScoringEnabled, escalatedTransactions]);
 
-  const fullExtraFilters: ExtraFilter<TransactionsTableParams>[] = [
+  const fullExtraFilters: ExtraFilterProps<TransactionsTableParams>[] = [
     ...(extraFilters ?? []),
     {
       title: 'Origin currencies',
@@ -404,7 +404,7 @@ export default function TransactionsTable(props: Props) {
         ...MONEY_CURRENCIES.autoFilterDataType,
         mode: 'MULTIPLE',
       },
-    } as ExtraFilter<TransactionsTableParams>,
+    } as ExtraFilterProps<TransactionsTableParams>,
     {
       title: 'Destination currencies',
       key: 'destinationCurrenciesFilter',
@@ -412,12 +412,12 @@ export default function TransactionsTable(props: Props) {
         ...MONEY_CURRENCIES.autoFilterDataType,
         mode: 'MULTIPLE',
       },
-    } as ExtraFilter<TransactionsTableParams>,
+    } as ExtraFilterProps<TransactionsTableParams>,
     {
       title: 'Origin method',
       key: 'originMethodFilter',
       renderer: PAYMENT_METHOD.autoFilterDataType,
-    } as ExtraFilter<TransactionsTableParams>,
+    } as ExtraFilterProps<TransactionsTableParams>,
     {
       title: 'Destination method',
       key: 'destinationMethodFilter',

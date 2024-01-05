@@ -1,6 +1,6 @@
 import React from 'react';
 import * as TanTable from '@tanstack/react-table';
-import { AllParams, TableColumn, TableData, TableRow, ToolRenderer } from '../../types';
+import { TableColumn, TableData, TableRow, ToolRenderer, PaginatedParams } from '../../types';
 import SettingsButton from './SettingsButton';
 import DownloadButton from './DownloadButton';
 import ReloadButton from './ReloadButton';
@@ -15,7 +15,7 @@ export interface ToolsOptions {
 interface Props<Item extends object, Params> {
   table: TanTable.Table<TableRow<Item>>;
   columns: TableColumn<Item>[];
-  params: AllParams<Params>;
+  params: PaginatedParams<Params>;
   extraTools?: ToolRenderer[];
   options?: ToolsOptions;
   onReload?: () => void;

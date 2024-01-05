@@ -3,12 +3,7 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import {
-  AllParams,
-  CommonParams,
-  ExtraFilter,
-  TableColumn,
-} from '@/components/library/Table/types';
+import { AllParams, CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { SANCTIONS_SEARCH } from '@/utils/queries/keys';
 import { SanctionsSearchHistory } from '@/apis/models/SanctionsSearchHistory';
@@ -20,6 +15,7 @@ import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import { SanctionsSearchType } from '@/apis';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { humanizeCamelCase } from '@/utils/humanize';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
@@ -76,7 +72,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
       },
     }),
   ];
-  const extraFilters: ExtraFilter<TableSearchParams>[] = [
+  const extraFilters: ExtraFilterProps<TableSearchParams>[] = [
     {
       title: 'Search term',
       key: 'searchTerm',

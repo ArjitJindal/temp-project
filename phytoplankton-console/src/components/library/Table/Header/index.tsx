@@ -1,23 +1,25 @@
 import React, { useMemo } from 'react';
 import cn from 'clsx';
 import * as TanTable from '@tanstack/react-table';
-import { AllParams, ExtraFilter, TableColumn, TableData, TableRow, ToolRenderer } from '../types';
+import { TableColumn, TableData, TableRow, ToolRenderer, PaginatedParams } from '../types';
 import { useAutoFilters } from '../internal/filters';
 import s from './index.module.less';
 import Filters from './Filters';
 import Tools, { ToolsOptions } from './Tools';
 import { PaginationParams } from '@/utils/queries/hooks';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
+import { pickPaginatedParams } from '@/components/library/Table/paramsHelpers';
 
 interface Props<Item extends object, Params extends object> {
   table: TanTable.Table<TableRow<Item>>;
   columns: TableColumn<Item>[];
-  extraFilters?: ExtraFilter<Params>[];
+  extraFilters?: ExtraFilterProps<Params>[];
   extraTools?: ToolRenderer[];
   toolsOptions?: ToolsOptions | false;
   hideFilters?: boolean;
-  params: AllParams<Params>;
+  params: PaginatedParams<Params>;
   externalHeader: boolean;
-  onChangeParams: (newParams: AllParams<Params>) => void;
+  onChangeParams: (newParams: PaginatedParams<Params>) => void;
   onReload?: () => void;
   onPaginateData?: (params: PaginationParams) => Promise<TableData<Item>>;
   pageCount?: number;
@@ -71,7 +73,16 @@ export default function Header<Item extends object, Params extends object>(
       className={cn(s.root, showFilters && s.filtersVisible, externalHeader && s.externalHeader)}
     >
       {showFilters ? (
-        <Filters<Params> filters={allFilters} params={params} onChangeParams={onChangeParams} />
+        <Filters<Params>
+          filters={allFilters}
+          params={params}
+          onChangeParams={(newParams) => {
+            onChangeParams({
+              ...pickPaginatedParams(params),
+              ...newParams,
+            });
+          }}
+        />
       ) : (
         <div />
       )}
