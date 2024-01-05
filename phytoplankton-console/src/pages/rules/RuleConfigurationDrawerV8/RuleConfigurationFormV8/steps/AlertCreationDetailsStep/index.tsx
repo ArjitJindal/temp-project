@@ -1,11 +1,100 @@
+import { Divider } from 'antd';
 import s from './style.module.less';
+import { AlertAssignedToInput } from './AlertAssignedToInput/input';
+import { RuleQueueInputField } from './RuleQueueInput';
+import { AlertInvestigationChecklist } from './AlertInvestigationChecklist';
+import CreationIntervalInput, { AlertCreationInterval } from './CreationIntervalInput';
+import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
+import InputField from '@/components/library/Form/InputField';
+import { Priority, RuleInstance, RuleInstanceAlertCreatedForEnum } from '@/apis';
+import SelectionGroup from '@/components/library/SelectionGroup';
+import { ALERT_CREATED_FOR, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
 
-export interface FormValues {}
+export interface FormValues {
+  alertPriority: Priority;
+  alertCreatedFor: RuleInstance['alertCreatedFor'];
+  alertCreationInterval?: AlertCreationInterval;
+  falsePositiveCheckEnabled: 'true' | 'false';
+  alertAssigneesType?: 'EMAIL' | 'ROLE';
+  alertAssignees?: string[];
+  alertAssigneeRole?: string;
+  queueId?: string;
+  checklistTemplateId?: string;
+}
 
-export const INITIAL_VALUES: FormValues = {};
+export const INITIAL_VALUES: FormValues = {
+  alertPriority: 'P1',
+  alertCreatedFor: ['USER'],
+  alertCreationInterval: {
+    type: 'INSTANTLY',
+  },
+  falsePositiveCheckEnabled: 'false',
+  alertAssigneesType: 'EMAIL',
+};
 
 interface Props {}
 
 export default function AlertCreationDetailsStep(_props: Props) {
-  return <div className={s.root}>AlertCreationDetailsStep</div>;
+  return (
+    <div className={s.root}>
+      <PropertyListLayout>
+        <div className={s.section}>
+          <InputField<FormValues, 'alertPriority'>
+            name={'alertPriority'}
+            label={'Alert severity'}
+            labelProps={{ required: true }}
+          >
+            {(inputProps) => (
+              <SelectionGroup<Priority>
+                mode="SINGLE"
+                options={RULE_CASE_PRIORITY}
+                {...inputProps}
+              />
+            )}
+          </InputField>
+          <InputField<FormValues, 'alertCreatedFor'>
+            name={'alertCreatedFor'}
+            label={'Alert created for'}
+            labelProps={{ required: true }}
+          >
+            {(inputProps) => (
+              <SelectionGroup<RuleInstanceAlertCreatedForEnum>
+                mode="MULTIPLE"
+                options={ALERT_CREATED_FOR}
+                {...inputProps}
+              />
+            )}
+          </InputField>
+          <InputField<FormValues, 'alertCreationInterval'>
+            name={'alertCreationInterval'}
+            label={'Alert creation interval'}
+            labelProps={{ element: 'div', required: { value: true, showHint: true } }}
+          >
+            {(inputProps) => <CreationIntervalInput {...inputProps} />}
+          </InputField>
+          <InputField<FormValues, 'falsePositiveCheckEnabled'>
+            name={'falsePositiveCheckEnabled'}
+            label={'False positive check'}
+            labelProps={{ required: true }}
+          >
+            {(inputProps) => (
+              <SelectionGroup<'true' | 'false'>
+                mode="SINGLE"
+                options={[
+                  { value: 'true', label: 'Yes' },
+                  { value: 'false', label: 'No' },
+                ]}
+                {...inputProps}
+              />
+            )}
+          </InputField>
+        </div>
+        <Divider className={s.divider} />
+        <AlertAssignedToInput<FormValues> alertAssigneesType={INITIAL_VALUES.alertAssigneesType} />
+        <Divider className={s.divider} />
+        <RuleQueueInputField<FormValues> label="Alert queue" />
+        <AlertInvestigationChecklist<FormValues> label="Alert investigation checklist" />
+      </PropertyListLayout>
+    </div>
+  );
 }

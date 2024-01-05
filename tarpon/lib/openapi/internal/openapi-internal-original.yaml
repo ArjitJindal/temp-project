@@ -5695,6 +5695,13 @@ components:
             - USER
         ruleNameAlias:
           type: string
+        alertCreatedFor:
+          type: array
+          items:
+            type: string
+            enum:
+              - PAYMENT_DETAILS
+              - USER
         ruleDescriptionAlias:
           type: string
         filters:

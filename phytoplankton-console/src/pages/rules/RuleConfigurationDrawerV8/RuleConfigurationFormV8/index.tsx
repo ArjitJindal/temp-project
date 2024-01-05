@@ -14,6 +14,7 @@ import RuleIsRunWhenStep, {
 } from './steps/RuleIsRunWhenStep';
 import AlertCreationDetailsStep, {
   FormValues as AlertCreationDetailsStepFormValues,
+  INITIAL_VALUES as ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES,
 } from './steps/AlertCreationDetailsStep';
 
 import { Rule } from '@/apis';
@@ -263,7 +264,13 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
       },
       ruleIsHitWhenStep,
       ruleIsRunWhenStep: {},
-      alertCreationDetailsStep: {},
+      alertCreationDetailsStep: {
+        alertCreatedFor: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreatedFor,
+        alertCreationInterval: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreationInterval,
+        alertPriority: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertPriority,
+        falsePositiveCheckEnabled:
+          ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.falsePositiveCheckEnabled,
+      },
     };
   }, [
     isRiskLevelsEnabled,

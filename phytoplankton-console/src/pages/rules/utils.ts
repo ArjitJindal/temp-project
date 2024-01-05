@@ -2,13 +2,22 @@ import { useMutation } from '@tanstack/react-query';
 import { RuleConfigurationFormValues } from './RuleConfigurationDrawer/RuleConfigurationForm';
 import { RuleConfigurationFormV8Values } from './RuleConfigurationDrawerV8/RuleConfigurationFormV8';
 import { useApi } from '@/api';
-import { Priority, Rule, RuleInstance, RuleLabels, RuleNature, TriggersOnHit } from '@/apis';
+import {
+  Rule,
+  Priority,
+  RuleInstance,
+  RuleLabels,
+  RuleNature,
+  TriggersOnHit,
+  RuleInstanceAlertCreatedForEnum,
+} from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { removeEmpty } from '@/utils/json';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
+import { humanizeConstant } from '@/utils/humanize';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 
@@ -95,6 +104,13 @@ export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = PRIORITY
     value: priority,
   }),
 );
+
+export const ALERT_CREATED_FOR: { label: string; value: RuleInstanceAlertCreatedForEnum }[] = (
+  ['USER', 'PAYMENT_DETAILS'] as RuleInstanceAlertCreatedForEnum[]
+).map((alertCreatedFor) => ({
+  label: humanizeConstant(alertCreatedFor),
+  value: alertCreatedFor as RuleInstanceAlertCreatedForEnum,
+}));
 
 export function ruleInstanceToFormValues(
   isRiskLevelsEnabled: boolean,
@@ -223,7 +239,21 @@ export function ruleInstanceToFormValuesV8(
           }),
     },
     ruleIsRunWhenStep: {},
-    alertCreationDetailsStep: {},
+    alertCreationDetailsStep: {
+      alertCreatedFor: ruleInstance.alertCreatedFor,
+      alertCreationInterval: ruleInstance.alertConfig?.alertCreationInterval,
+      alertPriority: ruleInstance.casePriority,
+      falsePositiveCheckEnabled: ruleInstance.falsePositiveCheckEnabled ? 'true' : 'false',
+      alertAssigneeRole: ruleInstance.alertConfig?.alertAssigneeRole,
+      alertAssignees: ruleInstance.alertConfig?.alertAssignees,
+      alertAssigneesType: ruleInstance.alertConfig?.alertAssigneeRole
+        ? 'ROLE'
+        : ruleInstance.alertConfig?.alertAssignees
+        ? 'EMAIL'
+        : undefined,
+      checklistTemplateId: ruleInstance.checklistTemplateId,
+      queueId: ruleInstance.queueId,
+    },
   };
 }
 
@@ -326,7 +356,7 @@ export function formValuesToRuleInstanceV8(
   formValues: RuleConfigurationFormV8Values,
   isRiskLevelsEnabled: boolean,
 ): RuleInstance {
-  const { basicDetailsStep, ruleIsHitWhenStep } = formValues;
+  const { basicDetailsStep, ruleIsHitWhenStep, alertCreationDetailsStep } = formValues;
   const {
     ruleAction,
     riskLevelRuleActions,
@@ -344,24 +374,25 @@ export function formValuesToRuleInstanceV8(
     ruleId: initialRuleInstance.ruleId,
     ruleNameAlias: basicDetailsStep.ruleName,
     ruleDescriptionAlias: basicDetailsStep.ruleDescription,
-    // casePriority: basicDetailsStep.casePriority,
+    casePriority: alertCreationDetailsStep.alertPriority,
     nature: basicDetailsStep.ruleNature,
     labels: basicDetailsStep.ruleLabels,
-    // checksFor: basicDetailsStep.checksFor,
-    // falsePositiveCheckEnabled: basicDetailsStep.falsePositiveCheckEnabled,
-    // queueId: basicDetailsStep.queueId,
-    // checklistTemplateId: basicDetailsStep.checklistTemplateId,
-    // alertConfig: {
-    //   alertAssignees:
-    //     basicDetailsStep.alertAssigneesType == 'EMAIL'
-    //       ? basicDetailsStep.alertAssignees
-    //       : undefined,
-    //   alertAssigneeRole:
-    //     basicDetailsStep.alertAssigneesType == 'ROLE'
-    //       ? basicDetailsStep.alertAssigneeRole
-    //       : undefined,
-    //   alertCreationInterval: basicDetailsStep.alertCreationInterval,
-    // },
+    checksFor: initialRuleInstance.checksFor,
+    alertCreatedFor: alertCreationDetailsStep.alertCreatedFor,
+    falsePositiveCheckEnabled: alertCreationDetailsStep.falsePositiveCheckEnabled === 'true',
+    queueId: alertCreationDetailsStep.queueId,
+    checklistTemplateId: alertCreationDetailsStep.checklistTemplateId,
+    alertConfig: {
+      alertAssignees:
+        alertCreationDetailsStep.alertAssigneesType == 'EMAIL'
+          ? alertCreationDetailsStep.alertAssignees
+          : undefined,
+      alertAssigneeRole:
+        alertCreationDetailsStep.alertAssigneesType == 'ROLE'
+          ? alertCreationDetailsStep.alertAssigneeRole
+          : undefined,
+      alertCreationInterval: alertCreationDetailsStep.alertCreationInterval,
+    },
     logicAggregationVariables: ruleLogicAggregationVariables,
     ...(isRiskLevelsEnabled
       ? {

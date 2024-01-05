@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useDebounce } from 'ahooks';
 import StepHeader from '../../StepHeader';
 import s from './style.module.less';
-import CreationIntervalInput, { AlertCreationInterval } from './CreationIntervalInput';
 import Label from '@/components/library/Label';
-import { ChecklistTemplatesResponse, Priority, Rule, RuleLabels, RuleNature } from '@/apis';
+import { Priority, Rule, RuleLabels, RuleNature } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { RULE_CASE_PRIORITY, RULE_LABELS_OPTIONS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
@@ -14,14 +12,13 @@ import Select from '@/components/library/Select';
 import TextArea from '@/components/library/TextArea';
 import Checkbox from '@/components/library/Checkbox';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
-import { CHECKLIST_TEMPLATES } from '@/utils/queries/keys';
-import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
-import { useRuleQueues } from '@/components/rules/util';
-import Alert from '@/components/library/Alert';
-import { useRoles, useUsers } from '@/utils/user-utils';
+import { RuleQueueInputField } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/RuleQueueInput';
+import CreationIntervalInput, {
+  AlertCreationInterval,
+} from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/CreationIntervalInput';
+import { AlertAssignedToInput } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/AlertAssignedToInput/input';
+import { AlertInvestigationChecklist } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/AlertInvestigationChecklist';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -166,32 +163,9 @@ function RuleDetails(props: Props) {
             <SelectionGroup<Priority> mode="SINGLE" options={RULE_CASE_PRIORITY} {...inputProps} />
           )}
         </InputField>
-        <RuleQueueInputField />
+        <RuleQueueInputField<FormValues> />
       </PropertyListLayout>
     </>
-  );
-}
-
-function RuleQueueInputField() {
-  const ruleQueues = useRuleQueues();
-  const options = useMemo(() => {
-    return ruleQueues.map((queue) => ({
-      label: queue.name,
-      value: queue.id!,
-    }));
-  }, [ruleQueues]);
-  return (
-    <InputField<FormValues, 'queueId'> name="queueId" label="Queue">
-      {(inputProps) => (
-        <Select
-          {...inputProps}
-          value={options.length ? inputProps.value : undefined}
-          options={options}
-          mode="SINGLE"
-          placeholder="Select queue"
-        />
-      )}
-    </InputField>
   );
 }
 
@@ -226,20 +200,7 @@ function AlertCreationDetails() {
   const {
     values: { alertAssigneesType: assigneeTypeSet },
   } = useFormContext<FormValues>();
-  const [alertAssigneesType, setAssigneesType] = useState<'EMAIL' | 'ROLE' | ''>(
-    assigneeTypeSet ?? '',
-  );
-  const [users] = useUsers({ includeBlockedUsers: false, includeRootUsers: true });
-  const [roles] = useRoles();
-  const options = useMemo(() => {
-    if (alertAssigneesType === 'EMAIL') {
-      return Object.values(users).map((user) => ({ label: user?.email, value: user?.id }));
-    } else {
-      return roles
-        .map((role) => ({ label: role?.name ?? '', value: role?.id ?? '' }))
-        .filter((data) => data.label !== '');
-    }
-  }, [users, roles, alertAssigneesType]);
+
   return (
     <>
       <StepHeader
@@ -254,105 +215,13 @@ function AlertCreationDetails() {
         >
           {(inputProps) => <CreationIntervalInput {...inputProps} />}
         </InputField>
-        <InputField<FormValues, 'alertAssigneesType'>
-          name={'alertAssigneesType'}
-          label={'Alert assigned to'}
-          labelProps={{ required: { value: false, showHint: true } }}
-        >
-          {(inputProps) => {
-            return (
-              <SelectionGroup<'EMAIL' | 'ROLE'>
-                mode="SINGLE"
-                options={[
-                  { label: 'Account', value: 'EMAIL' },
-                  { label: 'Role', value: 'ROLE' },
-                ]}
-                {...inputProps}
-                onChange={(value) => {
-                  if (value) {
-                    setAssigneesType(value);
-                  }
-                  if (inputProps.onChange) {
-                    inputProps.onChange(value);
-                  }
-                }}
-              />
-            );
-          }}
-        </InputField>
-        {alertAssigneesType === 'EMAIL' && (
-          <>
-            <InputField<FormValues, 'alertAssignees'>
-              name={'alertAssignees'}
-              label={'Assign to account(s)'}
-            >
-              {(inputProps) => (
-                <Select
-                  value={options.length ? inputProps.value : undefined}
-                  placeholder={'Select account(s)'}
-                  options={options}
-                  mode={'MULTIPLE'}
-                  {...inputProps}
-                />
-              )}
-            </InputField>
-            <Alert type="info">
-              Please note if one or more accounts are selected, the alert will be automatically
-              assigned and distributed equally.
-            </Alert>
-          </>
-        )}
-        {alertAssigneesType === 'ROLE' && (
-          <>
-            <InputField<FormValues, 'alertAssigneeRole'>
-              name={'alertAssigneeRole'}
-              label={'Assign to role'}
-            >
-              {(inputProps) => (
-                <Select
-                  value={options.length ? inputProps.value : undefined}
-                  placeholder={'Select role'}
-                  options={options}
-                  mode={'SINGLE'}
-                  {...inputProps}
-                />
-              )}
-            </InputField>
-            <Alert type="info">
-              Please note that the alert is automatically assigned and equally distributed among the
-              accounts within the role.
-            </Alert>
-          </>
-        )}
+        <AlertAssignedToInput<FormValues> alertAssigneesType={assigneeTypeSet} />
       </PropertyListLayout>
     </>
   );
 }
 
 function ChecklistDetails() {
-  const api = useApi();
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, { wait: 500 });
-
-  const params = {
-    filterName: debouncedSearchTerm,
-  };
-
-  const queryResult = useQuery<ChecklistTemplatesResponse>(CHECKLIST_TEMPLATES(params), async () =>
-    api.getChecklistTemplates(params),
-  );
-
-  const options = useMemo(() => {
-    return isSuccess(queryResult.data)
-      ? queryResult.data.value.data
-          .filter((checklist) => checklist.status === 'ACTIVE')
-          .map((checklist) => ({
-            label: checklist.name,
-            value: checklist.id!,
-          }))
-      : [];
-  }, [queryResult.data]);
-
   return (
     <>
       <StepHeader
@@ -362,24 +231,7 @@ function ChecklistDetails() {
         }
       />
       <PropertyListLayout>
-        <InputField<FormValues, 'checklistTemplateId'>
-          name="checklistTemplateId"
-          label="Checklist template"
-          data-cy="checklist-template-dropdown"
-        >
-          {(inputProps) => (
-            <Select
-              {...inputProps}
-              value={options.length ? inputProps.value : undefined}
-              options={options}
-              mode="SINGLE"
-              placeholder="Select checklist template"
-              onSearch={setSearchTerm}
-              isLoading={isLoading(queryResult.data)}
-              isDisabled={isLoading(queryResult.data)}
-            />
-          )}
-        </InputField>
+        <AlertInvestigationChecklist<FormValues> label="Checklist template" />
       </PropertyListLayout>
     </>
   );

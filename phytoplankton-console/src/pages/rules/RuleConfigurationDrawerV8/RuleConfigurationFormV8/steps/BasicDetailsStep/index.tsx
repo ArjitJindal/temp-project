@@ -28,7 +28,9 @@ interface Props {
 
 export default function BasicDetailsStep(props: Props) {
   const { rule } = props;
-  const [ruleNature, setRuleNature] = useState<RuleNature | undefined>(rule?.defaultNature);
+  const [ruleNature, setRuleNature] = useState<RuleNature | undefined>(
+    rule?.defaultNature ?? INITIAL_VALUES.ruleNature,
+  );
   const [ruleLabels, setRuleLabels] = useState<RuleLabels[] | undefined>(rule?.labels);
 
   useEffect(() => {

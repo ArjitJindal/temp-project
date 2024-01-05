@@ -61,8 +61,10 @@ export default function CreationIntervalInput(props: Props) {
           { value: 'MONTHLY', label: 'Monthly' },
         ]}
         mode="SINGLE"
+        size="LARGE"
         value={intervalType}
         onChange={handleChangeType}
+        style={{ width: 150 }}
       />
       {value?.type === 'MONTHLY' && (
         <>
@@ -71,6 +73,7 @@ export default function CreationIntervalInput(props: Props) {
             value={value?.day}
             min={1}
             max={31}
+            size="LARGE"
             onChange={(newValue) => {
               if (newValue != null) {
                 onChange?.({
@@ -96,12 +99,14 @@ export default function CreationIntervalInput(props: Props) {
               { value: 'SUNDAY', label: 'Sunday' },
             ]}
             mode="SINGLE"
+            size="LARGE"
             value={value.day}
             onChange={(day) => {
               if (day != null) {
                 onChange?.({ ...value, day });
               }
             }}
+            style={{ width: 150 }}
           />
         </>
       )}
