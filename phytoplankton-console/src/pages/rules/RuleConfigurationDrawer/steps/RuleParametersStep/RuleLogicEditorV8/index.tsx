@@ -142,16 +142,7 @@ export function RuleLogicEditorV8(props: Props) {
     },
     [props],
   );
-  const renderBuilder = useCallback(
-    (props: BuilderProps) => (
-      <div className="query-builder-container">
-        <div className="query-builder qb-lite">
-          <Builder {...props} />
-        </div>
-      </div>
-    ),
-    [],
-  );
+  const renderBuilder = useCallback((props: BuilderProps) => <Builder {...props} />, []);
 
   return (
     <AsyncResourceRenderer resource={ruleLogicConfig.data}>

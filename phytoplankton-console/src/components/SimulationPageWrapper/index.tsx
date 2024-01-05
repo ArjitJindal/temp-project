@@ -19,7 +19,7 @@ export type SimulationPageWrapperRef = {
 export type SimulationPageWrapperProps = PageWrapperProps & {
   isSimulationModeEnabled: boolean;
   onSimulationModeChange: (value: boolean | undefined) => void;
-  onCreateScenario?: () => void;
+  onCreateRule?: () => void;
 };
 
 const SimulationUsageCard = (props: { usageCount: number }) => {
@@ -102,9 +102,9 @@ export const SimulationPageWrapper = forwardRef<
                 />
               )}
             </div>
-            {v8Enabled && props.onCreateScenario && (
-              <Button type="SECONDARY" onClick={props.onCreateScenario}>
-                Create scenario
+            {v8Enabled && props.onCreateRule && (
+              <Button type="SECONDARY" onClick={props.onCreateRule}>
+                Create rule
               </Button>
             )}
           </div>

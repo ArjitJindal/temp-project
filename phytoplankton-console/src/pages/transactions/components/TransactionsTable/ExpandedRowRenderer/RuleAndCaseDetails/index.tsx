@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import s from './styles.module.less';
-import { Alert, InternalTransaction, RuleAction, RuleInstance } from '@/apis';
+import { Alert, InternalTransaction, RuleAction } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
@@ -13,7 +13,7 @@ import { P } from '@/components/ui/Typography';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useRules } from '@/utils/rules';
+import { useRuleOptions } from '@/utils/rules';
 
 type TableParams = AllParams<DefaultApiGetAlertListRequest>;
 
@@ -45,17 +45,7 @@ export default function RuleAndCaseDetails(props: Props) {
       total: response.total,
     };
   });
-
-  const rules = useRules();
-  const ruleOptions = useMemo(() => {
-    return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
-      const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId]?.name;
-      return {
-        value: rulesInstance.id ?? '',
-        label: `${ruleName} ${rulesInstance.ruleId} (${rulesInstance.id})`,
-      };
-    });
-  }, [rules.ruleInstances, rules.rules]);
+  const ruleOptions = useRuleOptions();
 
   return (
     <div>

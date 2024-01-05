@@ -75,7 +75,10 @@ import { background } from '@/utils/background'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
-import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
+import {
+  getAggregatedRuleStatus,
+  isV8RuleInstance,
+} from '@/services/rules-engine/utils'
 import { TransactionStatusDetails } from '@/@types/openapi-public/TransactionStatusDetails'
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
 import { envIs } from '@/utils/env'
@@ -91,7 +94,7 @@ const sqs = new SQSClient({})
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
   rule2: HitRulesDetails
-) => (rule1.ruleId > rule2.ruleId ? 1 : -1)
+) => ((rule1?.ruleId ?? '') > (rule2?.ruleId ?? '') ? 1 : -1)
 
 export type TransactionAggregationTask = {
   transactionId: string
@@ -409,8 +412,10 @@ export class RulesEngineService {
     const { senderUser, receiverUser } = await this.getTransactionUsers(
       transaction
     )
-    const rule = await this.ruleRepository.getRuleById(ruleInstance.ruleId)
-    if (!rule) {
+    const rule = ruleInstance.ruleId
+      ? await this.ruleRepository.getRuleById(ruleInstance.ruleId)
+      : undefined
+    if (!rule && !isV8RuleInstance(ruleInstance)) {
       throw new Error(`Cannot find rule ${ruleInstance.ruleId}`)
     }
 
@@ -435,7 +440,9 @@ export class RulesEngineService {
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
 
     const rules = await this.ruleRepository.getRulesByIds(
-      ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
+      ruleInstances
+        .map((ruleInstance) => ruleInstance.ruleId)
+        .filter(Boolean) as string[]
     )
     return this.verifyUserByRules(user, ruleInstances, rules, options)
   }
@@ -453,7 +460,9 @@ export class RulesEngineService {
       await Promise.all(
         ruleInstances.map(async (ruleInstance) =>
           this.verifyUserRule({
-            rule: rulesById[ruleInstance.ruleId],
+            rule: ruleInstance.ruleId
+              ? rulesById[ruleInstance.ruleId]
+              : undefined,
             ruleInstance,
             user,
             userRiskLevel,
@@ -512,7 +521,9 @@ export class RulesEngineService {
 
     const rulesById = keyBy(
       await this.ruleRepository.getRulesByIds(
-        ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
+        ruleInstances
+          .map((ruleInstance) => ruleInstance.ruleId)
+          .filter(Boolean) as string[]
       ),
       'id'
     )
@@ -525,7 +536,9 @@ export class RulesEngineService {
       await Promise.all(
         ruleInstances.map(async (ruleInstance) =>
           this.verifyTransactionRule({
-            rule: rulesById[ruleInstance.ruleId],
+            rule: ruleInstance.ruleId
+              ? rulesById[ruleInstance.ruleId]
+              : undefined,
             ruleInstance,
             senderUserRiskLevel: await senderUserRiskLevelPromise,
             transaction,
@@ -582,7 +595,7 @@ export class RulesEngineService {
   }
 
   private async verifyRuleIdempotent(options: {
-    rule: Rule
+    rule?: Rule
     ruleInstance: RuleInstance
     senderUserRiskLevel: RiskLevel | undefined
     transaction?: Transaction
@@ -663,7 +676,7 @@ export class RulesEngineService {
         }
       }
     } else {
-      const ruleImplementationName = rule.ruleImplementationName!
+      const ruleImplementationName = rule!.ruleImplementationName!
       const RuleClass = transaction
         ? TRANSACTION_RULES[ruleImplementationName]
         : USER_RULES[ruleImplementationName]
@@ -682,7 +695,7 @@ export class RulesEngineService {
               transactionRiskScore,
             },
             { parameters, filters: ruleFilters },
-            { ruleInstance, rule },
+            { ruleInstance, rule: rule! },
             mode,
             this.dynamoDb,
             mode === 'MONGODB' ? await getMongoDbClient() : undefined
@@ -764,10 +777,10 @@ export class RulesEngineService {
         ruleHit
           ? await Promise.all(
               filteredRuleResult!.map((result) =>
-                generateRuleDescription(rule, parameters as Vars, result.vars)
+                generateRuleDescription(rule!, parameters as Vars, result.vars)
               )
             )
-          : [rule.description]
+          : [rule!.description]
       ).map((description) =>
         last(description) !== '.' ? `${description}.` : description
       )
@@ -783,7 +796,7 @@ export class RulesEngineService {
       result: {
         ruleId: ruleInstance.ruleId,
         ruleInstanceId: ruleInstance.id!,
-        ruleName: ruleInstance.ruleNameAlias || rule.name,
+        ruleName: (ruleInstance.ruleNameAlias || rule?.name) ?? '',
         ruleDescription,
         ruleAction: action,
         ruleHit,
@@ -805,7 +818,7 @@ export class RulesEngineService {
   }
 
   private async verifyTransactionRule(options: {
-    rule: Rule
+    rule?: Rule
     ruleInstance: RuleInstance
     senderUserRiskLevel: RiskLevel | undefined
     transaction: Transaction
@@ -886,7 +899,7 @@ export class RulesEngineService {
           ...context?.metricDimensions,
           ruleId: ruleInstance.ruleId,
           ruleInstanceId: ruleInstance.id,
-          ruleImplementation: rule.ruleImplementationName,
+          ruleImplementation: rule?.ruleImplementationName,
         },
       }
     )
@@ -962,7 +975,7 @@ export class RulesEngineService {
   }
 
   private async verifyUserRule(options: {
-    rule: Rule
+    rule?: Rule
     ruleInstance: RuleInstance
     userRiskLevel: RiskLevel | undefined
     user: User | Business

@@ -1,13 +1,16 @@
 import { useMutation } from '@tanstack/react-query';
 import { RuleConfigurationFormValues } from './RuleConfigurationDrawer/RuleConfigurationForm';
+import { RuleConfigurationFormV8Values } from './RuleConfigurationDrawerV8/RuleConfigurationFormV8';
 import { useApi } from '@/api';
-import { Priority, RuleInstance, RuleLabels, RuleNature, TriggersOnHit } from '@/apis';
+import { Priority, Rule, RuleInstance, RuleLabels, RuleNature, TriggersOnHit } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { removeEmpty } from '@/utils/json';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -154,14 +157,74 @@ export function ruleInstanceToFormValues(
                 }),
             }
           : {
-              ruleLogic: ruleInstance.logic,
-              ruleLogicAggregationVariables: ruleInstance.logicAggregationVariables ?? [],
               ruleParameters: ruleInstance.parameters,
               ruleAction: ruleInstance.action,
               triggersOnHit: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
             },
       }
     : undefined;
+}
+
+export function ruleInstanceToFormValuesV8(
+  isRiskLevelsEnabled: boolean,
+  ruleInstance?: RuleInstance,
+): RuleConfigurationFormV8Values | undefined {
+  if (!ruleInstance) {
+    return undefined;
+  }
+
+  const defaultTriggersOnHit: TriggersOnHit = {
+    usersToCheck: 'ALL',
+  };
+  return {
+    basicDetailsStep: {
+      ruleName: ruleInstance.ruleNameAlias,
+      ruleDescription: ruleInstance.ruleDescriptionAlias,
+      ruleNature: ruleInstance.nature,
+      ruleLabels: ruleInstance.labels,
+    },
+    ruleIsHitWhenStep: {
+      ruleLogicAggregationVariables: ruleInstance.logicAggregationVariables ?? [],
+      ...(isRiskLevelsEnabled
+        ? {
+            riskLevelRuleLogic:
+              ruleInstance.riskLevelLogic ??
+              (ruleInstance.logic && {
+                VERY_HIGH: ruleInstance.logic,
+                HIGH: ruleInstance.logic,
+                MEDIUM: ruleInstance.logic,
+                LOW: ruleInstance.logic,
+                VERY_LOW: ruleInstance.logic,
+              }),
+            riskLevelRuleActions:
+              ruleInstance.riskLevelActions ??
+              (ruleInstance.action && {
+                VERY_HIGH: ruleInstance.action,
+                HIGH: ruleInstance.action,
+                MEDIUM: ruleInstance.action,
+                LOW: ruleInstance.action,
+                VERY_LOW: ruleInstance.action,
+              }),
+            riskLevelsTriggersOnHit:
+              ruleInstance.riskLevelsTriggersOnHit ??
+              (ruleInstance.triggersOnHit && {
+                VERY_HIGH: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+                HIGH: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+                MEDIUM: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+                LOW: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+                VERY_LOW: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+              }),
+          }
+        : {
+            ruleLogic: ruleInstance.logic,
+            ruleParameters: ruleInstance.parameters,
+            ruleAction: ruleInstance.action,
+            triggersOnHit: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
+          }),
+    },
+    ruleIsRunWhenStep: {},
+    alertCreationDetailsStep: {},
+  };
 }
 
 export function formValuesToRuleInstance(
@@ -172,8 +235,6 @@ export function formValuesToRuleInstance(
   const { basicDetailsStep, standardFiltersStep, ruleParametersStep } = formValues;
   const {
     ruleAction,
-    ruleLogic,
-    ruleLogicAggregationVariables,
     ruleParameters,
     riskLevelParameters,
     riskLevelActions,
@@ -253,10 +314,105 @@ export function formValuesToRuleInstance(
             : undefined,
         }
       : {
-          logic: ruleLogic,
-          logicAggregationVariables: ruleLogicAggregationVariables,
           action: ruleAction ?? initialRuleInstance.action,
           parameters: removeEmpty(ruleParameters),
+          triggersOnHit: removeEmpty(triggersOnHit) ?? defaultTriggersOnHit,
+        }),
+  };
+}
+
+export function formValuesToRuleInstanceV8(
+  initialRuleInstance: RuleInstance,
+  formValues: RuleConfigurationFormV8Values,
+  isRiskLevelsEnabled: boolean,
+): RuleInstance {
+  const { basicDetailsStep, ruleIsHitWhenStep } = formValues;
+  const {
+    ruleAction,
+    riskLevelRuleActions,
+    ruleLogic,
+    riskLevelRuleLogic,
+    ruleLogicAggregationVariables,
+    triggersOnHit,
+    riskLevelsTriggersOnHit,
+  } = ruleIsHitWhenStep;
+  const defaultTriggersOnHit: TriggersOnHit = {
+    usersToCheck: 'ALL',
+  };
+  return {
+    ...initialRuleInstance,
+    ruleId: initialRuleInstance.ruleId,
+    ruleNameAlias: basicDetailsStep.ruleName,
+    ruleDescriptionAlias: basicDetailsStep.ruleDescription,
+    // casePriority: basicDetailsStep.casePriority,
+    nature: basicDetailsStep.ruleNature,
+    labels: basicDetailsStep.ruleLabels,
+    // checksFor: basicDetailsStep.checksFor,
+    // falsePositiveCheckEnabled: basicDetailsStep.falsePositiveCheckEnabled,
+    // queueId: basicDetailsStep.queueId,
+    // checklistTemplateId: basicDetailsStep.checklistTemplateId,
+    // alertConfig: {
+    //   alertAssignees:
+    //     basicDetailsStep.alertAssigneesType == 'EMAIL'
+    //       ? basicDetailsStep.alertAssignees
+    //       : undefined,
+    //   alertAssigneeRole:
+    //     basicDetailsStep.alertAssigneesType == 'ROLE'
+    //       ? basicDetailsStep.alertAssigneeRole
+    //       : undefined,
+    //   alertCreationInterval: basicDetailsStep.alertCreationInterval,
+    // },
+    logicAggregationVariables: ruleLogicAggregationVariables,
+    ...(isRiskLevelsEnabled
+      ? {
+          riskLevelLogic: riskLevelRuleLogic
+            ? {
+                VERY_HIGH: riskLevelRuleLogic['VERY_HIGH'],
+                HIGH: riskLevelRuleLogic['HIGH'],
+                MEDIUM: riskLevelRuleLogic['MEDIUM'],
+                LOW: riskLevelRuleLogic['LOW'],
+                VERY_LOW: riskLevelRuleLogic['VERY_LOW'],
+              }
+            : {
+                VERY_HIGH: ruleLogic,
+                HIGH: ruleLogic,
+                MEDIUM: ruleLogic,
+                LOW: ruleLogic,
+                VERY_LOW: ruleLogic,
+              },
+          riskLevelActions: riskLevelRuleActions
+            ? {
+                VERY_HIGH: riskLevelRuleActions['VERY_HIGH'],
+                HIGH: riskLevelRuleActions['HIGH'],
+                MEDIUM: riskLevelRuleActions['MEDIUM'],
+                LOW: riskLevelRuleActions['LOW'],
+                VERY_LOW: riskLevelRuleActions['VERY_LOW'],
+              }
+            : ruleAction != null
+            ? {
+                VERY_HIGH: ruleAction,
+                HIGH: ruleAction,
+                MEDIUM: ruleAction,
+                LOW: ruleAction,
+                VERY_LOW: ruleAction,
+              }
+            : undefined,
+          riskLevelsTriggersOnHit: riskLevelsTriggersOnHit
+            ? {
+                VERY_HIGH:
+                  removeEmpty(riskLevelsTriggersOnHit['VERY_HIGH']) ?? defaultTriggersOnHit,
+                HIGH: removeEmpty(riskLevelsTriggersOnHit['HIGH']) ?? defaultTriggersOnHit,
+                MEDIUM: removeEmpty(riskLevelsTriggersOnHit['MEDIUM']) ?? defaultTriggersOnHit,
+                LOW: removeEmpty(riskLevelsTriggersOnHit['LOW']) ?? defaultTriggersOnHit,
+                VERY_LOW: removeEmpty(riskLevelsTriggersOnHit['VERY_LOW']) ?? defaultTriggersOnHit,
+              }
+            : undefined,
+        }
+      : {
+          // logic: ruleLogic,
+          // TODO: testing only
+          logic: { and: [{ '==': [{ var: 'TRANSACTION:id' }, 'abc'] }] },
+          action: ruleAction ?? initialRuleInstance.action,
           triggersOnHit: removeEmpty(triggersOnHit) ?? defaultTriggersOnHit,
         }),
   };
@@ -268,11 +424,10 @@ export function useUpdateRuleInstance(
   const api = useApi();
   return useMutation<RuleInstance, unknown, RuleInstance>(
     async (ruleInstance: RuleInstance) => {
-      const gg = await api.putRuleInstancesRuleInstanceId({
+      return api.putRuleInstancesRuleInstanceId({
         ruleInstanceId: ruleInstance.id!,
         RuleInstance: ruleInstance,
       });
-      return gg;
     },
     {
       onSuccess: async (updatedRuleInstance) => {
@@ -294,7 +449,7 @@ export function useCreateRuleInstance(
   const api = useApi();
   return useMutation<RuleInstance, unknown, RuleInstance>(
     async (ruleInstance: RuleInstance) => {
-      return await api.postRuleInstances({
+      return api.postRuleInstances({
         RuleInstance: ruleInstance,
       });
     },
@@ -303,11 +458,34 @@ export function useCreateRuleInstance(
         if (onRuleInstanceCreated) {
           onRuleInstanceCreated(newRuleInstance);
         }
-        message.success(`Rule created - ${newRuleInstance.ruleId} (${newRuleInstance.id})`);
+        const ruleInfo = [
+          newRuleInstance.id,
+          newRuleInstance.ruleId && `(${newRuleInstance.ruleId})`,
+        ]
+          .filter(Boolean)
+          .join(' ');
+        message.success(`Rule created - ${ruleInfo}`);
       },
       onError: async (err) => {
         message.fatal(`Unable to create the rule - Some parameters are missing`, err);
       },
     },
   );
+}
+
+export function useIsV8RuleInstance(ruleInstance?: RuleInstance | null): boolean {
+  const user = useAuth0User();
+  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
+  return (
+    isSuperAdmin(user) &&
+    v8Enabled &&
+    ruleInstance &&
+    (ruleInstance.logic || ruleInstance.riskLevelLogic)
+  );
+}
+
+export function useIsV8Rule(rule?: Rule | null): boolean {
+  const user = useAuth0User();
+  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
+  return isSuperAdmin(user) && v8Enabled && rule && rule.defaultLogic;
 }

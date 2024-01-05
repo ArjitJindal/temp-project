@@ -109,10 +109,12 @@ export function useRuleOptions() {
   const rules = useRules();
   return useMemo(() => {
     return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
-      const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId]?.name;
+      const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId!]?.name;
       return {
         value: rulesInstance.id ?? '',
-        label: `${ruleName} ${rulesInstance.ruleId} (${rulesInstance.id})`,
+        label: [ruleName, rulesInstance.id, rulesInstance.ruleId && `(${rulesInstance.ruleId})`]
+          .filter(Boolean)
+          .join(' '),
       };
     });
   }, [rules.ruleInstances, rules.rules]);

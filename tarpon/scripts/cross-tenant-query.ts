@@ -50,9 +50,11 @@ async function tenantRuleStats(
   const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
   const tenantRuleStats: CountStats = {}
   const tenantFilterStats: CountStats = {}
-  ruleInstances.forEach(
-    (r) => (tenantRuleStats[r.ruleId] = (tenantRuleStats[r.ruleId] ?? 0) + 1)
-  )
+  ruleInstances.forEach((r) => {
+    if (r.ruleId) {
+      tenantRuleStats[r.ruleId] = (tenantRuleStats[r.ruleId] ?? 0) + 1
+    }
+  })
   ruleInstances
     .flatMap((r) => Object.keys(r.filters || {}))
     .forEach((k) => (tenantFilterStats[k] = (tenantFilterStats[k] ?? 0) + 1))

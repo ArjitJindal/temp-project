@@ -5508,6 +5508,8 @@ components:
           type: string
         defaultLogic:
           type: object
+        defaultRiskLevelLogic:
+          $ref: '#/components/schemas/RiskLevelRuleLogic'
         defaultLogicAggregationVariables:
           type: array
           items:
@@ -5676,6 +5678,8 @@ components:
           $ref: '#/components/schemas/Priority'
         logic:
           type: object
+        riskLevelLogic:
+          $ref: '#/components/schemas/RiskLevelRuleLogic'
         logicAggregationVariables:
           type: array
           items:
@@ -5755,7 +5759,6 @@ components:
           items:
             type: string
       required:
-        - ruleId
         - casePriority
         - nature
         - labels
@@ -7153,6 +7156,26 @@ components:
         - riskLevel
         - lowerBoundRiskScore
         - upperBoundRiskScore
+    RiskLevelRuleLogic:
+      title: RiskLevelRuleLogic
+      type: object
+      properties:
+        VERY_HIGH:
+          type: object
+        HIGH:
+          type: object
+        MEDIUM:
+          type: object
+        LOW:
+          type: object
+        VERY_LOW:
+          type: object
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
     RiskLevelRuleParameters:
       title: RiskLevelRuleParameters
       x-stoplight:
@@ -8018,7 +8041,6 @@ components:
         - ruleInstanceId
         - ruleName
         - ruleDescription
-        - ruleId
         - ruleAction
         - numberOfTransactionsHit
         - priority

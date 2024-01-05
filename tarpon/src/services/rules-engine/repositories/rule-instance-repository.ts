@@ -92,6 +92,9 @@ export class RuleInstanceRepository {
     const newRuleInstance: RuleInstance = {
       ...ruleInstance,
       // Save fallback parameters/action in case we remove PULSE feature flag
+      logic:
+        ruleInstance.logic ??
+        Object.values(ruleInstance.riskLevelLogic ?? {})[0],
       parameters:
         ruleInstance.parameters ??
         Object.values(ruleInstance.riskLevelParameters ?? {})[0],

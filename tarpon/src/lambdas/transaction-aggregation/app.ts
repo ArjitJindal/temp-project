@@ -113,7 +113,7 @@ export async function handleTransactionAggregationTask(
       transaction.destinationUserId
         ? userRepository.getUser<User | Business>(transaction.destinationUserId)
         : undefined,
-      ruleRepository.getRuleById(ruleInstance.ruleId),
+      ruleRepository.getRuleById(ruleInstance.ruleId!),
       transaction.originUserId
         ? riskRepository.getDRSRiskItem(transaction.originUserId)
         : undefined,

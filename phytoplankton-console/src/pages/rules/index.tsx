@@ -1,7 +1,7 @@
 import { useLocalStorageState } from 'ahooks';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ruleHeaderKeyToDescription } from './utils';
+import { useIsV8Rule, ruleHeaderKeyToDescription } from './utils';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
 import { SimulationHistoryTable } from './SimulationHistoryTable';
@@ -15,7 +15,7 @@ import { Rule } from '@/apis';
 import { useHasPermissions } from '@/utils/user-utils';
 import { SimulationPageWrapper } from '@/components/SimulationPageWrapper';
 import { Authorized } from '@/components/Authorized';
-import ScenarioConfigurationDrawer from '@/pages/rules/ScenarioConfigurationDrawer';
+import RuleConfigurationDrawerV8 from '@/pages/rules/RuleConfigurationDrawerV8';
 
 const TableList = () => {
   const { rule = 'rules-library' } = useParams<'rule'>();
@@ -37,7 +37,8 @@ const TableList = () => {
     'SIMULATION_RULES',
     false,
   );
-  const [isScenarioBuilderOpen, setScenarioBuilderOpen] = useState(false);
+  const [isRuleBuilderOpen, setRuleBuilderOpen] = useState(false);
+  const isV8 = useIsV8Rule(currentRule);
 
   useEffect(() => {
     if (!currentRule) {
@@ -55,8 +56,8 @@ const TableList = () => {
       }
       isSimulationModeEnabled={isSimulationEnabled}
       onSimulationModeChange={setIsSimulationEnabled}
-      onCreateScenario={() => {
-        setScenarioBuilderOpen(true);
+      onCreateRule={() => {
+        setRuleBuilderOpen(true);
       }}
     >
       {isSimulationEnabled ? (
@@ -157,54 +158,72 @@ const TableList = () => {
           ]}
         />
       )}
-      <ScenarioConfigurationDrawer
-        isVisible={isScenarioBuilderOpen}
-        onChangeVisibility={setScenarioBuilderOpen}
+      <RuleConfigurationDrawerV8
+        isVisible={isRuleBuilderOpen}
+        onChangeVisibility={setRuleBuilderOpen}
         type={'CREATE'}
       />
-      {isSimulationEnabled && currentRule ? (
-        <RuleConfigurationSimulationDrawer
-          rule={currentRule}
-          ruleInstance={{
-            ruleId: currentRule.id,
-            parameters: currentRule.defaultParameters,
-            riskLevelParameters: currentRule.defaultRiskLevelParameters,
-            action: currentRule.defaultAction,
-            riskLevelActions: currentRule.defaultRiskLevelActions,
-            nature: currentRule.defaultNature,
-            casePriority: currentRule.defaultCasePriority,
-            filters: currentRule.defaultFilters,
-            labels: [],
-            checksFor: currentRule.checksFor,
-          }}
-          isVisible={currentRule != null}
-          onChangeVisibility={(isVisible) => {
-            if (!isVisible) {
+      {currentRule &&
+        (isSimulationEnabled ? (
+          <RuleConfigurationSimulationDrawer
+            rule={currentRule}
+            ruleInstance={{
+              ruleId: currentRule.id,
+              parameters: currentRule.defaultParameters,
+              riskLevelParameters: currentRule.defaultRiskLevelParameters,
+              action: currentRule.defaultAction,
+              riskLevelActions: currentRule.defaultRiskLevelActions,
+              nature: currentRule.defaultNature,
+              casePriority: currentRule.defaultCasePriority,
+              filters: currentRule.defaultFilters,
+              labels: [],
+              checksFor: currentRule.checksFor,
+            }}
+            isVisible={currentRule != null}
+            onChangeVisibility={(isVisible) => {
+              if (!isVisible) {
+                setCurrentRule(null);
+              }
+            }}
+            onRuleInstanceUpdated={() => {
               setCurrentRule(null);
-            }
-          }}
-          onRuleInstanceUpdated={() => {
-            setCurrentRule(null);
-          }}
-        />
-      ) : (
-        <RuleConfigurationDrawer
-          rule={currentRule}
-          isVisible={currentRule != null}
-          onChangeVisibility={(isVisible) => {
-            if (!isVisible) {
-              setCurrentRule(null);
-            }
-          }}
-          onRuleInstanceUpdated={() => setCurrentRule(null)}
-          readOnly={!canWriteRules || ruleReadOnly}
-          type="CREATE"
-          isClickAwayEnabled={ruleReadOnly}
-          onChangeToEditMode={() => {
-            setRuleReadOnly(false);
-          }}
-        />
-      )}
+            }}
+          />
+        ) : isV8 ? (
+          <RuleConfigurationDrawerV8
+            rule={currentRule}
+            isVisible={currentRule != null}
+            onChangeVisibility={(isVisible) => {
+              if (!isVisible) {
+                setCurrentRule(null);
+              }
+            }}
+            onRuleInstanceUpdated={() => setCurrentRule(null)}
+            readOnly={!canWriteRules || ruleReadOnly}
+            type="CREATE"
+            isClickAwayEnabled={ruleReadOnly}
+            onChangeToEditMode={() => {
+              setRuleReadOnly(false);
+            }}
+          />
+        ) : (
+          <RuleConfigurationDrawer
+            rule={currentRule}
+            isVisible={currentRule != null}
+            onChangeVisibility={(isVisible) => {
+              if (!isVisible) {
+                setCurrentRule(null);
+              }
+            }}
+            onRuleInstanceUpdated={() => setCurrentRule(null)}
+            readOnly={!canWriteRules || ruleReadOnly}
+            type="CREATE"
+            isClickAwayEnabled={ruleReadOnly}
+            onChangeToEditMode={() => {
+              setRuleReadOnly(false);
+            }}
+          />
+        ))}
     </SimulationPageWrapper>
   );
 };

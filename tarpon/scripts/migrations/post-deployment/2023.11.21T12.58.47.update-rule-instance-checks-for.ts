@@ -21,7 +21,7 @@ async function migrateTenant(tenant: Tenant) {
       continue
     }
 
-    const rule = await ruleRepository.getRuleById(ruleInstance.ruleId)
+    const rule = await ruleRepository.getRuleById(ruleInstance.ruleId!)
     if (!rule) {
       throw new Error(`Rule ${ruleInstance.ruleId} not found`)
     }

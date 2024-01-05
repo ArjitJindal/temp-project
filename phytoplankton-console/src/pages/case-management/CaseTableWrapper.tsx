@@ -1,13 +1,12 @@
-import React, { useMemo } from 'react';
 import { TableSearchParams } from './types';
 import CaseTable from './CaseTable';
 import { dayjs } from '@/utils/dayjs';
-import { Case, RuleInstance } from '@/apis';
+import { Case } from '@/apis';
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { AllParams } from '@/components/library/Table/types';
 import { CASES_LIST } from '@/utils/queries/keys';
-import { useRules } from '@/utils/rules';
+import { useRuleOptions } from '@/utils/rules';
 import { useAuth0User } from '@/utils/user-utils';
 import { getStatuses } from '@/utils/case-utils';
 
@@ -91,25 +90,14 @@ export default function CaseTableWrapper(props: {
       items: response.data,
     };
   });
-
-  const rules = useRules();
-
-  const getRulesAndInstances = useMemo(() => {
-    return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
-      const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId]?.name;
-      return {
-        value: rulesInstance.id ?? '',
-        label: `${ruleName} ${rulesInstance.ruleId} (${rulesInstance.id})`,
-      };
-    });
-  }, [rules.ruleInstances, rules.rules]);
+  const ruleOptions = useRuleOptions();
 
   return (
     <CaseTable
       params={params}
       onChangeParams={onChangeParams}
       queryResult={queryResults}
-      rules={getRulesAndInstances}
+      rules={ruleOptions}
       showAssignedToFilter={params.showCases === 'MY' ? false : true}
     />
   );

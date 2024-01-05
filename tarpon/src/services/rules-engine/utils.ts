@@ -2,6 +2,8 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { Rule } from '@/@types/openapi-internal/Rule'
 
 export function getSenderKeys(
   tenantId: string,
@@ -183,4 +185,12 @@ export function getAggregatedRuleStatus(
       return prev
     }
   }, 'ALLOW')
+}
+
+export function isV8RuleInstance(ruleInstance: RuleInstance): boolean {
+  return !!(ruleInstance.logic || ruleInstance.riskLevelLogic)
+}
+
+export function isV8Rule(rule: Rule): boolean {
+  return !!rule.defaultLogic
 }

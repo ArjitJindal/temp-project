@@ -2232,7 +2232,6 @@ components:
         nature:
           $ref: '#/components/schemas/RuleNature'
       required:
-        - ruleId
         - ruleInstanceId
         - ruleName
         - ruleDescription
@@ -2277,7 +2276,6 @@ components:
         nature:
           $ref: '#/components/schemas/RuleNature'
       required:
-        - ruleId
         - ruleInstanceId
         - ruleName
         - ruleDescription

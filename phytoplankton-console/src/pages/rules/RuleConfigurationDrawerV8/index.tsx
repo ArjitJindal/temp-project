@@ -3,12 +3,17 @@ import { usePrevious } from 'ahooks';
 import { EditOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import { isEqual } from 'lodash';
-import { ruleInstanceToFormValues, useCreateRuleInstance, useUpdateRuleInstance } from '../utils';
+import {
+  formValuesToRuleInstanceV8,
+  ruleInstanceToFormValuesV8,
+  useCreateRuleInstance,
+  useUpdateRuleInstance,
+} from '../utils';
 import s from './style.module.less';
-import ScenarioConfigurationForm, {
+import RuleConfigurationFormV8, {
   STEPS,
-  ScenarioConfigurationFormValues,
-} from './ScenarioConfigurationForm';
+  RuleConfigurationFormV8Values,
+} from './RuleConfigurationFormV8';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import Button from '@/components/library/Button';
@@ -30,7 +35,7 @@ interface RuleConfigurationDrawerProps {
   type: 'EDIT' | 'CREATE' | 'DUPLICATE' | 'READ';
 }
 
-export default function ScenarioConfigurationDrawer(props: RuleConfigurationDrawerProps) {
+export default function RuleConfigurationDrawerV8(props: RuleConfigurationDrawerProps) {
   const {
     isVisible,
     onChangeVisibility,
@@ -42,18 +47,40 @@ export default function ScenarioConfigurationDrawer(props: RuleConfigurationDraw
   } = props;
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
   const activeStepIndex = STEPS.findIndex((key) => key === activeStepKey);
-  const formRef = useRef<FormRef<ScenarioConfigurationFormValues>>(null);
+  const formRef = useRef<FormRef<RuleConfigurationFormV8Values>>(null);
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
-  const formInitialValues = ruleInstanceToFormValues(isRiskLevelsEnabled, ruleInstance);
+  const formInitialValues = ruleInstanceToFormValuesV8(isRiskLevelsEnabled, ruleInstance);
   const [isValuesSame, setIsValuesSame] = useState(
     isEqual(formInitialValues, formRef.current?.getValues()),
   );
   const prevIsVisible = usePrevious(isVisible);
   const updateRuleInstanceMutation = useUpdateRuleInstance(onRuleInstanceUpdated);
   const createRuleInstanceMutation = useCreateRuleInstance(onRuleInstanceUpdated);
-  const handleSubmit = useCallback((formValues: ScenarioConfigurationFormValues) => {
-    throw new Error(`Not implemented yet. ${JSON.stringify(formValues)}`);
-  }, []);
+  const handleSubmit = useCallback(
+    (formValues: RuleConfigurationFormV8Values) => {
+      if (type === 'EDIT' && ruleInstance) {
+        updateRuleInstanceMutation.mutate(
+          formValuesToRuleInstanceV8(ruleInstance, formValues, isRiskLevelsEnabled),
+        );
+      } else if (type === 'CREATE' || type === 'DUPLICATE') {
+        createRuleInstanceMutation.mutate(
+          formValuesToRuleInstanceV8(
+            { ruleId: rule?.id } as RuleInstance,
+            formValues,
+            isRiskLevelsEnabled,
+          ),
+        );
+      }
+    },
+    [
+      createRuleInstanceMutation,
+      isRiskLevelsEnabled,
+      rule,
+      ruleInstance,
+      type,
+      updateRuleInstanceMutation,
+    ],
+  );
   useEffect(() => {
     if (prevIsVisible !== isVisible) {
       setActiveStepKey(STEPS[0]);
@@ -70,10 +97,10 @@ export default function ScenarioConfigurationDrawer(props: RuleConfigurationDraw
       onChangeVisibility={onChangeVisibility}
       title={
         props.type === 'EDIT'
-          ? `Edit scenario`
+          ? `Edit rule`
           : props.type === 'DUPLICATE'
-          ? `Duplicate scenario`
-          : 'Create scenario'
+          ? `Duplicate rule`
+          : 'Create rule'
       }
       isClickAwayEnabled={props.isClickAwayEnabled}
       footer={
@@ -120,7 +147,7 @@ export default function ScenarioConfigurationDrawer(props: RuleConfigurationDraw
                 }}
                 isDisabled={activeStepIndex === STEPS.length - 1}
                 iconRight={<ArrowRightSLineIcon />}
-                testName="drawer-next-button-scenario-configuration"
+                testName="drawer-next-button"
               >
                 Next
               </Button>
@@ -175,7 +202,7 @@ export default function ScenarioConfigurationDrawer(props: RuleConfigurationDraw
         </div>
       }
     >
-      <ScenarioConfigurationForm
+      <RuleConfigurationFormV8
         key={`${isVisible}`}
         ref={formRef}
         rule={rule}

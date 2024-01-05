@@ -1,4 +1,3 @@
-import React from 'react';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import { AssignmentButton } from './components/AssignmentButton';
 import GavelIcon from './gavel.react.svg';

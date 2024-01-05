@@ -2,7 +2,8 @@ import { Switch, Tooltip } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
+import { getRuleInstanceDisplayId, useIsV8RuleInstance, useUpdateRuleInstance } from '../utils';
+import RuleConfigurationDrawerV8 from '../RuleConfigurationDrawerV8';
 import s from './style.module.less';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
@@ -179,7 +180,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
             const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
             return (
               <span style={{ fontSize: '14px' }}>
-                {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId]?.name}
+                {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId!]?.name}
               </span>
             );
           },
@@ -384,7 +385,9 @@ const MyRule = (props: { simulationMode?: boolean }) => {
       result.sort((a, b) => {
         let result = 0;
         if (key === 'ruleId') {
-          result = parseInt(a.ruleId?.split('-')[1]) - parseInt(b.ruleId?.split('-')[1]);
+          result =
+            (a.ruleId ? parseInt(a.ruleId.split('-')[1]) : 0) -
+            (b.ruleId ? parseInt(b.ruleId.split('-')[1]) : 0);
         } else if (key === 'hitCount') {
           result =
             (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
@@ -410,13 +413,17 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     };
   });
 
-  const rule = useMemo(() => currentRow && rules[currentRow?.ruleId], [currentRow, rules]);
+  const rule = useMemo(
+    () => (currentRow && currentRow.ruleId ? rules[currentRow.ruleId] : undefined),
+    [currentRow, rules],
+  );
 
   const ruleInstance: RuleInstance | undefined = useMemo<RuleInstance | undefined>(() => {
     return currentRow && currentRow.id
       ? updatedRuleInstances[currentRow.id] || currentRow
       : undefined;
   }, [currentRow, updatedRuleInstances]);
+  const isV8 = useIsV8RuleInstance(ruleInstance);
 
   return (
     <>
@@ -432,36 +439,56 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         params={params}
         onChangeParams={setParams}
       />
-      {props.simulationMode ? (
-        <RuleConfigurationSimulationDrawer
-          rule={rule}
-          ruleInstance={ruleInstance!}
-          isVisible={showDetail}
-          onChangeVisibility={setShowDetail}
-          onRuleInstanceUpdated={(ruleInstance) => {
-            handleRuleInstanceUpdate(ruleInstance);
-            setShowDetail(false);
-          }}
-        />
-      ) : (
-        <RuleConfigurationDrawer
-          rule={rule}
-          readOnly={!canWriteRules || ruleState === 'READ'}
-          ruleInstance={ruleInstance}
-          isVisible={showDetail}
-          onChangeVisibility={setShowDetail}
-          onRuleInstanceUpdated={(ruleInstance) => {
-            handleRuleInstanceUpdate(ruleInstance);
-            setShowDetail(false);
-            reloadTable();
-          }}
-          isClickAwayEnabled={ruleState === 'READ'}
-          onChangeToEditMode={() => {
-            setRuleState('EDIT');
-          }}
-          type={ruleState === 'DUPLICATE' ? 'DUPLICATE' : 'EDIT'}
-        />
-      )}
+      {ruleInstance ? (
+        props.simulationMode ? (
+          <RuleConfigurationSimulationDrawer
+            rule={rule}
+            ruleInstance={ruleInstance}
+            isVisible={showDetail}
+            onChangeVisibility={setShowDetail}
+            onRuleInstanceUpdated={(ruleInstance) => {
+              handleRuleInstanceUpdate(ruleInstance);
+              setShowDetail(false);
+            }}
+          />
+        ) : isV8 ? (
+          <RuleConfigurationDrawerV8
+            rule={rule}
+            readOnly={!canWriteRules || ruleState === 'READ'}
+            ruleInstance={ruleInstance}
+            isVisible={showDetail}
+            onChangeVisibility={setShowDetail}
+            onRuleInstanceUpdated={(ruleInstance) => {
+              handleRuleInstanceUpdate(ruleInstance);
+              setShowDetail(false);
+              reloadTable();
+            }}
+            isClickAwayEnabled={ruleState === 'READ'}
+            onChangeToEditMode={() => {
+              setRuleState('EDIT');
+            }}
+            type={ruleState === 'DUPLICATE' ? 'DUPLICATE' : 'EDIT'}
+          />
+        ) : (
+          <RuleConfigurationDrawer
+            rule={rule}
+            readOnly={!canWriteRules || ruleState === 'READ'}
+            ruleInstance={ruleInstance}
+            isVisible={showDetail}
+            onChangeVisibility={setShowDetail}
+            onRuleInstanceUpdated={(ruleInstance) => {
+              handleRuleInstanceUpdate(ruleInstance);
+              setShowDetail(false);
+              reloadTable();
+            }}
+            isClickAwayEnabled={ruleState === 'READ'}
+            onChangeToEditMode={() => {
+              setRuleState('EDIT');
+            }}
+            type={ruleState === 'DUPLICATE' ? 'DUPLICATE' : 'EDIT'}
+          />
+        )
+      ) : null}
     </>
   );
 };

@@ -59,7 +59,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       return
     }
     const rules = await ruleRepository.getRulesByIds(
-      ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
+      ruleInstances.map((ruleInstance) => ruleInstance.ruleId!)
     )
     const users = await userRepository.getMongoUsersByIds(userIds)
     const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)

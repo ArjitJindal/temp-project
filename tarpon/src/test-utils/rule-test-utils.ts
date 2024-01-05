@@ -419,7 +419,7 @@ export function testAggregationRebuild(
         TEST_RULE_INSTANCE_ID
       )) as RuleInstance
       const rule = (await ruleRepository.getRuleById(
-        ruleInstance!.ruleId
+        ruleInstance!.ruleId!
       )) as Rule
       await ruleInstanceRepository.createOrUpdateRuleInstance({
         ...ruleInstance!,

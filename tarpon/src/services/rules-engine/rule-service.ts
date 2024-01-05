@@ -12,6 +12,7 @@ import {
   TRANSACTION_HISTORICAL_FILTERS,
   USER_FILTERS,
 } from './filters'
+import { isV8Rule, isV8RuleInstance } from './utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -145,40 +146,48 @@ export class RuleService {
   }
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
-    this.assertValidRiskLevelParameters(
-      rule.defaultRiskLevelActions,
-      rule.defaultRiskLevelParameters
-    )
-    RuleService.validateRuleParametersSchema(
-      ALL_RULES[rule.ruleImplementationName!].getSchema(),
-      rule.defaultParameters,
-      rule.defaultRiskLevelParameters
-    )
+    if (!isV8Rule(rule)) {
+      this.assertValidRiskLevelParameters(
+        rule.defaultRiskLevelActions,
+        rule.defaultRiskLevelParameters
+      )
+      RuleService.validateRuleParametersSchema(
+        ALL_RULES[rule.ruleImplementationName!].getSchema(),
+        rule.defaultParameters,
+        rule.defaultRiskLevelParameters
+      )
+    }
     return this.ruleRepository.createOrUpdateRule(rule)
   }
 
   async createOrUpdateRuleInstance(
     ruleInstance: RuleInstance
   ): Promise<RuleInstance> {
-    const rule = await this.ruleRepository.getRuleById(ruleInstance.ruleId)
-    if (!rule) {
+    const rule = ruleInstance.ruleId
+      ? await this.ruleRepository.getRuleById(ruleInstance.ruleId)
+      : null
+    if (!isV8RuleInstance(ruleInstance) && !rule) {
       throw new createHttpError.BadRequest(
         `Rule ID ${ruleInstance.ruleId} not found`
       )
     }
 
-    this.assertValidRiskLevelParameters(
-      ruleInstance.riskLevelActions,
-      ruleInstance.riskLevelParameters
-    )
-    RuleService.validateRuleParametersSchema(
-      ALL_RULES[rule.ruleImplementationName!].getSchema(),
-      ruleInstance.parameters,
-      ruleInstance.riskLevelParameters
-    )
+    if (!isV8RuleInstance(ruleInstance)) {
+      this.assertValidRiskLevelParameters(
+        ruleInstance.riskLevelActions,
+        ruleInstance.riskLevelParameters
+      )
+      RuleService.validateRuleParametersSchema(
+        ALL_RULES[rule!.ruleImplementationName!].getSchema(),
+        ruleInstance.parameters,
+        ruleInstance.riskLevelParameters
+      )
+    }
+    // TODO (V8): FR-3985
+    const type = rule ? rule.type : 'TRANSACTION'
     return this.ruleInstanceRepository.createOrUpdateRuleInstance({
       ...ruleInstance,
-      type: rule.type,
+      type,
     })
   }
 
