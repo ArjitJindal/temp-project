@@ -1,0 +1,29 @@
+import { Query, Builder, BuilderProps, Config } from '@react-awesome-query-builder/ui';
+import '@react-awesome-query-builder/ui/css/styles.css';
+import React from 'react';
+import { Operators } from '@react-awesome-query-builder/core';
+import s from './index.module.less';
+import { LogicBuilderValue } from './types';
+
+const renderBuilder = (props: BuilderProps) => (
+  <div className="query-builder">
+    <Builder {...props} />
+  </div>
+);
+
+interface Props {
+  operators?: Operators;
+  config: Config;
+  value?: LogicBuilderValue;
+  onChange?: (newValue: LogicBuilderValue, config: Config) => void;
+}
+
+export default function LogicBuilder(props: Props) {
+  const { value, onChange, config } = props;
+
+  return (
+    <div className={s.root}>
+      <Query {...config} value={value} onChange={onChange} renderBuilder={renderBuilder} />
+    </div>
+  );
+}

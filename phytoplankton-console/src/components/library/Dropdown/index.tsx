@@ -61,17 +61,13 @@ export default function Dropdown<T extends string | number = string>(props: Prop
         }
       }}
       disabled={!hasUserPermissions}
-    >
-      {options.map((option) => (
-        <AntMenu.Item
-          key={option.value.toString()}
-          disabled={option.isDisabled}
-          className={cn(optionClassName)}
-        >
-          {option.label ?? option.value}
-        </AntMenu.Item>
-      ))}
-    </AntMenu>
+      items={options.map((option) => ({
+        key: option.value.toString(),
+        disabled: option.isDisabled,
+        className: cn(optionClassName),
+        label: option.label ?? option.value,
+      }))}
+    />
   );
 
   return (

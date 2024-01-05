@@ -1,0 +1,155 @@
+@import 'src/components/ui/colors';
+
+@border-color: @fr-colors-v2-gray-2;
+
+.root {
+  :global {
+    .group {
+      background: transparent;
+      border: none;
+    }
+    .rule {
+      background: @fr-colors-v2-highlight-flagrightBlue;
+      display: flex;
+      align-items: flex-start;
+    }
+    .rule--body {
+      text-align: left;
+      gap: 12px;
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-columns: minmax(200px, auto) minmax(120px, min-content) 3fr;
+    }
+    .rule--field {
+      min-width: 120px;
+      flex: 1;
+    }
+    .rule--operator {
+      min-width: 100px;
+      flex: 1;
+      margin-left: 0;
+      margin-right: 0;
+    }
+    .rule--value {
+      flex: 1;
+      display: flex;
+
+      .rule--widget {
+        display: flex;
+        flex: 1;
+        gap: 12px;
+      }
+
+      .widget--widget {
+        margin-bottom: 0;
+        flex: 1;
+      }
+    }
+    .widget--valuesrc {
+      margin-left: 0;
+      margin-right: 0;
+      margin-top: 0 !important;
+      min-width: 100px;
+    }
+    .group--actions {
+      display: flex;
+      gap: 8px;
+      margin-left: 14px;
+    }
+    .group--conjunctions {
+      background: @fr-colors-v2-case-alert-status-fills-in-review;
+      padding: 0 8px;
+      gap: 8px;
+      display: flex;
+      align-items: center;
+      border-radius: 2px;
+      height: 24px;
+
+      .group--drag-handler {
+        margin-right: 0;
+        margin-top: 0;
+        margin-left: 0;
+        display: flex;
+      }
+
+      label {
+        margin-left: 4px;
+        text-transform: uppercase;
+
+        &:not(:last-child) {
+          margin-right: 8px;
+        }
+      }
+    }
+    .group--children {
+      > .group-or-rule-container {
+        &:first-child {
+          > .group-or-rule {
+            &::before {
+              border-radius: 0 !important;
+            }
+          }
+        }
+
+        > .group-or-rule {
+          &::after {
+            border-color: @border-color;
+            border-width: 0 0 0 1px;
+          }
+
+          &::before {
+            border-color: @border-color;
+            border-width: 0 0 1px 1px;
+          }
+
+          &.group::before {
+            left: -13px !important;
+            width: 24px;
+          }
+          &.group::after {
+            left: -13px !important;
+          }
+        }
+      }
+    }
+    .group--header:not(.no--children):not(.hide--conjs)::before {
+      border-color: @border-color;
+      border-width: 0 0 0 1px;
+      top: 23px;
+    }
+    .query-builder {
+      margin: 0 !important;
+    }
+  }
+}
+
+.selectedConjunction {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+
+  &.isDisabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .arrowIcon {
+    width: 16px;
+  }
+}
+
+.delRuleButton {
+  border: none;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  > svg {
+    width: 16px;
+  }
+}

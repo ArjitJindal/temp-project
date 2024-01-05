@@ -1,0 +1,226 @@
+{
+  "TRANSACTION:type": {
+    "label": "Transaction / type",
+    "type": "select",
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "listValues": [
+        {
+          "value": "DEPOSIT",
+          "title": "Deposit"
+        },
+        {
+          "value": "TRANSFER",
+          "title": "Transfer"
+        },
+        {
+          "value": "EXTERNAL_PAYMENT",
+          "title": "External Payment"
+        },
+        {
+          "value": "WITHDRAWAL",
+          "title": "Withdrawal"
+        },
+        {
+          "value": "REFUND",
+          "title": "Refund"
+        },
+        {
+          "value": "OTHER",
+          "title": "Other"
+        }
+      ]
+    }
+  },
+  "TRANSACTION:state": {
+    "label": "Transaction / state",
+    "type": "select",
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "listValues": [
+        {
+          "value": "CREATED",
+          "title": "Created"
+        },
+        {
+          "value": "PROCESSING",
+          "title": "Processing"
+        },
+        {
+          "value": "SENT",
+          "title": "Sent"
+        },
+        {
+          "value": "EXPIRED",
+          "title": "Expired"
+        },
+        {
+          "value": "DECLINED",
+          "title": "Declined"
+        },
+        {
+          "value": "SUSPENDED",
+          "title": "Suspended"
+        },
+        {
+          "value": "REFUNDED",
+          "title": "Refunded"
+        },
+        {
+          "value": "SUCCESSFUL",
+          "title": "Successful"
+        }
+      ]
+    }
+  },
+  "USER:userAgeDays": {
+    "label": "User / user age (days)",
+    "type": "number",
+    "preferWidgets": ["slider", "rangeslider"],
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "marks": {
+        "0": "0",
+        "120": "120"
+      }
+    }
+  },
+  "USER:userAgeMonths": {
+    "label": "User / user age (months)",
+    "type": "number",
+    "preferWidgets": ["slider", "rangeslider"],
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "marks": {
+        "0": "0",
+        "120": "120"
+      }
+    }
+  },
+  "USER:userAgeYears": {
+    "label": "User / user age (years)",
+    "type": "number",
+    "preferWidgets": ["slider", "rangeslider"],
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "marks": {
+        "0": "0",
+        "120": "120"
+      }
+    }
+  },
+  "USER:userCreationAgeDays": {
+    "label": "User / User age on platform: (days)",
+    "type": "number",
+    "preferWidgets": ["slider", "rangeslider"],
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "marks": {
+        "0": "0",
+        "120": "120"
+      }
+    }
+  },
+  "USER:userCreationAgeMonths": {
+    "label": "User / User age on platform: (months)",
+    "type": "number",
+    "preferWidgets": ["slider", "rangeslider"],
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "marks": {
+        "0": "0",
+        "120": "120"
+      }
+    }
+  },
+  "USER:userCreationAgeYears": {
+    "label": "User / User age on platform: (years)",
+    "type": "number",
+    "preferWidgets": ["slider", "rangeslider"],
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "marks": {
+        "0": "0",
+        "120": "120"
+      }
+    }
+  },
+  "TRANSACTION:transaction.productType": {
+    "label": "Transaction / product type",
+    "type": "text",
+    "valueSources": ["value", "field", "func"]
+  },
+  "TRANSACTION:transaction.originAmountDetails.country": {
+    "label": "Transaction / origin country",
+    "type": "select",
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "listValues": [
+        {
+          "title": "Afghanistan",
+          "value": "AF"
+        },
+        {
+          "title": "Albania",
+          "value": "AL"
+        },
+        {
+          "title": "Algeria",
+          "value": "DZ"
+        },
+        {
+          "title": "American Samoa",
+          "value": "AS"
+        }
+      ]
+    }
+  },
+  "TRANSACTION:transaction.destinationAmountDetails.country": {
+    "label": "Transaction / destination country",
+    "type": "select",
+    "valueSources": ["value", "field", "func"],
+    "fieldSettings": {
+      "listValues": [
+        {
+          "title": "Afghanistan",
+          "value": "AF"
+        },
+        {
+          "title": "Albania",
+          "value": "AL"
+        },
+        {
+          "title": "Algeria",
+          "value": "DZ"
+        },
+        {
+          "title": "American Samoa",
+          "value": "AS"
+        }
+      ]
+    }
+  },
+  "TRANSACTION:id": {
+    "label": "Transaction / id",
+    "type": "text",
+    "valueSources": ["value", "field", "func"]
+  }
+}

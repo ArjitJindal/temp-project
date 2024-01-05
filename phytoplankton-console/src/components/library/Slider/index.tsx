@@ -5,7 +5,7 @@ import { SliderBaseProps as AntSliderBaseProps } from 'antd/lib/slider';
 import s from './index.module.less';
 import { InputProps } from '@/components/library/Form';
 
-interface CommonProps {
+export interface CommonProps {
   min?: number;
   max?: number;
   step?: number;
@@ -24,7 +24,7 @@ interface RangeModeProps extends CommonProps, InputProps<[number, number]> {
   endExclusive?: boolean;
 }
 
-type Props = SingleModeProps | RangeModeProps;
+export type Props = SingleModeProps | RangeModeProps;
 
 export default function Slider(props: Props) {
   const commonProps: AntSliderBaseProps = {
