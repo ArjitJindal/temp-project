@@ -39,7 +39,7 @@ describe('Rule create and delete', () => {
         cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
         cy.get('input[data-cy="rule-action-selector"]').eq(2).click();
         cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
-        cy.message(`Rule updated - R-1 (${ruleInstanceId})`).should('exist');
+        cy.message(`Rule updated - ${ruleInstanceId} (R-1)`).should('exist');
       }
     });
   }
