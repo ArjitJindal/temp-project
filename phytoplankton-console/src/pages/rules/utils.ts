@@ -377,7 +377,7 @@ export function formValuesToRuleInstanceV8(
     casePriority: alertCreationDetailsStep.alertPriority,
     nature: basicDetailsStep.ruleNature,
     labels: basicDetailsStep.ruleLabels,
-    checksFor: initialRuleInstance.checksFor,
+    checksFor: initialRuleInstance.checksFor ?? [],
     alertCreatedFor: alertCreationDetailsStep.alertCreatedFor,
     falsePositiveCheckEnabled: alertCreationDetailsStep.falsePositiveCheckEnabled === 'true',
     queueId: alertCreationDetailsStep.queueId,
