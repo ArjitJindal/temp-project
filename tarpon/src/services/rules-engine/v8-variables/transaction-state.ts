@@ -7,6 +7,7 @@ import { TransactionState } from '@/@types/openapi-public/TransactionState'
 export const TRANSACTION_STATE: TransactionRuleVariable<TransactionState> = {
   key: 'state',
   entity: 'TRANSACTION',
+  valueType: 'string',
   uiDefinition: {
     label: 'state',
     type: 'select',

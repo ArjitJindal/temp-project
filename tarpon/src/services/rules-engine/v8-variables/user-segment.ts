@@ -12,6 +12,7 @@ const createConsumerUserSegmentVariable = (): ConsumerUserRuleVariable<
 > => ({
   key: `segment`,
   entity: 'CONSUMER_USER',
+  valueType: 'string',
   uiDefinition: {
     label: `segment`,
     type: 'select',
@@ -33,6 +34,7 @@ const createBusinessUserSegmentVariable = (): BusinessUserRuleVariable<
 > => ({
   key: `segment`,
   entity: 'BUSINESS_USER',
+  valueType: 'string',
   uiDefinition: {
     label: `segment`,
     type: 'select',

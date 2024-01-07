@@ -5,6 +5,7 @@ export const TRANSACTION_PRODUCT_TYPE: TransactionRuleVariable<
 > = {
   key: 'transaction.productType',
   entity: 'TRANSACTION',
+  valueType: 'string',
   uiDefinition: {
     label: 'product type',
     type: 'text',

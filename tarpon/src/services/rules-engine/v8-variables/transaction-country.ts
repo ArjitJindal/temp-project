@@ -17,6 +17,7 @@ const createTransactionRuleVariable = ({
 }: RuleVariableConfig): TransactionRuleVariable<CountryCode | undefined> => ({
   key,
   entity: 'TRANSACTION',
+  valueType: 'string',
   uiDefinition: {
     label,
     type: 'select',

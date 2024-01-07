@@ -1,5 +1,6 @@
 import cn from 'clsx';
 import { Col, Row } from 'antd';
+import React from 'react';
 import s from './index.module.less';
 import ExclamationCircleIcon from './exclamation-circle.react.svg';
 import AlertFillIcon from '@/components/ui/icons/Remix/system/alert-fill.react.svg';
@@ -8,7 +9,7 @@ import CheckboxCircleFillIcon from '@/components/ui/icons/Remix/system/checkbox-
 
 interface Props {
   type: 'error' | 'warning' | 'info' | 'success';
-  children: string;
+  children: React.ReactNode;
 }
 
 export default function Alert(props: Props) {

@@ -141,6 +141,10 @@ const config: Config = [
         story: Message,
       },
       {
+        key: 'Tag',
+        story: Tag,
+      },
+      {
         key: 'Tooltip',
         story: Tooltip,
       },

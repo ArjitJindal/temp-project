@@ -18,6 +18,7 @@ export interface TagWithActionsProps {
   className?: string;
   children: string;
   actions: TagAction[];
+  maxWidth?: number;
 }
 
 export type Props = TagWithActionsProps;
@@ -32,7 +33,9 @@ export default function Tag(props: Props): JSX.Element {
 function TagWithActions(props: TagWithActionsProps): JSX.Element {
   return (
     <div className={cn(s.root, s[`kind-${props.kind}`], props.className)}>
-      <div className={s.text}>{props.children}</div>
+      <div className={s.text} style={{ maxWidth: props.maxWidth }}>
+        {props.children}
+      </div>
       <div className={s.actions}>
         {props.actions.map(({ icon, action, key, confirm }) => {
           if (confirm == null) {

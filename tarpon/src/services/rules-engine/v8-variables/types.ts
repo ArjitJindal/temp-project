@@ -11,6 +11,7 @@ export interface RuleVariable {
     | 'BUSINESS_USER'
     | 'PAYMENT_DETAILS'
     | 'USER'
+  valueType: 'string' | 'number' | 'boolean' | 'date'
   uiDefinition: FieldOrGroup
   load: (...args: any[]) => Promise<any>
 }

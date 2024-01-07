@@ -23,6 +23,7 @@ export const CONSUMER_USER_ACQUISITION_CHANNEL: ConsumerUserRuleVariable<
 > = {
   key: 'acquisitionChannel',
   entity: 'CONSUMER_USER',
+  valueType: 'string',
   uiDefinition,
   load: async (user: User) => {
     return user.acquisitionChannel
@@ -33,6 +34,7 @@ export const BUSINESS_USER_ACQUISITION_CHANNEL: BusinessUserRuleVariable<
 > = {
   key: 'acquisitionChannel',
   entity: 'BUSINESS_USER',
+  valueType: 'string',
   uiDefinition,
   load: async (user: Business) => {
     return user.acquisitionChannel

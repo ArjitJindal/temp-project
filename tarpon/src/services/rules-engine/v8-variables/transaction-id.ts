@@ -4,6 +4,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 export const TRANSACTION_ID: TransactionRuleVariable<string> = {
   key: 'id',
   entity: 'TRANSACTION',
+  valueType: 'string',
   uiDefinition: {
     label: 'id',
     type: 'text',

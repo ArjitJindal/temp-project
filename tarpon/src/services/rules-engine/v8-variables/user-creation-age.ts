@@ -38,6 +38,7 @@ const createConsumerCreationAgeVariable = (
 ): ConsumerUserRuleVariable<number | undefined> => ({
   key,
   entity: 'CONSUMER_USER',
+  valueType: 'number',
   uiDefinition: getUiDefinition(unit),
   load: async (user: User) => calculateAge(user, unit),
 })
@@ -47,6 +48,7 @@ const createBusinessCreationAgeVariable = (
 ): BusinessUserRuleVariable<number | undefined> => ({
   key,
   entity: 'BUSINESS_USER',
+  valueType: 'number',
   uiDefinition: getUiDefinition(unit),
   load: async (user: User) => calculateAge(user, unit),
 })

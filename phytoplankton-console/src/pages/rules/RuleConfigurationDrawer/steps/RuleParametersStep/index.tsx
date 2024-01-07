@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import s from './style.module.less';
 import { AdvancedOptions } from './AdvancedOptions';
 import { RuleLogicEditorV8 } from './RuleLogicEditorV8';
+import RuleAggregationVariablesEditor from './RuleAggregationVariablesEditor';
 import {
   RiskLevelRuleActions,
   RiskLevelRuleParameters,
@@ -82,15 +83,27 @@ function RuleSpecificParameters(props: Props) {
       />
       <PropertyListLayout>
         {v8Enabled && isSuperAdmin(user) && (
-          <GenericFormField<FormValues> name={'ruleLogic'}>
-            {(props: FormFieldRenderProps<any>) => (
-              <RuleLogicEditorV8
-                jsonLogic={props.value}
-                aggregationVariables={logicAggregationVariablesField?.value}
-                onChange={props.onChange!}
-              />
-            )}
-          </GenericFormField>
+          <>
+            <GenericFormField<FormValues, 'ruleLogicAggregationVariables'>
+              name={'ruleLogicAggregationVariables'}
+            >
+              {(props) => (
+                <RuleAggregationVariablesEditor
+                  aggregationVariables={props?.value}
+                  onChange={props.onChange!}
+                />
+              )}
+            </GenericFormField>
+            <GenericFormField<FormValues> name={'ruleLogic'}>
+              {(props: FormFieldRenderProps<any>) => (
+                <RuleLogicEditorV8
+                  jsonLogic={props.value}
+                  aggregationVariables={logicAggregationVariablesField?.value}
+                  onChange={props.onChange!}
+                />
+              )}
+            </GenericFormField>
+          </>
         )}
 
         <NestedForm name={'ruleParameters'}>

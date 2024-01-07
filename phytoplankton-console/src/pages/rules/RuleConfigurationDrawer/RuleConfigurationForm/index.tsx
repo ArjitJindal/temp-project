@@ -328,7 +328,8 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
       ruleParametersStep.ruleParameters =
         rule?.defaultParameters ?? RULE_PARAMETERS_STEP_INITIAL_VALUES.ruleParameters;
       ruleParametersStep.ruleLogic = rule?.defaultLogic;
-      ruleParametersStep.ruleLogicAggregationVariables = rule?.defaultLogicAggregationVariables;
+      ruleParametersStep.ruleLogicAggregationVariables =
+        rule?.defaultLogicAggregationVariables ?? [];
     }
     return {
       basicDetailsStep: {

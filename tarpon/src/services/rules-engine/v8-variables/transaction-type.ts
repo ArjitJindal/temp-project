@@ -8,6 +8,7 @@ import { TransactionType } from '@/@types/openapi-public/TransactionType'
 export const TRANSACTION_TYPE: TransactionRuleVariable<TransactionType> = {
   key: 'type',
   entity: 'TRANSACTION',
+  valueType: 'string',
   uiDefinition: {
     label: 'type',
     type: 'select',

@@ -5421,6 +5421,8 @@ components:
       properties:
         key:
           type: string
+        name:
+          type: string
         type:
           $ref: '#/components/schemas/RuleAggregationType'
         direction:
@@ -5447,6 +5449,18 @@ components:
         - aggregationFieldKey
         - aggregationFunc
         - timeWindow
+    RuleAggregationTimeWindowGranularity:
+      title: RuleAggregationTimeWindowGranularity
+      type: string
+      enum:
+        - second
+        - minute
+        - hour
+        - day
+        - week
+        - month
+        - year
+        - fiscal_year
     RuleAggregationTimeWindow:
       title: RuleAggregationTimeWindow
       type: object
@@ -5454,16 +5468,7 @@ components:
         units:
           type: number
         granularity:
-          type: string
-          enum:
-            - second
-            - minute
-            - hour
-            - day
-            - week
-            - month
-            - year
-            - fiscal_year
+          $ref: '#/components/schemas/RuleAggregationTimeWindowGranularity'
         rollingBasis:
           type: boolean
         fiscalYear:
