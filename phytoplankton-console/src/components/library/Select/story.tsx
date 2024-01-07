@@ -1,6 +1,7 @@
 import React from 'react';
 import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
+import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 
 export default function (): JSX.Element {
   return (
@@ -220,6 +221,48 @@ export default function (): JSX.Element {
               }}
             />
           </>
+        )}
+      </UseCase>
+      <UseCase
+        title={'Auto trim'}
+        initialState={{
+          singleValue: 'option2',
+          multiValue: ['option1', 'option2'],
+        }}
+      >
+        {([state, setState]) => (
+          <PropertyMatrix
+            xLabel="mode"
+            yLabel="size"
+            x={['SINGLE', 'MULTIPLE', 'TAGS'] as const}
+            y={['DEFAULT', 'LARGE'] as const}
+          >
+            {(mode, size) => (
+              <Component
+                mode={mode}
+                dropdownMatchWidth={false}
+                autoTrim={true}
+                isCopyable={true}
+                placeholder={'Single select'}
+                options={[
+                  { value: 'option1', label: 'First option' },
+                  {
+                    value: 'option2',
+                    label:
+                      'Second option, very very very very very very very very very very very long text here',
+                  },
+                ]}
+                size={size}
+                value={mode === 'SINGLE' ? state.singleValue : state.multiValue}
+                onChange={(newValue) => {
+                  setState((prevState) => ({
+                    ...prevState,
+                    [mode === 'SINGLE' ? 'singleValue' : 'multiValue']: newValue,
+                  }));
+                }}
+              />
+            )}
+          </PropertyMatrix>
         )}
       </UseCase>
     </>

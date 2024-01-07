@@ -31,6 +31,9 @@ interface CommonProps<Value extends Comparable> {
   className?: string;
   innerRef?: React.RefObject<any>;
   isCopyable?: boolean;
+  portaled?: boolean;
+  dropdownMatchWidth?: boolean;
+  autoTrim?: boolean;
 }
 
 export interface SingleProps<Value extends Comparable>
@@ -56,6 +59,7 @@ export type Props<Value extends Comparable> =
 
 export default function Select<Value extends Comparable = string>(props: Props<Value>) {
   const {
+    mode = 'SINGLE',
     isDisabled,
     options,
     placeholder,
@@ -68,6 +72,9 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     value,
     onChange,
     allowClear = true,
+    portaled = false,
+    dropdownMatchWidth = true,
+    autoTrim = false,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
@@ -131,19 +138,36 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     setIsHovered(false);
   };
 
+  let dropdownMatchSelectWidth;
+  if (!dropdownMatchWidth) {
+    dropdownMatchSelectWidth = false;
+  } else {
+    dropdownMatchSelectWidth = selectInput.current
+      ? selectInput.current?.getBoundingClientRect().width
+      : true;
+  }
   return (
     <div
       className={cn(
         s.root,
         isError && s.isError,
+        autoTrim && s.autoTrim,
         s[`size-${size}`],
-        (props.mode === 'MULTIPLE' || props.mode === 'TAGS') && s.extraPadding,
+        s[`mode-${mode ?? 'SINGLE'}`],
+        (mode === 'MULTIPLE' || mode === 'TAGS') && s.extraPadding,
         className,
       )}
       style={props.style}
       ref={selectInput}
     >
       <AntSelect
+        getPopupContainer={
+          portaled
+            ? () => {
+                return document.body;
+              }
+            : undefined
+        }
         ref={innerRef}
         placeholder={placeholder}
         allowClear={allowClear}
@@ -152,14 +176,14 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         }}
         onBlur={() => {
           setIsFocused(false);
-          applySearchStringValue(searchValue, props.mode !== 'TAGS');
+          applySearchStringValue(searchValue, mode !== 'TAGS');
           setSearchValue('');
         }}
         filterOption={() => true}
         showSearch={true}
         notFoundContent={props.notFoundContent}
         placement={props.dropdownPlacement}
-        mode={props.mode === 'MULTIPLE' ? 'multiple' : props.mode === 'TAGS' ? 'tags' : undefined}
+        mode={mode === 'MULTIPLE' ? 'multiple' : mode === 'TAGS' ? 'tags' : undefined}
         value={value}
         onChange={(newValue: Value | Value[] | undefined) => {
           props.onChange?.(newValue as (Value & Value[]) | undefined);
@@ -168,7 +192,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         onSearch={(searchString) => {
           setSearchValue(searchString);
           if (searchString.includes(SEPARATOR)) {
-            applySearchStringValue(searchString, props.mode !== 'TAGS');
+            applySearchStringValue(searchString, mode !== 'TAGS');
           }
         }}
         defaultValue={filteredOptions
@@ -176,9 +200,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
           .map((option) => option.value)}
         loading={isLoading}
         disabled={isDisabled || isLoading}
-        dropdownMatchSelectWidth={
-          selectInput.current ? selectInput.current?.getBoundingClientRect().width : true
-        }
+        dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         suffixIcon={
           isCopyable &&
           Array.isArray(props.value) &&

@@ -40,6 +40,30 @@
     }
   }
 
+  &.autoTrim {
+    &.mode-SINGLE {
+      width: 100%;
+
+      :global {
+        .ant-select-selector {
+          position: absolute !important;
+          width: 100%;
+          height: 100%;
+          top: 0;
+          left: 0;
+        }
+      }
+    }
+    &.mode-MULTIPLE,
+    &.mode-TAGS {
+      :global {
+        .ant-select-selection-overflow-item {
+          max-width: 200px !important;
+        }
+      }
+    }
+  }
+
   &.isError {
     :global {
       .ant-select-selector {
@@ -48,8 +72,17 @@
     }
   }
 
+  &.size-DEFAULT {
+    :global {
+      .ant-select,
+      .ant-select-selector {
+        min-height: 32px !important;
+      }
+    }
+  }
   &.size-LARGE {
     :global {
+      .ant-select,
       .ant-select-selector {
         min-height: 40px !important;
       }

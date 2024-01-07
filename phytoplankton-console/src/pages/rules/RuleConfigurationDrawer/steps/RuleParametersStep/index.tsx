@@ -2,8 +2,6 @@ import { capitalize, toLower } from 'lodash';
 import { useMemo } from 'react';
 import s from './style.module.less';
 import { AdvancedOptions } from './AdvancedOptions';
-import { RuleLogicEditorV8 } from './RuleLogicEditorV8';
-import RuleAggregationVariablesEditor from './RuleAggregationVariablesEditor';
 import {
   RiskLevelRuleActions,
   RiskLevelRuleParameters,
@@ -17,11 +15,7 @@ import {
 import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
 import StepHeader from '@/pages/rules/RuleConfigurationDrawer/StepHeader';
 import { RISK_LEVELS } from '@/utils/risk-levels';
-import {
-  getRiskLevelLabel,
-  useFeatureEnabled,
-  useSettings,
-} from '@/components/AppWrapper/Providers/SettingsProvider';
+import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import RuleActionSelector from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/RuleActionSelector';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import NestedForm from '@/components/library/Form/NestedForm';
@@ -29,8 +23,6 @@ import InputField from '@/components/library/Form/InputField';
 import { useFieldState, useFormState } from '@/components/library/Form/utils/hooks';
 import ApplyRiskLevels from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/ApplyRiskLevels';
 import Tabs, { TabItem } from '@/components/library/Tabs';
-import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
-import GenericFormField, { FormFieldRenderProps } from '@/components/library/Form/GenericFormField';
 
 export interface FormValues {
   ruleLogic?: object;
@@ -69,11 +61,6 @@ export default function RuleParametersStep(props: Props) {
 
 function RuleSpecificParameters(props: Props) {
   const { rule } = props;
-  const user = useAuth0User();
-  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
-  const logicAggregationVariablesField = useFieldState<FormValues, 'ruleLogicAggregationVariables'>(
-    'ruleLogicAggregationVariables',
-  );
 
   return (
     <>
@@ -82,30 +69,6 @@ function RuleSpecificParameters(props: Props) {
         description={'Configure parameters that are specific for this rule'}
       />
       <PropertyListLayout>
-        {v8Enabled && isSuperAdmin(user) && (
-          <>
-            <GenericFormField<FormValues, 'ruleLogicAggregationVariables'>
-              name={'ruleLogicAggregationVariables'}
-            >
-              {(props) => (
-                <RuleAggregationVariablesEditor
-                  aggregationVariables={props?.value}
-                  onChange={props.onChange!}
-                />
-              )}
-            </GenericFormField>
-            <GenericFormField<FormValues> name={'ruleLogic'}>
-              {(props: FormFieldRenderProps<any>) => (
-                <RuleLogicEditorV8
-                  jsonLogic={props.value}
-                  aggregationVariables={logicAggregationVariablesField?.value}
-                  onChange={props.onChange!}
-                />
-              )}
-            </GenericFormField>
-          </>
-        )}
-
         <NestedForm name={'ruleParameters'}>
           <JsonSchemaEditor parametersSchema={rule.parametersSchema} />
         </NestedForm>

@@ -1,11 +1,10 @@
-import { Utils as QbUtils, BasicConfig } from '@react-awesome-query-builder/ui';
+import { BasicConfig } from '@react-awesome-query-builder/ui';
 import '@react-awesome-query-builder/ui/css/styles.css';
-import { JsonTree } from '@react-awesome-query-builder/core';
 
 import cn from 'clsx';
 import React from 'react';
 import s from './index.module.less';
-import { LogicBuilderValue, LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
+import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets } from '@/components/ui/LogicBuilder/widgets';
 import Select, { Option } from '@/components/library/Select';
 import Label from '@/components/library/Label';
@@ -13,14 +12,6 @@ import Dropdown from '@/components/library/Dropdown';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-6-line.react.svg';
 import Button from '@/components/library/Button';
-
-export function prepareValue(value: JsonTree): LogicBuilderValue {
-  return QbUtils.loadTree(value);
-}
-
-export function parseValue(value: LogicBuilderValue): JsonTree {
-  return QbUtils.getTree(value);
-}
 
 const InitialConfig = BasicConfig;
 
@@ -76,6 +67,9 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
         return (
           <Label label={'Source'}>
             <Select
+              autoTrim={true}
+              dropdownMatchWidth={false}
+              portaled={true}
               allowClear={false}
               value={props.valueSrc}
               onChange={(newValue) => {
@@ -112,6 +106,9 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
         return (
           <Label label={'Variable'}>
             <Select
+              autoTrim={true}
+              dropdownMatchWidth={false}
+              portaled={true}
               allowClear={false}
               options={props.items.map((x) => ({ label: x.label, value: x.key }))}
               value={props.selectedKey}
@@ -129,6 +126,9 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
         return (
           <Label label={'Operator'}>
             <Select
+              autoTrim={true}
+              dropdownMatchWidth={false}
+              portaled={true}
               allowClear={false}
               options={props.items.map((x) => ({ label: x.label, value: x.key }))}
               value={props.selectedKey}

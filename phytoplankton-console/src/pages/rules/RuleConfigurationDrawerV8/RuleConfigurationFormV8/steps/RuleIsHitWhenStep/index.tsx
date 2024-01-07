@@ -1,3 +1,4 @@
+import React from 'react';
 import s from './style.module.less';
 import {
   RiskLevelRuleActions,
@@ -7,6 +8,9 @@ import {
   RuleAggregationVariable,
   TriggersOnHit,
 } from '@/apis';
+import { useFieldState } from '@/components/library/Form/utils/hooks';
+import DefineLogicCard from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/DefineLogicCard';
+import VariableDefinitionCard from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard';
 
 export interface RuleIsHitWhenStepFormValues {
   ruleLogic?: object;
@@ -20,8 +24,23 @@ export interface RuleIsHitWhenStepFormValues {
 
 export const INITIAL_VALUES: RuleIsHitWhenStepFormValues = {};
 
-interface Props {}
+export default function RuleIsHitWhenStep() {
+  const variablesFieldState = useFieldState<
+    RuleIsHitWhenStepFormValues,
+    'ruleLogicAggregationVariables'
+  >('ruleLogicAggregationVariables');
+  const logicFieldState = useFieldState<RuleIsHitWhenStepFormValues, 'ruleLogic'>('ruleLogic');
 
-export default function RuleIsHitWhenStep(_props: Props) {
-  return <div className={s.root}>RuleIsHitWhenStep</div>;
+  return (
+    <div className={s.root}>
+      <VariableDefinitionCard
+        aggregationVariables={variablesFieldState.value}
+        onChange={variablesFieldState.onChange}
+      />
+      <DefineLogicCard
+        variablesFieldState={variablesFieldState}
+        logicFieldState={logicFieldState}
+      />
+    </div>
+  );
 }

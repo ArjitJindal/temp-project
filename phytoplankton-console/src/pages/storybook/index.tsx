@@ -61,6 +61,7 @@ import SettingsCard from '@/components/library/SettingsCard/story';
 import Typography from '@/components/ui/Typography/story';
 import Spinner from '@/components/library/Spinner/story';
 import Filter from '@/components/library/Filter/story';
+import LogicBuilder from '@/components/ui/LogicBuilder/story';
 import Tag from '@/components/library/Tag/story';
 
 const config: Config = [
@@ -277,8 +278,12 @@ const config: Config = [
         story: RiskScoreDisplay,
       },
       {
-        key: '@/pages/dashboard/analysis/components/charts/Line/story',
+        key: '@/pages/dashboard/analysis/components/charts/Line',
         story: Line,
+      },
+      {
+        key: '@/components/ui/LogicBuilder',
+        story: LogicBuilder,
       },
       {
         key: 'JsonSchemaEditor',

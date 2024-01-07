@@ -38,7 +38,7 @@ import {
 function withNamespace(variable: RuleVariable) {
   return {
     ...variable,
-    key: `${variable.entity}:${variable.key}`,
+    key: `${variable.entity}:${variable.key.replace(/\./g, '-')}`,
     uiDefinition: {
       ...variable.uiDefinition,
       label: `${startCase(lowerCase(variable.entity))} / ${

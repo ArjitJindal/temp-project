@@ -770,14 +770,14 @@ export class RulesEngineService {
         return result.falsePositiveDetails
       }
     })
-    let ruleDescription = ruleInstance.ruleDescriptionAlias
+    let ruleDescription = (ruleInstance.ruleDescriptionAlias = '')
 
-    if (!ruleDescription) {
+    if (!ruleDescription && rule) {
       const ruleDescriptions = (
         ruleHit
           ? await Promise.all(
               filteredRuleResult!.map((result) =>
-                generateRuleDescription(rule!, parameters as Vars, result.vars)
+                generateRuleDescription(rule, parameters as Vars, result.vars)
               )
             )
           : [rule!.description]

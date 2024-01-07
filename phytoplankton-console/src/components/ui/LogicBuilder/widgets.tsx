@@ -113,6 +113,9 @@ const customSelectWidget: SelectWidget = {
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <Select
+          autoTrim={true}
+          dropdownMatchWidth={false}
+          portaled={true}
           allowClear={true}
           options={
             listValues.map((x) => {
@@ -149,6 +152,7 @@ const customMultiselectWidget: MultiSelectWidget = {
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <Select<string | number>
+          portaled={true}
           mode="MULTIPLE"
           allowClear={true}
           options={

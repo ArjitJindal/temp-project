@@ -8,4 +8,4 @@ export type LogicBuilderConfig = {
   disableNesting?: boolean;
 };
 
-export type LogicBuilderValue = ImmutableTree;
+export type LogicBuilderValue = ImmutableTree | undefined;

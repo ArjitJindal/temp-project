@@ -2,8 +2,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Tooltip } from 'antd';
 import { Link } from 'react-router-dom';
 import { isEqual } from 'lodash';
-import { getAggVarDefinition } from '../utils';
-import { RuleLogicEditorV8 } from '../RuleLogicEditorV8';
+import { getAggVarDefinition } from '../../../../../RuleConfigurationDrawer/steps/RuleParametersStep/utils';
+import { RuleLogicBuilder } from '../RuleLogicBuilder';
 import s from './style.module.less';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import * as Card from '@/components/ui/Card';
@@ -50,7 +50,7 @@ const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; 
   { value: 'RECEIVING', label: 'Receiving' },
   { value: 'SENDING_RECEIVING', label: 'All' },
 ];
-export const RuleAggregationVariableForm: React.FC<VariableFormProps> = ({
+export const VariableForm: React.FC<VariableFormProps> = ({
   variable,
   entityVariables,
   isNew,
@@ -191,7 +191,8 @@ export const RuleAggregationVariableForm: React.FC<VariableFormProps> = ({
             </Link>
           ) : (
             <Label label="Filters">
-              <RuleLogicEditorV8
+              <RuleLogicBuilder
+                entityVariableTypes={['TRANSACTION']}
                 jsonLogic={formValues.filtersLogic}
                 // NOTE: Only entity variables are allowed for aggregation variable filters
                 aggregationVariables={[]}

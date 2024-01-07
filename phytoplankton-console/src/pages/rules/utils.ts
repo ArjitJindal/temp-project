@@ -440,9 +440,7 @@ export function formValuesToRuleInstanceV8(
             : undefined,
         }
       : {
-          // logic: ruleLogic,
-          // TODO: testing only
-          logic: { and: [{ '==': [{ var: 'TRANSACTION:id' }, 'abc'] }] },
+          logic: ruleLogic,
           action: ruleAction ?? initialRuleInstance.action,
           triggersOnHit: removeEmpty(triggersOnHit) ?? defaultTriggersOnHit,
         }),
@@ -465,7 +463,13 @@ export function useUpdateRuleInstance(
         if (onRuleInstanceUpdated) {
           onRuleInstanceUpdated(updatedRuleInstance);
         }
-        message.success(`Rule updated - ${updatedRuleInstance.ruleId} (${updatedRuleInstance.id})`);
+        const ruleInfo = [
+          updatedRuleInstance.id,
+          updatedRuleInstance.ruleId && `(${updatedRuleInstance.ruleId})`,
+        ]
+          .filter(Boolean)
+          .join(' ');
+        message.success(`Rule updated - ${ruleInfo}`);
       },
       onError: async (err) => {
         message.fatal(`Unable to update the rule - ${getErrorMessage(err)}`, err);

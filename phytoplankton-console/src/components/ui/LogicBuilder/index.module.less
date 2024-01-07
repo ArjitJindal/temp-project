@@ -81,6 +81,9 @@
         }
       }
     }
+    .group-or-rule-container {
+      padding-right: 0;
+    }
     .group--children {
       > .group-or-rule-container {
         &:first-child {
@@ -119,6 +122,30 @@
     }
     .query-builder {
       margin: 0 !important;
+
+      > .group-container {
+        padding-right: 0 !important;
+
+        > .group-or-rule {
+          > .group--header {
+            margin-top: 0;
+            padding-left: 0;
+            padding-right: 0;
+
+            &::before {
+              left: 1px;
+            }
+          }
+          > .group--children {
+            padding-left: 14px;
+          }
+          > .group--footer {
+            padding-left: 0;
+            padding-right: 0;
+            margin-bottom: 0;
+          }
+        }
+      }
     }
   }
 }

@@ -1,11 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { v4 as uuid } from 'uuid';
-import { getAggVarDefinition } from '../utils';
+import { getAggVarDefinition } from '../../../../../RuleConfigurationDrawer/steps/RuleParametersStep/utils';
 import s from './style.module.less';
-import {
-  FormRuleAggregationVariable,
-  RuleAggregationVariableForm,
-} from './RuleAggregationVariableForm';
+import { FormRuleAggregationVariable, VariableForm } from './VariableForm';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import * as Card from '@/components/ui/Card';
@@ -23,7 +20,7 @@ interface RuleAggregationVariablesEditorProps {
   onChange: (newAggregationVariables: RuleAggregationVariable[]) => void;
 }
 
-const RuleAggregationVariablesEditor: React.FC<RuleAggregationVariablesEditorProps> = ({
+const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
   aggregationVariables,
   onChange,
 }) => {
@@ -129,7 +126,7 @@ const RuleAggregationVariablesEditor: React.FC<RuleAggregationVariablesEditorPro
         )}
       </Card.Section>
       {editingVariable && (
-        <RuleAggregationVariableForm
+        <VariableForm
           variable={editingVariable}
           isNew={isNewVariable}
           entityVariables={entityVariables}
@@ -141,4 +138,4 @@ const RuleAggregationVariablesEditor: React.FC<RuleAggregationVariablesEditorPro
   );
 };
 
-export default RuleAggregationVariablesEditor;
+export default VariableDefinitionCard;
