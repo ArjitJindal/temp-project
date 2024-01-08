@@ -13,7 +13,7 @@ import { ask } from '@/utils/openapi'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { ensureHttps } from '@/utils/http'
 
-const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output as a comma separate list For example:
+const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output all fields in different lines For example:
 
 Industry: Textiles
 Products: Shoes
