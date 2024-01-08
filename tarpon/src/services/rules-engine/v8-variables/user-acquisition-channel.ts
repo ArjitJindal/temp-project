@@ -1,42 +1,34 @@
 import { lowerCase, startCase } from 'lodash'
-import { FieldOrGroup } from '@react-awesome-query-builder/core'
-import { ConsumerUserRuleVariable, BusinessUserRuleVariable } from './types'
-import { AcquisitionChannel } from '@/@types/openapi-public/AcquisitionChannel'
-import { User } from '@/@types/openapi-internal/User'
+import { createRuleVariable } from './utils/variables'
+import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
+import { AcquisitionChannel } from '@/@types/openapi-internal/AcquisitionChannel'
 import { Business } from '@/@types/openapi-internal/Business'
-import { ACQUISITION_CHANNELS } from '@/@types/openapi-public-custom/AcquisitionChannel'
+import { User } from '@/@types/openapi-internal/User'
 
-const uiDefinition: FieldOrGroup = {
-  label: 'Acquisition Channel',
-  type: 'select',
-  valueSources: ['value', 'field', 'func'],
-  fieldSettings: {
-    listValues: ACQUISITION_CHANNELS.map((channel) => ({
-      value: channel,
-      title: startCase(lowerCase(channel)),
-    })),
-  },
+const createAcquisitionUserRuleVariable = (
+  type: 'CONSUMER_USER' | 'BUSINESS_USER'
+) => {
+  return createRuleVariable<AcquisitionChannel | undefined, typeof type>(
+    'CONSUMER_USER',
+    {
+      key: 'acquisitionChannel',
+      label: 'Acquisition Channel',
+      valueType: 'string',
+      load: async (user: User | Business) => user.acquisitionChannel,
+      uiDefinition: {
+        fieldSettings: {
+          listValues: ACQUISITION_CHANNELS.map((ac) => ({
+            title: startCase(lowerCase(ac)),
+            value: ac,
+          })),
+        },
+        type: 'select',
+      },
+    }
+  )
 }
+export const BUSINESS_USER_ACQUISITION_CHANNEL =
+  createAcquisitionUserRuleVariable('BUSINESS_USER')
 
-export const CONSUMER_USER_ACQUISITION_CHANNEL: ConsumerUserRuleVariable<
-  AcquisitionChannel | undefined
-> = {
-  key: 'acquisitionChannel',
-  entity: 'CONSUMER_USER',
-  valueType: 'string',
-  uiDefinition,
-  load: async (user: User) => {
-    return user.acquisitionChannel
-  },
-}
-export const BUSINESS_USER_ACQUISITION_CHANNEL: BusinessUserRuleVariable<
-  AcquisitionChannel | undefined
-> = {
-  key: 'acquisitionChannel',
-  entity: 'BUSINESS_USER',
-  valueType: 'string',
-  uiDefinition,
-  load: async (user: Business) => {
-    return user.acquisitionChannel
-  },
-}
+export const CONSUMER_USER_ACQUISITION_CHANNEL =
+  createAcquisitionUserRuleVariable('CONSUMER_USER')

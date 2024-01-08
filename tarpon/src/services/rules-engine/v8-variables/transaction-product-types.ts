@@ -1,17 +1,11 @@
-import { TransactionRuleVariable } from './types'
+import { createTransactionListRuleVariable } from './utils/variables'
 
-export const TRANSACTION_PRODUCT_TYPE: TransactionRuleVariable<
+export const TRANSACTION_PRODUCT_TYPE = createTransactionListRuleVariable<
   string | undefined
-> = {
+>({
   key: 'transaction.productType',
-  entity: 'TRANSACTION',
-  valueType: 'string',
-  uiDefinition: {
-    label: 'product type',
-    type: 'text',
-    valueSources: ['value', 'field', 'func'],
-  },
+  label: 'transaction product type',
   load: async (transaction) => {
     return transaction.productType
   },
-}
+})

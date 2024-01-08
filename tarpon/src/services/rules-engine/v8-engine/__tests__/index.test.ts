@@ -44,7 +44,7 @@ describe('aggregation', () => {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
           direction: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:id',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
             start: { units: 30, granularity: 'day' },
@@ -69,7 +69,7 @@ describe('aggregation', () => {
       key: 'agg:123',
       type: 'USER_TRANSACTIONS',
       direction: 'SENDING',
-      aggregationFieldKey: 'TRANSACTION:id',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
       aggregationFunc: 'COUNT',
       timeWindow: {
         start: { units: 30, granularity: 'day' },
@@ -119,7 +119,7 @@ describe('aggregation', () => {
       key: 'agg:123',
       type: 'USER_TRANSACTIONS',
       direction: 'SENDING',
-      aggregationFieldKey: 'TRANSACTION:id',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
       aggregationFunc: 'COUNT',
     } as const
     const resultNotWithinTimeWindow = await evaluator.evaluate(

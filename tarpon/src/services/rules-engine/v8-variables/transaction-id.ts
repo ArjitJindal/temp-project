@@ -1,16 +1,9 @@
 import { TransactionRuleVariable } from './types'
-import { Transaction } from '@/@types/openapi-public/Transaction'
+import { createTransactionListRuleVariable } from './utils/variables'
 
-export const TRANSACTION_ID: TransactionRuleVariable<string> = {
-  key: 'id',
-  entity: 'TRANSACTION',
-  valueType: 'string',
-  uiDefinition: {
-    label: 'id',
-    type: 'text',
-    valueSources: ['value', 'field', 'func'],
-  },
-  load: async (transaction: Transaction) => {
-    return transaction.transactionId
-  },
-}
+export const TRANSACTION_ID: TransactionRuleVariable<string> =
+  createTransactionListRuleVariable<string>({
+    key: 'transactionId',
+    label: 'transaction id',
+    load: async (transaction) => transaction.transactionId,
+  })

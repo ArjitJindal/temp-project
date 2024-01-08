@@ -4,7 +4,7 @@ import { TRANSACTION_TYPE } from './transaction-type'
 import {
   BusinessUserRuleVariable,
   ConsumerUserRuleVariable,
-  RuleVariable,
+  RuleVariableBase as RuleVariable,
   TransactionRuleVariable,
 } from './types'
 import {
@@ -34,6 +34,26 @@ import {
   CONSUMER_USER_AGE_MONTHS,
   CONSUMER_USER_AGE_YEARS,
 } from './user-age'
+import {
+  TRANSACTION_DESTINATION_PAYMENT_METHOD,
+  TRANSACTION_ORIGIN_PAYMENT_METHOD,
+} from './transaction-payment-method'
+import {
+  TRANSACTION_ORIGIN_WALLET_TYPE,
+  TRANSACTION_DESTINATION_WALLET_TYPE,
+} from './transaction-wallet-type'
+import {
+  TRANSACTION_ORIGIN_CARD_ISSUED_COUNTRIES,
+  TRANSACTION_DESTINATION_CARD_ISSUED_COUNTRIES,
+} from './transaction-card-issued-countries'
+import {
+  TRANSACTION_DESTINATION_MCC_CODES,
+  TRANSACTION_ORIGIN_MCC_CODES,
+} from './transaction-mcc-codes'
+import {
+  TRANSACTION_DESTINATION_PAYMENT_CHANNEL,
+  TRANSACTION_ORIGIN_PAYMENT_CHANNEL,
+} from './transaction-payment-channels'
 
 function withNamespace(variable: RuleVariable) {
   return {
@@ -55,7 +75,18 @@ const TRANSACTION_VARIABLES: TransactionRuleVariable[] = [
   TRANSACTION_ORIGIN_COUNTRY,
   TRANSACTION_DESTINATION_COUNTRY,
   TRANSACTION_ID,
+  TRANSACTION_ORIGIN_PAYMENT_METHOD,
+  TRANSACTION_DESTINATION_PAYMENT_METHOD,
+  TRANSACTION_ORIGIN_WALLET_TYPE,
+  TRANSACTION_DESTINATION_WALLET_TYPE,
+  TRANSACTION_ORIGIN_CARD_ISSUED_COUNTRIES,
+  TRANSACTION_DESTINATION_CARD_ISSUED_COUNTRIES,
+  TRANSACTION_ORIGIN_MCC_CODES,
+  TRANSACTION_DESTINATION_MCC_CODES,
+  TRANSACTION_ORIGIN_PAYMENT_CHANNEL,
+  TRANSACTION_DESTINATION_PAYMENT_CHANNEL,
 ]
+
 const USER_VARIABLES: Array<
   ConsumerUserRuleVariable | BusinessUserRuleVariable
 > = [

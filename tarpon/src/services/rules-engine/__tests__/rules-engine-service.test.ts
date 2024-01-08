@@ -581,7 +581,7 @@ describe('Verify Transaction: V8 engine', () => {
           key: 'agg:123',
           type: 'PAYMENT_DETAILS_TRSANCTIONS',
           direction: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:id',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
             start: { units: 1, granularity: 'day' },
