@@ -18,6 +18,10 @@ export type Config = {
     CLOUD_WATCH: {
       logRetention: RetentionDays
     }
+    FARGATE_BATCH_JOB_CONTAINER: {
+      CPU: number
+      MEMORY_LIMIT: number
+    }
     DYNAMODB: {
       READ_CAPACITY?: number
       WRITE_CAPACITY?: number

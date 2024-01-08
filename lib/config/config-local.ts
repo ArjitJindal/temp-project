@@ -8,6 +8,10 @@ export const config: Config = {
   stage: 'local',
   env: { account: account, region: region },
   resource: {
+    FARGATE_BATCH_JOB_CONTAINER: {
+      CPU: 1024,
+      MEMORY_LIMIT: 2048,
+    },
     CLOUD_WATCH: {
       logRetention: RetentionDays.TWO_WEEKS,
     },

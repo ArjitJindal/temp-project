@@ -9,6 +9,10 @@ export const config: Config = {
   stage: 'dev',
   env: { account, region },
   resource: {
+    FARGATE_BATCH_JOB_CONTAINER: {
+      CPU: 1024,
+      MEMORY_LIMIT: 2048,
+    },
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE: 512,
     },

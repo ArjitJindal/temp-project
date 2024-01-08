@@ -732,7 +732,12 @@ export class CdkTarponStack extends cdk.Stack {
       const fargateBatchJobTaskDefinition = createFargateTaskDefinition(
         this,
         StackConstants.FARGATE_BATCH_JOB_TASK_DEFINITION_NAME,
-        { role: ecsTaskExecutionRole }
+        {
+          role: ecsTaskExecutionRole,
+          cpu: config.resource.FARGATE_BATCH_JOB_CONTAINER.CPU,
+          memoryLimitMiB:
+            config.resource.FARGATE_BATCH_JOB_CONTAINER.MEMORY_LIMIT,
+        }
       )
 
       const fargateBatchJobContainer = addFargateContainer(

@@ -15,6 +15,10 @@ export const config: Config = {
   region: 'eu-1',
   env: { account, region },
   resource: {
+    FARGATE_BATCH_JOB_CONTAINER: {
+      CPU: 2048,
+      MEMORY_LIMIT: 4096,
+    },
     CLOUD_WATCH: {
       logRetention: RetentionDays.ONE_YEAR,
     },

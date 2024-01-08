@@ -206,7 +206,7 @@ export const DynamoDbKeys = {
   RULE_USER_TIME_AGGREGATION_LATEST_AVAILABLE_VERSION: (
     tenantId: string,
     ruleInstanceId: string,
-    userKeyId: string
+    userKeyId?: string
   ) => ({
     PartitionKeyID: `${tenantId}#aggregation#${RULE_INSTANCE_PREFIX}${ruleInstanceId}#version`,
     SortKeyID: userKeyId,
@@ -280,15 +280,15 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#${BUSINESS_USER_EVENT_KEY_IDENTIFIER}${USER_ID_PREFIX}${userId}`,
     SortKeyID: `${timestamp}`,
   }),
-  LIST_HEADER: (tenantId: string, listId: string) => ({
+  LIST_HEADER: (tenantId: string, listId?: string) => ({
     PartitionKeyID: `${tenantId}#lists`,
     SortKeyID: `${listId}`,
   }),
-  LIST_DELETED: (tenantId: string, listId: string) => ({
+  LIST_DELETED: (tenantId: string, listId?: string) => ({
     PartitionKeyID: `${tenantId}#deleted#lists`,
     SortKeyID: `${listId}`,
   }),
-  LIST_ITEM: (tenantId: string, listId: string, key: string) => ({
+  LIST_ITEM: (tenantId: string, listId: string, key?: string) => ({
     PartitionKeyID: `${tenantId}#list-item#${listId}`,
     SortKeyID: key,
   }),
@@ -331,13 +331,15 @@ export const DynamoDbKeys = {
   DEVICE_DATA_METRICS: (
     tenantId: string,
     userId: string,
-    type: string,
-    timestamp: number
+    type?: string,
+    timestamp?: number
   ) => ({
     PartitionKeyID: `${tenantId}#device-metrics-data#${userId}`,
     SortKeyID: `${type}#${timestamp}`,
   }),
 }
+
+export type DynamoDbKeyEnum = keyof typeof DynamoDbKeys
 
 export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   PaymentMethod,
