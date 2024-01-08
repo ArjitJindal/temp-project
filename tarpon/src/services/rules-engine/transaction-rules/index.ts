@@ -47,6 +47,7 @@ import HighRiskCountryRule from './high-risk-countries'
 import UsingTooManyBanksToMakePaymentsRule from './using-too-many-banks-to-make-payments'
 import { HighRiskIpAddressCountries } from './high-risk-ip-address-countries'
 import { TransactionRiskScoreRule } from './transaction-risk-score'
+import SameUserUsingTooManyPaymentIdentifiersRule from './same-user-using-too-many-payment-identifiers'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import BankNameChangeRule from '@/services/rules-engine/transaction-rules/bank-name-change'
@@ -89,6 +90,8 @@ export const _TRANSACTION_RULES = {
     TooManyUsersForSamePaymentIdentifierRule,
   'payment-method-name-levensthein-distance': PaymentMethodNameNameRule,
   'same-user-using-too-many-cards': SameUserUsingTooManyCardsRule,
+  'same-user-using-too-many-payment-identifiers':
+    SameUserUsingTooManyPaymentIdentifiersRule,
   'transactions-round-value-percentage': TransactionsRoundValuePercentageRule,
   'transactions-round-value-velocity': TransactionsRoundValueVelocityRule,
   'transactions-average-number-exceeded': TransactionsAverageNumberExceededRule,

@@ -13,13 +13,7 @@ export function getSenderKeys(
     disableDirection?: boolean
     matchPaymentDetails?: boolean
   }
-):
-  | {
-      PartitionKeyID: string
-      SortKeyID: string
-    }
-  | undefined
-  | null {
+): { PartitionKeyID: string; SortKeyID: string } | undefined | null {
   return DynamoDbKeys.ALL_TRANSACTION(
     tenantId,
     options?.matchPaymentDetails ? undefined : transaction.originUserId,

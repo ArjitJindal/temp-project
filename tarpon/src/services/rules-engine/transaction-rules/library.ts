@@ -45,6 +45,7 @@ import { HighRiskCountryRuleParameters } from './high-risk-countries'
 import { UsingTooManyBanksToMakePaymentsRuleParameters } from './using-too-many-banks-to-make-payments'
 import { HighRiskIpAddressCountriesParameters } from './high-risk-ip-address-countries'
 import { TransactionRiskScoreRuleParameters } from './transaction-risk-score'
+import { SameUserUsingTooManyPaymentIdentifiersParameters } from './same-user-using-too-many-payment-identifiers'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -622,7 +623,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-53',
       type: 'TRANSACTION',
-      name: 'Same unique payment identifier used by too many users.',
+      name: 'Same unique sender payment identifier used by too many users.',
       description:
         "Same payment identifier used by >= 'x' unique user IDs in time 't'",
       descriptionTemplate:
@@ -658,7 +659,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Same user using too many cards.',
       description:
-        'Same user using >= ‘x’ unique cards counted by card fingerprint id in time ‘t’.',
+        'Same user using >= ‘x’ unique sender cards counted by card fingerprint id in time ‘t’.',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} used {{ uniqueCardsCount }} unique cards above the limit of {{ parameters.uniqueCardsCountThreshold }}",
       defaultParameters,
@@ -667,6 +668,38 @@ const _RULES_LIBRARY: Array<
       ruleImplementationName: 'same-user-using-too-many-cards',
       labels: [],
       checksFor: ['User card fingerprint ID'],
+      defaultNature: 'FRAUD',
+      defaultCasePriority: 'P1',
+      typology: 'Acquiring Fraud',
+      typologyGroup: 'Card fraud',
+      typologyDescription:
+        'Attempts to use a multiple stolen cards to perform a purchase/top-up wallet',
+      source: 'Card Scheme Rules',
+    }
+  },
+  () => {
+    const defaultParameters: SameUserUsingTooManyPaymentIdentifiersParameters =
+      {
+        uniquePaymentIdentifiersCountThreshold: 10,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+        },
+      }
+
+    return {
+      id: 'R-55',
+      type: 'TRANSACTION',
+      name: 'Same sender user using too many payment identifiers.',
+      description:
+        'Same sender user using >= ‘x’ unique payment identifiers in time ‘t’.',
+      descriptionTemplate:
+        "{{ if-sender 'Sender' 'Receiver' }} used {{ uniquePaymentIdentifiersCount }} unique payment identifiers above the limit of {{ parameters.uniquePaymentIdentifiersCountThreshold }}",
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'same-user-using-too-many-payment-identifiers',
+      labels: [],
+      checksFor: ['User payment identifier'],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       typology: 'Acquiring Fraud',
