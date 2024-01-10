@@ -560,7 +560,7 @@ const _RULES_LIBRARY: Array<
           key: 'agg:R-30',
           type: 'USER_TRANSACTIONS',
           direction: 'SENDING_RECEIVING',
-          aggregationFieldKey: 'TRANSACTION:id',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
             start: { units: 1, granularity: 'day' },
