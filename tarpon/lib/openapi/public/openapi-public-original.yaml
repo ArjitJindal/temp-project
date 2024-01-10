@@ -2497,12 +2497,7 @@ components:
         countryOfNationality:
           $ref: '#/components/schemas/CountryCode'
         gender:
-          type: string
-          enum:
-            - M
-            - F
-            - NB
-          description: Gender of the individual - Male, Female or Non-Binary
+          $ref: '#/components/schemas/Gender'
       required:
         - name
     UserRegistrationStatus:
@@ -3228,33 +3223,16 @@ components:
           maxLength: 4
           description: Last 4 digits of Card
         cardBrand:
-          type: string
-          description: Brand of Card
-          enum:
-            - VISA
-            - MASTERCARD
-            - AMERICAN_EXPRESS
-            - DISCOVER
-            - UNIONPAY
-            - RUPAY
-            - JCB
+          $ref: '#/components/schemas/CardBrand'
         cardFunding:
-          type: string
-          description: Funding of Card
-          enum:
-            - CREDIT
-            - DEBIT
-            - PREPAID
+          $ref: '#/components/schemas/CardFunding'
         cardAuthenticated:
           type: boolean
           description: Authentication of Card
         paymentChannel:
           type: string
         cardType:
-          type: string
-          enum:
-            - VIRTUAL
-            - PHYSICAL
+          $ref: '#/components/schemas/CardType'
         merchantDetails:
           $ref: '#/components/schemas/CardMerchantDetails'
         tags:
@@ -3479,14 +3457,7 @@ components:
           minLength: 1
           description: Business code
         transactionType:
-          type: string
-          enum:
-            - CustomerPayBillOnline
-            - CustomerBuyGoodsOnline
-            - SalaryPayment
-            - BusinessPayment
-            - PromotionPayment
-          description: Type of transaction
+          $ref: '#/components/schemas/MpesaTransactionType'
         phoneNumber:
           type: string
           description: Contact Number of the account holder
@@ -4471,14 +4442,7 @@ components:
         name:
           type: string
         deliveryStatus:
-          type: string
-          enum:
-            - COMPLETED
-            - PENDING
-            - SETTLED
-            - CANCELED
-            - REFUND
-            - DECLINED
+          $ref: '#/components/schemas/CheckDeliveryStatus'
         etaTimestamp:
           type: number
           minimum: 1262300400000
@@ -5195,6 +5159,61 @@ components:
       enum:
         - 'true'
         - 'false'
+    Gender:
+      title: Gender
+      description: Gender of the individual - Male, Female or Non-Binary
+      type: string
+      enum:
+        - M
+        - F
+        - NB
+    CardBrand:
+      title: CardBrand
+      description: Brand of Card
+      type: string
+      enum:
+        - VISA
+        - MASTERCARD
+        - AMERICAN_EXPRESS
+        - DISCOVER
+        - UNIONPAY
+        - RUPAY
+        - JCB
+    CardFunding:
+      title: CardFunding
+      description: Funding of Card
+      type: string
+      enum:
+        - CREDIT
+        - DEBIT
+        - PREPAID
+    CardType:
+      title: CardType
+      description: Type of card
+      type: string
+      enum:
+        - VIRTUAL
+        - PHYSICAL
+    MpesaTransactionType:
+      title: MpesaTransactionType
+      description: Type of transaction
+      type: string
+      enum:
+        - CustomerPayBillOnline
+        - CustomerBuyGoodsOnline
+        - SalaryPayment
+        - BusinessPayment
+        - PromotionPayment
+    CheckDeliveryStatus:
+      title: CheckDeliveryStatus
+      type: string
+      enum:
+        - COMPLETED
+        - PENDING
+        - SETTLED
+        - CANCELED
+        - REFUND
+        - DECLINED
   securitySchemes:
     x-api-key:
       name: x-api-key

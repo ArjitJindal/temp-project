@@ -1,17 +1,10 @@
-import { lowerCase, startCase } from 'lodash'
-import { TRANSACTION_STATE } from './transaction-state'
-import { TRANSACTION_TYPE } from './transaction-type'
+import { get, lowerCase, startCase, memoize } from 'lodash'
 import {
   BusinessUserRuleVariable,
   ConsumerUserRuleVariable,
+  RuleEntityType,
   RuleVariableBase as RuleVariable,
-  TransactionRuleVariable,
 } from './types'
-import {
-  TRANSACTION_DESTINATION_COUNTRY,
-  TRANSACTION_ORIGIN_COUNTRY,
-} from './transaction-country'
-import { TRANSACTION_PRODUCT_TYPE } from './transaction-product-types'
 import {
   CONSUMER_USER_CREATION_AGE_DAYS,
   CONSUMER_USER_CREATION_AGE_MONTHS,
@@ -20,12 +13,6 @@ import {
   BUSINESS_USER_CREATION_AGE_MONTHS,
   BUSINESS_USER_CREATION_AGE_YEARS,
 } from './user-creation-age'
-import { CONSUMER_USER_SEGMENT, BUSINESS_USER_SEGMENT } from './user-segment'
-import {
-  CONSUMER_USER_ACQUISITION_CHANNEL,
-  BUSINESS_USER_ACQUISITION_CHANNEL,
-} from './user-acquisition-channel'
-import { TRANSACTION_ID } from './transaction-id'
 import {
   BUSINESS_USER_AGE_DAYS,
   BUSINESS_USER_AGE_MONTHS,
@@ -35,25 +22,13 @@ import {
   CONSUMER_USER_AGE_YEARS,
 } from './user-age'
 import {
-  TRANSACTION_DESTINATION_PAYMENT_METHOD,
-  TRANSACTION_ORIGIN_PAYMENT_METHOD,
-} from './transaction-payment-method'
-import {
-  TRANSACTION_ORIGIN_WALLET_TYPE,
-  TRANSACTION_DESTINATION_WALLET_TYPE,
-} from './transaction-wallet-type'
-import {
-  TRANSACTION_ORIGIN_CARD_ISSUED_COUNTRIES,
-  TRANSACTION_DESTINATION_CARD_ISSUED_COUNTRIES,
-} from './transaction-card-issued-countries'
-import {
-  TRANSACTION_DESTINATION_MCC_CODES,
-  TRANSACTION_ORIGIN_MCC_CODES,
-} from './transaction-mcc-codes'
-import {
-  TRANSACTION_DESTINATION_PAYMENT_CHANNEL,
-  TRANSACTION_ORIGIN_PAYMENT_CHANNEL,
-} from './transaction-payment-channels'
+  EntityLeafValueInfo,
+  EntityModel,
+  getPublicModelLeafAttrs,
+} from './utils'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
 
 function withNamespace(variable: RuleVariable) {
   return {
@@ -68,26 +43,7 @@ function withNamespace(variable: RuleVariable) {
   }
 }
 
-const TRANSACTION_VARIABLES: TransactionRuleVariable[] = [
-  TRANSACTION_TYPE,
-  TRANSACTION_STATE,
-  TRANSACTION_PRODUCT_TYPE,
-  TRANSACTION_ORIGIN_COUNTRY,
-  TRANSACTION_DESTINATION_COUNTRY,
-  TRANSACTION_ID,
-  TRANSACTION_ORIGIN_PAYMENT_METHOD,
-  TRANSACTION_DESTINATION_PAYMENT_METHOD,
-  TRANSACTION_ORIGIN_WALLET_TYPE,
-  TRANSACTION_DESTINATION_WALLET_TYPE,
-  TRANSACTION_ORIGIN_CARD_ISSUED_COUNTRIES,
-  TRANSACTION_DESTINATION_CARD_ISSUED_COUNTRIES,
-  TRANSACTION_ORIGIN_MCC_CODES,
-  TRANSACTION_DESTINATION_MCC_CODES,
-  TRANSACTION_ORIGIN_PAYMENT_CHANNEL,
-  TRANSACTION_DESTINATION_PAYMENT_CHANNEL,
-]
-
-const USER_VARIABLES: Array<
+const USER_DERIVED_VARIABLES: Array<
   ConsumerUserRuleVariable | BusinessUserRuleVariable
 > = [
   CONSUMER_USER_AGE_DAYS,
@@ -96,23 +52,77 @@ const USER_VARIABLES: Array<
   CONSUMER_USER_CREATION_AGE_DAYS,
   CONSUMER_USER_CREATION_AGE_MONTHS,
   CONSUMER_USER_CREATION_AGE_YEARS,
-  CONSUMER_USER_ACQUISITION_CHANNEL,
-  CONSUMER_USER_SEGMENT,
-  BUSINESS_USER_SEGMENT,
   BUSINESS_USER_AGE_DAYS,
   BUSINESS_USER_AGE_MONTHS,
   BUSINESS_USER_AGE_YEARS,
   BUSINESS_USER_CREATION_AGE_DAYS,
   BUSINESS_USER_CREATION_AGE_MONTHS,
   BUSINESS_USER_CREATION_AGE_YEARS,
-  BUSINESS_USER_ACQUISITION_CHANNEL,
 ]
 
-export const RULE_VARIABLES: RuleVariable[] = [
-  ...TRANSACTION_VARIABLES,
-  ...USER_VARIABLES,
-].map((v) => withNamespace(v))
+function getUiDefinitionType(leafInfo: EntityLeafValueInfo) {
+  if (leafInfo.options && leafInfo.options.length > 0) {
+    return 'select'
+  }
+  switch (leafInfo.type) {
+    case 'string':
+      return 'text'
+    case 'number':
+      return 'number'
+    case 'boolean':
+      return 'boolean'
+    default:
+      return 'text'
+  }
+}
+
+export const getAllRuleEntityVariables = memoize((): RuleVariable[] => {
+  const transactionEntityVariables = getAutoRuleEnvityVariables(
+    'TRANSACTION',
+    Transaction
+  )
+  const consumerUserEntityVariables = getAutoRuleEnvityVariables(
+    'CONSUMER_USER',
+    User
+  )
+  const businessUserEntityVariables = getAutoRuleEnvityVariables(
+    'BUSINESS_USER',
+    Business
+  )
+  return [
+    ...transactionEntityVariables,
+    ...consumerUserEntityVariables,
+    ...businessUserEntityVariables,
+    ...USER_DERIVED_VARIABLES,
+  ].map(withNamespace)
+})
+
+function getAutoRuleEnvityVariables(
+  entityType: RuleEntityType,
+  entityClass: typeof EntityModel
+): RuleVariable[] {
+  const leafValueInfos = getPublicModelLeafAttrs(entityClass)
+  return leafValueInfos.map((info) => {
+    return {
+      key: info.pathKey,
+      entity: entityType,
+      valueType: info.type,
+      uiDefinition: {
+        label: info.path.map(lowerCase).join(' > '),
+        type: getUiDefinitionType(info),
+        valueSources: ['value', 'field', 'func'],
+        fieldSettings:
+          info.options && info.options.length > 0
+            ? {
+                listValues: info.options,
+              }
+            : undefined,
+      },
+      load: async (entity: any) => get(entity, info.path),
+    }
+  })
+}
 
 export function getRuleVariableByKey(key: string): RuleVariable | undefined {
-  return RULE_VARIABLES.find((v) => v.key === key)
+  return getAllRuleEntityVariables().find((v) => v.key === key)
 }

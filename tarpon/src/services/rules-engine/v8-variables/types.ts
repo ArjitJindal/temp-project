@@ -4,10 +4,15 @@ import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 
 export type RuleValueTypesEnum = 'string' | 'number' | 'boolean' | 'date'
+export type RuleEntityType =
+  | 'TRANSACTION'
+  | 'CONSUMER_USER'
+  | 'BUSINESS_USER'
+  | 'PAYMENT_DETAILS'
 
 export interface RuleVariableBase {
   key: string
-  entity: 'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'PAYMENT_DETAILS'
+  entity: RuleEntityType
   uiDefinition: FieldOrGroup
   valueType: RuleValueTypesEnum
   load: (...args: any[]) => Promise<any>

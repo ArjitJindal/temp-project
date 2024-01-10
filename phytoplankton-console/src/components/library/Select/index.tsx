@@ -14,6 +14,7 @@ import { neverReturn } from '@/utils/lang';
 export interface Option<Value extends Comparable> {
   value: Value;
   label?: React.ReactNode;
+  fullLabel?: React.ReactNode;
   labelText?: string;
   alternativeLabels?: string[]; // Used for search
   isDisabled?: boolean;
@@ -182,7 +183,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         filterOption={() => true}
         showSearch={true}
         notFoundContent={props.notFoundContent}
-        placement={props.dropdownPlacement}
+        placement={props.dropdownPlacement ?? 'bottomLeft'}
         mode={mode === 'MULTIPLE' ? 'multiple' : mode === 'TAGS' ? 'tags' : undefined}
         value={value}
         onChange={(newValue: Value | Value[] | undefined) => {

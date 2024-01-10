@@ -98,9 +98,7 @@ function buildApi(
     `src/@types/openapi-${type}-custom/DefaultApi.ts`,
   ])
 
-  exec(
-    `rm -f src/@types/openapi-${type}/ObjectSerializer.ts src/@types/openapi-${type}/all.ts`
-  )
+  exec(`rm -f src/@types/openapi-${type}/ObjectSerializer.ts`)
 }
 
 buildApi('public')
