@@ -365,6 +365,11 @@ class DatabricksStack extends TerraformStack {
       provider: workspaceProvider,
       sparkVersion: '13.3.x-scala2.12',
       clusterName: 'Shared Autoscaling',
+      nodeTypeId: 'm5d.large',
+      autoscale: {
+        minWorkers: 1,
+        maxWorkers: 4,
+      },
       library: [
         {
           maven: {
