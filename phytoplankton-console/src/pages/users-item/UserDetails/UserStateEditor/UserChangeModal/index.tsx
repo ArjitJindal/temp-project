@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
@@ -12,7 +12,6 @@ import {
   Comment,
   KYCAndUserStatusChangeReason,
 } from '@/apis';
-import FilesInput, { RemoveAllFilesRef } from '@/components/ui/FilesInput';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
@@ -25,6 +24,7 @@ import NarrativesSelectStatusChange from '@/pages/case-management/components/Nar
 import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
 import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectParamAPI';
 import { USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 
 interface Props {
   isVisible: boolean;
@@ -50,7 +50,6 @@ const DEFAULT_INITIAL_VALUES: FormValues = {
 };
 export default function UserChangeModal(props: Props) {
   const { title, isVisible, onClose, user, onOkay } = props;
-  const [uploadingCount, setUploadingCount] = useState(0);
   const [fileList, setFileList] = useState<FileInfo[]>(DEFAULT_INITIAL_VALUES.files);
   const ref = useRef<FormRef<FormValues>>(null);
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
@@ -58,7 +57,6 @@ export default function UserChangeModal(props: Props) {
     values: DEFAULT_INITIAL_VALUES,
     isValid: false,
   });
-  const uploadRef = useRef<RemoveAllFilesRef>(null);
   const isOtherReason = useMemo(() => {
     return formState.values.reason === 'Other';
   }, [formState.values.reason]);
@@ -72,13 +70,6 @@ export default function UserChangeModal(props: Props) {
       },
     }));
   }, [fileList]);
-  const removeFiles = useCallback(() => {
-    setFormState((prevState) => ({
-      ...prevState,
-      files: [],
-    }));
-    uploadRef.current?.removeAllFiles();
-  }, []);
   const api = useApi();
 
   const queryClient = useQueryClient();
@@ -123,7 +114,6 @@ export default function UserChangeModal(props: Props) {
         message.success(`User status updated`);
         ref.current?.setValues(DEFAULT_INITIAL_VALUES);
         onOkay(data.userStatus!, data.updatedComment);
-        removeFiles();
         onClose();
         messageLoading?.();
         await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));
@@ -249,20 +239,12 @@ export default function UserChangeModal(props: Props) {
               )}
             </InputField>
           </div>
-          <InputField<FormValues, 'files'> name={'files'} label={'Upload'}>
-            {(inputProps) => (
-              <FilesInput
-                {...inputProps}
-                ref={uploadRef}
-                onChange={(value) => {
-                  setFileList(value ?? []);
-                }}
-                value={fileList}
-                uploadingCount={uploadingCount}
-                setUploadingCount={setUploadingCount}
-              />
-            )}
-          </InputField>
+          <FilesDraggerInput
+            onChange={(value) => {
+              setFileList(value ?? []);
+            }}
+            value={fileList}
+          />
         </Form>
       </Modal>
     </>

@@ -4,27 +4,57 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  :global {
+    .ant-upload {
+      background-color: @fr-colors-v2-highlight-flagrightBlue !important;
+      border-color: @fr-colors-brandBlue !important;
+      border-radius: 4px !important;
+      border-width: 1px !important;
+    }
+  }
 }
 
 .textRoot {
   display: flex;
-  flex-direction: column;
-  padding: 16px;
   align-items: center;
   text-align: center;
   border-radius: 4px;
+  justify-content: center;
+  gap: 16px;
+}
+
+.large {
+  flex-direction: column;
+  padding: 20px 20px;
+}
+
+.small {
+  flex-direction: row;
+  padding: 0 28px;
 }
 
 .icon {
-  width: 48px;
-  height: 48px;
   color: @fr-colors-v2-primary-flagrightBlue;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+}
+
+.alignItemsStart {
+  align-items: start;
+  font-size: 8px;
 }
 
 .title1 {
   font-size: 14px;
   line-height: 24px;
-  margin-top: 16px;
+  font-weight: 600;
 }
 
 .title2 {
@@ -32,4 +62,10 @@
   font-size: 14px;
   line-height: 24px;
   margin-top: 4px;
+}
+
+.textAlignStart {
+  text-align: start;
+  line-height: 16px;
+  font-size: 12px;
 }

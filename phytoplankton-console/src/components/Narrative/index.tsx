@@ -1,6 +1,7 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import { uniqBy } from 'lodash';
 import { ExpandContentButton } from '../library/ExpandContentButton';
+import FilesDraggerInput from '../ui/FilesDraggerInput';
 import s from './index.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Form, { InputProps } from '@/components/library/Form';
@@ -15,7 +16,6 @@ import NarrativesSelectStatusChange from '@/pages/case-management/components/Nar
 import TextArea from '@/components/library/TextArea';
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
-import FilesInput from '@/components/ui/FilesInput';
 import Alert from '@/components/library/Alert';
 
 export const OTHER_REASON: CaseReasons = 'Other';
@@ -81,7 +81,6 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
     isCopilotEnabled = true,
   } = props;
 
-  const [uploadingCount, setUploadingCount] = useState(0);
   const showCopilot = useFeatureEnabled('NARRATIVE_COPILOT') && isCopilotEnabled;
   const isOtherReason = otherReason ? values.values.reasons?.includes(otherReason) : false;
 
@@ -190,42 +189,34 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
           </GenericFormField>
         )}
       </div>
-      <InputField<FormValues<R>, 'files'> name={'files'} label={'Attach documents'}>
-        {(inputProps) => (
-          <FilesInput
-            {...inputProps}
-            onChange={(value) => {
-              if (value) {
-                onChange((state) => {
-                  const fileAdded = value.filter(
-                    (v) =>
-                      !state.values.files.find((existingFile) => v.s3Key === existingFile.s3Key),
-                  );
-                  if (fileAdded.length > 0) {
-                    return {
-                      ...state,
-                      values: {
-                        ...state.values,
-                        files: uniqBy([...state.values.files, ...value], 's3Key'),
-                      },
-                    };
-                  }
-                  return {
-                    ...state,
-                    values: {
-                      ...state.values,
-                      files: value,
-                    },
-                  };
-                });
+      <FilesDraggerInput
+        onChange={(value) => {
+          if (value) {
+            onChange((state) => {
+              const fileAdded = value.filter(
+                (v) => !state.values.files.find((existingFile) => v.s3Key === existingFile.s3Key),
+              );
+              if (fileAdded.length > 0) {
+                return {
+                  ...state,
+                  values: {
+                    ...state.values,
+                    files: uniqBy([...state.values.files, ...value], 's3Key'),
+                  },
+                };
               }
-            }}
-            value={values.values.files}
-            uploadingCount={uploadingCount}
-            setUploadingCount={setUploadingCount}
-          />
-        )}
-      </InputField>
+              return {
+                ...state,
+                values: {
+                  ...state.values,
+                  files: value,
+                },
+              };
+            });
+          }
+        }}
+        value={values.values.files}
+      />
       {extraFields}
       {alertMessage && <Alert type="info">{alertMessage}</Alert>}
     </Form>

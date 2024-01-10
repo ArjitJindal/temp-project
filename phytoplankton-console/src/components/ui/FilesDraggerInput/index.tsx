@@ -1,7 +1,7 @@
 import { Upload } from 'antd';
+import cn from 'clsx';
 import { useEffect, useState } from 'react';
 import s from './index.module.less';
-import Icon from './icon.react.svg';
 import { InputProps } from '@/components/library/Form';
 import { FileInfo } from '@/apis';
 import { message } from '@/components/library/Message';
@@ -10,13 +10,17 @@ import { useApi } from '@/api';
 import FilesList from '@/components/files/FilesList';
 import { usePrevious } from '@/utils/hooks';
 import { isEqual } from '@/utils/lang';
+import UploadIcon from '@/components/ui/icons/Remix/system/upload-2-line.react.svg';
+import Label from '@/components/library/Label';
 
 interface Props extends InputProps<FileInfo[]> {
   singleFile?: boolean;
+  size?: 'SMALL' | 'LARGE';
+  hideLabel?: boolean;
 }
 
 export default function FilesDraggerInput(props: Props) {
-  const { value, onChange, singleFile } = props;
+  const { value, onChange, singleFile, size = 'SMALL', hideLabel } = props;
   const [uploadingCount, setUploadingCount] = useState(0);
   const api = useApi();
 
@@ -38,6 +42,7 @@ export default function FilesDraggerInput(props: Props) {
 
   return (
     <div className={s.root}>
+      {!hideLabel && <Label label={'Upload attachments'} />}
       <Upload.Dragger
         disabled={uploadingCount > 0}
         multiple={!singleFile}
@@ -65,15 +70,18 @@ export default function FilesDraggerInput(props: Props) {
           }
         }}
       >
-        <div className={s.textRoot}>
-          <Icon className={s.icon} />
-          <div className={s.title1}>Click or drag file to this area to upload</div>
-          <div className={s.title2}>
-            Support for a single or bulk upload. Strictly prohibit from uploading company data or
-            other related files.
+        <div className={cn(s.textRoot, size === 'SMALL' ? s.small : s.large)}>
+          <UploadIcon className={s.icon} />
+          <div className={cn(s.title, size === 'SMALL' ? s.alignItemsStart : '')}>
+            <div className={s.title1}>Click or drag file to this area to upload</div>
+            <div className={cn(s.title2, size === 'SMALL' ? s.textAlignStart : '')}>
+              Support for a single or bulk upload. Strictly prohibit from uploading company data or
+              other related files.
+            </div>
           </div>
         </div>
       </Upload.Dragger>
+
       <FilesList
         files={state ?? []}
         onDeleteFile={

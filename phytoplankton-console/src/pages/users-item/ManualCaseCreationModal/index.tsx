@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { Case, CaseReasons, CasesUsersUserIdResponse, FileInfo, Priority } from '@/apis';
@@ -10,13 +10,13 @@ import Select from '@/components/library/Select';
 import TextArea from '@/components/library/TextArea';
 import TextInput from '@/components/library/TextInput';
 import { OTHER_REASON } from '@/components/Narrative';
-import FilesInput, { RemoveAllFilesRef } from '@/components/ui/FilesInput';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
 import { CASES_USERS_CASEIDS } from '@/utils/queries/keys';
 import { getOr } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
+import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 
 type Props = {
   isOpen: boolean;
@@ -57,23 +57,13 @@ export const MannualCaseCreationModal = (props: Props) => {
     isValid: false,
   });
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
-  const [uploadingCount, setUploadingCount] = useState(0);
 
   const isOtherReason = useMemo(() => {
     return formState.values.reason === OTHER_REASON;
   }, [formState.values.reason]);
   const [fileList, setFileList] = useState<FileInfo[]>(INITIAL_VALUES.files);
 
-  const uploadRef = useRef<RemoveAllFilesRef>(null);
   const api = useApi();
-
-  const removeFiles = useCallback(() => {
-    setFormState((prevState) => ({
-      ...prevState,
-      files: [],
-    }));
-    uploadRef.current?.removeAllFiles();
-  }, []);
 
   let messageLoading: CloseMessage | undefined;
 
@@ -106,7 +96,6 @@ export const MannualCaseCreationModal = (props: Props) => {
     {
       onSuccess: (data) => {
         message.success(`Case ${data.caseId} created successfully`);
-        removeFiles();
         setIsOpen(false);
         messageLoading?.();
       },
@@ -145,7 +134,6 @@ export const MannualCaseCreationModal = (props: Props) => {
     {
       onSuccess: (data) => {
         message.success(`Case ${data?.caseId} edited successfully`);
-        removeFiles();
         setIsOpen(false);
         messageLoading?.();
       },
@@ -311,20 +299,13 @@ export const MannualCaseCreationModal = (props: Props) => {
             </>
           )}
         </InputField>
-        <InputField<FormValues, 'files'> name={'files'} label={'Attach documents'}>
-          {(inputProps) => (
-            <FilesInput
-              {...inputProps}
-              ref={uploadRef}
-              onChange={(value) => {
-                setFileList(value ?? []);
-              }}
-              value={fileList}
-              uploadingCount={uploadingCount}
-              setUploadingCount={setUploadingCount}
-            />
-          )}
-        </InputField>
+
+        <FilesDraggerInput
+          onChange={(value) => {
+            setFileList(value ?? []);
+          }}
+          value={fileList}
+        />
       </Form>
     </Modal>
   );
