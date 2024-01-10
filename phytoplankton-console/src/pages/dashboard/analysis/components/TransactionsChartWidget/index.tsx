@@ -2,10 +2,14 @@
 import { Empty } from 'antd';
 import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import s from './index.module.less';
+import GranularDatePicker, {
+  DEFAULT_DATE_RANGE,
+  granularityValues,
+  GranularityValuesType,
+} from '../widgets/GranularDatePicker/GranularDatePicker';
+import { formatDate } from '../../utils/date-utils';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
-import DatePicker from '@/components/ui/DatePicker';
-import { dayjs, Dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
+import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import {
   getRuleActionLabel,
@@ -19,12 +23,6 @@ import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import Column, { ColumnData } from '@/pages/dashboard/analysis/components/charts/Column';
 import { RuleAction } from '@/apis';
 
-const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
-
-export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
-type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
-const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
-
 export default function TransactionsChartWidget(props: WidgetProps) {
   const settings = useSettings();
 
@@ -33,37 +31,6 @@ export default function TransactionsChartWidget(props: WidgetProps) {
     granularityValues.MONTH as GranularityValuesType,
   );
 
-  const calcGranularity = (type: string): GranularityValuesType => {
-    if (type === 'YEAR') {
-      return granularityValues.MONTH as GranularityValuesType;
-    } else if (type === 'MONTH' || type === 'WEEK') {
-      return granularityValues.DAY as GranularityValuesType;
-    }
-    return granularityValues.HOUR as GranularityValuesType;
-  };
-  const formatDate = (type: string): string => {
-    if (type.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      type = dayjs(type, YEAR_MONTH_DATE_FORMAT).format('MM/DD');
-    } else if (type.match(/^\d{4}-\d{2}$/)) {
-      type = dayjs(type, 'YYYY-MM').format('YYYY/MM');
-    } else if (type.match(/^\d{4}-\d{2}-\d{2}T\d{2}$/)) {
-      type = dayjs(type, 'YYYY-MM-DDTHH').format('MM/DD HH:mm');
-    }
-    return type;
-  };
-
-  const dayCalc = (val: string) => {
-    if (val === 'YEAR') {
-      return dayjs().subtract(1, 'year');
-    } else if (val === 'MONTH') {
-      return dayjs().subtract(1, 'month');
-    } else if (val === 'WEEK') {
-      return dayjs().subtract(1, 'week');
-    }
-    return dayjs().subtract(1, 'day');
-  };
-
-  const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
   const api = useApi();
 
   let startTimestamp = dayjs().subtract(1, 'year').valueOf();
@@ -88,35 +55,11 @@ export default function TransactionsChartWidget(props: WidgetProps) {
   return (
     <Widget
       extraControls={[
-        <div className={s.salesExtraWrap}>
-          <div className={s.salesExtra}>
-            {[
-              { type: 'DAY' as const, title: 'Day' },
-              { type: 'WEEK' as const, title: 'Week' },
-              { type: 'MONTH' as const, title: 'Month' },
-              { type: 'YEAR' as const, title: 'Year' },
-            ].map(({ type, title }) => (
-              <a
-                key={type}
-                className={type === timeWindowType ? s.currentDate : ''}
-                onClick={() => {
-                  setTimeWindowType(type);
-                  setDateRange([dayCalc(type), dayjs()]);
-                  setGranularity(calcGranularity(type));
-                }}
-              >
-                {title}
-              </a>
-            ))}
-          </div>
-          <DatePicker.RangePicker
-            value={dateRange}
-            onChange={(e) => {
-              setDateRange(e ?? DEFAULT_DATE_RANGE);
-              setTimeWindowType(null);
-            }}
-          />
-        </div>,
+        <GranularDatePicker
+          setGranularity={setGranularity}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+        />,
       ]}
       resizing="AUTO"
       {...props}

@@ -1,4 +1,4 @@
-import s from './styles.module.less';
+import s from './index.module.less';
 import { useApi } from '@/api';
 import { DashboardStatsOverview } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';

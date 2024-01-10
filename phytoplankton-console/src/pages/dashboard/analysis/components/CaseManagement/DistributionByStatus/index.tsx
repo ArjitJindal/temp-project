@@ -4,7 +4,12 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { Empty } from 'antd';
 import { useLocalStorageState } from 'ahooks';
 import ScopeSelector from '../CaseClosingReasonCard/ScopeSelector';
-import { dayCalc, formatDate, granularityTypeTitles } from '../../../utils/date-utils';
+import { formatDate } from '../../../utils/date-utils';
+import GranularDatePicker, {
+  DEFAULT_DATE_RANGE,
+  GranularityValuesType,
+  granularityValues,
+} from '../../widgets/GranularDatePicker/GranularDatePicker';
 import s from './index.module.less';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
@@ -23,10 +28,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_06,
   COLORS_V2_ANALYTICS_CHARTS_08,
 } from '@/components/ui/colors';
-import DatePicker from '@/components/ui/DatePicker';
 import { humanizeSnakeCase } from '@/utils/humanize';
-export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
-type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
 type statusType = 'OPEN' | 'CLOSED' | 'REOPENED' | 'ON_HOLD' | 'IN_PROGRESS' | 'ESCALATED';
 const statuses: statusType[] = [
   'REOPENED',
@@ -36,32 +38,17 @@ const statuses: statusType[] = [
   'IN_PROGRESS',
   'OPEN',
 ];
-const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
-
-const calcGranularity = (type: string): GranularityValuesType => {
-  if (type === 'YEAR') {
-    return granularityValues.MONTH as GranularityValuesType;
-  } else if (type === 'MONTH' || type === 'WEEK') {
-    return granularityValues.DAY as GranularityValuesType;
-  }
-  return granularityValues.HOUR as GranularityValuesType;
-};
 
 export default function DistributionByStatus(props: WidgetProps) {
   const [selectedSection, setSelectedSection] = useLocalStorageState(
     'dashboard-case-and-alert-status-active-tab',
     'CASE',
   );
-  const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
-
   const [granularity, setGranularity] = useState<GranularityValuesType>(
     granularityValues.MONTH as GranularityValuesType,
   );
 
-  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
-    dayjs().subtract(1, 'year'),
-    dayjs(),
-  ]);
+  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const api = useApi();
   let startTimestamp = dayjs().subtract(1, 'day').valueOf();
   let endTimestamp = Date.now();
@@ -101,30 +88,11 @@ export default function DistributionByStatus(props: WidgetProps) {
     <Widget
       {...props}
       extraControls={[
-        <div className={s.salesExtraWrap}>
-          <div className={s.salesExtra}>
-            {granularityTypeTitles.map(({ type, title }) => (
-              <a
-                key={type}
-                className={type === timeWindowType ? s.currentDate : ''}
-                onClick={() => {
-                  setTimeWindowType(type);
-                  setDateRange([dayCalc(type), dayjs()]);
-                  setGranularity(calcGranularity(type));
-                }}
-              >
-                {title}
-              </a>
-            ))}
-          </div>
-          <DatePicker.RangePicker
-            value={dateRange}
-            onChange={(e) => {
-              setDateRange(e);
-              setTimeWindowType(null);
-            }}
-          />
-        </div>,
+        <GranularDatePicker
+          setGranularity={setGranularity}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+        />,
       ]}
     >
       <div className={s.salesCard}>

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { flatMap } from 'lodash';
-import AccountsStatisticsTable from './AccountsStatisticsTable';
 import s from './index.module.less';
+import AccountsStatisticsTable from './AccountsStatisticsTable';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
