@@ -15,13 +15,17 @@ interface Props {
 export default function Alert(props: Props) {
   const { type, children } = props;
   return (
-    <div className={cn(s.root, s[`type-${type}`])}>
+    <div className={cn(s.root, s[`type-${type}`])} data-cy={`alert-${type}`}>
       <Row style={{ flexFlow: 'row' }}>
         <Col style={{ paddingTop: 2 }}>
-          {type === 'error' && <AlertFillIcon className={s.icon} />}
-          {type === 'warning' && <ExclamationCircleIcon className={s.icon} />}
-          {type === 'info' && <InformationFillIcon className={s.icon} />}
-          {type === 'success' && <CheckboxCircleFillIcon className={s.icon} />}
+          {type === 'error' && <AlertFillIcon className={s.icon} data-cy={`icon-${type}`} />}
+          {type === 'warning' && (
+            <ExclamationCircleIcon className={s.icon} data-cy={`icon-${type}`} />
+          )}
+          {type === 'info' && <InformationFillIcon className={s.icon} data-cy={`icon-${type}`} />}
+          {type === 'success' && (
+            <CheckboxCircleFillIcon className={s.icon} data-cy={`icon-${type}`} />
+          )}
         </Col>
         <Col style={{ paddingLeft: 8 }}>{children}</Col>
       </Row>

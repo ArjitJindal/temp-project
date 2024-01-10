@@ -119,6 +119,7 @@ export const COLORS_V2_STATE_DISABLED = '#a8a8a8';
 export const COLORS_V2_ALERT_CRITICAL = '#d42a2a';
 export const COLORS_V2_ALERT_WARNING = '#efbe12';
 export const COLORS_V2_ALERT_SUCCESS = '#1ba543';
+export const COLORS_V2_ALERT_ERROR = '#f5222d';
 export const COLORS_V2_RISK_LEVEL_BASE_VERY_LOW = '#d1e277';
 export const COLORS_V2_RISK_LEVEL_BG_VERY_LOW = '#f1f6d6';
 export const COLORS_V2_RISK_LEVEL_BASE_LOW = '#aad246';

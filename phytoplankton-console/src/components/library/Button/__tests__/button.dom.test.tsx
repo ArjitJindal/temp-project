@@ -9,7 +9,7 @@ describe('Button Component', () => {
   test.each(BUTTON_TYPES)('renders correctly for type %s', (type) => {
     render(<Button type={type}>Test</Button>);
     const button = getInput('Test');
-    const classNames = button?.className.split(/\s+/);
+    const classNames = Array.from(button.classList);
     const hasTypeClass = classNames?.some((className) => className.includes(`type-${type}`));
     expect(hasTypeClass).toBe(true);
   });
@@ -17,7 +17,7 @@ describe('Button Component', () => {
   test.each(BUTTON_SIZES)('renders correctly for size %s', (size) => {
     render(<Button size={size}>Test</Button>);
     const button = getInput('Test');
-    const classNames = button?.className.split(/\s+/);
+    const classNames = Array.from(button.classList);
     const hasSizeClass = classNames?.some((className) => className.includes(`size-${size}`));
     expect(hasSizeClass).toBe(true);
   });
@@ -43,7 +43,7 @@ describe('Button Component', () => {
       </Button>,
     );
     const button = getInput('Test');
-    const classNames = button?.className.split(/\s+/);
+    const classNames = Array.from(button.classList);
     const hasDangerClass = classNames?.some((className) =>
       className.includes(`type-${type}-danger`),
     );
