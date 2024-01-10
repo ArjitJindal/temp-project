@@ -19,7 +19,7 @@ export const databricksDeployStage = (
         phases: {
           install: {
             'runtime-versions': {
-              nodejs: 18,
+              nodejs: 20,
             },
             commands: [
               'cd lib',

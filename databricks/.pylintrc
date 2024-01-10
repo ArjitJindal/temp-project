@@ -218,7 +218,7 @@ contextmanager-decorators=contextlib.contextmanager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
-generated-members=
+generated-members=dlt.*
 
 # Tells whether missing members accessed in mixin class should be ignored. A
 # class is considered mixin if its name matches the mixin-class-rgx option.
@@ -410,12 +410,15 @@ good-names=i,
            j,
            k,
            ex,
+           df,
+           db,
+           dbutils,
            Run,
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted
-good-names-rgxs=
+good-names-rgxs=db_*
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no

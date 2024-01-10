@@ -3,10 +3,10 @@ import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StringType
 
-from dlt.transformations import transform_event_data
+from src.dlt_pipeline.transformations import transform_event_data
 
-outputJson = """{timestamp=1701790627472}"""
-dynamoEventJson = """
+OUTPUT_JSON = """{timestamp=1701790627472}"""
+DYNAMO_EVENT_JSON = """
 {
    "awsRegion":"eu-central-1",
    "eventID":"5465442e-5b49-47bc-8f27-1e4a6c0fa621",
@@ -39,16 +39,17 @@ def spark():
 def format_test_dataframe(dataframe):
     return dataframe.toJSON().collect()
 
+
 def test_dynamo_event_transform(spark):
-    dynamo_event_data = [(dynamoEventJson), (dynamoEventJson)]
+    dynamo_event_data = [(DYNAMO_EVENT_JSON), (DYNAMO_EVENT_JSON)]
     event_columns = ["data"]
     input_dynamo_event_df = spark.createDataFrame(
         dynamo_event_data, (StringType())
     ).toDF(*event_columns)
 
     expected_transformed_event_data = [
-        (dynamoEventJson, outputJson),
-        (dynamoEventJson, outputJson),
+        (DYNAMO_EVENT_JSON, OUTPUT_JSON),
+        (DYNAMO_EVENT_JSON, OUTPUT_JSON),
     ]
     expected_transformed_columns = ["data", "json_data"]
     expected_event_data_df = spark.createDataFrame(

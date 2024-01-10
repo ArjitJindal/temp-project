@@ -347,8 +347,8 @@ class DatabricksStack extends TerraformStack {
 
     const clusterConfig = {
       label: 'default',
-      nodeTypeId: 'm5d.large',
-      dataSecurityMode: 'SINGLE_USER',
+      dataSecurityMode: 'NONE',
+      accessMode: 'NO_ISOLATION',
       sparkEnvVars: {
         KINESIS_REGION: awsRegion,
         KINESIS_STREAM: kinesisStreamName,
@@ -357,13 +357,6 @@ class DatabricksStack extends TerraformStack {
       awsAttributes: {
         instanceProfileArn: instanceProfile.id,
         zoneId: awsRegion,
-      },
-      customTags: {
-        ResourceClass: 'SingleNode',
-      },
-      sparkConf: {
-        'spark.databricks.cluster.profile': 'singleNode',
-        'spark.master': 'local[*]',
       },
     }
 
@@ -375,7 +368,7 @@ class DatabricksStack extends TerraformStack {
       library: [
         {
           maven: {
-            coordinates: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1',
+            coordinates: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.2',
           },
         },
         {
@@ -387,48 +380,49 @@ class DatabricksStack extends TerraformStack {
       dependsOn: [instanceProfile],
     })
 
-    const currentUser =
-      new databricks.dataDatabricksCurrentUser.DataDatabricksCurrentUser(
-        this,
-        'current-user',
-        {
-          provider: workspaceProvider,
-        }
-      )
-
-    const directoryPath = path.join(__dirname, '../dlt')
-    const files = fs.readdirSync(directoryPath).map((fileName) => {
-      return fileName
-    })
-    for (let index = 0; index < files.length; index++) {
-      const file = files[index]
-      new databricks.workspaceFile.WorkspaceFile(
-        this,
-        `workspace-file-${index}`,
-        {
-          provider: workspaceProvider,
-          source: `${__dirname}/../dlt/${file}`,
-          path: `${currentUser.home}/dlt/${Fn.basename(file)}`,
-        }
-      )
-    }
+    // TODO give databricks access to github instead.
+    const directoryPath = path.resolve(__dirname, '..', 'src')
+    fs.readdirSync(directoryPath, { recursive: true, withFileTypes: true })
+      .filter((file) => file.isFile())
+      .map((file) => path.join(file.path.replace(directoryPath, ''), file.name))
+      .forEach((file, index) => {
+        new databricks.workspaceFile.WorkspaceFile(
+          this,
+          `workspace-file-${index}`,
+          {
+            provider: workspaceProvider,
+            source: path.join(directoryPath, file),
+            path: path.join('/Shared/main/src', file),
+          }
+        )
+      })
 
     new databricks.pipeline.Pipeline(this, `pipeline`, {
       provider: workspaceProvider,
       name: 'main',
       continuous: true,
-      // TODO change
-      development: true,
-      catalog: mainCatalog.name,
-      cluster: [clusterConfig],
-      library: [
+      development: stage === 'dev',
+      cluster: [
         {
-          file: {
-            path: `${currentUser.home}/dlt/pipeline.py`,
+          ...clusterConfig,
+          nodeTypeId: 'm5d.large',
+          numWorkers: 0,
+          customTags: {
+            ResourceClass: 'SingleNode',
+          },
+          sparkConf: {
+            'spark.databricks.cluster.profile': 'singleNode',
           },
         },
       ],
-      target: 'main',
+      library: [
+        {
+          file: {
+            path: `/Shared/main/src/dlt_pipeline/pipeline.py`,
+          },
+        },
+      ],
+      target: 'default',
       notification: [
         {
           emailRecipients: adminEmails,
