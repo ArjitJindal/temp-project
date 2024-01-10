@@ -85,8 +85,10 @@ const RoleFormAsync = ({ roleId, onChange }: { roleId: string; onChange: () => v
         <RoleForm
           key={role.id}
           role={role}
-          onChange={() => {
-            result.refetch();
+          onChange={(onDelete: boolean, onUpdate: boolean) => {
+            if (!onDelete && onUpdate) {
+              result.refetch();
+            }
             onChange();
           }}
         />

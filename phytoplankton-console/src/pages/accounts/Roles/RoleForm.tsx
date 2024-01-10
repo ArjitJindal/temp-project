@@ -22,7 +22,13 @@ export interface FormValues {
   roleName: string;
   description: string;
 }
-export default function RoleForm({ role, onChange }: { role?: AccountRole; onChange: () => any }) {
+export default function RoleForm({
+  role,
+  onChange,
+}: {
+  role?: AccountRole;
+  onChange: (onDelete: boolean, onUpdate: boolean) => any;
+}) {
   const api = useApi();
   const [edit, setEdit] = useState(!role);
   const [isLoading, setLoading] = useState(false);
@@ -59,7 +65,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
         await api.createRole({ AccountRole });
       }
       message.success(`${roleName} role saved`);
-      onChange();
+      onChange(false, true);
     } catch (e) {
       message.fatal(`Failed to save role - ${getErrorMessage(e)}`, e);
     } finally {
@@ -72,7 +78,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
     try {
       await api.deleteRole({ roleId: role?.id as string });
       message.success(`${role?.name} was deleted.`);
-      onChange();
+      onChange(true, false);
     } catch (e) {
       message.fatal(`Failed to delete role - ${getErrorMessage(e)}`, e);
     } finally {
