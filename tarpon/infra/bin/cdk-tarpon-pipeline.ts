@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib'
+import { Stack } from 'aws-cdk-lib'
 import { config as devConfig } from '@flagright/lib/config/config-dev'
 import { isQaEnv } from '@lib/qa'
-import { getTarponConfig } from "@flagright/lib/constants/config"
-import { stageAndRegion } from "@flagright/lib/utils/env";
+import { getTarponConfig } from '@flagright/lib/constants/config'
+import { stageAndRegion } from '@flagright/lib/utils/env'
 import { CdkTarponStack } from '../cdk-tarpon-stack'
 import { CdkTarponTestCanaryStack } from '../cdk-deploy-test-canary-stack'
 
@@ -16,8 +17,14 @@ if (process.env.ENV === 'dev' && process.env.TYPE === 'canary') {
     `${devConfig.stage}-tarpon-test-canary`,
     devConfig
   )
-} else {
+} else if (process.env.ENV) {
   const [stage, region] = stageAndRegion()
   const suffix = isQaEnv() ? `-${process.env.QA_SUBDOMAIN}` : ''
-  new CdkTarponStack(app, `${stage}-tarpon${suffix}`, getTarponConfig(stage, region))
+  new CdkTarponStack(
+    app,
+    `${stage}-tarpon${suffix}`,
+    getTarponConfig(stage, region)
+  )
+} else {
+  new Stack(app, 'dummy-stack')
 }

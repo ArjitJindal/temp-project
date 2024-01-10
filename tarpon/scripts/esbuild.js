@@ -33,6 +33,28 @@ const IGNORED = [
 const ROOT_DIR = path.resolve(`${__dirname}/..`)
 const OUT_DIR = 'dist'
 
+async function copyDirToDist(
+  relativeSrc,
+  relativeDest,
+  validateDestPath = true
+) {
+  const src = path.join(ROOT_DIR, relativeSrc)
+  const dest = path.join(OUT_DIR, relativeDest)
+  const destDir = path.parse(dest).dir
+  if (validateDestPath && !(await fs.exists(destDir))) {
+    throw new Error(`${destDir} does not exist!`)
+  }
+  await fs.ensureDir(dest)
+  await fs.copy(src, dest)
+}
+async function copyDirsToDist(entries) {
+  await Promise.all(
+    entries.map(({ src, dest, validateDestPath }) =>
+      copyDirToDist(src, dest, validateDestPath)
+    )
+  )
+}
+
 async function main() {
   console.log('Bundling...')
   console.time('Total build time')
@@ -73,34 +95,23 @@ async function main() {
   console.log('Generated bundles:')
   console.timeEnd('Bundle time')
 
-  await Promise.all([
-    (async () => {
-      // Copy geoip
-      await fs.ensureDir(
-        `${OUT_DIR}/layers/fast-geoip/nodejs/node_modules/fast-geoip`
-      )
-      await fs.copy(
-        `${ROOT_DIR}/node_modules/fast-geoip`,
-        `${OUT_DIR}/layers/fast-geoip/nodejs/node_modules/fast-geoip`
-      )
-    })(),
-    (async () => {
-      // Copy slack templates
-      await fs.ensureDir(`${OUT_DIR}/slack-app/templates`)
-      await fs.copy(
-        `${ROOT_DIR}/src/lambdas/slack-app/templates`,
-        `${OUT_DIR}/slack-app/templates`
-      )
-    })(),
-    (async () => {
-      // Copy fincen binaries
-      await fs.ensureDir(`${OUT_DIR}/console-api-sar/bin`)
-      fs.copy
-      await fs.copy(
-        `${ROOT_DIR}/src/services/sar/generators/US/SAR/bin`,
-        `${OUT_DIR}/console-api-sar/bin`
-      )
-    })(),
+  await copyDirsToDist([
+    // Copy geoip
+    {
+      src: 'node_modules/fast-geoip',
+      dest: 'layers/fast-geoip/nodejs/node_modules/fast-geoip',
+      validateDestPath: false,
+    },
+    // Copy slack templates
+    {
+      src: 'src/lambdas/slack-app/templates',
+      dest: 'lambdas/slack-app/templates',
+    },
+    // Copy fincen binaries
+    {
+      src: 'src/services/sar/generators/US/SAR/bin',
+      dest: 'lambdas/console-api-sar/bin',
+    },
   ])
 
   for (const [file, info] of Object.entries(bundleResults.metafile.outputs)) {
