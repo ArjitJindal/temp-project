@@ -14,7 +14,7 @@ module.exports = {
     'plugin:cypress/recommended',
   ],
   plugins: ['custom-rules'],
-  ignorePatterns: ['.eslintrc.js', 'build', 'node_modules', 'jest.config.js'],
+  ignorePatterns: ['.eslintrc.js', 'build', 'node_modules', 'jest.config.js', 'cypress-run.js'],
   rules: {
     'no-console': ['error', { allow: ['error', 'warn', 'info'] }],
     '@typescript-eslint/no-empty-function': 'off',
