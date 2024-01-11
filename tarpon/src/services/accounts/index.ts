@@ -530,6 +530,13 @@ export class AccountsService {
     await Promise.all(promises)
   }
 
+  async deleteAuth0User(userId: string) {
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
+    await managementClient.deleteUser({ id: userId })
+  }
+
   async patchUserHandler(
     request: DefaultApiAccountsEditRequest,
     tenant: Tenant

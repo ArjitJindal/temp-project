@@ -6,6 +6,7 @@ import {
 import { memoize, orderBy } from 'lodash'
 import { DeleteCommand, QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
+import { AccountsService } from '../accounts'
 import {
   getNonUserReceiverKeys,
   getNonUserSenderKeys,
@@ -17,6 +18,7 @@ import {
 import { BatchJobRunner } from './batch-job-runner-base'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient, paginateQueryGenerator } from '@/utils/dynamodb'
 import { DynamoDbKeyEnum, DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -70,6 +72,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     await Promise.all([
       this.deleteS3Data(job.tenantId),
       this.deleteDynamoDbData(job.tenantId),
+      this.deleteAuth0Users(job.tenantId),
     ])
   }
 
@@ -454,6 +457,24 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     } while (marker)
 
     logger.info(`Deleted S3 files.`)
+  }
+  private async deleteAuth0Users(tenantId: string) {
+    const mongoDb = await getMongoDbClient()
+    const accountsService = new AccountsService(
+      { auth0Domain: process.env.AUTH0_DOMAIN as string },
+      { mongoDb }
+    )
+    logger.info('Deleting all users from Auth0')
+    const tenant = await accountsService.getTenantById(tenantId)
+    if (!tenant) {
+      logger.warn(`Tenant not found.`)
+      return
+    }
+    const users = await accountsService.getTenantAccounts(tenant)
+    for (const user of users) {
+      logger.info(`Deleting auth0 user ${user.id}`)
+      await accountsService.deleteAuth0User(user.id)
+    }
   }
 
   private async deleteRiskClassifications(tenantId: string) {
