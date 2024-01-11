@@ -17,10 +17,9 @@ export const rbacMiddleware =
   (handler: CallableFunction): Handler =>
   async (event, ctx): Promise<APIGatewayProxyResult> => {
     const api = determineApi(ctx)
-    if (api !== 'CONSOLE') {
+    if (api !== 'CONSOLE' && ctx?.functionName !== 'Testing-API') {
       return await handler(event, ctx)
     }
-
     const requiredPermissions = getInternalApiRequiredPermissions(
       event.resource,
       event.httpMethod

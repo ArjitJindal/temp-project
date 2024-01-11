@@ -5,6 +5,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getTestTenantId } from './tenant-test-utils'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 
 function getPathFromPathParams(
   resource: string,
@@ -26,6 +27,7 @@ export function getApiGatewayGetEvent(
   params?: {
     pathParameters?: { [key: string]: string }
     queryStringParameters?: { [key: string]: string }
+    user?: Partial<JWTAuthorizerResult>
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
   APIGatewayEventLambdaAuthorizerContext<Credentials>
@@ -39,6 +41,7 @@ export function getApiGatewayGetEvent(
     requestContext: {
       authorizer: {
         principalId: tenantId,
+        ...(params?.user ?? {}),
       },
     } as any,
     body: null,
@@ -57,6 +60,7 @@ export function getApiGatewayPostEvent(
   params?: {
     pathParameters?: { [key: string]: string }
     queryStringParameters?: { [key: string]: string }
+    user?: Partial<JWTAuthorizerResult>
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
   APIGatewayEventLambdaAuthorizerContext<Credentials>
@@ -70,6 +74,7 @@ export function getApiGatewayPostEvent(
     requestContext: {
       authorizer: {
         principalId: tenantId,
+        ...(params?.user ?? {}),
       },
     } as any,
     body: JSON.stringify(body),
@@ -88,6 +93,7 @@ export function getApiGatewayPatchEvent(
   params?: {
     pathParameters?: { [key: string]: string }
     queryStringParameters?: { [key: string]: string }
+    user?: Partial<JWTAuthorizerResult>
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
   APIGatewayEventLambdaAuthorizerContext<Credentials>
@@ -101,6 +107,7 @@ export function getApiGatewayPatchEvent(
     requestContext: {
       authorizer: {
         principalId: tenantId,
+        ...(params?.user ?? {}),
       },
     } as any,
     body: JSON.stringify(body),
@@ -118,6 +125,7 @@ export function getApiGatewayDeleteEvent(
   params?: {
     pathParameters?: { [key: string]: string }
     queryStringParameters?: { [key: string]: string }
+    user?: Partial<JWTAuthorizerResult>
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
   APIGatewayEventLambdaAuthorizerContext<Credentials>
@@ -131,6 +139,7 @@ export function getApiGatewayDeleteEvent(
     requestContext: {
       authorizer: {
         principalId: tenantId,
+        ...(params?.user ?? {}),
       },
     } as any,
     body: null,
@@ -149,6 +158,7 @@ export function getApiGatewayPutEvent(
   params?: {
     pathParameters?: { [key: string]: string }
     queryStringParameters?: { [key: string]: string }
+    user?: Partial<JWTAuthorizerResult>
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
   APIGatewayEventLambdaAuthorizerContext<Credentials>
@@ -162,6 +172,7 @@ export function getApiGatewayPutEvent(
     requestContext: {
       authorizer: {
         principalId: tenantId,
+        ...(params?.user ?? {}),
       },
     } as any,
     body: JSON.stringify(body),
