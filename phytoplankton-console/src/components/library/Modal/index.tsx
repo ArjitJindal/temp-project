@@ -29,6 +29,8 @@ interface Props {
   children?: React.ReactNode;
   disablePadding?: boolean;
   writePermissions?: Permission[];
+  hideOk?: boolean;
+  maskClosable?: boolean;
 }
 
 const WIDTH: { [K in ModalWidth]: number | string } = {
@@ -57,6 +59,8 @@ export default function Modal(props: Props) {
     tabs = [],
     disablePadding = false,
     writePermissions = [],
+    hideOk = false,
+    maskClosable = false,
   } = props;
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key);
@@ -106,21 +110,24 @@ export default function Modal(props: Props) {
             <Button type="TETRIARY" htmlType="button" onClick={onCancel} {...cancelProps}>
               {cancelText ?? 'Cancel'}
             </Button>
-            <Button
-              type="PRIMARY"
-              htmlType="button"
-              onClick={onOk}
-              {...okProps}
-              testName={`modal-ok`}
-              requiredPermissions={writePermissions}
-            >
-              {okText ?? 'OK'}
-            </Button>
+            {!hideOk && (
+              <Button
+                type="PRIMARY"
+                htmlType="button"
+                onClick={onOk}
+                {...okProps}
+                testName={`modal-ok`}
+                requiredPermissions={writePermissions}
+              >
+                {okText ?? 'OK'}
+              </Button>
+            )}
           </>
         )
       }
       width={WIDTH[width]}
       centered
+      maskClosable={maskClosable}
     >
       {tabs.find(({ key }) => key === activeTab)?.children}
       {children}

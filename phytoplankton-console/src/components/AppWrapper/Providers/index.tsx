@@ -8,6 +8,7 @@ import FlagrightUserProvider from './FlagrightUserProvider';
 import AuthProvider from './AuthProvider';
 import SettingsProviderMock from './mocks/SettingsProvider';
 import FlagrightUserProviderMock from './mocks/FlagrightUserProvider';
+import { BrowserSupportProvider } from './BrowserSupportProvider';
 import { Feature } from '@/apis';
 
 interface Props {
@@ -35,9 +36,11 @@ export default function Providers(props: Props) {
         <QueryClientProvider>
           <FlagrightUserProvider>
             <SettingsProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
-              <SideBarProvider>
-                <DemoModeProvider>{props.children}</DemoModeProvider>
-              </SideBarProvider>
+              <BrowserSupportProvider>
+                <SideBarProvider>
+                  <DemoModeProvider>{props.children}</DemoModeProvider>
+                </SideBarProvider>
+              </BrowserSupportProvider>
             </SettingsProvider>
           </FlagrightUserProvider>
         </QueryClientProvider>
