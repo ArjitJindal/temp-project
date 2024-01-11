@@ -1,13 +1,17 @@
 import { BrowserSupportModal } from '@/components/BrowserSupportModal';
+import { useCurrentUser } from '@/utils/user-utils';
 
 interface Props {
   children?: React.ReactNode;
 }
 
 export const BrowserSupportProvider = (props: Props) => {
+  const currentUser = useCurrentUser();
   return (
     <>
-      <BrowserSupportModal />
+      {currentUser?.email && currentUser.email !== 'cypress@flagright.com' ? (
+        <BrowserSupportModal />
+      ) : null}
       {props.children}
     </>
   );

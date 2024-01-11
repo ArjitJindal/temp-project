@@ -92,7 +92,7 @@ async function getCypressCreds() {
   }
 
   execSync(
-    `./node_modules/.bin/cypress ${type} --env username=${username},password=${password} ${headlessFlag} --browser chrome`,
+    `./node_modules/.bin/cypress ${type} --env username=${username},password=${password} ${headlessFlag}`,
     {
       stdio: 'inherit',
     },
