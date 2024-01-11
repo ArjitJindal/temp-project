@@ -245,7 +245,8 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
     if (
       this.config.stage === 'prod' &&
       this.config.region != 'asia-1' &&
-      this.config.region != 'au-1'
+      this.config.region != 'au-1' &&
+      this.config.region != 'me-1'
     )
       new inspector.CfnAssessmentTarget(this, 'InspectorAssessmentTarget', {
         assessmentTargetName: 'InspectorAssessmentTarget',
