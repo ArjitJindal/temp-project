@@ -84,7 +84,7 @@ export default function SuperAdminPanel() {
     settings.complyAdvantageSearchProfileId || '',
   );
 
-  const [batchJobName, setBatchJobName] = useState<string>('');
+  const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
   const user = useAuth0User();
   const api = useApi();
   const queryResult = useQuery(['tenants'], () => api.getTenantsList());
@@ -302,8 +302,6 @@ export default function SuperAdminPanel() {
                   }))}
                   value={batchJobName}
                   onChange={setBatchJobName}
-                  allowClear
-                  onClear={() => setBatchJobName('')}
                   showSearch
                 />
               </Label>
@@ -314,7 +312,7 @@ export default function SuperAdminPanel() {
                 batchJobMessage = message.loading(`Starting ${humanizeConstant(batchJobName)}...`);
                 await api.postTenantsTriggerBatchJob({
                   TenantTriggerBatchJobRequest: {
-                    jobName: batchJobName as BatchJobNames,
+                    jobName: batchJobName,
                   },
                 });
                 batchJobMessage();
@@ -354,6 +352,11 @@ export default function SuperAdminPanel() {
               title="Delete tenant?"
               onConfirm={async () => {
                 batchJobMessage = message.loading(`Deleting tenant...`);
+                if (!tenantIdToDelete) {
+                  message.error('No tenant selected');
+                  return;
+                }
+
                 if (tenantIdToDelete === user.tenantId) {
                   message.error('Cannot delete current tenant');
                   return;
@@ -365,8 +368,9 @@ export default function SuperAdminPanel() {
                 }
 
                 await api.deleteTenant({
-                  tenantId: tenantIdToDelete as string,
+                  tenantId: tenantIdToDelete,
                 });
+
                 batchJobMessage();
                 window.location.reload();
               }}

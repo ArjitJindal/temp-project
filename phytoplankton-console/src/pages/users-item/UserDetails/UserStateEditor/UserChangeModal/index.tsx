@@ -11,6 +11,7 @@ import {
   UserState,
   Comment,
   KYCAndUserStatusChangeReason,
+  UserStateDetailsInternal,
 } from '@/apis';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
@@ -81,11 +82,12 @@ export default function UserChangeModal(props: Props) {
       if (userStatus === '') {
         throw new Error('User Status Empty');
       }
-      const newStateDetails = {
+      const newStateDetails: UserStateDetailsInternal = {
         userId: user.userId,
         state: userStatus!,
-        reason: reason === 'Other' ? otherReason : reason,
+        reason: reason === 'Other' && otherReason ? otherReason : reason,
       };
+
       const commentText = comment;
       const commentContent = {
         Comment: {
@@ -93,13 +95,13 @@ export default function UserChangeModal(props: Props) {
           files: files,
         },
       };
-      const params = {
+      const params: DefaultApiPostConsumerUsersUserIdRequest = {
         userId: user.userId,
         UserUpdateRequest: {
           userStateDetails: newStateDetails,
           comment: commentContent.Comment,
         },
-      } as DefaultApiPostConsumerUsersUserIdRequest;
+      };
       let updatedComment: Comment | undefined;
       if (user.type === 'CONSUMER') {
         updatedComment = await api.postConsumerUsersUserId(params);
@@ -118,8 +120,8 @@ export default function UserChangeModal(props: Props) {
         messageLoading?.();
         await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));
       },
-      onError: (error) => {
-        message.error(`Error Changing User Status: ${(error as Error).message}`);
+      onError: (error: Error) => {
+        message.error(`Error Changing User Status: ${error.message}`);
         messageLoading?.();
       },
     },

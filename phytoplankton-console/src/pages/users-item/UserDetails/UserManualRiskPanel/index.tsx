@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useApi } from '@/api';
-import { RiskLevel, useRiskLevel } from '@/utils/risk-levels';
+import { RiskLevel, useRiskLevel, useRiskScore } from '@/utils/risk-levels';
 import { message } from '@/components/library/Message';
 import {
   AsyncResource,
@@ -24,6 +24,7 @@ import LockLineIcon from '@/components/ui/icons/Remix/system/lock-line.react.svg
 import UnlockIcon from '@/components/ui/icons/Remix/system/lock-unlock-line.react.svg';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM_RISKS_DRS, USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { DEFAULT_RISK_LEVEL } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 
 interface Props {
   userId: string;
@@ -126,6 +127,8 @@ export default function UserManualRiskPanel(props: Props) {
     }
   };
 
+  const defaultRiskScore = useRiskScore(DEFAULT_RISK_LEVEL);
+
   return (
     <div className={s.root}>
       <RiskLevelSwitch
@@ -137,9 +140,7 @@ export default function UserManualRiskPanel(props: Props) {
               manualRiskLevel || derivedRiskLevel || undefined,
           ),
           useRiskLevel(
-            (drsScore && drsScore.length
-              ? drsScore[drsScore.length - 1].drsScore
-              : undefined) as number,
+            drsScore && drsScore.length ? drsScore[drsScore.length - 1].drsScore : defaultRiskScore,
           ) ?? undefined,
         )}
         onChange={handleChangeRiskLevel}

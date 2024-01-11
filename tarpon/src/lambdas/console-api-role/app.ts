@@ -25,7 +25,7 @@ export const rolesHandler = lambdaApi()(
 
     handlers.registerCreateRole(
       async (ctx, request) =>
-        await rolesService.createRole(tenantId, request.AccountRole)
+        await rolesService.createRole(tenantId, request.CreateAccountRole)
     )
 
     handlers.registerUpdateRole(

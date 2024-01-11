@@ -5,22 +5,19 @@ import { PageLoading } from '@/components/PageLoading';
 
 const AuthenticationRequiredWrapper = withAuthenticationRequired(
   (({ children: innerChildren }) => innerChildren) as React.FC,
-  {
-    onRedirecting: () => {
-      return <PageLoading />;
-    },
-  },
+  { onRedirecting: () => <PageLoading /> },
 );
 
 const branding = getBranding();
-export const providerConfig = {
+
+export const providerConfig = Object.freeze({
   domain: branding.auth0Domain,
   clientId: branding.auth0ClientId,
   scope: 'openid profile email',
   cacheLocation: 'localstorage',
   audience: AUTH0_AUDIENCE ?? undefined,
   redirectUri: `${window.location.origin}${branding.redirectPath || ''}`,
-} as const;
+});
 
 const AuthProvider: React.FC = ({ children }) => {
   return (

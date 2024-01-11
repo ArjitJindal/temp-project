@@ -32,7 +32,7 @@ export const SPECIAL_COLUMN_IDS = [EXPAND_COLUMN_ID, SELECT_COLUMN_ID, SPACER_CO
 
 export const DEFAULT_COLUMN_WRAP_MODE = 'WRAP';
 
-export const SELECT_COLUMN: TanTable.ColumnDef<unknown> = {
+export const SELECT_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRow<Item>, any> => ({
   id: SELECT_COLUMN_ID,
   size: 30,
   enableResizing: false,
@@ -59,16 +59,16 @@ export const SELECT_COLUMN: TanTable.ColumnDef<unknown> = {
       )}
     </AdditionalContext.Consumer>
   ),
-};
+});
 
-const ExpandCheckbox = ({
+const ExpandCheckbox = <Item extends object>({
   row,
   table,
   partiallySelectedIds,
   selectionInfo,
 }: {
-  row: TanTable.Row<unknown>;
-  table: TanTable.Table<unknown>;
+  row: TanTable.Row<TableRow<Item>>;
+  table: TanTable.Table<TableRow<Item>>;
   partiallySelectedIds?: string[];
   selectionInfo?: SelectionInfo;
 }) => {
@@ -104,7 +104,7 @@ const ExpandCheckbox = ({
   );
 };
 
-export const EXPAND_COLUMN: TanTable.ColumnDef<TableRow<unknown>> = {
+export const EXPAND_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRow<Item>, any> => ({
   id: EXPAND_COLUMN_ID,
   size: 30,
   enableResizing: false,
@@ -126,10 +126,10 @@ export const EXPAND_COLUMN: TanTable.ColumnDef<TableRow<unknown>> = {
       />
     );
   },
-};
+});
 
-export const SPACER_COLUMN: TanTable.ColumnDef<unknown> = {
+export const SPACER_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRow<Item>, any> => ({
   id: SPACER_COLUMN_ID,
   size: 0,
   enableResizing: false,
-};
+});

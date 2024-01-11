@@ -39,7 +39,7 @@ export default function UserActivityCard(props: Props) {
   >(
     async (variables) => {
       await api.deleteUsersUserIdCommentsCommentId({
-        userId: user.userId as string,
+        userId: user.userId,
         commentId: variables.commentId,
       });
     },

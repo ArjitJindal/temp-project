@@ -9,17 +9,19 @@ interface Props {
 }
 
 export default function HistoryItemEmbedded({ item }: Props) {
-  const userId = item.variables?.find((v) => v.name === 'userId')?.value as string;
-  const alertId = item.variables?.find((v) => v.name === 'alertId')?.value as string;
+  const userId = item.variables?.find((v) => v.name === 'userId')?.value;
+  const alertId = item.variables?.find((v) => v.name === 'alertId')?.value;
 
   return (
     <Card.Section key={JSON.stringify(item.variables)}>
-      {item.questionId === 'Entity linking' && (
+      {item.questionId === 'Entity linking' && typeof userId === 'string' && (
         <div style={{ height: '400px' }}>
           <Linking userId={userId} />
         </div>
       )}
-      {item.questionId === 'Recommendation' && <Recommendation alertId={alertId} />}
+      {item.questionId === 'Recommendation' && typeof alertId === 'string' && (
+        <Recommendation alertId={alertId} />
+      )}
     </Card.Section>
   );
 }

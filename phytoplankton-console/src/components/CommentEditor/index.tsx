@@ -142,7 +142,13 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             });
           }}
           customRequest={async ({ file: f, onError, onSuccess }) => {
-            const file = f as File;
+            const file = f;
+
+            if (!(file instanceof File)) {
+              message.fatal('Failed to upload the file', new Error('Invalid file'));
+              return;
+            }
+
             setUploadingCount((prevCount) => prevCount + 1);
             const hideMessage = message.loading('Uploading...');
             let fileS3Key = '';

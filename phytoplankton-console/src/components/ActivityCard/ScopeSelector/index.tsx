@@ -16,6 +16,12 @@ export default function ScopeSelector(props: Props) {
   const { selectedSection, setSelectedSection, count } = props;
   const { comments } = count;
   const isAuditlogEnabled = useFeatureEnabled('AUDIT_LOGS');
+  const logScopeSelectorValue: ScopeSelectorValue = 'LOG';
+  const items: { value: ScopeSelectorValue; label: string }[] = [
+    { value: 'COMMENTS', label: `Comments (${comments})` },
+    ...(isAuditlogEnabled ? [{ value: logScopeSelectorValue, label: `Log` }] : []),
+  ];
+
   return (
     <SegmentedControl<ScopeSelectorValue>
       size="LARGE"
@@ -23,10 +29,7 @@ export default function ScopeSelector(props: Props) {
       onChange={(newValue) => {
         setSelectedSection(newValue);
       }}
-      items={[
-        { value: 'COMMENTS', label: `Comments (${comments})` },
-        ...(isAuditlogEnabled ? [{ value: 'LOG' as ScopeSelectorValue, label: `Log` }] : []),
-      ]}
+      items={items}
     />
   );
 }

@@ -106,7 +106,7 @@ export function transformXLSXTableRows<T extends object>(
   const dataRows = items.map((row) =>
     columnsToExport.map((column): XLSX.CellObject => {
       const columnDataType = { ...UNKNOWN, ...column.type };
-      const value = isSimpleColumn(column)
+      const value = isSimpleColumn<T>(column)
         ? applyFieldAccessor(row, column.key)
         : column.value(row);
       const link = columnDataType.link?.(value as any, row);

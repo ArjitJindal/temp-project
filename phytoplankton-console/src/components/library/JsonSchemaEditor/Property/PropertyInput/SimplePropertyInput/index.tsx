@@ -24,9 +24,7 @@ export default function SimplePropertyInput(props: Props) {
         const enumNames = schema.enumNames ?? [];
 
         const displayOptions =
-          enumNames?.length && enumNames.length === enums.length
-            ? (enumNames as string[])
-            : (enums as string[]);
+          enumNames?.length && enumNames.length === enums.length ? enumNames : enums;
 
         return (
           <Select
@@ -79,9 +77,7 @@ export default function SimplePropertyInput(props: Props) {
         const enumNames = schema.enumNames ?? [];
 
         const displayOptions =
-          enumNames?.length && enumNames.length === enums.length
-            ? (enumNames as string[])
-            : (enums as string[]);
+          enumNames?.length && enumNames.length === enums.length ? enumNames : enums;
 
         return (
           <Select<number>

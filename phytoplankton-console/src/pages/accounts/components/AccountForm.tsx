@@ -258,7 +258,7 @@ export default function AccountForm(props: Props) {
                 allowClear={false}
                 options={roles.map((name) => ({
                   value: name.name,
-                  label: startCase(name.name as string),
+                  label: startCase(name.name),
                 }))}
                 value={values.role}
                 onChange={(value) => {

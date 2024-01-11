@@ -450,7 +450,7 @@ function Td<Item>(props: {
 
   const item: TableRow<Item> = cell.row.original;
   let rowSpan = 1;
-  if (columnId != null && (item.spanBy as string[]).includes(columnId) && item.rowsCount > 1) {
+  if (columnId != null && item.spanBy.includes(columnId) && item.rowsCount > 1) {
     rowSpan = item.isFirstRow ? item.rowsCount : 0;
   }
 

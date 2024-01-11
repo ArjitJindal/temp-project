@@ -21,7 +21,11 @@ export const WebhookInput = (props: Props) => {
   const handleRevealSecret = useCallback(async () => {
     try {
       setLoadingSecret(true);
-      const secrets = await api.getWebhooksWebhookIdSecret({ webhookId: value as string });
+      if (value == null) {
+        message.fatal(`Webhook ID is not set`);
+        return;
+      }
+      const secrets = await api.getWebhooksWebhookIdSecret({ webhookId: value });
       setSecrets(secrets);
     } catch (e) {
       message.fatal(`Failed to fetch secret`, e);

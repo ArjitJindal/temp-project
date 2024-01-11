@@ -67,7 +67,7 @@ export default function CommentsCard(props: Props) {
                     const adaptedMutation = adaptMutationVariables(
                       deleteCommentMutation,
                       (variables: { commentId: string }) => {
-                        return { ...variables, groupId: group.id as string };
+                        return { ...variables, groupId: group.id };
                       },
                     );
                     if (nonEmptyGroups.length < 2 && !group.title) {

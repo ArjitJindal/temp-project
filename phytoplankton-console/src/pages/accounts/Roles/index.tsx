@@ -48,8 +48,8 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
           </Button>
         }
         items={roles.map((r) => ({
-          key: r.id as string,
-          title: startCase(r.name as string),
+          key: r.id,
+          title: startCase(r.name),
           icon: isValidManagedRoleName(r.name) && (
             <span className={s.icon}>
               <LockFilled />

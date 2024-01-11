@@ -4,6 +4,7 @@ import { Permission } from '@/@types/openapi-internal/Permission'
 import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/ManagedRoleName'
 import { traceable } from '@/core/xray'
+import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
 
 @traceable
 export class RoleService {
@@ -23,7 +24,7 @@ export class RoleService {
   }
   async createRole(
     tenantId: string,
-    inputRole: AccountRole
+    inputRole: CreateAccountRole
   ): Promise<AccountRole> {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
@@ -51,7 +52,11 @@ export class RoleService {
       )
     }
 
-    return { id: role.id, ...inputRole }
+    if (!role.id) {
+      throw new Error('Role ID cannot be null')
+    }
+
+    return { ...inputRole, id: role.id }
   }
 
   async updateRole(
@@ -125,9 +130,13 @@ export class RoleService {
       per_page: 100, // One day we may have roles with >100 permissions.
     })
 
+    if (!role.id) {
+      throw new Error('Role ID cannot be null')
+    }
+
     return {
       id: role.id,
-      name: getRoleDisplayName(role.name),
+      name: getRoleDisplayName(role.name) || 'No name.',
       description: role.description || 'No description.',
       permissions: auth0Permissions
         .filter((p) => p.permission_name)
@@ -152,10 +161,17 @@ export class RoleService {
         throw new Error('Role name cannot be null')
       }
 
+      const roleId = role.id
+
+      if (!roleId) {
+        throw new Error('Role ID cannot be null')
+      }
+
       return {
-        id: role.id,
-        name: getRoleDisplayName(role.name),
+        id: roleId,
+        name: getRoleDisplayName(role.name) || 'No name.',
         description: !role.description ? 'No description.' : role.description,
+        permissions: [],
       }
     })
   }

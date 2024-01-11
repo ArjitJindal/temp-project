@@ -60,16 +60,23 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({
       async function startImport() {
         setLoading(true);
         const hideMessage = message.loading('Importing...');
+        if (!file) {
+          message.error('Please upload a file');
+          setLoading(false);
+          return;
+        }
+
+        const { s3Key, filename } = file;
+
+        if (!s3Key || !filename) {
+          message.fatal('Something went wrong', new Error('Missing s3Key or filename'));
+          setLoading(false);
+          return;
+        }
+
         try {
           try {
-            const data = {
-              ImportRequest: {
-                type,
-                format,
-                s3Key: file?.s3Key as string,
-                filename: file?.filename as string,
-              },
-            };
+            const data = { ImportRequest: { type, format, s3Key, filename } };
 
             type === 'TRANSACTION'
               ? await api.postImportTransactions(data)
@@ -78,7 +85,8 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({
             // If the import takes more than 29 seconds, we ignore the error and
             // poll for the import status
           }
-          const importId = file?.s3Key.replace(/\//g, '') as string;
+          const importId = s3Key.replace(/\//g, '');
+
           for (const _i of range(0, 100)) {
             const importInfo = await api.getImportImportId({ importId });
             if (importInfo) {
@@ -105,7 +113,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({
       }
       startImport();
     },
-    [api, file?.filename, file?.s3Key, format, handleClose],
+    [api, file, format, handleClose],
   );
 
   return (
@@ -163,7 +171,12 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({
             key="import"
             showUploadList={false}
             customRequest={async ({ file: f }) => {
-              const file = f as File;
+              const file = f;
+
+              if (!(file instanceof File)) {
+                message.error('Please upload a file');
+                return;
+              }
 
               //to check the size of csv file(in bytes)
               const fsize = file.size;

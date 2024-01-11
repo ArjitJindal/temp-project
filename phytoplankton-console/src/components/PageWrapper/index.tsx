@@ -98,7 +98,7 @@ function Header(
                           checkedIcon={false}
                           onColor={COLORS.red.base}
                           value={props.isSuperAdminMode}
-                          onChange={(v) => props.onSuperAdminModeChange(v as boolean)}
+                          onChange={(v) => props.onSuperAdminModeChange(Boolean(v))}
                         />
                       </SuperAdminContainer>
                     )}

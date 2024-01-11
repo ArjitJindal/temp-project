@@ -215,12 +215,14 @@ export default function TransactionsTable(props: Props) {
                 <Id to={makeUrl(`/transactions/item/:id`, { id: value })} testName="transaction-id">
                   {value}
                 </Id>
-                {escalatedTransactions && escalatedTransactions?.indexOf(value as string) > -1 && (
-                  <>
-                    <br />
-                    <Tag color="blue">Escalated</Tag>
-                  </>
-                )}
+                {escalatedTransactions &&
+                  value != null &&
+                  escalatedTransactions?.indexOf(value) > -1 && (
+                    <>
+                      <br />
+                      <Tag color="blue">Escalated</Tag>
+                    </>
+                  )}
               </div>
             );
           },

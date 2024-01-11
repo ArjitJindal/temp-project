@@ -33,7 +33,9 @@ export const fatal: ShowMessageWithOptionalError = (
 ) => {
   if (!errorsCaptured.includes(message?.toString() || '') && process.env.ENV_NAME !== 'local') {
     errorsCaptured.push(message?.toString() || ''); // prevent duplicate errors
-    Sentry.captureException(error);
+    if (error instanceof Error) {
+      Sentry.captureException(error);
+    }
   }
   return open(message, 'ERROR');
 };

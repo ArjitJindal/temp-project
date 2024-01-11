@@ -88,10 +88,12 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
   const { rules } = useRules();
   const handleRuleInstanceUpdate = useCallback(async (newRuleInstance: RuleInstance) => {
-    setUpdatedRuleInstances((prev) => ({
-      ...prev,
-      [newRuleInstance.id as string]: newRuleInstance,
-    }));
+    const newRuleInstanceId = newRuleInstance.id;
+    if (!newRuleInstanceId) {
+      message.fatal('Rule instance ID is not set');
+      return;
+    }
+    setUpdatedRuleInstances((prev) => ({ ...prev, [newRuleInstanceId]: newRuleInstance }));
   }, []);
   const updateRuleInstanceMutation = useUpdateRuleInstance(handleRuleInstanceUpdate);
 
@@ -177,7 +179,10 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         key: 'ruleNameAlias',
         type: {
           render: (_, { item: entity }) => {
-            const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
+            if (!entity.id) {
+              return <></>;
+            }
+            const ruleInstance = updatedRuleInstances[entity.id] || entity;
             return (
               <span style={{ fontSize: '14px' }}>
                 {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId!]?.name}
@@ -264,7 +269,10 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         type: {
           ...BOOLEAN,
           render: (_, { item: entity }) => {
-            const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
+            if (!entity.id) {
+              return <></>;
+            }
+            const ruleInstance = updatedRuleInstances[entity.id] || entity;
             return (
               <Switch
                 disabled={!canWriteRules}

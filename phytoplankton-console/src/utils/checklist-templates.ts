@@ -15,7 +15,7 @@ export const useAlertChecklist = (alertId: string): QueryResult<HydratedChecklis
       throw new Error('Could not resolve alert rule instance');
     }
     const template = await api.getChecklistTemplate({
-      checklistTemplateId: ruleInstance.checklistTemplateId as string,
+      checklistTemplateId: ruleInstance.checklistTemplateId,
     });
 
     return template.categories.map((category): ChecklistCategory => {
@@ -27,7 +27,7 @@ export const useAlertChecklist = (alertId: string): QueryResult<HydratedChecklis
             throw new Error('Bad checklist item');
           }
           return {
-            id: cli.id as string,
+            id: cli.id,
             name: cli.name,
             level: cli.level,
             qaStatus: item.status,

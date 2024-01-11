@@ -22,7 +22,7 @@ import {
 } from '@/components/library/Form/utils/validation/types';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
 
-interface Props extends InputProps<unknown[]> {
+interface Props extends InputProps<string[]> {
   schema: ExtendedSchema;
 }
 
@@ -44,18 +44,17 @@ export default function ArrayPropertyInput(props: Props) {
     const enumNames: string[] = schema.items.enumNames ?? [];
 
     const displayNames =
-      enumNames?.length && enumNames.length === enumItems.length
-        ? enumNames
-        : (enumItems as string[]);
+      enumNames?.length && enumNames.length === enumItems.length ? enumNames : enumItems;
 
     if (enumItems.length > 0 && enumItems.length <= 3) {
       return (
         <SelectionGroup
           mode="MULTIPLE"
-          options={enumItems
-            .filter(isString)
-            .map((item, i) => ({ label: displayNames[i] ?? item, value: item }))}
-          {...(props as InputProps<string[]>)}
+          options={enumItems.filter(isString).map((item, i) => ({
+            label: String(displayNames[i] ?? item),
+            value: item,
+          }))}
+          {...props}
         />
       );
     }
@@ -67,7 +66,7 @@ export default function ArrayPropertyInput(props: Props) {
           .filter(isString)
           .map((item, i) => ({ label: displayNames[i] ?? item, value: item }))}
         placeholder={`Select multiple ${pluralize(uiSchema['ui:entityName'] ?? 'option')}`}
-        {...(props as InputProps<string[]>)}
+        {...props}
       />
     );
   }
@@ -88,7 +87,7 @@ export function GenericArrayPropertyInput(props: Props) {
     : null;
 
   const handleClickAdd = useCallback(() => {
-    onChange?.([...value, null]);
+    onChange?.([...value, '']);
   }, [value, onChange]);
 
   return (
@@ -123,13 +122,15 @@ export function GenericArrayPropertyInput(props: Props) {
               }}
             >
               <Card.Section>
-                <PropertyInput
-                  value={item}
-                  onChange={(newValue) => {
-                    onChange?.(value.map((x, j) => (i === j ? newValue : x)));
-                  }}
-                  schema={schema.items as ExtendedSchema}
-                />
+                {schema.items && (
+                  <PropertyInput
+                    value={item}
+                    onChange={(newValue) => {
+                      onChange?.(value.map((x, j) => (i === j ? newValue : x)));
+                    }}
+                    schema={schema.items}
+                  />
+                )}
               </Card.Section>
             </Card.Root>
           );

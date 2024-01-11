@@ -278,7 +278,7 @@ export default function AlertTable(props: Props) {
               return item.alertId ?? '';
             },
             link: (value, item) => {
-              return getAlertUrl(item.caseId as string, item.alertId as string);
+              return item?.caseId && value ? getAlertUrl(item.caseId, value) : undefined;
             },
           },
         }),

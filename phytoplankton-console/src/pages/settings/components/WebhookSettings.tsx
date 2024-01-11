@@ -24,15 +24,10 @@ export const WebhookSettings: React.FC = () => {
     async (newWebhook: WebhookConfiguration) => {
       const hideMessage = message.loading('Saving...');
       try {
-        if (newWebhook._id) {
-          setUpdatedWebhooks((prev) => ({
-            ...prev,
-            [newWebhook._id as string]: newWebhook,
-          }));
-          await api.postWebhooksWebhookid({
-            webhookId: newWebhook._id as string,
-            WebhookConfiguration: newWebhook,
-          });
+        const webhookId = newWebhook._id;
+        if (webhookId) {
+          setUpdatedWebhooks((prev) => ({ ...prev, [webhookId]: newWebhook }));
+          await api.postWebhooksWebhookid({ webhookId, WebhookConfiguration: newWebhook });
         } else {
           await api.postWebhooks({
             WebhookConfiguration: newWebhook,
@@ -57,7 +52,7 @@ export const WebhookSettings: React.FC = () => {
       title: 'Endpoint URL',
       defaultWidth: 500,
       value: (entity): WebhookConfiguration | undefined => {
-        return updatedWebhooks[entity._id as string] ?? entity;
+        return entity._id ? updatedWebhooks[entity._id] ?? entity : undefined;
       },
       type: {
         render: (webhook: WebhookConfiguration | undefined) => {
@@ -68,7 +63,7 @@ export const WebhookSettings: React.FC = () => {
     helper.derived<WebhookConfiguration>({
       title: 'Events',
       value: (entity): WebhookConfiguration | undefined => {
-        return updatedWebhooks[entity._id as string] ?? entity;
+        return entity._id ? updatedWebhooks[entity._id] ?? entity : undefined;
       },
       type: {
         render: (webhook) => {
@@ -88,7 +83,7 @@ export const WebhookSettings: React.FC = () => {
     helper.derived<WebhookConfiguration>({
       title: 'Activated',
       value: (entity): WebhookConfiguration | undefined => {
-        return updatedWebhooks[entity._id as string] ?? entity;
+        return entity._id ? updatedWebhooks[entity._id] ?? entity : undefined;
       },
       defaultWidth: 500,
       type: {
@@ -171,11 +166,11 @@ export const WebhookSettings: React.FC = () => {
           UPDATE: (entityId, entity) => {
             entity.enabled = true;
             return api.postWebhooksWebhookid({
-              webhookId: entityId as string,
+              webhookId: entityId,
               WebhookConfiguration: entity,
             });
           },
-          DELETE: (entityId) => api.deleteWebhooksWebhookId({ webhookId: entityId as string }),
+          DELETE: (entityId) => api.deleteWebhooksWebhookId({ webhookId: entityId }),
         }}
         columns={columns}
         formWidth="800px"

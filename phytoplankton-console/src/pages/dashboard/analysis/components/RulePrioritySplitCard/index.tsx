@@ -48,7 +48,7 @@ export default function RulePrioritySplitCard(props: Props) {
         const priorityData: DonutData<Priority> = Object.entries(priorityFrequency).map(
           ([priority, value]) => ({
             series: priority as Priority,
-            value: value as number,
+            value: value,
           }),
         );
 

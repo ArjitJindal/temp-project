@@ -76,10 +76,10 @@ const randomizedData = (rawData: {
   return data.map((item): ExtendedValueItem => {
     const drsScore = Math.floor(Math.random() * 101); // Random value between 0 and 100
     const derivedRiskLevel = getRiskLevel(drsScore);
-    const createdAt = getRandomTimestamp() as number;
+    const createdAt = getRandomTimestamp();
     const components: RiskScoreComponent[] = (item.components ?? []).map(
       (component): RiskScoreComponent => {
-        const score = Math.floor((Math.random() * drsScore * 2) % 100) as number; // Random value between 0 and 2 x drsScore
+        const score = Math.floor((Math.random() * drsScore * 2) % 100); // Random value between 0 and 2 x drsScore
         const riskLevel = getRiskLevel(score);
         return {
           entityType: component.entityType as RiskEntityType,

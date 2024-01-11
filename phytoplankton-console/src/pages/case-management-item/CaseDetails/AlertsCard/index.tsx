@@ -13,7 +13,7 @@ interface Props {
 export default function AlertsCard(props: Props) {
   const { caseItem, expandedAlertId } = props;
 
-  const caseId = caseItem.caseId as string;
+  const caseId = caseItem.caseId;
   const [params, setParams] = useState<AlertTableParams>({
     ...DEFAULT_PARAMS_STATE,
     caseId,

@@ -73,7 +73,7 @@ export default function ExtendedRowRenderer(props: Props) {
 
 // Check permissions against feature flags.
 function featureEnabled(features: Feature[], section: string): boolean {
-  if (section == 'simulator' && !features.find((f) => (f as string) == 'SIMULATOR')) {
+  if (section == 'simulator' && !features.find((f) => f == 'SIMULATOR')) {
     return false;
   }
   return true;

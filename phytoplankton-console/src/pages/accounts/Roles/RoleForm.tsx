@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { startCase } from 'lodash';
 import { permissionsToRows } from './utils';
 import s from './RoleForm.module.less';
-import { AccountRole, Permission } from '@/apis';
+import { AccountRole, CreateAccountRole, Permission } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
 import TextInput from '@/components/library/TextInput';
 import Form from '@/components/library/Form';
@@ -55,14 +55,22 @@ export default function RoleForm({
         message.error('Role name should not match with default roles');
         return;
       }
-      const AccountRole = { name: roleName, description, permissions: [...permissions] };
+      const accountRole: CreateAccountRole = {
+        name: roleName,
+        description,
+        permissions: [...permissions],
+      };
+
       if (role?.id) {
         await api.updateRole({
           roleId: role?.id,
-          AccountRole,
+          AccountRole: {
+            ...accountRole,
+            id: role?.id,
+          },
         });
       } else {
-        await api.createRole({ AccountRole });
+        await api.createRole({ CreateAccountRole: accountRole });
       }
       message.success(`${roleName} role saved`);
       onChange(false, true);
@@ -76,7 +84,11 @@ export default function RoleForm({
   const onDelete = async () => {
     setLoading(true);
     try {
-      await api.deleteRole({ roleId: role?.id as string });
+      if (!role?.id) {
+        message.fatal('Role ID is not set');
+        return;
+      }
+      await api.deleteRole({ roleId: role?.id });
       message.success(`${role?.name} was deleted.`);
       onChange(true, false);
     } catch (e) {
@@ -118,14 +130,14 @@ export default function RoleForm({
       id={role?.id}
       key={role?.id}
       onSubmit={onSubmit}
-      initialValues={{ roleName: role?.name as string, description: role?.description as string }}
+      initialValues={{ roleName: role?.name ?? '', description: role?.description ?? '' }}
       fieldValidators={fieldValidators}
       alwaysShowErrors={true}
     >
       {!isEditing && (
         <>
-          <h3 className={s.title}>{startCase(role?.name as string)}</h3>
-          <h4>{role?.description as string}</h4>
+          <h3 className={s.title}>{startCase(role?.name)}</h3>
+          <h4>{role?.description}</h4>
         </>
       )}
       {isEditing && (

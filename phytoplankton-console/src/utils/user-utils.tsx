@@ -98,9 +98,11 @@ export function isAtLeast(user: FlagrightAuth0User | Account | null, role: UserR
   if (ROLES_ORDER.indexOf(getUserRole(user)) > ROLES_ORDER.indexOf(role)) {
     return false;
   }
-  if (role === UserRole.ROOT) {
-    const email = (user as FlagrightAuth0User)?.verifiedEmail ?? (user as Account)?.email;
+  if (role === UserRole.ROOT && user) {
+    const email = 'verifiedEmail' in user ? user.verifiedEmail : user.email;
+
     const isFlagrightEmail = email?.endsWith('@flagright.com') ?? false;
+
     if (!isFlagrightEmail) {
       return false;
     }

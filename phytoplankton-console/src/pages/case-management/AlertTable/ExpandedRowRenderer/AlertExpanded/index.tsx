@@ -15,6 +15,7 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import { dayjs } from '@/utils/dayjs';
 import { CurrencyCode, TransactionType } from '@/apis';
+import { message } from '@/components/library/Message';
 
 interface Props {
   alert: TableAlertItem;
@@ -91,7 +92,11 @@ export default function AlertExpanded(props: Props) {
             escalatedTransactions={escalatedTransactionIds}
             selectedIds={selectedTransactionIds}
             onSelect={(transactionIds) => {
-              onTransactionSelect && onTransactionSelect(alertId as string, transactionIds);
+              if (!alertId) {
+                message.fatal('Unable to select transactions, alert id is empty');
+                return;
+              }
+              onTransactionSelect && onTransactionSelect(alertId, transactionIds);
             }}
             queryResult={transactionsResponse}
             params={params}

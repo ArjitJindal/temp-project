@@ -7,7 +7,7 @@ import DeviceSettings from './DeviceSettings';
 import OtherInformation from './OtherInformation';
 import * as Card from '@/components/ui/Card';
 import { DeviceMetric } from '@/apis';
-import LANGUAGES, { LanguageCode } from '@/utils/languages';
+import LANGUAGES from '@/utils/languages';
 
 type Props = {
   title: string;
@@ -23,36 +23,43 @@ const DeviceDataInternalCard = ({ deviceData }: { deviceData: Partial<DeviceMetr
       },
       {
         title: 'Location',
-        value:
-          deviceData?.location?.latitude && deviceData?.location?.longitude ? (
+        value: () => {
+          const latitude = deviceData?.location?.latitude ?? '';
+          const longitude = deviceData?.location?.longitude ?? '';
+
+          return latitude && longitude ? (
             <span>
-              {deviceData?.location?.latitude} °N, {deviceData?.location?.longitude} °E
+              {latitude} °N, {longitude} °E
             </span>
           ) : (
             'N/A'
-          ),
+          );
+        },
       },
       {
         title: 'Country & Language',
-        value: (
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {deviceData.deviceCountryCode && deviceData.deviceLaungageCode && (
-              <>
-                <ReactCountryFlag
-                  countryCode={deviceData.deviceCountryCode ?? ''}
-                  svg
-                  style={{ width: '1.5rem', height: '1.5rem' }}
-                />
-                <div style={{ paddingLeft: '8px' }}>
-                  {COUNTRIES[deviceData.deviceCountryCode]},{' '}
-                  {deviceData.deviceLaungageCode
-                    ? LANGUAGES[deviceData.deviceLaungageCode as LanguageCode]
-                    : '-'}
-                </div>
-              </>
-            )}
-          </div>
-        ),
+        value: () => {
+          const countryCode = deviceData.deviceCountryCode ?? '';
+          const languageCode = deviceData.deviceLaungageCode ?? '';
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'row' }}>
+              {countryCode && languageCode && (
+                <>
+                  <ReactCountryFlag
+                    countryCode={countryCode ?? ''}
+                    svg
+                    style={{ width: '1.5rem', height: '1.5rem' }}
+                  />
+                  <div style={{ paddingLeft: '8px' }}>
+                    {COUNTRIES[countryCode]},{' '}
+                    {languageCode && languageCode in LANGUAGES ? LANGUAGES[languageCode] : '-'}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        },
       },
     ],
     [deviceData],

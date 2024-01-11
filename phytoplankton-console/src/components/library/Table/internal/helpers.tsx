@@ -45,7 +45,7 @@ import {
   SELECT_COLUMN_ID,
   SPACER_COLUMN,
 } from '../consts';
-import { ColumnOrder, usePersistedSettingsContext } from './settings';
+import { ColumnOrder, PersistedState, usePersistedSettingsContext } from './settings';
 import { ExternalStateContext } from './externalState';
 import { getErrorMessage, isEqual } from '@/utils/lang';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
@@ -53,7 +53,7 @@ import { AsyncResource, getOr } from '@/utils/asyncResource';
 import { applyUpdater, StatePair, Updater } from '@/utils/state';
 import { getPageCount } from '@/utils/queries/hooks';
 
-export function useLocalStorageOptionally<Value>(
+export function useLocalStorageOptionally<Value extends PersistedState = PersistedState>(
   key: string | null,
   defaultValueFactory: () => Value,
   nonResizableColumns: string[],
@@ -65,7 +65,7 @@ export function useLocalStorageOptionally<Value>(
         if (storedValue != null) {
           // todo: validate parsed state and use default if invalid
           const parsedValue = JSON.parse(storedValue);
-          const defaultValues = defaultValueFactory() as any;
+          const defaultValues = defaultValueFactory();
           if (parsedValue.columnSizing != null) {
             nonResizableColumns.forEach((columnId) => {
               parsedValue.columnSizing[columnId] = defaultValues.columnSizing[columnId];
@@ -86,10 +86,7 @@ export function useLocalStorageOptionally<Value>(
           parsedValue.columnOrder = parsedValue.columnOrder.filter(
             (id: string) => !parsedValue.columnOrderRestrictions.includes(id),
           );
-          return {
-            ...(defaultValues as Value),
-            ...(parsedValue as Value),
-          };
+          return { ...defaultValues, ...parsedValue };
         }
       } catch (e) {
         console.error(
@@ -318,14 +315,12 @@ export function useTanstackTable<
   ]);
 
   const allColumns = useMemo(
-    (): TanTable.ColumnDef<TableRow<Item>>[] => [
-      ...(isAnythingExpandable ? [EXPAND_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
-      ...(isAnythingSelectable ? [SELECT_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
-      ...columnDefs.filter((column) => columnOrderRestrictions.includes(column.id as string)),
-      ...(columnDefs.filter(
-        (column) => !columnOrderRestrictions.includes(column.id as string),
-      ) as any),
-      SPACER_COLUMN,
+    (): TanTable.ColumnDef<TableRow<Item>, any>[] => [
+      ...(isAnythingExpandable ? [EXPAND_COLUMN<Item>()] : []),
+      ...(isAnythingSelectable ? [SELECT_COLUMN<Item>()] : []),
+      ...columnDefs.filter((column) => column.id && columnOrderRestrictions.includes(column.id)),
+      ...columnDefs.filter((column) => column.id && !columnOrderRestrictions.includes(column.id)),
+      SPACER_COLUMN<Item>(),
     ],
     [isAnythingExpandable, isAnythingSelectable, columnDefs, columnOrderRestrictions],
   );
@@ -514,7 +509,7 @@ function makeDisplayColumnCellComponent<Item extends object>(options: {
 }): CellComponent<Item> {
   const { column, rowKey } = options;
   return (props: CellComponentProps<Item>) => {
-    const id = applyFieldAccessor(props.row.original.content, rowKey as FieldAccessor<Item>);
+    const id = applyFieldAccessor(props.row.original.content, rowKey);
     const onEdit = props.table.options.meta.onEdit;
     const externalState = useContext(ExternalStateContext);
     const editContext = useEditContext<Item>(

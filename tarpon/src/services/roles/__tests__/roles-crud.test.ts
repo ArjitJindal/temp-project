@@ -96,16 +96,20 @@ describe('Test Custom Roles Deletion and Updation', () => {
     const createdRole = await roleService.createRole(TEST_TENANT_ID, {
       name: 'test-name',
       description: 'test-description',
+      permissions: [],
     })
     expect(createdRole).toEqual({
       id: 'test-id',
       name: 'test-name',
       description: 'test-description',
+      permissions: [],
     })
     expect(TEST_ROLES.length).toEqual(3)
     await roleService.updateRole(TEST_TENANT_ID, 'test-id', {
       name: 'test-name-updated',
       description: 'test-description-updated',
+      id: 'test-id',
+      permissions: [],
     })
     expect(TEST_ROLES[2]).toEqual({
       id: 'test-id',

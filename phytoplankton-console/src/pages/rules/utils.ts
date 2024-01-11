@@ -47,11 +47,11 @@ export function ruleHeaderKeyToDescription(key: string) {
 
 export function getRuleInstanceDisplay(
   ruleId: string,
-  ruleInstanceId: string | undefined,
+  ruleInstanceId: string,
   rules: RulesMap,
   ruleInstances: RuleInstanceMap,
 ) {
-  return ruleInstances[ruleInstanceId as string]?.ruleNameAlias || rules[ruleId]?.name || ruleId;
+  return ruleInstances[ruleInstanceId]?.ruleNameAlias || rules[ruleId]?.name || ruleId;
 }
 
 export const RULE_NATURE_LABELS: { [key in RuleNature]: string } = {

@@ -37,19 +37,16 @@ export default function UserItem() {
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
-  const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
-    USERS_ITEM(id as string),
-    () => {
-      if (id == null) {
-        throw new Error(`Id is not defined`);
-      }
-      return api.getUsersItem({ userId: id });
-    },
-  );
+  const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(USERS_ITEM(id), () => {
+    if (id == null) {
+      throw new Error(`Id is not defined`);
+    }
+    return api.getUsersItem({ userId: id });
+  });
 
   const handleNewComment = (newComment: Comment) => {
     queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-      USERS_ITEM(id as string),
+      USERS_ITEM(id),
       (user) => {
         if (user == null) {
           return user;

@@ -41,9 +41,7 @@ export default function CRMCommunicationCard(props: Props) {
         {link && <CompanyHeader link={link} />}
       </div>
       {title && <div className={styles.bold}>{title}</div>}
-      <div className={styles.body}>
-        <MarkdownViewer value={body as string} />
-      </div>
+      <div className={styles.body}>{body && <MarkdownViewer value={body} />}</div>
       {attachments && (
         <div className={styles.attachments}>
           {attachments.map((attachment, i) => (

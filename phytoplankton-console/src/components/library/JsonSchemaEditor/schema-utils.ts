@@ -63,8 +63,9 @@ export function flattenAllOf(schema: ExtendedSchema, rootSchema?: ExtendedSchema
     if (!deRefSchema) {
       return;
     }
-    if (deRefSchema.required) {
-      newSchema.required.push(...((deRefSchema.required as string[]) ?? []));
+    const required = deRefSchema.required;
+    if (Array.isArray(required) && typeof required !== 'boolean') {
+      newSchema.required.push(...required);
     }
     newSchema.properties = {
       ...newSchema.properties,

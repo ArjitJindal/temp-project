@@ -24,8 +24,8 @@ export default function CopilotSources(props: Props) {
           total: 0,
           items: [
             ...attributes.map((a) => ({
-              key: a.attribute as string,
-              value: a.value as any,
+              key: a.attribute,
+              value: a.value,
               secret: !!a.secret,
             })),
           ].map((a) => {

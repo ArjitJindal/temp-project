@@ -1,10 +1,11 @@
 import { STACK_CONSTANTS } from '../constants/stack-constants'
 import { getReleaseVersionTarpon } from './release-version'
 import { BuildEnvironmentVariableType } from 'aws-cdk-lib/aws-codebuild'
+import { compact } from 'lodash'
 
 export const getSentryReleaseSpec = (production: boolean) => {
   return {
-    commands: [
+    commands: compact<string>([
       production
         ? undefined
         : `./node_modules/.bin/sentry-cli releases files ${getReleaseVersionTarpon(
@@ -13,7 +14,7 @@ export const getSentryReleaseSpec = (production: boolean) => {
       `./node_modules/.bin/sentry-cli releases set-commits $RELEASE_VERSION --commit flagright/tarpon@$RELEASE_COMMIT`,
       `./node_modules/.bin/sentry-cli releases files $RELEASE_VERSION upload-sourcemaps --ext js --ext map --ignore-file .sentryignore dist`,
       `./node_modules/.bin/sentry-cli releases finalize $RELEASE_VERSION`,
-    ].filter(Boolean) as string[],
+    ]),
     env: {
       'secrets-manager': {
         SENTRY_AUTH_TOKEN: STACK_CONSTANTS.SENTRY_AUTH_TOKEN,

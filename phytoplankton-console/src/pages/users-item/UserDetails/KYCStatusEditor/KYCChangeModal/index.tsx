@@ -91,9 +91,9 @@ export default function KYCChangeModal(props: Props) {
     async (values: FormValues) => {
       const { files, comment, otherReason, reason, kycStatus } = values;
       messageLoading = message.loading('Changing KYC Status...');
-      const newStateDetails = {
+      const newStateDetails: KYCStatusDetailsInternal = {
         status: kycStatus === '' ? undefined : kycStatus,
-        reason: reason === 'Other' ? otherReason : reason,
+        reason: reason === 'Other' && otherReason ? otherReason : reason,
       };
       const commentText = comment;
       const commentContent = {
@@ -104,10 +104,12 @@ export default function KYCChangeModal(props: Props) {
       };
 
       let updatedComment: Comment | undefined;
+
       const payload: UserUpdateRequest = {
-        kycStatusDetails: newStateDetails as KYCStatusDetailsInternal,
+        kycStatusDetails: newStateDetails,
         comment: commentContent.Comment,
       };
+
       if (user.type === 'CONSUMER') {
         updatedComment = await api.postConsumerUsersUserId({
           userId: user.userId,
@@ -130,8 +132,8 @@ export default function KYCChangeModal(props: Props) {
         messageLoading?.();
         await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));
       },
-      onError: (error) => {
-        message.error(`Error Changing KYC Status: ${(error as Error).message}`);
+      onError: (error: Error) => {
+        message.error(`Error Changing KYC Status: ${error.message}`);
         messageLoading?.();
       },
     },

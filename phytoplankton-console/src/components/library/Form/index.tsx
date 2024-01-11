@@ -26,7 +26,7 @@ interface ChildrenProps<FormValues> {
 
 interface Props<FormValues> {
   id?: string;
-  initialValues?: FormValues;
+  initialValues: FormValues;
   children: React.ReactNode | ((props: ChildrenProps<FormValues>) => React.ReactNode);
   formValidators?: Validator<FormValues>[];
   fieldValidators?: FieldValidators<FormValues>;
@@ -41,7 +41,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
   const {
     portalled,
     id,
-    initialValues = {} as FormValues,
+    initialValues,
     children,
     fieldValidators,
     formValidators,

@@ -122,7 +122,7 @@ export default function SubHeader(props: Props) {
   const handleUpdateAssignments = useCallback(
     (assignees: string[]) => {
       const newAssignments = assignees.map((assigneeUserId) => ({
-        assignedByUserId: currentUserId as string,
+        assignedByUserId: currentUserId,
         assigneeUserId,
         timestamp: Date.now(),
       }));

@@ -117,7 +117,7 @@ export default function Header(props: Props) {
         ...(!isReview && caseId
           ? [
               <CasesStatusChangeButton
-                caseIds={[caseId as string]}
+                caseIds={[caseId]}
                 caseStatus={caseItem.caseStatus}
                 onSaved={onReload}
                 isDisabled={caseItem.caseStatus === 'CLOSED' && !isReopenEnabled}

@@ -2288,7 +2288,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AccountRole'
+              $ref: '#/components/schemas/CreateAccountRole'
         required: true
       responses:
         '200':
@@ -5206,6 +5206,31 @@ components:
             - FLOAT
             - AUTOCOMPLETE
             - SEARCH
+    TableHeaders:
+      title: TableHeaders
+      type: object
+      properties:
+        name:
+          type: string
+        columnType:
+          type: string
+          enum:
+            - STRING
+            - NUMBER
+            - FLOAT
+            - LONG_TEXT
+            - BOOLEAN
+            - ID
+            - TRANSACTION_TYPE
+            - DATE_TIME
+            - PAYMENT_METHOD
+            - TAG
+            - MONEY_AMOUNT
+            - MONEY_CURRENCY
+            - COUNTRY
+      required:
+        - name
+        - columnType
     Table:
       title: Table
       type: object
@@ -5213,26 +5238,7 @@ components:
         headers:
           type: array
           items:
-            type: object
-            properties:
-              name:
-                type: string
-              columnType:
-                type: string
-                enum:
-                  - STRING
-                  - NUMBER
-                  - FLOAT
-                  - LONG_TEXT
-                  - BOOLEAN
-                  - ID
-                  - TRANSACTION_TYPE
-                  - DATE_TIME
-                  - PAYMENT_METHOD
-                  - TAG
-                  - MONEY_AMOUNT
-                  - MONEY_CURRENCY
-                  - COUNTRY
+            $ref: '#/components/schemas/TableHeaders'
         rows:
           type: array
           items:
@@ -7546,6 +7552,24 @@ components:
         - approver
         - auditor
         - developer
+    CreateAccountRole:
+      type: object
+      title: CreateAccountRole
+      x-stoplight:
+        id: byu0hqffp9h3
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+      required:
+        - name
+        - description
+        - permissions
     AccountRole:
       type: object
       title: AccountRole
@@ -7562,6 +7586,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Permission'
+      required:
+        - id
+        - name
+        - description
+        - permissions
     Permission:
       type: string
       title: Permission

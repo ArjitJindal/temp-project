@@ -24,7 +24,7 @@ interface FormDetails {
   auth0DisplayName: string;
   auth0Domain: string;
   emailsOfAdmins: string[];
-  featureFlags: string[];
+  featureFlags: Feature[];
   demoMode: boolean;
 }
 
@@ -111,9 +111,7 @@ export const CreateTenantModal = (props: Props) => {
           auth0DisplayName,
           auth0Domain,
           adminEmails: emailsOfAdmins,
-          features: demoMode
-            ? [...(featureFlags as Feature[]), 'DEMO_MODE' as Feature]
-            : (featureFlags as Feature[]),
+          features: demoMode ? [...featureFlags, 'DEMO_MODE'] : featureFlags,
         },
       });
 

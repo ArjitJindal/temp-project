@@ -343,7 +343,7 @@ export const CASEID: ColumnDataType<string, Pick<Case, 'caseId'>> = {
     return `${item?.caseId ?? ''}`;
   },
   link(value) {
-    return getCaseUrl(value as string);
+    return value ? getCaseUrl(value) : '';
   },
 };
 
@@ -351,11 +351,8 @@ export const ALERT_ID: ColumnDataType<string, Pick<Alert, 'caseId'>> = {
   render: (alertId, { item: entity }) => {
     return (
       <>
-        {entity?.caseId && (
-          <Id
-            to={addBackUrlToRoute(getAlertUrl(entity.caseId, alertId as string))}
-            testName="alert-id"
-          >
+        {entity?.caseId && alertId && (
+          <Id to={addBackUrlToRoute(getAlertUrl(entity.caseId, alertId))} testName="alert-id">
             {alertId}
           </Id>
         )}
@@ -366,7 +363,7 @@ export const ALERT_ID: ColumnDataType<string, Pick<Alert, 'caseId'>> = {
     return `${item?.caseId ?? ''}`;
   },
   link(value, item) {
-    return getAlertUrl(item?.caseId as string, value as string);
+    return item?.caseId && value ? getAlertUrl(item.caseId, value) : '';
   },
 };
 
@@ -437,14 +434,14 @@ export const PAYMENT_METHOD: ColumnDataType<PaymentMethod> = {
 };
 
 const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
-  entity: T | null;
+  entity: T;
   caseStatus: CaseStatus;
   reload: () => void;
 }) => {
   const { entity, caseStatus, reload } = props;
   const api = useApi();
   let messageState: CloseMessage | undefined;
-  const alertId = (entity as TableAlertItem)?.alertId;
+  const alertId = 'alertId' in entity ? entity?.alertId : undefined;
   const caseId = entity?.caseId;
 
   const updateMutation = useMutation(
@@ -508,7 +505,7 @@ export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
   reload: () => void;
 }): ColumnDataType<CaseStatus, T> => ({
   render: (caseStatus, { item: entity }) => {
-    return caseStatus ? (
+    return caseStatus && entity ? (
       <StatusChangeDropDown<T>
         entity={entity}
         caseStatus={caseStatus}

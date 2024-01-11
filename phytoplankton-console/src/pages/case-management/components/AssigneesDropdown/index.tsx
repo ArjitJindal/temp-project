@@ -42,7 +42,7 @@ export const AssigneesDropdown: React.FC<Props> = ({
             return false;
           }
 
-          const accountId = option.value as string;
+          const accountId = option.value;
           const selectedUser = users.find((user) => user.id === accountId);
 
           if (!selectedUser) {

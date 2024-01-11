@@ -157,7 +157,7 @@ export const USER_EVENTS_LIST = (params: AnyParameters): QueryKey => [
   'list',
   params,
 ];
-export const USERS_ITEM = (userId: string): QueryKey => ['users', 'item', userId];
+export const USERS_ITEM = (userId: string | undefined): QueryKey => ['users', 'item', userId];
 
 export const USERS_ITEM_RISKS_DRS = (userId: string): QueryKey => [
   'users',

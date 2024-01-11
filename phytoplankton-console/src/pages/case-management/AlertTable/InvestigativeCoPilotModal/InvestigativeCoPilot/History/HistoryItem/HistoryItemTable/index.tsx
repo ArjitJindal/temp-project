@@ -106,7 +106,7 @@ export default function HistoryItemTable(props: Props) {
         (acc, header, i) => {
           return {
             ...acc,
-            [header.name ?? `header#${i}`]: row[i] ?? '-',
+            [header.name]: row[i] ?? '-',
           };
         },
         { index: i },
@@ -129,8 +129,8 @@ export default function HistoryItemTable(props: Props) {
       rowKey="index"
       columns={(item.headers ?? []).map((header) => {
         return columnHelper.simple({
-          title: header.name as string,
-          key: header.name as string,
+          title: header.name,
+          key: header.name,
           type: typeAssigner(header.columnType),
         });
       })}

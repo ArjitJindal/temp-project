@@ -203,7 +203,7 @@ export function flatColumns<Item extends object>(columns: TableColumn<Item>[]): 
 
 export function getColumnId<Item extends object>(column: TableColumn<Item>): string {
   if (isSimpleColumn<Item>(column)) {
-    return column.id ?? (column.key as string);
+    return String(column.id ?? column.key);
   }
   return column.id ?? column.title;
 }

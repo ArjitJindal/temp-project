@@ -647,7 +647,10 @@ const MultipleSelect: React.FC<
       style={{ width: '100%' }}
       value={value?.values.map(({ content }) => `${content}`) ?? []}
       onChange={(value) => {
-        onChange(riskValueMultiple((value as string[]).map((x) => riskValueLiteral(x))));
+        if (!value) {
+          return;
+        }
+        onChange(riskValueMultiple(value.map((x) => riskValueLiteral(x))));
       }}
       isDisabled={disabled}
       options={optionsFixed}
@@ -859,7 +862,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
                     riskValueDayRange(
                       startValue,
                       previousEndGranularity as RiskParameterValueDayRangeStartGranularityEnum,
-                      value?.endGranularity === 'INFINITE' ? 0 : (val as number),
+                      value?.endGranularity === 'INFINITE' || !val ? 0 : val,
                       value?.endGranularity ?? previousEndGranularity,
                     ),
                   );

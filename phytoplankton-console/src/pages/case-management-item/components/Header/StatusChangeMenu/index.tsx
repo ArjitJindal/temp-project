@@ -50,9 +50,12 @@ const useOptions = (props: Props) => {
 
   const currentUser = useAuth0User();
   const displayApproveButtons = useMemo(() => {
+    if (!caseId) {
+      return false;
+    }
     return (
-      isInReviewCases({ [caseId as string]: caseItem }) &&
-      canReviewCases({ [caseId as string]: caseItem }, currentUser.userId)
+      isInReviewCases({ [caseId]: caseItem }) &&
+      canReviewCases({ [caseId]: caseItem }, currentUser.userId)
     );
   }, [caseItem, caseId, currentUser]);
   return [
@@ -62,7 +65,7 @@ const useOptions = (props: Props) => {
             value: 'ESCALATE',
             label: (
               <CasesStatusChangeButton
-                caseIds={[caseId as string]}
+                caseIds={[caseId]}
                 caseStatus={caseItem.caseStatus}
                 onSaved={onReload}
                 statusTransitions={{
@@ -96,7 +99,7 @@ const useOptions = (props: Props) => {
             value: 'APPROVE',
             label: (
               <CasesStatusChangeButton
-                caseIds={[caseId as string]}
+                caseIds={[caseId]}
                 onSaved={onReload}
                 caseStatus={caseItem.caseStatus ?? 'OPEN'}
                 statusTransitions={APPROVE_STATUS_TRANSITIONS}
@@ -113,7 +116,7 @@ const useOptions = (props: Props) => {
             value: 'DECLINE',
             label: (
               <CasesStatusChangeButton
-                caseIds={[caseId as string]}
+                caseIds={[caseId]}
                 onSaved={onReload}
                 caseStatus={previousStatus}
                 statusTransitions={DECLINE_STATUS_TRANSITIONS}

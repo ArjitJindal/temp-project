@@ -194,6 +194,7 @@ export function usePersistedState(
     defaultValue,
     nonResizableColumns,
   );
+
   return [
     state,
     (updater: SetStateAction<PersistedState>) => {

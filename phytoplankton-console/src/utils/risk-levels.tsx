@@ -25,13 +25,13 @@ export const RISK_LEVELS: ApiRiskLevel[] = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH',
 
 export type RiskLevel = ApiRiskLevel;
 
-export const RISK_LEVEL_LABELS: { [key in RiskLevel]: string } = {
+export const RISK_LEVEL_LABELS: { [key in RiskLevel]: string } = Object.freeze({
   VERY_LOW: 'Very low risk',
   LOW: 'Low risk',
   MEDIUM: 'Medium risk',
   HIGH: 'High risk',
   VERY_HIGH: 'Very high risk',
-} as const;
+});
 
 type RiskLevelColors = {
   primary?: string;
@@ -39,7 +39,7 @@ type RiskLevelColors = {
   text?: string;
 };
 
-export const RISK_LEVEL_COLORS: { [key in RiskLevel]: RiskLevelColors } = {
+export const RISK_LEVEL_COLORS: { [key in RiskLevel]: RiskLevelColors } = Object.freeze({
   VERY_LOW: {
     primary: COLORS_V2_RISK_LEVEL_BASE_VERY_LOW,
     light: COLORS_V2_RISK_LEVEL_BG_VERY_LOW,
@@ -65,7 +65,7 @@ export const RISK_LEVEL_COLORS: { [key in RiskLevel]: RiskLevelColors } = {
     light: COLORS_V2_RISK_LEVEL_BG_VERY_HIGH,
     text: COLORS_V2_GRAY_10,
   },
-} as const;
+});
 
 export function useRiskClassificationScores(): AsyncResource<ApiRiskClassificationScore[]> {
   const api = useApi();
@@ -86,6 +86,19 @@ export function useRiskLevel(score: number): RiskLevel | null {
     }
   }
   return null;
+}
+
+export function useRiskScore(riskLevel: RiskLevel): number {
+  const classificationScores = useRiskClassificationScores();
+  for (const { lowerBoundRiskScore, upperBoundRiskScore, riskLevel: level } of getOr(
+    classificationScores,
+    [],
+  )) {
+    if (level === riskLevel) {
+      return (lowerBoundRiskScore + upperBoundRiskScore) / 2;
+    }
+  }
+  return 0;
 }
 
 export const levelToAlias = (level: string, configRiskLevelAlias: RiskLevelAlias[]) =>
