@@ -22,14 +22,10 @@ describe('Bulk approval of payments', () => {
       }
     });
     cy.contains('Payment approval').click();
-    cy.get('input[data-cy="row-table-checkbox"]', { timeout: 20000 })
-      .should('exist')
-      .each((element, index) => {
-        if (index < 3) {
-          // this will ensure only the first three elements are clicked
-          cy.wrap(element).click({ force: true });
-        }
-      });
+
+    for (let i = 0; i < 3; i++) {
+      cy.get('input[data-cy="row-table-checkbox"]').eq(i).click();
+    }
 
     cy.contains('Allow').click();
     cy.intercept('GET', '**/transactions**').as('bulk-approval-request');

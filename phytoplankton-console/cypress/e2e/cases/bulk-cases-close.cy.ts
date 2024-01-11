@@ -14,13 +14,9 @@ describe('bulk closing cases with alerts selected', () => {
         }
       });
     //   Selecting at max 3 cases
-    cy.get('input[data-cy="row-table-checkbox"]', { timeout: 20000 })
-      .should('exist')
-      .each((element, index) => {
-        if (index < 3) {
-          cy.wrap(element).click({ force: true });
-        }
-      });
+    for (let i = 0; i < 3; i++) {
+      cy.get('input[data-cy="row-table-checkbox"]').eq(i).click();
+    }
     // Expanding first case
     cy.get('button[data-cy="expand-icon"]', { timeout: 2000 })
       .should('exist')
