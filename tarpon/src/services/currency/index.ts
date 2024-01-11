@@ -1,4 +1,5 @@
 import { isEmpty, set } from 'lodash'
+import * as Sentry from '@sentry/serverless'
 import { CurrencyRepository } from './repository'
 import { traceable } from '@/core/xray'
 import { apiFetch } from '@/utils/api-fetch'
@@ -47,6 +48,16 @@ export class CurrencyService {
         exchangeData = await this.storeCache(cdnData)
       } catch (e) {
         logger.warn(`Failed to fetch currency exchange data from CDN`, e)
+
+        if (exchangeData?.date) {
+          const failureTimestamp = new Date(exchangeData?.date).getTime()
+          const diffInHours = (Date.now() - failureTimestamp) / (1000 * 60 * 60)
+          if (diffInHours >= 48) {
+            Sentry.captureMessage(
+              `Failed to fetch currency exchange data from CDN for more than 48 hours`
+            )
+          }
+        }
       }
     }
 
