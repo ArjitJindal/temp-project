@@ -1,10 +1,11 @@
-import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { BatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { getBatchJobRunner } from '@/services/batch-jobs/batch-job-runner-factory'
 import { envIs } from '@/utils/env'
+import { getSQSClient } from '@/utils/sns-sqs-client'
 
-const sqsClient = new SQSClient({})
+const sqsClient = getSQSClient()
 
 export async function sendBatchJobCommand(job: BatchJob) {
   if (envIs('local')) {

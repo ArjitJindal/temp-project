@@ -15,7 +15,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { Subsegment } from 'aws-xray-sdk-core'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
@@ -88,8 +88,9 @@ import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResp
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { getSQSClient } from '@/utils/sns-sqs-client'
 
-const sqs = new SQSClient({})
+const sqs = getSQSClient()
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,

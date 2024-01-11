@@ -1,5 +1,5 @@
 import { KinesisStreamEvent, KinesisStreamRecord, SQSEvent } from 'aws-lambda'
-import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { TransientRepository } from '../repositories/transient-repository'
 import { logger } from '../logger'
 import { updateLogMetadata, withContext } from '../utils/context'
@@ -19,8 +19,9 @@ import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
+import { getSQSClient } from '@/utils/sns-sqs-client'
 
-const sqsClient = new SQSClient({})
+const sqsClient = getSQSClient()
 
 type TransactionHandler = (
   tenantId: string,

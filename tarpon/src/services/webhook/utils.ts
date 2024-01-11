@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { SendMessageBatchCommand, SQSClient } from '@aws-sdk/client-sqs'
+import { SendMessageBatchCommand } from '@aws-sdk/client-sqs'
 import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
 import {
   SecretsManagerWebhookSecrets,
@@ -9,6 +9,7 @@ import { createSecret, deleteSecret, getSecret } from '@/utils/secrets-manager'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
+import { getSQSClient } from '@/utils/sns-sqs-client'
 
 export function getWebhookSecretKey(tenantId: string, webhookId: string) {
   return `${tenantId}/webhooks/${webhookId}`
@@ -44,7 +45,8 @@ export async function getWebhookSecrets(
   )) as SecretsManagerWebhookSecrets
 }
 
-const sqs = new SQSClient({})
+const sqs = getSQSClient()
+
 export type ThinWebhookDeliveryTask<T extends object = object> = Pick<
   WebhookDeliveryTask<T>,
   'event' | 'payload' | 'triggeredBy'

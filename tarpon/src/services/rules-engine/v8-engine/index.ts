@@ -3,7 +3,7 @@ import memoizeOne from 'memoize-one'
 import DataLoader from 'dataloader'
 import { isEqual, mergeWith, uniq } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { RULE_FUNCTIONS } from '../v8-functions'
 import { RULE_OPERATORS } from '../v8-operators'
 import { getRuleVariableByKey } from '../v8-variables'
@@ -35,10 +35,11 @@ import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { handleV8TransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
+import { getSQSClient } from '@/utils/sns-sqs-client'
 
 const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
 
-const sqs = new SQSClient({})
+const sqs = getSQSClient()
 
 type RuleData = {
   transaction: Transaction

@@ -5,7 +5,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
   Context,
 } from 'aws-lambda'
-import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { isEmpty } from 'lodash'
 import { logger } from '../logger'
 import { getContext } from '../utils/context'
@@ -15,12 +15,12 @@ import { envIs } from '@/utils/env'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTask } from '@/lambdas/request-logger/app'
 import { getErrorMessage } from '@/utils/lang'
+import { getSQSClient } from '@/utils/sns-sqs-client'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
 >
-
-const sqsClient = new SQSClient({})
+const sqsClient = getSQSClient()
 
 export const requestLoggerMiddleware = () => {
   return (handler: CallableFunction): Handler => {

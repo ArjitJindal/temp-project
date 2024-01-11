@@ -1,12 +1,13 @@
-import { PublishCommand, SNSClient } from '@aws-sdk/client-sns'
+import { PublishCommand } from '@aws-sdk/client-sns'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AuditLogRecord } from '@/@types/audit-log'
 import { getContext } from '@/core/utils/context'
 import { Account } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
+import { getSNSClient } from '@/utils/sns-sqs-client'
 
-const snsClient = new SNSClient({})
+const snsClient = getSNSClient()
 
 export async function publishAuditLog(
   tenantId: string,
