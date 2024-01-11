@@ -770,7 +770,7 @@ export class RulesEngineService {
         return result.falsePositiveDetails
       }
     })
-    let ruleDescription = (ruleInstance.ruleDescriptionAlias = '')
+    let ruleDescription = ruleInstance.ruleDescriptionAlias || ''
 
     if (!ruleDescription && rule) {
       const ruleDescriptions = (
