@@ -8,6 +8,7 @@ import { FieldMeta, FormContext, FormContextValue } from '@/components/library/F
 import InputField from '@/components/library/Form/InputField';
 import { InputProps } from '@/components/library/Form';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
+import { applyUpdater } from '@/utils/state';
 
 interface ValueType {
   granularity?: string;
@@ -37,7 +38,7 @@ export default function TimeWindowInput(props: Props) {
   const { alwaysShowErrors } = useFormContext();
 
   // todo: move all context providers to one place
-  const subContext: FormContextValue<ValueType> = {
+  const subContext: FormContextValue<ValueType | undefined> = {
     alwaysShowErrors,
     meta: fieldMeta,
     setMeta: (key, cb) => {
@@ -47,7 +48,9 @@ export default function TimeWindowInput(props: Props) {
       }));
     },
     values: value ?? {},
-    setValues: onChange ?? (() => {}),
+    setValues: (updater) => {
+      onChange?.(applyUpdater(value, updater));
+    },
   };
 
   const properties = useOrderedProps(schema);

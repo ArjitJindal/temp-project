@@ -1,6 +1,7 @@
-import React, { useContext } from 'react';
+import React, { useContext, Dispatch } from 'react';
 import { FieldValidators, FormValidators } from './utils/validation/types';
 import { FieldState } from '@/components/library/Form/utils/hooks';
+import { Updater } from '@/utils/state';
 
 export interface FieldMeta {
   isTouched?: boolean;
@@ -14,7 +15,7 @@ interface MetaMap {
 
 export interface FormContextValue<FormValues> {
   values: FormValues;
-  setValues: (newValues: FormValues) => void;
+  setValues: Dispatch<Updater<FormValues>>;
   meta: MetaMap;
   setMeta: (key: string, cb: (prev: FieldMeta) => FieldMeta) => void;
   alwaysShowErrors: boolean;

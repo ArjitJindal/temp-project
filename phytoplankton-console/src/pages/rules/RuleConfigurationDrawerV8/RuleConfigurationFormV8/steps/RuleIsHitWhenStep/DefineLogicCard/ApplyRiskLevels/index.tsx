@@ -9,10 +9,11 @@ import Button from '@/components/library/Button';
 
 interface Props {
   currentRiskLevel: RiskLevel;
+  onConfirm: (chosenLevels: RiskLevel[]) => void;
 }
 
 export default function ApplyToOtherLevelsCard(props: Props) {
-  const { currentRiskLevel } = props;
+  const { currentRiskLevel, onConfirm } = props;
   const settings = useSettings();
   const [chosenLevels, setChosenLevels] = useState<RiskLevel[]>([]);
   return (
@@ -35,7 +36,8 @@ export default function ApplyToOtherLevelsCard(props: Props) {
           />
           <Button
             onClick={() => {
-              throw new Error(`Not supported yet`);
+              setChosenLevels([]);
+              onConfirm(chosenLevels);
             }}
           >
             Apply

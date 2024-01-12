@@ -6,6 +6,7 @@ import { InputProps } from '@/components/library/Form';
 import { CountryCode, PaymentMethod } from '@/apis';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
+import { applyUpdater } from '@/utils/state';
 
 type ValueType = {
   walletType?: string;
@@ -33,7 +34,7 @@ export default function PaymentFiltersInput(props: Props) {
 
   const { alwaysShowErrors } = useFormContext();
 
-  const subContext: FormContextValue<ValueType> = useMemo(
+  const subContext: FormContextValue<ValueType | undefined> = useMemo(
     () => ({
       meta: fieldMeta,
       setMeta: (key, cb) => {
@@ -45,7 +46,9 @@ export default function PaymentFiltersInput(props: Props) {
         });
       },
       values: value ?? {},
-      setValues: onChange ?? (() => {}),
+      setValues: (updater) => {
+        onChange?.(applyUpdater(value, updater));
+      },
       alwaysShowErrors,
     }),
     [alwaysShowErrors, value, fieldMeta, onChange],

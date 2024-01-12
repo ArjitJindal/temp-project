@@ -30,6 +30,14 @@ export default function RuleIsHitWhenStep() {
     'ruleLogicAggregationVariables'
   >('ruleLogicAggregationVariables');
   const logicFieldState = useFieldState<RuleIsHitWhenStepFormValues, 'ruleLogic'>('ruleLogic');
+  const riskLevelsRuleLogicFieldState = useFieldState<
+    RuleIsHitWhenStepFormValues,
+    'riskLevelRuleLogic'
+  >('riskLevelRuleLogic');
+  const riskLevelRuleActionsFieldState = useFieldState<
+    RuleIsHitWhenStepFormValues,
+    'riskLevelRuleActions'
+  >('riskLevelRuleActions');
 
   return (
     <div className={s.root}>
@@ -39,6 +47,8 @@ export default function RuleIsHitWhenStep() {
       />
       <DefineLogicCard
         variablesFieldState={variablesFieldState}
+        riskLevelsLogicFieldState={riskLevelsRuleLogicFieldState}
+        riskLevelRuleActionsFieldState={riskLevelRuleActionsFieldState}
         logicFieldState={logicFieldState}
       />
     </div>

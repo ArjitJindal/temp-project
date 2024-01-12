@@ -6,6 +6,7 @@ import s from './style.module.less';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import { InputProps } from '@/components/library/Form';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
+import { applyUpdater } from '@/utils/state';
 
 interface ValueType {
   granularity?: string;
@@ -24,7 +25,7 @@ export default function DayWindowInput(props: Props) {
 
   const { alwaysShowErrors } = useFormContext();
 
-  const subContext: FormContextValue<ValueType> = useMemo(
+  const subContext: FormContextValue<ValueType | undefined> = useMemo(
     () => ({
       meta: fieldMeta,
       setMeta: (key, cb) => {
@@ -36,7 +37,9 @@ export default function DayWindowInput(props: Props) {
       values: value ?? {
         granularity: 'day',
       },
-      setValues: onChange ?? (() => {}),
+      setValues: (updater) => {
+        onChange?.(applyUpdater(value, updater));
+      },
       alwaysShowErrors: alwaysShowErrors,
     }),
     [alwaysShowErrors, value, fieldMeta, onChange],

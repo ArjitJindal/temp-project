@@ -47,30 +47,19 @@ export default function (): JSX.Element {
         {([state, setState]) => {
           const schema: ExtendedSchema = {
             type: 'object',
-            required: ['f1'],
+            required: ['array_field'],
             properties: {
-              f1: {
-                'ui:schema': {
-                  'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
-                },
-                required: ['ElectronicAddressText', 'ElectronicAddressTypeCode'],
-                properties: {
-                  ElectronicAddressText: {
-                    // $ref: '#/definitions/RestrictString517',
-                    type: 'string',
-                    title: 'Electronic address',
-                    description:
-                      'This element identifies the subject`s email address or website URL (Uniform Resource Locator) address.',
+              array_field: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    object_string_field: {
+                      type: 'string',
+                    },
                   },
-                  ElectronicAddressTypeCode: {
-                    // $ref: '#/definitions/ValidateElectronicAddressTypeCode',
-                    type: 'string',
-                    title: 'Electronic address type (code)',
-                    description:
-                      'This element identifies the type of electronic address recorded for the subject; specifically whether it is an email address or a website URL (Uniform Resource Locator) address.',
-                  },
+                  required: ['object_string_field'],
                 },
-                type: 'object',
               },
             },
           };

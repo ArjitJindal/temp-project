@@ -1,6 +1,7 @@
 import React from 'react';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
+import { applyUpdater } from '@/utils/state';
 
 interface Props {
   name: string;
@@ -29,11 +30,11 @@ export default function NestedForm<FormValues>(props: Props) {
       }));
     },
     values: values?.[name] ?? {},
-    setValues: (newValues) => {
-      setValues?.({
+    setValues: (updater) => {
+      setValues?.((prevState) => ({
         ...values,
-        [name]: newValues,
-      });
+        [name]: applyUpdater(prevState?.[name], updater),
+      }));
     },
     fieldValidators: fieldValidators?.[name],
   };

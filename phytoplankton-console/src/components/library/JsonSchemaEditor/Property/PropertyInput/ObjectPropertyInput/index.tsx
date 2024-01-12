@@ -16,6 +16,7 @@ import {
   isArrayFieldValidator,
   isObjectFieldValidator,
 } from '@/components/library/Form/utils/validation/types';
+import { Updater, applyUpdater } from '@/utils/state';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -48,7 +49,8 @@ export default function GenericObjectInput(props: Props) {
       }));
     },
     values: value ?? {},
-    setValues: (newValue) => {
+    setValues: (updater: Updater<any>) => {
+      const newValue = applyUpdater(value, updater);
       onChange?.(
         newValue != null && !Object.entries(newValue).some(([_, value]) => value != null)
           ? null

@@ -1,4 +1,4 @@
-import { SetStateAction, useCallback, useContext, useMemo } from 'react';
+import { SetStateAction, useCallback, useContext, useMemo, Dispatch } from 'react';
 import { FormState } from '../types';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import {
@@ -11,6 +11,7 @@ import {
   FieldValidator,
   NestedValidationResult,
 } from '@/components/library/Form/utils/validation/types';
+import { Updater, applyUpdater } from '@/utils/state';
 
 export function useFormContext<FormValues>(): FormContextValue<FormValues> {
   const context = useContext(FormContext);
@@ -39,7 +40,7 @@ export function useFormState<FormValues>(): FormState<FormValues> {
 
 export interface FieldState<Value> {
   value: Value | undefined;
-  onChange: (newValue: Value | undefined) => void;
+  onChange: Dispatch<Updater<Value | undefined>>;
   meta: FieldMeta;
   onChangeMeta: (newMeta: SetStateAction<FieldMeta>) => void;
   isValid: boolean;
@@ -56,13 +57,13 @@ export function useFieldState<FormValues, Key extends keyof FormValues = keyof F
 
   const value = values[name] as FormValues[Key] | undefined;
   const onChange = useCallback(
-    (newValue) => {
-      setValues({
-        ...values,
-        [name]: newValue,
-      });
+    (updater) => {
+      setValues((prevValues) => ({
+        ...prevValues,
+        [name]: applyUpdater(prevValues?.[name], updater),
+      }));
     },
-    [values, name, setValues],
+    [name, setValues],
   );
 
   const fieldValidator = (fieldValidators as any)?.[name] as unknown as FieldValidator<
