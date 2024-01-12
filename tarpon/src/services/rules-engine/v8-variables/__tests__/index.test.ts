@@ -96,17 +96,6 @@ test('List of entity variables', async () => {
         },
       },
       {
-        key: 'BUSINESS_USER:legalEntity-companyGeneralDetails-businessIndustry-$i',
-        entity: 'BUSINESS_USER',
-        valueType: 'string',
-        uiDefinition: {
-          label:
-            'Business User / legal entity > company general details > business industry > i',
-          type: 'text',
-          valueSources: ['value', 'field', 'func'],
-        },
-      },
-      {
         key: 'BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment',
         entity: 'BUSINESS_USER',
         valueType: 'string',
@@ -126,6 +115,112 @@ test('List of entity variables', async () => {
                 value: 'LIMITED',
               },
             ]),
+          },
+        },
+      },
+      {
+        key: 'TRANSACTION:tags',
+        entity: 'TRANSACTION',
+        valueType: 'array',
+        uiDefinition: {
+          label: 'Transaction / tags',
+          type: '!group',
+          mode: 'array',
+          conjunctions: ['AND', 'OR'],
+          subfields: {
+            key: {
+              label: 'key',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+            value: {
+              label: 'value',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+          },
+        },
+      },
+      {
+        key: 'CONSUMER_USER:legalDocuments',
+        entity: 'CONSUMER_USER',
+        valueType: 'array',
+        uiDefinition: {
+          label: 'Consumer User / legal documents',
+          type: '!group',
+          mode: 'array',
+          conjunctions: ['AND', 'OR'],
+          subfields: {
+            documentType: {
+              label: 'document type',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+            documentNumber: {
+              label: 'document number',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+            documentIssuedDate: {
+              label: 'document issued date',
+              type: 'number',
+              valueSources: ['value', 'field', 'func'],
+            },
+            documentExpirationDate: {
+              label: 'document expiration date',
+              type: 'number',
+              valueSources: ['value', 'field', 'func'],
+            },
+            documentIssuedCountry: {
+              label: 'document issued country',
+              type: 'select',
+              valueSources: ['value', 'field', 'func'],
+              fieldSettings: {
+                listValues: expect.arrayContaining([
+                  {
+                    title: 'Af',
+                    value: 'AF',
+                  },
+                  {
+                    title: 'Al',
+                    value: 'AL',
+                  },
+                ]),
+              },
+            },
+            'nameOnDocument.firstName': {
+              label: 'name on document > first name',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+            'nameOnDocument.middleName': {
+              label: 'name on document > middle name',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+            'nameOnDocument.lastName': {
+              label: 'name on document > last name',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+            tags: {
+              label: 'tags',
+              type: '!group',
+              mode: 'array',
+              conjunctions: ['AND', 'OR'],
+              subfields: {
+                key: {
+                  label: 'key',
+                  type: 'text',
+                  valueSources: ['value', 'field', 'func'],
+                },
+                value: {
+                  label: 'value',
+                  type: 'text',
+                  valueSources: ['value', 'field', 'func'],
+                },
+              },
+            },
           },
         },
       },
@@ -183,5 +278,20 @@ describe('Auto-created entity variables', () => {
         })
       )
     ).toBe('LIMITED')
+  })
+  test('TRANSACTION:tags', async () => {
+    const variable = getRuleVariableByKey('TRANSACTION:tags')!
+    const data = await variable.load(
+      getTestTransaction({
+        tags: [
+          { key: 'k1', value: 'v1' },
+          { key: 'k2', value: 'v2' },
+        ],
+      })
+    )
+    expect(data).toEqual([
+      { key: 'k1', value: 'v1' },
+      { key: 'k2', value: 'v2' },
+    ])
   })
 })

@@ -49,6 +49,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       maxNesting: disableNesting === false ? undefined : 1,
       forceShowConj: false,
       addRuleLabel: 'Add condition',
+      addSubRuleLabel: 'Add sub condition',
       addGroupLabel: 'Add complex condition',
       groupActionsPosition: 'bottomLeft',
       renderValueSources: (props) => {
@@ -87,15 +88,16 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
           label: x.label,
           value: x.key,
         }));
+        const disabled = props.disabled || props.readonly;
         return (
           <Dropdown
-            disabled={props.disabled}
+            disabled={disabled}
             options={options}
             onSelect={(option) => {
               props.setConjunction(option.value);
             }}
           >
-            <div className={cn(s.selectedConjunction, props.disabled && s.isDisabled)}>
+            <div className={cn(s.selectedConjunction, disabled && s.isDisabled)}>
               {props.selectedConjunction ?? options[0]?.label ?? '-'}
               <ArrowDownSLineIcon className={s.arrowIcon} />
             </div>
@@ -110,11 +112,11 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
               dropdownMatchWidth={false}
               portaled={true}
               allowClear={false}
-              options={props.items.map((x) => ({ label: x.label, value: x.key }))}
+              options={props.items.map((x) => ({ label: x.label, value: x.path }))}
               value={props.selectedKey}
-              onChange={(key) => {
-                const item = props.items.find((x) => x.key === key);
-                if (item && item.path) {
+              onChange={(path) => {
+                const item = props.items.find((x) => x.path === path);
+                if (item?.path) {
                   props.setField(item.path);
                 }
               }}
@@ -143,7 +145,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
         );
       },
       renderButton: (props) => {
-        if (props.type === 'delRule') {
+        if (props.type.startsWith('del')) {
           return (
             <button onClick={props.onClick} className={s.delRuleButton} disabled={props.readonly}>
               <DeleteOutlined />

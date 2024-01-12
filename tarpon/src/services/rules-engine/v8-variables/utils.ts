@@ -17,7 +17,7 @@ export type EntityLeafValueInfo = {
   type: LeafValueType
   options?: Array<{ title: string; value: string }>
 }
-const ARRAY_ITEM_INDICATOR = '$i'
+export const ARRAY_ITEM_INDICATOR = '$i'
 function getPathKey(path: string[]) {
   return path.join('.')
 }

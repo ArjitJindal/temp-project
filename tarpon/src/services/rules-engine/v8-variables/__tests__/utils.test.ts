@@ -1,4 +1,5 @@
 import { getPublicModelLeafAttrs } from '../utils'
+import { User } from '@/@types/openapi-public/User'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 describe('getPublicModelLeafAttrs', () => {
@@ -84,6 +85,28 @@ describe('getPublicModelLeafAttrs', () => {
         {
           path: ['originPaymentDetails', 'tags', '$i', 'value'],
           pathKey: 'originPaymentDetails.tags.$i.value',
+          type: 'string',
+        },
+      ])
+    )
+  })
+  test('Consumer user', async () => {
+    const result = getPublicModelLeafAttrs(User)
+    expect(result).toEqual(
+      expect.arrayContaining([
+        {
+          path: ['userId'],
+          pathKey: 'userId',
+          type: 'string',
+        },
+        {
+          path: ['legalDocuments', '$i', 'documentType'],
+          pathKey: 'legalDocuments.$i.documentType',
+          type: 'string',
+        },
+        {
+          path: ['legalDocuments', '$i', 'tags', '$i', 'key'],
+          pathKey: 'legalDocuments.$i.tags.$i.key',
           type: 'string',
         },
       ])

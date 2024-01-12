@@ -6,7 +6,10 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { RULE_FUNCTIONS } from '../v8-functions'
 import { RULE_OPERATORS } from '../v8-operators'
-import { getRuleVariableByKey } from '../v8-variables'
+import {
+  VARIABLE_NAMESPACE_SEPARATOR,
+  getRuleVariableByKey,
+} from '../v8-variables'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { getTimestampRange } from '../utils/time-utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
@@ -64,7 +67,12 @@ const getDataLoader = memoizeOne(
           if (variable?.entity === 'TRANSACTION') {
             return variable.load(data.transaction, dynamoDb)
           }
-          // TODO (V8): hanlde other entities
+          if (variable?.entity === 'CONSUMER_USER') {
+            return variable.load(data.senderUser, dynamoDb)
+          }
+          if (variable?.entity === 'BUSINESS_USER') {
+            return variable.load(data.receiverUser, dynamoDb)
+          }
           return null
         })
       )
@@ -103,7 +111,12 @@ export class RuleJsonLogicEvaluator {
     }
   }> {
     const entityVarDataloader = getDataLoader(data, this.dynamoDb)
-    const variableKeys = uniq(getAllValuesByKey<string>('var', jsonLogic))
+    const variableKeys = uniq(
+      getAllValuesByKey<string>('var', jsonLogic).filter((v) =>
+        // NOTE: We don't need to load the subfields of an array-type variable
+        v.includes(VARIABLE_NAMESPACE_SEPARATOR)
+      )
+    )
     const entityVariableKeys = variableKeys.filter(
       (k) => !isAggregationVariable(k)
     )

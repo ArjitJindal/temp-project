@@ -3,7 +3,12 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 
-export type RuleValueTypesEnum = 'string' | 'number' | 'boolean' | 'date'
+export type RuleValueTypesEnum =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'date'
+  | 'array'
 export type RuleEntityType =
   | 'TRANSACTION'
   | 'CONSUMER_USER'

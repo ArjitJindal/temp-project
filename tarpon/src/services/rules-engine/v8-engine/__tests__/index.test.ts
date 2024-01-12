@@ -2,36 +2,182 @@ import { RuleJsonLogicEvaluator } from '..'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { getTestUser } from '@/test-utils/user-test-utils'
+import { LegalDocument } from '@/@types/openapi-public/LegalDocument'
 
 dynamoDbSetupHook()
 
-test('executes the json logic - hit', async () => {
-  const evaluator = new RuleJsonLogicEvaluator('tenant-id', getDynamoDbClient())
-  const result = await evaluator.evaluate(
-    { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
-    [],
-    { transaction: getTestTransaction({ type: 'TRANSFER' }) }
-  )
-  expect(result).toEqual({
-    hit: true,
-    varData: { 'TRANSACTION:type': 'TRANSFER' },
+describe('entity variable', () => {
+  test('executes the json logic - hit', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
+      [],
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(result).toEqual({
+      hit: true,
+      varData: { 'TRANSACTION:type': 'TRANSFER' },
+    })
+  })
+
+  test('executes the json logic - no hit', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
+      [],
+      { transaction: getTestTransaction({ type: 'DEPOSIT' }) }
+    )
+    expect(result).toEqual({
+      hit: false,
+      varData: { 'TRANSACTION:type': 'DEPOSIT' },
+    })
+  })
+})
+describe('entity variable (array)', () => {
+  const TEST_LOGIC = {
+    and: [
+      {
+        some: [
+          { var: 'TRANSACTION:tags' },
+          {
+            and: [
+              { '==': [{ var: 'key' }, 'a'] },
+              { '==': [{ var: 'value' }, 'b'] },
+            ],
+          },
+        ],
+      },
+    ],
+  }
+  const TEST_LOGIC_NESTED = {
+    and: [
+      {
+        some: [
+          { var: 'CONSUMER_USER:legalDocuments' },
+          {
+            some: [
+              { var: 'tags' },
+              {
+                and: [
+                  { '==': [{ var: 'key' }, 'a'] },
+                  { '==': [{ var: 'value' }, 'b'] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }
+  test('executes the json logic - hit', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const result = await evaluator.evaluate(TEST_LOGIC, [], {
+      transaction: getTestTransaction({
+        tags: [
+          { key: '1', value: '2' },
+          { key: 'a', value: 'b' },
+        ],
+      }),
+    })
+    expect(result).toEqual({
+      hit: true,
+      varData: {
+        'TRANSACTION:tags': [
+          { key: '1', value: '2' },
+          { key: 'a', value: 'b' },
+        ],
+      },
+    })
+  })
+  test('executes the json logic - not hit', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const result = await evaluator.evaluate(TEST_LOGIC, [], {
+      transaction: getTestTransaction({
+        tags: [
+          { key: '1', value: 'b' },
+          { key: 'a', value: '2' },
+        ],
+      }),
+    })
+    expect(result).toMatchObject({ hit: false })
+  })
+  test('executes the json logic (nested) - hit', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const testLegalDocuments: LegalDocument[] = [
+      {
+        documentType: 'passport',
+        documentNumber: 'Z9431P',
+        documentIssuedCountry: 'DE',
+        tags: [
+          { key: '1', value: 'b' },
+          { key: 'a', value: '2' },
+        ],
+      },
+      {
+        documentType: 'passport',
+        documentNumber: 'Z9431P',
+        documentIssuedCountry: 'DE',
+        tags: [
+          { key: '1', value: '2' },
+          { key: 'a', value: 'b' },
+        ],
+      },
+    ]
+    const result = await evaluator.evaluate(TEST_LOGIC_NESTED, [], {
+      transaction: getTestTransaction(),
+      senderUser: getTestUser({
+        legalDocuments: testLegalDocuments,
+      }),
+    })
+    expect(result).toEqual({
+      hit: true,
+      varData: {
+        'CONSUMER_USER:legalDocuments': testLegalDocuments,
+      },
+    })
+  })
+  test('executes the json logic (nested) - not hit', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const result = await evaluator.evaluate(TEST_LOGIC_NESTED, [], {
+      transaction: getTestTransaction(),
+      senderUser: getTestUser({
+        legalDocuments: [
+          {
+            documentType: 'passport',
+            documentNumber: 'Z9431P',
+            documentIssuedCountry: 'DE',
+            tags: [
+              { key: '1', value: 'b' },
+              { key: 'a', value: '2' },
+            ],
+          },
+        ],
+      }),
+    })
+    expect(result).toMatchObject({ hit: false })
   })
 })
 
-test('executes the json logic - no hit', async () => {
-  const evaluator = new RuleJsonLogicEvaluator('tenant-id', getDynamoDbClient())
-  const result = await evaluator.evaluate(
-    { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
-    [],
-    { transaction: getTestTransaction({ type: 'DEPOSIT' }) }
-  )
-  expect(result).toEqual({
-    hit: false,
-    varData: { 'TRANSACTION:type': 'DEPOSIT' },
-  })
-})
-
-describe('aggregation', () => {
+describe('aggregation variable', () => {
   test('executes the json logic', async () => {
     const evaluator = new RuleJsonLogicEvaluator(
       'tenant-id',
