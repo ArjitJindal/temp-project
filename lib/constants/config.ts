@@ -6,7 +6,7 @@ import { config as prodConfigEu1 } from '../config/config-prod-eu-1'
 import { config as prodConfigEu2 } from '../config/config-prod-eu-2'
 import { config as prodConfigUs1 } from '../config/config-prod-us-1'
 import { config as prodConfigAu1 } from '../config/config-prod-au-1'
-import { config as prodConfigMe1 } from '../config/config-prod-me-1'
+// import { config as prodConfigMe1 } from '../config/config-prod-me-1'
 import { config as localConfig } from '../config/config-local'
 import { FlagrightRegion, Stage } from './deploy'
 
@@ -31,7 +31,7 @@ export const CONFIG_MAP = {
     'eu-2': prodConfigEu2,
     'us-1': prodConfigUs1,
     'au-1': prodConfigAu1,
-    'me-1': prodConfigMe1,
+    // 'me-1': prodConfigMe1,
   },
 }
 
