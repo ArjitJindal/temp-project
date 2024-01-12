@@ -7,11 +7,7 @@ describe('Autocompletion', () => {
   const ac = new AutocompleteService()
   test('3 suggestions returned', async () => {
     const suggestions = ac.autocomplete('Aerts')
-    expect(suggestions).toEqual([
-      'Alerts',
-      'Alerts related to transaction',
-      'Alerts that resulted in SAR',
-    ])
+    expect(suggestions).toEqual(['Alerts', 'Alerts related to transaction'])
   })
   test('1 suggestions returned', async () => {
     const suggestions = ac.autocomplete('user de')

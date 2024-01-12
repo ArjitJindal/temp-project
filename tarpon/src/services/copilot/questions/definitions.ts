@@ -30,6 +30,8 @@ import { TransactionSummary } from '@/services/copilot/questions/definitions/tra
 import { CrmInsights } from '@/services/copilot/questions/definitions/crm-insights'
 import { KycScoring } from '@/services/copilot/questions/definitions/kyc-score'
 import { Recommendation } from '@/services/copilot/questions/definitions/recommendation'
+import { hasFeature } from '@/core/utils/context'
+import { envIsNot } from '@/utils/env'
 
 export const questions: (
   | TableQuestion<any>
@@ -41,29 +43,33 @@ export const questions: (
 )[] = [
   AlertHistory,
   AlertsRelatedToTransaction,
-  CheckedTransactions,
-  Transactions,
-  TransactionSummary,
-  CrmInsights,
-  LinkedUsers,
   CaseHistory,
-  SarsFiled,
-  Shareholders,
   Directors,
-  TransactionByRulesAction,
-  TransactionType,
-  TrsScore,
-  UsersSentMoneyTo,
-  UsersReceivedMoneyFrom,
-  UniquePaymentIdentifierSent,
-  UniquePaymentIdentifierReceived,
-  UserDetails,
-  Website,
-  Linkedin,
-  EntityLinking,
   KycScoring,
-  Recommendation,
-]
+  Shareholders,
+  UserDetails,
+  ...(hasFeature('CRM') ? [CrmInsights] : []),
+  ...(hasFeature('SAR') ? [SarsFiled] : []),
+  ...(hasFeature('MERCHANT_MONITORING')
+    ? [CrmInsights, Linkedin, Website]
+    : []),
+  ...(hasFeature('ENTITY_LINKING') ? [LinkedUsers, EntityLinking] : []),
+  ...(envIsNot('prod')
+    ? [
+        CheckedTransactions,
+        Recommendation,
+        UniquePaymentIdentifierSent,
+        UniquePaymentIdentifierReceived,
+        UsersSentMoneyTo,
+        UsersReceivedMoneyFrom,
+        TrsScore,
+        Transactions,
+        TransactionSummary,
+        TransactionByRulesAction,
+        TransactionType,
+      ]
+    : []),
+].sort((a, b) => a.questionId.localeCompare(b.questionId))
 
 export const queries = questions.map(({ questionId, variableOptions }) => {
   return {
