@@ -26,6 +26,7 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { ListHeader } from '@/@types/openapi-internal/ListHeader'
 import { traceable } from '@/core/xray'
+import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -72,6 +73,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     await Promise.all([
       this.deleteS3Data(job.tenantId),
       this.deleteDynamoDbData(job.tenantId),
+      this.deleteAuth0Organization(job.tenantId),
       this.deleteAuth0Users(job.tenantId),
     ])
   }
@@ -543,5 +545,21 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         await this.deletePartitionKey(entityName, item, tableName)
       }
     )
+  }
+  private async deleteAuth0Organization(tenantId: string) {
+    const mongoDb = await getMongoDbClient()
+    const accountsService = new AccountsService(
+      { auth0Domain: process.env.AUTH0_DOMAIN as string },
+      { mongoDb }
+    )
+    const tenant = await accountsService.getTenantById(tenantId)
+    if (tenant == null) {
+      logger.warn(`Tenant ${tenantId} not found`)
+      return
+    }
+    const managementClient = await getAuth0ManagementClient(
+      process.env.AUTH0_DOMAIN as string
+    )
+    await managementClient.organizations.delete({ id: tenant.orgId })
   }
 }
