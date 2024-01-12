@@ -1,5 +1,5 @@
 import { uniq } from 'lodash'
-import { questions } from '@/services/copilot/questions/definitions'
+import { getQuestions } from '@/services/copilot/questions/definitions'
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
@@ -10,7 +10,9 @@ const LIMIT = 30
 
 @traceable
 export class AutocompleteService {
-  private phrases: string[] = questions.map((q) => q.questionId.toLowerCase())
+  private phrases: string[] = getQuestions().map((q) =>
+    q.questionId.toLowerCase()
+  )
 
   autocomplete(query: string, c?: Case | null): string[] {
     query = query.toLowerCase()
@@ -48,6 +50,7 @@ export class AutocompleteService {
     ]
 
     // Repair casing
+    const questions = getQuestions()
     const data = uniq(combinedResults)
       .filter((r) => {
         if (!userCategory) return true
@@ -56,8 +59,8 @@ export class AutocompleteService {
       })
       .map((r) => {
         return (
-          questions.find((q) => q.questionId.toLowerCase() === r)?.questionId ||
-          ''
+          getQuestions().find((q) => q.questionId.toLowerCase() === r)
+            ?.questionId || ''
         )
       })
       .slice(0, LIMIT)

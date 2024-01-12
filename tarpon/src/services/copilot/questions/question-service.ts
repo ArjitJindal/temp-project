@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
-import { queries, questions } from './definitions'
+import { getQueries, getQuestions } from './definitions'
 import { InvestigationRepository } from './investigation-repository'
 import { InvestigationContext, Variables } from './types'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
@@ -135,6 +135,7 @@ export class QuestionService {
       accountService: this.accountsService,
     }
 
+    const questions = getQuestions()
     let question = questions.find((qt) => qt.questionId === questionId)
     if (!question) {
       const { questionId: gptQuestionId, variables } = await this.gpt(
@@ -237,7 +238,7 @@ export class QuestionService {
 
   private async gpt(ctx: InvestigationContext, question: string) {
     const prompt = `
-    ${JSON.stringify(queries)}
+    ${JSON.stringify(getQueries())}
 Please parse "${question}" to give the best matching query and variables values that should be set. The only output you will provide will be in the following format, defined in typescript, with no extra context or content. 
 Dates and datetimes should be output in ISO format, for example the datetime now is ${new Date().toISOString()}. This user's ID is ${
       ctx.userId
@@ -254,7 +255,7 @@ Dates and datetimes should be output in ISO format, for example the datetime now
         questionId: string
         variables: Variables
       } = JSON.parse(await ask(prompt))
-
+      const questions = getQuestions()
       const question = questions.find((q) => q.questionId === result.questionId)
 
       // Workaround in case GPT sets variable type as the value.
@@ -310,8 +311,9 @@ Dates and datetimes should be output in ISO format, for example the datetime now
   ) {
     const tenantId = getContext()?.tenantId
 
-    const variableOption = questions.find((q) => q.questionId === questionId)
-      ?.variableOptions[variable]
+    const variableOption = getQuestions().find(
+      (q) => q.questionId === questionId
+    )?.variableOptions[variable]
     // TODO make the typing here a bit nicer.
     if (
       tenantId &&

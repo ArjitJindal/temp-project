@@ -33,47 +33,49 @@ import { Recommendation } from '@/services/copilot/questions/definitions/recomme
 import { hasFeature } from '@/core/utils/context'
 import { envIsNot } from '@/utils/env'
 
-export const questions: (
+export const getQuestions = (): (
   | TableQuestion<any>
   | StackedBarchartQuestion<any>
   | BarchartQuestion<any>
   | TimeseriesQuestion<any>
   | PropertiesQuestion<any>
   | EmbeddedQuestion<any>
-)[] = [
-  AlertHistory,
-  AlertsRelatedToTransaction,
-  CaseHistory,
-  Directors,
-  KycScoring,
-  Shareholders,
-  UserDetails,
-  ...(hasFeature('CRM') ? [CrmInsights] : []),
-  ...(hasFeature('SAR') ? [SarsFiled] : []),
-  ...(hasFeature('MERCHANT_MONITORING')
-    ? [CrmInsights, Linkedin, Website]
-    : []),
-  ...(hasFeature('ENTITY_LINKING') ? [LinkedUsers, EntityLinking] : []),
-  ...(envIsNot('prod')
-    ? [
-        CheckedTransactions,
-        Recommendation,
-        UniquePaymentIdentifierSent,
-        UniquePaymentIdentifierReceived,
-        UsersSentMoneyTo,
-        UsersReceivedMoneyFrom,
-        TrsScore,
-        Transactions,
-        TransactionSummary,
-        TransactionByRulesAction,
-        TransactionType,
-      ]
-    : []),
-].sort((a, b) => a.questionId.localeCompare(b.questionId))
+)[] =>
+  [
+    AlertHistory,
+    AlertsRelatedToTransaction,
+    CaseHistory,
+    Directors,
+    KycScoring,
+    Shareholders,
+    UserDetails,
+    ...(hasFeature('CRM') ? [CrmInsights] : []),
+    ...(hasFeature('SAR') ? [SarsFiled] : []),
+    ...(hasFeature('MERCHANT_MONITORING')
+      ? [CrmInsights, Linkedin, Website]
+      : []),
+    ...(hasFeature('ENTITY_LINKING') ? [LinkedUsers, EntityLinking] : []),
+    ...(envIsNot('prod')
+      ? [
+          CheckedTransactions,
+          Recommendation,
+          UniquePaymentIdentifierSent,
+          UniquePaymentIdentifierReceived,
+          UsersSentMoneyTo,
+          UsersReceivedMoneyFrom,
+          TrsScore,
+          Transactions,
+          TransactionSummary,
+          TransactionByRulesAction,
+          TransactionType,
+        ]
+      : []),
+  ].sort((a, b) => a.questionId.localeCompare(b.questionId))
 
-export const queries = questions.map(({ questionId, variableOptions }) => {
-  return {
-    questionId,
-    variableOptions,
-  }
-})
+export const getQueries = () =>
+  getQuestions().map(({ questionId, variableOptions }) => {
+    return {
+      questionId,
+      variableOptions,
+    }
+  })
