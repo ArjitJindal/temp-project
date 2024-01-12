@@ -17,6 +17,7 @@ export default function FlagrightUserProviderMock_(props: { children: React.Reac
           verifiedEmail: 'mock@example.com',
           tenantId: 'mock',
           tenantName: 'Mock Tenant',
+          region: 'eu',
           tenantConsoleApiUrl: 'https://example.com/mock',
           demoMode: false,
           permissions,

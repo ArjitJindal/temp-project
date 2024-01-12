@@ -25,6 +25,7 @@ export interface FlagrightAuth0User {
   verifiedEmail: string | null;
   tenantId: string;
   tenantName: string;
+  region: string | null;
   tenantConsoleApiUrl: string;
   demoMode: boolean;
   permissions?: Map<Permission, boolean>;

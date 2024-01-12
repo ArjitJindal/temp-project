@@ -30,6 +30,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
       const name: string | null = user[`${NAMESPACE}/name`] ?? '-';
       const picture: string | null = user[`${NAMESPACE}/picture`] ?? null;
       const tenantConsoleApiUrl: string | null = user[`${NAMESPACE}/tenantConsoleApiUrl`];
+      const region: string | null = user[`${NAMESPACE}/region`];
       const tenantId: string | null = user[`${NAMESPACE}/tenantId`];
       const tenantName: string | null = user[`${NAMESPACE}/tenantName`];
       const verifiedEmail: string | null = user[`${NAMESPACE}/verifiedEmail`];
@@ -54,6 +55,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
         tenantId: tenantId,
         tenantName: tenantName,
         tenantConsoleApiUrl: tenantConsoleApiUrl,
+        region,
         verifiedEmail: verifiedEmail ?? null,
         demoMode: demoMode === true,
         permissions,

@@ -14,6 +14,7 @@ exports.onExecutePostLogin = async (event, api) => {
     role,
     tenantId,
     tenantName,
+    region,
     consoleApiUrl,
     apiAudience,
     dangerousTenantDelete,
@@ -35,6 +36,7 @@ exports.onExecutePostLogin = async (event, api) => {
         tenantId = organization.name
         tenantName = organization.display_name ?? tenantName
         if (organization.metadata != null) {
+          region = organization.metadata.region
           consoleApiUrl = organization.metadata.consoleApiUrl
           apiAudience = organization.metadata.apiAudience
           tenantId = organization.metadata.tenantId ?? tenantId
@@ -74,6 +76,7 @@ exports.onExecutePostLogin = async (event, api) => {
     )
     api.accessToken.setCustomClaim(namespace + '/tenantId', tenantId)
     api.accessToken.setCustomClaim(namespace + '/tenantName', tenantName)
+    api.accessToken.setCustomClaim(namespace + '/region', region)
     api.accessToken.setCustomClaim(
       namespace + '/tenantConsoleApiUrl',
       consoleApiUrl

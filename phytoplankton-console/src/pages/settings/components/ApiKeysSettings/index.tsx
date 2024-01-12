@@ -14,9 +14,13 @@ import Tooltip from '@/components/library/Tooltip';
 import { useReloadSettings, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Alert from '@/components/library/Alert';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
+import { useAuth0User } from '@/utils/user-utils';
+import { isWhiteLabeled } from '@/utils/branding';
 
 export const ApiKeysSettings = () => {
   const api = useApi();
+  const user = useAuth0User();
+
   const [unmaskedApiKey, setUnmaskedApiKey] = useState<string | undefined>(undefined);
   const reloadSettings = useReloadSettings();
 
@@ -35,24 +39,45 @@ export const ApiKeysSettings = () => {
 
   const settings = useSettings();
 
+  const generateApiUrl = (environment, region) => {
+    const envUrls = {
+      prod: `https://${region}.api.flagright.com`,
+      sandbox: 'https://sandbox.api.flagright.com',
+      dev: 'https://api.flagright.dev',
+      local: `https://region.api.flagright.com`,
+    };
+
+    return envUrls[environment];
+  };
+
   const columnHelper = new ColumnHelper<TenantApiKey>();
 
   return (
-    <SettingsCard title="API keys" description="View your API keys.">
+    <SettingsCard title="API details" description="View your API details.">
       <AsyncResourceRenderer resource={queryResult.data}>
         {(apiKeys) => (
           <>
             <Table<TenantApiKey>
               data={{ items: apiKeys }}
               pagination={false}
+              tableId="api-keys-table"
               columns={[
                 columnHelper.simple({
-                  title: 'Name',
+                  title: 'Header name',
                   key: 'id',
                   type: {
                     render: () => <>{'x-api-key'}</>,
                   },
                 }),
+                ...(!isWhiteLabeled()
+                  ? [
+                      columnHelper.display({
+                        title: 'URL',
+                        render: () => <>{generateApiUrl(process.env.ENV_NAME, user.region)}</>,
+                      }),
+                    ]
+                  : []),
+
                 columnHelper.simple({
                   title: 'Key',
                   type: {
