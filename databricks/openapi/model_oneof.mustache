@@ -2,6 +2,5 @@
 {{import}}
 {{/imports}}
 
-{{classname}} = StructType([
-	{{#oneOf}}{{.}}.fields {{^-last}}+ {{/-last}}{{/oneOf}}
-])
+{{classname}} = StructType(list({obj.name: obj for l in [{{#oneOf}}{{.}}{{^-last}}, {{/-last}}{{/oneOf}}] for obj in l}.values()))
+
