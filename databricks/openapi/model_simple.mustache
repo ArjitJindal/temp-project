@@ -6,12 +6,12 @@
 {{/isArray}}
 {{/isMap}}
 {{#isArray}}
-	ArrayType({{{parent}}}, {{^required}}True{{/required}}{{#required}}False{{/required}})
+	ArrayType({{{parent}}}, True)
 {{/isArray}}
 {{/parent}}
 {{#vars}}
 {{^-first}}
 {{/-first}}
-	StructField("{{baseName}}", {{>datatypes}}, {{^required}}True{{/required}}{{#required}}False{{/required}}),
+	StructField("{{baseName}}", {{>datatypes}}, True),
 {{/vars}}
 ])
