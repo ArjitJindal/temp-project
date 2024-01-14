@@ -1,0 +1,7 @@
+{{#imports}}
+{{import}}
+{{/imports}}
+
+{{classname}} = StructType([
+	{{#oneOf}}{{.}}.fields {{^-last}}+ {{/-last}}{{/oneOf}}
+])

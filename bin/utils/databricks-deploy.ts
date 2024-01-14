@@ -33,7 +33,9 @@ export const databricksDeployStage = (
           build: {
             commands: [
               ...installTerraform,
-              'cd databricks/infra',
+              'cd databricks',
+              'make generate',
+              'cd infra',
               `npm run deploy -- ${config.stage} ${
                 config.region || 'eu-1'
               } --auto-approve`,

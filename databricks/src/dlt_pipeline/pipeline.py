@@ -1,6 +1,7 @@
 # type: ignore
 import json
 import os
+import sys
 
 import dlt  # pylint: disable=import-error
 from boto3.dynamodb.types import TypeDeserializer
@@ -9,10 +10,15 @@ from data_quality_checks import (  # pylint: disable=import-error
     raw_event_data_warn,
 )
 from pyspark.sql.functions import col, expr, from_json, regexp_extract, udf
-from schema import (  # pylint: disable=import-error
-    kinesis_event_schema,
-    transaction_schema,
+
+sys.path.append(os.path.abspath("/Workspace/Shared/main/src"))
+
+from openapi_client.models.transaction import (  # pylint: disable=import-error
+    Transaction,
 )
+from openapi_client.models.user import User  # pylint: disable=import-error
+
+from dlt_pipeline.schema import kinesis_event_schema  # pylint: disable=import-error
 
 aws_access_key = dbutils.secrets.get(  # pylint: disable=undefined-variable
     "kinesis", "aws-access-key"
@@ -33,7 +39,10 @@ def deserialise_dynamo(column):
         return None
 
 
-entities = [["transactions", transaction_schema, "transaction#primary"]]
+entities = [
+    ["transactions", Transaction, "transaction#primary"],
+    ["users", User, "user#primary"],
+]
 
 
 def define_pipeline(spark):
@@ -62,6 +71,7 @@ def define_pipeline(spark):
 
 def create_entity_tables(entity, schema, dynamo_key):
     cdc_table_name = f"{entity}_cdc"
+
     @dlt.table(name=cdc_table_name, comment=f"{entity} CDC", partition_cols=["tenant"])
     def cdc():
         deserialisation_udf = udf(deserialise_dynamo, schema)

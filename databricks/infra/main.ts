@@ -178,6 +178,7 @@ class DatabricksStack extends TerraformStack {
       {
         name: `shared-ec2-role-${region}`,
         role: profileRoleName,
+        tags: { Project: 'databricks' },
       }
     )
     const instanceProfile = new databricks.instanceProfile.InstanceProfile(
@@ -385,6 +386,49 @@ class DatabricksStack extends TerraformStack {
       dependsOn: [instanceProfile],
     })
 
+    const sqlWarehouse = new databricks.sqlEndpoint.SqlEndpoint(
+      this,
+      'sql-endpoint',
+      {
+        provider: workspaceProvider,
+        name: 'tarpon',
+        clusterSize: '2X-Small',
+        autoStopMins: 5,
+        enableServerlessCompute: true,
+      }
+    )
+
+    const databricksAccessToken = new databricks.token.Token(
+      this,
+      'access-token',
+      {
+        provider: workspaceProvider,
+        comment: 'Terraform provisioned',
+      }
+    )
+
+    const databricksAccessTokenSecret =
+      new aws.secretsmanagerSecret.SecretsmanagerSecret(
+        this,
+        'databricks-access-secret',
+        {
+          name: 'databricks-access',
+        }
+      )
+
+    new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
+      this,
+      'databricks-access-secret-version',
+      {
+        secretId: databricksAccessTokenSecret.id,
+        secretString: Fn.jsonencode({
+          serverHostname: sqlWarehouse.odbcParams.hostname,
+          httpPath: sqlWarehouse.odbcParams.path,
+          token: databricksAccessToken.tokenValue,
+        }),
+      }
+    )
+
     // TODO give databricks access to github instead.
     const directoryPath = path.resolve(__dirname, '..', 'src')
     fs.readdirSync(directoryPath, { recursive: true, withFileTypes: true })
@@ -398,6 +442,32 @@ class DatabricksStack extends TerraformStack {
             provider: workspaceProvider,
             source: path.join(directoryPath, file),
             path: path.join('/Shared/main/src', file),
+          }
+        )
+      })
+
+    // TODO create and upload a python WHL instead.
+    const genDirectoryPath = path.resolve(
+      __dirname,
+      '..',
+      'openapi',
+      'gen',
+      'openapi_client',
+      'models'
+    )
+    fs.readdirSync(genDirectoryPath, { withFileTypes: true })
+      .filter((file) => file.name !== '__init__.py')
+      .map((file) =>
+        path.join(file.path.replace(genDirectoryPath, ''), file.name)
+      )
+      .forEach((file, index) => {
+        new databricks.workspaceFile.WorkspaceFile(
+          this,
+          `gen-workspace-file-${index}`,
+          {
+            provider: workspaceProvider,
+            source: path.join(genDirectoryPath, file),
+            path: path.join('/Shared/main/src/openapi_client/models', file),
           }
         )
       })
@@ -753,6 +823,7 @@ class DatabricksStack extends TerraformStack {
       managedPolicyArns: [
         'arn:aws:iam::aws:policy/AmazonKinesisReadOnlyAccess',
       ],
+      tags: { Project: 'databricks' },
     })
 
     const assumeRolePolicy =
@@ -767,6 +838,7 @@ class DatabricksStack extends TerraformStack {
     const crossAccountRole = new aws.iamRole.IamRole(this, 'iam-role', {
       name: `${prefix}-crossaccount`,
       assumeRolePolicy: assumeRolePolicy.json,
+      tags: { Project: 'databricks' },
     })
 
     const crossAcountPolicy =
@@ -785,6 +857,7 @@ class DatabricksStack extends TerraformStack {
         name: `${prefix}-policy`,
         role: crossAccountRole.id,
         policy: crossAcountPolicy.json,
+        tags: { Project: 'databricks' },
       }
     )
 
@@ -831,6 +904,7 @@ class DatabricksStack extends TerraformStack {
         name: `shared-pass-role-for-ec2-${region}`,
         path: '/',
         policy: passRoleDoc.json,
+        tags: { Project: 'databricks' },
       }
     )
 
@@ -840,6 +914,7 @@ class DatabricksStack extends TerraformStack {
       {
         policyArn: sharedPolicy.arn,
         role: crossAccountRole.name,
+        tags: { Project: 'databricks' },
       }
     )
 
@@ -857,6 +932,7 @@ class DatabricksStack extends TerraformStack {
         forceDestroy: true,
         tags: {
           Name: `${prefix}-metastore`,
+          Project: 'databricks',
         },
       }
     )
@@ -976,6 +1052,7 @@ class DatabricksStack extends TerraformStack {
         }),
         tags: {
           Name: `${prefix}-unity-catalog IAM policy`, // Replace `localPrefix` with your local prefix variable or value
+          Project: 'databricks',
         },
       }
     )
@@ -986,6 +1063,7 @@ class DatabricksStack extends TerraformStack {
       managedPolicyArns: [unityMetastorePolicy.arn],
       tags: {
         Name: `${prefix}-unity-catalog IAM role`,
+        Project: 'databricks',
       },
     })
 
@@ -1020,6 +1098,7 @@ class DatabricksStack extends TerraformStack {
           applicationId: 'cb9efcf2-ffd5-484a-badc-6317ba4aef91',
         }
       )
+
     new databricks.groupMember.GroupMember(this, `tf-group-member`, {
       provider: this.mws,
       groupId: adminGroup.id,

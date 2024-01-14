@@ -7,8 +7,8 @@ infra:
 frontend:
   - phytoplankton-console/**
 
-raptor:
-  - raptor/**
+databricks:
+  - databricks/**
 
 pipeline:
   - bin/**

@@ -11,7 +11,7 @@ from pyspark.sql.functions import col, lit
 sys.path.append(os.path.abspath("/Workspace/Shared/main/src"))
 
 # pylint: disable=import-error,wrong-import-position
-from dlt_pipeline.schema import transaction_schema
+from openapi_client.models.user import User  # pylint: disable=import-error
 
 # MongoDB Connection Setup
 MONGO_USERNAME = dbutils.secrets.get(  # pylint: disable=undefined-variable
@@ -25,7 +25,7 @@ MONGO_HOST = dbutils.secrets.get(  # pylint: disable=undefined-variable
 )
 
 
-def load_mongo():
+def load_mongo(table, partition_key, id_column, schema):
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("MongoDBToDelta")
     connection_uri = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}"
@@ -36,7 +36,7 @@ def load_mongo():
     # Initialize Spark Session
     spark = SparkSession.builder.appName("MongoDBToDelta").getOrCreate()
 
-    suffix = "-transactions"
+    suffix = f"-{table}"
 
     # List the collections and process each
     for coll in db.list_collection_names():
@@ -49,13 +49,13 @@ def load_mongo():
             .option("database", db_name)
             .option("uri", connection_uri)
             .option("collection", coll)
-            .schema(transaction_schema)
+            .schema(schema)
             .load()
         )
         transformed_df = (
             df.withColumn("tenant", lit(tenant))
-            .withColumn("PartitionKeyID", lit(f"{tenant}#transaction#primary"))
-            .withColumn("SortKeyID", col("transactionId"))
+            .withColumn("PartitionKeyID", lit(f"{tenant}{partition_key}"))
+            .withColumn("SortKeyID", col(id_column))
             # Timestamp of 0 to indicate the initial data load.
             .withColumn(
                 "approximateArrivalTimestamp",
@@ -66,10 +66,8 @@ def load_mongo():
         (
             transformed_df.write.mode("append")
             .format("delta")
-            .saveAsTable("transactions_cdc")
+            .saveAsTable(f"{table.replace('-', '_')}_cdc")
         )
         logger.info("Collection processed: %s", coll)
     logger.info("All collections processed successfully.")
 
-
-load_mongo()
