@@ -857,7 +857,6 @@ class DatabricksStack extends TerraformStack {
         name: `${prefix}-policy`,
         role: crossAccountRole.id,
         policy: crossAcountPolicy.json,
-        tags: { Project: 'databricks' },
       }
     )
 
@@ -914,7 +913,6 @@ class DatabricksStack extends TerraformStack {
       {
         policyArn: sharedPolicy.arn,
         role: crossAccountRole.name,
-        tags: { Project: 'databricks' },
       }
     )
 
