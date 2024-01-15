@@ -28,6 +28,14 @@ const cidrBlock = '10.4.0.0/16'
 const databricksClientId = 'cb9efcf2-ffd5-484a-badc-6317ba4aef91'
 const databricksAccountId = 'e2fae071-88c7-4b3e-90cd-2f4c5ced45a7'
 const awsAccountId = AWS_ACCOUNTS[stage]
+const serverlessRegions = [
+  'eu-central-1',
+  'ap-southeast-2',
+  'eu-west-1',
+  'us-west-2',
+  'us-east-1',
+  'us-east-2',
+]
 
 class DatabricksStack extends TerraformStack {
   config: Config
@@ -386,6 +394,7 @@ class DatabricksStack extends TerraformStack {
       dependsOn: [instanceProfile],
     })
 
+    const enableServerlessCompute = serverlessRegions.indexOf(awsRegion) > -1
     const sqlWarehouse = new databricks.sqlEndpoint.SqlEndpoint(
       this,
       'sql-endpoint',
@@ -393,8 +402,8 @@ class DatabricksStack extends TerraformStack {
         provider: workspaceProvider,
         name: 'tarpon',
         clusterSize: '2X-Small',
-        autoStopMins: 5,
-        enableServerlessCompute: true,
+        autoStopMins: enableServerlessCompute ? 5 : 10,
+        enableServerlessCompute,
       }
     )
 
