@@ -412,7 +412,7 @@ class DatabricksStack extends TerraformStack {
         this,
         'databricks-access-secret',
         {
-          name: 'databricks-access',
+          name: `databricks-access-${region}`,
         }
       )
 
