@@ -450,7 +450,7 @@ export default function AlertTable(props: Props) {
         helper.display({
           title: 'Operations',
           enableResizing: false,
-          defaultWidth: 260,
+          defaultWidth: 230,
           render: (entity) => {
             if (!entity.alertId || !entity.caseId) {
               return <></>;

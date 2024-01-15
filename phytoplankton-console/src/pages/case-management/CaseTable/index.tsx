@@ -301,7 +301,7 @@ export default function CaseTable(props: Props) {
       helper.display({
         title: 'Operations',
         enableResizing: false,
-        defaultWidth: 200,
+        defaultWidth: 180,
         render: (entity) => {
           if (!entity.caseId) {
             return <></>;
