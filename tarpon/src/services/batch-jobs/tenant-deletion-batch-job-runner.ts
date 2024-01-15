@@ -18,7 +18,7 @@ import {
 import { BatchJobRunner } from './batch-job-runner-base'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { allCollections, getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient, paginateQueryGenerator } from '@/utils/dynamodb'
 import { DynamoDbKeyEnum, DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -67,6 +67,7 @@ type ExcludedDynamoDbKey = Exclude<
 @traceable
 export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   private dynamoDb = memoize(() => getDynamoDbClient())
+  private mongoDb = memoize(async () => await getMongoDbClient())
   private deletedUserAggregationUserIds = new Set<string>()
 
   protected async run(job: TenantDeletionBatchJob): Promise<void> {
@@ -76,6 +77,19 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       this.deleteAuth0Organization(job.tenantId),
       this.deleteAuth0Users(job.tenantId),
     ])
+
+    await this.dropMongoTables(job.tenantId)
+  }
+
+  private async dropMongoTables(tenantId: string) {
+    const mongoDb = await this.mongoDb()
+    const db = mongoDb.db()
+
+    const collections = await allCollections(tenantId, db)
+    for (const collection of collections) {
+      await db.collection(collection).drop()
+      logger.info(`Dropped collection ${collection}`)
+    }
   }
 
   private async deleteDynamoDbData(tenantId: string) {

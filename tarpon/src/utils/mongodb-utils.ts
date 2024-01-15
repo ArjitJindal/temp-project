@@ -291,7 +291,7 @@ export const createMongoDBCollections = async (
 }
 
 export async function allCollections(tenantId: string, db: Db) {
-  const re = new RegExp(tenantId + `-((?!test).+)`)
+  const re = new RegExp(`^${escapeStringRegexp(tenantId)}(-test)?-`)
   const collections = await db
     .listCollections({
       name: re,
