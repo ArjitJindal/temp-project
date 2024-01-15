@@ -9,16 +9,12 @@ from data_quality_checks import (  # pylint: disable=import-error
     raw_event_data_valid,
     raw_event_data_warn,
 )
-from pyspark.sql.functions import col, expr, from_json, regexp_extract, udf
+from pyspark.sql.functions import col, concat, expr, from_json, lit, regexp_extract, udf
 
 sys.path.append(os.path.abspath("/Workspace/Shared/main/src"))
 
-from openapi_client.models.transaction import (  # pylint: disable=import-error
-    Transaction,
-)
-from openapi_client.models.user import User  # pylint: disable=import-error
-
 from dlt_pipeline.schema import kinesis_event_schema  # pylint: disable=import-error
+from entities import entities  # pylint: disable=import-error
 
 aws_access_key = dbutils.secrets.get(  # pylint: disable=undefined-variable
     "kinesis", "aws-access-key"
@@ -37,12 +33,6 @@ def deserialise_dynamo(column):
         return None
     except KeyError:
         return None
-
-
-entities = [
-    ["transactions", Transaction, "transaction#primary"],
-    ["users", User, "user#primary"],
-]
 
 
 def define_pipeline(spark):
@@ -66,11 +56,33 @@ def define_pipeline(spark):
         )
 
     for entity in entities:
-        create_entity_tables(entity[0], entity[1], entity[2])
+        create_entity_tables(
+            entity["table"],
+            entity["schema"],
+            entity["partition_key"],
+            entity["id_column"],
+        )
 
 
-def create_entity_tables(entity, schema, dynamo_key):
+def create_entity_tables(entity, schema, dynamo_key, id_column):
     cdc_table_name = f"{entity}_cdc"
+    backfill_table_name = f"{entity}_backfill"
+
+    @dlt.append_flow(name=backfill_table_name, target=cdc_table_name)
+    def backfill():
+        df = spark.readStream.format("delta").table(
+            f"hive_metastore.default.{backfill_table_name}"
+        )
+        return (
+            df.withColumn("PartitionKeyID", concat(lit(dynamo_key), df["tenant"]))
+            .withColumn("SortKeyID", col(id_column))
+            # Timestamp of 0 to indicate the initial data load.
+            .withColumn(
+                "approximateArrivalTimestamp",
+                lit("1970-01-01 00:00:00").cast("timestamp"),
+            )
+            .withColumn("event", lit("INSERT"))
+        )
 
     @dlt.table(name=cdc_table_name, comment=f"{entity} CDC", partition_cols=["tenant"])
     def cdc():

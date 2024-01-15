@@ -7,11 +7,15 @@ import pymongo
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, lit
 
-# Hack to make module imports work on Databricks
+from databricks.sdk.runtime import *
+
 sys.path.append(os.path.abspath("/Workspace/Shared/main/src"))
 
-# pylint: disable=import-error,wrong-import-position
-from openapi_client.models.user import User  # pylint: disable=import-error
+from openapi_client.models.transaction import (  # pylint: disable=import-error
+    Transaction,
+)
+
+from entities import entities  # pylint: disable=import-error
 
 # MongoDB Connection Setup
 MONGO_USERNAME = dbutils.secrets.get(  # pylint: disable=undefined-variable
@@ -32,9 +36,14 @@ def load_mongo(table, partition_key, id_column, schema):
     client = pymongo.MongoClient(connection_uri, 27017, maxPoolSize=50)
     db_name = "tarpon"
     db = client[db_name]
+    table_path = f"hive_metastore.default.{table}_backfill"
 
     # Initialize Spark Session
     spark = SparkSession.builder.appName("MongoDBToDelta").getOrCreate()
+
+    # Clear existing table
+    empty_df = spark.createDataFrame([], schema)
+    empty_df.write.format("delta").mode("overwrite").saveAsTable(table_path)
 
     suffix = f"-{table}"
 
@@ -51,23 +60,16 @@ def load_mongo(table, partition_key, id_column, schema):
             .option("collection", coll)
             .schema(schema)
             .load()
+            .withColumn("tenant", lit(tenant))
         )
-        transformed_df = (
-            df.withColumn("tenant", lit(tenant))
-            .withColumn("PartitionKeyID", lit(f"{tenant}{partition_key}"))
-            .withColumn("SortKeyID", col(id_column))
-            # Timestamp of 0 to indicate the initial data load.
-            .withColumn(
-                "approximateArrivalTimestamp",
-                lit("1970-01-01 00:00:00").cast("timestamp"),
-            )
-            .withColumn("event", lit("INSERT"))
-        )
-        (
-            transformed_df.write.mode("append")
-            .format("delta")
-            .saveAsTable(f"{table.replace('-', '_')}_cdc")
-        )
+        df.write.option("mergeSchema", "true").format("delta").mode(
+            "append"
+        ).saveAsTable(table_path)
         logger.info("Collection processed: %s", coll)
     logger.info("All collections processed successfully.")
 
+
+for entity in entities:
+    load_mongo(
+        entity["table"], entity["partition_key"], entity["id_column"], entity["schema"]
+    )
