@@ -74,7 +74,7 @@ def create_entity_tables(entity, schema, dynamo_key, id_column):
             f"hive_metastore.default.{backfill_table_name}"
         )
         return (
-            df.withColumn("PartitionKeyID", concat(lit(dynamo_key), df["tenant"]))
+            df.withColumn("PartitionKeyID", concat(df["tenant"]), lit(dynamo_key))
             .withColumn("SortKeyID", col(id_column))
             # Timestamp of 0 to indicate the initial data load.
             .withColumn(
