@@ -43,7 +43,9 @@ def load_mongo(table, partition_key, id_column, schema):
 
     # Clear existing table
     empty_df = spark.createDataFrame([], schema)
-    empty_df.write.format("delta").mode("overwrite").saveAsTable(table_path)
+    empty_df.write.option("mergeSchema", "true").format("delta").mode(
+        "overwrite"
+    ).saveAsTable(table_path)
 
     suffix = f"-{table}"
 
