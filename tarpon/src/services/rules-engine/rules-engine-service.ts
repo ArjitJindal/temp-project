@@ -43,6 +43,7 @@ import {
 } from './filters'
 import { USER_RULES, UserRuleBase } from './user-rules'
 import { RuleJsonLogicEvaluator } from './v8-engine'
+import { getAggVarHash } from './v8-engine/aggregation-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -818,6 +819,8 @@ export class RulesEngineService {
     }
   }
 
+  private updatedAggregationVariables: Set<string> = new Set()
+
   private async verifyTransactionRule(options: {
     rule?: Rule
     ruleInstance: RuleInstance
@@ -855,22 +858,24 @@ export class RulesEngineService {
           publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
           logger.info(`Completed rule`)
 
-          // TODO (V8): Update aggregaion variables only once if used by multiple rules
           await Promise.all(
             ruleInstance.logicAggregationVariables?.flatMap(async (aggVar) => {
+              const hash = getAggVarHash(aggVar)
+              if (this.updatedAggregationVariables.has(hash)) {
+                return
+              }
+
+              this.updatedAggregationVariables.add(hash)
+
               return [
                 await this.ruleLogicEvaluator.updateAggregationVariable(
                   aggVar,
-                  {
-                    transaction: options.transaction,
-                  },
+                  { transaction: options.transaction },
                   'origin'
                 ),
                 await this.ruleLogicEvaluator.updateAggregationVariable(
                   aggVar,
-                  {
-                    transaction: options.transaction,
-                  },
+                  { transaction: options.transaction },
                   'destination'
                 ),
               ]
@@ -886,6 +891,7 @@ export class RulesEngineService {
                   ruleInstance.id!
                 )
               : []
+
           return {
             result,
             transactionAggregationTasks,

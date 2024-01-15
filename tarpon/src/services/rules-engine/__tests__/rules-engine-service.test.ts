@@ -6,6 +6,7 @@ import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transact
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
 import { RuleInstanceRepository } from '../repositories/rule-instance-repository'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
+import { RuleJsonLogicEvaluator } from '../v8-engine'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
@@ -19,6 +20,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
 
@@ -593,7 +595,7 @@ describe('Verify Transaction: V8 engine', () => {
     },
   ])
 
-  test('', async () => {
+  test('executes the json logic - hit', async () => {
     const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
     const result1 = await rulesEngine.verifyTransaction(
       getTestTransaction({
@@ -663,5 +665,59 @@ describe('Verify Transaction: V8 engine', () => {
         },
       ],
     } as TransactionMonitoringResult)
+  })
+})
+
+describe('Verify Transaction V8 engine with Update Aggregation', () => {
+  withFeatureHook(['RULES_ENGINE_V8'])
+
+  const mock = jest.spyOn(
+    RuleJsonLogicEvaluator.prototype,
+    'updateAggregationVariable'
+  )
+
+  const TEST_TENANT_ID = getTestTenantId()
+  const aggregationVariables: RuleAggregationVariable = {
+    key: 'agg:123',
+    type: 'PAYMENT_DETAILS_TRSANCTIONS',
+    direction: 'SENDING',
+    aggregationFieldKey: 'TRANSACTION:transactionId',
+    aggregationFunc: 'COUNT',
+    timeWindow: {
+      start: { units: 1, granularity: 'day' },
+      end: { units: 0, granularity: 'day' },
+    },
+  }
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'V8-R-1',
+      defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+      defaultLogicAggregationVariables: [aggregationVariables],
+      type: 'TRANSACTION',
+    },
+    {
+      id: 'V8-R-2',
+      defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+      defaultLogicAggregationVariables: [aggregationVariables],
+      type: 'TRANSACTION',
+    },
+  ])
+
+  test('Checks aggregation variable is updated only once', async () => {
+    mock.mockClear()
+    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+
+    await rulesEngine.verifyTransaction(
+      getTestTransaction({
+        transactionId: 'tx-1',
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      })
+    )
+
+    expect(mock).toBeCalledTimes(2)
   })
 })
