@@ -13,7 +13,7 @@ from openapi_client.models.user import User  # pylint: disable=import-error
 from openapi_client.models.business import Business  # pylint: disable=import-error
 
 def merge_schemas(*schemas):
-    StructType(list({obj.name: obj for l in schemas for obj in l}.values()))
+    return StructType(list({obj.name: obj for l in schemas for obj in l}.values()))
 
 entities = [
     {
