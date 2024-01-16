@@ -77,10 +77,7 @@ async function buildCode(env, options) {
   ];
   const devMode = watch || config.mode === 'development';
   const envName = config.envName ?? 'unknown_env';
-  const releaseSuffix =
-    process.env.ENV === 'dev' || process.env.ENV === 'sandbox'
-      ? 'latest-version'
-      : getGitHeadHash();
+  const releaseSuffix = process.env.ENV === 'dev' ? 'latest-version' : getGitHeadHash();
   const release = `phytoplankton#${releaseSuffix}`;
   const define = config.define;
 

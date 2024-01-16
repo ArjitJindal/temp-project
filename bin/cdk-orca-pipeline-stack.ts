@@ -79,7 +79,7 @@ export class CdkOrcaPipelineStack extends Stack {
               input: sourceOutput,
               project: buildTarpon(this, role),
               outputs: [tarponBuildOutput],
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
+              environmentVariables: getSentryReleaseSpec(true).actionEnv,
             }),
           ],
         },
@@ -91,7 +91,7 @@ export class CdkOrcaPipelineStack extends Stack {
               input: sourceOutput,
               project: tarponDeployStage(this, devConfig, role, vpc),
               extraInputs: [tarponBuildOutput],
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
+              environmentVariables: getSentryReleaseSpec(true).actionEnv,
             }),
             new codepipline_actions.CodeBuildAction({
               actionName: 'Deploy_Phytoplankton_Console',
@@ -122,7 +122,7 @@ export class CdkOrcaPipelineStack extends Stack {
                 vpc
               ),
               input: sourceOutput,
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
+              environmentVariables: getSentryReleaseSpec(true).actionEnv,
               extraInputs: [tarponBuildOutput],
             }),
           ],
@@ -216,7 +216,7 @@ export class CdkOrcaPipelineStack extends Stack {
                   ),
                   input: sourceOutput,
                   extraInputs: [tarponBuildOutput],
-                  environmentVariables: getSentryReleaseSpec(true).actionEnv,
+                  environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
                 new codepipline_actions.CodeBuildAction({
                   actionName: `Deploy_Databricks_${region
@@ -258,7 +258,7 @@ export class CdkOrcaPipelineStack extends Stack {
                   vpc
                 ),
                 input: sourceOutput,
-                environmentVariables: getSentryReleaseSpec(true).actionEnv,
+                environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 extraInputs: [tarponBuildOutput],
               })
             }),
