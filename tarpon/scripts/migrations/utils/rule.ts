@@ -13,7 +13,10 @@ import {
 } from '@/services/rules-engine/filters'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { replaceMagicKeyword } from '@/utils/object'
-import { DEFAULT_CURRENCY_KEYWORD } from '@/services/rules-engine/transaction-rules/library'
+import {
+  DEFAULT_CURRENCY_KEYWORD,
+  getRuleByRuleId,
+} from '@/services/rules-engine/transaction-rules/library'
 
 function isRule(rule: Rule | RuleInstance) {
   return !!(rule as Rule).defaultParameters
@@ -409,15 +412,11 @@ async function migrateRuleInstancePrivate(
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
-  const ruleRepository = new RuleRepository(tenantId, {
-    dynamoDb,
-  })
   const tenantRepository = new TenantRepository(tenantId, {
     dynamoDb,
   })
-  const rules = await ruleRepository.getRulesByIds([sourceRuleId, targetRuleId])
-  const sourceRule = rules.find((rule) => rule.id === sourceRuleId)
-  const targetRule = rules.find((rule) => rule.id === targetRuleId)
+  const sourceRule = getRuleByRuleId(sourceRuleId)
+  const targetRule = getRuleByRuleId(targetRuleId)
   const tenantSettings = await tenantRepository.getTenantSettings()
   if (!sourceRule || !targetRule) {
     throw new Error(
@@ -447,8 +446,8 @@ async function migrateRuleInstancePrivate(
 }
 
 export const deleteRules = async (ruleIds: string[]) => {
-  const tenantId = FLAGRIGHT_TENANT_ID
   const dynamoDb = getDynamoDbClient()
+  const tenantId = FLAGRIGHT_TENANT_ID
   const ruleRepository = new RuleRepository(tenantId, {
     dynamoDb,
   })
