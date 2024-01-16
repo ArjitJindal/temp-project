@@ -9,6 +9,7 @@ import { RULE_OPERATORS } from '../v8-operators'
 import {
   VARIABLE_NAMESPACE_SEPARATOR,
   getRuleVariableByKey,
+  isSenderUserVariable,
 } from '../v8-variables'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { getTimestampRange } from '../utils/time-utils'
@@ -64,14 +65,20 @@ const getDataLoader = memoizeOne(
       return Promise.all(
         variableKeys.map(async (variableKey) => {
           const variable = getRuleVariableByKey(variableKey)
-          if (variable?.entity === 'TRANSACTION') {
+          if (!variable) {
+            logger.error(`Rule variable not found: ${variableKey}`)
+            return null
+          }
+          if (variable.entity === 'TRANSACTION') {
             return variable.load(data.transaction, dynamoDb)
           }
-          if (variable?.entity === 'CONSUMER_USER') {
-            return variable.load(data.senderUser, dynamoDb)
-          }
-          if (variable?.entity === 'BUSINESS_USER') {
-            return variable.load(data.receiverUser, dynamoDb)
+          if (
+            ['CONSUMER_USER', 'BUSINESS_USER', 'USER'].includes(variable.entity)
+          ) {
+            const user = isSenderUserVariable(variable)
+              ? data.senderUser
+              : data.receiverUser
+            return variable.load(user, dynamoDb)
           }
           return null
         })

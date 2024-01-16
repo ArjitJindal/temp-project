@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Config, Utils as QbUtils } from '@react-awesome-query-builder/ui';
-import { isEqual } from 'lodash';
+import { isEqual, debounce } from 'lodash';
 import { useLogicBuilderConfig } from '../helpers';
 import LogicBuilder from '@/components/ui/LogicBuilder';
 import { LogicBuilderValue } from '@/components/ui/LogicBuilder/types';
@@ -15,9 +15,10 @@ interface Props {
   aggregationVariables: RuleAggregationVariable[] | undefined;
   onChange: (jsonLogic: object | undefined) => void;
 }
+type State = { tree: LogicBuilderValue; config: Config } | null;
 
 export function RuleLogicBuilder(props: Props) {
-  const [state, setState] = useState<{ tree: LogicBuilderValue; config: Config } | null>(null);
+  const [state, setState] = useState<State>(null);
 
   // Initialize state when config is loaded or changed
   const configRes = useLogicBuilderConfig(
@@ -47,22 +48,36 @@ export function RuleLogicBuilder(props: Props) {
       setState(null);
     }
   }, [prevAggregationVariables, props.aggregationVariables]);
+  const handleChangeLogic = useCallback(
+    (newState: State) => {
+      if (!newState) {
+        return;
+      }
+      const jsonLogic = QbUtils.jsonLogicFormat(newState.tree!, newState.config);
+      if (!isEqual(jsonLogic.logic, props.jsonLogic)) {
+        props.onChange(jsonLogic.logic!);
+      }
+    },
+    [props],
+  );
+  const debouncedHandleChangeLogic = useMemo(
+    () => debounce(handleChangeLogic, 1000),
+    [handleChangeLogic],
+  );
 
   const onChange = useCallback(
     (immutableTree: LogicBuilderValue, config: Config) => {
-      // TODO (V8): Apply throttling
       setState((prevState) => {
         const newState = {
           ...prevState,
           tree: immutableTree,
           config,
         };
-        const jsonLogic = QbUtils.jsonLogicFormat(newState.tree!, newState.config);
-        props.onChange(jsonLogic.logic!);
+        debouncedHandleChangeLogic(newState);
         return newState;
       });
     },
-    [props],
+    [debouncedHandleChangeLogic],
   );
 
   return (

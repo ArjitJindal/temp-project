@@ -1,10 +1,10 @@
 import { omit } from 'lodash'
-import { getAllRuleEntityVariables, getRuleVariableByKey } from '..'
+import { getTransactionRuleEntityVariables, getRuleVariableByKey } from '..'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 
 test('List of entity variables', async () => {
-  const entityVariables = (await getAllRuleEntityVariables()).map((v) =>
+  const entityVariables = (await getTransactionRuleEntityVariables()).map((v) =>
     omit(v, 'load')
   )
   expect(entityVariables).toEqual(
@@ -64,21 +64,22 @@ test('List of entity variables', async () => {
         },
       },
       {
-        key: 'CONSUMER_USER:userDetails-dateOfBirth',
+        key: 'CONSUMER_USER:userDetails-dateOfBirth__SENDER',
         entity: 'CONSUMER_USER',
         valueType: 'string',
         uiDefinition: {
-          label: 'Consumer User / user details > date of birth',
+          label: 'Consumer User / user details > date of birth (Sender)',
           type: 'text',
           valueSources: ['value', 'field', 'func'],
         },
       },
       {
-        key: 'CONSUMER_USER:userDetails-countryOfResidence',
+        key: 'CONSUMER_USER:userDetails-countryOfResidence__RECEIVER',
         entity: 'CONSUMER_USER',
         valueType: 'string',
         uiDefinition: {
-          label: 'Consumer User / user details > country of residence',
+          label:
+            'Consumer User / user details > country of residence (Receiver)',
           type: 'select',
           valueSources: ['value', 'field', 'func'],
           fieldSettings: {
@@ -96,12 +97,12 @@ test('List of entity variables', async () => {
         },
       },
       {
-        key: 'BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment',
+        key: 'BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__SENDER',
         entity: 'BUSINESS_USER',
         valueType: 'string',
         uiDefinition: {
           label:
-            'Business User / legal entity > company general details > user segment',
+            'Business User / legal entity > company general details > user segment (Sender)',
           type: 'select',
           valueSources: ['value', 'field', 'func'],
           fieldSettings: {
@@ -142,11 +143,11 @@ test('List of entity variables', async () => {
         },
       },
       {
-        key: 'CONSUMER_USER:legalDocuments',
+        key: 'CONSUMER_USER:legalDocuments__SENDER',
         entity: 'CONSUMER_USER',
         valueType: 'array',
         uiDefinition: {
-          label: 'Consumer User / legal documents',
+          label: 'Consumer User / legal documents (Sender)',
           type: '!group',
           mode: 'array',
           conjunctions: ['AND', 'OR'],
@@ -250,9 +251,9 @@ describe('Auto-created entity variables', () => {
       )
     ).toBe('JPY')
   })
-  test('CONSUMER_USER:userDetails-dateOfBirth', async () => {
+  test('CONSUMER_USER:userDetails-dateOfBirth__SENDER', async () => {
     const variable = (await getRuleVariableByKey(
-      'CONSUMER_USER:userDetails-dateOfBirth'
+      'CONSUMER_USER:userDetails-dateOfBirth__SENDER'
     ))!
     expect(
       await variable.load(
@@ -265,9 +266,9 @@ describe('Auto-created entity variables', () => {
       )
     ).toBe('1990-01-01')
   })
-  test('BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment', async () => {
+  test('BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__SENDER', async () => {
     const variable = (await getRuleVariableByKey(
-      'BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment'
+      'BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__SENDER'
     ))!
     expect(
       await variable.load(

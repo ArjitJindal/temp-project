@@ -60,7 +60,7 @@ describe('entity variable (array)', () => {
     and: [
       {
         some: [
-          { var: 'CONSUMER_USER:legalDocuments' },
+          { var: 'CONSUMER_USER:legalDocuments__SENDER' },
           {
             some: [
               { var: 'tags' },
@@ -148,7 +148,7 @@ describe('entity variable (array)', () => {
     expect(result).toEqual({
       hit: true,
       varData: {
-        'CONSUMER_USER:legalDocuments': testLegalDocuments,
+        'CONSUMER_USER:legalDocuments__SENDER': testLegalDocuments,
       },
     })
   })

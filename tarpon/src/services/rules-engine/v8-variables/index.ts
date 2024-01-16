@@ -51,6 +51,35 @@ function withNamespace(variable: RuleVariable) {
   }
 }
 
+const SENDER_VARIABLE_KEY_SUFFIX = '__SENDER'
+const RECEIVER_VARIABLE_KEY_SUFFIX = '__RECEIVER'
+export function isSenderUserVariable(variable: RuleVariable) {
+  return variable.key.endsWith(SENDER_VARIABLE_KEY_SUFFIX)
+}
+export function isReceiverUserVariable(variable: RuleVariable) {
+  return variable.key.endsWith(RECEIVER_VARIABLE_KEY_SUFFIX)
+}
+function withDirection(variables: RuleVariable[]) {
+  return variables.flatMap((variable) => [
+    {
+      ...variable,
+      key: `${variable.key}${SENDER_VARIABLE_KEY_SUFFIX}`,
+      uiDefinition: {
+        ...variable.uiDefinition,
+        label: `${variable.uiDefinition.label} (Sender)`,
+      },
+    },
+    {
+      ...variable,
+      key: `${variable.key}${RECEIVER_VARIABLE_KEY_SUFFIX}`,
+      uiDefinition: {
+        ...variable.uiDefinition,
+        label: `${variable.uiDefinition.label} (Receiver)`,
+      },
+    },
+  ])
+}
+
 const USER_DERIVED_VARIABLES: Array<
   ConsumerUserRuleVariable | BusinessUserRuleVariable | CommonUserRuleVariable
 > = [
@@ -85,7 +114,7 @@ function getUiDefinitionType(leafInfo: EntityLeafValueInfo) {
   }
 }
 
-export const getAllRuleEntityVariables = memoize((): RuleVariable[] => {
+export const getTransactionRuleEntityVariables = memoize((): RuleVariable[] => {
   const transactionEntityVariables = getAutoRuleEntityVariables(
     'TRANSACTION',
     Transaction
@@ -98,12 +127,15 @@ export const getAllRuleEntityVariables = memoize((): RuleVariable[] => {
     'BUSINESS_USER',
     Business
   )
-  return [
-    ...transactionEntityVariables,
-    ...consumerUserEntityVariables,
-    ...businessUserEntityVariables,
-    ...USER_DERIVED_VARIABLES,
-  ].map(withNamespace)
+  const userEntityVariables = withDirection(
+    consumerUserEntityVariables
+      .concat(businessUserEntityVariables)
+      .concat(USER_DERIVED_VARIABLES)
+  )
+
+  return transactionEntityVariables
+    .concat(userEntityVariables)
+    .map(withNamespace)
 })
 
 function getArrayUiDefinition(
@@ -220,5 +252,5 @@ function getAutoArrayRuleEntityVariables(
 }
 
 export function getRuleVariableByKey(key: string): RuleVariable | undefined {
-  return getAllRuleEntityVariables().find((v) => v.key === key)
+  return getTransactionRuleEntityVariables().find((v) => v.key === key)
 }
