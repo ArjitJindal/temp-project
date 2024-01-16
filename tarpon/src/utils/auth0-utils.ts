@@ -36,11 +36,15 @@ export interface AppMetadata {
 
 export const getAuth0ManagementClient = memoize(async (auth0Domain: string) => {
   const { clientId, clientSecret } = await getAuth0Credentials(auth0Domain)
-  return new ManagementClient<AppMetadata>({
+  return new ManagementClient({
     domain: auth0Domain,
     clientId,
     clientSecret,
-    retry: { enabled: true, maxRetries: 10 },
+    retry: {
+      enabled: true,
+      maxRetries: 10,
+      retryWhen: [500, 502, 503, 504, 408, 429, 524],
+    },
   })
 })
 
@@ -54,3 +58,10 @@ export const getAuth0AuthenticationClient = memoize(
     })
   }
 )
+
+export async function auth0AsyncWrapper<T>(
+  asyncFunction: () => Promise<{ data: T }>
+): Promise<T> {
+  const result = await asyncFunction()
+  return result.data
+}

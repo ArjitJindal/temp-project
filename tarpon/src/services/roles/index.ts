@@ -1,7 +1,10 @@
 import { BadRequest, Conflict } from 'http-errors'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
-import { getAuth0ManagementClient } from '@/utils/auth0-utils'
+import {
+  auth0AsyncWrapper,
+  getAuth0ManagementClient,
+} from '@/utils/auth0-utils'
 import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/ManagedRoleName'
 import { traceable } from '@/core/xray'
 import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
@@ -29,18 +32,21 @@ export class RoleService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
+    const rolesManager = managementClient.roles
     if (isValidManagedRoleName(inputRole.name?.toLowerCase())) {
       throw new BadRequest(
         "Can't overwrite managed role, please choose a different name."
       )
     }
-    const role = await managementClient.createRole({
-      name: getNamespacedRoleName(tenantId, inputRole.name),
-      description: inputRole.description,
-    })
+    const role = await auth0AsyncWrapper(() =>
+      rolesManager.create({
+        name: getNamespacedRoleName(tenantId, inputRole.name),
+        description: inputRole.description,
+      })
+    )
 
     if (inputRole.permissions && inputRole.permissions?.length > 0) {
-      await managementClient.addPermissionsInRole(
+      await rolesManager.addPermissions(
         { id: role.id as string },
         {
           permissions:
@@ -67,12 +73,14 @@ export class RoleService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
+    const rolesManager = managementClient.roles
+    const userManager = managementClient.users
     if (isValidManagedRoleName(inputRole.name?.toLowerCase())) {
       throw new BadRequest(
         "Can't overwrite default role, please choose a different name."
       )
     }
-    await managementClient.updateRole(
+    await rolesManager.update(
       { id },
       {
         name: getNamespacedRoleName(tenantId, inputRole.name),
@@ -85,7 +93,7 @@ export class RoleService {
     const users = await this.getUsersByRole(inputRole.id ?? '')
     await Promise.all(
       users.map((u) => {
-        return managementClient.updateUser(
+        return userManager.update(
           { id: u.user_id as string },
           { app_metadata: { ...u.app_metadata, role: inputRole.name } }
         )
@@ -98,7 +106,8 @@ export class RoleService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
-    const role = await managementClient.getRole({ id })
+    const rolesManager = managementClient.roles
+    const role = await auth0AsyncWrapper(() => rolesManager.get({ id }))
 
     const users = await this.getUsersByRole(role.id ?? '')
     if (isInNamespace('default', role.name) || role.name == 'root') {
@@ -115,20 +124,23 @@ export class RoleService {
           users.map((u) => u.email).join(', ')
       )
     }
-    await managementClient.deleteRole({ id })
+    await rolesManager.delete({ id })
   }
 
   async getRole(roleId: string): Promise<AccountRole> {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
-    const role = await managementClient.getRole({ id: roleId })
+    const rolesManager = managementClient.roles
+    const role = await auth0AsyncWrapper(() => rolesManager.get({ id: roleId }))
 
     // Haven't implemented any error handling for a bad role ID since this is internal.
-    const auth0Permissions = await managementClient.getPermissionsInRole({
-      id: roleId,
-      per_page: 100, // One day we may have roles with >100 permissions.
-    })
+    const auth0Permissions = await auth0AsyncWrapper(() =>
+      rolesManager.getPermissions({
+        id: roleId,
+        per_page: 100, // One day we may have roles with >100 permissions.
+      })
+    )
 
     if (!role.id) {
       throw new Error('Role ID cannot be null')
@@ -148,9 +160,12 @@ export class RoleService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
-    const roles = await managementClient.getRoles({
-      name_filter: `${namespace}:`,
-    })
+    const rolesManager = managementClient.roles
+    const roles = await auth0AsyncWrapper(() =>
+      rolesManager.getAll({
+        name_filter: `${namespace}:`,
+      })
+    )
     // We store roles in the form namespace:role on Auth0. Default roles are stored in the "default" namespace.
     const validRoles = roles.filter(
       (r) => r.name && r.name.match(/^[0-9a-z-_]+:.+$/i)
@@ -183,11 +198,14 @@ export class RoleService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
-    const currentPermissions = await managementClient.getPermissionsInRole({
-      id,
-    })
+    const rolesManager = managementClient.roles
+    const currentPermissions = await auth0AsyncWrapper(() =>
+      rolesManager.getPermissions({
+        id,
+      })
+    )
     if (currentPermissions.length > 0) {
-      await managementClient.removePermissionsFromRole(
+      await rolesManager.deletePermissions(
         { id },
         {
           permissions: currentPermissions.map((p) => ({
@@ -198,7 +216,7 @@ export class RoleService {
       )
     }
     if (inputPermissions && inputPermissions?.length > 0) {
-      await managementClient.addPermissionsInRole(
+      await rolesManager.addPermissions(
         { id },
         {
           permissions:
@@ -215,8 +233,16 @@ export class RoleService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
-    const users = id && (await managementClient.getUsersInRole({ id }))
-    if (users) {
+    const userManager = managementClient.users
+    const rolesManager = managementClient.roles
+    const usersByRole =
+      id && (await auth0AsyncWrapper(() => rolesManager.getUsers({ id })))
+    if (usersByRole) {
+      const users = await Promise.all(
+        usersByRole.map((u) =>
+          auth0AsyncWrapper(() => userManager.get({ id: u.user_id as string }))
+        )
+      )
       return users
     }
     return []
@@ -236,21 +262,24 @@ export class RoleService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
-    const roles = await managementClient.getUserRoles({ id: userId })
+    const userManager = managementClient.users
+    const roles = await auth0AsyncWrapper(() =>
+      userManager.getRoles({ id: userId })
+    )
     if (roles.length > 0) {
-      await managementClient.removeRolesFromUser(
+      await userManager.deleteRoles(
         { id: userId },
-        { roles: roles.map((r) => r.id as string) }
+        { roles: roles.map((role) => role.id) }
       )
     }
-    await managementClient.assignRolestoUser(
+    await userManager.assignRoles(
       { id: userId },
       { roles: [role.id as string] }
     )
 
     // Set app metadata
-    const user = await managementClient.getUser({ id: userId })
-    await managementClient.updateUser(
+    const user = await auth0AsyncWrapper(() => userManager.get({ id: userId }))
+    await userManager.update(
       {
         id: userId,
       },

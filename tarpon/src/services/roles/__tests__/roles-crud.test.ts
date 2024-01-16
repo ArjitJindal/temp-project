@@ -1,10 +1,28 @@
-import { CreateRoleData, ObjectWithId, Role, UpdateRoleData } from 'auth0'
+import {
+  ApiResponse,
+  DeleteRolesByIdRequest,
+  GetOrganizationMemberRoles200ResponseOneOfInner,
+  PatchRolesByIdRequest,
+  RoleCreate,
+  RoleUpdate,
+} from 'auth0'
 import { remove } from 'lodash'
 import { RoleService } from '..'
-import { getAuth0ManagementClient } from '@/utils/auth0-utils'
+import {
+  auth0AsyncWrapper,
+  getAuth0ManagementClient,
+} from '@/utils/auth0-utils'
 jest.mock('@/utils/auth0-utils')
 const mockedGetAuth0ManagementClient =
   getAuth0ManagementClient as unknown as jest.Mock
+
+const mockedAuth0AsyncWrapper = auth0AsyncWrapper as unknown as jest.Mock
+
+const API_RESPONSE = {
+  status: 200,
+  statusText: 'OK',
+  headers: new Headers(),
+}
 
 const TEST_TENANT_ID = 'test-tenant-id'
 const TEST_DOMAIN = 'test-domain'
@@ -23,71 +41,87 @@ let TEST_ROLES: { id?: string; name?: string; description?: string }[] = [
 ]
 describe('Test Custom Roles Deletion and Updation', () => {
   beforeEach(() => {
+    mockedAuth0AsyncWrapper.mockImplementation(async (asyncFunction) => {
+      const result = await asyncFunction()
+      return result.data
+    })
     mockedGetAuth0ManagementClient.mockImplementation(() => {
       return {
-        createRole: jest
-          .fn()
-          .mockImplementation(
-            async (roleData: CreateRoleData): Promise<Role> => {
-              TEST_ROLES.push({
-                id: 'test-id',
-                name: roleData.name,
-                description: roleData.description,
-              })
-              return Promise.resolve({
-                id: 'test-id',
-                name: roleData.name,
-                description: roleData.description,
-              })
-            }
-          ),
-        addPermissionsInRole: jest.fn().mockImplementation(async () => {
-          return Promise.resolve(null)
-        }),
-        getRole: jest.fn().mockImplementation(async () => {
-          return Promise.resolve({
-            id: 'test-id',
-            name: 'test-tenant-id:test-name',
-            description: 'test-description',
-          })
-        }),
-        getPermissionsInRole: jest.fn().mockImplementation(async () => {
-          return Promise.resolve([])
-        }),
-        updateRole: jest
-          .fn()
-          .mockImplementation(
-            async (idObject: ObjectWithId, data: UpdateRoleData) => {
-              TEST_ROLES = TEST_ROLES.map((role) => {
-                if (role.id === idObject.id) {
-                  return {
-                    id: role.id,
-                    name: data.name,
-                    description: data.description,
-                  }
-                }
-                return role
-              })
-              return Promise.resolve(null)
-            }
-          ),
-        getUsersInRole: jest.fn().mockImplementation(async () => {
-          return Promise.resolve([])
-        }),
-        deleteRole: jest
-          .fn()
-          .mockImplementation(async (idObject: ObjectWithId) => {
-            TEST_ROLES = remove(TEST_ROLES, (role) => {
-              return role.id !== idObject.id
-            })
+        roles: {
+          create: jest
+            .fn()
+            .mockImplementation(
+              async (
+                roleData: RoleCreate
+              ): Promise<
+                ApiResponse<GetOrganizationMemberRoles200ResponseOneOfInner>
+              > => {
+                TEST_ROLES.push({
+                  id: 'test-id',
+                  name: roleData.name,
+                  description: roleData.description,
+                })
+                return Promise.resolve({
+                  ...API_RESPONSE,
+                  data: {
+                    id: 'test-id',
+                    name: roleData.name,
+                    description: roleData.description ?? '',
+                  },
+                })
+              }
+            ),
+          addPermissions: jest.fn().mockImplementation(async () => {
             return Promise.resolve(null)
           }),
-        updateRolePermissions: jest.fn().mockImplementation(async () => {
-          return Promise.resolve(null)
-        }),
-        updateUser: jest.fn().mockImplementation(async () => {
-          return Promise.resolve(null)
-        }),
+          get: jest.fn().mockImplementation(async () => {
+            return Promise.resolve({
+              ...API_RESPONSE,
+              data: {
+                id: 'test-id',
+                name: 'test-tenant-id:test-name',
+                description: 'test-description',
+              },
+            })
+          }),
+          getPermissions: jest.fn().mockImplementation(async () => {
+            return Promise.resolve({
+              ...API_RESPONSE,
+              data: [],
+            })
+          }),
+          update: jest
+            .fn()
+            .mockImplementation(
+              async (idObject: PatchRolesByIdRequest, data: RoleUpdate) => {
+                TEST_ROLES = TEST_ROLES.map((role) => {
+                  if (role.id === idObject.id) {
+                    return {
+                      id: role.id,
+                      name: data.name,
+                      description: data.description,
+                    }
+                  }
+                  return role
+                })
+                return Promise.resolve(null)
+              }
+            ),
+          getUsers: jest.fn().mockImplementation(async () => {
+            return Promise.resolve([])
+          }),
+          delete: jest
+            .fn()
+            .mockImplementation(async (idObject: DeleteRolesByIdRequest) => {
+              TEST_ROLES = remove(TEST_ROLES, (role) => {
+                return role.id !== idObject.id
+              })
+              return Promise.resolve(null)
+            }),
+          deletePermissions: jest.fn().mockImplementation(async () => {
+            return Promise.resolve(null)
+          }),
+        },
       }
     })
   })
