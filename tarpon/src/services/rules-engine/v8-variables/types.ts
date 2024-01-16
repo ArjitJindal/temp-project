@@ -11,6 +11,7 @@ export type RuleValueTypesEnum =
   | 'array'
 export type RuleEntityType =
   | 'TRANSACTION'
+  | 'USER'
   | 'CONSUMER_USER'
   | 'BUSINESS_USER'
   | 'PAYMENT_DETAILS'
@@ -39,4 +40,10 @@ export interface BusinessUserRuleVariable<ReturnType = unknown>
   extends RuleVariableBase {
   entity: 'BUSINESS_USER'
   load: (user: Business) => Promise<ReturnType>
+}
+
+export interface CommonUserRuleVariable<ReturnType = unknown>
+  extends RuleVariableBase {
+  entity: 'USER'
+  load: (user: User | Business) => Promise<ReturnType>
 }

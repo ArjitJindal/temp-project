@@ -11,7 +11,7 @@ import { RuleAggregationVariable } from '@/apis';
 
 interface Props {
   jsonLogic: object | undefined;
-  entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER'>;
+  entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER'>;
   aggregationVariables: RuleAggregationVariable[] | undefined;
   onChange: (jsonLogic: object | undefined) => void;
 }

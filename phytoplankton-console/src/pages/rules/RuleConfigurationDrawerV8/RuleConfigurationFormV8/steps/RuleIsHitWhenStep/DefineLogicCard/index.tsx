@@ -58,7 +58,7 @@ export default function DefineLogicCard(props: Props) {
           renderIf={
             <RuleLogicBuilder
               key={currentRiskLevel}
-              entityVariableTypes={['TRANSACTION', 'CONSUMER_USER', 'BUSINESS_USER']}
+              entityVariableTypes={['TRANSACTION', 'CONSUMER_USER', 'BUSINESS_USER', 'USER']}
               jsonLogic={
                 isRiskLevelsEnabled
                   ? riskLevelsLogicFieldState.value?.[currentRiskLevel]

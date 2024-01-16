@@ -2,6 +2,7 @@ import { get, lowerCase, startCase, memoize, groupBy, mapValues } from 'lodash'
 import { FieldOrGroup } from '@react-awesome-query-builder/core'
 import {
   BusinessUserRuleVariable,
+  CommonUserRuleVariable,
   ConsumerUserRuleVariable,
   RuleEntityType,
   RuleVariableBase as RuleVariable,
@@ -28,6 +29,7 @@ import {
   EntityModel,
   getPublicModelLeafAttrs,
 } from './utils'
+import { USER_TYPE } from './user-type'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -50,8 +52,9 @@ function withNamespace(variable: RuleVariable) {
 }
 
 const USER_DERIVED_VARIABLES: Array<
-  ConsumerUserRuleVariable | BusinessUserRuleVariable
+  ConsumerUserRuleVariable | BusinessUserRuleVariable | CommonUserRuleVariable
 > = [
+  USER_TYPE,
   CONSUMER_USER_AGE_DAYS,
   CONSUMER_USER_AGE_MONTHS,
   CONSUMER_USER_AGE_YEARS,

@@ -13,7 +13,7 @@ import { RuleAggregationFunc, RuleAggregationVariable, RuleLogicConfig } from '@
 
 export function useLogicBuilderConfig(
   // TODO (V8): Improve RuleLogicConfig type
-  entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER'>,
+  entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER'>,
   aggregationVariables: RuleAggregationVariable[],
 ): AsyncResource<Config> {
   const [result, setResult] = useState<AsyncResource<Config>>(init());
