@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-from pyspark.sql.types import StructType
+from pyspark.sql.types import StructType, StructField, StringType
 
 sys.path.append(os.path.abspath("/Workspace/Shared/main/src"))
 
@@ -27,7 +27,7 @@ entities = [
     },
     {
         "table": "users",
-        "schema": merge_schemas(User, Business),
+        "schema": merge_schemas(User, Business, StructType([StructField("type", StringType(), True)])),
         "partition_key": "user#primary",
         "id_column": "userId",
     },
