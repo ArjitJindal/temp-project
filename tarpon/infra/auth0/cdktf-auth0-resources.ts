@@ -363,4 +363,30 @@ export const createAuth0TenantResources = (
       resultUrl: tenantConfig.consoleUrl,
     }
   )
+
+  if (['flagright', 'sandbox-flagright'].includes(tenantName)) {
+    let welcomeTemplateFilePath: string
+    if (tenantName === 'flagright') {
+      welcomeTemplateFilePath =
+        'infra/auth0/email-templates/welcome-email-prod-template.html'
+    } else {
+      welcomeTemplateFilePath =
+        'infra/auth0/email-templates/welcome-email-sandbox-template.html'
+    }
+    const welcomeTemplate = fs.readFileSync(welcomeTemplateFilePath, 'utf8')
+    new auth0.emailTemplate.EmailTemplate(
+      context,
+      getTenantResourceId(tenantName, 'welcome-email-template'),
+      {
+        provider,
+        dependsOn: [emailProvider],
+        enabled: true,
+        template: 'welcome_email',
+        syntax: 'liquid',
+        body: welcomeTemplate,
+        from: `${tenantConfig.consoleApplicationName} <${tenantConfig.emailProvider.fromAddress}>`,
+        subject: `Welcome to ${tenantConfig.consoleApplicationName}`,
+      }
+    )
+  }
 }
