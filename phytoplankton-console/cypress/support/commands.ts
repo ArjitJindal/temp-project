@@ -22,12 +22,6 @@ Cypress.Commands.add('loginByForm', (inputUsername?: string, inputPassword?: str
   cy.checkAndSwitchToCypressTenant();
 });
 
-Cypress.Commands.add('enableFeatureFlag', (text) => {
-  cy.get('button[data-cy="superadmin-panel-button"]').click();
-  cy.get('.ant-select-selection-overflow').type(text);
-  cy.get('button[data-cy="modal-ok"]').click({ force: true });
-});
-
 Cypress.Commands.add('checkAndSwitchToCypressTenant', () => {
   cy.intercept('GET', '**/tenants').as('tenants');
   cy.intercept('POST', '**/change_tenant').as('changeTenant');
@@ -144,6 +138,8 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('toggleFeature', (feature: string, enable: boolean) => {
+  // Do not add "(Don't use)" in the feature name (e.g. "Google SSO (Don't use)"
+  const featureKey = feature.split(' ').join('_').toUpperCase();
   // Open super admin panel
   cy.get("button[data-cy='superadmin-panel-button']").click();
   cy.get('[role="dialog"]').should('be.visible');
@@ -157,12 +153,7 @@ Cypress.Commands.add('toggleFeature', (feature: string, enable: boolean) => {
     const isFeatureEnabled = enabledFeaturesElements.length > 0;
     if (enable && !isFeatureEnabled) {
       // Open select
-      cy.multiSelect('[data-cy="features-select"]', feature);
-      cy.get('[data-cy="features-select"]').find('.ant-select-selector').click();
-      cy.get('[data-cy="features-select"]').find('input[type=search]').type(feature);
-
-      // Select feature
-      cy.get('.ant-select-dropdown .rc-virtual-list-holder-inner > div').contains(feature).click();
+      cy.get('label[data-cy="features-select"]').click().type(`${featureKey}{enter}`);
     } else if (!enable && isFeatureEnabled) {
       Cypress.$(enabledFeaturesElements.get(0)).find('.ant-select-selection-item-remove').click();
     }

@@ -4,7 +4,7 @@ describe('Create and delete risk factor', () => {
   });
 
   it('create, update and delete risk factor', () => {
-    cy.enableFeatureFlag('Risk Scoring');
+    cy.toggleFeature('Risk Scoring', true);
     cy.intercept('POST', '**/pulse/risk-parameter').as('riskFactor');
     createRiskFactor();
     updateRiskFactor();
