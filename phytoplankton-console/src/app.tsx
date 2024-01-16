@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/browser';
 import { Navigate, Route, Routes } from 'react-router';
 import { Debug } from '@sentry/integrations';
+import { FetchCallError } from './apis';
 import AppWrapper from '@/components/AppWrapper';
 
 import { useRoutes } from '@/services/routing';
@@ -37,6 +38,11 @@ Sentry.init({
     const error = hint?.originalException as Error;
     if (error && error.code && error.code >= 400 && error.code < 500) {
       return null;
+    }
+    if (error instanceof FetchCallError) {
+      event.extra = {
+        ...error.request,
+      };
     }
     return event;
   },
