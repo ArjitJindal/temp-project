@@ -1,9 +1,9 @@
 import React from 'react';
 import cn from 'clsx';
+import { Currency } from '@flagright/lib/constants';
 import s from './styles.module.less';
 import Popover from './Popover';
 import { getLabelColor } from '@/components/ui/colors';
-import { Currency } from '@/utils/currencies';
 
 const LABEL_DISPLAY_THRESHOLD = 0.03;
 

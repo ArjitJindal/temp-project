@@ -1,4 +1,5 @@
 import { groupBy, lowerCase, snakeCase, startCase } from 'lodash'
+import { COUNTRIES, CURRENCIES } from '@flagright/lib/constants'
 import * as Models from '@/@types/openapi-public/all'
 import * as CustomModelData from '@/@types/openapi-public-custom/all'
 export abstract class EntityModel {
@@ -20,6 +21,29 @@ export type EntityLeafValueInfo = {
 export const ARRAY_ITEM_INDICATOR = '$i'
 function getPathKey(path: string[]) {
   return path.join('.')
+}
+
+function getOptions(
+  enumConstKey: string,
+  optionValues: string[]
+): Array<{ title: string; value: string }> {
+  if (enumConstKey === 'CURRENCY_CODES') {
+    return CURRENCIES.map((v) => ({
+      title: v.label,
+      value: v.value,
+    }))
+  }
+  if (enumConstKey === 'COUNTRY_CODES') {
+    return Object.entries(COUNTRIES).map((entry) => ({
+      title: `${entry[1]} (${entry[0]})`,
+      value: entry[0],
+    }))
+  }
+
+  return optionValues.map((value) => ({
+    title: startCase(lowerCase(value)),
+    value,
+  }))
 }
 
 function getPublicModelLeafAttrsByName(
@@ -88,18 +112,14 @@ export function getPublicModelLeafAttrs(
           result.push(...leafInfos)
         } else {
           // Enum
-          const enumValues = CustomModelData[
-            `${snakeCase(attribute.type).toUpperCase()}S`
-          ] as string[]
+          const enumConstKey = `${snakeCase(attribute.type).toUpperCase()}S`
+          const enumValues = CustomModelData[enumConstKey] as string[]
           if (enumValues) {
             result.push({
               path,
               pathKey: getPathKey(path),
               type: 'string',
-              options: enumValues.map((value) => ({
-                title: startCase(lowerCase(value)),
-                value,
-              })),
+              options: getOptions(enumConstKey, enumValues),
             })
           }
         }

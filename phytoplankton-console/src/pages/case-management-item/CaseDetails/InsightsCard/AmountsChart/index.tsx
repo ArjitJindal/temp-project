@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'clsx';
 import { sumBy } from 'lodash';
+import { Currency } from '@flagright/lib/constants';
 import Legend from '../components/Legend';
 import s from './styles.module.less';
 import Chart from './Chart';
@@ -8,7 +9,6 @@ import COLORS from '@/components/ui/colors';
 import { QueryResult } from '@/utils/queries/types';
 import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { Currency } from '@/utils/currencies';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import Money from '@/components/ui/Money';
 import { capitalizeWords } from '@/utils/humanize';

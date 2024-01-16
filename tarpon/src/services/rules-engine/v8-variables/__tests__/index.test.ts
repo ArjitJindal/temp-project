@@ -52,12 +52,12 @@ test('List of entity variables', async () => {
           fieldSettings: {
             listValues: expect.arrayContaining([
               {
-                title: '1 Inch',
-                value: '1INCH',
+                title: 'USD (United States dollar)',
+                value: 'USD',
               },
               {
-                title: 'Aave',
-                value: 'AAVE',
+                title: 'EUR (Euro)',
+                value: 'EUR',
               },
             ]),
           },
@@ -84,12 +84,12 @@ test('List of entity variables', async () => {
           fieldSettings: {
             listValues: expect.arrayContaining([
               {
-                title: 'Af',
-                value: 'AF',
+                title: 'Germany (DE)',
+                value: 'DE',
               },
               {
-                title: 'Al',
-                value: 'AL',
+                title: 'United States of America (US)',
+                value: 'US',
               },
             ]),
           },
@@ -178,12 +178,12 @@ test('List of entity variables', async () => {
               fieldSettings: {
                 listValues: expect.arrayContaining([
                   {
-                    title: 'Af',
-                    value: 'AF',
+                    title: 'Germany (DE)',
+                    value: 'DE',
                   },
                   {
-                    title: 'Al',
-                    value: 'AL',
+                    title: 'United States of America (US)',
+                    value: 'US',
                   },
                 ]),
               },

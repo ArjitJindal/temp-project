@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Switch, Tag as AntTag } from 'antd';
 import { capitalize, uniqBy } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
-import { COUNTRIES } from '@flagright/lib/constants';
+import { COUNTRIES, CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { ColumnDataType, FullColumnDataType } from '../types';
 import { CloseMessage, message } from '../../Message';
 import PriorityTag from '../../PriorityTag';
@@ -35,7 +35,6 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import CurrencySymbol from '@/components/ui/Currency';
 import CountryDisplay from '@/components/ui/CountryDisplay';
-import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import KeyValueTag from '@/components/ui/KeyValueTag';
 import { PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';

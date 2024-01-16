@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Currency } from '@flagright/lib/constants';
 import s from './styles.module.less';
 import Column from './Column';
 import { DataItem, Series, Settings } from './types';
@@ -12,7 +13,6 @@ import {
 } from './helpers';
 import AxisX from './AxisX';
 import AxisY from './AxisY';
-import { Currency } from '@/utils/currencies';
 
 interface Props {
   settings: Settings;

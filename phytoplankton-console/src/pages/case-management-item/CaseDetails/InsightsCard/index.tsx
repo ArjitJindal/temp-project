@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
+import { Currency } from '@flagright/lib/constants';
 import s from './styles.module.less';
 import TransactionsSelector, { Params } from './TransactionsSelector';
 import TypesChart from './TypesChart';
@@ -13,7 +14,6 @@ import { useApi } from '@/api';
 import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { SortOrder, TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
-import { Currency } from '@/utils/currencies';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const FIXED_API_PARAMS = {

@@ -1,7 +1,7 @@
 import React from 'react';
+import { CURRENCIES_SELECT_OPTIONS, Currency } from '@flagright/lib/constants';
 import { InputProps } from '@/components/library/Form';
 import Select from '@/components/library/Select';
-import { CURRENCIES_SELECT_OPTIONS, Currency } from '@/utils/currencies';
 import { UiSchemaCurrency } from '@/components/library/JsonSchemaEditor/types';
 
 interface Props extends InputProps<Currency> {

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
+import { Currency } from '@flagright/lib/constants';
 import s from './styles.module.less';
 import Popover from './Popover';
 import { P } from '@/components/ui/Typography';
-import { Currency } from '@/utils/currencies';
 import {
   Colors,
   Data,

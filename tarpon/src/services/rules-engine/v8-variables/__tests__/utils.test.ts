@@ -43,12 +43,12 @@ describe('getPublicModelLeafAttrs', () => {
           type: 'string',
           options: expect.arrayContaining([
             {
-              title: '1 Inch',
-              value: '1INCH',
+              title: 'USD (United States dollar)',
+              value: 'USD',
             },
             {
-              title: 'Aave',
-              value: 'AAVE',
+              title: 'EUR (Euro)',
+              value: 'EUR',
             },
           ]),
         },

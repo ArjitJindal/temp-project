@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
+import { CURRENCIES_SELECT_OPTIONS, Currency } from '@flagright/lib/constants';
 import s from './style.module.less';
 import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
 import Select from '@/components/library/Select';
-import { CURRENCIES_SELECT_OPTIONS, Currency } from '@/utils/currencies';
 import Button from '@/components/library/Button';
 import Money from '@/components/ui/Money';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';

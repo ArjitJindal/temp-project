@@ -46,12 +46,7 @@ export default function RuleActionsCard(props: Props) {
         label={'Rule actions'}
         description={'Select the action to perform if this rule is hit'}
       >
-        {(inputProps) => (
-          <>
-            <RuleActionSelector {...inputProps} />
-            <AdvancedOptions />
-          </>
-        )}
+        {(inputProps) => <RuleActionSelector {...inputProps} />}
       </InputField>
       <AdvancedOptions />
     </SubCard>

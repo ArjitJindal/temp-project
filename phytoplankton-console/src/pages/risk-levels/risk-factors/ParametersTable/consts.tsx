@@ -1,7 +1,12 @@
 import { Tag } from 'antd';
 import React, { useEffect } from 'react';
 import { keyBy } from 'lodash';
-import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
+import {
+  COUNTRIES,
+  COUNTRY_ALIASES,
+  CURRENCIES,
+  CURRENCIES_SELECT_OPTIONS,
+} from '@flagright/lib/constants';
 import style from './style.module.less';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -20,11 +25,11 @@ import {
   RiskValueType,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
-import { CURRENCIES, CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { businessType, consumerType } from '@/utils/customer-type';
 import { RiskLevel } from '@/utils/risk-levels';
 import Slider from '@/components/library/Slider';
 import {
+  CurrencyCode,
   RiskParameterValueAmountRange,
   RiskParameterValueDayRange,
   RiskParameterValueDayRangeEndGranularityEnum,
@@ -981,7 +986,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
                     riskValueAmountRange(
                       props.value?.start ?? 0,
                       props.value?.end ?? 0,
-                      newValue ?? defaultCurrency,
+                      (newValue ?? defaultCurrency) as CurrencyCode,
                     ),
                   );
                 }}

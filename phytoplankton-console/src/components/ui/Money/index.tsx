@@ -1,5 +1,5 @@
 import React from 'react';
-import { CURRENCIES, Currency } from '@/utils/currencies';
+import { CURRENCIES, Currency } from '@flagright/lib/constants';
 import { Amount, TransactionAmountDetails } from '@/apis';
 import { formatNumber } from '@/utils/number';
 import CurrencySymbol from '@/components/ui/Currency';

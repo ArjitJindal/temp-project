@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'clsx';
 import { Select } from 'antd';
+import { CURRENCIES_SELECT_OPTIONS, Currency } from '@flagright/lib/constants';
 import TransactionCountChart from './Chart';
 import s from './styles.module.less';
 import SwitchButton from './SwitchButton';
@@ -15,7 +16,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { CURRENCIES_SELECT_OPTIONS, Currency } from '@/utils/currencies';
 import { PARTIAL_RULE_ACTIONS } from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsSelector/Chart/types';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';

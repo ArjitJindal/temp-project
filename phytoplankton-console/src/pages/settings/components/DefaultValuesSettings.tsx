@@ -1,5 +1,6 @@
 import { Select, SelectProps } from 'antd';
 import { useState, useEffect } from 'react';
+import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
   useSettings,
@@ -7,7 +8,6 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import Table from '@/components/library/Table';
-import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { TIMEZONES } from '@/utils/dayjs';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { StatePair } from '@/utils/state';

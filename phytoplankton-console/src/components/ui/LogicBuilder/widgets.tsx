@@ -6,8 +6,9 @@ import {
   NumberWidget,
   BooleanWidget,
   MultiSelectWidget,
+  SelectFieldSettings,
 } from '@react-awesome-query-builder/core';
-import { CoreWidgets, Config, BasicConfig } from '@react-awesome-query-builder/ui';
+import { CoreWidgets, Config, BasicConfig, BaseWidgetProps } from '@react-awesome-query-builder/ui';
 import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -94,22 +95,27 @@ const customBooleanWidget: BooleanWidget = {
   },
 };
 
+function getSelectOptions(
+  props: BaseWidgetProps & SelectFieldSettings,
+): Array<ListItem | string | number> {
+  let listValues: Array<ListItem | string | number> = [];
+  if (props.listValues == null) {
+    listValues = [];
+  } else if (Array.isArray(props.listValues)) {
+    listValues = props.listValues;
+  } else if (typeof props.listValues === 'object') {
+    listValues = Object.entries(props.listValues).map(([key, value]) => ({
+      title: humanizeAuto(key),
+      value: value,
+    }));
+  }
+  return listValues;
+}
+
 const customSelectWidget: SelectWidget = {
   type: `select`,
   factory: (props) => {
-    let listValues: (ListItem | string | number)[];
-    if (props.listValues == null) {
-      listValues = [];
-    } else if (Array.isArray(props.listValues)) {
-      listValues = props.listValues;
-    } else if (typeof props.listValues === 'object') {
-      listValues = Object.entries(props.listValues).map(([key, value]) => ({
-        title: humanizeAuto(key),
-        value: value,
-      }));
-    } else {
-      listValues = [];
-    }
+    const listValues = getSelectOptions(props);
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <Select
@@ -136,19 +142,7 @@ const customSelectWidget: SelectWidget = {
 const customMultiselectWidget: MultiSelectWidget = {
   type: `select`,
   factory: (props) => {
-    let listValues: (ListItem | string | number)[];
-    if (props.listValues == null) {
-      listValues = [];
-    } else if (Array.isArray(props.listValues)) {
-      listValues = props.listValues;
-    } else if (typeof props.listValues === 'object') {
-      listValues = Object.entries(props.listValues).map(([key, value]) => ({
-        title: humanizeAuto(key),
-        value: value,
-      }));
-    } else {
-      listValues = [];
-    }
+    const listValues = getSelectOptions(props);
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <Select<string | number>

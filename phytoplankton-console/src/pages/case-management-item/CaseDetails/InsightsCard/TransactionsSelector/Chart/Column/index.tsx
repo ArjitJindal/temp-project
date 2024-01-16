@@ -1,11 +1,11 @@
 import cn from 'clsx';
 import React from 'react';
+import { Currency } from '@flagright/lib/constants';
 import { CalculatedParams, DataItem, Series } from '../types';
 import s from './styles.module.less';
 import Popover from './Popover';
 import { RuleAction } from '@/apis';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
-import { Currency } from '@/utils/currencies';
 
 function Category(props: {
   ruleAction: RuleAction;

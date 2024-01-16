@@ -1,5 +1,5 @@
 import React from 'react';
-import { CURRENCIES, Currency } from '@/utils/currencies';
+import { CURRENCIES, Currency } from '@flagright/lib/constants';
 import { CurrencyCode } from '@/apis';
 
 interface Props {

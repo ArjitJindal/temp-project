@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
+import { Currency } from '@flagright/lib/constants';
 import Legend from '../components/Legend';
 import s from './styles.module.less';
 import Pie, { Data as PieData } from './Pie';
@@ -10,7 +11,6 @@ import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
-import { Currency } from '@/utils/currencies';
 import { capitalizeWords } from '@/utils/humanize';
 
 interface Props {

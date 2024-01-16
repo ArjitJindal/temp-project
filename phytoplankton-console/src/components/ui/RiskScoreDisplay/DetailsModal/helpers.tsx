@@ -1,4 +1,5 @@
 import React from 'react';
+import { CURRENCIES } from '@flagright/lib/constants';
 import {
   DataType,
   ParameterName,
@@ -10,7 +11,6 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { PaymentMethod } from '@/utils/payments';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import { humanizeConstant } from '@/utils/humanize';
-import { CURRENCIES } from '@/utils/currencies';
 import {
   ALL_RISK_PARAMETERS,
   BUSINESS_USER_SEGMENT_OPTIONS,
