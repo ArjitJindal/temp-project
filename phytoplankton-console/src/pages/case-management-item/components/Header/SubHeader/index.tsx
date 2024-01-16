@@ -155,7 +155,7 @@ export default function SubHeader(props: Props) {
           {dayjs(caseItem.updatedAt).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
         </Form.Layout.Label>
 
-        <Form.Layout.Label title={'Assignees'}>
+        <Form.Layout.Label title={'Assigned to'}>
           <AssigneesDropdown
             assignments={assignments ?? []}
             editing={

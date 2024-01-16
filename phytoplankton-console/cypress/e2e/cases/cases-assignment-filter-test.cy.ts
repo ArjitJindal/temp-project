@@ -56,7 +56,7 @@ describe('Using Assignment filter and assigning cases', () => {
         cy.get('h2').first().click();
 
         cy.get('[data-cy="rules-filter"]')
-          .filter(':contains("Assignees")')
+          .filter(':contains("Assigned to")')
           .eq(0)
           .should('exist')
           .click();

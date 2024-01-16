@@ -384,7 +384,7 @@ export default function AlertTable(props: Props) {
         }),
 
         helper.derived({
-          title: 'Assignees',
+          title: 'Assigned to',
           id: '_assigneeName',
           sorting: true,
           defaultWidth: 300,
@@ -446,7 +446,7 @@ export default function AlertTable(props: Props) {
         ...(qaMode
           ? [
               helper.simple<'assignments'>({
-                title: 'QA Assignees',
+                title: 'QA assigned to',
                 key: 'assignments',
                 id: '_assignmentName',
                 defaultWidth: 300,

@@ -19,7 +19,7 @@ const columns = (scope: 'CASES' | 'ALERTS') => {
     }),
     helper.simple({
       key: 'assignedTo',
-      title: 'Assignees',
+      title: 'Assigned to',
       defaultWidth: 100,
     }),
     helper.simple({

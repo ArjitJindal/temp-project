@@ -210,7 +210,7 @@ export const useCaseAlertFilters = (
     },
     {
       key: 'assignedTo',
-      title: 'Assignees',
+      title: 'Assigned to',
       showFilterByDefault: false,
       renderer: ({ params, setParams, onUpdateFilterClose }) => (
         <AssignmentButton

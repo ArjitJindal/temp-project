@@ -233,7 +233,7 @@ export default function CaseTable(props: Props) {
           ]
         : []) as TableColumn<TableItem>[]),
       helper.simple<'assignments'>({
-        title: 'Assignees',
+        title: 'Assigned to',
         key: 'assignments',
         id: '_assignmentName',
         defaultWidth: 300,

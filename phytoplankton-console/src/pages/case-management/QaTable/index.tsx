@@ -112,7 +112,7 @@ export default function QaTable(props: Props) {
     ...(qaMode
       ? [
           helper.derived({
-            title: 'Assignees',
+            title: 'Assigned to',
             id: '_assigneeName',
             sorting: true,
             defaultWidth: 300,
