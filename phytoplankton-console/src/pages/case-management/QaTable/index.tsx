@@ -24,6 +24,8 @@ import { useApi } from '@/api';
 import { DefaultApiPatchAlertsQaAssignmentsRequest } from '@/apis/types/ObjectParamAPI';
 import { AssignmentButton } from '@/pages/case-management/components/AssignmentButton';
 import { CLOSING_REASONS } from '@/components/Narrative';
+import { statusEscalated, statusInReview } from '@/utils/case-utils';
+import { useQaMode } from '@/utils/qa-mode';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -34,8 +36,9 @@ export default function QaTable(props: Props) {
   const { params, onChangeParams } = props;
   const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
   const user = useAuth0User();
+  const [qaMode] = useQaMode();
   const tableRef = useRef<TableRefType>(null);
-  const assigneeUpdateMutation = useAlertQaAssignmentUpdateMutation(tableRef);
+  const qaAssigneesUpdateMutation = useAlertQaAssignmentUpdateMutation(tableRef);
 
   const helper = new ColumnHelper<TableAlertItem>();
   const columns = helper.list([
@@ -58,7 +61,7 @@ export default function QaTable(props: Props) {
       type: ALERT_ID,
     }),
     helper.simple<'ruleQaStatus'>({
-      title: 'QA Status',
+      title: 'QA status',
       key: 'ruleQaStatus',
       type: {
         render: (status) => {
@@ -93,7 +96,7 @@ export default function QaTable(props: Props) {
       filtering: true,
     }),
     helper.display({
-      title: 'Closing Reason',
+      title: 'Closing reason',
       enableResizing: false,
       defaultWidth: 200,
       render: (entity) => {
@@ -106,8 +109,29 @@ export default function QaTable(props: Props) {
         );
       },
     }),
+    ...(qaMode
+      ? [
+          helper.derived({
+            title: 'Assignees',
+            id: '_assigneeName',
+            sorting: true,
+            defaultWidth: 300,
+            enableResizing: false,
+            value: (item) =>
+              statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
+                ? item.reviewAssignments
+                : item.assignments,
+            type: {
+              ...ASSIGNMENTS,
+              render: (assignments, __) => {
+                return <AssigneesDropdown assignments={assignments || []} editing={false} />;
+              },
+            },
+          }),
+        ]
+      : []),
     helper.simple<'assignments'>({
-      title: 'Assignees',
+      title: 'QA assignees',
       key: 'assignments',
       id: '_assignmentName',
       defaultWidth: 300,
@@ -122,7 +146,7 @@ export default function QaTable(props: Props) {
               editing={!entity.ruleQaStatus}
               onChange={(assignees) => {
                 if (entity.alertId) {
-                  assigneeUpdateMutation.mutate({
+                  qaAssigneesUpdateMutation.mutate({
                     alertId: entity.alertId,
                     AlertQaAssignmentsUpdateRequest: {
                       assignments: assignees.map((assigneeUserId) => ({
@@ -238,7 +262,6 @@ export default function QaTable(props: Props) {
     </>
   );
 }
-
 const reloadTable = (ref: React.RefObject<TableRefType>) => {
   if (ref.current) {
     ref.current.reload();

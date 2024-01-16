@@ -27,7 +27,7 @@ export function AssignmentButton(props: Props) {
     <QuickFilterBase
       icon={<UserOutlined />}
       analyticsName="assigned-to-filter"
-      title="Assigned to"
+      title="Assignees"
       buttonText={isEmpty ? undefined : finalUsers.join(', ')}
       onClear={
         isEmpty

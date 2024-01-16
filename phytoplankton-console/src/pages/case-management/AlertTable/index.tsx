@@ -4,6 +4,7 @@ import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { FalsePositiveTag } from '../components/FalsePositiveTag';
 import { useAlertQuery } from '../common';
+import { useAlertQaAssignmentUpdateMutation } from '../QaTable';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { useApi } from '@/api';
 import {
@@ -116,7 +117,6 @@ export default function AlertTable(props: Props) {
   const api = useApi();
   const user = useAuth0User();
   const [users] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
-
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
@@ -180,6 +180,8 @@ export default function AlertTable(props: Props) {
   const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
 
   const actionRef = useRef<TableRefType>(null);
+
+  const qaAssigneesUpdateMutation = useAlertQaAssignmentUpdateMutation(actionRef);
 
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
@@ -380,8 +382,9 @@ export default function AlertTable(props: Props) {
           filtering: true,
           sorting: true,
         }),
+
         helper.derived({
-          title: 'Assigned to',
+          title: 'Assignees',
           id: '_assigneeName',
           sorting: true,
           defaultWidth: 300,
@@ -401,8 +404,12 @@ export default function AlertTable(props: Props) {
                 <AssigneesDropdown
                   assignments={assignments || []}
                   editing={
-                    !(statusInReview(entity.alertStatus) || otherStatuses) &&
-                    !(entity.alertStatus === 'CLOSED')
+                    !(
+                      statusInReview(entity.alertStatus) ||
+                      otherStatuses ||
+                      entity.alertStatus === 'CLOSED' ||
+                      qaMode
+                    )
                   }
                   onChange={(assignees) => {
                     const assignments: Assignment[] = assignees.map((assignee) => ({
@@ -435,6 +442,48 @@ export default function AlertTable(props: Props) {
             },
           },
         }),
+
+        ...(qaMode
+          ? [
+              helper.simple<'assignments'>({
+                title: 'QA Assignees',
+                key: 'assignments',
+                id: '_assignmentName',
+                defaultWidth: 300,
+                enableResizing: false,
+                type: {
+                  ...ASSIGNMENTS,
+                  render: (__, { item: entity }) => {
+                    const assignments = entity.qaAssignment || [];
+                    return (
+                      <AssigneesDropdown
+                        assignments={assignments}
+                        editing={!entity.ruleQaStatus}
+                        onChange={(assignees) => {
+                          if (entity.alertId) {
+                            qaAssigneesUpdateMutation.mutate({
+                              alertId: entity.alertId,
+                              AlertQaAssignmentsUpdateRequest: {
+                                assignments: assignees.map((assigneeUserId) => ({
+                                  assignedByUserId: user.userId,
+                                  assigneeUserId,
+                                  timestamp: Date.now(),
+                                })),
+                              },
+                            });
+                          } else {
+                            message.fatal('Alert ID is missing');
+                            return;
+                          }
+                        }}
+                      />
+                    );
+                  },
+                },
+              }),
+            ]
+          : []),
+
         helper.simple<'ruleQueueId'>({
           title: 'Queue',
           key: 'ruleQueueId',
@@ -547,6 +596,8 @@ export default function AlertTable(props: Props) {
     caseId,
     qaEnabled,
     ruleQueues,
+    qaMode,
+    qaAssigneesUpdateMutation,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {

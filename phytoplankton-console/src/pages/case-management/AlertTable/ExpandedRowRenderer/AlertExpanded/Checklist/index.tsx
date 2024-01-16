@@ -171,7 +171,7 @@ export default function Checklist(props: Props) {
     if (qaModeSet) {
       columns.push(
         helper.display({
-          title: 'QA Status',
+          title: 'QA status',
           id: 'qaStatus',
           defaultWidth: 220,
           render: (status) => {

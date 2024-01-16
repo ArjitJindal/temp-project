@@ -11,7 +11,7 @@ import ArrowDropDownFill from '@/components/ui/icons/Remix/system/arrow-drop-dow
 interface Props {
   editing: boolean;
   assignments: Array<Assignment>;
-  onChange: (assignees: string[]) => void;
+  onChange?: (assignees: string[]) => void;
   maxAssignees?: number;
   placeholder?: string;
   fixSelectorHeight?: boolean;
