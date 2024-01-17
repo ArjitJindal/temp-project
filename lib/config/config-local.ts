@@ -61,12 +61,8 @@ export const config: Config = {
       'arn:aws:acm:eu-central-1:911899431626:certificate/18e81dca-c35a-453c-a566-9f2d9bfa0d98',
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.dev/',
-    ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`,
-    COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-j8uTMO`,
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
       '432dd5d0-d9ee-417e-90f3-647c4ce531ad',
-    OPENAI_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:openAI-oTKO8l`,
-    IBANCOM_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:ibanComCreds-VEzOeY`,
     CONSOLE_URI: 'https://console.flagright.dev',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     NODE_ENV: 'development',
@@ -77,9 +73,6 @@ export const config: Config = {
     POSTMAN_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:PostmanAPICreds-iSFLI2`,
     POSTMAN_COLLECTION_ID: '25627167-9716caee-9579-4961-8254-66e40d894d09',
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
-    GOOGLE_SHEETS_PRIVATE_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:GoogleSheetsPrivateKey-0WCDHP`,
     API_USAGE_GOOGLE_SHEET_ID: '14VIlFKYsJq6R-UYAj-JVdAZA9PiBK5T7IgLzcFKRKlU',
-    MERCHANT_MONITORING_SECRETS_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:MerchantMonitoring-kr2u3Z`,
-    FINCEN_CREDENTIALS_SECRET_ARN: 'N/A',
   },
 }

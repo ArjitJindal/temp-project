@@ -8,7 +8,7 @@ import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyA
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import { getSecret } from '@/utils/secrets-manager'
+import { getSecretByName } from '@/utils/secrets-manager'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -110,9 +110,7 @@ export class SanctionsService {
     if (process.env.COMPLYADVANTAGE_API_KEY) {
       return process.env.COMPLYADVANTAGE_API_KEY
     }
-    return (await getSecret<{ apiKey: string }>(
-      process.env.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN as string
-    ))!.apiKey
+    return (await getSecretByName('complyAdvantageCreds'))!.apiKey
   }
 
   public async updateMonitoredSearch(caSearchId: number) {

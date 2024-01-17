@@ -3,7 +3,7 @@ import axios, { AxiosRequestConfig, AxiosInstance } from 'axios'
 import { convert } from 'html-to-text'
 import { NotFound, InternalServerError } from 'http-errors'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
-import { getSecret } from '@/utils/secrets-manager'
+import { getSecretByName } from '@/utils/secrets-manager'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { MerchantRepository } from '@/lambdas/console-api-merchant/merchant-repository'
 import { logger } from '@/core/logger'
@@ -28,14 +28,6 @@ const MAX_TOKEN_OUTPUT = 4096
 
 const OUTPUT_REGEX =
   /Industry:(.*)\nProducts:(.*)\nLocation:(.*)\nEmployees:(.*)\nRevenue:(.*)\nSummary:(.*)/i
-
-type MerchantMonitoringSecrets = {
-  companiesHouse: string
-  rapidApi: string
-  scrapfly: string
-  explorium: string
-}
-
 @traceable
 export class MerchantMonitoringScrapeService {
   private companiesHouseApiKey?: string
@@ -44,11 +36,7 @@ export class MerchantMonitoringScrapeService {
   private exploriumApiKey?: string
   private axios: AxiosInstance
 
-  constructor(merchantMonitoringSecrets: MerchantMonitoringSecrets) {
-    this.companiesHouseApiKey = merchantMonitoringSecrets.companiesHouse
-    this.rapidApiKey = merchantMonitoringSecrets.rapidApi
-    this.scrapflyApiKey = merchantMonitoringSecrets.scrapfly
-    this.exploriumApiKey = merchantMonitoringSecrets.explorium
+  constructor() {
     this.axios = axios.create()
 
     this.axios.interceptors.response.use(
@@ -61,12 +49,15 @@ export class MerchantMonitoringScrapeService {
   }
 
   public static async init(): Promise<MerchantMonitoringScrapeService> {
-    const merchantMonitoringSecrets =
-      await getSecret<MerchantMonitoringSecrets>(
-        process.env.MERCHANT_MONITORING_SECRETS_ARN as string
-      )
+    const secrets = await getSecretByName('MerchantMonitoring')
 
-    return new MerchantMonitoringScrapeService(merchantMonitoringSecrets)
+    const service = new MerchantMonitoringScrapeService()
+
+    service.companiesHouseApiKey = secrets.companiesHouse
+    service.rapidApiKey = secrets.rapidApi
+    service.scrapflyApiKey = secrets.scrapfly
+    service.exploriumApiKey = secrets.explorium
+    return service
   }
 
   async getMerchantMonitoringSummaries(

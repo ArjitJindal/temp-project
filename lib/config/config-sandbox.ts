@@ -74,12 +74,8 @@ export const config: Config = {
       'arn:aws:acm:eu-central-1:293986822825:certificate/a2e221d7-eaf5-42d5-ac39-1d500cbbd745',
     AUTH0_DOMAIN: 'sandbox-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://sandbox.api.flagright.com/',
-    ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-suQQec`,
-    COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-w67BQP`,
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
       '432dd5d0-d9ee-417e-90f3-647c4ce531ad',
-    OPENAI_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:openAI-y7yGiu`,
-    IBANCOM_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:ibanComCreds-2svAtq`,
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     BETTERUPTIME_HOOK_URL:
       'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/N4Cd5cADBCU4WfihkQnvoYsq',
@@ -91,9 +87,6 @@ export const config: Config = {
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
     INTEGRATION_TEST_API_KEY_ID: 'lvgtserzmf',
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
-    GOOGLE_SHEETS_PRIVATE_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:GoogleSheetsPrivateKey-2N4ZGU`,
     API_USAGE_GOOGLE_SHEET_ID: '1sHbFc5uOMw5NGnRZMcVQBUwslwjrA9qpP3dUk_Shr3w',
-    MERCHANT_MONITORING_SECRETS_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:MerchantMonitoring-Xwt8QJ`,
-    FINCEN_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:fincenCreds-gCp9ut`,
   },
 }

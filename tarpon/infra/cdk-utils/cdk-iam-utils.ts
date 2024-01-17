@@ -3,6 +3,13 @@ import { Construct } from 'constructs'
 import { Resource } from 'aws-cdk-lib'
 import { Effect, IRole, Policy, PolicyStatement } from 'aws-cdk-lib/aws-iam'
 import { Config } from '@flagright/lib/config/config'
+import { SecretName } from '@flagright/lib/secrets/secrets'
+import { Secret } from 'aws-cdk-lib/aws-secretsmanager'
+
+export function secretArn(context: Construct, secretName: SecretName): string {
+  return Secret.fromSecretNameV2(context, secretName, secretName)
+    .secretFullArn as string
+}
 
 export function grantMongoDbAccess(
   context: Construct & { config: Config },
@@ -16,7 +23,7 @@ export function grantMongoDbAccess(
         new PolicyStatement({
           effect: Effect.ALLOW,
           actions: ['secretsmanager:GetSecretValue'],
-          resources: [context.config.application.ATLAS_CREDENTIALS_SECRET_ARN],
+          resources: [secretArn(context, 'mongoAtlasCreds')],
         }),
       ],
     })

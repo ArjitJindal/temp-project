@@ -7,7 +7,7 @@ import { electronicFormatIBAN, isValidIBAN } from 'ibantools'
 import { IBANValidation, IBANValidationResponse } from './types'
 import { IBANApiRepository } from './repositories/iban-api-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getSecret } from '@/utils/secrets-manager'
+import { getSecretByName } from '@/utils/secrets-manager'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { logger } from '@/core/logger'
 import { hasFeature } from '@/core/utils/context'
@@ -71,9 +71,7 @@ async function getApiKey(): Promise<string> {
   if (process.env.IBAN_API_KEY) {
     return process.env.IBAN_API_KEY
   }
-  return (await getSecret<{ apiKey: string }>(
-    process.env.IBANCOM_CREDENTIALS_SECRET_ARN as string
-  ))!.apiKey
+  return (await getSecretByName('ibanComCreds'))!.apiKey
 }
 
 @traceable

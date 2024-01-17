@@ -9,9 +9,7 @@ export async function ask(
   params?: { temperature: number }
 ): Promise<string> {
   if (!openai) {
-    const { apiKey } = await getSecret<{ apiKey: string }>(
-      process.env.OPENAI_CREDENTIALS_SECRET_ARN as string
-    )
+    const { apiKey } = await getSecret<{ apiKey: string }>('openAI')
     openai = new OpenAIApi(new Configuration({ apiKey }))
   }
   const completion = await openai.createChatCompletion({

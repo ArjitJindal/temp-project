@@ -12,7 +12,7 @@ import {
 
 import { isEqual } from 'lodash'
 import { escapeStringRegexp } from './regex'
-import { getSecret } from './secrets-manager'
+import { getSecretByName } from './secrets-manager'
 import { getMongoDbIndexDefinitions } from './mongodb-definitions'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 import {
@@ -23,12 +23,6 @@ import {
   PageSize,
 } from '@/utils/pagination'
 import { logger } from '@/core/logger'
-
-interface DBCredentials {
-  username: string
-  password: string
-  host: string
-}
 
 let cacheClient: MongoClient
 
@@ -50,9 +44,7 @@ export async function getMongoDbClient(useCache = true) {
       `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}`
     )
   } else {
-    const credentials = await getSecret<DBCredentials>(
-      process.env.ATLAS_CREDENTIALS_SECRET_ARN as string
-    )
+    const credentials = await getSecretByName('mongoAtlasCreds')
     const DB_USERNAME = credentials['username']
     const DB_PASSWORD = encodeURIComponent(credentials['password'])
     const DB_HOST = credentials['host']

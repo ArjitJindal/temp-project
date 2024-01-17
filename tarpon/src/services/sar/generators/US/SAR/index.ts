@@ -55,7 +55,7 @@ import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
 import { getAllIpAddresses } from '@/utils/ipAddress'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
-import { getSecret } from '@/utils/secrets-manager'
+import { getSecretByName } from '@/utils/secrets-manager'
 import { traceable } from '@/core/xray'
 import {
   fixPartyIndicators,
@@ -654,9 +654,7 @@ export class UsSarReportGenerator implements ReportGenerator {
 
   public async submit(report: Report) {
     if (this.tenantId.startsWith('flagright')) {
-      const creds = await getSecret<{ username: string; password: string }>(
-        process.env.FINCEN_CREDENTIALS_SECRET_ARN as string
-      )
+      const creds = await getSecretByName('fincenCreds')
       const sftp = new SftpClient()
       try {
         await sftp.connect({

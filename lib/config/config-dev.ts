@@ -72,12 +72,8 @@ export const config: Config = {
       'dev-flagright-cd-dc9lyrkmponfpoa2.edge.tenants.eu.auth0.com',
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.dev/',
-    ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`,
-    COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-j8uTMO`,
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
       '432dd5d0-d9ee-417e-90f3-647c4ce531ad',
-    OPENAI_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:openAI-oTKO8l`,
-    IBANCOM_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:ibanComCreds-VEzOeY`,
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     BETTERUPTIME_HOOK_URL:
       'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/b9EMVzubTbU3YRnn8tktYYnu',
@@ -88,11 +84,7 @@ export const config: Config = {
       'https://api.flagright.dev/console/slack/oauth_redirect',
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
     INTEGRATION_TEST_API_KEY_ID: 'hov2hklpll',
-    INTEGRATION_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:IntegrationKey-ctDjdV`,
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
-    GOOGLE_SHEETS_PRIVATE_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:GoogleSheetsPrivateKey-0WCDHP`,
-    MERCHANT_MONITORING_SECRETS_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:MerchantMonitoring-kr2u3Z`,
     API_USAGE_GOOGLE_SHEET_ID: '1JiK5HTWQVfNXO5XeoGheZTx9TwaHpDTQQUc2uNeH5Uw',
-    FINCEN_CREDENTIALS_SECRET_ARN: 'N/A',
   },
 }

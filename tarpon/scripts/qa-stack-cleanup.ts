@@ -10,16 +10,14 @@ import {
   Stack,
 } from '@aws-sdk/client-cloudformation'
 import { logger } from '@/core/logger'
-import { getSecret } from '@/utils/secrets-manager'
+import { getSecretByName } from '@/utils/secrets-manager'
 
 process.env.AWS_REGION = 'eu-central-1'
 
 export class FatalError extends Error {}
 
 const cleanUp = async () => {
-  const githubAuth = (await getSecret(
-    'arn:aws:secretsmanager:eu-central-1:911899431626:secret:githubCreds-i1u6Uv'
-  )) as { auth: string }
+  const githubAuth = await getSecretByName('githubCreds')
 
   const octokit = new Octokit(githubAuth)
   const response = await octokit.request('GET /repos/flagright/orca/pulls', {

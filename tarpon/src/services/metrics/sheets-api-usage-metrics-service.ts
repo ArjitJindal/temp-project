@@ -16,7 +16,7 @@ import { BackoffOptions, backOff } from 'exponential-backoff'
 import { DailyMetricStats, MonthlyMetricStats } from './utils'
 import { CUSTOM_API_USAGE_METRIC_NAMES } from '@/core/cloudwatch/metrics'
 import { TenantBasic } from '@/services/accounts'
-import { getSecret } from '@/utils/secrets-manager'
+import { getSecretByName } from '@/utils/secrets-manager'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
 
@@ -120,9 +120,7 @@ export class SheetsApiUsageMetricsService {
   private async initializePrivate() {
     const googleSpreadsheetService = new GoogleSpreadsheet(this.googleSheetId)
 
-    const secret = await getSecret<{ privateKey: string }>(
-      process.env.GOOGLE_SHEETS_PRIVATE_KEY as string
-    )
+    const secret = await getSecretByName('GoogleSheetsPrivateKey')
 
     await googleSpreadsheetService.useServiceAccountAuth({
       client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL as string,

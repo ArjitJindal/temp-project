@@ -5,6 +5,7 @@ import {
   SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager'
 import { fromIni } from '@aws-sdk/credential-providers'
+import { SecretName, Secrets } from '@flagright/lib/secrets/secrets'
 import { envIs } from './env'
 import { WrappedError } from '@/utils/errors'
 
@@ -18,6 +19,12 @@ function getSecretManager() {
         }
       : {}
   )
+}
+
+export async function getSecretByName<T extends SecretName>(
+  secretId: T
+): Promise<Secrets[T]> {
+  return getSecret(secretId)
 }
 
 export async function getSecret<T>(secretId: string): Promise<T> {
