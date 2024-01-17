@@ -76,7 +76,7 @@ async function renameRuleParameterPrivate(
       ? (rule as Rule).id
       : (rule as RuleInstance).ruleId
     if (
-      !ruleId ||
+      !rulesById[ruleId!] ||
       (ruleImplementationNames &&
         !ruleImplementationNames.includes(
           rulesById[ruleId!].ruleImplementationName!
@@ -173,7 +173,7 @@ async function deleteUnusedRuleParameterPrivate(
       ? (rule as Rule).id
       : (rule as RuleInstance).ruleId
     if (
-      !ruleId ||
+      !rulesById[ruleId!] ||
       (ruleImplementationNames &&
         !ruleImplementationNames.includes(
           rulesById[ruleId!].ruleImplementationName!
