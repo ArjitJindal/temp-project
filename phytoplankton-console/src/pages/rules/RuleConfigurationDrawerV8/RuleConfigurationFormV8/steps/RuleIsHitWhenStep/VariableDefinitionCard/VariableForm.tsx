@@ -127,6 +127,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
             onChange={(name) => handleUpdateForm({ name })}
             placeholder={variableAutoName}
             allowClear
+            testName="variable-name-v8"
           />
         </Label>
         <PropertyColumns>
@@ -136,6 +137,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
               onChange={(type) => handleUpdateForm({ type })}
               mode={'SINGLE'}
               options={TYPE_OPTIONS}
+              testName="variable-type-v8"
             />
           </Label>
           <Label label="Transaction direction" required={{ value: true, showHint: true }}>
@@ -144,9 +146,14 @@ export const VariableForm: React.FC<VariableFormProps> = ({
               onChange={(direction) => handleUpdateForm({ direction })}
               mode={'SINGLE'}
               options={TX_DIRECTION_OPTIONS}
+              testName="variable-direction-v8"
             />
           </Label>
-          <Label label="Aggregate field" required={{ value: true, showHint: true }}>
+          <Label
+            label="Aggregate field"
+            required={{ value: true, showHint: true }}
+            testId="variable-aggregate-field-v8"
+          >
             <Select<string>
               value={formValues.aggregationFieldKey}
               onChange={(aggregationFieldKey) => handleUpdateForm({ aggregationFieldKey })}
@@ -154,7 +161,11 @@ export const VariableForm: React.FC<VariableFormProps> = ({
               options={aggregateFieldOptions}
             />
           </Label>
-          <Label label="Aggregate function" required={{ value: true, showHint: true }}>
+          <Label
+            label="Aggregate function"
+            required={{ value: true, showHint: true }}
+            testId="variable-aggregate-function-v8"
+          >
             <Select<RuleAggregationFunc>
               value={formValues.aggregationFunc}
               onChange={(aggregationFunc) => handleUpdateForm({ aggregationFunc })}
@@ -170,6 +181,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
                 timeWindow: { ...formValues?.timeWindow, start: startTimeWindow },
               });
             }}
+            testName="time-from"
           />
           <TimeWindow
             label={'Time to'}
@@ -177,6 +189,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
             onChange={(endTimeWindow) => {
               handleUpdateForm({ timeWindow: { ...formValues.timeWindow, end: endTimeWindow } });
             }}
+            testName="time-to"
           />
         </PropertyColumns>
         {!isValidTimeWindow && (
@@ -211,6 +224,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
           type="PRIMARY"
           onClick={() => onUpdate(formValues as RuleAggregationVariable)}
           isDisabled={!isValidFormValues}
+          testName={`${isNew ? 'add' : 'update'}-variable-v8`}
         >
           {isNew ? 'Add' : 'Update'}
         </Button>
@@ -226,39 +240,48 @@ interface TimeWindowProps {
   label: string;
   timeWindow: RuleAggregationTimeWindow;
   onChange: (newTimeWindow: RuleAggregationTimeWindow) => void;
+  testName?: string;
 }
 
-const TimeWindow: React.FC<TimeWindowProps> = ({ timeWindow, label, onChange }) => {
+const TimeWindow: React.FC<TimeWindowProps> = ({ timeWindow, label, onChange, testName = '' }) => {
   return (
+    // One label for two input fields will cause selection issue for the second input field
     <Label label={label} required={{ value: true, showHint: true }}>
       <div className={s.timeWindowInputContainer}>
-        <NumberInput
-          min={0}
-          value={timeWindow.units}
-          onChange={(value) =>
-            onChange({
-              ...timeWindow,
-              units: value ?? 0,
-            })
-          }
-        />
-        <Select<RuleAggregationTimeWindowGranularity>
-          value={timeWindow.granularity}
-          onChange={(value) =>
-            onChange({
-              ...timeWindow,
-              granularity: value ?? 'day',
-            })
-          }
-          mode="SINGLE"
-          // TODO (V8): Support fiscal year
-          options={RULE_AGGREGATION_TIME_WINDOW_GRANULARITYS.filter((v) => v !== 'fiscal_year').map(
-            (granularity) => ({
+        <label className={s.timeWindowLabel} data-cy={`${testName}-number`}>
+          {' '}
+          {/* separate label for each input field */}
+          <NumberInput
+            min={0}
+            value={timeWindow.units}
+            onChange={(value) =>
+              onChange({
+                ...timeWindow,
+                units: value ?? 0,
+              })
+            }
+          />
+        </label>
+        <label className={s.timeWindowLabel} data-cy={`${testName}-interval`}>
+          {/* separate label for each input field */}
+          <Select<RuleAggregationTimeWindowGranularity>
+            value={timeWindow.granularity}
+            onChange={(value) =>
+              onChange({
+                ...timeWindow,
+                granularity: value ?? 'day',
+              })
+            }
+            mode="SINGLE"
+            // TODO (V8): Support fiscal year
+            options={RULE_AGGREGATION_TIME_WINDOW_GRANULARITYS.filter(
+              (v) => v !== 'fiscal_year',
+            ).map((granularity) => ({
               label: humanizeAuto(granularity),
               value: granularity,
-            }),
-          )}
-        />
+            }))}
+          />
+        </label>
       </div>
       <Label
         label={

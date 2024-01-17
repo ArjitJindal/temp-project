@@ -103,7 +103,11 @@ export const SimulationPageWrapper = forwardRef<
               )}
             </div>
             {v8Enabled && props.onCreateRule && (
-              <Button type="SECONDARY" onClick={props.onCreateRule}>
+              <Button
+                type="SECONDARY"
+                onClick={props.onCreateRule}
+                testName="create-scenario-button"
+              >
                 Create rule
               </Button>
             )}

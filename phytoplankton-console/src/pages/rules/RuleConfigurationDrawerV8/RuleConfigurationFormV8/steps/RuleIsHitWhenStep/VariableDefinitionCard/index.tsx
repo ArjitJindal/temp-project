@@ -95,7 +95,11 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
             description="Add all the variables that are required"
           />
 
-          {!editingVariable && <Button onClick={handleAddVariable}>Add variable</Button>}
+          {!editingVariable && (
+            <Button onClick={handleAddVariable} testName="add-variable-v8">
+              Add variable
+            </Button>
+          )}
         </div>
         {!editingVariable && aggregationVariables && aggregationVariables.length > 0 && (
           <div className={s.tagsContainer}>

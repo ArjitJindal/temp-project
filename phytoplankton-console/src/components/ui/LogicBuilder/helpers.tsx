@@ -66,7 +66,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
           }));
         }
         return (
-          <Label label={'Source'}>
+          <Label label={'Source'} testId="logic-source">
             <Select
               autoTrim={true}
               dropdownMatchWidth={false}
@@ -106,7 +106,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       },
       renderField: (props) => {
         return (
-          <Label label={'Variable'}>
+          <Label label={'Variable'} testId="logic-variable">
             <Select
               autoTrim={true}
               dropdownMatchWidth={false}
@@ -126,7 +126,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       },
       renderOperator: (props) => {
         return (
-          <Label label={'Operator'}>
+          <Label label={'Operator'} testId="logic-operator">
             <Select
               autoTrim={true}
               dropdownMatchWidth={false}

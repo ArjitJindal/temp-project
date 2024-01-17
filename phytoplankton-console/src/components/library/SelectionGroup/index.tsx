@@ -15,6 +15,7 @@ interface Option<Value extends string = string> {
 interface CommonProps<Value extends string> {
   name?: string; // todo: generalize
   options: Option<Value>[];
+  testName?: string;
 }
 
 interface MultipleProps<Value extends string> extends CommonProps<Value>, InputProps<Value[]> {
@@ -28,7 +29,7 @@ interface SingleProps<Value extends string> extends CommonProps<Value>, InputPro
 type Props<Value extends string> = MultipleProps<Value> | SingleProps<Value>;
 
 export default function SelectionGroup<Value extends string = string>(props: Props<Value>) {
-  const { mode, options } = props;
+  const { mode, options, testName } = props;
   const isSingle = props.mode === 'SINGLE';
   const values: string[] = isSingle ? (props.value ? [props.value] : []) : props.value ?? [];
   return (
@@ -50,6 +51,7 @@ export default function SelectionGroup<Value extends string = string>(props: Pro
                       props.onChange?.(option.value);
                     }
                   }}
+                  testName={testName}
                 />
               ) : (
                 <Checkbox
@@ -63,6 +65,7 @@ export default function SelectionGroup<Value extends string = string>(props: Pro
                       ]);
                     }
                   }}
+                  testName={testName}
                 />
               )}
               <div className={s.label}>{option.label}</div>
