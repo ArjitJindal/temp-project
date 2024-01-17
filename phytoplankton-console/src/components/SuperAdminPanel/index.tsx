@@ -166,7 +166,7 @@ export default function SuperAdminPanel() {
         onCancel={handleCancel}
         onOk={role === 'root' ? handleSave : undefined}
       >
-        <Label label="Tenant">
+        <Label label="Tenant" testId="tenant-name">
           <Select
             disabled={tenantOptions.length === 0}
             options={tenantOptions}
