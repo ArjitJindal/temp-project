@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { debounce } from 'lodash';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
 import Slider from '@/components/library/Slider';
@@ -6,7 +7,6 @@ import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
 import { UiSchemaAgeRange } from '@/components/library/JsonSchemaEditor/types';
 import Select from '@/components/library/Select';
-
 type ValueType = {
   minAge?: {
     granularity?: string;
@@ -33,7 +33,7 @@ function getGranularityRange(granularity?: string): [number, number] {
 }
 
 interface Props extends InputProps<ValueType> {
-  uiSchema: UiSchemaAgeRange;
+  uiSchema?: UiSchemaAgeRange;
 }
 
 export default function AgeRangeInput(props: Props) {
@@ -54,10 +54,15 @@ export default function AgeRangeInput(props: Props) {
     [onChange],
   );
 
+  const debouncedHandleChange = debounce((newValue) => {
+    handleChange(newValue);
+  }, 500);
+
   return (
     <div className={s.root}>
       <Label label={'Min age'} level={2}>
         <NumberInput
+          testName="min-age-input"
           min={0}
           max={maxValue ?? to}
           allowClear={true}
@@ -78,6 +83,7 @@ export default function AgeRangeInput(props: Props) {
         />
       </Label>
       <Slider
+        data-cy="age-range-slider"
         mode="RANGE"
         min={from}
         max={to}
@@ -111,12 +117,13 @@ export default function AgeRangeInput(props: Props) {
       />
       <Label label={'Max age'} level={2}>
         <NumberInput
+          testName="max-age-input"
           min={minValue ?? from}
           max={to}
           value={maxValue}
           allowClear={true}
           onChange={(newValue) => {
-            handleChange({
+            debouncedHandleChange({
               ...value,
               maxAge:
                 newValue != null
@@ -129,7 +136,7 @@ export default function AgeRangeInput(props: Props) {
           }}
         />
       </Label>
-      <Label label={''} level={2}>
+      <Label label={''} level={2} testId="granularity-select">
         <Select
           mode="SINGLE"
           value={granularityValue}

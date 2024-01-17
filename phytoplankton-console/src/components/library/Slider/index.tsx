@@ -36,7 +36,7 @@ export default function Slider(props: Props) {
   };
   if (props.mode === 'RANGE') {
     return (
-      <div className={cn(s.root)}>
+      <div className={cn(s.root)} data-cy="age-range-slider">
         <AntSlider
           range={true}
           className={cn(s.slider, {
@@ -53,7 +53,7 @@ export default function Slider(props: Props) {
     );
   }
   return (
-    <div className={cn(s.root)}>
+    <div className={cn(s.root)} data-cy="age-range-slider">
       <AntSlider
         range={false}
         className={cn(s.slider, s.single, {
