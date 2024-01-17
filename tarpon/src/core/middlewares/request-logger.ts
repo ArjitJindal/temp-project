@@ -62,7 +62,7 @@ async function logRequest(
       }
     })()
 
-    if (!LOGGABLE_METHODS.includes(event.httpMethod) || !isEmpty(payload)) {
+    if (!LOGGABLE_METHODS.includes(event.httpMethod) || isEmpty(payload)) {
       return
     }
     const tenantId = getContext()?.tenantId as string

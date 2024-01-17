@@ -515,5 +515,21 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         ],
       },
     ],
+    [API_REQUEST_LOGS_COLLECTION(tenantId)]: [
+      {
+        getIndexes: () => [
+          {
+            path: 1,
+            timestamp: 1,
+          },
+          {
+            requestId: 1,
+          },
+          {
+            traceId: 1,
+          },
+        ],
+      },
+    ],
   }
 }
