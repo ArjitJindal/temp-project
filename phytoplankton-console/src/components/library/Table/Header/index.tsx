@@ -1,7 +1,14 @@
 import React, { useMemo } from 'react';
 import cn from 'clsx';
 import * as TanTable from '@tanstack/react-table';
-import { TableColumn, TableData, TableRow, ToolRenderer, PaginatedParams } from '../types';
+import {
+  TableColumn,
+  TableData,
+  TableRow,
+  ToolRenderer,
+  PaginatedParams,
+  CommonParams,
+} from '../types';
 import { useAutoFilters } from '../internal/filters';
 import s from './index.module.less';
 import Filters from './Filters';
@@ -10,7 +17,7 @@ import { PaginationParams } from '@/utils/queries/hooks';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { pickPaginatedParams } from '@/components/library/Table/paramsHelpers';
 
-interface Props<Item extends object, Params extends object> {
+interface Props<Item extends object, Params extends object = CommonParams> {
   table: TanTable.Table<TableRow<Item>>;
   columns: TableColumn<Item>[];
   extraFilters?: ExtraFilterProps<Params>[];
@@ -25,9 +32,10 @@ interface Props<Item extends object, Params extends object> {
   pageCount?: number;
   cursorPagination?: boolean;
   totalPages?: number;
+  leftTools?: React.ReactNode;
 }
 
-export default function Header<Item extends object, Params extends object>(
+export default function Header<Item extends object, Params extends object = CommonParams>(
   props: Props<Item, Params>,
 ) {
   const {
@@ -44,6 +52,7 @@ export default function Header<Item extends object, Params extends object>(
     onPaginateData,
     cursorPagination,
     totalPages,
+    leftTools,
   } = props;
 
   const autoFilters = useAutoFilters(props.columns);
@@ -84,7 +93,7 @@ export default function Header<Item extends object, Params extends object>(
           }}
         />
       ) : (
-        <div />
+        <>{leftTools ? <div className={s.left}>{leftTools}</div> : <div />}</>
       )}
       <div className={s.right}>
         {toolsOptions != false && (

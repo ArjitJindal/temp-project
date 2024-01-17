@@ -1,11 +1,10 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
-
+import { removeStopwords, eng } from 'stopword'
 import { isEmpty, set } from 'lodash'
-import {
-  DEFAULT_CURRENCY_KEYWORD,
-  RULES_LIBRARY,
-} from './transaction-rules/library'
+import { replaceMagicKeyword } from '@flagright/lib/utils/object'
+import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
+import { RULES_LIBRARY } from './transaction-rules/library'
 import {
   TRANSACTION_FILTERS,
   TRANSACTION_FILTER_DEFAULT_VALUES,
@@ -14,7 +13,6 @@ import {
 } from './filters'
 import { isV8Rule, isV8RuleInstance } from './utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule, RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -24,13 +22,15 @@ import { USER_RULES } from '@/services/rules-engine/user-rules'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
-import { mergeObjects, replaceMagicKeyword } from '@/utils/object'
+import { mergeObjects } from '@/utils/object'
 import { hasFeatures } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 import { RuleFilters } from '@/@types/openapi-internal/RuleFilters'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { RuleSearchFilter } from '@/@types/rule/rule-actions'
+import { removePunctuation } from '@/utils/regex'
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
   (attribute) => attribute.name
@@ -60,7 +60,11 @@ export class RuleService {
 
   public static async syncRulesLibrary() {
     const dynamoDb = getDynamoDbClient()
-    const ruleRepository = new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
+    const mongoDb = await getMongoDbClient()
+    const ruleRepository = new RuleRepository(FLAGRIGHT_TENANT_ID, {
+      dynamoDb,
+      mongoDb,
+    })
     for (const rule of RULES_LIBRARY) {
       // If ui:order is not defined, set the order to be the order defined in each rule
       if (!rule.parametersSchema?.['ui:schema']?.['ui:order']) {
@@ -79,10 +83,7 @@ export class RuleService {
     const mongoDb = await getMongoDbClient()
     const tenantRepository = new TenantRepository(
       this.ruleRepository.tenantId,
-      {
-        mongoDb,
-        dynamoDb: this.ruleRepository.dynamoDb,
-      }
+      { mongoDb, dynamoDb: this.ruleRepository.dynamoDb }
     )
 
     const filters = [
@@ -143,6 +144,17 @@ export class RuleService {
         isEmpty(rule.requiredFeatures) ||
         hasFeatures(rule.requiredFeatures || [])
     )
+  }
+
+  async searchRules(
+    queryStr: string,
+    filters: RuleSearchFilter
+  ): Promise<Rule[]> {
+    const cleanedQueryStr = removePunctuation(
+      removeStopwords(queryStr.split(' '), [...eng, 'rule']).join(' ')
+    )
+
+    return this.ruleRepository.searchRules(cleanedQueryStr, filters)
   }
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {

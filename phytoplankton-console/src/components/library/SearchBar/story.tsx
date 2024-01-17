@@ -28,7 +28,7 @@ function Example() {
       onChangeFilterParams={setFilterParams}
       filters={filters}
       items={queryResult.data}
-      placeholder={`Search for any rule or use case using natural language`}
+      placeholder={`Search for any rule or use-case using natural language`}
       onSelectItem={(item) => {
         console.info('Selected item', item);
       }}
@@ -82,49 +82,49 @@ const filters: FilterProps<FilterParams>[] = [
 async function fetchItems(search?: string): Promise<ItemGroup[]> {
   const items = [
     {
-      ruleNumber: 'R-30',
-      ruleName: 'High velocity sender',
-      ruleDescription: 'If a sender sends >= ‘x’ transactions within time ‘t’',
+      itemId: 'R-30',
+      itemName: 'High velocity sender',
+      itemDescription: 'If a sender sends >= ‘x’ transactions within time ‘t’',
     },
     {
-      ruleNumber: 'R-1',
-      ruleName: 'High velocity receiver',
-      ruleDescription: 'If a receiver receives >= ‘x’ transactions within time ‘t’',
+      itemId: 'R-1',
+      itemName: 'High velocity receiver',
+      itemDescription: 'If a receiver receives >= ‘x’ transactions within time ‘t’',
     },
     {
-      ruleNumber: 'R-119',
-      ruleName: 'High velocity between the same parties.',
-      ruleDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
+      itemId: 'R-119',
+      itemName: 'High velocity between the same parties.',
+      itemDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
     },
     {
-      ruleNumber: 'R-39',
-      ruleName: 'High velocity sender',
-      ruleDescription: 'If a sender sends >= ‘x’ transactions within time ‘t’',
+      itemId: 'R-39',
+      itemName: 'High velocity sender',
+      itemDescription: 'If a sender sends >= ‘x’ transactions within time ‘t’',
     },
     {
-      ruleNumber: 'R-2',
-      ruleName: 'High velocity receiver',
-      ruleDescription: 'If a receiver receives >= ‘x’ transactions within time ‘t’',
+      itemId: 'R-2',
+      itemName: 'High velocity receiver',
+      itemDescription: 'If a receiver receives >= ‘x’ transactions within time ‘t’',
     },
     {
-      ruleNumber: 'R-119',
-      ruleName: 'High velocity between the same parties.',
-      ruleDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
+      itemId: 'R-119',
+      itemName: 'High velocity between the same parties.',
+      itemDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
     },
     {
-      ruleNumber: 'R-11',
-      ruleName: 'High velocity between the same parties.',
-      ruleDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
+      itemId: 'R-11',
+      itemName: 'High velocity between the same parties.',
+      itemDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
     },
     {
-      ruleNumber: 'R-45',
-      ruleName: 'High velocity between the same parties.',
-      ruleDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
+      itemId: 'R-45',
+      itemName: 'High velocity between the same parties.',
+      itemDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
     },
     {
-      ruleNumber: 'R-81',
-      ruleName: 'High velocity between the same parties.',
-      ruleDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
+      itemId: 'R-81',
+      itemName: 'High velocity between the same parties.',
+      itemDescription: 'Same parties transacting among themselves >= ‘x’ times in ‘t’',
     },
   ];
 
@@ -133,8 +133,8 @@ async function fetchItems(search?: string): Promise<ItemGroup[]> {
       return true;
     }
     return (
-      item.ruleName.toLowerCase().includes(search.toLowerCase()) ||
-      item.ruleDescription.toLowerCase().includes(search.toLowerCase())
+      item.itemName.toLowerCase().includes(search.toLowerCase()) ||
+      item.itemDescription.toLowerCase().includes(search.toLowerCase())
     );
   });
   const groups: ItemGroup[] = [

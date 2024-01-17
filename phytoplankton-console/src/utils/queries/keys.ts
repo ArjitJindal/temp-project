@@ -138,6 +138,11 @@ export const HITS_PER_USER_STATS = (dateRange: RangeValue<Dayjs>): QueryKey => [
   'hits-per-user-stats',
   dateRange,
 ];
+export const RULES_UNIVERSAL_SEARCH = (search: string, params?: AnyParameters): QueryKey => [
+  'rules-universal-search',
+  search,
+  params,
+];
 export const TRANSACTION_FILES = (params?: AnyParameters): QueryKey =>
   ['transaction-files', params].filter(Boolean);
 export const USER_FILES = (params?: AnyParameters): QueryKey =>

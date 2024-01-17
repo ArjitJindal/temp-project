@@ -1,12 +1,14 @@
 @import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
 
 .root {
+  width: 100%;
 }
 
 .dropdown {
   position: relative;
   width: 100%;
-  z-index: 1;
+  z-index: @universal-search-z-index;
 }
 
 .dropdownPosition {

@@ -10,10 +10,11 @@ interface Props {
   action?: string;
   onActionButtonClick?: () => void;
   showIcon?: boolean;
+  showButtonIcon?: boolean;
 }
 
 export function EmptyEntitiesInfo(props: Props) {
-  const { title, description, action, onActionButtonClick } = props;
+  const { title, description, action, onActionButtonClick, showButtonIcon = true } = props;
   return (
     <Card
       bordered={false}
@@ -37,7 +38,7 @@ export function EmptyEntitiesInfo(props: Props) {
           type="PRIMARY"
           size="MEDIUM"
           onClick={() => onActionButtonClick && onActionButtonClick()}
-          icon={<AddLineIcon />}
+          icon={showButtonIcon ? <AddLineIcon /> : undefined}
         >
           {action}
         </Button>

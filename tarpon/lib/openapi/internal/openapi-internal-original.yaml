@@ -83,6 +83,48 @@ paths:
             schema:
               $ref: '#/components/schemas/Rule'
         required: true
+  /rules-search:
+    get:
+      summary: Rules - Search
+      tags: []
+      x-flagright:
+        permissions:
+          - rules:library:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rule'
+              examples: {}
+      operationId: get-rules-search
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: queryStr
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterTypology
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterChecksFor
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
+          in: query
+          name: filterNature
   /rule-filters:
     get:
       summary: Rule Filters - List

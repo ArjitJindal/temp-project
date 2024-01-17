@@ -10,6 +10,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RULES_LIBRARY } from '@/services/rules-engine/transaction-rules/library'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 dynamoDbSetupHook()
 
@@ -21,7 +22,8 @@ describe('Public Management API - Rule', () => {
 
   beforeAll(async () => {
     const dynamoDb = getDynamoDbClient()
-    ruleRepository = new RuleRepository(TEST_TENANT_ID, { dynamoDb })
+    const mongoDb = await getMongoDbClient()
+    ruleRepository = new RuleRepository(TEST_TENANT_ID, { dynamoDb, mongoDb })
     ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
       dynamoDb,
     })
@@ -70,8 +72,8 @@ describe('Public Management API - Rule', () => {
       {
         id: 'R-1',
         type: 'TRANSACTION',
-        name: 'First transaction of a user.',
-        description: 'First transaction of a user.',
+        name: 'First transaction of a user',
+        description: 'First transaction of a user',
         parametersSchema: {
           type: 'object',
           properties: {
@@ -97,7 +99,7 @@ describe('Public Management API - Rule', () => {
       {
         id: 'R-2',
         type: 'TRANSACTION',
-        name: 'Transaction amount too high.',
+        name: 'Transaction amount too high',
         description: 'Transaction amount is >= x in USD or equivalent',
         parametersSchema: {
           type: 'object',
@@ -188,8 +190,8 @@ describe('Public Management API - Rule', () => {
     expect(JSON.parse(response.body)).toMatchObject({
       id: 'R-1',
       type: 'TRANSACTION',
-      name: 'First transaction of a user.',
-      description: 'First transaction of a user.',
+      name: 'First transaction of a user',
+      description: 'First transaction of a user',
       parametersSchema: {
         type: 'object',
         properties: {

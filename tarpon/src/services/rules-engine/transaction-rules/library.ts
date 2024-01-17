@@ -4,6 +4,7 @@
  * Spreadsheet: https://docs.google.com/spreadsheets/d/1xAl3cqF6cGMyFTpiIOXguyq7P_EGlTldbOWCYj0lMA8
  */
 
+import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { OriginPaymentRuleFiltersParameters } from '../transaction-filters/payment-filters-base'
 import { TransactionFilters, UserFilters } from '../filters'
 import { USER_RULES, UserRuleImplementationName } from '../user-rules'
@@ -57,8 +58,6 @@ import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-e
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { BankNameChangeRuleParameters } from '@/services/rules-engine/transaction-rules/bank-name-change'
 
-export const DEFAULT_CURRENCY_KEYWORD = '__DEFAULT_CURRENCY__'
-
 const _RULES_LIBRARY: Array<
   () => Omit<Rule, 'parametersSchema' | 'ruleImplementationName'> & {
     ruleImplementationName:
@@ -69,8 +68,8 @@ const _RULES_LIBRARY: Array<
   () => ({
     id: 'R-1',
     type: 'TRANSACTION',
-    name: 'First transaction of a user.',
-    description: 'First transaction of a user.',
+    name: 'First transaction of a user',
+    description: 'First transaction of a user',
     descriptionTemplate:
       "{{ if-sender 'Sender’s' 'Receiver’s' }} first transaction",
     defaultParameters: {},
@@ -83,7 +82,7 @@ const _RULES_LIBRARY: Array<
     typology: 'Account activity, inconsistent with customer profile',
     typologyGroup: 'Unusual behaviour',
     typologyDescription:
-      'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
     source:
       'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
   }),
@@ -96,7 +95,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-2',
       type: 'TRANSACTION',
-      name: 'Transaction amount too high.',
+      name: 'Transaction amount too high',
       description: `Transaction amount is >= x in ${DEFAULT_CURRENCY_KEYWORD} or equivalent`,
       descriptionTemplate:
         'Transaction amount is {{ format-money limit currency }} or more',
@@ -111,7 +110,7 @@ const _RULES_LIBRARY: Array<
       typology: 'Account activity, inconsistent with customer profile',
       typologyGroup: 'Unusual behavior',
       typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
       source:
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
@@ -135,10 +134,10 @@ const _RULES_LIBRARY: Array<
       checksFor: ['No. of transactions'],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      typology: 'Account activity, inconsistent with customer profile ',
+      typology: 'Account activity, inconsistent with customer profile',
       typologyGroup: 'Unusual behaviour',
       typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
       source:
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
@@ -150,7 +149,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-4',
       type: 'TRANSACTION',
-      name: 'Transaction including a new currency.',
+      name: 'Transaction including a new currency',
       description:
         "Transactions to or from a new currency. Trigger the rule after 'x' transactions have been completed. This is relevant when moving between countries.",
       descriptionTemplate:
@@ -165,7 +164,7 @@ const _RULES_LIBRARY: Array<
       typology: 'Account activity, inconsistent with customer profile',
       typologyGroup: 'Unusual behavior',
       typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
       source:
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
@@ -178,7 +177,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-5',
       type: 'TRANSACTION',
-      name: 'Dormant account.',
+      name: 'Dormant account',
       description:
         "If a user has made a transaction after being inactive for time 't'",
       descriptionTemplate:
@@ -206,9 +205,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-6',
       type: 'TRANSACTION',
-      name: 'Transaction including a high risk currency.',
+      name: 'Transaction including a high risk currency',
       description:
-        'Transactions including high-risk currencies, often involved in fund transfers b/w currencies, use a customizable list.',
+        'Transactions including high-risk currencies, often involved in fund transfers b/w currencies, use a customizable list',
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} currency ({{ hitParty.amount.currency }}) is a High Risk",
       defaultParameters,
@@ -239,9 +238,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-7',
       type: 'TRANSACTION',
-      name: 'Too many transactions under reporting limit received by a user.',
+      name: 'Too many transactions under reporting limit received by a user',
       description:
-        '>= ‘x’ number of consecutive low value incoming transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts..',
+        '>= ‘x’ number of consecutive low value incoming transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transactions just under the flagging limit",
       defaultParameters,
@@ -272,9 +271,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-8',
       type: 'TRANSACTION',
-      name: 'Too many transactions under reporting limit sent by a user.',
+      name: 'Too many transactions under reporting limit sent by a user',
       description:
-        '>= ‘x’ number of consecutive low value outgoing transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts.',
+        '>= ‘x’ number of consecutive low value outgoing transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts',
       descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transaction(s) just under the flagging limit`,
       defaultParameters,
       defaultAction: 'FLAG',
@@ -301,9 +300,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-9',
       type: 'TRANSACTION',
-      name: 'Too many users transacting with a single counterparty.',
+      name: 'Too many users transacting with a single counterparty',
       description:
-        'More than ‘x’ users transacting with a single counterparty over a period of time ‘t’ (E.g. Nigerian prince scam outbound).',
+        'More than ‘x’ users transacting with a single counterparty over a period of time ‘t’ (E.g. Nigerian prince scam outbound)',
       descriptionTemplate:
         'More than {{ parameters.sendersCount }} users transacting with a single counterparty over a set period of {{ format-time-window parameters.timeWindow }}',
       defaultParameters,
@@ -318,7 +317,7 @@ const _RULES_LIBRARY: Array<
       typologyGroup:
         'Hidden / unusual relationships, money mules, scams (romance, Nigerian Prince, inheritance and etc.), terrorist financing',
       typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds.',
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds',
       source:
         '1) UK National risk assessment of money laundering and terrorist financing 2021 2) Singapore. Stored value cards: money laundering and terrorism financing risk assessment 2017',
     }
@@ -335,9 +334,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-10',
       type: 'TRANSACTION',
-      name: 'Too many counterparties transacting with a single user.',
+      name: 'Too many counterparties transacting with a single user',
       description:
-        'More than x counterparties transacting with a single user over a period of time t (E.g. Nigerian prince scam inbound).',
+        'More than x counterparties transacting with a single user over a period of time t (E.g. Nigerian prince scam inbound)',
       descriptionTemplate:
         'More than {{ parameters.sendersCount }} counterparties transacting with a single user over a set period of {{ format-time-window parameters.timeWindow }}',
       defaultParameters,
@@ -353,7 +352,7 @@ const _RULES_LIBRARY: Array<
       typologyGroup:
         'Hidden / unusual relationships, money mules, scams (romance, Nigerian Prince, inheritance and etc.), terrorist financing',
       typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds.',
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds',
       source:
         '1) UK National risk assessment of money laundering and terrorist financing 2021 2) Singapore. Stored value cards: money laundering and terrorism financing risk assessment 2017',
     }
@@ -370,8 +369,8 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-13',
       type: 'TRANSACTION',
-      name: 'Blacklisted receiver’s wallet name.',
-      description: 'Receiver’s wallet name is blacklisted.',
+      name: 'Blacklisted receiver’s wallet name',
+      description: 'Receiver’s wallet name is blacklisted',
       descriptionTemplate: '{{ receiverName }} is blacklisted',
       defaultParameters,
       defaultFilters,
@@ -398,7 +397,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'High risk country',
       description:
-        'Transaction to or from a country that is designated as high risk. This rule uses a customizable list.',
+        'Transaction to or from a country that is designated as high risk. This rule uses a customizable list',
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} country ({{ hitParty.amount.country }}) is a High Risk",
       defaultParameters,
@@ -445,7 +444,7 @@ const _RULES_LIBRARY: Array<
       typology: 'Money Mules, Acquiring Fraud, Layering of funds',
       typologyGroup: 'Money Mules, Acquiring Fraud, Layering',
       typologyDescription:
-        'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Acquiring fraud - receiving money that are proceeds of fraud ( typically top-up from stolen card and/or APP fraud). Layering - disguising the true nature of transactions via numerous transfers between financial institutions.',
+        'Money muling is conducting transactions, knowingly or not, to help third parties conceal fund sources. Acquiring fraud involves receiving money from fraud, like stolen card top-ups or APP fraud. Layering is hiding transaction origins through multiple bank transfers',
       source: '',
     }
   },
@@ -472,8 +471,8 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-22',
       type: 'TRANSACTION',
-      name: 'Blacklisted card-issued country.',
-      description: 'Card-issued country is in the blacklist.',
+      name: 'Blacklisted card-issued country',
+      description: 'Card-issued country is in the blacklist',
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} card is issued from {{ if-sender origin.payment.country destination.payment.country }}, a blacklisted country",
       defaultParameters,
@@ -514,9 +513,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-24',
       type: 'TRANSACTION',
-      name: 'Blacklisted Tx reference field.',
+      name: 'Blacklisted Tx reference field',
       description:
-        'Transaction reference field includes a keyword in blacklist.',
+        'Transaction reference field includes a keyword in blacklist',
       descriptionTemplate:
         'Keyword “{{ keyword }}” in reference is blacklisted',
       defaultParameters,
@@ -577,7 +576,7 @@ const _RULES_LIBRARY: Array<
       typology: 'Money mules, acquiring fraud, layering of funds',
       typologyGroup: 'Money mules, acquiring fraud, layering',
       typologyDescription:
-        'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Acquiring fraud - receiving money that are proceeds of fraud ( typically top-up from stolen card and/or APP fraud). Layering - disguising the true nature of transactions via numerous transfers between financial institutions.',
+        'Money muling is conducting transactions, knowingly or not, to help third parties conceal fund sources. Acquiring fraud involves receiving money from fraud, like stolen card top-ups or APP fraud. Layering is hiding transaction origins through multiple bank transfers',
       source:
         'UK National risk assessment of money laundering and terrorist financing 2020',
     }
@@ -593,7 +592,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-52',
       type: 'TRANSACTION',
-      name: 'Same IP address for too many users.',
+      name: 'Same IP address for too many users',
       description: "Same IP address for >= 'x' unique user IDs in time 't'",
       descriptionTemplate:
         'Same ip address ({{ ipAddress }}) used by {{ uniqueUsersCount }} unique users',
@@ -608,7 +607,7 @@ const _RULES_LIBRARY: Array<
       typologyGroup:
         'Hidden / unusual relationships, money mules, account takeover fraud',
       typologyDescription:
-        'Use of different accounts opened in one institution by a perpetrator in order to perform the illicit activity. The same IP can be indicative of an account takeover attack, connected money mules, or money launderers.',
+        'Use of different accounts opened in one institution by a perpetrator in order to perform the illicit activity. The same IP can be indicative of an account takeover attack, connected money mules, or money launderers',
       source: 'NA',
     }
   },
@@ -623,7 +622,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-53',
       type: 'TRANSACTION',
-      name: 'Same unique sender payment identifier used by too many users.',
+      name: 'Same unique sender payment identifier used by too many users',
       description:
         "Same payment identifier used by >= 'x' unique user IDs in time 't'",
       descriptionTemplate:
@@ -657,9 +656,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-54',
       type: 'TRANSACTION',
-      name: 'Same user using too many cards.',
+      name: 'Same user using too many cards',
       description:
-        'Same user using >= ‘x’ unique sender cards counted by card fingerprint id in time ‘t’.',
+        'Same user using >= ‘x’ unique sender cards counted by card fingerprint id in time ‘t’',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} used {{ uniqueCardsCount }} unique cards above the limit of {{ parameters.uniqueCardsCountThreshold }}",
       defaultParameters,
@@ -690,9 +689,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-55',
       type: 'TRANSACTION',
-      name: 'Same sender user using too many payment identifiers.',
+      name: 'Same sender user using too many payment identifiers',
       description:
-        'Same sender user using >= ‘x’ unique payment identifiers in time ‘t’.',
+        'Same sender user using >= ‘x’ unique payment identifiers in time ‘t’',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} used {{ uniquePaymentIdentifiersCount }} unique payment identifiers above the limit of {{ parameters.uniquePaymentIdentifiersCountThreshold }}",
       defaultParameters,
@@ -742,7 +741,7 @@ const _RULES_LIBRARY: Array<
         'Customer activity is not in line with profile based on available information',
       typologyGroup: 'Unusual behaviour',
       typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
       source: 'NA',
     }
   },
@@ -756,7 +755,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'High risk IP address countries',
       description:
-        'Transaction is being sent from or received in a high risk country based on IP address.',
+        'Transaction is being sent from or received in a high risk country based on IP address',
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} ip-bases country ({{ format-country ipCountry }}) is a High Risk",
       defaultParameters,
@@ -780,7 +779,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-88',
       type: 'TRANSACTION',
-      name: 'Unexpected IP address for user.',
+      name: 'Unexpected IP address for user',
       description:
         "IP address where the payment is initiated is outside the following expected location's for the user.",
       descriptionTemplate:
@@ -833,7 +832,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Transaction value exceeds expected limit',
       description:
-        'For a given user, compares the expected transaction count or transaction amount per payment method or in aggregate for multiple time intervals.',
+        'For a given user, compares the expected transaction count or transaction amount per payment method or in aggregate for multiple time intervals',
       descriptionTemplate: '{{ hitDescription }}',
       defaultParameters: {},
       defaultAction: 'FLAG',
@@ -860,8 +859,8 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-113',
       type: 'TRANSACTION',
-      name: 'User location changed too many times based on IP address.',
-      description: 'Users IP address changes > ‘x’ within time ‘t’.',
+      name: 'User location changed too many times based on IP address',
+      description: 'Users IP address changes > ‘x’ within time ‘t’',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsCount }} transactions from {{ locationsCount }} locations in more than {{ parameters.timeWindow.units }} {{parameters.timeWindow.granularity}}(s)",
       defaultParameters,
@@ -919,9 +918,9 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-117',
       type: 'TRANSACTION',
-      name: 'Transaction amount matches a pattern.',
+      name: 'Transaction amount matches a pattern',
       description:
-        'Transaction amount ends in a pattern, such as 999 or 000, including decimals.',
+        'Transaction amount ends in a pattern, such as 999 or 000, including decimals',
       descriptionTemplate:
         'Transaction amount of {{ format-money hitParty.amount }} matches a blacklisted pattern ending with {{ matchPattern }}',
       defaultParameters,
@@ -969,7 +968,7 @@ const _RULES_LIBRARY: Array<
       checksFor: ['Username'],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      typology: 'Acquiring fraud',
+      typology: 'Acquiring Fraud',
       typologyGroup: 'Account takeover fraud',
       typologyDescription:
         'Attempts to use multiple stolen account details to perform a purchase/top-up wallet',
@@ -987,7 +986,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-119',
       type: 'TRANSACTION',
-      name: 'High velocity between the same parties.',
+      name: 'High velocity between the same parties',
       description:
         'Same parties transacting among themselves >= ‘x’ times in ‘t’',
       descriptionTemplate:
@@ -1000,10 +999,10 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       typology:
-        'A high value of transactions between the same parties can be indicative of ML',
+        'A high value of transactions between the same parties which can be indicative of ML',
       typologyGroup: 'Hidden / unusual relationships',
       typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships.',
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships',
       source:
         'UK National risk assessment of money laundering and terrorist financing 2020',
     }
@@ -1048,7 +1047,7 @@ const _RULES_LIBRARY: Array<
         'Change in behavior driven by an increase in a value of transactions',
       typologyGroup: 'Unusual behaviour',
       typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
       source:
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
@@ -1089,7 +1088,7 @@ const _RULES_LIBRARY: Array<
         'Change in behavior driven by an increase in a number of transactions',
       typologyGroup: 'Unusual behaviour',
       typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
       source:
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
@@ -1134,7 +1133,7 @@ const _RULES_LIBRARY: Array<
         'Change in behavior driven by an increase in a value of transactions',
       typologyGroup: 'Unusual behaviour',
       typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
       source:
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
@@ -1195,7 +1194,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-126',
       type: 'TRANSACTION',
-      name: 'High volume between the same parties.',
+      name: 'High volume between the same parties',
       description:
         'Same parties transacting among themselves of amount >= ‘x’ in ‘t’',
       descriptionTemplate:
@@ -1209,10 +1208,10 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
       typology:
-        'A high value of transactions between the same parties which can be indicative of ML ',
+        'A high value of transactions between the same parties which can be indicative of ML',
       typologyGroup: 'Hidden / Unusual Relationships',
       typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships.',
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships',
       source:
         'UK National risk assessment of money laundering and terrorist financing 2020',
     }
@@ -1231,7 +1230,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Too many round transactions',
       description:
-        'Same user ID receives or sends >= X % of all of their receiving or sending transactions as round values ending in 00.00 (hundreds without cents) in time t. The rule kicks in after user has y transactions for any specific direction.',
+        'Same user ID receives or sends >= X % of all of their receiving or sending transactions as round values ending in 00.00 (hundreds without cents) in time t. The rule kicks in after user has y transactions for any specific direction',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} funds with more than {{ parameters.patternPercentageLimit }}% of transactions as round values ending in 00.00 (hundreds without cents) within time {{ format-time-window parameters.timeWindow }}. Rule should hit after the user has initiaited {{ parameters.initialTransactions }} transactions (doesn't have to be successful)",
       defaultParameters,
@@ -1242,7 +1241,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       typology:
-        'Transactions in round amounts  which disguise the true nature of transaction and might be indicative of ML/TF',
+        'Transactions in round amounts which disguise the true nature of transaction and might be indicative of ML/TF',
       typologyGroup: 'Structuring, unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer. Conceal or disguise the true nature of transactions  by executing frequent or several transactions such that each transaction is a rounded number which is not common for regular payment activity',
@@ -1314,7 +1313,7 @@ const _RULES_LIBRARY: Array<
         'Elevated ML/TF risks associated with transactions with high risk geography',
       typologyGroup: 'High risk transactions',
       typologyDescription:
-        'Typologies that scrutinise a high-risk element of the transaction, such as geographic location or an attribute of the beneficiary or originator.',
+        'Typologies that scrutinise a high-risk element of the transaction, such as geographic location or an attribute of the beneficiary or originator',
       source:
         '1) FATF Emerging Terrorist Financing Risks 2) US Advisory on Human Rights Abuses Enabled by Corrupt Senior Foreign Political Figures and their Financial Facilitators',
     }
@@ -1350,7 +1349,7 @@ const _RULES_LIBRARY: Array<
         'Unusually high number of countries involved into transactional activity of the customer',
       typologyGroup: 'Unusual behaviour',
       typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
       source:
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
@@ -1416,7 +1415,7 @@ const _RULES_LIBRARY: Array<
         'A high value of transactions using the same payment details can be indicative of ML',
       typologyGroup: 'Hidden / unusual relationships',
       typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships.',
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships',
       source:
         'UK National risk assessment of money laundering and terrorist financing 2020',
     }
@@ -1429,7 +1428,7 @@ const _RULES_LIBRARY: Array<
       id: 'R-129',
       type: 'TRANSACTION',
       name: 'Blacklisted payment details',
-      description: 'Payment details that are in the blacklist.',
+      description: 'Payment details that are in the blacklist',
       descriptionTemplate:
         "{{ if-sender 'Sender’s' 'Receiver’s' }} payment details are in blacklisted payment details",
       defaultParameters,
@@ -1476,10 +1475,10 @@ const _RULES_LIBRARY: Array<
       checksFor: ['No. of transactions', 'Time'],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      typology: 'Account activity, inconsistent with customer profile ',
+      typology: 'Account activity, inconsistent with customer profile',
       typologyGroup: 'Unusual behaviour',
       typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
       source:
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
@@ -1493,9 +1492,9 @@ const _RULES_LIBRARY: Array<
       id: 'R-132',
       name: 'Blacklisted User ID',
       type: 'TRANSACTION',
-      description: 'User ID’s that are in the blacklist.',
+      description: 'User ID’s that are in the blacklist',
       descriptionTemplate:
-        '{{ value }} is blacklisted in Blacklist ID {{ blackListId }} for {{ variableType }} field.',
+        '{{ value }} is blacklisted in Blacklist ID {{ blackListId }} for {{ variableType }} field',
       defaultParameters,
       defaultAction: 'BLOCK',
       ruleImplementationName: 'blacklist-transaction-related-value',
@@ -1522,10 +1521,10 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-41',
-      name: 'Transaction’s sending volume compared to receiving volume.',
+      name: 'Transaction’s sending volume compared to receiving volume',
       type: 'TRANSACTION',
       description:
-        'Compare transaction’s sending volume with receiving’s volume.',
+        'Compare transaction’s sending volume with receiving’s volume',
       descriptionTemplate:
         'Transaction outflow volume ({{ format-money outflowAmount }}) is {{ format-comparator parameters.outflowInflowComparator }} transaction inflow volume ({{ format-money inflowAmount }})',
       defaultParameters,
@@ -1538,7 +1537,7 @@ const _RULES_LIBRARY: Array<
       typology: 'Money transit, money mules',
       typologyGroup: 'Layering, money mules',
       typologyDescription:
-        'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Layering - disguising the true nature of transactions via numerous transfers between financial institutions.',
+        'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Layering - disguising the true nature of transactions via numerous transfers between financial institutions',
       source:
         'UK National risk assessment of money laundering and terrorist financing 2020',
     }
@@ -1552,12 +1551,12 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-128',
-      name: 'Business user screening - Shareholders, dirs & legal name.',
+      name: 'Business user screening - Shareholders, dirs & legal name',
       type: 'USER',
       description:
-        'Business legal entity & shareholders & directors screening for Sanctions/PEP/Adverse media screening.',
+        'Business legal entity & shareholders & directors screening for Sanctions/PEP/Adverse media screening',
       descriptionTemplate:
-        'Business legal entity & shareholders & directors screening for Sanctions/PEP/Adverse media screening.',
+        'Business legal entity & shareholders & directors screening for Sanctions/PEP/Adverse media screening',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-business-user',
@@ -1577,12 +1576,12 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-32',
-      name: 'Screening bank names.',
+      name: 'Screening bank names',
       type: 'USER',
       description:
-        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution is possible.',
+        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution is possible',
       descriptionTemplate:
-        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution is possible.',
+        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution is possible',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-bank-name',
@@ -1604,9 +1603,9 @@ const _RULES_LIBRARY: Array<
       name: 'Tx’s counterparty screening',
       type: 'TRANSACTION',
       description:
-        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media.',
+        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media',
       descriptionTemplate:
-        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media .',
+        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-counterparty',
@@ -1627,12 +1626,12 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-16',
-      name: 'Screening consumer users.',
+      name: 'Screening consumer users',
       type: 'USER',
       description:
-        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
+        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media',
       descriptionTemplate:
-        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
+        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-consumer-user',
@@ -1650,10 +1649,10 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-17',
-      name: 'Business industry change.',
+      name: 'Business industry change',
       type: 'USER',
       description:
-        'Checks if industry has changed for a business user on an external platforms.',
+        'Checks if industry has changed for a business user on an external platforms',
       descriptionTemplate:
         'Business industry for user has changed on {{ sourceType }}',
       defaultParameters,
@@ -1672,11 +1671,11 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-61',
-      name: 'User address change.',
+      name: 'User address change',
       type: 'USER',
       description:
-        'Check if user address has changed.For business users its legal entity’s address is used. For consumer users their own address is used.',
-      descriptionTemplate: 'User address has changed.',
+        'Check if user address has changed.For business users its legal entity’s address is used. For consumer users their own address is used',
+      descriptionTemplate: 'User address has changed',
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'user-address-change',

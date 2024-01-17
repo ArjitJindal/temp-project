@@ -1,10 +1,10 @@
 import { JSONSchemaType } from 'ajv'
 
+import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import {
   TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA,
   TransactionAmountRange,
 } from '../utils/rule-parameter-schemas'
-import { DEFAULT_CURRENCY_KEYWORD } from '../transaction-rules/library'
 import { TransactionRuleFilter } from './filter'
 import { transactionAmountRuleFilterPredicate } from './transaction-amount'
 

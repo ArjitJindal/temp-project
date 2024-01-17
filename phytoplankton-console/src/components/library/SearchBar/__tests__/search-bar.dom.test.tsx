@@ -2,7 +2,7 @@ import { test, expect } from '@jest/globals';
 
 import React from 'react';
 import { render, screen, userEvent } from 'testing-library-wrapper';
-import SearchBar, { Props } from '..';
+import SearchBar, { SearchBarProps } from '..';
 import SearchBarStyles from '../index.module.less';
 import SearchBarDropdownStyles from '../SearchBarDropdown/index.module.less';
 import { success } from '@/utils/asyncResource';
@@ -23,7 +23,7 @@ describe('Open/closing dropdown', () => {
 /*
   Helpers
  */
-function RenderSearchBar(props: Props<FilterParams>) {
+function RenderSearchBar(props: SearchBarProps<FilterParams>) {
   return <SearchBar {...props} />;
 }
 

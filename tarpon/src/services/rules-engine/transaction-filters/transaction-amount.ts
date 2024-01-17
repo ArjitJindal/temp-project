@@ -1,12 +1,12 @@
 import { JSONSchemaType } from 'ajv'
 
 import { isEmpty } from 'lodash'
+import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import {
   TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA,
   TransactionAmountRange,
 } from '../utils/rule-parameter-schemas'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
-import { DEFAULT_CURRENCY_KEYWORD } from '../transaction-rules/library'
 import { TransactionRuleFilter } from './filter'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 

@@ -15,3 +15,8 @@ export const isValidEmail = (email: string) => {
   )
   return emailRegex.test(email)
 }
+
+export const removePunctuation = (input: string) => {
+  const punctuation = /[.,/#!$%^&*;:?{}=\-_`~()]/g
+  return input.replace(punctuation, '')
+}

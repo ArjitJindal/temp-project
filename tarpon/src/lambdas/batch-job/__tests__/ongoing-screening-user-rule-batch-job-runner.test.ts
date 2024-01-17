@@ -121,7 +121,7 @@ describe('Batch Job Sanctions Screening Rule', () => {
         {
           ruleAction: 'SUSPEND',
           nature: 'SCREENING',
-          ruleName: 'Screening consumer users.',
+          ruleName: 'Screening consumer users',
           ruleId: 'R-16',
           ruleDescription:
             'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
@@ -141,7 +141,7 @@ describe('Batch Job Sanctions Screening Rule', () => {
         {
           ruleAction: 'SUSPEND',
           nature: 'SCREENING',
-          ruleName: 'Screening consumer users.',
+          ruleName: 'Screening consumer users',
           ruleHit: true,
           ruleId: 'R-16',
           ruleDescription:
@@ -216,7 +216,7 @@ describe('Batch Job Sanctions Screening Rule', () => {
         {
           ruleAction: 'SUSPEND',
           nature: 'SCREENING',
-          ruleName: 'Screening consumer users.',
+          ruleName: 'Screening consumer users',
           ruleHit: false,
           ruleId: 'R-16',
           ruleDescription:

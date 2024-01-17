@@ -215,6 +215,11 @@ export const TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION = (
   return `${tenantId}-transaction-type-distribution`
 }
 
+/** Rules Collection */
+export const RULES_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-rules`
+}
+
 export function getMongoDbIndexDefinitions(tenantId: string): {
   [collectionName: string]: Array<{
     getIndexes: () => Document[]
@@ -485,6 +490,30 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [CRM_TASKS_COLLECTION(tenantId)]: [{ getIndexes: () => [{ account: 1 }] }],
     [CHECKLIST_TEMPLATE_COLLECTION(tenantId)]: [
       { getIndexes: () => [{ id: 1 }, { createdAt: 1 }] },
+    ],
+    [RULE_QUEUES_COLLECTION(tenantId)]: [
+      {
+        getIndexes: () => [
+          {
+            id: 1,
+            name: 1,
+            description: 1,
+            typology: 1,
+            defaultNature: 1,
+            typologyDescription: 1,
+            source: 1,
+            typologyGroup: 1,
+          },
+          { id: 1 },
+          { name: 1 },
+          { description: 1 },
+          { typology: 1 },
+          { defaultNature: 1 },
+          { typologyDescription: 1 },
+          { source: 1 },
+          { typologyGroup: 1 },
+        ],
+      },
     ],
   }
 }

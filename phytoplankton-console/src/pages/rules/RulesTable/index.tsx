@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import style from './style.module.less';
+import { RulesSearchBar } from './RulesSearchBar';
 import { Rule } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
@@ -15,6 +16,8 @@ import { LONG_TEXT, RULE_ACTION } from '@/components/library/Table/standardDataT
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { RULE_ACTION_VALUES } from '@/utils/rules';
 import RuleChecksForTag from '@/components/library/RuleChecksForTag';
+import { getOr } from '@/utils/asyncResource';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface RulesTableParams extends CommonParams {}
 
@@ -46,6 +49,8 @@ const branding = getBranding();
 export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulationMode }) => {
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
+  const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
+
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const helper = new ColumnHelper<Rule>();
     return helper.list([
@@ -237,6 +242,19 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
       params={params}
       onChangeParams={setParams}
       rowHeightMode={'AUTO'}
+      toolsOptions={{
+        reload: false,
+        download: true,
+        setting: true,
+      }}
+      leftTools={
+        isV8Enabled ? (
+          <RulesSearchBar
+            rules={getOr(rulesResult.data, { items: [] }).items}
+            onSelectedRule={onEditRule}
+          />
+        ) : null
+      }
     />
   );
 };

@@ -45,7 +45,7 @@ export async function getMongoDbClient(useCache = true) {
     cacheClient = await MongoClient.connect(
       process.env.MONGO_URI || `mongodb://localhost:27018/${MONGO_TEST_DB_NAME}`
     )
-  } else if (process.env.ENV === 'local') {
+  } else if (process.env.ENV?.includes('local')) {
     cacheClient = await MongoClient.connect(
       `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}`
     )

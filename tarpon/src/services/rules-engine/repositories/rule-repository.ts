@@ -8,24 +8,32 @@ import {
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { omit } from 'lodash'
+import { Filter, MongoClient } from 'mongodb'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { traceable } from '@/core/xray'
+import { RULES_COLLECTION } from '@/utils/mongodb-definitions'
+import { escapeStringRegexp } from '@/utils/regex'
+import { RuleSearchFilter } from '@/@types/rule/rule-actions'
+import { RuleNature } from '@/@types/openapi-internal/RuleNature'
 
 @traceable
 export class RuleRepository {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
+  mongoDb: MongoClient
 
   constructor(
     tenantId: string,
     connections: {
       dynamoDb?: DynamoDBDocumentClient
+      mongoDb?: MongoClient
     }
   ) {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
+    this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
 
@@ -51,6 +59,49 @@ export class RuleRepository {
         },
       })
     )[0]
+  }
+
+  async searchRules(query: string, filters: RuleSearchFilter): Promise<Rule[]> {
+    const db = this.mongoDb.db()
+    const rulesCollectionName = RULES_COLLECTION(FLAGRIGHT_TENANT_ID)
+    const rulesCollection = db.collection<Rule>(rulesCollectionName)
+    const regexQuery = escapeStringRegexp(query)
+    const fields: ReadonlyArray<keyof Rule> = [
+      'name',
+      'description',
+      'id',
+      'typology',
+      'checksFor',
+      'defaultNature',
+      'typologyGroup',
+      'source',
+      'typologyDescription',
+      'labels',
+    ]
+
+    const queryInput: Filter<Rule> = {
+      $and: [
+        {
+          ...(filters?.filterChecksFor?.length && {
+            checksFor: { $in: filters.filterChecksFor },
+          }),
+          ...(filters?.filterTypology?.length && {
+            typology: { $in: filters.filterTypology },
+          }),
+          ...(filters?.filterNature?.length && {
+            defaultNature: { $in: filters.filterNature as RuleNature[] },
+          }),
+        },
+        {
+          $or: fields.map((field) => ({
+            [field]: { $regex: regexQuery, $options: 'i' },
+          })),
+        },
+      ],
+    }
+    const rules = await rulesCollection.find(queryInput).toArray()
+
+    return rules
   }
 
   async getRulesByIds(ruleIds: string[]): Promise<ReadonlyArray<Rule>> {
@@ -97,6 +148,9 @@ export class RuleRepository {
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
     const now = Date.now()
+    const db = this.mongoDb.db()
+    const rulesCollection = RULES_COLLECTION(FLAGRIGHT_TENANT_ID)
+
     const newRule: Rule = {
       ...rule,
       createdAt: rule.createdAt || now,
@@ -109,7 +163,14 @@ export class RuleRepository {
         ...newRule,
       },
     }
-    await this.dynamoDb.send(new PutCommand(putItemInput))
+
+    await Promise.all([
+      this.dynamoDb.send(new PutCommand(putItemInput)),
+      db
+        .collection<Rule>(rulesCollection)
+        .updateOne({ id: rule.id }, { $set: newRule }, { upsert: true }),
+    ])
+
     return newRule
   }
 

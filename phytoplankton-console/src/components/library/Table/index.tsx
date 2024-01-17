@@ -76,6 +76,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   externalState?: unknown;
   selectionInfo?: SelectionInfo;
   expandedRowId?: string;
+  leftTools?: React.ReactNode;
 }
 
 export type SelectionInfo = {
@@ -119,6 +120,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     selectionInfo,
     rowHeightMode = 'FIXED',
     expandedRowId,
+    leftTools,
   } = props;
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
     return 'items' in props.data ? success(props.data) : props.data;
@@ -242,6 +244,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
         onReload={onReload}
         cursorPagination={cursor != null}
         totalPages={getPageCount(params, data)}
+        leftTools={leftTools}
       />
       <ScrollContainer
         maxHeight={typeof fitHeight === 'number' ? fitHeight : undefined}

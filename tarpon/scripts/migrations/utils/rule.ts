@@ -1,4 +1,6 @@
 import { get, keyBy, set, unset } from 'lodash'
+import { replaceMagicKeyword } from '@flagright/lib/utils/object'
+import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { migrateAllTenants } from './tenant'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -12,11 +14,8 @@ import {
   UserFilters,
 } from '@/services/rules-engine/filters'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { replaceMagicKeyword } from '@/utils/object'
-import {
-  DEFAULT_CURRENCY_KEYWORD,
-  getRuleByRuleId,
-} from '@/services/rules-engine/transaction-rules/library'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 
 function isRule(rule: Rule | RuleInstance) {
   return !!(rule as Rule).defaultParameters
@@ -65,9 +64,10 @@ async function renameRuleParameterPrivate(
 ) {
   const rulesById = await getRulesById()
   const dynamoDb = await getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
   const ruleRepository = tenantId
     ? new RuleInstanceRepository(tenantId, { dynamoDb })
-    : new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
+    : new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb, mongoDb })
   const rules = tenantId
     ? await (ruleRepository as RuleInstanceRepository).getAllRuleInstances()
     : await (ruleRepository as RuleRepository).getAllRules()
@@ -161,9 +161,10 @@ async function deleteUnusedRuleParameterPrivate(
 ) {
   const rulesById = await getRulesById()
   const dynamoDb = await getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
   const ruleRepository = tenantId
     ? new RuleInstanceRepository(tenantId, { dynamoDb })
-    : new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
+    : new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb, mongoDb })
   const rules = tenantId
     ? await (ruleRepository as RuleInstanceRepository).getAllRuleInstances()
     : await (ruleRepository as RuleRepository).getAllRules()
@@ -241,9 +242,10 @@ async function addRuleFiltersPrivate(
   tenantId?: string
 ) {
   const dynamoDb = await getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
   const ruleRepository = tenantId
     ? new RuleInstanceRepository(tenantId, { dynamoDb })
-    : new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
+    : new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb, mongoDb })
   const rules = tenantId
     ? await (ruleRepository as RuleInstanceRepository).getAllRuleInstances()
     : await (ruleRepository as RuleRepository).getAllRules()

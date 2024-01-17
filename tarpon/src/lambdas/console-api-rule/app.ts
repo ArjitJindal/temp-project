@@ -25,7 +25,8 @@ export const ruleHandler = lambdaApi()(
     const tenantId = (event.requestContext.authorizer?.principalId ||
       event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
+    const mongoDb = await getMongoDbClient()
+    const ruleRepository = new RuleRepository(tenantId, { dynamoDb, mongoDb })
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
@@ -62,6 +63,12 @@ export const ruleHandler = lambdaApi()(
     handlers.registerDeleteRulesRuleId(
       async (ctx, request) => await ruleService.deleteRule(request.ruleId)
     )
+
+    handlers.registerGetRulesSearch(async (ctx, request) => {
+      const { queryStr = '', ...rest } = request
+
+      return await ruleService.searchRules(queryStr, rest)
+    })
 
     return await handlers.handle(event)
   }

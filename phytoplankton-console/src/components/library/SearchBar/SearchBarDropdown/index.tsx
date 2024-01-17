@@ -1,13 +1,17 @@
 import React from 'react';
+import { EmptyEntitiesInfo } from '../../EmptyDataInfo';
+import { SearchBarProps } from '..';
 import s from './index.module.less';
 import ExpandContainer from '@/components/library/ExpandContainer';
 import { FilterProps } from '@/components/library/Filter/types';
 import Filter from '@/components/library/Filter';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { AsyncResource, getOr, isLoading } from '@/utils/asyncResource';
 
 export interface Item {
-  ruleNumber: string;
-  ruleName: string;
-  ruleDescription: string;
+  itemId: string;
+  itemName: string;
+  itemDescription: string;
 }
 
 export interface ItemGroup {
@@ -20,11 +24,13 @@ interface Props<FilterParams> {
   filterParams?: FilterParams;
   onChangeFilterParams?: (filterParams: FilterParams) => void;
   onSelectItem?: (item: Item) => void;
-  items: ItemGroup[];
+  items: AsyncResource<ItemGroup[]>;
   showFilters?: boolean;
   showAllItems?: boolean;
   collapsedMaxLength?: number;
   onToggleShowAllItems?: () => void;
+  isEnterPressed?: boolean;
+  emptyState?: SearchBarProps<FilterParams>['emptyState'];
 }
 
 export default function SearchBarDropdown<FilterParams extends object = object>(
@@ -40,10 +46,21 @@ export default function SearchBarDropdown<FilterParams extends object = object>(
     onToggleShowAllItems,
     collapsedMaxLength = 3,
     onSelectItem,
+    isEnterPressed,
+    emptyState,
   } = props;
-  const totalAmount = items.reduce((acc, x) => acc + x.items.length, 0);
+  const totalAmount = getOr(items, []).reduce((acc, x) => acc + x.items.length, 0);
 
-  return (
+  return isEnterPressed && totalAmount === 0 && emptyState && !isLoading(items) ? (
+    <EmptyEntitiesInfo
+      action={emptyState.actionLabel}
+      onActionButtonClick={emptyState.onAction}
+      title={emptyState.title}
+      description={emptyState.description}
+      showIcon={true}
+      showButtonIcon={false}
+    />
+  ) : (
     <div className={s.root}>
       {filters && filterParams != null && onChangeFilterParams && filters.length > 0 && (
         <ExpandContainer isCollapsed={!showFilters}>
@@ -59,28 +76,34 @@ export default function SearchBarDropdown<FilterParams extends object = object>(
           </div>
         </ExpandContainer>
       )}
-      {items.map(({ title, items }) => (
-        <React.Fragment key={title}>
-          <div className={s.subheader}>
-            {title} ({items.length})
-          </div>
-          <div className={s.items}>
-            {(showAllItems ? items : items.slice(0, collapsedMaxLength)).map((item) => (
-              <div
-                key={item.ruleNumber}
-                className={s.item}
-                onClick={() => {
-                  onSelectItem?.(item);
-                }}
-              >
-                <div className={s.itemRuleNumber}>{item.ruleNumber}</div>
-                <div className={s.itemRuleName}>{item.ruleName}</div>
-                <div className={s.itemRuleDescription}>{item.ruleDescription}</div>
+      <AsyncResourceRenderer resource={items}>
+        {(items) =>
+          items.map(({ title, items: groupItems }) => (
+            <React.Fragment key={title}>
+              <div className={s.subheader}>
+                {title} ({groupItems.length})
               </div>
-            ))}
-          </div>
-        </React.Fragment>
-      ))}
+              <div className={s.items}>
+                {(showAllItems ? groupItems : groupItems.slice(0, collapsedMaxLength)).map(
+                  (item) => (
+                    <div
+                      key={item.itemId}
+                      className={s.item}
+                      onClick={() => {
+                        onSelectItem?.(item);
+                      }}
+                    >
+                      <div className={s.itemId}>{item.itemId}</div>
+                      <div className={s.itemName}>{item.itemName}</div>
+                      <div className={s.itemDescription}>{item.itemDescription}</div>
+                    </div>
+                  ),
+                )}
+              </div>
+            </React.Fragment>
+          ))
+        }
+      </AsyncResourceRenderer>
       {totalAmount > collapsedMaxLength && !showAllItems && (
         <button
           className={s.seeAllButton}

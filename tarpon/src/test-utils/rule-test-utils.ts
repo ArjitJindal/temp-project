@@ -35,8 +35,10 @@ export async function createRule(
   ruleInstance?: Partial<RuleInstance & { ruleInstanceId?: string }>
 ) {
   const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
   const ruleRepository = new RuleRepository(testTenantId, {
     dynamoDb,
+    mongoDb,
   })
   const ruleInstanceRepository = new RuleInstanceRepository(testTenantId, {
     dynamoDb,
@@ -90,8 +92,10 @@ export async function updateRule(
   changes: Partial<Rule>
 ) {
   const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
   const ruleRepository = new RuleRepository(testTenantId, {
     dynamoDb,
+    mongoDb,
   })
   const rule = await ruleRepository.getRuleById(ruleId)
   if (!rule) {
