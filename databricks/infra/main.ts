@@ -288,7 +288,7 @@ class DatabricksStack extends TerraformStack {
         this,
         'mongo-secret',
         {
-          arn: this.config.application.ATLAS_CREDENTIALS_SECRET_ARN,
+          name: 'mongoAtlasCreds',
         }
       )
     const mongoSecretVersion =
