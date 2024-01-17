@@ -61,7 +61,7 @@ export function RuleLogicBuilder(props: Props) {
     [props],
   );
   const debouncedHandleChangeLogic = useMemo(
-    () => debounce(handleChangeLogic, 1000),
+    () => debounce(handleChangeLogic, 500),
     [handleChangeLogic],
   );
 

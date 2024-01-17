@@ -24,7 +24,9 @@ describe('Create scenario', () => {
     cy.get('input[data-cy="rule-action-selector"]').eq(2).click();
     cy.get('label[data-cy="apply-to-risk-levels"]')
       .click()
-      .type('Low{downarrow}{enter}High{downarrow}{enter}');
+      .type(
+        'Low{downarrow}{enter}Medium{downarrow}{enter}High{downarrow}{enter}Very high{downarrow}{enter}',
+      );
     cy.get('button[data-cy="apply-to-risk-levels-button"]').click();
     checkConditionsCount(2, 'LOW');
     checkConditionsCount(2, 'HIGH');
