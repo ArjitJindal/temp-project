@@ -32,4 +32,9 @@ describe('xlsxValue', () => {
   it('should strip double quotes from the string', () => {
     expect(xlsxValue('"hello"')).toEqual('hello');
   });
+  it('should truncate to excels limits', () => {
+    const output = xlsxValue('a'.repeat(40000));
+    expect(output).toHaveLength(32767);
+    expect(output.endsWith('aaaaaa... (TRUNCATED)')).toBeTruthy();
+  });
 });

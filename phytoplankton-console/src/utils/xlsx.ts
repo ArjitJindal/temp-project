@@ -1,3 +1,5 @@
+const EXCEL_CHAR_LIMIT = Math.pow(2, 15) - 1;
+
 export function xlsxValue(value: unknown): string {
   if (value === null || value === '') {
     return '-';
@@ -20,5 +22,9 @@ export function xlsxValue(value: unknown): string {
 
   str = str.replace(/"/g, '');
 
+  if (str.length > EXCEL_CHAR_LIMIT) {
+    const label = '... (TRUNCATED)';
+    str = str.substring(0, EXCEL_CHAR_LIMIT - label.length) + label;
+  }
   return str;
 }
