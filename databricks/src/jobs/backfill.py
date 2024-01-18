@@ -1,21 +1,15 @@
 # type: ignore
-import logging
 import os
 import sys
 
 import pymongo
-from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, lit
 
 from databricks.sdk.runtime import *
 
-sys.path.append(os.path.abspath("/Workspace/Shared/main/src"))
+sys.path.append(os.path.abspath("/Workspace/Shared/main"))
 
-from openapi_client.models.transaction import (  # pylint: disable=import-error
-    Transaction,
-)
-
-from entities import entities  # pylint: disable=import-error
+from src.entities import entities  # pylint: disable=import-error
 
 # MongoDB Connection Setup
 MONGO_USERNAME = dbutils.secrets.get(  # pylint: disable=undefined-variable

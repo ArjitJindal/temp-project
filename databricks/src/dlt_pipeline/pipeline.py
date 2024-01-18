@@ -11,10 +11,10 @@ from data_quality_checks import (  # pylint: disable=import-error
 )
 from pyspark.sql.functions import col, concat, expr, from_json, lit, regexp_extract, udf
 
-sys.path.append(os.path.abspath("/Workspace/Shared/main/src"))
+sys.path.append(os.path.abspath("/Workspace/Shared/main"))
 
-from dlt_pipeline.schema import kinesis_event_schema  # pylint: disable=import-error
-from entities import entities  # pylint: disable=import-error
+from src.dlt_pipeline.schema import kinesis_event_schema  # pylint: disable=import-error
+from src.entities import entities  # pylint: disable=import-error
 
 aws_access_key = dbutils.secrets.get(  # pylint: disable=undefined-variable
     "kinesis", "aws-access-key"

@@ -132,19 +132,6 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
-    // Assign metastore to workspace
-    const metastoreAssignment =
-      new databricks.metastoreAssignment.MetastoreAssignment(
-        this,
-        'metastore-assignment',
-        {
-          provider: this.mws,
-          workspaceId: workspace.workspaceId,
-          metastoreId: metastoreId,
-          defaultCatalogName: stage,
-        }
-      )
-
     // Configure workspace provide
     const workspaceProvider = new databricks.provider.DatabricksProvider(
       this,
@@ -162,24 +149,36 @@ class DatabricksStack extends TerraformStack {
     // Note; On first run, this should be commented out. On second run, it should be uncommented.
     // This is an unresolved dependency issue.
     this.workspace({
-      metastoreId,
-      metastoreAssignment,
       profileRoleName,
       workspaceProvider,
     })
   }
 
   private workspace({
-    metastoreId,
     profileRoleName,
-    metastoreAssignment,
     workspaceProvider,
   }: {
     workspaceProvider: databricks.provider.DatabricksProvider
-    metastoreId: string
     profileRoleName: string
-    metastoreAssignment: ITerraformDependable
   }) {
+
+    new databricks.workspaceConf.WorkspaceConf(this, 'workspace-conf', {
+      provider: workspaceProvider,
+      customConfig: {
+        enableTokensConfig: "true",
+        maxTokenLifetimeDays: "0",
+      }
+    })
+
+    new databricks.permissions.Permissions(this, 'token-permission', {
+      provider: workspaceProvider,
+      authorization: "tokens",
+      accessControl: [{
+        groupName: "users",
+        permissionLevel: "CAN_USE"
+      }]
+    })
+
     const profile = new aws.iamInstanceProfile.IamInstanceProfile(
       this,
       'instance-profile',
@@ -207,37 +206,6 @@ class DatabricksStack extends TerraformStack {
           artifact: 'org.mongodb.spark:mongo-spark-connector_2.12',
         },
       ],
-    })
-
-    const mainCatalog = new databricks.catalog.Catalog(this, 'main-catalog', {
-      provider: workspaceProvider,
-      metastoreId: metastoreId,
-      name: Fn.replace(env, '-', '_'),
-      comment: 'This catalog is managed by terraform',
-      properties: {
-        purpose: 'testing',
-      },
-      dependsOn: [metastoreAssignment],
-      forceDestroy: true,
-    })
-
-    new databricks.schema.Schema(this, 'main-schema', {
-      provider: workspaceProvider,
-      name: 'main',
-      catalogName: mainCatalog.name,
-      dependsOn: [mainCatalog],
-    })
-
-    new databricks.grants.Grants(this, 'main-grants-env', {
-      provider: workspaceProvider,
-      catalog: mainCatalog.name,
-      grant: [
-        {
-          principal: regionalAdminGroupName,
-          privileges: ['ALL_PRIVILEGES'],
-        },
-      ],
-      dependsOn: [metastoreAssignment],
     })
 
     const workspaceGroup =
@@ -372,7 +340,7 @@ class DatabricksStack extends TerraformStack {
     new databricks.cluster.Cluster(this, 'cluster', {
       ...clusterConfig,
       provider: workspaceProvider,
-      sparkVersion: '13.3.x-scala2.12',
+      sparkVersion: '14.2.x-scala2.12',
       clusterName: 'Shared Autoscaling',
       nodeTypeId: 'm5d.large',
       autoscale: {
@@ -388,6 +356,11 @@ class DatabricksStack extends TerraformStack {
         {
           pypi: {
             package: 'pymongo',
+          },
+        },
+        {
+          pypi: {
+            package: 'databricks-sdk==0.17',
           },
         },
       ],
@@ -451,32 +424,6 @@ class DatabricksStack extends TerraformStack {
             provider: workspaceProvider,
             source: path.join(directoryPath, file),
             path: path.join('/Shared/main/src', file),
-          }
-        )
-      })
-
-    // TODO create and upload a python WHL instead.
-    const genDirectoryPath = path.resolve(
-      __dirname,
-      '..',
-      'openapi',
-      'gen',
-      'openapi_client',
-      'models'
-    )
-    fs.readdirSync(genDirectoryPath, { withFileTypes: true })
-      .filter((file) => file.name !== '__init__.py')
-      .map((file) =>
-        path.join(file.path.replace(genDirectoryPath, ''), file.name)
-      )
-      .forEach((file, index) => {
-        new databricks.workspaceFile.WorkspaceFile(
-          this,
-          `gen-workspace-file-${index}`,
-          {
-            provider: workspaceProvider,
-            source: path.join(genDirectoryPath, file),
-            path: path.join('/Shared/main/src/openapi_client/models', file),
           }
         )
       })
