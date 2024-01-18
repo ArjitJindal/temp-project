@@ -22,6 +22,7 @@ interface Props<DataType, ValueType extends string, GroupType extends string> ex
     name: GroupType;
     attributeName: string;
     attributeDataPrefix: string;
+    seriesLabel?: string;
   }>;
   groupBy: 'VALUE' | 'TIME';
   valueColors: { [key in ValueType]: string };
@@ -87,6 +88,10 @@ export default function DistributionChartWidget<
     () => groups.find((group) => group.name === selectedGroup)!.attributeName,
     [groups, selectedGroup],
   );
+  const seriesLabel = useMemo<string>(
+    () => groups.find((group) => group.name === selectedGroup)!.seriesLabel ?? '',
+    [groups, selectedGroup],
+  );
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   const getValueName = useCallback(
     (value: string) => valueNames?.[value] ?? humanizeAuto(value),
@@ -126,8 +131,14 @@ export default function DistributionChartWidget<
                   fileName: `${downloadFilenamePrefix}${selectedGroupPrefix}-${dayjs().format(
                     'YYYY_MM_DD',
                   )}`,
-                  data: exportDataForBarGraphs(data, attributeName),
+                  data: exportDataForBarGraphs(
+                    data,
+                    attributeName,
+                    undefined,
+                    groupBy === 'TIME' ? seriesLabel : '',
+                  ),
                   pdfRef,
+                  tableTitle: `${attributeName} distribution`,
                 };
                 resolve(fileData);
               });

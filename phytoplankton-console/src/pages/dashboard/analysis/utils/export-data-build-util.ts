@@ -33,15 +33,22 @@ export const exportDataForTreemaps = (
 };
 
 export const exportDataForBarGraphs = (
-  data: { xValue: string | null; yValue: number }[],
+  data: { xValue: string | null; yValue: number; series?: string | number | null }[],
   xField: string,
   yField?: string,
+  seriesLabel?: string,
 ): string => {
   const parsedData = orderBy(data, 'value', 'desc').map((dataItem) => {
-    return {
-      [xField]: dataItem.xValue ?? '',
-      [yField ?? 'count']: dataItem.yValue,
-    };
+    return seriesLabel === '' || seriesLabel === null
+      ? {
+          [xField]: dataItem.xValue ?? '',
+          [yField ?? 'count']: dataItem.yValue,
+        }
+      : {
+          [xField]: dataItem.xValue ?? '',
+          [seriesLabel ?? '']: dataItem.series ?? '',
+          [yField ?? 'count']: dataItem.yValue,
+        };
   });
   return getCsvData(parsedData);
 };

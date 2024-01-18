@@ -71,6 +71,7 @@ export default function RuleActionSplitCard(props: Props) {
                     fileName: `distribution-by-rule-action-${dayjs().format('YYYY_MM_DD')}`,
                     data: exportDataForDonuts('ruleAction', data),
                     pdfRef,
+                    tableTitle: `Distribution by rule action`,
                   };
                   resolve(fileData);
                 });

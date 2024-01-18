@@ -89,6 +89,9 @@ export default function UserStatusDistributionCard(props: Props) {
                     )}`,
                     data: exportDataForDonuts('userStatus', data),
                     pdfRef,
+                    tableTitle: `${
+                      userType.charAt(0).toUpperCase() + userType.slice(1).toLowerCase()
+                    } user status distribution`,
                   };
                   resolve(fileData);
                 });

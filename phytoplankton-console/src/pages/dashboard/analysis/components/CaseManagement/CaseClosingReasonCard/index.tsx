@@ -130,6 +130,7 @@ const CaseClosingReasonCard = (props: Props) => {
                       data,
                     ),
                     pdfRef: pdfRef,
+                    tableTitle: `Distribution by ${selectedSection.toLowerCase()} closing reason`,
                   };
                   resolve(fileData);
                 });

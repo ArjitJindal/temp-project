@@ -77,6 +77,7 @@ export default function RulePrioritySplitCard(props: Props) {
                     fileName: `distribution-by-rule-priority-${dayjs().format('YYYY_MM_DD')}`,
                     data: exportDataForDonuts('rulePriority', priorityData),
                     pdfRef,
+                    tableTitle: `Distribution by rule priority`,
                   };
                   resolve(fileData);
                 });

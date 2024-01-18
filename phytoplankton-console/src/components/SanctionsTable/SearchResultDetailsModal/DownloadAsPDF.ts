@@ -7,13 +7,14 @@ interface Props {
   pdfRef: React.MutableRefObject<HTMLInputElement>;
   fileName: string;
   data?: string;
+  tableTitle?: string;
 }
 
 const PAGE_WIDTH = 190;
 const PAGE_HEIGHT = 295;
 
 const DownloadAsPDF = async (props: Props) => {
-  const { pdfRef, fileName, data } = props;
+  const { pdfRef, fileName, data, tableTitle } = props;
   try {
     const input = pdfRef.current;
     const logoImage = new Image();
@@ -41,6 +42,11 @@ const DownloadAsPDF = async (props: Props) => {
       heightLeft -= PAGE_HEIGHT;
     }
 
+    // Add table title if available
+    if (tableTitle) {
+      doc.setFontSize(12);
+      doc.text(tableTitle, 15, position + imgHeight + 7);
+    }
     // Add table if data is available
     addTable({ imgHeight, position, doc, data });
 
@@ -93,6 +99,33 @@ const addTable = ({ imgHeight, position, doc, data }) => {
       body: tableData.rows,
       startY: (imgHeight + position + 10) % PAGE_HEIGHT,
       tableWidth: tableWidth,
+      headStyles: { fillColor: [245, 245, 245], textColor: [38, 38, 38], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [255, 255, 255] },
+      bodyStyles: { fillColor: [245, 245, 245] },
+      didParseCell: (data) => {
+        switch (data.cell.text[0]) {
+          case 'VERY_HIGH': {
+            data.cell.styles.textColor = [245, 34, 45];
+            break;
+          }
+          case 'HIGH': {
+            data.cell.styles.textColor = [250, 140, 22];
+            break;
+          }
+          case 'MEDIUM': {
+            data.cell.styles.textColor = [245, 226, 90];
+            break;
+          }
+          case 'LOW': {
+            data.cell.styles.textColor = [82, 196, 26];
+            break;
+          }
+          case 'VERY_LOW': {
+            data.cell.styles.textColor = [173, 198, 255];
+            break;
+          }
+        }
+      },
     });
   }
 };

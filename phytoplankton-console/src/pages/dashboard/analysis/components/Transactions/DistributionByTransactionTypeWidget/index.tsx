@@ -88,6 +88,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
                     fileName: `distribution-by-transaction-type-${randomID}`,
                     data: exportDataForDonuts('transactionType', data),
                     pdfRef,
+                    tableTitle: `Distribution by transaction type`,
                   };
                   resolve(fileData);
                 });

@@ -64,8 +64,18 @@ function RiskLevelDistributionCardBase(props: Props & { groupBy: 'VALUE' | 'TIME
   return (
     <DistributionChartWidget<DashboardStatsUsersStats, RiskLevel>
       groups={[
-        { name: 'CRA', attributeName: 'CRA', attributeDataPrefix: 'drsRiskLevel' },
-        { name: 'KRS', attributeName: 'KRS', attributeDataPrefix: 'krsRiskLevel' },
+        {
+          name: 'CRA',
+          attributeName: 'CRA',
+          attributeDataPrefix: 'drsRiskLevel',
+          seriesLabel: 'Risk Level',
+        },
+        {
+          name: 'KRS',
+          attributeName: 'KRS',
+          attributeDataPrefix: 'krsRiskLevel',
+          seriesLabel: 'Risk Level',
+        },
       ]}
       groupBy={groupBy}
       valueColors={RISK_LEVEL_COLORS}

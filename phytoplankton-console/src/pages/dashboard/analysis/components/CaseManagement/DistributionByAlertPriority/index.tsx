@@ -67,6 +67,7 @@ const DistributionByAlertPriority = (props: Props) => {
                     )}.pdf`,
                     pdfRef: pdfRef,
                     data: exportDataForDonuts('alertPriority', data),
+                    tableTitle: `Distribution by open alert priority`,
                   };
                   resolve(fileData);
                 });

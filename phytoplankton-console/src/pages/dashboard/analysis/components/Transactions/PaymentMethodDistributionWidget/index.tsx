@@ -96,6 +96,7 @@ export default function PaymentMethodDistributionWidget(props: Props) {
                     fileName: `distribution-by-payment-methods-${dayjs().format('YYYY_MM_DD')}`,
                     data: exportDataForTreemaps('paymentMethod', preparedData),
                     pdfRef,
+                    tableTitle: `Distribution by payment methods`,
                   };
                   resolve(fileData);
                 });

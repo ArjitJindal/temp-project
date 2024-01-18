@@ -55,6 +55,7 @@ export function DownloadButton(props: {
     fileName: string;
     data?: string;
     pdfRef?: MutableRefObject<HTMLInputElement>;
+    tableTitle?: string;
   }>;
 }) {
   const { onDownload } = props;
@@ -64,9 +65,9 @@ export function DownloadButton(props: {
     setLoading(true);
 
     try {
-      const { data, fileName, pdfRef } = await onDownload();
+      const { data, fileName, pdfRef, tableTitle } = await onDownload();
       if (pdfRef) {
-        await DownloadAsPDF({ pdfRef, fileName, data });
+        await DownloadAsPDF({ pdfRef, fileName, data, tableTitle });
       } else {
         if (data && data.length) {
           download(fileName, data);
