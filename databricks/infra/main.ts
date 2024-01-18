@@ -132,6 +132,18 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
+    // Assign metastore to workspace
+    new databricks.metastoreAssignment.MetastoreAssignment(
+      this,
+      'metastore-assignment',
+      {
+        provider: this.mws,
+        workspaceId: workspace.workspaceId,
+        metastoreId: metastoreId,
+        defaultCatalogName: stage,
+      }
+    )
+
     // Configure workspace provide
     const workspaceProvider = new databricks.provider.DatabricksProvider(
       this,
@@ -161,22 +173,23 @@ class DatabricksStack extends TerraformStack {
     workspaceProvider: databricks.provider.DatabricksProvider
     profileRoleName: string
   }) {
-
     new databricks.workspaceConf.WorkspaceConf(this, 'workspace-conf', {
       provider: workspaceProvider,
       customConfig: {
-        enableTokensConfig: "true",
-        maxTokenLifetimeDays: "0",
-      }
+        enableTokensConfig: 'true',
+        maxTokenLifetimeDays: '0',
+      },
     })
 
     new databricks.permissions.Permissions(this, 'token-permission', {
       provider: workspaceProvider,
-      authorization: "tokens",
-      accessControl: [{
-        groupName: "users",
-        permissionLevel: "CAN_USE"
-      }]
+      authorization: 'tokens',
+      accessControl: [
+        {
+          groupName: 'users',
+          permissionLevel: 'CAN_USE',
+        },
+      ],
     })
 
     const profile = new aws.iamInstanceProfile.IamInstanceProfile(
