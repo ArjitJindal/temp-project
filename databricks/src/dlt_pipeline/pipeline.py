@@ -48,7 +48,7 @@ def define_pipeline(spark):
         return (
             spark.readStream.format("kinesis")
             .option("streamName", os.environ["KINESIS_STREAM"])
-            .option("region", os.environ["KINESIS_REGION"])
+            .option("region", os.environ["AWS_REGION"])
             .option("awsAccessKey", aws_access_key)
             .option("awsSecretKey", aws_secret_key)
             .option("startingposition", "latest")

@@ -264,6 +264,31 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
+    const databricksAccessToken = new databricks.token.Token(
+      this,
+      'access-token',
+      {
+        provider: workspaceProvider,
+        comment: 'Terraform provisioned',
+      }
+    )
+
+    const databricksScope = new databricks.secretScope.SecretScope(
+      this,
+      'databricks-secret-scope',
+      {
+        provider: workspaceProvider,
+        name: 'databricks',
+      }
+    )
+
+    new databricks.secret.Secret(this, 'databricks-username', {
+      provider: workspaceProvider,
+      key: 'token',
+      stringValue: databricksAccessToken.tokenValue,
+      scope: databricksScope.id,
+    })
+
     const mongoSecret =
       new aws.dataAwsSecretsmanagerSecret.DataAwsSecretsmanagerSecret(
         this,
@@ -340,7 +365,7 @@ class DatabricksStack extends TerraformStack {
       dataSecurityMode: 'NONE',
       accessMode: 'NO_ISOLATION',
       sparkEnvVars: {
-        KINESIS_REGION: awsRegion,
+        AWS_REGION: awsRegion,
         KINESIS_STREAM: kinesisStreamName,
       },
       autoterminationMinutes: 15,
@@ -390,15 +415,6 @@ class DatabricksStack extends TerraformStack {
         clusterSize: '2X-Small',
         autoStopMins: enableServerlessCompute ? 5 : 10,
         enableServerlessCompute,
-      }
-    )
-
-    const databricksAccessToken = new databricks.token.Token(
-      this,
-      'access-token',
-      {
-        provider: workspaceProvider,
-        comment: 'Terraform provisioned',
       }
     )
 
@@ -791,6 +807,7 @@ class DatabricksStack extends TerraformStack {
       assumeRolePolicy: doc.json,
       managedPolicyArns: [
         'arn:aws:iam::aws:policy/AmazonKinesisReadOnlyAccess',
+        'arn:aws:iam::aws:policy/SecretsManagerReadWrite',
       ],
       tags: { Project: 'databricks' },
     })
