@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { get } from 'lodash';
 import { message, Popover, Radio } from 'antd';
-import * as XLSX from 'xlsx-js-style';
+import { utils, CellStyle, CellObject, writeFile } from 'xlsx-js-style';
 import {
   applyFieldAccessor,
   DerivedColumn,
@@ -89,13 +89,13 @@ export function transformXLSXTableRows<T extends object>(
     getColumnTitile(adjustedColumn, props),
   );
 
-  const style: XLSX.CellStyle = {
+  const style: CellStyle = {
     font: {
       bold: true,
     },
   };
 
-  const rows: XLSX.CellObject[][] = [
+  const rows: CellObject[][] = [
     columnTitles.map((title) => ({
       t: 's',
       v: title,
@@ -104,7 +104,7 @@ export function transformXLSXTableRows<T extends object>(
   ];
 
   const dataRows = items.map((row) =>
-    columnsToExport.map((column): XLSX.CellObject => {
+    columnsToExport.map((column): CellObject => {
       const columnDataType = { ...UNKNOWN, ...column.type };
       const value = isSimpleColumn<T>(column)
         ? applyFieldAccessor(row, column.key)
@@ -141,11 +141,11 @@ function processTableExcelDownload<T extends object>(
 ) {
   const rows = transformXLSXTableRows(items, columnsToExport, props);
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = utils.book_new();
+  const ws = utils.aoa_to_sheet(rows);
 
-  XLSX.utils.book_append_sheet(wb, ws, 'data_sheet');
-  XLSX.writeFile(wb, `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.xlsx`);
+  utils.book_append_sheet(wb, ws, 'data_sheet');
+  writeFile(wb, `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.xlsx`);
 }
 
 export default function DownloadButton<T extends object, Params extends object>(
