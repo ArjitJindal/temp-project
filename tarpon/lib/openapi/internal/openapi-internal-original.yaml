@@ -5434,7 +5434,7 @@ components:
         variables:
           type: array
           items:
-            type: object
+            $ref: '#/components/schemas/RuleEntityVariable'
         operators:
           type: array
           items:
@@ -5443,6 +5443,33 @@ components:
           type: array
           items:
             type: object
+    RuleEntityVariable:
+      title: RuleEntityVariable
+      type: object
+      properties:
+        key:
+          type: string
+        uiDefinition:
+          type: object
+        entity:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
+            - CONSUMER_USER
+            - BUSINESS_USER
+            - PAYMENT_DETAILS
+        valueType:
+          type: string
+          enum:
+            - string
+            - number
+            - boolean
+            - date
+            - array
+      required:
+        - key
+        - uiDefinition
     RuleAggregationType:
       title: RuleAggregationType
       type: string

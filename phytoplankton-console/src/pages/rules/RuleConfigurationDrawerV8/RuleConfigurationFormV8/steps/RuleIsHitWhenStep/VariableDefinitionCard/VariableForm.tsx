@@ -16,6 +16,7 @@ import {
   RuleAggregationType,
   RuleAggregationVariable,
   RuleAggregationVariableTimeWindow,
+  RuleEntityVariable,
 } from '@/apis';
 import Select from '@/components/library/Select';
 import SelectionGroup from '@/components/library/SelectionGroup';
@@ -37,7 +38,7 @@ export type FormRuleAggregationVariable = Partial<RuleAggregationVariable> & {
 interface VariableFormProps {
   variable: FormRuleAggregationVariable;
   isNew: boolean;
-  entityVariables: any[];
+  entityVariables: RuleEntityVariable[];
   onUpdate: (newAggregationVariable: RuleAggregationVariable) => void;
   onCancel: () => void;
 }

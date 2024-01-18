@@ -9,11 +9,17 @@ import { useQuery } from '@/utils/queries/hooks';
 import { RULE_LOGIC_CONFIG } from '@/utils/queries/keys';
 import { useIsChanged } from '@/utils/hooks';
 import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
-import { RuleAggregationFunc, RuleAggregationVariable, RuleLogicConfig } from '@/apis';
+import {
+  RuleAggregationFunc,
+  RuleAggregationVariable,
+  RuleEntityVariable,
+  RuleLogicConfig,
+} from '@/apis';
 
 export function useLogicBuilderConfig(
-  // TODO (V8): Improve RuleLogicConfig type
-  entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER'>,
+  entityVariableTypes: Array<
+    'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER' | 'PAYMENT_DETAILS'
+  >,
   aggregationVariables: RuleAggregationVariable[],
 ): AsyncResource<Config> {
   const [result, setResult] = useState<AsyncResource<Config>>(init());
@@ -45,7 +51,7 @@ export function useLogicBuilderConfig(
           return definition;
         });
         const filteredEntityVariables = entityVariables.filter((v) =>
-          entityVariableTypes.includes(v.entity),
+          entityVariableTypes.includes(v.entity!),
         );
         const variables = filteredEntityVariables.concat(aggregationVariablesGrouped);
         const config = makeConfig({
@@ -98,8 +104,10 @@ const AGG_FUNC_TO_TYPE: Record<RuleAggregationFunc, string> = {
   SUM: 'number',
 };
 
-// TODO (V8): Improve entityVariables typings
-function getAggVarDefinition(aggVar: RuleAggregationVariable, entityVariables: any[]) {
+function getAggVarDefinition(
+  aggVar: RuleAggregationVariable,
+  entityVariables: RuleEntityVariable[],
+) {
   const entityVariable = entityVariables.find((v) => v.key === aggVar.aggregationFieldKey);
   const { start, end } = aggVar.timeWindow;
   const startLabel = `${start.units} ${pluralize(lowerCase(start.granularity), start.units)} ago`;
@@ -107,9 +115,10 @@ function getAggVarDefinition(aggVar: RuleAggregationVariable, entityVariables: a
     end.units === 0 ? '' : `${end.units} ${pluralize(lowerCase(end.granularity), end.units)} ago`;
   const timeWindowLabel = `${startLabel}${endLabel ? ` - ${endLabel}` : ''}`;
   const entityVariableLabel =
-    aggVar.aggregationFunc === 'COUNT'
-      ? lowerCase(pluralize(entityVariable.entity))
-      : entityVariable?.uiDefinition?.label;
+    entityVariable &&
+    (aggVar.aggregationFunc === 'COUNT'
+      ? lowerCase(pluralize(entityVariable.entity!))
+      : entityVariable?.uiDefinition?.label);
   const label = `${humanizeAuto(aggVar.aggregationFunc)} of ${
     entityVariableLabel ?? aggVar.aggregationFieldKey
   } (${timeWindowLabel})`;

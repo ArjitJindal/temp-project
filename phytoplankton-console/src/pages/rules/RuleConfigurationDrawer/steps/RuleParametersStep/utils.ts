@@ -1,6 +1,6 @@
 import { lowerCase } from 'lodash';
 import pluralize from 'pluralize';
-import { RuleAggregationFunc, RuleAggregationVariable } from '@/apis';
+import { RuleAggregationFunc, RuleAggregationVariable, RuleEntityVariable } from '@/apis';
 import { humanizeAuto } from '@/utils/humanize';
 
 const AGG_FUNC_TO_TYPE: Record<RuleAggregationFunc, string> = {
@@ -9,7 +9,10 @@ const AGG_FUNC_TO_TYPE: Record<RuleAggregationFunc, string> = {
   SUM: 'number',
 };
 
-export function getAggVarDefinition(aggVar: RuleAggregationVariable, entityVariables: any[]) {
+export function getAggVarDefinition(
+  aggVar: RuleAggregationVariable,
+  entityVariables: RuleEntityVariable[],
+) {
   const entityVariable = entityVariables.find((v) => v.key === aggVar.aggregationFieldKey);
   const { start, end } = aggVar.timeWindow;
   const startLabel = `${start.units} ${pluralize(lowerCase(start.granularity), start.units)} ago`;
@@ -19,7 +22,7 @@ export function getAggVarDefinition(aggVar: RuleAggregationVariable, entityVaria
   const entityVariableLabel =
     entityVariable &&
     (aggVar.aggregationFunc === 'COUNT'
-      ? lowerCase(pluralize(entityVariable.entity))
+      ? lowerCase(pluralize(entityVariable.entity!))
       : entityVariable.uiDefinition?.label);
   const label = `${humanizeAuto(aggVar.aggregationFunc)} of ${
     entityVariableLabel ?? aggVar.aggregationFieldKey
