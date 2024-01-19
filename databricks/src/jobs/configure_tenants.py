@@ -22,6 +22,7 @@ sql_access = ComplexValue()
 sql_access.value = "databricks-sql-access"
 sql_access.display = "databricks-sql-access"
 
+
 def create_or_update_secret(secret_name, secret_value):
     # Initialize a client for AWS Secrets Manager
     client = boto3.client('secretsmanager', region_name=os.environ["AWS_REGION"])
@@ -46,6 +47,7 @@ def create_or_update_secret(secret_name, secret_value):
 
     print("Operation completed successfully.")
 
+
 w = WorkspaceClient(
     auth_type="pat",
     token=dbutils.secrets.get('databricks', 'token'),
@@ -67,9 +69,14 @@ for wh in w.warehouses.list():
         warehouse = wh
 
 print(f"querying integrated tenants")
-tenants = w.statement_execution.execute_statement('select distinct(tenant) from hive_metastore.default.transactions',
-                                                  warehouse_id)
-for [tenant] in tenants.result.data_array:
+tenants_query = w.statement_execution.execute_statement(
+    'select distinct(tenant) from hive_metastore.default.transactions',
+    warehouse_id)
+
+tenants = []
+if tenants_query.result is not None:
+    tenants = [result[0] for result in tenants_query.result.data_array]
+for tenant in tenants:
     if tenant not in principals:
         print(f"creating service principal for {tenant}")
         sp = w.service_principals.create(active=True, display_name=tenant, entitlements=[workspace_access, sql_access])
@@ -78,10 +85,10 @@ print("setting permissions for all service principals")
 all_principals = [sp for sp in w.service_principals.list()]
 sp_perms = []
 for sp in all_principals:
-  acr = AccessControlRequest()
-  acr.service_principal_name = sp.application_id
-  acr.permission_level = PermissionLevel.CAN_USE
-  sp_perms.append(acr)
+    acr = AccessControlRequest()
+    acr.service_principal_name = sp.application_id
+    acr.permission_level = PermissionLevel.CAN_USE
+    sp_perms.append(acr)
 
 adm = AccessControlRequest()
 adm.group_name = "admins"
@@ -95,52 +102,45 @@ print("permissions set")
 
 print("reconfiguring all service principals")
 for sp in all_principals:
-  tenant = sp.display_name
-  print(f"configure {tenant}")
-  if sp.display_name not in [t[0] for t in tenants.result.data_array]:
-    print(tenants.result.data_array)
-    continue
-  w.service_principals.update(sp.id, display_name=sp.display_name, entitlements=[workspace_access, sql_access])
+    tenant = sp.display_name
+    print(f"configure {tenant}")
 
-  print(f"creating schema for {tenant}")
-  w.statement_execution.execute_statement(f"create schema hive_metastore.{tenant}", warehouse_id)
-  w.statement_execution.execute_statement(f"grant usage on schema hive_metastore.{tenant} to `{sp.application_id}`", warehouse_id)
+    if sp.display_name not in tenants:
+        print(tenants.result.data_array)
+        continue
+    w.service_principals.update(sp.id, display_name=sp.display_name, entitlements=[workspace_access, sql_access])
 
+    print(f"creating schema for {tenant}")
+    w.statement_execution.execute_statement(f"create schema hive_metastore.{tenant}", warehouse_id)
+    w.statement_execution.execute_statement(f"grant usage on schema hive_metastore.{tenant} to `{sp.application_id}`",
+                                            warehouse_id)
 
-  print("creating missing views")
-  query_result = w.statement_execution.execute_statement(f"show tables in {tenant}", warehouse_id)
-  if query_result.result is None:
-      tables = []
-  else:
-      tables = [table[1] for table in query_result.result.data_array]
+    print("creating missing views")
+    query_result = w.statement_execution.execute_statement(f"show tables in {tenant}", warehouse_id)
+    if query_result.result is None:
+        tables = []
+    else:
+        tables = [table[1] for table in query_result.result.data_array]
 
-  for entity in entities:
-      table = entity["table"]
-      if table not in tables:
-          print(f"create view {table} for {tenant}")
-          r = w.statement_execution.execute_statement(
-              f"create view hive_metastore.{tenant}.{table} as select * from hive_metastore.default.{table} where tenant = '{tenant}'",
-              warehouse_id)
+    for entity in entities:
+        table = entity["table"]
+        if table not in tables:
+            print(f"create view {table} for {tenant}")
+            r = w.statement_execution.execute_statement(
+                f"create view hive_metastore.{tenant}.{table} as select * from hive_metastore.default.{table} where tenant = '{tenant}'",
+                warehouse_id)
 
-  for entity in entities:
-    table = entity["table"]
-    w.statement_execution.execute_statement(f"grant select on view hive_metastore.{tenant}.{table} to `{sp.application_id}`", warehouse_id)
+    for entity in entities:
+        table = entity["table"]
+        w.statement_execution.execute_statement(
+            f"grant select on view hive_metastore.{tenant}.{table} to `{sp.application_id}`", warehouse_id)
 
-  print(f"creating token for {tenant} service principal")
-  token = w.token_management.create_obo_token(sp.application_id, -1)
+    print(f"creating token for {tenant} service principal")
+    token = w.token_management.create_obo_token(sp.application_id, -1)
 
-  print(f"pushing secret to AWS")
-  create_or_update_secret(f"databricks/{tenant}", json.dumps({
-    "token": token.token_value,
-    "host": warehouse.odbc_params.hostname,
-    "path": warehouse.odbc_params.path
-  }))
-
-
-
-
-
-
-
-
-
+    print(f"pushing secret to AWS")
+    create_or_update_secret(f"databricks/{tenant}", json.dumps({
+        "token": token.token_value,
+        "host": warehouse.odbc_params.hostname,
+        "path": warehouse.odbc_params.path
+    }))

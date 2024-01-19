@@ -51,19 +51,22 @@ def load_mongo(table, partition_key, id_column, schema):
             continue
         tenant = coll.replace(suffix, "")
         logger.info("Processing collection: %s", coll)
-        df = (
-            spark.read.format("mongo")
-            .option("database", db_name)
-            .option("uri", connection_uri)
-            .option("collection", coll)
-            .schema(schema)
-            .load()
-            .withColumn("tenant", lit(tenant))
-        )
-        df.write.option("mergeSchema", "true").format("delta").mode(
-            "append"
-        ).saveAsTable(table_path)
-        logger.info("Collection processed: %s", coll)
+        try:
+            df = (
+                spark.read.format("mongo")
+                .option("database", db_name)
+                .option("uri", connection_uri)
+                .option("collection", coll)
+                .schema(schema)
+                .load()
+                .withColumn("tenant", lit(tenant))
+            )
+            df.write.option("mergeSchema", "true").format("delta").mode(
+                "append"
+            ).saveAsTable(table_path)
+            logger.info("Collection processed: %s", coll)
+        except:
+            logger.info("Could not backfill from %s", coll)
     logger.info("All collections processed successfully.")
 
 
