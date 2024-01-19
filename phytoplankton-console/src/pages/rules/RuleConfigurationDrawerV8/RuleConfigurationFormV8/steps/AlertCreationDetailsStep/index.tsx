@@ -6,13 +6,13 @@ import { AlertInvestigationChecklist } from './AlertInvestigationChecklist';
 import CreationIntervalInput, { AlertCreationInterval } from './CreationIntervalInput';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import InputField from '@/components/library/Form/InputField';
-import { Priority, RuleInstance, RuleInstanceAlertCreatedForEnum } from '@/apis';
+import { Priority } from '@/apis';
 import SelectionGroup from '@/components/library/SelectionGroup';
-import { ALERT_CREATED_FOR, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
+import { ALERT_CREATED_FOR, AlertCreatedForEnum, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
 
 export interface FormValues {
   alertPriority: Priority;
-  alertCreatedFor: RuleInstance['alertCreatedFor'];
+  alertCreatedFor: AlertCreatedForEnum[];
   alertCreationInterval?: AlertCreationInterval;
   falsePositiveCheckEnabled: 'true' | 'false';
   alertAssigneesType?: 'EMAIL' | 'ROLE';
@@ -58,7 +58,7 @@ export default function AlertCreationDetailsStep(_props: Props) {
             labelProps={{ required: true }}
           >
             {(inputProps) => (
-              <SelectionGroup<RuleInstanceAlertCreatedForEnum>
+              <SelectionGroup<AlertCreatedForEnum>
                 mode="MULTIPLE"
                 options={ALERT_CREATED_FOR}
                 {...inputProps}

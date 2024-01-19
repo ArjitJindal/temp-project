@@ -85,7 +85,8 @@ export class RuleInstanceRepository {
   }
 
   public async createOrUpdateRuleInstance(
-    ruleInstance: RuleInstance
+    ruleInstance: RuleInstance,
+    updatedAt?: number
   ): Promise<RuleInstance> {
     const ruleInstanceId =
       ruleInstance.id || (await this.getNewRuleInstanceId())
@@ -105,7 +106,7 @@ export class RuleInstanceRepository {
       id: ruleInstanceId,
       status: ruleInstance.status || 'ACTIVE',
       createdAt: ruleInstance.createdAt || now,
-      updatedAt: now,
+      updatedAt: updatedAt ?? now,
       runCount: ruleInstance.runCount || 0,
       hitCount: ruleInstance.hitCount || 0,
       alertConfig: ruleInstance.alertConfig,

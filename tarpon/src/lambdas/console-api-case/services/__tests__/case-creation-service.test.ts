@@ -43,7 +43,7 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
-import { CreateAlertFor } from '@/services/rules-engine/utils/rule-parameter-schemas'
+import { AlertCreatedForEnum } from '@/services/rules-engine/utils/rule-parameter-schemas'
 import { getAlertRepo } from '@/lambdas/console-api-dashboard/repositories/__tests__/helpers'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -1561,7 +1561,7 @@ describe('Test payment cases', () => {
         TEST_TENANT_ID,
         [
           {
-            createAlertFor: 'EXTERNAL_USER',
+            alertCreatedFor: ['PAYMENT_DETAILS'],
           },
         ],
         async () => {
@@ -1593,7 +1593,7 @@ describe('Test payment cases', () => {
         TEST_TENANT_ID,
         [
           {
-            createAlertFor: 'EXTERNAL_USER',
+            alertCreatedFor: ['PAYMENT_DETAILS'],
           },
         ],
         async () => {
@@ -1771,7 +1771,7 @@ async function underRules<R = void>(
       | AlertCreationIntervalInstantly
       | AlertCreationIntervalWeekly
       | AlertCreationIntervalMonthly
-    createAlertFor?: CreateAlertFor
+    alertCreatedFor?: AlertCreatedForEnum[]
     alertAssignees?: string[]
     alertAssigneeRole?: string
   }[],
@@ -1790,12 +1790,12 @@ async function underRules<R = void>(
           type: ruleType,
           parameters: {
             hitDirections: parameters.hitDirections,
-            createAlertFor: parameters.createAlertFor,
           },
           alertConfig: {
             alertAssigneeRole: parameters.alertAssigneeRole,
             alertAssignees: parameters.alertAssignees,
             alertCreationInterval: parameters.alertCreationInterval,
+            alertCreatedFor: parameters.alertCreatedFor ?? ['USER'],
           },
         }
       )

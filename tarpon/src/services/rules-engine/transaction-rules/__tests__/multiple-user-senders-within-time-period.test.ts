@@ -20,7 +20,6 @@ const DEFAULT_RULE_PARAMETERS: MultipleSendersWithinTimePeriodRuleParameters = {
     units: 30,
     granularity: 'day',
   },
-  createAlertFor: 'ALL',
 }
 
 dynamoDbSetupHook()

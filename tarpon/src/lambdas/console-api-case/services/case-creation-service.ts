@@ -41,7 +41,6 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { RoleService } from '@/services/roles'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { CreateAlertFor } from '@/services/rules-engine/utils/rule-parameter-schemas'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 import { dedupObjectArray } from '@/utils/object'
@@ -622,18 +621,21 @@ export class CaseCreationService {
         if (ruleInstance == null) {
           return false
         }
+        // Create AlertFor Logic
+        let { alertCreatedFor } = ruleInstance.alertConfig ?? {}
+        alertCreatedFor =
+          !alertCreatedFor || alertCreatedFor.length === 0
+            ? ['USER']
+            : alertCreatedFor
 
-        // TODO: Refactor createAlertFor
-        const createAlertFor: CreateAlertFor | undefined =
-          ruleInstance.parameters?.createAlertFor
         if (
-          subject.type === 'PAYMENT' &&
-          createAlertFor !== 'EXTERNAL_USER' &&
-          createAlertFor !== 'ALL'
+          !alertCreatedFor.includes('PAYMENT_DETAILS') &&
+          subject.type === 'PAYMENT'
         ) {
           return false
         }
-        if (subject.type === 'USER' && createAlertFor === 'EXTERNAL_USER') {
+
+        if (!alertCreatedFor.includes('USER') && subject.type === 'USER') {
           return false
         }
 

@@ -918,13 +918,4 @@ export const USER_STATUS_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
-export type CreateAlertFor = 'INTERNAL_USER' | 'EXTERNAL_USER' | 'ALL'
-export const CREATE_ALERT_FOR_OPTIONAL_SCHEMA = () =>
-  ({
-    type: 'string',
-    enum: ['INTERNAL_USER', 'EXTERNAL_USER', 'ALL'],
-    enumNames: ['Internal user', 'External user', 'All'],
-    title: 'Create alert for',
-    description: 'Alerts and cases are created only for specific kind of user',
-    nullable: true,
-  } as const)
+export type AlertCreatedForEnum = 'PAYMENT_DETAILS' | 'USER'

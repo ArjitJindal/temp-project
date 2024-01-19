@@ -2,12 +2,7 @@ import { JSONSchemaType } from 'ajv'
 
 import { chain, compact, mergeWith, uniq } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
-import {
-  CREATE_ALERT_FOR_OPTIONAL_SCHEMA,
-  CreateAlertFor,
-  TIME_WINDOW_SCHEMA,
-  TimeWindow,
-} from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import {
@@ -24,7 +19,6 @@ type UserType = 'USER' | 'NON_USER'
 export type MultipleSendersWithinTimePeriodRuleParameters = {
   sendersCount: number
   timeWindow: TimeWindow
-  createAlertFor: CreateAlertFor // this is a temporal solution, we will have a refactoring in a future
 }
 
 export type SenderReceiverTypes = {
@@ -53,7 +47,6 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
             'rule is run when the senders count per time window is greater than the threshold',
         },
         timeWindow: TIME_WINDOW_SCHEMA(),
-        createAlertFor: CREATE_ALERT_FOR_OPTIONAL_SCHEMA(),
       },
       required: ['sendersCount', 'timeWindow'],
     }

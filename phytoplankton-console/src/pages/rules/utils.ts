@@ -2,15 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { RuleConfigurationFormValues } from './RuleConfigurationDrawer/RuleConfigurationForm';
 import { RuleConfigurationFormV8Values } from './RuleConfigurationDrawerV8/RuleConfigurationFormV8';
 import { useApi } from '@/api';
-import {
-  Rule,
-  Priority,
-  RuleInstance,
-  RuleLabels,
-  RuleNature,
-  TriggersOnHit,
-  RuleInstanceAlertCreatedForEnum,
-} from '@/apis';
+import { Rule, Priority, RuleInstance, RuleLabels, RuleNature, TriggersOnHit } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { removeEmpty } from '@/utils/json';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
@@ -67,6 +59,8 @@ export const RULE_NATURE_OPTIONS: { label: string; value: RuleNature }[] = RULE_
   (value) => ({ label: RULE_NATURE_LABELS[value], value }),
 );
 
+export type AlertCreatedForEnum = 'USER' | 'PAYMENT_DETAILS';
+
 export const RULE_LABELS_OPTIONS: {
   [key in RuleNature]: { label: string; value: RuleLabels }[];
 } = {
@@ -105,11 +99,11 @@ export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = PRIORITY
   }),
 );
 
-export const ALERT_CREATED_FOR: { label: string; value: RuleInstanceAlertCreatedForEnum }[] = (
-  ['USER', 'PAYMENT_DETAILS'] as RuleInstanceAlertCreatedForEnum[]
+export const ALERT_CREATED_FOR: { label: string; value: AlertCreatedForEnum }[] = (
+  ['USER', 'PAYMENT_DETAILS'] as AlertCreatedForEnum[]
 ).map((alertCreatedFor) => ({
   label: humanizeConstant(alertCreatedFor),
-  value: alertCreatedFor as RuleInstanceAlertCreatedForEnum,
+  value: alertCreatedFor as AlertCreatedForEnum,
 }));
 
 export function ruleInstanceToFormValues(
@@ -140,6 +134,7 @@ export function ruleInstanceToFormValues(
             : undefined,
           alertAssignees: ruleInstance.alertConfig?.alertAssignees,
           alertAssigneeRole: ruleInstance.alertConfig?.alertAssigneeRole,
+          alertCreatedFor: ruleInstance.alertConfig?.alertCreatedFor ?? ['USER'],
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
         ruleParametersStep: isRiskLevelsEnabled
@@ -240,7 +235,7 @@ export function ruleInstanceToFormValuesV8(
     },
     ruleIsRunWhenStep: {},
     alertCreationDetailsStep: {
-      alertCreatedFor: ruleInstance.alertCreatedFor,
+      alertCreatedFor: ruleInstance.alertConfig?.alertCreatedFor ?? ['USER'],
       alertCreationInterval: ruleInstance.alertConfig?.alertCreationInterval,
       alertPriority: ruleInstance.casePriority,
       falsePositiveCheckEnabled: ruleInstance.falsePositiveCheckEnabled ? 'true' : 'false',
@@ -297,6 +292,7 @@ export function formValuesToRuleInstance(
           ? basicDetailsStep.alertAssigneeRole
           : undefined,
       alertCreationInterval: basicDetailsStep.alertCreationInterval,
+      alertCreatedFor: basicDetailsStep.alertCreatedFor,
     },
     ...(isRiskLevelsEnabled
       ? {
@@ -378,7 +374,6 @@ export function formValuesToRuleInstanceV8(
     nature: basicDetailsStep.ruleNature,
     labels: basicDetailsStep.ruleLabels,
     checksFor: initialRuleInstance.checksFor ?? [],
-    alertCreatedFor: alertCreationDetailsStep.alertCreatedFor,
     falsePositiveCheckEnabled: alertCreationDetailsStep.falsePositiveCheckEnabled === 'true',
     queueId: alertCreationDetailsStep.queueId,
     checklistTemplateId: alertCreationDetailsStep.checklistTemplateId,
@@ -392,6 +387,7 @@ export function formValuesToRuleInstanceV8(
           ? alertCreationDetailsStep.alertAssigneeRole
           : undefined,
       alertCreationInterval: alertCreationDetailsStep.alertCreationInterval,
+      alertCreatedFor: alertCreationDetailsStep.alertCreatedFor,
     },
     logicAggregationVariables: ruleLogicAggregationVariables,
     ...(isRiskLevelsEnabled

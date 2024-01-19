@@ -5,7 +5,13 @@ import Label from '@/components/library/Label';
 import { Priority, Rule, RuleLabels, RuleNature } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
-import { RULE_CASE_PRIORITY, RULE_LABELS_OPTIONS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
+import {
+  ALERT_CREATED_FOR,
+  AlertCreatedForEnum,
+  RULE_CASE_PRIORITY,
+  RULE_LABELS_OPTIONS,
+  RULE_NATURE_OPTIONS,
+} from '@/pages/rules/utils';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
@@ -36,6 +42,7 @@ export interface FormValues {
   alertCreationInterval?: AlertCreationInterval;
   alertAssignees?: string[];
   alertAssigneeRole?: string;
+  alertCreatedFor: AlertCreatedForEnum[];
   checksFor: string[];
 }
 
@@ -51,6 +58,7 @@ export const INITIAL_VALUES: FormValues = {
   },
   alertAssigneesType: 'EMAIL',
   checksFor: [],
+  alertCreatedFor: ['USER'],
 };
 
 interface Props {
@@ -216,6 +224,19 @@ function AlertCreationDetails() {
           {(inputProps) => <CreationIntervalInput {...inputProps} />}
         </InputField>
         <AlertAssignedToInput<FormValues> alertAssigneesType={assigneeTypeSet} />
+        <InputField<FormValues, 'alertCreatedFor'>
+          name={'alertCreatedFor'}
+          label={'Alert created for'}
+          labelProps={{ required: true }}
+        >
+          {(inputProps) => (
+            <SelectionGroup<AlertCreatedForEnum>
+              mode="MULTIPLE"
+              options={ALERT_CREATED_FOR}
+              {...inputProps}
+            />
+          )}
+        </InputField>
       </PropertyListLayout>
     </>
   );

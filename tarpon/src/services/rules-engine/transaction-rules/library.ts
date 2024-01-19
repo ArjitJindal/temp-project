@@ -295,7 +295,6 @@ const _RULES_LIBRARY: Array<
         granularity: 'day',
       },
       sendersCount: 4,
-      createAlertFor: 'INTERNAL_USER',
     }
     return {
       id: 'R-9',
@@ -329,7 +328,6 @@ const _RULES_LIBRARY: Array<
         granularity: 'day',
       },
       sendersCount: 4,
-      createAlertFor: 'INTERNAL_USER',
     }
     return {
       id: 'R-10',

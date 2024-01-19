@@ -5775,13 +5775,6 @@ components:
             - USER
         ruleNameAlias:
           type: string
-        alertCreatedFor:
-          type: array
-          items:
-            type: string
-            enum:
-              - PAYMENT_DETAILS
-              - USER
         ruleDescriptionAlias:
           type: string
         filters:
@@ -5841,6 +5834,13 @@ components:
                 type: string
             alertAssigneeRole:
               type: string
+            alertCreatedFor:
+              type: array
+              items:
+                type: string
+                enum:
+                  - USER
+                  - PAYMENT_DETAILS
         checksFor:
           type: array
           items:
