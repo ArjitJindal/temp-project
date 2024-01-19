@@ -1,6 +1,8 @@
 # type: ignore
 import os
 import sys
+import logging
+from pyspark.sql import SparkSession
 
 import pymongo
 from pyspark.sql.functions import col, lit
