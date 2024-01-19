@@ -32,12 +32,15 @@ export default function QuickFilterBase(props: Props) {
 
   const [isOpen, setOpen] = useState(false);
   const deferredFocus = () => {
-    innerRef &&
-      setTimeout(() => {
-        innerRef?.current?.focus();
-      }, 2);
-  };
+    if (innerRef) {
+      const scrollY = window.scrollY; //current scroll position
 
+      setTimeout(() => {
+        innerRef.current.focus();
+        window.scrollTo(0, scrollY);
+      }, 2);
+    }
+  };
   return (
     <>
       <QuickFilterButton
