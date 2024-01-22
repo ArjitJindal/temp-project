@@ -64,8 +64,7 @@ export function SandboxEmail() {
               title="Follow us on LinkedIn"
               logo="https://lh3.googleusercontent.com/pw/ABLVV86XPC6gurvUqrs6Cb4gtf8cHxnVulm7xdduE23nZ3u_DQvlREG1llpYwV5e98-bYkGcwFUA-ZibPBPZo5HN-0NaviZR_ML6DY3MqVVl-w7jvdita5mw3prtW5B5E4aqV4TKp8TjOnoj2FzL9OSMrVK6=w64-h65-s-no-gm?authuser=0"
               textLink="https://in.linkedin.com/company/flagright"
-              description="Followup our LinkedIn and stay up to date with latest
-              FinCrime news."
+              description="Follow us on LinkedIn and stay up to date with latest FinCrime news."
             />
           </Column>
         </Row>
