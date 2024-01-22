@@ -46,7 +46,6 @@ import { UsingTooManyBanksToMakePaymentsRuleParameters } from './using-too-many-
 import { HighRiskIpAddressCountriesParameters } from './high-risk-ip-address-countries'
 import { TransactionRiskScoreRuleParameters } from './transaction-risk-score'
 import { SameUserUsingTooManyPaymentIdentifiersParameters } from './same-user-using-too-many-payment-identifiers'
-import { SameUserUsingTooManyCardsParameters } from './same-user-using-too-many-cards'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -636,42 +635,6 @@ const _RULES_LIBRARY: Array<
       typologyGroup: '',
       typologyDescription: '',
       source: '',
-    }
-  },
-  () => {
-    const defaultParameters: SameUserUsingTooManyCardsParameters = {
-      uniqueCardsCountThreshold: 10,
-      timeWindow: {
-        units: 1,
-        granularity: 'day',
-      },
-    }
-    const defaultFilters: TransactionFilters = {
-      originPaymentFilters: {
-        paymentMethods: ['CARD'],
-      },
-    }
-    return {
-      id: 'R-54',
-      type: 'TRANSACTION',
-      name: 'Same user using too many cards',
-      description:
-        'Same user using >= ‘x’ unique sender cards counted by card fingerprint id in time ‘t’',
-      descriptionTemplate:
-        "{{ if-sender 'Sender' 'Receiver' }} used {{ uniqueCardsCount }} unique cards above the limit of {{ parameters.uniqueCardsCountThreshold }}",
-      defaultParameters,
-      defaultFilters,
-      defaultAction: 'FLAG',
-      ruleImplementationName: 'same-user-using-too-many-cards',
-      labels: [],
-      checksFor: ['User card fingerprint ID'],
-      defaultNature: 'FRAUD',
-      defaultCasePriority: 'P1',
-      typology: 'Acquiring Fraud',
-      typologyGroup: 'Card fraud',
-      typologyDescription:
-        'Attempts to use a multiple stolen cards to perform a purchase/top-up wallet',
-      source: 'Card Scheme Rules',
     }
   },
   () => {

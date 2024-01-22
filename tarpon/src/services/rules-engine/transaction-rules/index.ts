@@ -28,7 +28,6 @@ import PaymentMethodNameNameRule from './payment-method-name-levensthein-distanc
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 import HighTrafficVolumeBetweenSameUsersParameters from './high-traffic-volume-between-same-users'
 import TooManyUsersForSamePaymentIdentifierRule from './too-many-users-for-same-payment-identifier'
-import SameUserUsingTooManyCardsRule from './same-user-using-too-many-cards'
 import TransactionsAverageNumberExceededRule from './transactions-average-number-exceeded'
 import TransactionAverageAmountExceededRule from './transactions-average-amount-exceeded'
 import TransactionAverageDailyAmountExceededRule from './transactions-average-daily-amount-exceeded'
@@ -89,7 +88,6 @@ export const _TRANSACTION_RULES = {
   'too-many-users-for-same-payment-identifier':
     TooManyUsersForSamePaymentIdentifierRule,
   'payment-method-name-levensthein-distance': PaymentMethodNameNameRule,
-  'same-user-using-too-many-cards': SameUserUsingTooManyCardsRule,
   'same-user-using-too-many-payment-identifiers':
     SameUserUsingTooManyPaymentIdentifiersRule,
   'transactions-round-value-percentage': TransactionsRoundValuePercentageRule,

@@ -35,7 +35,7 @@ export const recommendedRules = [
   'R-8',
   'R-10',
   'R-30',
-  'R-54',
+  'R-55',
   'R-69',
   'R-121',
   'R-122',
