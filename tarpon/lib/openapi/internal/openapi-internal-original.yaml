@@ -5506,6 +5506,8 @@ components:
           type: string
         aggregationFunc:
           $ref: '#/components/schemas/RuleAggregationFunc'
+        baseCurrency:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
         timeWindow:
           type: object
           properties:
@@ -5764,6 +5766,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleAggregationVariable'
+        baseCurrency:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
         parameters:
           type: object
         action:

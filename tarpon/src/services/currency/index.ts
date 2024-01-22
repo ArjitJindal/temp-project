@@ -96,12 +96,12 @@ export class CurrencyService {
   }
 
   public async getTargetCurrencyAmount(
-    transactionAmountDefails: TransactionAmountDetails,
+    transactionAmountDetails: TransactionAmountDetails,
     targetCurrency: CurrencyCode
   ): Promise<TransactionAmountDetails> {
-    const sourceCurrency = transactionAmountDefails.transactionCurrency
+    const sourceCurrency = transactionAmountDetails.transactionCurrency
     if (sourceCurrency === targetCurrency) {
-      return transactionAmountDefails
+      return transactionAmountDetails
     }
 
     const rate = await this.getCurrencyExchangeRate(
@@ -110,7 +110,7 @@ export class CurrencyService {
     )
 
     return {
-      transactionAmount: transactionAmountDefails.transactionAmount * rate,
+      transactionAmount: transactionAmountDetails.transactionAmount * rate,
       transactionCurrency: targetCurrency,
     }
   }

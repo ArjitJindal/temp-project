@@ -14,6 +14,7 @@ import { isSuccess } from '@/utils/asyncResource';
 import { useApi } from '@/api';
 import Tag from '@/components/library/Tag';
 import Button from '@/components/library/Button';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface RuleAggregationVariablesEditorProps {
   aggregationVariables: RuleAggregationVariable[] | undefined;
@@ -42,6 +43,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     }
     return [];
   }, [ruleLogicConfig.data]);
+  const settings = useSettings();
   const handleDelete = useCallback(
     (varKey: string) => {
       onChange(aggregationVariables?.filter((v) => v.key !== varKey) ?? []);
@@ -60,12 +62,13 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
   const handleAddVariable = useCallback(() => {
     setEditingVariable({
       key: `agg:${uuid()}`,
+      baseCurrency: settings.defaultValues?.currency,
       timeWindow: {
         start: { units: 1, granularity: 'day' },
         end: { units: 0, granularity: 'day' },
       },
     });
-  }, []);
+  }, [settings.defaultValues?.currency]);
   const handleUpdateVariable = useCallback(
     (newAggregationVariable: RuleAggregationVariable) => {
       // Sanitize values

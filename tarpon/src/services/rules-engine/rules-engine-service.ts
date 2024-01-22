@@ -620,7 +620,7 @@ export class RulesEngineService {
       tracing,
       transactionRiskScore,
     } = options
-    const { parameters, action } = this.getUserSpecificParameters(
+    const { parameters, logic, action } = this.getUserSpecificParameters(
       senderUserRiskLevel,
       ruleInstance
     )
@@ -649,15 +649,16 @@ export class RulesEngineService {
     let isOriginUserFiltered = false
     let isDestinationUserFiltered = false
     let ruleResult: RuleHitResult | undefined
-    if (hasFeature('RULES_ENGINE_V8') && ruleInstance.logic) {
+    if (hasFeature('RULES_ENGINE_V8') && logic) {
       if (transactionWithValidUserId) {
         // TODO (V8): handle hit directions
         isOriginUserFiltered = true
         isDestinationUserFiltered = true
 
         const { hit, varData } = await this.ruleLogicEvaluator.evaluate(
-          ruleInstance.logic,
+          logic,
           ruleInstance.logicAggregationVariables ?? [],
+          { baseCurrency: ruleInstance.baseCurrency },
           {
             transaction: transactionWithValidUserId,
             senderUser,
@@ -1152,19 +1153,21 @@ export class RulesEngineService {
     userRiskLevel: RiskLevel | undefined,
     ruleInstance: RuleInstance
   ): {
+    logic?: object
     parameters: object
     action: RuleAction
   } {
-    if (hasFeature('RISK_LEVELS') && ruleInstance.riskLevelParameters) {
-      const riskLevel = userRiskLevel || DEFAULT_RISK_LEVEL
-      return {
-        parameters: ruleInstance.riskLevelParameters[riskLevel],
-        action: ruleInstance.riskLevelActions?.[riskLevel] as RuleAction,
-      }
-    }
+    const riskEnabled = hasFeature('RISK_LEVELS')
+    const riskLevel = userRiskLevel || DEFAULT_RISK_LEVEL
     return {
-      parameters: ruleInstance.parameters,
-      action: ruleInstance.action as RuleAction,
+      logic:
+        (riskEnabled && ruleInstance.riskLevelLogic?.[riskLevel]) ||
+        ruleInstance.logic,
+      parameters:
+        (riskEnabled && ruleInstance.riskLevelParameters?.[riskLevel]) ||
+        ruleInstance.parameters,
+      action: ((riskEnabled && ruleInstance.riskLevelActions?.[riskLevel]) ||
+        ruleInstance.action) as RuleAction,
     }
   }
 

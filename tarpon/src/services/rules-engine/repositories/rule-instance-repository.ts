@@ -29,6 +29,7 @@ function toRuleInstance(item: any): RuleInstance {
     ruleNameAlias: item.ruleNameAlias,
     ruleDescriptionAlias: item.ruleDescriptionAlias,
     filters: item.filters,
+    baseCurrency: item.baseCurrency,
     logic: item.logic,
     riskLevelLogic: item.riskLevelLogic,
     logicAggregationVariables: item.logicAggregationVariables,

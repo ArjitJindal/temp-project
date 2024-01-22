@@ -1,6 +1,7 @@
 import React from 'react';
 import s from './style.module.less';
 import {
+  CurrencyCode,
   RiskLevelRuleActions,
   RiskLevelRuleLogic,
   RiskLevelsTriggersOnHit,
@@ -13,6 +14,7 @@ import DefineLogicCard from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigu
 import VariableDefinitionCard from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard';
 
 export interface RuleIsHitWhenStepFormValues {
+  baseCurrency?: CurrencyCode;
   ruleLogic?: object;
   riskLevelRuleLogic?: RiskLevelRuleLogic;
   ruleLogicAggregationVariables?: RuleAggregationVariable[];
@@ -38,6 +40,9 @@ export default function RuleIsHitWhenStep() {
     RuleIsHitWhenStepFormValues,
     'riskLevelRuleActions'
   >('riskLevelRuleActions');
+  const baseCurrencyFieldState = useFieldState<RuleIsHitWhenStepFormValues, 'baseCurrency'>(
+    'baseCurrency',
+  );
 
   return (
     <div className={s.root}>
@@ -50,6 +55,7 @@ export default function RuleIsHitWhenStep() {
         riskLevelsLogicFieldState={riskLevelsRuleLogicFieldState}
         riskLevelRuleActionsFieldState={riskLevelRuleActionsFieldState}
         logicFieldState={logicFieldState}
+        baseCurrencyFieldState={baseCurrencyFieldState}
       />
     </div>
   );

@@ -6,6 +6,8 @@ import {
   ConsumerUserRuleVariable,
   RuleEntityType,
   RuleVariableBase as RuleVariable,
+  TransactionRuleVariable,
+  TransactionRuleVariableContext,
 } from './types'
 import {
   CONSUMER_USER_CREATION_AGE_DAYS,
@@ -33,8 +35,16 @@ import { USER_TYPE } from './user-type'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
+import { CurrencyService } from '@/services/currency'
+import { logger } from '@/core/logger'
+import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+
+const currencyService = new CurrencyService()
 
 export const VARIABLE_NAMESPACE_SEPARATOR = ':'
+const ORIGIN_TRANSACTION_AMOUNT_KEY = 'originAmountDetails.transactionAmount'
+const DESTINATION_TRANSACTION_AMOUNT_KEY =
+  'destinationAmountDetails.transactionAmount'
 
 function withNamespace(variable: RuleVariable) {
   return {
@@ -114,29 +124,73 @@ function getUiDefinitionType(leafInfo: EntityLeafValueInfo) {
   }
 }
 
-export const getTransactionRuleEntityVariables = memoize((): RuleVariable[] => {
-  const transactionEntityVariables = getAutoRuleEntityVariables(
-    'TRANSACTION',
-    Transaction
-  )
-  const consumerUserEntityVariables = getAutoRuleEntityVariables(
-    'CONSUMER_USER',
-    User
-  )
-  const businessUserEntityVariables = getAutoRuleEntityVariables(
-    'BUSINESS_USER',
-    Business
-  )
-  const userEntityVariables = withDirection(
-    consumerUserEntityVariables
-      .concat(businessUserEntityVariables)
-      .concat(USER_DERIVED_VARIABLES)
-  )
+function updatedTransactionEntityVariables(
+  variables: TransactionRuleVariable[]
+) {
+  const originAmountVariable = variables.find(
+    (v) => v.key === ORIGIN_TRANSACTION_AMOUNT_KEY
+  )!
+  const destinationAmountVariable = variables.find(
+    (v) => v.key === DESTINATION_TRANSACTION_AMOUNT_KEY
+  )!
+  const loadTransactionAmount = async (
+    amountDetails: TransactionAmountDetails | undefined,
+    context: TransactionRuleVariableContext
+  ): Promise<number | undefined> => {
+    if (!amountDetails) {
+      return
+    }
+    if (!context.baseCurrency) {
+      logger.error('Missing base currency for transaction amount variable!')
+    }
+    const amount = await currencyService.getTargetCurrencyAmount(
+      amountDetails,
+      context.baseCurrency ?? 'USD'
+    )
+    return amount.transactionAmount
+  }
+  originAmountVariable.load = async (transaction, context) => {
+    return await loadTransactionAmount(transaction.originAmountDetails, context)
+  }
+  destinationAmountVariable.load = async (transaction, context) => {
+    return await loadTransactionAmount(
+      transaction.destinationAmountDetails,
+      context
+    )
+  }
+}
 
-  return transactionEntityVariables
-    .concat(userEntityVariables)
-    .map(withNamespace)
-})
+export const getTransactionRuleEntityVariables = memoize(
+  (): { [key: string]: RuleVariable } => {
+    const transactionEntityVariables = getAutoRuleEntityVariables(
+      'TRANSACTION',
+      Transaction
+    )
+    updatedTransactionEntityVariables(
+      transactionEntityVariables as TransactionRuleVariable[]
+    )
+
+    const consumerUserEntityVariables = getAutoRuleEntityVariables(
+      'CONSUMER_USER',
+      User
+    )
+    const businessUserEntityVariables = getAutoRuleEntityVariables(
+      'BUSINESS_USER',
+      Business
+    )
+    const userEntityVariables = withDirection(
+      consumerUserEntityVariables.concat(
+        businessUserEntityVariables,
+        USER_DERIVED_VARIABLES
+      )
+    )
+    return Object.fromEntries(
+      [...transactionEntityVariables, ...userEntityVariables]
+        .map(withNamespace)
+        .map((v) => [v.key, v])
+    )
+  }
+)
 
 function getArrayUiDefinition(
   subPath: string[],
@@ -252,5 +306,5 @@ function getAutoArrayRuleEntityVariables(
 }
 
 export function getRuleVariableByKey(key: string): RuleVariable | undefined {
-  return getTransactionRuleEntityVariables().find((v) => v.key === key)
+  return getTransactionRuleEntityVariables()[key]
 }

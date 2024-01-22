@@ -36,7 +36,7 @@ export const ruleHandler = lambdaApi()(
 
     handlers.registerGetRuleLogicConfig(async () => {
       return {
-        variables: getTransactionRuleEntityVariables(),
+        variables: Object.values(getTransactionRuleEntityVariables()),
         operators: [],
         functions: [],
       }

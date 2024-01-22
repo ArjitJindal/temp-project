@@ -195,6 +195,7 @@ export function ruleInstanceToFormValuesV8(
       ruleLabels: ruleInstance.labels,
     },
     ruleIsHitWhenStep: {
+      baseCurrency: ruleInstance.baseCurrency,
       ruleLogicAggregationVariables: ruleInstance.logicAggregationVariables ?? [],
       ...(isRiskLevelsEnabled
         ? {
@@ -361,6 +362,7 @@ export function formValuesToRuleInstanceV8(
     ruleLogicAggregationVariables,
     triggersOnHit,
     riskLevelsTriggersOnHit,
+    baseCurrency,
   } = ruleIsHitWhenStep;
   const defaultTriggersOnHit: TriggersOnHit = {
     usersToCheck: 'ALL',
@@ -389,6 +391,7 @@ export function formValuesToRuleInstanceV8(
       alertCreationInterval: alertCreationDetailsStep.alertCreationInterval,
       alertCreatedFor: alertCreationDetailsStep.alertCreatedFor,
     },
+    baseCurrency,
     logicAggregationVariables: ruleLogicAggregationVariables,
     ...(isRiskLevelsEnabled
       ? {

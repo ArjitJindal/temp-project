@@ -2,6 +2,7 @@ import { FieldOrGroup } from '@react-awesome-query-builder/core'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export type RuleValueTypesEnum =
   | 'string'
@@ -24,10 +25,17 @@ export interface RuleVariableBase {
   load: (...args: any[]) => Promise<any>
 }
 
+export type TransactionRuleVariableContext = {
+  baseCurrency?: CurrencyCode
+}
+
 export interface TransactionRuleVariable<ReturnType = unknown>
   extends RuleVariableBase {
   entity: 'TRANSACTION'
-  load: (transaction: Transaction) => Promise<ReturnType>
+  load: (
+    transaction: Transaction,
+    context: TransactionRuleVariableContext
+  ) => Promise<ReturnType>
 }
 
 export interface ConsumerUserRuleVariable<ReturnType = unknown>

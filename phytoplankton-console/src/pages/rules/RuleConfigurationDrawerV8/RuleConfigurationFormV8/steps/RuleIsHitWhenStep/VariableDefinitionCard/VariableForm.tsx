@@ -2,13 +2,16 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Tooltip } from 'antd';
 import { Link } from 'react-router-dom';
 import { isEqual } from 'lodash';
+import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { getAggVarDefinition } from '../../../../../RuleConfigurationDrawer/steps/RuleParametersStep/utils';
 import { RuleLogicBuilder } from '../RuleLogicBuilder';
+import { isTransactionAmountVariable } from '../helpers';
 import s from './style.module.less';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import {
+  CurrencyCode,
   RuleAggregationFunc,
   RuleAggregationTimeWindow,
   RuleAggregationTimeWindowGranularity,
@@ -92,16 +95,21 @@ export const VariableForm: React.FC<VariableFormProps> = ({
     );
   }, [formValues.timeWindow]);
   const isValidFormValues = useMemo(() => {
+    const isTxAmount = formValues.aggregationFieldKey
+      ? isTransactionAmountVariable(formValues.aggregationFieldKey)
+      : false;
     return (
       formValues.type &&
       formValues.direction &&
       formValues.aggregationFieldKey &&
+      (!isTxAmount || (isTxAmount && formValues.baseCurrency)) &&
       formValues.aggregationFunc &&
       isValidTimeWindow
     );
   }, [
     formValues.aggregationFieldKey,
     formValues.aggregationFunc,
+    formValues.baseCurrency,
     formValues.direction,
     formValues.type,
     isValidTimeWindow,
@@ -161,6 +169,21 @@ export const VariableForm: React.FC<VariableFormProps> = ({
               mode="SINGLE"
               options={aggregateFieldOptions}
             />
+            {/* TODO (v8): Base currency design TBD */}
+            {formValues.aggregationFieldKey &&
+              isTransactionAmountVariable(formValues.aggregationFieldKey) && (
+                <Label label="Base currency" required={{ value: true, showHint: true }}>
+                  <Select<string>
+                    value={formValues.baseCurrency}
+                    onChange={(baseCurrency) =>
+                      handleUpdateForm({ baseCurrency: baseCurrency as CurrencyCode })
+                    }
+                    mode="SINGLE"
+                    placeholder="Select base currency"
+                    options={CURRENCIES_SELECT_OPTIONS}
+                  />
+                </Label>
+              )}
           </Label>
           <Label
             label="Aggregate function"

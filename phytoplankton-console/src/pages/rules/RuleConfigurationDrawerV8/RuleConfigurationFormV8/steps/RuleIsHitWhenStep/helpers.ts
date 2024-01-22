@@ -131,3 +131,7 @@ function getAggVarDefinition(
     },
   };
 }
+
+export function isTransactionAmountVariable(variableKey: string): boolean {
+  return variableKey?.endsWith('transactionAmount');
+}

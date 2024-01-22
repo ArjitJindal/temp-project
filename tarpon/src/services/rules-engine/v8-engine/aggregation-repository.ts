@@ -35,6 +35,7 @@ export function getAggVarHash(
     'aggregationFunc',
     'timeWindow',
     'filtersLogic',
+    'baseCurrency',
   ]
   return `${GLOBAL_AGG_VERSION}-${generateChecksum(
     pick(aggregationVariable, checksumFields),
