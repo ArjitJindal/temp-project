@@ -5,7 +5,6 @@ import * as databricks from './.gen/providers/databricks'
 import { sleep, provider } from '@cdktf/provider-time'
 import { TerraformHclModule } from 'cdktf'
 import { Fn } from 'cdktf'
-import { ITerraformDependable } from 'cdktf/lib/terraform-dependable'
 import { TerraformProvider } from 'cdktf/lib/terraform-provider'
 import { Config } from '@flagright/lib/config/config'
 import { getTarponConfig } from '@flagright/lib/constants/config'
@@ -179,17 +178,6 @@ class DatabricksStack extends TerraformStack {
         enableTokensConfig: 'true',
         maxTokenLifetimeDays: '0',
       },
-    })
-
-    new databricks.permissions.Permissions(this, 'token-permission', {
-      provider: workspaceProvider,
-      authorization: 'tokens',
-      accessControl: [
-        {
-          groupName: 'users',
-          permissionLevel: 'CAN_USE',
-        },
-      ],
     })
 
     const profile = new aws.iamInstanceProfile.IamInstanceProfile(
@@ -466,12 +454,9 @@ class DatabricksStack extends TerraformStack {
         {
           ...clusterConfig,
           nodeTypeId: 'm5d.large',
-          numWorkers: 0,
-          customTags: {
-            ResourceClass: 'SingleNode',
-          },
-          sparkConf: {
-            'spark.databricks.cluster.profile': 'singleNode',
+          autoscale: {
+            minWorkers: 1,
+            maxWorkers: 4,
           },
         },
       ],
@@ -493,6 +478,141 @@ class DatabricksStack extends TerraformStack {
           ],
         },
       ],
+    })
+
+    const catalog = new databricks.catalog.Catalog(this, 'main-catalog', {
+      provider: workspaceProvider,
+      name: stage,
+    })
+
+    const defaultSchema = new databricks.schema.Schema(this, 'default-schema', {
+      provider: workspaceProvider,
+      catalogName: catalog.name,
+      name: 'default',
+    })
+
+    const entities = ['users', 'transactions']
+    entities.forEach((entity) => {
+      new databricks.sqlTable.SqlTable(this, `${entity}-table`, {
+        provider: workspaceProvider,
+        catalogName: catalog.name,
+        name: entity,
+        schemaName: defaultSchema.name,
+        tableType: 'MANAGED',
+        column: [
+          {
+            type: 'string',
+            name: 'tenant',
+          },
+        ],
+        lifecycle: {
+          ignoreChanges: ['column'],
+        },
+      })
+    })
+
+    const servicePrincipals = [
+      'flagright',
+      'flagright-test',
+      'cypress-test',
+      ...(this.config.databricksEnabledTenants || []),
+    ]?.map((tenantId) => {
+      return new databricks.servicePrincipal.ServicePrincipal(
+        this,
+        `service-principal-${tenantId}`,
+        {
+          provider: workspaceProvider,
+          displayName: tenantId,
+          active: true,
+          databricksSqlAccess: true,
+        }
+      )
+    })
+
+    new databricks.permissions.Permissions(this, 'token-permission', {
+      provider: workspaceProvider,
+      authorization: 'tokens',
+      accessControl: [
+        {
+          groupName: 'users',
+          permissionLevel: 'CAN_USE',
+        },
+        ...servicePrincipals.map((sp) => ({
+          servicePrincipalName: sp.applicationId,
+          permissionLevel: 'CAN_USE',
+        })),
+      ],
+    })
+    new databricks.permissions.Permissions(this, 'sql-permission', {
+      provider: workspaceProvider,
+      sqlEndpointId: sqlWarehouse.id,
+      accessControl: [
+        {
+          groupName: 'users',
+          permissionLevel: 'CAN_USE',
+        },
+        ...servicePrincipals.map((sp) => ({
+          servicePrincipalName: sp.applicationId,
+          permissionLevel: 'CAN_USE',
+        })),
+      ],
+    })
+
+    servicePrincipals.forEach((sp, i) => {
+      const tenantSchema = new databricks.schema.Schema(this, `schema-${i}`, {
+        provider: workspaceProvider,
+        catalogName: catalog.name,
+        name: sp.displayName,
+      })
+      new databricks.grants.Grants(this, `grants-${i}`, {
+        provider: workspaceProvider,
+        schema: tenantSchema.id,
+        grant: [
+          {
+            principal: sp.applicationId,
+            privileges: ['USE_SCHEMA', 'SELECT'],
+          },
+        ],
+      })
+
+      entities.forEach((entity) => {
+        new databricks.sqlTable.SqlTable(this, `view-${entity}-${i}`, {
+          provider: workspaceProvider,
+          catalogName: catalog.name,
+          name: entity,
+          schemaName: tenantSchema.name,
+          tableType: 'VIEW',
+          viewDefinition: Fn.format(
+            "SELECT * from %s.default.%s WHERE tenant = '%s'",
+            [catalog.name, entity, sp.displayName]
+          ),
+        })
+      })
+
+      const spToken = new databricks.oboToken.OboToken(this, `obo-token-${i}`, {
+        provider: workspaceProvider,
+        applicationId: sp.applicationId,
+      })
+
+      const tenantSecret = new aws.secretsmanagerSecret.SecretsmanagerSecret(
+        this,
+        `aws-secret-${i}`,
+        {
+          name: Fn.format('databricks/%s', [sp.displayName]),
+        }
+      )
+      new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
+        this,
+        `aws-secret-version-${i}`,
+        {
+          secretId: tenantSecret.id,
+          secretString: Fn.jsonencode({
+            token: spToken.tokenValue,
+            host: sqlWarehouse.odbcParams.host,
+            path: sqlWarehouse.odbcParams.path,
+          }),
+        }
+      )
     })
   }
 

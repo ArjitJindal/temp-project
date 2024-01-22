@@ -71,7 +71,7 @@ def create_entity_tables(entity, schema, dynamo_key, id_column):
     @dlt.append_flow(name=backfill_table_name, target=cdc_table_name)
     def backfill():
         df = spark.readStream.format("delta").table(
-            f"hive_metastore.default.{backfill_table_name}"
+            f"default.{backfill_table_name}"
         )
         return (
             df.withColumn("PartitionKeyID", concat(df["tenant"], lit(dynamo_key)))

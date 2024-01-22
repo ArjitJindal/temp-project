@@ -32,7 +32,7 @@ def load_mongo(table, partition_key, id_column, schema):
     client = pymongo.MongoClient(connection_uri, 27017, maxPoolSize=50)
     db_name = "tarpon"
     db = client[db_name]
-    table_path = f"hive_metastore.default.{table}_backfill"
+    table_path = f"default.{table}_backfill"
 
     # Initialize Spark Session
     spark = SparkSession.builder.appName("MongoDBToDelta").getOrCreate()
