@@ -16,7 +16,6 @@ import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
 import { Config } from '@flagright/lib/config/config'
 import { Duration } from 'aws-cdk-lib'
-
 export type InternalFunctionProps = {
   name: string
   provisionedConcurrency?: number
@@ -102,7 +101,6 @@ export function createFunction(
     layers: layersArray,
     logRetention: context.config.resource.CLOUD_WATCH.logRetention,
     logRetentionRetryOptions: {
-      base: Duration.millis(200),
       maxRetries: 10,
     },
   })
