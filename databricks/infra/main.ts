@@ -492,8 +492,8 @@ class DatabricksStack extends TerraformStack {
     })
 
     const entities = ['users', 'transactions']
-    entities.forEach((entity) => {
-      new databricks.sqlTable.SqlTable(this, `${entity}-table`, {
+    const tables = entities.map((entity) => {
+      return new databricks.sqlTable.SqlTable(this, `${entity}-table`, {
         provider: workspaceProvider,
         catalogName: catalog.name,
         name: entity,
@@ -586,6 +586,7 @@ class DatabricksStack extends TerraformStack {
             "SELECT * from %s.default.%s WHERE tenant = '%s'",
             [catalog.name, entity, sp.displayName]
           ),
+          dependsOn: tables,
         })
       })
 
@@ -598,7 +599,7 @@ class DatabricksStack extends TerraformStack {
         this,
         `aws-secret-${i}`,
         {
-          name: Fn.format('databricks/%s', [sp.displayName]),
+          name: Fn.format('databricks/tenant/%s', [sp.displayName]),
         }
       )
       new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(

@@ -12,7 +12,7 @@ export async function executeSql<T>(
     path: string
     host: string
     token: string
-  }>(`databricks/${getContext()?.tenantId}`)
+  }>(`databricks/tenant/${getContext()?.tenantId}`)
 
   const client = new DBSQLClient()
   const connectOptions = {
