@@ -6,9 +6,10 @@ import { AlertInvestigationChecklist } from './AlertInvestigationChecklist';
 import CreationIntervalInput, { AlertCreationInterval } from './CreationIntervalInput';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import InputField from '@/components/library/Form/InputField';
-import { Priority } from '@/apis';
+import { AlertCreationDirection, Priority } from '@/apis';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { ALERT_CREATED_FOR, AlertCreatedForEnum, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
+import Select from '@/components/library/Select';
 
 export interface FormValues {
   alertPriority: Priority;
@@ -18,6 +19,7 @@ export interface FormValues {
   alertAssigneesType?: 'EMAIL' | 'ROLE';
   alertAssignees?: string[];
   alertAssigneeRole?: string;
+  alertCreationDirection?: AlertCreationDirection;
   queueId?: string;
   checklistTemplateId?: string;
 }
@@ -62,6 +64,25 @@ export default function AlertCreationDetailsStep(_props: Props) {
                 mode="MULTIPLE"
                 options={ALERT_CREATED_FOR}
                 {...inputProps}
+              />
+            )}
+          </InputField>
+          <InputField<FormValues, 'alertCreationDirection'>
+            name={'alertCreationDirection'}
+            label={'Alert creation direction'}
+            labelProps={{ required: true }}
+          >
+            {(inputProps) => (
+              <Select<AlertCreationDirection>
+                allowClear={false}
+                options={[
+                  { value: 'AUTO', label: 'Auto (based on the rule logic)' },
+                  { value: 'ORIGIN', label: 'Origin user' },
+                  { value: 'DESTINATION', label: 'Destination user' },
+                  { value: 'ALL', label: 'Both origin user and destination user' },
+                ]}
+                {...inputProps}
+                value={inputProps.value ?? 'AUTO'}
               />
             )}
           </InputField>

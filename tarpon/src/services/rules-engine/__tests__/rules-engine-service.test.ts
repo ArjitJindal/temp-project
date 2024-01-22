@@ -643,7 +643,7 @@ describe('Verify Transaction: V8 engine', () => {
           ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
           ruleHitMeta: {
-            hitDirections: ['ORIGIN', 'DESTINATION'],
+            hitDirections: ['ORIGIN'],
           },
           ruleHit: true,
           nature: 'AML',
@@ -658,7 +658,7 @@ describe('Verify Transaction: V8 engine', () => {
           ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
           ruleHitMeta: {
-            hitDirections: ['ORIGIN', 'DESTINATION'],
+            hitDirections: ['ORIGIN'],
           },
           labels: [],
           nature: 'AML',

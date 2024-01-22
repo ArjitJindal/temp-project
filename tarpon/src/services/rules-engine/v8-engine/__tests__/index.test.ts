@@ -22,6 +22,7 @@ describe('entity variable', () => {
     expect(result).toEqual({
       hit: true,
       varData: { 'TRANSACTION:type': 'TRANSFER' },
+      hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
 
@@ -39,6 +40,7 @@ describe('entity variable', () => {
     expect(result).toEqual({
       hit: false,
       varData: { 'TRANSACTION:type': 'DEPOSIT' },
+      hitDirections: [],
     })
   })
 })
@@ -104,6 +106,7 @@ describe('entity variable (array)', () => {
           { key: 'a', value: 'b' },
         ],
       },
+      hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
   test('executes the json logic - not hit', async () => {
@@ -167,6 +170,7 @@ describe('entity variable (array)', () => {
       varData: {
         'CONSUMER_USER:legalDocuments__SENDER': testLegalDocuments,
       },
+      hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
   test('executes the json logic (nested) - not hit', async () => {
@@ -200,7 +204,7 @@ describe('entity variable (array)', () => {
 })
 
 describe('aggregation variable', () => {
-  test('executes the json logic', async () => {
+  test('executes the json logic (sending)', async () => {
     const evaluator = new RuleJsonLogicEvaluator(
       'tenant-id',
       getDynamoDbClient()
@@ -226,6 +230,113 @@ describe('aggregation variable', () => {
     expect(result).toEqual({
       hit: true,
       varData: { 'agg:123': 1 },
+      hitDirections: ['ORIGIN'],
+    })
+  })
+
+  test('executes the json logic (receiving)', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          direction: 'RECEIVING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      { baseCurrency: 'EUR' },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(result).toEqual({
+      hit: true,
+      varData: { 'agg:123': 1 },
+      hitDirections: ['DESTINATION'],
+    })
+  })
+
+  test('executes the json logic (sending + receiving)', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const result = await evaluator.evaluate(
+      {
+        and: [
+          { '==': [{ var: 'agg:123' }, 1] },
+          { '==': [{ var: 'agg:456' }, 1] },
+        ],
+      },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+        {
+          key: 'agg:456',
+          type: 'USER_TRANSACTIONS',
+          direction: 'RECEIVING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      { baseCurrency: 'EUR' },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(result).toEqual({
+      hit: true,
+      varData: { 'agg:123': 1, 'agg:456': 1 },
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    })
+  })
+
+  test('executes the json logic (sending_receiving)', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING_RECEIVING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      { baseCurrency: 'EUR' },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(result).toEqual({
+      hit: true,
+      varData: { 'agg:123': 1 },
+      hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
 
@@ -237,7 +348,7 @@ describe('aggregation variable', () => {
     const testAggVar = {
       key: 'agg:123',
       type: 'USER_TRANSACTIONS',
-      direction: 'SENDING',
+      direction: 'RECEIVING',
       aggregationFieldKey: 'TRANSACTION:transactionId',
       aggregationFunc: 'COUNT',
       timeWindow: {
@@ -261,6 +372,7 @@ describe('aggregation variable', () => {
     expect(resultFilteredOut).toEqual({
       hit: false,
       varData: { 'agg:123': 0 },
+      hitDirections: [],
     })
     const resultFiltered = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
@@ -278,6 +390,7 @@ describe('aggregation variable', () => {
     expect(resultFiltered).toEqual({
       hit: true,
       varData: { 'agg:123': 1 },
+      hitDirections: ['DESTINATION'],
     })
   })
 
@@ -310,6 +423,7 @@ describe('aggregation variable', () => {
     expect(resultNotWithinTimeWindow).toEqual({
       hit: false,
       varData: { 'agg:123': 0 },
+      hitDirections: [],
     })
     const resultWithinTimeWindow = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
@@ -328,6 +442,7 @@ describe('aggregation variable', () => {
     expect(resultWithinTimeWindow).toEqual({
       hit: true,
       varData: { 'agg:123': 1 },
+      hitDirections: ['ORIGIN'],
     })
   })
 
@@ -366,6 +481,7 @@ describe('aggregation variable', () => {
     expect(result).toEqual({
       hit: true,
       varData: { 'agg:123': 106.85660242529653 },
+      hitDirections: ['ORIGIN'],
     })
   })
 })

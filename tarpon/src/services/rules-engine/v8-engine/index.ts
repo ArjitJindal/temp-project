@@ -42,6 +42,7 @@ import { envIs } from '@/utils/env'
 import { handleV8TransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
 import { getSQSClient } from '@/utils/sns-sqs-client'
+import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 
 const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
 
@@ -123,6 +124,7 @@ export class RuleJsonLogicEvaluator {
     varData: {
       [key: string]: unknown
     }
+    hitDirections: RuleHitDirection[]
   }> {
     const entityVarDataloader = getDataLoader(data, context, this.dynamoDb)
     const variableKeys = uniq(
@@ -141,32 +143,92 @@ export class RuleJsonLogicEvaluator {
         await entityVarDataloader.load(key),
       ])
     )
-    const aggVarEntries = await Promise.all(
-      aggVariableKeys.map(async (key) => {
+    const aggVariables = aggVariableKeys
+      .map((key) => {
         const aggVariable = aggregationVariables.find((v) => v.key === key)
         if (!aggVariable) {
           logger.error(`Aggregation variable ${key} not found`)
-          return [key, null]
+          return
         }
-        return [
-          key,
-          await this.loadAggregationData(
-            aggVariable,
-            data,
-            getDataLoader(
-              data,
-              { baseCurrency: aggVariable.baseCurrency },
-              this.dynamoDb
-            )
-          ),
-        ]
+        return aggVariable
+      })
+      .filter(Boolean) as RuleAggregationVariable[]
+    const aggHasBothDirections = aggVariables.some(
+      (v) => v.direction === 'SENDING_RECEIVING'
+    )
+    const aggVarData = await Promise.all(
+      aggVariables.map(async (aggVariable) => {
+        const aggEntityVarDataloader = getDataLoader(
+          data,
+          { baseCurrency: aggVariable.baseCurrency },
+          this.dynamoDb
+        )
+        return {
+          variable: aggVariable,
+          origin:
+            aggVariable.direction !== 'RECEIVING'
+              ? await this.loadAggregationData(
+                  'origin',
+                  aggVariable,
+                  data,
+                  aggEntityVarDataloader
+                )
+              : null,
+          destination:
+            aggVariable.direction !== 'SENDING'
+              ? await this.loadAggregationData(
+                  'destination',
+                  aggVariable,
+                  data,
+                  aggEntityVarDataloader
+                )
+              : null,
+        }
       })
     )
-    const varData = Object.fromEntries(entityVarEntries.concat(aggVarEntries))
-    const hit = await jsonLogicEngine.run(jsonLogic, varData)
+    // NOTE: If a aggregation variable has both directions, we need to evaluate the logic
+    // twice, one for each direction
+    const directions = aggHasBothDirections
+      ? ['origin', 'destination']
+      : ['origin']
+    let hit = false
+    // NOTE: If there's no aggregation variable, we hit both directions. One side can be muted
+    // by setting alertConfig.alertCreationDirection
+    const hitDirections: RuleHitDirection[] =
+      aggVariables.length > 0 ? [] : ['ORIGIN', 'DESTINATION']
+    let varData = {}
+    for (const direction of directions) {
+      const aggVarEntries: Array<{
+        entry: [string, any]
+        direction: RuleHitDirection
+      }> = aggVarData.map((v) => {
+        const directionToUse =
+          v.variable.direction === 'SENDING'
+            ? 'origin'
+            : v.variable.direction === 'RECEIVING'
+            ? 'destination'
+            : direction
+        return {
+          entry: [v.variable.key, v[directionToUse]],
+          direction: directionToUse === 'origin' ? 'ORIGIN' : 'DESTINATION',
+        }
+      })
+      varData = Object.fromEntries(
+        entityVarEntries.concat(aggVarEntries.map((v) => v.entry))
+      )
+      const resultHit = await jsonLogicEngine.run(jsonLogic, varData)
+      if (resultHit) {
+        hitDirections.push(...uniq(aggVarEntries.map((v) => v.direction)))
+      }
+      if (!hit) {
+        hit = resultHit
+      }
+    }
     return {
       hit,
+      // TODO (V8): Persist varData for both directions
       varData,
+      hitDirections: hit ? uniq(hitDirections) : [],
     }
   }
 
@@ -459,6 +521,7 @@ export class RuleJsonLogicEvaluator {
 
   // TODO (V8): Load same aggregation data only once from multiple rules
   private async loadAggregationData(
+    direction: 'origin' | 'destination',
     aggregationVariable: RuleAggregationVariable,
     data: RuleData,
     entityVarDataloader: DataLoader<string, unknown>
@@ -466,10 +529,9 @@ export class RuleJsonLogicEvaluator {
     const { transaction } = data
     const { aggregationFunc } = aggregationVariable
 
-    // TODO (V8): Handle origin/destinaiton user
     const userKeyId = this.getUserKeyId(
       transaction,
-      'origin',
+      direction,
       aggregationVariable.type
     )
     if (!userKeyId) {

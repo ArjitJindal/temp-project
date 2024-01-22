@@ -242,6 +242,7 @@ export function ruleInstanceToFormValuesV8(
       falsePositiveCheckEnabled: ruleInstance.falsePositiveCheckEnabled ? 'true' : 'false',
       alertAssigneeRole: ruleInstance.alertConfig?.alertAssigneeRole,
       alertAssignees: ruleInstance.alertConfig?.alertAssignees,
+      alertCreationDirection: ruleInstance.alertConfig?.alertCreationDirection,
       alertAssigneesType: ruleInstance.alertConfig?.alertAssigneeRole
         ? 'ROLE'
         : ruleInstance.alertConfig?.alertAssignees
@@ -390,6 +391,7 @@ export function formValuesToRuleInstanceV8(
           : undefined,
       alertCreationInterval: alertCreationDetailsStep.alertCreationInterval,
       alertCreatedFor: alertCreationDetailsStep.alertCreatedFor,
+      alertCreationDirection: alertCreationDetailsStep.alertCreationDirection,
     },
     baseCurrency,
     logicAggregationVariables: ruleLogicAggregationVariables,

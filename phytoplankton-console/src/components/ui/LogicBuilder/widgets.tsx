@@ -33,7 +33,7 @@ const customNumberWidget: NumberWidget = {
     }
     return (
       <WidgetWrapper widgetFactoryProps={props}>
-        <NumberInput value={value} onChange={props.setValue} allowClear={true} />
+        <NumberInput value={value} onChange={(v) => props.setValue(v ?? 0)} allowClear={true} />
       </WidgetWrapper>
     );
   },

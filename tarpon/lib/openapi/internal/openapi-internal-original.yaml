@@ -5845,6 +5845,8 @@ components:
                 enum:
                   - USER
                   - PAYMENT_DETAILS
+            alertCreationDirection:
+              $ref: '#/components/schemas/AlertCreationDirection'
         checksFor:
           type: array
           items:
@@ -5854,6 +5856,14 @@ components:
         - nature
         - labels
         - checksFor
+    AlertCreationDirection:
+      type: string
+      title: AlertCreationDirection
+      enum:
+        - ORIGIN
+        - DESTINATION
+        - ALL
+        - AUTO
     RuleAction:
       type: string
       title: RuleAction

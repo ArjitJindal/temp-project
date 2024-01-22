@@ -90,6 +90,7 @@ import { TransactionRiskScoringResult } from '@/@types/openapi-public/Transactio
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { getSQSClient } from '@/utils/sns-sqs-client'
+import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 
 const sqs = getSQSClient()
 
@@ -646,36 +647,31 @@ export class RulesEngineService {
 
     let ruleClassInstance: TransactionRuleBase | UserRuleBase | undefined
     let isTransactionHistoricalFiltered = false
-    let isOriginUserFiltered = false
-    let isDestinationUserFiltered = false
+    let isOriginUserFiltered = true
+    let isDestinationUserFiltered = true
     let ruleResult: RuleHitResult | undefined
     if (hasFeature('RULES_ENGINE_V8') && logic) {
       if (transactionWithValidUserId) {
-        // TODO (V8): handle hit directions
-        isOriginUserFiltered = true
-        isDestinationUserFiltered = true
-
-        const { hit, varData } = await this.ruleLogicEvaluator.evaluate(
-          logic,
-          ruleInstance.logicAggregationVariables ?? [],
-          { baseCurrency: ruleInstance.baseCurrency },
-          {
-            transaction: transactionWithValidUserId,
-            senderUser,
-            receiverUser,
-          }
+        const { hit, varData, hitDirections } =
+          await this.ruleLogicEvaluator.evaluate(
+            logic,
+            ruleInstance.logicAggregationVariables ?? [],
+            { baseCurrency: ruleInstance.baseCurrency },
+            {
+              transaction: transactionWithValidUserId,
+              senderUser,
+              receiverUser,
+            }
+          )
+        const finalHitDirections = this.getFinalHitDirections(
+          hitDirections,
+          ruleInstance.alertConfig?.alertCreationDirection ?? 'AUTO'
         )
         if (hit) {
-          ruleResult = [
-            {
-              direction: 'ORIGIN',
-              vars: varData,
-            },
-            {
-              direction: 'DESTINATION',
-              vars: varData,
-            },
-          ]
+          ruleResult = finalHitDirections.map((direction) => ({
+            direction,
+            vars: varData,
+          }))
         }
       }
     } else {
@@ -1298,5 +1294,21 @@ export class RulesEngineService {
       this.tenantId,
       webhooksData
     )
+  }
+
+  private getFinalHitDirections(
+    hitDirections: RuleHitDirection[],
+    alertCreationDirection: AlertCreationDirection
+  ): RuleHitDirection[] {
+    switch (alertCreationDirection) {
+      case 'AUTO':
+        return hitDirections
+      case 'ORIGIN':
+        return ['ORIGIN']
+      case 'DESTINATION':
+        return ['DESTINATION']
+      case 'ALL':
+        return ['ORIGIN', 'DESTINATION']
+    }
   }
 }
