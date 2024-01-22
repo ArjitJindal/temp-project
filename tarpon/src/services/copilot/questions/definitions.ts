@@ -49,6 +49,10 @@ export const getQuestions = (): (
     KycScoring,
     Shareholders,
     UserDetails,
+    UniquePaymentIdentifierSent,
+    UniquePaymentIdentifierReceived,
+    UsersSentMoneyTo,
+    UsersReceivedMoneyFrom,
     ...(hasFeature('CRM') ? [CrmInsights] : []),
     ...(hasFeature('SAR') ? [SarsFiled] : []),
     ...(hasFeature('MERCHANT_MONITORING')
@@ -59,10 +63,6 @@ export const getQuestions = (): (
       ? [
           CheckedTransactions,
           Recommendation,
-          UniquePaymentIdentifierSent,
-          UniquePaymentIdentifierReceived,
-          UsersSentMoneyTo,
-          UsersReceivedMoneyFrom,
           TrsScore,
           Transactions,
           TransactionSummary,

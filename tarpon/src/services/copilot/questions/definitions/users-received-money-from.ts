@@ -3,6 +3,7 @@ import {
   humanReadablePeriod,
   Period,
   periodVars,
+  sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
 import { executeSql } from '@/utils/databricks'
 
@@ -34,6 +35,7 @@ from
   transactions t
   join users u on u.userId = t.originUserId
   and t.destinationUserId = :userId
+  and t.timestamp between :from and :to
 group by
   t.originUserId
 order by
@@ -44,14 +46,13 @@ LIMIT
       {
         userId,
         limit: top,
-        from: (period.from || 0) / 1000,
-        to: (period.to || new Date().valueOf()) / 1000,
+        ...sqlPeriod(period),
       }
     )
 
     return {
       data: result.map((r) => [r.userId, r.name, r.userType, r.count, r.sum]),
-      summary: `The top user that ${username} sent money to was ${
+      summary: `The top user that ${username} received money from was ${
         result.at(0)?.name
       }.`,
     }
