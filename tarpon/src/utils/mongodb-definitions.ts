@@ -220,6 +220,11 @@ export const RULES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-rules`
 }
 
+/** DynamoDB Keys Collection */
+export const DYNAMODB_PARTITIONKEYS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-dynamodb-partition-keys`
+}
+
 export function getMongoDbIndexDefinitions(tenantId: string): {
   [collectionName: string]: Array<{
     getIndexes: () => Document[]

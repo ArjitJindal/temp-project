@@ -1,6 +1,7 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { omit } from 'lodash'
+import { StackConstants } from '@lib/constants'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
@@ -98,7 +99,8 @@ async function krsScoreEventHandler(
 
 const hammerheadBuilder = new StreamConsumerBuilder(
   path.basename(__dirname) + '-hammerhead',
-  process.env.HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL!
+  process.env.HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL!,
+  StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
 )
   .setArsScoreEventHandler((tenantId, oldArsScore, newArsScore) =>
     arsScoreEventHandler(tenantId, newArsScore)

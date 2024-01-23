@@ -2,6 +2,7 @@ import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { flatten, isEmpty, pick, omit } from 'lodash'
+import { StackConstants } from '@lib/constants'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -431,7 +432,8 @@ async function transactionEventHandler(
 
 const tarponBuilder = new StreamConsumerBuilder(
   path.basename(__dirname) + '-tarpon',
-  process.env.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL!
+  process.env.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL!,
+  StackConstants.TARPON_DYNAMODB_TABLE_NAME
 )
   .setTransactionHandler((tenantId, oldTransaction, newTransaction) =>
     transactionHandler(tenantId, newTransaction)

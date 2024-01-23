@@ -7,6 +7,7 @@ import { traceable } from '../xray'
 import {
   DynamoDbEntityUpdate,
   getDynamoDbUpdates,
+  savePartitionKey,
 } from './dynamodb-stream-utils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { User } from '@/@types/openapi-public/User'
@@ -74,6 +75,7 @@ export class StreamConsumerBuilder {
   name: string
   retrySqsQueue: string
   transientRepository: TransientRepository
+  tableName: string
   transactionHandler?: TransactionHandler
   transactionEventHandler?: TransactionEventHandler
   userHandler?: UserHandler
@@ -84,10 +86,11 @@ export class StreamConsumerBuilder {
   krsScoreEventHandler?: KrsScoreEventHandler
   ruleInstanceHandler?: RuleInstanceHandler
 
-  constructor(name: string, retrySqsQueue: string) {
+  constructor(name: string, retrySqsQueue: string, tableName: string) {
     this.name = name
     this.retrySqsQueue = retrySqsQueue
     this.transientRepository = new TransientRepository(getDynamoDbClient())
+    this.tableName = tableName
   }
 
   public setTransactionHandler(
@@ -143,6 +146,13 @@ export class StreamConsumerBuilder {
     return this
   }
   public async handleDynamoDbUpdate(update: DynamoDbEntityUpdate) {
+    /**   Store DynamoDB Keys in MongoDB * */
+    await this.partitionKeyHandler(update.tenantId, update.partitionKeyId!)
+
+    if (!update.type) {
+      return
+    }
+
     if (update.type === 'TRANSACTION' && this.transactionHandler) {
       await this.transactionHandler(
         update.tenantId,
@@ -208,6 +218,14 @@ export class StreamConsumerBuilder {
         update.NewImage as RuleInstance
       )
     }
+  }
+
+  private async partitionKeyHandler(
+    tenantId: string,
+    partitionKey: string
+  ): Promise<void> {
+    logger.info(`Storing DynamoDB Key(${partitionKey}) in MongoDB`)
+    await savePartitionKey(tenantId, partitionKey, this.tableName)
   }
 
   private async shouldSendToRetryQueue(

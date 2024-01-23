@@ -25,6 +25,8 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { DYNAMODB_PARTITIONKEYS_COLLECTION } from '@/utils/mongodb-definitions'
 
 type DynamoDbEntityType =
   | 'TRANSACTION'
@@ -40,12 +42,13 @@ type DynamoDbEntityType =
 
 export type DynamoDbEntityUpdate = {
   tenantId: string
-  type: DynamoDbEntityType
-  entityId: string
+  type?: DynamoDbEntityType
+  entityId?: string
   sequenceNumber?: string
   NewImage?: { [key: string]: any }
   OldImage?: { [key: string]: any }
   rawRecord?: KinesisStreamRecord
+  partitionKeyId?: string
 }
 
 function unMarshallDynamoDBStream(dataString: string) {
@@ -176,16 +179,30 @@ function getDynamoDbEntity(
   const metadata =
     getDynamoDbEntityMetadata(partitionKeyId, NewImage) ??
     getDynamoDbEntityMetadata(partitionKeyId, OldImage)
-  if (!metadata) {
-    return null
-  }
+
   return {
     tenantId,
-    type: metadata.type,
-    entityId: metadata.entityId,
+    type: metadata?.type,
+    entityId: metadata?.entityId,
     NewImage,
     OldImage,
+    partitionKeyId,
   }
+}
+
+export async function savePartitionKey(
+  tenantId: string,
+  partitionKey: string,
+  tableName: string
+) {
+  const mongoDb = await getMongoDbClient()
+  const db = mongoDb.db()
+  const collection = db.collection(DYNAMODB_PARTITIONKEYS_COLLECTION(tenantId))
+  await collection.replaceOne(
+    { _id: partitionKey as any },
+    { _id: partitionKey, table: tableName },
+    { upsert: true }
+  )
 }
 
 export function getDynamoDbUpdates(
