@@ -16,6 +16,13 @@ import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/Insig
 import { dayjs } from '@/utils/dayjs';
 import { CurrencyCode, TransactionType } from '@/apis';
 import { message } from '@/components/library/Message';
+import { useQaEnabled } from '@/utils/qa-mode';
+
+enum AlertExpandedTabs {
+  TRANSACTIONS = 'transactions',
+  CHECKLIST = 'checklist',
+  COMMENTS = 'comments',
+}
 
 interface Props {
   alert: TableAlertItem;
@@ -28,7 +35,7 @@ export default function AlertExpanded(props: Props) {
   const { selectedTransactionIds, alert, onTransactionSelect, escalatedTransactionIds } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const alertId = alert.alertId;
-
+  const qaEnabled = useQaEnabled();
   const api = useApi();
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
@@ -85,7 +92,7 @@ export default function AlertExpanded(props: Props) {
     const tabs: TabItem[] = [];
     tabs.push({
       title: 'Transactions details',
-      key: 'transactions',
+      key: AlertExpandedTabs.TRANSACTIONS,
       children: (
         <>
           <TransactionsTable
@@ -140,13 +147,13 @@ export default function AlertExpanded(props: Props) {
     if (alert.ruleChecklistTemplateId && alert?.alertId) {
       tabs.push({
         title: 'Checklist',
-        key: 'checklist',
+        key: AlertExpandedTabs.CHECKLIST,
         children: <Checklist alert={alert} />,
       });
     }
     tabs.push({
       title: 'Comments',
-      key: 'comments',
+      key: AlertExpandedTabs.COMMENTS,
       children: <Comments alertId={alertId ?? null} alertsRes={alertResponse.data} />,
     });
     return tabs;
@@ -162,5 +169,11 @@ export default function AlertExpanded(props: Props) {
     transactionsResponse,
   ]);
 
-  return <Tabs items={items} type="line" />;
+  return (
+    <Tabs
+      items={items}
+      type="line"
+      defaultActiveKey={qaEnabled ? AlertExpandedTabs.CHECKLIST : AlertExpandedTabs.TRANSACTIONS}
+    />
+  );
 }

@@ -113,9 +113,9 @@ export default function CaseManagementPage() {
   }
 
   const qaModeItems: Item<ScopeSelectorValue>[] = [
-    { value: 'QA_UNCHECKED_ALERTS', label: "Closed & Not QA'd alerts" },
-    { value: 'QA_PASSED_ALERTS', label: 'Passed alerts' },
-    { value: 'QA_FAILED_ALERTS', label: 'Failed alerts' },
+    { value: 'QA_UNCHECKED_ALERTS', label: "Not QA'd" },
+    { value: 'QA_PASSED_ALERTS', label: 'QA passed' },
+    { value: 'QA_FAILED_ALERTS', label: 'QA failed' },
   ];
 
   const branding = getBranding();

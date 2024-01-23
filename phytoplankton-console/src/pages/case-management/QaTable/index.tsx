@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Tag } from 'antd';
 import { useMutation } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableData, TableRefType } from '@/components/library/Table/types';
 import { QueryResult } from '@/utils/queries/types';
@@ -26,6 +27,8 @@ import { AssignmentButton } from '@/pages/case-management/components/AssignmentB
 import { CLOSING_REASONS } from '@/components/Narrative';
 import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useQaMode } from '@/utils/qa-mode';
+import Button from '@/components/library/Button';
+import { getAlertUrl } from '@/utils/routing';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -89,14 +92,14 @@ export default function QaTable(props: Props) {
       type: RULE_NATURE,
     }),
     helper.simple<'updatedAt'>({
-      title: 'Closed at',
+      title: 'Alert closed at',
       key: 'updatedAt',
       type: DATE,
       sorting: true,
       filtering: true,
     }),
     helper.display({
-      title: 'Closing reason',
+      title: 'Alert closing reason',
       enableResizing: false,
       defaultWidth: 200,
       render: (entity) => {
@@ -166,6 +169,27 @@ export default function QaTable(props: Props) {
         },
       },
     }),
+    ...(qaMode
+      ? [
+          helper.display({
+            title: 'Action',
+            render: (entity) => {
+              const caseId = entity.caseId;
+              const alertId = entity.alertId;
+              if (!caseId || !alertId) {
+                return null;
+              }
+              return (
+                <Link to={getAlertUrl(caseId, alertId)}>
+                  <>
+                    <Button type="PRIMARY">View</Button>
+                  </>
+                </Link>
+              );
+            },
+          }),
+        ]
+      : []),
   ]);
 
   const filters = useCaseAlertFilters([
@@ -201,31 +225,7 @@ export default function QaTable(props: Props) {
         ),
       },
       {
-        title: 'QA status',
-        key: 'filterQaStatus',
-        showFilterByDefault: true,
-        renderer: {
-          kind: 'select',
-          mode: 'MULTIPLE',
-          displayMode: 'select',
-          options: [
-            {
-              value: 'PASSED',
-              label: 'Passed',
-            },
-            {
-              value: 'FAILED',
-              label: 'Failed',
-            },
-            {
-              value: "NOT_QA'd",
-              label: "Not QA'd",
-            },
-          ],
-        },
-      },
-      {
-        title: 'Closing reason',
+        title: 'Alert closing reason',
         key: 'filterClosingReason',
         showFilterByDefault: true,
         renderer: {
