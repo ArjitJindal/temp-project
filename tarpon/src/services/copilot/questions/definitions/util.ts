@@ -88,13 +88,6 @@ export function matchPeriod(timestampField: string, period: Period) {
   return { [timestampField]: filters }
 }
 
-export function sqlPeriod(period: Period) {
-  return {
-    from: (period.from || 0).toFixed(2),
-    to: (period.to || new Date().valueOf()).toFixed(2),
-  }
-}
-
 export function calculatePercentageBreakdown(data: string[]): string {
   const threshold = 10
   const statusCount: { [status: string]: number } = {}

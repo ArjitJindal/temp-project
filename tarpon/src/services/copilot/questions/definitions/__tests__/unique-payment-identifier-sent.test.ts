@@ -4,7 +4,7 @@ import { UniquePaymentIdentifierSent } from '@/services/copilot/questions/defini
 import { testQuestion } from '@/services/copilot/questions/definitions/__tests__/util'
 
 describe('Unique payment identifier sent', () => {
-  test.skip('One payment identifier returned', async () => {
+  test('One payment identifier returned', async () => {
     await testQuestion(
       UniquePaymentIdentifierSent,
       {},
