@@ -562,7 +562,7 @@ class DatabricksStack extends TerraformStack {
       const tenantSchema = new databricks.schema.Schema(this, `schema-${i}`, {
         provider: workspaceProvider,
         catalogName: catalog.name,
-        name: sp.displayName,
+        name: Fn.lower(sp.displayName),
       })
       new databricks.grant.Grant(this, `sp-grant-${i}`, {
         provider: workspaceProvider,
@@ -580,7 +580,7 @@ class DatabricksStack extends TerraformStack {
           tableType: 'VIEW',
           viewDefinition: Fn.format(
             "SELECT * from %s.default.%s WHERE tenant = '%s'",
-            [catalog.name, entity, sp.displayName]
+            [catalog.name, entity, Fn.lower(sp.displayName)]
           ),
           dependsOn: tables,
         })
