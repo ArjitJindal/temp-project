@@ -12,6 +12,7 @@ describe('Escalate a case from case-details', () => {
   const escalateCase = () => {
     cy.get('button[data-cy="status-options-button"]').eq(0).click();
     cy.get('.ant-dropdown-menu-title-content > [data-cy="update-status-button"]')
+      .contains('Escalate')
       .should('exist')
       .click();
     cy.intercept('POST', '**/cases/*/escalate').as('escalate');
