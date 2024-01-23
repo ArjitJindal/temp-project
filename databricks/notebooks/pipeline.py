@@ -1,29 +1,28 @@
-# type: ignore
+# Databricks notebook source
+# MAGIC %pip install /dbfs/FileStore/src-0.1.0-py3-none-any.whl
+
+# COMMAND ----------
+
 import json
 import os
-import sys
-
-import dlt  # pylint: disable=import-error
+import dlt
 from boto3.dynamodb.types import TypeDeserializer
-from data_quality_checks import (  # pylint: disable=import-error
+from src.dlt.data_quality_checks import (
     raw_event_data_valid,
     raw_event_data_warn,
 )
 from pyspark.sql.functions import col, concat, expr, from_json, lit, regexp_extract, udf
 
-sys.path.append(os.path.abspath("/Workspace/Shared/main"))
+from src.dlt.schema import kinesis_event_schema
+from src.entities import entities
 
-from src.dlt_pipeline.schema import kinesis_event_schema  # pylint: disable=import-error
-from src.entities import entities  # pylint: disable=import-error
-
-aws_access_key = dbutils.secrets.get(  # pylint: disable=undefined-variable
+aws_access_key = dbutils.secrets.get(
     "kinesis", "aws-access-key"
 )
 
-aws_secret_key = dbutils.secrets.get(  # pylint: disable=undefined-variable
+aws_secret_key = dbutils.secrets.get(
     "kinesis", "aws-secret-key"
 )
-
 
 def deserialise_dynamo(column):
     data = json.loads(column)
@@ -130,5 +129,4 @@ def create_entity_tables(entity, schema, dynamo_key, id_column):
         apply_as_deletes=expr("event = 'REMOVE'"),
     )
 
-
-define_pipeline(spark)  # pylint: disable=undefined-variable
+define_pipeline(spark)

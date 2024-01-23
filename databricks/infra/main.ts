@@ -391,6 +391,9 @@ class DatabricksStack extends TerraformStack {
         },
       ],
       dependsOn: [instanceProfile],
+      lifecycle: {
+        ignoreChanges: ['aws_attributes'],
+      },
     })
 
     const enableServerlessCompute = serverlessRegions.indexOf(awsRegion) > -1
@@ -415,35 +418,21 @@ class DatabricksStack extends TerraformStack {
         }
       )
 
-    new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
-      this,
-      'databricks-access-secret-version',
-      {
-        secretId: databricksAccessTokenSecret.id,
-        secretString: Fn.jsonencode({
-          serverHostname: sqlWarehouse.odbcParams.hostname,
-          httpPath: sqlWarehouse.odbcParams.path,
-          token: databricksAccessToken.tokenValue,
-        }),
-      }
-    )
+    new databricks.notebook.Notebook(this, `dlt-file`, {
+      provider: workspaceProvider,
+      source: path.resolve(__dirname, '../notebooks/pipeline.py'),
+      path: '/Shared/pipeline.py',
+    })
+    new databricks.notebook.Notebook(this, `backfill-file`, {
+      provider: workspaceProvider,
+      source: path.resolve(__dirname, '../notebooks/backfill.py'),
+      path: '/Shared/backfill.py',
+    })
 
-    // TODO give databricks access to github instead.
-    const directoryPath = path.resolve(__dirname, '..', 'src')
-    fs.readdirSync(directoryPath, { recursive: true, withFileTypes: true })
-      .filter((file) => file.isFile())
-      .map((file) => path.join(file.path.replace(directoryPath, ''), file.name))
-      .forEach((file, index) => {
-        new databricks.workspaceFile.WorkspaceFile(
-          this,
-          `workspace-file-${index}`,
-          {
-            provider: workspaceProvider,
-            source: path.join(directoryPath, file),
-            path: path.join('/Shared/main/src', file),
-          }
-        )
-      })
+    new databricks.dbfsFile.DbfsFile(this, `whl-dbfs`, {
+      path: '/FileStore/src-0.1.0-py3-none-any.whl',
+      source: path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl'),
+    })
 
     new databricks.pipeline.Pipeline(this, `pipeline`, {
       provider: workspaceProvider,
@@ -462,8 +451,8 @@ class DatabricksStack extends TerraformStack {
       ],
       library: [
         {
-          file: {
-            path: `/Shared/main/src/dlt_pipeline/pipeline.py`,
+          notebook: {
+            path: `/Shared/pipeline.py`,
           },
         },
       ],
@@ -483,6 +472,17 @@ class DatabricksStack extends TerraformStack {
     const catalog = new databricks.catalog.Catalog(this, 'main-catalog', {
       provider: workspaceProvider,
       name: stage,
+    })
+
+    new databricks.grants.Grants(this, `grants-admin`, {
+      provider: workspaceProvider,
+      catalog: catalog.id,
+      grant: [
+        {
+          principal: regionalAdminGroupName,
+          privileges: ['ALL_PRIVILEGES'],
+        },
+      ],
     })
 
     const defaultSchema = new databricks.schema.Schema(this, 'default-schema', {
@@ -564,15 +564,11 @@ class DatabricksStack extends TerraformStack {
         catalogName: catalog.name,
         name: sp.displayName,
       })
-      new databricks.grants.Grants(this, `grants-${i}`, {
+      new databricks.grant.Grant(this, `sp-grant-${i}`, {
         provider: workspaceProvider,
         schema: tenantSchema.id,
-        grant: [
-          {
-            principal: sp.applicationId,
-            privileges: ['USE_SCHEMA', 'SELECT'],
-          },
-        ],
+        principal: sp.applicationId,
+        privileges: ['USE_SCHEMA', 'SELECT'],
       })
 
       entities.forEach((entity) => {
@@ -609,8 +605,8 @@ class DatabricksStack extends TerraformStack {
           secretId: tenantSecret.id,
           secretString: Fn.jsonencode({
             token: spToken.tokenValue,
-            host: sqlWarehouse.odbcParams.host,
-            path: sqlWarehouse.odbcParams.path,
+            host: sqlWarehouse.odbcParams.get(0).hostname,
+            path: sqlWarehouse.odbcParams.get(0).path,
           }),
         }
       )

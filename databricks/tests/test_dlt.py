@@ -3,7 +3,7 @@ import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StringType
 
-from src.dlt_pipeline.transformations import transform_event_data
+from src.dlt.transformations import transform_event_data
 
 OUTPUT_JSON = """{timestamp=1701790627472}"""
 DYNAMO_EVENT_JSON = """

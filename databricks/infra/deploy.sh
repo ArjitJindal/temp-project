@@ -13,5 +13,8 @@ if [ -z "$STAGE" ] || [ -z "$REGION" ]; then
     exit 1
 fi
 
+echo "Building python assets"
+poetry build
+
 echo "Deploying to stage: $STAGE, region: $REGION"
 STAGE=$STAGE REGION=$REGION cdktf deploy "$@"

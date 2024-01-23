@@ -31,11 +31,16 @@ export const databricksDeployStage = (
             ],
           },
           build: {
+            'runtime-versions': {
+              nodejs: 20,
+              python: '3.8',
+            },
             commands: [
               ...installTerraform,
               'cd databricks',
               'make generate',
               'cd infra',
+              'pip install poetry',
               `npm run deploy -- ${config.stage} ${
                 config.region || 'eu-1'
               } --auto-approve`,

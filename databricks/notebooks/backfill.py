@@ -1,29 +1,26 @@
-# type: ignore
-import os
-import sys
-import logging
-from pyspark.sql import SparkSession
+# Databricks notebook source
+# MAGIC %pip install /dbfs/FileStore/src-0.1.0-py3-none-any.whl
+
+# COMMAND ----------
 
 import pymongo
 from pyspark.sql.functions import col, lit
+import logging
 
 from databricks.sdk.runtime import *
 
-sys.path.append(os.path.abspath("/Workspace/Shared/main"))
-
-from src.entities import entities  # pylint: disable=import-error
+from src.entities import entities
 
 # MongoDB Connection Setup
-MONGO_USERNAME = dbutils.secrets.get(  # pylint: disable=undefined-variable
+MONGO_USERNAME = dbutils.secrets.get(
     "mongo", "mongo-username"
 )
-MONGO_PASSWORD = dbutils.secrets.get(  # pylint: disable=undefined-variable
+MONGO_PASSWORD = dbutils.secrets.get(
     "mongo", "mongo-password"
 )
-MONGO_HOST = dbutils.secrets.get(  # pylint: disable=undefined-variable
+MONGO_HOST = dbutils.secrets.get(
     "mongo", "mongo-host"
 )
-
 
 def load_mongo(table, partition_key, id_column, schema):
     logging.basicConfig(level=logging.INFO)
@@ -68,7 +65,6 @@ def load_mongo(table, partition_key, id_column, schema):
         except:
             logger.info("Could not backfill from %s", coll)
     logger.info("All collections processed successfully.")
-
 
 for entity in entities:
     load_mongo(

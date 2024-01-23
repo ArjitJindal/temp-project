@@ -27,4 +27,3 @@ generate:
 	rm -rf src/openapi
 	mkdir -p src/openapi
 	mv ./openapi/gen/src/openapi/models src/openapi/models
-
