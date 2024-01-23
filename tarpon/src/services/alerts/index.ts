@@ -214,8 +214,13 @@ export class AlertsService extends CaseAlertsCommonService {
     caseId: string,
     caseEscalationRequest: CaseEscalationRequest
   ): Promise<{ childCaseId?: string; assigneeIds: string[] }> {
+    const context = getContext()
     const accountsService = new AccountsService(
-      { auth0Domain: process.env.AUTH0_DOMAIN as string },
+      {
+        auth0Domain:
+          context?.settings?.auth0Domain ||
+          (process.env.AUTH0_DOMAIN as string),
+      },
       { mongoDb: this.mongoDb }
     )
     const transactionsRepo = new MongoDbTransactionRepository(
@@ -727,8 +732,12 @@ export class AlertsService extends CaseAlertsCommonService {
       mongoDb: this.mongoDb,
     })
 
+    const context = getContext()
+    const auth0Domain =
+      context?.settings?.auth0Domain ?? (process.env.AUTH0_DOMAIN as string)
+
     const accountsService = new AccountsService(
-      { auth0Domain: process.env.AUTH0_DOMAIN as string },
+      { auth0Domain },
       { mongoDb: this.mongoDb }
     )
 

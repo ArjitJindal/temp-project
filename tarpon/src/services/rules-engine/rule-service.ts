@@ -23,7 +23,7 @@ import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRule
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
 import { mergeObjects } from '@/utils/object'
-import { hasFeatures } from '@/core/utils/context'
+import { hasFeatures, tenantSettings } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 import { RuleFilters } from '@/@types/openapi-internal/RuleFilters'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -126,17 +126,12 @@ export class RuleService {
   async getAllRules(): Promise<Array<Rule>> {
     const rulesPromise = this.ruleRepository.getAllRules()
 
-    const tenantRepo = new TenantRepository(
-      this.ruleInstanceRepository.tenantId,
-      { dynamoDb: this.ruleInstanceRepository.dynamoDb }
-    )
-
-    const tenantSettings = await tenantRepo.getTenantSettings()
+    const settings = await tenantSettings(this.ruleInstanceRepository.tenantId)
 
     const rules = replaceMagicKeyword(
       await rulesPromise,
       DEFAULT_CURRENCY_KEYWORD,
-      tenantSettings?.defaultValues?.currency ?? 'USD'
+      settings?.defaultValues?.currency ?? 'USD'
     ) as Array<Rule>
 
     return rules.filter(

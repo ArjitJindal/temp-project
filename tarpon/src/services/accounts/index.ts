@@ -10,7 +10,6 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { MongoClient } from 'mongodb'
-import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { CaseRepository } from '../rules-engine/repositories/case-repository'
 import { AlertsRepository } from '../rules-engine/repositories/alerts-repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
@@ -25,7 +24,7 @@ import {
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { RoleService } from '@/services/roles'
-import { getContext, hasFeature } from '@/core/utils/context'
+import { getContext, hasFeature, tenantSettings } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ACCOUNTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { JWTAuthorizerResult, isRoleAboveAdmin } from '@/@types/jwt'
@@ -33,7 +32,6 @@ import {
   DefaultApiAccountsChangeTenantRequest,
   DefaultApiAccountsEditRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 
@@ -207,20 +205,18 @@ export class AccountsService {
     if (inviteRole === 'root') {
       throw new Forbidden(`It's not possible to create a root user`)
     }
-    const dynamoDb = getDynamoDbClient()
     const allAccounts: Account[] = await this.getTenantAccounts(organization)
     const existingAccount = allAccounts.filter(
       (account) => !isRoleAboveAdmin(account.role) && account.blocked === false
     )
-    const tenantRepository = new TenantRepository(organization.id, { dynamoDb })
-    const tenantSettings = await tenantRepository.getTenantSettings()
+    const settings = await tenantSettings(organization.id)
 
     if (
-      tenantSettings?.limits?.seats &&
-      existingAccount.length >= tenantSettings?.limits?.seats
+      settings?.limits?.seats &&
+      existingAccount.length >= settings?.limits?.seats
     ) {
       throw new Forbidden(
-        `You have reached the maximum number of users (${existingAccount.length} / ${tenantSettings?.limits?.seats})`
+        `You have reached the maximum number of users (${existingAccount.length} / ${settings?.limits?.seats})`
       )
     }
 

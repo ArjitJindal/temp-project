@@ -1,20 +1,17 @@
-import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { TestFargateJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { tenantSettings } from '@/core/utils/context'
 
 export class TestFargateBatchJobRunner extends BatchJobRunner {
   protected async run(job: TestFargateJob): Promise<void> {
     const { message } = job.parameters
     logger.info(`TestFargateBatchJobRunner: ${message}`)
-    const dynamoDb = getDynamoDbClient()
 
     // Test DynamoDB connection
-    const tenantRepository = new TenantRepository(job.tenantId, { dynamoDb })
-    const tenant = await tenantRepository.getTenantSettings()
+    const tenant = await tenantSettings(job.tenantId)
     logger.info(`Tenant: ${JSON.stringify(tenant)}`)
 
     // Test MongoDB connection

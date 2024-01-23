@@ -43,6 +43,8 @@ import { AccountsService } from '@/services/accounts'
 import { setAccounts } from '@/core/seed/samplers/accounts'
 import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -66,16 +68,21 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
   const db = client.db()
-
+  const originalTenantId = tenantId.replace('-test', '')
+  const tenantRepository = new TenantRepository(originalTenantId, {
+    mongoDb: client,
+    dynamoDb: getDynamoDbClient(),
+  })
+  const settings = await tenantRepository.getTenantSettings(['auth0Domain'])
+  const auth0Domain =
+    settings.auth0Domain || (process.env.AUTH0_DOMAIN as string)
   const accountsService = new AccountsService(
-    { auth0Domain: process.env.AUTH0_DOMAIN as string },
+    { auth0Domain },
     { mongoDb: client }
   )
   logger.info(`TenantId: ${tenantId}`)
 
-  let tenant = await accountsService.getTenantById(
-    tenantId.replace('-test', '')
-  ) // As we are appending -test to the tenantId, we need to remove it to get the real tenantId when in demo mode
+  let tenant = await accountsService.getTenantById(originalTenantId) // As we are appending -test to the tenantId, we need to remove it to get the real tenantId when in demo mode
 
   logger.info(`Tenant: ${JSON.stringify(tenant)}`)
 

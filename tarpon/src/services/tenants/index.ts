@@ -36,6 +36,11 @@ import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
 import { isFlagrightInternalUser } from '@/@types/jwt'
+import {
+  getContext,
+  tenantSettings,
+  updateTenantSettings,
+} from '@/core/utils/context'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -168,7 +173,9 @@ export class TenantService {
     const newTenantSettings: TenantSettings = {
       limits: { seats: tenantData.seats ?? 5, apiKeyView: 2 },
       features: tenantData.features ?? [],
+      auth0Domain: tenantData.auth0Domain,
     }
+
     const dynamoDb = this.dynamoDb
     const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
     await tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
@@ -196,7 +203,7 @@ export class TenantService {
 
     const usagePlanKeys = compact(
       await Promise.all(
-        await allUsagePlans.map(async (usagePlan) => {
+        allUsagePlans.map(async (usagePlan) => {
           const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
             usagePlanId: usagePlan.id,
           })
@@ -248,19 +255,21 @@ export class TenantService {
     const apigateway = new APIGatewayClient({
       region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
     })
-    // TODO: handle for more than 500 usage plans
-    const usagePlansCommand = new GetUsagePlansCommand({
-      limit: 500,
-    })
 
-    const usagePlans = await apigateway.send(usagePlansCommand)
+    let position: string | undefined
+    const usagePlans: UsagePlan[] = []
+    do {
+      const usagePlansCommand = new GetUsagePlansCommand({
+        limit: 500,
+        position,
+      })
 
-    if (!usagePlans?.items?.length) {
-      logger.error('No usage plans found')
-      return []
-    }
+      const retrivedPlans = await apigateway.send(usagePlansCommand)
+      position = retrivedPlans.position
+      retrivedPlans.items?.concat(usagePlans)
+    } while (position)
 
-    return usagePlans.items
+    return usagePlans
   }
 
   async assertUsagePlanNotExist(planName: string): Promise<void> {
@@ -389,10 +398,10 @@ export class TenantService {
       dynamoDb: this.dynamoDb,
     })
 
-    const tenantSettings = await tenantRepository.getTenantSettings()
+    const settings = await tenantSettings(this.tenantId)
 
     const apiKeyViewTimes =
-      tenantSettings?.apiKeyViewData?.find(
+      settings?.apiKeyViewData?.find(
         (x) => x.apiKey === unmaskingOptions.apiKeyId
       )?.count ?? 0
 
@@ -401,7 +410,7 @@ export class TenantService {
 
       if (
         unmaskingOptions.unmask &&
-        apiKeyViewTimes >= (tenantSettings?.limits?.apiKeyView ?? 2)
+        apiKeyViewTimes >= (settings?.limits?.apiKeyView ?? 2)
       ) {
         value = x.value?.replace(/.(?=.{4})/g, '*')
       }
@@ -414,7 +423,7 @@ export class TenantService {
       }
     })
 
-    const apiKeyViewData = tenantSettings?.apiKeyViewData ?? []
+    const apiKeyViewData = settings?.apiKeyViewData ?? []
 
     const apiKeyViewDataIndex = apiKeyViewData.findIndex(
       (x) => x.apiKey === unmaskingOptions.apiKeyId
@@ -535,9 +544,14 @@ export class TenantService {
     const updatedResult = await tenantRepository.createOrUpdateTenantSettings(
       newTenantSettings
     )
+
+    const context = getContext()
+    const auth0Domain =
+      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+
     if (newTenantSettings.isProductionAccessEnabled != null) {
       const accountsService = new AccountsService(
-        { auth0Domain: process.env.AUTH0_DOMAIN as string },
+        { auth0Domain },
         { mongoDb: this.mongoDb }
       )
 
@@ -546,6 +560,15 @@ export class TenantService {
         !newTenantSettings.isProductionAccessEnabled
       )
     }
+
+    const existingTenantSettings = getContext()?.settings
+
+    const mergedTenantSettings: TenantSettings = {
+      ...existingTenantSettings,
+      ...newTenantSettings,
+    }
+
+    updateTenantSettings(mergedTenantSettings)
 
     return updatedResult
   }

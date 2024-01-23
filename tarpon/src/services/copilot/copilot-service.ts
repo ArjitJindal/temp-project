@@ -6,7 +6,6 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { difference } from 'lodash'
-import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import {
   AttributeGenerator,
   AttributeSet,
@@ -29,6 +28,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { ask } from '@/utils/openapi'
 import { AI_ATTRIBUTES } from '@/@types/openapi-internal-custom/AIAttribute'
+import { tenantSettings } from '@/core/utils/context'
 
 type GenerateNarrative = {
   _case: Case
@@ -132,14 +132,7 @@ export class CopilotService {
   }
 
   private async getEnabledAttributes(): Promise<AIAttribute[]> {
-    const tenantRepository = new TenantRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-      dynamoDb: this.dynamoDb,
-    })
-
-    const tenantSettings = await tenantRepository.getTenantSettings([
-      'aiSourcesDisabled',
-    ])
+    const settings = await tenantSettings(this.tenantId)
 
     const compulsoryHidden = AI_SOURCES.filter((s) => s.isPii).map(
       (s) => s.sourceName
@@ -147,7 +140,7 @@ export class CopilotService {
 
     const aiSourcesEnabled = difference(
       AI_ATTRIBUTES,
-      (tenantSettings.aiSourcesDisabled ?? []).concat(
+      (settings.aiSourcesDisabled ?? []).concat(
         compulsoryHidden as AIAttribute[]
       )
     )

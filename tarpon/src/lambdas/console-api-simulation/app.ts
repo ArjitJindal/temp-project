@@ -12,10 +12,9 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { isDemoTenant } from '@/utils/tenant'
+import { tenantSettings } from '@/core/utils/context'
 
 export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
   async (
@@ -25,7 +24,6 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
-    const dynamoDb = await getDynamoDbClientByEvent(event)
     const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
       mongoDb
@@ -45,11 +43,9 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
     handlers.registerPostSimulation(async (ctx, request) => {
       const simulationParameters =
         request.SimulationPulseParametersRequest___SimulationBeaconParametersRequest
-      const tenantRepositry = new TenantRepository(tenantId, {
-        dynamoDb,
-      })
-      const tenantSettings = await tenantRepositry.getTenantSettings()
-      const simulationsLimit = tenantSettings.limits?.simulations ?? 0
+
+      const settings = await tenantSettings(tenantId)
+      const simulationsLimit = settings.limits?.simulations ?? 0
       const usedSimulations =
         await simulationTaskRepository.getSimulationJobsCount()
       if (

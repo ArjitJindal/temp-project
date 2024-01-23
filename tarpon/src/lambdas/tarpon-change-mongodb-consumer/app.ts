@@ -24,7 +24,7 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { updateLogMetadata } from '@/core/utils/context'
+import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
@@ -160,17 +160,14 @@ async function transactionHandler(
   })
   const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
-  const tenantRepository = new TenantRepository(tenantId, {
-    dynamoDb,
-  })
   const riskScoringService = new RiskScoringService(tenantId, {
     dynamoDb,
     mongoDb,
   })
 
-  const tenantSettings = await tenantRepository.getTenantSettings()
+  const settings = await tenantSettings(tenantId)
 
-  const isSyncRiskScoringEnabled = tenantSettings.features?.includes(
+  const isSyncRiskScoringEnabled = settings.features?.includes(
     'SYNC_TRS_CALCULATION'
   )
 
@@ -193,7 +190,7 @@ async function transactionHandler(
     usersRepo,
     ruleInstancesRepo,
     transactionsRepo,
-    tenantSettings
+    settings
   )
 
   const userService = new UserService(tenantId, { dynamoDb, mongoDb })
@@ -232,8 +229,8 @@ async function transactionHandler(
 
   logger.info(`Case Creation Completed`)
 
-  // We don't need to use `tenantHasSetting` because we already have tenantSettings from above and we can just check for the feature
-  if (tenantSettings?.features?.includes('RISK_SCORING')) {
+  // We don't need to use `tenantHasSetting` because we already have settings from above and we can just check for the feature
+  if (settings?.features?.includes('RISK_SCORING')) {
     logger.info(`Calculating ARS & DRS`)
 
     const { originDrsScore, destinationDrsScore } =
@@ -276,25 +273,20 @@ async function userHandler(
   })
   const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
-  const tenantRepository = new TenantRepository(tenantId, {
-    dynamoDb,
-  })
-
-  const tenantSettings = await tenantRepository.getTenantSettings()
+  const settings = await tenantSettings(tenantId)
 
   const caseCreationService = new CaseCreationService(
     casesRepo,
     usersRepo,
     ruleInstancesRepo,
     transactionsRepo,
-    tenantSettings
+    settings
   )
 
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-  const isRiskScoringEnabled =
-    tenantSettings?.features?.includes('RISK_SCORING')
+  const isRiskScoringEnabled = settings?.features?.includes('RISK_SCORING')
 
-  const isRiskLevelsEnabled = tenantSettings?.features?.includes('RISK_LEVELS')
+  const isRiskLevelsEnabled = settings?.features?.includes('RISK_LEVELS')
 
   const [krsScore, drsScore] = await Promise.all([
     isRiskScoringEnabled

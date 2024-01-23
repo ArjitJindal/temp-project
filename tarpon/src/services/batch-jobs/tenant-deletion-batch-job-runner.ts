@@ -27,6 +27,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { ListHeader } from '@/@types/openapi-internal/ListHeader'
 import { traceable } from '@/core/xray'
 import { getAuth0ManagementClient } from '@/utils/auth0-utils'
+import { getContext } from '@/core/utils/context'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -474,12 +475,14 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
     logger.info(`Deleted S3 files.`)
   }
+
   private async deleteAuth0Users(tenantId: string) {
     const mongoDb = await getMongoDbClient()
-    const accountsService = new AccountsService(
-      { auth0Domain: process.env.AUTH0_DOMAIN as string },
-      { mongoDb }
-    )
+    const context = getContext()
+    const auth0Domain =
+      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+
+    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
     logger.info('Deleting all users from Auth0')
     const tenant = await accountsService.getTenantById(tenantId)
     if (!tenant) {
@@ -562,18 +565,17 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
   private async deleteAuth0Organization(tenantId: string) {
     const mongoDb = await getMongoDbClient()
-    const accountsService = new AccountsService(
-      { auth0Domain: process.env.AUTH0_DOMAIN as string },
-      { mongoDb }
-    )
+    const context = getContext()
+    const auth0Domain =
+      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+
+    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
     const tenant = await accountsService.getTenantById(tenantId)
     if (tenant == null) {
       logger.warn(`Tenant ${tenantId} not found`)
       return
     }
-    const managementClient = await getAuth0ManagementClient(
-      process.env.AUTH0_DOMAIN as string
-    )
+    const managementClient = await getAuth0ManagementClient(auth0Domain)
     await managementClient.organizations.delete({ id: tenant.orgId })
   }
 }

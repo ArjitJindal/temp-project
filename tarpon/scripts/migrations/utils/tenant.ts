@@ -9,6 +9,7 @@ import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { envIs } from '@/utils/env'
 import { getFullTenantId } from '@/utils/tenant'
+import { tenantSettings } from '@/core/utils/context'
 
 const config = getConfig()
 
@@ -73,14 +74,12 @@ export async function syncFeatureFlags() {
     const tenantRepository = new TenantRepository(tenant.id, {
       dynamoDb,
     })
-    const tenantSettings = await tenantRepository.getTenantSettings([
-      'features',
-    ])
-    if (!tenantSettings.features) {
+    const settings = await tenantRepository.getTenantSettings(['features'])
+    if (!settings.features) {
       return
     }
     await tenantRepository.createOrUpdateTenantSettings({
-      features: tenantSettings.features.filter((feature) =>
+      features: settings.features.filter((feature) =>
         FEATURES.includes(feature as Feature)
       ),
     })
@@ -94,14 +93,12 @@ export async function renameFeatureFlags(mappings: {
     const tenantRepository = new TenantRepository(tenant.id, {
       dynamoDb,
     })
-    const tenantSettings = await tenantRepository.getTenantSettings([
-      'features',
-    ])
-    if (!tenantSettings.features) {
+    const settings = await tenantSettings(tenant.id)
+    if (!settings.features) {
       return
     }
     await tenantRepository.createOrUpdateTenantSettings({
-      features: tenantSettings.features.map(
+      features: settings.features.map(
         (feature) => mappings[feature] ?? feature
       ),
     })

@@ -548,13 +548,18 @@ export class CaseService extends CaseAlertsCommonService {
 
     await background(this.updateKycAndUserState(cases, updates))
 
+    const context = getContext()
+
     const accountsService = new AccountsService(
-      { auth0Domain: process.env.AUTH0_DOMAIN as string },
+      {
+        auth0Domain:
+          context?.settings?.auth0Domain ??
+          (process.env.AUTH0_DOMAIN as string),
+      },
       { mongoDb: this.mongoDb }
     )
 
-    const userId = getContext()?.user?.id as string
-
+    const userId = (context?.user as Account)?.id
     const accountUser = account ?? (await accountsService.getAccount(userId))
     const isLastInReview = isStatusInReview(
       cases[0].lastStatusChange?.caseStatus
@@ -836,8 +841,13 @@ export class CaseService extends CaseAlertsCommonService {
     caseId: string,
     caseUpdateRequest: CaseEscalationsUpdateRequest
   ): Promise<{ assigneeIds: string[] }> {
+    const context = getContext()
     const accountsService = new AccountsService(
-      { auth0Domain: process.env.AUTH0_DOMAIN as string },
+      {
+        auth0Domain:
+          context?.settings?.auth0Domain ??
+          (process.env.AUTH0_DOMAIN as string),
+      },
       { mongoDb: this.caseRepository.mongoDb }
     )
     const accounts = await accountsService.getAllActiveAccounts()

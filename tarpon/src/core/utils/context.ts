@@ -70,7 +70,8 @@ export async function getInitialContext(
   lambdaContext: LambdaContext
 ): Promise<Context> {
   try {
-    let features: any = undefined
+    let features: Feature[] | undefined
+    let settings: TenantSettings | undefined
     const {
       principalId: tenantId,
       tenantName,
@@ -88,8 +89,9 @@ export async function getInitialContext(
         >
       )
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
-      features = (await tenantRepository.getTenantSettings(['features']))
-        ?.features
+      const allSettings = await tenantRepository.getTenantSettings()
+      features = allSettings?.features
+      settings = allSettings
     }
 
     // Create a map for O(1) lookup in permissions checks
@@ -131,6 +133,7 @@ export async function getInitialContext(
             dangerousTenantDelete: Boolean(dangerousTenantDelete),
           }
         : undefined,
+      settings,
     }
     return context
   } catch (e) {
@@ -341,7 +344,7 @@ export async function tenantSettings(
     return contextSettings
   }
 
-  const tenantRepository = await new TenantRepository(tenantId, {
+  const tenantRepository = new TenantRepository(tenantId, {
     dynamoDb: getDynamoDbClient(),
   })
   const settings = await tenantRepository.getTenantSettings()
@@ -350,5 +353,6 @@ export async function tenantSettings(
     updateTenantSettings(settings)
     updateTenantFeatures(settings.features ?? [])
   }
+
   return settings
 }

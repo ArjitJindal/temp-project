@@ -35,6 +35,7 @@ import {
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getFullTenantId } from '@/utils/tenant'
+import { tenantSettings } from '@/core/utils/context'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
@@ -97,7 +98,6 @@ export const tenantsHandler = lambdaApi()(
 
     handlers.registerPostTenantsSettings(async (ctx, request) => {
       const dynamoDb = getDynamoDbClientByEvent(event)
-      const tenantRepository = new TenantRepository(ctx.tenantId, { dynamoDb })
       const newTenantSettings = request.TenantSettings
       if (
         ROOT_ONLY_SETTINGS.find((settingName) => newTenantSettings[settingName])
@@ -105,7 +105,7 @@ export const tenantsHandler = lambdaApi()(
         assertCurrentUserRole('root')
       }
       assertCurrentUserRole('admin')
-      const tenantSettingsCurrent = await tenantRepository.getTenantSettings()
+      const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
       const tenantService = new TenantService(ctx.tenantId, {
         dynamoDb,
         mongoDb,

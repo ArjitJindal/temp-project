@@ -39,7 +39,6 @@ import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-re
 import { AlertsService } from '@/services/alerts'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseService } from '@/lambdas/console-api-case/services/case-service'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
@@ -47,6 +46,7 @@ import { AlertCreatedForEnum } from '@/services/rules-engine/utils/rule-paramete
 import { getAlertRepo } from '@/lambdas/console-api-dashboard/repositories/__tests__/helpers'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { tenantSettings } from '@/core/utils/context'
 
 dynamoDbSetupHook()
 
@@ -67,17 +67,15 @@ async function getServices(tenantId: string) {
     tenantId,
     mongoDb
   )
-  const tenantRepository = new TenantRepository(tenantId, {
-    dynamoDb: dynamoDb,
-  })
-  const tenantSettings = await tenantRepository.getTenantSettings()
+
+  const settings = await tenantSettings(tenantId)
 
   const caseCreationService = new CaseCreationService(
     caseRepository,
     userRepository,
     ruleInstanceRepository,
     transactionRepository,
-    tenantSettings
+    settings
   )
   const dynamoDbTranasactionRepository = new DynamoDbTransactionRepository(
     tenantId,

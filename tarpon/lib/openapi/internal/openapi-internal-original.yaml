@@ -7218,6 +7218,8 @@ components:
               type: number
         tenantTimezone:
           $ref: '#/components/schemas/Timezone'
+        auth0Domain:
+          type: string
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object

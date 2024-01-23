@@ -2,7 +2,11 @@ import { KinesisStreamEvent, KinesisStreamRecord, SQSEvent } from 'aws-lambda'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { TransientRepository } from '../repositories/transient-repository'
 import { logger } from '../logger'
-import { updateLogMetadata, withContext } from '../utils/context'
+import {
+  initializeTenantContext,
+  updateLogMetadata,
+  withContext,
+} from '../utils/context'
 import { traceable } from '../xray'
 import {
   DynamoDbEntityUpdate,
@@ -283,6 +287,7 @@ export class StreamConsumerBuilder {
           Records: [kinesisStreamRecord],
         })) {
           await withContext(async () => {
+            await initializeTenantContext(update.tenantId)
             if (await this.shouldRun(update)) {
               updateLogMetadata({
                 tenantId: update.tenantId,
@@ -308,6 +313,7 @@ export class StreamConsumerBuilder {
     return async (event: KinesisStreamEvent) => {
       for (const update of getDynamoDbUpdates(event)) {
         await withContext(async () => {
+          await initializeTenantContext(update.tenantId)
           updateLogMetadata({
             tenantId: update.tenantId,
             entityId: update.entityId,

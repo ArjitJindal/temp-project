@@ -16,9 +16,8 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { Case } from '@/@types/openapi-internal/Case'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { CaseEscalationResponse } from '@/@types/openapi-internal/CaseEscalationResponse'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
@@ -58,18 +57,14 @@ export const casesHandler = lambdaApi()(
       tmpBucketName: TMP_BUCKET,
     })
 
-    const tenantRepository = new TenantRepository(tenantId, {
-      dynamoDb,
-    })
-
-    const tenantSettings = await tenantRepository.getTenantSettings()
+    const settings = await tenantSettings(tenantId)
 
     const caseCreationService = new CaseCreationService(
       caseRepository,
       userService,
       ruleInstanceRepository,
       transactionRepository,
-      tenantSettings
+      settings
     )
 
     const casesAlertsAuditLogService = new CasesAlertsAuditLogService(

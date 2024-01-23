@@ -75,7 +75,9 @@ export class TenantRepository {
 
       ...getUpdateAttributesUpdateItemInput(newTenantSettings),
     }
+
     await this.dynamoDb.send(new UpdateCommand(updateItemInput))
+
     return newTenantSettings
   }
 
