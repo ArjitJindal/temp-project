@@ -1,5 +1,5 @@
 export function formatNumber(amount: number, compact = false): string {
-  let formattedNumber = `${amount.toFixed(2)}`;
+  let formattedNumber = `${Number(amount ?? 0).toFixed(2)}`;
   if (compact) {
     if (amount >= 1000) {
       formattedNumber = `${Math.round(amount / 10) / 100}`;
