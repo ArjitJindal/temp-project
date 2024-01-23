@@ -40,11 +40,7 @@ describe('Accounts - CRUD Test', () => {
       .find('button[data-cy="accounts-delete-button"]')
       .click();
 
-    cy.get('.ant-select-selection-search-input').click();
-    cy.get('.ant-select-item-option-content')
-      .contains('test@gmail.com')
-      .should('be.visible')
-      .click({ force: true });
+    cy.get('.ant-select-selection-search-input').click().type('cypress+admin@flagright.com{enter}');
     cy.get('button[data-cy="delete-account"]').click();
     cy.wait(`@delete`, { timeout: 30000 })
       .its('response.statusCode')
