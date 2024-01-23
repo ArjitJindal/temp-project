@@ -1,11 +1,11 @@
 import * as yaml from 'js-yaml'
 import { unflatten } from 'flat'
-import fetch from 'node-fetch'
 import Ajv, { ValidateFunction } from 'ajv'
 
 import { trim } from 'lodash'
 import { ConverterInterface } from './converter-interface'
 import { traceable } from '@/core/xray'
+import { apiFetch } from '@/utils/api-fetch'
 
 @traceable
 export class FlagrightConverter<T> implements ConverterInterface<T> {
@@ -18,11 +18,11 @@ export class FlagrightConverter<T> implements ConverterInterface<T> {
   }
 
   async initialize(): Promise<void> {
-    const openapiYaml = await (
-      await fetch(
+    const openapiYaml = (
+      await apiFetch<string>(
         'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/openapi-public-original.yaml'
       )
-    ).text()
+    ).result
     const openapi = yaml.load(openapiYaml) as any
     const schemas = openapi['components']['schemas']
 

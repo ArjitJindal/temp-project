@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import fetch from 'node-fetch'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
+import { apiFetch } from '@/utils/api-fetch'
 
 const CURRENCY_CODES_TO_FETCH: CurrencyCode[] = [
   'USD',
@@ -30,7 +30,7 @@ async function main() {
   for await (const currency of allCurrencies) {
     console.log(`Fetching ${currency}...`)
     const url = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${currency.toLowerCase()}.min.json`
-    const data = await (await fetch(url)).json()
+    const data = (await apiFetch<object>(url)).result
     const currencyData = data[currency.toLowerCase()]
     const capitalizedData = Object.keys(currencyData).reduce((acc, key) => {
       if (

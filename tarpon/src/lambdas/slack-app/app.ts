@@ -5,8 +5,6 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   SQSEvent,
 } from 'aws-lambda'
-
-import fetch from 'node-fetch'
 import * as ejs from 'ejs'
 import { IncomingWebhook } from '@slack/webhook'
 import { Credentials } from '@aws-sdk/client-sts'
@@ -14,12 +12,12 @@ import { OauthV2AccessResponse } from '@slack/web-api'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { AlertPayload } from '@/@types/alert/alert-payload'
 import { logger } from '@/core/logger'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { apiFetch } from '@/utils/api-fetch'
 
 export const slackAppHandler = lambdaApi()(
   async (
@@ -34,8 +32,8 @@ export const slackAppHandler = lambdaApi()(
       const code = event.queryStringParameters?.['code'] as string
       const tenantId = event.queryStringParameters?.['state'] as string
       try {
-        const response = (await (
-          await fetch(
+        const response = (
+          await apiFetch<OauthV2AccessResponse>(
             'https://slack.com/api/oauth.v2.access?' +
               new URLSearchParams({
                 client_id: process.env.SLACK_CLIENT_ID as string,
@@ -44,7 +42,8 @@ export const slackAppHandler = lambdaApi()(
                 code,
               })
           )
-        ).json()) as OauthV2AccessResponse
+        ).result
+
         const slackWebhookURL = response?.incoming_webhook?.url
         if (!slackWebhookURL) {
           throw Error('Missing webhook url')

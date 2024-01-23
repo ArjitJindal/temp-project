@@ -3,7 +3,6 @@
 
 import path from 'path'
 import { execSync } from 'child_process'
-import fetch from 'node-fetch'
 import fs from 'fs-extra'
 import { omit } from 'lodash'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -13,6 +12,10 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 import { RuleService } from '@/services/rules-engine'
+import { apiFetch } from '@/utils/api-fetch'
+import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
 process.env.ENV = 'local'
 
@@ -32,14 +35,15 @@ const jwt = rawJwt.replace(/^Bearer\s+/, '')
 async function getRemoteRuleInstances(
   ruleInstanceIds: string[]
 ): Promise<RuleInstance[]> {
-  const allRuleInstances: RuleInstance[] = await (
-    await fetch(`${api}/console/rule_instances`, {
+  const allRuleInstances: RuleInstance[] = (
+    await apiFetch<RuleInstance[]>(`${api}/console/rule_instances`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${jwt}`,
       },
     })
-  ).json()
+  ).result
+
   return allRuleInstances
     .filter((ruleInstance) => ruleInstanceIds.includes(ruleInstance.id!))
     .map((ruleInstance) => ({
@@ -50,36 +54,47 @@ async function getRemoteRuleInstances(
 
 async function getRemoteTransaction(transactionId: string) {
   return (
-    await fetch(`${api}/console/transactions/${transactionId}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-      },
-    })
-  ).json()
+    await apiFetch<TransactionWithRulesResult>(
+      `${api}/console/transactions/${transactionId}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+      }
+    )
+  ).result
 }
 
 async function getRemoteUser(userId: string) {
-  const result = await (
-    await Promise.race([
-      fetch(`${api}/console/business/users/${userId}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${jwt}`,
-        },
-      }),
-      fetch(`${api}/console/consumer/users/${userId}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${jwt}`,
-        },
-      }),
-    ])
-  ).json()
-  if (result.error) {
+  try {
+    const result = (
+      await Promise.race([
+        apiFetch<InternalBusinessUser>(
+          `${api}/console/business/users/${userId}`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${jwt}`,
+            },
+          }
+        ),
+        apiFetch<InternalConsumerUser>(
+          `${api}/console/consumer/users/${userId}`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${jwt}`,
+            },
+          }
+        ),
+      ])
+    ).result
+
+    return result
+  } catch (e) {
     return null
   }
-  return result
 }
 
 async function createRuleInstancesLocally(ruleInstanceIds: string[]) {
@@ -102,7 +117,7 @@ async function createUserLocally(userId: string) {
   }
   const user = await getRemoteUser(userId)
   if (user) {
-    await fetch(`http://localhost:3000/${user.type.toLowerCase()}/users`, {
+    await apiFetch(`http://localhost:3000/${user.type.toLowerCase()}/users`, {
       method: 'POST',
       headers: {
         'x-api-key': 'fake',
@@ -119,11 +134,15 @@ async function createUserLocally(userId: string) {
 async function verifyTransactionLocally(transactionId: string) {
   const transaction = await getRemoteTransaction(transactionId)
   const { originUserId, destinationUserId } = transaction
-  await createUserLocally(originUserId)
-  await createUserLocally(destinationUserId)
+  if (originUserId) {
+    await createUserLocally(originUserId)
+  }
+  if (destinationUserId) {
+    await createUserLocally(destinationUserId)
+  }
 
-  return await (
-    await fetch(
+  return (
+    await apiFetch<TransactionWithRulesResult>(
       `http://localhost:3000/transactions?validateOriginUserId=false&validateDestinationUserId=false`,
       {
         method: 'POST',
@@ -147,7 +166,7 @@ async function verifyTransactionLocally(transactionId: string) {
         ),
       }
     )
-  ).json()
+  ).result
 }
 
 async function main() {

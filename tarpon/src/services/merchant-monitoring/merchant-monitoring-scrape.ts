@@ -1,4 +1,3 @@
-import fetch, { Headers } from 'node-fetch'
 import axios, { AxiosRequestConfig, AxiosInstance } from 'axios'
 import { convert } from 'html-to-text'
 import { NotFound, InternalServerError } from 'http-errors'
@@ -12,6 +11,7 @@ import { traceable } from '@/core/xray'
 import { ask } from '@/utils/openapi'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { ensureHttps } from '@/utils/http'
+import { apiFetch } from '@/utils/api-fetch'
 
 const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output all fields in different lines For example:
 
@@ -232,23 +232,19 @@ export class MerchantMonitoringScrapeService {
       if (!this.companiesHouseApiKey) {
         throw new Error('No companies house api key')
       }
-      const headers = new Headers()
-      headers.set(
-        'Authorization',
-        'Basic ' +
-          Buffer.from(this.companiesHouseApiKey + ':').toString('base64')
-      )
-      const response = await fetch(
+
+      const response = await apiFetch<{ items: any[] }>(
         `https://api.company-information.service.gov.uk/search/companies?q=${companyName}`,
         {
-          headers,
+          headers: {
+            Authorization:
+              'Basic ' +
+              Buffer.from(this.companiesHouseApiKey + ':').toString('base64'),
+          },
         }
       )
 
-      return this.summarise(
-        'COMPANIES_HOUSE',
-        (await response.json())?.items[0]
-      )
+      return this.summarise('COMPANIES_HOUSE', response?.result?.items[0])
     } catch (e) {
       logger.error(e)
       throw e
