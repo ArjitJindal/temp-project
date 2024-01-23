@@ -2,6 +2,8 @@ import { useLocalStorageState, useSessionStorageState } from 'ahooks';
 import { useState } from 'react';
 import { browserName } from 'react-device-detect';
 import Checkbox from '../library/Checkbox';
+import EdgeLogo from '../ui/icons/edge-logo.react.svg';
+import ChromeLogo from '../ui/icons/chrome-logo.react.svg';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import { getBranding } from '@/utils/branding';
@@ -54,6 +56,7 @@ export const BrowserSupportModal = () => {
         </div>
         <div className={s.browsers}>
           <a className={s.browser} href="https://www.google.com/intl/en_in/chrome/" target="_blank">
+            <ChromeLogo />
             <span>Download Chrome</span>
           </a>
           <a
@@ -61,6 +64,7 @@ export const BrowserSupportModal = () => {
             href="https://www.microsoft.com/en-us/edge/download?form=MA13FJ"
             target="_blank"
           >
+            <EdgeLogo />
             <span>Download Edge</span>
           </a>
         </div>
