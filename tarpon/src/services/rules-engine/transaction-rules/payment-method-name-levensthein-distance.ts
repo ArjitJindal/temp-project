@@ -63,9 +63,7 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
       details.method === 'WALLET' ||
       details.method === 'SWIFT'
     ) {
-      if (details.name) {
-        return extractFirstAndLastName(details.name)
-      }
+      return details.name
     }
   }
 
@@ -77,9 +75,9 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
     if (!paymentDetails) {
       return
     }
+    const paymentMethodName = this.getPaymentMethodName(paymentDetails)
     const { allowedDistancePercentage } = this.parameters
     const userName = formatConsumerName((user as User)?.userDetails?.name, true)
-    const paymentMethodName = this.getPaymentMethodName(paymentDetails)
 
     if (
       ((!userName && paymentMethodName) || (userName && !paymentMethodName)) &&
@@ -94,12 +92,32 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
       }
     }
 
-    if (
-      paymentMethodName &&
-      userName &&
-      levenshtein.get(userName, paymentMethodName) >
-        (allowedDistancePercentage / 100) * userName.length
-    ) {
+    if (!userName || !paymentMethodName) {
+      return
+    }
+
+    // Choose the minimum score from trying with and without the prefixes.
+    let paymentMethodNameWithoutPrefix = paymentMethodName
+    prefixes.forEach((prefix) => {
+      paymentMethodNameWithoutPrefix = paymentMethodNameWithoutPrefix.replace(
+        new RegExp(`^${prefix}\\.? `, 'gi'),
+        ''
+      )
+    })
+
+    const paymentMethodNameWithoutPrexiAndMiddleNames = extractFirstAndLastName(
+      paymentMethodNameWithoutPrefix
+    )
+
+    const minDistance = Math.min(
+      ...[paymentMethodName, paymentMethodNameWithoutPrexiAndMiddleNames].map(
+        (str) => {
+          return levenshtein.get(userName, str || '')
+        }
+      )
+    )
+
+    if (minDistance > (allowedDistancePercentage / 100) * userName.length) {
       return {
         direction: direction.toUpperCase() as 'ORIGIN' | 'DESTINATION',
         vars: {
@@ -138,6 +156,30 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
     return await Promise.all(tasks)
   }
 }
+
+const prefixes = [
+  'Mr',
+  'Mrs',
+  'Miss',
+  'Ms',
+  'Dr',
+  'Sr',
+  'Sra',
+  'Srta',
+  'Dr',
+  'M',
+  'Mme',
+  'Mlle',
+  'Dr',
+  'Herr',
+  'Frau',
+  'Fräulein',
+  'Dr',
+  'Sr',
+  'Sra',
+  'Srta',
+  'Dr',
+]
 
 export function extractFirstAndLastName(fullName: string): string | undefined {
   const names = fullName.split(' ')

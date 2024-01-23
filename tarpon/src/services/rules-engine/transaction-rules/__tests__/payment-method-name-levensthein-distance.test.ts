@@ -38,9 +38,19 @@ setUpUsersHooks(TEST_TENANT_ID, [
       },
     },
   }),
+  getTestUser({
+    userId: '4-1',
+    userDetails: {
+      name: {
+        firstName: 'John',
+        middleName: 'David',
+        lastName: 'Smith',
+      },
+    },
+  }),
 ])
 
-describe('Hit on empty name', () => {
+describe('Hit on empty `name', () => {
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       type: 'TRANSACTION',
@@ -69,6 +79,65 @@ describe('Hit on empty name', () => {
       expectedHits: [true],
     },
   ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits,
+      undefined,
+      { autoCreateUser: false }
+    )
+  })
+})
+
+describe('No hit on 25%', () => {
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'payment-method-name-levensthein-distance',
+      defaultParameters: {
+        allowedDistancePercentage: 25,
+        ignoreEmptyName: true,
+      } as PaymentMethodNameRuleParameter,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Name matches and is under allowed distance - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '4-1',
+          originPaymentDetails: {
+            method: 'GENERIC_BANK_ACCOUNT',
+            name: 'Mr John David Smith',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '4-1',
+          originPaymentDetails: {
+            method: 'GENERIC_BANK_ACCOUNT',
+            name: 'Mr. John David Smith',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '4-1',
+          originPaymentDetails: {
+            method: 'GENERIC_BANK_ACCOUNT',
+            name: 'Mr. John David Smith',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '4-1',
+          originPaymentDetails: {
+            method: 'GENERIC_BANK_ACCOUNT',
+            name: 'Barry John David Smith',
+          },
+        }),
+      ],
+      expectedHits: [false, false, false, true],
+    },
+  ])('Bank payment', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
