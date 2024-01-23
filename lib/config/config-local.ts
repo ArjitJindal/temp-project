@@ -55,9 +55,10 @@ export const config: Config = {
     CASE_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
     },
+    INSPECTOR_ENABLED: false,
   },
   application: {
-    CERTIFICATE_ARN:
+    DEV_CERTIFICATE_ARN:
       'arn:aws:acm:eu-central-1:911899431626:certificate/18e81dca-c35a-453c-a566-9f2d9bfa0d98',
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.dev/',

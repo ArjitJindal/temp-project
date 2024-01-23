@@ -68,10 +68,9 @@ export const config: Config = {
       MEMORY_SIZE: 1024,
     },
     LAMBDA_VPC_ENABLED: true,
+    INSPECTOR_ENABLED: false,
   },
   application: {
-    CERTIFICATE_ARN:
-      'arn:aws:acm:eu-central-1:293986822825:certificate/a2e221d7-eaf5-42d5-ac39-1d500cbbd745',
     AUTH0_DOMAIN: 'sandbox-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://sandbox.api.flagright.com/',
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:

@@ -92,9 +92,11 @@ export type Config = {
       MEMORY_SIZE?: number
     }
     LAMBDA_VPC_ENABLED?: boolean
+    INSPECTOR_ENABLED: boolean
+    DATABRICKS_DISABLED?: boolean
   }
   application: {
-    CERTIFICATE_ARN: string
+    DEV_CERTIFICATE_ARN?: string
     AUTH0_CUSTOM_CNAME?: string
     AUTH0_DOMAIN: string
     AUTH0_AUDIENCE: string

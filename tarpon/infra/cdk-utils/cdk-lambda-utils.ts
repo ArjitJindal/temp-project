@@ -16,11 +16,31 @@ import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
 import { Config } from '@flagright/lib/config/config'
 import { Duration } from 'aws-cdk-lib'
+import { FlagrightRegion } from '@flagright/lib/constants/deploy'
+
 export type InternalFunctionProps = {
   name: string
   provisionedConcurrency?: number
   layers?: Array<ILayerVersion>
   memorySize?: number
+}
+
+/* Cloudwatch Insights Layer (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html) */
+const LAMBDA_LAYER_ARN_BY_REGION: Record<FlagrightRegion, string> = {
+  'asia-1':
+    'arn:aws:lambda:ap-southeast-1:580247275435:layer:LambdaInsightsExtension:38',
+  'asia-2':
+    'arn:aws:lambda:ap-south-1:580247275435:layer:LambdaInsightsExtension:36',
+  'au-1':
+    'arn:aws:lambda:ap-southeast-2:580247275435:layer:LambdaInsightsExtension:38',
+  'eu-1':
+    'arn:aws:lambda:eu-central-1:580247275435:layer:LambdaInsightsExtension:38',
+  'eu-2':
+    'arn:aws:lambda:eu-west-2:580247275435:layer:LambdaInsightsExtension:38',
+  'me-1':
+    'arn:aws:lambda:me-central-1:732604637566:layer:LambdaInsightsExtension:11',
+  'us-1':
+    'arn:aws:lambda:us-west-2:580247275435:layer:LambdaInsightsExtension:38',
 }
 
 // IMPORTANT: We should use the returned `alias` for granting further roles.
@@ -43,12 +63,12 @@ export function createFunction(
     ) &&
     context.config.stage !== 'local'
   ) {
-    /* Cloudwatch Insights Layer (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html) */
-    const cwInsightsLayerArn = `arn:aws:lambda:${context.config.env.region}:580247275435:layer:LambdaInsightsExtension:18`
     const cwInsightsLayer = LayerVersion.fromLayerVersionArn(
       context,
       `cw-insights-layer_${name}`,
-      cwInsightsLayerArn
+      context.config.region
+        ? LAMBDA_LAYER_ARN_BY_REGION[context.config.region]
+        : LAMBDA_LAYER_ARN_BY_REGION['eu-1']
     ) as LayerVersion
 
     layersArray.push(cwInsightsLayer)

@@ -75,10 +75,9 @@ export const config: Config = {
       MEMORY_SIZE: 1024,
     },
     LAMBDA_VPC_ENABLED: true,
+    INSPECTOR_ENABLED: true,
   },
   application: {
-    CERTIFICATE_ARN:
-      'arn:aws:acm:eu-west-2:870721492449:certificate/7747fde3-4f1e-477a-aa83-850af6267ec5',
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.com/',
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:

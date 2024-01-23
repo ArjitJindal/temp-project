@@ -203,33 +203,30 @@ export class CdkOrcaPipelineStack extends Stack {
           stageName: 'Deploy_Prod',
           actions: [
             ...PRODUCTION_REGIONS.flatMap((region) => {
-              return [
+              const config = getTarponConfig('prod', region)
+              const actions = [
                 new codepipline_actions.CodeBuildAction({
                   actionName: `Deploy_Tarpon_${region
                     .toUpperCase()
                     .replace('-', '_')}`,
-                  project: tarponDeployStage(
-                    this,
-                    getTarponConfig('prod', region),
-                    role,
-                    vpc
-                  ),
+                  project: tarponDeployStage(this, config, role, vpc),
                   input: sourceOutput,
                   extraInputs: [tarponBuildOutput],
                   environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
-                new codepipline_actions.CodeBuildAction({
-                  actionName: `Deploy_Databricks_${region
-                    .toUpperCase()
-                    .replace('-', '_')}`,
-                  project: databricksDeployStage(
-                    this,
-                    getTarponConfig('prod', region),
-                    role
-                  ),
-                  input: sourceOutput,
-                }),
               ]
+              if (!config.resource.DATABRICKS_DISABLED) {
+                actions.push(
+                  new codepipline_actions.CodeBuildAction({
+                    actionName: `Deploy_Databricks_${region
+                      .toUpperCase()
+                      .replace('-', '_')}`,
+                    project: databricksDeployStage(this, config, role),
+                    input: sourceOutput,
+                  })
+                )
+              }
+              return actions
             }),
             new codepipline_actions.CodeBuildAction({
               actionName: 'Deploy_Phytoplankton_Console',

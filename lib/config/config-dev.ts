@@ -64,9 +64,10 @@ export const config: Config = {
     CRON_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
+    INSPECTOR_ENABLED: false,
   },
   application: {
-    CERTIFICATE_ARN:
+    DEV_CERTIFICATE_ARN:
       'arn:aws:acm:eu-central-1:911899431626:certificate/18e81dca-c35a-453c-a566-9f2d9bfa0d98',
     AUTH0_CUSTOM_CNAME:
       'dev-flagright-cd-dc9lyrkmponfpoa2.edge.tenants.eu.auth0.com',

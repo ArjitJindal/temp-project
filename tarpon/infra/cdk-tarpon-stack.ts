@@ -993,14 +993,13 @@ export class CdkTarponStack extends cdk.Stack {
      * Open Issue: CDK+OpenAPI proper integration - https://github.com/aws/aws-cdk/issues/1461
      */
 
-    const apiCert = Certificate.fromCertificateArn(
-      this,
-      `api-certificate`,
-      config.application.CERTIFICATE_ARN
-    )
-
     let domainName: DomainName | undefined
     if (this.config.stage === 'dev') {
+      const apiCert = Certificate.fromCertificateArn(
+        this,
+        `api-certificate`,
+        config.application.DEV_CERTIFICATE_ARN!
+      )
       domainName = new DomainName(this, getApiDomain(config), {
         certificate: apiCert,
         domainName: getApiDomain(config),

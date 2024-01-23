@@ -244,13 +244,12 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
     // Create an Amazon Inspector Assessment Target
     if (
       this.config.stage === 'prod' &&
-      this.config.region != 'asia-1' &&
-      this.config.region != 'au-1'
-      // && this.config.region != 'me-1'
-    )
+      this.config.resource.INSPECTOR_ENABLED
+    ) {
       new inspector.CfnAssessmentTarget(this, 'InspectorAssessmentTarget', {
         assessmentTargetName: 'InspectorAssessmentTarget',
       })
+    }
 
     createRuleHitRateAlarm(this, this.betterUptimeCloudWatchTopic, 25)
 
