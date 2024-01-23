@@ -19,7 +19,8 @@ export const databricksDeployStage = (
         phases: {
           install: {
             'runtime-versions': {
-              nodejs: 20,
+              nodejs: 16,
+              python: '3.10',
             },
             commands: [
               'cd lib',
@@ -31,10 +32,6 @@ export const databricksDeployStage = (
             ],
           },
           build: {
-            'runtime-versions': {
-              nodejs: 20,
-              python: '3.8',
-            },
             commands: [
               ...installTerraform,
               'cd databricks',
@@ -52,7 +49,7 @@ export const databricksDeployStage = (
         },
       }),
       environment: {
-        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+        buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
         computeType: ComputeType.LARGE,
       },
       role: codeDeployRole,
