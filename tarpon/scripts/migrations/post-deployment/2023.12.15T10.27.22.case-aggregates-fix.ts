@@ -3,7 +3,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Tenant } from '@/services/accounts'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { Case } from '@/@types/openapi-internal/Case'
-import { dedupObjectArray } from '@/utils/object'
+import { uniqObjects } from '@/utils/object'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
@@ -18,7 +18,7 @@ async function migrateTenant(tenant: Tenant) {
   let i = 0
   for await (const doc of cursor) {
     const tags = doc.caseAggregates.tags
-    const tagsWithoutDuplicates = dedupObjectArray(tags)
+    const tagsWithoutDuplicates = uniqObjects(tags)
 
     await cases.updateOne(
       { _id: doc._id },

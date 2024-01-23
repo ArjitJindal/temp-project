@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { pick, merge, mergeWith, isNil, isArray, uniqWith } from 'lodash'
+import { pick, merge, mergeWith, isNil, isArray, uniqBy } from 'lodash'
 import { stringify } from 'safe-stable-stringify'
 
 export function generateChecksum(obj: any, length = 64) {
@@ -50,13 +50,6 @@ export function pickKnownEntityFields<T>(
   ) as T
 }
 
-export const dedupObjectArray = <T extends object>(array: T[]): T[] => {
-  const isEqual = (a: T, b: T) => {
-    return (
-      Object.keys(a).length === Object.keys(b).length &&
-      Object.keys(a).every((key) => a[key] === b[key])
-    )
-  }
-
-  return uniqWith(array, isEqual)
+export const uniqObjects = <T extends object>(array: T[]): T[] => {
+  return uniqBy(array, generateChecksum)
 }

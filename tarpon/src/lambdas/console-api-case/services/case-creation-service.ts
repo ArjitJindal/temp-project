@@ -43,7 +43,7 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/aler
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
-import { dedupObjectArray } from '@/utils/object'
+import { uniqObjects } from '@/utils/object'
 
 type CaseSubject =
   | {
@@ -455,7 +455,7 @@ export class CaseCreationService {
         )
       )
     )
-    const tags = dedupObjectArray(
+    const tags = uniqObjects(
       compact(transactions.flatMap(({ tags }) => tags ?? []))
     ).sort()
 
@@ -794,7 +794,7 @@ export class CaseCreationService {
                 ?.destinationPaymentDetails?.method
                 ? [filteredTransaction?.destinationPaymentDetails?.method]
                 : [],
-              tags: dedupObjectArray(compact(filteredTransaction?.tags ?? [])),
+              tags: uniqObjects(compact(filteredTransaction?.tags ?? [])),
             },
             caseTransactionsIds: filteredTransaction
               ? [filteredTransaction.transactionId as string]
@@ -838,10 +838,10 @@ export class CaseCreationService {
       ).concat(caseAggregates?.destinationPaymentMethods ?? [])
     )
 
-    const tags = dedupObjectArray(
-      compact(
-        transactions.flatMap((transaction) => transaction?.tags ?? [])
-      ).concat(caseAggregates?.tags ?? [])
+    const tags = uniqObjects(
+      transactions
+        .flatMap((transaction) => transaction?.tags ?? [])
+        .concat(caseAggregates?.tags ?? [])
     )
 
     return {
