@@ -22,7 +22,7 @@ export const getAllUsagePlans = async (
     })
     const retrivedPlans = await apigateway.send(usagePlansCommand)
     position = retrivedPlans.position
-    retrivedPlans.items?.concat(usagePlans)
+    usagePlans?.concat(retrivedPlans.items || [])
   } while (position)
   return usagePlans
 }
