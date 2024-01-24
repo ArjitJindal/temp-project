@@ -23,6 +23,7 @@ export default function AlertsStatusChangeModal(props: Props) {
   const api = useApi();
   const queryClient = useQueryClient();
   const [users] = useUsers();
+
   const currentUser = useCurrentUser();
   const isChildCase = props.caseId?.includes('.');
   const updateMutation = useMutation<unknown, unknown, FormValues>(
@@ -68,6 +69,7 @@ export default function AlertsStatusChangeModal(props: Props) {
             .join(', ');
 
           const entities = props.entityIds.join(', ');
+
           if (!currentUser?.reviewerId) {
             if (isEmpty(transactionIds)) {
               message.success(

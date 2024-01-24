@@ -6,16 +6,20 @@ import { useElementSize } from '@/utils/browser';
 interface Props {
   maxHeight?: number;
   enableHorizontalScroll?: boolean;
+  enableScroll?: boolean;
   children: (width: number) => React.ReactNode;
 }
 
 export default function ScrollContainer(props: Props) {
-  const { enableHorizontalScroll = true, maxHeight } = props;
+  const { enableHorizontalScroll = true, maxHeight, enableScroll } = props;
   const [ref, setRef] = useState<HTMLDivElement | null>(null);
 
   const rect = useElementSize(ref);
   return (
-    <div ref={setRef} className={cn(s.root, enableHorizontalScroll && s.scroll)}>
+    <div
+      ref={setRef}
+      className={cn(s.root, enableHorizontalScroll && s.scroll, !enableScroll && s.disableScroll)}
+    >
       <div
         style={{
           maxWidth: rect && enableHorizontalScroll ? rect.width : undefined,

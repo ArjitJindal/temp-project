@@ -121,6 +121,7 @@ export default function AlertTable(props: Props) {
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
   const params = useMemo(() => internalParams ?? externalParams, [externalParams, internalParams]);
+
   const selectedTransactionIds = useMemo(() => {
     return Object.values(selectedTxns)
       .flatMap((v) => v)
@@ -897,7 +898,7 @@ export default function AlertTable(props: Props) {
         expandedRowId={expandedAlertId}
         tableId={isEmbedded ? 'alerts-list-embedded' : 'alerts-list'}
         rowKey={'alertId'}
-        fitHeight={isEmbedded ? 500 : true}
+        fitHeight={isEmbedded ? 600 : true}
         hideFilters={isEmbedded}
         innerRef={actionRef}
         columns={columns}
