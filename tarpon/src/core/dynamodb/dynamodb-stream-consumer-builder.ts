@@ -150,13 +150,6 @@ export class StreamConsumerBuilder {
     return this
   }
   public async handleDynamoDbUpdate(update: DynamoDbEntityUpdate) {
-    /**   Store DynamoDB Keys in MongoDB * */
-    await this.partitionKeyHandler(update.tenantId, update.partitionKeyId!)
-
-    if (!update.type) {
-      return
-    }
-
     if (update.type === 'TRANSACTION' && this.transactionHandler) {
       await this.transactionHandler(
         update.tenantId,
@@ -228,7 +221,6 @@ export class StreamConsumerBuilder {
     tenantId: string,
     partitionKey: string
   ): Promise<void> {
-    logger.info(`Storing DynamoDB Key(${partitionKey}) in MongoDB`)
     await savePartitionKey(tenantId, partitionKey, this.tableName)
   }
 
@@ -286,24 +278,25 @@ export class StreamConsumerBuilder {
         for (const update of getDynamoDbUpdates({
           Records: [kinesisStreamRecord],
         })) {
-          await withContext(async () => {
-            await initializeTenantContext(update.tenantId)
-            if (await this.shouldRun(update)) {
-              updateLogMetadata({
-                tenantId: update.tenantId,
-                entityId: update.entityId,
-                sequenceNumber: update.sequenceNumber,
-              })
-              try {
-                await this.handleDynamoDbUpdate(update)
-                await this.handleUpdateSuccess(update)
-                logger.info('Retry SUCCESS')
-              } catch (e) {
-                logger.error((e as Error).message)
-                throw e
+          if (update.type) {
+            await withContext(async () => {
+              await initializeTenantContext(update.tenantId)
+              if (await this.shouldRun(update)) {
+                updateLogMetadata({
+                  entityId: update.entityId,
+                  sequenceNumber: update.sequenceNumber,
+                })
+                try {
+                  await this.handleDynamoDbUpdate(update)
+                  await this.handleUpdateSuccess(update)
+                  logger.info('Retry SUCCESS')
+                } catch (e) {
+                  logger.error((e as Error).message)
+                  throw e
+                }
               }
-            }
-          })
+            })
+          }
         }
       }
     }
@@ -312,30 +305,32 @@ export class StreamConsumerBuilder {
   public buildKinesisStreamHandler() {
     return async (event: KinesisStreamEvent) => {
       for (const update of getDynamoDbUpdates(event)) {
-        await withContext(async () => {
-          await initializeTenantContext(update.tenantId)
-          updateLogMetadata({
-            tenantId: update.tenantId,
-            entityId: update.entityId,
-          })
-          if (await this.shouldSendToRetryQueue(update)) {
-            await this.sendToRetryQueue(update)
-            logger.warn(
-              `There're other events for the entity currently being retried. Sent to retry queue.`
-            )
-          } else {
-            try {
-              await this.handleDynamoDbUpdate(update)
-            } catch (e) {
+        /**   Store DynamoDB Keys in MongoDB * */
+        await this.partitionKeyHandler(update.tenantId, update.partitionKeyId!)
+
+        if (update.type) {
+          await withContext(async () => {
+            await initializeTenantContext(update.tenantId)
+            updateLogMetadata({ entityId: update.entityId })
+            if (await this.shouldSendToRetryQueue(update)) {
               await this.sendToRetryQueue(update)
-              logger.error(e)
-              if (e instanceof Error) {
-                logger.error(e.stack)
+              logger.warn(
+                `There're other events for the entity currently being retried. Sent to retry queue.`
+              )
+            } else {
+              try {
+                await this.handleDynamoDbUpdate(update)
+              } catch (e) {
+                await this.sendToRetryQueue(update)
+                logger.error(e)
+                if (e instanceof Error) {
+                  logger.error(e.stack)
+                }
+                logger.warn(`Failed to process. Sent to retry queue`)
               }
-              logger.warn(`Failed to process. Sent to retry queue`)
             }
-          }
-        })
+          })
+        }
       }
     }
   }
