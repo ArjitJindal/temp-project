@@ -39,10 +39,12 @@ const serverlessRegions = [
 class DatabricksStack extends TerraformStack {
   config: Config
   mws: TerraformProvider
+  tenantIds: string[]
 
-  constructor(scope: Construct, name: string) {
+  constructor(scope: Construct, name: string, tenantIds: string[]) {
     super(scope, name)
     this.config = config
+    this.tenantIds = tenantIds
 
     new S3Backend(this, {
       bucket: stateBucket,
@@ -165,7 +167,7 @@ class DatabricksStack extends TerraformStack {
     })
   }
 
-  private async workspace({
+  private workspace({
     profileRoleName,
     workspaceProvider,
   }: {
@@ -512,10 +514,7 @@ class DatabricksStack extends TerraformStack {
       })
     })
 
-    const tenants = await getTenantInfoFromUsagePlans(awsRegion)
-    const tenantIds = tenants.map((ti) => ti.id)
-
-    const servicePrincipals = tenantIds.map((tenantId) => {
+    const servicePrincipals = this.tenantIds.map((tenantId) => {
       return new databricks.servicePrincipal.ServicePrincipal(
         this,
         `service-principal-${tenantId}`,
@@ -1253,7 +1252,12 @@ class DatabricksStack extends TerraformStack {
   }
 }
 
-const app = new App()
-new DatabricksStack(app, `databricks-stack-${env}`)
-
-app.synth()
+getTenantInfoFromUsagePlans(awsRegion).then((tenants) => {
+  const app = new App()
+  new DatabricksStack(
+    app,
+    `databricks-stack-${env}`,
+    tenants.map((t) => t.id)
+  )
+  app.synth()
+})
