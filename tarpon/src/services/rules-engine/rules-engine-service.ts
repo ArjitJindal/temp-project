@@ -833,7 +833,7 @@ export class RulesEngineService {
       }
     | undefined
   > {
-    const { rule, ruleInstance } = options
+    const { ruleInstance } = options
     const context = getContext()
     return withContext(
       async () => {
@@ -903,7 +903,6 @@ export class RulesEngineService {
           ...context?.metricDimensions,
           ruleId: ruleInstance.ruleId,
           ruleInstanceId: ruleInstance.id,
-          ruleImplementation: rule?.ruleImplementationName,
         },
       }
     )

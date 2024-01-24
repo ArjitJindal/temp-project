@@ -14,7 +14,7 @@ import {
 } from '@aws-sdk/client-cloudwatch'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
-import { cloneDeep, isEmpty, isNil, omitBy } from 'lodash'
+import { cloneDeep, isEmpty, isNil, mergeWith, omitBy } from 'lodash'
 import { logger, winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import {
@@ -269,14 +269,27 @@ export async function withContext<R>(
   // Reset dynamodb clients from parent, then we won't clean up the dynamodb clients
   // which might still be used.
   ctx.dynamoDbClients = []
-  return getContextStorage().run(ctx, async () => {
+  const result = await getContextStorage().run(ctx, async () => {
     try {
       return await callback()
     } finally {
-      await publishContextMetrics()
       cleanUpDynamoDbResources()
     }
   })
+  const parentContext = getContext()
+  if (parentContext) {
+    parentContext.metrics
+    parentContext.metrics = mergeWith(
+      parentContext.metrics ?? {},
+      ctx.metrics ?? {},
+      (m1: MetricDatum[] | undefined, m2: MetricDatum[] | undefined) =>
+        (m1 ?? []).concat(m2 ?? [])
+    )
+  } else {
+    // NOTE: we only publish metrics for the root context
+    await publishContextMetrics()
+  }
+  return result
 }
 
 export function getContextStorage(): AsyncLocalStorage<Context> {

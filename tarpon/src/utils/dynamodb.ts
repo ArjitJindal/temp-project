@@ -214,7 +214,8 @@ export function getDynamoDbClient(
     opts.push(withRetry)
   }
   if (envIsNot('test') && envIsNot('local')) {
-    opts.push(withMetrics)
+    // TODO: Re-enable withMetrics in FR-4133
+    // opts.push(withMetrics)
   }
   ;(client as any).__rawClient = rawClient
   return opts.reduce((client, opt) => opt(client), client)
