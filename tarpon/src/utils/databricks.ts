@@ -8,11 +8,12 @@ export async function executeSql<T>(
   sql: string,
   namedParameters: any
 ): Promise<T[]> {
+  const tenantId = getContext()?.tenantId?.toLowerCase()
   const credentials = await getSecret<{
     path: string
     host: string
     token: string
-  }>(`databricks/tenant/${getContext()?.tenantId}`)
+  }>(`databricks/tenants/${tenantId}`)
 
   const client = new DBSQLClient()
   const connectOptions = {
@@ -23,7 +24,7 @@ export async function executeSql<T>(
 
   const connectedClient = await client.connect(connectOptions)
   const session = await connectedClient.openSession({
-    initialSchema: getContext()?.tenantId,
+    initialSchema: tenantId,
     initialCatalog: 'hive_metastore',
   })
   const statement = await session.executeStatement(sql, {

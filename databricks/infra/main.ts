@@ -13,7 +13,7 @@ import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { AWS_ACCOUNTS } from '@flagright/lib/constants'
 import * as path from 'path'
 
-const adminEmails = ['tim+pw@flagright.com']
+const adminEmails = ['tim+databricks@flagright.com']
 const stage = process.env.STAGE as Stage
 const region = process.env.REGION as FlagrightRegion
 const env = `${stage}-${region}`
@@ -411,15 +411,6 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
-    const databricksAccessTokenSecret =
-      new aws.secretsmanagerSecret.SecretsmanagerSecret(
-        this,
-        'databricks-access-secret',
-        {
-          name: `databricks-access-${region}`,
-        }
-      )
-
     new databricks.notebook.Notebook(this, `dlt-file`, {
       provider: workspaceProvider,
       source: path.resolve(__dirname, '../notebooks/pipeline.py'),
@@ -527,20 +518,24 @@ class DatabricksStack extends TerraformStack {
       )
     })
 
-    new databricks.permissions.Permissions(this, 'token-permission', {
-      provider: workspaceProvider,
-      authorization: 'tokens',
-      accessControl: [
-        {
-          groupName: 'users',
-          permissionLevel: 'CAN_USE',
-        },
-        ...servicePrincipals.map((sp) => ({
-          servicePrincipalName: sp.applicationId,
-          permissionLevel: 'CAN_USE',
-        })),
-      ],
-    })
+    const authPerms = new databricks.permissions.Permissions(
+      this,
+      'token-permission',
+      {
+        provider: workspaceProvider,
+        authorization: 'tokens',
+        accessControl: [
+          {
+            groupName: 'users',
+            permissionLevel: 'CAN_USE',
+          },
+          ...servicePrincipals.map((sp) => ({
+            servicePrincipalName: sp.applicationId,
+            permissionLevel: 'CAN_USE',
+          })),
+        ],
+      }
+    )
     new databricks.permissions.Permissions(this, 'sql-permission', {
       provider: workspaceProvider,
       sqlEndpointId: sqlWarehouse.id,
@@ -564,7 +559,7 @@ class DatabricksStack extends TerraformStack {
         {
           provider: workspaceProvider,
           catalogName: catalog.name,
-          name: Fn.lower(sp.displayName),
+          name: sp.displayName,
         }
       )
       new databricks.grant.Grant(this, `sp-grant-${tenant}`, {
@@ -583,7 +578,7 @@ class DatabricksStack extends TerraformStack {
           tableType: 'VIEW',
           viewDefinition: Fn.format(
             "SELECT * from %s.default.%s WHERE tenant = '%s'",
-            [catalog.name, entity, Fn.lower(sp.displayName)]
+            [catalog.name, entity, sp.displayName]
           ),
           dependsOn: tables,
         })
@@ -595,6 +590,7 @@ class DatabricksStack extends TerraformStack {
         {
           provider: workspaceProvider,
           applicationId: sp.applicationId,
+          dependsOn: [authPerms],
         }
       )
 
@@ -602,7 +598,8 @@ class DatabricksStack extends TerraformStack {
         this,
         `aws-secret-${tenant}`,
         {
-          name: Fn.format('databricks/tenant/%s', [sp.displayName]),
+          name: Fn.format('databricks/tenants/%s', [sp.displayName]),
+          recoveryWindowInDays: 0,
         }
       )
       new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
@@ -1180,17 +1177,13 @@ class DatabricksStack extends TerraformStack {
       displayName: regionalAdminGroupName,
     })
 
-    userIds.forEach((userId) => {
-      new databricks.groupMember.GroupMember(
-        this,
-        `admin-group-member-${userId}`,
-        {
-          provider: this.mws,
-          groupId: adminGroup.id,
-          memberId: userId,
-        }
-      )
-      new databricks.userRole.UserRole(this, `admin-${userId}`, {
+    userIds.forEach((userId, i) => {
+      new databricks.groupMember.GroupMember(this, `admin-group-member-${i}`, {
+        provider: this.mws,
+        groupId: adminGroup.id,
+        memberId: userId,
+      })
+      new databricks.userRole.UserRole(this, `admin-${i}`, {
         provider: this.mws,
         userId: userId,
         role: 'account_admin',
@@ -1262,11 +1255,18 @@ class DatabricksStack extends TerraformStack {
 }
 
 getTenantInfoFromUsagePlans(awsRegion).then((tenants) => {
+  if (tenants.length === 0) {
+    throw new Error('no tenants found')
+  }
   const app = new App()
   new DatabricksStack(
     app,
     `databricks-stack-${env}`,
-    tenants.map((t) => t.id)
+    tenants
+      .map((t) => t.id.toLowerCase())
+      .filter((elem, index, self) => {
+        return index === self.indexOf(elem)
+      })
   )
   app.synth()
 })
