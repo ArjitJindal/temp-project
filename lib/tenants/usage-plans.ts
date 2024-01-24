@@ -14,7 +14,7 @@ export const getAllUsagePlans = async (
     region,
   })
   let position: string | undefined
-  const usagePlans: UsagePlan[] = []
+  let usagePlans: UsagePlan[] = []
   do {
     const usagePlansCommand = new GetUsagePlansCommand({
       limit: 500,
@@ -22,7 +22,7 @@ export const getAllUsagePlans = async (
     })
     const retrivedPlans = await apigateway.send(usagePlansCommand)
     position = retrivedPlans.position
-    usagePlans?.concat(retrivedPlans.items || [])
+    usagePlans = usagePlans?.concat(retrivedPlans.items || [])
   } while (position)
   return usagePlans
 }
