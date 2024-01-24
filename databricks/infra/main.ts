@@ -9,8 +9,8 @@ import { TerraformProvider } from 'cdktf/lib/terraform-provider'
 import { Config } from '@flagright/lib/config/config'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { Stage, FlagrightRegion } from '@flagright/lib/constants/deploy'
+import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { AWS_ACCOUNTS } from '@flagright/lib/constants'
-import * as fs from 'fs'
 import * as path from 'path'
 
 const adminEmails = ['tim+pw@flagright.com']
@@ -165,7 +165,7 @@ class DatabricksStack extends TerraformStack {
     })
   }
 
-  private workspace({
+  private async workspace({
     profileRoleName,
     workspaceProvider,
   }: {
@@ -512,12 +512,10 @@ class DatabricksStack extends TerraformStack {
       })
     })
 
-    const servicePrincipals = [
-      'flagright',
-      'flagright-test',
-      'cypress-test',
-      ...(this.config.databricksEnabledTenants || []),
-    ]?.map((tenantId) => {
+    const tenants = await getTenantInfoFromUsagePlans(awsRegion)
+    const tenantIds = tenants.map((ti) => ti.id)
+
+    const servicePrincipals = tenantIds.map((tenantId) => {
       return new databricks.servicePrincipal.ServicePrincipal(
         this,
         `service-principal-${tenantId}`,

@@ -138,7 +138,6 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * SQS & SNS
      */
-
     const BetterUptimeCloudWatchTopic = new Topic(
       this,
       StackConstants.BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME,

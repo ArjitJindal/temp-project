@@ -1,5 +1,4 @@
 import { MongoClient } from 'mongodb'
-import { compact, map } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   APIGatewayClient,
@@ -7,9 +6,7 @@ import {
   CreateUsagePlanCommand,
   GetRestApisCommand,
   GetUsagePlanKeysCommand,
-  GetUsagePlansCommand,
   ThrottleSettings,
-  UsagePlan,
   GetUsageCommand,
   GetApiKeyCommand,
   ApiKey,
@@ -19,16 +16,21 @@ import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { BadRequest } from 'http-errors'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
+import {
+  getTenantInfoFromUsagePlans,
+  USAGE_PLAN_REGEX,
+  doesUsagePlanExist,
+  getAllUsagePlans,
+} from '@flagright/lib/tenants/usage-plans'
 import { createNewApiKeyForTenant } from '../api-key'
 import { TenantRepository } from './repositories/tenant-repository'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
-import { AccountsService, Tenant, TenantBasic } from '@/services/accounts'
+import { AccountsService, Tenant } from '@/services/accounts'
 import { checkMultipleEmails } from '@/utils/helpers'
 import { getAuth0Domain } from '@/utils/auth0-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantUsageData } from '@/@types/openapi-internal/TenantUsageData'
@@ -48,7 +50,9 @@ export type TenantInfo = {
   auth0TenantConfig: Auth0TenantConfig
 }
 
-export const USAGE_PLAN_REGEX = /tarpon:(.*):(.*)/
+const region = envIs('local')
+  ? 'eu-central-1'
+  : process.env.AWS_REGION || 'eu-central-1'
 
 @traceable
 export class TenantService {
@@ -141,7 +145,13 @@ export class TenantService {
 
     tenantData.tenantName = tenantData.tenantName.replace(/[^a-zA-Z0-9]/g, '-')
 
-    await this.assertUsagePlanNotExist(tenantData.tenantName)
+    const planExists = await doesUsagePlanExist(tenantData.tenantName, region)
+
+    if (planExists) {
+      throw new BadRequest(
+        `Usage plan for tenant ${tenantData.tenantName} already exists`
+      )
+    }
 
     const tenantId = this.tenantId
 
@@ -193,103 +203,9 @@ export class TenantService {
     }
   }
 
-  static async getTenantInfoFromUsagePlans(): Promise<TenantBasic[]> {
-    const apigateway = new APIGatewayClient({
-      region: process.env.AWS_REGION,
-      maxAttempts: 10,
-    })
-
-    const allUsagePlans = await TenantService.getAllUsagePlans()
-
-    const usagePlanKeys = compact(
-      await Promise.all(
-        allUsagePlans.map(async (usagePlan) => {
-          const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
-            usagePlanId: usagePlan.id,
-          })
-
-          const usagePlanKeys = await apigateway.send(usagePlanKeysCommand)
-
-          if (usagePlanKeys.items?.length) {
-            return {
-              ...usagePlan,
-              tenantId: usagePlanKeys.items[0].name,
-            }
-          } else {
-            logger.warn(
-              `Usage plan ${usagePlan.id} does not have any keys associated with it`
-            )
-            return null
-          }
-        })
-      )
-    )
-
-    const tenantDetails = compact(
-      map(usagePlanKeys, (usagePlan) => {
-        if (
-          usagePlan.name &&
-          USAGE_PLAN_REGEX.test(usagePlan.name) &&
-          usagePlan.tenantId &&
-          usagePlan.name?.includes(usagePlan.tenantId)
-        ) {
-          return {
-            id: usagePlan.tenantId,
-            name: usagePlan.name
-              .replace('tarpon:', '')
-              .replace(':', '')
-              .replace(usagePlan.tenantId, ''),
-          }
-        }
-        logger.warn(
-          `Invalid usage plan name ${usagePlan.name} for usage plan ${usagePlan.id}`
-        )
-        return null
-      })
-    )
-
-    return tenantDetails
-  }
-
-  static async getAllUsagePlans(): Promise<UsagePlan[]> {
-    const apigateway = new APIGatewayClient({
-      region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
-    })
-
-    let position: string | undefined
-    const usagePlans: UsagePlan[] = []
-    do {
-      const usagePlansCommand = new GetUsagePlansCommand({
-        limit: 500,
-        position,
-      })
-
-      const retrivedPlans = await apigateway.send(usagePlansCommand)
-      position = retrivedPlans.position
-      retrivedPlans.items?.concat(usagePlans)
-    } while (position)
-
-    return usagePlans
-  }
-
-  async assertUsagePlanNotExist(planName: string): Promise<void> {
-    const usagePlans = await TenantService.getAllUsagePlans()
-
-    const usagePlan = usagePlans?.find((x) => x.name?.includes(`${planName}`))
-    const usagePlanName = usagePlan?.name
-
-    if (usagePlanName == null) {
-      return
-    }
-
-    if (usagePlanName.match(USAGE_PLAN_REGEX)?.[2] === planName) {
-      throw new BadRequest(`Usage plan for tenant ${planName} already exists`)
-    }
-  }
-
   async getApiStages(): Promise<ApiStage[] | undefined> {
     const apigateway = new APIGatewayClient({
-      region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
+      region,
     })
 
     const apiGatewayCommand = new GetRestApisCommand({})
@@ -326,26 +242,24 @@ export class TenantService {
     unmask: boolean
     apiKeyId: string
   }): Promise<TenantApiKey[]> {
-    const allUsagePlans = await TenantService.getAllUsagePlans()
+    const tenants = await getTenantInfoFromUsagePlans(region)
 
     const tenantId = this.tenantId.endsWith('-test')
       ? this.tenantId.replace('-test', '')
       : this.tenantId
 
-    const usagePlan = allUsagePlans?.find(
-      (x) => x.name?.match(USAGE_PLAN_REGEX)?.[1] === tenantId
-    )
+    const usagePlanId = tenants?.find((t) => t.id === tenantId)?.usagePlanId
 
-    if (!usagePlan) {
+    if (!usagePlanId) {
       throw new Error(`Usage plan for tenant ${tenantId} not found`)
     }
 
     const apigateway = new APIGatewayClient({
-      region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
+      region,
     })
 
     const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
-      usagePlanId: usagePlan.id,
+      usagePlanId: usagePlanId,
     })
 
     const usagePlanKeys = await apigateway.send(usagePlanKeysCommand)
@@ -448,7 +362,7 @@ export class TenantService {
   }
 
   public async getUsagePlanData(tenantId: string): Promise<TenantUsageData> {
-    const usagePlans = await TenantService.getAllUsagePlans()
+    const usagePlans = await getAllUsagePlans(region)
 
     if (tenantId.endsWith('-test')) {
       tenantId = tenantId.replace('-test', '')
@@ -462,7 +376,7 @@ export class TenantService {
     }
 
     const apigateway = new APIGatewayClient({
-      region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
+      region,
     })
 
     const getUsageCommand = new GetUsageCommand({

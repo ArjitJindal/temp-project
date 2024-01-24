@@ -38,7 +38,7 @@ jobs:
           cache: "yarn"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Build Root
-        run: npm ci
+        run: yarn install --frozen-lockfile
       - run: npm ci
         working-directory: "tarpon"
       - run: npm run openapi:prepare

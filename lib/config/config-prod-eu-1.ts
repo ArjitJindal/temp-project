@@ -14,7 +14,6 @@ export const config: Config = {
   stage: 'prod',
   region: 'eu-1',
   env: { account, region },
-  databricksEnabledTenants: ['QEO03JYKBT'],
   resource: {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 2048,

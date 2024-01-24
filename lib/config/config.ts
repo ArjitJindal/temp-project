@@ -14,7 +14,6 @@ export type Config = {
   stage: Stage
   region?: FlagrightRegion
   env: Environment
-  databricksEnabledTenants?: string[]
   resource: {
     CLOUD_WATCH: {
       logRetention: RetentionDays

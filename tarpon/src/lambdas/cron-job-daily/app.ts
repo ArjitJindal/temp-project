@@ -1,5 +1,6 @@
 import { chunk, groupBy, mapValues } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
+import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantInfo, TenantService } from '@/services/tenants'
@@ -8,7 +9,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
-
+import { envIs } from '@/utils/env'
 const ONGOING_SCREENING_USERS_BATCH_SIZE = 100
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
@@ -33,7 +34,9 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
 })
 
 async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
-  const basicTenants = await TenantService.getTenantInfoFromUsagePlans()
+  const basicTenants = await getTenantInfoFromUsagePlans(
+    envIs('local') ? 'eu-central-1' : process.env.AWS_REGION || 'eu-central-1'
+  )
   const tenantsBySheets = mapValues(
     groupBy(basicTenants, (basicTenant) => {
       const auth0Tenant = tenantInfos.find(
