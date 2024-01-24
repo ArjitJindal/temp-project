@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import Component from './index';
+import Component, { SelectionGroupValueType } from './index';
 import { UseCase } from '@/pages/storybook/components';
 
 export default function (): JSX.Element {
-  const [selected1, setSelected1] = useState<string | undefined>('disabled');
-  const [selected2, setSelected2] = useState<string[] | undefined>([]);
-  const [selected3, setSelected3] = useState<string | undefined>('disabled');
+  const [selected1, setSelected1] = useState<SelectionGroupValueType | undefined>(undefined);
+  const [selected2, setSelected2] = useState<SelectionGroupValueType[] | undefined>([]);
+  const [selected3, setSelected3] = useState<SelectionGroupValueType | undefined>('disabled');
   return (
     <>
       <UseCase title={'Radio-buttons mode'}>
@@ -55,6 +55,64 @@ export default function (): JSX.Element {
               value: 'disabled',
               label: 'Disabled',
               description: 'This is a description of disabled option',
+              isDisabled: true,
+            },
+          ]}
+        />
+      </UseCase>
+      <UseCase title={'Number Options'}>
+        <Component
+          mode="MULTIPLE"
+          value={selected2}
+          onChange={setSelected2}
+          options={[
+            {
+              value: 1,
+              label: 'Customer friendly',
+              description: 'Click on this radio button if you found us customer friendly',
+            },
+            {
+              value: 2,
+              label: 'Interactive usecase',
+              description: 'Click on this radio button if you found our usecase interactive',
+            },
+            {
+              value: 3,
+              label: 'Value for money',
+              description: 'Click on this radio button if you found out product value for money',
+              isDisabled: true,
+            },
+          ]}
+        />
+      </UseCase>
+
+      <UseCase title={'Boolean Options'}>
+        <Component
+          mode="SINGLE"
+          value={selected1}
+          onChange={setSelected1}
+          options={[
+            {
+              value: true,
+              label: 'Yes',
+              description: 'Do you wanna confirm to make a transaction?',
+            },
+            { value: false, label: 'No', description: 'Do you wanna cancel your transaction? ' },
+          ]}
+        />
+      </UseCase>
+      <UseCase title={'Number Options'}>
+        <Component
+          mode="SINGLE"
+          value={selected1}
+          onChange={setSelected1}
+          options={[
+            { value: 1, label: '1 star Rating', description: 'Give our service a one star rating' },
+            { value: 2, label: '2 star Rating', description: 'Give our service a two star rating' },
+            {
+              value: 3,
+              label: '3 star Rating',
+              description: 'Give our service a three star rating',
               isDisabled: true,
             },
           ]}
