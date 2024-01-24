@@ -5584,10 +5584,6 @@ components:
           ruleImplementationName: code-filename
           createdAt: 0
           updatedAt: 0
-          typology: Typology
-          typologyGroup: Typology group
-          typologyDescription: Typology description
-          source: Source
       properties:
         id:
           type: string
@@ -5600,6 +5596,14 @@ components:
           type: string
         description:
           type: string
+        types:
+          type: array
+          items:
+            type: string
+        typologies:
+          type: array
+          items:
+            type: string
         defaultLogic:
           type: object
         defaultRiskLevelLogic:
@@ -5642,14 +5646,6 @@ components:
             type: string
         defaultFalsePositiveCheckEnabled:
           type: boolean
-        typology:
-          type: string
-        typologyGroup:
-          type: string
-        typologyDescription:
-          type: string
-        source:
-          type: string
         requiredFeatures:
           type: array
           items:
@@ -5669,6 +5665,8 @@ components:
         - defaultNature
         - defaultCasePriority
         - checksFor
+        - types
+        - typologies
     RuleFilters:
       title: RuleFilter
       type: object
@@ -5824,14 +5822,6 @@ components:
           type: number
         falsePositiveCheckEnabled:
           type: boolean
-        typology:
-          type: string
-        typologyGroup:
-          type: string
-        typologyDescription:
-          type: string
-        source:
-          type: string
         checklistTemplateId:
           type: string
         queueId:

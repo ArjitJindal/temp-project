@@ -56,6 +56,9 @@ export async function createRule(
     defaultCasePriority: 'P1',
     defaultNature: 'AML',
     checksFor: [],
+    types: [],
+    typologies: [],
+
     ...rule,
   })
 

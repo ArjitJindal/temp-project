@@ -68,7 +68,7 @@ export const RulesSearchBar = (props: Props) => {
 
   const universalSearchFilters = useMemo(() => {
     const filters: FilterProps<RuleUniversalSearchFilters>[] = [
-      getRuleFilter('Typology', 'typology'),
+      getRuleFilter('Typology', 'typologies'),
       getRuleFilter('Checking for', 'checksFor'),
       getRuleFilter('Nature', 'defaultNature'),
     ];

@@ -552,6 +552,10 @@ components:
             - USER
         name:
           type: string
+        types:
+          type: array
+          items:
+            type: string
         description:
           type: string
         parametersSchema:
@@ -576,6 +580,10 @@ components:
           type: array
           items:
             type: string
+        typologies:
+          type: array
+          items:
+            type: string
       required:
         - id
         - type
@@ -587,6 +595,8 @@ components:
         - defaultCasePriority
         - defaultNature
         - checksFor
+        - types
+        - typologies
     ErrorMessage:
       title: ErrorMessage
       x-stoplight:

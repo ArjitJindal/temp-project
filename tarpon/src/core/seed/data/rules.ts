@@ -100,6 +100,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       runCount: 1848,
       hitCount: 8,
       checksFor: ['Transaction amount', 'No. of transactions'],
+      types: [],
+      typologies: [],
     } as RuleInstance,
     {
       id: 'a25685ad-2',
@@ -159,6 +161,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688114634781,
       runCount: 1848,
       hitCount: 1434,
+      types: [],
+      typologies: [],
     } as RuleInstance,
     {
       id: 'a45615ad-1',
@@ -235,6 +239,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688114634781,
       runCount: 1848,
       hitCount: 1434,
+      types: [],
+      typologies: [],
     },
     {
       id: '2i3nflkd',
@@ -294,6 +300,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       runCount: 295,
       hitCount: 102,
       checksFor: ['Username', 'User’s Y.O.B'],
+      types: [],
+      typologies: [],
     } as RuleInstance,
     {
       id: 'skn2ls',
@@ -359,6 +367,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688114634781,
       runCount: 603,
       hitCount: 340,
+      types: [],
+      typologies: [],
     } as RuleInstance,
     {
       id: '3oi3nlk',
@@ -425,6 +435,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       updatedAt: 1688114634781,
       runCount: 340,
       hitCount: 240,
+      types: [],
+      typologies: [],
     } as RuleInstance,
   ]
 })

@@ -57,11 +57,95 @@ import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-e
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { BankNameChangeRuleParameters } from '@/services/rules-engine/transaction-rules/bank-name-change'
 
+export enum RuleChecksForField {
+  FirstTransaction = '1st transaction',
+  TransactionAmount = 'Transaction amount',
+  NumberOfTransactions = 'No. of transactions',
+  UserAccountStatus = 'User account status',
+  Time = 'Time',
+  TransactionCurrency = 'Transaction currency',
+  NumberOfUsers = 'No. of users',
+  TransactionPaymentMethod = 'Transaction payment method',
+  TransactionCountry = 'Transaction country',
+  TransactionPaymentMethodCount = 'Transaction payment method count',
+  TransactionPaymentMethodIssuedCountry = 'Transaction payment method issued country',
+  UsersIPAddress = "User's IP address",
+  TransactionPaymentIdentifier = 'Transaction payment identifier',
+  UserCardFingerprintID = 'User card fingerprint ID',
+  UserPaymentIdentifier = 'User payment identifier',
+  TransactionRiskScore = 'Transaction risk score',
+  Username = 'Username',
+  BothPartiesUsername = 'Both parties username',
+  TransactionState = 'Transaction state',
+  CounterpartyCountryCount = 'Counterparty country count',
+  TransactionPaymentDetails = 'Transaction payment details',
+  UserDetails = 'User details',
+  TransactionType = 'Transaction type',
+  EntityName = 'Entity name',
+  UsersBankName = 'User’s bank name',
+  CounterpartyUsername = 'Counterparty username',
+  CounterpartyBankName = 'Counterparty bank name',
+  UsersYearOfBirth = 'User’s Y.O.B',
+  UsersIndustry = 'User’s industry',
+  UsersAddress = 'User’s address',
+  TranasctionDetails = 'Transaction details',
+  Keywords = 'Keywords',
+}
+
+export enum RuleTypeField {
+  NewActivity = 'New activity',
+  AnomalyDetection = 'Anomaly detection',
+  RiskExposure = 'Risk exposure',
+  Diversity = 'Diversity',
+  PatternRecognition = 'Pattern recognition',
+  Velocity = 'Velocity',
+  TransactionDenstiy = 'Transaction density',
+  VelocityComparison = 'Velocity comparison',
+  Volume = 'Volume',
+  VolumeComparison = 'Volume comparison',
+  Blacklist = 'Blacklist',
+  MerchantMonitoring = 'Merchant monitoring',
+  Screening = 'Screening',
+}
+
+export enum RuleNature {
+  AML = 'AML',
+  FRAUD = 'FRAUD',
+  SCREENING = 'SCREENING',
+}
+
+export enum RuleTypology {
+  UnusualBehaviour = 'Unusual behaviour',
+  MoneyMules = 'Money mules',
+  AccountTakeoverFraud = 'Account takeover fraud',
+  AcquiringFraud = 'Acquiring fraud',
+  IssuingFraud = 'Issuing fraud',
+  CardFraud = 'Card fraud',
+  Structuring = 'Structuring',
+  HiddenUnusualRelationships = 'Hidden / unusual relationships',
+  Scams = 'Scams (romance, Nigerian Prince, inheritance and etc.)',
+  TerroristFinancing = 'Terrorist financing',
+  Layering = 'Layering',
+  InternalBlacklists = 'Internal blacklists',
+  ScreeningHits = 'Screening hits',
+  HighRiskTransactions = 'High risk transactions',
+}
+
 const _RULES_LIBRARY: Array<
-  () => Omit<Rule, 'parametersSchema' | 'ruleImplementationName'> & {
+  () => Omit<
+    Rule,
+    | 'parametersSchema'
+    | 'ruleImplementationName'
+    | 'checksFor'
+    | 'types'
+    | 'defaultNature'
+  > & {
     ruleImplementationName:
       | TransactionRuleImplementationName
       | UserRuleImplementationName
+    checksFor: RuleChecksForField[]
+    types: RuleTypeField[]
+    defaultNature: RuleNature
   }
 > = [
   () => ({
@@ -75,15 +159,12 @@ const _RULES_LIBRARY: Array<
     defaultAction: 'FLAG',
     ruleImplementationName: 'first-payment',
     labels: [],
-    checksFor: ['1st transaction'],
-    defaultNature: 'AML',
+    checksFor: [RuleChecksForField.FirstTransaction],
+    defaultNature: RuleNature.AML,
     defaultCasePriority: 'P1',
-    typology: 'Account activity, inconsistent with customer profile',
-    typologyGroup: 'Unusual behaviour',
-    typologyDescription:
-      'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-    source:
-      'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+    ruleTypology: 'Account activity, inconsistent with customer profile',
+    types: [RuleTypeField.NewActivity],
+    typologies: [RuleTypology.UnusualBehaviour],
   }),
   () => {
     const defaultParameters: TransactionAmountRuleParameters = {
@@ -102,16 +183,12 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'transaction-amount',
       labels: [],
-      checksFor: ['Transaction amount'],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.TransactionAmount],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
-      typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual behavior',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.PatternRecognition],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -130,15 +207,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-new-country',
       labels: [],
-      checksFor: ['No. of transactions'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.TransactionCountry,
+        RuleChecksForField.NumberOfTransactions,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual behaviour',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.NewActivity],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -157,15 +233,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-new-currency',
       labels: [],
-      checksFor: ['No. of transactions'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.TransactionCurrency,
+        RuleChecksForField.NumberOfTransactions,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual behavior',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.NewActivity],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -185,16 +260,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'first-activity-after-time-period',
       labels: [],
-      checksFor: ['User account status', 'Time'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.UserAccountStatus,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology:
-        'Account activity, inconsistent with customer profile or Initial account was opened by a money mule ',
-      typologyGroup: 'Money mules, unusual behavior',
-      typologyDescription:
-        'UK National risk assessment of money laundering and terrorist financing 2021',
-      source:
-        '1) UK National risk assessment of money laundering and terrorist financing 2020 Guidelines to 2) MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.MoneyMules, RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -213,15 +286,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-risk-currency',
       labels: [],
-      checksFor: ['Transactions currency'],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.TransactionCurrency],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual behavior',
-      typologyDescription:
-        "The customer uses a currency that does not fit with their profile or what is known about the customer's business.",
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.RiskExposure],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -246,15 +315,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'low-value-incoming-transactions',
       labels: [],
-      checksFor: ['Transaction amount', 'No.of transactions'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.NumberOfTransactions,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology: 'Avoiding reporting limits',
-      typologyGroup: 'Structuring',
-      typologyDescription:
-        'Conceal or disguise significant transactions to avoid disclosure for record purposes by executing frequent or several transactions such that each transaction by itself is below reporting thresholds',
-      source:
-        '1) Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism \n 2) AUSTRAC:Stored value cards: money laundering and terrorism financing risk assessment 2017',
+      types: [RuleTypeField.Velocity, RuleTypeField.TransactionDenstiy],
+      typologies: [RuleTypology.Structuring],
     }
   },
   () => {
@@ -278,13 +346,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'low-value-outgoing-transactions',
       labels: [],
-      checksFor: ['Transaction amount', 'No. of transactions'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.NumberOfTransactions,
+        RuleChecksForField.TransactionAmount,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology: '',
-      typologyGroup: '',
-      typologyDescription: '',
-      source: '',
+      types: [RuleTypeField.Velocity, RuleTypeField.TransactionDenstiy],
+      typologies: [RuleTypology.Structuring, RuleTypology.MoneyMules],
     }
   },
   () => {
@@ -307,17 +376,16 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'multiple-user-senders-within-time-period',
       labels: [],
-      checksFor: ['No. of users', 'Time'],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.NumberOfUsers, RuleChecksForField.Time],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology:
-        'Hidden / unusual relationships, money mules, scams, terrorist financing',
-      typologyGroup:
-        'Hidden / unusual relationships, money mules, scams (romance, Nigerian Prince, inheritance and etc.), terrorist financing',
-      typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds',
-      source:
-        '1) UK National risk assessment of money laundering and terrorist financing 2021 2) Singapore. Stored value cards: money laundering and terrorism financing risk assessment 2017',
+      types: [RuleTypeField.Velocity],
+      typologies: [
+        RuleTypology.HiddenUnusualRelationships,
+        RuleTypology.MoneyMules,
+        RuleTypology.Scams,
+        RuleTypology.TerroristFinancing,
+      ],
     }
   },
   () => {
@@ -341,17 +409,16 @@ const _RULES_LIBRARY: Array<
       ruleImplementationName:
         'multiple-counterparty-senders-within-time-period',
       labels: [],
-      checksFor: ['No. of users', 'Time'],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.NumberOfUsers, RuleChecksForField.Time],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology:
-        'Hidden / unusual relationships, money mules, scams, terrorist financing',
-      typologyGroup:
-        'Hidden / unusual relationships, money mules, scams (romance, Nigerian Prince, inheritance and etc.), terrorist financing',
-      typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds',
-      source:
-        '1) UK National risk assessment of money laundering and terrorist financing 2021 2) Singapore. Stored value cards: money laundering and terrorism financing risk assessment 2017',
+      types: [RuleTypeField.Velocity],
+      typologies: [
+        RuleTypology.HiddenUnusualRelationships,
+        RuleTypology.MoneyMules,
+        RuleTypology.Scams,
+        RuleTypology.TerroristFinancing,
+      ],
     }
   },
   () => {
@@ -374,14 +441,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'merchant-receiver-name',
       labels: [],
-      checksFor: ['Transaction payment method'],
-      defaultNature: 'FRAUD',
+      checksFor: [RuleChecksForField.TransactionPaymentMethodCount],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Prohibited merchants due to financial crime risks',
-      typologyGroup: 'Internal blacklists',
-      typologyDescription:
-        'Blocking transactions with certain merchants which are outside of risk appetite of the organization',
-      source: 'Prohibited countries policy, Sanctions Policy',
+      types: [RuleTypeField.Blacklist],
+      typologies: [RuleTypology.InternalBlacklists],
     }
   },
   () => {
@@ -401,14 +465,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-risk-countries',
       labels: [],
-      checksFor: ['Transaction country'],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.TransactionCountry],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual behavior',
-      typologyDescription:
-        "The customer uses a country that does not fit with their profile or what is known about the customer's business.",
-      source: '',
+      types: [RuleTypeField.RiskExposure],
+      typologies: [
+        RuleTypology.HighRiskTransactions,
+        RuleTypology.UnusualBehaviour,
+      ],
     }
   },
 
@@ -435,14 +499,18 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'using-too-many-banks-to-make-payments',
       labels: [],
-      checksFor: ['Tx payment method count', 'Time'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.TransactionPaymentMethodCount,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P2',
-      typology: 'Money Mules, Acquiring Fraud, Layering of funds',
-      typologyGroup: 'Money Mules, Acquiring Fraud, Layering',
-      typologyDescription:
-        'Money muling is conducting transactions, knowingly or not, to help third parties conceal fund sources. Acquiring fraud involves receiving money from fraud, like stolen card top-ups or APP fraud. Layering is hiding transaction origins through multiple bank transfers',
-      source: '',
+      types: [RuleTypeField.Diversity],
+      typologies: [
+        RuleTypology.MoneyMules,
+        RuleTypology.AcquiringFraud,
+        RuleTypology.Layering,
+      ],
     }
   },
   () => {
@@ -477,15 +545,11 @@ const _RULES_LIBRARY: Array<
       defaultFilters,
       ruleImplementationName: 'blacklist-card-issued-country',
       labels: [],
-      checksFor: ['Transaction payment method issued country'],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.TransactionPaymentMethodIssuedCountry],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology:
-        'Prohibited countries of cards issued due to financial crime risks',
-      typologyGroup: 'Internal blacklists',
-      typologyDescription:
-        'Blocking transactions with certain card issued in countries which are outside of risk appetite of the organization',
-      source: 'Prohibited countries policy, Sanctions Policy',
+      types: [RuleTypeField.Blacklist],
+      typologies: [RuleTypology.InternalBlacklists],
     }
   },
   () => {
@@ -519,16 +583,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-reference-keyword',
       labels: [],
-      checksFor: ['Transaction payment method issued country'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.TranasctionDetails,
+        RuleChecksForField.Keywords,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology:
-        'Transactions with high-risk industries, potentially sanctioned entities, for potentially illicit purposes',
-      typologyGroup: 'Internal blacklists',
-      typologyDescription:
-        "Identifying risky transactions by screening the reference field which might be outside of firm's risk appetite",
-      source:
-        'Prohibited countries policy, Prohibited industries Policy, Sanctions Policy',
+      types: [RuleTypeField.Blacklist],
+      typologies: [RuleTypology.InternalBlacklists],
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -567,15 +629,18 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-velocity',
       labels: [],
-      checksFor: ['No. of transactions', 'Time'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.NumberOfTransactions,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Money mules, acquiring fraud, layering of funds',
-      typologyGroup: 'Money mules, acquiring fraud, layering',
-      typologyDescription:
-        'Money muling is conducting transactions, knowingly or not, to help third parties conceal fund sources. Acquiring fraud involves receiving money from fraud, like stolen card top-ups or APP fraud. Layering is hiding transaction origins through multiple bank transfers',
-      source:
-        'UK National risk assessment of money laundering and terrorist financing 2020',
+      types: [RuleTypeField.Velocity],
+      typologies: [
+        RuleTypology.MoneyMules,
+        RuleTypology.AcquiringFraud,
+        RuleTypology.Layering,
+      ],
     }
   },
   () => {
@@ -597,15 +662,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'ip-address-multiple-users',
       labels: [],
-      checksFor: ["User's IP address"],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.UsersIPAddress,
+        RuleChecksForField.NumberOfUsers,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Money mules, account take over',
-      typologyGroup:
-        'Hidden / unusual relationships, money mules, account takeover fraud',
-      typologyDescription:
-        'Use of different accounts opened in one institution by a perpetrator in order to perform the illicit activity. The same IP can be indicative of an account takeover attack, connected money mules, or money launderers',
-      source: 'NA',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.MoneyMules, RuleTypology.AccountTakeoverFraud],
     }
   },
   () => {
@@ -628,13 +692,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'too-many-users-for-same-payment-identifier',
       labels: [],
-      checksFor: ['Tx payment identifier', 'Time'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.TransactionPaymentIdentifier,
+        RuleChecksForField.NumberOfUsers,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Acquiring Fraud',
-      typologyGroup: '',
-      typologyDescription: '',
-      source: '',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.AcquiringFraud],
     }
   },
   () => {
@@ -659,14 +724,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'same-user-using-too-many-payment-identifiers',
       labels: [],
-      checksFor: ['User payment identifier'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.UserPaymentIdentifier,
+        RuleChecksForField.NumberOfUsers,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Acquiring Fraud',
-      typologyGroup: 'Card fraud',
-      typologyDescription:
-        'Attempts to use a multiple stolen cards to perform a purchase/top-up wallet',
-      source: 'Card Scheme Rules',
+      types: [RuleTypeField.Diversity],
+      typologies: [RuleTypology.CardFraud, RuleTypology.AcquiringFraud],
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -694,16 +759,15 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-volume',
       labels: [],
-      checksFor: ['Transaction amount', 'Time'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
-      typology:
-        'Customer activity is not in line with profile based on available information',
-      typologyGroup: 'Unusual behaviour',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-      source: 'NA',
+      types: [RuleTypeField.Volume],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -723,14 +787,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-risk-ip-address-countries',
       labels: [],
-      checksFor: ["User's IP address"],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.TransactionCountry,
+        RuleChecksForField.UsersIPAddress,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P2',
-      typology: "Customer's IP address is in a high risk country",
-      typologyGroup: 'Unusual behavior',
-      typologyDescription:
-        "The customer's IP address is in a high risk country",
-      source: '',
+      types: [RuleTypeField.RiskExposure],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -750,14 +814,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'ip-address-unexpected-location',
       labels: [],
-      checksFor: ["User's IP address"],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.UsersIPAddress],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology: 'Account takeover fraud',
-      typologyGroup: 'Account takeover fraud',
-      typologyDescription:
-        'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
-      source: 'Japan Reference Cases on Suspicious Transactions 2020',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.AccountTakeoverFraud],
     }
   },
   () => {
@@ -775,16 +836,16 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-risk-score',
       labels: [],
-      checksFor: ['Transaction risk score'],
-      defaultNature: 'FRAUD',
+      checksFor: [RuleChecksForField.TransactionRiskScore],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
-      typology: 'Account takeover fraud',
-      typologyGroup: 'Account takeover fraud',
-      typologyDescription:
-        'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
-      source: 'Japan Reference Cases on Suspicious Transactions 2020',
       requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS', 'SYNC_TRS_CALCULATION'],
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [
+        RuleTypology.UnusualBehaviour,
+        RuleTypology.HiddenUnusualRelationships,
+      ],
     }
   },
   () => {
@@ -799,14 +860,15 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'user-transaction-limits',
       labels: [],
-      checksFor: ['Transaction amount', 'No. of transactions'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.NumberOfTransactions,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
-      typology: '',
-      typologyGroup: '',
-      typologyDescription: '',
-      source: '',
+      types: [RuleTypeField.VolumeComparison],
+      typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -828,14 +890,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'sender-location-changes-frequency',
       labels: [],
-      checksFor: ["User's IP address", 'Time'],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.Time, RuleChecksForField.UsersIPAddress],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology: 'Account takeover fraud',
-      typologyGroup: 'Account takeover',
-      typologyDescription:
-        'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
-      source: 'Card Scheme Rules',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.AccountTakeoverFraud],
     }
   },
   () => {
@@ -860,16 +919,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'BLOCK',
       ruleImplementationName: 'card-issued-country',
       labels: [],
-      checksFor: ['Transaction payment method issued country'],
-      defaultNature: 'FRAUD',
+      checksFor: [RuleChecksForField.TransactionPaymentMethodIssuedCountry],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology:
-        'Transactions with high-risk industries, potentially sanctioned entities, for potentially illicit purposes',
-      typologyGroup: 'Internal blacklists',
-      typologyDescription:
-        "Identifying risky transactions by screening the reference field which might be outside of firm's risk appetite",
-      source:
-        'Prohibited countries policy, Prohibited industries Policy, Sanctions Policy',
+      types: [RuleTypeField.Blacklist],
+      typologies: [RuleTypology.InternalBlacklists],
     }
   },
   () => {
@@ -888,15 +942,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-amount-pattern',
       labels: [],
-      checksFor: ['Tx amount value'],
-      defaultNature: 'FRAUD',
+      checksFor: [RuleChecksForField.TransactionAmount],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Avoiding reporting limits',
-      typologyGroup: 'Structuring',
-      typologyDescription:
-        'Conceal or disguise significant transactions to avoid disclosure for record purposes by executing frequent or several transactions such that each transaction by itself is below reporting thresholds',
-      source:
-        '1) Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism 2) AUSTRAC:Stored value cards: money laundering and terrorism financing risk assessment 2017',
+      types: [RuleTypeField.PatternRecognition],
+      typologies: [RuleTypology.Structuring],
     }
   },
 
@@ -926,14 +976,11 @@ const _RULES_LIBRARY: Array<
       defaultFilters,
       ruleImplementationName: 'payment-method-name-levensthein-distance',
       labels: [],
-      checksFor: ['Username'],
-      defaultNature: 'FRAUD',
+      checksFor: [RuleChecksForField.Username],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Acquiring Fraud',
-      typologyGroup: 'Account takeover fraud',
-      typologyDescription:
-        'Attempts to use multiple stolen account details to perform a purchase/top-up wallet',
-      source: 'Card Scheme Rules',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.AccountTakeoverFraud],
     }
   },
   () => {
@@ -956,16 +1003,16 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-traffic-between-same-parties',
       labels: [],
-      checksFor: ['No. of transactions', 'Time', 'Both parties username'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.NumberOfTransactions,
+        RuleChecksForField.Time,
+        RuleChecksForField.BothPartiesUsername,
+        RuleChecksForField.Username,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology:
-        'A high value of transactions between the same parties which can be indicative of ML',
-      typologyGroup: 'Hidden / unusual relationships',
-      typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships',
-      source:
-        'UK National risk assessment of money laundering and terrorist financing 2020',
+      types: [RuleTypeField.Velocity],
+      typologies: [RuleTypology.HiddenUnusualRelationships],
     }
   },
   // TODO: Change Rule Descriptions once rule is split into two
@@ -1000,17 +1047,15 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-average-amount-exceeded',
       labels: [],
-      checksFor: ['Transaction amount', 'Time'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
-      typology:
-        'Change in behavior driven by an increase in a value of transactions',
-      typologyGroup: 'Unusual behaviour',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.VolumeComparison],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -1042,16 +1087,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-average-number-exceeded',
       labels: [],
-      checksFor: ['No. of transactions', 'Time'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.NumberOfTransactions,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology:
-        'Change in behavior driven by an increase in a number of transactions',
-      typologyGroup: 'Unusual behaviour',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.VelocityComparison],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -1086,17 +1129,15 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-average-daily-amount-exceeded',
       labels: [],
-      checksFor: ['No. of transactions', 'Time'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.NumberOfTransactions,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
-      typology:
-        'Change in behavior driven by an increase in a value of transactions',
-      typologyGroup: 'Unusual behaviour',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.VolumeComparison],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   // TODO: Change rule description when rule is split into two
@@ -1129,17 +1170,20 @@ const _RULES_LIBRARY: Array<
       defaultParameters,
       defaultAction: 'FLAG',
       defaultCasePriority: 'P1',
-      defaultNature: 'FRAUD',
+      defaultNature: RuleNature.FRAUD,
       labels: [],
-      checksFor: ['Transaction amount', 'Time'],
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.Time,
+      ],
       ruleImplementationName: 'total-transactions-volume-exceeds',
       defaultFalsePositiveCheckEnabled: true,
-      typology: 'Money mules, acquiring fraud, layering of funds',
-      typologyGroup: 'Money mules acquiring fraud layering',
-      typologyDescription:
-        '- Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. - Acquiring fraud - receiving money that are proceeds of fraud ( typically top-up from stolen card and/or APP fraud). - Layering- disguising the true nature of transactions via numerous transfers between financial institutions. ',
-      source:
-        'UK National risk assessment of money laundering and terrorist financing 2020',
+      types: [RuleTypeField.VolumeComparison],
+      typologies: [
+        RuleTypology.MoneyMules,
+        RuleTypology.AcquiringFraud,
+        RuleTypology.Layering,
+      ],
     }
   },
   () => {
@@ -1164,17 +1208,17 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-traffic-volume-between-same-users',
       labels: [],
-      checksFor: ['Transaction amount', 'Time', 'Both parties username'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.Time,
+        RuleChecksForField.BothPartiesUsername,
+        RuleChecksForField.Username,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
-      typology:
-        'A high value of transactions between the same parties which can be indicative of ML',
-      typologyGroup: 'Hidden / Unusual Relationships',
-      typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships',
-      source:
-        'UK National risk assessment of money laundering and terrorist financing 2020',
+      types: [RuleTypeField.Volume],
+      typologies: [RuleTypology.HiddenUnusualRelationships],
     }
   },
   () => {
@@ -1186,6 +1230,7 @@ const _RULES_LIBRARY: Array<
       patternPercentageLimit: 50,
       initialTransactions: 10,
     }
+
     return {
       id: 'R-124',
       type: 'TRANSACTION',
@@ -1198,16 +1243,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-round-value-percentage',
       labels: [],
-      checksFor: ['Transaction amount', 'Time'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology:
-        'Transactions in round amounts which disguise the true nature of transaction and might be indicative of ML/TF',
-      typologyGroup: 'Structuring, unusual behaviour',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer. Conceal or disguise the true nature of transactions  by executing frequent or several transactions such that each transaction is a rounded number which is not common for regular payment activity',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.Diversity],
+      typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -1234,13 +1277,16 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-unsuccessfull-state-rate',
       labels: [],
-      checksFor: ['Transaction state', 'Time'],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.TransactionState, RuleChecksForField.Time],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology: 'Acquiring fraud, issuing fraud, account takeover fraud',
-      typologyGroup: 'Card fraud',
-      typologyDescription: 'Unsuccessful attempts to use cards by fraudsters',
-      source: 'Card Scheme Rules',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [
+        RuleTypology.AcquiringFraud,
+        RuleTypology.CardFraud,
+        RuleTypology.AccountTakeoverFraud,
+        RuleTypology.IssuingFraud,
+      ],
     }
   },
   () => {
@@ -1255,6 +1301,7 @@ const _RULES_LIBRARY: Array<
         checkSender: 'all',
         checkReceiver: 'all',
       }
+
     return {
       id: 'R-77',
       type: 'TRANSACTION',
@@ -1267,16 +1314,18 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'too-many-transactions-to-high-risk-country',
       labels: [],
-      checksFor: ['Counterparty country count', 'Time'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.TransactionCountry,
+        RuleChecksForField.Time,
+        RuleChecksForField.CounterpartyCountryCount,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology:
-        'Elevated ML/TF risks associated with transactions with high risk geography',
-      typologyGroup: 'High risk transactions',
-      typologyDescription:
-        'Typologies that scrutinise a high-risk element of the transaction, such as geographic location or an attribute of the beneficiary or originator',
-      source:
-        '1) FATF Emerging Terrorist Financing Risks 2) US Advisory on Human Rights Abuses Enabled by Corrupt Senior Foreign Political Figures and their Financial Facilitators',
+      types: [RuleTypeField.Velocity],
+      typologies: [
+        RuleTypology.HighRiskTransactions,
+        RuleTypology.TerroristFinancing,
+      ],
     }
   },
   // TODO: Change Rule Description when Rule is Split into two
@@ -1303,16 +1352,15 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'too-many-counterparty-country',
       labels: [],
-      checksFor: ['Counterparty country count', 'Time'],
-      defaultNature: 'AML',
+      checksFor: [
+        RuleChecksForField.TransactionCountry,
+        RuleChecksForField.Time,
+        RuleChecksForField.CounterpartyCountryCount,
+      ],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology:
-        'Unusually high number of countries involved into transactional activity of the customer',
-      typologyGroup: 'Unusual behaviour',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.Diversity],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -1335,16 +1383,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-round-value-velocity',
       labels: [],
-      checksFor: [],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.NumberOfTransactions],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
-      typology:
-        'Transactions in round amounts which disguise the true nature of transaction and might be indicative of ML/TF',
-      typologyGroup: 'Structuring unusual behaviour',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer. Conceal or disguise the true nature of transactions  by executing frequent or several transactions such that each transaction is a rounded number which is not common for regular payment activity',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.Velocity],
+      typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -1369,16 +1412,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'same-payment-details',
       labels: [],
-      checksFor: [],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.TransactionPaymentIdentifier,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology:
-        'A high value of transactions using the same payment details can be indicative of ML',
-      typologyGroup: 'Hidden / unusual relationships',
-      typologyDescription:
-        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships',
-      source:
-        'UK National risk assessment of money laundering and terrorist financing 2020',
+      types: [RuleTypeField.Diversity],
+      typologies: [RuleTypology.HiddenUnusualRelationships],
     }
   },
   () => {
@@ -1396,14 +1437,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'blacklist-payment-details',
       labels: [],
-      checksFor: ['Transaction payment details'],
-      defaultNature: 'FRAUD',
+      checksFor: [RuleChecksForField.TransactionPaymentDetails],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Prohibited payment details due to financial crime risks',
-      typologyGroup: 'Internal blacklists',
-      typologyDescription:
-        'Blocking transactions with certain cards issued in countries which are outside of risk appetite of the organization',
-      source: 'Prohibited countries policy, Sanctions Policy',
+      types: [RuleTypeField.Blacklist],
+      typologies: [RuleTypology.InternalBlacklists],
     }
   },
   // TODO: Change Rule Description when Rule is Split into two
@@ -1433,15 +1471,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-exceed-past-period',
       labels: [],
-      checksFor: ['No. of transactions', 'Time'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.NumberOfTransactions,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual behaviour',
-      typologyDescription:
-        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer',
-      source:
-        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+      types: [RuleTypeField.VelocityComparison],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -1460,13 +1497,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'BLOCK',
       ruleImplementationName: 'blacklist-transaction-related-value',
       labels: [],
-      checksFor: ['User details'],
-      defaultNature: 'FRAUD',
+      checksFor: [RuleChecksForField.UserDetails],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P3',
-      typology: 'Internal blacklists',
-      typologyGroup: 'Internal blacklists',
-      typologyDescription: 'Internal blacklists',
-      source: 'Internal blacklists',
+      types: [RuleTypeField.Blacklist],
+      typologies: [RuleTypology.InternalBlacklists],
     }
   },
   () => {
@@ -1492,15 +1527,15 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-outflow-inflow-volume',
       labels: [],
-      checksFor: ['Transaction amount', 'Time', 'Transaction type'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.TransactionType,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
-      typology: 'Money transit, money mules',
-      typologyGroup: 'Layering, money mules',
-      typologyDescription:
-        'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Layering - disguising the true nature of transactions via numerous transfers between financial institutions',
-      source:
-        'UK National risk assessment of money laundering and terrorist financing 2020',
+      types: [RuleTypeField.VolumeComparison],
+      typologies: [RuleTypology.MoneyMules, RuleTypology.Layering],
     }
   },
   () => {
@@ -1522,10 +1557,15 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-business-user',
       labels: [],
-      checksFor: ['Entity name'],
-      defaultNature: 'SCREENING',
+      checksFor: [
+        RuleChecksForField.UserDetails,
+        RuleChecksForField.EntityName,
+      ],
+      defaultNature: RuleNature.SCREENING,
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
     }
   },
   () => {
@@ -1547,10 +1587,12 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-bank-name',
       labels: [],
-      checksFor: ['User’s bank name'],
-      defaultNature: 'SCREENING',
+      checksFor: [RuleChecksForField.UsersBankName],
+      defaultNature: RuleNature.SCREENING,
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
     }
   },
   () => {
@@ -1571,11 +1613,16 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-counterparty',
       labels: [],
-      checksFor: ['Counterparty username', 'Counterparty bank name'],
-      defaultNature: 'SCREENING',
+      checksFor: [
+        RuleChecksForField.CounterpartyUsername,
+        RuleChecksForField.CounterpartyBankName,
+      ],
+      defaultNature: RuleNature.SCREENING,
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
       isOngoingScreening: true,
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
     }
   },
   () => {
@@ -1597,10 +1644,16 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-consumer-user',
       labels: [],
-      checksFor: ['Username', 'User’s Y.O.B'],
-      defaultNature: 'SCREENING',
+      checksFor: [
+        RuleChecksForField.Username,
+        RuleChecksForField.UserDetails,
+        RuleChecksForField.UsersYearOfBirth,
+      ],
+      defaultNature: RuleNature.SCREENING,
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
     }
   },
   () => {
@@ -1620,10 +1673,15 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'merchant-monitoring-industry',
       labels: [],
-      checksFor: ['User’s industry'],
-      defaultNature: 'SCREENING',
+      checksFor: [
+        RuleChecksForField.UserDetails,
+        RuleChecksForField.UsersIndustry,
+      ],
+      defaultNature: RuleNature.SCREENING,
       defaultCasePriority: 'P1',
       requiredFeatures: ['MERCHANT_MONITORING'],
+      types: [RuleTypeField.MerchantMonitoring],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
 
@@ -1641,9 +1699,14 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'user-address-change',
       labels: [],
-      checksFor: ['User’s address'],
-      defaultNature: 'FRAUD',
+      checksFor: [
+        RuleChecksForField.UserDetails,
+        RuleChecksForField.UsersAddress,
+      ],
+      defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P2',
+      types: [RuleTypeField.MerchantMonitoring],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
   () => {
@@ -1665,9 +1728,11 @@ const _RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       ruleImplementationName: 'bank-name-change',
       labels: [],
-      checksFor: ["User's bank name", 'Time'],
-      defaultNature: 'AML',
+      checksFor: [RuleChecksForField.UsersBankName, RuleChecksForField.Time],
+      defaultNature: RuleNature.AML,
       defaultCasePriority: 'P2',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.UnusualBehaviour],
     }
   },
 ]

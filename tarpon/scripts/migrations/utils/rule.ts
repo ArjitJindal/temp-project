@@ -378,10 +378,6 @@ function defaultRuleMigrationBehavior(
   const tempRuleInstance: RuleInstance = {
     ...ruleInstance,
     ruleId: targetRule.id,
-    typology: targetRule.typology,
-    typologyDescription: targetRule.typologyDescription,
-    typologyGroup: targetRule.typologyGroup,
-    source: targetRule.source,
     labels: targetRule.labels,
   }
 

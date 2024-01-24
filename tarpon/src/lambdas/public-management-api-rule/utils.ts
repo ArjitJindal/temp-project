@@ -16,5 +16,7 @@ export function toPublicRule(rule: Rule): PublicRule {
     defaultCasePriority: rule.defaultCasePriority,
     defaultNature: rule.defaultNature,
     checksFor: rule.checksFor,
+    types: rule.types,
+    typologies: rule.typologies,
   }
 }

@@ -91,16 +91,45 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
           defaultWrapMode: 'OVERFLOW',
         },
       }),
+
       helper.simple<'description'>({
         title: 'Description',
         key: 'description',
         defaultWidth: 425,
         type: LONG_TEXT,
       }),
+
+      helper.simple<'types'>({
+        title: 'Type',
+        key: 'types',
+        defaultWidth: 300,
+        sorting: true,
+        type: {
+          render: (types) => {
+            return <>{types?.join('/ ')}</>;
+          },
+          stringify: (types) => {
+            return types?.join('/ ') ?? '-';
+          },
+        },
+      }),
       helper.simple<'defaultNature'>({
         title: 'Default nature',
         key: 'defaultNature',
         defaultWidth: 80,
+      }),
+      helper.simple<'typologies'>({
+        title: 'Typology',
+        key: 'typologies',
+        defaultWidth: 250,
+        type: {
+          render: (typologies) => {
+            return <>{typologies?.join(', ')}</>;
+          },
+          stringify: (typologies) => {
+            return typologies?.join(', ') ?? '-';
+          },
+        },
       }),
       helper.simple<'defaultAction'>({
         title: 'Default action',
@@ -111,11 +140,6 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
         // todo: implement
         // sorter: (a, b) => a.defaultAction.localeCompare(b.defaultAction),
         // exportData: (row) => row.defaultAction,
-      }),
-      helper.simple<'typology'>({
-        title: 'Typology',
-        key: 'typology',
-        defaultWidth: 250,
       }),
       helper.simple<'checksFor'>({
         title: 'Checks for',
@@ -136,21 +160,6 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
           },
           defaultWrapMode: 'WRAP',
         },
-      }),
-      helper.simple<'typologyGroup'>({
-        title: 'Typology group',
-        key: 'typologyGroup',
-        defaultWidth: 220,
-      }),
-      helper.simple<'typologyDescription'>({
-        title: 'Typology description',
-        key: 'typologyDescription',
-        defaultWidth: 300,
-      }),
-      helper.simple<'source'>({
-        title: 'Source',
-        key: 'source',
-        defaultWidth: 300,
       }),
       helper.display({
         id: 'actions',

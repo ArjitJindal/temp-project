@@ -70,13 +70,10 @@ export class RuleRepository {
       'name',
       'description',
       'id',
-      'typology',
       'checksFor',
       'defaultNature',
-      'typologyGroup',
-      'source',
-      'typologyDescription',
       'labels',
+      'types',
     ]
 
     const queryInput: Filter<Rule> = {
@@ -86,7 +83,7 @@ export class RuleRepository {
             checksFor: { $in: filters.filterChecksFor },
           }),
           ...(filters?.filterTypology?.length && {
-            typology: { $in: filters.filterTypology },
+            typologies: { $in: filters.filterTypology },
           }),
           ...(filters?.filterNature?.length && {
             defaultNature: { $in: filters.filterNature as RuleNature[] },
@@ -168,7 +165,7 @@ export class RuleRepository {
       this.dynamoDb.send(new PutCommand(putItemInput)),
       db
         .collection<Rule>(rulesCollection)
-        .updateOne({ id: rule.id }, { $set: newRule }, { upsert: true }),
+        .replaceOne({ id: rule.id }, { ...newRule }, { upsert: true }),
     ])
 
     return newRule
