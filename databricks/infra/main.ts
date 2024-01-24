@@ -221,15 +221,15 @@ class DatabricksStack extends TerraformStack {
         }
       )
 
-    adminEmails.forEach((email, index) => {
-      const user = new databricks.user.User(this, `workspace-user-${index}`, {
+    adminEmails.forEach((email) => {
+      const user = new databricks.user.User(this, `workspace-user-${email}`, {
         provider: workspaceProvider,
         userName: email,
         force: true,
       })
       new databricks.groupMember.GroupMember(
         this,
-        `workspace-group-member-${index}`,
+        `workspace-group-member-${email}`,
         {
           provider: workspaceProvider,
           groupId: workspaceGroup.id,
@@ -557,12 +557,17 @@ class DatabricksStack extends TerraformStack {
     })
 
     servicePrincipals.forEach((sp, i) => {
-      const tenantSchema = new databricks.schema.Schema(this, `schema-${i}`, {
-        provider: workspaceProvider,
-        catalogName: catalog.name,
-        name: Fn.lower(sp.displayName),
-      })
-      new databricks.grant.Grant(this, `sp-grant-${i}`, {
+      const tenant = this.tenantIds[i]
+      const tenantSchema = new databricks.schema.Schema(
+        this,
+        `schema-${tenant}`,
+        {
+          provider: workspaceProvider,
+          catalogName: catalog.name,
+          name: Fn.lower(sp.displayName),
+        }
+      )
+      new databricks.grant.Grant(this, `sp-grant-${tenant}`, {
         provider: workspaceProvider,
         schema: tenantSchema.id,
         principal: sp.applicationId,
@@ -570,7 +575,7 @@ class DatabricksStack extends TerraformStack {
       })
 
       entities.forEach((entity) => {
-        new databricks.sqlTable.SqlTable(this, `view-${entity}-${i}`, {
+        new databricks.sqlTable.SqlTable(this, `view-${entity}-${tenant}`, {
           provider: workspaceProvider,
           catalogName: catalog.name,
           name: entity,
@@ -584,21 +589,25 @@ class DatabricksStack extends TerraformStack {
         })
       })
 
-      const spToken = new databricks.oboToken.OboToken(this, `obo-token-${i}`, {
-        provider: workspaceProvider,
-        applicationId: sp.applicationId,
-      })
+      const spToken = new databricks.oboToken.OboToken(
+        this,
+        `obo-token-${tenant}`,
+        {
+          provider: workspaceProvider,
+          applicationId: sp.applicationId,
+        }
+      )
 
       const tenantSecret = new aws.secretsmanagerSecret.SecretsmanagerSecret(
         this,
-        `aws-secret-${i}`,
+        `aws-secret-${tenant}`,
         {
           name: Fn.format('databricks/tenant/%s', [sp.displayName]),
         }
       )
       new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
         this,
-        `aws-secret-version-${i}`,
+        `aws-secret-version-${tenant}`,
         {
           secretId: tenantSecret.id,
           secretString: Fn.jsonencode({
@@ -612,8 +621,8 @@ class DatabricksStack extends TerraformStack {
   }
 
   private createUsers() {
-    return adminEmails.map((email, index) => {
-      return new databricks.user.User(this, `user-${index}`, {
+    return adminEmails.map((email) => {
+      return new databricks.user.User(this, `user-${email}`, {
         provider: this.mws,
         userName: email,
         force: true,
@@ -621,10 +630,10 @@ class DatabricksStack extends TerraformStack {
     })
   }
   private fetchUsers() {
-    return adminEmails.map((email, index) => {
+    return adminEmails.map((email) => {
       return new databricks.dataDatabricksUser.DataDatabricksUser(
         this,
-        `user-${index}`,
+        `user-${email}`,
         {
           provider: this.mws,
           userName: email,
@@ -1171,17 +1180,17 @@ class DatabricksStack extends TerraformStack {
       displayName: regionalAdminGroupName,
     })
 
-    userIds.forEach((userId, index) => {
+    userIds.forEach((userId) => {
       new databricks.groupMember.GroupMember(
         this,
-        `admin-group-member-${index}`,
+        `admin-group-member-${userId}`,
         {
           provider: this.mws,
           groupId: adminGroup.id,
           memberId: userId,
         }
       )
-      new databricks.userRole.UserRole(this, `admin-${index}`, {
+      new databricks.userRole.UserRole(this, `admin-${userId}`, {
         provider: this.mws,
         userId: userId,
         role: 'account_admin',
