@@ -172,6 +172,7 @@ export class SimulationTaskRepository {
         demoJob.jobId = jobId
         demoJob.createdAt = now
         demoJob.createdBy = createdByUser?.id
+        demoJob.internal = isCurrentUserAtLeastRole('root')
 
         demoJob.defaultRuleInstance = simulationRequest.defaultRuleInstance
 
@@ -204,7 +205,6 @@ export class SimulationTaskRepository {
             },
           } as SimulationBeaconIteration
         })
-
         await collection.insertOne({
           _id: demoJob.jobId as any,
           ...demoJob,

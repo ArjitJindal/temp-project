@@ -1,7 +1,7 @@
 import { memoize } from 'lodash'
-import { ruleSimulation } from '../raw-data/simulation-rules'
+import { getRuleSimulation } from '../raw-data/simulation-rules'
 import { SimulationBeaconJob } from '@/@types/openapi-internal/SimulationBeaconJob'
 
 export const getSimulations: () => SimulationBeaconJob[] = memoize(() => {
-  return ruleSimulation
+  return getRuleSimulation()
 })

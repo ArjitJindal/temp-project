@@ -1,11 +1,14 @@
+import { getRandomUser } from '../samplers/accounts'
 import { SimulationBeaconJob } from '@/@types/openapi-internal/SimulationBeaconJob'
 
-export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
+export const getRuleSimulation = (): Array<
+  SimulationBeaconJob & { _id: string }
+> => [
   {
     _id: '7a6d4861-d761-46d6-9a37-263ff4066419',
     createdAt: 1691483599102,
     jobId: '7a6d4861-d761-46d6-9a37-263ff4066419',
-    createdBy: 'auth0|6226462a28b7ce006816032c',
+    createdBy: getRandomUser().assigneeUserId,
     type: 'BEACON',
     defaultRuleInstance: {
       id: '2b9ec5b2',
@@ -177,7 +180,7 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
     _id: '80ba00a4-3bfe-4d20-b9f2-05de8482bc8f',
     createdAt: 1691441270921,
     jobId: '80ba00a4-3bfe-4d20-b9f2-05de8482bc8f',
-    createdBy: 'auth0|6226462a28b7ce006816032c',
+    createdBy: getRandomUser().assigneeUserId,
     type: 'BEACON',
     defaultRuleInstance: {
       id: '0afc5eba',
@@ -300,7 +303,7 @@ export const ruleSimulation: Array<SimulationBeaconJob & { _id: string }> = [
     _id: '95c2ae52-1476-4df7-88e4-768c3c7e3373',
     createdAt: 1691440136730,
     jobId: '95c2ae52-1476-4df7-88e4-768c3c7e3373',
-    createdBy: 'auth0|6226462a28b7ce006816032c',
+    createdBy: getRandomUser().assigneeUserId,
     type: 'BEACON',
     defaultRuleInstance: {
       id: 'a86206ad',
