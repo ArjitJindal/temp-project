@@ -865,17 +865,21 @@ export class RulesEngineService {
               this.updatedAggregationVariables.add(hash)
 
               return [
-                await this.ruleLogicEvaluator.updateAggregationVariable(
-                  aggVar,
-                  { transaction: options.transaction },
-                  'origin'
-                ),
-                await this.ruleLogicEvaluator.updateAggregationVariable(
-                  aggVar,
-                  { transaction: options.transaction },
-                  'destination'
-                ),
-              ]
+                aggVar.direction !== 'RECEIVING'
+                  ? await this.ruleLogicEvaluator.updateAggregationVariable(
+                      aggVar,
+                      { transaction: options.transaction },
+                      'origin'
+                    )
+                  : undefined,
+                aggVar.direction !== 'SENDING'
+                  ? await this.ruleLogicEvaluator.updateAggregationVariable(
+                      aggVar,
+                      { transaction: options.transaction },
+                      'destination'
+                    )
+                  : undefined,
+              ].filter(Boolean)
             }) ?? []
           )
 
@@ -926,7 +930,22 @@ export class RulesEngineService {
           direction,
           isTransactionHistoricalFiltered
         )
-      if (shouldUpdateAggregation) {
+
+      // NOTE: This is a quick workaround fix to avoid updating aggregation when it's unnecessary.
+      // Eventually the whole `handleTransactionRuleAggregation` will be removed after we migrate all the
+      // rules to V8
+      const { checkSender, checkReceiver } = ruleClassInstance.parameters ?? {}
+      const skipUpdateAggregation =
+        (direction === 'origin' &&
+          checkSender === 'none' &&
+          checkReceiver &&
+          checkReceiver !== 'all') ||
+        (direction === 'destination' &&
+          checkReceiver === 'none' &&
+          checkSender &&
+          checkSender !== 'all')
+
+      if (shouldUpdateAggregation && !skipUpdateAggregation) {
         const userKeyId = ruleClassInstance.getUserKeyId(direction)
         if (userKeyId) {
           if (!(await ruleClassInstance.isRebuilt(direction))) {

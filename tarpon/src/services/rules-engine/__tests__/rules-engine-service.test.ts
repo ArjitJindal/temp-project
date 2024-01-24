@@ -718,6 +718,6 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
       })
     )
 
-    expect(mock).toBeCalledTimes(2)
+    expect(mock).toBeCalledTimes(1)
   })
 })
