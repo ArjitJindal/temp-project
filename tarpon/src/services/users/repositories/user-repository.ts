@@ -94,6 +94,7 @@ export class UserRepository {
       filterUserRegistrationStatus?: UserRegistrationStatus[]
       sortField?: string
       sortOrder?: SortOrder
+      filterRiskLevelLocked?: string
     }
   ): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
     return (await this.getMongoUsers(params, 'BUSINESS')) as {
@@ -112,6 +113,7 @@ export class UserRepository {
       filterTagKey?: string
       filterTagValue?: string
       filterRiskLevel?: RiskLevel[]
+      filterRiskLevelLocked?: string
     }
   ): Promise<{ total: number; data: Array<InternalConsumerUser> }> {
     return (await this.getMongoUsers(params, 'CONSUMER')) as {
@@ -133,6 +135,7 @@ export class UserRepository {
       includeCasesCount?: boolean
       sortField?: string
       sortOrder?: SortOrder
+      filterRiskLevelLocked?: string
     }
   ): Promise<{
     total: number
@@ -180,6 +183,7 @@ export class UserRepository {
       filterUserRegistrationStatus?: UserRegistrationStatus[]
       sortField?: string
       sortOrder?: SortOrder
+      filterRiskLevelLocked?: string
     },
     userType?: UserType
   ): Promise<{
@@ -199,6 +203,13 @@ export class UserRepository {
 
     const isPulseEnabled =
       hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')
+    console.log('FILTER_RISK_LEVEL_LOCKED', params.filterRiskLevelLocked)
+    if (params.filterRiskLevelLocked != null) {
+      const isUpdatable = params.filterRiskLevelLocked === 'YES' ? false : true
+      filterConditions.push({
+        'drsScore.isUpdatable': isUpdatable,
+      })
+    }
 
     if (params.filterId != null) {
       filterConditions.push({

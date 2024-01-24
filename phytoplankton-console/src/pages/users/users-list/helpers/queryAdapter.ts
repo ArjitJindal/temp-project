@@ -14,6 +14,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       tagKey: params.tagKey,
       tagValue: params.tagValue,
       userRegistrationStatus: params.userRegistrationStatus?.join(',') ?? '',
+      riskLevelLocked: params.riskLevelLocked,
     };
   },
   deserializer: (raw): UserSearchParams => {
@@ -29,6 +30,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       userRegistrationStatus: raw.userRegistrationStatus
         ? (raw.userRegistrationStatus.split(',') as UserRegistrationStatus[])
         : undefined,
+      riskLevelLocked: raw.riskLevelLocked as 'YES' | 'NO' | undefined,
     };
   },
 };

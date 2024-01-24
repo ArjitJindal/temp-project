@@ -1296,6 +1296,10 @@ paths:
           in: query
           name: sortField
         - schema:
+            type: string
+          in: query
+          name: filterRiskLevelLocked
+        - schema:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
@@ -1407,6 +1411,10 @@ paths:
             type: string
           in: query
           name: sortField
+        - schema:
+            type: string
+          in: query
+          name: filterRiskLevelLocked
         - schema:
             $ref: '#/components/schemas/SortOrder'
           in: query
@@ -1633,6 +1641,10 @@ paths:
             type: string
           in: query
           name: sortField
+        - schema:
+            type: string
+          in: query
+          name: filterRiskLevelLocked
         - schema:
             $ref: '#/components/schemas/SortOrder'
           in: query

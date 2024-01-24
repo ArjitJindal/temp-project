@@ -193,6 +193,15 @@ export const BOOLEAN: ColumnDataType<boolean> = {
     );
   },
   stringify: (value) => (value ? 'Yes' : 'No'),
+  autoFilterDataType: {
+    kind: 'select',
+    options: [
+      { value: 'YES', label: 'Yes' },
+      { value: 'NO', label: 'No' },
+    ],
+    mode: 'SINGLE',
+    displayMode: 'list',
+  },
 };
 
 export const RULE_NATURE: ColumnDataType<RuleNature> = {

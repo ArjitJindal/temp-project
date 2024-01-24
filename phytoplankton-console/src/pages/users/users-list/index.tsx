@@ -35,6 +35,7 @@ export interface UserSearchParams extends CommonParams {
   tagValue?: string;
   createdTimestamp?: string[];
   userRegistrationStatus?: UserRegistrationStatus[];
+  riskLevelLocked?: 'YES' | 'NO';
 }
 
 function getRiskScoringColumns(): TableColumn<InternalUser>[] {
@@ -58,7 +59,9 @@ function getRiskScoringColumns(): TableColumn<InternalUser>[] {
     helper.simple<'drsScore.isUpdatable'>({
       key: 'drsScore.isUpdatable',
       title: 'Is locked',
-      type: BOOLEAN,
+      type: {
+        render: (value) => <>{!value ? 'Yes' : 'No'}</>,
+      },
       tooltip: 'Whether customer risk assessment score is locked',
     }),
     helper.simple<'krsScore.riskLevel'>({
@@ -131,6 +134,11 @@ const extraFilters = (
           }}
         />
       ),
+    },
+    {
+      key: 'riskLevelLocked',
+      title: 'CRA lock status',
+      renderer: BOOLEAN.autoFilterDataType,
     },
   ];
 
@@ -213,8 +221,17 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const queryResults = usePaginatedQuery(
     USERS(type, params),
     async (paginationParams): Promise<PaginatedData<InternalUser>> => {
-      const { userId, createdTimestamp, page, riskLevels, pageSize, tagKey, tagValue, sort } =
-        params;
+      const {
+        userId,
+        createdTimestamp,
+        page,
+        riskLevels,
+        pageSize,
+        tagKey,
+        tagValue,
+        sort,
+        riskLevelLocked,
+      } = params;
 
       const queryObj = {
         page,
@@ -231,6 +248,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         }),
         sortField: sort[0]?.[0] ?? 'createdTimestamp',
         sortOrder: sort[0]?.[1] ?? 'descend',
+        filterRiskLevelLocked: riskLevelLocked,
       };
 
       const response =
