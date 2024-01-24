@@ -29,7 +29,6 @@ export default function Tabs(props: Props) {
   return (
     <AntTabs
       activeKey={activeKey}
-      style={{ overflow: 'auto' }}
       type={props?.type}
       size={props?.size}
       className={cn(s.root, props.type === 'line' && s.line)}
@@ -55,7 +54,6 @@ export default function Tabs(props: Props) {
               </span>
             }
             key={key}
-            style={{ overflow: 'auto', height: '400px' }}
             closable={isClosable}
             disabled={isDisabled ?? false}
           >

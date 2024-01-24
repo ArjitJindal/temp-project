@@ -4,7 +4,6 @@ import AlertsStatusChangeModal from './AlertsStatusChangeModal';
 import { AlertStatus } from '@/apis';
 import { ButtonSize } from '@/components/library/Button';
 import StatusChangeButton from '@/pages/case-management/components/StatusChangeButton';
-import { removeUniqueTableId } from '@/utils/removeUniqueTableId';
 
 interface Props {
   entityName?: string;
@@ -50,7 +49,6 @@ export default function AlertsStatusChangeButton(props: Props) {
     buttonProps = {},
     isDisabled = false,
   } = props;
-
   return (
     <>
       <StatusChangeButton
@@ -63,7 +61,7 @@ export default function AlertsStatusChangeButton(props: Props) {
         {({ isVisible, setVisible, newStatus }) => (
           <AlertsStatusChangeModal
             isVisible={isVisible}
-            entityIds={removeUniqueTableId(ids)}
+            entityIds={ids}
             transactionIds={transactionIds}
             caseId={caseId}
             oldStatus={status}
