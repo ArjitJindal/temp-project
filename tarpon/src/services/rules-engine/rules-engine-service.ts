@@ -736,10 +736,16 @@ export class RulesEngineService {
         runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
       }
 
+      const periodicLog = setInterval(() => {
+        logger.warn(`Rule ${ruleInstance.ruleId} is taking too long to execute`)
+        runSegment?.flush()
+      }, 5000)
+
       ruleResult = shouldRunRule
         ? await ruleClassInstance.computeRule()
         : undefined
       runSegment?.close()
+      clearInterval(periodicLog)
     }
 
     const filteredRuleResult = ruleResult

@@ -29,18 +29,7 @@ export async function addNewSubsegment(
     ' '
   )
   try {
-    const segment = AWSXRay.getSegment()?.addNewSubsegment(name)
-    if (segment) {
-      const flushInterval = setInterval(() => {
-        segment.flush()
-      }, 5000)
-      segment.close = (...args: any[]) => {
-        segment?.close(...args)
-        clearInterval(flushInterval)
-      }
-    }
-
-    return segment
+    return AWSXRay.getSegment()?.addNewSubsegment(name)
   } catch (e) {
     logger.error(e)
   }
