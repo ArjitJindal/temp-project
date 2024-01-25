@@ -21,6 +21,7 @@ import {
   TableColumn,
   TableData,
   TableRefType,
+  TableRow,
 } from '@/components/library/Table/types';
 import { makeUrl } from '@/utils/routing';
 import { getUserLink } from '@/utils/api/users';
@@ -158,6 +159,7 @@ type Props = {
   selectionActions?: SelectionAction<InternalTransaction, TransactionsTableParams>[];
   selectionInfo?: SelectionInfo;
   isExpandable?: boolean;
+  canSelectRow?: (row: TableRow<InternalTransaction>) => boolean;
 };
 
 export const getStatus = (
@@ -175,8 +177,6 @@ export const getStatus = (
 export default function TransactionsTable(props: Props) {
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
-  const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
-  const sarEnabled = useFeatureEnabled('SAR');
 
   const {
     tableRef,
@@ -197,6 +197,7 @@ export default function TransactionsTable(props: Props) {
     setIsModalVisible,
     escalatedTransactions = [],
     isExpandable = false,
+    canSelectRow,
   } = props;
 
   const columns: TableColumn<InternalTransaction>[] = useMemo(() => {
@@ -435,16 +436,13 @@ export default function TransactionsTable(props: Props) {
       innerRef={tableRef}
       tableId={'transactions-list'}
       selection={(row) => {
-        if (!(escalationEnabled || sarEnabled || settings.isPaymentApprovalEnabled)) {
+        if (!onSelect) {
           return false;
         }
-
-        const alertNotClosed = alert?.alertStatus !== 'CLOSED';
-        const notEscalated = !escalatedTransactions?.includes(row.content.transactionId);
-        if ((escalationEnabled || sarEnabled) && alertNotClosed && notEscalated) {
-          return true;
+        if (canSelectRow) {
+          return canSelectRow(row);
         }
-        return !!(settings.isPaymentApprovalEnabled && row.content.status === 'SUSPEND');
+        return true;
       }}
       selectedIds={selectedIds}
       selectionInfo={selectionInfo}

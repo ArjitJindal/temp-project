@@ -16,6 +16,7 @@ import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/Insig
 import { dayjs } from '@/utils/dayjs';
 import { CurrencyCode, TransactionType } from '@/apis';
 import { message } from '@/components/library/Message';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useQaEnabled } from '@/utils/qa-mode';
 
 enum AlertExpandedTabs {
@@ -88,6 +89,9 @@ export default function AlertExpanded(props: Props) {
     return alert;
   });
 
+  const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
+  const sarEnabled = useFeatureEnabled('SAR');
+
   const items = useMemo(() => {
     const tabs: TabItem[] = [];
     tabs.push({
@@ -132,6 +136,19 @@ export default function AlertExpanded(props: Props) {
                 ),
               },
             ]}
+            canSelectRow={(row) => {
+              if (!escalationEnabled && !sarEnabled) {
+                return false;
+              }
+              const alertClosed = alert?.alertStatus === 'CLOSED';
+              const transactionEscalated = escalatedTransactionIds?.includes(
+                row.content.transactionId,
+              );
+              if (alertClosed || transactionEscalated) {
+                return false;
+              }
+              return true;
+            }}
           />
           {isModalVisible && alert && (
             <DisplayCheckedTransactions
@@ -167,6 +184,8 @@ export default function AlertExpanded(props: Props) {
     params,
     selectedTransactionIds,
     transactionsResponse,
+    escalationEnabled,
+    sarEnabled,
   ]);
 
   return (
