@@ -13,6 +13,10 @@ import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { AWS_ACCOUNTS } from '@flagright/lib/constants'
 import * as path from 'path'
 
+// Toggle this to remove tenants.
+const preventTenantDestruction = false
+// Change this to update the table schemas
+const schemaVersion = '3'
 const adminEmails = ['tim+databricks@flagright.com']
 const stage = process.env.STAGE as Stage
 const region = process.env.REGION as FlagrightRegion
@@ -352,46 +356,43 @@ class DatabricksStack extends TerraformStack {
 
     const clusterConfig = {
       label: 'default',
-      dataSecurityMode: 'NONE',
-      accessMode: 'NO_ISOLATION',
+      dataSecurityMode: 'USER_ISOLATION',
+      nodeTypeId: 'm5d.large',
+      autoscale: {
+        minWorkers: 1,
+        maxWorkers: 4,
+      },
       sparkEnvVars: {
         AWS_REGION: awsRegion,
         KINESIS_STREAM: kinesisStreamName,
+        STAGE: stage,
       },
-      autoterminationMinutes: 15,
       awsAttributes: {
         instanceProfileArn: instanceProfile.id,
         zoneId: awsRegion,
       },
     }
 
+    const clusterLibraries = [
+      {
+        maven: {
+          coordinates: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.2',
+        },
+      },
+      {
+        pypi: {
+          package: 'pymongo',
+        },
+      },
+    ]
+
     new databricks.cluster.Cluster(this, 'cluster', {
       ...clusterConfig,
       provider: workspaceProvider,
       sparkVersion: '14.2.x-scala2.12',
       clusterName: 'Shared Autoscaling',
-      nodeTypeId: 'm5d.large',
-      autoscale: {
-        minWorkers: 1,
-        maxWorkers: 4,
-      },
-      library: [
-        {
-          maven: {
-            coordinates: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.2',
-          },
-        },
-        {
-          pypi: {
-            package: 'pymongo',
-          },
-        },
-        {
-          pypi: {
-            package: 'databricks-sdk==0.17',
-          },
-        },
-      ],
+      library: clusterLibraries,
+      autoterminationMinutes: 15,
       dependsOn: [instanceProfile],
       lifecycle: {
         ignoreChanges: ['aws_attributes'],
@@ -414,59 +415,83 @@ class DatabricksStack extends TerraformStack {
     new databricks.notebook.Notebook(this, `dlt-file`, {
       provider: workspaceProvider,
       source: path.resolve(__dirname, '../notebooks/pipeline.py'),
-      path: '/Shared/pipeline.py',
+      path: '/Shared/pipeline',
     })
+
     new databricks.notebook.Notebook(this, `backfill-file`, {
       provider: workspaceProvider,
       source: path.resolve(__dirname, '../notebooks/backfill.py'),
-      path: '/Shared/backfill.py',
-    })
-
-    new databricks.dbfsFile.DbfsFile(this, `whl-dbfs`, {
-      provider: workspaceProvider,
-      path: '/FileStore/src-0.1.0-py3-none-any.whl',
-      source: path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl'),
-    })
-
-    new databricks.pipeline.Pipeline(this, `pipeline`, {
-      provider: workspaceProvider,
-      name: 'main',
-      continuous: true,
-      development: stage === 'dev',
-      cluster: [
-        {
-          ...clusterConfig,
-          nodeTypeId: 'm5d.large',
-          autoscale: {
-            minWorkers: 1,
-            maxWorkers: 4,
-          },
-        },
-      ],
-      library: [
-        {
-          notebook: {
-            path: `/Shared/pipeline.py`,
-          },
-        },
-      ],
-      target: 'default',
-      notification: [
-        {
-          emailRecipients: adminEmails,
-          alerts: [
-            'on-update-failure',
-            'on-update-fatal-failure',
-            'on-flow-failure',
-          ],
-        },
-      ],
+      path: '/Shared/backfill',
     })
 
     const catalog = new databricks.catalog.Catalog(this, 'main-catalog', {
       provider: workspaceProvider,
       name: stage,
     })
+
+    new databricks.workspaceFile.WorkspaceFile(this, `whl`, {
+      provider: workspaceProvider,
+      path: `/Shared/src-0.1.0-py3-none-any.whl`,
+      source: path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl'),
+    })
+
+    // Only deploy in EU-1 for now.
+    if (region === 'eu-1') {
+      new databricks.pipeline.Pipeline(this, `pipeline`, {
+        provider: workspaceProvider,
+        name: 'main',
+        continuous: true,
+        development: stage === 'dev',
+        channel: 'PREVIEW',
+        catalog: catalog.name,
+        cluster: [
+          {
+            ...clusterConfig,
+            nodeTypeId: 'm5d.large',
+            autoscale: {
+              minWorkers: 1,
+              maxWorkers: 4,
+            },
+          },
+        ],
+        library: [
+          {
+            notebook: {
+              path: `/Shared/pipeline`,
+            },
+          },
+        ],
+        target: 'default',
+        notification: [
+          {
+            emailRecipients: adminEmails,
+            alerts: [
+              'on-update-failure',
+              'on-update-fatal-failure',
+              'on-flow-failure',
+            ],
+          },
+        ],
+      })
+
+      new databricks.job.Job(this, `backfill-job`, {
+        provider: workspaceProvider,
+        name: 'One-time backfill from Mongo',
+        task: [
+          {
+            taskKey: 'backfill',
+            notebookTask: {
+              notebookPath: '/Shared/backfill',
+            },
+            newCluster: {
+              ...clusterConfig,
+              sparkVersion: '14.2.x-scala2.12',
+            },
+            library: clusterLibraries,
+          },
+        ],
+      })
+    }
 
     new databricks.grants.Grants(this, `grants-admin`, {
       provider: workspaceProvider,
@@ -485,25 +510,19 @@ class DatabricksStack extends TerraformStack {
       name: 'default',
     })
 
-    const entities = ['users', 'transactions']
-    const tables = entities.map((entity) => {
-      return new databricks.sqlTable.SqlTable(this, `${entity}-table`, {
+    const entities = [
+      { table: 'users', idColumn: 'userId' },
+      { table: 'transactions', idColumn: 'transactionId' },
+    ]
+    const tables = new databricks.dataDatabricksTables.DataDatabricksTables(
+      this,
+      `tables`,
+      {
         provider: workspaceProvider,
         catalogName: catalog.name,
-        name: entity,
         schemaName: defaultSchema.name,
-        tableType: 'MANAGED',
-        column: [
-          {
-            type: 'string',
-            name: 'tenant',
-          },
-        ],
-        lifecycle: {
-          ignoreChanges: ['column'],
-        },
-      })
-    })
+      }
+    )
 
     const servicePrincipals = this.tenantIds.map((tenantId) => {
       return new databricks.servicePrincipal.ServicePrincipal(
@@ -514,6 +533,9 @@ class DatabricksStack extends TerraformStack {
           displayName: tenantId,
           active: true,
           databricksSqlAccess: true,
+          lifecycle: {
+            preventDestroy: preventTenantDestruction,
+          },
         }
       )
     })
@@ -551,6 +573,29 @@ class DatabricksStack extends TerraformStack {
       ],
     })
 
+    entities.forEach((entity) => {
+      new databricks.sqlTable.SqlTable(this, `backfill-${entity.table}`, {
+        provider: workspaceProvider,
+        catalogName: catalog.name,
+        name: `${entity.table}_backfill`,
+        schemaName: defaultSchema.name,
+        tableType: 'MANAGED',
+        dataSourceFormat: 'DELTA',
+        column: [
+          {
+            type: 'string',
+            name: 'tenant',
+          },
+          {
+            type: 'string',
+            name: entity.idColumn,
+          },
+        ],
+        lifecycle: {
+          ignoreChanges: ['column'],
+        },
+      })
+    })
     servicePrincipals.forEach((sp, i) => {
       const tenant = this.tenantIds[i]
       const tenantSchema = new databricks.schema.Schema(
@@ -560,6 +605,9 @@ class DatabricksStack extends TerraformStack {
           provider: workspaceProvider,
           catalogName: catalog.name,
           name: sp.displayName,
+          lifecycle: {
+            preventDestroy: preventTenantDestruction,
+          },
         }
       )
       new databricks.grant.Grant(this, `sp-grant-${tenant}`, {
@@ -567,21 +615,32 @@ class DatabricksStack extends TerraformStack {
         schema: tenantSchema.id,
         principal: sp.applicationId,
         privileges: ['USE_SCHEMA', 'SELECT'],
+        lifecycle: {
+          preventDestroy: preventTenantDestruction,
+        },
       })
 
       entities.forEach((entity) => {
-        new databricks.sqlTable.SqlTable(this, `view-${entity}-${tenant}`, {
-          provider: workspaceProvider,
-          catalogName: catalog.name,
-          name: entity,
-          schemaName: tenantSchema.name,
-          tableType: 'VIEW',
-          viewDefinition: Fn.format(
-            "SELECT * from %s.default.%s WHERE tenant = '%s'",
-            [catalog.name, entity, sp.displayName]
-          ),
-          dependsOn: tables,
-        })
+        if (Fn.contains(tables.ids, `${stage}.default.${entity.table}`)) {
+          const view = new databricks.sqlTable.SqlTable(
+            this,
+            `view-${entity.table}-${tenant}`,
+            {
+              provider: workspaceProvider,
+              catalogName: catalog.name,
+              name: entity.table,
+              schemaName: tenantSchema.name,
+              tableType: 'VIEW',
+              viewDefinition: Fn.format(
+                `SELECT * from %s.default.%s WHERE tenant = '%s' AND '${schemaVersion}' = '${schemaVersion}'`,
+                [catalog.name, entity.table, sp.displayName]
+              ),
+              lifecycle: {
+                preventDestroy: preventTenantDestruction,
+              },
+            }
+          )
+        }
       })
 
       const spToken = new databricks.oboToken.OboToken(
@@ -590,6 +649,9 @@ class DatabricksStack extends TerraformStack {
         {
           provider: workspaceProvider,
           applicationId: sp.applicationId,
+          lifecycle: {
+            preventDestroy: preventTenantDestruction,
+          },
           dependsOn: [authPerms],
         }
       )
@@ -600,6 +662,9 @@ class DatabricksStack extends TerraformStack {
         {
           name: Fn.format('databricks/tenants/%s', [sp.displayName]),
           recoveryWindowInDays: 0,
+          lifecycle: {
+            preventDestroy: preventTenantDestruction,
+          },
         }
       )
       new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
@@ -612,6 +677,9 @@ class DatabricksStack extends TerraformStack {
             host: sqlWarehouse.odbcParams.get(0).hostname,
             path: sqlWarehouse.odbcParams.get(0).path,
           }),
+          lifecycle: {
+            preventDestroy: preventTenantDestruction,
+          },
         }
       )
     })

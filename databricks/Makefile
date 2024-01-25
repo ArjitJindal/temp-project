@@ -26,4 +26,10 @@ generate:
 	npm exec openapi-generator-cli generate -- -i ../tarpon/lib/openapi/public/openapi-public-original.yaml -g python -o ./openapi/gen --template-dir openapi --additional-properties=packageName=src.openapi
 	rm -rf src/openapi
 	mkdir -p src/openapi
+	touch src/openapi/__init__.py
 	mv ./openapi/gen/src/openapi/models src/openapi/models
+
+patch: generate
+	poetry build
+	databricks workspace import-dir --overwrite notebooks /Shared/
+	databricks workspace import-dir --overwrite dist /Shared/

@@ -38,26 +38,3 @@ def spark():
 
 def format_test_dataframe(dataframe):
     return dataframe.toJSON().collect()
-
-
-def test_dynamo_event_transform(spark):
-    dynamo_event_data = [(DYNAMO_EVENT_JSON), (DYNAMO_EVENT_JSON)]
-    event_columns = ["data"]
-    input_dynamo_event_df = spark.createDataFrame(
-        dynamo_event_data, (StringType())
-    ).toDF(*event_columns)
-
-    expected_transformed_event_data = [
-        (DYNAMO_EVENT_JSON, OUTPUT_JSON),
-        (DYNAMO_EVENT_JSON, OUTPUT_JSON),
-    ]
-    expected_transformed_columns = ["data", "json_data"]
-    expected_event_data_df = spark.createDataFrame(
-        expected_transformed_event_data
-    ).toDF(*expected_transformed_columns)
-
-    transformed_event_data_df = transform_event_data(input_dynamo_event_df)
-
-    assert format_test_dataframe(transformed_event_data_df) == format_test_dataframe(
-        expected_event_data_df
-    )

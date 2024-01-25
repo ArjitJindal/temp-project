@@ -1,19 +1,18 @@
 # Databricks notebook source
-# MAGIC %pip install /dbfs/FileStore/src-0.1.0-py3-none-any.whl
+# MAGIC %pip install /Workspace/Shared/src-0.1.0-py3-none-any.whl
 
 # COMMAND ----------
 
-import json
 import os
 import dlt
-from boto3.dynamodb.types import TypeDeserializer
 from src.dlt.data_quality_checks import (
     raw_event_data_valid,
     raw_event_data_warn,
 )
-from pyspark.sql.functions import col, concat, expr, from_json, lit, regexp_extract, udf
+from pyspark.sql.functions import col, concat, expr, from_json, lit, regexp_extract, udf, lower
 
 from src.dlt.schema import kinesis_event_schema
+from src.dynamo.serde import deserialise_dynamo
 from src.entities import entities
 
 aws_access_key = dbutils.secrets.get(
@@ -23,16 +22,6 @@ aws_access_key = dbutils.secrets.get(
 aws_secret_key = dbutils.secrets.get(
     "kinesis", "aws-secret-key"
 )
-
-def deserialise_dynamo(column):
-    data = json.loads(column)
-    try:
-        if "dynamodb" in data and "NewImage" in data["dynamodb"]:
-            return TypeDeserializer().deserialize({"M": data["dynamodb"]["NewImage"]})
-        return None
-    except KeyError:
-        return None
-
 
 def define_pipeline(spark):
     @dlt.table(
@@ -50,7 +39,6 @@ def define_pipeline(spark):
             .option("region", os.environ["AWS_REGION"])
             .option("awsAccessKey", aws_access_key)
             .option("awsSecretKey", aws_secret_key)
-            .option("startingposition", "latest")
             .load()
         )
 
@@ -67,7 +55,10 @@ def create_entity_tables(entity, schema, dynamo_key, id_column):
     cdc_table_name = f"{entity}_cdc"
     backfill_table_name = f"{entity}_backfill"
 
-    @dlt.append_flow(name=backfill_table_name, target=cdc_table_name)
+    @dlt.append_flow(
+        name=backfill_table_name,
+        target=cdc_table_name,
+    )
     def backfill():
         df = spark.readStream.format("delta").table(
             f"default.{backfill_table_name}"
@@ -83,7 +74,11 @@ def create_entity_tables(entity, schema, dynamo_key, id_column):
             .withColumn("event", lit("INSERT"))
         )
 
-    @dlt.table(name=cdc_table_name, comment=f"{entity} CDC", partition_cols=["tenant"])
+    @dlt.table(
+        name=cdc_table_name,
+        comment=f"{entity} CDC",
+        partition_cols=["tenant"],
+    )
     def cdc():
         deserialisation_udf = udf(deserialise_dynamo, schema)
         partition_key_id_path = "event.dynamodb.Keys.PartitionKeyID.S"
@@ -103,12 +98,13 @@ def create_entity_tables(entity, schema, dynamo_key, id_column):
             )
             .withColumn(
                 "tenant",
-                regexp_extract(col(partition_key_id_path), "^[^#]*", 0).alias("tenant"),
+                lower(regexp_extract(col(partition_key_id_path), "^[^#]*", 0)).alias("tenant"),
             )
-            .withColumn("structured_data", deserialisation_udf(col("data")))
         )
 
-        return df.filter(col(partition_key_id_path).contains(dynamo_key)).select(
+        filtered_df = df.filter(col(partition_key_id_path).contains(dynamo_key))
+        with_structured_df = filtered_df.withColumn("structured_data", deserialisation_udf(col("data")))
+        return with_structured_df.select(
             col("structured_data.*"),
             col("tenant"),
             col("PartitionKeyID"),
@@ -117,7 +113,7 @@ def create_entity_tables(entity, schema, dynamo_key, id_column):
             col("event.eventName").alias("event"),
         )
 
-    dlt.create_streaming_live_table(
+    dlt.create_streaming_table(
         name=entity,
         partition_cols=["tenant"],
     )

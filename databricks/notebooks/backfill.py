@@ -1,11 +1,12 @@
 # Databricks notebook source
-# MAGIC %pip install /dbfs/FileStore/src-0.1.0-py3-none-any.whl
+# MAGIC %pip install /Workspace/Shared/src-0.1.0-py3-none-any.whl
 
 # COMMAND ----------
 
 import pymongo
-from pyspark.sql.functions import col, lit
+from pyspark.sql.functions import lower, lit
 import logging
+import os
 
 from databricks.sdk.runtime import *
 
@@ -22,17 +23,15 @@ MONGO_HOST = dbutils.secrets.get(
     "mongo", "mongo-host"
 )
 
-def load_mongo(table, partition_key, id_column, schema):
+def load_mongo(table, schema):
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("MongoDBToDelta")
     connection_uri = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}"
     client = pymongo.MongoClient(connection_uri, 27017, maxPoolSize=50)
     db_name = "tarpon"
     db = client[db_name]
-    table_path = f"default.{table}_backfill"
-
-    # Initialize Spark Session
-    spark = SparkSession.builder.appName("MongoDBToDelta").getOrCreate()
+    stage = os.environ["STAGE"]
+    table_path = f"{stage}.default.{table}_backfill"
 
     # Clear existing table
     empty_df = spark.createDataFrame([], schema)
@@ -56,7 +55,7 @@ def load_mongo(table, partition_key, id_column, schema):
                 .option("collection", coll)
                 .schema(schema)
                 .load()
-                .withColumn("tenant", lit(tenant))
+                .withColumn("tenant", lit(tenant.lower()))
             )
             df.write.option("mergeSchema", "true").format("delta").mode(
                 "append"
@@ -68,5 +67,5 @@ def load_mongo(table, partition_key, id_column, schema):
 
 for entity in entities:
     load_mongo(
-        entity["table"], entity["partition_key"], entity["id_column"], entity["schema"]
+        entity["table"], entity["schema"]
     )
