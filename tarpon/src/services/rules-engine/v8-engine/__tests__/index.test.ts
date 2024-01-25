@@ -485,3 +485,125 @@ describe('aggregation variable', () => {
     })
   })
 })
+
+describe('Testing dataLoader Cache', () => {
+  test('Testing the aggregation variable cache', async () => {
+    const evaluator = new RuleJsonLogicEvaluator(
+      'tenant-id',
+      getDynamoDbClient()
+    )
+    const loadAggregationDataSpy = jest.spyOn(
+      evaluator as any,
+      'loadAggregationData'
+    )
+    const testTransaction = getTestTransaction({ type: 'TRANSFER' })
+
+    loadAggregationDataSpy.mockImplementation(() => Promise.resolve())
+    await evaluator.evaluate(
+      {
+        and: [
+          { '==': [{ var: 'agg:123' }, 1] },
+          { '==': [{ var: 'agg:124' }, 1] },
+          { '==': [{ var: 'agg:125' }, 1] },
+          { '==': [{ var: 'agg:126' }, 1] },
+        ],
+      },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+        {
+          key: 'agg:124',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+        {
+          key: 'agg:125',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+        {
+          key: 'agg:126',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'SUM',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      { baseCurrency: 'EUR' },
+      { transaction: testTransaction }
+    )
+    await evaluator.evaluate(
+      {
+        and: [
+          { '==': [{ var: 'agg:123' }, 1] },
+          { '==': [{ var: 'agg:124' }, 1] },
+          { '==': [{ var: 'agg:126' }, 1] },
+        ],
+      },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+        {
+          key: 'agg:124',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+        {
+          key: 'agg:126',
+          type: 'USER_TRANSACTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'SUM',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      { baseCurrency: 'EUR' },
+      { transaction: testTransaction }
+    )
+    /** Validating if the cache is called twice as we have two distinct aggregationFunc (COUNT & SUM) accross two evaluate calls */
+    expect(loadAggregationDataSpy).toHaveBeenCalledTimes(2)
+  })
+})

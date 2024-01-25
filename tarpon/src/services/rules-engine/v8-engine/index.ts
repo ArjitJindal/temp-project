@@ -163,25 +163,26 @@ export class RuleJsonLogicEvaluator {
           { baseCurrency: aggVariable.baseCurrency },
           this.dynamoDb
         )
+        const aggregationVarLoader = this.aggregationVarLoader(
+          data,
+          aggEntityVarDataloader
+        )
+
         return {
           variable: aggVariable,
           origin:
             aggVariable.direction !== 'RECEIVING'
-              ? await this.loadAggregationData(
-                  'origin',
+              ? await aggregationVarLoader.load({
+                  direction: 'origin',
                   aggVariable,
-                  data,
-                  aggEntityVarDataloader
-                )
+                })
               : null,
           destination:
             aggVariable.direction !== 'SENDING'
-              ? await this.loadAggregationData(
-                  'destination',
+              ? await aggregationVarLoader.load({
+                  direction: 'destination',
                   aggVariable,
-                  data,
-                  aggEntityVarDataloader
-                )
+                })
               : null,
         }
       })
@@ -231,6 +232,36 @@ export class RuleJsonLogicEvaluator {
       hitDirections: hit ? uniq(hitDirections) : [],
     }
   }
+
+  private aggregationVarLoader = memoizeOne(
+    (data: RuleData, entityVarDataloader: DataLoader<string, unknown>) =>
+      new DataLoader(
+        async (
+          variableKeys: readonly {
+            direction: 'origin' | 'destination'
+            aggVariable: RuleAggregationVariable
+          }[]
+        ) => {
+          return Promise.all(
+            variableKeys.map(async ({ direction, aggVariable }) => {
+              return this.loadAggregationData(
+                direction,
+                aggVariable,
+                data,
+                entityVarDataloader
+              )
+            })
+          )
+        },
+        {
+          cacheKeyFn: ({ direction, aggVariable }) => {
+            return `${direction}-${getAggVarHash(aggVariable)}`
+          },
+        }
+      ),
+    /** ignore entity var loader while caching */
+    (a, b) => isEqual(a[0], b[0])
+  )
 
   private getUserKeyId(
     transaction: Transaction,
@@ -519,7 +550,6 @@ export class RuleJsonLogicEvaluator {
     logger.info('Updated aggregation')
   }
 
-  // TODO (V8): Load same aggregation data only once from multiple rules
   private async loadAggregationData(
     direction: 'origin' | 'destination',
     aggregationVariable: RuleAggregationVariable,
@@ -528,7 +558,6 @@ export class RuleJsonLogicEvaluator {
   ) {
     const { transaction } = data
     const { aggregationFunc } = aggregationVariable
-
     const userKeyId = this.getUserKeyId(
       transaction,
       direction,
