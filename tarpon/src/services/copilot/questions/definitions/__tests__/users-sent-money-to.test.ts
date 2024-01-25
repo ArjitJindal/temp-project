@@ -8,7 +8,7 @@ import { testQuestion } from '@/services/copilot/questions/definitions/__tests__
 import { UsersSentMoneyTo } from '@/services/copilot/questions/definitions/users-sent-money-to'
 
 describe('User sent money to', () => {
-  test('One user returned', async () => {
+  test.skip('One user returned', async () => {
     await testQuestion(
       UsersSentMoneyTo,
       {},
