@@ -622,7 +622,7 @@ class DatabricksStack extends TerraformStack {
 
       entities.forEach((entity) => {
         if (Fn.contains(tables.ids, `${stage}.default.${entity.table}`)) {
-          const view = new databricks.sqlTable.SqlTable(
+          new databricks.sqlTable.SqlTable(
             this,
             `view-${entity.table}-${tenant}`,
             {
@@ -631,6 +631,7 @@ class DatabricksStack extends TerraformStack {
               name: entity.table,
               schemaName: tenantSchema.name,
               tableType: 'VIEW',
+              warehouseId: sqlWarehouse.id,
               viewDefinition: Fn.format(
                 `SELECT * from %s.default.%s WHERE tenant = '%s' AND '${schemaVersion}' = '${schemaVersion}'`,
                 [catalog.name, entity.table, sp.displayName]
