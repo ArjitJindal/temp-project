@@ -20,7 +20,7 @@ export const config: DeployConfig = {
   budget: {
     CODEBUILD: 150,
     EC2: 150,
-    CODEPIPELINE: 0,
+    CODEPIPELINE: 1,
   },
   github: {
     GITHUB_CONNECTION_ARN:
