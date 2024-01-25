@@ -43,6 +43,7 @@ import {
   tenantSettings,
   updateTenantSettings,
 } from '@/core/utils/context'
+import { isDemoTenant } from '@/utils/tenant'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -463,16 +464,21 @@ export class TenantService {
     const auth0Domain =
       context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
 
-    if (newTenantSettings.isProductionAccessEnabled != null) {
+    // Update auth0 tenant metadata for the selected tenant setting properties
+    if (
+      !isDemoTenant(this.tenantId) &&
+      newTenantSettings.isProductionAccessEnabled != null
+    ) {
       const accountsService = new AccountsService(
         { auth0Domain },
         { mongoDb: this.mongoDb }
       )
 
-      await accountsService.updateProductionAccessForTenant(
-        this.tenantId,
-        !newTenantSettings.isProductionAccessEnabled
-      )
+      await accountsService.updateAuth0TenantMetadata(this.tenantId, {
+        isProductionAccessDisabled: String(
+          !newTenantSettings.isProductionAccessEnabled
+        ),
+      })
     }
 
     const existingTenantSettings = getContext()?.settings

@@ -10,6 +10,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { MongoClient } from 'mongodb'
+import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { CaseRepository } from '../rules-engine/repositories/case-repository'
 import { AlertsRepository } from '../rules-engine/repositories/alerts-repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
@@ -53,6 +54,15 @@ export type TenantBasic = {
   id: string
   name: string
   auth0Domain?: string
+}
+
+type Auth0TenantMetadata = {
+  tenantId: string
+  consoleApiUrl: string
+  apiAudience: string
+  auth0Domain: string
+  region: FlagrightRegion
+  isProductionAccessDisabled: string
 }
 @traceable
 export class AccountsService {
@@ -108,9 +118,9 @@ export class AccountsService {
     }
   }
 
-  public async updateProductionAccessForTenant(
+  public async updateAuth0TenantMetadata(
     tenantId: string,
-    isProductionAccessDisabled: boolean
+    updatedMetadata: Partial<Auth0TenantMetadata>
   ): Promise<void> {
     const tenant = await this.getTenantById(tenantId)
     if (tenant == null) {
@@ -132,7 +142,7 @@ export class AccountsService {
       {
         metadata: {
           ...organization.metadata,
-          isProductionAccessDisabled: isProductionAccessDisabled.toString(),
+          ...updatedMetadata,
         },
       }
     )
@@ -690,6 +700,14 @@ export class AccountsService {
     const auth0Audience = process.env.AUTH0_AUDIENCE?.split('https://')[1]
     const regionPrefix =
       process.env.ENV === 'prod' ? `${process.env.REGION}.` : ''
+    const metadata: Auth0TenantMetadata = {
+      tenantId,
+      consoleApiUrl: `https://${regionPrefix}${auth0Audience}console`,
+      apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
+      auth0Domain: tenantData.auth0Domain,
+      region: process.env.REGION as FlagrightRegion,
+      isProductionAccessDisabled: 'false',
+    }
     const organization = await auth0AsyncWrapper(() =>
       organizationManager.create({
         name: tenantData.tenantName.toLowerCase(),
@@ -697,14 +715,7 @@ export class AccountsService {
           /[^a-zA-Z0-9]/g,
           '_'
         ),
-        metadata: {
-          tenantId,
-          consoleApiUrl: `https://${regionPrefix}${auth0Audience}console`,
-          apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
-          auth0Domain: tenantData.auth0Domain,
-          region: process.env.REGION,
-          isProductionAccessDisabled: 'false',
-        },
+        metadata,
       })
     )
 
