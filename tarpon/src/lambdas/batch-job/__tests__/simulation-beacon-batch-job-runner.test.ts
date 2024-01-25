@@ -102,6 +102,20 @@ describe('Simulation Beacon Batch Job Runner', () => {
     },
   ])
 
+  setUpRulesHooks(`${tenantId}-test`, [
+    {
+      defaultParameters: {
+        transactionAmountThreshold: {
+          USD: 4000,
+        },
+      } as TransactionAmountRuleParameters,
+      ruleImplementationName: 'transaction-amount',
+      type: 'TRANSACTION',
+      defaultAction: 'FLAG',
+      id: 'R-2',
+    },
+  ])
+
   test('Should run the simulation beacon batch job', async () => {
     const mongoDb = await getMongoDbClient()
     const dynamoDb = await getDynamoDbClient()
@@ -209,6 +223,66 @@ describe('Simulation Beacon Batch Job Runner', () => {
         usersHit: 6,
         transactionsHit: 5,
       },
+    })
+  })
+
+  test('Should run the simulation beacon batch job for demo mode with specified number of iterations', async () => {
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = await getDynamoDbClient()
+    const demoTenantId = `${tenantId}-test`
+    const RULE_INSTANCE_SIMULATION = 'TEST_RULE_INSTANCE_SIMULATION'
+    const simulationTaskRepository = new SimulationTaskRepository(
+      demoTenantId,
+      mongoDb
+    )
+    const ruleInstanceRepository = new RuleInstanceRepository(demoTenantId, {
+      dynamoDb,
+    })
+
+    const simulationRuleInstance = getRuleInstance(
+      6000,
+      RULE_INSTANCE_SIMULATION
+    )
+
+    const parameters: SimulationBeaconParameters[] = [
+      {
+        type: 'BEACON',
+        ruleInstance: simulationRuleInstance,
+        name: 'Test Simulation 1',
+        description: 'Test Simulation',
+      },
+      {
+        type: 'BEACON',
+        ruleInstance: simulationRuleInstance,
+        name: 'Test Simulation 2',
+        description: 'Test Simulation',
+      },
+      {
+        type: 'BEACON',
+        ruleInstance: simulationRuleInstance,
+        name: 'Test Simulation 3',
+        description: 'Test Simulation',
+      },
+    ]
+
+    const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
+    expect(ruleInstances).toHaveLength(1)
+
+    const ruleInstance = ruleInstances[0]
+
+    const { jobId, taskIds } =
+      await simulationTaskRepository.createSimulationJob({
+        type: 'BEACON',
+        defaultRuleInstance: ruleInstance,
+        parameters,
+      })
+
+    expect(taskIds).toHaveLength(3)
+    const demoJob = await simulationTaskRepository.getSimulationJob(jobId)
+
+    expect(demoJob?.iterations).toHaveLength(taskIds.length)
+    demoJob?.iterations.forEach((iteration) => {
+      expect(taskIds).toContain(iteration.taskId)
     })
   })
 })
