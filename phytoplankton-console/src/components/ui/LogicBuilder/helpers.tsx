@@ -17,6 +17,8 @@ const InitialConfig = BasicConfig;
 
 export function makeConfig(params: LogicBuilderConfig): BasicConfig {
   const { fields, disableNesting } = params;
+  InitialConfig.operators.select_any_in.valueTypes = ['multiselect', 'text'];
+  InitialConfig.operators.select_not_any_in.valueTypes = ['multiselect', 'text'];
   return {
     ...InitialConfig,
     widgets: customWidgets,

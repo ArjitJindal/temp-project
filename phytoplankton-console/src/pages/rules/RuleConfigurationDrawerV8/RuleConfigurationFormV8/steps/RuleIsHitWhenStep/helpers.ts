@@ -14,7 +14,12 @@ import {
   RuleAggregationVariable,
   RuleEntityVariable,
   RuleLogicConfig,
+  RuleOperator,
 } from '@/apis';
+
+function getSupportedOperatorsKeys(operators: RuleOperator[], valueType: string): string[] {
+  return operators.filter((v) => v.uiDefinition.valueTypes?.includes(valueType)).map((v) => v.key);
+}
 
 export function useLogicBuilderConfig(
   entityVariableTypes: Array<
@@ -54,24 +59,30 @@ export function useLogicBuilderConfig(
           entityVariableTypes.includes(v.entity!),
         );
         const variables = filteredEntityVariables.concat(aggregationVariablesGrouped);
+        const types = InitialConfig.types;
+        for (const key in types) {
+          if (types[key].widgets[key]) {
+            const initialOperators = types[key].widgets[key].operators ?? [];
+            types[key].widgets[key].operators = initialOperators.concat(
+              getSupportedOperatorsKeys(operators, key),
+            );
+            if (key === 'select') {
+              types[key].widgets['multiselect'].operators = [
+                ...(types[key].widgets['multiselect'].operators ?? []),
+                ...getSupportedOperatorsKeys(operators, 'multiselect'),
+              ];
+            } else if (key === 'text') {
+              types[key].widgets[key].operators = [
+                ...(types[key].widgets[key].operators ?? []),
+                'select_any_in',
+                'select_not_any_in',
+              ];
+            }
+          }
+        }
+
         const config = makeConfig({
-          types: {
-            text: {
-              ...InitialConfig.types.text,
-              ...{
-                widgets: {
-                  text: {
-                    operators: [
-                      ...InitialConfig.types.text.widgets.text.operators!,
-                      ...operators
-                        .filter((v) => v.uiDefinition.valueTypes?.includes('text'))
-                        .map((v) => v.key),
-                    ],
-                  },
-                },
-              },
-            },
-          },
+          types,
           operators: {
             ...Object.fromEntries(operators.map((v) => [v.key, v.uiDefinition])),
           },

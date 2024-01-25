@@ -5450,11 +5450,15 @@ components:
         operators:
           type: array
           items:
-            type: object
+            $ref: '#/components/schemas/RuleOperator'
         functions:
           type: array
           items:
             type: object
+      required:
+        - variables
+        - operators
+        - functions
     RuleEntityVariable:
       title: RuleEntityVariable
       type: object
@@ -5482,6 +5486,23 @@ components:
       required:
         - key
         - uiDefinition
+    RuleOperator:
+      title: RuleOperator
+      type: object
+      properties:
+        key:
+          $ref: '#/components/schemas/RuleOperatorType'
+        uiDefinition:
+          type: object
+      required:
+        - key
+        - uiDefinition
+    RuleOperatorType:
+      title: RuleOperatorType
+      type: string
+      enum:
+        - op:inlist
+        - op:!inlist
     RuleAggregationType:
       title: RuleAggregationType
       type: string

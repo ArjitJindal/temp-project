@@ -16,6 +16,7 @@ import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
 import Toggle from '@/components/library/Toggle';
 import Slider, { CommonProps as SliderCommonProps } from '@/components/library/Slider';
+import { RuleOperatorType } from '@/apis';
 
 function WidgetWrapper(props: { widgetFactoryProps: WidgetProps; children: React.ReactNode }) {
   return <Label label={'Value'}>{props.children}</Label>;
@@ -42,6 +43,29 @@ const customNumberWidget: NumberWidget = {
 const customTextWidget: TextWidget = {
   type: `text`,
   factory: (props) => {
+    const operator = props.operator as RuleOperatorType;
+    if (
+      operator === 'op:inlist' ||
+      operator === 'op:!inlist' ||
+      operator === 'select_any_in' ||
+      operator === 'select_not_any_in'
+    ) {
+      // TODO (V8): Create a ListSelect component which loads whitelist/blacklist from server
+      return (
+        <WidgetWrapper widgetFactoryProps={props}>
+          <Select<string>
+            portaled={true}
+            mode={'TAGS'}
+            allowClear={true}
+            options={[]}
+            value={(props.value as any) ?? undefined}
+            onChange={(newValue) => {
+              props.setValue(newValue as any);
+            }}
+          />
+        </WidgetWrapper>
+      );
+    }
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <TextInput value={props.value ?? undefined} onChange={props.setValue} allowClear={true} />
@@ -147,7 +171,7 @@ const customMultiselectWidget: MultiSelectWidget = {
       <WidgetWrapper widgetFactoryProps={props}>
         <Select<string | number>
           portaled={true}
-          mode="MULTIPLE"
+          mode={props.allowCustomValues ? 'TAGS' : 'MULTIPLE'}
           allowClear={true}
           options={
             listValues.map((x) => {

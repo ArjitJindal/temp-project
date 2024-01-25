@@ -213,16 +213,18 @@ function getArrayUiDefinition(
 }
 
 function getUiDefinition(info: EntityLeafValueInfo): FieldOrGroup {
+  const type = getUiDefinitionType(info)
+  const fieldSettings =
+    info.options && info.options.length > 0
+      ? {
+          listValues: info.options,
+        }
+      : undefined
   return {
     label: info.path.map(lowerCase).join(' > '),
-    type: getUiDefinitionType(info),
+    type,
     valueSources: ['value', 'field', 'func'],
-    fieldSettings:
-      info.options && info.options.length > 0
-        ? {
-            listValues: info.options,
-          }
-        : undefined,
+    fieldSettings,
   }
 }
 
