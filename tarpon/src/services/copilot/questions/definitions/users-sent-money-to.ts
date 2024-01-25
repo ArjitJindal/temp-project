@@ -1,11 +1,18 @@
 import { TableQuestion } from '@/services/copilot/questions/types'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import {
+  TRANSACTIONS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongodb-definitions'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { getUserName } from '@/utils/helpers'
 import {
   humanReadablePeriod,
+  matchPeriod,
   Period,
   periodVars,
-  sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
-import { executeSql } from '@/utils/databricks'
 
 export const UsersSentMoneyTo: TableQuestion<Period & { top: number }> = {
   type: 'TABLE',
@@ -16,45 +23,62 @@ export const UsersSentMoneyTo: TableQuestion<Period & { top: number }> = {
       vars
     )}`
   },
-  aggregationPipeline: async ({ userId, username }, { top, ...period }) => {
-    const result = await executeSql<{
-      userId: string
-      name: string
-      userType: string
-      count: number
-      sum: number
-    }>(
-      `
-select
-  t.destinationUserId as userId,
-  FIRST(case when u.type = 'CONSUMER' THEN u.userDetails.name.firstName ELSE u.legalEntity.companyGeneralDetails.legalName END) as name,
-  FIRST(u.type) as userType,
-  count(*) as count,
-  sum(t.originAmountDetails.transactionAmount) as sum
-from
-  transactions t
-  join users u on u.userId = t.destinationUserId
-  and t.originUserId = :userId
-  and t.timestamp between :from and :to
-group by
-  t.destinationUserId
-order by
-  count desc
-LIMIT
-  :limit
-        `,
-      {
-        userId,
-        limit: top,
-        ...sqlPeriod(period),
-      }
-    )
+  aggregationPipeline: async (
+    { tenantId, userId, username },
+    { top, ...period }
+  ) => {
+    const client = await getMongoDbClient()
+    const db = client.db()
+    const result = await db
+      .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
+      .aggregate<{ user: InternalUser; count: number; amount: number }>([
+        {
+          $match: { originUserId: userId, ...matchPeriod('timestamp', period) },
+        },
+        {
+          $group: {
+            _id: '$destinationUserId',
+            count: { $sum: 1 },
+            amount: { $sum: '$originAmountDetails.transactionAmount' },
+          },
+        },
+        {
+          $sort: {
+            count: -1, // Sort by count in descending order
+          },
+        },
+        {
+          $limit: top,
+        },
+        {
+          $lookup: {
+            from: USERS_COLLECTION(tenantId),
+            localField: '_id',
+            foreignField: 'userId',
+            as: 'user',
+          },
+        },
+        {
+          $unwind: {
+            path: '$user',
+          },
+        },
+      ])
+      .toArray()
 
     return {
-      data: result.map((r) => [r.userId, r.name, r.userType, r.count, r.sum]),
-      summary: `The top user that ${username} sent money to was ${
-        result.at(0)?.name
-      }.`,
+      data: result.map((r) => {
+        return [
+          r.user.userId,
+          getUserName(r.user),
+          r.user.type,
+          r.count,
+          r.amount,
+        ]
+      }),
+      summary: `The top user that ${username} received money from was ${getUserName(
+        result.at(0)?.user
+      )}.`,
     }
   },
   headers: [
