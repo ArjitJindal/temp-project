@@ -17,7 +17,7 @@ export const initSentryLambda =
       ...SENTRY_INIT_CONFIG,
       integrations: [
         new RewriteFrames({
-          prefix: `app:///${process.env.LAMBDA_CODE_PATH}/`,
+          prefix: `app:///lambdas/${process.env.LAMBDA_CODE_PATH}/`,
         }) as any,
         new Debug(),
       ],
