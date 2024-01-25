@@ -31,6 +31,11 @@ jobs:
           node-version: 18
           cache: "npm"
           cache-dependency-path: "tarpon/package-lock.json"
+      - name: Corepack enable
+        run: |
+          corepack enable
+          yarn set version berry
+          yarn -v
       - name: Use Node.js 18x
         uses: actions/setup-node@v3
         with:
@@ -38,12 +43,12 @@ jobs:
           cache: "yarn"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Build Root
-        run: yarn install --frozen-lockfile
+        run: npm install
       - run: npm ci
         working-directory: "tarpon"
       - run: npm run openapi:prepare
         working-directory: "tarpon"
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --immutable
         working-directory: "phytoplankton-console"
       - run: yarn run build:local
         working-directory: "phytoplankton-console"

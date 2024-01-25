@@ -76,7 +76,7 @@
     "@ant-design/pro-layout": "^6.15.3",
     "@antv/l7-react": "^2.1.9",
     "@auth0/auth0-react": "^1.9.0",
-    "@flagright/lib": "file:../lib",
+    "@flagright/lib": "link:../lib",
     "@react-awesome-query-builder/antd": "^6.4.2",
     "@react-awesome-query-builder/ui": "^6.4.2",
     "@rjsf/antd": "^4.2.2",
@@ -190,11 +190,9 @@
     "ts-node": "^10.8.2",
     "typescript": "^5.1.0"
   },
-  "resolutions": {
-    "**/@types/react": "^17.0.0"
-  },
   "engines": {
     "node": "18.x",
     "npm": ">=9.0.0 <11.0.0"
-  }
+  },
+  "packageManager": "yarn@4.0.2"
 }

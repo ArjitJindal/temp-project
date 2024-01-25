@@ -44,3 +44,4 @@ config/openapi.yaml
 .env
 cypress.env.json
 
+.yarn/

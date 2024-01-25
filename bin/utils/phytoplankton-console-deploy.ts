@@ -17,10 +17,12 @@ export const phytoplanktonDeployStage = (
             nodejs: 18,
           },
           commands: [
+            'corepack enable',
+            'yarn set version berry',
             'npm ci',
             'npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
             'cd phytoplankton-console',
-            'npm install -g aws-cdk yarn',
+            'yarn install -g aws-cdk yarn',
             'yarn --ignore-engines',
             `ASSUME_ROLE_ARN="${roleArn}"`,
             `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
