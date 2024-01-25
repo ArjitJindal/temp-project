@@ -22,7 +22,7 @@ export const phytoplanktonDeployStage = (
             'cd phytoplankton-console',
             'npm install -g aws-cdk yarn',
             'corepack enable',
-            'yarn --ignore-engines',
+            'yarn install --immutable',
             `ASSUME_ROLE_ARN="${roleArn}"`,
             `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
             'export TEMP_ROLE',
