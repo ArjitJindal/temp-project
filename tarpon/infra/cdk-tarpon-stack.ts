@@ -109,6 +109,7 @@ import {
   createDockerImage,
   createFargateTaskDefinition,
 } from './cdk-utils/cdk-fargate-utils'
+import { CdkBudgetStack } from './cdk-tarpon-nested-stacks/cdk-budgets-stack'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
   DEFAULT_LAMBDA_TIMEOUT_SECONDS * 6
@@ -1180,6 +1181,11 @@ export class CdkTarponStack extends cdk.Stack {
         betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
       })
     }
+
+    new CdkBudgetStack(this, `${config.stage}-tarpon-budget`, {
+      config,
+    })
+
     new CdkTarponConsoleLambdaStack(
       this,
       `${config.stage}-tarpon-console-api`,

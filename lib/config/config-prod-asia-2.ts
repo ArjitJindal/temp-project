@@ -14,6 +14,18 @@ export const config: Config = {
   stage: 'prod',
   region: 'asia-2',
   env: { account, region },
+  budgets: {
+    CLOUDWATCH: 400,
+    DYNAMODB: 130,
+    LAMBDA: 500,
+    S3: 20,
+    SQS: 10,
+    EC2: 220,
+    GUARDDUTY: 20,
+    KINESIS: 70,
+    SECRETS_MANAGER: 15,
+    VPC: 20,
+  },
   resource: {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 2048,

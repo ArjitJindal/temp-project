@@ -94,6 +94,18 @@ export type Config = {
     INSPECTOR_ENABLED: boolean
     DATABRICKS_DISABLED?: boolean
   }
+  budgets: {
+    EC2: number
+    S3: number
+    LAMBDA: number
+    DYNAMODB: number
+    CLOUDWATCH: number
+    SQS: number
+    KINESIS: number
+    VPC: number
+    GUARDDUTY: number
+    SECRETS_MANAGER: number
+  }
   application: {
     DEV_CERTIFICATE_ARN?: string
     AUTH0_CUSTOM_CNAME?: string

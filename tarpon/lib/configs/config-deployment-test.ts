@@ -10,6 +10,11 @@ import { DeployConfig } from './config-deployment'
 
 export const config: DeployConfig = {
   env: { account: '073830519512', region: 'us-east-2' },
+  budget: {
+    CODEBUILD: 5,
+    EC2: 5,
+    CODEPIPELINE: 0,
+  },
   github: {
     GITHUB_CONNECTION_ARN:
       'arn:aws:codestar-connections:eu-central-1:073830519512:connection/e7342cf6-a595-4984-a415-08f15ddbaa47',

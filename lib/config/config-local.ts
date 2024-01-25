@@ -7,6 +7,18 @@ const region = 'eu-central-1'
 export const config: Config = {
   stage: 'local',
   env: { account: account, region: region },
+  budgets: {
+    CLOUDWATCH: 0,
+    DYNAMODB: 0,
+    LAMBDA: 0,
+    S3: 0,
+    SQS: 0,
+    EC2: 0,
+    GUARDDUTY: 0,
+    KINESIS: 0,
+    SECRETS_MANAGER: 0,
+    VPC: 0,
+  },
   resource: {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 1024,

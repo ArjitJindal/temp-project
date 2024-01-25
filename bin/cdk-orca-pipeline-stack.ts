@@ -25,6 +25,7 @@ import { postDeploymentCodeBuildProject } from './utils/post_deploy_tarpon'
 import { PRODUCTION_REGIONS } from '@flagright/lib/constants/deploy'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { databricksDeployStage } from './utils/databricks-deploy'
+import { BudgetServiceTypes, createBudget } from '@flagright/lib/cdk-utils'
 const PIPLINE_NAME = 'orca-pipeline'
 
 export type CdkOrcaPipelineStackProps = StackProps
@@ -51,6 +52,28 @@ export class CdkOrcaPipelineStack extends Stack {
     const PROD_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${phytoProdConfig.env.account}:role/CodePipelineDeployRole`
 
     // CodePipeline
+
+    const budgetConfigs: Record<
+      keyof DeployConfig['budget'],
+      BudgetServiceTypes[]
+    > = {
+      CODEBUILD: ['CodeBuild'],
+      EC2: [
+        'Amazon Elastic Compute Cloud - Compute',
+        'EC2 - Other',
+        'Amazon EC2 Container Registry (ECR)',
+      ],
+      CODEPIPELINE: ['AWS CodePipeline'],
+    }
+
+    Object.entries(budgetConfigs).forEach(([key, value]) => {
+      createBudget(this, {
+        budgetName: `${deployConfig.env.account}-${key}-${deployConfig.env.region}`,
+        budgetAmount: deployConfig.budget[key],
+        budgetServiceType: value,
+        region: deployConfig.env.region as string,
+      })
+    })
 
     new codepipline.Pipeline(this, PIPLINE_NAME, {
       pipelineName: PIPLINE_NAME,
