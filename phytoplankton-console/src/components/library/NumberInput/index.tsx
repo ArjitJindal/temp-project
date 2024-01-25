@@ -26,8 +26,8 @@ export default function NumberInput(props: Props) {
       if (inputText == null) {
         onChange?.(undefined);
       } else {
-        let newNumberValue = Number(inputText) || undefined;
-        if (newNumberValue != null) {
+        let newNumberValue = Number(inputText);
+        if (Number.isFinite(newNumberValue)) {
           newNumberValue = min != null ? Math.max(min, newNumberValue) : newNumberValue;
           newNumberValue = max != null ? Math.min(max, newNumberValue) : newNumberValue;
           onChange?.(newNumberValue);

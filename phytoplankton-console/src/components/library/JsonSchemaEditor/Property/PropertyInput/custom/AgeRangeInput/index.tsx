@@ -1,5 +1,4 @@
-import React, { useCallback } from 'react';
-import { debounce } from 'lodash';
+import React, { useCallback, useEffect, useState } from 'react';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
 import Slider from '@/components/library/Slider';
@@ -47,16 +46,17 @@ export default function AgeRangeInput(props: Props) {
   const minValue = value?.minAge?.units;
   const maxValue = value?.maxAge?.units;
 
+  const [ageInput, setAgeInput] = useState<number | undefined>(0);
+
   const handleChange = useCallback(
     (newValue: ValueType | undefined) => {
       onChange?.(newValue?.minAge == null && newValue?.maxAge == null ? undefined : newValue);
     },
     [onChange],
   );
-
-  const debouncedHandleChange = debounce((newValue) => {
-    handleChange(newValue);
-  }, 500);
+  useEffect(() => {
+    setAgeInput(minValue);
+  }, [minValue]);
 
   return (
     <div className={s.root}>
@@ -68,16 +68,22 @@ export default function AgeRangeInput(props: Props) {
           allowClear={true}
           value={minValue}
           onChange={(newValue) => {
+            setAgeInput(newValue);
+          }}
+          onBlur={() => {
             handleChange({
               ...value,
               minAge:
-                newValue != null
+                ageInput != undefined
                   ? {
-                      units: newValue,
+                      units: ageInput,
                       granularity: granularityValue,
                     }
                   : undefined,
             });
+          }}
+          onFocus={() => {
+            if (ageInput === undefined) setAgeInput(0);
           }}
           {...rest}
         />
@@ -123,12 +129,15 @@ export default function AgeRangeInput(props: Props) {
           value={maxValue}
           allowClear={true}
           onChange={(newValue) => {
-            debouncedHandleChange({
+            setAgeInput(newValue);
+          }}
+          onBlur={() => {
+            handleChange({
               ...value,
               maxAge:
-                newValue != null
+                ageInput != null
                   ? {
-                      units: newValue,
+                      units: ageInput,
                       granularity: granularityValue,
                     }
                   : undefined,
