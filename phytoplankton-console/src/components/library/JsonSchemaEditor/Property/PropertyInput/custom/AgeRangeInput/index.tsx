@@ -62,6 +62,7 @@ export default function AgeRangeInput(props: Props) {
     <div className={s.root}>
       <Label label={'Min age'} level={2}>
         <NumberInput
+          {...rest}
           testName="min-age-input"
           min={0}
           max={maxValue ?? to}
@@ -85,10 +86,10 @@ export default function AgeRangeInput(props: Props) {
           onFocus={() => {
             if (ageInput === undefined) setAgeInput(0);
           }}
-          {...rest}
         />
       </Label>
       <Slider
+        {...rest}
         data-cy="age-range-slider"
         mode="RANGE"
         min={from}
@@ -119,10 +120,10 @@ export default function AgeRangeInput(props: Props) {
                   },
           });
         }}
-        {...rest}
       />
       <Label label={'Max age'} level={2}>
         <NumberInput
+          {...rest}
           testName="max-age-input"
           min={minValue ?? from}
           max={to}
