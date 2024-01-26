@@ -619,6 +619,15 @@ class DatabricksStack extends TerraformStack {
           preventDestroy: preventTenantDestruction,
         },
       })
+      new databricks.grant.Grant(this, `sp-grant-catalog-${tenant}`, {
+        provider: workspaceProvider,
+        catalog: catalog.id,
+        principal: sp.applicationId,
+        privileges: ['USE_CATALOG'],
+        lifecycle: {
+          preventDestroy: preventTenantDestruction,
+        },
+      })
 
       entities.forEach((entity) => {
         if (Fn.contains(tables.ids, `${stage}.default.${entity.table}`)) {
