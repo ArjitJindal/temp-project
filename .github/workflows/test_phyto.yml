@@ -32,10 +32,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: "tarpon/package-lock.json"
       - name: Corepack enable
-        run: |
-          corepack enable
-          yarn set version berry
-          yarn -v
+        run: corepack enable && yarn set version berry
       - name: Use Node.js 18x
         uses: actions/setup-node@v3
         with:

@@ -44,10 +44,7 @@ jobs:
           clean: false
           fetch-depth: 0
       - name: Corepack enable
-        run: |
-          corepack enable
-          yarn set version berry
-          yarn -v
+        run: corepack enable && yarn set version berry
       - name: Use Node.js ${{ matrix.node-version }}
         if: steps.check.outputs.triggered == 'true'
         uses: actions/setup-node@v3

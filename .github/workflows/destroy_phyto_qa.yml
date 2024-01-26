@@ -19,6 +19,8 @@ jobs:
         with:
           ref: "main"
           clean: false
+      - name: Corepack enable
+        run: corepack enable && yarn set version berry
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:

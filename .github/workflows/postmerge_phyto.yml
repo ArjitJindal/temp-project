@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+      - name: Corepack enable
+        run: corepack enable && yarn set version berry
       - name: Use Node.js 18.17.1
         uses: actions/setup-node@v3
         with:
