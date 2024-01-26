@@ -40,6 +40,11 @@ Sentry.init({
       return null;
     }
     if (error instanceof FetchCallError) {
+      // These errors happen ofter when running cypress, because of it's internal
+      // architecture, so ignoring them
+      if (event.tags?.['tenantId'] === 'cypress-tenant') {
+        return null;
+      }
       event.extra = {
         ...error.request,
       };
