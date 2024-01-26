@@ -89,7 +89,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         { concurrency: CONCURRENT_BATCH_SIZE }
       )
       processedUsers += usersChunk.length
-      cleanUpDynamoDbResources()
+      await cleanUpDynamoDbResources()
       logger.info(`Processed users ${processedUsers} / ${userIds.length}`)
     }
   }

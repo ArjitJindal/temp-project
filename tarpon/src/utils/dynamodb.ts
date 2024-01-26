@@ -29,12 +29,12 @@ import {
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { StandardRetryStrategy } from '@aws-sdk/middleware-retry'
 import { getCredentialsFromEvent } from './credentials'
+import { addNewSubsegment } from '@/core/xray'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
   DYNAMODB_WRITE_CAPACITY_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { logger } from '@/core/logger'
-import { addNewSubsegment } from '@/core/xray'
 import { getContext, publishMetric } from '@/core/utils/context'
 import { envIs, envIsNot } from '@/utils/env'
 
@@ -457,13 +457,15 @@ export type CursorPaginatedResponse<Item> = {
   cursor?: string
 }
 
-export function cleanUpDynamoDbResources() {
+export async function cleanUpDynamoDbResources() {
   try {
     const dynamoDbClients = getContext()?.dynamoDbClients
-    if (dynamoDbClients) {
+    if (dynamoDbClients && dynamoDbClients.length > 0) {
+      const segment = await addNewSubsegment('DynamoDBClient', 'destroy')
       dynamoDbClients.forEach((client) => {
         client.destroy()
       })
+      segment?.close()
     }
   } catch (e) {
     logger.error(`Failed to clean up dynamodb resources - ${e}`)

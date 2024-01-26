@@ -232,8 +232,8 @@ export function publishMetric(
   ]
 }
 
-export async function publishContextMetrics() {
-  if (envIs('local') || envIs('test')) {
+export async function publishContextMetrics(context: Context | undefined) {
+  if (envIs('local') || envIs('test') || !context) {
     return
   }
 
@@ -242,7 +242,7 @@ export async function publishContextMetrics() {
     const client = new CloudWatchClient({
       region: process.env.AWS_REGION,
     })
-    const metrics = getContext()?.metrics
+    const metrics = context.metrics
     if (metrics) {
       await Promise.all(
         Object.keys(metrics).map((ns) => {
@@ -273,7 +273,7 @@ export async function withContext<R>(
     try {
       return await callback()
     } finally {
-      cleanUpDynamoDbResources()
+      await cleanUpDynamoDbResources()
     }
   })
   const parentContext = getContext()
@@ -287,7 +287,7 @@ export async function withContext<R>(
     )
   } else {
     // NOTE: we only publish metrics for the root context
-    await publishContextMetrics()
+    await publishContextMetrics(ctx)
   }
   return result
 }

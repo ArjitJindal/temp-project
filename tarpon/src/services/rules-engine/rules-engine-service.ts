@@ -72,7 +72,6 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { generateChecksum, mergeEntities } from '@/utils/object'
-import { background } from '@/utils/background'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
@@ -307,18 +306,14 @@ export class RulesEngineService {
       }
     )
 
-    await background(
-      ...transactionAggregationTasks.map((task) =>
-        this.sendTransactionAggregationTasks(task)
-      )
-    )
-
     saveTransactionSegment?.close()
 
-    await this.updateGlobalAggregation(
-      savedTransaction,
-      previousTransactionEvents
-    )
+    await Promise.all([
+      ...transactionAggregationTasks.map((task) =>
+        this.sendTransactionAggregationTasks(task)
+      ),
+      this.updateGlobalAggregation(savedTransaction, previousTransactionEvents),
+    ])
 
     return {
       transactionId: savedTransaction.transactionId as string,
@@ -382,23 +377,25 @@ export class RulesEngineService {
 
     // For duplicated transaction events with the same state, we don't re-aggregated
     // but this won't prevent re-aggregation if we have the states like [CREATED, APPROVED, CREATED]
+    let updateGlobalAggregationPromise: Promise<void> | undefined = undefined
     if (transaction.transactionState !== updatedTransaction.transactionState) {
-      await this.updateGlobalAggregation(
+      updateGlobalAggregationPromise = this.updateGlobalAggregation(
         updatedTransaction,
         previousTransactionEvents
       )
     }
+    await Promise.all([
+      ...transactionAggregationTasks.map((sqsMessage) =>
+        this.sendTransactionAggregationTasks(sqsMessage)
+      ),
+      updateGlobalAggregationPromise,
+    ])
+
     const updatedTransactionWithoutRulesResult = {
       ...updatedTransaction,
       executedRules: undefined,
       hitRules: undefined,
     }
-
-    await background(
-      ...transactionAggregationTasks.map((sqsMessage) =>
-        this.sendTransactionAggregationTasks(sqsMessage)
-      )
-    )
 
     return {
       eventId,
@@ -480,11 +477,9 @@ export class RulesEngineService {
       .filter((ruleResult) => ruleResult.ruleHit)
       .map((ruleResults) => ruleResults.ruleInstanceId)
 
-    await background(
-      this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
-        ruleInstances.map((ruleInstance) => ruleInstance.id as string),
-        hitRuleInstanceIds
-      )
+    await this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
+      ruleInstances.map((ruleInstance) => ruleInstance.id as string),
+      hitRuleInstanceIds
     )
     const executionResult = getExecutedAndHitRulesResult(ruleResults)
 
@@ -569,11 +564,9 @@ export class RulesEngineService {
       .filter((ruleResult) => ruleResult.ruleHit)
       .map((ruleResults) => ruleResults.ruleInstanceId)
 
-    await background(
-      this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
-        ruleInstances.map((ruleInstance) => ruleInstance.id as string),
-        hitRuleInstanceIds
-      )
+    await this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
+      ruleInstances.map((ruleInstance) => ruleInstance.id as string),
+      hitRuleInstanceIds
     )
 
     const executedAndHitRulesResult = getExecutedAndHitRulesResult(ruleResults)
@@ -960,11 +953,9 @@ export class RulesEngineService {
               },
             })
           } else {
-            await background(
-              ruleClassInstance.updateAggregation(
-                direction,
-                isTransactionHistoricalFiltered
-              )
+            await ruleClassInstance.updateAggregation(
+              direction,
+              isTransactionHistoricalFiltered
             )
           }
         }

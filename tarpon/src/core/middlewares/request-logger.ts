@@ -10,7 +10,6 @@ import { isEmpty } from 'lodash'
 import { logger } from '../logger'
 import { getContext } from '../utils/context'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { background } from '@/utils/background'
 import { envIs } from '@/utils/env'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTask } from '@/lambdas/request-logger/app'
@@ -32,8 +31,10 @@ export const requestLoggerMiddleware = () => {
       >,
       context: Context
     ) => {
-      await background(logRequest(event, context))
-      const response = await handler(event, context)
+      const [response] = await Promise.all([
+        handler(event, context),
+        logRequest(event, context),
+      ])
       return response
     }
   }
@@ -92,7 +93,7 @@ async function logRequest(
     if (envIs('local') || envIs('test')) {
       await handleRequestLoggerTask([data])
     } else {
-      await background(sqsClient.send(sqsMessage))
+      await sqsClient.send(sqsMessage)
     }
   } catch (error) {
     logger.error(`Failed to log request: ${(error as Error).message}`)

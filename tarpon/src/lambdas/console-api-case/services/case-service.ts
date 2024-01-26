@@ -58,7 +58,6 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { CursorPaginationResponse } from '@/utils/pagination'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { ManualCasePatchRequest } from '@/@types/openapi-internal/ManualCasePatchRequest'
-import { background } from '@/utils/background'
 import { UserService } from '@/services/users'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { Priority } from '@/@types/openapi-internal/Priority'
@@ -546,10 +545,7 @@ export class CaseService extends CaseAlertsCommonService {
       throw new NotFound(`Cases ${casesNotFound.join(', ')} not found`)
     }
 
-    await background(this.updateKycAndUserState(cases, updates))
-
     const context = getContext()
-
     const accountsService = new AccountsService(
       {
         auth0Domain:
@@ -598,6 +594,7 @@ export class CaseService extends CaseAlertsCommonService {
 
     await withTransaction(async () => {
       await Promise.all([
+        this.updateKycAndUserState(cases, updates),
         this.caseRepository.updateStatusOfCases(
           caseIds,
           statusChange,

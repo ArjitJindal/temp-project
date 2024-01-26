@@ -49,7 +49,6 @@ import { UserStateDetailsInternal } from '@/@types/openapi-internal/UserStateDet
 import { KYCStatusDetailsInternal } from '@/@types/openapi-internal/KYCStatusDetailsInternal'
 import { TriggersOnHit } from '@/@types/openapi-internal/TriggersOnHit'
 import { UserAuditLogService } from '@/lambdas/console-api-user/services/user-audit-log-service'
-import { background } from '@/utils/background'
 import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 
@@ -688,23 +687,23 @@ export class UserService {
       this.userRepository.tenantId
     )
 
-    await background(
+    const [savedComment] = await Promise.all([
+      this.userRepository.saveUserComment(user.userId, {
+        body: commentBody ?? '',
+        createdAt: Date.now(),
+        userId: options?.bySystem
+          ? FLAGRIGHT_SYSTEM_USER
+          : (getContext()?.user?.id as string),
+        files: updateRequest.comment?.files ?? [],
+        updatedAt: Date.now(),
+      }),
       userAuditLogService.handleAuditLogForUserUpdate(
         updateRequest,
         user.userId
       ),
-      this.sendUserAndKycWebhook(user, updatedUser, options?.bySystem ?? false)
-    )
-
-    return await this.userRepository.saveUserComment(user.userId, {
-      body: commentBody ?? '',
-      createdAt: Date.now(),
-      userId: options?.bySystem
-        ? FLAGRIGHT_SYSTEM_USER
-        : (getContext()?.user?.id as string),
-      files: updateRequest.comment?.files ?? [],
-      updatedAt: Date.now(),
-    })
+      this.sendUserAndKycWebhook(user, updatedUser, options?.bySystem ?? false),
+    ])
+    return savedComment
   }
 
   private async getDownloadLink(file: FileInfo): Promise<string> {

@@ -20,7 +20,6 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
 import { AlertsService } from '@/services/alerts'
 import { CaseService } from '@/lambdas/console-api-case/services/case-service'
-import { background } from '@/utils/background'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -255,35 +254,31 @@ export const transactionsViewHandler = lambdaApi()(
         throw new NotFound('Case(s) not found for transactions')
       }
       await Promise.all(
-        cases.data.map(async (c) => {
+        cases.data.flatMap(async (c) => {
           if (!c.alerts) {
-            return
+            return []
           }
-          await Promise.all(
-            c.alerts?.map((alert) => {
-              const txnIds: string[] = []
-              req.TransactionAction.transactionIds.forEach((tid) => {
-                if (alert.transactionIds?.includes(tid)) {
-                  txnIds.push(tid)
-                }
-              })
-              if (
-                txnIds.length > 0 &&
-                alert.alertId &&
-                alert.ruleAction === 'SUSPEND'
-              ) {
-                return background(
-                  alertService.saveAlertComment(alert.alertId, {
-                    body: `${txnIds.join(', ')} set to ${
-                      req.TransactionAction.action
-                    }. Reasons: ${req.TransactionAction.reason.join(
-                      ', '
-                    )}. Comment: ${req.TransactionAction.comment}`,
-                  })
-                )
+          return c.alerts?.map(async (alert) => {
+            const txnIds: string[] = []
+            req.TransactionAction.transactionIds.forEach((tid) => {
+              if (alert.transactionIds?.includes(tid)) {
+                txnIds.push(tid)
               }
             })
-          )
+            if (
+              txnIds.length > 0 &&
+              alert.alertId &&
+              alert.ruleAction === 'SUSPEND'
+            ) {
+              await alertService.saveAlertComment(alert.alertId, {
+                body: `${txnIds.join(', ')} set to ${
+                  req.TransactionAction.action
+                }. Reasons: ${req.TransactionAction.reason.join(
+                  ', '
+                )}. Comment: ${req.TransactionAction.comment}`,
+              })
+            }
+          })
         })
       )
       return response
