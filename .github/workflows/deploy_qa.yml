@@ -43,6 +43,11 @@ jobs:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
           clean: false
           fetch-depth: 0
+      - name: Corepack enable
+        run: |
+          corepack enable
+          yarn set version berry
+          yarn -v
       - name: Use Node.js ${{ matrix.node-version }}
         if: steps.check.outputs.triggered == 'true'
         uses: actions/setup-node@v3
