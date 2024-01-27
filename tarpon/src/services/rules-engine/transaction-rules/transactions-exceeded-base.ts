@@ -307,40 +307,37 @@ export default abstract class TransactionsDeviationBaseRule<
   private async getData(
     direction: 'origin' | 'destination'
   ): Promise<AggregationResult | undefined> {
+    const currencyService = new CurrencyService()
     const {
       afterTimestamp: afterTimestampP1,
       beforeTimestamp: beforeTimestampP1,
     } = getTimestampRange(this.transaction.timestamp!, this.parameters.period1)
-
-    const aggregationType = this.getAggregationType()
-
+    const {
+      afterTimestamp: afterTimestampP2,
+      beforeTimestamp: beforeTimestampP2,
+    } = this.getPeriod2TimeRange()
+    const userAggregationData = await this.getRuleAggregations<AggregationData>(
+      direction,
+      afterTimestampP2,
+      beforeTimestampP1
+    )
     const checkDirection =
       direction === 'origin'
         ? this.parameters.checkSender
         : this.parameters.checkReceiver
 
-    const userAggregationDataP1 =
-      await this.getRuleAggregations<AggregationData>(
-        direction,
-        afterTimestampP1,
-        beforeTimestampP1
-      )
-
-    const currencyService = new CurrencyService()
-
-    const {
-      afterTimestamp: afterTimestampP2,
-      beforeTimestamp: beforeTimestampP2,
-    } = this.getPeriod2TimeRange()
-
-    const userAggregationDataP2 =
-      await this.getRuleAggregations<AggregationData>(
-        direction,
+    if (userAggregationData) {
+      const userAggregationDataP1 =
+        this.getFilterAggregationData<AggregationData>(
+          userAggregationData,
+          afterTimestampP1,
+          beforeTimestampP1
+        )
+      const userAggregationDataP2 = this.getFilterAggregationData(
+        userAggregationData,
         afterTimestampP2,
         beforeTimestampP2
       )
-
-    if (userAggregationDataP1 && userAggregationDataP2) {
       let transactionsSendingCountPeriod1 =
         checkDirection !== 'receiving'
           ? sumBy(userAggregationDataP1, (data) => data.sendingCount ?? 0)
@@ -375,9 +372,9 @@ export default abstract class TransactionsDeviationBaseRule<
 
       const transactionsCountPeriod1 =
         transactionsSendingCountPeriod1 + transactionsReceivingCountPeriod1
-
       const transactionsCountPeriod2 =
         transactionsSendingCountPeriod2 + transactionsReceivingCountPeriod2
+      const aggregationType = this.getAggregationType()
 
       if (aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT') {
         const amountDetails =

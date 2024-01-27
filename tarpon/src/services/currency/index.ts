@@ -1,7 +1,6 @@
 import { isEmpty, set } from 'lodash'
 import * as Sentry from '@sentry/serverless'
 import { CurrencyRepository } from './repository'
-import { traceable } from '@/core/xray'
 import { apiFetch } from '@/utils/api-fetch'
 import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -17,7 +16,6 @@ export type CurrencyExchangeUSDType = {
   usd: Record<Lowercase<Currency>, number>
 }
 
-@traceable
 export class CurrencyService {
   repository: CurrencyRepository
 

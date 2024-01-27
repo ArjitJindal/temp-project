@@ -202,6 +202,21 @@ export abstract class TransactionAggregationRule<
     )
   }
 
+  protected getFilterAggregationData<T>(
+    aggData: Array<T & { hour: string }>,
+    afterTimestamp: number,
+    beforeTimestamp: number
+  ) {
+    const afterHour = dayjs(afterTimestamp).format(AGGREGATION_TIME_FORMAT)
+    const beforeHour = dayjs(beforeTimestamp - 1).format(
+      AGGREGATION_TIME_FORMAT
+    )
+    const filterAggData = aggData.filter(
+      (data) => data.hour >= afterHour && data.hour <= beforeHour
+    )
+    return filterAggData
+  }
+
   private getLatestAggregationVersion(): string {
     const ruleInstanceVersion = this.ruleInstance.updatedAt!
     return `${AGGREGATION_VERSION}_${this.getRuleAggregationVersion()}_${ruleInstanceVersion}`
