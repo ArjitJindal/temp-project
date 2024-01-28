@@ -1,8 +1,10 @@
-describe('Escalating and Sending back the cases', () => {
-  beforeEach(() => {
-    cy.loginByForm();
-  });
+import { PERMISSIONS } from '../../support/permissions';
 
+describe('Escalating and Sending back the cases', () => {
+  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW, ...PERMISSIONS.CASE_DETAILS];
+  beforeEach(() => {
+    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+  });
   it('should escalate a case and send it back', () => {
     cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
 

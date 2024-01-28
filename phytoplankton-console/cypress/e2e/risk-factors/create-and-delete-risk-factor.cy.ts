@@ -1,10 +1,15 @@
+import { PERMISSIONS } from '../../support/permissions';
+
 describe('Create and delete risk factor', () => {
+  const REQUIRED_PERMISSIONS = [...PERMISSIONS.RISK_SCORING_RISK_FACTORS];
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      featureFlags: [{ 'Risk Scoring': true }],
+    });
   });
 
   it('create, update and delete risk factor', () => {
-    cy.toggleFeature('Risk Scoring', true);
     cy.intercept('POST', '**/pulse/risk-parameter').as('riskFactor');
     createRiskFactor();
     updateRiskFactor();

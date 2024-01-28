@@ -1,6 +1,9 @@
+import { PERMISSIONS } from '../../support/permissions';
+
 describe('Filter according to case id', () => {
+  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW];
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
   it('should be able to filter according to case id', () => {
     cy.visit('/case-management/cases');

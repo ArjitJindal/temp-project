@@ -6,12 +6,11 @@ const prompts = require('prompts');
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 const { fromIni } = require('@aws-sdk/credential-providers');
 
+const CYPRESS_CREDS_SECRET_ARN = 'rbacCypressCreds';
+
 if (!process.env.ENV) {
   process.env.ENV = 'local';
 }
-
-const CYPRESS_CREDS_SECRET_ARN =
-  'arn:aws:secretsmanager:eu-central-1:911899431626:secret:cypressCreds-BX1Tr2';
 
 async function getCypressCreds() {
   try {
@@ -28,10 +27,11 @@ async function getCypressCreds() {
         }),
       )
     ).SecretString;
-    const { username, password } = JSON.parse(secretString);
+    const { super_admin, custom_role, admin } = JSON.parse(secretString);
     return {
-      username,
-      password,
+      super_admin,
+      custom_role,
+      admin,
     };
   } catch (e) {
     console.error(
@@ -42,19 +42,15 @@ async function getCypressCreds() {
 }
 
 (async () => {
-  let username = process.env.CYPRESS_USERNAME;
-  let password = process.env.CYPRESS_PASSWORD;
-  try {
-    const cypressEnv = JSON.parse(fs.readFileSync('cypress.env.json'));
-    username = cypressEnv.username;
-    password = cypressEnv.password;
-  } catch (e) {
-    // ignore
-  }
-  if (!username && !password) {
+  let super_admin = process.env.CYPRESS_SUPER_ADMIN;
+  let custom_role = process.env.CYPRESS_CUSTOM_ROLE;
+  let admin = process.env.CYPRESS_ADMIN;
+
+  if (!super_admin && !custom_role && !admin) {
     const creds = await getCypressCreds();
-    username = creds.username;
-    password = creds.password;
+    super_admin = creds.super_admin;
+    custom_role = creds.custom_role;
+    admin = creds.admin;
   }
   const type = process.argv[2];
   const headlessFlag =
@@ -90,11 +86,17 @@ async function getCypressCreds() {
       process.exit(1);
     }
   }
-
-  execSync(
-    `./node_modules/.bin/cypress ${type} --env username=${username},password=${password} ${headlessFlag}`,
-    {
-      stdio: 'inherit',
-    },
-  );
+  const credentials = {
+    super_admin: super_admin,
+    custom_role: custom_role,
+    admin: admin,
+  };
+  let ENV_VARS = [];
+  Object.keys(credentials).map((key, index) => {
+    ENV_VARS.push(`${key}_username=${credentials[key].username}`);
+    ENV_VARS.push(`${key}_password=${credentials[key].password}`);
+  });
+  execSync(`./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag}`, {
+    stdio: 'inherit',
+  });
 })();

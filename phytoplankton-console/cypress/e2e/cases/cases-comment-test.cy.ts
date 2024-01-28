@@ -1,6 +1,12 @@
+import { PERMISSIONS } from '../../support/permissions';
+
 describe('Add a comment to a case', () => {
+  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW, ...PERMISSIONS.CASE_DETAILS];
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      featureFlags: [{ 'Audit Logs': true }],
+    });
   });
 
   it('should be able to create a comment for a first case with file attachment', () => {
@@ -8,11 +14,9 @@ describe('Add a comment to a case', () => {
     const fileName = `file_${Date.now()}.txt`;
     const fileContent = `file content of ${fileName}`;
 
-    cy.toggleFeature('Audit Logs', true);
-
     // Navigate to case
     cy.intercept('GET', `**/cases**`).as('cases');
-    cy.visit('/case-management/cases');
+    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
     cy.wait('@cases', { timeout: 15000 }).then((intercept) => {
       expect(intercept.response?.statusCode).to.be.oneOf([200, 304]);
     });
@@ -65,9 +69,15 @@ describe('Add a comment to a case', () => {
 
     cy.message('Comment deleted').should('exist');
 
-    cy.get('[data-cy="segmented-control-log"]').click();
-
     // Get the latest entry within the Log tab
+    cy.logout();
+    cy.loginByRole('admin');
+    cy.visit(
+      '/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=OPEN%2CREOPENED',
+    );
+    cy.get('[data-cy="case-id"]', { timeout: 15000 }).eq(0).click();
+    cy.get('.ant-tabs-tab').contains('Activity').click();
+    cy.get('[data-cy="segmented-control-log"]').click();
     cy.get('[data-cv="log-entry-item"]')
       .should('exist')
       .first()
@@ -76,7 +86,7 @@ describe('Add a comment to a case', () => {
         const textValue = log.find('[data-cv="log-entry-item-text"]').text().trim();
         const timeValue = log.find('[data-cv="log-entry-item-date"]').text().trim();
 
-        cy.wrap(textValue).should('include', 'System deleted a comment');
+        cy.wrap(textValue).should('include', 'Cypress+custom@flagright.com deleted a comment');
 
         // Parse timeValue into a JavaScript Date object
         const timeParts = timeValue.split(':');

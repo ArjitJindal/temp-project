@@ -1,6 +1,6 @@
 describe('navigate sidebar', () => {
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginByRole('super_admin');
   });
 
   it('should load main pages', () => {

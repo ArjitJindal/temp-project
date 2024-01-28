@@ -1,9 +1,11 @@
 /// <reference types="cypress" />
 
+import { getAccessToken, getAuthTokenKey, getBaseUrl } from './utils';
+
 Cypress.Commands.add('loginByForm', (inputUsername?: string, inputPassword?: string) => {
   cy.session('login-session', () => {
-    const username = (inputUsername || Cypress.env('username')) as string;
-    const password = (inputPassword || Cypress.env('password')) as string;
+    const username = (inputUsername || Cypress.env('super_admin_username')) as string;
+    const password = (inputPassword || Cypress.env('super_admin_password')) as string;
     const loginUrl = Cypress.env('loginUrl');
     cy.visit(Cypress.config('baseUrl') as string);
 
@@ -20,6 +22,88 @@ Cypress.Commands.add('loginByForm', (inputUsername?: string, inputPassword?: str
     cy.wait(3000);
   });
   cy.checkAndSwitchToCypressTenant();
+});
+
+Cypress.Commands.add('loginByRole', (role) => {
+  cy.session(`login-session-for-${role}`, () => {
+    const username = Cypress.env(`${role}_username`) as string;
+    const password = Cypress.env(`${role}_password`) as string;
+    const loginUrl = Cypress.env('loginUrl');
+    cy.visit(Cypress.config('baseUrl') as string);
+
+    cy.url().should('contains', `${loginUrl}`);
+    cy.get('input#username').type(username);
+    cy.get('input#password').type(password);
+    cy.get('div:not(.ulp-button-bar-hidden) > button[type=submit]').first().click({ force: true });
+
+    cy.location('host', { timeout: 10000 }).should(
+      'eq',
+      new URL(Cypress.config('baseUrl') as string).host,
+    );
+    /* eslint-disable-next-line cypress/no-unnecessary-waiting */
+    cy.wait(3000);
+  });
+  if (role === 'super_admin') {
+    cy.checkAndSwitchToCypressTenant();
+  }
+});
+
+Cypress.Commands.add('loginWithPermissions', ({ permissions, featureFlags = [], settingsBody }) => {
+  cy.loginByRole('super_admin');
+  featureFlags.forEach((featureFlag) => {
+    const feature = Object.keys(featureFlag)[0];
+    cy.toggleFeature(feature, featureFlag[feature]);
+  });
+  if (settingsBody) {
+    cy.addSettings(settingsBody);
+  }
+  cy.setPermissions(permissions).then(() => {
+    cy.logout().then(() => {
+      cy.loginByRole('custom_role');
+    });
+  });
+});
+
+Cypress.Commands.add('setPermissions', (permissions) => {
+  const roleId = 'rol_BxM56v32qGhImCzc';
+  cy.apiHandler({
+    endpoint: `roles/${roleId}`,
+    method: 'PATCH',
+    body: {
+      id: roleId,
+      name: 'Custom_role',
+      description: 'Custom role for RBAC testing',
+      permissions: permissions,
+    },
+  });
+});
+
+Cypress.Commands.add('addSettings', (settingsBody) => {
+  const baseUrl = getBaseUrl();
+  cy.apiHandler({
+    endpoint: 'tenants/settings',
+    method: 'POST',
+    body: settingsBody,
+    baseUrl: baseUrl,
+  });
+});
+
+Cypress.Commands.add('apiHandler', ({ endpoint, method, body, baseUrl }) => {
+  const apiUrl = 'https://api.flagright.dev/console/';
+  const authTokenKey = getAuthTokenKey();
+  const accessToken = getAccessToken(authTokenKey);
+  cy.request({
+    method: method,
+    url: `${baseUrl ?? apiUrl}${endpoint}`,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: body,
+  });
+});
+
+Cypress.Commands.add('logout', () => {
+  Cypress.session.clearAllSavedSessions();
 });
 
 Cypress.Commands.add('checkAndSwitchToCypressTenant', () => {
@@ -51,8 +135,9 @@ Cypress.on('uncaught:exception', (err) => {
 });
 
 Cypress.Commands.add('loginByRequest', (username: string, password: string) => {
+  const env = Cypress.env('environment');
   const scope = 'openid profile email offline_access';
-  const client_id = Cypress.env('auth0_client_id');
+  const client_id = Cypress.env(`${env}_auth0_client_id`);
   const audience = Cypress.env('auth0_audience');
   const options = {
     method: 'POST',
@@ -138,6 +223,7 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('toggleFeature', (feature: string, enable: boolean) => {
+  cy.visit('/');
   // Do not add "(Don't use)" in the feature name (e.g. "Google SSO (Don't use)"
   const featureKey = feature.split(' ').join('_').toUpperCase();
   // Open super admin panel

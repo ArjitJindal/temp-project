@@ -1,19 +1,26 @@
+import { PERMISSIONS } from '../../support/permissions';
+
 describe('QA Assignee Column', () => {
+  let qaFlag = false;
   beforeEach(() => {
-    cy.loginByForm();
+    const REQUIRED_PERMISSIONS = [
+      ...PERMISSIONS.CASE_OVERVIEW,
+      ...PERMISSIONS.QA,
+      ...PERMISSIONS.CASE_DETAILS,
+      ...PERMISSIONS.TRANSACTION_OVERVIEW,
+    ];
+    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS, featureFlags: [{ QA: qaFlag }] });
   });
 
   it('should not be present when QA feature flag is turned off', () => {
     cy.visit('/case-management/cases');
-    cy.toggleFeature('QA', true);
     cy.reload();
     cy.contains('QA assignee').should('not.exist');
+    qaFlag = true;
   });
 
   it('should be present when QA feature flag is turned on', () => {
     cy.visit('/case-management/cases');
-    cy.toggleFeature('QA', true);
-    cy.reload();
     cy.get('.ant-space-item').click();
     cy.contains('QA assignee').should('exist');
 

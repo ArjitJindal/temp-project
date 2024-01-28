@@ -1,6 +1,6 @@
 describe('Checklkist Crud', () => {
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginByRole('admin');
   });
 
   it('perform crud operation on checklist', () => {
