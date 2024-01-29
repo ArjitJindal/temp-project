@@ -47,6 +47,7 @@ function RiskLevelDistributionCardBase(props: Props & { groupBy: 'VALUE' | 'TIME
     userType: userType,
     startTimestamp: timeRange.startTimestamp,
     endTimestamp: timeRange.endTimestamp,
+    granularity: 'MONTH' as 'HOUR' | 'DAY' | 'MONTH',
   };
   const settings = useSettings();
   const api = useApi();
