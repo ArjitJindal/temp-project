@@ -1,9 +1,6 @@
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('bulk closing cases with alerts selected', () => {
-  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginByForm();
   });
   it('testing bulk closing of cases with alerts selected', () => {
     const caseIds: string[] = [];

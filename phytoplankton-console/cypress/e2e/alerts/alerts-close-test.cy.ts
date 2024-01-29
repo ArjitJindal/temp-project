@@ -1,14 +1,8 @@
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('Close Alerts from Table', () => {
-  const REQUIRED_PERMISSIONS = [
-    ...PERMISSIONS.CASE_OVERVIEW,
-    ...PERMISSIONS.CASE_REOPEN,
-    ...PERMISSIONS.CASE_DETAILS,
-  ];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginByForm();
   });
+
   it('should close and re-open an alert', () => {
     cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&alertStatus=OPEN');
 

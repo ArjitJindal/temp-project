@@ -1,10 +1,8 @@
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('Alert Priority Filtering', () => {
-  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginByForm();
   });
+
   it('should filter according to alert priority of the cases', () => {
     cy.visit(
       '/case-management/cases?page=1&pageSize=20&sort=-priority&showCases=ALL_ALERTS&alertStatus=OPEN',

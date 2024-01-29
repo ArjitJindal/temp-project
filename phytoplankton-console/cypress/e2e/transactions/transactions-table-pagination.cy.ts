@@ -1,11 +1,8 @@
 /// <reference types="cypress" />
 
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('check pagination', () => {
-  const REQUIRED_PERMISSIONS = [...PERMISSIONS.TRANSACTION_OVERVIEW];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginByForm();
   });
 
   it('Next button on table should work', () => {

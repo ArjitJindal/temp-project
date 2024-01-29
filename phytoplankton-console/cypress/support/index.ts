@@ -8,12 +8,6 @@ declare global {
        * @example cy.dataCy('greeting')
        */
       loginByForm(username?: string, password?: string): Chainable<Element>;
-      loginByRole(role: 'super_admin' | 'custom_role' | 'admin'): Chainable<Element>;
-      loginWithPermissions(props: {
-        permissions: string[];
-        featureFlags?: { [key: string]: boolean }[];
-        settingsBody?: any;
-      }): Chainable<Element>;
       loginByRequest(username: string, password: string): Chainable<Element>;
       multiSelect(preSelector: string, text: string): Chainable<Element>;
       caseAlertAction(action: string): Chainable<Element>;
@@ -30,15 +24,6 @@ declare global {
        * @param text
        */
       message(text: string): Chainable<Element>;
-      logout(): Chainable<Promise<Element>>;
-      setPermissions(permissions: string[]): Chainable<Promise<Element>>;
-      apiHandler(props: {
-        endpoint: string;
-        method: string;
-        body?: any;
-        baseUrl?: string;
-      }): Chainable<Promise<Element>>;
-      addSettings(settingsBody: any): Chainable<Promise<Element>>;
     }
   }
 }

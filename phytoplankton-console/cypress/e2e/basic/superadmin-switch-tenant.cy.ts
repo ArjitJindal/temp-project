@@ -1,6 +1,6 @@
 describe('Switching from one tenant to another', () => {
   beforeEach(() => {
-    cy.loginByRole('super_admin');
+    cy.loginByForm();
   });
 
   it('should switch from one tenant to another', () => {
@@ -8,9 +8,7 @@ describe('Switching from one tenant to another', () => {
     cy.visit('/');
 
     // Wait for tenants to load
-    cy.wait('@tenants', { timeout: 20000 })
-      .its('response.statusCode')
-      .should('be.oneOf', [200, 304]);
+    cy.wait('@tenants').its('response.statusCode').should('be.oneOf', [200, 304]);
 
     // Switch to 'FlagrightPostman'
     cy.get("button[data-cy='superadmin-panel-button']").click({ force: true });

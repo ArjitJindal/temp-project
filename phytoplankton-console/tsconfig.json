@@ -28,6 +28,6 @@
       "jest-utils": ["./jest/jest-utils"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "cypress-run.js"],
+  "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "build", "dist", "cdk.out"]
 }

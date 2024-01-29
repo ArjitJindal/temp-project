@@ -1,16 +1,8 @@
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('SAR Generate', () => {
-  const REQUIRED_PERMISSIONS = [
-    ...PERMISSIONS.CASE_OVERVIEW,
-    ...PERMISSIONS.CASE_DETAILS,
-    ...PERMISSIONS.TRANSACTION_OVERVIEW,
-    ...PERMISSIONS.REPORTS,
-  ];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginByForm();
   });
-  it('should open SAR report form', () => {
+  it('should open SAR report form', async () => {
     cy.visit(
       '/case-management/cases?page=1&pageSize=100&showCases=ALL_ALERTS&alertStatus=OPEN&ruleNature=AML',
     );

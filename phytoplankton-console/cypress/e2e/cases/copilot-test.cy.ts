@@ -1,16 +1,6 @@
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('Copilot', () => {
-  const REQUIRED_PERMISSIONS = [
-    ...PERMISSIONS.CASE_OVERVIEW,
-    ...PERMISSIONS.CASE_DETAILS,
-    ...PERMISSIONS.COPILOT,
-  ];
   beforeEach(() => {
-    cy.loginWithPermissions({
-      permissions: REQUIRED_PERMISSIONS,
-      settingsBody: { isAiEnabled: true },
-    });
+    cy.loginByForm();
   });
 
   it('should fetch the narrative and format', () => {

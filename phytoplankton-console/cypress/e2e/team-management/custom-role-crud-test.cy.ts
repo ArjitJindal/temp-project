@@ -1,9 +1,6 @@
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('Custom Role - CRUD Test', () => {
   beforeEach(() => {
-    const REQUIRED_PERMISSIONS = [...PERMISSIONS.SETTINGS_ORGANIZATION];
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginByForm();
   });
 
   it('perform crud operation on custom role', async () => {

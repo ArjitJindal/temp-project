@@ -61,11 +61,7 @@ function LogOutButton(props: { isCollapsed: boolean }) {
       }}
     >
       {({ onClick }) => (
-        <div
-          className={cn(s.logoutButton, isCollapsed && s.isCollapsed)}
-          onClick={onClick}
-          data-cy={'logout-button'}
-        >
+        <div className={cn(s.logoutButton, isCollapsed && s.isCollapsed)} onClick={onClick}>
           {isCollapsed && 'Log out'}
           <LogOutIcon className={s.logoutIcon} />
         </div>

@@ -1,14 +1,8 @@
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('Escalate a case from case-details', () => {
-  const REQUIRED_PERMISSIONS = [
-    ...PERMISSIONS.CASE_OVERVIEW,
-    ...PERMISSIONS.CASE_DETAILS,
-    ...PERMISSIONS.CASE_REOPEN,
-  ];
-  before(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+  beforeEach(() => {
+    cy.loginByForm();
   });
+
   const selectCase = () => {
     cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
     cy.get('[data-cy="case-id"]', { timeout: 15000 }).eq(0).invoke('text').as('caseId');
@@ -40,7 +34,6 @@ describe('Escalate a case from case-details', () => {
   });
 
   it('should escalate a case from case details then close it and re-open it', () => {
-    cy.loginByRole('custom_role');
     selectCase();
     escalateCase();
 

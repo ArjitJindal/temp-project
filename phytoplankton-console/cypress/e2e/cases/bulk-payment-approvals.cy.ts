@@ -1,20 +1,26 @@
-import { PERMISSIONS } from '../../support/permissions';
+import { skipOn } from '@cypress/skip-test';
+import { checkQAUrl } from './../../../src/utils/qaUrl';
 describe('Bulk approval of payments', () => {
-  const REQUIRED_PERMISSIONS = [
-    ...PERMISSIONS.CASE_OVERVIEW,
-    ...PERMISSIONS.TRANSACTION_OVERVIEW,
-    ...PERMISSIONS.TRANSACTION_DETAILS,
-    ...PERMISSIONS.SETTINGS_ORGANIZATION,
-  ];
   beforeEach(() => {
-    cy.loginWithPermissions({
-      permissions: REQUIRED_PERMISSIONS,
-      settingsBody: { isPaymentApprovalEnabled: true },
-    });
+    cy.loginByForm();
   });
   it('testing bulk approval of payments', () => {
+    const isQAenv = checkQAUrl();
+    isQAenv ? skipOn(true) : skipOn(false);
+    cy.visit('/settings/transactions');
     cy.intercept('POST', '**/transactions/action').as('approval-request');
-    cy.visit('/case-management/cases');
+
+    cy.get('input[role="switch"]').then((toggle) => {
+      const isChecked = toggle.attr('aria-checked') === 'true';
+      if (isChecked) {
+        // If the toggle is active (checked)
+        cy.visit('/case-management/cases');
+      } else {
+        // If the toggle is inactive (unchecked), click it to activate
+        cy.get('input[role="switch"]').click({ force: true });
+        cy.visit('/case-management/cases');
+      }
+    });
     cy.contains('Payment approval').click();
 
     for (let i = 0; i < 3; i++) {

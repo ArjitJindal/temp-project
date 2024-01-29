@@ -1,11 +1,7 @@
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('Rule create and delete', () => {
-  const REQUIRED_PERMISSIONS = [...PERMISSIONS.RULES];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginByForm();
   });
-
   it('should create a rule and delete it', () => {
     cy.visit('/rules/rules-library');
     cy.intercept('POST', '**/rule_instances').as('createdRule');

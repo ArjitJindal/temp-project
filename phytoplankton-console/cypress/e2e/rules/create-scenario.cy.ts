@@ -1,7 +1,7 @@
 describe('Create scenario', () => {
   let conditionsCount = 1;
   beforeEach(() => {
-    cy.loginByRole('super_admin');
+    cy.loginByForm();
     cy.toggleFeature('Risk Levels', true);
   });
 
@@ -93,15 +93,12 @@ describe('Create scenario', () => {
 
   function createVariable(variableName, variableAggregateField) {
     cy.get('button[data-cy="add-variable-v8"]').first().click();
-    cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}{enter}`);
+    cy.get('input[data-cy="variable-name-v8"]').type(variableName);
     cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
     cy.get('input[data-cy="variable-direction-v8"]').eq(0).click();
-    /* eslint-disable-next-line cypress/no-unnecessary-waiting */
     cy.get('label[data-cy="variable-aggregate-field-v8"]')
       .click()
-      .type(`${variableAggregateField}`)
-      .wait(1000)
-      .type(`{enter}`);
+      .type(`${variableAggregateField}{enter}`);
     cy.get('label[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
     cy.get('label[data-cy="time-from-interval"]').click().type('Month{enter}');
     cy.get('label[data-cy="time-to-interval"]').click().type('Month{enter}');

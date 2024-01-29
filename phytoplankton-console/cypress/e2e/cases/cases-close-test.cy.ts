@@ -1,15 +1,8 @@
-import { PERMISSIONS } from '../../support/permissions';
-
 describe('Closing and Re-Opening the cases', () => {
-  const REQUIRED_PERMISSIONS = [
-    ...PERMISSIONS.CASE_OVERVIEW,
-    ...PERMISSIONS.CASE_DETAILS,
-    ...PERMISSIONS.CASE_REOPEN,
-    ...PERMISSIONS.TRANSACTION_OVERVIEW,
-  ];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginByForm();
   });
+
   it('should close a case', () => {
     cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
     cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();

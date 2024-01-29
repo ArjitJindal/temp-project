@@ -1,6 +1,6 @@
 describe('Accounts - CRUD Test', () => {
   beforeEach(() => {
-    cy.loginByRole('admin');
+    cy.loginByForm();
   });
 
   it('perform crud operation on accounts in team management', async () => {

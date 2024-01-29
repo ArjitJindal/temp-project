@@ -9,7 +9,7 @@ export const BrowserSupportProvider = (props: Props) => {
   const currentUser = useCurrentUser();
   return (
     <>
-      {currentUser?.email && !currentUser.email.includes('cypress') ? (
+      {currentUser?.email && currentUser.email !== 'cypress@flagright.com' ? (
         <BrowserSupportModal />
       ) : null}
       {props.children}
