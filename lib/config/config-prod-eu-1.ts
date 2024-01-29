@@ -27,6 +27,7 @@ export const config: Config = {
     VPC: 40,
   },
   resource: {
+    DATABRICKS_ENABLED: true,
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 2048,
       MEMORY_LIMIT: 4096,

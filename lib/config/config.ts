@@ -92,7 +92,7 @@ export type Config = {
     }
     LAMBDA_VPC_ENABLED?: boolean
     INSPECTOR_ENABLED: boolean
-    DATABRICKS_DISABLED?: boolean
+    DATABRICKS_ENABLED?: boolean
   }
   budgets: {
     EC2: number

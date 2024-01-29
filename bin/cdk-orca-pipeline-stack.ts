@@ -238,7 +238,7 @@ export class CdkOrcaPipelineStack extends Stack {
                   environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
               ]
-              if (!config.resource.DATABRICKS_DISABLED) {
+              if (!config.resource.DATABRICKS_ENABLED) {
                 actions.push(
                   new codepipline_actions.CodeBuildAction({
                     actionName: `Deploy_Databricks_${region

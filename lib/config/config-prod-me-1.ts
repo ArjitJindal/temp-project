@@ -88,8 +88,6 @@ export const config: Config = {
     },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: false,
-    // Not supported in this region
-    DATABRICKS_DISABLED: true,
   },
   application: {
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',
