@@ -12,3 +12,4 @@ src/@types/openapi*
 **/bin/*
 *.xml
 Dockerfile
+*.lock

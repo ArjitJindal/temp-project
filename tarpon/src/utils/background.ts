@@ -15,7 +15,7 @@ export const background = async (...tasks: Promise<unknown>[]) => {
     return await Promise.all(tasks)
   }
   if (ctx) {
-    ctx.promises = ctx?.promises ? [...ctx.promises].concat(tasks) : tasks
+    ctx.promises = ctx?.promises ? [...ctx.promises].concat(tasks) : tasks // eslint-disable-line @typescript-eslint/no-floating-promises
   }
 }
 

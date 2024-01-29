@@ -209,7 +209,7 @@ export function publishMetric(
     ...context.metricDimensions,
     ...dimensions,
   }
-  const metricDatum = {
+  const metricDatum: MetricDatum = {
     MetricName: metric.name,
     Dimensions: Object.entries(dimensionsWithContext || {})
       // Lambda function name isn't defined in local dev.

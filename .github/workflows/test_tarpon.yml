@@ -27,12 +27,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Corepack enable
+        run: |
+          corepack enable
+          yarn set version berry
       - name: Use Node.js 18x
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "npm"
-          cache-dependency-path: "tarpon/package-lock.json"
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
       - name: Cache jest results
         uses: actions/cache@v3
         with:
@@ -41,15 +45,15 @@ jobs:
       - name: Build Flagright Lib
         run: npm ci
         working-directory: "lib"
-      - run: npm ci
+      - run: yarn install --immutable
         working-directory: "tarpon"
-      - run: npm run build:local
+      - run: yarn run build:local
         working-directory: "tarpon"
-      - run: npm run tsc:ci
+      - run: yarn run tsc:ci
         working-directory: "tarpon"
-      - run: npm run lint:ci
+      - run: yarn run lint:ci
         working-directory: "tarpon"
-      - run: npm run format:check
+      - run: yarn run format:check
         working-directory: "tarpon"
       - name: Setup DynamoDB localy
         uses: rrainn/dynamodb-action@v2.0.1
@@ -62,7 +66,7 @@ jobs:
           mongodb-version: 5.0.18
           mongodb-port: 27018
       - name: Run Tests
-        run: npm run test:ci
+        run: yarn run test:ci
         working-directory: "tarpon"
       - name: Post to a Slack channel on failure
         id: slack

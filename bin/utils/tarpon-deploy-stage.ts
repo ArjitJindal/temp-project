@@ -34,7 +34,8 @@ export const tarponDeployStage = (
           commands: [
             'npm ci',
             'cd tarpon',
-            'npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
+            'corepack enable',
+            'yarn install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
             `export ENV=${env}`,
             `export AWS_REGION=${config.env.region}`,
             `export AWS_ACCOUNT=${config.env.account}`,
@@ -50,12 +51,13 @@ export const tarponDeployStage = (
                 `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`
             ),
             ...(shouldReleaseSentry ? getSentryReleaseSpec(true).commands : []),
-            `npm run migration:pre:up`,
+            'corepack enable',
+            `yarn run migration:pre:up`,
             // Don't upload source maps to Lambda
             'rm dist/lambdas/**/*.js.map',
             ...installTerraform,
-            `npm run synth:${env}`,
-            `npm run deploy:${env}`,
+            `yarn run synth:${env}`,
+            `yarn run deploy:${env}`,
           ],
         },
       },

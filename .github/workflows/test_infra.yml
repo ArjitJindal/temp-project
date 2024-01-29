@@ -25,15 +25,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Corepack enable
+        run: corepack enable && yarn set version berry
       - name: Use Node.js 18x
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "npm"
-          cache-dependency-path: "tarpon/package-lock.json"
-      - run: npm ci
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
+      - run: yarn install --immutable
         working-directory: "tarpon"
-      - run: npm run synth:ci
+      - run: yarn run synth:ci
         working-directory: "tarpon"
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"

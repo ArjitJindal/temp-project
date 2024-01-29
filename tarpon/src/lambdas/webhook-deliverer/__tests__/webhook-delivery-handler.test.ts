@@ -67,7 +67,7 @@ describe('Webhook delivery', () => {
   const ACTIVE_WEBHOOK_ID = 'ACTIVE_WEBHOOK_ID'
   const INACTIVE_WEBHOOK_ID = 'INACTIVE_WEBHOOK_ID'
   const webhookDeliveryHandler = handler as any as (event: SQSEvent) => void
-  let smMock: AwsStub<any, any>
+  let smMock: AwsStub<any, any, any>
 
   beforeEach(() => {
     smMock = mockClient(SecretsManagerClient)

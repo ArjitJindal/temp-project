@@ -50,23 +50,23 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: "yarn"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Use Node.js ${{ matrix.node-version }}
         if: steps.check.outputs.triggered == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: "tarpon/package-lock.json"
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
       - name: Install infra dependencies
         if: steps.check.outputs.triggered == 'true'
-        run: npm ci
+        run: corepack enable && yarn set version berry && yarn install --immutable
       - name: Install dependencies for tarpon
-        run: npm ci
+        run: yarn install --immutable
         if: steps.check.outputs.triggered == 'true'
         working-directory: "tarpon"
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --immutable
         if: steps.check.outputs.triggered == 'true'
         working-directory: "phytoplankton-console"
       - run: npm run openapi:prepare

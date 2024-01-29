@@ -12,7 +12,7 @@ process.env.BATCH_JOB_STATE_MACHINE_ARN = MOCK_BATCH_JOB_STATE_MACHINE_ARN
 
 describe('Batch job trigger', () => {
   const jobTriggerHandler = handler as any as (event: SQSEvent) => void
-  let sfnMock: AwsStub<any, any>
+  let sfnMock: AwsStub<any, any, any>
 
   beforeEach(() => {
     sfnMock = mockClient(SFNClient as any)
@@ -25,7 +25,7 @@ describe('Batch job trigger', () => {
       type: 'DASHBOARD_REFRESH',
       parameters: { checkTimeRange: {} },
     }
-    await jobTriggerHandler(createSqsEvent([batchJob]))
+    jobTriggerHandler(createSqsEvent([batchJob]))
 
     expect(sfnMock).toHaveReceivedCommandTimes(StartExecutionCommand as any, 1)
 
