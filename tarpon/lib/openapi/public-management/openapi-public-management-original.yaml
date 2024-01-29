@@ -584,6 +584,8 @@ components:
           type: array
           items:
             type: string
+        sampleUseCases:
+          type: string
       required:
         - id
         - type
@@ -597,6 +599,7 @@ components:
         - checksFor
         - types
         - typologies
+        - sampleUseCases
     ErrorMessage:
       title: ErrorMessage
       x-stoplight:

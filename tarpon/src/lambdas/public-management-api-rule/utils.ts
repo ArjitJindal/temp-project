@@ -18,5 +18,6 @@ export function toPublicRule(rule: Rule): PublicRule {
     checksFor: rule.checksFor,
     types: rule.types,
     typologies: rule.typologies,
+    sampleUseCases: rule.sampleUseCases,
   }
 }

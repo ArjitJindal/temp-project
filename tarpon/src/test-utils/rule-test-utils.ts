@@ -58,6 +58,7 @@ export async function createRule(
     checksFor: [],
     types: [],
     typologies: [],
+    sampleUseCases: '',
 
     ...rule,
   })

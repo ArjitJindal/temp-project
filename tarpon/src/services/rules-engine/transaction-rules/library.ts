@@ -165,6 +165,8 @@ const _RULES_LIBRARY: Array<
     ruleTypology: 'Account activity, inconsistent with customer profile',
     types: [RuleTypeField.NewActivity],
     typologies: [RuleTypology.UnusualBehaviour],
+    sampleUseCases:
+      'A new user, opens a bank account and soon after initiates a large international wire transfer.',
   }),
   () => {
     const defaultParameters: TransactionAmountRuleParameters = {
@@ -189,6 +191,8 @@ const _RULES_LIBRARY: Array<
       defaultFalsePositiveCheckEnabled: true,
       types: [RuleTypeField.PatternRecognition],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'A user, usually transacting under 500 SGD, initiates a sudden 10,000 SGD transaction, prompting a review for unusual high-value activity.',
     }
   },
   () => {
@@ -215,6 +219,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.NewActivity],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'A user typically transacts domestically, then suddenly starts sending high-value transactions abroad.',
     }
   },
   () => {
@@ -241,6 +247,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.NewActivity],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'An account mainly using USD suddenly transacts in EUR. This significant shift triggers an alert for potential scrutiny.',
     }
   },
   () => {
@@ -268,6 +276,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.MoneyMules, RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        "An account shows no activity for six months (time 't'), then suddenly executes a high-value transaction.",
     }
   },
   () => {
@@ -291,6 +301,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.RiskExposure],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'A user frequently transacts with a high-risk currency linked to money laundering, necessitating closer scrutiny.',
     }
   },
   () => {
@@ -323,6 +335,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Velocity, RuleTypeField.TransactionDenstiy],
       typologies: [RuleTypology.Structuring],
+      sampleUseCases:
+        'Over a week, an individual receive multiple transactions from different recipients, all marginally under the reporting limit, suggesting a deliberate effort to stay under the radar.',
     }
   },
   () => {
@@ -354,6 +368,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Velocity, RuleTypeField.TransactionDenstiy],
       typologies: [RuleTypology.Structuring, RuleTypology.MoneyMules],
+      sampleUseCases:
+        'Over a week, an individual sends multiple transactions to different recipients, all marginally under the reporting limit, suggesting a deliberate effort to stay under the radar.',
     }
   },
   () => {
@@ -386,6 +402,8 @@ const _RULES_LIBRARY: Array<
         RuleTypology.Scams,
         RuleTypology.TerroristFinancing,
       ],
+      sampleUseCases:
+        'Within a week, an unusually large number of different users send money to a single recipient, suggesting a possible scam or money laundering operation.',
     }
   },
   () => {
@@ -419,6 +437,8 @@ const _RULES_LIBRARY: Array<
         RuleTypology.Scams,
         RuleTypology.TerroristFinancing,
       ],
+      sampleUseCases:
+        'Within a week, an unusually large number of different counterparties send money to a single user, suggesting a possible scam or money laundering operation.',
     }
   },
   () => {
@@ -446,6 +466,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Blacklist],
       typologies: [RuleTypology.InternalBlacklists],
+      sampleUseCases:
+        'During a transaction, a receiver’s wallet name matches an entry in the blacklist database, triggering an immediate hold on the transaction for further investigation.',
     }
   },
   () => {
@@ -473,6 +495,8 @@ const _RULES_LIBRARY: Array<
         RuleTypology.HighRiskTransactions,
         RuleTypology.UnusualBehaviour,
       ],
+      sampleUseCases:
+        'Multiple transactions are initiated to and from a country that has been identified as having high levels of corruption and money laundering.',
     }
   },
 
@@ -511,6 +535,8 @@ const _RULES_LIBRARY: Array<
         RuleTypology.AcquiringFraud,
         RuleTypology.Layering,
       ],
+      sampleUseCases:
+        'A user initiates transactions from four banks within a week, indicating unusual financial behaviour.',
     }
   },
   () => {
@@ -550,6 +576,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Blacklist],
       typologies: [RuleTypology.InternalBlacklists],
+      sampleUseCases:
+        "During a transaction, an individual's card issued country matches an entry in the blacklist database, triggering an immediate hold on the transaction for further investigation.",
     }
   },
   () => {
@@ -591,6 +619,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Blacklist],
       typologies: [RuleTypology.InternalBlacklists],
+      sampleUseCases:
+        'A payment with a blacklisted keyword in its reference is automatically flagged by the system for potential fraud review.',
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -641,6 +671,8 @@ const _RULES_LIBRARY: Array<
         RuleTypology.AcquiringFraud,
         RuleTypology.Layering,
       ],
+      sampleUseCases:
+        'If a person sends several transactions exceeding a set limit (e.g., $10,000) within a brief period (e.g., 24 hours). ',
     }
   },
   () => {
@@ -670,6 +702,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.MoneyMules, RuleTypology.AccountTakeoverFraud],
+      sampleUseCases:
+        'In a week, an IP address is used by 10 unique users for transactions, exceeding the set limit for unique users per IP.',
     }
   },
   () => {
@@ -700,6 +734,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.AcquiringFraud],
+      sampleUseCases:
+        'Within a month, 20 user accounts use the same payment identifier, exceeding the unique user threshold for a specific timeframe.',
     }
   },
   () => {
@@ -732,6 +768,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Diversity],
       typologies: [RuleTypology.CardFraud, RuleTypology.AcquiringFraud],
+      sampleUseCases:
+        "A user's use of several unique cards within a week hints at possible card testing or fraud.",
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -768,6 +806,8 @@ const _RULES_LIBRARY: Array<
       defaultFalsePositiveCheckEnabled: true,
       types: [RuleTypeField.Volume],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'An account typically making $100 monthly transactions suddenly sends $3,000 in three days, triggering an investigation due to the unusual increase.',
     }
   },
   () => {
@@ -795,6 +835,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P2',
       types: [RuleTypeField.RiskExposure],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'A user initiates a transaction from a high-risk country, triggering an alert for potential scrutiny.',
     }
   },
   () => {
@@ -819,6 +861,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.AccountTakeoverFraud],
+      sampleUseCases:
+        'A regular account in Japan initiates an unusual transaction from Sweden.',
     }
   },
   () => {
@@ -846,6 +890,7 @@ const _RULES_LIBRARY: Array<
         RuleTypology.UnusualBehaviour,
         RuleTypology.HiddenUnusualRelationships,
       ],
+      sampleUseCases: 'A user with a high risk score initiates a transaction.',
     }
   },
   () => {
@@ -869,6 +914,8 @@ const _RULES_LIBRARY: Array<
       defaultFalsePositiveCheckEnabled: true,
       types: [RuleTypeField.VolumeComparison],
       typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'A user initiates a transaction that exceeds the expected limit.',
     }
   },
   () => {
@@ -895,6 +942,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.AccountTakeoverFraud],
+      sampleUseCases:
+        "Over the course of a week, a user's IP address switches between different countries 10 times, exceeding the set limit for IP address changes and raising concerns about the legitimacy of the user's activities.",
     }
   },
   () => {
@@ -924,6 +973,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Blacklist],
       typologies: [RuleTypology.InternalBlacklists],
+      sampleUseCases:
+        'A card issued in a country that is not on the whitelist is automatically blocked from making transactions.',
     }
   },
   () => {
@@ -947,6 +998,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.PatternRecognition],
       typologies: [RuleTypology.Structuring],
+      sampleUseCases:
+        'Recurring user transactions end in .999 (e.g., 150.999, 250.999, 350.999), hinting at a pattern warranting investigation.',
     }
   },
 
@@ -981,6 +1034,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.AccountTakeoverFraud],
+      sampleUseCases:
+        'A transaction initiated by "JohnDoe123" with an account holder name "JonDo123", triggers the monitoring rule due to the significant Levenshtein distance.',
     }
   },
   () => {
@@ -1013,6 +1068,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Velocity],
       typologies: [RuleTypology.HiddenUnusualRelationships],
+      sampleUseCases:
+        'Businesses transacting excessively among themselves within a period, initiating a potential circular trading investigation.',
     }
   },
   // TODO: Change Rule Descriptions once rule is split into two
@@ -1056,6 +1113,8 @@ const _RULES_LIBRARY: Array<
       defaultFalsePositiveCheckEnabled: true,
       types: [RuleTypeField.VolumeComparison],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'In Q1, the average sender user transaction was $1,000, dropping to $100 in Q2, triggering a rule for further investigation.',
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -1095,6 +1154,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.VelocityComparison],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        "User's avg daily transactions increase significantly in the first month and drop the next, indicating a possible change in transaction behaviour or risk profile.",
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -1138,6 +1199,8 @@ const _RULES_LIBRARY: Array<
       defaultFalsePositiveCheckEnabled: true,
       types: [RuleTypeField.VolumeComparison],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'In early May (t1), sender’s daily transaction was $200 on average, which dropped to $20 daily in late May (t2), triggering an alert due to this significant decrease.',
     }
   },
   // TODO: Change rule description when rule is split into two
@@ -1184,6 +1247,8 @@ const _RULES_LIBRARY: Array<
         RuleTypology.AcquiringFraud,
         RuleTypology.Layering,
       ],
+      sampleUseCases:
+        "In the last 15 days, a user's transactions surged to $50,000 from the previous 30-day total of $5,000, with a possibility for potential unusual activity.",
     }
   },
   () => {
@@ -1219,6 +1284,8 @@ const _RULES_LIBRARY: Array<
       defaultFalsePositiveCheckEnabled: true,
       types: [RuleTypeField.Volume],
       typologies: [RuleTypology.HiddenUnusualRelationships],
+      sampleUseCases:
+        'Two users repeatedly transact between each other, exchanging sums above $10,000 within a single week.',
     }
   },
   () => {
@@ -1251,6 +1318,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Diversity],
       typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        "A user's account receives 10 transactions of round values (e.g., $100, $200, $300) within a single day, exceeding the set limit for round transactions and raising concerns about the legitimacy of the user's activities.",
     }
   },
   () => {
@@ -1287,6 +1356,8 @@ const _RULES_LIBRARY: Array<
         RuleTypology.AccountTakeoverFraud,
         RuleTypology.IssuingFraud,
       ],
+      sampleUseCases:
+        "A user's account has a high percentage of transactions in a specific state (e.g., Refund) within a single day, exceeding the set limit for transactions in a specific state and raising concerns about the legitimacy of the user's activities.",
     }
   },
   () => {
@@ -1326,6 +1397,8 @@ const _RULES_LIBRARY: Array<
         RuleTypology.HighRiskTransactions,
         RuleTypology.TerroristFinancing,
       ],
+      sampleUseCases:
+        "A user's account receives 10 transactions from a high-risk country within a single day, exceeding the set limit for transactions from high-risk countries and raising concerns about the legitimacy of the user's activities.",
     }
   },
   // TODO: Change Rule Description when Rule is Split into two
@@ -1361,6 +1434,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Diversity],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'In a single week, a sender sent transactions to 8 distinct countries, indicating a potential pattern of irregular activity.',
     }
   },
   () => {
@@ -1388,6 +1463,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Velocity],
       typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        "A user's account receives 10 transactions of $100.00 within a single day, exceeding the set limit for round transactions and raising concerns about the legitimacy of the user's activities.",
     }
   },
   () => {
@@ -1420,6 +1497,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Diversity],
       typologies: [RuleTypology.HiddenUnusualRelationships],
+      sampleUseCases:
+        "A user's account number is used in 10 transactions within a single day, exceeding the set limit for account number usage and raising concerns about the legitimacy of the user's activities.",
     }
   },
   () => {
@@ -1442,6 +1521,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.Blacklist],
       typologies: [RuleTypology.InternalBlacklists],
+      sampleUseCases:
+        "During a transaction, an individual's user’s payment details matches an entry in the blacklist database, triggering an immediate hold on the transaction for further investigation.",
     }
   },
   // TODO: Change Rule Description when Rule is Split into two
@@ -1479,6 +1560,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.VelocityComparison],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'When a user does 200 transactions in the first quarter, but only 20 in the next, due to the significant drop in activity.',
     }
   },
   () => {
@@ -1502,6 +1585,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P3',
       types: [RuleTypeField.Blacklist],
       typologies: [RuleTypology.InternalBlacklists],
+      sampleUseCases:
+        "During a transaction, an individual's user ID matches an entry in the blacklist database, triggering an immediate hold on the transaction for further investigation.",
     }
   },
   () => {
@@ -1536,6 +1621,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       types: [RuleTypeField.VolumeComparison],
       typologies: [RuleTypology.MoneyMules, RuleTypology.Layering],
+      sampleUseCases:
+        'A user sent transactions worth $30,000 in a month but received only $3,000, triggering further analysis due to the large discrepancy.',
     }
   },
   () => {
@@ -1566,6 +1653,8 @@ const _RULES_LIBRARY: Array<
       requiredFeatures: ['SANCTIONS'],
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases:
+        'A merchant or business user can check for sanctions/PEP/AM match of their shareholders & directors.',
     }
   },
   () => {
@@ -1593,6 +1682,8 @@ const _RULES_LIBRARY: Array<
       requiredFeatures: ['SANCTIONS'],
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases:
+        'Resolve an IBAN number to check if the bank name have matched against Sanctions/ PEP/ AM.',
     }
   },
   () => {
@@ -1623,6 +1714,8 @@ const _RULES_LIBRARY: Array<
       isOngoingScreening: true,
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases:
+        "A transaction’s recipient's name and bank name are checked against Sanctions/ PEP/ AM sanctions list, prompting further investigation.",
     }
   },
   () => {
@@ -1654,6 +1747,8 @@ const _RULES_LIBRARY: Array<
       requiredFeatures: ['SANCTIONS'],
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases:
+        'A consumer user can be checked for sanctions/PEP/AM match.',
     }
   },
   () => {
@@ -1682,6 +1777,8 @@ const _RULES_LIBRARY: Array<
       requiredFeatures: ['MERCHANT_MONITORING'],
       types: [RuleTypeField.MerchantMonitoring],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'An alert is triggered when a company, previously listed as technology on a professional network, suddenly switches to healthcare, suggesting a possible profile discrepancy.',
     }
   },
 
@@ -1707,6 +1804,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P2',
       types: [RuleTypeField.MerchantMonitoring],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'The system temporarily halts frequent online shopping transactions for verification if it detects multiple recent home address changes.',
     }
   },
   () => {
@@ -1733,6 +1832,8 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P2',
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'A user updated their bank details four times in a month, indicating possible account takeover or fraud.',
     }
   },
 ]

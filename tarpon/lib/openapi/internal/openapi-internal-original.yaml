@@ -5675,6 +5675,8 @@ components:
           type: array
           items:
             type: string
+        sampleUseCases:
+          type: string
       required:
         - id
         - type
@@ -5688,6 +5690,7 @@ components:
         - checksFor
         - types
         - typologies
+        - sampleUseCases
     RuleFilters:
       title: RuleFilter
       type: object

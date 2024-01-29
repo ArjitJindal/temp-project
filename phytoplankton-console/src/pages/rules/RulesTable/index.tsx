@@ -136,7 +136,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
         key: 'defaultAction',
         type: RULE_ACTION,
         sorting: true,
-        defaultWidth: 80,
+        defaultWidth: 100,
         // todo: implement
         // sorter: (a, b) => a.defaultAction.localeCompare(b.defaultAction),
         // exportData: (row) => row.defaultAction,
@@ -157,6 +157,20 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
           },
           stringify: (checksFor) => {
             return checksFor?.join(', ') ?? '-';
+          },
+          defaultWrapMode: 'WRAP',
+        },
+      }),
+      helper.simple<'sampleUseCases'>({
+        title: 'Sample use cases',
+        key: 'sampleUseCases',
+        defaultWidth: 400,
+        type: {
+          render: (sampleUseCases) => {
+            return <>{sampleUseCases}</>;
+          },
+          stringify: (sampleUseCases) => {
+            return sampleUseCases ?? '-';
           },
           defaultWrapMode: 'WRAP',
         },
