@@ -450,7 +450,7 @@ class DatabricksStack extends TerraformStack {
             nodeTypeId: 'm5d.large',
             autoscale: {
               minWorkers: 1,
-              maxWorkers: 4,
+              maxWorkers: 1,
             },
           },
         ],
