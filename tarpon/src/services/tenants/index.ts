@@ -17,7 +17,6 @@ import { BadRequest } from 'http-errors'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import {
-  getTenantInfoFromUsagePlans,
   USAGE_PLAN_REGEX,
   doesUsagePlanExist,
   getAllUsagePlans,
@@ -243,17 +242,21 @@ export class TenantService {
     unmask: boolean
     apiKeyId: string
   }): Promise<TenantApiKey[]> {
-    const tenants = await getTenantInfoFromUsagePlans(region)
+    const allUsagePlans = await getAllUsagePlans(region)
 
     const tenantId = this.tenantId.endsWith('-test')
       ? this.tenantId.replace('-test', '')
       : this.tenantId
 
-    const usagePlanId = tenants?.find((t) => t.id === tenantId)?.usagePlanId
+    const usagePlan = allUsagePlans?.find(
+      (x) => x.name?.match(USAGE_PLAN_REGEX)?.[1] === tenantId
+    )
 
-    if (!usagePlanId) {
+    if (!usagePlan) {
       throw new Error(`Usage plan for tenant ${tenantId} not found`)
     }
+
+    const usagePlanId = usagePlan.id
 
     const apigateway = new APIGatewayClient({
       region,

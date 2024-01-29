@@ -24,6 +24,7 @@ export const getAllUsagePlans = async (
     position = retrivedPlans.position
     usagePlans = usagePlans?.concat(retrivedPlans.items || [])
   } while (position)
+
   return usagePlans
 }
 
