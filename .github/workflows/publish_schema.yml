@@ -30,13 +30,15 @@ jobs:
         if: github.event_name == 'pull_request'
         shell: bash
         run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
+      - name: Corepack enable
+        run: corepack enable && yarn set version berry
       - name: Use Node.js 18
         uses: actions/setup-node@v3
         with:
           node-version: "18"
-          cache: "npm"
-          cache-dependency-path: "tarpon/package-lock.json"
-      - run: npm ci
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
+      - run: yarn install --immutable
         working-directory: "tarpon"
       - name: Publish schemas
         run: npm run openapi:publish

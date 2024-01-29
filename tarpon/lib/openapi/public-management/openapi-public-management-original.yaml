@@ -81,7 +81,7 @@ paths:
 
         If you need an update to a rule or a new rule, you can always contact the Flagright team.
       parameters: []
-  '/rules/{ruleId}':
+  /rules/{ruleId}:
     parameters:
       - schema:
           type: string
@@ -192,7 +192,7 @@ paths:
 
 
         `GET /rule-instances` endpoint returns a list of all rule instances created by your account on flagright.
-  '/rule-instances/{ruleInstanceId}':
+  /rule-instances/{ruleInstanceId}:
     parameters:
       - schema:
           type: string

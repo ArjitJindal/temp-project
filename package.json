@@ -4,7 +4,7 @@
   "description": "`phytoplankton` - Frontend code for the console `tarpon` - Our backend API `raptor` - Our ML stack",
   "main": "index.js",
   "scripts": {
-    "preinstall": "cd lib && npm install",
+    "preinstall": "cd lib && corepack enable && yarn",
     "prepare": "husky install .husky",
     "openapi:local": "cd tarpon && npm run openapi:build && npm run openapi:prepare && cd ../phytoplankton-console && ENV=local npm run openapi:build && cd ..",
     "deploy:pipeline": "ENV=deploy cdk deploy orca-pipeline --require-approval never --profile=AWSAdministratorAccess-073830519512",
@@ -21,6 +21,7 @@
     "aws-cdk-lib": "~2.106.0",
     "constructs": "^10.3.0",
     "husky": "^8.0.1",
+    "prettier": "^3.1.1",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.2.2"
@@ -41,9 +42,9 @@
     ]
   },
   "dependencies": {
-    "@flagright/lib": "file:lib",
+    "@flagright/lib": "link:./lib",
     "@types/lodash": "^4.14.200",
-    "lodash": "^4.17.21",
-    "prettier": "^3.1.1"
-  }
+    "lodash": "^4.17.21"
+  },
+  "packageManager": "yarn@4.0.2"
 }

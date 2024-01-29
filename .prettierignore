@@ -10,3 +10,4 @@ src/@types/openapi*
 *.txt
 *.xsd
 *.xml
+*.lock

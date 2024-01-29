@@ -4,7 +4,7 @@
   "description": "![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)",
   "main": "index.js",
   "scripts": {
-    "preinstall": "cd ../lib && npm install",
+    "preinstall": "cd ../lib && corepack enable && yarn",
     "all": "npm-run-all -l -s",
     "parallel": "npm-run-all -l -p",
     "aws-login": "npx ts-node ../lib/scripts/aws-login.ts",

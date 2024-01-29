@@ -25,12 +25,6 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js 18x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: "npm"
-          cache-dependency-path: "tarpon/package-lock.json"
       - name: Corepack enable
         run: corepack enable && yarn set version berry
       - name: Use Node.js 18x
@@ -38,10 +32,16 @@ jobs:
         with:
           node-version: 18
           cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
+      - name: Use Node.js 18x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "yarn"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Build Root
-        run: npm install
-      - run: npm ci
+        run: yarn install --immutable
+      - run: yarn install --immutable
         working-directory: "tarpon"
       - run: npm run openapi:prepare
         working-directory: "tarpon"
