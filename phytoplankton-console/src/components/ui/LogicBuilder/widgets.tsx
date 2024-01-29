@@ -8,7 +8,14 @@ import {
   MultiSelectWidget,
   SelectFieldSettings,
 } from '@react-awesome-query-builder/core';
-import { CoreWidgets, Config, BasicConfig, BaseWidgetProps } from '@react-awesome-query-builder/ui';
+import {
+  CoreWidgets,
+  Config,
+  BasicConfig,
+  BaseWidgetProps,
+  DateTimeWidget,
+} from '@react-awesome-query-builder/ui';
+import DatePicker from '../DatePicker';
 import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -16,6 +23,7 @@ import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
 import Toggle from '@/components/library/Toggle';
 import Slider, { CommonProps as SliderCommonProps } from '@/components/library/Slider';
+import { dayjs } from '@/utils/dayjs';
 import { RuleOperatorType } from '@/apis';
 
 function WidgetWrapper(props: { widgetFactoryProps: WidgetProps; children: React.ReactNode }) {
@@ -119,6 +127,21 @@ const customBooleanWidget: BooleanWidget = {
   },
 };
 
+const customDateAndTimeWidget: DateTimeWidget = {
+  type: `datetime`,
+  factory: (props) => {
+    return (
+      <WidgetWrapper widgetFactoryProps={props}>
+        <DatePicker
+          showTime
+          value={props.value ? dayjs(props.value as any) : undefined}
+          onChange={(v) => props.setValue(dayjs(v).valueOf() as any)}
+        />
+      </WidgetWrapper>
+    );
+  },
+};
+
 function getSelectOptions(
   props: BaseWidgetProps & SelectFieldSettings,
 ): Array<ListItem | string | number> {
@@ -204,7 +227,7 @@ export const customWidgets: CoreWidgets<Config> = {
   // treemultiselect: customTreemultiselectWidget,
   // date: customDateWidget,
   // time: customTimeWidget,
-  // datetime: customDatetimeWidget,
+  datetime: customDateAndTimeWidget,
   boolean: customBooleanWidget,
   // field: customWidget,
   // func: customWidget,

@@ -108,10 +108,19 @@ const USER_DERIVED_VARIABLES: Array<
   BUSINESS_USER_CREATION_AGE_YEARS,
 ]
 
+function isTimestampVariable(key: string): boolean {
+  return key.endsWith('timestamp') || key.endsWith('Timestamp')
+}
+
 function getUiDefinitionType(leafInfo: EntityLeafValueInfo) {
   if (leafInfo.options && leafInfo.options.length > 0) {
     return 'select'
   }
+
+  if (isTimestampVariable(leafInfo.pathKey)) {
+    return 'datetime'
+  }
+
   switch (leafInfo.type) {
     case 'string':
       return 'text'
