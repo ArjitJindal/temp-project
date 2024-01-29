@@ -21,13 +21,15 @@ jobs:
         with:
           ref: "main"
           clean: false
+      - name: Corepack enable
+        run: corepack enable && yarn set version berry
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: "tarpon/package-lock.json"
-      - run: npm ci
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
+      - run: yarn install --immutable
         working-directory: "tarpon"
       - name: Destroy
         run: |

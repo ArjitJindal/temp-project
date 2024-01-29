@@ -17,8 +17,9 @@ export const phytoplanktonDeployStage = (
             nodejs: 18,
           },
           commands: [
-            'npm ci',
-            'npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
+            'corepack enable && yarn set version berry',
+            'yarn install --immutable',
+            'yarn add @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
             'cd phytoplankton-console',
             'npm install -g aws-cdk yarn',
             'corepack enable && yarn set version berry',

@@ -32,10 +32,11 @@ export const tarponDeployStage = (
             nodejs: 18,
           },
           commands: [
-            'npm ci',
+            'corepack enable && yarn set version berry',
+            'yarn install --immutable',
             'cd tarpon',
             'corepack enable',
-            'yarn install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
+            'yarn add @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
             `export ENV=${env}`,
             `export AWS_REGION=${config.env.region}`,
             `export AWS_ACCOUNT=${config.env.account}`,

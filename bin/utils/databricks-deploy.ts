@@ -24,7 +24,8 @@ export const databricksDeployStage = (
             },
             commands: [
               'cd lib',
-              'npm ci',
+              'corepack enable && yarn set version berry',
+              'yarn install --immutable',
               'cd ../databricks/infra',
               'npm install',
               ...getAssumeRoleCommands(config),

@@ -15,9 +15,10 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
           },
           commands: [
             'corepack enable',
-            'npm ci',
+            'yarn set version berry',
+            'yarn install --immutable',
             'cd lib',
-            'npm ci',
+            'yarn install --immutable',
             'cd ../tarpon',
             'yarn install --immutable',
           ],
