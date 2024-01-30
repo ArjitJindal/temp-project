@@ -23,7 +23,8 @@ async function main() {
     console.error(e)
   }
   console.info('Seeding DynamoDB...')
-  await seedDynamo(getDynamoDbClient(), TENANT)
+  const dynamoClient = getDynamoDbClient()
+  await seedDynamo(dynamoClient, TENANT)
 
   console.info('Seeding MongoDB...')
   const client = await MongoClient.connect(
@@ -32,6 +33,8 @@ async function main() {
   await seedMongo(client, TENANT)
   console.info('Closing up mongo client')
   await client.close()
+  console.info('Closing up dynamo client')
+  dynamoClient.destroy()
   console.info('Finished seeding!')
 }
 

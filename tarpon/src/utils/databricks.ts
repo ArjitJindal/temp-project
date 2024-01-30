@@ -6,7 +6,7 @@ import { getContext } from '@/core/utils/context'
 // https://www.notion.so/flagright/Reuse-connected-databricks-SQL-client-b33a5fd5323142a5a1cea880e5c57470
 export async function executeSql<T>(
   sql: string,
-  namedParameters: any
+  namedParameters: any = {}
 ): Promise<T[]> {
   const tenantId = getContext()?.tenantId?.toLowerCase()
   const credentials = await getSecret<{
@@ -25,7 +25,6 @@ export async function executeSql<T>(
   const connectedClient = await client.connect(connectOptions)
   const session = await connectedClient.openSession({
     initialSchema: tenantId,
-    initialCatalog: 'hive_metastore',
   })
   const statement = await session.executeStatement(sql, {
     namedParameters,
@@ -35,4 +34,9 @@ export async function executeSql<T>(
   await statement.close()
   await session.close()
   return result as T[]
+}
+
+export async function startSqlWarehouse() {
+  // Execute arbitrary SQL that will boot the serverless SQL warehouse that will live for 15 mins.
+  await executeSql(`select 1`)
 }

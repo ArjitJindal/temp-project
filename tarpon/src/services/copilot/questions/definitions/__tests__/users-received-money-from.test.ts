@@ -8,7 +8,8 @@ import { UsersReceivedMoneyFrom } from '@/services/copilot/questions/definitions
 import { testQuestion } from '@/services/copilot/questions/definitions/__tests__/util'
 
 describe('User received money from', () => {
-  test('One user returned', async () => {
+  // TODO: Skipped until dockerized hiveSQL is integrated
+  test.skip('One user returned', async () => {
     await testQuestion(
       UsersReceivedMoneyFrom,
 

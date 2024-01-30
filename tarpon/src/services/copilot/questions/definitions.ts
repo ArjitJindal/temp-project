@@ -26,7 +26,8 @@ import { Directors } from '@/services/copilot/questions/definitions/directors'
 import { Website } from '@/services/copilot/questions/definitions/website'
 import { Linkedin } from '@/services/copilot/questions/definitions/linkedin'
 import { EntityLinking } from '@/services/copilot/questions/definitions/entity-linking'
-import { TransactionSummary } from '@/services/copilot/questions/definitions/transaction-summary'
+import { TransactionOriginSummary } from '@/services/copilot/questions/definitions/transaction-origin-summary'
+import { TransactionDestinationSummary } from '@/services/copilot/questions/definitions/transaction-destination-summary'
 import { CrmInsights } from '@/services/copilot/questions/definitions/crm-insights'
 import { KycScoring } from '@/services/copilot/questions/definitions/kyc-score'
 import { Recommendation } from '@/services/copilot/questions/definitions/recommendation'
@@ -53,6 +54,8 @@ export const getQuestions = (): (
     UniquePaymentIdentifierReceived,
     UsersSentMoneyTo,
     UsersReceivedMoneyFrom,
+    TransactionOriginSummary,
+    TransactionDestinationSummary,
     ...(hasFeature('CRM') ? [CrmInsights] : []),
     ...(hasFeature('SAR') ? [SarsFiled] : []),
     ...(hasFeature('MERCHANT_MONITORING')
@@ -65,7 +68,6 @@ export const getQuestions = (): (
           Recommendation,
           TrsScore,
           Transactions,
-          TransactionSummary,
           TransactionByRulesAction,
           TransactionType,
         ]

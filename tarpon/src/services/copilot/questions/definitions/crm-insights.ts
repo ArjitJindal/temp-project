@@ -24,7 +24,7 @@ export const CrmInsights: PropertiesQuestion<any> = {
           value: crmAccount?.summary.summary || '',
         },
         {
-          key: 'Postive indicators',
+          key: 'Positive indicators',
           value: crmAccount?.summary.good || '',
         },
         {

@@ -16,6 +16,7 @@ import { AutocompleteService } from '@/services/copilot/questions/autocompletion
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { AI_SOURCES } from '@/services/copilot/attributes/ai-sources'
 import { Case } from '@/@types/openapi-internal/Case'
+import { startSqlWarehouse } from '@/utils/databricks'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -98,6 +99,7 @@ export const copilotHandler = lambdaApi({})(
     })
 
     handlers.registerGetQuestions(async (_ctx, request) => {
+      void startSqlWarehouse()
       const questionService = await QuestionService.fromEvent(event)
       const alert = await alertsService.getAlert(request.alertId)
       if (!alert?.caseId) {
