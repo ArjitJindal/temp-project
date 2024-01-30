@@ -66,7 +66,6 @@ export class RuleService {
       mongoDb,
     })
     for (const rule of RULES_LIBRARY) {
-      console.info(`Syncing rule ${rule.id} (${rule.name})`)
       // If ui:order is not defined, set the order to be the order defined in each rule
       if (!rule.parametersSchema?.['ui:schema']?.['ui:order']) {
         set(
@@ -78,9 +77,6 @@ export class RuleService {
       await ruleRepository.createOrUpdateRule(rule)
       console.info(`Synced rule ${rule.id} (${rule.name})`)
     }
-    console.info('All rules synced')
-    dynamoDb.destroy()
-    void mongoDb.close()
   }
 
   async getAllRuleFilters(): Promise<RuleFilters> {
