@@ -48,7 +48,7 @@ export default function Money(props: Props) {
   if (currencyInfo == null) {
     return (
       <span {...rest}>
-        <span title={(value ?? 0.0)?.toFixed(2)}>{formatNumber(value, compact)}</span>
+        <span title={(value ?? 0.0)?.toFixed(2)}>{formatNumber(value, { compact })}</span>
         <span> </span>
         <span>{currency}</span>
       </span>
@@ -58,7 +58,7 @@ export default function Money(props: Props) {
     <span {...rest}>
       <CurrencySymbol currency={currency} />
       &#8203;
-      <span title={(value ?? 0.0)?.toFixed(2)}>{formatNumber(value, compact)}</span>
+      <span title={(value ?? 0.0)?.toFixed(2)}>{formatNumber(value, { compact })}</span>
     </span>
   );
 }

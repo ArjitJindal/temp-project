@@ -125,7 +125,7 @@ export const NUMBER: ColumnDataType<number> = {
 };
 
 export const FLOAT: ColumnDataType<number> = {
-  render: (value) => <span>{Number(value ?? 0.0)?.toFixed(2)}</span>,
+  render: (value) => <span>{formatNumber(value ?? 0.0, { keepDecimals: true })}</span>,
   renderEdit: (context) => {
     const [state] = context.edit.state;
     return (
