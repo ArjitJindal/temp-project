@@ -33,9 +33,7 @@ export const getE2ETestProject = (
       },
       env: {
         'secrets-manager': {
-          CYPRESS_SUPER_ADMIN: STACK_CONSTANTS.CYPRESS_SUPER_ADMIN,
-          CYPRESS_CUSTOM_ROLE: STACK_CONSTANTS.CYPRESS_CUSTOM_ROLE,
-          CYPRESS_ADMIN: STACK_CONSTANTS.CYPRESS_ADMIN,
+          CYPRESS_CREDS: STACK_CONSTANTS.CYPRESS_CREDS,
         },
       },
     }),

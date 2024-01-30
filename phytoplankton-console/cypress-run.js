@@ -43,9 +43,10 @@ async function getCypressCreds() {
 }
 
 (async () => {
-  let super_admin = process.env.CYPRESS_SUPER_ADMIN;
-  let custom_role = process.env.CYPRESS_CUSTOM_ROLE;
-  let admin = process.env.CYPRESS_ADMIN;
+  const cypressCreds = process.env.CYPRESS_CREDS ?? {};
+  console.info('🔑 Cypress creds in env', cypressCreds);
+  let { super_admin, custom_role, admin } =
+    typeof cypressCreds === 'string' ? JSON.parse(cypressCreds) : cypressCreds;
   try {
     const cypressEnv = JSON.parse(fs.readFileSync('cypress.env.json'));
     super_admin = cypressEnv.super_admin;
