@@ -53,7 +53,7 @@ describe('comments formatting', () => {
   test('format comments for cases', () => {
     const data = casesCommentsGenerator([testComment], [testAlert, testAlert], testUsers);
     expect(data).toEqual(
-      `Other comments\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\n\nAlert alertId1\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\n\nAlert alertId1\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added`,
+      `Other comments :\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\n\nAlert alertId1\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\n\nAlert alertId1\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added\n\n\ncomment 1\n\nAdded on: 12:00:00 AM Added by: user1\n\n1 attachment(s) added`,
     );
   });
 });

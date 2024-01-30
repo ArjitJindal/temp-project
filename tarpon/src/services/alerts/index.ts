@@ -771,6 +771,7 @@ export class AlertsService extends CaseAlertsCommonService {
           userId: statusChange.userId,
           body: commentBody,
           files: statusUpdateRequest.files,
+          type: 'STATUS_CHANGE',
         }),
         ...(isReview && userAccount.reviewerId && !skipReview
           ? [

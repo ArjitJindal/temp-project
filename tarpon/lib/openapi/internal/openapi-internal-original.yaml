@@ -6850,6 +6850,10 @@ components:
           type: number
         updatedAt:
           type: number
+        type:
+          type: string
+          enum:
+            - STATUS_CHANGE
       required:
         - body
     NarrativeRequest:

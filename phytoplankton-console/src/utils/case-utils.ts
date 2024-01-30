@@ -2,6 +2,7 @@ import { every, some, uniq, map, intersection } from 'lodash';
 import { DEFAULT_TIME_FORMAT } from './dayjs';
 import { getAccountUserName } from './account';
 import { FLAGRIGHT_SYSTEM_USER } from './user-utils';
+import { humanizeSnakeCase } from './humanize';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { dayjs } from '@/utils/dayjs';
 import {
@@ -173,23 +174,23 @@ export function casesCommentsGenerator(
   comments: Comment[],
   alerts: Alert[],
   users: { [userId: string]: Account },
+  type?: 'STATUS_CHANGE',
 ) {
+  const filteredComments = comments?.filter((comment) => comment.type === type);
   {
     let commentData = '';
-
-    if (comments?.length) {
-      commentData += 'Other comments\n\n';
+    if (filteredComments?.length) {
+      commentData += `${humanizeSnakeCase(type ?? 'OTHER')} comments :\n\n`;
     }
-
-    commentData += commentsToString(comments ?? [], users);
+    commentData += commentsToString(filteredComments ?? [], users);
     commentData += '\n\n';
 
     alerts?.forEach((alert, i) => {
-      if (alert.comments?.length) {
+      const filteredAlertComments = alert.comments?.filter((comment) => comment.type === type);
+      if (filteredAlertComments?.length) {
         commentData += `\n\nAlert ${alert.alertId}\n\n`;
       }
-
-      commentData += commentsToString(alert.comments ?? [], users);
+      commentData += commentsToString(filteredAlertComments ?? [], users);
 
       if (i < alerts.length - 1) {
         commentData += '\n\n';

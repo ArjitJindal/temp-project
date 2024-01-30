@@ -604,6 +604,7 @@ export class CaseService extends CaseAlertsCommonService {
           body: commentBody,
           files: updates.files,
           userId: statusChange.userId,
+          type: 'STATUS_CHANGE',
         }),
         ...(isReview &&
         accountUser.reviewerId &&

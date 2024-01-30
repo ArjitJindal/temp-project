@@ -396,6 +396,25 @@ export default function CaseTable(props: Props) {
       helper.simple<'comments'>({
         hideInTable: true,
         key: 'comments',
+        title: 'Status change comments',
+        filtering: false,
+        exporting: true,
+        type: {
+          stringify: (comments: Comment[] | undefined, item: TableItem) =>
+            casesCommentsGenerator(
+              comments ?? [],
+              item.alerts ?? [],
+              users,
+              'STATUS_CHANGE',
+            ).trim(),
+        },
+      }),
+    );
+
+    mergedColumns.push(
+      helper.simple<'comments'>({
+        hideInTable: true,
+        key: 'comments',
         title: 'Comments',
         filtering: false,
         exporting: true,
