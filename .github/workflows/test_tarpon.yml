@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Corepack enable
-        run: corepack enable && yarn set version berry
+        run: corepack enable && yarn set version 4.0.2
       - name: Use Node.js 18x
         uses: actions/setup-node@v3
         with:
@@ -41,7 +41,7 @@ jobs:
           path: ~/.jest-cache
           key: jest-cache
       - name: Build Flagright Lib
-        run: corepack enable && yarn set version berry && yarn install --immutable
+        run: corepack enable && yarn set version 4.0.2 && yarn install --immutable
         working-directory: "lib"
       - run: yarn install --immutable
         working-directory: "tarpon"

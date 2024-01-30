@@ -32,7 +32,7 @@ export const tarponDeployStage = (
             nodejs: 18,
           },
           commands: [
-            'corepack enable && yarn set version berry',
+            'corepack enable && yarn set version 4.0.2',
             'yarn install --immutable',
             'cd tarpon',
             'corepack enable',

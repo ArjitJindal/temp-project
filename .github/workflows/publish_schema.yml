@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
       - name: Corepack enable
-        run: corepack enable && yarn set version berry
+        run: corepack enable && yarn set version 4.0.2
       - name: Use Node.js 18
         uses: actions/setup-node@v3
         with:
