@@ -119,7 +119,8 @@ function renderValue(key: PaymentDetailsKey, value: unknown): React.ReactNode {
     key === 'phoneNumber' ||
     key === 'checkNumber' ||
     key === 'checkIdentifier' ||
-    key === 'etaTimestamp'
+    key === 'etaTimestamp' ||
+    key === 'emailId'
   ) {
     return stringifyValue(value);
   }

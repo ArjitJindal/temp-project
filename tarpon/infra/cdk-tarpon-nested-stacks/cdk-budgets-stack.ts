@@ -11,7 +11,7 @@ interface BudgetProps extends cdk.NestedStackProps {
   config: Config
 }
 
-export class CdkBudgetStack extends cdk.Stack {
+export class CdkBudgetStack extends cdk.NestedStack {
   constructor(scope: Construct, id: string, props: BudgetProps) {
     super(scope, id, props)
 

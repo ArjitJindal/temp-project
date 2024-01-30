@@ -1180,11 +1180,11 @@ export class CdkTarponStack extends cdk.Stack {
         config,
         betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
       })
-    }
 
-    new CdkBudgetStack(this, `${config.stage}-tarpon-budget`, {
-      config,
-    })
+      new CdkBudgetStack(this, `${config.stage}-tarpon-budget`, {
+        config,
+      })
+    }
 
     new CdkTarponConsoleLambdaStack(
       this,

@@ -67,12 +67,10 @@ export const createBudget = (
     },
     notificationsWithSubscribers: [
       {
-        subscribers: [
-          {
-            subscriptionType: 'EMAIL',
-            address: 'engineering@flagright.com',
-          },
-        ],
+        subscribers: ['chia', 'tim', 'nadig', 'aman'].map((email) => ({
+          subscriptionType: 'EMAIL',
+          address: email + '@flagright.com',
+        })),
         notification: {
           notificationType: 'ACTUAL',
           comparisonOperator: 'GREATER_THAN',
