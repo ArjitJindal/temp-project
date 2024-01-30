@@ -1,6 +1,13 @@
+import { PERMISSIONS } from '../../support/permissions';
+
 describe('Add a comment to a user', () => {
+  const REQUIRED_PERMISSIONS = [
+    ...PERMISSIONS.USERS_USER_DETAILS,
+    ...PERMISSIONS.USERS_USER_OVERVIEW,
+    ...PERMISSIONS.USERS_USER_COMMENTS,
+  ];
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
 
   it('should be able to create a comment for a first consumer user with file attachment', () => {

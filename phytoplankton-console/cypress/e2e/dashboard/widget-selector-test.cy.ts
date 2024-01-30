@@ -1,6 +1,6 @@
 describe('Check if the widget selector works as expected', () => {
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginByRole('super_admin');
   });
 
   it('should check the visibility of selected widgets', () => {

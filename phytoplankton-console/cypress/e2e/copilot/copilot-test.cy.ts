@@ -1,6 +1,13 @@
+import { PERMISSIONS } from '../../support/permissions';
+
 describe('Investigative Copilot', () => {
+  const REQUIRED_PERMISSIONS = [
+    ...PERMISSIONS.CASE_OVERVIEW,
+    ...PERMISSIONS.USERS_USER_OVERVIEW,
+    ...PERMISSIONS.TRANSACTION_OVERVIEW,
+  ];
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
 
   it('should open investigate with copilot', () => {

@@ -1,8 +1,7 @@
 describe('Dashboard Integration Test', () => {
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginByRole('super_admin');
   });
-
   it('should configure the dashboard with selected widgets', async () => {
     cy.visit('/');
     const WIDGETS = {

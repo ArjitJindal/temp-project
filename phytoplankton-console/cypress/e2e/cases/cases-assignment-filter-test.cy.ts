@@ -1,6 +1,9 @@
+import { PERMISSIONS } from '../../support/permissions';
+
 describe('Using Assignment filter and assigning cases', () => {
+  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW];
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
 
   it('should assign single and multiple cases', async () => {

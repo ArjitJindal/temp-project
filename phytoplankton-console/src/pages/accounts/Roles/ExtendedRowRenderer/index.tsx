@@ -46,6 +46,7 @@ export default function ExtendedRowRenderer(props: Props) {
                 label={startCase(action.name)}
                 position={'RIGHT'}
                 key={action.key}
+                testId={action.key}
               >
                 <Checkbox
                   value={action.enabled}

@@ -1,6 +1,9 @@
+import { PERMISSIONS } from '../../support/permissions';
+
 describe('Case rule filter testing', () => {
+  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW, ...PERMISSIONS.RULES];
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
 
   it('should filter according to rule name', () => {
@@ -24,10 +27,13 @@ describe('Case rule filter testing', () => {
     });
 
     cy.get('[data-cy="rules-filter"]').filter(':contains("Rules")').eq(0).should('exist').click();
-    cy.get('.ant-popover .ant-select-selector').should('exist').first().click();
-
     const ruleName = 'Transaction amount too high';
-    cy.get('.ant-select-item-option').filter(`:contains("${ruleName}")`).first().click();
+    cy.get('.ant-popover .ant-select-selector')
+      .should('exist')
+      .first()
+      .click()
+      .type(`${ruleName}{enter}`);
+
     cy.get('td[data-cy="ruleName"]')
       .contains(ruleName)
       .should('exist')

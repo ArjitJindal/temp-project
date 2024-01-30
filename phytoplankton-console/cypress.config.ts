@@ -5,9 +5,11 @@ const BASE_URL =
 
 export default defineConfig({
   env: {
+    environment: process.env.ENV ?? 'local',
     loginUrl: 'https://login.console.flagright.dev/',
     auth0_domain: 'dev-flagright.eu.auth0.com',
-    auth0_client_id: 'uGGbVNumU7d57NswPLD5UaTwvf17tc7y',
+    local_auth0_client_id: 'uGGbVNumU7d57NswPLD5UaTwvf17tc7y',
+    dev_auth0_client_id: 'uUFYLezaTSqQjj9052jiInDAaarI3f92',
     auth0_audience: 'https://api.flagright.dev/',
   },
   e2e: {

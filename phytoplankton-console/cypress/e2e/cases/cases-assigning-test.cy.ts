@@ -1,8 +1,10 @@
-describe('Assigning single and multiple cases', () => {
-  beforeEach(() => {
-    cy.loginByForm();
-  });
+import { PERMISSIONS } from '../../support/permissions';
 
+describe('Assigning single and multiple cases', () => {
+  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW];
+  beforeEach(() => {
+    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+  });
   it('should assign single and multiple cases', () => {
     cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
 

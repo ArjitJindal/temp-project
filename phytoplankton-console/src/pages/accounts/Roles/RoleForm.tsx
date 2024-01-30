@@ -72,7 +72,7 @@ export default function RoleForm({
       } else {
         await api.createRole({ CreateAccountRole: accountRole });
       }
-      message.success(`${roleName} role saved`);
+      message.success(`${startCase(roleName)} role saved`);
       onChange(false, true);
     } catch (e) {
       message.fatal(`Failed to save role - ${getErrorMessage(e)}`, e);
