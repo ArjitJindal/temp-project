@@ -21,8 +21,9 @@ import {
   V8TransactionAggregationTask,
 } from '../rules-engine-service'
 import {
+  getTransactionStatsTimeGroupLabel,
   getTransactionsGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByGranularity,
 } from '../utils/transaction-rule-utils'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import { TransactionRuleVariableContext } from '../v8-variables/types'
@@ -37,14 +38,11 @@ import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregati
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { logger } from '@/core/logger'
-import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { handleV8TransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
 import { getSQSClient } from '@/utils/sns-sqs-client'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
-
-const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
 
 const sqs = getSQSClient()
 
@@ -347,6 +345,10 @@ export class RuleJsonLogicEvaluator {
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
+
+    const aggregationGranularity =
+      this.getAggregationGranularity(aggregationVariable)
+
     const generator = getTransactionsGenerator(
       direction == 'origin'
         ? data.transaction.originUserId
@@ -373,7 +375,9 @@ export class RuleJsonLogicEvaluator {
         .map((v) => v.name)
         .concat(['senderKeyId', 'receiverKeyId']) as Array<keyof Transaction>
     )
-    let timeAggregatedResult: { [hour: string]: AggregationData } = {}
+    let timeAggregatedResult: {
+      [time: string]: AggregationData
+    } = {}
     for await (const data of generator) {
       const transactions = data.sendingTransactions.concat(
         data.receivingTransactions
@@ -392,7 +396,7 @@ export class RuleJsonLogicEvaluator {
       }
 
       // Update aggregation result
-      const partialTimeAggregatedResult = await groupTransactionsByHour(
+      const partialTimeAggregatedResult = await groupTransactionsByGranularity(
         targetTransactions,
         async (groupTransactions) => {
           const txEntityVariable = getRuleVariableByKey(
@@ -410,7 +414,8 @@ export class RuleJsonLogicEvaluator {
           return {
             value: aggFunc.aggregate(aggregateValues),
           }
-        }
+        },
+        aggregationGranularity
       )
       timeAggregatedResult = mergeWith(
         timeAggregatedResult,
@@ -530,19 +535,26 @@ export class RuleJsonLogicEvaluator {
     const aggFunc = getRuleVariableAggregator(
       aggregationVariable.aggregationFunc
     )
+
+    const aggregationGranularity =
+      this.getAggregationGranularity(aggregationVariable)
+
     const targetAggregations =
       (await this.aggregationRepository.getUserRuleTimeAggregations(
         userKeyId,
         aggregationVariable,
         data.transaction.timestamp!,
         data.transaction.timestamp! + 1,
-        AGGREGATION_TIME_FORMAT
+        aggregationGranularity
       )) ?? []
     if ((targetAggregations?.length ?? 0) > 1) {
       throw new Error('Should only get one target aggregation')
     }
     const targetAggregation = targetAggregations?.[0] ?? {
-      hour: dayjs(data.transaction.timestamp).format(AGGREGATION_TIME_FORMAT),
+      time: getTransactionStatsTimeGroupLabel(
+        data.transaction.timestamp,
+        aggregationGranularity
+      ),
       value: aggFunc.init(),
     }
     const updatedTargetAggregation = aggFunc.reduce(
@@ -552,7 +564,7 @@ export class RuleJsonLogicEvaluator {
     await this.aggregationRepository.rebuildUserTimeAggregations(
       userKeyId,
       aggregationVariable,
-      { [targetAggregation.hour]: { value: updatedTargetAggregation } }
+      { [targetAggregation.time]: { value: updatedTargetAggregation } }
     )
     await this.aggregationRepository.setTransactionApplied(
       aggregationVariable,
@@ -584,13 +596,17 @@ export class RuleJsonLogicEvaluator {
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
+
+    const aggregationGranularity =
+      this.getAggregationGranularity(aggregationVariable)
+
     const aggData =
       (await this.aggregationRepository.getUserRuleTimeAggregations(
         userKeyId,
         aggregationVariable,
         afterTimestamp,
         beforeTimestamp,
-        AGGREGATION_TIME_FORMAT
+        aggregationGranularity
       )) ?? []
     const aggFunc = getRuleVariableAggregator(aggregationFunc)
     const result = aggData.reduce((acc, cur) => {
@@ -642,6 +658,15 @@ export class RuleJsonLogicEvaluator {
       data.transaction.timestamp! >= afterTimestamp &&
       data.transaction.timestamp! <= beforeTimestamp
     )
+  }
+
+  private getAggregationGranularity(
+    aggregationVariable: RuleAggregationVariable
+  ) {
+    return aggregationVariable.timeWindow.start.rollingBasis ||
+      aggregationVariable.timeWindow.end.rollingBasis
+      ? 'hour'
+      : aggregationVariable.timeWindow.start.granularity
   }
 
   private getTimeRange(

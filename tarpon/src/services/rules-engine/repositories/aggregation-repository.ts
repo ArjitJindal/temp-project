@@ -11,6 +11,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 
 import { mapValues, omit } from 'lodash'
+import { getTransactionStatsTimeGroupLabel } from '../utils/transaction-rule-utils'
 import dayjs, { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
@@ -338,7 +339,7 @@ export class AggregationRepository {
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,
-        this.getTransactionStatsTimeGroupLabel(timestamp, timeGranularity),
+        getTransactionStatsTimeGroupLabel(timestamp, timeGranularity),
         this.USER_TRANSACTION_STATS_VERSION
       ),
       UpdateExpression: `SET ${transactionAmountKey} = :amount, ${transactionCountKey} = :count, #ttl = :ttl`,
@@ -371,7 +372,7 @@ export class AggregationRepository {
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,
-        this.getTransactionStatsTimeGroupLabel(timestamp, timeGranularity),
+        getTransactionStatsTimeGroupLabel(timestamp, timeGranularity),
         this.USER_TRANSACTION_STATS_VERSION
       ),
       ProjectionExpression: attributes.join(','),
@@ -396,26 +397,6 @@ export class AggregationRepository {
       receivingTransactionsCount: new Map(
         Object.entries(receivingTransactionsCount ?? {})
       ) as Map<PaymentMethod | 'ALL', number>,
-    }
-  }
-
-  // TODO: We use UTC time for getting the time label for now. We could use
-  // the customer specified timezone if there's a need.
-  public getTransactionStatsTimeGroupLabel(
-    timestamp: number,
-    timeGranularity: 'day' | 'week' | 'month' | 'year'
-  ): string {
-    switch (timeGranularity) {
-      case 'day':
-        return dayjs(timestamp).format('YYYY-MM-DD')
-      case 'week': {
-        const time = dayjs(timestamp)
-        return `${time.format('YYYY')}-W${time.week()}`
-      }
-      case 'month':
-        return dayjs(timestamp).format('YYYY-MM')
-      case 'year':
-        return dayjs(timestamp).format('YYYY')
     }
   }
 

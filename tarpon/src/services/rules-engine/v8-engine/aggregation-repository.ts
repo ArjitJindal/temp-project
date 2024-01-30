@@ -9,7 +9,8 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 
 import { mapValues, pick } from 'lodash'
-import dayjs, { duration } from '@/utils/dayjs'
+import { getTransactionStatsTimeGroupLabel } from '../utils/transaction-rule-utils'
+import { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   batchWrite,
@@ -19,6 +20,7 @@ import {
 import { traceable } from '@/core/xray'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { generateChecksum } from '@/utils/object'
+import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
 
 export type AggregationData<T = unknown> = { value: T }
 
@@ -57,7 +59,7 @@ export class AggregationRepository {
     userKeyId: string,
     aggregationVariable: RuleAggregationVariable,
     aggregationData: {
-      [hour: string]: AggregationData
+      [time: string]: AggregationData
     }
   ) {
     const aggregationDataWithTtl = mapValues(aggregationData, (data) => {
@@ -96,13 +98,13 @@ export class AggregationRepository {
     aggregationVariable: RuleAggregationVariable,
     afterTimestamp: number,
     beforeTimestamp: number,
-    timeLabelFormat: string
-  ): Promise<Array<{ hour: string } & AggregationData<T>> | undefined> {
+    granularity: RuleAggregationTimeWindowGranularity
+  ): Promise<Array<{ time: string } & AggregationData<T>> | undefined> {
     const queryInput: QueryCommandInput = dynamoDbQueryHelper({
       tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       sortKey: {
-        from: dayjs(afterTimestamp).format(timeLabelFormat),
-        to: dayjs(beforeTimestamp - 1).format(timeLabelFormat),
+        from: getTransactionStatsTimeGroupLabel(afterTimestamp, granularity),
+        to: getTransactionStatsTimeGroupLabel(beforeTimestamp - 1, granularity),
       },
       partitionKey: DynamoDbKeys.V8_RULE_USER_TIME_AGGREGATION(
         this.tenantId,
@@ -124,10 +126,9 @@ export class AggregationRepository {
         return []
       }
     }
-
     return hasData
       ? result?.Items?.map((item) => ({
-          hour: item.SortKeyID,
+          time: item.SortKeyID,
           value: item.value as T,
         }))
       : undefined

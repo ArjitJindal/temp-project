@@ -1,6 +1,9 @@
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { UserTimeAggregationAttributes } from '../repositories/aggregation-repository'
-import { getTransactionsTotalAmount } from '../utils/transaction-rule-utils'
+import {
+  getTransactionStatsTimeGroupLabel,
+  getTransactionsTotalAmount,
+} from '../utils/transaction-rule-utils'
 import { Aggregator } from './aggregator'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
@@ -157,11 +160,10 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
     transaction: Transaction,
     granularity: 'day' | 'week' | 'month' | 'year'
   ) {
-    const timeLabel =
-      this.aggregationRepository.getTransactionStatsTimeGroupLabel(
-        transaction.timestamp,
-        granularity
-      )
+    const timeLabel = getTransactionStatsTimeGroupLabel(
+      transaction.timestamp,
+      granularity
+    )
     if (!allAggregation[timeLabel]) {
       allAggregation[timeLabel] = {
         sendingTransactionsCount: new Map(),

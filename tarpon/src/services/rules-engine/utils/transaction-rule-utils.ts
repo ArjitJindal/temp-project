@@ -13,6 +13,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { zipGenerators, staticValueGenerator } from '@/utils/generator'
 import { CurrencyService } from '@/services/currency'
+import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
 
 export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
@@ -329,6 +330,19 @@ export async function* getTransactionUserPastTransactionsGenerator(
   }
 }
 
+export async function groupTransactionsByGranularity<T>(
+  transactions: AuxiliaryIndexTransaction[],
+  aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>,
+  granularity: RuleAggregationTimeWindowGranularity
+): Promise<{ [timeKey: string]: T }> {
+  return groupTransactions(
+    transactions,
+    (transaction) =>
+      getTransactionStatsTimeGroupLabel(transaction.timestamp!, granularity),
+    aggregator
+  )
+}
+
 export async function groupTransactionsByHour<T>(
   transactions: AuxiliaryIndexTransaction[],
   aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>
@@ -344,11 +358,34 @@ export async function groupTransactions<T>(
   transactions: AuxiliaryIndexTransaction[],
   iteratee: (transactions: AuxiliaryIndexTransaction) => string,
   aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>
-): Promise<{ [hourKey: string]: T }> {
+): Promise<{ [timeKey: string]: T }> {
   const groups = groupBy(transactions, iteratee)
   const newGroups: { [key: string]: T } = {}
   for (const group in groups) {
     newGroups[group] = await aggregator(groups[group])
   }
   return newGroups
+}
+
+// TODO: We use UTC time for getting the time label for now. We could use
+// the customer specified timezone if there's a need.
+
+export function getTransactionStatsTimeGroupLabel(
+  timestamp: number,
+  timeGranularity: RuleAggregationTimeWindowGranularity
+): string {
+  switch (timeGranularity) {
+    case 'day':
+      return dayjs(timestamp).format('YYYY-MM-DD')
+    case 'week': {
+      const time = dayjs(timestamp)
+      return `${time.format('YYYY')}-W${time.week()}`
+    }
+    case 'month':
+      return dayjs(timestamp).format('YYYY-MM')
+    case 'year':
+      return dayjs(timestamp).format('YYYY')
+    default:
+      return dayjs(timestamp).format('YYYY-MM-DD-HH')
+  }
 }

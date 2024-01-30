@@ -21,6 +21,7 @@ import { TransactionEventRepository } from '@/services/rules-engine/repositories
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import dayjs from '@/utils/dayjs'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
 
@@ -719,5 +720,189 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
     )
 
     expect(mock).toBeCalledTimes(1)
+  })
+})
+
+describe('Verify Transaction: V8 engine course grained aggregation', () => {
+  withFeatureHook(['RULES_ENGINE_V8'])
+
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'V8-R-1',
+      defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:123',
+          type: 'PAYMENT_DETAILS_TRSANCTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 1, granularity: 'month' },
+            end: { units: 0, granularity: 'month' },
+          },
+        },
+      ],
+      type: 'TRANSACTION',
+    },
+  ])
+
+  test('executes the json logic - hit for course grained aggregation', async () => {
+    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const result1 = await rulesEngine.verifyTransaction(
+      getTestTransaction({
+        transactionId: 'tx-1',
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      })
+    )
+    expect(result1).toEqual({
+      transactionId: 'tx-1',
+      status: 'ALLOW',
+      executedRules: [
+        {
+          ruleId: 'V8-R-1',
+          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+          ruleName: 'test rule name',
+          ruleDescription: 'test rule description.',
+          ruleAction: 'FLAG',
+          ruleHit: false,
+          nature: 'AML',
+          labels: [],
+        },
+      ],
+      hitRules: [],
+    } as TransactionMonitoringResult)
+    const result2 = await rulesEngine.verifyTransaction(
+      getTestTransaction({
+        transactionId: 'tx-2',
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      })
+    )
+    expect(result2).toEqual({
+      transactionId: 'tx-2',
+      status: 'FLAG',
+      executedRules: [
+        {
+          ruleId: 'V8-R-1',
+          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+          ruleName: 'test rule name',
+          ruleDescription: 'test rule description.',
+          ruleAction: 'FLAG',
+          ruleHitMeta: {
+            hitDirections: ['ORIGIN'],
+          },
+          ruleHit: true,
+          nature: 'AML',
+          labels: [],
+        },
+      ],
+      hitRules: [
+        {
+          ruleId: 'V8-R-1',
+          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+          ruleName: 'test rule name',
+          ruleDescription: 'test rule description.',
+          ruleAction: 'FLAG',
+          ruleHitMeta: {
+            hitDirections: ['ORIGIN'],
+          },
+          labels: [],
+          nature: 'AML',
+        },
+      ],
+    } as TransactionMonitoringResult)
+  })
+})
+describe('Verify Transaction: V8 engine with rolling basis', () => {
+  withFeatureHook(['RULES_ENGINE_V8'])
+
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'V8-R-1',
+      defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:123',
+          type: 'PAYMENT_DETAILS_TRSANCTIONS',
+          direction: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 1, granularity: 'month', rollingBasis: true },
+            end: { units: 0, granularity: 'month', rollingBasis: true },
+          },
+        },
+      ],
+      type: 'TRANSACTION',
+    },
+  ])
+
+  test('executes the json logic - not hit for rolling basis ', async () => {
+    /** This Test would fail if we use incorrectly use course grained aggregation(month) for rolling basis,
+     *  as it would use complete previous month */
+
+    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const result1 = await rulesEngine.verifyTransaction(
+      getTestTransaction({
+        transactionId: 'tx-1',
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+        timestamp: dayjs('2023-12-01T20:00:00').valueOf(),
+      })
+    )
+    expect(result1).toEqual({
+      transactionId: 'tx-1',
+      status: 'ALLOW',
+      executedRules: [
+        {
+          ruleId: 'V8-R-1',
+          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+          ruleName: 'test rule name',
+          ruleDescription: 'test rule description.',
+          ruleAction: 'FLAG',
+          ruleHit: false,
+          nature: 'AML',
+          labels: [],
+        },
+      ],
+      hitRules: [],
+    } as TransactionMonitoringResult)
+    const result2 = await rulesEngine.verifyTransaction(
+      getTestTransaction({
+        transactionId: 'tx-2',
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+        timestamp: dayjs('2024-01-03T19:00:00').valueOf(),
+      })
+    )
+    expect(result2).toEqual({
+      transactionId: 'tx-2',
+      status: 'ALLOW',
+      executedRules: [
+        {
+          ruleId: 'V8-R-1',
+          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+          ruleName: 'test rule name',
+          ruleDescription: 'test rule description.',
+          ruleAction: 'FLAG',
+          ruleHit: false,
+          nature: 'AML',
+          labels: [],
+        },
+      ],
+      hitRules: [],
+    } as TransactionMonitoringResult)
   })
 })
