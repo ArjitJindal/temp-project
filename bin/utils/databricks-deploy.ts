@@ -23,8 +23,10 @@ export const databricksDeployStage = (
               python: '3.10',
             },
             commands: [
-              'cd lib',
+              'export YARN_IGNORE_NODE=1',
               'corepack enable && yarn set version berry',
+              'yarn install --immutable',
+              'cd lib',
               'yarn install --immutable',
               'cd ../databricks/infra',
               'npm install',
