@@ -2,28 +2,33 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Config, Utils as QbUtils } from '@react-awesome-query-builder/ui';
 import { isEqual, debounce } from 'lodash';
 import { useLogicBuilderConfig } from '../helpers';
-import LogicBuilder from '@/components/ui/LogicBuilder';
-import { LogicBuilderValue } from '@/components/ui/LogicBuilder/types';
+import LogicBuilder, { Props as LogicBuilderProps } from '@/components/ui/LogicBuilder';
+import { LogicBuilderValue, LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { isSuccess } from '@/utils/asyncResource';
 import { usePrevious, useIsChanged } from '@/utils/hooks';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { RuleAggregationVariable } from '@/apis';
+import { RuleLogic } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/types';
 
 interface Props {
-  jsonLogic: object | undefined;
+  jsonLogic: RuleLogic | undefined;
   entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER'>;
   aggregationVariables: RuleAggregationVariable[] | undefined;
-  onChange: (jsonLogic: object | undefined) => void;
+  onChange: (jsonLogic: RuleLogic | undefined) => void;
+  configParams?: Partial<LogicBuilderConfig>;
+  logicBuilderProps?: Partial<LogicBuilderProps>;
 }
 type State = { tree: LogicBuilderValue; config: Config } | null;
 
 export function RuleLogicBuilder(props: Props) {
+  const { logicBuilderProps, configParams } = props;
   const [state, setState] = useState<State>(null);
 
   // Initialize state when config is loaded or changed
   const configRes = useLogicBuilderConfig(
     props.entityVariableTypes,
     props.aggregationVariables ?? [],
+    configParams ?? {},
   );
   const isConfigChanged = useIsChanged(configRes);
   useEffect(() => {
@@ -55,7 +60,7 @@ export function RuleLogicBuilder(props: Props) {
       }
       const jsonLogic = QbUtils.jsonLogicFormat(newState.tree!, newState.config);
       if (!isEqual(jsonLogic.logic, props.jsonLogic)) {
-        props.onChange(jsonLogic.logic!);
+        props.onChange(jsonLogic.logic as RuleLogic | undefined);
       }
     },
     [props],
@@ -84,7 +89,12 @@ export function RuleLogicBuilder(props: Props) {
     <AsyncResourceRenderer resource={configRes}>
       {() =>
         state ? (
-          <LogicBuilder value={state.tree} config={state.config} onChange={onChange} />
+          <LogicBuilder
+            value={state.tree}
+            config={state.config}
+            onChange={onChange}
+            {...logicBuilderProps}
+          />
         ) : (
           <></>
         )

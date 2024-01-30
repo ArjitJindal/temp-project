@@ -4,20 +4,22 @@ import Label from '@/components/library/Label';
 import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
-import { UiSchemaAgeRange } from '@/components/library/JsonSchemaEditor/types';
 import Select from '@/components/library/Select';
-type ValueType = {
+
+export type Granularity = 'day' | 'month' | 'year';
+
+export type ValueType = {
   minAge?: {
-    granularity?: string;
+    granularity?: Granularity;
     units?: number;
   };
   maxAge?: {
-    granularity?: string;
+    granularity?: Granularity;
     units?: number;
   };
 };
 
-const DEFAULT_GRANULARITY = 'year';
+const DEFAULT_GRANULARITY: Granularity = 'year';
 
 const GRANULARITY_RANGE = {
   year: [0, 100],
@@ -32,12 +34,11 @@ function getGranularityRange(granularity?: string): [number, number] {
 }
 
 interface Props extends InputProps<ValueType> {
-  uiSchema?: UiSchemaAgeRange;
+  defaultGranularity?: Granularity;
 }
 
 export default function AgeRangeInput(props: Props) {
-  const { value, onChange, uiSchema, ...rest } = props;
-  const defaultGranularity: string = uiSchema?.['ui:defaultGranularity'] ?? DEFAULT_GRANULARITY;
+  const { value, onChange, defaultGranularity = DEFAULT_GRANULARITY, ...rest } = props;
   const minGranularity = value?.minAge?.granularity;
   const maxGranularity = value?.maxAge?.granularity;
   const granularityValue = minGranularity ?? maxGranularity ?? defaultGranularity;
@@ -147,7 +148,7 @@ export default function AgeRangeInput(props: Props) {
         />
       </Label>
       <Label label={''} level={2} testId="granularity-select">
-        <Select
+        <Select<Granularity>
           mode="SINGLE"
           value={granularityValue}
           options={[

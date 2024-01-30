@@ -71,7 +71,6 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     innerRef,
     isCopyable,
     value,
-    onChange,
     allowClear = true,
     portaled = false,
     dropdownMatchWidth = true,
@@ -84,6 +83,28 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
+  const handleChange = useCallback(
+    (newValue: Value | Value[] | undefined) => {
+      if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
+        if (Array.isArray(newValue)) {
+          props.onChange?.(newValue.length === 0 ? undefined : newValue);
+        }
+      } else if (props.mode === 'SINGLE' || props.mode == null) {
+        if (!Array.isArray(newValue)) {
+          props.onChange?.(newValue);
+        }
+      } else {
+        neverReturn(props.mode, null);
+      }
+      setSearchValue('');
+    },
+    // suppressing because we only use `props.mode` and `props.onChange` in
+    // the function, but eslint failed to see this and requires `props` to be
+    // in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [props.mode, props.onChange],
+  );
+
   const applySearchStringValue = useCallback(
     (searchString: string, skipUnknown: boolean) => {
       const parsedValues = parseSearchString(options, searchString, skipUnknown);
@@ -95,10 +116,10 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       } else {
         newValue = neverReturn(props.mode, props.value);
       }
-      onChange?.(newValue as (Value & Value[]) | undefined);
+      handleChange?.(newValue as (Value & Value[]) | undefined);
       setSearchValue('');
     },
-    [props.value, props.mode, options, onChange],
+    [props.value, props.mode, options, handleChange],
   );
 
   const filteredOptions = useMemo(
@@ -147,6 +168,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       ? selectInput.current?.getBoundingClientRect().width
       : true;
   }
+
   return (
     <div
       className={cn(
@@ -186,10 +208,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         placement={props.dropdownPlacement ?? 'bottomLeft'}
         mode={mode === 'MULTIPLE' ? 'multiple' : mode === 'TAGS' ? 'tags' : undefined}
         value={value}
-        onChange={(newValue: Value | Value[] | undefined) => {
-          props.onChange?.(newValue as (Value & Value[]) | undefined);
-          setSearchValue('');
-        }}
+        onChange={handleChange}
         onSearch={(searchString) => {
           setSearchValue(searchString);
           if (searchString.includes(SEPARATOR)) {

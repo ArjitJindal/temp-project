@@ -26,11 +26,18 @@ import Slider, { CommonProps as SliderCommonProps } from '@/components/library/S
 import { dayjs } from '@/utils/dayjs';
 import { RuleOperatorType } from '@/apis';
 
-function WidgetWrapper(props: { widgetFactoryProps: WidgetProps; children: React.ReactNode }) {
+function WidgetWrapper(props: {
+  widgetFactoryProps: WidgetProps<BasicConfig>;
+  children: React.ReactNode;
+}) {
+  const showLabel = props.widgetFactoryProps.config?.settings.showLabels !== false;
+  if (!showLabel) {
+    return <>{props.children}</>;
+  }
   return <Label label={'Value'}>{props.children}</Label>;
 }
 
-const customNumberWidget: NumberWidget = {
+const customNumberWidget: NumberWidget<BasicConfig> = {
   type: `number`,
   factory: (props) => {
     let value: number | undefined;
@@ -48,7 +55,7 @@ const customNumberWidget: NumberWidget = {
   },
 };
 
-const customTextWidget: TextWidget = {
+const customTextWidget: TextWidget<BasicConfig> = {
   type: `text`,
   factory: (props) => {
     const operator = props.operator as RuleOperatorType;
@@ -82,14 +89,13 @@ const customTextWidget: TextWidget = {
   },
 };
 
-const customSliderWidget: NumberWidget = {
+const customSliderWidget: NumberWidget<BasicConfig> = {
   type: `text`,
   factory: (props) => {
     const commonProps: SliderCommonProps = {
       min: props.min,
       max: props.max,
       step: props.step,
-      marks: props.marks,
     };
     if (Array.isArray(props.value)) {
       return (
@@ -116,7 +122,7 @@ const customSliderWidget: NumberWidget = {
   },
 };
 
-const customBooleanWidget: BooleanWidget = {
+const customBooleanWidget: BooleanWidget<BasicConfig> = {
   type: `boolean`,
   factory: (props) => {
     return (
@@ -127,7 +133,7 @@ const customBooleanWidget: BooleanWidget = {
   },
 };
 
-const customDateAndTimeWidget: DateTimeWidget = {
+const customDateAndTimeWidget: DateTimeWidget<BasicConfig> = {
   type: `datetime`,
   factory: (props) => {
     return (
@@ -159,7 +165,7 @@ function getSelectOptions(
   return listValues;
 }
 
-const customSelectWidget: SelectWidget = {
+const customSelectWidget: SelectWidget<BasicConfig> = {
   type: `select`,
   factory: (props) => {
     const listValues = getSelectOptions(props);
@@ -186,7 +192,7 @@ const customSelectWidget: SelectWidget = {
   },
 };
 
-const customMultiselectWidget: MultiSelectWidget = {
+const customMultiselectWidget: MultiSelectWidget<BasicConfig> = {
   type: `select`,
   factory: (props) => {
     const listValues = getSelectOptions(props);

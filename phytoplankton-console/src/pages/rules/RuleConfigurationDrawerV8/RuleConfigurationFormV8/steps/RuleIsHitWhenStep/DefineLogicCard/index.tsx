@@ -14,6 +14,7 @@ import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { FieldState } from '@/components/library/Form/utils/hooks';
 import { RiskLevel } from '@/utils/risk-levels';
+import { RuleLogic } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/types';
 import Select from '@/components/library/Select';
 import { CurrencyCode } from '@/apis';
 
@@ -106,7 +107,7 @@ export default function DefineLogicCard(props: Props) {
               entityVariableTypes={['TRANSACTION', 'CONSUMER_USER', 'BUSINESS_USER', 'USER']}
               jsonLogic={jsonLogic}
               aggregationVariables={variablesFieldState.value}
-              onChange={(jsonLogic) => {
+              onChange={(jsonLogic: RuleLogic | undefined) => {
                 if (isRiskLevelsEnabled) {
                   riskLevelsLogicFieldState.onChange({
                     ...(riskLevelsLogicFieldState.value ?? {

@@ -5817,6 +5817,10 @@ components:
           type: string
         filters:
           type: object
+        filtersLogic:
+          type: object
+        filtersLogicFormValues:
+          type: object
         riskLevelParameters:
           $ref: '#/components/schemas/RiskLevelRuleParameters'
         riskLevelActions:

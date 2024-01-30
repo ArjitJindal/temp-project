@@ -517,9 +517,30 @@ export class RulesEngineService {
       transactionRiskDetails,
     ])
 
+    const ruleInstancesFiltered: RuleInstance[] = []
+    for (const ruleInstance of ruleInstances) {
+      let shouldRuleRun = true
+      if (ruleInstance.filtersLogic) {
+        const runResult = await this.ruleLogicEvaluator.evaluate(
+          ruleInstance.filtersLogic,
+          [],
+          { baseCurrency: ruleInstance.baseCurrency },
+          {
+            transaction,
+            senderUser,
+            receiverUser,
+          }
+        )
+        shouldRuleRun = runResult.hit
+      }
+      if (shouldRuleRun) {
+        ruleInstancesFiltered.push(ruleInstance)
+      }
+    }
+
     const rulesById = keyBy(
       await this.ruleRepository.getRulesByIds(
-        ruleInstances
+        ruleInstancesFiltered
           .map((ruleInstance) => ruleInstance.ruleId)
           .filter(Boolean) as string[]
       ),
@@ -532,7 +553,7 @@ export class RulesEngineService {
 
     const verifyTransactionResults = compact(
       await Promise.all(
-        ruleInstances.map(async (ruleInstance) =>
+        ruleInstancesFiltered.map(async (ruleInstance) =>
           this.verifyTransactionRule({
             rule: ruleInstance.ruleId
               ? rulesById[ruleInstance.ruleId]
@@ -565,7 +586,7 @@ export class RulesEngineService {
       .map((ruleResults) => ruleResults.ruleInstanceId)
 
     await this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
-      ruleInstances.map((ruleInstance) => ruleInstance.id as string),
+      ruleInstancesFiltered.map((ruleInstance) => ruleInstance.id as string),
       hitRuleInstanceIds
     )
 

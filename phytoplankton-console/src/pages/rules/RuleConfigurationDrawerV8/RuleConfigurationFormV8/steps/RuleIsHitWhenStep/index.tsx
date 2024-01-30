@@ -12,10 +12,11 @@ import {
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 import DefineLogicCard from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/DefineLogicCard';
 import VariableDefinitionCard from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard';
+import { RuleLogic } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/types';
 
 export interface RuleIsHitWhenStepFormValues {
   baseCurrency?: CurrencyCode;
-  ruleLogic?: object;
+  ruleLogic?: RuleLogic;
   riskLevelRuleLogic?: RiskLevelRuleLogic;
   ruleLogicAggregationVariables?: RuleAggregationVariable[];
   ruleAction?: RuleAction;

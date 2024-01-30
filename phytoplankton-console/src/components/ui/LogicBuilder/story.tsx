@@ -14,7 +14,7 @@ export default function (): JSX.Element {
           value: undefined,
           config: makeConfig({
             fields: fields as Fields,
-            disableNesting: true,
+            enableNesting: true,
           }),
         }}
       >
@@ -36,7 +36,52 @@ export default function (): JSX.Element {
           value: undefined,
           config: makeConfig({
             fields: fields as Fields,
-            disableNesting: false,
+            enableNesting: false,
+          }),
+        }}
+      >
+        {([state, setState]) => {
+          return (
+            <LogicBuilder
+              config={state.config}
+              value={state.value}
+              onChange={(newValue) => {
+                setState((prevState) => ({ ...prevState, value: newValue }));
+              }}
+            />
+          );
+        }}
+      </UseCase>
+      <UseCase
+        title={'Conjunctions hidden'}
+        initialState={{
+          value: undefined,
+          config: makeConfig({
+            fields: fields as Fields,
+            enableNesting: false,
+          }),
+        }}
+      >
+        {([state, setState]) => {
+          return (
+            <LogicBuilder
+              config={state.config}
+              value={state.value}
+              hideConjunctions={true}
+              onChange={(newValue) => {
+                setState((prevState) => ({ ...prevState, value: newValue }));
+              }}
+            />
+          );
+        }}
+      </UseCase>
+      <UseCase
+        title={'Disable reordering'}
+        initialState={{
+          value: undefined,
+          config: makeConfig({
+            fields: fields as Fields,
+            enableReorder: false,
           }),
         }}
       >

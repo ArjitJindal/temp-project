@@ -16,6 +16,7 @@ import {
   RuleLogicConfig,
   RuleOperator,
 } from '@/apis';
+import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 
 function getSupportedOperatorsKeys(operators: RuleOperator[], valueType: string): string[] {
   return operators.filter((v) => v.uiDefinition.valueTypes?.includes(valueType)).map((v) => v.key);
@@ -26,6 +27,7 @@ export function useLogicBuilderConfig(
     'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER' | 'PAYMENT_DETAILS'
   >,
   aggregationVariables: RuleAggregationVariable[],
+  configParams: Partial<LogicBuilderConfig>,
 ): AsyncResource<Config> {
   const [result, setResult] = useState<AsyncResource<Config>>(init());
   const api = useApi();
@@ -82,6 +84,7 @@ export function useLogicBuilderConfig(
         }
 
         const config = makeConfig({
+          ...configParams,
           types,
           operators: {
             ...Object.fromEntries(operators.map((v) => [v.key, v.uiDefinition])),
@@ -103,6 +106,7 @@ export function useLogicBuilderConfig(
     result,
     configResChanged,
     entityVariableTypes,
+    configParams,
   ]);
 
   return result;

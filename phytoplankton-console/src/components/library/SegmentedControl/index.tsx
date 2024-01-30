@@ -27,6 +27,7 @@ export default function SegmentedControl<Value extends Comparable = string>(prop
       {items.map((item) => (
         <button
           key={key(item.value)}
+          type="button"
           className={cn(s.item, { [s.isActive]: compare(active, item.value) })}
           disabled={item.isDisabled}
           onClick={() => {

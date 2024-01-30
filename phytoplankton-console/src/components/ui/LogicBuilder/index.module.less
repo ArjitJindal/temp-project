@@ -3,7 +3,39 @@
 @border-color: @fr-colors-v2-gray-2;
 
 .root {
+  &.hideConjunctions {
+    :global {
+      .group--header {
+        display: none;
+      }
+
+      .group-or-rule {
+        &::before,
+        &::after {
+          display: none;
+        }
+      }
+
+      .query-builder {
+        > .group-container {
+          > .group-or-rule {
+            > .group--children {
+              padding-left: 0;
+            }
+            > .group--footer {
+              > .group--actions {
+                margin-left: 0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   :global {
+    .rule--label {
+      display: none;
+    }
     .group {
       background: transparent;
       border: none;
@@ -48,6 +80,8 @@
       .widget--widget {
         margin-bottom: 0;
         flex: 1;
+        display: flex;
+        flex-direction: column;
       }
     }
     .widget--valuesrc {

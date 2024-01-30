@@ -3,11 +3,11 @@ import { ExtendedSchema } from '../../types';
 import { getUiSchema } from '../../utils';
 import { useJsonSchemaEditorContext } from '../../context';
 import { dereferenceType } from '../../schema-utils';
+import AgeRangeInput from '../../../AgeRangeInput';
 import SimplePropertyInput from './SimplePropertyInput';
 import ArrayPropertyInput from './ArrayPropertyInput';
 import DayWindowInput from './custom/DayWindowInput';
 import TimeWindowInput from './custom/TimeWindowInput';
-import AgeRangeInput from './custom/AgeRangeInput';
 import CountriesInput from './custom/CountriesInput';
 import ObjectPropertyInput from './ObjectPropertyInput';
 import PaymentChannelInput from './custom/PaymentChannelInput';
@@ -53,7 +53,7 @@ export default function PropertyInput(props: Props) {
     return <CountriesInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'AGE_RANGE') {
-    return <AgeRangeInput {...props} uiSchema={uiSchema} />;
+    return <AgeRangeInput {...props} defaultGranularity={uiSchema?.['ui:defaultGranularity']} />;
   }
   if (uiSchema['ui:subtype'] === 'TRANSACTION_AMOUNT_RANGE') {
     return <TransactionAmountRangeInput {...props} uiSchema={uiSchema} />;

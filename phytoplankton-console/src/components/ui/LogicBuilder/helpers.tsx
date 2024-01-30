@@ -7,7 +7,7 @@ import s from './index.module.less';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets } from '@/components/ui/LogicBuilder/widgets';
 import Select, { Option } from '@/components/library/Select';
-import Label from '@/components/library/Label';
+import Label, { Props as LabelProps } from '@/components/library/Label';
 import Dropdown from '@/components/library/Dropdown';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-6-line.react.svg';
@@ -16,7 +16,16 @@ import Button from '@/components/library/Button';
 const InitialConfig = BasicConfig;
 
 export function makeConfig(params: LogicBuilderConfig): BasicConfig {
-  const { fields, disableNesting } = params;
+  const {
+    fields,
+    enableNesting = true,
+    enableReorder = true,
+    hideLabels = false,
+    addRuleLabel = 'Add condition',
+    addGroupLabel = 'Add complex condition',
+    enabledValueSources = undefined,
+  } = params;
+  // todo: make a proper config initialization instead of mutating 3rd party config
   InitialConfig.operators.select_any_in.valueTypes = ['multiselect', 'text'];
   InitialConfig.operators.select_not_any_in.valueTypes = ['multiselect', 'text'];
   return {
@@ -30,13 +39,28 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       ...InitialConfig.funcs,
       ...params.funcs,
     },
-    operators: {
-      ...InitialConfig.operators,
-      ...params.operators,
-    },
+    operators: enabledValueSources
+      ? Object.entries({
+          ...InitialConfig.operators,
+          ...params.operators,
+        }).reduce(
+          (acc, [key, value]) => ({
+            ...acc,
+            [key]: {
+              ...value,
+              valueSources: enabledValueSources,
+            },
+          }),
+          InitialConfig.operators,
+        )
+      : {
+          ...InitialConfig.operators,
+          ...params.operators,
+        },
     fields: fields,
     settings: {
       ...InitialConfig.settings,
+      showLabels: !hideLabels,
       valueSourcesInfo: {
         ...InitialConfig.settings.valueSourcesInfo,
         value: {
@@ -48,12 +72,13 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       },
       showNot: false,
       canLeaveEmptyGroup: false,
-      maxNesting: disableNesting === false ? undefined : 1,
+      maxNesting: !enableNesting ? undefined : 1,
       forceShowConj: false,
-      addRuleLabel: 'Add condition',
+      addRuleLabel: addRuleLabel,
+      addGroupLabel: addGroupLabel,
       addSubRuleLabel: 'Add sub condition',
-      addGroupLabel: 'Add complex condition',
       groupActionsPosition: 'bottomLeft',
+      canReorder: enableReorder,
       renderValueSources: (props) => {
         let options: Option<string>[];
         if (Array.isArray(props.valueSources)) {
@@ -68,7 +93,11 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
           }));
         }
         return (
-          <Label label={'Source'} testId="logic-source">
+          <OptionalLabel
+            label={'Source'}
+            showLabel={props.config?.settings.showLabels !== false}
+            testId="logic-source"
+          >
             <Select
               autoTrim={true}
               dropdownMatchWidth={false}
@@ -82,7 +111,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
               }}
               options={options}
             />
-          </Label>
+          </OptionalLabel>
         );
       },
       renderConjs: (props) => {
@@ -108,7 +137,11 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       },
       renderField: (props) => {
         return (
-          <Label label={'Variable'} testId="logic-variable">
+          <OptionalLabel
+            label={'Variable'}
+            showLabel={props.config?.settings.showLabels !== false}
+            testId="logic-variable"
+          >
             <Select
               autoTrim={true}
               dropdownMatchWidth={false}
@@ -123,12 +156,16 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
                 }
               }}
             />
-          </Label>
+          </OptionalLabel>
         );
       },
       renderOperator: (props) => {
         return (
-          <Label label={'Operator'} testId="logic-operator">
+          <OptionalLabel
+            label={'Operator'}
+            showLabel={props.config?.settings.showLabels !== false}
+            testId="logic-operator"
+          >
             <Select
               autoTrim={true}
               dropdownMatchWidth={false}
@@ -143,7 +180,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
                 }
               }}
             />
-          </Label>
+          </OptionalLabel>
         );
       },
       renderButton: (props) => {
@@ -162,4 +199,16 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       },
     },
   };
+}
+
+function OptionalLabel(
+  props: LabelProps & {
+    showLabel: boolean;
+  },
+) {
+  const { children, showLabel = true, ...rest } = props;
+  if (!showLabel) {
+    return <>{children}</>;
+  }
+  return <Label {...rest}>{children}</Label>;
 }

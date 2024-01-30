@@ -234,7 +234,10 @@ export function ruleInstanceToFormValuesV8(
             triggersOnHit: ruleInstance.triggersOnHit ?? defaultTriggersOnHit,
           }),
     },
-    ruleIsRunWhenStep: {},
+    ruleIsRunWhenStep: {
+      filtersLogic: ruleInstance.filtersLogic,
+      filtersLogicFormValues: ruleInstance.filtersLogicFormValues,
+    },
     alertCreationDetailsStep: {
       alertCreatedFor: ruleInstance.alertConfig?.alertCreatedFor ?? ['USER'],
       alertCreationInterval: ruleInstance.alertConfig?.alertCreationInterval,
@@ -354,7 +357,8 @@ export function formValuesToRuleInstanceV8(
   formValues: RuleConfigurationFormV8Values,
   isRiskLevelsEnabled: boolean,
 ): RuleInstance {
-  const { basicDetailsStep, ruleIsHitWhenStep, alertCreationDetailsStep } = formValues;
+  const { basicDetailsStep, ruleIsHitWhenStep, ruleIsRunWhenStep, alertCreationDetailsStep } =
+    formValues;
   const {
     ruleAction,
     riskLevelRuleActions,
@@ -365,6 +369,7 @@ export function formValuesToRuleInstanceV8(
     riskLevelsTriggersOnHit,
     baseCurrency,
   } = ruleIsHitWhenStep;
+  const { filtersLogic, filtersLogicFormValues } = ruleIsRunWhenStep;
   const defaultTriggersOnHit: TriggersOnHit = {
     usersToCheck: 'ALL',
   };
@@ -395,6 +400,8 @@ export function formValuesToRuleInstanceV8(
     },
     baseCurrency,
     logicAggregationVariables: ruleLogicAggregationVariables,
+    filtersLogic: filtersLogic,
+    filtersLogicFormValues: filtersLogicFormValues,
     ...(isRiskLevelsEnabled
       ? {
           riskLevelLogic: riskLevelRuleLogic

@@ -574,98 +574,229 @@ describe('Verify Transaction for Simulation', () => {
 describe('Verify Transaction: V8 engine', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
 
-  const TEST_TENANT_ID = getTestTenantId()
-  setUpRulesHooks(TEST_TENANT_ID, [
-    {
-      id: 'V8-R-1',
-      defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
-      defaultLogicAggregationVariables: [
-        {
-          key: 'agg:123',
-          type: 'PAYMENT_DETAILS_TRSANCTIONS',
-          direction: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 1, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+  describe('Simple case', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'V8-R-1',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:123',
+            type: 'PAYMENT_DETAILS_TRSANCTIONS',
+            direction: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
-      type: 'TRANSACTION',
-    },
-  ])
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
 
-  test('executes the json logic - hit', async () => {
-    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
-    const result1 = await rulesEngine.verifyTransaction(
-      getTestTransaction({
+    test('Basic test', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+        })
+      )
+      expect(result1).toEqual({
         transactionId: 'tx-1',
-        originPaymentDetails: {
-          method: 'CARD',
-          cardFingerprint: '123',
-        },
-      })
-    )
-    expect(result1).toEqual({
-      transactionId: 'tx-1',
-      status: 'ALLOW',
-      executedRules: [
-        {
-          ruleId: 'V8-R-1',
-          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
-          ruleName: 'test rule name',
-          ruleDescription: 'test rule description.',
-          ruleAction: 'FLAG',
-          ruleHit: false,
-          nature: 'AML',
-          labels: [],
-        },
-      ],
-      hitRules: [],
-    } as TransactionMonitoringResult)
-    const result2 = await rulesEngine.verifyTransaction(
-      getTestTransaction({
+        status: 'ALLOW',
+        executedRules: [
+          {
+            ruleId: 'V8-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            ruleHit: false,
+            nature: 'AML',
+            labels: [],
+          },
+        ],
+        hitRules: [],
+      } as TransactionMonitoringResult)
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+        })
+      )
+      expect(result2).toEqual({
         transactionId: 'tx-2',
-        originPaymentDetails: {
-          method: 'CARD',
-          cardFingerprint: '123',
+        status: 'FLAG',
+        executedRules: [
+          {
+            ruleId: 'V8-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            ruleHit: true,
+            nature: 'AML',
+            labels: [],
+          },
+        ],
+        hitRules: [
+          {
+            ruleId: 'V8-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            labels: [],
+            nature: 'AML',
+          },
+        ],
+      } as TransactionMonitoringResult)
+    })
+  })
+  describe('With filters', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    describe('With falsy filters', () => {
+      setUpRulesHooks(TEST_TENANT_ID, [
+        {
+          id: 'V8-R-1',
+          type: 'TRANSACTION',
+          ruleImplementationName: 'tests/test-always-hit-rule',
+          logic: { and: [{ '==': [1, 1] }] },
+          filtersLogic: { and: [{ '==': [1, 0] }] },
         },
+      ])
+      test('Rule should run if filters are truthy', async () => {
+        const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+        const result = await rulesEngine.verifyTransaction(
+          getTestTransaction({
+            transactionId: 'tx-2',
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          })
+        )
+        expect(result).toEqual({
+          transactionId: 'tx-2',
+          status: 'ALLOW',
+          executedRules: [],
+          hitRules: [],
+        } as TransactionMonitoringResult)
       })
-    )
-    expect(result2).toEqual({
-      transactionId: 'tx-2',
-      status: 'FLAG',
-      executedRules: [
+    })
+    describe('With truthy filters', () => {
+      setUpRulesHooks(TEST_TENANT_ID, [
         {
-          ruleId: 'V8-R-1',
-          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
-          ruleName: 'test rule name',
-          ruleDescription: 'test rule description.',
-          ruleAction: 'FLAG',
-          ruleHitMeta: {
-            hitDirections: ['ORIGIN'],
-          },
-          ruleHit: true,
-          nature: 'AML',
-          labels: [],
+          id: 'V8-R-1',
+          type: 'TRANSACTION',
+          ruleImplementationName: 'tests/test-always-hit-rule',
+          logic: { and: [{ '==': [1, 1] }] },
+          filtersLogic: { and: [{ '==': [1, 1] }] },
         },
-      ],
-      hitRules: [
+      ])
+      test('Rule should run if filters are truthy', async () => {
+        const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+        const result = await rulesEngine.verifyTransaction(
+          getTestTransaction({
+            transactionId: 'tx-3',
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          })
+        )
+        expect(result).toEqual({
+          transactionId: 'tx-3',
+          status: 'FLAG',
+          executedRules: [
+            {
+              ruleId: 'V8-R-1',
+              ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+              ruleName: 'test rule name',
+              ruleDescription: 'test rule description.',
+              ruleAction: 'FLAG',
+              ruleHitMeta: {
+                hitDirections: ['ORIGIN', 'DESTINATION'],
+              },
+              ruleHit: true,
+              nature: 'AML',
+              labels: [],
+            },
+          ],
+          hitRules: [
+            {
+              ruleId: 'V8-R-1',
+              ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+              ruleName: 'test rule name',
+              ruleDescription: 'test rule description.',
+              ruleAction: 'FLAG',
+              ruleHitMeta: {
+                hitDirections: ['ORIGIN', 'DESTINATION'],
+              },
+              labels: [],
+              nature: 'AML',
+            },
+          ],
+        } as TransactionMonitoringResult)
+      })
+    })
+    describe('With truthy filters using transactions data', () => {
+      setUpRulesHooks(TEST_TENANT_ID, [
         {
-          ruleId: 'V8-R-1',
-          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
-          ruleName: 'test rule name',
-          ruleDescription: 'test rule description.',
-          ruleAction: 'FLAG',
-          ruleHitMeta: {
-            hitDirections: ['ORIGIN'],
+          id: 'V8-R-1',
+          type: 'TRANSACTION',
+          ruleImplementationName: 'tests/test-always-hit-rule',
+          logic: { and: [{ '==': [1, 1] }] },
+          filtersLogic: {
+            and: [{ '==': [{ var: 'TRANSACTION:state' }, 'CREATED'] }],
           },
-          labels: [],
-          nature: 'AML',
         },
-      ],
-    } as TransactionMonitoringResult)
+      ])
+      test('Rule should run if transaction state is CREATED', async () => {
+        const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+        const result = await rulesEngine.verifyTransaction(
+          getTestTransaction({
+            transactionId: 'tx-3',
+            transactionState: 'CREATED',
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          })
+        )
+        expect(result.executedRules).not.toHaveLength(0)
+      })
+      test('Rule should run if transaction state is not CREATED', async () => {
+        const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+        const result = await rulesEngine.verifyTransaction(
+          getTestTransaction({
+            transactionId: 'tx-4',
+            transactionState: 'DECLINED',
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          })
+        )
+        expect(result.executedRules).toHaveLength(0)
+      })
+    })
   })
 })
 

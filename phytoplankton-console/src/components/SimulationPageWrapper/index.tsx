@@ -84,6 +84,15 @@ export const SimulationPageWrapper = forwardRef<
             </AsyncResourceRenderer>
           )}
           <div className={s.right}>
+            {v8Enabled && props.onCreateRule && (
+              <Button
+                type="SECONDARY"
+                onClick={props.onCreateRule}
+                testName="create-scenario-button"
+              >
+                Create rule
+              </Button>
+            )}
             <div className={s.simulationSwitch}>
               <p className={s.simulationSwitchTitle}>Simulator</p>
               {!isSimulationFeatureEnabled ? (
@@ -102,15 +111,6 @@ export const SimulationPageWrapper = forwardRef<
                 />
               )}
             </div>
-            {v8Enabled && props.onCreateRule && (
-              <Button
-                type="SECONDARY"
-                onClick={props.onCreateRule}
-                testName="create-scenario-button"
-              >
-                Create rule
-              </Button>
-            )}
           </div>
         </div>
       }

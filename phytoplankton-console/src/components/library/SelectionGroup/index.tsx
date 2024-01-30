@@ -7,7 +7,7 @@ import { InputProps } from '@/components/library/Form';
 
 export type SelectionGroupValueType = string | boolean | number;
 
-interface Option<Value extends SelectionGroupValueType = SelectionGroupValueType> {
+export interface Option<Value extends SelectionGroupValueType = SelectionGroupValueType> {
   value: Value;
   label: string;
   description?: string;

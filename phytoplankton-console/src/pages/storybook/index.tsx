@@ -63,12 +63,17 @@ import Spinner from '@/components/library/Spinner/story';
 import Filter from '@/components/library/Filter/story';
 import LogicBuilder from '@/components/ui/LogicBuilder/story';
 import Tag from '@/components/library/Tag/story';
+import AgeRangeInput from '@/components/library/AgeRangeInput/story';
 
 const config: Config = [
   {
     key: 'library',
     title: 'Library',
     components: [
+      {
+        key: 'AgeRangeInput',
+        story: AgeRangeInput,
+      },
       {
         key: 'SearchBar',
         story: SearchBar,

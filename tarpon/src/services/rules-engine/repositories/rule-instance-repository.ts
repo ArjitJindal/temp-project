@@ -21,6 +21,7 @@ import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
+
 function toRuleInstance(item: any): RuleInstance {
   return {
     id: item.id,
@@ -30,6 +31,8 @@ function toRuleInstance(item: any): RuleInstance {
     ruleDescriptionAlias: item.ruleDescriptionAlias,
     filters: item.filters,
     baseCurrency: item.baseCurrency,
+    filtersLogic: item.filtersLogic,
+    filtersLogicFormValues: item.filtersLogicFormValues,
     logic: item.logic,
     riskLevelLogic: item.riskLevelLogic,
     logicAggregationVariables: item.logicAggregationVariables,
@@ -98,6 +101,8 @@ export class RuleInstanceRepository {
       logic:
         ruleInstance.logic ??
         Object.values(ruleInstance.riskLevelLogic ?? {})[0],
+      filtersLogic: ruleInstance.filtersLogic,
+      filtersLogicFormValues: ruleInstance.filtersLogicFormValues,
       parameters:
         ruleInstance.parameters ??
         Object.values(ruleInstance.riskLevelParameters ?? {})[0],

@@ -11,6 +11,7 @@ import RuleIsHitWhenStep, {
 } from './steps/RuleIsHitWhenStep';
 import RuleIsRunWhenStep, {
   FormValues as RuleIsRunWhenStepFormValues,
+  INITIAL_VALUES as RULE_IS_RUN_WHEN_STEP_INITIAL_VALUES,
 } from './steps/RuleIsRunWhenStep';
 import AlertCreationDetailsStep, {
   FormValues as AlertCreationDetailsStepFormValues,
@@ -34,8 +35,7 @@ const ALERT_CREATION_DETAILS_STEP = 'alertCreationDetailsStep';
 export const STEPS = [
   BASIC_DETAILS_STEP,
   RULE_IS_HIT_WHEN_STEP,
-  // TODO: Uncomment when rule is run when step is implemented
-  // RULE_IS_RUN_WHEN_STEP,
+  RULE_IS_RUN_WHEN_STEP,
   ALERT_CREATION_DETAILS_STEP,
 ];
 
@@ -135,18 +135,17 @@ function RuleConfigurationFormV8(
           ) != null,
         description: 'Define rule variables and condition for which the rule is hit',
       },
-      // TODO: Uncomment when rule is run when step is implemented
-      // {
-      //   key: RULE_IS_RUN_WHEN_STEP,
-      //   title: 'Rule is run when',
-      //   isOptional: true,
-      //   isUnfilled:
-      //     validateField(
-      //       fieldValidators[RULE_IS_RUN_WHEN_STEP],
-      //       formState?.[RULE_IS_RUN_WHEN_STEP],
-      //     ) != null,
-      //   description: 'Define user and transaction filters for the rule to consider',
-      // },
+      {
+        key: RULE_IS_RUN_WHEN_STEP,
+        title: 'Rule is run when',
+        isOptional: true,
+        isUnfilled:
+          validateField(
+            fieldValidators[RULE_IS_RUN_WHEN_STEP],
+            formState?.[RULE_IS_RUN_WHEN_STEP],
+          ) != null,
+        description: 'Define user and transaction filters for the rule to consider',
+      },
       {
         key: ALERT_CREATION_DETAILS_STEP,
         title: 'Alert creation details',
@@ -263,7 +262,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
         ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
       },
       ruleIsHitWhenStep,
-      ruleIsRunWhenStep: {},
+      ruleIsRunWhenStep: RULE_IS_RUN_WHEN_STEP_INITIAL_VALUES,
       alertCreationDetailsStep: {
         alertCreatedFor: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreatedFor,
         alertCreationInterval: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreationInterval,
