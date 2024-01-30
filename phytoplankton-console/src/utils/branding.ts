@@ -8,6 +8,8 @@ import RegtankLogoSvg from '@/branding/regtank-logo.svg';
 import RegtankFaviconSvg from '@/branding/regtank-favicon.svg';
 import ZigramLogo from '@/branding/zigram-logo-white.png';
 import ZigramFavicon from '@/branding/zigram-favicon.png';
+import TraxionRightLogo from '@/branding/traxionright-logo.png';
+import TraxionRightFavicon from '@/branding/traxionright-favicon.png';
 
 interface BrandingSettings {
   apiBasePath?: string;
@@ -85,6 +87,19 @@ const ZIGRAM_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> =
   systemAvatarUrl: ZigramFavicon,
 };
 
+const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
+  supportEmail: 'support@traxionright.com',
+  logoUrl: TraxionRightLogo,
+  demoModeLogoUrl: TraxionRightLogo,
+  companyName: 'Traxion right',
+  notProvisionedWarning: `User does not have a provisioned Traxion right Account.`,
+  apiDocsLinks: {
+    webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
+  },
+  faviconUrl: TraxionRightFavicon,
+  systemAvatarUrl: TraxionRightFavicon,
+};
+
 const WHITELABEL_BRANDING = {
   'tm.bureau.id': {
     ...BUREAU_BRANDING,
@@ -110,6 +125,16 @@ const WHITELABEL_BRANDING = {
     ...REGTANK_BRANDING,
     auth0Domain: 'login.transaction.console.regtank.com',
     auth0ClientId: 'nVwFjIjOIyrzQfLtkUXo7sdxODGuHfvc',
+  },
+  'sitapp.traxionright.com': {
+    ...TRAXIONRIGHT_BRANDING,
+    auth0Domain: 'login.sitapp.traxionright.com',
+    auth0ClientId: 'CDyMjCLGJ9iyXkcszimeN9tdb7CBYI3R',
+  },
+  'app.traxionright.com': {
+    ...TRAXIONRIGHT_BRANDING,
+    auth0Domain: 'login.app.traxionright.com',
+    auth0ClientId: 'O0B6W59xtC5PbRjPBOfLpUCrnDAr6qmB',
   },
 };
 

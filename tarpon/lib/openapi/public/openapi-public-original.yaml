@@ -177,7 +177,7 @@ paths:
           content: {}
       deprecated: false
       tags: []
-  '/transactions/{transactionId}':
+  /transactions/{transactionId}:
     get:
       x-fern-sdk-group-name: transactions
       x-fern-sdk-method-name: get
@@ -450,7 +450,7 @@ paths:
       deprecated: false
       tags: []
       x-internal: false
-  '/events/transaction/{eventId}':
+  /events/transaction/{eventId}:
     get:
       x-fern-sdk-group-name: transaction_events
       x-fern-sdk-method-name: get
@@ -609,7 +609,7 @@ paths:
           content: {}
       deprecated: false
       tags: []
-  '/consumer/users/{userId}':
+  /consumer/users/{userId}:
     get:
       x-fern-sdk-group-name: consumer_users
       x-fern-sdk-method-name: get
@@ -765,7 +765,7 @@ paths:
           content: {}
       deprecated: false
       tags: []
-  '/business/users/{userId}':
+  /business/users/{userId}:
     get:
       x-fern-sdk-group-name: business_users
       x-fern-sdk-method-name: get

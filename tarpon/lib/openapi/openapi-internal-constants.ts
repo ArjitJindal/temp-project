@@ -12,6 +12,10 @@ export const WHITE_LABEL_ORIGINS = {
     sandbox: 'https://sandboxconsole.transactcomply.com',
     prod: 'https://console.transactcomply.com/',
   },
+  traxionRight: {
+    sandbox: 'https:///sitapp.traxionright.com/',
+    prod: 'https://app.traxionright.com/',
+  },
 }
 export const ALLOWED_ORIGINS = {
   dev: ['*'],
