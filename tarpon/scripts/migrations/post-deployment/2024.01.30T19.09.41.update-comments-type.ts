@@ -7,7 +7,7 @@ async function migrateTenant(tenant: Tenant) {
   const db = await getMongoDbClientDb()
   const collection = db.collection(CASES_COLLECTION(tenant.id))
   await collection.updateMany(
-    { comments: { $exists: true } },
+    { comments: { $exists: true, $ne: null } },
     {
       $set: {
         'comments.$[comment].type': 'STATUS_CHANGE',
@@ -22,7 +22,7 @@ async function migrateTenant(tenant: Tenant) {
     }
   )
   await collection.updateMany(
-    {},
+    { alerts: { $exists: true, $ne: null } },
     {
       $set: {
         'alerts.$[alert].comments': [],
@@ -37,7 +37,7 @@ async function migrateTenant(tenant: Tenant) {
     }
   )
   await collection.updateMany(
-    {},
+    { alerts: { $exists: true, $ne: null } },
     {
       $set: {
         'alerts.$[].comments.$[comment].type': 'STATUS_CHANGE',
