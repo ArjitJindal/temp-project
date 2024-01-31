@@ -40,12 +40,12 @@ jobs:
           cache: "yarn"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Build Root
-        run: yarn add --immutable
-      - run: yarn add --immutable
+        run: yarn install --immutable
+      - run: yarn install --immutable
         working-directory: "tarpon"
       - run: npm run openapi:prepare
         working-directory: "tarpon"
-      - run: yarn add --immutable
+      - run: yarn install --immutable
         working-directory: "phytoplankton-console"
       - run: yarn run build:local
         working-directory: "phytoplankton-console"

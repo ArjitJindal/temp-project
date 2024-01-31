@@ -16,11 +16,11 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
           commands: [
             'corepack enable',
             'yarn set version 4.0.2',
-            'yarn add --immutable',
+            'yarn install --immutable',
             'cd lib',
-            'yarn add --immutable',
+            'yarn install --immutable',
             'cd ../tarpon',
-            'yarn add --immutable',
+            'yarn install --immutable',
           ],
         },
         build: {

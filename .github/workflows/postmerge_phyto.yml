@@ -26,12 +26,12 @@ jobs:
           cache: "yarn"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Install root deps
-        run: yarn add --immutable
+        run: yarn install --immutable
       - name: Install tarpon deps
-        run: yarn add --immutable
+        run: yarn install --immutable
         working-directory: "tarpon"
       - name: Install phyto deps
-        run: yarn add --immutable
+        run: yarn install --immutable
         working-directory: "phytoplankton-console"
       - name: Prepare types
         run: npm run openapi:local

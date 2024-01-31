@@ -41,9 +41,9 @@ jobs:
           path: ~/.jest-cache
           key: jest-cache
       - name: Build Flagright Lib
-        run: corepack enable && yarn set version 4.0.2 && yarn add --immutable
+        run: corepack enable && yarn set version 4.0.2 && yarn install --immutable
         working-directory: "lib"
-      - run: yarn add --immutable
+      - run: yarn install --immutable
         working-directory: "tarpon"
       - run: yarn run build:local
         working-directory: "tarpon"
