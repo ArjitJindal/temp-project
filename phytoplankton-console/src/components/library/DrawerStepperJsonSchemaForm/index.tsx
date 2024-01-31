@@ -29,11 +29,12 @@ interface Props<Entity> {
   isSaving?: boolean;
   onChangeVisibility: (visible: boolean) => void;
   onSubmit: (formState: Entity) => void;
+  onChange?: (formState: Entity) => void;
   extraInfo?: { label: string; redirectUrl: string };
 }
 
 export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
-  const { title, description, isVisible, steps, onSubmit, onChangeVisibility } = props;
+  const { title, description, isVisible, steps, onSubmit, onChange, onChangeVisibility } = props;
   const [activeStepKey, setActiveStepKey] = useState(steps[0].step.key);
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const activeStepIndex = steps.findIndex((step) => step.step.key === activeStepKey);
@@ -121,6 +122,9 @@ export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
             );
             setAlwaysShowErrors(true);
           }
+        }}
+        onChange={({ values }) => {
+          onChange?.(merge({}, ...Object.values(values)) as Entity);
         }}
       >
         {steps.length > 1 ? (

@@ -63,6 +63,7 @@ interface Props<GetParams, Entity extends { [key: string]: any }> {
   formSteps: Array<{ step: Step; jsonSchema: object }>;
   formWidth?: string;
   extraInfo?: { label: string; redirectUrl: string };
+  onChange?: (formState: Entity) => void;
 }
 
 export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any }>(
@@ -275,6 +276,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
         formInitialValues={formInitialValues}
         isSaving={updateMutation.isLoading || creationMutation.isLoading}
         extraInfo={props.extraInfo}
+        onChange={props.onChange}
       />
     </Authorized>
   );
