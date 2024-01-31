@@ -26,19 +26,24 @@ export type AggregationData<T = unknown> = { value: T }
 
 // Increment this version when we need to invalidate all existing aggregations.
 const GLOBAL_AGG_VERSION = 'v1'
+const RULE_AGG_VAR_CHECKSUM_FIELDS: Array<keyof RuleAggregationVariable> = [
+  'type',
+  'direction',
+  'aggregationFieldKey',
+  'aggregationFunc',
+  'timeWindow',
+  'filtersLogic',
+  'baseCurrency',
+]
 
 export function getAggVarHash(
-  aggregationVariable: RuleAggregationVariable
+  aggregationVariable: RuleAggregationVariable,
+  versioned = true
 ): string {
-  const checksumFields: Array<keyof RuleAggregationVariable> = [
-    'type',
-    'direction',
-    'aggregationFieldKey',
-    'aggregationFunc',
-    'timeWindow',
-    'filtersLogic',
-    'baseCurrency',
-  ]
+  let checksumFields = RULE_AGG_VAR_CHECKSUM_FIELDS
+  if (versioned) {
+    checksumFields = checksumFields.concat(['version'])
+  }
   return `${GLOBAL_AGG_VERSION}-${generateChecksum(
     pick(aggregationVariable, checksumFields),
     10

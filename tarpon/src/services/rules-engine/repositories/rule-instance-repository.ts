@@ -12,6 +12,8 @@ import {
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { shortId } from '@flagright/lib/utils'
+import { isEqual } from 'lodash'
+import { getAggVarHash } from '../v8-engine/aggregation-repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   RuleInstance,
@@ -21,6 +23,7 @@ import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
+import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 
 function toRuleInstance(item: any): RuleInstance {
   return {
@@ -103,6 +106,9 @@ export class RuleInstanceRepository {
         Object.values(ruleInstance.riskLevelLogic ?? {})[0],
       filtersLogic: ruleInstance.filtersLogic,
       filtersLogicFormValues: ruleInstance.filtersLogicFormValues,
+      logicAggregationVariables: await this.getLogicAggVarsWithUpdatedVersion(
+        ruleInstance
+      ),
       parameters:
         ruleInstance.parameters ??
         Object.values(ruleInstance.riskLevelParameters ?? {})[0],
@@ -126,6 +132,60 @@ export class RuleInstanceRepository {
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
     return newRuleInstance
+  }
+
+  private async getLogicAggVarsWithUpdatedVersion(
+    ruleInstance: RuleInstance
+  ): Promise<RuleAggregationVariable[] | undefined> {
+    // Early return if no aggregation variables
+    if (
+      !ruleInstance.logicAggregationVariables ||
+      ruleInstance.logicAggregationVariables.length === 0
+    ) {
+      return ruleInstance.logicAggregationVariables
+    }
+
+    const oldRuleInstance = ruleInstance.id
+      ? await this.getRuleInstanceById(ruleInstance.id)
+      : null
+
+    // Early return if aggregation variables are not changed
+    const isBeingEnabled =
+      (!oldRuleInstance || oldRuleInstance?.status === 'INACTIVE') &&
+      ruleInstance.status === 'ACTIVE'
+    if (
+      ruleInstance.status === 'INACTIVE' ||
+      (!isBeingEnabled &&
+        isEqual(
+          oldRuleInstance?.logicAggregationVariables?.map((v) =>
+            getAggVarHash(v, false)
+          ),
+          ruleInstance.logicAggregationVariables?.map((v) =>
+            getAggVarHash(v, false)
+          )
+        ))
+    ) {
+      return ruleInstance.logicAggregationVariables
+    }
+
+    const activeRuleInstances = await this.getActiveRuleInstances(
+      ruleInstance.type
+    )
+    const activeLogicAggregationVariables = activeRuleInstances.flatMap(
+      (r) => r.logicAggregationVariables ?? []
+    )
+    const newVersion = Date.now()
+    return ruleInstance.logicAggregationVariables.map((aggVar) => {
+      const existingSameAggVar = activeLogicAggregationVariables.find(
+        (v) => getAggVarHash(v, false) === getAggVarHash(aggVar, false)
+      )
+      // NOTE: An aggregation variable's version is determined by the timestamp when
+      // it is first created and enabled. This is to ensure that the version is consistent.
+      return {
+        ...aggVar,
+        version: existingSameAggVar?.version ?? newVersion,
+      }
+    })
   }
 
   public async deleteRuleInstance(ruleInstanceId: string): Promise<void> {

@@ -1,4 +1,5 @@
 import { last, omit, uniq } from 'lodash'
+import { v4 as uuidv4 } from 'uuid'
 import { createConsumerUser, getTestUser } from './user-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -65,7 +66,7 @@ export async function createRule(
 
   const createdRuleInstance =
     await ruleInstanceRepository.createOrUpdateRuleInstance({
-      type: rule.type,
+      type: rule.type ?? 'TRANSACTION',
       ruleId: createdRule.id as string,
       id: ruleInstance?.ruleInstanceId,
       logic: createdRule.defaultLogic,
@@ -472,4 +473,18 @@ export function testAggregationRebuild(
       )
     })
   })
+}
+
+export function getTestRuleInstance(
+  partialRuleInstance: Partial<RuleInstance>
+): RuleInstance {
+  return {
+    id: uuidv4(),
+    casePriority: 'P1',
+    type: 'TRANSACTION',
+    nature: 'AML',
+    labels: [],
+    checksFor: [],
+    ...partialRuleInstance,
+  }
 }

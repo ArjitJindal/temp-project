@@ -237,6 +237,7 @@ describe('Cases (Transaction hit)', () => {
         nature: 'AML',
         labels: [],
         checksFor: [],
+        type: 'TRANSACTION',
       },
       {
         ruleId: 'NEW_RULE_HIT',
@@ -244,6 +245,7 @@ describe('Cases (Transaction hit)', () => {
         nature: 'AML',
         labels: [],
         checksFor: [],
+        type: 'TRANSACTION',
       },
     ]
 

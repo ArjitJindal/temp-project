@@ -5553,6 +5553,8 @@ components:
             - end
         filtersLogic:
           type: object
+        version:
+          type: number
       required:
         - key
         - type
@@ -5886,6 +5888,7 @@ components:
         - nature
         - labels
         - checksFor
+        - type
     AlertCreationDirection:
       type: string
       title: AlertCreationDirection
