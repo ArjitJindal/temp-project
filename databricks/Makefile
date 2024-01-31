@@ -1,16 +1,16 @@
 test:
 	poetry install
-	poetry run coverage run --source=src --omit='*tests/*' --branch -m pytest tests
+	poetry run coverage run --source=src --omit='**/*_test.py,src/openapi/**' --branch -m pytest src
 	poetry run coverage report -m --skip-empty
 
 black:
-	poetry run black src tests --check
+	poetry run black src --check
 
 lint:
-	poetry run pylint src tests
+	poetry run pylint src
 
 isort:
-	poetry run isort src tests --check --skip src/openapi
+	poetry run isort src --check --skip src/openapi
 
 mypy:
 	poetry run mypy src
@@ -18,8 +18,8 @@ mypy:
 all_checks: isort black test lint mypy
 
 fix:
-	poetry run isort src tests
-	poetry run black src tests
+	poetry run isort src
+	poetry run black src
 
 generate:
 	command -v openapi-generator-cli >/dev/null 2>&1 || npm install @openapitools/openapi-generator-cli -g

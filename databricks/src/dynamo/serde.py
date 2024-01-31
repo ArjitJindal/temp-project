@@ -30,7 +30,11 @@ class DeserializerException(Exception):
 
 def deserialise_dynamo(column):
     data = json.loads(column)
-    if "dynamodb" in data and "NewImage" in data["dynamodb"]:
-        raw = TypeDeserializer().deserialize({"M": data["dynamodb"]["NewImage"]})
-        return replace_decimals(raw)
+    if "dynamodb" in data:
+        images = data["dynamodb"]
+        if "NewImage" in data["dynamodb"]:
+            to_des = images["NewImage"]
+        if "OldImage" in data["dynamodb"]:
+            to_des = images["OldImage"]
+        return replace_decimals(TypeDeserializer().deserialize({"M": to_des}))
     raise DeserializerException(column)
