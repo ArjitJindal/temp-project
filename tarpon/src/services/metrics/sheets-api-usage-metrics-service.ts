@@ -20,10 +20,16 @@ import { getSecretByName } from '@/utils/secrets-manager'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
 
+const RETRY_STATUS_CODES = [500, 502, 503, 504, 408, 429, 524]
+
 const RETRY_OPTIONS: BackoffOptions = {
   startingDelay: 15 * 1000, // ms
   maxDelay: 120 * 1000, // ms
   jitter: 'full',
+  retry: (e: any, _attemptNumber: number) => {
+    if (e.statusCode && RETRY_STATUS_CODES.includes(e.statusCode)) return true
+    return false
+  },
 }
 
 const DAILY_USAGE_METRICS_SHEET_TITLE = 'DailyUsageMetrics'
