@@ -7,7 +7,6 @@ import {
   updateLogMetadata,
   withContext,
 } from '../utils/context'
-import { traceable } from '../xray'
 import {
   DynamoDbEntityUpdate,
   getDynamoDbUpdates,
@@ -74,7 +73,6 @@ type RuleInstanceHandler = (
   newRuleInstance: RuleInstance | undefined
 ) => Promise<void>
 
-@traceable
 export class StreamConsumerBuilder {
   name: string
   retrySqsQueue: string
