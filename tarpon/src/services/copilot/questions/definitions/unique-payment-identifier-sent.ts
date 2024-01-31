@@ -20,7 +20,7 @@ export const UniquePaymentIdentifierSent: TableQuestion<
       vars.top
     } payment identifiers they have sent to ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ userId, username }, { ...period }) => {
+  aggregationPipeline: async ({ userId, username }, { top, ...period }) => {
     const result = await executeSql<{
       method: string
       count: number
@@ -42,10 +42,12 @@ export const UniquePaymentIdentifierSent: TableQuestion<
       t.destinationPaymentDetails
     order by
       count desc
+    limit :top
     `,
       {
         userId,
         ...sqlPeriod(period),
+        top,
       }
     )
 

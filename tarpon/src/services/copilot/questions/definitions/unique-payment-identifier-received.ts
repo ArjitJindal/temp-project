@@ -20,7 +20,7 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
       vars.top
     } payment identifiers they have received from ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ userId, username }, { ...period }) => {
+  aggregationPipeline: async ({ userId, username }, { top, ...period }) => {
     const result = await executeSql<{
       method: string
       count: number
@@ -41,11 +41,13 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
     group by
       t.originPaymentDetails
     order by
-      count desc
+      sum desc
+    limit :top
     `,
       {
         userId,
         ...sqlPeriod(period),
+        top,
       }
     )
 
