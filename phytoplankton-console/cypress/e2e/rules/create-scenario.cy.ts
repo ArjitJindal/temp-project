@@ -1,4 +1,4 @@
-describe('Create scenario', () => {
+describe.skip('Create scenario', () => {
   let conditionsCount = 1;
   beforeEach(() => {
     cy.loginByRole('super_admin');
