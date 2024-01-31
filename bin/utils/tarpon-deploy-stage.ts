@@ -20,8 +20,7 @@ export const tarponDeployStage = (
   vpc: ec2.IVpc
 ) => {
   const env = config.stage + (config.region ? `:${config.region}` : '')
-  const shouldReleaseSentry =
-    config.stage === 'prod' && config.region === 'eu-1'
+  const shouldReleaseSentry = config.stage === 'sandbox'
 
   return new codebuild.PipelineProject(scope, `TarponDeploy-${env}`, {
     buildSpec: codebuild.BuildSpec.fromObject({
@@ -51,7 +50,9 @@ export const tarponDeployStage = (
               (dir) =>
                 `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`
             ),
-            ...(shouldReleaseSentry ? getSentryReleaseSpec(true).commands : []),
+            ...(shouldReleaseSentry
+              ? getSentryReleaseSpec(false).commands
+              : []),
             'corepack enable',
             `yarn run migration:pre:up`,
             // Don't upload source maps to Lambda
@@ -66,7 +67,7 @@ export const tarponDeployStage = (
         'base-directory': 'tarpon/cdk.out',
         files: ['*.json'],
       },
-      env: shouldReleaseSentry ? getSentryReleaseSpec(true).env : undefined,
+      env: shouldReleaseSentry ? getSentryReleaseSpec(false).env : undefined,
     }),
     environment: {
       buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,

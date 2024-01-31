@@ -27,7 +27,7 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
           commands: [
             ...installTerraform,
             'yarn build',
-            ...getSentryReleaseSpec(false).commands,
+            ...getSentryReleaseSpec(true).commands,
           ],
         },
       },
@@ -38,7 +38,7 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
         'base-directory': 'tarpon',
         files: GENERATED_DIRS.map((dir) => `${dir}/**/*`),
       },
-      env: getSentryReleaseSpec(false).env,
+      env: getSentryReleaseSpec(true).env,
     }),
     environment: {
       buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
