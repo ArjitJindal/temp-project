@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router-dom';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { FalsePositiveTag } from '../components/FalsePositiveTag';
@@ -27,7 +28,7 @@ import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import { getAlertUrl } from '@/utils/routing';
+import { getAlertUrl, makeUrl, parseQueryString } from '@/utils/routing';
 import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
@@ -35,7 +36,7 @@ import AssignToButton from '@/pages/case-management/components/AssignToButton';
 import { useAuth0User, useUsers, useHasPermissions } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
-import { useCaseAlertFilters } from '@/pages/case-management/helpers';
+import { queryAdapter, useCaseAlertFilters } from '@/pages/case-management/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   ASSIGNMENTS,
@@ -126,10 +127,28 @@ export default function AlertTable(props: Props) {
       .flatMap((v) => v)
       .filter(Boolean);
   }, [selectedTxns]);
-  const [investigativeAlert, setInvestigativeAlert] = useState<{
-    alertId: string;
-    caseUserName: string;
-  }>();
+  const navigate = useNavigate();
+  const parsedParams = queryAdapter.deserializer({
+    ...parseQueryString(location.search),
+  });
+  const forensicsFor = parsedParams.forensicsFor;
+  const [investigativeAlert, setInvestigativeAlert] = useState<
+    | {
+        alertId: string;
+        caseUserName: string;
+      }
+    | undefined
+  >(forensicsFor);
+
+  //for handing back and forth button in browser
+  useEffect(() => {
+    if (!forensicsFor?.alertId && !forensicsFor?.caseUserName) setInvestigativeAlert(undefined);
+    else
+      setInvestigativeAlert({
+        alertId: forensicsFor?.alertId,
+        caseUserName: forensicsFor?.caseUserName,
+      });
+  }, [forensicsFor?.alertId, forensicsFor?.caseUserName]);
 
   const assignmentsToMutationAlerts = useMutation<unknown, Error, AlertsAssignmentsUpdateRequest>(
     async ({ alertIds, assignments }) => {
@@ -541,20 +560,35 @@ export default function AlertTable(props: Props) {
                   </div>
                 )}
                 {handleInvestigateAlert && (
-                  <Button
-                    testName={'investigate-button'}
-                    type="TETRIARY"
-                    onClick={() => {
-                      if (entity.alertId != null) {
-                        handleInvestigateAlert({
+                  <Link
+                    to={makeUrl(
+                      location.pathname,
+                      undefined,
+                      queryAdapter.serializer({
+                        ...params,
+                        forensicsFor: {
                           alertId: entity.alertId,
                           caseUserName: entity.caseUserName || '',
-                        });
-                      }
-                    }}
+                        },
+                        expandedAlertId: entity.alertId,
+                      }),
+                    )}
                   >
-                    <BrainIcon style={{ width: '16px', cursor: 'pointer' }} /> Forensics
-                  </Button>
+                    <Button
+                      testName={'investigate-button'}
+                      type="TETRIARY"
+                      onClick={() => {
+                        if (entity.alertId != null) {
+                          handleInvestigateAlert({
+                            alertId: entity.alertId,
+                            caseUserName: entity.caseUserName || '',
+                          });
+                        }
+                      }}
+                    >
+                      <BrainIcon style={{ width: '16px', cursor: 'pointer' }} /> Forensics
+                    </Button>
+                  </Link>
                 )}
               </div>
             );
@@ -598,6 +632,7 @@ export default function AlertTable(props: Props) {
     ruleQueues,
     qaMode,
     qaAssigneesUpdateMutation,
+    params,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
@@ -960,6 +995,7 @@ export default function AlertTable(props: Props) {
         alertId={investigativeAlert?.alertId}
         caseUserName={investigativeAlert?.caseUserName}
         onClose={() => {
+          navigate(-1);
           setInvestigativeAlert(undefined);
         }}
       />

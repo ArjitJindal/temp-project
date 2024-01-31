@@ -458,6 +458,7 @@ export default function CaseTable(props: Props) {
     <QueryResultsTable<TableItem, TableSearchParams>
       innerRef={tableRef}
       tableId="case-table"
+      expandedRowId={params.caseId}
       renderExpanded={(record) => (
         <>
           {record.caseId && (

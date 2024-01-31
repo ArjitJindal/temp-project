@@ -59,6 +59,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       alertPriority: params.alertPriority?.join(','),
       ruleQueueIds: params.ruleQueueIds?.join(','),
       ruleNature: params.ruleNature?.join(','),
+      forensicsFor: JSON.stringify(params.forensicsFor),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -107,6 +108,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       ) as unknown as TableSearchParams['alertPriority'],
       ruleQueueIds: raw.ruleQueueIds?.split(','),
       ruleNature: raw.ruleNature?.split(','),
+      forensicsFor: raw.forensicsFor ? JSON.parse(raw.forensicsFor) : undefined,
     };
   },
 };

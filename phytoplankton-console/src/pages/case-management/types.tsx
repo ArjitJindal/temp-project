@@ -47,6 +47,11 @@ export type CommonCaseParams = {
   alertPriority: Priority[];
   ruleQueueIds?: string[];
   ruleNature?: string[];
+  forensicsFor?: {
+    alertId: string;
+    caseUserName: string;
+  };
+  expandedAlertId?: string;
 };
 
 export type TableSearchParams = CommonParams & {
