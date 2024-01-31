@@ -493,15 +493,11 @@ class DatabricksStack extends TerraformStack {
       })
     }
 
-    new databricks.grants.Grants(this, `grants-admin`, {
+    new databricks.grant.Grant(this, `grants-admin`, {
       provider: workspaceProvider,
       catalog: catalog.id,
-      grant: [
-        {
-          principal: regionalAdminGroupName,
-          privileges: ['ALL_PRIVILEGES'],
-        },
-      ],
+      privileges: ['ALL_PRIVILEGES'],
+      principal: regionalAdminGroupName,
     })
 
     const defaultSchema = new databricks.schema.Schema(this, 'default-schema', {
