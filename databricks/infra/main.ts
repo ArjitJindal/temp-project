@@ -94,15 +94,13 @@ class DatabricksStack extends TerraformStack {
     // Conditionals
     const shouldCreateVpc = stage === 'dev'
     const shouldCreateMetastore = stage === 'prod'
-    const shouldCreateUsers = stage === 'prod'
 
     // Create or retrieve metastores, VPC, users.
     const { securityGroupIds, subnetIds, vpcId } = shouldCreateVpc
       ? this.createVpc()
       : this.fetchVpc()
-    const userIds = shouldCreateUsers ? this.createUsers() : this.fetchUsers()
     const metastoreId = shouldCreateMetastore
-      ? this.createMetastore(userIds)
+      ? this.createMetastore()
       : this.fetchMetastore()
 
     const storageConfigurationId = this.rootStorage()
@@ -703,18 +701,6 @@ class DatabricksStack extends TerraformStack {
       }).id
     })
   }
-  private fetchUsers() {
-    return adminEmails.map((email) => {
-      return new databricks.dataDatabricksUser.DataDatabricksUser(
-        this,
-        `user-${email}`,
-        {
-          provider: this.mws,
-          userName: email,
-        }
-      ).id
-    })
-  }
 
   private fetchVpc() {
     const vpcs = new aws.dataAwsVpcs.DataAwsVpcs(this, 'vpc', {
@@ -1105,7 +1091,8 @@ class DatabricksStack extends TerraformStack {
       profileRoleName: profileRole.name,
     }
   }
-  private createMetastore(userIds: string[]): string {
+  private createMetastore(): string {
+    const userIds = this.createUsers()
     const metaStorageBucket = new aws.s3Bucket.S3Bucket(
       this,
       'meta-storage-bucket',
