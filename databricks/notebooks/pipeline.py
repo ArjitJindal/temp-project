@@ -5,10 +5,6 @@
 
 import os
 import dlt
-from src.dlt.data_quality_checks import (
-    raw_event_data_valid,
-    raw_event_data_warn,
-)
 from pyspark.sql.functions import col, concat, expr, from_json, lit, regexp_extract, udf, lower
 
 from src.dlt.schema import kinesis_event_schema
@@ -30,8 +26,6 @@ def define_pipeline(spark):
             "pipelines.reset.allowed": "false",
         },
     )
-    @dlt.expect_all_or_drop(raw_event_data_valid)
-    @dlt.expect_all(raw_event_data_warn)
     def kinesis_events():
         return (
             spark.readStream.format("kinesis")
