@@ -1337,14 +1337,16 @@ getTenantInfoFromUsagePlans(awsRegion).then((tenants) => {
     throw new Error('no tenants found')
   }
   const app = new App()
-  new DatabricksStack(
-    app,
-    `databricks-stack-${env}`,
-    tenants
-      .map((t) => t.id.toLowerCase())
-      .filter((elem, index, self) => {
-        return index === self.indexOf(elem)
-      })
-  )
+  const tenantIds = tenants
+    .map((t) => t.id.toLowerCase())
+    .filter((elem, index, self) => {
+      return index === self.indexOf(elem)
+    })
+
+  // Add demo mode tenants.
+  if (stage === 'sandbox') {
+    tenantIds.push(...tenantIds.map((tid) => `${tid}-test`))
+  }
+  new DatabricksStack(app, `databricks-stack-${env}`, tenantIds)
   app.synth()
 })
