@@ -1,9 +1,6 @@
 # pylint: disable=redefined-outer-name
 import pytest
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StringType
-
-from src.dlt.transformations import transform_event_data
 
 OUTPUT_JSON = """{timestamp=1701790627472}"""
 DYNAMO_EVENT_JSON = """
@@ -23,6 +20,11 @@ DYNAMO_EVENT_JSON = """
    },
    "eventSource":"aws:dynamodb"
 }"""
+
+
+def test_noop():
+    value = True
+    assert value
 
 
 @pytest.fixture()

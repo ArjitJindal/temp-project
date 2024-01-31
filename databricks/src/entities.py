@@ -4,6 +4,7 @@ from src.openapi.models.business import Business
 from src.openapi.models.transaction import Transaction
 from src.openapi.models.user import User
 
+
 def merge_schemas(*schemas):
     return StructType(list({obj.name: obj for l in schemas for obj in l}.values()))
 

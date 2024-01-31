@@ -10,7 +10,7 @@ lint:
 	poetry run pylint src tests
 
 isort:
-	poetry run isort src tests --check
+	poetry run isort src tests --check --skip src/openapi
 
 mypy:
 	poetry run mypy src
