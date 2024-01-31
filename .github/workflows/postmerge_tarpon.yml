@@ -32,9 +32,9 @@ jobs:
           path: ~/.jest-cache
           key: jest-cache
       - name: Build Flagright Lib
-        run: yarn install --immutable
+        run: yarn add --immutable
         working-directory: "lib"
-      - run: yarn install --immutable
+      - run: yarn add --immutable
         working-directory: "tarpon"
       - run: npm run build:local
         working-directory: "tarpon"

@@ -32,7 +32,7 @@ export const tarponDeployStage = (
           },
           commands: [
             'corepack enable && yarn set version 4.0.2',
-            'yarn install --immutable',
+            'yarn add --immutable',
             'cd tarpon',
             'corepack enable',
             'yarn add @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',

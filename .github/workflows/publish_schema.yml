@@ -38,7 +38,7 @@ jobs:
           node-version: "18"
           cache: "yarn"
           cache-dependency-path: "tarpon/yarn.lock"
-      - run: yarn install --immutable
+      - run: yarn add --immutable
         working-directory: "tarpon"
       - name: Publish schemas
         run: npm run openapi:publish

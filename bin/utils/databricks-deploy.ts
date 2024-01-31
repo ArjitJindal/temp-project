@@ -25,9 +25,9 @@ export const databricksDeployStage = (
             commands: [
               'export YARN_IGNORE_NODE=1',
               'corepack enable && yarn set version 4.0.2',
-              'yarn install --immutable',
+              'yarn add --immutable',
               'cd lib',
-              'yarn install --immutable',
+              'yarn add --immutable',
               'cd ../databricks/infra',
               'npm install',
               ...getAssumeRoleCommands(config),
