@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import s from './styles.module.less';
 import { Alert, InternalTransaction, RuleAction } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -27,18 +27,13 @@ export default function RuleAndCaseDetails(props: Props) {
 
   const api = useApi();
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
-  const fullParams = useMemo(
-    () => ({
-      ...params,
-      filterTransactionId: transaction.transactionId,
-    }),
-    [params, transaction.transactionId],
-  );
-  const queryResults = usePaginatedQuery<Alert>(ALERT_LIST(fullParams), async ({ page }) => {
+
+  const queryResults = usePaginatedQuery<Alert>(ALERT_LIST(params), async ({ page }) => {
     const response = await api.getAlertList({
-      ...fullParams,
-      page: page ?? fullParams.page,
+      ...params,
+      page: page ?? params.page,
       filterAction: action ? action : undefined,
+      filterTransactionIds: [transaction.transactionId],
     });
     return {
       items: response.data.map(({ alert }) => alert),

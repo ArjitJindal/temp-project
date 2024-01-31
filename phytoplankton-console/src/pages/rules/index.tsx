@@ -179,6 +179,7 @@ const TableList = () => {
               filters: currentRule.defaultFilters,
               labels: [],
               checksFor: currentRule.checksFor,
+              type: currentRule.type,
             }}
             isVisible={currentRule != null}
             onChangeVisibility={(isVisible) => {
