@@ -10,7 +10,7 @@ export const Auth0SandboxTraxionRightTenantConfig: Auth0TenantConfig = {
   allowedOrigins: [WHITE_LABEL_ORIGINS.traxionRight.sandbox],
   allowedCallbackUrls: [WHITE_LABEL_ORIGINS.traxionRight.sandbox],
   branding: {
-    logoUrl: 'https://i.imgur.com/0OuS3UP.png',
+    logoUrl: 'https://imgur.com/uG7lZJn.png',
     primaryColor: '#4169E0',
     pageBackgroundColor: '#EFF2F5',
     companyDisplayName: 'TraxionRight',

@@ -10,7 +10,7 @@ export const Auth0ProdTraxionRightTenantConfig: Auth0TenantConfig = {
   allowedOrigins: [WHITE_LABEL_ORIGINS.traxionRight.prod],
   allowedCallbackUrls: [WHITE_LABEL_ORIGINS.traxionRight.prod],
   branding: {
-    logoUrl: 'https://i.imgur.com/0OuS3UP.png',
+    logoUrl: 'https://i.imgur.com/uG7lZJn.png',
     primaryColor: '#4169E0',
     pageBackgroundColor: '#EFF2F5',
     companyDisplayName: 'Traxion Right',
