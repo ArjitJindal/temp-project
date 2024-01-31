@@ -31,6 +31,7 @@ describe('Create scenario', () => {
     checkConditionsCount(2, 'LOW');
     checkConditionsCount(2, 'HIGH');
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
+    cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
 
     cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
 
@@ -75,6 +76,7 @@ describe('Create scenario', () => {
         checkConditionsCount(3, 'MEDIUM');
         checkConditionsCount(3, 'VERY_HIGH');
         cy.get('button[data-cy="drawer-next-button-v8"]').eq(1).click();
+        cy.get('button[data-cy="drawer-next-button-v8"]').eq(1).click();
         cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
         cy.message(`Rule updated - ${ruleInstanceId}`).should('exist');
       }
@@ -96,11 +98,9 @@ describe('Create scenario', () => {
     cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}{enter}`);
     cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
     cy.get('input[data-cy="variable-direction-v8"]').eq(0).click();
-    /* eslint-disable-next-line cypress/no-unnecessary-waiting */
     cy.get('label[data-cy="variable-aggregate-field-v8"]')
       .click()
       .type(`${variableAggregateField}`)
-      .wait(1000)
       .type(`{enter}`);
     cy.get('label[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
     cy.get('label[data-cy="time-from-interval"]').click().type('Month{enter}');
