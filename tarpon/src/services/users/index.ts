@@ -55,9 +55,12 @@ import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
   FAILED: 1,
-  IN_PROGRESS: 2,
-  SUCCESSFUL: 3,
-  NOT_STARTED: 4,
+  CANCELLED: 2,
+  IN_PROGRESS: 3,
+  EXPIRED: 4,
+  SUCCESSFUL: 5,
+  NOT_STARTED: 6,
+  NEW: 7,
 }
 
 const USER_STATE_DETAILS_PRIORITY: Record<UserState, number> = {

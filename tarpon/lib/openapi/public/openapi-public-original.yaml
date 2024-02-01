@@ -2428,6 +2428,15 @@ components:
         - Wealth
         - Gift
         - Pension
+        - Inheritance
+        - Gambling
+        - Benefits
+        - Passive
+        - Family
+        - Insurance
+        - Legal
+        - Sales
+        - Rollover
     ContactDetails:
       title: ContactDetails
       type: object
@@ -4100,12 +4109,17 @@ components:
         - FAILED
         - NOT_STARTED
         - IN_PROGRESS
+        - EXPIRED
+        - NEW
+        - CANCELLED
         - MANUAL_REVIEW
     EmploymentStatus:
       type: string
       title: EmploymentStatus
       enum:
         - UNEMPLOYED
+        - EMPLOYED
+        - SELF_EMPLOYED
         - STUDENT
         - FULL_TIME
         - PART_TIME
