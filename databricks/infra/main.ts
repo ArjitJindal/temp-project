@@ -16,7 +16,7 @@ import * as path from 'path'
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
 // Change this to update the table schemas
-const schemaVersion = '3'
+const schemaVersion = '4'
 const adminEmails = ['tim+databricks@flagright.com']
 const stage = process.env.STAGE as Stage
 const region = process.env.REGION as FlagrightRegion
@@ -636,7 +636,7 @@ class DatabricksStack extends TerraformStack {
               tableType: 'VIEW',
               warehouseId: sqlWarehouse.id,
               viewDefinition: Fn.format(
-                `SELECT * from %s.default.%s WHERE tenant = '%s' AND '${schemaVersion}' = '${schemaVersion}'`,
+                `SELECT * from %s.default.%s WHERE tenant = '%s' AND '${schemaVersion}' = '${schemaVersion}'`, // This is required for manually updating views
                 [catalog.name, entity.table, sp.displayName]
               ),
               lifecycle: {
