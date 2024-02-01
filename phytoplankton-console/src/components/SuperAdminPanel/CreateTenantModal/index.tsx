@@ -34,6 +34,7 @@ let envToDisplay: string;
 switch (currentEnv) {
   case 'local':
   case 'dev':
+  case 'dev:user':
     envToDisplay = 'Development';
     break;
   case 'sandbox':

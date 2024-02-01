@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/node'
+import { isQaEnv } from '@lib/qa'
 import { getContext } from '../utils/context'
 import { envIs } from '@/utils/env'
 import { SENTRY_INIT_CONFIG } from '@/utils/sentry'
@@ -7,7 +8,7 @@ export const initSentryNode =
   () =>
   (handler: CallableFunction): any =>
   async (): Promise<any> => {
-    if (!process.env.ENV || envIs('local')) {
+    if (!envIs('dev', 'sandbox', 'prod') || isQaEnv()) {
       return handler()
     }
 

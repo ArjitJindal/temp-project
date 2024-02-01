@@ -44,6 +44,7 @@ export const ApiKeysSettings = () => {
       prod: `https://${region}.api.flagright.com`,
       sandbox: 'https://sandbox.api.flagright.com',
       dev: 'https://api.flagright.dev',
+      'dev:user': 'https://api.flagright.dev',
       local: `https://region.api.flagright.com`,
     };
 

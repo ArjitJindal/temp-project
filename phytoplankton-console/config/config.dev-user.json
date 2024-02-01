@@ -1,6 +1,6 @@
 {
   "mode": "production",
-  "envName": "dev",
+  "envName": "dev:user",
   "define": {
     "EXPORT_ENTRIES_LIMIT": 10000,
     "API_BASE_PATH": "https://{{qaSubdomain}}.api.flagright.dev/console",
