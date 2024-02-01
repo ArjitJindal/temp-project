@@ -17,10 +17,7 @@ import * as path from 'path'
 const preventTenantDestruction = false
 // Change this to update the table schemas
 const schemaVersion = '3'
-const adminEmails = [
-  'tim+databricks@flagright.com',
-  'nadig+databricks@flagright.com',
-]
+const adminEmails = ['tim+databricks@flagright.com']
 const stage = process.env.STAGE as Stage
 const region = process.env.REGION as FlagrightRegion
 const env = `${stage}-${region}`
@@ -1157,13 +1154,14 @@ class DatabricksStack extends TerraformStack {
             {
               effect: 'Allow',
               actions: ['sts:AssumeRole'],
-              principals: Object.values(AWS_ACCOUNTS).map((accountId) => ({
-                type: 'AWS',
-                identifiers: [
-                  'arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL',
-                  `arn:aws:iam::${accountId}:role/${prefix}-uc-access`,
-                ],
-              })),
+              principals: [
+                {
+                  type: 'AWS',
+                  identifiers: [
+                    'arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL',
+                  ],
+                },
+              ],
               condition: [
                 {
                   test: 'StringEquals',
@@ -1214,17 +1212,6 @@ class DatabricksStack extends TerraformStack {
                 's3:PutLifecycleConfiguration',
               ],
               Resource: [metaStorageBucket.arn, `${metaStorageBucket.arn}/*`],
-              Effect: 'Allow',
-            },
-            {
-              Action: ['sts:AssumeRole'],
-              Resource: Object.values(AWS_ACCOUNTS).map((accountId) => ({
-                type: 'AWS',
-                identifiers: [
-                  `arn:aws:iam::${accountId}:role/${prefix}-uc-access`,
-                ],
-              })),
-
               Effect: 'Allow',
             },
           ],
