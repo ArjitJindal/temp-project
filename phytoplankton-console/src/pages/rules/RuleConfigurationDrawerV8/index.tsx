@@ -65,7 +65,7 @@ export default function RuleConfigurationDrawerV8(props: RuleConfigurationDrawer
       } else if (type === 'CREATE' || type === 'DUPLICATE') {
         createRuleInstanceMutation.mutate(
           formValuesToRuleInstanceV8(
-            { ruleId: rule?.id } as RuleInstance,
+            { ruleId: rule?.id, type: rule?.type ?? 'TRANSACTION' } as RuleInstance,
             formValues,
             isRiskLevelsEnabled,
           ),
