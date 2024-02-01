@@ -4,6 +4,7 @@ import '@react-awesome-query-builder/ui/css/styles.css';
 import cn from 'clsx';
 import React from 'react';
 import s from './index.module.less';
+import { JSON_LOGIC_FUNCTIONS } from './functions';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets } from '@/components/ui/LogicBuilder/widgets';
 import Select, { Option } from '@/components/library/Select';
@@ -38,6 +39,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
     funcs: {
       ...InitialConfig.funcs,
       ...params.funcs,
+      ...JSON_LOGIC_FUNCTIONS,
     },
     operators: enabledValueSources
       ? Object.entries({
@@ -61,6 +63,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
     settings: {
       ...InitialConfig.settings,
       showLabels: !hideLabels,
+      fieldSources: ['field', 'func'],
       valueSourcesInfo: {
         ...InitialConfig.settings.valueSourcesInfo,
         value: {
@@ -93,25 +96,16 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
           }));
         }
         return (
-          <OptionalLabel
-            label={'Source'}
-            showLabel={props.config?.settings.showLabels !== false}
-            testId="logic-source"
+          <Dropdown
+            options={options}
+            onSelect={(option) => {
+              props.setValueSrc(option.value);
+            }}
           >
-            <Select
-              autoTrim={true}
-              dropdownMatchWidth={false}
-              portaled={true}
-              allowClear={false}
-              value={props.valueSrc}
-              onChange={(newValue) => {
-                if (newValue) {
-                  props.setValueSrc(newValue);
-                }
-              }}
-              options={options}
-            />
-          </OptionalLabel>
+            <div className={cn(s.selectedValueSource)}>
+              <ArrowDownSLineIcon className={s.arrowIcon} />
+            </div>
+          </Dropdown>
         );
       },
       renderConjs: (props) => {
@@ -181,6 +175,26 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
               }}
             />
           </OptionalLabel>
+        );
+      },
+      renderFunc: (props) => {
+        return (
+          <Label label={'Function'} testId="logic-function">
+            <Select
+              autoTrim={true}
+              dropdownMatchWidth={true}
+              portaled={true}
+              allowClear={false}
+              options={props.items.map((x) => ({ label: x.label, value: x.key }))}
+              value={props.selectedKey}
+              onChange={(key) => {
+                const item = props.items.find((x) => x.key === key);
+                if (item && item.path) {
+                  props.setField(item.path);
+                }
+              }}
+            />
+          </Label>
         );
       },
       renderButton: (props) => {

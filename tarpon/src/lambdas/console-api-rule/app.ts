@@ -16,8 +16,7 @@ import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-re
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getTransactionRuleEntityVariables } from '@/services/rules-engine/v8-variables'
 import { RULE_OPERATORS } from '@/services/rules-engine/v8-operators'
-import { RuleEntityVariable } from '@/@types/openapi-internal/RuleEntityVariable'
-import { RuleOperator } from '@/@types/openapi-internal/RuleOperator'
+import { RULE_FUNCTIONS } from '@/services/rules-engine/v8-functions'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -39,11 +38,9 @@ export const ruleHandler = lambdaApi()(
 
     handlers.registerGetRuleLogicConfig(async () => {
       return {
-        variables: Object.values(
-          getTransactionRuleEntityVariables()
-        ) as RuleEntityVariable[],
-        operators: RULE_OPERATORS as RuleOperator[],
-        functions: [],
+        variables: Object.values(getTransactionRuleEntityVariables()),
+        operators: RULE_OPERATORS,
+        functions: RULE_FUNCTIONS,
       }
     })
 

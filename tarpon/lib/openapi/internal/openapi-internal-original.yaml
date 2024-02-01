@@ -5454,7 +5454,7 @@ components:
         functions:
           type: array
           items:
-            type: object
+            $ref: '#/components/schemas/RuleFunction'
       required:
         - variables
         - operators
@@ -5503,6 +5503,17 @@ components:
       enum:
         - op:inlist
         - op:!inlist
+    RuleFunction:
+      title: RuleFunction
+      type: object
+      properties:
+        key:
+          type: object
+        uiDefinition:
+          type: object
+      required:
+        - key
+        - uiDefinition
     RuleAggregationType:
       title: RuleAggregationType
       type: string

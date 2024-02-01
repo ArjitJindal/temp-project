@@ -192,6 +192,7 @@ function RuleConfigurationFormV8(
         <Stepper
           layout="VERTICAL"
           className={s.stepper}
+          stepsClassName={s.steps}
           steps={STEPS}
           active={activeStepKey}
           onChange={onActiveStepKeyChange}

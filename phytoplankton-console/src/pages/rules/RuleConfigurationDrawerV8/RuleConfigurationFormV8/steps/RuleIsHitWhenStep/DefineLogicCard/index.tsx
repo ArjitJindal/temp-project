@@ -54,7 +54,7 @@ export default function DefineLogicCard(props: Props) {
   const settings = useSettings();
   useEffect(() => {
     if (hasTransactionAmountVariable && !baseCurrencyFieldState.value) {
-      baseCurrencyFieldState.onChange(settings.defaultValues?.currency);
+      baseCurrencyFieldState.onChange(settings.defaultValues?.currency ?? 'USD');
     }
   }, [baseCurrencyFieldState, hasTransactionAmountVariable, settings.defaultValues?.currency]);
 
