@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -14,7 +15,7 @@ import {
 
 export const Transactions: TableQuestion<Period> = {
   type: 'TABLE',
-  questionId: 'Transactions',
+  questionId: COPILOT_QUESTIONS.TRANSACTIONS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (ctx, vars) => {
     return `Transactions ${humanReadablePeriod(vars)}`

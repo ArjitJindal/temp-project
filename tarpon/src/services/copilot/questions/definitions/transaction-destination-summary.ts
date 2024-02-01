@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import {
   humanReadablePeriod,
@@ -8,7 +9,7 @@ import {
 import { executeSql } from '@/utils/databricks'
 export const TransactionDestinationSummary: PropertiesQuestion<Period> = {
   type: 'PROPERTIES',
-  questionId: 'Transaction insights for destination',
+  questionId: COPILOT_QUESTIONS.TRANSACTION_INSIGHTS_FOR_DESTINATION,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }, { ...period }) => {
     return `Transaction insights for ${username} ${humanReadablePeriod(

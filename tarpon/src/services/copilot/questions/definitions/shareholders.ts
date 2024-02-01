@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -12,7 +13,7 @@ import { queryUsername } from '@/services/copilot/questions/definitions/util'
 
 export const Shareholders: TableQuestion<{ userId: string }> = {
   type: 'TABLE',
-  questionId: 'Shareholders',
+  questionId: COPILOT_QUESTIONS.SHAREHOLDERS,
   categories: ['BUSINESS'],
   title: async (_, { userId }) => {
     return `Shareholders for ${await queryUsername(userId)}`

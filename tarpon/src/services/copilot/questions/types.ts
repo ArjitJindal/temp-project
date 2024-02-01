@@ -1,3 +1,4 @@
+import { CopilotQuestionIds } from '@flagright/lib/utils'
 import { QuestionVariableOptionVariableTypeEnum } from '@/@types/openapi-internal/QuestionVariableOption'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
@@ -42,7 +43,7 @@ export type InvestigationContext = {
 export type QuestionCategory = 'BUSINESS' | 'CONSUMER'
 
 export type Question<V extends Variables> = {
-  questionId: string
+  questionId: CopilotQuestionIds
   title?: (ctx: InvestigationContext, variables: V) => Promise<string>
   explainer?: string
   variableOptions: VariableOptions<V>

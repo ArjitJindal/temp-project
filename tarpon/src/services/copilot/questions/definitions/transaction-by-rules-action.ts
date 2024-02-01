@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { StackedBarchartQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -16,7 +17,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 
 export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
   type: 'STACKED_BARCHART',
-  questionId: 'Transactions by rule action',
+  questionId: COPILOT_QUESTIONS.TRANSACTIONS_BY_RULE_ACTION,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Transactions by rule action ${humanReadablePeriod(vars)}`

@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -12,7 +13,7 @@ import {
 
 export const CaseHistory: TableQuestion<Period> = {
   type: 'TABLE',
-  questionId: 'Cases',
+  questionId: COPILOT_QUESTIONS.CASES,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }, vars) => {
     return `Cases for ${username} ${humanReadablePeriod(vars)}`

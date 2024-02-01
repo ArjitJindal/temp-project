@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { LinkerService } from '@/services/linker'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -8,7 +9,7 @@ import { calculatePercentageBreakdown } from '@/services/copilot/questions/defin
 
 export const LinkedUsers: TableQuestion<any> = {
   type: 'TABLE',
-  questionId: 'Linked users',
+  questionId: COPILOT_QUESTIONS.LINKED_USERS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }) => {
     return `Linked users for ${username} over the last 30 days`

@@ -1,9 +1,10 @@
 import { BadRequest } from 'http-errors'
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import { CrmService } from '@/services/crm'
 export const CrmInsights: PropertiesQuestion<any> = {
   type: 'PROPERTIES',
-  questionId: 'CRM insights',
+  questionId: COPILOT_QUESTIONS.CRM_INSIGHTS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }) => {
     return `CRM insights for ${username}`

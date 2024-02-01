@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TimeseriesQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -14,7 +15,7 @@ import {
 
 export const TrsScore: TimeseriesQuestion<Period> = {
   type: 'TIME_SERIES',
-  questionId: 'TRS score',
+  questionId: COPILOT_QUESTIONS.TRS_SCORE,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `TRS score distribution ${humanReadablePeriod(vars)}`

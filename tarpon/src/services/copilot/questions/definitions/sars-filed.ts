@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -16,7 +17,7 @@ import {
 
 export const SarsFiled: TableQuestion<Period> = {
   type: 'TABLE',
-  questionId: 'Alerts that resulted in SAR',
+  questionId: COPILOT_QUESTIONS.ALERTS_THAT_RESULTED_IN_SAR,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Alerts that results in SARs ${humanReadablePeriod(vars)}`

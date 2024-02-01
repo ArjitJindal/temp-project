@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -12,7 +13,7 @@ import {
 
 export const AlertHistory: TableQuestion<Period> = {
   type: 'TABLE',
-  questionId: 'Alerts',
+  questionId: COPILOT_QUESTIONS.ALERTS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }, vars) => {
     return `Alerts for ${username} ${humanReadablePeriod(vars)}`

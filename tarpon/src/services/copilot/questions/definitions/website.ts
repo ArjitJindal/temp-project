@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import { MerchantMonitoringScrapeService } from '@/services/merchant-monitoring/merchant-monitoring-scrape'
 import { ensureHttps } from '@/utils/http'
@@ -8,7 +9,7 @@ export const Website: PropertiesQuestion<{
 }> = {
   type: 'PROPERTIES',
   categories: ['BUSINESS'],
-  questionId: 'Website',
+  questionId: COPILOT_QUESTIONS.WEBSITE,
   title: async (_, { website }) => {
     return `Business details from ${website}`
   },

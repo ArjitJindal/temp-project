@@ -3,6 +3,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import cn from 'clsx';
 import { useDebounce } from 'ahooks';
 import { compact } from 'lodash';
+import { COPILOT_QUESTIONS, CopilotQuestionIds } from '@flagright/lib/utils';
 import s from './index.module.less';
 import { useQuery } from '@/utils/queries/hooks';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
@@ -20,19 +21,20 @@ export type FormValues = {
   searchString: string;
 };
 
-const SUGGESTIONS_ORDER: readonly string[] = [
-  'User details',
-  'Alerts',
-  'TRS score',
-  'Transactions',
-  'Transaction insights',
-  'Payment identifiers of senders',
-  'Payment identifiers of receivers',
-  'Users money received from',
-  'Users money sent to',
-  'Website',
-  'Alerts that resulted in SAR',
-  'Recommendation',
+const SUGGESTIONS_ORDER: readonly CopilotQuestionIds[] = [
+  COPILOT_QUESTIONS.USER_DETAILS,
+  COPILOT_QUESTIONS.ALERTS,
+  COPILOT_QUESTIONS.TRS_SCORE,
+  COPILOT_QUESTIONS.TRANSACTIONS,
+  COPILOT_QUESTIONS.TRANSACTION_INSIGHTS_FOR_ORIGINATOR,
+  COPILOT_QUESTIONS.TRANSACTION_INSIGHTS_FOR_DESTINATION,
+  COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS_OF_SENDERS,
+  COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS_OF_RECEIVERS,
+  COPILOT_QUESTIONS.USERS_MONEY_RECEIVED_FROM,
+  COPILOT_QUESTIONS.USERS_MONEY_SENT_TO,
+  COPILOT_QUESTIONS.WEBSITE,
+  COPILOT_QUESTIONS.ALERTS_THAT_RESULTED_IN_SAR,
+  COPILOT_QUESTIONS.RECOMMENDATION,
 ];
 
 interface Props {

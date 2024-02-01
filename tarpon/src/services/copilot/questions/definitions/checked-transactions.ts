@@ -1,4 +1,5 @@
 import { sortBy } from 'lodash'
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -11,7 +12,7 @@ import {
 
 export const CheckedTransactions: TableQuestion<Period> = {
   type: 'TABLE',
-  questionId: 'Checked transactions',
+  questionId: COPILOT_QUESTIONS.CHECKED_TRANSACTIONS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (ctx) => {
     return `Checked transactions that led to "${ctx.alert.ruleName}" rule hit`

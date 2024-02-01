@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import { MerchantMonitoringScrapeService } from '@/services/merchant-monitoring/merchant-monitoring-scrape'
 import { summaryToProperties } from '@/services/copilot/questions/definitions/common/merchant-monitoring'
@@ -6,7 +7,7 @@ export const Linkedin: PropertiesQuestion<{
   companyName: string
 }> = {
   type: 'PROPERTIES',
-  questionId: 'Linkedin',
+  questionId: COPILOT_QUESTIONS.LINKEDIN,
   categories: ['BUSINESS'],
   title: async (_, { companyName }) => {
     return `Business details from Linkedin for ${companyName}`

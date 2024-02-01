@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { BarchartQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -12,7 +13,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 
 export const TransactionType: BarchartQuestion<Period> = {
   type: 'BARCHART',
-  questionId: 'Transactions by type',
+  questionId: COPILOT_QUESTIONS.TRANSACTIONS_BY_TYPE,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Transactions by type ${humanReadablePeriod(vars)}`

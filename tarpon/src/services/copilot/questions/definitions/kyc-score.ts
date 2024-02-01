@@ -1,12 +1,14 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { KRS_SCORES_COLLECTION } from '@/utils/mongodb-definitions'
 import { searchUser } from '@/services/copilot/questions/definitions/common/search'
 import { queryUsername } from '@/services/copilot/questions/definitions/util'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
+
 export const KycScoring: TableQuestion<{ userId: string }> = {
   type: 'TABLE',
-  questionId: 'KYC Scoring',
+  questionId: COPILOT_QUESTIONS.KYC_SCORING,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ userId }) => {
     return `KYC risk score (KRS) for ${await queryUsername(userId)}`

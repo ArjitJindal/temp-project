@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import {
   humanReadablePeriod,
@@ -9,7 +10,7 @@ import { executeSql } from '@/utils/databricks'
 
 export const UsersSentMoneyTo: TableQuestion<Period & { top: number }> = {
   type: 'TABLE',
-  questionId: 'Users money sent to',
+  questionId: COPILOT_QUESTIONS.USERS_MONEY_SENT_TO,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Top ${vars.top} users they have sent money to ${humanReadablePeriod(

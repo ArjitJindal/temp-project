@@ -1,0 +1,30 @@
+export const COPILOT_QUESTIONS = {
+  ALERTS: 'Alerts',
+  ALERTS_RELATED_TO_TRANSACTION: 'Alerts related to transaction',
+  ALERTS_THAT_RESULTED_IN_SAR: 'Alerts that resulted in SAR',
+  CASES: 'Cases',
+  CHECKED_TRANSACTIONS: 'Checked transactions',
+  CRM_INSIGHTS: 'CRM insights',
+  DIRECTORS: 'Directors',
+  ENTITY_LINKING: 'Entity linking',
+  KYC_SCORING: 'KYC Scoring',
+  LINKED_USERS: 'Linked users',
+  LINKEDIN: 'Linkedin',
+  PAYMENT_IDENTIFIERS_OF_RECEIVERS: 'Payment identifiers of receivers',
+  PAYMENT_IDENTIFIERS_OF_SENDERS: 'Payment identifiers of senders',
+  RECOMMENDATION: 'Recommendation',
+  SHAREHOLDERS: 'Shareholders',
+  TRANSACTION_INSIGHTS_FOR_DESTINATION: 'Transaction insights for destination',
+  TRANSACTION_INSIGHTS_FOR_ORIGINATOR: 'Transaction insights for originator',
+  TRANSACTIONS: 'Transactions',
+  TRANSACTIONS_BY_RULE_ACTION: 'Transactions by rule action',
+  TRANSACTIONS_BY_TYPE: 'Transactions by type',
+  TRS_SCORE: 'TRS score',
+  USER_DETAILS: 'User details',
+  USERS_MONEY_RECEIVED_FROM: 'Users money received from',
+  USERS_MONEY_SENT_TO: 'Users money sent to',
+  WEBSITE: 'Website',
+} as const
+
+export type CopilotQuestionIds =
+  (typeof COPILOT_QUESTIONS)[keyof typeof COPILOT_QUESTIONS]

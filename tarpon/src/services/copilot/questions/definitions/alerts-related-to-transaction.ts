@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -21,7 +22,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
   } & Period
 > = {
   type: 'TABLE',
-  questionId: 'Alerts related to transaction',
+  questionId: COPILOT_QUESTIONS.ALERTS_RELATED_TO_TRANSACTION,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Alerts related to transaction ${

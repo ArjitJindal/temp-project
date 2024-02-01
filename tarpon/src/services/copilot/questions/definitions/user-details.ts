@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -9,7 +10,7 @@ import { searchUser } from '@/services/copilot/questions/definitions/common/sear
 
 export const UserDetails: PropertiesQuestion<{ userId: string }> = {
   type: 'PROPERTIES',
-  questionId: 'User details',
+  questionId: COPILOT_QUESTIONS.USER_DETAILS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, { userId }) => {
     return `User details for ${userId}`

@@ -1,3 +1,4 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import {
   humanReadablePeriod,
@@ -13,7 +14,7 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
   Period & { top: number }
 > = {
   type: 'TABLE',
-  questionId: 'Payment identifiers of senders',
+  questionId: COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS_OF_RECEIVERS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Top ${
