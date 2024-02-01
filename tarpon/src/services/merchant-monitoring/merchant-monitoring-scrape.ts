@@ -197,7 +197,7 @@ export class MerchantMonitoringScrapeService {
       }
 
       if (!website) {
-        logger.warning('No website provided')
+        logger.warn('No website provided')
         return {}
       }
 
