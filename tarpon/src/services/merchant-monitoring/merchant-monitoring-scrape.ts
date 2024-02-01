@@ -196,6 +196,11 @@ export class MerchantMonitoringScrapeService {
         throw new Error('No scrapfly api key')
       }
 
+      if (!website) {
+        logger.warning('No website provided')
+        return {}
+      }
+
       const options: AxiosRequestConfig = {
         method: 'GET',
         url: `https://api.scrapfly.io/scrape?key=scp-live-${
