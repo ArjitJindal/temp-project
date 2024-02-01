@@ -90,6 +90,7 @@ export function RuleLogicBuilder(props: Props) {
       {() =>
         state ? (
           <LogicBuilder
+            data-cy="logic-builder"
             value={state.tree}
             config={state.config}
             onChange={onChange}
