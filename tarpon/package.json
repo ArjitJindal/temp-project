@@ -68,7 +68,7 @@
     "openapi:publish": "yarn openapi:prepare && scripts/openapi/openapi_publish.js",
     "openapi:augment": "yarn openapi:prepare && lib/openapi/openapi-public-augmentor.ts && lib/openapi/openapi-public-management-augmentor.ts && lib/openapi/openapi-public-device-data-augmentor.ts && lib/openapi/openapi-public-sanctions-augmentor.ts && lib/openapi/openapi-internal-augmentor.ts",
     "start-local-api": "yarn openapi:augment && ENV=local ts-node-dev --transpile-only --inspect=4321 -r tsconfig-paths/register local-api-server.ts --exit-child",
-    "recreate-local-ddb": "yarn delete-local-ddb --table=$npm_config_table; yarn create-local-ddb --table=$npm_config_table",
+    "recreate-local-ddb": "npm run delete-local-ddb --table=$npm_config_table; npm run create-local-ddb --table=$npm_config_table",
     "create-local-ddb": "aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --region=us-east-2",
     "delete-local-ddb": "aws dynamodb delete-table --endpoint-url http://localhost:8000 --table-name $npm_config_table",
     "dev:databases": "docker-compose up",

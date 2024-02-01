@@ -3,6 +3,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ListRepository } from '@/services/list/repositories/list-repository'
 import { FLAGRIGHT_LIST_LIBRARY } from '@/services/list/library'
 import { generateChecksum } from '@/utils/object'
+import { logger } from '@/core/logger'
 
 async function deleteList(listId: string) {
   const dynamoDb = await getDynamoDbClient()
@@ -73,4 +74,9 @@ export async function syncListLibrary() {
 
 if (require.main === module) {
   void syncListLibrary()
+    .then(() => process.exit(0))
+    .catch((e) => {
+      logger.error(e)
+      process.exit(1)
+    })
 }

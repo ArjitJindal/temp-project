@@ -1,4 +1,5 @@
 import { migrateAllTenants } from '../utils/tenant'
+import { logger } from '@/core/logger'
 import { Tenant } from '@/services/accounts'
 import {
   createMongoDBCollections,
@@ -17,4 +18,9 @@ export async function syncMongoDbIndexes() {
 
 if (require.main === module) {
   void syncMongoDbIndexes()
+    .then(() => process.exit(0))
+    .catch((e) => {
+      logger.error(e)
+      process.exit(1)
+    })
 }
