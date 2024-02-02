@@ -1,5 +1,5 @@
 import { v4 as uuid4 } from 'uuid'
-import { ManipulateType } from 'dayjs'
+import { ManipulateType } from '@flagright/lib/utils/dayjs'
 import { getSanctions } from '../data/sanctions'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'

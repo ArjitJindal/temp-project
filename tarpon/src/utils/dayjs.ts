@@ -1,19 +1,9 @@
-import dayjsLib, { ConfigType } from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import timezone from 'dayjs/plugin/timezone'
-import weekOfYear from 'dayjs/plugin/weekOfYear'
-import durationPlugin, {
-  Duration,
+import dayjsLib, {
+  ConfigType,
   DurationUnitType,
-} from 'dayjs/plugin/duration'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
+  Duration,
+} from '@flagright/lib/utils/dayjs'
 import { Timezone as ApiTimezone } from '@/@types/openapi-internal/Timezone'
-
-dayjsLib.extend(utc)
-dayjsLib.extend(durationPlugin)
-dayjsLib.extend(timezone)
-dayjsLib.extend(weekOfYear)
-dayjsLib.extend(localizedFormat)
 
 dayjsLib.locale('en')
 

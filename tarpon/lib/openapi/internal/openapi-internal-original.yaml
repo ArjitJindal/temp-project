@@ -5610,6 +5610,9 @@ components:
               type: number
             startMonth:
               type: number
+          required:
+            - startDay
+            - startMonth
       required:
         - units
         - granularity

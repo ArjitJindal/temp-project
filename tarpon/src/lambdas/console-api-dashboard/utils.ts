@@ -1,4 +1,4 @@
-import { ManipulateType } from 'dayjs'
+import { ManipulateType } from '@flagright/lib/utils/dayjs'
 import { isEmpty } from 'lodash'
 import dayjs from '@/utils/dayjs'
 import { neverThrow } from '@/utils/lang'

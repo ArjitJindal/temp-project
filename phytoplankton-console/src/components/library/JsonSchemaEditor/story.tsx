@@ -145,7 +145,9 @@ const SAMPLE_SCHEMAS: [string, ExtendedSchema][] = [
       type: 'object',
       properties: {
         period: {
-          'ui:subtype': 'DAY_WINDOW',
+          'ui:schema': {
+            'ui:subtype': 'DAY_WINDOW',
+          },
           description: 'Reference period, should be larger than period1',
           type: 'object',
           title: 'Period property title',
@@ -180,7 +182,9 @@ const SAMPLE_SCHEMAS: [string, ExtendedSchema][] = [
       type: 'object',
       properties: {
         period: {
-          'ui:subtype': 'TIME_WINDOW',
+          'ui:schema': {
+            'ui:subtype': 'TIME_WINDOW',
+          },
           type: 'object',
           title: 'Time period',
           description: 'Select the time period from the dropdown',

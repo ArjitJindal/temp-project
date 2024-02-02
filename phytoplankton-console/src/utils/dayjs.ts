@@ -1,17 +1,7 @@
-import dayjsLib, { ConfigType, OptionType } from 'dayjs';
-import tz from 'dayjs/plugin/timezone';
-import localizedFormat from 'dayjs/plugin/localizedFormat';
-import utc from 'dayjs/plugin/utc';
-import durationPlugin from 'dayjs/plugin/duration';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import dayjsLib, { ConfigType, OptionType, CreateDurationType } from '@flagright/lib/utils/dayjs';
+
 import { RiskParameterValueDayRange, Timezone } from '@/apis';
 import { neverReturn } from '@/utils/lang';
-
-dayjsLib.extend(relativeTime);
-dayjsLib.extend(tz);
-dayjsLib.extend(localizedFormat);
-dayjsLib.extend(utc);
-dayjsLib.extend(durationPlugin);
 
 export type Dayjs = dayjsLib.Dayjs;
 
@@ -20,7 +10,7 @@ export const dayjs = (date?: ConfigType, option?: OptionType): Dayjs => {
   return dayjs;
 };
 
-export const duration: durationPlugin.CreateDurationType = dayjsLib.duration;
+export const duration: CreateDurationType = dayjsLib.duration;
 
 export const DEFAULT_DATE_FORMAT = 'll';
 export const DEFAULT_TIME_FORMAT = 'LTS';

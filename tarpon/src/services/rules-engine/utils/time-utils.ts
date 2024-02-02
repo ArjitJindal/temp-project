@@ -1,3 +1,4 @@
+import { getFiscalYearStart } from '@flagright/lib/utils/time'
 import { TimeWindow } from './rule-parameter-schemas'
 import dayjs, { Dayjs } from '@/utils/dayjs'
 
@@ -14,26 +15,6 @@ export type TimeWindowGranularity =
 export type TimeWindowFiscalYear = {
   startMonth: number
   startDay: number
-}
-
-function getFiscalYearStart(
-  timestamp: Dayjs,
-  fiscalYear: TimeWindowFiscalYear
-): Dayjs {
-  const { startMonth, startDay } = fiscalYear
-  const fiscalYearStart =
-    timestamp.month() < startMonth - 1
-      ? timestamp
-          .subtract(1, 'year')
-          .startOf('year')
-          .add(startMonth - 1, 'month')
-          .add(startDay - 1, 'day')
-      : timestamp
-          .startOf('year')
-          .add(startMonth - 1, 'month')
-          .add(startDay - 1, 'day')
-
-  return fiscalYearStart
 }
 
 export function subtractTime(timestamp: Dayjs, timeWindow: TimeWindow): number {
