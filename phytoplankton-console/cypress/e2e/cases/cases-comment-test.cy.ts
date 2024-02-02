@@ -70,7 +70,6 @@ describe('Add a comment to a case', () => {
     cy.message('Comment deleted').should('exist');
 
     // Get the latest entry within the Log tab
-    cy.logout();
     cy.loginByRole('admin');
     cy.visit(
       '/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=OPEN%2CREOPENED',

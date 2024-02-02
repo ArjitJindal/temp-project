@@ -2,47 +2,31 @@
 
 import { getAccessToken, getAuthTokenKey, getBaseUrl } from './utils';
 
-Cypress.Commands.add('loginByForm', (inputUsername?: string, inputPassword?: string) => {
-  cy.session('login-session', () => {
-    const username = (inputUsername || Cypress.env('super_admin_username')) as string;
-    const password = (inputPassword || Cypress.env('super_admin_password')) as string;
-    const loginUrl = Cypress.env('loginUrl');
-    cy.visit(Cypress.config('baseUrl') as string);
+Cypress.Commands.add('loginByRole', (role, permissions = []) => {
+  cy.session(
+    `login-session-for-${role}-${permissions.sort().join('_')}`,
+    () => {
+      const username = Cypress.env(`${role}_username`) as string;
+      const password = Cypress.env(`${role}_password`) as string;
+      const loginUrl = Cypress.env('loginUrl');
+      cy.visit(Cypress.config('baseUrl') as string);
 
-    cy.url().should('contains', `${loginUrl}`);
-    cy.get('input#username').type(username);
-    cy.get('input#password').type(password);
-    cy.get('div:not(.ulp-button-bar-hidden) > button[type=submit]').first().click({ force: true });
+      cy.url().should('contains', `${loginUrl}`);
+      cy.get('input#username').type(username);
+      cy.get('input#password').type(password);
+      cy.get('div:not(.ulp-button-bar-hidden) > button[type=submit]')
+        .first()
+        .click({ force: true });
 
-    cy.location('host', { timeout: 10000 }).should(
-      'eq',
-      new URL(Cypress.config('baseUrl') as string).host,
-    );
-    /* eslint-disable-next-line cypress/no-unnecessary-waiting */
-    cy.wait(3000);
-  });
-  cy.checkAndSwitchToCypressTenant();
-});
-
-Cypress.Commands.add('loginByRole', (role) => {
-  cy.session(`login-session-for-${role}`, () => {
-    const username = Cypress.env(`${role}_username`) as string;
-    const password = Cypress.env(`${role}_password`) as string;
-    const loginUrl = Cypress.env('loginUrl');
-    cy.visit(Cypress.config('baseUrl') as string);
-
-    cy.url().should('contains', `${loginUrl}`);
-    cy.get('input#username').type(username);
-    cy.get('input#password').type(password);
-    cy.get('div:not(.ulp-button-bar-hidden) > button[type=submit]').first().click({ force: true });
-
-    cy.location('host', { timeout: 10000 }).should(
-      'eq',
-      new URL(Cypress.config('baseUrl') as string).host,
-    );
-    /* eslint-disable-next-line cypress/no-unnecessary-waiting */
-    cy.wait(3000);
-  });
+      cy.location('host', { timeout: 10000 }).should(
+        'eq',
+        new URL(Cypress.config('baseUrl') as string).host,
+      );
+      /* eslint-disable-next-line cypress/no-unnecessary-waiting */
+      cy.wait(3000);
+    },
+    { cacheAcrossSpecs: true },
+  );
   if (role === 'super_admin') {
     cy.checkAndSwitchToCypressTenant();
   }
@@ -58,9 +42,7 @@ Cypress.Commands.add('loginWithPermissions', ({ permissions, featureFlags = [], 
     cy.addSettings(settingsBody);
   }
   cy.setPermissions(permissions).then(() => {
-    cy.logout().then(() => {
-      cy.loginByRole('custom_role');
-    });
+    cy.loginByRole('custom_role', permissions);
   });
 });
 

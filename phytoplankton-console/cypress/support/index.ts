@@ -7,8 +7,10 @@ declare global {
        * Custom command to select DOM element by data-cy attribute.
        * @example cy.dataCy('greeting')
        */
-      loginByForm(username?: string, password?: string): Chainable<Element>;
-      loginByRole(role: 'super_admin' | 'custom_role' | 'admin'): Chainable<Element>;
+      loginByRole(
+        role: 'super_admin' | 'custom_role' | 'admin',
+        permissions?: string[],
+      ): Chainable<Element>;
       loginWithPermissions(props: {
         permissions: string[];
         featureFlags?: { [key: string]: boolean }[];

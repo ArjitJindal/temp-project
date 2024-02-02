@@ -2,7 +2,7 @@
 
 describe('login', () => {
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginByRole('super_admin');
   });
 
   it('should redirect to dashboard by default', () => {

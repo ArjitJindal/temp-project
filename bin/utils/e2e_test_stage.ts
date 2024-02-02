@@ -39,6 +39,7 @@ export const getE2ETestProject = (
     }),
     environment: {
       buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+      computeType: codebuild.ComputeType.MEDIUM,
     },
     role: codeDeployRole,
   })

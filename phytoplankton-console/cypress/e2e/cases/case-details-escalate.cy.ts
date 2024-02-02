@@ -6,7 +6,7 @@ describe('Escalate a case from case-details', () => {
     ...PERMISSIONS.CASE_DETAILS,
     ...PERMISSIONS.CASE_REOPEN,
   ];
-  before(() => {
+  beforeEach(() => {
     cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
   const selectCase = () => {
@@ -40,7 +40,6 @@ describe('Escalate a case from case-details', () => {
   });
 
   it('should escalate a case from case details then close it and re-open it', () => {
-    cy.loginByRole('custom_role');
     selectCase();
     escalateCase();
 

@@ -4,7 +4,7 @@ import { v4 as uuid } from 'uuid';
 // TODO: Unskip in FR-3189
 describe.skip('Comment Alerts from Table', () => {
   beforeEach(() => {
-    cy.loginByForm();
+    cy.loginByRole('super_admin');
   });
 
   it('should create a comment alert from table and delete it', () => {
