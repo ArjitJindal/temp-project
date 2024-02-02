@@ -29,7 +29,7 @@ export function EmptyEntitiesInfo(props: Props) {
       <div style={{ marginBottom: 16 }}>{props.showIcon && <EmptyBoxIcon />}</div>
       <H4 style={{ fontSize: 18 }}> {title ?? 'No data'}</H4>
       {description && (
-        <P variant={'sml'} grey={true}>
+        <P variant="m" fontWeight="normal" grey={true}>
           {description}
         </P>
       )}

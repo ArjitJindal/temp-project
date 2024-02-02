@@ -52,9 +52,11 @@ export default function OverviewCard(props: Props) {
 
 const OverviewSingleCard = ({ title, value }: { title: string; value: number | string }) => (
   <Card.Root noBorder className={s.card}>
-    <P variant="sml" grey className={s.cardTitle}>
+    <P variant="m" fontWeight="normal" grey className={s.cardTitle}>
       {title}
     </P>
-    <P variant="2xl">{value}</P>
+    <P variant="2xl" fontWeight="normal">
+      {value}
+    </P>
   </Card.Root>
 );

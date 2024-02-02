@@ -174,7 +174,7 @@ export default function ValuesTable(props: Props) {
       <div className={style.table}>
         <div className={style.topHeader}>
           <div className={style.header}>Default risk level</div>
-          <P grey variant="sml" className={style.description}>
+          <P grey variant="m" fontWeight="normal" className={style.description}>
             Any value lacking an assigned risk level will be categorized under default risk level.
             The system configuration designates the default value as '{aliasForVeryHigh}' when no
             specific risk level is allocated.

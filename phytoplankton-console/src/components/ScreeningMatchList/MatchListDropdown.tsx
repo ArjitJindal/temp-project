@@ -23,7 +23,11 @@ export const MatchListDropdown = (props: Props) => {
     <AsyncResourceRenderer resource={results.data}>
       {(results) => {
         if (results.length === 0) {
-          return <P variant="sml">No screening data available for alert</P>;
+          return (
+            <P variant="m" fontWeight="normal">
+              No screening data available for alert
+            </P>
+          );
         }
         const options: Option<string>[] = results.map((sanction, i) => {
           return {

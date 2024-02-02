@@ -160,7 +160,12 @@ export default function Team() {
                     height={16}
                     width={16}
                   />{' '}
-                  <P variant="sml" grey={context.item.blocked} style={{ marginBottom: 0 }}>
+                  <P
+                    variant="m"
+                    fontWeight="normal"
+                    grey={context.item.blocked}
+                    style={{ marginBottom: 0 }}
+                  >
                     Verified
                   </P>
                 </>
@@ -173,7 +178,12 @@ export default function Team() {
                     height={16}
                     width={16}
                   />{' '}
-                  <P variant="sml" grey={context.item.blocked} style={{ marginBottom: 0 }}>
+                  <P
+                    variant="m"
+                    fontWeight="normal"
+                    grey={context.item.blocked}
+                    style={{ marginBottom: 0 }}
+                  >
                     Not verified
                   </P>
                 </>
@@ -314,7 +324,7 @@ export default function Team() {
         hideFooter
       >
         <div className={s.deletedModalContent}>
-          <P grey variant="sml" style={{ marginBottom: 0 }}>
+          <P grey variant="m" style={{ marginBottom: 0 }}>
             Deleted users will not be able to login to console and perform any relevant actions.
             Please make sure to re-assign the open cases/alerts of the deleted user to an account.
           </P>

@@ -22,7 +22,7 @@ export default function Popover(props: Props) {
   const { isVisible, dataItem, children, colors, currency } = props;
   const content = (
     <div className={s.root}>
-      <P className={s.title} variant="sml" bold>
+      <P className={s.title} variant="m" fontWeight="normal" bold>
         {`Transaction amount for ${dataItem.title}`}
       </P>
       <div className={s.indicatorsTable}>

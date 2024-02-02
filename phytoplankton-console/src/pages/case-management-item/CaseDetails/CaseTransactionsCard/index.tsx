@@ -43,10 +43,10 @@ export const CaseTransactionsCard = (props: Props) => {
   return caseType === 'MANUAL' && caseTransactionsCount === 0 ? (
     <Card.Root noBorder className={s.cardEmpty}>
       <div className={s.cardEmptyContent}>
-        <P variant="big" bold>
+        <P variant="xl" fontWeight="normal" bold>
           No transactions found
         </P>
-        <P variant="sml" grey>
+        <P variant="m" fontWeight="normal" grey>
           You haven’t added any transactions yet. Add transactions to this case for investigation
         </P>
         {'type' in user && (

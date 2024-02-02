@@ -349,14 +349,16 @@ export default function AccountForm(props: Props) {
           </Button>
         )}
         {isInviteDisabled === true && (
-          <P variant="sml">
+          <P variant="m" fontWeight="normal">
             You have reached maximum no. of Seats ({maxSeats}). Please contact support at{' '}
             <a href={`mailto:${branding.supportEmail}`}>{branding.supportEmail}</a> if you want
             additional seats
           </P>
         )}
         {isInviteDisabled === null && (
-          <P variant="sml">Loading existing accounts to check maximum no. of Seats...</P>
+          <P variant="m" fontWeight="normal">
+            Loading existing accounts to check maximum no. of Seats...
+          </P>
         )}
       </div>
     </Drawer>

@@ -12,7 +12,7 @@ export default function InsightCard(props: Props) {
   const { title, children } = props;
   return (
     <div className={cn(s.root)}>
-      <P variant="big" className={s.title}>
+      <P variant="xl" fontWeight="normal" className={s.title}>
         {title}
       </P>
       {children}

@@ -21,11 +21,16 @@ export default function (): JSX.Element {
           )}
         </PropertyMatrix>
       </UseCase>
-      <UseCase title={'P variants'}>
+      <UseCase title={'P variants with different size & fontWeights'}>
         <PropertyMatrix<React.ComponentProps<typeof Typography.P>['variant']>
-          x={['big', 'sml', 'xl', '2xl']}
+          x={['xs', 's', 'm', 'l', 'xl', '2xl']}
+          y={['normal', 'medium', 'semibold', 'bold']}
         >
-          {(variant) => <Typography.P variant={variant}>P</Typography.P>}
+          {(variant, fontWeight) => (
+            <Typography.P variant={variant} fontWeight={fontWeight as any}>
+              P
+            </Typography.P>
+          )}
         </PropertyMatrix>
       </UseCase>
       <UseCase title={'H1 variants'}>

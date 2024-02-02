@@ -35,7 +35,8 @@ export default function Chart(props: Props) {
           return (
             <React.Fragment key={title}>
               <P
-                variant="sml"
+                variant="m"
+                fontWeight="normal"
                 className={cn(s.label, isGhosted && s.isGhosted)}
                 onMouseEnter={() => {
                   setFocused(title);

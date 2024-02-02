@@ -26,7 +26,7 @@ export default function Popover(props: Props) {
   const settings = useSettings();
   const content = (
     <div className={s.root}>
-      <P className={s.title} variant="sml" bold>
+      <P className={s.title} variant="m" fontWeight="normal" bold>
         {`Transactions ${currency == null ? 'count' : 'amount'} on ${series.label}`}
       </P>
       <div className={s.indicatorsTable}>
