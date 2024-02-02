@@ -97,6 +97,7 @@ import {
   ContainerImage,
   FargatePlatformVersion,
 } from 'aws-cdk-lib/aws-ecs'
+import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -110,6 +111,7 @@ import {
   createFargateTaskDefinition,
 } from './cdk-utils/cdk-fargate-utils'
 import { CdkBudgetStack } from './cdk-tarpon-nested-stacks/cdk-budgets-stack'
+import { envIs } from '@/utils/env'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
   DEFAULT_LAMBDA_TIMEOUT_SECONDS * 6
@@ -883,11 +885,35 @@ export class CdkTarponStack extends cdk.Stack {
         }
       )
 
+      let triggerHour: string = '20'
+      let triggerMinute: string = '0'
+
+      if (envIs('prod') && config.region) {
+        const triggerTime: Record<FlagrightRegion, Record<string, string>> = {
+          'eu-1': { hour: '20', minute: '0' },
+          'eu-2': { hour: '20', minute: '15' },
+          'asia-1': { hour: '20', minute: '30' },
+          'asia-2': { hour: '20', minute: '45' },
+          'au-1': { hour: '21', minute: '0' },
+          'us-1': { hour: '21', minute: '15' },
+          'me-1': { hour: '21', minute: '30' },
+        }
+
+        triggerHour = triggerTime[config.region].hour
+        triggerMinute = triggerTime[config.region].minute
+      } else if (envIs('sandbox')) {
+        triggerHour = '21'
+        triggerMinute = '45'
+      } else if (envIs('dev')) {
+        triggerHour = '22'
+        triggerMinute = '0'
+      }
+
       const apiMetricsRule = new Rule(
         this,
         getResourceNameForTarpon('ApiMetricsRule'),
         {
-          schedule: Schedule.cron({ minute: '0', hour: '20' }),
+          schedule: Schedule.cron({ minute: triggerMinute, hour: triggerHour }),
         }
       )
 
