@@ -266,7 +266,10 @@ export class SanctionsSearchRepository {
     }
   }
 
-  public async getSanctionsScreeningStats(): Promise<SanctionsScreeningStats> {
+  public async getSanctionsScreeningStats(timestampRange?: {
+    from: number
+    to: number
+  }): Promise<SanctionsScreeningStats> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
@@ -276,6 +279,12 @@ export class SanctionsSearchRepository {
         {
           $match: {
             metadata: { $exists: true },
+            ...(timestampRange && {
+              createdAt: {
+                $gte: timestampRange.from,
+                $lte: timestampRange.to,
+              },
+            }),
           },
         },
         {

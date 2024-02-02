@@ -4339,6 +4339,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SanctionsScreeningStats'
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
       operationId: get-sanctions-screening-stats
   /sanctions/search/{searchId}:
     get:

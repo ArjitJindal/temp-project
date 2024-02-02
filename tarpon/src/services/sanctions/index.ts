@@ -337,9 +337,14 @@ export class SanctionsService {
     return result
   }
 
-  public async getSanctionsScreeningStats(): Promise<SanctionsScreeningStats> {
+  public async getSanctionsScreeningStats(timeRange?: {
+    from: number
+    to: number
+  }): Promise<SanctionsScreeningStats> {
     await this.initialize()
-    return await this.sanctionsSearchRepository.getSanctionsScreeningStats()
+    return await this.sanctionsSearchRepository.getSanctionsScreeningStats(
+      timeRange
+    )
   }
 
   public async getSearchHistoriesByIds(
