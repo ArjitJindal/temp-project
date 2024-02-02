@@ -5,7 +5,7 @@ import Checkbox from '@/components/library/Checkbox';
 import Radio from '@/components/library/Radio';
 import { InputProps } from '@/components/library/Form';
 
-export type SelectionGroupValueType = string | boolean | number;
+export type SelectionGroupValueType = string | boolean | number | undefined;
 
 export interface Option<Value extends SelectionGroupValueType = SelectionGroupValueType> {
   value: Value;

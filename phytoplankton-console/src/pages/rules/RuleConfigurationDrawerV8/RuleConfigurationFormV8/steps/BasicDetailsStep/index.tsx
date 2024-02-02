@@ -15,10 +15,10 @@ export interface FormValues {
   ruleLabels: RuleLabels[];
 }
 
-export const INITIAL_VALUES: FormValues = {
+export const INITIAL_VALUES: Partial<FormValues> = {
   ruleName: undefined,
   ruleDescription: undefined,
-  ruleNature: 'FRAUD',
+  ruleNature: undefined,
   ruleLabels: [],
 };
 
@@ -43,18 +43,22 @@ export default function BasicDetailsStep(props: Props) {
         <InputField<FormValues, 'ruleName'>
           name={'ruleName'}
           label={'Rule name'}
-          labelProps={{ required: { value: false, showHint: true } }}
+          labelProps={{ required: true }}
         >
           {(inputProps) => <TextInput {...inputProps} placeholder={'Enter rule name'} />}
         </InputField>
         <InputField<FormValues, 'ruleDescription'>
           name={'ruleDescription'}
           label={'Rule description'}
-          labelProps={{ required: { value: false, showHint: true } }}
+          labelProps={{ required: true }}
         >
           {(inputProps) => <TextInput {...inputProps} placeholder={'Enter rule description'} />}
         </InputField>
-        <InputField<FormValues, 'ruleNature'> name={'ruleNature'} label={'Rule nature'}>
+        <InputField<FormValues, 'ruleNature'>
+          name={'ruleNature'}
+          label={'Rule nature'}
+          labelProps={{ required: true }}
+        >
           {(inputProps) => (
             <SelectionGroup<RuleNature>
               mode="SINGLE"

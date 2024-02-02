@@ -25,7 +25,28 @@ export interface RuleIsHitWhenStepFormValues {
   riskLevelsTriggersOnHit?: RiskLevelsTriggersOnHit;
 }
 
-export const INITIAL_VALUES: RuleIsHitWhenStepFormValues = {};
+export const INITIAL_VALUES: Partial<RuleIsHitWhenStepFormValues> = {
+  triggersOnHit: {
+    usersToCheck: 'ALL',
+  },
+  riskLevelsTriggersOnHit: {
+    VERY_LOW: {
+      usersToCheck: 'ALL',
+    },
+    LOW: {
+      usersToCheck: 'ALL',
+    },
+    MEDIUM: {
+      usersToCheck: 'ALL',
+    },
+    HIGH: {
+      usersToCheck: 'ALL',
+    },
+    VERY_HIGH: {
+      usersToCheck: 'ALL',
+    },
+  },
+};
 
 export default function RuleIsHitWhenStep() {
   const variablesFieldState = useFieldState<

@@ -11,6 +11,8 @@
   flex: 1;
 
   &.layout-VERTICAL {
+    gap: 0;
+
     &.root {
       flex-direction: row;
     }
@@ -33,6 +35,15 @@
         transform: translateX(-50%);
       }
     }
+
+    .steps,
+    .children {
+      padding: 16px;
+    }
+
+    .sticky {
+      border-right: 1px solid @fr-colors-v2-gray-2;
+    }
   }
 
   .step {
@@ -49,6 +60,9 @@
     .optional {
       transition-property: color;
     }
+    .required {
+      color: @fr-colors-red;
+    }
     .stepNumber {
       transition-property: color, background-color;
     }
@@ -59,6 +73,14 @@
   display: flex;
   gap: var(--step-gap);
   grid-auto-flow: column;
+}
+
+.sticky {
+  .steps {
+    position: sticky;
+    top: 0;
+    left: 0;
+  }
 }
 
 .step {

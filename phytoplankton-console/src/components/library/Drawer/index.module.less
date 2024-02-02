@@ -29,6 +29,12 @@
       transform: none;
     }
   }
+
+  &.noPadding {
+    .children {
+      padding: 0;
+    }
+  }
 }
 
 .header {
@@ -78,6 +84,7 @@
   flex-direction: column;
   padding: @padding;
   overflow-y: auto;
+  position: relative;
 }
 
 .footer {

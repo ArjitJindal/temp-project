@@ -40,36 +40,42 @@ export default function Stepper(props: Props) {
 
   return (
     <div className={cn(s.root, className, s[`layout-${layout}`])}>
-      <div className={cn(s.steps, stepsClassName)}>
-        {steps.map((step, i) => {
-          const isPassed = i < number;
-          const isActive = active === step.key;
-          const { isUnfilled, isInvalid } = step;
-          return (
-            <div
-              key={step.key}
-              className={cn(s.step, {
-                [s.isPassed]: isPassed,
-                [s.isActive]: isActive,
-                [s.inUnfilled]: isUnfilled,
-                [s.isInvalid]: isInvalid,
-              })}
-              onClick={() => handleStepClick(step.key)}
-            >
-              <div className={s.stepNumber}>
-                {isPassed && (isUnfilled || isInvalid ? <MoreLineIcon /> : <CheckLineIcon />)}
-                {!isPassed && i + 1}
-              </div>
-              <div>
-                <div className={s.stepTitle}>
-                  {step.title}
-                  {step.isOptional && <span className={s.optional}>{' - optional'}</span>}
+      <div className={s.sticky}>
+        <div className={cn(s.steps, stepsClassName)}>
+          {steps.map((step, i) => {
+            const isPassed = i < number;
+            const isActive = active === step.key;
+            const { isUnfilled, isInvalid } = step;
+            return (
+              <div
+                key={step.key}
+                className={cn(s.step, {
+                  [s.isPassed]: isPassed,
+                  [s.isActive]: isActive,
+                  [s.inUnfilled]: isUnfilled,
+                  [s.isInvalid]: isInvalid,
+                })}
+                onClick={() => handleStepClick(step.key)}
+              >
+                <div className={s.stepNumber}>
+                  {isPassed && (isUnfilled || isInvalid ? <MoreLineIcon /> : <CheckLineIcon />)}
+                  {!isPassed && i + 1}
                 </div>
-                <div className={s.stepDescription}>{step.description}</div>
+                <div>
+                  <div className={s.stepTitle}>
+                    {step.title}
+                    {step.isOptional ? (
+                      <span className={s.optional}>{' - optional'}</span>
+                    ) : (
+                      <span className={s.required}>{' *'}</span>
+                    )}
+                  </div>
+                  <div className={s.stepDescription}>{step.description}</div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       {children && <div className={s.children}>{children(active)}</div>}
     </div>

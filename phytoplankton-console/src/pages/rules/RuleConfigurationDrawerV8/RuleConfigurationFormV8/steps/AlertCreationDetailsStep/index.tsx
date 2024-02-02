@@ -24,7 +24,7 @@ export interface FormValues {
   checklistTemplateId?: string;
 }
 
-export const INITIAL_VALUES: FormValues = {
+export const INITIAL_VALUES: Partial<FormValues> = {
   alertPriority: 'P1',
   alertCreatedFor: ['USER'],
   alertCreationInterval: {
@@ -111,7 +111,7 @@ export default function AlertCreationDetailsStep(_props: Props) {
           </InputField>
         </div>
         <Divider className={s.divider} />
-        <AlertAssignedToInput<FormValues> alertAssigneesType={INITIAL_VALUES.alertAssigneesType} />
+        <AlertAssignedToInput />
         <Divider className={s.divider} />
         <RuleQueueInputField<FormValues> label="Alert queue" />
         <AlertInvestigationChecklist<FormValues> label="Alert investigation checklist" />

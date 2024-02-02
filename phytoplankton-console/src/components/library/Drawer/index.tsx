@@ -13,6 +13,7 @@ interface Props {
   description?: string;
   footer?: React.ReactNode;
   drawerMaxWidth?: string;
+  noPadding?: boolean;
   isClickAwayEnabled?: boolean;
   rightAlignButtonsFooter?: boolean;
 }
@@ -25,6 +26,7 @@ export default function Drawer(props: Props) {
     onChangeVisibility,
     children,
     footer,
+    noPadding = false,
     isClickAwayEnabled = false,
   } = props;
 
@@ -45,7 +47,7 @@ export default function Drawer(props: Props) {
 
   return ReactDOM.createPortal(
     <div
-      className={cn(s.root, isVisible && s.isVisible)}
+      className={cn(s.root, isVisible && s.isVisible, noPadding && s.noPadding)}
       onClick={() => {
         if (isClickAwayEnabled) {
           handleClose();

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { NestedValidationResult } from '../utils/validation/types';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 import { InputProps } from '@/components/library/Form';
@@ -37,11 +37,19 @@ export default function GenericFormField<
     errorMessage,
   } = fieldState;
 
+  const handleChange = useCallback(
+    (value) => {
+      onChangeMeta((prev) => ({ ...prev, isVisited: true, isTouched: true }));
+      onChange?.(value);
+    },
+    [onChange, onChangeMeta],
+  );
+
   return (
     <FieldContext.Provider value={{ state: fieldState }}>
       {children({
         value,
-        onChange,
+        onChange: handleChange,
         onFocus: () => {
           onChangeMeta((prev) => ({ ...prev, isTouched: true }));
         },

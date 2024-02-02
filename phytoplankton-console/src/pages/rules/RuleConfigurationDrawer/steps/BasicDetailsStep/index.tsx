@@ -18,7 +18,6 @@ import Select from '@/components/library/Select';
 import TextArea from '@/components/library/TextArea';
 import Checkbox from '@/components/library/Checkbox';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useFormContext } from '@/components/library/Form/utils/hooks';
 import { RuleQueueInputField } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/RuleQueueInput';
 import CreationIntervalInput, {
   AlertCreationInterval,
@@ -205,10 +204,6 @@ function SimulationIterationDetails() {
 }
 
 function AlertCreationDetails() {
-  const {
-    values: { alertAssigneesType: assigneeTypeSet },
-  } = useFormContext<FormValues>();
-
   return (
     <>
       <StepHeader
@@ -223,7 +218,7 @@ function AlertCreationDetails() {
         >
           {(inputProps) => <CreationIntervalInput {...inputProps} />}
         </InputField>
-        <AlertAssignedToInput<FormValues> alertAssigneesType={assigneeTypeSet} />
+        <AlertAssignedToInput />
         <InputField<FormValues, 'alertCreatedFor'>
           name={'alertCreatedFor'}
           label={'Alert created for'}

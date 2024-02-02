@@ -373,6 +373,13 @@ export function formValuesToRuleInstanceV8(
   const defaultTriggersOnHit: TriggersOnHit = {
     usersToCheck: 'ALL',
   };
+  if (
+    alertCreationDetailsStep.alertPriority == null ||
+    basicDetailsStep.ruleNature == null ||
+    basicDetailsStep.ruleLabels == null
+  ) {
+    throw new Error(`Passed form values are not valid`);
+  }
   return {
     ...initialRuleInstance,
     ruleId: initialRuleInstance.ruleId,

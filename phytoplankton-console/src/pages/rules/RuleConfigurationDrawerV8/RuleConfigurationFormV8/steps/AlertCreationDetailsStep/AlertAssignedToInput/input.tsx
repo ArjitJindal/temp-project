@@ -1,34 +1,26 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { FormValues } from '..';
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import Alert from '@/components/library/Alert';
 import { useRoles, useUsers } from '@/utils/user-utils';
+import { useFieldState } from '@/components/library/Form/utils/hooks';
 
-export const AlertAssignedToInput = <
-  FormValues extends {
-    alertAssigneesType?: 'EMAIL' | 'ROLE';
-    alertAssignees?: string[];
-    alertAssigneeRole?: string;
-  },
->(props: {
-  alertAssigneesType: FormValues['alertAssigneesType'];
-}) => {
-  const [alertAssigneesType, setAssigneesType] = useState<'EMAIL' | 'ROLE' | ''>(
-    props.alertAssigneesType ?? '',
-  );
+export function AlertAssignedToInput() {
+  const alertAssigneesTypeFieldState = useFieldState<FormValues>('alertAssigneesType');
 
   const [users] = useUsers({ includeBlockedUsers: false, includeRootUsers: true });
   const [roles] = useRoles();
   const options = useMemo(() => {
-    if (alertAssigneesType === 'EMAIL') {
+    if (alertAssigneesTypeFieldState.value === 'EMAIL') {
       return Object.values(users).map((user) => ({ label: user?.email, value: user?.id }));
     } else {
       return roles
         .map((role) => ({ label: role?.name ?? '', value: role?.id ?? '' }))
         .filter((data) => data.label !== '');
     }
-  }, [users, roles, alertAssigneesType]);
+  }, [users, roles, alertAssigneesTypeFieldState.value]);
 
   return (
     <>
@@ -39,30 +31,29 @@ export const AlertAssignedToInput = <
       >
         {(inputProps) => {
           return (
-            <SelectionGroup<'EMAIL' | 'ROLE'>
+            <SelectionGroup<'EMAIL' | 'ROLE' | undefined>
               mode="SINGLE"
               options={[
+                { label: 'None', value: undefined },
                 { label: 'Account', value: 'EMAIL' },
                 { label: 'Role', value: 'ROLE' },
               ]}
               {...inputProps}
               onChange={(value) => {
-                if (value) {
-                  setAssigneesType(value);
-                }
-                if (inputProps.onChange) {
-                  inputProps.onChange(value);
-                }
+                inputProps.onChange?.(value);
               }}
             />
           );
         }}
       </InputField>
-      {alertAssigneesType === 'EMAIL' && (
+      {alertAssigneesTypeFieldState.value === 'EMAIL' && (
         <>
           <InputField<FormValues, 'alertAssignees'>
             name={'alertAssignees'}
             label={'Assign to account(s)'}
+            labelProps={{
+              required: true,
+            }}
           >
             {(inputProps) => (
               <Select
@@ -80,11 +71,14 @@ export const AlertAssignedToInput = <
           </Alert>
         </>
       )}
-      {alertAssigneesType === 'ROLE' && (
+      {alertAssigneesTypeFieldState.value === 'ROLE' && (
         <>
           <InputField<FormValues, 'alertAssigneeRole'>
             name={'alertAssigneeRole'}
             label={'Assign to role'}
+            labelProps={{
+              required: true,
+            }}
           >
             {(inputProps) => (
               <Select
@@ -104,4 +98,4 @@ export const AlertAssignedToInput = <
       )}
     </>
   );
-};
+}

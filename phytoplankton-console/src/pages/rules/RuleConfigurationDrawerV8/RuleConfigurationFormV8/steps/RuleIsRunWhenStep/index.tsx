@@ -13,7 +13,7 @@ export interface FormValues {
   filtersLogicFormValues?: FiltersValues;
 }
 
-export const INITIAL_VALUES: FormValues = {
+export const INITIAL_VALUES: Partial<FormValues> = {
   filtersLogic: undefined,
 };
 

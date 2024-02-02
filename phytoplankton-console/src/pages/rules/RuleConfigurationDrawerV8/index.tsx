@@ -104,6 +104,7 @@ export default function RuleConfigurationDrawerV8(props: RuleConfigurationDrawer
       }
       isClickAwayEnabled={props.isClickAwayEnabled}
       drawerMaxWidth={'90%'}
+      noPadding={true}
       footer={
         <div className={isMutableOnly ? s.footerEnd : s.footer}>
           {type === 'EDIT' && readOnly && (

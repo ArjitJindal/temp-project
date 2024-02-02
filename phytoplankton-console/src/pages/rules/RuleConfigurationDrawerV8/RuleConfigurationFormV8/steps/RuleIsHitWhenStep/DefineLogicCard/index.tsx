@@ -17,6 +17,8 @@ import { RiskLevel } from '@/utils/risk-levels';
 import { RuleLogic } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/types';
 import Select from '@/components/library/Select';
 import { CurrencyCode } from '@/apis';
+import Alert from '@/components/library/Alert';
+import { isError } from '@/components/library/Form/utils/validation/types';
 
 const TEMPORALY_DISABLED = false;
 
@@ -36,6 +38,7 @@ export default function DefineLogicCard(props: Props) {
     riskLevelRuleActionsFieldState,
     baseCurrencyFieldState,
   } = props;
+  const settings = useSettings();
   const [currentRiskLevel, setCurrentRiskLevel] = useState<RiskLevel>('VERY_LOW');
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const jsonLogic = useMemo(() => {
@@ -48,10 +51,15 @@ export default function DefineLogicCard(props: Props) {
     logicFieldState.value,
     riskLevelsLogicFieldState.value,
   ]);
+  const showErrors = isRiskLevelsEnabled
+    ? riskLevelsLogicFieldState.showError
+    : logicFieldState.showError;
+  const validationError = isRiskLevelsEnabled
+    ? riskLevelsLogicFieldState.validationResult
+    : logicFieldState.validationResult;
   const hasTransactionAmountVariable = useMemo(() => {
     return Boolean(getAllValuesByKey<string>('var', jsonLogic).find(isTransactionAmountVariable));
   }, [jsonLogic]);
-  const settings = useSettings();
   useEffect(() => {
     if (hasTransactionAmountVariable && !baseCurrencyFieldState.value) {
       baseCurrencyFieldState.onChange(settings.defaultValues?.currency ?? 'USD');
@@ -173,6 +181,7 @@ export default function DefineLogicCard(props: Props) {
             </div>
           }
         />
+        {showErrors && isError(validationError) && <Alert type={'error'}>{validationError}</Alert>}
       </Card.Section>
     </Card.Root>
   );
