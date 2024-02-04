@@ -1,6 +1,7 @@
 import { StackConstants } from './constants'
 
 const DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS = 15
+const PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS = 8
 const ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS = 885 // 900 seconds is the hard timeout, a lambda should stop gracefully before the hard timeout
 const ASYNC_SHORT_JOB_LAMBDA_EXPECTED_MAX_SECONDS = 5 * 60
 const KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS = 100
@@ -37,19 +38,19 @@ export const LAMBDAS: {
   [StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME]: {
     codePath: 'public-api-rules-engine',
     handlerName: 'transactionHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    expectedMaxSeconds: PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME]: {
     codePath: 'public-api-rules-engine',
     handlerName: 'transactionEventHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    expectedMaxSeconds: PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME]: {
     codePath: 'public-api-rules-engine',
     handlerName: 'userEventsHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    expectedMaxSeconds: PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME]: {
@@ -151,7 +152,7 @@ export const LAMBDAS: {
   [StackConstants.PUBLIC_API_USER_FUNCTION_NAME]: {
     codePath: 'public-api-user-management',
     handlerName: 'userHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    expectedMaxSeconds: PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME]: {
