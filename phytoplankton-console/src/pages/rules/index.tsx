@@ -16,6 +16,7 @@ import { useHasPermissions } from '@/utils/user-utils';
 import { SimulationPageWrapper } from '@/components/SimulationPageWrapper';
 import { Authorized } from '@/components/Authorized';
 import RuleConfigurationDrawerV8 from '@/pages/rules/RuleConfigurationDrawerV8';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const TableList = () => {
   const { rule = 'rules-library' } = useParams<'rule'>();
@@ -46,6 +47,8 @@ const TableList = () => {
     }
   }, [currentRule]);
 
+  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
+
   return (
     <SimulationPageWrapper
       title={isSimulationEnabled ? 'Simulate rule' : i18n(currentHeaderId as unknown as any)}
@@ -56,9 +59,6 @@ const TableList = () => {
       }
       isSimulationModeEnabled={isSimulationEnabled}
       onSimulationModeChange={setIsSimulationEnabled}
-      onCreateRule={() => {
-        setRuleBuilderOpen(true);
-      }}
     >
       {isSimulationEnabled ? (
         <PageTabs
@@ -142,6 +142,13 @@ const TableList = () => {
                 <PageWrapperContentContainer>
                   <Authorized required={['rules:library:read']}>
                     <RulesTable
+                      onCreateRule={
+                        v8Enabled
+                          ? () => {
+                              setRuleBuilderOpen(true);
+                            }
+                          : undefined
+                      }
                       onViewRule={(rule) => {
                         setCurrentRule(rule);
                         setRuleReadOnly(false);

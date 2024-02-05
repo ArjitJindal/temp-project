@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import style from './style.module.less';
 import { RulesSearchBar } from './RulesSearchBar';
 import { Rule } from '@/apis';
@@ -23,6 +23,7 @@ interface RulesTableParams extends CommonParams {}
 
 interface Props {
   simulationMode?: boolean;
+  onCreateRule?: () => void;
   onViewRule: (rule: Rule) => void;
   onEditRule: (rule: Rule) => void;
 }
@@ -46,7 +47,8 @@ const DEFAULT_SORTING: SortingParamsItem = ['id', 'ascend'];
 
 const branding = getBranding();
 
-export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulationMode }) => {
+export const RulesTable: React.FC<Props> = (props) => {
+  const { onViewRule, onEditRule, onCreateRule, simulationMode } = props;
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
@@ -277,6 +279,21 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
             onSelectedRule={onEditRule}
           />
         ) : null
+      }
+      extraTools={
+        onCreateRule
+          ? [
+              () => (
+                <Button
+                  type="SECONDARY"
+                  onClick={props.onCreateRule}
+                  testName="create-scenario-button"
+                >
+                  Create rule
+                </Button>
+              ),
+            ]
+          : []
       }
     />
   );

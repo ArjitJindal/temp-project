@@ -4,7 +4,6 @@ import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/Settings
 import { H4, P } from '../ui/Typography';
 import PageWrapper, { PageWrapperProps } from '../PageWrapper';
 import s from './styles.module.less';
-import Button from '@/components/library/Button';
 import Toggle from '@/components/library/Toggle';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -19,7 +18,6 @@ export type SimulationPageWrapperRef = {
 export type SimulationPageWrapperProps = PageWrapperProps & {
   isSimulationModeEnabled: boolean;
   onSimulationModeChange: (value: boolean | undefined) => void;
-  onCreateRule?: () => void;
 };
 
 const SimulationUsageCard = (props: { usageCount: number }) => {
@@ -48,7 +46,6 @@ export const SimulationPageWrapper = forwardRef<
 >((props, ref) => {
   const api = useApi();
   const isSimulationFeatureEnabled = useFeatureEnabled('SIMULATOR');
-  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const simulationCountResults = useQuery(SIMULATION_COUNT(), async () => {
     if (!isSimulationFeatureEnabled) {
       return { runJobsCount: 0 };
@@ -84,15 +81,6 @@ export const SimulationPageWrapper = forwardRef<
             </AsyncResourceRenderer>
           )}
           <div className={s.right}>
-            {v8Enabled && props.onCreateRule && (
-              <Button
-                type="SECONDARY"
-                onClick={props.onCreateRule}
-                testName="create-scenario-button"
-              >
-                Create rule
-              </Button>
-            )}
             <div className={s.simulationSwitch}>
               <p className={s.simulationSwitchTitle}>Simulator</p>
               {!isSimulationFeatureEnabled ? (

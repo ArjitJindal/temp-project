@@ -57,7 +57,7 @@ export default function BasicDetailsStep(props: Props) {
         <InputField<FormValues, 'ruleNature'>
           name={'ruleNature'}
           label={'Rule nature'}
-          labelProps={{ required: true }}
+          labelProps={{ required: true, testId: 'rule-nature' }}
         >
           {(inputProps) => (
             <SelectionGroup<RuleNature>

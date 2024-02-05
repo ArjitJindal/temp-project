@@ -1,19 +1,21 @@
-describe.skip('Create scenario', () => {
-  let conditionsCount = 1;
+describe('Create scenario', () => {
   beforeEach(() => {
     cy.loginByRole('super_admin');
     cy.toggleFeature('Risk Levels', true);
+    cy.toggleFeature('Rules Engine V8', true);
   });
 
-  it('should create a scenario', () => {
+  it('should create a scenario!', () => {
     cy.visit('/rules/rules-library');
-
     cy.intercept('POST', '**/rule_instances').as('createdRule');
 
     //Basic details
-    cy.get('button[data-cy="create-scenario-button"]').click();
+    cy.contains('Create rule').click();
     cy.get('input[placeholder="Enter rule name"]').type('Scenario 1');
     cy.get('input[placeholder="Enter rule description"]').type('Description of the scenario');
+    cy.get('label[data-cy="rule-nature"]').within(() => {
+      cy.contains('AML').click();
+    });
 
     //Rule is hit when
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
@@ -21,7 +23,6 @@ describe.skip('Create scenario', () => {
     cy.get('label[data-cy="logic-variable"]').eq(0).click().type('Transaction / type{enter}');
     cy.get('.widget--has-valuerscs').eq(0).first().click().type('Deposit{enter}');
     addCondition('Variable 1', 5);
-    cy.get('input[data-cy="rule-action-selector"]').eq(2).click();
     cy.get('label[data-cy="apply-to-risk-levels"]')
       .click()
       .type(
@@ -64,6 +65,11 @@ describe.skip('Create scenario', () => {
       if (ruleId.includes(ruleInstanceId)) {
         cy.get('button[data-cy="rule-edit-button"]').eq(index).click();
         cy.get('button[data-cy="drawer-next-button-v8"]').eq(1).click();
+        checkConditionsCount(2, 'LOW');
+        checkConditionsCount(2, 'MEDIUM');
+        checkConditionsCount(2, 'HIGH');
+        checkConditionsCount(2, 'VERY_HIGH');
+        checkConditionsCount(2, 'VERY_LOW');
         createVariable('Variable 2', 'Transaction / transaction id');
         addCondition('Variable 2', 10);
         cy.get('input[data-cy="rule-action-selector"]').eq(1).click();
@@ -85,17 +91,17 @@ describe.skip('Create scenario', () => {
 
   function addCondition(variableName, value) {
     cy.contains('button', 'Add condition').click();
-    cy.get('label[data-cy="logic-variable"]')
-      .eq(conditionsCount)
-      .click()
-      .type(`${variableName}{enter}`);
-    cy.get('.widget--has-valuerscs').eq(conditionsCount).click().type(`${value}{enter}`);
-    conditionsCount++;
+    cy.get('.query-builder .group-or-rule-container')
+      .last()
+      .within(() => {
+        cy.get('label[data-cy="logic-variable"]').click().type(`${variableName}{enter}`);
+        cy.get('.widget--has-valuerscs').click().type(`${value}{enter}`);
+      });
   }
 
   function createVariable(variableName, variableAggregateField) {
     cy.get('button[data-cy="add-variable-v8"]').first().click();
-    cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}{enter}`);
+    cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}`).blur();
     cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
     cy.get('input[data-cy="variable-direction-v8"]').eq(0).click();
     cy.get('label[data-cy="variable-aggregate-field-v8"]')
@@ -103,8 +109,8 @@ describe.skip('Create scenario', () => {
       .type(`${variableAggregateField}`)
       .type(`{enter}`);
     cy.get('label[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
-    cy.get('label[data-cy="time-from-interval"]').click().type('Month{enter}');
-    cy.get('label[data-cy="time-to-interval"]').click().type('Month{enter}');
+    // cy.get('label[data-cy="time-from-interval"]').click().type('Month{enter}');
+    // cy.get('label[data-cy="time-to-interval"]').click().type('Month{enter}');
     cy.get('button[data-cy="add-variable-v8"]').first().click();
   }
 
