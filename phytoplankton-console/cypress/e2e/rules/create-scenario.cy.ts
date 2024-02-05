@@ -1,8 +1,7 @@
 describe('Create scenario', () => {
   beforeEach(() => {
     cy.loginByRole('super_admin');
-    cy.toggleFeature('Risk Levels', true);
-    cy.toggleFeature('Rules Engine V8', true);
+    cy.toggleFeatures({ RISK_LEVELS: true, RULES_ENGINE_V8: true });
   });
 
   it('should create a scenario!', () => {

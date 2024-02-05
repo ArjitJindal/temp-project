@@ -1,4 +1,7 @@
 /// <reference types="cypress" />
+
+import { Feature, TenantSettings } from '../../src/apis';
+
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
@@ -9,12 +12,12 @@ declare global {
        */
       loginByRole(
         role: 'super_admin' | 'custom_role' | 'admin',
-        permissions?: string[],
+        sessionSuffix?: string,
       ): Chainable<Element>;
       loginWithPermissions(props: {
         permissions: string[];
-        featureFlags?: { [key: string]: boolean }[];
-        settingsBody?: any;
+        features?: Partial<Record<Feature, boolean>>;
+        settings?: TenantSettings;
       }): Chainable<Element>;
       loginByRequest(username: string, password: string): Chainable<Element>;
       multiSelect(preSelector: string, text: string): Chainable<Element>;
@@ -26,7 +29,7 @@ declare global {
         tabText: string,
       ): Chainable<Promise<Element>>;
       navigateToPage(url: string, pageTitle: string): Chainable<Promise<Element>>;
-      toggleFeature(feature: string, enabled: boolean): Chainable<Promise<Element>>;
+      toggleFeatures(features: Partial<Record<Feature, boolean>>): Chainable<Promise<Element>>;
       /**
        * Looks for a popup message by a text
        * @param text
@@ -40,7 +43,7 @@ declare global {
         body?: any;
         baseUrl?: string;
       }): Chainable<Promise<Element>>;
-      addSettings(settingsBody: any): Chainable<Promise<Element>>;
+      addSettings(settings: TenantSettings): Chainable<Promise<Element>>;
     }
   }
 }

@@ -1,10 +1,11 @@
 /// <reference types="cypress" />
 
+import { Feature, TenantSettings } from '../../src/apis';
 import { getAccessToken, getAuthTokenKey, getBaseUrl } from './utils';
 
-Cypress.Commands.add('loginByRole', (role, permissions = []) => {
+Cypress.Commands.add('loginByRole', (role, sessionSuffix = '') => {
   cy.session(
-    `login-session-for-${role}-${permissions.sort().join('_')}`,
+    `login-session-for-${role}-${sessionSuffix}}`,
     () => {
       const username = Cypress.env(`${role}_username`) as string;
       const password = Cypress.env(`${role}_password`) as string;
@@ -22,27 +23,32 @@ Cypress.Commands.add('loginByRole', (role, permissions = []) => {
         'eq',
         new URL(Cypress.config('baseUrl') as string).host,
       );
+      cy.intercept('GET', '**/tenants/settings').as('tenantSettings');
+      cy.wait('@tenantSettings');
+
       /* eslint-disable-next-line cypress/no-unnecessary-waiting */
       cy.wait(3000);
     },
     { cacheAcrossSpecs: true },
   );
+  cy.intercept('GET', '**/tenants/settings').as('tenantSettings');
   if (role === 'super_admin') {
     cy.checkAndSwitchToCypressTenant();
   }
 });
 
-Cypress.Commands.add('loginWithPermissions', ({ permissions, featureFlags = [], settingsBody }) => {
+Cypress.Commands.add('loginWithPermissions', ({ permissions, features = {}, settings }) => {
   cy.loginByRole('super_admin');
-  featureFlags.forEach((featureFlag) => {
-    const feature = Object.keys(featureFlag)[0];
-    cy.toggleFeature(feature, featureFlag[feature]);
-  });
-  if (settingsBody) {
-    cy.addSettings(settingsBody);
+  cy.toggleFeatures(features);
+  if (settings) {
+    cy.addSettings(settings);
   }
+  const sessionSuffix = JSON.stringify({
+    permission: permissions.sort(),
+    features,
+  });
   cy.setPermissions(permissions).then(() => {
-    cy.loginByRole('custom_role', permissions);
+    cy.loginByRole('custom_role', sessionSuffix);
   });
 });
 
@@ -60,12 +66,12 @@ Cypress.Commands.add('setPermissions', (permissions) => {
   });
 });
 
-Cypress.Commands.add('addSettings', (settingsBody) => {
+Cypress.Commands.add('addSettings', (settings) => {
   const baseUrl = getBaseUrl();
   cy.apiHandler({
     endpoint: 'tenants/settings',
     method: 'POST',
-    body: settingsBody,
+    body: settings,
     baseUrl: baseUrl,
   });
 });
@@ -153,7 +159,6 @@ Cypress.Commands.add('loginByRequest', (username: string, password: string) => {
           expiresAt: Math.floor(Date.now() / 1000) + expires_in,
         }),
       );
-      cy.reload();
     });
   });
 });
@@ -204,32 +209,29 @@ Cypress.Commands.add(
   },
 );
 
-Cypress.Commands.add('toggleFeature', (feature: string, enable: boolean) => {
-  cy.visit('/');
-  // Do not add "(Don't use)" in the feature name (e.g. "Google SSO (Don't use)"
-  const featureKey = feature.split(' ').join('_').toUpperCase();
-  // Open super admin panel
-  cy.get("button[data-cy='superadmin-panel-button']").click();
-  cy.get('[role="dialog"]').should('be.visible');
-
-  cy.get('.ant-select-selection-overflow').then((item) => {
-    // item.children()
-    const enabledFeaturesElements = item.children().filter((index, element) => {
-      const $element = Cypress.$(element);
-      return $element.text().trim() === feature;
-    });
-    const isFeatureEnabled = enabledFeaturesElements.length > 0;
-    if (enable && !isFeatureEnabled) {
-      // Open select
-      cy.get('label[data-cy="features-select"]').click().type(`${featureKey}{enter}`);
-    } else if (!enable && isFeatureEnabled) {
-      Cypress.$(enabledFeaturesElements.get(0)).find('.ant-select-selection-item-remove').click();
+Cypress.Commands.add('toggleFeatures', (features) => {
+  if (Object.keys(features).length === 0) {
+    return;
+  }
+  cy.wait('@tenantSettings').then((interception) => {
+    const tenantSettings = interception.response!.body as TenantSettings;
+    const existingFeatures = tenantSettings.features ?? [];
+    for (const feature in features) {
+      const enabled = features[feature];
+      if (enabled && !existingFeatures.includes(feature as Feature)) {
+        existingFeatures.push(feature as Feature);
+      } else if (!enabled && existingFeatures.includes(feature as Feature)) {
+        existingFeatures.splice(existingFeatures.indexOf(feature as Feature), 1);
+      }
     }
 
-    // Click save, wait for success message and close dialog
-    cy.get('[data-cy="modal-ok"]').click();
-    cy.message('Settings saved').should('exist');
-    cy.get('[data-cy="modal-close"]').click();
-    cy.get('[role="dialog"]').should('not.be.visible');
+    // Update settings
+    cy.apiHandler({
+      endpoint: `tenants/settings`,
+      method: 'POST',
+      body: {
+        features: existingFeatures,
+      },
+    });
   });
 });

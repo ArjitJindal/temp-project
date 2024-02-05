@@ -5,7 +5,7 @@ describe('Create and delete risk factor', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      featureFlags: [{ 'Risk Scoring': true }],
+      features: { RISK_SCORING: true, RISK_LEVELS: true },
     });
   });
 

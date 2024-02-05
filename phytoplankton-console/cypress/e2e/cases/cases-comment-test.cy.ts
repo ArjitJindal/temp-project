@@ -5,7 +5,7 @@ describe('Add a comment to a case', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      featureFlags: [{ 'Audit Logs': true }],
+      features: { AUDIT_LOGS: true },
     });
   });
 

@@ -9,7 +9,7 @@ describe('Bulk approval of payments', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      settingsBody: { isPaymentApprovalEnabled: true },
+      settings: { isPaymentApprovalEnabled: true },
     });
   });
   it('testing bulk approval of payments', () => {

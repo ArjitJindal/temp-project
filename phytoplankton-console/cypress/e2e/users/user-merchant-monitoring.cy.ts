@@ -8,7 +8,10 @@ describe('Check if merchant monitoring is available for a user', () => {
     ...PERMISSIONS.USERS_USER_OVERVIEW,
   ];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { MERCHANT_MONITORING: true },
+    });
   });
 
   it('business user should have merchant monitoring data', () => {

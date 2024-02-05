@@ -8,7 +8,7 @@ describe('Approval of payments', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      settingsBody: { isPaymentApprovalEnabled: true },
+      settings: { isPaymentApprovalEnabled: true },
     });
   });
   it('should change the status of a payment on approval', () => {
