@@ -13,6 +13,8 @@ interface Props {
   isCollapsable?: boolean;
   isCollapsedByDefault?: boolean;
   isInvalid?: boolean;
+  testId?: string;
+  headerClassName?: string;
 }
 
 const Root = (props: Props) => {
@@ -25,6 +27,8 @@ const Root = (props: Props) => {
     isCollapsable = false,
     isCollapsedByDefault = false,
     isInvalid = false,
+    testId,
+    headerClassName,
   } = props;
 
   const [isCollapsed, setCollapsed] = useState(isCollapsable && isCollapsedByDefault);
@@ -49,6 +53,8 @@ const Root = (props: Props) => {
             isCollapsed={isCollapsed}
             setCollapsed={setCollapsed}
             isInvalid={showInvalidState}
+            testId={testId}
+            className={headerClassName}
             {...header}
           />
         )}

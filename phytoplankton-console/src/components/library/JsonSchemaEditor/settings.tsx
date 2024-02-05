@@ -4,11 +4,13 @@ import { useDeepEqualMemo } from '@/utils/hooks';
 export interface JsonSchemaEditorSettings {
   propertyNameStyle: 'SNAKE_CASE' | 'AS_IS' | 'CAMEL_CASE' | 'AUTO';
   showOptionalMark: boolean;
+  collapseForNestedProperties?: boolean;
 }
 
 export const DEFAULT_FORM_SETTINGS: JsonSchemaEditorSettings = {
   propertyNameStyle: 'AUTO',
   showOptionalMark: true,
+  collapseForNestedProperties: false,
 };
 export const JsonSchemaEditorSettingsContext =
   React.createContext<JsonSchemaEditorSettings>(DEFAULT_FORM_SETTINGS);

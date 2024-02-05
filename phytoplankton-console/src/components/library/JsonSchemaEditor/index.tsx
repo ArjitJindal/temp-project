@@ -1,5 +1,3 @@
-// TODO: Move JsonSchemaEditor/ to library
-
 import { useMemo } from 'react';
 import { ExtendedSchema } from './types';
 import {
@@ -7,6 +5,7 @@ import {
   DEFAULT_FORM_SETTINGS,
   JsonSchemaEditorSettings,
 } from './settings';
+import s from './style.module.less';
 import { JsonSchemaEditorContext } from '@/components/library/JsonSchemaEditor/context';
 import PropertyList from '@/components/library/JsonSchemaEditor/PropertyList';
 import { getOrderedProps } from '@/components/library/JsonSchemaEditor/utils';
@@ -20,10 +19,16 @@ export default function JsonSchemaEditor(props: Props) {
   const { settings = DEFAULT_FORM_SETTINGS, parametersSchema } = props;
   const items = useMemo(() => getOrderedProps(parametersSchema), [parametersSchema]);
   return (
-    <JsonSchemaEditorContext.Provider value={{ rootSchema: parametersSchema }}>
-      <ChangeJsonSchemaEditorSettings settings={settings}>
-        <PropertyList items={items} />
-      </ChangeJsonSchemaEditorSettings>
-    </JsonSchemaEditorContext.Provider>
+    <div className={s.root}>
+      <JsonSchemaEditorContext.Provider value={{ rootSchema: parametersSchema }}>
+        <ChangeJsonSchemaEditorSettings settings={settings}>
+          <PropertyList
+            items={items}
+            collapseForNestedProperties={settings.collapseForNestedProperties}
+            parentSchema={parametersSchema}
+          />
+        </ChangeJsonSchemaEditorSettings>
+      </JsonSchemaEditorContext.Provider>
+    </div>
   );
 }

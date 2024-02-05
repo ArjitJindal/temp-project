@@ -1,3 +1,5 @@
+import { compact, uniq } from 'lodash';
+import { Item } from '../SegmentedControl';
 import { ExtendedSchema, PropertyItem, PropertyItems, UiSchema } from './types';
 import { useJsonSchemaEditorContext } from './context';
 import {
@@ -153,4 +155,19 @@ export function makeDefaultState(props: PropertyItems): unknown {
       [prop.name]: result,
     };
   }, {});
+}
+
+export function getScopeSelectorItems(schema?: ExtendedSchema): Item<string>[] | null {
+  const properties = Object.keys(schema?.properties ?? {});
+  if (schema?.properties && properties && properties.length)
+    return uniq(
+      compact(
+        properties.map((property) => {
+          const uiSchema = schema?.properties![property]?.['ui:schema'] ?? {};
+          const scope = uiSchema['ui:scope'];
+          return scope;
+        }),
+      ),
+    ).map((scope) => ({ value: scope, label: scope }));
+  return null;
 }

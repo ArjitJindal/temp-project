@@ -213,10 +213,13 @@ describe('Objects validation', () => {
     render(<RenderSchema alwaysShowErrors={true} schema={schema} />);
     const arrayField = await findInputField('f1');
     const item = await addArrayItem(arrayField);
+    const arrayFieldHeader = await findInputField('f1/card');
     {
       // It should be no errors initially
       await expectArrayItemError(item, false);
-      await toggleArrayItem(item, true);
+      await toggleItem(arrayFieldHeader);
+      const objectItem = await findInputField('f2/card');
+      await toggleItem(objectItem);
       const f3 = await findInputField('f3');
       const f4 = await findInputField('f4');
       await userEvent.click(f3);
@@ -225,19 +228,21 @@ describe('Objects validation', () => {
       await expectFieldError(f3, false);
       await expectFieldError(f4, true);
       // Also, when array item is closed it should be considered invalid now
-      await toggleArrayItem(item, false);
+      await toggleItem(arrayFieldHeader);
       await expectArrayItemError(item, true);
     }
     // After cleaning everything should become valid again
     {
-      await toggleArrayItem(item, true);
+      await toggleItem(arrayFieldHeader);
+      const objectItem = await findInputField('f2/card');
+      await toggleItem(objectItem);
       const f3 = await findInputField('f3');
       const f4 = await findInputField('f4');
       await userEvent.click(f3);
       await userEvent.keyboard('{Backspace}{Backspace}{Backspace}');
       await expectFieldError(f3, false);
       await expectFieldError(f4, false);
-      await toggleArrayItem(item, false);
+      await toggleItem(arrayFieldHeader);
       await expectArrayItemError(item, false);
     }
   });
@@ -332,6 +337,10 @@ async function toggleArrayItem(item: HTMLElement, expectedOpenState?: boolean) {
       expect(item).toHaveClass(CardStyles.isCollapsed);
     }
   }
+}
+
+async function toggleItem(item: HTMLElement) {
+  await userEvent.click(item);
 }
 
 async function expectArrayItemError(item: HTMLElement, isErrorExpected: boolean) {

@@ -5,7 +5,7 @@ import s from './index.module.less';
 import ExpandIcon from '@/components/library/ExpandIcon';
 
 export interface HeaderSettings {
-  title: string;
+  title: string | React.ReactNode;
   titleSize?: 'DEFAULT' | 'SMALL';
   link?: React.ReactNode;
 }
@@ -15,6 +15,8 @@ interface Props extends HeaderSettings {
   isCollapsed?: boolean;
   setCollapsed?: (isCollapsed: boolean) => void;
   isInvalid?: boolean;
+  testId?: string;
+  className?: string;
 }
 
 export default function Header(props: Props) {
@@ -26,11 +28,19 @@ export default function Header(props: Props) {
     isCollapsed,
     setCollapsed,
     link,
+    testId,
+    className,
   } = props;
+
   return (
     <Section>
       <div
-        className={cn(s.header, isCollapsable && s.isCollapsable, isInvalid && s.isInvalid)}
+        className={cn(
+          s.header,
+          isCollapsable && s.isCollapsable,
+          className,
+          isInvalid && s.isInvalid,
+        )}
         onClick={
           isCollapsable && setCollapsed
             ? () => {
@@ -42,7 +52,14 @@ export default function Header(props: Props) {
         {isCollapsable && (
           <ExpandIcon isExpanded={!isCollapsed} color="BLUE" size="BIG" isInvalid={isInvalid} />
         )}
-        <h3 className={cn(s.title, s[`size-${titleSize}`])}>{title}</h3>
+        {typeof title === 'string' ? (
+          <h3 className={cn(s.title, s[`size-${titleSize}`])} data-cy={testId}>
+            {title}
+          </h3>
+        ) : (
+          <div className={s.isInvalid}> {title} </div>
+        )}
+
         {link}
       </div>
     </Section>

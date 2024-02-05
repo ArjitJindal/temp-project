@@ -16,10 +16,11 @@ import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsPr
 interface Props {
   item: PropertyItem;
   labelProps?: Partial<LabelProps>;
+  collapseForNestedProperties?: boolean;
 }
 
 export default function Property(props: Props) {
-  const { item, labelProps } = props;
+  const { item, labelProps, collapseForNestedProperties } = props;
   const { schema: _schema, name } = item;
 
   const settings = useJsonSchemaEditorSettings();
@@ -91,14 +92,20 @@ export default function Property(props: Props) {
           level: labelLevel,
           testId: `Property/${item.name}`,
         }}
+        hideLabel={schema.type === 'object' && collapseForNestedProperties && !!labelProps?.level}
       >
         {(inputProps) =>
-          schema.type === 'object' ? (
+          schema.type === 'object' && (!collapseForNestedProperties || !labelProps?.level) ? (
             <div className={s.children}>
-              <PropertyInput {...inputProps} schema={schema} />
+              <PropertyInput {...inputProps} schema={schema} labelProps={labelProps} />
             </div>
           ) : (
-            <PropertyInput {...inputProps} schema={schema} />
+            <PropertyInput
+              {...inputProps}
+              schema={schema}
+              collapseForNestedProperties={collapseForNestedProperties}
+              labelProps={labelProps}
+            />
           )
         }
       </InputField>

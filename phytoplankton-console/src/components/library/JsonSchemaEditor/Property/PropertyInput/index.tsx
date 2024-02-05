@@ -26,14 +26,17 @@ import { InputProps } from '@/components/library/Form';
 import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/PhoneNumber';
 import ElectronicAddress from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/ElectronicAddress';
 import Gender from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/Gender';
+import { Props as LabelProps } from '@/components/library/Label';
 
 // todo: fix any
 interface Props extends InputProps<any> {
   schema: ExtendedSchema;
+  collapseForNestedProperties?: boolean;
+  labelProps?: Partial<LabelProps>;
 }
 
 export default function PropertyInput(props: Props) {
-  const { schema: _schema } = props;
+  const { schema: _schema, collapseForNestedProperties, labelProps } = props;
   const { rootSchema } = useJsonSchemaEditorContext();
   const schema = dereferenceType(_schema, rootSchema);
   const uiSchema = getUiSchema(schema);
@@ -103,7 +106,14 @@ export default function PropertyInput(props: Props) {
     case 'string':
       return <SimplePropertyInput {...props} schema={schema} />;
     case 'object':
-      return <ObjectPropertyInput {...props} schema={schema} />;
+      return (
+        <ObjectPropertyInput
+          {...props}
+          schema={schema}
+          collapseForNestedProperties={collapseForNestedProperties}
+          labelProps={labelProps}
+        />
+      );
     case 'array':
       return <ArrayPropertyInput {...props} schema={schema} />;
     default:

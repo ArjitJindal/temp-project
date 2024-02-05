@@ -1,6 +1,8 @@
 import React, { useContext, useState } from 'react';
 import PropertyList from '../../../PropertyList';
 import { ExtendedSchema } from '../../../types';
+import { CollapsePropertiesLayout } from '../CollapsePropertiesLayout';
+import { useJsonSchemaEditorSettings } from '../../../settings';
 import s from './style.module.less';
 import AdditionalProperties from './AdditionalProperties';
 import OneOf from './OneOf';
@@ -9,23 +11,26 @@ import { useOrderedProps } from '@/components/library/JsonSchemaEditor/utils';
 import { isSchema } from '@/components/library/JsonSchemaEditor/schema-utils';
 import { InputProps } from '@/components/library/Form';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
-import { Props as LabelProps } from '@/components/library/Label';
+import Label, { Props as LabelProps } from '@/components/library/Label';
 import { PropertyContext } from '@/components/library/JsonSchemaEditor/Property';
 import {
   $IS_OPTIONAL,
   isArrayFieldValidator,
   isObjectFieldValidator,
+  isResultValid,
 } from '@/components/library/Form/utils/validation/types';
 import { Updater, applyUpdater } from '@/utils/state';
+import { validateField } from '@/components/library/Form/utils/validation/utils';
 
 // todo: fix any
 interface Props extends InputProps<any> {
   schema: ExtendedSchema;
   labelProps?: Partial<LabelProps>;
+  collapseForNestedProperties?: boolean;
 }
 
 export default function GenericObjectInput(props: Props) {
-  const { schema, value, onChange, labelProps } = props;
+  const { schema, value, onChange, labelProps, collapseForNestedProperties } = props;
   const properties = useOrderedProps(schema);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
 
@@ -38,7 +43,6 @@ export default function GenericObjectInput(props: Props) {
       subFieldValidator = subFieldValidator.itemValidator;
     }
   }
-
   const subContext: FormContextValue<any> = {
     alwaysShowErrors: alwaysShowErrors,
     meta: fieldMeta,
@@ -64,11 +68,50 @@ export default function GenericObjectInput(props: Props) {
         ? undefined
         : subFieldValidator,
   };
-
+  const settings = useJsonSchemaEditorSettings();
+  const labelRequiredProps = {
+    value: !!propertyContext?.item.isRequired,
+    showHint: settings.showOptionalMark,
+  };
+  const isInvalid = alwaysShowErrors && !isResultValid(validateField(subFieldValidator, value));
   return (
     <div className={s.children}>
       <FormContext.Provider value={subContext}>
-        <PropertyList items={properties} labelProps={{ level: 2, ...labelProps }} />
+        {collapseForNestedProperties && labelProps?.level ? (
+          <CollapsePropertiesLayout
+            className={s.collapse}
+            fieldValidation={isInvalid}
+            title={
+              <Label
+                label={schema.title}
+                description={schema.description}
+                element="div"
+                required={labelRequiredProps}
+                testId={`Property/${propertyContext?.item.name}/card`}
+              />
+            }
+            headerClassName={s.cardHeader}
+          >
+            <PropertyList
+              items={properties}
+              labelProps={{
+                ...labelProps,
+                level: 2,
+              }}
+              collapseForNestedProperties
+              parentSchema={schema}
+            />
+          </CollapsePropertiesLayout>
+        ) : (
+          <PropertyList
+            items={properties}
+            labelProps={{
+              level: 2,
+              ...labelProps,
+            }}
+            collapseForNestedProperties
+          />
+        )}
         {isSchema(schema.additionalProperties) && (
           <AdditionalProperties
             schema={schema.additionalProperties}

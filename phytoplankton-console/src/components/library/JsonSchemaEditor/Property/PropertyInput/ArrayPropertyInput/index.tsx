@@ -3,15 +3,14 @@ import cn from 'clsx';
 import pluralize from 'pluralize';
 import { ExtendedSchema } from '../../../types';
 import PropertyInput from '../index';
+import { CollapsePropertiesLayout } from '../CollapsePropertiesLayout';
 import s from './style.module.less';
 import Button from '@/components/library/Button';
 import Select from '@/components/library/Select';
 import { dereferenceType, isString } from '@/components/library/JsonSchemaEditor/schema-utils';
-import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import { InputProps } from '@/components/library/Form';
 import { getUiSchema } from '@/components/library/JsonSchemaEditor/utils';
 import SelectionGroup from '@/components/library/SelectionGroup';
-import * as Card from '@/components/ui/Card';
 import { useJsonSchemaEditorContext } from '@/components/library/JsonSchemaEditor/context';
 import { PropertyContext } from '@/components/library/JsonSchemaEditor/Property';
 import { humanizeAuto, normalizeCase } from '@/utils/humanize';
@@ -101,38 +100,29 @@ export function GenericArrayPropertyInput(props: Props) {
           };
 
           return (
-            <Card.Root
-              key={i}
+            <CollapsePropertiesLayout
               className={s.root}
-              isCollapsable={true}
-              isCollapsedByDefault={true}
-              isInvalid={alwaysShowErrors && !isResultValid(validateField(subFieldValidator, item))}
-              header={{
-                title: normalizeCase(`${entityName ?? 'Item'} #${i + 1}`),
-                titleSize: 'SMALL',
-                link: (
-                  <Button
-                    icon={<DeleteBin7LineIcon />}
-                    type="TEXT"
-                    size="SMALL"
-                    isDanger={true}
-                    onClick={handleDeleteItem}
-                  />
-                ),
+              fieldValidation={
+                alwaysShowErrors && !isResultValid(validateField(subFieldValidator, item))
+              }
+              title={entityName}
+              arrayItemProps={{
+                handleDeleteItem: handleDeleteItem,
+                itemCount: i,
               }}
+              testId={`Property/${propertyContext?.item.name}/card`}
+              headerClassName={s.cardHeader}
             >
-              <Card.Section>
-                {schema.items && (
-                  <PropertyInput
-                    value={item}
-                    onChange={(newValue) => {
-                      onChange?.(value.map((x, j) => (i === j ? newValue : x)));
-                    }}
-                    schema={schema.items}
-                  />
-                )}
-              </Card.Section>
-            </Card.Root>
+              {schema.items && (
+                <PropertyInput
+                  value={item}
+                  onChange={(newValue) => {
+                    onChange?.(value.map((x, j) => (i === j ? newValue : x)));
+                  }}
+                  schema={schema.items}
+                />
+              )}
+            </CollapsePropertiesLayout>
           );
         })}
         <div>

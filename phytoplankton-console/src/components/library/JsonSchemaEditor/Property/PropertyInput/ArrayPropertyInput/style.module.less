@@ -1,3 +1,5 @@
+@import 'src/components/ui/colors.less';
+
 .root {
   display: flex;
   gap: 0.5rem;
@@ -9,4 +11,11 @@
   grid-template-columns: auto;
   gap: 20px 16px;
   align-items: flex-start;
+}
+
+.cardHeader {
+  button,
+  h3 {
+    color: @fr-colors-v2-gray-10 !important;
+  }
 }

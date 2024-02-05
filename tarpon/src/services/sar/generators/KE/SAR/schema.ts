@@ -1322,12 +1322,18 @@ export const KenyaTransactionSchema: AnySchemaObject = {
       title: 'Transaction number',
       maxLength: 50,
       description: 'Unique transaction number assigned to a transaction',
+      'ui:schema': {
+        'ui:scope': 'General information',
+      },
     },
     internal_ref_number: {
       type: 'string',
       maxLength: 50,
       title: 'Internal ref number',
       description: 'Reporting Entity internal transaction reference number',
+      'ui:schema': {
+        'ui:scope': 'General information',
+      },
     },
     // transaction_location: {
     //   type: 'string',
@@ -1340,12 +1346,18 @@ export const KenyaTransactionSchema: AnySchemaObject = {
       title: 'Description',
       description: 'Free text field to describe the purpose of the transaction',
       maxLength: 4000,
+      'ui:schema': {
+        'ui:scope': 'General information',
+      },
     },
     date_transaction: {
       type: 'string',
       title: 'Transaction date',
       description: 'Date and time of the transaction',
       format: 'date-time',
+      'ui:schema': {
+        'ui:scope': 'General information',
+      },
     },
     // teller: {
     //   type: 'string',
@@ -1381,19 +1393,28 @@ export const KenyaTransactionSchema: AnySchemaObject = {
       title: 'Transmode code',
       description:
         'How the transaction was conducted ie the Transaction Method',
-      'ui:schema': { 'ui:subtype': 'NARRATIVE' },
+      'ui:schema': {
+        'ui:subtype': 'NARRATIVE',
+        'ui:scope': 'General information',
+      },
     },
     transmode_comment: {
       type: 'string',
       title: 'Transmode comment',
       maxLength: 50,
       description: 'More information on the Transaction Method',
-      'ui:schema': { 'ui:subtype': 'NARRATIVE' },
+      'ui:schema': {
+        'ui:subtype': 'NARRATIVE',
+        'ui:scope': 'General information',
+      },
     },
     amount_local: {
       type: 'number',
       title: 'Amount local',
       description: 'The value of the transaction in local currency',
+      'ui:schema': {
+        'ui:scope': 'General information',
+      },
     },
     goods_services: {
       type: 'array',
@@ -1402,18 +1423,30 @@ export const KenyaTransactionSchema: AnySchemaObject = {
       items: {
         $ref: '#/definitions/t_trans_item',
       },
+      'ui:schema': {
+        'ui:scope': 'General information',
+      },
     },
     comments: {
       type: 'string',
       title: 'Comments',
       description: 'Free text field to describe the source of Funds',
       maxLength: 4000,
+      'ui:schema': {
+        'ui:scope': 'General information',
+      },
     },
     t_from_my_client: {
       $ref: '#/definitions/t_from_my_client',
+      'ui:schema': {
+        'ui:scope': 'Transaction sender',
+      },
     },
     t_to_my_client: {
       $ref: '#/definitions/t_to_my_client',
+      'ui:schema': {
+        'ui:scope': 'Transaction receiver',
+      },
     },
   },
   definitions: Definitions,

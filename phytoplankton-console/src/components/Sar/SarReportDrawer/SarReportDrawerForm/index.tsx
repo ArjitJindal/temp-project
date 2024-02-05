@@ -52,6 +52,7 @@ export default function SarReportDrawerForm(props: Props) {
 
   const settings = {
     propertyNameStyle: report.schema?.settings?.propertyNameStyle || 'AS_IS',
+    collapseForNestedProperties: true,
   };
 
   const orderedProps: PropertyItem[] = [
