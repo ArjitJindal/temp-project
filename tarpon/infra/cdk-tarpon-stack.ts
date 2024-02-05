@@ -190,11 +190,14 @@ export class CdkTarponStack extends cdk.Stack {
     })
     const auditLogQueue = this.createQueue(
       SQSQueues.AUDIT_LOG_QUEUE_NAME.name,
-      {
-        maxReceiveCount: 3,
-      }
+      { maxReceiveCount: 3 }
+    )
+    const notificationQueue = this.createQueue(
+      SQSQueues.NOTIFICATIONS_QUEUE_NAME.name,
+      { maxReceiveCount: 10 }
     )
     auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
+    auditLogTopic.addSubscription(new SqsSubscription(notificationQueue))
 
     const batchJobQueue = this.createQueue(SQSQueues.BATCH_JOB_QUEUE_NAME.name)
 
@@ -517,6 +520,7 @@ export class CdkTarponStack extends cdk.Stack {
             slackAlertQueue.queueArn,
             transactionAggregationQueue.queueArn,
             requestLoggerQueue.queueArn,
+            notificationQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -711,6 +715,20 @@ export class CdkTarponStack extends cdk.Stack {
     )
     auditLogConsumerAlias.addEventSource(new SqsEventSource(auditLogQueue))
 
+    /* Notification */
+    const { alias: notificationsConsumerAlias } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.NOTIFICATIONS_CONSUMER_FUNCTION_NAME,
+      }
+    )
+
+    notificationsConsumerAlias.addEventSource(
+      new SqsEventSource(notificationQueue)
+    )
+
+    /* Batch Job */
     const { alias: jobDecisionAlias } = createFunction(
       this,
       lambdaExecutionRole,

@@ -270,6 +270,9 @@ export const StackConstants = {
   FARGATE_BATCH_JOB_XRAY_CONTAINER_NAME: getResourceNameForTarpon(
     'FargateBatchJobXrayContainer'
   ),
+  NOTIFICATIONS_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'NotificationsConsumerFunction'
+  ),
 }
 
 export const SQSQueues: {
@@ -277,6 +280,9 @@ export const SQSQueues: {
 } = {
   AUDIT_LOG_QUEUE_NAME: {
     name: getResourceName('AuditLogQueue'),
+  },
+  NOTIFICATIONS_QUEUE_NAME: {
+    name: getResourceName('NotificationsQueue'),
   },
   TRANSACTION_AGGREGATION_QUEUE_NAME: {
     name: getResourceName('TransactionAggregationQueue') + '.fifo',
