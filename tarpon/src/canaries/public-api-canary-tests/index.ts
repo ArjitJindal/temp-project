@@ -459,7 +459,7 @@ const getTestTransactionSuccess = async () => {
         dataCallback: (_, data, reject) => {
           if (
             data.validationErrors !==
-            '[instance value ("INVALID") not found in enum (possible values: ["CREATED", "REVERSED"."PROCESSING","SENT","EXPIRED","DECLINED","SUSPENDED","REFUNDED","SUCCESSFUL"])]'
+            '[instance value ("INVALID") not found in enum (possible values: ["CREATED","PROCESSING","SENT","EXPIRED","DECLINED","SUSPENDED","REFUNDED","SUCCESSFUL","REVERSED"])]'
           ) {
             reject('Validation error does not match')
           }
