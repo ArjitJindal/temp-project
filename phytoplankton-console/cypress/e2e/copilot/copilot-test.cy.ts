@@ -6,8 +6,12 @@ describe('Investigative Copilot', () => {
     ...PERMISSIONS.USERS_USER_OVERVIEW,
     ...PERMISSIONS.TRANSACTION_OVERVIEW,
   ];
+
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      featureFlags: [{ AI_FORENSICS: true }, { ENTITY_LINKING: true }],
+    });
   });
 
   it('should open investigate with copilot', () => {
