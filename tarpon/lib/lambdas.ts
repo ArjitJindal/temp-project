@@ -352,6 +352,6 @@ export const LAMBDAS: {
     codePath: 'notifications-consumer',
     handlerName: 'notificationsConsumerHandler',
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
 }
