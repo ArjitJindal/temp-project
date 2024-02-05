@@ -7,7 +7,10 @@ describe('Escalate a case from case-details', () => {
     ...PERMISSIONS.CASE_REOPEN,
   ];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { ADVANCED_WORKFLOWS: true },
+    });
   });
   const selectCase = () => {
     cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');

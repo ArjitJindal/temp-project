@@ -10,7 +10,7 @@ describe('Investigative Copilot', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { AI_FORENSICS: true, ENTITY_LINKING: true },
+      features: { AI_FORENSICS: true, ENTITY_LINKING: true, NARRATIVE_COPILOT: true },
     });
   });
 

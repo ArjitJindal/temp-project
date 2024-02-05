@@ -9,6 +9,7 @@ describe('Copilot', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
+      features: { NARRATIVE_COPILOT: true },
       settings: { isAiEnabled: true },
     });
   });

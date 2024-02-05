@@ -3,7 +3,10 @@ import { PERMISSIONS } from '../../support/permissions';
 describe('Escalating and Sending back the cases', () => {
   const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW, ...PERMISSIONS.CASE_DETAILS];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { ADVANCED_WORKFLOWS: true },
+    });
   });
   it('should escalate a case and send it back', () => {
     cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');

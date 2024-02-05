@@ -23,15 +23,15 @@ Cypress.Commands.add('loginByRole', (role, sessionSuffix = '') => {
         'eq',
         new URL(Cypress.config('baseUrl') as string).host,
       );
-      cy.intercept('GET', '**/tenants/settings').as('tenantSettings');
-      cy.wait('@tenantSettings');
 
       /* eslint-disable-next-line cypress/no-unnecessary-waiting */
       cy.wait(3000);
     },
     { cacheAcrossSpecs: true },
   );
+  cy.visit('/');
   cy.intercept('GET', '**/tenants/settings').as('tenantSettings');
+  cy.wait('@tenantSettings');
   if (role === 'super_admin') {
     cy.checkAndSwitchToCypressTenant();
   }
@@ -43,12 +43,8 @@ Cypress.Commands.add('loginWithPermissions', ({ permissions, features = {}, sett
   if (settings) {
     cy.addSettings(settings);
   }
-  const sessionSuffix = JSON.stringify({
-    permission: permissions.sort(),
-    features,
-  });
   cy.setPermissions(permissions).then(() => {
-    cy.loginByRole('custom_role', sessionSuffix);
+    cy.loginByRole('custom_role', `${permissions.sort().join('-')}`);
   });
 });
 
@@ -216,22 +212,26 @@ Cypress.Commands.add('toggleFeatures', (features) => {
   cy.wait('@tenantSettings').then((interception) => {
     const tenantSettings = interception.response!.body as TenantSettings;
     const existingFeatures = tenantSettings.features ?? [];
+    const newFeatures = [...existingFeatures];
     for (const feature in features) {
       const enabled = features[feature];
-      if (enabled && !existingFeatures.includes(feature as Feature)) {
-        existingFeatures.push(feature as Feature);
-      } else if (!enabled && existingFeatures.includes(feature as Feature)) {
-        existingFeatures.splice(existingFeatures.indexOf(feature as Feature), 1);
+      if (enabled && !newFeatures.includes(feature as Feature)) {
+        newFeatures.push(feature as Feature);
+      } else if (!enabled && newFeatures.includes(feature as Feature)) {
+        newFeatures.splice(newFeatures.indexOf(feature as Feature), 1);
       }
     }
 
-    // Update settings
-    cy.apiHandler({
-      endpoint: `tenants/settings`,
-      method: 'POST',
-      body: {
-        features: existingFeatures,
-      },
-    });
+    if (newFeatures.sort().join(',') !== existingFeatures.sort().join(',')) {
+      // Update settings
+      cy.apiHandler({
+        endpoint: `tenants/settings`,
+        method: 'POST',
+        body: {
+          features: newFeatures,
+        },
+      });
+      cy.reload();
+    }
   });
 });
