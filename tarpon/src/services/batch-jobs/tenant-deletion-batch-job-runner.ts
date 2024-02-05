@@ -6,6 +6,7 @@ import {
 import { memoize, orderBy } from 'lodash'
 import { DeleteCommand, QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
+import { MongoClient } from 'mongodb'
 import { AccountsService } from '../accounts'
 import {
   getNonUserReceiverKeys,
@@ -28,6 +29,8 @@ import { ListHeader } from '@/@types/openapi-internal/ListHeader'
 import { traceable } from '@/core/xray'
 import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 import { getContext } from '@/core/utils/context'
+import { DYNAMODB_PARTITIONKEYS_COLLECTION } from '@/utils/mongodb-definitions'
+import dayjs from '@/utils/dayjs'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -70,6 +73,27 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   private dynamoDb = memoize(() => getDynamoDbClient())
   private mongoDb = memoize(async () => await getMongoDbClient())
   private deletedUserAggregationUserIds = new Set<string>()
+  private auth0Domain: string
+  private accountsService = memoize(
+    (auth0Domain: string, mongoDb: MongoClient) =>
+      new AccountsService({ auth0Domain }, { mongoDb })
+  )
+  private managementClient = memoize((auth0Domain: string) =>
+    getAuth0ManagementClient(auth0Domain)
+  )
+  constructor() {
+    super()
+    const context = getContext()
+    this.auth0Domain =
+      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+  }
+
+  private getTenantByTenantId = memoize(
+    async (tenantId: string, accountsService: AccountsService) => {
+      const tenant = await accountsService.getTenantById(tenantId)
+      return tenant
+    }
+  )
 
   protected async run(job: TenantDeletionBatchJob): Promise<void> {
     await Promise.all([
@@ -94,6 +118,22 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteDynamoDbData(tenantId: string) {
+    const changeDate = dayjs('2024-01-30')
+    const mongoDb = await this.mongoDb()
+    const accountsService = this.accountsService(this.auth0Domain, mongoDb)
+    const tenant = await this.getTenantByTenantId(tenantId, accountsService)
+    const account = await accountsService.getOrganization(
+      tenant?.name as string
+    )
+    /** If the tenant is created after https://github.com/flagright/orca/pull/3077#event-11574061803  */
+    if (
+      account?.metadata?.createdAt &&
+      dayjs(account?.metadata?.createdAt).isAfter(changeDate)
+    ) {
+      await this.deleteDynamoDbDataUsingMongo(tenantId)
+      return
+    }
+
     const dynamoDbKeysToDelete: Record<
       ExcludedDynamoDbKey,
       {
@@ -165,9 +205,9 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   private async deleteListItem(tenantId: string, listId: string) {
     await this.deletePartition(
       tenantId,
-      'list item',
       DynamoDbKeys.LIST_ITEM(tenantId, listId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      'list item'
     )
   }
 
@@ -191,9 +231,9 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
     await this.deletePartition(
       tenantId,
-      'List Header',
       partitionKeyId,
-      tableName
+      tableName,
+      'List Header'
     )
   }
 
@@ -233,12 +273,12 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         // TODO: Delete RULE_USER_TIME_AGGREGATION_MARKER
         await this.deletePartition(
           tenantId,
-          'Rule Instance Time Aggregation',
           DynamoDbKeys.RULE_USER_TIME_AGGREGATION_LATEST_AVAILABLE_VERSION(
             tenantId,
             ruleInstance.id as string
           ).PartitionKeyID,
-          StackConstants.TARPON_DYNAMODB_TABLE_NAME
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+          'Rule Instance Time Aggregation'
         )
       }
     )
@@ -250,9 +290,9 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
     await this.deletePartition(
       tenantId,
-      'Rule Instance',
       partitionKeyId,
-      tableName
+      tableName,
+      'Rule Instance'
     )
   }
 
@@ -262,15 +302,15 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     }
     await this.deletePartition(
       tenantId,
-      'user aggregation',
       DynamoDbKeys.USER_AGGREGATION(tenantId, userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      'user aggregation'
     )
     await this.deletePartition(
       tenantId,
-      'user aggregation (time)',
       DynamoDbKeys.USER_TIME_AGGREGATION(tenantId, userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      'user aggregation (time)'
     )
 
     this.deletedUserAggregationUserIds.add(userId)
@@ -288,9 +328,9 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
     await this.deletePartition(
       tenantId,
-      'Transaction Event',
       partitionKeyId,
-      tableName
+      tableName,
+      'Transaction Event'
     )
   }
 
@@ -302,7 +342,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       '1'
     )
 
-    await this.deletePartitionKey('AR Scores', partitionKey, tableName)
+    await this.deletePartitionKey(partitionKey, tableName)
   }
 
   private async deleteTransactionIndices(
@@ -343,7 +383,6 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
     for (const key of keysToDelete) {
       await this.deletePartitionKey(
-        'transaction',
         key,
         StackConstants.TARPON_DYNAMODB_TABLE_NAME
       )
@@ -354,34 +393,31 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     await this.deleteUserAggregation(tenantId, user.userId)
     await this.deletePartition(
       tenantId,
-      'business user event',
       DynamoDbKeys.BUSINESS_USER_EVENT(tenantId, user.userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      'business user event'
     )
     await this.deletePartition(
       tenantId,
-      'consumer user event',
       DynamoDbKeys.CONSUMER_USER_EVENT(tenantId, user.userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      'consumer user event'
     )
     await this.deletePartitionKey(
-      'drs value item',
       DynamoDbKeys.DRS_VALUE_ITEM(tenantId, user.userId, '1'),
       StackConstants.TARPON_DYNAMODB_TABLE_NAME
     )
     await this.deletePartitionKey(
-      'krs value item',
       DynamoDbKeys.KRS_VALUE_ITEM(tenantId, user.userId, '1'),
       StackConstants.TARPON_DYNAMODB_TABLE_NAME
     )
     await this.deletePartition(
       tenantId,
-      'device data metrics',
       DynamoDbKeys.DEVICE_DATA_METRICS(tenantId, user.userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      'device data metrics'
     )
     await this.deletePartitionKey(
-      'user',
       DynamoDbKeys.USER(tenantId, user.userId) as DynamoDbKey,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME
     )
@@ -477,14 +513,11 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteAuth0Users(tenantId: string) {
-    const mongoDb = await getMongoDbClient()
-    const context = getContext()
-    const auth0Domain =
-      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+    const mongoDb = await this.mongoDb()
 
-    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+    const accountsService = this.accountsService(this.auth0Domain, mongoDb)
     logger.info('Deleting all users from Auth0')
-    const tenant = await accountsService.getTenantById(tenantId)
+    const tenant = await this.getTenantByTenantId(tenantId, accountsService)
     if (!tenant) {
       logger.warn(`Tenant not found.`)
       return
@@ -503,9 +536,9 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
     await this.deletePartition(
       tenantId,
-      'Risk Classification',
       partitionKeyId,
-      tableName
+      tableName,
+      'Risk Classification'
     )
   }
 
@@ -516,9 +549,9 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
     await this.deletePartition(
       tenantId,
-      'Risk RiskParameters',
       partitionKeyId,
-      tableName
+      tableName,
+      'Risk RiskParameters'
     )
   }
 
@@ -526,25 +559,19 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME
     const partitionKey = DynamoDbKeys.TENANT_SETTINGS(tenantId)
 
-    await this.deletePartitionKey('Tenant Settings', partitionKey, tableName)
+    await this.deletePartitionKey(partitionKey, tableName)
   }
 
-  private async deletePartitionKey(
-    entityName: string,
-    key: DynamoDbKey,
-    tableName: string
-  ) {
+  private async deletePartitionKey(key: DynamoDbKey, tableName: string) {
     const deleteCommand = new DeleteCommand({ TableName: tableName, Key: key })
     await this.dynamoDb().send(deleteCommand)
-
-    logger.info(`Deleted ${entityName} ${JSON.stringify(key)}`)
   }
 
   private async deletePartition(
     tenantId: string,
-    entityName: string,
     partitionKeyId: string,
-    tableName: string
+    tableName: string,
+    entityName?: string
   ) {
     const queryInput: QueryCommandInput = {
       TableName: tableName,
@@ -559,23 +586,36 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       tenantId,
       queryInput,
       async (tenantId, item) => {
-        await this.deletePartitionKey(entityName, item, tableName)
+        await this.deletePartitionKey(item, tableName)
       }
+    )
+    logger.info(
+      `Deleted  ${partitionKeyId}` + (entityName ? ` ${entityName}` : '')
     )
   }
   private async deleteAuth0Organization(tenantId: string) {
-    const mongoDb = await getMongoDbClient()
-    const context = getContext()
-    const auth0Domain =
-      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-
-    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
-    const tenant = await accountsService.getTenantById(tenantId)
+    const mongoDb = await this.mongoDb()
+    const accountsService = this.accountsService(this.auth0Domain, mongoDb)
+    const tenant = await this.getTenantByTenantId(tenantId, accountsService)
     if (tenant == null) {
       logger.warn(`Tenant ${tenantId} not found`)
       return
     }
-    const managementClient = await getAuth0ManagementClient(auth0Domain)
+    const managementClient = await this.managementClient(this.auth0Domain)
     await managementClient.organizations.delete({ id: tenant.orgId })
+  }
+
+  private async deleteDynamoDbDataUsingMongo(tenantId: string) {
+    const mongoDb = await getMongoDbClient()
+    const db = mongoDb.db()
+
+    const collection = db.collection(
+      DYNAMODB_PARTITIONKEYS_COLLECTION(tenantId)
+    )
+    const cursor = collection.find()
+    for await (const doc of cursor) {
+      await this.deletePartition(tenantId, doc._id.toString(), doc.TableName)
+      await collection.deleteOne({ _id: doc._id })
+    }
   }
 }
