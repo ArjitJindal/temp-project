@@ -1,4 +1,9 @@
 // NOTE: For white-label customers, add their console URLs here
+
+const sanitize = (url: string) => {
+  return url.endsWith('/') ? url.slice(0, -1) : url
+}
+
 export const WHITE_LABEL_ORIGINS = {
   bureau: {
     sandbox: 'https://tm.sandbox.bureau.id',
@@ -13,15 +18,15 @@ export const WHITE_LABEL_ORIGINS = {
     prod: 'https://console.transactcomply.com/',
   },
   traxionRight: {
-    sandbox: 'https:///sitapp.traxionright.com/',
-    prod: 'https://app.traxionright.com/',
+    sandbox: 'https://sitapp.traxionright.com',
+    prod: 'https://app.traxionright.com',
   },
 }
 export const ALLOWED_ORIGINS = {
   dev: ['*'],
   sandbox: [
     'https://sandbox.console.flagright.com',
-    ...Object.values(WHITE_LABEL_ORIGINS).map((v) => v.sandbox),
+    ...Object.values(WHITE_LABEL_ORIGINS).map((v) => sanitize(v.sandbox)),
   ],
   prod: [
     'https://console.flagright.com',
