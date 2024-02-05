@@ -129,12 +129,12 @@ const WHITELABEL_BRANDING = {
   'sitapp.traxionright.com': {
     ...TRAXIONRIGHT_BRANDING,
     auth0Domain: 'login.sitapp.traxionright.com',
-    auth0ClientId: 'CDyMjCLGJ9iyXkcszimeN9tdb7CBYI3R',
+    auth0ClientId: 'wJuiiS6bbcGhSMnqC442RL8HKHfMUI4n',
   },
   'app.traxionright.com': {
     ...TRAXIONRIGHT_BRANDING,
     auth0Domain: 'login.app.traxionright.com',
-    auth0ClientId: 'O0B6W59xtC5PbRjPBOfLpUCrnDAr6qmB',
+    auth0ClientId: '6k9yUXtYFG9WTjsuEhe4LahCD8Q9W8x6',
   },
 };
 
