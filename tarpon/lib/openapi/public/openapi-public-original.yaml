@@ -4014,6 +4014,7 @@ components:
         - SUSPENDED
         - REFUNDED
         - SUCCESSFUL
+        - REVERSED
       minLength: 1
       description: Model for transaction states. E.g. Processing, Refunded, Successful etc.
     AcquisitionChannel:

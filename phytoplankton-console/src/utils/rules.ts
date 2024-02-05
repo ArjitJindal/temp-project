@@ -40,6 +40,7 @@ export function isTransactionState(value: unknown): value is TransactionState {
     case 'SUSPENDED':
     case 'REFUNDED':
     case 'SUCCESSFUL':
+    case 'REVERSED':
       return true;
   }
   return neverReturn(asState, false);

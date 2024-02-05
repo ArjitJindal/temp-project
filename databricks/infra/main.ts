@@ -16,7 +16,7 @@ import * as path from 'path'
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
 // Change this to update the table schemas
-const schemaVersion = '4'
+const schemaVersion = '5'
 const adminEmails = ['tim+databricks@flagright.com']
 const stage = process.env.STAGE as Stage
 const region = process.env.REGION as FlagrightRegion

@@ -9,6 +9,7 @@ import SendPlaneLineIcon from '@/components/ui/icons/Remix/business/send-plane-l
 import TimeLineIcon from '@/components/ui/icons/expire-icon.react.svg';
 import ErrorWarningLine from '@/components/ui/icons/Remix/system/error-warning-line.react.svg';
 import ArrowGoBackLineIcon from '@/components/ui/icons/Remix/system/arrow-go-back-line.react.svg';
+import ArrowGoForwardLineIcon from '@/components/ui/icons/Remix/system/arrow-go-forward-line.react.svg';
 import CheckDoubleLineIcon from '@/components/ui/icons/Remix/system/check-double-line.react.svg';
 import CloseLineIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
 import { useTransactionStateLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -50,6 +51,8 @@ export function getTransactionStateIcon(transactionState: ApiTransactionState): 
     return <ArrowGoBackLineIcon />;
   } else if (transactionState === 'SUCCESSFUL') {
     return <CheckDoubleLineIcon />;
+  } else if (transactionState === 'REVERSED') {
+    return <ArrowGoForwardLineIcon />;
   }
   return neverReturn(transactionState, null);
 }
