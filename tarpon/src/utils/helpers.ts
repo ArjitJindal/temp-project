@@ -1,4 +1,4 @@
-import { isValidEmail } from './regex'
+import { isValidEmail } from '@flagright/lib/utils'
 import { UserDetails } from '@/@types/openapi-public/UserDetails'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'

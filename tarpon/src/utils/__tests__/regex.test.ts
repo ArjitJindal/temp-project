@@ -1,4 +1,5 @@
-import { isValidEmail, removePunctuation } from '../regex'
+import { isValidEmail } from '@flagright/lib/utils'
+import { removePunctuation } from '../regex'
 
 describe('Email validation', () => {
   test('Valid email', () => {

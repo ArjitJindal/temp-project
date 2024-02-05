@@ -1,10 +1,10 @@
 import { ObjectId, WithId } from 'mongodb'
+import { isValidEmail } from '@flagright/lib/utils'
 import { DEFAULT_CASE_AGGREGATES } from '../case'
 import { anonymize } from '@/utils/anonymize'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
-import { isValidEmail } from '@/utils/regex'
 
 describe('Anonymizer', () => {
   test('Data is anonymized', () => {

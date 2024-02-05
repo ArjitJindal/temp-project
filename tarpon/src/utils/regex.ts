@@ -9,13 +9,6 @@ export function escapeStringRegexp(string: string) {
   return string.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&').replace(/-/g, '\\x2d')
 }
 
-export const isValidEmail = (email: string) => {
-  const emailRegex = new RegExp(
-    '^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*$'
-  )
-  return emailRegex.test(email)
-}
-
 export const removePunctuation = (input: string) => {
   const punctuation = /[.,/#!$%^&*;:?{}=\-_`~()]/g
   return input.replace(punctuation, '')

@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Typography } from 'antd';
+import { isValidEmail } from '@flagright/lib/utils';
 import Modal from '@/components/library/Modal';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { getFixedSchemaJsonForm } from '@/utils/json';
@@ -81,15 +82,24 @@ export const CreateTenantModal = (props: Props) => {
     } = formDetails;
 
     if (
-      !tenantName ||
-      !tenantWebsite ||
-      !auth0DisplayName ||
-      !auth0Domain ||
-      !emailsOfAdmins?.length
+      !(tenantName && tenantWebsite && auth0DisplayName && auth0Domain && emailsOfAdmins?.length)
     ) {
-      message.error('Please fill in all the required fields');
+      message.error('Please fill all the required fields');
       return;
     }
+
+    const isEmailsValid = emailsOfAdmins?.every((email) => {
+      const validEmail = isValidEmail(email);
+      if (!validEmail) {
+        message.error(`Invalid email: ${email}`);
+      }
+
+      if (email.includes(' ')) {
+        message.error('Please remove all spaces from the emails');
+      }
+
+      return isValidEmail;
+    });
 
     if (
       tenantName.includes(' ') ||
@@ -97,7 +107,7 @@ export const CreateTenantModal = (props: Props) => {
       auth0Domain.includes(' ') ||
       auth0DisplayName.includes(' ') ||
       tenantId?.includes(' ') ||
-      emailsOfAdmins.some((email) => email.includes(' '))
+      !isEmailsValid
     ) {
       message.error('Please remove all spaces from the fields');
       return;
