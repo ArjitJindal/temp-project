@@ -1,3 +1,8 @@
+import {
+  AggregationData,
+  paymentDetailChangeReducer,
+  PaymentDetailChangeRuleParameters,
+} from '../payment-detail-change-base'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -10,22 +15,25 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
-import {
-  AggregationData,
-  bankNameChangeReducer,
-  BankNameChangeRuleParameters,
-} from '@/services/rules-engine/transaction-rules/bank-name-change'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import dayjs from '@/utils/dayjs'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { getBankname } from '@/core/dynamodb/dynamodb-keys'
 
-const DEFAULT_RULE_PARAMETERS: BankNameChangeRuleParameters = {
+const DEFAULT_RULE_PARAMETERS: PaymentDetailChangeRuleParameters = {
   timeWindow: {
     units: 1,
     granularity: 'day',
   },
-  oldBanksThreshold: 1,
+  oldNamesThreshold: 1,
+  initialTransactions: 1,
+  allowedDistancePercentage: 0,
+  ignoreEmptyName: true,
 }
 
+const getBankDetail = (paymentDetails?: PaymentDetails): string | undefined => {
+  return getBankname(paymentDetails)
+}
 dynamoDbSetupHook()
 
 function getBankDetails(bankName: string): GenericBankAccountDetails {
@@ -36,7 +44,7 @@ function getBankDetails(bankName: string): GenericBankAccountDetails {
 }
 
 ruleVariantsTest(true, () => {
-  describe('R-155: bankNameChangeReducer', () => {
+  describe('R-155: paymentDetailsChangeReducer', () => {
     test('', () => {
       const txns = [
         getTestTransaction({
@@ -50,23 +58,26 @@ ruleVariantsTest(true, () => {
         }),
       ]
       const agg = txns.reduce<AggregationData>(
-        (agg, txn) => bankNameChangeReducer('origin', agg, txn),
+        (agg, txn) =>
+          paymentDetailChangeReducer('origin', agg, txn, getBankDetail),
         {
-          senderBanknameUsage: {},
-          receiverBanknameUsage: {},
-          senderPreviousBankName: '',
-          receiverPreviousBankName: '',
+          senderPaymentDetailUsage: {},
+          receiverPaymentDetailUsage: {},
+          senderPreviousPaymentDetail: '',
+          receiverPreviousPaymentDetail: '',
+          transactionCount: 0,
         }
       )
 
       expect(agg).toEqual({
-        receiverBanknameUsage: {},
-        senderBanknameUsage: {
+        receiverPaymentDetailUsage: {},
+        senderPaymentDetailUsage: {
           HSBC: 2,
           LLOYDS: 1,
         },
-        senderPreviousBankName: 'LLOYDS',
-        receiverPreviousBankName: '',
+        senderPreviousPaymentDetail: 'LLOYDS',
+        receiverPreviousPaymentDetail: '',
+        transactionCount: 3,
       })
     })
   })
@@ -212,34 +223,38 @@ testAggregationRebuild(
   {
     origin: [
       {
-        receiverPreviousBankName: '',
-        senderBanknameUsage: { LLOYDS: 1, HSBC: 1 },
-        senderPreviousBankName: 'HSBC',
-        receiverBanknameUsage: {},
+        receiverPreviousPaymentDetail: '',
+        senderPaymentDetailUsage: { LLOYDS: 1, HSBC: 1 },
+        senderPreviousPaymentDetail: 'HSBC',
+        receiverPaymentDetailUsage: {},
+        transactionCount: 2,
         hour: '2022010100',
       },
       {
-        receiverPreviousBankName: '',
-        senderBanknameUsage: {},
-        senderPreviousBankName: '',
-        receiverBanknameUsage: {},
+        receiverPreviousPaymentDetail: '',
+        senderPaymentDetailUsage: {},
+        senderPreviousPaymentDetail: '',
+        receiverPaymentDetailUsage: {},
+        transactionCount: 0,
         hour: '2022010101',
       },
     ],
 
     destination: [
       {
-        receiverPreviousBankName: '',
-        senderBanknameUsage: {},
-        senderPreviousBankName: '',
-        receiverBanknameUsage: {},
+        receiverPreviousPaymentDetail: '',
+        senderPaymentDetailUsage: {},
+        senderPreviousPaymentDetail: '',
+        receiverPaymentDetailUsage: {},
+        transactionCount: 0,
         hour: '2022010100',
       },
       {
-        receiverPreviousBankName: 'HSBC',
-        senderBanknameUsage: {},
-        senderPreviousBankName: '',
-        receiverBanknameUsage: { LLOYDS: 1, HSBC: 1 },
+        receiverPreviousPaymentDetail: 'HSBC',
+        senderPaymentDetailUsage: {},
+        senderPreviousPaymentDetail: '',
+        receiverPaymentDetailUsage: { LLOYDS: 1, HSBC: 1 },
+        transactionCount: 2,
         hour: '2022010101',
       },
     ],

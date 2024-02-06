@@ -57,13 +57,7 @@ describe('', () => {
         if (!originLibrary?.[rule.id]) {
           return
         }
-        if (
-          rule.id === 'R-53' ||
-          rule.id === 'R-54' ||
-          rule.id === 'R-113' ||
-          rule.id === 'R-9' ||
-          rule.id === 'R-10'
-        ) {
+        if (rule.id === 'R-155') {
           // TODO: remove this in another PR later
           return
         }

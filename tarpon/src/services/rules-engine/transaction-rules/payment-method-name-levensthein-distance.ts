@@ -157,7 +157,7 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
   }
 }
 
-const prefixes = [
+export const prefixes = [
   'Mr',
   'Mrs',
   'Miss',

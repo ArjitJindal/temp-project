@@ -27,11 +27,24 @@ type AggregationData = {
   uniqueBanks?: string[]
 }
 
-type AcceptedPaymentDetails =
+export type AcceptedPaymentDetails =
   | IBANDetails
   | ACHDetails
   | SWIFTDetails
   | GenericBankAccountDetails
+
+export function isTransactionMethodValid(
+  transactionMethod: string | undefined
+): boolean {
+  if (transactionMethod === undefined) return false
+  const requiredTransactionMethods = [
+    'GENERIC_BANK_ACCOUNT',
+    'IBAN',
+    'SWIFT',
+    'ACH',
+  ]
+  return requiredTransactionMethods.includes(transactionMethod)
+}
 
 export type UsingTooManyBanksToMakePaymentsRuleParameters = {
   banksLimit: number
@@ -185,12 +198,12 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
     } else {
       return checkDirection != 'none'
         ? direction === 'origin'
-          ? this.isTransactionMethodValid(
+          ? isTransactionMethodValid(
               this.transaction.originPaymentDetails?.method
             )
             ? 1
             : 0
-          : this.isTransactionMethodValid(
+          : isTransactionMethodValid(
               this.transaction.destinationPaymentDetails?.method
             )
           ? 1
@@ -314,26 +327,13 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
     ) as Set<string>
   }
 
-  private isTransactionMethodValid(
-    transactionMethod: string | undefined
-  ): boolean {
-    if (transactionMethod === undefined) return false
-    const requiredTransactionMethods = [
-      'GENERIC_BANK_ACCOUNT',
-      'IBAN',
-      'SWIFT',
-      'ACH',
-    ]
-    return requiredTransactionMethods.includes(transactionMethod)
-  }
-
   private addBankNameIfValid = (
     paymentDetails: AcceptedPaymentDetails | undefined,
     uniqueBanks: Set<string>
   ) => {
     if (
       paymentDetails?.bankName &&
-      this.isTransactionMethodValid(paymentDetails?.method)
+      isTransactionMethodValid(paymentDetails?.method)
     ) {
       uniqueBanks.add(paymentDetails.bankName)
     }
@@ -347,7 +347,7 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
     transactions.filter(
       (transaction) =>
         (!onlyCheckKnownUsers || transaction.originUserId) &&
-        this.isTransactionMethodValid(transaction.originPaymentDetails?.method)
+        isTransactionMethodValid(transaction.originPaymentDetails?.method)
     )
     return transactions
   }

@@ -46,6 +46,7 @@ import { UsingTooManyBanksToMakePaymentsRuleParameters } from './using-too-many-
 import { HighRiskIpAddressCountriesParameters } from './high-risk-ip-address-countries'
 import { TransactionRiskScoreRuleParameters } from './transaction-risk-score'
 import { SameUserUsingTooManyPaymentIdentifiersParameters } from './same-user-using-too-many-payment-identifiers'
+import { PaymentDetailChangeRuleParameters } from './payment-detail-change-base'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -55,8 +56,6 @@ import { SamePaymentDetailsParameters } from '@/services/rules-engine/transactio
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
-import { BankNameChangeRuleParameters } from '@/services/rules-engine/transaction-rules/bank-name-change'
-
 export enum RuleChecksForField {
   FirstTransaction = '1st transaction',
   TransactionAmount = 'Transaction amount',
@@ -90,6 +89,7 @@ export enum RuleChecksForField {
   UsersAddress = 'User’s address',
   TranasctionDetails = 'Transaction details',
   Keywords = 'Keywords',
+  accountHolderName = 'Account holder name',
 }
 
 export enum RuleTypeField {
@@ -1626,6 +1626,40 @@ const _RULES_LIBRARY: Array<
     }
   },
   () => {
+    const defaultParameters: PaymentDetailChangeRuleParameters = {
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+      },
+      oldNamesThreshold: 1,
+      initialTransactions: 1,
+      allowedDistancePercentage: 30,
+      ignoreEmptyName: true,
+    }
+    return {
+      id: 'R-45',
+      name: 'New name on Bank Account',
+      type: 'TRANSACTION',
+      description:
+        'Compare transaction’s sending volume with receiving’s volume',
+      descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} bank account holder name has changed.`,
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'bank-account-holder-name-change',
+      labels: [],
+      checksFor: [
+        RuleChecksForField.accountHolderName,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
+      defaultCasePriority: 'P1',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'A user used 3 different bank account names in a month, indicating possible account takeover or fraud.',
+    }
+  },
+  () => {
     const defaultParameters: SanctionsBusinessUserRuleParameters = {
       fuzziness: 20,
       ongoingScreening: false,
@@ -1809,12 +1843,14 @@ const _RULES_LIBRARY: Array<
     }
   },
   () => {
-    const defaultParameters: BankNameChangeRuleParameters = {
-      oldBanksThreshold: 1,
+    const defaultParameters: PaymentDetailChangeRuleParameters = {
+      oldNamesThreshold: 1,
       timeWindow: {
         units: 30,
         granularity: 'day',
       },
+      initialTransactions: 0,
+      allowedDistancePercentage: 0,
     }
 
     return {
