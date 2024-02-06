@@ -12,6 +12,7 @@ import { ask } from '@/utils/openapi'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { ensureHttps } from '@/utils/http'
 import { apiFetch } from '@/utils/api-fetch'
+import { checkIfWebsite } from '@/utils/regex'
 
 const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output all fields in different lines For example:
 
@@ -196,8 +197,8 @@ export class MerchantMonitoringScrapeService {
         throw new Error('No scrapfly api key')
       }
 
-      if (!website) {
-        logger.warn('No website provided')
+      if (!checkIfWebsite(website)) {
+        logger.warn(`Website is not valid or not provided: ${website}`)
         return {}
       }
 
@@ -335,7 +336,8 @@ export class MerchantMonitoringScrapeService {
       const result: string[] = re.exec(output as string) as string[]
 
       if (!result || result.length < 2) {
-        throw new Error('Unable to extract information')
+        logger.error(`Unable to summarise ${source} content: ${content}`)
+        return undefined
       }
 
       return {

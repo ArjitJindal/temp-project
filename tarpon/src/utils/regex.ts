@@ -13,3 +13,11 @@ export const removePunctuation = (input: string) => {
   const punctuation = /[.,/#!$%^&*;:?{}=\-_`~()]/g
   return input.replace(punctuation, '')
 }
+
+export const checkIfWebsite = (input: string | undefined | null) => {
+  if (!input) {
+    return false
+  }
+  const website = /^(https?:\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$/
+  return website.test(input)
+}
