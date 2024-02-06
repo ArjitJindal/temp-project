@@ -2,6 +2,7 @@ import { AVG } from './average'
 import { COUNT } from './count'
 import { SUM } from './sum'
 import { RuleVariableAggregator } from './types'
+import { UNIQUE_VALUES, UNIQUE_COUNT } from './unique'
 import { RuleAggregationFunc } from '@/@types/openapi-internal/RuleAggregationFunc'
 
 export function getRuleVariableAggregator(
@@ -14,5 +15,9 @@ export function getRuleVariableAggregator(
       return SUM
     case 'AVG':
       return AVG
+    case 'UNIQUE_COUNT':
+      return UNIQUE_COUNT
+    case 'UNIQUE_VALUES':
+      return UNIQUE_VALUES
   }
 }

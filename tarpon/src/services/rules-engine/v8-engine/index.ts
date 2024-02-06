@@ -613,20 +613,20 @@ export class RuleJsonLogicEvaluator {
       return aggFunc.merge(acc, cur.value as any)
     }, aggFunc.init())
 
-    const isNewDataFiltered = await this.isDataIncludedInAggregationVariable(
-      aggregationVariable,
-      data
-    )
-    if (
-      isNewDataFiltered &&
-      this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
-    ) {
-      const newDataValue = await entityVarDataloader.load(
-        aggregationVariable.aggregationFieldKey
-      )
-      if (newDataValue) {
-        // NOTE: Merge the incoming transaction/user into the aggregation result
-        return aggFunc.compute(aggFunc.reduce(result, newDataValue))
+    if (this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)) {
+      const shouldIncludeNewData =
+        await this.isDataIncludedInAggregationVariable(
+          aggregationVariable,
+          data
+        )
+      if (shouldIncludeNewData) {
+        const newDataValue = await entityVarDataloader.load(
+          aggregationVariable.aggregationFieldKey
+        )
+        if (newDataValue) {
+          // NOTE: Merge the incoming transaction/user into the aggregation result
+          return aggFunc.compute(aggFunc.reduce(result, newDataValue))
+        }
       }
     }
     return aggFunc.compute(result)

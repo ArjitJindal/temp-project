@@ -3,6 +3,7 @@ export type RuleVariableAggregator<
   AggregationData,
   ComputeValue = AggregationData
 > = {
+  returnValueType: 'number' | 'string' | 'boolean' | 'array'
   init: () => AggregationData
   aggregate: (values: Value[]) => AggregationData
   reduce: (aggregation: AggregationData, value: Value) => AggregationData

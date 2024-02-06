@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { getFiscalYearStart } from '@flagright/lib/utils/time';
 import { isEqual } from 'lodash';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
-import { getAggVarDefinition } from '../../../../../RuleConfigurationDrawer/steps/RuleParametersStep/utils';
 import { RuleLogicBuilder } from '../RuleLogicBuilder';
 import { isTransactionAmountVariable } from '../helpers';
 import s from './style.module.less';
@@ -28,6 +27,7 @@ import TextInput from '@/components/library/TextInput';
 import { dayjs } from '@/utils/dayjs';
 import Alert from '@/components/library/Alert';
 import VariableTimeWindow from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/VariableTimeWindow';
+import { getAggVarDefinition } from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/utils';
 
 export type FormRuleAggregationVariable = Partial<RuleAggregationVariable> & {
   timeWindow: RuleAggregationVariableTimeWindow;
@@ -71,13 +71,20 @@ export const VariableForm: React.FC<VariableFormProps> = ({
     const options: Array<{ value: RuleAggregationFunc; label: string }> = [
       { value: 'COUNT', label: 'Count' },
     ];
-    const numberValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
-      { value: 'AVG', label: 'Average' },
-      { value: 'SUM', label: 'Sum' },
-    ];
     const entityVariable = entityVariables.find((v) => v.key === formValues.aggregationFieldKey);
     if (entityVariable?.valueType === 'number') {
+      const numberValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
+        { value: 'AVG', label: 'Average' },
+        { value: 'SUM', label: 'Sum' },
+      ];
       options.push(...numberValueOptions);
+    } else if (entityVariable?.valueType === 'string') {
+      // TODO (V8): Only allow low cardinality fields. Fields like transaction id should not be allowed.
+      const stringValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
+        { value: 'UNIQUE_COUNT', label: 'Unique count' },
+        { value: 'UNIQUE_VALUES', label: 'Unique values' },
+      ];
+      options.push(...stringValueOptions);
     }
     return options;
   }, [entityVariables, formValues.aggregationFieldKey]);

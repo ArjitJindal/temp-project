@@ -6,6 +6,7 @@ export const AVG: RuleVariableAggregator<
   { count: number; value: number },
   number
 > = {
+  returnValueType: 'number',
   init: () => ({ count: 0, value: 0 }),
   aggregate: (values) => ({ count: values.length, value: sum(values) }),
   reduce: (aggregation, value) => ({

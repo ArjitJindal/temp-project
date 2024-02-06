@@ -46,6 +46,7 @@ export const INITIAL_VALUES: Partial<RuleIsHitWhenStepFormValues> = {
       usersToCheck: 'ALL',
     },
   },
+  ruleAction: 'FLAG',
 };
 
 export default function RuleIsHitWhenStep() {

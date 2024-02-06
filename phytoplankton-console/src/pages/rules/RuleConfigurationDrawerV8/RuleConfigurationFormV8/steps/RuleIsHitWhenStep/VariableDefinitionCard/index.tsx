@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { v4 as uuid } from 'uuid';
-import { getAggVarDefinition } from '../../../../../RuleConfigurationDrawer/steps/RuleParametersStep/utils';
 import s from './style.module.less';
 import { FormRuleAggregationVariable, VariableForm } from './VariableForm';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
@@ -15,6 +14,7 @@ import { useApi } from '@/api';
 import Tag from '@/components/library/Tag';
 import Button from '@/components/library/Button';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { getAggVarDefinition } from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/utils';
 
 interface RuleAggregationVariablesEditorProps {
   aggregationVariables: RuleAggregationVariable[] | undefined;
@@ -125,7 +125,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
                     },
                   ]}
                 >
-                  {aggVar.name || aggVarDefinition.uiDefinition.label}
+                  {aggVar.name || aggVarDefinition.uiDefinition.label || 'Unknown'}
                 </Tag>
               );
             })}

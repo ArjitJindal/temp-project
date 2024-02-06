@@ -5543,6 +5543,8 @@ components:
         - SUM
         - COUNT
         - AVG
+        - UNIQUE_COUNT
+        - UNIQUE_VALUES
     RuleAggregationVariable:
       title: AggregationVariable
       type: object
