@@ -18,4 +18,5 @@ export default defineConfig({
     baseUrl: BASE_URL,
   },
   chromeWebSecurity: false,
+  retries: 1,
 });

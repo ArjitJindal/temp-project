@@ -1,7 +1,6 @@
 import { PERMISSIONS } from '../../support/permissions';
 
-// TODO: Unskip in FR-4252
-describe.skip('Add a comment to a case', () => {
+describe('Add a comment to a case', () => {
   const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW, ...PERMISSIONS.CASE_DETAILS];
   beforeEach(() => {
     cy.loginWithPermissions({
