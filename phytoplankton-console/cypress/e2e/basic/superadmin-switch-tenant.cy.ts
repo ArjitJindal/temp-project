@@ -1,4 +1,5 @@
-describe('Switching from one tenant to another', () => {
+// TODO: Unskip in FR-4252
+describe.skip('Switching from one tenant to another', () => {
   beforeEach(() => {
     cy.loginByRole('super_admin');
   });

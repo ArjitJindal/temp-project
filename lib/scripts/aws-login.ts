@@ -15,7 +15,13 @@ try {
   console.log(
     `\n\n\nRun this to load the AWS credentials (${profile}) as env vars:\n`
   )
-  console.log(`source ${scriptDir}/load-credentials.sh ${profile}\n`)
+  const BACKGROUND = '\x1b[37;41;1m'
+  const NOCOLOR = '\x1b[0m'
+  console.log(
+    BACKGROUND +
+      `source ${scriptDir}/load-credentials.sh ${profile}\n` +
+      NOCOLOR
+  )
 } catch (error) {
   console.error('An error occurred:', error)
 }
