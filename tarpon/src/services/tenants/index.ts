@@ -43,6 +43,8 @@ import {
   updateTenantSettings,
 } from '@/core/utils/context'
 import { isDemoTenant } from '@/utils/tenant'
+import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
+import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -70,6 +72,27 @@ export class TenantService {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb
     this.tenantId = tenantId
+  }
+
+  public static getTenantsToDelete = async (): Promise<DeleteTenant[]> => {
+    const mongoDb = await getMongoDbClient()
+    const collectionName = TENANT_DELETION_COLLECTION
+    const collection = mongoDb.db().collection<DeleteTenant>(collectionName)
+    const tenantsToDeleteResult = await collection
+      .find({
+        $or: [
+          {
+            latestStatus: 'WAITING_HARD_DELETE',
+            hardDeleteTimestamp: { $lte: dayjs().valueOf() },
+          },
+          {
+            latestStatus: { $in: ['FAILED', 'PENDING'] },
+          },
+        ],
+      })
+      .toArray()
+
+    return tenantsToDeleteResult
   }
 
   public static getAllTenants = async (

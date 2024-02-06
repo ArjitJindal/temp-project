@@ -35,7 +35,7 @@ type LogMetaData = {
   tenantName?: string
 }
 export type ContextUser =
-  | (Pick<Account, 'id' | 'role' | 'dangerousTenantDelete'> & {
+  | (Pick<Account, 'id' | 'role' | 'allowTenantDeletion'> & {
       email?: string
     })
   | undefined
@@ -79,7 +79,7 @@ export async function getInitialContext(
       userId,
       role,
       encodedPermissions,
-      dangerousTenantDelete,
+      allowTenantDeletion,
     } = (event as APIGatewayEvent)?.requestContext?.authorizer || {}
 
     if (tenantId) {
@@ -130,7 +130,7 @@ export async function getInitialContext(
             id: userId,
             email: verifiedEmail,
             role: role!,
-            dangerousTenantDelete: Boolean(dangerousTenantDelete),
+            allowTenantDeletion: Boolean(allowTenantDeletion),
           }
         : undefined,
       settings,

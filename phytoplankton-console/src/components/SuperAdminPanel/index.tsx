@@ -6,6 +6,7 @@ import NumberInput from '../library/NumberInput';
 import Label from '../library/Label';
 import { H4 } from '../ui/Typography';
 import { COLORS_V2_ALERT_CRITICAL } from '../ui/colors';
+import Checkbox from '../library/Checkbox';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
 import Modal from '@/components/library/Modal';
@@ -79,6 +80,7 @@ export default function SuperAdminPanel() {
   const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
   const [limits, setLimits] = useState<TenantSettings['limits']>(settings.limits || {});
   const [tenantIdToDelete, setTenantIdToDelete] = useState<string | undefined>(undefined);
+  const [instantDelete, setInstantDelete] = useState<boolean>(false);
 
   const [complyAdvantageSearchProfileId, setSearchProfileId] = useState<string>(
     settings.complyAdvantageSearchProfileId || '',
@@ -334,64 +336,93 @@ export default function SuperAdminPanel() {
             </Confirm>
 
             <Divider />
-            <H4 style={{ color: COLORS_V2_ALERT_CRITICAL }}>Danger Zone</H4>
-            <div className={s.field}>
-              <Select
-                options={tenantOptions}
-                onChange={(value) => setTenantIdToDelete(value)}
-                value={tenantIdToDelete}
-                filterOption={(input, option) =>
-                  (option?.text?.toLowerCase() ?? '').includes(input.toLowerCase().trim())
-                }
-                showSearch={true}
-                placeholder="Select tenant to delete"
-                style={{ width: '100%' }}
-              />
-            </div>
-            <Confirm
-              title="Delete tenant?"
-              onConfirm={async () => {
-                batchJobMessage = message.loading(`Deleting tenant...`);
-                if (!tenantIdToDelete) {
-                  message.error('No tenant selected');
-                  return;
-                }
-
-                if (tenantIdToDelete === user.tenantId) {
-                  message.error('Cannot delete current tenant');
-                  return;
-                }
-
-                if (tenantIdToDelete?.includes('flagright')) {
-                  message.error('Cannot delete tenant');
-                  return;
-                }
-
-                await api.deleteTenant({
-                  tenantId: tenantIdToDelete,
-                });
-
-                batchJobMessage();
-                window.location.reload();
-              }}
-              text={`Are you sure you want to delete ${tenantIdToDelete} tenant?`}
-              onSuccess={() => {
-                batchJobMessage();
-                message.success(`${tenantIdToDelete} deleted`);
-              }}
-            >
-              {(props) => (
-                <div className={s.field}>
-                  <Button
-                    isDisabled={!tenantIdToDelete}
-                    onClick={props.onClick}
-                    style={{ color: COLORS_V2_ALERT_CRITICAL }}
-                  >
-                    Delete
-                  </Button>
+            {user.allowTenantDeletion && (
+              <>
+                <H4 style={{ color: COLORS_V2_ALERT_CRITICAL }}>Danger Zone</H4>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div className={s.field}>
+                    <Label label="Tenant to delete">
+                      <Select
+                        options={tenantOptions}
+                        onChange={(value) => setTenantIdToDelete(value)}
+                        value={tenantIdToDelete}
+                        filterOption={(input, option) =>
+                          (option?.text?.toLowerCase() ?? '').includes(input.toLowerCase().trim())
+                        }
+                        showSearch={true}
+                        placeholder="Select tenant to delete"
+                        style={{ width: '20rem' }}
+                      />
+                    </Label>
+                  </div>
+                  <div className={s.field}>
+                    <Label label="Instant delete">
+                      <Checkbox
+                        value={instantDelete}
+                        onChange={(value) => {
+                          if (value != null) {
+                            setInstantDelete(value);
+                          }
+                        }}
+                      />
+                    </Label>
+                  </div>
                 </div>
-              )}
-            </Confirm>
+                <Confirm
+                  title="Delete tenant?"
+                  onConfirm={async () => {
+                    batchJobMessage = message.loading(`Deleting tenant...`);
+                    if (!tenantIdToDelete) {
+                      message.error('No tenant selected');
+                      return;
+                    }
+
+                    if (tenantIdToDelete === user.tenantId) {
+                      message.error('Cannot delete current tenant');
+                      return;
+                    }
+
+                    if (tenantIdToDelete?.includes('flagright')) {
+                      message.error('Cannot delete tenant');
+                      return;
+                    }
+
+                    try {
+                      await api.deleteTenant({
+                        DeleteTenant: {
+                          tenantId: tenantIdToDelete,
+                          notRecoverable: instantDelete,
+                        },
+                      });
+                    } catch (e) {
+                      message.error(
+                        `Failed to delete tenant ${tenantIdToDelete}: Message: ${
+                          (e as Error).message
+                        }`,
+                      );
+                      batchJobMessage();
+                      return;
+                    }
+
+                    batchJobMessage();
+                    window.location.reload();
+                  }}
+                  text={`Are you sure you want to delete ${tenantIdToDelete} tenant?`}
+                  onSuccess={() => {
+                    batchJobMessage();
+                    message.success(`${tenantIdToDelete} deleted`);
+                  }}
+                >
+                  {(props) => (
+                    <div className={s.field}>
+                      <Button isDisabled={!tenantIdToDelete} onClick={props.onClick}>
+                        Delete
+                      </Button>
+                    </div>
+                  )}
+                </Confirm>
+              </>
+            )}
           </>
         )}
       </Modal>

@@ -71,6 +71,19 @@ function isAtLeast(role1: string, role2: string) {
   )
 }
 
+export const assertHasDangerousTenantDelete = () => {
+  const user = currentUser()
+  if (!user) {
+    throw new Forbidden('Unknown user')
+  }
+
+  if (!user.allowTenantDeletion) {
+    throw new Forbidden(
+      `You need to have allowTenantDeletion flag to perform this action`
+    )
+  }
+}
+
 export function assertRole(user: ContextUser, requiredRole: ManagedRoleName) {
   if (!user) {
     throw new Forbidden('Unknown user')
@@ -126,5 +139,5 @@ export interface JWTAuthorizerResult extends Credentials {
   encodedPermissions: string
   verifiedEmail: string
   auth0Domain: string
-  dangerousTenantDelete: boolean
+  allowTenantDeletion: boolean
 }

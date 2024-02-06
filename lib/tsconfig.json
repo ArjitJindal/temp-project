@@ -12,9 +12,9 @@
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "noImplicitAny": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
   },
   "ts-node": {
-    "require": ["tsconfig-paths/register"]
-  }
+    "require": ["tsconfig-paths/register"],
+  },
 }

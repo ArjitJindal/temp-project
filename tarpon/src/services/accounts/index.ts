@@ -555,16 +555,35 @@ export class AccountsService {
 
     promises.push(
       ...[
-        userManager.update({ id: idToDelete }, { blocked: true }),
-        this.updateAuth0UserInMongo(tenant.id, idToDelete, {
-          blocked: true,
-        }),
+        this.deactivateAccount(tenant.id, idToDelete),
         caseRepository.reassignCases(idToDelete, reassignedTo),
         alertRepository.reassignAlerts(idToDelete, reassignedTo),
       ]
     )
 
     await Promise.all(promises)
+  }
+
+  public async deactivateAccount(
+    tenantId: string,
+    accountId: string
+  ): Promise<void> {
+    const userTenant = await this.getAccountTenant(accountId)
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
+    const userManager = managementClient.users
+
+    if (userTenant == null || userTenant.id !== tenantId) {
+      throw new BadRequest(
+        `Unable to find user "${accountId}" in the tenant |${tenantId}|`
+      )
+    }
+
+    await Promise.all([
+      userManager.update({ id: accountId }, { blocked: true }),
+      this.updateAuth0UserInMongo(tenantId, accountId, { blocked: true }),
+    ])
   }
 
   async deleteAuth0User(userId: string) {

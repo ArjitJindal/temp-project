@@ -63,7 +63,7 @@ export class RuleRepository {
 
   async searchRules(query: string, filters: RuleSearchFilter): Promise<Rule[]> {
     const db = this.mongoDb.db()
-    const rulesCollectionName = RULES_COLLECTION(FLAGRIGHT_TENANT_ID)
+    const rulesCollectionName = RULES_COLLECTION
     const rulesCollection = db.collection<Rule>(rulesCollectionName)
     const regexQuery = escapeStringRegexp(query)
     const fields: ReadonlyArray<keyof Rule> = [
@@ -146,7 +146,7 @@ export class RuleRepository {
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
     const now = Date.now()
     const db = this.mongoDb.db()
-    const rulesCollection = RULES_COLLECTION(FLAGRIGHT_TENANT_ID)
+    const rulesCollection = RULES_COLLECTION
 
     const newRule: Rule = {
       ...rule,

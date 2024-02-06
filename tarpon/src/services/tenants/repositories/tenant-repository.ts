@@ -10,10 +10,15 @@ import {
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { DynamoDbKeys, TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
 import { getUpdateAttributesUpdateItemInput } from '@/utils/dynamodb'
-import { METADATA_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  METADATA_COLLECTION,
+  TENANT_DELETION_COLLECTION,
+} from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
 import { envIs } from '@/utils/env'
 import { getTestEnabledFeatures } from '@/core/utils/context'
+import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
+import dayjs from '@/utils/dayjs'
 
 type MetadataType = 'SLACK_WEBHOOK'
 type MetadataPayload = { slackWebhookURL: string; originalResponse: any }
@@ -79,6 +84,45 @@ export class TenantRepository {
     await this.dynamoDb.send(new UpdateCommand(updateItemInput))
 
     return newTenantSettings
+  }
+
+  public async createPendingRecordForTenantDeletion(data: {
+    tenantId: string
+    triggeredByEmail: string
+    triggeredById: string
+    notRecoverable: boolean
+  }): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Required<DeleteTenant>>(
+      TENANT_DELETION_COLLECTION
+    )
+    await collection.insertOne({
+      hardDeleteTimestamp: data.notRecoverable
+        ? Date.now()
+        : dayjs().add(45, 'day').unix(),
+      createdTimestamp: Date.now(),
+      updatedTimestamp: Date.now(),
+      latestStatus: 'PENDING',
+      statuses: [
+        {
+          status: 'PENDING',
+          timestamp: Date.now(),
+        },
+      ],
+      triggeredByEmail: data.triggeredByEmail,
+      triggeredById: data.triggeredById,
+      tenantId: data.tenantId,
+      notRecoverable: data.notRecoverable ? true : false,
+    })
+  }
+
+  public async isDeletetionRecordExists(
+    tenantIdToDelete: string
+  ): Promise<boolean> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<DeleteTenant>(TENANT_DELETION_COLLECTION)
+    const result = await collection.findOne({ tenantIdToDelete })
+    return result !== null
   }
 
   public async deleteTenantSettings(

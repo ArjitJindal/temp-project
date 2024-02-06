@@ -6,6 +6,15 @@ import {
 import { memoize, orderBy } from 'lodash'
 import { DeleteCommand, QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
+import {
+  getAllUsagePlans,
+  getTenantIdFromUsagePlanName,
+} from '@flagright/lib/tenants/usage-plans'
+import {
+  APIGatewayClient,
+  GetUsagePlanKeysCommand,
+  UpdateApiKeyCommand,
+} from '@aws-sdk/client-api-gateway'
 import { MongoClient } from 'mongodb'
 import { AccountsService } from '../accounts'
 import {
@@ -29,8 +38,15 @@ import { ListHeader } from '@/@types/openapi-internal/ListHeader'
 import { traceable } from '@/core/xray'
 import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 import { getContext } from '@/core/utils/context'
-import { DYNAMODB_PARTITIONKEYS_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  TENANT_DELETION_COLLECTION,
+  DYNAMODB_PARTITIONKEYS_COLLECTION,
+} from '@/utils/mongodb-definitions'
+import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
+import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
+import { DeleteTenantStatusEnum } from '@/@types/openapi-internal/DeleteTenantStatusEnum'
+import { DeleteTenantStatus } from '@/@types/openapi-internal/DeleteTenantStatus'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -95,17 +111,6 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     }
   )
 
-  protected async run(job: TenantDeletionBatchJob): Promise<void> {
-    await Promise.all([
-      this.deleteS3Data(job.tenantId),
-      this.deleteDynamoDbData(job.tenantId),
-      this.deleteAuth0Organization(job.tenantId),
-      this.deleteAuth0Users(job.tenantId),
-    ])
-
-    await this.dropMongoTables(job.tenantId)
-  }
-
   private async dropMongoTables(tenantId: string) {
     const mongoDb = await this.mongoDb()
     const db = mongoDb.db()
@@ -114,6 +119,141 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     for (const collection of collections) {
       await db.collection(collection).drop()
       logger.info(`Dropped collection ${collection}`)
+    }
+  }
+
+  protected async run(job: TenantDeletionBatchJob): Promise<void> {
+    const { tenantId, notRecoverable } = job
+
+    logger.info(`Started deleting tenant ${tenantId}`)
+
+    try {
+      await this.addStatusRecord(tenantId, 'IN_PROGRESS')
+      if (notRecoverable) {
+        // No parallelism here because we want to make sure that all data is deleted before
+        await Promise.all([
+          this.deleteS3Data(tenantId),
+          this.deleteDynamoDbData(tenantId),
+        ])
+        await this.deleteAuth0Users(tenantId)
+        await this.deleteAuth0Organization(tenantId)
+        await this.dropMongoTables(tenantId)
+        await this.addStatusRecord(tenantId, 'HARD_DELETED')
+      } else {
+        await Promise.all([
+          this.deactivateAuth0Users(tenantId),
+          this.deactivateApiKeys(tenantId),
+        ])
+
+        await this.addStatusRecord(tenantId, 'WAITING_HARD_DELETE')
+      }
+    } catch (e) {
+      logger.error(`Failed to delete tenant ${tenantId} - ${e}`)
+      await this.addStatusRecord(tenantId, 'FAILED', (e as Error).message)
+      throw e
+    }
+  }
+
+  private async findTenantRecord(tenantId: string) {
+    const mongoDb = await this.mongoDb()
+    const db = mongoDb.db()
+    const collectionName = TENANT_DELETION_COLLECTION
+    const collection = db.collection<DeleteTenant>(collectionName)
+
+    return collection.findOne({ tenantId: tenantId })
+  }
+
+  private async addStatusRecord(
+    tenantId: string,
+    status: DeleteTenantStatusEnum,
+    message?: string
+  ) {
+    const mongoDb = await this.mongoDb()
+    const db = mongoDb.db()
+    const collectionName = TENANT_DELETION_COLLECTION
+    const collection = db.collection<DeleteTenant>(collectionName)
+
+    const record = await this.findTenantRecord(tenantId)
+    if (record) {
+      const newStatus: DeleteTenantStatus = {
+        status,
+        timestamp: Date.now(),
+        message,
+      }
+
+      await collection.updateOne(
+        { tenantId },
+        {
+          $push: { statuses: newStatus },
+          $set: { latestStatus: status, updatedTimestamp: Date.now() },
+        }
+      )
+
+      return
+    }
+
+    throw new Error(`Tenant ${tenantId} record not found in tenant deletion`)
+  }
+
+  private async deactivateApiKeys(tenantId: string) {
+    const allUsagePlans = await getAllUsagePlans(
+      envIs('local') ? 'eu-central-1' : (process.env.AWS_REGION as string)
+    )
+
+    const usagePlan = allUsagePlans.find(
+      (usagePlan) =>
+        getTenantIdFromUsagePlanName(usagePlan.name as string) === tenantId
+    )
+
+    if (!usagePlan) {
+      logger.warn(`Usage plan not found for tenant ${tenantId}`)
+      return
+    }
+
+    const apigateway = new APIGatewayClient({
+      region: process.env.AWS_REGION,
+      maxAttempts: 10,
+    })
+
+    const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
+      usagePlanId: usagePlan.id,
+    })
+
+    const usagePlanKeys = await apigateway.send(usagePlanKeysCommand)
+
+    if (!usagePlanKeys.items?.length) {
+      logger.warn(`Usage plan ${usagePlan.id} does not have any keys`)
+      return
+    }
+
+    for (const key of usagePlanKeys.items) {
+      await apigateway.send(
+        new UpdateApiKeyCommand({
+          apiKey: key.id,
+          patchOperations: [
+            { op: 'replace', path: '/enabled', value: 'false' },
+          ],
+        })
+      )
+    }
+  }
+
+  private async deactivateAuth0Users(tenantId: string) {
+    const mongoDb = await getMongoDbClient()
+    const context = getContext()
+    const auth0Domain =
+      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+    logger.info('Deactivating all users from Auth0')
+    const tenant = await accountsService.getTenantById(tenantId)
+    if (!tenant) {
+      logger.warn(`Tenant not found.`)
+      return
+    }
+    const users = await accountsService.getTenantAccounts(tenant)
+    for (const user of users) {
+      logger.info(`Deactivating auth0 user ${user.id}`)
+      await accountsService.deactivateAccount(tenantId, user.id)
     }
   }
 
@@ -448,7 +588,6 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const { originUserId, destinationUserId, transactionId } = transaction
     await this.deleteUserAggregation(tenantId, originUserId)
     await this.deleteUserAggregation(tenantId, destinationUserId)
-    // TODO: Delete RULE_USER_TIME_AGGREGATION for origin and destination user
     await this.deleteTransactionEvents(tenantId, transactionId)
     await this.deleteARSScores(tenantId, transactionId)
     await this.deleteTransactionIndices(tenantId, transaction)
@@ -496,6 +635,12 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       const objects = response.Contents?.map((content) => ({
         Key: content.Key,
       }))
+
+      logger.info(`Deleting ${objects?.length} files.`)
+
+      if (!objects?.length) {
+        return
+      }
 
       await s3Client.send(
         new DeleteObjectsCommand({

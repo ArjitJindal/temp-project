@@ -28,8 +28,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/checklist-templates/{checklistTemplateId}':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
-  '/tenants/delete_tenant/{tenantId}':
-    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/delete': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/rule-queues':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/rule-queues/{ruleQueueId}':
@@ -170,7 +169,6 @@ export const ConsoleApiPathToLambda: any = {
   '/tenant/usageData': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenant/apiKeys': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/cases/assignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
-
   '/cases/reviewAssignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/statusChange': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,

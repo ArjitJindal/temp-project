@@ -1,6 +1,7 @@
 import { Document, Filter } from 'mongodb'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-transactions`
@@ -216,14 +217,15 @@ export const TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION = (
 }
 
 /** Rules Collection */
-export const RULES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-rules`
-}
-
+export const RULES_COLLECTION = FLAGRIGHT_TENANT_ID + '-rules'
 /** DynamoDB Keys Collection */
 export const DYNAMODB_PARTITIONKEYS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-dynamodb-partition-keys`
 }
+
+/** Tenant Deletion Collection */
+export const TENANT_DELETION_COLLECTION =
+  FLAGRIGHT_TENANT_ID + '-tenant-deletion'
 
 export function getMongoDbIndexDefinitions(tenantId: string): {
   [collectionName: string]: Array<{

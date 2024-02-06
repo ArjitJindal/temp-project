@@ -10,6 +10,7 @@ import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { envIs } from '@/utils/env'
+
 const ONGOING_SCREENING_USERS_BATCH_SIZE = 100
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
@@ -30,6 +31,31 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
       `Failed to create ongoing screening jobs: ${(e as Error)?.message}`,
       e
     )
+  }
+  try {
+    const tenantsToDeactivate = await TenantService.getTenantsToDelete()
+    for (const tenant of tenantsToDeactivate) {
+      if (!tenant.tenantId) {
+        logger.error(
+          `Failed to delete record ${JSON.stringify(
+            tenant
+          )}: no tenantIdToDelete`
+        )
+
+        continue
+      }
+
+      await sendBatchJobCommand({
+        type: 'TENANT_DELETION',
+        notRecoverable:
+          tenant.latestStatus === 'WAITING_HARD_DELETE'
+            ? true
+            : tenant.notRecoverable || false,
+        tenantId: tenant.tenantId,
+      })
+    }
+  } catch (e) {
+    logger.error(`Failed to delete tenants: ${(e as Error)?.message}`, e)
   }
 })
 

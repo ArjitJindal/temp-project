@@ -4915,14 +4915,8 @@ paths:
             schema:
               $ref: '#/components/schemas/ChecklistTemplate'
         required: true
-  /tenants/delete_tenant/{tenantId}:
-    parameters:
-      - schema:
-          type: string
-        name: tenantId
-        in: path
-        required: true
-    delete:
+  /tenants/delete:
+    post:
       summary: Delete a tenant
       operationId: delete-tenant
       x-flagright:
@@ -4931,6 +4925,12 @@ paths:
       responses:
         '200':
           description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteTenant'
+        required: true
   /tenants/settings/checklist-templates/{checklistTemplateId}:
     parameters:
       - schema:
@@ -7124,7 +7124,7 @@ components:
           type: boolean
         reviewerId:
           type: string
-        dangerousTenantDelete:
+        allowTenantDeletion:
           type: boolean
       required:
         - id
@@ -9245,6 +9245,50 @@ components:
             type: string
       required:
         - businessIndustry
+    DeleteTenantStatusEnum:
+      type: string
+      enum:
+        - PENDING
+        - IN_PROGRESS
+        - FAILED
+        - CANCELLED
+        - WAITING_HARD_DELETE
+        - HARD_DELETED
+    DeleteTenantStatus:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/DeleteTenantStatusEnum'
+        timestamp:
+          type: number
+        message:
+          type: string
+      required:
+        - status
+        - timestamp
+    DeleteTenant:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        notRecoverable:
+          type: boolean
+        createdTimestamp:
+          type: number
+        hardDeleteTimestamp:
+          type: number
+        updatedTimestamp:
+          type: number
+        triggeredById:
+          type: string
+        triggeredByEmail:
+          type: string
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeleteTenantStatus'
+        latestStatus:
+          $ref: '#/components/schemas/DeleteTenantStatusEnum'
     AuditLogType:
       title: AuditLogType
       type: string

@@ -7,6 +7,13 @@ import {
 
 export const USAGE_PLAN_REGEX = /tarpon:(.*):(.*)/
 
+export function getTenantIdFromUsagePlanName(
+  usagePlanName: string
+): string | null {
+  const matches = usagePlanName.match(USAGE_PLAN_REGEX)
+  return matches?.[1] || null
+}
+
 export const getAllUsagePlans = async (
   region: string
 ): Promise<UsagePlan[]> => {

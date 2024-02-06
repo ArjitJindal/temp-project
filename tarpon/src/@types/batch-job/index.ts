@@ -115,6 +115,7 @@ export type TestFargateJob = {
 export type TenantDeletionBatchJob = {
   type: 'TENANT_DELETION'
   tenantId: string
+  notRecoverable: boolean
 }
 
 export type BatchJob =

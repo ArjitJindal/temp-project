@@ -10,6 +10,7 @@ import {
   JWTAuthorizerResult,
   assertCurrentUserRole,
   assertCurrentUserRoleAboveAdmin,
+  assertHasDangerousTenantDelete,
 } from '@/@types/jwt'
 import { Tenant } from '@/@types/openapi-internal/Tenant'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -291,15 +292,44 @@ export const tenantsHandler = lambdaApi()(
 
     handlers.registerDeleteTenant(async (ctx, request) => {
       assertCurrentUserRole('root')
+      assertHasDangerousTenantDelete()
+
       if (envIsNot('dev')) {
         throw new createHttpError.Forbidden(
           'Cannot delete tenant in non-dev environment'
         )
       }
+
+      const { tenantId, notRecoverable } = request.DeleteTenant
+
+      if (!tenantId) {
+        throw new createHttpError.BadRequest(
+          'Cannot delete tenant: no tenantIdToDelete'
+        )
+      }
+
+      const tenantRepository = new TenantRepository(tenantId, { mongoDb })
+
+      if (await tenantRepository.isDeletetionRecordExists(tenantId)) {
+        throw new createHttpError.Forbidden(
+          `Tenant deletion record already exists for tenantId: ${tenantId}`
+        )
+      }
+
+      await tenantRepository.createPendingRecordForTenantDeletion({
+        tenantId,
+        triggeredByEmail: ctx.email,
+        triggeredById: ctx.userId,
+        notRecoverable: notRecoverable ?? false,
+      })
+
       await sendBatchJobCommand({
         type: 'TENANT_DELETION',
-        tenantId: request.tenantId,
+        tenantId,
+        notRecoverable: request.DeleteTenant.notRecoverable ?? false,
       })
+
+      return
     })
 
     handlers.registerDeleteRuleQueue(async (ctx, request) => {
