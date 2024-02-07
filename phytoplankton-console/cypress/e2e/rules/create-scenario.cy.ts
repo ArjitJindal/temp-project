@@ -8,6 +8,7 @@ describe('Create scenario', () => {
     cy.visit('/rules/rules-library');
     cy.intercept('POST', '**/rule_instances').as('createdRule');
 
+    cy.intercept('GET', '**/rule-logic-config').as('ruleLogicConfig');
     //Basic details
     cy.contains('Create rule').click();
     cy.get('input[placeholder="Enter rule name"]').type('Scenario 1');
@@ -18,7 +19,7 @@ describe('Create scenario', () => {
 
     //Rule is hit when
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
-    createVariable('Variable 1', 'Transaction / type');
+    createVariable('Variable 1', 'type');
     cy.get('label[data-cy="logic-variable"]').eq(0).click().type('Transaction / type{enter}');
     cy.get('.widget--has-valuerscs').eq(0).first().click().type('Deposit{enter}');
     addCondition('Variable 1', 5);
@@ -69,7 +70,7 @@ describe('Create scenario', () => {
         checkConditionsCount(2, 'HIGH');
         checkConditionsCount(2, 'VERY_HIGH');
         checkConditionsCount(2, 'VERY_LOW');
-        createVariable('Variable 2', 'Transaction / transaction id');
+        createVariable('Variable 2', 'transaction id');
         addCondition('Variable 2', 10);
         cy.get('input[data-cy="rule-action-selector"]').eq(1).click();
         cy.get('label[data-cy="apply-to-risk-levels"]')
@@ -103,14 +104,17 @@ describe('Create scenario', () => {
     cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}`).blur();
     cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
     cy.get('input[data-cy="variable-direction-v8"]').eq(0).click();
-    cy.get('label[data-cy="variable-aggregate-field-v8"]')
-      .click()
-      .type(`${variableAggregateField}`)
-      .type(`{enter}`);
-    cy.get('label[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
-    // cy.get('label[data-cy="time-from-interval"]').click().type('Month{enter}');
-    // cy.get('label[data-cy="time-to-interval"]').click().type('Month{enter}');
-    cy.get('button[data-cy="add-variable-v8"]').first().click();
+    cy.wait('@ruleLogicConfig').then((interception) => {
+      expect(interception.response?.statusCode).to.oneOf([200, 304]);
+      cy.get('label[data-cy="variable-aggregate-field-v8"]')
+        .click()
+        .type(`${variableAggregateField}`)
+        .type(`{enter}`);
+      cy.get('label[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
+      // cy.get('label[data-cy="time-from-interval"]').click().type('Month{enter}');
+      // cy.get('label[data-cy="time-to-interval"]').click().type('Month{enter}');
+      cy.get('button[data-cy="add-variable-v8"]').first().click();
+    });
   }
 
   function checkConditionsCount(count, riskLevel) {
