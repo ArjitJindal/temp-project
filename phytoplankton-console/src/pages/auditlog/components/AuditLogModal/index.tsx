@@ -9,6 +9,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import AccountTag from '@/components/AccountTag';
 import Modal from '@/components/library/Modal';
+import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
   data: AuditLog;
@@ -141,12 +142,12 @@ const AuditLogModal = (props: Props) => {
         onCancel={() => setIsModalVisible(false)}
         width={'L'}
         hideFooter
-        hideHeader
+        title={`Changes for ${humanizeAuto(data.type)}`}
       >
         <div style={{ padding: '1rem', width: '100%' }}>
           {changedDetails.length && (
             <>
-              <Typography.Title level={3}>
+              <Typography.Title level={4}>
                 {startCase(toLower(data.type))} details changed
               </Typography.Title>
               <TableTemplate details={changedDetails} />
@@ -155,7 +156,7 @@ const AuditLogModal = (props: Props) => {
           <>
             {notChangedDetails.length > 0 && (
               <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={3}>
+                <Typography.Title level={4}>
                   {startCase(toLower(data.type))} details not changed
                 </Typography.Title>
                 <TableTemplate details={notChangedDetails} />

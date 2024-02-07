@@ -42,7 +42,7 @@ export const BrowserSupportModal = () => {
       onCancel={handleCancel}
       title={`Unfortunately, ${browserName} is not compatible!`}
       hideOk
-      maskClosable
+      maskClosable={false}
       width="S"
     >
       <div className={s.root}>

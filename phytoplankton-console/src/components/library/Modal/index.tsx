@@ -60,7 +60,7 @@ export default function Modal(props: Props) {
     disablePadding = false,
     writePermissions = [],
     hideOk = false,
-    maskClosable = false,
+    maskClosable = true,
   } = props;
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key);
