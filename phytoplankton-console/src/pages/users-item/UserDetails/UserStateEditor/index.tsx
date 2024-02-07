@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import Icon from './icon.react.svg';
 import s from './index.module.less';
 import UserChangeModal from './UserChangeModal';
+import Icon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { InternalBusinessUser, InternalConsumerUser, Comment } from '@/apis';
 import { UserState } from '@/apis/models/UserState';
 import { useHasPermissions } from '@/utils/user-utils';

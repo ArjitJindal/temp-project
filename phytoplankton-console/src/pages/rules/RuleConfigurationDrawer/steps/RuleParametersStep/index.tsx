@@ -193,6 +193,9 @@ function RiskBasedThresholds(props: Props) {
       <StepHeader
         title={'Risk-based thresholds'}
         description={'Configure risk-based thresholds that are specific for this rule'}
+        tooltip={
+          'Rules utilize CRA risk levels and they are automatically adjusted for manual overrides.'
+        }
       />
       <Tabs items={tabItems} />
     </>

@@ -1,5 +1,5 @@
 import React from 'react';
-import Icon from './icon.react.svg';
+import Icon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { useApi } from '@/api';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import { useQuery } from '@/utils/queries/hooks';
