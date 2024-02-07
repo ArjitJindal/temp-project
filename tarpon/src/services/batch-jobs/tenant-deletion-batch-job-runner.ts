@@ -268,7 +268,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     /** If the tenant is created after https://github.com/flagright/orca/pull/3077#event-11574061803  */
     if (
       account?.metadata?.tenantCreatedAt &&
-      dayjs(account?.metadata?.tenantCreatedAt).isAfter(changeDate)
+      dayjs(parseInt(account?.metadata?.tenantCreatedAt)).isAfter(changeDate)
     ) {
       await this.deleteDynamoDbDataUsingMongo(tenantId)
       return
