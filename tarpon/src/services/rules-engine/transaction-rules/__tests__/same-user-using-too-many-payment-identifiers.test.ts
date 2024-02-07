@@ -34,7 +34,7 @@ setUpRulesHooks(TEST_TENANT_ID, [
   },
 ])
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('R-55 description formatting', () => {
     testRuleDescriptionFormatting(
       'basic case',

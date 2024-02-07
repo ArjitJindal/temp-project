@@ -23,7 +23,7 @@ const DEFAULT_RULE_PARAMETERS: SenderLocationChangesFrequencyRuleParameters = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('Core logic', () => {
     const TEST_TENANT_ID = getTestTenantId()
 

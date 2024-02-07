@@ -12,7 +12,6 @@ import RuleIsHitWhenStep, {
 } from './steps/RuleIsHitWhenStep';
 import RuleIsRunWhenStep, {
   FormValues as RuleIsRunWhenStepFormValues,
-  INITIAL_VALUES as RULE_IS_RUN_WHEN_STEP_INITIAL_VALUES,
 } from './steps/RuleIsRunWhenStep';
 import AlertCreationDetailsStep, {
   FormValues as AlertCreationDetailsStepFormValues,
@@ -264,7 +263,9 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
         ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
       },
       ruleIsHitWhenStep,
-      ruleIsRunWhenStep: RULE_IS_RUN_WHEN_STEP_INITIAL_VALUES,
+      ruleIsRunWhenStep: {
+        filtersLogic: rule?.defaultFiltersLogic,
+      },
       alertCreationDetailsStep: {
         alertCreatedFor: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreatedFor,
         alertCreationInterval: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreationInterval,
@@ -276,6 +277,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
   }, [
     isRiskLevelsEnabled,
     rule?.defaultAction,
+    rule?.defaultFiltersLogic,
     rule?.defaultLogic,
     rule?.defaultLogicAggregationVariables,
     rule?.defaultNature,

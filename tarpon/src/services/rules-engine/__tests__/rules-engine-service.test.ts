@@ -695,7 +695,18 @@ describe('Verify Transaction: V8 engine', () => {
         expect(result).toEqual({
           transactionId: 'tx-2',
           status: 'ALLOW',
-          executedRules: [],
+          executedRules: [
+            {
+              ruleId: 'V8-R-1',
+              ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+              ruleName: 'test rule name',
+              ruleDescription: 'test rule description.',
+              ruleAction: 'FLAG',
+              ruleHit: false,
+              nature: 'AML',
+              labels: [],
+            },
+          ],
           hitRules: [],
         } as TransactionMonitoringResult)
       })
@@ -780,7 +791,7 @@ describe('Verify Transaction: V8 engine', () => {
             },
           })
         )
-        expect(result.executedRules).not.toHaveLength(0)
+        expect(result.executedRules).toHaveLength(1)
       })
       test('Rule should run if transaction state is not CREATED', async () => {
         const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
@@ -794,7 +805,7 @@ describe('Verify Transaction: V8 engine', () => {
             },
           })
         )
-        expect(result.executedRules).toHaveLength(0)
+        expect(result.executedRules).toHaveLength(1)
       })
     })
   })

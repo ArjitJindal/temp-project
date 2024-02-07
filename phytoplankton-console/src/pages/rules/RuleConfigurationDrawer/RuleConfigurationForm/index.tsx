@@ -327,9 +327,6 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
         rule?.defaultAction ?? RULE_PARAMETERS_STEP_INITIAL_VALUES.ruleAction;
       ruleParametersStep.ruleParameters =
         rule?.defaultParameters ?? RULE_PARAMETERS_STEP_INITIAL_VALUES.ruleParameters;
-      ruleParametersStep.ruleLogic = rule?.defaultLogic;
-      ruleParametersStep.ruleLogicAggregationVariables =
-        rule?.defaultLogicAggregationVariables ?? [];
     }
     return {
       basicDetailsStep: {
@@ -360,7 +357,5 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
     rule?.defaultParameters,
     rule?.defaultRiskLevelActions,
     rule?.defaultAction,
-    rule?.defaultLogic,
-    rule?.defaultLogicAggregationVariables,
   ]);
 }

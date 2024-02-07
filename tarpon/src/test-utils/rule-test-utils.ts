@@ -1,6 +1,7 @@
 import { last, omit, uniq } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
 import { createConsumerUser, getTestUser } from './user-test-utils'
+import { withFeatureHook } from './feature-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -16,7 +17,10 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Business } from '@/@types/openapi-public/Business'
 import { RuleHitMeta } from '@/@types/openapi-public/RuleHitMeta'
-import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
+import {
+  getRuleByImplementation,
+  getRuleByRuleId,
+} from '@/services/rules-engine/transaction-rules/library'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
@@ -27,6 +31,9 @@ import {
   TransactionRuleBase,
 } from '@/services/rules-engine/transaction-rules'
 import { TransactionAggregationRule } from '@/services/rules-engine/transaction-rules/aggregation-rule'
+import { hasFeature } from '@/core/utils/context'
+import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
+import { getMigratedV8Config } from '@/services/rules-engine/v8-migrations'
 
 const DEFAULT_DESCRIPTION = 'test rule description.'
 
@@ -70,6 +77,7 @@ export async function createRule(
       ruleId: createdRule.id as string,
       id: ruleInstance?.ruleInstanceId,
       logic: createdRule.defaultLogic,
+      filtersLogic: createdRule.defaultFiltersLogic,
       logicAggregationVariables: createdRule.defaultLogicAggregationVariables,
       parameters: createdRule.defaultParameters,
       riskLevelParameters: createdRule.defaultRiskLevelParameters,
@@ -240,6 +248,34 @@ export function setUpRulesHooks(
   beforeAll(async () => {
     for (const rule of rules) {
       const libraryRule = rule.id ? getRuleByRuleId(rule.id) : undefined
+      let alertCreationDirection: AlertCreationDirection = 'AUTO'
+      const v8Rule: Partial<Rule> = {}
+      if (hasFeature('RULES_ENGINE_V8') && (rule as Rule).defaultParameters) {
+        const libraryRuleV8 =
+          libraryRule ??
+          getRuleByImplementation((rule as Rule).ruleImplementationName!)
+        if (!libraryRuleV8?.defaultLogic) {
+          throw new Error(`Rule ${rule.id} is not V8 compatible!`)
+        }
+        const r = rule as Rule
+        const filters = {
+          ...r.defaultFilters,
+          ...(rule as RuleInstance).filters,
+        }
+        const {
+          logic,
+          filtersLogic,
+          logicAggregationVariables,
+          alertCreationDirection: alertDirection,
+        } = getMigratedV8Config(libraryRuleV8.id, r.defaultParameters, filters)!
+
+        v8Rule.defaultFiltersLogic = filtersLogic
+        v8Rule.defaultLogic = logic
+        v8Rule.defaultLogicAggregationVariables = logicAggregationVariables
+        if (alertDirection) {
+          alertCreationDirection = alertDirection
+        }
+      }
       cleanups.push(
         await createRule(
           tenantId,
@@ -252,8 +288,14 @@ export function setUpRulesHooks(
             ruleImplementationName: 'tests/test-success-rule',
             ...libraryRule,
             ...rule,
+            ...v8Rule,
           },
-          omit(rule, 'id')
+          {
+            ...(omit(rule, 'id') as RuleInstance),
+            alertConfig: {
+              alertCreationDirection,
+            },
+          }
         )
       )
     }
@@ -317,6 +359,10 @@ export function testRuleDescriptionFormatting(
   expectedDescriptions: (string | null)[]
 ) {
   test(`Description formatting (${testName})`, async () => {
+    if (hasFeature('RULES_ENGINE_V8')) {
+      // V8 rules don't have description template (yet)
+      return
+    }
     const initialRule = await getRule(tenantId, SETUP_TEST_RULE_ID)
     await updateRule(tenantId, SETUP_TEST_RULE_ID, rulePatch)
 
@@ -359,11 +405,17 @@ export interface UserRuleTestCase {
 
 // For making sure a rule works the same w/ or w/o RULES_ENGINE_RULE_BASED_AGGREGATION feature flag
 export function ruleVariantsTest(
-  ruleAggregationImplemented: boolean,
+  config: { aggregation: boolean; v8?: boolean },
   jestCallback: () => void
 ) {
-  if (ruleAggregationImplemented) {
+  if (config.aggregation) {
     describe('database:dynamodb; rule-aggregation:on', () => {
+      jestCallback()
+    })
+  }
+  if (config.v8) {
+    describe('database:dynamodb; V8', () => {
+      withFeatureHook(['RULES_ENGINE_V8'])
       jestCallback()
     })
   }

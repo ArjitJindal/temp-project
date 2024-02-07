@@ -159,6 +159,10 @@ export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserStatusRuleFilterParameter &
   UserTagsRuleFilterParameter
 
+export type LegacyFilters = TransactionFilters &
+  TransactionHistoricalFilters &
+  UserFilters
+
 export type TransactionFilterKeys = keyof TransactionFilters
 export type TransactionHistoricalFilterKeys = keyof TransactionHistoricalFilters
 export type UserFilterKeys = keyof UserFilters

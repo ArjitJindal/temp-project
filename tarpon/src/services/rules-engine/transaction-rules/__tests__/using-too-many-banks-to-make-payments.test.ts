@@ -85,7 +85,7 @@ function getTestDifferentBankTransactions(
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('Description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
 

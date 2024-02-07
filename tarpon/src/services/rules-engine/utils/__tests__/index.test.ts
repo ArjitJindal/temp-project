@@ -45,6 +45,16 @@ describe('Description formatting helpers', () => {
 })
 
 describe('subtractTime', () => {
+  it('should return the correct afterTimestamp for units = 0', () => {
+    const result = dayjs(
+      subtractTime(dayjs('2021-03-05'), {
+        units: 0,
+        granularity: 'day',
+      })
+    )
+    expect(result.valueOf()).toBe(dayjs('2021-03-05').valueOf())
+  })
+
   it('should return the correct afterTimestamp for units = 1', () => {
     const result = dayjs(
       subtractTime(dayjs('2021-03-05'), {

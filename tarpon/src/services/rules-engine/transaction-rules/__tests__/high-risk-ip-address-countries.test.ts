@@ -14,7 +14,7 @@ import dayjs from '@/utils/dayjs'
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(false, () => {
+ruleVariantsTest({ aggregation: false }, () => {
   const TENANT_ID = getTestTenantId()
 
   setUpRulesHooks(TENANT_ID, [

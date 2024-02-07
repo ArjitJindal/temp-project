@@ -12,6 +12,7 @@ import { SanctionsBusinessUserRuleParameters } from '../user-rules/sanctions-bus
 import { SanctionsBankUserRuleParameters } from '../user-rules/sanctions-bank-name'
 import { SanctionsConsumerUserRuleParameters } from '../user-rules/sanctions-consumer-user'
 import { UserAddressChangeRuleParameters } from '../user-rules/user-address-change'
+import { getMigratedV8Config } from '../v8-migrations'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -642,20 +643,6 @@ const _RULES_LIBRARY: Array<
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsDif }} more transaction(s) above the limit of {{ parameters.transactionsLimit }} in {{ format-time-window parameters.timeWindow }}",
       defaultParameters,
-      defaultLogic: { and: [{ '>': [{ var: 'agg:R-30' }, 100] }] },
-      defaultLogicAggregationVariables: [
-        {
-          key: 'agg:R-30',
-          type: 'USER_TRANSACTIONS',
-          direction: 'SENDING_RECEIVING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 1, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
-          },
-        },
-      ],
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-velocity',
       labels: [],
@@ -1876,12 +1863,20 @@ const _RULES_LIBRARY: Array<
 
 export const RULES_LIBRARY: Array<Rule> = _RULES_LIBRARY.map((getRule) => {
   const rule = getRule()
+  const v8Config = getMigratedV8Config(
+    rule.id,
+    rule.defaultParameters,
+    rule.defaultFilters
+  )
   return {
     ...rule,
     parametersSchema:
       rule.type === 'TRANSACTION'
         ? TRANSACTION_RULES[rule.ruleImplementationName]?.getSchema()
         : USER_RULES[rule.ruleImplementationName]?.getSchema(),
+    defaultLogic: v8Config?.logic,
+    defaultLogicAggregationVariables: v8Config?.logicAggregationVariables,
+    defaultFiltersLogic: v8Config?.filtersLogic,
   }
 })
 
@@ -1893,4 +1888,12 @@ export const RULES_LOOKUP: Map<string, Rule> = new Map(
 
 export function getRuleByRuleId(ruleId: string): Rule {
   return RULES_LOOKUP.get(ruleId) as Rule
+}
+
+export function getRuleByImplementation(
+  ruleImplementationName: string
+): Rule | null {
+  return RULES_LIBRARY.find(
+    (r) => r.ruleImplementationName === ruleImplementationName
+  ) as Rule
 }

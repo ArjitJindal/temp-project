@@ -60,8 +60,14 @@ export const VariableForm: React.FC<VariableFormProps> = ({
   const aggregateFieldOptions = useMemo(
     () =>
       entityVariables
-        .filter((v) => v.entity === 'TRANSACTION')
-        .map((v) => ({ value: v.key, label: v.uiDefinition.label })),
+        // NOTE: As 'Transaction direction' already determines whether to use origin/destination variables,
+        // we only keep origin variabes here and hide 'origin' from the label
+        .filter((v) => v.entity === 'TRANSACTION' && !v.key.startsWith('TRANSACTION:destination'))
+        .map((v) => ({
+          value: v.key,
+          // NOTE: Remove redundant namespace prefix as we only show transaction variables
+          label: v.uiDefinition.label.replace(/^Transaction\s*\/\s*/, '').replace(/^origin/, ''),
+        })),
     [entityVariables],
   );
   const aggregateFunctionOptions: Array<{

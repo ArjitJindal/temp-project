@@ -37,7 +37,8 @@ export function subtractTime(timestamp: Dayjs, timeWindow: TimeWindow): number {
 
   if (
     !timeWindow.rollingBasis &&
-    ['day', 'week', 'month', 'year'].includes(timeWindow.granularity)
+    ['day', 'week', 'month', 'year'].includes(timeWindow.granularity) &&
+    timeWindow.units > 0
   ) {
     afterTimestamp = timestamp
       .startOf(granularity)

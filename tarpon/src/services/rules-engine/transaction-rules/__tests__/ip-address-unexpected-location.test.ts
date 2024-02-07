@@ -15,7 +15,7 @@ import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(false, () => {
+ruleVariantsTest({ aggregation: false }, () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {

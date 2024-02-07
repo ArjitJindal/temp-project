@@ -48,7 +48,7 @@ function getDefaultParams(): TransactionsAverageAmountExceededParameters {
   }
 }
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('Description formatting', () => {
     describe('R-122 description formatting', () => {
       const TEST_TENANT_ID = getTestTenantId()

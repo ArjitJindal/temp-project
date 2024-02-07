@@ -44,7 +44,7 @@ const DEFAULT_RULE_PARAMETERS: TransactionsVelocityRuleParameters = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
 

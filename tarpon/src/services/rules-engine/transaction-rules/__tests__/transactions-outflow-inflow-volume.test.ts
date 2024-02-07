@@ -35,7 +35,7 @@ const DEFAULT_RULE_PARAMETERS: TransactionsOutflowInflowVolumeRuleParameters = {
   outflowTransactionTypes: ['WITHDRAWAL'],
 }
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('Core logic', () => {
     describe('R-41 description formatting - gte', () => {
       const TEST_TENANT_ID = getTestTenantId()

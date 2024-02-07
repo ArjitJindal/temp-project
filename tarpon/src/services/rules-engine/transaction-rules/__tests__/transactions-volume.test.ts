@@ -50,7 +50,7 @@ const TEST_TRANSACTION_METHOD_IBAN_3 = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('Core logic', () => {
     const TEST_HIT_TRANSACTIONS = [
       getTestTransaction({

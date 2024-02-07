@@ -95,7 +95,7 @@ jest.mock('@/services/iban.com', () => {
   }
 })
 
-ruleVariantsTest(false, () => {
+ruleVariantsTest({ aggregation: false }, () => {
   describe.each<TransactionRuleTestCase>([
     {
       name: 'IBAN Bank Resolution Tests',

@@ -14,7 +14,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(false, () => {
+ruleVariantsTest({ aggregation: false }, () => {
   describe('R-5 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [

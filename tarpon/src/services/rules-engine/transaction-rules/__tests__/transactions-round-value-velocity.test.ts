@@ -54,7 +54,7 @@ const TEST_PAYMENT_DETAILS_3: IBANDetails = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(false, () => {
+ruleVariantsTest({ aggregation: false }, () => {
   describe('R-130 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [

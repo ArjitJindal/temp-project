@@ -77,6 +77,14 @@ export default function AlertCreationDetailsStep(_props: Props) {
                 allowClear={false}
                 options={[
                   { value: 'AUTO', label: 'Auto (based on the rule logic)' },
+                  {
+                    value: 'AUTO_ORIGIN',
+                    label: 'Auto (based on the rule logic, but only create for origin user)',
+                  },
+                  {
+                    value: 'AUTO_DESTINATION',
+                    label: 'Auto (based on the rule logic, but only create for destination user)',
+                  },
                   { value: 'ORIGIN', label: 'Origin user' },
                   { value: 'DESTINATION', label: 'Destination user' },
                   { value: 'ALL', label: 'Both origin user and destination user' },

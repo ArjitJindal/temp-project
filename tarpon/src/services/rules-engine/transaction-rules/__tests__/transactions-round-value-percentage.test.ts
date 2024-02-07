@@ -33,7 +33,7 @@ const DEFAULT_RULE_PARAMETERS: TransactionsRoundValuePercentageRuleParameters =
   }
 
 dynamoDbSetupHook()
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('R-124 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [

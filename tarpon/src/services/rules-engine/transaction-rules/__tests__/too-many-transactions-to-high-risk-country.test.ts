@@ -27,7 +27,7 @@ const DEFAULT_RULE_PARAMETERS: TooManyTransactionsToHighRiskCountryRuleParameter
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('R-77 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [

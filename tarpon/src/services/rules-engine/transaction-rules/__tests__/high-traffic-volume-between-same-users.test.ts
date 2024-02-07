@@ -43,7 +43,7 @@ const DEFAULT_RULE_PARAMETERS: HighTrafficVolumeBetweenSameUsersParameters = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('R-126 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
 

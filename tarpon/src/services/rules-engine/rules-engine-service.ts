@@ -517,30 +517,9 @@ export class RulesEngineService {
       transactionRiskDetails,
     ])
 
-    const ruleInstancesFiltered: RuleInstance[] = []
-    for (const ruleInstance of ruleInstances) {
-      let shouldRuleRun = true
-      if (ruleInstance.filtersLogic) {
-        const runResult = await this.ruleLogicEvaluator.evaluate(
-          ruleInstance.filtersLogic,
-          [],
-          { baseCurrency: ruleInstance.baseCurrency },
-          {
-            transaction,
-            senderUser,
-            receiverUser,
-          }
-        )
-        shouldRuleRun = runResult.hit
-      }
-      if (shouldRuleRun) {
-        ruleInstancesFiltered.push(ruleInstance)
-      }
-    }
-
     const rulesById = keyBy(
       await this.ruleRepository.getRulesByIds(
-        ruleInstancesFiltered
+        ruleInstances
           .map((ruleInstance) => ruleInstance.ruleId)
           .filter(Boolean) as string[]
       ),
@@ -553,7 +532,7 @@ export class RulesEngineService {
 
     const verifyTransactionResults = compact(
       await Promise.all(
-        ruleInstancesFiltered.map(async (ruleInstance) =>
+        ruleInstances.map(async (ruleInstance) =>
           this.verifyTransactionRule({
             rule: ruleInstance.ruleId
               ? rulesById[ruleInstance.ruleId]
@@ -586,7 +565,7 @@ export class RulesEngineService {
       .map((ruleResults) => ruleResults.ruleInstanceId)
 
     await this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
-      ruleInstancesFiltered.map((ruleInstance) => ruleInstance.id as string),
+      ruleInstances.map((ruleInstance) => ruleInstance.id as string),
       hitRuleInstanceIds
     )
 
@@ -598,6 +577,7 @@ export class RulesEngineService {
 
     updateStatsSegment?.close()
     const riskDetails = await transactionRiskDetails
+    this.updatedAggregationVariables.clear()
     return {
       ...executedAndHitRulesResult,
       transactionAggregationTasks,
@@ -666,26 +646,43 @@ export class RulesEngineService {
     let ruleResult: RuleHitResult | undefined
     if (hasFeature('RULES_ENGINE_V8') && logic) {
       if (transactionWithValidUserId) {
-        const { hit, varData, hitDirections } =
-          await this.ruleLogicEvaluator.evaluate(
-            logic,
-            ruleInstance.logicAggregationVariables ?? [],
+        let shouldRuleRun = true
+        if (!isEmpty(ruleInstance.filtersLogic)) {
+          const runResult = await this.ruleLogicEvaluator.evaluate(
+            ruleInstance.filtersLogic,
+            [],
             { baseCurrency: ruleInstance.baseCurrency },
             {
-              transaction: transactionWithValidUserId,
+              transaction,
               senderUser,
               receiverUser,
             }
           )
-        const finalHitDirections = this.getFinalHitDirections(
-          hitDirections,
-          ruleInstance.alertConfig?.alertCreationDirection ?? 'AUTO'
-        )
-        if (hit) {
-          ruleResult = finalHitDirections.map((direction) => ({
-            direction,
-            vars: varData,
-          }))
+          shouldRuleRun = runResult.hit
+        }
+
+        if (shouldRuleRun) {
+          const { hit, varData, hitDirections } =
+            await this.ruleLogicEvaluator.evaluate(
+              logic,
+              ruleInstance.logicAggregationVariables ?? [],
+              { baseCurrency: ruleInstance.baseCurrency },
+              {
+                transaction: transactionWithValidUserId,
+                senderUser,
+                receiverUser,
+              }
+            )
+          const finalHitDirections = this.getFinalHitDirections(
+            hitDirections,
+            ruleInstance.alertConfig?.alertCreationDirection ?? 'AUTO'
+          )
+          if (hit) {
+            ruleResult = finalHitDirections.map((direction) => ({
+              direction,
+              vars: varData,
+            }))
+          }
         }
       }
     } else {
@@ -1333,6 +1330,10 @@ export class RulesEngineService {
     switch (alertCreationDirection) {
       case 'AUTO':
         return hitDirections
+      case 'AUTO_ORIGIN':
+        return hitDirections.includes('ORIGIN') ? ['ORIGIN'] : []
+      case 'AUTO_DESTINATION':
+        return hitDirections.includes('DESTINATION') ? ['DESTINATION'] : []
       case 'ORIGIN':
         return ['ORIGIN']
       case 'DESTINATION':

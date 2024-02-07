@@ -5652,6 +5652,8 @@ components:
           type: array
           items:
             type: string
+        defaultFiltersLogic:
+          type: object
         defaultLogic:
           type: object
         defaultRiskLevelLogic:
@@ -5922,6 +5924,8 @@ components:
         - DESTINATION
         - ALL
         - AUTO
+        - AUTO_ORIGIN
+        - AUTO_DESTINATION
     RuleAction:
       type: string
       title: RuleAction

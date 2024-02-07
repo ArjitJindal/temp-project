@@ -4,6 +4,7 @@ import { formatCountry } from '@/utils/countries'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { logger } from '@/core/logger'
 import { getErrorMessage } from '@/utils/lang'
+import { hasFeature } from '@/core/utils/context'
 
 Handlebars.registerHelper('possessive', function (value) {
   if (value == null || typeof value !== 'string' || value === '') {
@@ -91,7 +92,7 @@ export async function generateRuleDescription(
   parameters: Vars,
   ruleResultVars?: Vars
 ): Promise<string> {
-  if (ruleInfo.descriptionTemplate) {
+  if (ruleInfo.descriptionTemplate && !hasFeature('RULES_ENGINE_V8')) {
     try {
       const ruleDescriptionTemplate = compileTemplate(
         ruleInfo.descriptionTemplate

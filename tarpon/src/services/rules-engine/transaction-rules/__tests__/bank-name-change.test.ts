@@ -43,7 +43,7 @@ function getBankDetails(bankName: string): GenericBankAccountDetails {
   }
 }
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('R-155: paymentDetailsChangeReducer', () => {
     test('', () => {
       const txns = [

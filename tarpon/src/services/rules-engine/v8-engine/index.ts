@@ -26,7 +26,10 @@ import {
   groupTransactionsByGranularity,
 } from '../utils/transaction-rule-utils'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
-import { TransactionRuleVariableContext } from '../v8-variables/types'
+import {
+  RuleVariableBase,
+  TransactionRuleVariableContext,
+} from '../v8-variables/types'
 import {
   AggregationData,
   AggregationRepository,
@@ -50,6 +53,9 @@ type RuleData = {
   transaction: Transaction
   senderUser?: User | Business
   receiverUser?: User | Business
+}
+type TransactionWithDirection = Transaction & {
+  __direction: 'sending' | 'receiving'
 }
 
 const getJsonLogicEngine = memoizeOne(
@@ -333,6 +339,7 @@ export class RuleJsonLogicEvaluator {
     userKeyId: string
   ) {
     logger.info('Rebuilding aggregation...')
+    const { aggregationFieldKey } = aggregationVariable
     const aggFunc = getRuleVariableAggregator(
       aggregationVariable.aggregationFunc
     )
@@ -379,32 +386,60 @@ export class RuleJsonLogicEvaluator {
       [time: string]: AggregationData
     } = {}
     for await (const data of generator) {
-      const transactions = data.sendingTransactions.concat(
-        data.receivingTransactions
-      )
+      const sendingTransactions = data.sendingTransactions.map((t) => ({
+        ...t,
+        __direction: 'sending',
+      }))
+      const receivingTransactions = data.receivingTransactions.map((t) => ({
+        ...t,
+        __direction: 'receiving',
+      }))
+      const transactions = sendingTransactions.concat(receivingTransactions)
 
       // Filter transactions by filtersLogic
-      const targetTransactions: Transaction[] = []
+      const targetTransactions: TransactionWithDirection[] = []
       for (const transaction of transactions) {
         const isTransactionFiltered =
           await this.isDataIncludedInAggregationVariable(aggregationVariable, {
             transaction: transaction as Transaction,
           })
         if (isTransactionFiltered) {
-          targetTransactions.push(transaction as Transaction)
+          targetTransactions.push(transaction as TransactionWithDirection)
         }
       }
 
       // Update aggregation result
+      const txEntityVariable = getRuleVariableByKey(
+        aggregationVariable.aggregationFieldKey
+      )!
+      let originTtxEntityVariable: RuleVariableBase
+      let destinationTtxEntityVariable: RuleVariableBase
+      if (aggregationFieldKey.startsWith('TRANSACTION:origin')) {
+        originTtxEntityVariable = txEntityVariable
+        destinationTtxEntityVariable = getRuleVariableByKey(
+          aggregationFieldKey.replace(':origin', ':destination')
+        )!
+      }
+      if (aggregationFieldKey.startsWith('TRANSACTION:destination')) {
+        destinationTtxEntityVariable = txEntityVariable
+        originTtxEntityVariable = getRuleVariableByKey(
+          aggregationFieldKey.replace(':destination', ':origin')
+        )!
+      }
       const partialTimeAggregatedResult = await groupTransactionsByGranularity(
         targetTransactions,
         async (groupTransactions) => {
-          const txEntityVariable = getRuleVariableByKey(
-            aggregationVariable.aggregationFieldKey
-          )!
           const aggregateValues = await Promise.all(
             groupTransactions.map((transaction) => {
-              return txEntityVariable.load(
+              const tx = transaction as TransactionWithDirection
+              let entityVariable: RuleVariableBase = txEntityVariable
+              if (originTtxEntityVariable) {
+                entityVariable =
+                  tx.__direction === 'sending'
+                    ? originTtxEntityVariable
+                    : destinationTtxEntityVariable
+              }
+              return entityVariable.load(
                 transaction,
                 aggregationVariable.baseCurrency,
                 this.dynamoDb

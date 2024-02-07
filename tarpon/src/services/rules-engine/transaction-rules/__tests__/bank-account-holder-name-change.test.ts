@@ -26,7 +26,7 @@ const DEFAULT_RULE_PARAMETERS: PaymentDetailChangeRuleParameters = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('R-45: description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [

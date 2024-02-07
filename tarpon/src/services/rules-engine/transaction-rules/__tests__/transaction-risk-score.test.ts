@@ -13,7 +13,7 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 dynamoDbSetupHook()
 withFeatureHook(['RISK_SCORING', 'SYNC_TRS_CALCULATION', 'RISK_LEVELS'])
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('Core logic', () => {
     describe.each<TransactionRuleTestCase<TransactionRiskScoreRuleParameters>>([
       {

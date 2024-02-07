@@ -39,7 +39,7 @@ const CARD_DETAILS_2: CardDetails = {
   '3dsDone': true,
 }
 
-ruleVariantsTest(true, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('R-119 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
 
