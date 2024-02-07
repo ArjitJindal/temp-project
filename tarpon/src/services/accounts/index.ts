@@ -63,7 +63,6 @@ type Auth0TenantMetadata = {
   auth0Domain: string
   region: FlagrightRegion
   isProductionAccessDisabled: string
-  tenantCreatedAt: number
 }
 @traceable
 export class AccountsService {
@@ -727,7 +726,6 @@ export class AccountsService {
       auth0Domain: tenantData.auth0Domain,
       region: process.env.REGION as FlagrightRegion,
       isProductionAccessDisabled: 'false',
-      tenantCreatedAt: Date.now(),
     }
     const organization = await auth0AsyncWrapper(() =>
       organizationManager.create({
