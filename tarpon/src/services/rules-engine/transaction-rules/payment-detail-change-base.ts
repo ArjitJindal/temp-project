@@ -137,6 +137,7 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
         }
         return acc + usages
       }, 0)
+
       if (oldPaymentUsages >= this.parameters.oldNamesThreshold) {
         return {
           direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
@@ -165,7 +166,7 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
         (result, currentData: AggregationData) => {
           result[previousPaymentDetail] = currentData[previousPaymentDetail]
           for (const [paymentDetail, usages] of Object.entries(
-            currentData[paymentUsage]
+            currentData[paymentUsage] ?? {}
           )) {
             const existingPaymentUsage = result[paymentUsage][paymentDetail]
             if (existingPaymentUsage) {
