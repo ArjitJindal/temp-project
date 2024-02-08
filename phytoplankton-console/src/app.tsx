@@ -13,7 +13,7 @@ import { isRedirect, isTree, RouteItem } from '@/services/routing/types';
 import './global.less';
 import { getBranding } from '@/utils/branding';
 
-interface Error {
+interface HttpError {
   code?: number;
   body?: string;
   headers?:
@@ -35,8 +35,8 @@ Sentry.init({
   environment: process.env.ENV_NAME,
   enabled: !['local', 'dev:user'].includes(process.env.ENV_NAME!),
   beforeSend(event, hint) {
-    const error = hint?.originalException as Error;
-    if (error && error.code && error.code >= 400 && error.code < 500) {
+    const error = hint?.originalException as HttpError | Error;
+    if (error && 'code' in error && error.code && error.code >= 400 && error.code < 500) {
       return null;
     }
     if (error instanceof FetchCallError) {
@@ -48,6 +48,12 @@ Sentry.init({
       event.extra = {
         ...error.request,
       };
+    }
+    // Some requests are not made using generated API, so they are not wrapped in FetchCallError.
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      if (event.tags?.['tenantId'] === 'cypress-tenant') {
+        return null;
+      }
     }
     return event;
   },
