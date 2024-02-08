@@ -583,7 +583,7 @@ describe('Verify Transaction: V8 engine', () => {
         defaultLogicAggregationVariables: [
           {
             key: 'agg:123',
-            type: 'PAYMENT_DETAILS_TRSANCTIONS',
+            type: 'PAYMENT_DETAILS_TRANSACTIONS',
             direction: 'SENDING',
             aggregationFieldKey: 'TRANSACTION:transactionId',
             aggregationFunc: 'COUNT',
@@ -822,7 +822,7 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
   const TEST_TENANT_ID = getTestTenantId()
   const aggregationVariables: RuleAggregationVariable = {
     key: 'agg:123',
-    type: 'PAYMENT_DETAILS_TRSANCTIONS',
+    type: 'PAYMENT_DETAILS_TRANSACTIONS',
     direction: 'SENDING',
     aggregationFieldKey: 'TRANSACTION:transactionId',
     aggregationFunc: 'COUNT',
@@ -876,7 +876,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
       defaultLogicAggregationVariables: [
         {
           key: 'agg:123',
-          type: 'PAYMENT_DETAILS_TRSANCTIONS',
+          type: 'PAYMENT_DETAILS_TRANSACTIONS',
           direction: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
@@ -973,7 +973,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
       defaultLogicAggregationVariables: [
         {
           key: 'agg:123',
-          type: 'PAYMENT_DETAILS_TRSANCTIONS',
+          type: 'PAYMENT_DETAILS_TRANSACTIONS',
           direction: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',

@@ -5528,7 +5528,7 @@ components:
       type: string
       enum:
         - USER_TRANSACTIONS
-        - PAYMENT_DETAILS_TRSANCTIONS
+        - PAYMENT_DETAILS_TRANSACTIONS
     RuleAggregationTransactionDirection:
       title: RuleAggregationTransactionDirection
       type: string

@@ -41,7 +41,7 @@ interface VariableFormProps {
 }
 const TYPE_OPTIONS: Array<{ value: RuleAggregationType; label: string }> = [
   { value: 'USER_TRANSACTIONS', label: 'User transactions' },
-  { value: 'PAYMENT_DETAILS_TRSANCTIONS', label: 'Payment details transactions' },
+  { value: 'PAYMENT_DETAILS_TRANSACTIONS', label: 'Payment details transactions' },
 ];
 const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; label: string }> = [
   { value: 'SENDING', label: 'Sending' },

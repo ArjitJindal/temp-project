@@ -39,7 +39,7 @@ export function migrateCheckDirectionParameters(
     logicAggregationVariables.push({
       key: 'agg:sending',
       type: parameters.originMatchPaymentMethodDetails
-        ? 'PAYMENT_DETAILS_TRSANCTIONS'
+        ? 'PAYMENT_DETAILS_TRANSACTIONS'
         : 'USER_TRANSACTIONS',
       direction: 'SENDING',
       aggregationFieldKey,
@@ -58,7 +58,7 @@ export function migrateCheckDirectionParameters(
     logicAggregationVariables.push({
       key: 'agg:receiving',
       type: parameters.destinationMatchPaymentMethodDetails
-        ? 'PAYMENT_DETAILS_TRSANCTIONS'
+        ? 'PAYMENT_DETAILS_TRANSACTIONS'
         : 'USER_TRANSACTIONS',
       direction: 'RECEIVING',
       aggregationFieldKey: 'TRANSACTION:transactionId',
@@ -83,7 +83,7 @@ export function migrateCheckDirectionParameters(
       type:
         parameters.originMatchPaymentMethodDetails ||
         parameters.destinationMatchPaymentMethodDetails
-          ? 'PAYMENT_DETAILS_TRSANCTIONS'
+          ? 'PAYMENT_DETAILS_TRANSACTIONS'
           : 'USER_TRANSACTIONS',
       direction: 'SENDING_RECEIVING',
       aggregationFieldKey,

@@ -287,11 +287,11 @@ export class RuleJsonLogicEvaluator {
     return direction === 'origin'
       ? getSenderKeyId(this.tenantId, transaction, {
           disableDirection: true,
-          matchPaymentDetails: type === 'PAYMENT_DETAILS_TRSANCTIONS',
+          matchPaymentDetails: type === 'PAYMENT_DETAILS_TRANSACTIONS',
         })
       : getReceiverKeyId(this.tenantId, transaction, {
           disableDirection: true,
-          matchPaymentDetails: type === 'PAYMENT_DETAILS_TRSANCTIONS',
+          matchPaymentDetails: type === 'PAYMENT_DETAILS_TRANSACTIONS',
         })
   }
 
@@ -374,7 +374,7 @@ export class RuleJsonLogicEvaluator {
             ? 'receiving'
             : 'all',
         matchPaymentMethodDetails:
-          aggregationVariable.type === 'PAYMENT_DETAILS_TRSANCTIONS',
+          aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS',
         filters: {},
       },
       // TODO (V8): Optimize to only fetch the required attributes
