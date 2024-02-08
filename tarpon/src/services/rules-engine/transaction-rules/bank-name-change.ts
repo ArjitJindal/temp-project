@@ -8,4 +8,7 @@ export default class BankNameChangeRule extends PaymentDetailChangeRuleBase {
   getPaymentDetail(paymentDetails?: PaymentDetails): string | undefined {
     return getBankname(paymentDetails)
   }
+  protected override getRuleAggregationVersion(): number {
+    return 3
+  }
 }
