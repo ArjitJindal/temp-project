@@ -1,6 +1,6 @@
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import { AssignmentButton } from './components/AssignmentButton';
-import GavelIcon from './gavel.react.svg';
+import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
 import { Adapter } from '@/utils/routing';

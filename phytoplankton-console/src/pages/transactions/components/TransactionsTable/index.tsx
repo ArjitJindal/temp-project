@@ -3,6 +3,7 @@ import { Tag } from 'antd';
 import DetailsViewButton from '../DetailsViewButton';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
+import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import {
   Alert,
   ExecutedRulesResult,
@@ -56,6 +57,7 @@ import { useHasPermissions } from '@/utils/user-utils';
 import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
 import { PaymentDetails } from '@/utils/api/payment-details';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
+import { useRuleOptions } from '@/utils/rules';
 
 const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<PaymentDetails> => ({
   stringify: (value) => {
@@ -87,6 +89,7 @@ export interface TransactionsTableParams extends CommonParams {
   originPaymentMethodId?: string;
   destinationPaymentMethodId?: string;
   transactionStatusFilter?: RuleAction[];
+  ruleInstancesHitFilter?: string[];
 }
 
 export const transactionParamsToRequest = (
@@ -106,6 +109,7 @@ export const transactionParamsToRequest = (
     originMethodFilter,
     destinationMethodFilter,
     transactionStatusFilter,
+    ruleInstancesHitFilter,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
   return {
@@ -125,6 +129,7 @@ export const transactionParamsToRequest = (
     filterDestinationPaymentMethods: destinationMethodFilter
       ? [destinationMethodFilter]
       : undefined,
+    filterRuleInstancesHit: ruleInstancesHitFilter?.join(','),
     filterTagKey: tagKey,
     filterTagValue: tagValue,
     filterUserId: params.userFilterMode === 'ALL' ? params.userId : undefined,
@@ -199,10 +204,10 @@ export default function TransactionsTable(props: Props) {
     isExpandable = false,
     canSelectRow,
   } = props;
+  const ruleOptions = useRuleOptions();
 
   const columns: TableColumn<InternalTransaction>[] = useMemo(() => {
     const helper = new ColumnHelper<InternalTransaction>();
-
     return helper.list([
       helper.simple<'transactionId'>({
         title: 'Transaction ID',
@@ -425,6 +430,18 @@ export default function TransactionsTable(props: Props) {
       title: 'Destination method',
       key: 'destinationMethodFilter',
       renderer: PAYMENT_METHOD.autoFilterDataType,
+    },
+    {
+      title: 'Rules',
+      key: 'ruleInstancesHitFilter',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'select',
+        options: ruleOptions,
+      },
+      icon: <GavelIcon />,
+      showFilterByDefault: true,
     },
   ];
 
