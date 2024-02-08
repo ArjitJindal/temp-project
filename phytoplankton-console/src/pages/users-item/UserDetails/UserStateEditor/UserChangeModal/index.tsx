@@ -79,12 +79,12 @@ export default function UserChangeModal(props: Props) {
     async (values: FormValues) => {
       const { files, comment, otherReason, reason, userStatus } = values;
       messageLoading = message.loading('Changing User Status...');
-      if (userStatus === '') {
+      if (userStatus === '' || userStatus == null) {
         throw new Error('User Status Empty');
       }
       const newStateDetails: UserStateDetailsInternal = {
         userId: user.userId,
-        state: userStatus!,
+        state: userStatus,
         reason: reason === 'Other' && otherReason ? otherReason : reason,
       };
 
@@ -115,7 +115,7 @@ export default function UserChangeModal(props: Props) {
       onSuccess: async (data) => {
         message.success(`User status updated`);
         ref.current?.setValues(DEFAULT_INITIAL_VALUES);
-        onOkay(data.userStatus!, data.updatedComment);
+        onOkay(data.userStatus, data.updatedComment);
         onClose();
         messageLoading?.();
         await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));

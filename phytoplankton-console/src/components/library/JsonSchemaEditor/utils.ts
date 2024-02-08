@@ -163,7 +163,7 @@ export function getScopeSelectorItems(schema?: ExtendedSchema): Item<string>[] |
     return uniq(
       compact(
         properties.map((property) => {
-          const uiSchema = schema?.properties![property]?.['ui:schema'] ?? {};
+          const uiSchema = schema?.properties?.[property]?.['ui:schema'] ?? {};
           const scope = uiSchema['ui:scope'];
           return scope;
         }),

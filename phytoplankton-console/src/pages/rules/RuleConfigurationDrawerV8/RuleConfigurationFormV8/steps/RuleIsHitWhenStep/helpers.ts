@@ -51,8 +51,8 @@ export function useLogicBuilderConfig(
           }
           return definition;
         });
-        const filteredEntityVariables = entityVariables.filter((v) =>
-          entityVariableTypes.includes(v.entity!),
+        const filteredEntityVariables = entityVariables.filter(
+          (v) => v.entity != null && entityVariableTypes.includes(v.entity),
         );
         const variables = filteredEntityVariables.concat(aggregationVariablesGrouped);
         const types = InitialConfig.types;

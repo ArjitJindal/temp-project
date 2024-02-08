@@ -32,7 +32,7 @@ export const AlertInvestigationChecklist = <
           .filter((checklist) => checklist.status === 'ACTIVE')
           .map((checklist) => ({
             label: checklist.name,
-            value: checklist.id!,
+            value: checklist.id,
           }))
       : [];
   }, [queryResult.data]);

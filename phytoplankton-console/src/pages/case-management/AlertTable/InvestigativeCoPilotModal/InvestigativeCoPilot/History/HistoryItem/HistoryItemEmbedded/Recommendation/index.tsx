@@ -8,6 +8,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { ALERT_ITEM } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { notEmpty } from '@/utils/array';
 
 export const Recommendation = ({ alertId }: { alertId: string }) => {
   const api = useApi();
@@ -36,11 +37,11 @@ export const Recommendation = ({ alertId }: { alertId: string }) => {
           <div className={s.recommandationActionButtons}>
             {!statusInReview(alert.alertStatus) ? (
               <AlertsStatusChangeButton
-                ids={[alert.alertId!]}
+                ids={[alert.alertId].filter(notEmpty)}
                 onSaved={() => {}}
                 transactionIds={{}}
-                caseId={alert.caseId!}
-                status={alert.alertStatus!}
+                caseId={alert.caseId}
+                status={alert.alertStatus}
                 statusTransitions={{
                   OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                   OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
@@ -50,22 +51,22 @@ export const Recommendation = ({ alertId }: { alertId: string }) => {
               />
             ) : (
               <ApproveSendBackButton
-                ids={[alert.alertId!]}
+                ids={[alert.alertId].filter(notEmpty)}
                 onReload={() => {}}
                 previousStatus={findLastStatusForInReview(alert.statusChanges ?? [])}
-                status={alert.alertStatus!}
+                status={alert.alertStatus}
                 type="ALERT"
                 key={alert.alertId}
-                selectedCaseId={alert.caseId!}
+                selectedCaseId={alert.caseId}
               />
             )}
             {isEscalationEnabled && !statusInReview(alert.alertStatus) && (
               <AlertsStatusChangeButton
-                ids={[alert.alertId!]}
+                ids={[alert.alertId].filter(notEmpty)}
                 transactionIds={{}}
                 onSaved={() => {}}
-                status={alert.alertStatus!}
-                caseId={alert.caseId!}
+                status={alert.alertStatus}
+                caseId={alert.caseId}
                 statusTransitions={{
                   OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
@@ -78,11 +79,13 @@ export const Recommendation = ({ alertId }: { alertId: string }) => {
                 }}
               />
             )}
-            <SarButton
-              alertIds={[alert.alertId!]}
-              caseId={alert.caseId!}
-              transactionIds={alert?.transactionIds ?? []}
-            />
+            {alert.caseId && (
+              <SarButton
+                alertIds={[alert.alertId].filter(notEmpty)}
+                caseId={alert.caseId}
+                transactionIds={alert?.transactionIds ?? []}
+              />
+            )}
           </div>
         )}
       </AsyncResourceRenderer>

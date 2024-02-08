@@ -26,8 +26,8 @@ export default function WidgetRangePicker(props: WidgetRangePickerParams) {
           onChange?.(undefined);
         } else {
           onChange?.({
-            startTimestamp: start!.startOf('day').valueOf(),
-            endTimestamp: end!.endOf('day').valueOf(),
+            startTimestamp: start?.startOf('day').valueOf(),
+            endTimestamp: end?.endOf('day').valueOf(),
           });
         }
       }}

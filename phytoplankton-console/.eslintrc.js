@@ -30,7 +30,7 @@ module.exports = {
     'import/no-named-as-default': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     'import/no-duplicates': 'error',
-    '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'error',
     '@typescript-eslint/switch-exhaustiveness-check': 'error',
     'custom-rules/enforce-paginated-query-params': 'error',
     'cypress/no-async-tests': 'off',

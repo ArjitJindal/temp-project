@@ -118,7 +118,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
             (item) =>
               ({
                 type: 'PULSE',
-                classificationValues: prepareApiState(item.state!),
+                classificationValues: prepareApiState(item.state),
                 name: item.name,
                 description: item.description,
                 sampling: {

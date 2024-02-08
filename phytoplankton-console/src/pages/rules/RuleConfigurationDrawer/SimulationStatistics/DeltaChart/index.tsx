@@ -1,5 +1,6 @@
 import { Column } from '@ant-design/charts';
 import s from './index.module.less';
+import { COLORS_V2_GRAY_1 } from '@/components/ui/colors';
 
 type ValueType =
   | 'Before'
@@ -61,9 +62,9 @@ export function DeltaChart(props: Props) {
             case 'True positive (after)':
               return afterColor;
             case 'False positive (before)':
-              return beforeFalsePositiveColor!;
+              return beforeFalsePositiveColor ?? COLORS_V2_GRAY_1;
             case 'False positive (after)':
-              return afterFalsePositiveColor!;
+              return afterFalsePositiveColor ?? COLORS_V2_GRAY_1;
           }
         }}
       />

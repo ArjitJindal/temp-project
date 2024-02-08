@@ -93,7 +93,9 @@ export default function SubHeader(props: Props) {
     },
     {
       onMutate: async (assignments) => {
-        const previousCaseItem = queryClient.getQueryData<Case>(CASES_ITEM(caseId!));
+        const previousCaseItem = caseId
+          ? queryClient.getQueryData<Case>(CASES_ITEM(caseId))
+          : undefined;
         updateCaseQueryData(caseId, (caseItem) => {
           if (caseItem == null) {
             return caseItem;

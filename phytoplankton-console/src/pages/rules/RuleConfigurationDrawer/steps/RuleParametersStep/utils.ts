@@ -26,7 +26,7 @@ export function getAggVarDefinition(
   const entityVariableLabel =
     entityVariable &&
     (aggVar.aggregationFunc === 'COUNT'
-      ? lowerCase(pluralize(entityVariable.entity!))
+      ? lowerCase(pluralize(entityVariable.entity ?? ''))
       : entityVariable?.uiDefinition?.label);
   const label = `${humanizeAuto(aggVar.aggregationFunc)} of ${
     entityVariableLabel ?? aggVar.aggregationFieldKey

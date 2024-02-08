@@ -100,7 +100,10 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
   );
   const updateMutation = useMutation(
     async (entity: Entity) => {
-      return await props.apiOperations.UPDATE(selectedEntity![props.entityIdField], entity);
+      if (selectedEntity == null) {
+        throw new Error(`Unable to update selectedEntity since it is null`);
+      }
+      return await props.apiOperations.UPDATE(selectedEntity[props.entityIdField], entity);
     },
     {
       onSuccess: () => {

@@ -23,7 +23,7 @@ interface Props {
 
 export default function Checklist(props: Props) {
   const { alert } = props;
-  const checklistQueryResult = useAlertChecklist(alert.alertId!);
+  const checklistQueryResult = useAlertChecklist(alert.alertId);
   const [category, setCategory] = useState<string | undefined>();
   const [qaModeSet] = useQaMode();
   const api = useApi();
@@ -42,7 +42,7 @@ export default function Checklist(props: Props) {
           return {
             ...c,
             items: c.items.map((i) => {
-              if (checklistItemIds.includes(i.id!)) {
+              if (i.id != null && checklistItemIds.includes(i.id)) {
                 return {
                   ...i,
                   ...data,
@@ -65,8 +65,11 @@ export default function Checklist(props: Props) {
       status: ChecklistStatus;
       checklistItemIds: string[];
     }) => {
+      if (alert.alertId == null) {
+        throw new Error(`Unable to update status, alertId is null`);
+      }
       await api.patchAlertsQaStatus({
-        alertId: alert.alertId!,
+        alertId: alert.alertId,
         AlertChecklistQaUpdateRequest: {
           status,
           checklistItemIds,
@@ -75,8 +78,11 @@ export default function Checklist(props: Props) {
     },
     {
       onSuccess: (_, { status, checklistItemIds }) => {
+        if (alert.alertId == null) {
+          throw new Error(`Unable to update status, alertId is null`);
+        }
         message.success(`Checklist items marked as ${status}`);
-        updateQueryData(alert.alertId!, checklistItemIds, { qaStatus: status });
+        updateQueryData(alert.alertId, checklistItemIds, { qaStatus: status });
       },
       onError: (err: Error) => {
         message.error(`Failed to update checklist items QA status. ${err}`);
@@ -92,8 +98,11 @@ export default function Checklist(props: Props) {
       done: ChecklistDoneStatus;
       checklistItemIds: string[];
     }) => {
+      if (alert.alertId == null) {
+        throw new Error(`Unable to update status, alertId is null`);
+      }
       await api.patchAlertsChecklistStatus({
-        alertId: alert.alertId!,
+        alertId: alert.alertId,
         AlertChecklistUpdateRequest: {
           done,
           checklistItemIds,
@@ -102,8 +111,11 @@ export default function Checklist(props: Props) {
     },
     {
       onSuccess: (_, { done, checklistItemIds }) => {
+        if (alert.alertId == null) {
+          throw new Error(`Unable to update status, alertId is null`);
+        }
         message.success(`Checklist items marked as ${done ? 'done' : 'not done'}`);
-        updateQueryData(alert.alertId!, checklistItemIds, { done });
+        updateQueryData(alert.alertId, checklistItemIds, { done });
       },
       onError: (err: Error) => {
         message.error(`Failed to mark checklist items. ${err}`);
@@ -176,13 +188,14 @@ export default function Checklist(props: Props) {
           defaultWidth: 220,
           render: (status) => {
             let label = !alert.ruleQaStatus ? 'Select status' : '-';
-            switch (status.qaStatus!) {
+            switch (status?.qaStatus) {
               case 'PASSED':
                 label = 'QA passed';
                 break;
               case 'FAILED':
                 label = 'QA failed';
                 break;
+              default:
             }
             return !alert.ruleQaStatus ? (
               <Dropdown<ChecklistStatus>

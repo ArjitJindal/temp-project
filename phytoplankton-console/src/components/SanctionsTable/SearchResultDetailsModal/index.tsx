@@ -21,7 +21,8 @@ interface Props {
 
 export default function SearchResultDetailsModal(props: Props) {
   const { hit, onClose } = props;
-  const allFields = hit.doc?.fields?.sort((a, b) => a.name?.localeCompare(b.name!) || 0) || [];
+  const allFields =
+    hit.doc?.fields?.sort((a, b) => a.name?.localeCompare(b?.name ?? '') || 0) || [];
   const keyInfoFields = allFields.filter((field) => !field.source);
   const sourceFields = (hit.doc?.sources || []).map((source) => ({
     source,

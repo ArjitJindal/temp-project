@@ -10,7 +10,7 @@ export function RuleQueueInputField<FormValues extends { queueId?: string }>(pro
   const options = useMemo(() => {
     return ruleQueues.map((queue) => ({
       label: queue.name,
-      value: queue.id!,
+      value: queue.id,
     }));
   }, [ruleQueues]);
 

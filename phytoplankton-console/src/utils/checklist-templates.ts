@@ -4,9 +4,12 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_CHECKLIST } from '@/utils/queries/keys';
 
-export const useAlertChecklist = (alertId: string): QueryResult<HydratedChecklist> => {
+export const useAlertChecklist = (alertId: string | undefined): QueryResult<HydratedChecklist> => {
   const api = useApi();
   return useQuery(ALERT_CHECKLIST(alertId), async () => {
+    if (alertId == null) {
+      throw new Error(`Unable to get checklist because alertId is null`);
+    }
     const alert = await api.getAlert({ alertId });
     const ruleInstances = await api.getRuleInstances({});
     const ruleInstance = ruleInstances.find((ri) => ri.id === alert.ruleInstanceId);

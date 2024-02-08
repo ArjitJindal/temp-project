@@ -185,7 +185,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
             const ruleInstance = updatedRuleInstances[entity.id] || entity;
             return (
               <span style={{ fontSize: '14px' }}>
-                {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId!]?.name}
+                {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId ?? '']?.name}
               </span>
             );
           },

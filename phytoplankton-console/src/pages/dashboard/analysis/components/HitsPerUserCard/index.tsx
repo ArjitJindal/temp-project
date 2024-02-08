@@ -74,18 +74,19 @@ export default function HitsPerUserCard(props: Props) {
         render: (openCasesCount, { item: entity }) => {
           return (
             <>
-              <Link to={generateCaseListUrl(entity.userId!, direction, dateRange)}>
+              <Link
+                to={entity.userId ? generateCaseListUrl(entity.userId, direction, dateRange) : '#'}
+              >
                 {entity.openCasesCount} Open {pluralize('case', entity.openCasesCount)}
               </Link>
             </>
           );
         },
         stringify(value, item) {
-          return `${value} (${getCurrentDomain()}${generateCaseListUrl(
-            item.userId!,
-            direction,
-            dateRange,
-          )})`;
+          const link = item.userId
+            ? `(${getCurrentDomain()}${generateCaseListUrl(item.userId, direction, dateRange)})`
+            : undefined;
+          return `${value} ${link}`;
         },
       },
     }),

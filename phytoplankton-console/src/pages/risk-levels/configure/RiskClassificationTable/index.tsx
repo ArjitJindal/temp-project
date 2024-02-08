@@ -28,11 +28,11 @@ const LEVEL_ENTRIES = RISK_LEVELS.map((key, i) => ({
 
 export type ApiState = Array<RiskClassificationScore>;
 
-export function prepareApiState(state: State): ApiState {
+export function prepareApiState(state: State | undefined | null): ApiState {
   return RISK_LEVELS.map((riskLevel, index) => ({
     riskLevel,
-    lowerBoundRiskScore: state[index - 1] ?? 0,
-    upperBoundRiskScore: state[index] ?? 100,
+    lowerBoundRiskScore: state?.[index - 1] ?? 0,
+    upperBoundRiskScore: state?.[index] ?? 100,
   }));
 }
 

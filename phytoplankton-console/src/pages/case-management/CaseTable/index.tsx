@@ -249,7 +249,7 @@ export default function CaseTable(props: Props) {
               statusEscalated(entity.caseStatus) || isStatusInReview
                 ? entity.reviewAssignments
                 : entity.assignments;
-            const otherStatuses = isOnHoldOrInProgress(entity.caseStatus!);
+            const otherStatuses = isOnHoldOrInProgress(entity.caseStatus);
             return (
               <AssigneesDropdown
                 assignments={assignments || []}

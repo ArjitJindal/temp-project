@@ -71,6 +71,7 @@ import { getOr } from '@/utils/asyncResource';
 import { RuleQueueTag } from '@/components/rules/RuleQueueTag';
 import { denseArray } from '@/utils/lang';
 import { useRuleQueues } from '@/components/rules/util';
+import { notEmpty } from '@/utils/array';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;
@@ -276,7 +277,11 @@ export default function AlertTable(props: Props) {
               return (
                 <>
                   <Id
-                    to={addBackUrlToRoute(getAlertUrl(entity.caseId!, alertId!))}
+                    to={
+                      entity?.caseId != null && alertId != null
+                        ? addBackUrlToRoute(getAlertUrl(entity.caseId, alertId))
+                        : '#'
+                    }
                     testName="alert-id"
                   >
                     {alertId}
@@ -285,7 +290,7 @@ export default function AlertTable(props: Props) {
                     falsePositiveDetails.isFalsePositive &&
                     falsePositiveEnabled && (
                       <FalsePositiveTag
-                        caseIds={[entity.caseId!]}
+                        caseIds={[entity.caseId].filter(notEmpty)}
                         confidence={falsePositiveDetails.confidenceScore}
                         newCaseStatus={'CLOSED'}
                         onSaved={reload}
@@ -418,7 +423,7 @@ export default function AlertTable(props: Props) {
               return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
             },
             render: (assignments, { item: entity }) => {
-              const otherStatuses = isOnHoldOrInProgress(entity.alertStatus!);
+              const otherStatuses = isOnHoldOrInProgress(entity?.alertStatus);
               return (
                 <AssigneesDropdown
                   assignments={assignments || []}
@@ -534,7 +539,7 @@ export default function AlertTable(props: Props) {
                 {entity?.caseId && !statusInReview(entity.alertStatus) && (
                   <AlertsStatusChangeButton
                     caseId={entity.caseId}
-                    ids={[entity.alertId!]}
+                    ids={[entity.alertId]}
                     status={entity.alertStatus}
                     onSaved={reload}
                     statusTransitions={{

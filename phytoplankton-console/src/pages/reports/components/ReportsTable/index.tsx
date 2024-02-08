@@ -196,10 +196,16 @@ export default function ReportsTable() {
               statusInfo: displayStatusInfoReport.statusInfo || '',
             });
           } else {
+            if (displayStatusInfoReport.id == null) {
+              throw new Error(`displayStatusInfoReport.id can not be null`);
+            }
+            if (statusUpdate == null) {
+              throw new Error(`statusUpdate can not be null`);
+            }
             try {
               await api.postReportsReportIdStatus({
-                reportId: displayStatusInfoReport.id!,
-                ReportStatusUpdateRequest: statusUpdate!,
+                reportId: displayStatusInfoReport.id,
+                ReportStatusUpdateRequest: statusUpdate,
               });
               message.success('Saved');
             } catch (e) {
@@ -215,16 +221,18 @@ export default function ReportsTable() {
             <Select
               mode="SINGLE"
               style={{ width: 200 }}
-              value={statusUpdate!.status}
+              value={statusUpdate?.status}
               options={REPORT_STATUSS.map((v) => ({ label: humanizeConstant(v), value: v }))}
               onChange={(v) => {
-                setStatusUpdate(
-                  (prev) =>
-                    prev && {
-                      ...prev,
-                      status: v!,
-                    },
-                );
+                if (v != null) {
+                  setStatusUpdate(
+                    (prev) =>
+                      prev && {
+                        ...prev,
+                        status: v,
+                      },
+                  );
+                }
               }}
             />
             <MarkdownEditor

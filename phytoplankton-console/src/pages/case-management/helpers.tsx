@@ -285,7 +285,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: [{ value: 'default', label: 'default' }].concat(
-          ruleQueues.map((v) => ({ value: v.id!, label: v.name })),
+          ruleQueues.map((v) => ({ value: v.id ?? v.name, label: v.name })),
         ),
       },
       showFilterByDefault: true,

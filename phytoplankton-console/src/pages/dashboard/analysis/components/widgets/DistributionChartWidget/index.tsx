@@ -59,7 +59,7 @@ export default function DistributionChartWidget<
     groups[0].name,
   );
   const preparedDataRes = map(queryResult.data, (data): ColumnData<string, number, ValueType> => {
-    const { attributeDataPrefix } = groups.find((group) => group.name === selectedGroup)!;
+    const { attributeDataPrefix } = groups.find((group) => group.name === selectedGroup) ?? {};
     if (groupBy === 'TIME') {
       return data.flatMap((dataItem): ColumnData<string, number, ValueType> => {
         return values.map((value) => {
@@ -84,12 +84,12 @@ export default function DistributionChartWidget<
       });
     }
   });
-  const attributeName = useMemo<string>(
-    () => groups.find((group) => group.name === selectedGroup)!.attributeName,
+  const attributeName = useMemo<string | undefined>(
+    () => groups.find((group) => group.name === selectedGroup)?.attributeName,
     [groups, selectedGroup],
   );
   const seriesLabel = useMemo<string>(
-    () => groups.find((group) => group.name === selectedGroup)!.seriesLabel ?? '',
+    () => groups.find((group) => group.name === selectedGroup)?.seriesLabel ?? '',
     [groups, selectedGroup],
   );
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
@@ -127,6 +127,9 @@ export default function DistributionChartWidget<
               pdfRef: MutableRefObject<HTMLInputElement>;
             }> => {
               return new Promise((resolve, _reject) => {
+                if (attributeName == null) {
+                  throw new Error(`Unable to download file, attributeName can not be null`);
+                }
                 const fileData = {
                   fileName: `${downloadFilenamePrefix}${selectedGroupPrefix}-${dayjs().format(
                     'YYYY_MM_DD',

@@ -66,15 +66,14 @@ const TopUsersHitCard = (props: Props) => {
   const dataToExport = useMemo(() => {
     if (isSuccess(hitsPerUserResult.data)) {
       const data = hitsPerUserResult.data.value.items.map((item) => {
+        const caseLink = item.userId
+          ? `${getCurrentDomain()}${generateCaseListUrl(item.userId, direction, dateRange)}`
+          : null;
         return {
           userId: `${item.userId} (${getCurrentDomain()}${getUserLink(item.user)})`,
           userName: getUserName(item.user) ?? '',
           ruleHit: `${item.rulesHit} hits`,
-          openCases: `${item.openCasesCount} open cases (${getCurrentDomain()}${generateCaseListUrl(
-            item.userId!,
-            direction,
-            dateRange,
-          )})`,
+          openCases: `${item.openCasesCount} open cases ${caseLink ? `(${caseLink})` : ''}`,
         };
       });
       return data;

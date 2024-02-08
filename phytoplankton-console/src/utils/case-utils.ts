@@ -92,7 +92,10 @@ export const getNextStatusFromInReview = (status: CaseStatus): CaseStatus => {
   return status.replace('IN_REVIEW_', '') as CaseStatus;
 };
 
-export const isOnHoldOrInProgress = (status: CaseStatus): boolean => {
+export const isOnHoldOrInProgress = (status: CaseStatus | null | undefined): boolean => {
+  if (status == null) {
+    return false;
+  }
   return [
     'OPEN_IN_PROGRESS',
     'OPEN_ON_HOLD',

@@ -272,7 +272,7 @@ export function useTabs(
           </div>
         ),
         key: 'crm-monitoring',
-        children: <CRMMonitoring userId={user.userId!} />,
+        children: user.userId ? <CRMMonitoring userId={user.userId} /> : undefined,
         isClosable: false,
         isDisabled: false,
       },
@@ -281,7 +281,7 @@ export function useTabs(
       isEntityLinkingEnabled && {
         title: <div className={style.icon}>Entity linking</div>,
         key: 'entity-linking',
-        children: <Linking userId={user.userId!} />,
+        children: user.userId ? <Linking userId={user.userId} /> : undefined,
         isClosable: false,
         isDisabled: false,
       },

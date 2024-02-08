@@ -364,10 +364,10 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
   const [isDemoModeRes] = useDemoMode();
 
   const jobResult = useQuery(
-    SIMULATION_JOB(jobId!),
+    SIMULATION_JOB(jobId ?? ''),
     () =>
       api.getSimulationTestId({
-        jobId: jobId!,
+        jobId: jobId ?? '',
       }) as Promise<SimulationBeaconJob>,
     {
       refetchInterval: (data) =>

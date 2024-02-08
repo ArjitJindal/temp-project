@@ -33,7 +33,7 @@ Sentry.init({
   replaysSessionSampleRate: 0.1,
   tracesSampleRate: 0.05,
   environment: process.env.ENV_NAME,
-  enabled: !['local', 'dev:user'].includes(process.env.ENV_NAME!),
+  enabled: !['local', 'dev:user'].includes(process.env.ENV_NAME ?? ''),
   beforeSend(event, hint) {
     const error = hint?.originalException as HttpError | Error;
     if (error && 'code' in error && error.code && error.code >= 400 && error.code < 500) {

@@ -116,10 +116,16 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
     [transactionLimit?.averageTransactionAmountLimit, updatedAverageTransactionAmountLimit],
   );
   const handleSave = useCallback(async () => {
-    onSave(paymentMethod!, {
+    if (paymentMethod == null) {
+      throw new Error(`paymentMethod can not be null`);
+    }
+    if (currency == null) {
+      throw new Error(`currency can not be null`);
+    }
+    onSave(paymentMethod, {
       transactionCountLimit,
-      transactionAmountLimit: updateCurrency(transactionAmountLimit, currency!),
-      averageTransactionAmountLimit: updateCurrency(averageTransactionAmountLimit, currency!),
+      transactionAmountLimit: updateCurrency(transactionAmountLimit, currency),
+      averageTransactionAmountLimit: updateCurrency(averageTransactionAmountLimit, currency),
     });
   }, [
     averageTransactionAmountLimit,
@@ -217,7 +223,7 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
                       ...prev,
                       [timeFrame]: newValue
                         ? {
-                            amountCurrency: currency!,
+                            amountCurrency: currency,
                             amountValue: newValue,
                           }
                         : null,
@@ -244,7 +250,7 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
                       ...prev,
                       [timeFrame]: newValue
                         ? {
-                            amountCurrency: currency!,
+                            amountCurrency: currency,
                             amountValue: Number(newValue),
                           }
                         : null,

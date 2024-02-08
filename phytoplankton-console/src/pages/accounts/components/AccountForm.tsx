@@ -200,7 +200,10 @@ export default function AccountForm(props: Props) {
       return;
     }
 
-    inviteMutation.mutate({ email: email!.trim(), role: role!, isEscalationContact, reviewerId });
+    if (email == null) {
+      throw new Error(`email can not be null`);
+    }
+    inviteMutation.mutate({ email: email.trim(), role: role, isEscalationContact, reviewerId });
   };
 
   return (

@@ -468,8 +468,11 @@ export function useUpdateRuleInstance(
   const api = useApi();
   return useMutation<RuleInstance, unknown, RuleInstance>(
     async (ruleInstance: RuleInstance) => {
+      if (ruleInstance.id == null) {
+        throw new Error(`Rule instance ID is not defined, unable to update rule instance`);
+      }
       return api.putRuleInstancesRuleInstanceId({
-        ruleInstanceId: ruleInstance.id!,
+        ruleInstanceId: ruleInstance.id,
         RuleInstance: ruleInstance,
       });
     },

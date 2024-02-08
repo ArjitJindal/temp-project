@@ -39,11 +39,14 @@ export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const activeStepIndex = steps.findIndex((step) => step.step.key === activeStepKey);
   const getNestedForm = useCallback(() => {
+    const parametersSchema = steps.find((step) => step?.step?.key === activeStepKey)?.jsonSchema;
+    if (parametersSchema == null) {
+      console.warn(`Unable to find step by key ${activeStepKey}`);
+      return <></>;
+    }
     return (
       <NestedForm name={activeStepKey}>
-        <JsonSchemaEditor
-          parametersSchema={steps.find((step) => step.step.key === activeStepKey)!.jsonSchema}
-        />
+        <JsonSchemaEditor parametersSchema={parametersSchema} />
       </NestedForm>
     );
   }, [activeStepKey, steps]);

@@ -55,10 +55,10 @@ export function RuleLogicBuilder(props: Props) {
   }, [prevAggregationVariables, props.aggregationVariables]);
   const handleChangeLogic = useCallback(
     (newState: State) => {
-      if (!newState) {
+      if (newState == null || newState.tree == null) {
         return;
       }
-      const jsonLogic = QbUtils.jsonLogicFormat(newState.tree!, newState.config);
+      const jsonLogic = QbUtils.jsonLogicFormat(newState.tree, newState.config);
       if (!isEqual(jsonLogic.logic, props.jsonLogic)) {
         props.onChange(jsonLogic.logic as RuleLogic | undefined);
       }
