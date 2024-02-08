@@ -305,10 +305,19 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
     return 2
   }
 
-  private isDistanceAllowed(str1: string, str2: string): boolean {
+  private isDistanceAllowed(
+    str1: string | undefined,
+    str2: string | undefined
+  ): boolean {
+    if (!str1 || !str2) {
+      return false
+    }
+    if (!this.parameters.allowedDistancePercentage) {
+      return str1 === str2
+    }
     return (
       levenshtein.get(str1, str2) / str1.length <=
-      (this.parameters.allowedDistancePercentage ?? 100) / 100
+      this.parameters.allowedDistancePercentage / 100
     )
   }
 }
