@@ -66,7 +66,7 @@ export const addFargateContainer = (
             ? RemovalPolicy.DESTROY
             : RemovalPolicy.RETAIN,
         retention: envIs('prod')
-          ? RetentionDays.TWO_MONTHS
+          ? RetentionDays.ONE_YEAR
           : RetentionDays.TWO_WEEKS,
       }),
     }),
