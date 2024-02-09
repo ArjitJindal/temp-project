@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import s from './index.module.less';
 import KYCChangeModal from './KYCChangeModal';
-import Icon from '@/components/ui/icons/Remix/system/information-line.react.svg';
+import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { KYCStatus } from '@/apis/models/KYCStatus';
 import { useHasPermissions } from '@/utils/user-utils';
