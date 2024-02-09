@@ -4187,6 +4187,20 @@ components:
           type: array
           items:
             type: string
+    CaseOpenedDetails:
+      title: CaseOpenedDetails
+      type: object
+      properties:
+        caseId:
+          type: string
+        status:
+          type: string
+        userId:
+          type: string
+        transactionIds:
+          type: array
+          items:
+            type: string
     AlertClosedDetails:
       title: AlertClosedDetails
       type: object
@@ -4293,6 +4307,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/UserStateDetails'
             - $ref: '#/components/schemas/CaseClosedDetails'
+            - $ref: '#/components/schemas/CaseOpenedDetails'
             - $ref: '#/components/schemas/AlertClosedDetails'
             - $ref: '#/components/schemas/TransactionStatusDetails'
             - $ref: '#/components/schemas/KYCStatusDetails'

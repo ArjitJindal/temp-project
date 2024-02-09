@@ -196,7 +196,7 @@ export const casesHandler = lambdaApi()(
     )
 
     handlers.registerPostCasesManual(async (ctx, request) => {
-      const case_ = await caseService.createManualCaseFromUser(
+      const case_ = await caseCreationService.createManualCaseFromUser(
         request.ManualCaseCreationDataRequest.manualCaseData,
         request.ManualCaseCreationDataRequest.files,
         request.ManualCaseCreationDataRequest.transactionIds,

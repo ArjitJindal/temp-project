@@ -8,6 +8,8 @@ import {
   sample,
   uniq,
 } from 'lodash'
+import pluralize from 'pluralize'
+import createHttpError from 'http-errors'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -43,8 +45,21 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/aler
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
-import { tenantSettings as contextTenantSettings } from '@/core/utils/context'
+import {
+  tenantSettings as contextTenantSettings,
+  getContext,
+} from '@/core/utils/context'
 import { uniqObjects } from '@/utils/object'
+import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
+import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { Account } from '@/@types/openapi-internal/Account'
+import { Comment } from '@/@types/openapi-internal/Comment'
+import {
+  ThinWebhookDeliveryTask,
+  sendWebhookTasks,
+} from '@/services/webhook/utils'
+import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
+import { CaseOpenedDetails } from '@/@types/openapi-public/CaseOpenedDetails'
 
 type CaseSubject =
   | {
@@ -75,6 +90,156 @@ export class CaseCreationService {
     this.ruleInstanceRepository = ruleInstanceRepository
     this.transactionRepository = transactionRepository
     this.tenantSettings = tenantSettings
+  }
+
+  private async sendCasesOpenedWebhook(cases: Case[]) {
+    const webhookTasks: ThinWebhookDeliveryTask<CaseOpenedDetails>[] =
+      cases.map((case_) => ({
+        event: 'CASE_OPENED' as WebhookEventType,
+        triggeredBy: 'SYSTEM',
+        payload: {
+          caseObject: case_,
+          status: 'OPEN',
+          userId:
+            case_?.caseUsers?.origin?.userId ??
+            case_?.caseUsers?.destination?.userId,
+          transactionIds: case_?.caseTransactionsIds,
+        },
+      }))
+
+    await sendWebhookTasks<CaseOpenedDetails>(
+      this.caseRepository.tenantId,
+      webhookTasks
+    )
+  }
+
+  private getManualCaseComment(
+    manualCaseData: CaseStatusChange,
+    caseId: string,
+    files: FileInfo[],
+    transactionIds: string[]
+  ): Comment {
+    const { comment, reason, otherReason } = manualCaseData
+    const { id: userId, email } = getContext()?.user as Account
+
+    const transactionsCount = transactionIds.length
+
+    // Break down string generation into smaller, more meaningful parts
+    const createdByText = `Case ${caseId} is manually created by ${
+      email ?? userId
+    }`
+    const reasonText = `with reason: ${reason}${
+      reason?.[0] === 'Other' ? `: ${otherReason}` : ''
+    }`
+
+    // Individual components for transactionsText
+    const transactionsCountText = `${transactionsCount} ${pluralize(
+      'transaction',
+      transactionsCount
+    )}`
+
+    const transactionIdsText = `${pluralize(
+      'id',
+      transactionsCount
+    )} ${transactionIds.join(', ')}`
+
+    // Final transactionsText based on the condition
+    const transactionsText = transactionsCount
+      ? ` and ${transactionsCountText} with ${transactionIdsText}`
+      : ''
+
+    const optionalComment = comment ? `\n${comment}` : ''
+
+    const commentText = `${createdByText} ${reasonText}${transactionsText}${optionalComment}`
+
+    return {
+      body: commentText,
+      createdAt: Date.now(),
+      files,
+      updatedAt: Date.now(),
+      userId,
+    }
+  }
+
+  public async createManualCaseFromUser(
+    manualCaseData: CaseStatusChange,
+    files: FileInfo[],
+    transactionIds: string[],
+    priority?: Priority
+  ): Promise<Case> {
+    const { id: userId } = getContext()?.user as Account
+
+    const caseUser = await this.userRepository.getUserById(
+      manualCaseData.userId
+    )
+
+    if (!caseUser) {
+      throw new createHttpError.NotFound(
+        `User ${manualCaseData.userId} not found`
+      )
+    }
+
+    const statusChange: CaseStatusChange = {
+      ...manualCaseData,
+      caseStatus: 'OPEN',
+      userId,
+    }
+
+    const transactions = compact(transactionIds).length
+      ? await this.transactionRepository.getTransactionsByIds(
+          compact(transactionIds)
+        )
+      : []
+
+    const case_ = await this.addOrUpdateCase({
+      caseType: 'MANUAL',
+      caseStatus: 'OPEN',
+      caseUsers: {
+        origin: caseUser,
+        originUserRiskLevel:
+          caseUser.drsScore?.manualRiskLevel ??
+          caseUser.drsScore?.derivedRiskLevel,
+        originUserDrsScore: caseUser.drsScore?.drsScore,
+      },
+      alerts: [],
+      caseTransactionsCount: transactions.length,
+      createdBy: manualCaseData.userId,
+      priority: priority ?? 'P1',
+      updatedAt: Date.now(),
+      createdTimestamp: Date.now(),
+      caseTransactionsIds: transactions.map((t) => t.transactionId),
+      statusChanges: [statusChange],
+      lastStatusChange: statusChange,
+      caseAggregates: {
+        originPaymentMethods: compact(
+          uniq(transactions.map((t) => t.originPaymentDetails?.method))
+        ),
+        destinationPaymentMethods: compact(
+          uniq(transactions.map((t) => t.destinationPaymentDetails?.method))
+        ),
+        tags: compact(uniqObjects(transactions.flatMap((t) => t.tags ?? []))),
+      },
+    })
+
+    const comment = this.getManualCaseComment(
+      manualCaseData,
+      case_.caseId!,
+      files,
+      transactions.map((t) => t.transactionId)
+    )
+
+    await this.caseRepository.saveCaseComment(case_.caseId!, comment)
+
+    return case_
+  }
+
+  private async addOrUpdateCase(caseEntity: Case): Promise<Case> {
+    const isNew = caseEntity.caseId == null
+    const case_ = await this.caseRepository.addCaseMongo(caseEntity)
+    if (isNew) {
+      await this.sendCasesOpenedWebhook([case_])
+    }
+    return case_
   }
 
   async getUsers(
@@ -509,7 +674,7 @@ export class CaseCreationService {
     const now = Date.now()
 
     // Create new case
-    const newCase = await this.caseRepository.addCaseMongo({
+    const newCase = await this.addOrUpdateCase({
       alerts: newCaseAlerts,
       createdTimestamp: now,
       caseStatus: 'OPEN',
@@ -532,7 +697,7 @@ export class CaseCreationService {
     )
 
     // Save old case
-    await this.caseRepository.addCaseMongo({
+    await this.addOrUpdateCase({
       ...sourceCase,
       alerts: oldCaseAlerts,
       caseTransactionsIds: oldCaseTransactionsIds,
@@ -543,6 +708,7 @@ export class CaseCreationService {
         oldCaseAlertsTransactions ?? []
       ),
     })
+
     return newCase
   }
 
@@ -920,7 +1086,7 @@ export class CaseCreationService {
     result.push(...cases)
 
     const savedCases = await Promise.all(
-      result.map((caseItem) => this.caseRepository.addCaseMongo(caseItem))
+      result.map((caseItem) => this.addOrUpdateCase(caseItem))
     )
 
     logger.info(`Updated/created cases count`, {
@@ -967,8 +1133,9 @@ export class CaseCreationService {
     )
 
     const savedCases = await Promise.all(
-      result.map((caseItem) => this.caseRepository.addCaseMongo(caseItem))
+      result.map((caseItem) => this.addOrUpdateCase(caseItem))
     )
+
     logger.info(`Updated/created cases count`, {
       count: savedCases.length,
     })
@@ -984,7 +1151,7 @@ export class CaseCreationService {
       savedCases.map((nextCase) => {
         // todo: filter unpublished cases?
         const relatedCases = nextCase.relatedCases ?? []
-        return this.caseRepository.addCaseMongo({
+        return this.addOrUpdateCase({
           ...nextCase,
           relatedCases: [
             ...relatedCases,
