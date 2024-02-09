@@ -294,9 +294,9 @@ export const tenantsHandler = lambdaApi()(
       assertCurrentUserRole('root')
       assertHasDangerousTenantDelete()
 
-      if (envIsNot('dev')) {
+      if (envIsNot('dev', 'sandbox')) {
         throw new createHttpError.Forbidden(
-          'Cannot delete tenant in non-dev environment'
+          'Cannot delete tenant in non-dev/sandbox environment'
         )
       }
 
@@ -305,6 +305,23 @@ export const tenantsHandler = lambdaApi()(
       if (!tenantId) {
         throw new createHttpError.BadRequest(
           'Cannot delete tenant: no tenantIdToDelete'
+        )
+      }
+
+      if (tenantId === ctx.tenantId) {
+        throw new createHttpError.BadRequest(
+          'Cannot delete tenant: cannot delete self'
+        )
+      }
+
+      const tenant = await accountsService.getTenantById(tenantId)
+
+      if (
+        tenantId.toLowerCase().includes('flagright') ||
+        tenant?.name.toLowerCase().includes('flagright')
+      ) {
+        throw new createHttpError.BadRequest(
+          'Cannot delete tenant with flagright in the name'
         )
       }
 
