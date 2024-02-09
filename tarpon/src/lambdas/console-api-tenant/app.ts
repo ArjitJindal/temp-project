@@ -294,12 +294,6 @@ export const tenantsHandler = lambdaApi()(
       assertCurrentUserRole('root')
       assertHasDangerousTenantDelete()
 
-      if (envIsNot('dev', 'sandbox')) {
-        throw new createHttpError.Forbidden(
-          'Cannot delete tenant in non-dev/sandbox environment'
-        )
-      }
-
       const { tenantId, notRecoverable } = request.DeleteTenant
 
       if (!tenantId) {
