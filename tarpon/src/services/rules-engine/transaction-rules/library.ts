@@ -1628,7 +1628,7 @@ const _RULES_LIBRARY: Array<
       name: 'New name on Bank Account',
       type: 'TRANSACTION',
       description:
-        'Compare transaction’s sending volume with receiving’s volume',
+        'Current payment’s bank account name mismatches with the bank account name of previous payments by same user.',
       descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} bank account holder name has changed.`,
       defaultParameters,
       defaultAction: 'FLAG',
