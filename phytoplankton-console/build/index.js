@@ -80,6 +80,22 @@ async function main() {
     log(`Running build...`);
   }
   await prepare(env);
+  await buildStatic(env);
+  const buildResult = await buildCode(env, {
+    entry: 'app.tsx',
+    outFile: bundleBaseName,
+    config,
+    watch: env.WATCH,
+  });
+  await Promise.all(
+    buildResult.outputFiles.map(async (file) => {
+      // ignore chunk css files since they are already included in main css file
+      if (/chunks\/.*\.css$/.test(file.path) || /chunks\/.*\.css.map$/.test(file.path)) {
+        return;
+      }
+      await fs.outputFile(file.path, file.contents);
+    }),
+  );
   await buildHtml(env, {
     file: 'index.html',
     context: {
@@ -91,16 +107,10 @@ async function main() {
       ...config.define,
     },
   });
-  await buildStatic(env);
-  const buildResult = await buildCode(env, {
-    entry: 'app.tsx',
-    outFile: bundleJs,
-    config,
-    watch: env.WATCH,
-  });
   if (buildResult.metafile) {
     await fs.writeJson(path.resolve(env.PROJECT_DIR, 'esbuild.json'), buildResult.metafile);
   }
+
   if (env.WATCH) {
     log('Build finished, watching for changes');
     notify('Build finished, watching for changes');

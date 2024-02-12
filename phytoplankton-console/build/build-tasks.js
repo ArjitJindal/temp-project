@@ -87,8 +87,9 @@ async function buildCode(env, options) {
 
   return await esbuild.build({
     entryPoints: [path.join(SRC_FOLDER, entry)],
+    entryNames: outFile,
     bundle: true,
-    // logLevel: "verbose",
+    logLevel: 'error',
     loader: {
       '.svg': 'file',
       '.png': 'file',
@@ -132,16 +133,20 @@ async function buildCode(env, options) {
             }),
           ]),
     ],
-    outfile: path.join(PROJECT_DIR, OUTPUT_FOLDER, outFile),
+    outdir: path.join(PROJECT_DIR, OUTPUT_FOLDER),
     mainFields: ['module', 'browser', 'main'],
     target: ['chrome102', 'firefox100', 'safari14'],
+    format: 'esm',
+    splitting: true,
     inject: [path.join(env.SCRIPT_DIR, 'react-shim.js')],
+    chunkNames: 'chunks/[name].[hash]',
     assetNames: 'public/[name].[hash]',
     publicPath: '/',
     minify: !devMode,
     metafile: !devMode,
     sourcemap: devMode || 'external',
     treeShaking: !devMode,
+    write: false,
     watch: watch
       ? {
           onRebuild(e, result) {

@@ -31,13 +31,14 @@ export default function SearchResultDetailsModal(props: Props) {
   const pdfRef = useRef() as React.MutableRefObject<HTMLInputElement>;
   const pdfName = hit.doc?.name;
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const handleDownloadClick = (): void => {
+  const handleDownloadClick = async () => {
     setIsLoading(true);
-    DownloadAsPDF({ pdfRef, fileName: `${pdfName} Sanctions Details.pdf` })
-      .then(() => setIsLoading(false))
-      .catch((err) => {
-        message.fatal(`Unable to complete the download!`, err);
-      });
+    try {
+      await DownloadAsPDF({ pdfRef, fileName: `${pdfName} Sanctions Details.pdf` });
+      setIsLoading(false);
+    } catch (err) {
+      message.fatal(`Unable to complete the download!`, err);
+    }
   };
   const okText = isLoading ? (
     <>

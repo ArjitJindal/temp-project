@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { get } from 'lodash';
 import { message, Popover, Radio } from 'antd';
-import { utils, CellStyle, CellObject, writeFile } from 'xlsx-js-style';
+import type { CellStyle, CellObject } from 'xlsx-js-style';
 import {
   applyFieldAccessor,
   DerivedColumn,
@@ -134,11 +134,14 @@ export function transformXLSXTableRows<T extends object>(
   return rows;
 }
 
-function processTableExcelDownload<T extends object>(
+async function processTableExcelDownload<T extends object>(
   items: T[],
   columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
   props: Props<T, any>,
 ) {
+  const lib = await import('xlsx-js-style');
+  const { utils, writeFile } = lib.default;
+  // import { utils, CellStyle, CellObject, writeFile } from 'xlsx-js-style';
   const rows = transformXLSXTableRows(items, columnsToExport, props);
 
   const wb = utils.book_new();
@@ -236,7 +239,7 @@ export default function DownloadButton<T extends object, Params extends object>(
       if (format === 'csv') {
         processTableCSVDownload(allFlatData, columnsToExport, props);
       } else {
-        processTableExcelDownload(allFlatData, columnsToExport, props);
+        await processTableExcelDownload(allFlatData, columnsToExport, props);
       }
     } catch (e) {
       message.error(`Unable to export data. ${getErrorMessage(e)}`);

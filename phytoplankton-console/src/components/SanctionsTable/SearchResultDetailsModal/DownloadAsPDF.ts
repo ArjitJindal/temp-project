@@ -1,6 +1,3 @@
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import FlagrightDemoLogoSvg from '@/branding/flagright-logo-demo.svg';
 
 interface Props {
@@ -19,6 +16,9 @@ const DownloadAsPDF = async (props: Props) => {
     const input = pdfRef.current;
     const logoImage = new Image();
     logoImage.src = FlagrightDemoLogoSvg;
+
+    const { default: html2canvas } = await import('html2canvas');
+    const { default: jsPDF } = await import('jspdf');
 
     const canvas = await html2canvas(input);
 
@@ -90,10 +90,11 @@ const addTopFormatting = ({ doc, logoImage }) => {
   doc.addImage(getLogoImageData({ logoImage }), 'PNG', 10, 10, 70, 14);
 };
 
-const addTable = ({ imgHeight, position, doc, data }) => {
+const addTable = async ({ imgHeight, position, doc, data }) => {
   const tableData = getTableHeadAndBody(data);
   if (tableData) {
     const tableWidth = 180;
+    const { default: autoTable } = await import('jspdf-autotable');
     autoTable(doc, {
       head: [tableData.head],
       body: tableData.rows,
