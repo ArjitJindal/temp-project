@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { NotFound } from 'http-errors'
 import { compact, difference } from 'lodash'
+import { paginateArray } from '../utils/paginate-array'
 import { CaseRepository, getRuleQueueFilter } from './case-repository'
 import { MongoDbTransactionRepository } from './mongodb-transaction-repository'
 import {
@@ -787,6 +788,9 @@ export class AlertsRepository {
     if (alert == null) {
       throw new NotFound(`Alert "${params.alertId}" not found`)
     }
+    if (alert.transactionIds == null) {
+      throw new NotFound(`Alert "${params.alertId}" does not have transactions`)
+    }
 
     const transactionsRepo = new MongoDbTransactionRepository(
       this.tenantId,
@@ -794,11 +798,13 @@ export class AlertsRepository {
     )
 
     const result = await transactionsRepo.getTransactionsCursorPaginate({
-      filterIdList: alert.transactionIds,
+      filterIdList: paginateArray(
+        alert.transactionIds,
+        params.pageSize,
+        params.page
+      ),
       afterTimestamp: params.afterTimestamp || 0,
       beforeTimestamp: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
-      page: params.page,
-      pageSize: params.pageSize,
       filterOriginUserId: params.originUserId,
       filterDestinationUserId: params.destinationUserId,
       filterUserId: params.userId,
