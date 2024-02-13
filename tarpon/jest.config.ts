@@ -1,4 +1,6 @@
-module.exports = {
+import type { Config } from 'jest'
+
+const config: Config = {
   testTimeout: 120000,
   preset: 'ts-jest',
   moduleNameMapper: {
@@ -22,4 +24,8 @@ module.exports = {
       },
     ],
   },
+  collectCoverage: true,
+  collectCoverageFrom: ['<rootDir>/src/**/*.{ts}', '!**/node_modules/**'],
+  coverageReporters: ['json-summary'],
 }
+module.exports = config
