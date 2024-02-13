@@ -341,7 +341,10 @@ export default function SuperAdminPanel() {
                 <H4 style={{ color: COLORS_V2_ALERT_CRITICAL }}>Danger Zone</H4>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <div className={s.field}>
-                    <Label label="Tenant to delete">
+                    <Label
+                      label="Tenant to delete"
+                      description="Please go to the respective tenant region to delete the tenant (for example if tenant is in `us-1` region, go to `us-1` region you need to be in a different tenant then the tenant you want to delete)"
+                    >
                       <Select
                         options={tenantOptions}
                         onChange={(value) => setTenantIdToDelete(value)}

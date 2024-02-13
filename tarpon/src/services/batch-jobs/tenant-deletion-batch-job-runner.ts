@@ -135,9 +135,19 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
           this.deleteS3Data(tenantId),
           this.deleteDynamoDbData(tenantId),
         ])
-        await this.deleteAuth0Users(tenantId)
-        await this.deleteAuth0Organization(tenantId)
-        await this.dropMongoTables(tenantId)
+        try {
+          await this.deleteAuth0Users(tenantId)
+          await this.deleteAuth0Organization(tenantId)
+        } catch (e) {
+          logger.error(`Failed to delete Auth0 users and organization - ${e}`)
+          await this.addStatusRecord(tenantId, 'FAILED', (e as Error).message)
+        }
+        try {
+          await this.dropMongoTables(tenantId)
+        } catch (e) {
+          logger.error(`Failed to delete mongo tables - ${e}`)
+          await this.addStatusRecord(tenantId, 'FAILED', (e as Error).message)
+        }
         await this.addStatusRecord(tenantId, 'HARD_DELETED')
       } else {
         await Promise.all([
@@ -261,17 +271,23 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const changeDate = dayjs('2024-01-30')
     const mongoDb = await this.mongoDb()
     const accountsService = this.accountsService(this.auth0Domain, mongoDb)
-    const tenant = await this.getTenantByTenantId(tenantId, accountsService)
-    const account = await accountsService.getOrganization(
-      tenant?.name as string
-    )
-    /** If the tenant is created after https://github.com/flagright/orca/pull/3077#event-11574061803  */
-    if (
-      account?.metadata?.tenantCreatedAt &&
-      dayjs(parseInt(account?.metadata?.tenantCreatedAt)).isAfter(changeDate)
-    ) {
-      await this.deleteDynamoDbDataUsingMongo(tenantId)
-      return
+
+    try {
+      const tenant = await this.getTenantByTenantId(tenantId, accountsService)
+      const account = await accountsService.getOrganization(
+        tenant?.name as string
+      )
+      /** If the tenant is created after https://github.com/flagright/orca/pull/3077#event-11574061803  */
+      if (
+        account?.metadata?.tenantCreatedAt &&
+        dayjs(parseInt(account?.metadata?.tenantCreatedAt)).isAfter(changeDate)
+      ) {
+        await this.deleteDynamoDbDataUsingMongo(tenantId)
+        return
+      }
+    } catch (e) {
+      logger.error(`Failed to get Tenant Probably Tenant not found - ${e}`)
+      await this.addStatusRecord(tenantId, 'FAILED', (e as Error).message)
     }
 
     const dynamoDbKeysToDelete: Record<
