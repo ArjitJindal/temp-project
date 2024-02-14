@@ -215,13 +215,6 @@ export class StreamConsumerBuilder {
     }
   }
 
-  private async partitionKeyHandler(
-    tenantId: string,
-    partitionKey: string
-  ): Promise<void> {
-    await savePartitionKey(tenantId, partitionKey, this.tableName)
-  }
-
   private async shouldSendToRetryQueue(
     update: DynamoDbEntityUpdate
   ): Promise<boolean> {
@@ -304,7 +297,13 @@ export class StreamConsumerBuilder {
     return async (event: KinesisStreamEvent) => {
       for (const update of getDynamoDbUpdates(event)) {
         /**   Store DynamoDB Keys in MongoDB * */
-        await this.partitionKeyHandler(update.tenantId, update.partitionKeyId!)
+        if (update.NewImage) {
+          await savePartitionKey(
+            update.tenantId,
+            update.partitionKeyId!,
+            this.tableName
+          )
+        }
 
         if (update.type) {
           await withContext(async () => {

@@ -213,6 +213,11 @@ export function getDynamoDbUpdates(
     const message: string = Buffer.from(payload.data, 'base64').toString()
 
     const dynamoDBStreamRecord = JSON.parse(message).dynamodb as StreamRecord
+    // If the record is a delete, we don't need to process it
+    if (!dynamoDBStreamRecord.NewImage) {
+      return null
+    }
+
     const entity = getDynamoDbEntity(dynamoDBStreamRecord)
 
     return (
