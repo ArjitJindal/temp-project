@@ -77,12 +77,12 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
 
     const hitResult: RuleHitResult = []
     if (latestTransaction) {
-      if (
-        dayjs(this.transaction.timestamp).diff(
-          latestTransaction.timestamp,
-          'day'
-        ) > dormancyPeriodDays
-      ) {
+      const diffDays = dayjs(this.transaction.timestamp).diff(
+        latestTransaction.timestamp,
+        'day'
+      )
+
+      if (diffDays > dormancyPeriodDays) {
         hitResult.push({
           direction: 'ORIGIN',
           vars: {},

@@ -9,14 +9,13 @@ dynamoDbSetupHook()
 
 describe('entity variable', () => {
   test('executes the json logic - hit', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
       [],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'TRANSFER' }) }
     )
     expect(result).toEqual({
@@ -27,14 +26,13 @@ describe('entity variable', () => {
   })
 
   test('executes the json logic - no hit', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
       [],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'DEPOSIT' }) }
     )
     expect(result).toEqual({
@@ -81,14 +79,12 @@ describe('entity variable (array)', () => {
     ],
   }
   test('executes the json logic - hit', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, getDynamoDbClient())
     const result = await evaluator.evaluate(
       TEST_LOGIC,
       [],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       {
         transaction: getTestTransaction({
           tags: [
@@ -110,14 +106,13 @@ describe('entity variable (array)', () => {
     })
   })
   test('executes the json logic - not hit', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       TEST_LOGIC,
       [],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       {
         transaction: getTestTransaction({
           tags: [
@@ -130,10 +125,9 @@ describe('entity variable (array)', () => {
     expect(result).toMatchObject({ hit: false })
   })
   test('executes the json logic (nested) - hit', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const testLegalDocuments: LegalDocument[] = [
       {
         documentType: 'passport',
@@ -157,7 +151,7 @@ describe('entity variable (array)', () => {
     const result = await evaluator.evaluate(
       TEST_LOGIC_NESTED,
       [],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       {
         transaction: getTestTransaction(),
         senderUser: getTestUser({
@@ -174,14 +168,13 @@ describe('entity variable (array)', () => {
     })
   })
   test('executes the json logic (nested) - not hit', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       TEST_LOGIC_NESTED,
       [],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       {
         transaction: getTestTransaction(),
         senderUser: getTestUser({
@@ -205,10 +198,9 @@ describe('entity variable (array)', () => {
 
 describe('aggregation variable', () => {
   test('executes the json logic (sending)', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
       [
@@ -224,7 +216,7 @@ describe('aggregation variable', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'TRANSFER' }) }
     )
     expect(result).toEqual({
@@ -235,10 +227,9 @@ describe('aggregation variable', () => {
   })
 
   test('executes the json logic (receiving)', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
       [
@@ -254,7 +245,7 @@ describe('aggregation variable', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'TRANSFER' }) }
     )
     expect(result).toEqual({
@@ -265,10 +256,9 @@ describe('aggregation variable', () => {
   })
 
   test('executes the json logic (sending + receiving)', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       {
         and: [
@@ -300,7 +290,7 @@ describe('aggregation variable', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'TRANSFER' }) }
     )
     expect(result).toEqual({
@@ -311,10 +301,9 @@ describe('aggregation variable', () => {
   })
 
   test('executes the json logic (sending_receiving)', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
       [
@@ -330,7 +319,7 @@ describe('aggregation variable', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'TRANSFER' }) }
     )
     expect(result).toEqual({
@@ -341,10 +330,9 @@ describe('aggregation variable', () => {
   })
 
   test('executes the json logic (filters logic)', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const testAggVar = {
       key: 'agg:123',
       type: 'USER_TRANSACTIONS',
@@ -366,7 +354,7 @@ describe('aggregation variable', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'TRANSFER' }) }
     )
     expect(resultFilteredOut).toEqual({
@@ -384,7 +372,7 @@ describe('aggregation variable', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'TRANSFER' }) }
     )
     expect(resultFiltered).toEqual({
@@ -395,10 +383,9 @@ describe('aggregation variable', () => {
   })
 
   test('executes the json logic (time window)', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const testAggVar = {
       key: 'agg:123',
       type: 'USER_TRANSACTIONS',
@@ -417,7 +404,7 @@ describe('aggregation variable', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'TRANSFER' }) }
     )
     expect(resultNotWithinTimeWindow).toEqual({
@@ -436,7 +423,7 @@ describe('aggregation variable', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: getTestTransaction({ type: 'TRANSFER' }) }
     )
     expect(resultWithinTimeWindow).toEqual({
@@ -447,10 +434,9 @@ describe('aggregation variable', () => {
   })
 
   test('executes the json logic (object type aggregator)', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '>': [{ var: 'agg:123' }, 100] }] },
       [
@@ -467,7 +453,7 @@ describe('aggregation variable', () => {
           },
         },
       ],
-      { baseCurrency: 'USD' },
+      { baseCurrency: 'USD', tenantId },
       {
         transaction: getTestTransaction({
           type: 'TRANSFER',
@@ -488,10 +474,9 @@ describe('aggregation variable', () => {
 
 describe('Testing dataLoader Cache', () => {
   test('Testing the aggregation variable cache', async () => {
-    const evaluator = new RuleJsonLogicEvaluator(
-      'tenant-id',
-      getDynamoDbClient()
-    )
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const loadAggregationDataSpy = jest.spyOn(
       evaluator as any,
       'loadAggregationData'
@@ -554,7 +539,7 @@ describe('Testing dataLoader Cache', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: testTransaction }
     )
     await evaluator.evaluate(
@@ -600,7 +585,7 @@ describe('Testing dataLoader Cache', () => {
           },
         },
       ],
-      { baseCurrency: 'EUR' },
+      { baseCurrency: 'EUR', tenantId },
       { transaction: testTransaction }
     )
     /** Validating if the cache is called twice as we have two distinct aggregationFunc (COUNT & SUM) accross two evaluate calls */

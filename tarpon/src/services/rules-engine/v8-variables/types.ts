@@ -1,4 +1,5 @@
 import { FieldOrGroup } from '@react-awesome-query-builder/core'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
@@ -27,6 +28,8 @@ export interface RuleVariableBase {
 
 export type TransactionRuleVariableContext = {
   baseCurrency?: CurrencyCode
+  tenantId: string
+  dynamoDb: DynamoDBDocumentClient
 }
 
 export interface TransactionRuleVariable<ReturnType = unknown>
@@ -53,5 +56,8 @@ export interface BusinessUserRuleVariable<ReturnType = unknown>
 export interface CommonUserRuleVariable<ReturnType = unknown>
   extends RuleVariableBase {
   entity: 'USER'
-  load: (user: User | Business) => Promise<ReturnType>
+  load: (
+    user: User | Business,
+    context: TransactionRuleVariableContext
+  ) => Promise<ReturnType>
 }

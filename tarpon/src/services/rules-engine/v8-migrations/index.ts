@@ -1,6 +1,7 @@
 import { pickBy } from 'lodash'
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
 import { TransactionsVelocityRuleParameters } from '../transaction-rules/transactions-velocity'
+import { FirstActivityAfterLongTimeRuleParameters } from '../transaction-rules/first-activity-after-time-period'
 import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
@@ -81,6 +82,52 @@ const V8_CONVERSION: {
       logic: { and: conditions },
       logicAggregationVariables,
       alertCreationDirection,
+    }
+  },
+  'R-5': (parameters: FirstActivityAfterLongTimeRuleParameters, filters) => {
+    const { dormancyPeriodDays, checkDirection = 'all' } = parameters
+    const aggregationVariable: RuleAggregationVariable[] =
+      migrateCheckDirectionParameters(
+        'COUNT',
+        {
+          timeWindow: {
+            granularity: 'day',
+            units: dormancyPeriodDays,
+            rollingBasis: true,
+          },
+          checkSender: checkDirection,
+          checkReceiver: 'none',
+        },
+        filters
+      ).logicAggregationVariables
+
+    const conditions: any[] = []
+
+    const v = aggregationVariable[0]
+    conditions.push({
+      '==': [{ var: v.key }, 1],
+    })
+
+    const orConditions: any[] = []
+
+    orConditions.push({
+      '!=': [{ var: 'USER:sendingTransactionsCount__SENDER' }, 0],
+    })
+
+    if (checkDirection === 'all') {
+      orConditions.push({
+        '!=': [{ var: 'USER:receivingTransactionsCount__SENDER' }, 0],
+      })
+    }
+
+    conditions.push({
+      or: orConditions,
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables: aggregationVariable,
+      alertCreationDirection: 'ORIGIN',
     }
   },
 }

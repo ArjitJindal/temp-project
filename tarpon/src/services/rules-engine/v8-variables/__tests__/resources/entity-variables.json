@@ -1134,5 +1134,9 @@
   "BUSINESS_USER:creationAgeMonths__SENDER",
   "BUSINESS_USER:creationAgeMonths__RECEIVER",
   "BUSINESS_USER:creationAgeYears__SENDER",
-  "BUSINESS_USER:creationAgeYears__RECEIVER"
+  "BUSINESS_USER:creationAgeYears__RECEIVER",
+  "USER:sendingTransactionsCount__SENDER",
+  "USER:sendingTransactionsCount__RECEIVER",
+  "USER:receivingTransactionsCount__SENDER",
+  "USER:receivingTransactionsCount__RECEIVER"
 ]

@@ -33,6 +33,7 @@ import { Aggregators } from './aggregator'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
 import { RuleHitResult, RuleHitResultItem } from './rule'
 import {
+  LegacyFilters,
   TRANSACTION_FILTERS,
   TRANSACTION_HISTORICAL_FILTERS,
   TransactionFilters,
@@ -111,6 +112,7 @@ export type V8TransactionAggregationTask = {
   transaction: Transaction
   direction: 'origin' | 'destination'
   tenantId: string
+  filters?: LegacyFilters
 }
 export type TransactionAggregationTaskEntry = {
   userKeyId: string
@@ -651,12 +653,11 @@ export class RulesEngineService {
           const runResult = await this.ruleLogicEvaluator.evaluate(
             ruleInstance.filtersLogic,
             [],
-            { baseCurrency: ruleInstance.baseCurrency },
             {
-              transaction,
-              senderUser,
-              receiverUser,
-            }
+              baseCurrency: ruleInstance.baseCurrency,
+              tenantId: this.tenantId,
+            },
+            { transaction, senderUser, receiverUser }
           )
           shouldRuleRun = runResult.hit
         }
@@ -666,7 +667,10 @@ export class RulesEngineService {
             await this.ruleLogicEvaluator.evaluate(
               logic,
               ruleInstance.logicAggregationVariables ?? [],
-              { baseCurrency: ruleInstance.baseCurrency },
+              {
+                baseCurrency: ruleInstance.baseCurrency,
+                tenantId: this.tenantId,
+              },
               {
                 transaction: transactionWithValidUserId,
                 senderUser,

@@ -36,7 +36,6 @@ export async function handleV8TransactionAggregationTask(
 ) {
   const dynamoDb = getDynamoDbClient()
   const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
-  task.transaction
   await ruleEvaluator.rebuildOrUpdateAggregationVariable(
     task.aggregationVariable,
     { transaction: task.transaction },

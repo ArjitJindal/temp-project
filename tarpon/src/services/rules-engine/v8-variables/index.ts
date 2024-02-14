@@ -32,6 +32,10 @@ import {
   getPublicModelLeafAttrs,
 } from './utils'
 import { USER_TYPE } from './user-type'
+import {
+  SENDING_TRANSACTIONS_COUNT,
+  RECEIVING_TRANSACTIONS_COUNT,
+} from './transactions-count'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -106,6 +110,8 @@ const USER_DERIVED_VARIABLES: Array<
   BUSINESS_USER_CREATION_AGE_DAYS,
   BUSINESS_USER_CREATION_AGE_MONTHS,
   BUSINESS_USER_CREATION_AGE_YEARS,
+  SENDING_TRANSACTIONS_COUNT,
+  RECEIVING_TRANSACTIONS_COUNT,
 ]
 
 function isTimestampVariable(key: string): boolean {
