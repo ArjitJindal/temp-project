@@ -67,11 +67,12 @@ jobs:
         run: yarn run test:ci
         working-directory: "tarpon"
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          working-directory: "tarpon"
+          name: tarpon
+          directory: tarpon/coverage
       - name: Post to a Slack channel on failure
         id: slack
         uses: slackapi/slack-github-action@v1.24.0
