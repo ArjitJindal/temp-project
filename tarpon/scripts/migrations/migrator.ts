@@ -68,8 +68,10 @@ function refreshCredentialsPeriodically() {
 }
 
 function initializeEnvVars() {
-  process.env.BATCH_JOB_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${SQSQueues.BATCH_JOB_QUEUE_NAME}`
-  process.env.AUDITLOG_TOPIC_ARN = `arn:aws:sns:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT}:${StackConstants.AUDIT_LOG_TOPIC_NAME}`
+  const batchJobQueueName: string = SQSQueues.BATCH_JOB_QUEUE_NAME.name
+  const auditLogTopicName: string = StackConstants.AUDIT_LOG_TOPIC_NAME
+  process.env.BATCH_JOB_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchJobQueueName}`
+  process.env.AUDITLOG_TOPIC_ARN = `arn:aws:sns:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT}:${auditLogTopicName}`
 }
 
 async function main() {
