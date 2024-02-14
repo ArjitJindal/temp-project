@@ -925,6 +925,7 @@ export class AlertsService extends CaseAlertsCommonService {
     return await this.alertsRepository.getAlertTransactionsHit({
       alertId,
       pageSize: params?.pageSize,
+      page: params?.page,
       userId: params?.userId,
       originUserId: params?.originUserId,
       destinationUserId: params?.destinationUserId,
