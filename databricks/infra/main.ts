@@ -26,7 +26,7 @@ const awsRegion = config.env.region || ''
 const regionalAdminGroupName = `admins-${awsRegion}`
 const stateBucket = `flagright-terraform-state-databricks-${env}`
 const kinesisStreamName = 'tarponDynamoChangeCaptureStream'
-const prefix = `flagright-databricks-${env}`
+const prefix = `flagright-databricks-${stage}-${region}`
 const cidrBlock = '10.4.0.0/16'
 const databricksClientId = 'cb9efcf2-ffd5-484a-badc-6317ba4aef91'
 const databricksAccountId = 'e2fae071-88c7-4b3e-90cd-2f4c5ced45a7'
@@ -1159,6 +1159,7 @@ class DatabricksStack extends TerraformStack {
                   type: 'AWS',
                   identifiers: [
                     'arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL',
+                    `arn:aws:iam::${awsAccountId}:role/${prefix}-uc-access`,
                   ],
                 },
               ],
@@ -1192,15 +1193,15 @@ class DatabricksStack extends TerraformStack {
         }
       )
 
-    const unityMetastorePolicy = new aws.iamPolicy.IamPolicy(
-      this,
-      'unity-metastore',
-      {
-        policy: JSON.stringify({
-          Version: '2012-10-17',
-          Statement: [
+    const unityMetastorePolicyDoc =
+      new aws.dataAwsIamPolicyDocument.DataAwsIamPolicyDocument(
+        this,
+        'unity-metastore-policy',
+        {
+          statement: [
             {
-              Action: [
+              effect: 'Allow',
+              actions: [
                 's3:GetObject',
                 's3:GetObjectVersion',
                 's3:PutObject',
@@ -1211,11 +1212,24 @@ class DatabricksStack extends TerraformStack {
                 's3:GetLifecycleConfiguration',
                 's3:PutLifecycleConfiguration',
               ],
-              Resource: [metaStorageBucket.arn, `${metaStorageBucket.arn}/*`],
-              Effect: 'Allow',
+              resources: [metaStorageBucket.arn, `${metaStorageBucket.arn}/*`],
+            },
+            {
+              actions: ['sts:AssumeRole'],
+              resources: [
+                `arn:aws:iam::${awsAccountId}:role/${prefix}-uc-access`,
+              ],
+              effect: 'Allow',
             },
           ],
-        }),
+        }
+      )
+
+    const unityMetastorePolicy = new aws.iamPolicy.IamPolicy(
+      this,
+      'unity-metastore',
+      {
+        policy: unityMetastorePolicyDoc.json,
         tags: {
           Name: `${prefix}-unity-catalog IAM policy`, // Replace `localPrefix` with your local prefix variable or value
           Project: 'databricks',
