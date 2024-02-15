@@ -26,12 +26,15 @@ export const Shareholders: TableQuestion<{ userId: string }> = {
         USERS_COLLECTION(tenantId)
       )
       .findOne({ userId })
-
+    const items =
+      result?.type === 'BUSINESS' && result.shareHolders
+        ? result.shareHolders.map(personToRow)
+        : []
     return {
-      data:
-        result?.type === 'BUSINESS' && result.shareHolders
-          ? result.shareHolders.map(personToRow)
-          : [],
+      data: {
+        items,
+        total: items.length,
+      },
       summary: ``,
     }
   },

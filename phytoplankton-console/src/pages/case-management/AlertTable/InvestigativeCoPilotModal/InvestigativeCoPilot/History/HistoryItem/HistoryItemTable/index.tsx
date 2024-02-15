@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { QuestionResponseTable } from '../../../types';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -18,14 +18,12 @@ import {
   MONEY_CURRENCY,
   COUNTRY,
 } from '@/components/library/Table/standardDataTypes';
-import { PaginatedData } from '@/utils/queries/hooks';
-import { ColumnDataType } from '@/components/library/Table/types';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-
-const PAGE_SIZE = 5;
+import { ColumnDataType, CommonParams } from '@/components/library/Table/types';
 
 interface Props {
   item: QuestionResponseTable;
+  pageParams: CommonParams;
+  onPageParams: (params: CommonParams) => void;
 }
 export const typeAssigner = (columnType: string | undefined) => {
   let type: ColumnDataType<any> = UNKNOWN;
@@ -90,18 +88,13 @@ export const typeAssigner = (columnType: string | undefined) => {
   return type;
 };
 export default function HistoryItemTable(props: Props) {
-  const { item } = props;
+  const { item, pageParams, onPageParams } = props;
 
   const columnHelper = new ColumnHelper();
-  const [params, setParams] = useState({
-    ...DEFAULT_PARAMS_STATE,
-    pageSize: PAGE_SIZE,
-  });
 
-  const page = params.page ?? 1;
-
-  const tableData: PaginatedData<unknown> = useMemo(() => {
-    const dataItems = (item.rows ?? []).map((row, i) => {
+  const paginate = item.rows?.length != item.total;
+  const tableData = useMemo(() => {
+    const items = (item.rows ?? []).map((row, i) => {
       return (item.headers ?? []).reduce(
         (acc, header, i) => {
           return {
@@ -112,18 +105,25 @@ export default function HistoryItemTable(props: Props) {
         { index: i },
       );
     });
-
+    if (paginate) {
+      return {
+        success: true,
+        items: items,
+        total: item.total,
+      };
+    }
+    const page = pageParams?.page || 1;
     return {
       success: true,
-      items: dataItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-      total: dataItems.length,
+      items: items?.slice((page - 1) * pageParams.pageSize, page * pageParams.pageSize),
+      total: items?.length,
     };
-  }, [page, item]);
+  }, [item.rows, item.headers, item.total, paginate, pageParams?.page, pageParams.pageSize]);
 
   return (
     <Table<any>
-      params={params}
-      onChangeParams={setParams}
+      params={pageParams}
+      onChangeParams={onPageParams}
       rowHeightMode={'AUTO'}
       toolsOptions={false}
       rowKey="index"
@@ -135,7 +135,7 @@ export default function HistoryItemTable(props: Props) {
         });
       })}
       data={tableData}
-      pagination={'HIDE_FOR_ONE_PAGE'}
+      pagination={paginate || 'HIDE_FOR_ONE_PAGE'}
     />
   );
 }

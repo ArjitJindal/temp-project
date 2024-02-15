@@ -33,25 +33,29 @@ export const AlertHistory: TableQuestion<Period> = {
       .toArray()
 
     const alerts = result.flatMap((r) => r.alerts)
+    const items = result.flatMap((r) => {
+      return (
+        r.alerts?.map((a) => [
+          a.alertId,
+          r.createdTimestamp,
+          a.numberOfTransactionsHit,
+          a.ruleId,
+          a.ruleName,
+          a.ruleDescription,
+          a.ruleAction,
+          a.ruleNature,
+          a.alertStatus,
+          r.caseStatus,
+          r.lastStatusChange?.reason?.join(', '),
+          a.updatedAt,
+        ]) || []
+      )
+    })
     return {
-      data: result.flatMap((r) => {
-        return (
-          r.alerts?.map((a) => [
-            a.alertId,
-            r.createdTimestamp,
-            a.numberOfTransactionsHit,
-            a.ruleId,
-            a.ruleName,
-            a.ruleDescription,
-            a.ruleAction,
-            a.ruleNature,
-            a.alertStatus,
-            r.caseStatus,
-            r.lastStatusChange?.reason?.join(', '),
-            a.updatedAt,
-          ]) || []
-        )
-      }),
+      data: {
+        items,
+        total: items.length,
+      },
       summary: `There have been ${
         alerts.length
       } alerts for ${username} ${humanReadablePeriod(

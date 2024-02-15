@@ -32,21 +32,24 @@ export const KycScoring: TableQuestion<{ userId: string }> = {
       'userDetails.countryOfResidence': 'Country of residence',
     }
 
-    const data =
+    const items =
       krsScore?.components?.map((c) => [
         displayNames[c.parameter],
         c.value,
         c.score.toFixed(0),
         c.riskLevel,
       ]) || []
-    data.push([
+    items.push([
       'KYC risk score (KRS)',
       '-',
       krsScore?.krsScore,
       krsScore?.riskLevel,
     ])
     return {
-      data,
+      data: {
+        items,
+        total: items.length,
+      },
       summary: ``,
     }
   },

@@ -26,8 +26,13 @@ export const LinkedUsers: TableQuestion<any> = {
       })
       .toArray()
 
+    const items = result.map((u) => [u.userId, getUserName(u), u.type])
+
     return {
-      data: result.map((u) => [u.userId, getUserName(u), u.type]),
+      data: {
+        items,
+        total: items.length,
+      },
       summary: `There have ${
         result.length
       } users linked to ${username}. For the linked users, ${calculatePercentageBreakdown(

@@ -15,6 +15,8 @@ import HistoryItemBarchart from '@/pages/case-management/AlertTable/Investigativ
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import HistoryItemProperties from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemProperties';
 import HistoryItemEmbedded from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemEmbedded';
+import { CommonParams } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 interface Props {
   alertId: string;
@@ -27,7 +29,11 @@ export default function HistoryItem(props: Props) {
   const questionId = itemState.questionId;
 
   const api = useApi();
-  const updateVarsMutation = useMutation<QuestionResponse, unknown, VariablesValues>(
+  const updateVarsMutation = useMutation<
+    QuestionResponse,
+    unknown,
+    VariablesValues & { page?: number; pageSize?: number }
+  >(
     async (variables) => {
       if (questionId == null) {
         throw new Error(`Question id is not defined`);
@@ -70,6 +76,17 @@ export default function HistoryItem(props: Props) {
     },
   );
 
+  const [pageParams, setPageParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
+
+  const onPageParams = (newParams: CommonParams) => {
+    updateVarsMutation.mutate({
+      ...updateVarsMutation.variables,
+      page: newParams.page,
+      pageSize: newParams.pageSize,
+    });
+    setPageParams((pageParams) => ({ ...pageParams, ...newParams }));
+  };
+
   return (
     <HistoryItemLayout
       questionId={questionId}
@@ -77,17 +94,22 @@ export default function HistoryItem(props: Props) {
       isLoading={isLoading(getMutationAsyncResource(updateVarsMutation))}
       item={itemState}
       onRefresh={(vars) => {
-        updateVarsMutation.mutate(vars);
+        updateVarsMutation.mutate({ ...vars });
+        setPageParams(DEFAULT_PARAMS_STATE);
       }}
     >
-      {renderItem(itemState)}
+      {renderItem(itemState, pageParams, onPageParams)}
     </HistoryItemLayout>
   );
 }
 
-function renderItem(item: QuestionResponse) {
+function renderItem(
+  item: QuestionResponse,
+  pageParams: CommonParams,
+  onPageParams: (params: CommonParams) => void,
+) {
   if (item.questionType === 'TABLE') {
-    return <HistoryItemTable item={item} />;
+    return <HistoryItemTable item={item} pageParams={pageParams} onPageParams={onPageParams} />;
   }
   if (item.questionType === 'STACKED_BARCHART') {
     return <HistoryItemStackedBarchart item={item} />;

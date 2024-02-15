@@ -62,22 +62,26 @@ export const AlertsRelatedToTransaction: TableQuestion<
       .toArray()
 
     const alerts = result.flatMap((r) => r.alerts)
+    const items = result.flatMap((r) => {
+      return r.alerts.map((a) => {
+        return [
+          a.alertId,
+          a.ruleId,
+          a.ruleDescription,
+          a.alertStatus,
+          a.createdTimestamp,
+          a.alertStatus === 'CLOSED'
+            ? a.lastStatusChange?.reason?.join(', ')
+            : '-',
+          r.reports.map((r) => r.id).join(', '),
+        ]
+      })
+    })
     return {
-      data: result.flatMap((r) => {
-        return r.alerts.map((a) => {
-          return [
-            a.alertId,
-            a.ruleId,
-            a.ruleDescription,
-            a.alertStatus,
-            a.createdTimestamp,
-            a.alertStatus === 'CLOSED'
-              ? a.lastStatusChange?.reason?.join(', ')
-              : '-',
-            r.reports.map((r) => r.id).join(', '),
-          ]
-        })
-      }),
+      data: {
+        items,
+        total: items.length,
+      },
       summary: `There have been ${
         alerts.length
       } alerts for ${username} ${humanReadablePeriod(

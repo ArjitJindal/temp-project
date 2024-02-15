@@ -6,19 +6,20 @@ import {
   periodVars,
   sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
-import { executeSql } from '@/utils/databricks'
+import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
 
-export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
+export const UsersReceivedMoneyFrom: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.USERS_MONEY_RECEIVED_FROM,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
-    return `Top ${
-      vars.top
-    } users they have received money ${humanReadablePeriod(vars)}`
+    return `Top users they have received money ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ userId, username }, { top, ...period }) => {
-    const result = await executeSql<{
+  aggregationPipeline: async (
+    { userId, username },
+    { page, pageSize, ...period }
+  ) => {
+    const { rows, total } = await paginatedSqlQuery<{
       userId: string
       name: string
       userType: string
@@ -40,21 +41,29 @@ from
 group by
   t.originUserId
 order by
-  count desc
-LIMIT
-  :limit
-        `,
+  count desc`,
       {
         userId,
-        limit: top,
         ...sqlPeriod(period),
-      }
+      },
+      page,
+      pageSize
     )
 
+    const items = rows.map((r) => [
+      r.userId,
+      r.name,
+      r.userType,
+      r.count,
+      r.sum,
+    ])
     return {
-      data: result.map((r) => [r.userId, r.name, r.userType, r.count, r.sum]),
+      data: {
+        items,
+        total,
+      },
       summary: `The top user that ${username} received money from was ${
-        result.at(0)?.name
+        rows.at(0)?.name
       }.`,
     }
   },
@@ -67,9 +76,8 @@ LIMIT
   ],
   variableOptions: {
     ...periodVars,
-    top: 'INTEGER',
   },
   defaults: () => {
-    return { top: 10 }
+    return {}
   },
 }

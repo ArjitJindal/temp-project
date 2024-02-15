@@ -27,11 +27,15 @@ export const Directors: TableQuestion<{ userId: string }> = {
       )
       .findOne({ userId })
 
+    const items =
+      result?.type === 'BUSINESS' && result.directors
+        ? result.directors.map(personToRow)
+        : []
     return {
-      data:
-        result?.type === 'BUSINESS' && result.directors
-          ? result.directors.map(personToRow)
-          : [],
+      data: {
+        items,
+        total: items.length,
+      },
       summary: ``,
     }
   },

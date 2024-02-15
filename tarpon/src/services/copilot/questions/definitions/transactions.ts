@@ -1,17 +1,15 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
-
-import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   calculatePercentageBreakdown,
   humanReadablePeriod,
-  matchPeriod,
   Period,
   periodDefaults,
   periodVars,
+  sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
+import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
+import { Transaction } from '@/@types/openapi-internal/Transaction'
 
 export const Transactions: TableQuestion<Period> = {
   type: 'TABLE',
@@ -26,14 +24,6 @@ export const Transactions: TableQuestion<Period> = {
       columnType: 'ID',
     },
     {
-      name: 'TRS score',
-      columnType: 'FLOAT',
-    },
-    {
-      name: 'Risk level',
-      columnType: 'TAG',
-    },
-    {
       name: 'Transaction type',
       columnType: 'TAG',
     },
@@ -46,16 +36,8 @@ export const Transactions: TableQuestion<Period> = {
       columnType: 'TAG',
     },
     {
-      name: 'Status',
-      columnType: 'TAG',
-    },
-    {
       name: 'Origin user ID',
       columnType: 'ID',
-    },
-    {
-      name: 'Origin payment identifier',
-      columnType: 'STRING',
     },
     {
       name: 'Origin amount',
@@ -74,10 +56,6 @@ export const Transactions: TableQuestion<Period> = {
       columnType: 'ID',
     },
     {
-      name: 'Destination payment identifier',
-      columnType: 'STRING',
-    },
-    {
       name: 'Destination amount',
       columnType: 'MONEY_AMOUNT',
     },
@@ -94,48 +72,48 @@ export const Transactions: TableQuestion<Period> = {
       columnType: 'STRING',
     },
   ],
-  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
-    const client = await getMongoDbClient()
-    const db = client.db()
-
-    console.log(period)
-    const result = await db
-      .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
-      .find({
-        ...matchPeriod('timestamp', period),
-        $or: [{ originUserId: userId }, { destinationUserId: userId }],
-      })
-      .toArray()
-
+  aggregationPipeline: async (
+    { userId, username },
+    { page, pageSize, ...period }
+  ) => {
+    const { rows, total } = await paginatedSqlQuery<Transaction>(
+      `select * 
+        from transactions t where t.timestamp between :from and :to
+        and (t.originUserId = :userId or t.destinationUserId = :userId)
+      `,
+      {
+        userId,
+        ...sqlPeriod(period),
+      },
+      page,
+      pageSize
+    )
+    const items = rows.map((t) => {
+      return [
+        t.transactionId,
+        t.type,
+        t.timestamp,
+        t.transactionState,
+        t.originUserId,
+        t.originAmountDetails?.transactionAmount,
+        t.originAmountDetails?.transactionCurrency,
+        t.originAmountDetails?.country,
+        t.destinationUserId,
+        t.destinationAmountDetails?.transactionAmount,
+        t.destinationAmountDetails?.transactionCurrency,
+        t.destinationAmountDetails?.country,
+        t.reference,
+      ]
+    })
     return {
-      data: result.map((t) => {
-        return [
-          t.transactionId,
-          t.arsScore?.arsScore,
-          t.arsScore?.riskLevel,
-          t.type,
-          t.timestamp,
-          t.transactionState,
-          t.status,
-          t.originUserId,
-          t.originPaymentMethodId,
-          t.originAmountDetails?.transactionAmount,
-          t.originAmountDetails?.transactionCurrency,
-          t.originAmountDetails?.country,
-          t.destinationUserId,
-          t.destinationPaymentMethodId,
-          t.destinationAmountDetails?.transactionAmount,
-          t.destinationAmountDetails?.transactionCurrency,
-          t.destinationAmountDetails?.country,
-          t.reference,
-        ]
-      }),
-      summary: `There have been ${
-        result.length
-      } transactions for ${username} ${humanReadablePeriod(
+      data: {
+        items,
+        total,
+      },
+      summary: `There have been ${total} transactions for ${username} ${humanReadablePeriod(
         period
       )}.  For the transactions, ${calculatePercentageBreakdown(
-        result.map((t) => t.status || '')
+        rows.map((t) => t.transactionState || '')
       )}.`,
     }
   },

@@ -5189,6 +5189,13 @@ components:
           oneOf:
             - type: string
             - type: number
+            - type: boolean
+            - type: array
+              items:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
       required:
         - name
         - value
@@ -5302,6 +5309,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TableHeaders'
+        total:
+          type: number
         rows:
           type: array
           items:

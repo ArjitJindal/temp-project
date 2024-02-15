@@ -6,23 +6,24 @@ import {
   periodVars,
   sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
-import { executeSql } from '@/utils/databricks'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
 
-export const UniquePaymentIdentifierReceived: TableQuestion<
-  Period & { top: number }
-> = {
+export const UniquePaymentIdentifierReceived: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS_OF_RECEIVERS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
-    return `Top ${
-      vars.top
-    } payment identifiers they have received from ${humanReadablePeriod(vars)}`
+    return `Top payment identifiers they have received from ${humanReadablePeriod(
+      vars
+    )}`
   },
-  aggregationPipeline: async ({ userId, username }, { top, ...period }) => {
-    const result = await executeSql<{
+  aggregationPipeline: async (
+    { userId, username },
+    { page, pageSize, ...period }
+  ) => {
+    const { rows, total } = await paginatedSqlQuery<{
       method: string
       count: number
       sum: number
@@ -43,27 +44,32 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
       t.originPaymentDetails
     order by
       sum desc
-    limit :top
     `,
       {
         userId,
         ...sqlPeriod(period),
-        top,
-      }
+      },
+      page,
+      pageSize
     )
 
+    const items = rows.map((r) => {
+      return [
+        getPaymentMethodId(r.originPaymentDetails),
+        r.method,
+        r.count,
+        r.sum,
+      ]
+    })
+
     return {
-      data: result.map((r) => {
-        return [
-          getPaymentMethodId(r.originPaymentDetails),
-          r.method,
-          r.count,
-          r.sum,
-        ]
-      }),
+      data: {
+        items,
+        total,
+      },
       summary: `The top payment identifier that ${username} received money from was ${getPaymentMethodId(
-        result.at(0)?.originPaymentDetails
-      )} which was a ${result.at(0)?.method} method.`,
+        rows.at(0)?.originPaymentDetails
+      )} which was a ${rows.at(0)?.method} method.`,
     }
   },
   headers: [
@@ -74,9 +80,8 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
   ],
   variableOptions: {
     ...periodVars,
-    top: 'INTEGER',
   },
   defaults: () => {
-    return { top: 10 }
+    return {}
   },
 }

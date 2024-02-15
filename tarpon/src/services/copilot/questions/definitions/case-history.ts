@@ -32,17 +32,21 @@ export const CaseHistory: TableQuestion<Period> = {
       })
       .toArray()
 
+    const items = result.map((r) => {
+      return [
+        r.caseId,
+        r.createdTimestamp,
+        r.caseTransactionsCount,
+        r.caseStatus,
+        r.updatedAt,
+        r.lastStatusChange?.reason?.join(', ') || '-',
+      ]
+    })
     return {
-      data: result.map((r) => {
-        return [
-          r.caseId,
-          r.createdTimestamp,
-          r.caseTransactionsCount,
-          r.caseStatus,
-          r.updatedAt,
-          r.lastStatusChange?.reason?.join(', ') || '-',
-        ]
-      }),
+      data: {
+        items,
+        total: items.length,
+      },
       summary: `There have been ${
         result.length
       } cases for ${username} ${humanReadablePeriod(

@@ -57,16 +57,20 @@ export const SarsFiled: TableQuestion<Period> = {
       result.map((r) => r.createdById)
     )
 
+    const items = result.map((r, i) => {
+      return [
+        r.id,
+        r.description,
+        accounts && accounts.at(i)?.name,
+        r.caseId,
+        r.createdAt,
+      ]
+    })
     return {
-      data: result.map((r, i) => {
-        return [
-          r.id,
-          r.description,
-          accounts && accounts.at(i)?.name,
-          r.caseId,
-          r.createdAt,
-        ]
-      }),
+      data: {
+        items,
+        total: items.length,
+      },
       summary: `There have been ${
         result.length
       } SARs filed for ${username} ${humanReadablePeriod(

@@ -55,6 +55,7 @@ export const getQuestions = (): (
     UsersSentMoneyTo,
     UsersReceivedMoneyFrom,
     TransactionOriginSummary,
+    Transactions,
     TransactionDestinationSummary,
     ...(hasFeature('CRM') ? [CrmInsights] : []),
     ...(hasFeature('SAR') ? [SarsFiled] : []),
@@ -67,7 +68,6 @@ export const getQuestions = (): (
           CheckedTransactions,
           Recommendation,
           TrsScore,
-          Transactions,
           TransactionByRulesAction,
           TransactionType,
         ]

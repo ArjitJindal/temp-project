@@ -189,7 +189,8 @@ export class QuestionService {
       const result = await question.aggregationPipeline(ctx, varObject)
       return {
         ...common,
-        rows: result.data,
+        total: result.data.total,
+        rows: result.data.items,
         summary: result.summary,
         headers: question.headers.map((c) => ({
           name: c.name,
@@ -275,7 +276,7 @@ Dates and datetimes should be output in ISO format, for example the datetime now
         typeof result.variables['from'] === 'string' &&
         result.variables['from'].length > 0
       ) {
-        result.variables['from'] = dayjs(result.variables['to'])
+        result.variables['from'] = dayjs(result.variables['to'] as number)
           .subtract(1, 'day')
           .format('YYYY-MM-DD')
       }
@@ -287,7 +288,7 @@ Dates and datetimes should be output in ISO format, for example the datetime now
             if (key in result.variables) {
               if (isIsoDate(result.variables[key])) {
                 result.variables[key] = new Date(
-                  result.variables[key]
+                  result.variables[key] as number
                 ).valueOf()
               } else {
                 delete result.variables[key]

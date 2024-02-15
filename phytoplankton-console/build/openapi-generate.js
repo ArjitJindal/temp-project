@@ -4,6 +4,19 @@
 const execSync = require('child_process').execSync;
 const fs = require('fs');
 
+function removeBadImports(paths) {
+  for (const path of paths) {
+    if (!fs.existsSync(path)) {
+      continue;
+    }
+    const newText = fs
+      .readFileSync(path)
+      .toString()
+      .replace(/import \{ \S+ \| \S+ .*/g, '');
+    fs.writeFileSync(path, newText);
+  }
+}
+
 function exec(command) {
   execSync(command, { env: process.env });
 }
@@ -80,6 +93,8 @@ const pathsToReplace = [
   'src/apis/models/BusinessWithRulesResult.ts',
   'src/apis/models/BusinessResponse.ts',
 ];
+
+removeBadImports(['src/apis/models/QuestionVariable.ts']);
 
 replaceUserSavedPaymentDetails(pathsToReplace);
 

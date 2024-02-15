@@ -19,6 +19,7 @@ import CaseStatusTag from '@/components/library/CaseStatusTag';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 interface Props {
   alertId: string;
@@ -51,7 +52,9 @@ export default function InvestigativeCoPilot(props: Props) {
       const response = await api.postQuestion({
         QuestionRequest: {
           questionId: searchString,
-          variables: [],
+          variables: Object.entries(DEFAULT_PARAMS_STATE)
+            .filter(([_, value]) => value != null)
+            .map(([name, value]) => ({ name, value })),
         },
         alertId: alertId,
       });

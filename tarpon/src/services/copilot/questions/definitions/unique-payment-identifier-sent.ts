@@ -6,23 +6,24 @@ import {
   periodVars,
   sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
-import { executeSql } from '@/utils/databricks'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
 
-export const UniquePaymentIdentifierSent: TableQuestion<
-  Period & { top: number }
-> = {
+export const UniquePaymentIdentifierSent: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS_OF_SENDERS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
-    return `Top ${
-      vars.top
-    } payment identifiers they have sent to ${humanReadablePeriod(vars)}`
+    return `Top  payment identifiers they have sent to ${humanReadablePeriod(
+      vars
+    )}`
   },
-  aggregationPipeline: async ({ userId, username }, { top, ...period }) => {
-    const result = await executeSql<{
+  aggregationPipeline: async (
+    { userId, username },
+    { page, pageSize, ...period }
+  ) => {
+    const { rows, total } = await paginatedSqlQuery<{
       method: string
       count: number
       sum: number
@@ -43,27 +44,32 @@ export const UniquePaymentIdentifierSent: TableQuestion<
       t.destinationPaymentDetails
     order by
       count desc
-    limit :top
     `,
       {
         userId,
         ...sqlPeriod(period),
-        top,
-      }
+      },
+      page,
+      pageSize
     )
 
+    const items = rows.map((r) => {
+      return [
+        getPaymentMethodId(r.destinationPaymentDetails),
+        r.method,
+        r.count,
+        r.sum,
+      ]
+    })
+
     return {
-      data: result.map((r) => {
-        return [
-          getPaymentMethodId(r.destinationPaymentDetails),
-          r.method,
-          r.count,
-          r.sum,
-        ]
-      }),
+      data: {
+        items,
+        total,
+      },
       summary: `The top payment identifier that ${username} sent money to was ${getPaymentMethodId(
-        result.at(0)?.destinationPaymentDetails
-      )} which was a ${result.at(0)?.method} method.`,
+        rows.at(0)?.destinationPaymentDetails
+      )} which was a ${rows.at(0)?.method} method.`,
     }
   },
   headers: [
@@ -72,11 +78,8 @@ export const UniquePaymentIdentifierSent: TableQuestion<
     { name: 'Transaction Count', columnType: 'NUMBER' },
     { name: 'Total Amount', columnType: 'MONEY_AMOUNT' },
   ],
-  variableOptions: {
-    ...periodVars,
-    top: 'INTEGER',
-  },
+  variableOptions: periodVars,
   defaults: () => {
-    return { top: 10 }
+    return {}
   },
 }

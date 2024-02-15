@@ -65,16 +65,20 @@ export const CheckedTransactions: TableQuestion<Period> = {
       .limit(100)
       .toArray()
 
+    const items = sortBy(checkedTransactions, 'timestamp')
+      .reverse()
+      .map((t) => {
+        return [
+          t.transactionId,
+          `${t.originAmountDetails?.transactionAmount}`,
+          t.timestamp,
+        ]
+      })
     return {
-      data: sortBy(checkedTransactions, 'timestamp')
-        .reverse()
-        .map((t) => {
-          return [
-            t.transactionId,
-            `${t.originAmountDetails?.transactionAmount}`,
-            t.timestamp,
-          ]
-        }),
+      data: {
+        items,
+        total: items.length,
+      },
       summary: `${checkedTransactions.length} transactions were checked before the alert was created for ${username}.`,
     }
   },

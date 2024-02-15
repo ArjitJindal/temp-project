@@ -7,9 +7,11 @@ import { AccountsService } from '@/services/accounts'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { PropertiesProperties } from '@/@types/openapi-internal/PropertiesProperties'
+import { PageSize } from '@/utils/pagination'
+import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 
 export type Variables = {
-  [key: string]: string | number
+  [key: string]: (typeof QuestionVariable.prototype)['value']
 }
 
 export type VariableOptions<V> = {
@@ -61,7 +63,10 @@ export type AggregationQuestion<V extends Variables, D> = Question<any> & {
 export type TableQuestion<V extends Variables> = {
   type: 'TABLE'
   headers: { name: string; columnType: TableHeadersColumnTypeEnum }[]
-} & AggregationQuestion<V, (string | number | undefined)[][]>
+} & AggregationQuestion<
+  V & { pageSize: PageSize; page: number },
+  { items: (string | number | undefined)[][]; total: number }
+>
 
 export type TimeseriesQuestion<V extends Variables> = {
   type: 'TIME_SERIES'
