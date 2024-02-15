@@ -5523,6 +5523,16 @@ components:
       required:
         - key
         - uiDefinition
+    RuleEntityVariableInUse:
+      title: RuleEntityVariableInUse
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+      required:
+        - key
     RuleAggregationType:
       title: RuleAggregationType
       type: string
@@ -5829,6 +5839,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleAggregationVariable'
+        logicEntityVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleEntityVariableInUse'
         baseCurrency:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
         parameters:

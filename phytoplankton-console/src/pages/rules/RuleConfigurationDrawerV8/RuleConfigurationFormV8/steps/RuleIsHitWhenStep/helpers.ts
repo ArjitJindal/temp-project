@@ -6,7 +6,12 @@ import { useQuery } from '@/utils/queries/hooks';
 import { RULE_LOGIC_CONFIG } from '@/utils/queries/keys';
 import { useIsChanged } from '@/utils/hooks';
 import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
-import { RuleAggregationVariable, RuleLogicConfig, RuleOperator } from '@/apis';
+import {
+  RuleAggregationVariable,
+  RuleEntityVariableInUse,
+  RuleLogicConfig,
+  RuleOperator,
+} from '@/apis';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/utils';
 
@@ -20,6 +25,7 @@ export function useLogicBuilderConfig(
   entityVariableTypes: Array<
     'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER' | 'PAYMENT_DETAILS'
   >,
+  entityVariablesInUse: RuleEntityVariableInUse[] | undefined,
   aggregationVariables: RuleAggregationVariable[],
   configParams: Partial<LogicBuilderConfig>,
 ): AsyncResource<Config> {
@@ -31,7 +37,7 @@ export function useLogicBuilderConfig(
   );
   const ruleLogicConfigRes = ruleLogicConfigResult.data;
 
-  const variablesChanged = useIsChanged(aggregationVariables);
+  const variablesChanged = useIsChanged([...aggregationVariables, ...(entityVariablesInUse ?? [])]);
   const configResChanged = useIsChanged(ruleLogicConfigRes);
   useEffect(() => {
     if (!(configResChanged || variablesChanged)) {
@@ -51,9 +57,23 @@ export function useLogicBuilderConfig(
           }
           return definition;
         });
-        const filteredEntityVariables = entityVariables.filter(
-          (v) => v.entity != null && entityVariableTypes.includes(v.entity),
-        );
+        const filteredEntityVariables = entityVariables
+          .filter(
+            (v) =>
+              v.entity != null &&
+              entityVariableTypes.includes(v.entity) &&
+              (!entityVariablesInUse ||
+                entityVariablesInUse.find((varInUse) => varInUse.key === v.key)),
+          )
+          .map((v) => ({
+            ...v,
+            uiDefinition: {
+              ...v.uiDefinition,
+              label:
+                entityVariablesInUse?.find((varInUse) => varInUse.key === v.key)?.name ??
+                v.uiDefinition.label,
+            },
+          }));
         const variables = filteredEntityVariables.concat(aggregationVariablesGrouped);
         const types = InitialConfig.types;
         for (const key in types) {
@@ -101,6 +121,7 @@ export function useLogicBuilderConfig(
     configResChanged,
     entityVariableTypes,
     configParams,
+    entityVariablesInUse,
   ]);
 
   return result;

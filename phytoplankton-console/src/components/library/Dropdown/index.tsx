@@ -23,6 +23,7 @@ type Placement =
 
 interface Props<T extends string | number = string> {
   onSelect?: (option: DropdownOption<T>) => void;
+  selectedKeys?: string[];
   options: DropdownOption<T>[];
   children: React.ReactNode;
   placement?: Placement;
@@ -48,6 +49,7 @@ export default function Dropdown<T extends string | number = string>(props: Prop
     bordered,
     minWidth,
     writePermissions = [],
+    selectedKeys = [],
   } = props;
 
   const hasUserPermissions = useHasPermissions(writePermissions);
@@ -60,6 +62,7 @@ export default function Dropdown<T extends string | number = string>(props: Prop
           onSelect?.(option);
         }
       }}
+      selectedKeys={selectedKeys}
       disabled={!hasUserPermissions}
       items={options.map((option) => ({
         key: option.value.toString(),

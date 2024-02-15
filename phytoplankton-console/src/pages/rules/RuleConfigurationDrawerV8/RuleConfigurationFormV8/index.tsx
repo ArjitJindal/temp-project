@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ConfigProvider } from 'antd';
 import cn from 'clsx';
+import { getAllEntityVariables } from '../../utils';
 import s from './style.module.less';
 import BasicDetailsStep, {
   FormValues as BasicDetailsStepFormValues,
@@ -234,6 +235,8 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
   return useMemo(() => {
     const ruleIsHitWhenStep: RuleIsHitWhenStepFormValues = {
       ...RULE_IS_HIT_WHEN_STEP_INITIAL_VALUES,
+      ruleLogic: rule?.defaultLogic,
+      ruleLogicEntityVariables: getAllEntityVariables(rule?.defaultLogic),
       ruleLogicAggregationVariables: rule?.defaultLogicAggregationVariables ?? [],
     };
     if (isRiskLevelsEnabled) {

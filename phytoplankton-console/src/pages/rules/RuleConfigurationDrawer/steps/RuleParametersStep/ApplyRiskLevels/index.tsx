@@ -31,7 +31,7 @@ export default function ApplyRiskLevels(props: Props) {
   });
   return (
     <>
-      <Label label={'Apply to other risk levels'} testId={'apply-to-risk-levels'}>
+      <Label label={'Apply to other risk levels'}>
         <Select<RiskLevel>
           mode="TAGS"
           options={RISK_LEVELS.filter((x) => x !== currentRiskLevel).map((riskLevel) => ({

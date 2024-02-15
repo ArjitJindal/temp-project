@@ -1,8 +1,17 @@
 import { useMutation } from '@tanstack/react-query';
+import { getAllValuesByKey } from '@flagright/lib/utils';
 import { RuleConfigurationFormValues } from './RuleConfigurationDrawer/RuleConfigurationForm';
 import { RuleConfigurationFormV8Values } from './RuleConfigurationDrawerV8/RuleConfigurationFormV8';
 import { useApi } from '@/api';
-import { Rule, Priority, RuleInstance, RuleLabels, RuleNature, TriggersOnHit } from '@/apis';
+import {
+  Rule,
+  Priority,
+  RuleInstance,
+  RuleLabels,
+  RuleNature,
+  TriggersOnHit,
+  RuleEntityVariableInUse,
+} from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { removeEmpty } from '@/utils/json';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
@@ -196,6 +205,8 @@ export function ruleInstanceToFormValuesV8(
     },
     ruleIsHitWhenStep: {
       baseCurrency: ruleInstance.baseCurrency,
+      ruleLogicEntityVariables:
+        ruleInstance.logicEntityVariables ?? getAllEntityVariables(ruleInstance.logic),
       ruleLogicAggregationVariables: ruleInstance.logicAggregationVariables ?? [],
       ...(isRiskLevelsEnabled
         ? {
@@ -364,6 +375,7 @@ export function formValuesToRuleInstanceV8(
     riskLevelRuleActions,
     ruleLogic,
     riskLevelRuleLogic,
+    ruleLogicEntityVariables,
     ruleLogicAggregationVariables,
     triggersOnHit,
     riskLevelsTriggersOnHit,
@@ -406,6 +418,7 @@ export function formValuesToRuleInstanceV8(
       alertCreationDirection: alertCreationDetailsStep.alertCreationDirection,
     },
     baseCurrency,
+    logicEntityVariables: ruleLogicEntityVariables,
     logicAggregationVariables: ruleLogicAggregationVariables,
     filtersLogic: filtersLogic,
     filtersLogicFormValues: filtersLogicFormValues,
@@ -541,4 +554,10 @@ export function useIsV8Rule(rule?: Rule | null): boolean {
   const user = useAuth0User();
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   return isSuperAdmin(user) && v8Enabled && rule && rule.defaultLogic;
+}
+
+export function getAllEntityVariables(logic: object): RuleEntityVariableInUse[] {
+  return getAllValuesByKey<string>('var', logic ?? {})
+    .filter((v) => !v.startsWith('agg:'))
+    .map((v) => ({ key: v }));
 }

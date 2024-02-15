@@ -14,7 +14,7 @@ export default function (): JSX.Element {
           value: undefined,
           config: makeConfig({
             fields: fields as Fields,
-            enableNesting: true,
+            enableNesting: false,
           }),
         }}
       >
@@ -36,7 +36,7 @@ export default function (): JSX.Element {
           value: undefined,
           config: makeConfig({
             fields: fields as Fields,
-            enableNesting: false,
+            enableNesting: true,
           }),
         }}
       >
@@ -58,7 +58,7 @@ export default function (): JSX.Element {
           value: undefined,
           config: makeConfig({
             fields: fields as Fields,
-            enableNesting: false,
+            enableNesting: true,
           }),
         }}
       >

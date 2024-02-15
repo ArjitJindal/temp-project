@@ -13,17 +13,19 @@ describe('Create scenario', () => {
     cy.contains('Create rule').click();
     cy.get('input[placeholder="Enter rule name"]').type('Scenario 1');
     cy.get('input[placeholder="Enter rule description"]').type('Description of the scenario');
-    cy.get('label[data-cy="rule-nature"]').within(() => {
+    cy.get('[data-cy="rule-nature"]').within(() => {
       cy.contains('AML').click();
     });
 
     //Rule is hit when
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
-    createVariable('Variable 1', 'type');
-    cy.get('label[data-cy="logic-variable"]').eq(0).click().type('Transaction / type{enter}');
-    cy.get('.widget--has-valuerscs').eq(0).first().click().type('Deposit{enter}');
+    createAggregationVariable('Variable 1', 'type');
+    createTransactionEntityVariable('type');
+    cy.get('button[data-cy="add-logic-v8"]').click();
+    cy.get('[data-cy="logic-variable"]').eq(0).click().type('Transaction / type{enter}');
+    cy.get('.widget--widget').eq(0).first().click().type('Deposit{enter}');
     addCondition('Variable 1', 5);
-    cy.get('label[data-cy="apply-to-risk-levels"]')
+    cy.get('[data-cy="apply-to-risk-levels"]')
       .click()
       .type(
         'Low{downarrow}{enter}Medium{downarrow}{enter}High{downarrow}{enter}Very high{downarrow}{enter}',
@@ -70,10 +72,10 @@ describe('Create scenario', () => {
         checkConditionsCount(2, 'HIGH');
         checkConditionsCount(2, 'VERY_HIGH');
         checkConditionsCount(2, 'VERY_LOW');
-        createVariable('Variable 2', 'transaction id');
+        createAggregationVariable('Variable 2', 'transaction id');
         addCondition('Variable 2', 10);
         cy.get('input[data-cy="rule-action-selector"]').eq(1).click();
-        cy.get('label[data-cy="apply-to-risk-levels"]')
+        cy.get('[data-cy="apply-to-risk-levels"]')
           .click()
           .type('Medium{downarrow}{enter}Very high{downarrow}{enter}');
         cy.get('button[data-cy="apply-to-risk-levels-button"]').click();
@@ -94,31 +96,38 @@ describe('Create scenario', () => {
     cy.get('.query-builder .group-or-rule-container')
       .last()
       .within(() => {
-        cy.get('label[data-cy="logic-variable"]').click().type(`${variableName}{enter}`);
+        cy.get('[data-cy="logic-variable"]').click().type(`${variableName}{enter}`);
         cy.get('.widget--has-valuerscs').click().type(`${value}{enter}`);
       });
   }
 
-  function createVariable(variableName, variableAggregateField) {
+  function createTransactionEntityVariable(entityText: string) {
     cy.get('button[data-cy="add-variable-v8"]').first().click();
+    cy.get('[role="menuitem"]').contains('Entity variable').click();
+    cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
+    cy.get('[data-cy="variable-entity-v8"]').click().type(`${entityText}`).type(`{enter}`);
+    cy.get('button[data-cy="add-variable-v8"]').first().click();
+  }
+
+  function createAggregationVariable(variableName, variableAggregateField) {
+    cy.get('button[data-cy="add-variable-v8"]').first().click();
+    cy.get('[role="menuitem"]').contains('Aggregate variable').click();
     cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}`).blur();
     cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
     cy.get('input[data-cy="variable-direction-v8"]').eq(0).click();
     cy.wait('@ruleLogicConfig').then((interception) => {
       expect(interception.response?.statusCode).to.oneOf([200, 304]);
-      cy.get('label[data-cy="variable-aggregate-field-v8"]')
+      cy.get('[data-cy="variable-aggregate-field-v8"]')
         .click()
         .type(`${variableAggregateField}`)
         .type(`{enter}`);
-      cy.get('label[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
-      // cy.get('label[data-cy="time-from-interval"]').click().type('Month{enter}');
-      // cy.get('label[data-cy="time-to-interval"]').click().type('Month{enter}');
+      cy.get('[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
       cy.get('button[data-cy="add-variable-v8"]').first().click();
     });
   }
 
   function checkConditionsCount(count, riskLevel) {
-    cy.get(`label[data-cy="risk-level-${riskLevel}"]`).click();
+    cy.get(`[data-cy="risk-level-${riskLevel}"]`).click();
     cy.get('.rule.group-or-rule').should('have.length', count);
   }
 });

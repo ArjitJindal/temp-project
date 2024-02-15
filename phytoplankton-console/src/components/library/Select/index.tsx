@@ -35,6 +35,7 @@ interface CommonProps<Value extends Comparable> {
   portaled?: boolean;
   dropdownMatchWidth?: boolean;
   autoTrim?: boolean;
+  testId?: string;
 }
 
 export interface SingleProps<Value extends Comparable>
@@ -75,6 +76,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     portaled = false,
     dropdownMatchWidth = true,
     autoTrim = false,
+    testId,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
@@ -182,6 +184,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       )}
       style={props.style}
       ref={selectInput}
+      data-cy={testId}
     >
       <AntSelect
         getPopupContainer={

@@ -46,9 +46,9 @@ describe('SAR Generate', () => {
         .first()
         .click({ force: true });
       cy.get('button[data-cy="sar-button"]').click();
-      cy.get('label[data-cy="sar-country-select"] input').click();
+      cy.get('[data-cy="sar-country-select"] input').click();
       cy.get(`div[title="${item.countryName}"]`).click();
-      cy.get('label[data-cy="sar-report-type-select"] input').click();
+      cy.get('[data-cy="sar-report-type-select"] input').click();
       cy.get(`div[title="${item.reportType}"]`).click();
       cy.get('button[data-cy="modal-ok"]').click();
       cy.get('div[data-cy="drawer-title-sar-report"]').should('contain', 'SAR report');

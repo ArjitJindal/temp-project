@@ -32,7 +32,7 @@ import { getAggVarDefinition } from '@/pages/rules/RuleConfigurationDrawer/steps
 export type FormRuleAggregationVariable = Partial<RuleAggregationVariable> & {
   timeWindow: RuleAggregationVariableTimeWindow;
 };
-interface VariableFormProps {
+interface AggregationVariableFormProps {
   variable: FormRuleAggregationVariable;
   isNew: boolean;
   entityVariables: RuleEntityVariable[];
@@ -48,7 +48,7 @@ const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; 
   { value: 'RECEIVING', label: 'Receiving' },
   { value: 'SENDING_RECEIVING', label: 'All' },
 ];
-export const VariableForm: React.FC<VariableFormProps> = ({
+export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = ({
   variable,
   entityVariables,
   isNew,
@@ -149,8 +149,12 @@ export const VariableForm: React.FC<VariableFormProps> = ({
     return 'Auto-generated if left empty';
   }, [entityVariables, formValues, isValidFormValues]);
   const handleUpdateForm = useCallback((newValues: Partial<FormRuleAggregationVariable>) => {
+    if (newValues.aggregationFunc === 'COUNT') {
+      newValues.aggregationFieldKey = 'TRANSACTION:transactionId';
+    }
     setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
   }, []);
+  const isAggFuncCount = formValues.aggregationFunc === 'COUNT';
   return (
     <>
       <Card.Section direction="vertical">
@@ -188,10 +192,13 @@ export const VariableForm: React.FC<VariableFormProps> = ({
             testId="variable-aggregate-field-v8"
           >
             <Select<string>
-              value={formValues.aggregationFieldKey}
-              onChange={(aggregationFieldKey) => handleUpdateForm({ aggregationFieldKey })}
+              value={isAggFuncCount ? '-' : formValues.aggregationFieldKey}
+              onChange={(aggregationFieldKey) =>
+                handleUpdateForm({ aggregationFieldKey, aggregationFunc: undefined })
+              }
               mode="SINGLE"
               options={aggregateFieldOptions}
+              isDisabled={isAggFuncCount}
             />
             {/* TODO (v8): Base currency design TBD */}
             {formValues.aggregationFieldKey &&
@@ -226,7 +233,6 @@ export const VariableForm: React.FC<VariableFormProps> = ({
               label="Time window"
               required={{ value: true, showHint: true }}
               testId="time-from-to"
-              element="div"
             >
               <VariableTimeWindow
                 value={formValues.timeWindow}

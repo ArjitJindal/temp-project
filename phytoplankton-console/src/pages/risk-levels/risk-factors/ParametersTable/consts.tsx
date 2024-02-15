@@ -838,7 +838,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
     return shouldShowNewValueInput ? (
       <div className={style.dayRangeRoot}>
         <div className={style.dayRangeContainer}>
-          <Label label="From" element="div">
+          <Label label="From">
             <div className={style.dayRangeInputContainer}>
               <NumberInput
                 isDisabled={true}
@@ -856,7 +856,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
         </div>
 
         <div className={style.dayRangeContainer}>
-          <Label label="To" element="div">
+          <Label label="To">
             <div className={style.dayRangeInputContainer}>
               <NumberInput
                 isDisabled={disabled || value?.endGranularity === 'INFINITE'}
@@ -900,7 +900,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
     return (
       <div style={{ display: 'grid', gridAutoFlow: 'column', gap: '.5rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-          <Label label="Start Time" element="div">
+          <Label label="Start Time">
             <Select
               isDisabled={disabled}
               onChange={(val) =>
@@ -918,7 +918,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
           </Label>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-          <Label label="End Time" element="div">
+          <Label label="End Time">
             <Select<number>
               isDisabled={disabled}
               onChange={(val) =>
@@ -936,7 +936,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
           </Label>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-          <Label label="Time Zone" element="div">
+          <Label label="Time Zone">
             <Select
               isDisabled={disabled}
               onChange={(val) =>
@@ -976,7 +976,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
       <>
         <div className={style.amount_container}>
           <div className={style.amountCurrencyContainer}>
-            <Label label={<div className={style.currencyLabel}>Currency</div>} element="div">
+            <Label label={<div className={style.currencyLabel}>Currency</div>}>
               <Select
                 isDisabled={props.disabled}
                 value={props.value?.currency ?? defaultCurrency}
@@ -994,7 +994,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
             </Label>
           </div>
           <div className={style.amountRangeLabel}>
-            <Label label="From" element="div">
+            <Label label="From">
               <NumberInput
                 isDisabled={props.disabled}
                 min={0}
@@ -1013,7 +1013,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
             </Label>
           </div>
           <div className={style.amountRangeLabel}>
-            <Label label="To" element="div">
+            <Label label="To">
               <NumberInput
                 isDisabled={props.disabled}
                 min={0}
@@ -1082,7 +1082,7 @@ const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value }) => {
   return (
     <div className={style.dayRangeRoot}>
       <div className={style.dayRangeContainer}>
-        <Label label="From" element="div">
+        <Label label="From">
           <div className={style.dayRangeInputContainer}>
             <NumberInput
               isDisabled={true}
@@ -1099,7 +1099,7 @@ const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value }) => {
         </Label>
       </div>
       <div className={style.dayRangeContainer}>
-        <Label label="To" element="div">
+        <Label label="To">
           <div className={style.dayRangeInputContainer}>
             <NumberInput
               isDisabled={true}

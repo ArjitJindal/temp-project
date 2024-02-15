@@ -1,18 +1,19 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Config, Utils as QbUtils } from '@react-awesome-query-builder/ui';
-import { isEqual, debounce } from 'lodash';
+import { isEqual } from 'lodash';
 import { useLogicBuilderConfig } from '../helpers';
 import LogicBuilder, { Props as LogicBuilderProps } from '@/components/ui/LogicBuilder';
 import { LogicBuilderValue, LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { isSuccess } from '@/utils/asyncResource';
 import { usePrevious, useIsChanged } from '@/utils/hooks';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { RuleAggregationVariable } from '@/apis';
+import { RuleAggregationVariable, RuleEntityVariableInUse } from '@/apis';
 import { RuleLogic } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/types';
 
 interface Props {
   jsonLogic: RuleLogic | undefined;
   entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER'>;
+  entityVariablesInUse?: RuleEntityVariableInUse[];
   aggregationVariables: RuleAggregationVariable[] | undefined;
   onChange: (jsonLogic: RuleLogic | undefined) => void;
   configParams?: Partial<LogicBuilderConfig>;
@@ -27,6 +28,7 @@ export function RuleLogicBuilder(props: Props) {
   // Initialize state when config is loaded or changed
   const configRes = useLogicBuilderConfig(
     props.entityVariableTypes,
+    props.entityVariablesInUse,
     props.aggregationVariables ?? [],
     configParams ?? {},
   );
@@ -65,10 +67,6 @@ export function RuleLogicBuilder(props: Props) {
     },
     [props],
   );
-  const debouncedHandleChangeLogic = useMemo(
-    () => debounce(handleChangeLogic, 500),
-    [handleChangeLogic],
-  );
 
   const onChange = useCallback(
     (immutableTree: LogicBuilderValue, config: Config) => {
@@ -78,11 +76,11 @@ export function RuleLogicBuilder(props: Props) {
           tree: immutableTree,
           config,
         };
-        debouncedHandleChangeLogic(newState);
+        handleChangeLogic(newState);
         return newState;
       });
     },
-    [debouncedHandleChangeLogic],
+    [handleChangeLogic],
   );
 
   return (

@@ -9,7 +9,6 @@ import {
   Rule,
   RuleAction,
   TriggersOnHit,
-  RuleAggregationVariable,
 } from '@/apis';
 
 import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
@@ -25,8 +24,6 @@ import ApplyRiskLevels from '@/pages/rules/RuleConfigurationDrawer/steps/RulePar
 import Tabs, { TabItem } from '@/components/library/Tabs';
 
 export interface FormValues {
-  ruleLogic?: object;
-  ruleLogicAggregationVariables?: RuleAggregationVariable[];
   ruleParameters?: unknown;
   ruleAction?: RuleAction;
   riskLevelParameters?: RiskLevelRuleParameters;

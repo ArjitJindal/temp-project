@@ -21,7 +21,6 @@ export default function ApplyToOtherLevelsCard(props: Props) {
       <Label
         label={'Apply to other risk levels'}
         description="This option lets you apply the configured settings to multiple risk levels, saving time"
-        testId="apply-to-risk-levels"
       >
         <div className={s.inputs}>
           <Select<RiskLevel>
@@ -34,6 +33,7 @@ export default function ApplyToOtherLevelsCard(props: Props) {
             onChange={(newValue) => {
               setChosenLevels(newValue ?? []);
             }}
+            testId="apply-to-risk-levels"
           />
           <Button
             onClick={() => {

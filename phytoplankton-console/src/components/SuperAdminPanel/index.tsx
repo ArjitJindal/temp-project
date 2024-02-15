@@ -223,7 +223,6 @@ export default function SuperAdminPanel() {
               <Label
                 label="Simulation limit"
                 description="The maximum number of simulations that can be run by a tenant."
-                element="div"
               >
                 <NumberInput
                   value={limits?.simulations ?? 0}
@@ -236,7 +235,6 @@ export default function SuperAdminPanel() {
               <Label
                 label="Max Seats"
                 description="The maximum number of seats allowed for this tenant"
-                element="div"
               >
                 <NumberInput
                   value={limits?.seats ?? 0}
@@ -249,7 +247,6 @@ export default function SuperAdminPanel() {
               <Label
                 label="Max ongoing merchant monitoring users"
                 description="The maximum number of merchant monitoring users allowed for this tenant"
-                element="div"
               >
                 <NumberInput
                   value={limits?.ongoingMerchantMonitoringUsers ?? DEFAULT_MERCHANT_MOITORING_LIMIT}
@@ -264,7 +261,6 @@ export default function SuperAdminPanel() {
               <Label
                 label="Maximum times api key can be viewed"
                 description="The maximum number of times the api key can be viewed by a tenant"
-                element="div"
               >
                 <NumberInput
                   value={limits?.apiKeyView ?? 0}

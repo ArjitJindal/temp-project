@@ -63,22 +63,20 @@ Cypress.Commands.add('setPermissions', (permissions) => {
 });
 
 Cypress.Commands.add('addSettings', (settings) => {
-  const baseUrl = getBaseUrl();
   cy.apiHandler({
     endpoint: 'tenants/settings',
     method: 'POST',
     body: settings,
-    baseUrl: baseUrl,
   });
 });
 
-Cypress.Commands.add('apiHandler', ({ endpoint, method, body, baseUrl }) => {
-  const apiUrl = 'https://api.flagright.dev/console/';
+Cypress.Commands.add('apiHandler', ({ endpoint, method, body }) => {
+  const baseUrl = getBaseUrl();
   const authTokenKey = getAuthTokenKey();
   const accessToken = getAccessToken(authTokenKey);
   cy.request({
     method: method,
-    url: `${baseUrl ?? apiUrl}${endpoint}`,
+    url: `${baseUrl}${endpoint}`,
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

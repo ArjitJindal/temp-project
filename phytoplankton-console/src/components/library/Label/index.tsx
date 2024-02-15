@@ -26,7 +26,7 @@ export default function Label(props: Props) {
     level = 1,
     children,
     description,
-    element = 'label',
+    element = 'div',
     required = {
       value: false,
       showHint: false,

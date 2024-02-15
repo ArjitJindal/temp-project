@@ -85,7 +85,6 @@ export default function GenericObjectInput(props: Props) {
               <Label
                 label={schema.title}
                 description={schema.description}
-                element="div"
                 required={labelRequiredProps}
                 testId={`Property/${propertyContext?.item.name}/card`}
               />

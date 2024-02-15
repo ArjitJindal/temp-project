@@ -38,6 +38,7 @@ function toRuleInstance(item: any): RuleInstance {
     filtersLogicFormValues: item.filtersLogicFormValues,
     logic: item.logic,
     riskLevelLogic: item.riskLevelLogic,
+    logicEntityVariables: item.logicEntityVariables,
     logicAggregationVariables: item.logicAggregationVariables,
     parameters:
       item.parameters ?? item.riskLevelParameters?.[DEFAULT_RISK_LEVEL],

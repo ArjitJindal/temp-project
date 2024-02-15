@@ -10,7 +10,7 @@ const generateInitialState = (customConfig = {}) => {
     value: undefined,
     config: makeConfig({
       fields: { 'Transaction:id': { label: 'Transaction/id', type: 'text' } },
-      enableNesting: true,
+      enableNesting: false,
       ...customConfig,
     }),
     onChange: jest.fn(),

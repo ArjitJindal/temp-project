@@ -18,5 +18,8 @@ export default defineConfig({
     baseUrl: BASE_URL,
   },
   chromeWebSecurity: false,
-  retries: 1,
+  retries: {
+    runMode: 1,
+    openMode: 0,
+  },
 });

@@ -55,7 +55,7 @@ export default function VariableTimeWindow(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.timeInputs}>
-        <Label label={'Time from'} level={2} element="div">
+        <Label label={'Time from'} level={2}>
           <UnitGranularityInputs
             fiscalYearSelectValue={fiscalYearSelectValue}
             value={start}
@@ -69,7 +69,7 @@ export default function VariableTimeWindow(props: Props) {
             }}
           />
         </Label>
-        <Label label={'Time to'} level={2} element="div">
+        <Label label={'Time to'} level={2}>
           <UnitGranularityInputs
             fiscalYearSelectValue={fiscalYearSelectValue}
             value={end}

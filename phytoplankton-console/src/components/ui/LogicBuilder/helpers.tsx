@@ -23,7 +23,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
     enableReorder = true,
     hideLabels = false,
     addRuleLabel = 'Add condition',
-    addGroupLabel = 'Add complex condition',
+    addGroupLabel = 'Add group',
     enabledValueSources = undefined,
   } = params;
   // todo: make a proper config initialization instead of mutating 3rd party config
@@ -75,7 +75,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       },
       showNot: false,
       canLeaveEmptyGroup: false,
-      maxNesting: !enableNesting ? undefined : 1,
+      maxNesting: enableNesting ? undefined : 1,
       forceShowConj: false,
       addRuleLabel: addRuleLabel,
       addGroupLabel: addGroupLabel,
@@ -97,6 +97,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
         }
         return (
           <Dropdown
+            selectedKeys={[props.valueSrc ?? '']}
             options={options}
             onSelect={(option) => {
               props.setValueSrc(option.value);

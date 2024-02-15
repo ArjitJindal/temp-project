@@ -22,7 +22,7 @@ function createRiskFactor() {
   cy.get('button[data-cy="expand-icon"]').eq(0).click();
   cy.get('.ant-select-selection-overflow').click();
   cy.get('.ant-select-item-option-content').eq(0).click({ force: true });
-  cy.get('label[data-cy="risk-level-MEDIUM"]').eq(1).click();
+  cy.get('[data-cy="risk-level-MEDIUM"]').eq(1).click();
   cy.get('button[data-cy="add-risk-factor"]').click();
   cy.get('button[data-cy="save-risk-factor"]').click();
   cy.wait('@riskFactor', { timeout: 15000 }).then((interception) => {
@@ -33,7 +33,7 @@ function createRiskFactor() {
 function updateRiskFactor() {
   cy.visit('risk-levels/risk-factors/transaction');
   cy.get('button[data-cy="expand-icon"]').eq(0).click();
-  cy.get('label[data-cy="risk-level-HIGH"]').eq(1).click();
+  cy.get('[data-cy="risk-level-HIGH"]').eq(1).click();
   cy.get('button[data-cy="save-risk-factor"]').click();
   cy.wait('@riskFactor', { timeout: 15000 }).then((interception) => {
     expect(interception.response?.statusCode).to.eq(200);

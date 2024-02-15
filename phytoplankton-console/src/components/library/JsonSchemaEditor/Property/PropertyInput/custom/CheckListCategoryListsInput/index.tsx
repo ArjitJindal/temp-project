@@ -127,7 +127,6 @@ export const CheckListCategoryListsInput = (props: Props) => {
           <div key={categoryIndex + 'category'} className={s.root}>
             <Label
               label={'Category name'}
-              element="div"
               required={{
                 showHint: true,
                 value: true,
@@ -143,7 +142,7 @@ export const CheckListCategoryListsInput = (props: Props) => {
             </Label>
             {(['P1', 'P2'] as const).map((priority, priorityIndex) => {
               return (
-                <Label key={priorityIndex} label={`${priority} checklist items`} element="div">
+                <Label key={priorityIndex} label={`${priority} checklist items`}>
                   <Card.Root>
                     {category.checklistItems.map((checklistItem, checklistItemIndex) => {
                       return checklistItem.level === priority ? (

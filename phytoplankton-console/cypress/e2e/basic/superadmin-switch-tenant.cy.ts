@@ -14,7 +14,7 @@ describe('Switching from one tenant to another', () => {
 
     // Switch to 'FlagrightPostman'
     cy.get("button[data-cy='superadmin-panel-button']").click({ force: true });
-    cy.get('label[data-cy="tenant-name"]')
+    cy.get('[data-cy="tenant-name"]')
       .should('be.visible')
       .should('not.be.disabled')
       .click()
@@ -28,7 +28,7 @@ describe('Switching from one tenant to another', () => {
 
     // Switch to 'Cypress Tenant'
     cy.get("button[data-cy='superadmin-panel-button']").click();
-    cy.get('label[data-cy="tenant-name"]')
+    cy.get('[data-cy="tenant-name"]')
       .should('be.visible')
       .should('not.be.disabled')
       .click()

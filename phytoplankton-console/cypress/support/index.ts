@@ -41,7 +41,6 @@ declare global {
         endpoint: string;
         method: string;
         body?: any;
-        baseUrl?: string;
       }): Chainable<Promise<Element>>;
       addSettings(settings: TenantSettings): Chainable<Promise<Element>>;
     }

@@ -40,7 +40,14 @@ function TagWithActions(props: TagWithActionsProps): JSX.Element {
         {props.actions.map(({ icon, action, key, confirm }) => {
           if (confirm == null) {
             return (
-              <button className={s.action} key={key} onClick={action}>
+              <button
+                className={s.action}
+                key={key}
+                onClick={(e) => {
+                  e.preventDefault();
+                  action();
+                }}
+              >
                 {icon}
               </button>
             );
