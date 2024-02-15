@@ -1,7 +1,7 @@
 import { useContext, useMemo, useRef, useState } from 'react';
 import { useApi } from '@/api';
 import { RiskClassificationScore, SimulationPostResponse, SimulationPulseJob } from '@/apis';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import COLORS from '@/components/ui/colors';

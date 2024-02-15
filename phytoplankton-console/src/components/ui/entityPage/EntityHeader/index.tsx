@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import Breadcrumbs, { BreadcrumbItem } from './Breadcrumbs';
-import Sticky from '@/components/ui/Sticky';
+import Sticky from '@/components/utils/Sticky';
 import * as Card from '@/components/ui/Card';
 
 interface Props {

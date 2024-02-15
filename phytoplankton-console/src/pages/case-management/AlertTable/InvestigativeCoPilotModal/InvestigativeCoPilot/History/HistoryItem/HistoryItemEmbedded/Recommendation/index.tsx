@@ -1,5 +1,5 @@
 import s from './index.module.less';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { SarButton } from '@/components/Sar';
 import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
 import { ApproveSendBackButton } from '@/pages/case-management/components/ApproveSendBackButton';

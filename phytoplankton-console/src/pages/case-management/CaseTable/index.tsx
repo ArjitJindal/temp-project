@@ -19,7 +19,7 @@ import {
   TableColumn,
   TableRefType,
 } from '@/components/library/Table/types';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   useCaseAssignmentUpdateMutation,
   useCaseReviewAssignmentUpdateMutation,

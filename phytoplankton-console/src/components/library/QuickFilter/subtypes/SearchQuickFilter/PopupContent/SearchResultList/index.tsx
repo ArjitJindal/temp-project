@@ -5,7 +5,7 @@ import { ItemType } from '../../types';
 import s from './style.module.less';
 import SearchResultItem from './SearchResultItem';
 import { AsyncResource } from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PaginatedData } from '@/utils/queries/hooks';
 
 export interface MessageRenderers {

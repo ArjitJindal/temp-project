@@ -5,7 +5,7 @@ import {
   DashboardStatsAlertPriorityDistributionStats,
   DashboardStatsAlertPriorityDistributionStatsAlertPriorityData,
 } from '@/apis';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import {
   COLORS_V2_PRIMARY_SHADES_BLUE_100,
   COLORS_V2_PRIMARY_SHADES_BLUE_300,

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import Toggle from '../library/Toggle';
-import Label from '../library/Label';
-import { message } from '../library/Message';
-import { useSettings } from '../AppWrapper/Providers/SettingsProvider';
-import AsyncResourceRenderer from '../common/AsyncResourceRenderer';
-import Tooltip from '../library/Tooltip';
+import Toggle from '../../../../../components/library/Toggle';
+import Label from '../../../../../components/library/Label';
+import AsyncResourceRenderer from '../../../../../components/utils/AsyncResourceRenderer';
+import Tooltip from '../../../../../components/library/Tooltip';
+import { message } from '@/components/library/Message';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';

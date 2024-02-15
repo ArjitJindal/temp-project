@@ -24,7 +24,7 @@ import { useQueries } from '@/utils/queries/hooks';
 import { ALERT_ITEM_COMMENTS, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
 import { all, AsyncResource, map, success } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';

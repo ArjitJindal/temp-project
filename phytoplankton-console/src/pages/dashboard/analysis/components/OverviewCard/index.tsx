@@ -1,7 +1,7 @@
 import s from './index.module.less';
 import { useApi } from '@/api';
 import { DashboardStatsOverview } from '@/apis';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_OVERVIEW_TOTAL } from '@/utils/queries/keys';
 import * as Card from '@/components/ui/Card';

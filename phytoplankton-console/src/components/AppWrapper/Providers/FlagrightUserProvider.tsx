@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import ErrorPage from '@/components/ErrorPage';
 import { Context, FlagrightAuth0User, NAMESPACE } from '@/utils/user-utils';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { getBranding } from '@/utils/branding';
 import { USER_INFO } from '@/utils/queries/keys';

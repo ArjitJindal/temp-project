@@ -11,7 +11,7 @@ import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { ListHeader } from '@/apis';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
 import FontSizeIcon from '@/components/ui/icons/Remix/editor/font-size.react.svg';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';

@@ -2,7 +2,7 @@ import { useContext, useMemo, useState } from 'react';
 import { RuleConfigurationSimulationDrawer } from '../RuleConfigurationDrawer';
 import { useApi } from '@/api';
 import { SimulationBeaconJob } from '@/apis';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import COLORS from '@/components/ui/colors';

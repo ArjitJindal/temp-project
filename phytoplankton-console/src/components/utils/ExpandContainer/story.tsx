@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '../Button';
+import Button from '../../library/Button';
 import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
 

@@ -37,7 +37,7 @@ import { CloseMessage, message } from '@/components/library/Message';
 import CheckCircleOutlined from '@/components/ui/icons/Remix/system/checkbox-circle-line.react.svg';
 import MinusCircleOutlined from '@/components/ui/icons/Remix/system/indeterminate-circle-line.react.svg';
 import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-2-line.react.svg';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Confirm from '@/components/utils/Confirm';
 
 export default function Team() {

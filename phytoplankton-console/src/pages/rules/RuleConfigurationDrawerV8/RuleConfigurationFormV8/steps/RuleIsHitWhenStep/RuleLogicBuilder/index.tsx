@@ -6,7 +6,7 @@ import LogicBuilder, { Props as LogicBuilderProps } from '@/components/ui/LogicB
 import { LogicBuilderValue, LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { isSuccess } from '@/utils/asyncResource';
 import { usePrevious, useIsChanged } from '@/utils/hooks';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { RuleAggregationVariable, RuleEntityVariableInUse } from '@/apis';
 import { RuleLogic } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/types';
 

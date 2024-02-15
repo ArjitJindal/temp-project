@@ -11,7 +11,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM, COPILOT_ALERT_QUESTIONS } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
 import { isSuccess, map, useFinishedSuccessfully } from '@/utils/asyncResource';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';

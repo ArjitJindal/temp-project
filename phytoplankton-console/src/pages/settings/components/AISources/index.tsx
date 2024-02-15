@@ -15,7 +15,7 @@ import Tooltip from '@/components/library/Tooltip';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { COPILOT_AI_RESOURCES } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import SettingsCard from '@/components/library/SettingsCard';
 
 export const AISources = () => {

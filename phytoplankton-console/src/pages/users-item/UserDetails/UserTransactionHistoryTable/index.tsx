@@ -16,7 +16,7 @@ import {
 import { useApi } from '@/api';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { CASES_LIST, USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import AsyncResourceRenderer from '../common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '../utils/AsyncResourceRenderer';
 import SanctionsTable from '../SanctionsTable';
 import { P } from '../ui/Typography';
 import Select, { Option } from '../library/Select';

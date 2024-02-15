@@ -6,7 +6,7 @@ import s from './style.module.less';
 import UserItem from './UserItem';
 import { AsyncResource } from '@/utils/asyncResource';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Spinner from '@/components/library/Spinner';
 
 interface Props {

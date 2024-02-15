@@ -3,7 +3,7 @@ import s from './index.module.less';
 import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
 import { TenantApiKey } from '@/apis';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { useQuery } from '@/utils/queries/hooks';

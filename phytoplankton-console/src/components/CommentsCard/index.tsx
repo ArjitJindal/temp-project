@@ -8,7 +8,7 @@ import { Comment as ApiComment } from '@/apis';
 import { P } from '@/components/ui/Typography';
 import { Mutation } from '@/utils/queries/types';
 import { map, getOr, AsyncResource } from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
 
 export interface CommentGroup {

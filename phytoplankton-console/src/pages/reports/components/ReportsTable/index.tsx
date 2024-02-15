@@ -5,7 +5,7 @@ import { COUNTRIES } from '@flagright/lib/constants';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import { Report, ReportStatus } from '@/apis';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DATE, LONG_TEXT } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { AllParams } from '@/components/library/Table/types';

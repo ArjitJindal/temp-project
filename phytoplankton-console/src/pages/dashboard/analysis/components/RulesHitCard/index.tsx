@@ -12,7 +12,7 @@ import { TableColumn } from '@/components/library/Table/types';
 import { useRules } from '@/utils/rules';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER_STATS } from '@/utils/queries/keys';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 export default function RuleHitCard() {

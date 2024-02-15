@@ -15,7 +15,7 @@ import {
   getRuleActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useQuery } from '@/utils/queries/hooks';

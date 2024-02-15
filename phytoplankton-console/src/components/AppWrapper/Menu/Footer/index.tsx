@@ -1,7 +1,7 @@
 import cn from 'clsx';
 import React from 'react';
-import SuperAdminPanel from '../../../SuperAdminPanel';
 import { Roles, useFeatureEnabled } from '../../Providers/SettingsProvider';
+import SuperAdminPanel from './SuperAdminPanel';
 import s from './index.module.less';
 import UserPanel from './UserPanel';
 import DemoModeSwitch from './DemoModeSwitch';

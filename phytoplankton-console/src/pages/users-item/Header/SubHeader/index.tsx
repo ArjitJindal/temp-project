@@ -4,11 +4,11 @@ import UserStateEditor from '../../UserDetails/UserStateEditor';
 import KycRiskDisplay from '../../UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '../../UserDetails/DynamicRiskDisplay';
 import s from './index.module.less';
+import { MerchantMonitoringToggle } from './MerchantMonitoringToggle';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
-import { MerchantMonitoringToggle } from '@/components/MerchantMonitoringToggle';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;

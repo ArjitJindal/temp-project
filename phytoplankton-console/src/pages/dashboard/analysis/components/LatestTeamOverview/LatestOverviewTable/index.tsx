@@ -3,7 +3,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import AccountTag from '@/components/AccountTag';
 import { DashboardLatestTeamStatsItem } from '@/apis';
 import { map, QueryResult } from '@/utils/queries/types';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DURATION } from '@/components/library/Table/standardDataTypes';
 
 interface Props {

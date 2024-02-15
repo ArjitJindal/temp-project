@@ -12,7 +12,7 @@ import { useApi } from '@/api';
 import { AllParams, TableColumn, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AuditLog } from '@/apis';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';

@@ -1,7 +1,7 @@
 import { startCase, toLower } from 'lodash';
 import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { humanizeCamelCase } from '@/utils/humanize';

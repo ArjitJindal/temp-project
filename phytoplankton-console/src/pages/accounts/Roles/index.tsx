@@ -7,7 +7,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { AccountRole } from '@/apis';
 import { ROLE, ROLES_LIST } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import VerticalMenu from '@/components/library/VerticalMenu';
 import RoleForm from '@/pages/accounts/Roles/RoleForm';
 import { isValidManagedRoleName } from '@/apis/models-custom/ManagedRoleName';

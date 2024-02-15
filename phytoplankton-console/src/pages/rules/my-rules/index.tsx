@@ -17,7 +17,7 @@ import { useRules } from '@/utils/rules';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import RuleConfigurationDrawer, {
   RuleConfigurationSimulationDrawer,
 } from '@/pages/rules/RuleConfigurationDrawer';

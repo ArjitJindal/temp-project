@@ -13,7 +13,7 @@ import CommentEditor, {
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { AsyncResource } from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { ALERT_ITEM, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import { useMutation } from '@/utils/queries/mutations/hooks';

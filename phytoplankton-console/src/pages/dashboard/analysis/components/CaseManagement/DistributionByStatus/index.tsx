@@ -14,7 +14,7 @@ import s from './index.module.less';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { map } from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useQuery } from '@/utils/queries/hooks';

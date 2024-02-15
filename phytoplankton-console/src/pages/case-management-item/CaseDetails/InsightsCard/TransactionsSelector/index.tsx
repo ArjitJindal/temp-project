@@ -15,7 +15,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PARTIAL_RULE_ACTIONS } from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsSelector/Chart/types';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';

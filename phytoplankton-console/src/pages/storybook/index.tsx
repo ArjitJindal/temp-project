@@ -43,7 +43,7 @@ import FilesList from '@/components/files/FilesList/story';
 import EmptyDataInfo from '@/components/library/EmptyDataInfo/story';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag/story';
 import SearchBar from '@/components/library/SearchBar/story';
-import ExpandContainer from '@/components/library/ExpandContainer/story';
+import ExpandContainer from '@/components/utils/ExpandContainer/story';
 import { Category, Config } from '@/pages/storybook/types';
 import {
   CATEGORY_ROUTE,
@@ -81,10 +81,6 @@ const config: Config = [
       {
         key: 'Filter',
         story: Filter,
-      },
-      {
-        key: 'ExpandContainer',
-        story: ExpandContainer,
       },
       {
         key: 'Tag',
@@ -145,10 +141,6 @@ const config: Config = [
       {
         key: 'Message',
         story: Message,
-      },
-      {
-        key: 'Tag',
-        story: Tag,
       },
       {
         key: 'Tooltip',
@@ -253,12 +245,22 @@ const config: Config = [
     ],
   },
   {
-    key: 'to_add',
-    title: 'To add',
+    key: 'to-add',
+    title: 'To add to library',
     components: [
       {
         key: 'Slider',
         story: Slider,
+      },
+    ],
+  },
+  {
+    key: 'utils',
+    title: 'Utils',
+    components: [
+      {
+        key: 'ExpandContainer',
+        story: ExpandContainer,
       },
     ],
   },

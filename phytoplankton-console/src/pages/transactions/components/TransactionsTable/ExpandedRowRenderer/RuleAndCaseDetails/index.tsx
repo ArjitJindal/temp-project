@@ -5,7 +5,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { ALERT_LIST } from '@/utils/queries/keys';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Id from '@/components/ui/Id';
 import { getRuleInstanceDisplayId } from '@/pages/rules/utils';
 import { makeUrl } from '@/utils/routing';

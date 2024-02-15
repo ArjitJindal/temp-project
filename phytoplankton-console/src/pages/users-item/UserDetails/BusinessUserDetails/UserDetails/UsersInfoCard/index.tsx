@@ -18,7 +18,7 @@ import * as Form from '@/components/ui/Form';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 
 interface Props {

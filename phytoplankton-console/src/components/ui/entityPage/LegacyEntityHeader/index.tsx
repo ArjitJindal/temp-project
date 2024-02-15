@@ -3,7 +3,7 @@ import cn from 'clsx';
 import s from './index.module.less';
 import EntityId from '@/components/ui/entityPage/EntityId';
 import * as Form from '@/components/ui/Form';
-import Sticky from '@/components/ui/Sticky';
+import Sticky from '@/components/utils/Sticky';
 import * as Card from '@/components/ui/Card';
 
 interface Props {

@@ -8,7 +8,7 @@ import s from './styles.module.less';
 import { map } from '@/utils/asyncResource';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import Widget from '@/components/library/Widget';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { WidgetProps } from '@/components/library/Widget/types';
 import DatePicker from '@/components/ui/DatePicker';

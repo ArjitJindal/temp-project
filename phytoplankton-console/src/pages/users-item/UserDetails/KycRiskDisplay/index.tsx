@@ -4,7 +4,7 @@ import { useApi } from '@/api';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM_RISKS_KRS } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   userId: string;

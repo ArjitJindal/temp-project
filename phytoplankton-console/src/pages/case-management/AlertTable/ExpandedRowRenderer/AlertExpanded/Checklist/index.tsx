@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Card from '@/components/ui/Card';
 import { Alert, ChecklistDoneStatus, ChecklistStatus } from '@/apis';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { ChecklistItem, HydratedChecklist, useAlertChecklist } from '@/utils/checklist-templates';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import Table from '@/components/library/Table';

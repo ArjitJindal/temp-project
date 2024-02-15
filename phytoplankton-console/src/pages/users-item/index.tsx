@@ -11,7 +11,7 @@ import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useApi } from '@/api';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useQuery } from '@/utils/queries/hooks';
 import { UI_SETTINGS } from '@/pages/users-item/ui-settings';

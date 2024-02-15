@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { Tag } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableData, TableRefType } from '@/components/library/Table/types';
 import { QueryResult } from '@/utils/queries/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';

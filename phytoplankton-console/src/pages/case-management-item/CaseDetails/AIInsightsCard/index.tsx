@@ -12,7 +12,7 @@ import UserGroupIcon from '@/components/ui/icons/Remix/user/group-line.react.svg
 import HistoryLine from '@/components/ui/icons/Remix/system/history-line.react.svg';
 import RefreshLine from '@/components/ui/icons/Remix/system/refresh-line.react.svg';
 import ExternalLinkFill from '@/components/ui/icons/Remix/system/external-link-fill.react.svg';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { MERCHANT_SUMMARY, MERCHANT_SUMMARY_HISTORY } from '@/utils/queries/keys';
 import dayjs from '@/utils/dayjs';

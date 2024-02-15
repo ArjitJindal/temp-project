@@ -5,7 +5,7 @@ import { ListHeader } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { getErrorMessage } from '@/utils/lang';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { getListSubtypeTitle, Metadata } from '@/pages/lists/helpers';

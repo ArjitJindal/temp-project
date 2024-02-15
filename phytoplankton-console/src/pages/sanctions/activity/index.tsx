@@ -5,7 +5,7 @@ import { KpiCard } from './KpiCard';
 import { useApi } from '@/api';
 import { SANCTIONS_SCREENING_STATS } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import DatePicker from '@/components/ui/DatePicker';
 

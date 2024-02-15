@@ -1,4 +1,4 @@
-import { BrowserSupportModal } from '@/components/BrowserSupportModal';
+import { BrowserSupportModal } from './BrowserSupportModal';
 import { useCurrentUser } from '@/utils/user-utils';
 
 interface Props {

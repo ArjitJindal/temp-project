@@ -9,7 +9,7 @@ import { useApi } from '@/api';
 import { Account, AccountInvitePayload, AccountPatchPayload, AccountRole } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { ROLES_LIST } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { getErrorMessage } from '@/utils/lang';
 import {
   Feature,

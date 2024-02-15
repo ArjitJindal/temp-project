@@ -8,7 +8,7 @@ import Colors from '@/components/ui/colors';
 import { TableColumn } from '@/components/library/Table/types';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { WEBHOOKS } from '@/utils/queries/keys';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import Modal from '@/components/library/Modal';

@@ -14,7 +14,7 @@ import {
   Assignment,
   ChecklistStatus,
 } from '@/apis';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,
   SelectionAction,

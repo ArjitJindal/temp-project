@@ -11,7 +11,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { CrmAccountResponse } from '@/apis';
 import { CRM_ACCOUNT } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   userId: string;

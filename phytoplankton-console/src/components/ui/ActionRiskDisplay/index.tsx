@@ -3,7 +3,7 @@ import Icon from '@/components/ui/icons/Remix/system/information-line.react.svg'
 import { useApi } from '@/api';
 import { TRANSACTIONS_ITEM_RISKS_ARS } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 
 interface Props {

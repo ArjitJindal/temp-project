@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle, useMemo } from 'react';
-import AsyncResourceRenderer from '../common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '../utils/AsyncResourceRenderer';
 import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import { H4, P } from '../ui/Typography';
 import PageWrapper, { PageWrapperProps } from '../PageWrapper';

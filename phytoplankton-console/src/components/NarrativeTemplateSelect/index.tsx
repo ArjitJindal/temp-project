@@ -1,4 +1,4 @@
-import AsyncResourceRenderer from '../common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '../utils/AsyncResourceRenderer';
 import Select from '../library/Select';
 import s from './index.module.less';
 import { useApi } from '@/api';

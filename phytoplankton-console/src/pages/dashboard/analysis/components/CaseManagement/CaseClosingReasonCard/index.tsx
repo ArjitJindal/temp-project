@@ -21,7 +21,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_29,
 } from '@/components/ui/colors';
 import ScopeSelector from '@/pages/dashboard/analysis/components/CaseManagement/CaseClosingReasonCard/ScopeSelector';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import {
   DashboardStatsClosingReasonDistributionStats,
   DashboardStatsClosingReasonDistributionStatsClosingReasonsData,

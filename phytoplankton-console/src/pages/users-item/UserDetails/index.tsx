@@ -7,7 +7,7 @@ import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis'
 import { Small } from '@/components/ui/Typography';
 import { Authorized } from '@/components/Authorized';
 import { useApi } from '@/api';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { DEVICE_DATA_USER } from '@/utils/queries/keys';
 

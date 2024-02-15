@@ -13,7 +13,7 @@ import SarReportDrawer from '@/components/Sar/SarReportDrawer';
 import { Report, ReportTypesResponse } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { REPORT_SCHEMAS } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 export function SarButton({

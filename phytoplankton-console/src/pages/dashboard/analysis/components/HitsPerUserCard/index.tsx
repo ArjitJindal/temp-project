@@ -10,7 +10,7 @@ import UserLink from '@/components/UserLink';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { TableColumn } from '@/components/library/Table/types';
 import { PaginatedData } from '@/utils/queries/hooks';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getCurrentDomain } from '@/utils/routing';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardStatsHitsPerUserData } from '@/apis';

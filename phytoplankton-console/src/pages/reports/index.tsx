@@ -7,7 +7,7 @@ import { Report } from '@/apis';
 import { REPORTS_ITEM } from '@/utils/queries/keys';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useApi } from '@/api';
 
 const ReportsList = () => {

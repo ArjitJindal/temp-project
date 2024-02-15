@@ -11,7 +11,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_28,
   COLORS_V2_ANALYTICS_CHARTS_29,
 } from '@/components/ui/colors';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_TOTAL_STATS } from '@/utils/queries/keys';

@@ -8,7 +8,7 @@ import { CommonParams, SortingParamsItem, TableColumn } from '@/components/libra
 import { RecommendedTag } from '@/components/ui/RecommendedTag';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULES } from '@/utils/queries/keys';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getBranding } from '@/utils/branding';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';

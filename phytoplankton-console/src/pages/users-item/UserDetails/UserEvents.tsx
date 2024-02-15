@@ -2,7 +2,7 @@ import { useState } from 'react';
 import s from './index.module.less';
 import { useApi } from '@/api';
 import { InternalUserEvent, SortOrder } from '@/apis';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { DATE_TIME, ID } from '@/components/library/Table/standardDataTypes';

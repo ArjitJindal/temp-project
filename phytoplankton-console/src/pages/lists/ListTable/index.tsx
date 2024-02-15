@@ -11,7 +11,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { TableColumn } from '@/components/library/Table/types';
 import { useQuery } from '@/utils/queries/hooks';
 import { map } from '@/utils/queries/types';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { LISTS_OF_TYPE } from '@/utils/queries/keys';
 import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
 import { useHasPermissions } from '@/utils/user-utils';

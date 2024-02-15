@@ -4,7 +4,7 @@ import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import { USERS_ITEM_RISKS_DRS } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   userId: string;

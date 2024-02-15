@@ -9,7 +9,7 @@ import ContainerWidthMeasure from '@/components/utils/ContainerWidthMeasure';
 import { QueryResult } from '@/utils/queries/types';
 import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import { neverReturn } from '@/utils/lang';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { capitalizeWords } from '@/utils/humanize';
 

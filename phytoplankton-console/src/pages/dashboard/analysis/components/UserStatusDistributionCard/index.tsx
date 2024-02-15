@@ -11,7 +11,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_10,
 } from '@/components/ui/colors';
 import { BusinessUsersListResponse, ConsumerUsersListResponse, UserState } from '@/apis';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Widget from '@/components/library/Widget';
 import WidgetRangePicker, {

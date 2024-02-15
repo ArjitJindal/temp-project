@@ -18,7 +18,7 @@ import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { USERS } from '@/utils/queries/keys';
 import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useDeepEqualEffect } from '@/utils/hooks';

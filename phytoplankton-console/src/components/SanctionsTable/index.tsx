@@ -3,7 +3,7 @@ import { Tag } from 'antd';
 import { startCase } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
 import SearchResultDetailsModal from './SearchResultDetailsModal';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableColumn, TableData, ToolRenderer } from '@/components/library/Table/types';
 import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
 import CountryDisplay from '@/components/ui/CountryDisplay';

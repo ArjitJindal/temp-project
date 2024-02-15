@@ -1,9 +1,9 @@
 import { useLocalStorageState, useSessionStorageState } from 'ahooks';
 import { useState } from 'react';
 import { browserName } from 'react-device-detect';
-import Checkbox from '../library/Checkbox';
-import EdgeLogo from '../ui/icons/edge-logo.react.svg';
-import ChromeLogo from '../ui/icons/chrome-logo.react.svg';
+import Checkbox from '../../../library/Checkbox';
+import EdgeLogo from '../../../ui/icons/edge-logo.react.svg';
+import ChromeLogo from '../../../ui/icons/chrome-logo.react.svg';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import { getBranding } from '@/utils/branding';

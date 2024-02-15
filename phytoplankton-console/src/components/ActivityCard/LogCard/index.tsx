@@ -6,7 +6,7 @@ import s from './index.module.less';
 import { LogItemData } from './LogContainer/LogItem';
 import { useQuery } from '@/utils/queries/hooks';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { P } from '@/components/ui/Typography';
 
 interface Props {

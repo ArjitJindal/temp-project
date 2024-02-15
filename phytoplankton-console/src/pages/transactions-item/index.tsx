@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router';
 import SubHeader from './SubHeader';
 import SenderReceiverDetails from './SenderReceiverDetails';
 import PageWrapper from '@/components/PageWrapper';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
 

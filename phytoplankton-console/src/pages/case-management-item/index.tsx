@@ -8,7 +8,7 @@ import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
 import { useQuery } from '@/utils/queries/hooks';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { ALERT_LIST, CASES_ITEM, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';

@@ -9,7 +9,7 @@ import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { USER_FILES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';

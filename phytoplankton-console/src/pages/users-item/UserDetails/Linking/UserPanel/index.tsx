@@ -3,7 +3,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { USERS_ITEM } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import Button from '@/components/library/Button';
 import { makeUrl } from '@/utils/routing';

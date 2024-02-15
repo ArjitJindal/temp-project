@@ -26,7 +26,7 @@ import {
 } from '@/components/library/Table/types';
 import { makeUrl } from '@/utils/routing';
 import { getUserLink } from '@/utils/api/users';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';

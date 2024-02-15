@@ -3,7 +3,7 @@ import { Rule } from '@/apis';
 import PropertyList from '@/components/library/JsonSchemaEditor/PropertyList';
 import { useQuery } from '@/utils/queries/hooks';
 import { RULE_FILTERS } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useApi } from '@/api';
 import { ExtendedSchema, PropertyItems } from '@/components/library/JsonSchemaEditor/types';
 import { getUiSchema, getOrderedProps } from '@/components/library/JsonSchemaEditor/utils';

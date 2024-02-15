@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { SANCTIONS_SEARCH } from '@/utils/queries/keys';

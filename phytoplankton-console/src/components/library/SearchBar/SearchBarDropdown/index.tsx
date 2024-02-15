@@ -2,10 +2,10 @@ import React from 'react';
 import { EmptyEntitiesInfo } from '../../EmptyDataInfo';
 import { SearchBarProps } from '..';
 import s from './index.module.less';
-import ExpandContainer from '@/components/library/ExpandContainer';
+import ExpandContainer from '@/components/utils/ExpandContainer';
 import { FilterProps } from '@/components/library/Filter/types';
 import Filter from '@/components/library/Filter';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { AsyncResource, getOr, isLoading } from '@/utils/asyncResource';
 
 export interface Item {
