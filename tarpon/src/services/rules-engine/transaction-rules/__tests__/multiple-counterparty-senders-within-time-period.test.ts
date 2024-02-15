@@ -23,7 +23,7 @@ const DEFAULT_RULE_PARAMETERS: MultipleSendersWithinTimePeriodRuleParameters = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
@@ -90,7 +90,7 @@ ruleVariantsTest({ aggregation: true }, () => {
 
   describe.each<TransactionRuleTestCase>([
     {
-      name: 'Transacting with different originUserID (within time period) - not hit',
+      name: 'Transacting with different destinationUserID (within time period) - not hit',
       transactions: [
         getTestTransaction({
           originUserId: undefined,
@@ -132,7 +132,7 @@ ruleVariantsTest({ aggregation: true }, () => {
       expectedHits: [false, false, false],
     },
     {
-      name: 'Transacting with different originUserID (not within time period) - not hit',
+      name: 'Transacting with different destinationUserID (not within time period) - not hit',
       transactions: [
         getTestTransaction({
           originUserId: undefined,
@@ -174,7 +174,7 @@ ruleVariantsTest({ aggregation: true }, () => {
       expectedHits: [false, false, false],
     },
     {
-      name: 'Transacting with same originUserID (not within time period) - not hit',
+      name: 'Transacting with same destinationUserID (not within time period) - not hit',
       transactions: [
         getTestTransaction({
           originUserId: undefined,
@@ -216,7 +216,7 @@ ruleVariantsTest({ aggregation: true }, () => {
       expectedHits: [false, false, false],
     },
     {
-      name: 'Transacting with same originUserID (within time period) - hit',
+      name: 'Transacting with same destinationUserID (within time period) - hit',
       transactions: [
         getTestTransaction({
           originUserId: undefined,
@@ -256,6 +256,48 @@ ruleVariantsTest({ aggregation: true }, () => {
         }),
       ],
       expectedHits: [false, false, true],
+    },
+    {
+      name: 'Transacting with same destinationUserID but with non counterParty sender (within time period) - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '4-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '20ac00fegf3ef913aefb17cfae1097cce',
+            cardIssuedCountry: 'CH',
+            transactionReferenceField: 'DEPOSIT',
+            '3dsDone': true,
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-2',
+          destinationUserId: '4-2',
+          timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '34gf00fed8ef913aefb17cfae1097cce',
+            cardIssuedCountry: 'CH',
+            transactionReferenceField: 'DEPOSIT',
+            '3dsDone': true,
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-3',
+          destinationUserId: '4-2',
+          timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '98ju00fed8ef913aefb17cfae1097cce',
+            cardIssuedCountry: 'CH',
+            transactionReferenceField: 'DEPOSIT',
+            '3dsDone': true,
+          },
+        }),
+      ],
+      expectedHits: [false, false, false],
     },
   ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(

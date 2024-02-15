@@ -163,6 +163,8 @@
   "TRANSACTION:destinationPaymentDetails-bankAddress-tags",
   "TRANSACTION:destinationPaymentDetails-shippingAddress-tags",
   "TRANSACTION:tags",
+  "TRANSACTION:paymentDetailsIdentifier__SENDER",
+  "TRANSACTION:paymentDetailsIdentifier__RECEIVER",
   "CONSUMER_USER:userId__SENDER",
   "CONSUMER_USER:userId__RECEIVER",
   "CONSUMER_USER:createdTimestamp__SENDER",

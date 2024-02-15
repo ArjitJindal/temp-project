@@ -1,6 +1,7 @@
 import { pickBy } from 'lodash'
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
 import { TransactionsVelocityRuleParameters } from '../transaction-rules/transactions-velocity'
+import { MultipleSendersWithinTimePeriodRuleParameters } from '../transaction-rules/multiple-senders-within-time-period-base'
 import { FirstActivityAfterLongTimeRuleParameters } from '../transaction-rules/first-activity-after-time-period'
 import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
@@ -84,6 +85,34 @@ const V8_CONVERSION: {
       alertCreationDirection,
     }
   },
+
+  'R-10': (parameters: MultipleSendersWithinTimePeriodRuleParameters) => {
+    const logicAggregationVariables: RuleAggregationVariable[] = []
+    const alertCreationDirection: AlertCreationDirection = 'DESTINATION'
+
+    logicAggregationVariables.push({
+      key: 'agg:receiving',
+      type: 'USER_TRANSACTIONS',
+      direction: 'RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:paymentDetailsIdentifier__SENDER',
+      aggregationFunc: 'UNIQUE_COUNT',
+      timeWindow: {
+        start: parameters.timeWindow,
+        end: { units: 0, granularity: 'day' },
+      },
+      filtersLogic: {
+        '!': { var: 'TRANSACTION:originUserId' },
+      },
+    })
+    return {
+      logic: {
+        '>': [{ var: 'agg:receiving' }, parameters.sendersCount],
+      },
+      logicAggregationVariables,
+      alertCreationDirection,
+    }
+  },
+
   'R-5': (parameters: FirstActivityAfterLongTimeRuleParameters, filters) => {
     const { dormancyPeriodDays, checkDirection = 'all' } = parameters
     const aggregationVariable: RuleAggregationVariable[] =

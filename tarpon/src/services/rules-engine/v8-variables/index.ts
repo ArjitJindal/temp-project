@@ -33,6 +33,10 @@ import {
 } from './utils'
 import { USER_TYPE } from './user-type'
 import {
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER,
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER,
+} from './payment-details'
+import {
   SENDING_TRANSACTIONS_COUNT,
   RECEIVING_TRANSACTIONS_COUNT,
 } from './transactions-count'
@@ -93,6 +97,11 @@ function withDirection(variables: RuleVariable[]) {
     },
   ])
 }
+
+const TRANSACTION_DERIVED_VARIABLES = [
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER,
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER,
+]
 
 const USER_DERIVED_VARIABLES: Array<
   ConsumerUserRuleVariable | BusinessUserRuleVariable | CommonUserRuleVariable
@@ -177,10 +186,10 @@ function updatedTransactionEntityVariables(
 
 export const getTransactionRuleEntityVariables = memoize(
   (): { [key: string]: RuleVariable } => {
-    const transactionEntityVariables = getAutoRuleEntityVariables(
-      'TRANSACTION',
-      Transaction
-    )
+    const transactionEntityVariables = [
+      ...getAutoRuleEntityVariables('TRANSACTION', Transaction),
+      ...TRANSACTION_DERIVED_VARIABLES,
+    ]
     updatedTransactionEntityVariables(
       transactionEntityVariables as TransactionRuleVariable[]
     )

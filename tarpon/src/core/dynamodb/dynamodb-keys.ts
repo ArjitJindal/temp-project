@@ -20,6 +20,7 @@ import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { getPaymentDetailsIdentifiersKey } from '@/services/rules-engine/v8-variables/payment-details'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -130,11 +131,10 @@ export const DynamoDbKeys = {
         SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
       }
     } else {
-      const identifiersString = Object.entries(identifiers)
-        .map((entry) => `${entry[0]}:${entry[1]}`)
-        .join('#')
       return {
-        PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifiersString}#${direction}`,
+        PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${getPaymentDetailsIdentifiersKey(
+          paymentDetails
+        )}#${direction}`,
         SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
       }
     }

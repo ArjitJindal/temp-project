@@ -208,8 +208,8 @@ Cypress.Commands.add('toggleFeatures', (features) => {
     return;
   }
   cy.wait('@tenantSettings').then((interception) => {
-    const tenantSettings = interception.response!.body as TenantSettings;
-    const existingFeatures = tenantSettings.features ?? [];
+    const tenantSettings = interception?.response?.body;
+    const existingFeatures = (tenantSettings as TenantSettings)?.features ?? [];
     const newFeatures = [...existingFeatures];
     for (const feature in features) {
       const enabled = features[feature];
