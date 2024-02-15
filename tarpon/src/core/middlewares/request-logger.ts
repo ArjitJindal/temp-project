@@ -19,7 +19,6 @@ import { getSQSClient } from '@/utils/sns-sqs-client'
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
 >
-const sqsClient = getSQSClient()
 
 export const requestLoggerMiddleware = () => {
   return (handler: CallableFunction): Handler => {
@@ -93,9 +92,13 @@ async function logRequest(
     if (envIs('local') || envIs('test')) {
       await handleRequestLoggerTask([data])
     } else {
-      await sqsClient.send(sqsMessage)
+      await getSQSClient().send(sqsMessage)
     }
   } catch (error) {
-    logger.error(`Failed to log request: ${(error as Error).message}`)
+    logger.error(
+      `Failed to log request for Queue: ${
+        process.env.REQUEST_LOGGER_QUEUE_URL
+      }, Err: ${(error as Error).message}.`
+    )
   }
 }
