@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { mapValues } from 'lodash'
 import { RuleHitResult } from '../rule'
-import { TransactionHistoricalFilters } from '../filters'
+import { TransactionHistoricalFilters, TransactionFilters } from '../filters'
 import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 
@@ -17,7 +17,7 @@ export type FirstPaymentRuleParameter = {
 @traceable
 export default class FirstPaymentRule extends TransactionRule<
   FirstPaymentRuleParameter,
-  TransactionHistoricalFilters
+  TransactionHistoricalFilters & TransactionFilters
 > {
   public static getSchema(): JSONSchemaType<FirstPaymentRuleParameter> {
     return {
@@ -45,13 +45,22 @@ export default class FirstPaymentRule extends TransactionRule<
       !(await this.transactionRepository.hasAnySendingTransaction(
         this.transaction.originUserId,
         {
-          originCountries: this.filters.transactionCountriesHistorical,
-          transactionAmountRange: this.filters.transactionAmountRangeHistorical,
+          originCountries:
+            this.filters.transactionCountriesHistorical ??
+            this.filters.originTransactionCountries,
+          transactionAmountRange:
+            this.filters.transactionAmountRangeHistorical ??
+            this.filters.transactionAmountRange,
           originPaymentMethods: this.filters.paymentMethodsHistorical,
           transactionTimeRange24hr:
-            this.filters.transactionTimeRangeHistorical24hr,
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
+            this.filters.transactionTimeRangeHistorical24hr ??
+            this.filters.transactionTimeRange24hr,
+          transactionStates:
+            this.filters.transactionStatesHistorical ??
+            this.filters.transactionStates,
+          transactionTypes:
+            this.filters.transactionTypesHistorical ??
+            this.filters.transactionTypes,
         }
       ))
 
