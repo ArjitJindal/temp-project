@@ -6,13 +6,14 @@ describe('Close Alerts from Table', () => {
     ...PERMISSIONS.CASE_REOPEN,
     ...PERMISSIONS.CASE_DETAILS,
   ];
+
   beforeEach(() => {
     cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
-  it('should close and re-open an alert', () => {
-    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&alertStatus=OPEN');
 
+  it('should close and re-open an alert', () => {
     // Close an alert
+    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&alertStatus=OPEN');
     cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
     cy.caseAlertAction('Close');
     cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
@@ -29,7 +30,6 @@ describe('Close Alerts from Table', () => {
     );
     cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
     cy.caseAlertAction('Re-Open');
-    cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
     cy.get('button[data-cy="modal-ok"]').eq(0).click();
     cy.wait('@alert').its('response.statusCode').should('eq', 200);
   });

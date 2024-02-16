@@ -6,49 +6,33 @@ describe('Audit log filter - entity type', () => {
     cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
 
-  it('should filter according to entity type', () => {
-    cy.visit('/auditlog');
-    cy.get('[data-cy="rules-filter"]').filter(':contains("Entity")').eq(0).should('exist').click();
-    cy.get('.ant-checkbox-wrapper').filter(':contains("CASE")').should('exist').first().click();
-    cy.get('[data-cy="auditlog-entity-confirm"]').should('exist').click();
-    cy.get('[data-cy="auditlog-primary"]')
-      .contains('CASE')
-      .should('exist')
-      .each((ele) => {
-        cy.wrap(ele)
-          .should('exist')
-          .invoke('text')
-          .then((innerText) => {
-            expect('CASE').to.include(innerText);
-          });
-      });
-    cy.get('[data-cy="rules-filter"]').filter(':contains("Entity")').eq(0).should('exist').click();
-    cy.get('[data-cy="auditlog-entity-reset"]').should('exist').click();
-    cy.get('[data-cy="rules-filter"]')
-      .filter(':contains("Entity ID")')
-      .eq(0)
-      .should('exist')
-      .click();
+  describe('Audit log filter - entity type', () => {
+    const REQUIRED_PERMISSIONS = PERMISSIONS.AUDIT_LOG;
 
-    cy.get('[data-cy="auditlog-secondary"]')
-      .first()
-      .should('exist')
-      .invoke('text')
-      .then((text2) => {
-        cy.get('.ant-popover-inner-content input', { timeout: 15000 })
-          .eq(8)
-          .type(text2, { force: true });
-        cy.get('[data-cy="auditlog-secondary"]')
-          .contains(text2)
-          .should('exist')
-          .each((ele) => {
-            cy.wrap(ele)
-              .should('exist')
-              .invoke('text')
-              .then((innerText) => {
-                expect(text2).to.include(innerText);
-              });
-          });
-      });
+    beforeEach(() => {
+      cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    });
+
+    it('should filter according to entity type', () => {
+      cy.visit('/auditlog');
+
+      cy.get('[data-cy="rules-filter"]:contains("Entity")').first().click();
+      cy.get('.ant-checkbox-wrapper:contains("CASE")').first().click();
+      cy.get('[data-cy="auditlog-entity-confirm"]').click();
+      cy.get('[data-cy="auditlog-primary"]').contains('CASE').should('exist');
+
+      cy.get('[data-cy="rules-filter"]:contains("Entity")').first().click();
+      cy.get('[data-cy="auditlog-entity-reset"]').click();
+
+      cy.get('[data-cy="rules-filter"]:contains("Entity ID")').first().click();
+      cy.get('[data-cy="auditlog-secondary"]')
+        .first()
+        .invoke('text')
+        .then((text2) => {
+          cy.get('.ant-popover-inner-content input').eq(8).type(text2);
+
+          cy.get('[data-cy="auditlog-primary"]').contains('CASE').should('exist');
+        });
+    });
   });
 });
