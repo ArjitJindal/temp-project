@@ -1,7 +1,7 @@
 import React, { forwardRef, useImperativeHandle, useMemo } from 'react';
 import AsyncResourceRenderer from '../utils/AsyncResourceRenderer';
 import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
-import { H4, P } from '../ui/Typography';
+import { P } from '../ui/Typography';
 import PageWrapper, { PageWrapperProps } from '../PageWrapper';
 import s from './styles.module.less';
 import Toggle from '@/components/library/Toggle';
@@ -28,14 +28,11 @@ const SimulationUsageCard = (props: { usageCount: number }) => {
     ? 0
     : Math.max(settings.limits.simulations - props.usageCount, 0);
   return (
-    <div className={s.card}>
-      <P className={s.title}>Simulations</P>
-      <H4 className={s.count}>
-        {`${remainingSimulations} left`}
-        <a className={s.buyMore} href={`mailto:${branding.supportEmail}`} target="_blank">
-          Buy more
-        </a>
-      </H4>
+    <div className={`${s.card} ${s.extraMargin}`}>
+      <P className={s.title}> {`${remainingSimulations} Simulations left`}</P>
+      <a className={s.buyMore} href={`mailto:${branding.supportEmail}`} target="_blank">
+        Buy more
+      </a>
     </div>
   );
 };
@@ -65,39 +62,39 @@ export const SimulationPageWrapper = forwardRef<
   return (
     <PageWrapper
       {...props}
-      superAdminMode={
-        props.isSimulationModeEnabled
-          ? {
-              tooltip:
-                'Turn on to make the simulation jobs triggered from super admin users visible.',
-            }
-          : undefined
-      }
+      superAdminMode={{
+        tooltip: 'Turn on to make the simulation jobs triggered from super admin users visible.',
+      }}
       actionButton={
         <div className={s.simulationRoot}>
-          {isSimulationFeatureEnabled && props.isSimulationModeEnabled && (
-            <AsyncResourceRenderer resource={simulationCountResults.data}>
-              {(data) => <SimulationUsageCard usageCount={data.runJobsCount} />}
-            </AsyncResourceRenderer>
-          )}
           <div className={s.right}>
             <div className={s.simulationSwitch}>
-              <p className={s.simulationSwitchTitle}>Simulator</p>
-              {!isSimulationFeatureEnabled ? (
-                <div>
-                  <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="left">
-                    <span>
-                      <Toggle disabled={true} />
-                    </span>
-                  </Tooltip>
+              <div className={s.card}>
+                <div className={s.switchCard}>
+                  <p className={s.simulationSwitchTitle}>Simulator</p>
+                  {!isSimulationFeatureEnabled ? (
+                    <div>
+                      <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="left">
+                        <span>
+                          <Toggle size="SMALL" disabled={true} />
+                        </span>
+                      </Tooltip>
+                    </div>
+                  ) : (
+                    <Toggle
+                      size="SMALL"
+                      value={props.isSimulationModeEnabled}
+                      onChange={props.onSimulationModeChange}
+                      disabled={false}
+                    />
+                  )}
                 </div>
-              ) : (
-                <Toggle
-                  value={props.isSimulationModeEnabled}
-                  onChange={props.onSimulationModeChange}
-                  disabled={false}
-                />
-              )}
+                {isSimulationFeatureEnabled && props.isSimulationModeEnabled && (
+                  <AsyncResourceRenderer resource={simulationCountResults.data}>
+                    {(data) => <SimulationUsageCard usageCount={data.runJobsCount} />}
+                  </AsyncResourceRenderer>
+                )}
+              </div>
             </div>
           </div>
         </div>

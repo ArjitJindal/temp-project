@@ -90,17 +90,22 @@ function Header(
                 <div style={{ textAlign: 'end', display: 'flex', justifyContent: 'end' }}>
                   <Space>
                     {superAdminMode && isSuperAdmin(user) && (
-                      <SuperAdminContainer tooltip={superAdminMode.tooltip} tooltipPlacement="left">
-                        <Toggle
-                          height={20}
-                          width={40}
-                          uncheckedIcon={false}
-                          checkedIcon={false}
-                          onColor={COLORS.red.base}
-                          value={props.isSuperAdminMode}
-                          onChange={(v) => props.onSuperAdminModeChange(Boolean(v))}
-                        />
-                      </SuperAdminContainer>
+                      <div className={cn(actionButton && s.simulationShift)}>
+                        <SuperAdminContainer
+                          tooltip={superAdminMode?.tooltip}
+                          tooltipPlacement="left"
+                        >
+                          <Toggle
+                            height={20}
+                            width={40}
+                            uncheckedIcon={false}
+                            checkedIcon={false}
+                            onColor={COLORS.red.base}
+                            value={props.isSuperAdminMode}
+                            onChange={(v) => props.onSuperAdminModeChange(Boolean(v))}
+                          />
+                        </SuperAdminContainer>
+                      </div>
                     )}
                     {actionButton}
                   </Space>
