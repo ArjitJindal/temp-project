@@ -1,6 +1,6 @@
 import { Space } from 'antd';
 import ReactCountryFlag from 'react-country-flag';
-import { COUNTRIES, COUNTRY_NAME_TO_CODE } from '@flagright/lib/constants';
+import { COUNTRIES, COUNTRY_NAME_TO_CODE, CountryCode } from '@flagright/lib/constants';
 
 interface Props {
   // Alpha-2 code
@@ -23,8 +23,13 @@ export default function CountryDisplay(props: Props): JSX.Element {
 
   return (
     <Space align="start">
-      {name && <ReactCountryFlag countryCode={code} svg style={flagStyle} />}
+      {name && <CountryFlag code={code} flagStyle={flagStyle} />}
       <span>{name || code}</span>
     </Space>
   );
+}
+
+export function CountryFlag(props: { code: CountryCode; flagStyle?: React.CSSProperties }) {
+  const { code, flagStyle } = props;
+  return <ReactCountryFlag countryCode={code} svg style={flagStyle} />;
 }

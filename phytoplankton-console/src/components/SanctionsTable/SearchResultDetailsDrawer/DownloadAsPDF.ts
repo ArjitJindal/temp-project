@@ -1,7 +1,7 @@
 import FlagrightDemoLogoSvg from '@/branding/flagright-logo-demo.svg';
 
 interface Props {
-  pdfRef: React.MutableRefObject<HTMLInputElement>;
+  pdfRef: HTMLElement;
   fileName: string;
   data?: string;
   tableTitle?: string;
@@ -13,7 +13,7 @@ const PAGE_HEIGHT = 295;
 const DownloadAsPDF = async (props: Props) => {
   const { pdfRef, fileName, data, tableTitle } = props;
   try {
-    const input = pdfRef.current;
+    const input = pdfRef;
     const logoImage = new Image();
     logoImage.src = FlagrightDemoLogoSvg;
 

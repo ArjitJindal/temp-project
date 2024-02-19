@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Tag } from 'antd';
 import { startCase } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
-import SearchResultDetailsModal from './SearchResultDetailsModal';
+import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableColumn, TableData, ToolRenderer } from '@/components/library/Table/types';
 import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
@@ -201,7 +201,7 @@ export default function SanctionsTable(props: Props) {
         fitHeight={isEmbedded ? 400 : true}
       />
       {selectedSearchHit && (
-        <SearchResultDetailsModal
+        <SearchResultDetailsDrawer
           hit={selectedSearchHit}
           onClose={() => setSelectedSearchHit(undefined)}
         />

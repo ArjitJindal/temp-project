@@ -1,8 +1,11 @@
-/*
-  SOME_CONSTANT_NAME => Some Constant Name
- */
 import { describe, expect } from '@jest/globals';
-import { humanizeCamelCase, humanizeConstant, humanizeSnakeCase, recognizeCase } from '../humanize';
+import {
+  humanizeCamelCase,
+  humanizeConstant,
+  humanizeSnakeCase,
+  recognizeCase,
+  humanizeKebabCase,
+} from '../humanize';
 
 describe('humanize', () => {
   test('constant case', () => {
@@ -10,6 +13,10 @@ describe('humanize', () => {
   });
   test('snake case', () => {
     expect(humanizeSnakeCase('some_constant')).toEqual('Some constant');
+  });
+  test('kebab case', () => {
+    expect(humanizeKebabCase('some-constant')).toEqual('Some constant');
+    expect(humanizeKebabCase('some-other-constant')).toEqual('Some other constant');
   });
   test('camel case', () => {
     expect(humanizeCamelCase('')).toEqual('');
@@ -25,6 +32,27 @@ describe('humanize', () => {
     expect(humanizeCamelCase('FB')).toEqual('FB');
     expect(humanizeCamelCase('UserIBANNumber')).toEqual('User IBAN number');
     expect(humanizeCamelCase('fiveShortSimpleWordsHere')).toEqual('Five short simple words here');
+  });
+});
+
+describe('capitalize abbreviations', () => {
+  test('kebab case', () => {
+    expect(humanizeKebabCase('some-constant')).toEqual('Some constant');
+    expect(humanizeKebabCase('some-aml-constant')).toEqual('Some AML constant');
+    expect(humanizeKebabCase('aml-as-first-word')).toEqual('AML as first word');
+    expect(humanizeKebabCase('aml')).toEqual('AML');
+  });
+  test('kebab case', () => {
+    expect(humanizeSnakeCase('some_constant')).toEqual('Some constant');
+    expect(humanizeSnakeCase('some_aml_constant')).toEqual('Some AML constant');
+    expect(humanizeSnakeCase('aml_as_first_word')).toEqual('AML as first word');
+    expect(humanizeSnakeCase('aml')).toEqual('AML');
+  });
+  test('constant case', () => {
+    expect(humanizeConstant('SOME_CONSTANT')).toEqual('Some constant');
+    expect(humanizeConstant('SOME_AML_CONSTANT')).toEqual('Some AML constant');
+    expect(humanizeConstant('AML_AS_FIRST_WORD')).toEqual('AML as first word');
+    expect(humanizeConstant('AML')).toEqual('AML');
   });
 });
 
@@ -52,9 +80,14 @@ describe('recognize case', () => {
     expect(recognizeCase('SOME')).toEqual('CONSTANT');
     expect(recognizeCase('SOME_PROPERTY')).toEqual('CONSTANT');
     expect(recognizeCase('SOME_PROPERTY42')).toEqual('CONSTANT');
+    expect(recognizeCase('SOME-PROPERTY')).toEqual('KEBAB');
     expect(recognizeCase('SOME_PROPERTY ')).toEqual('UNKNOWN');
     expect(recognizeCase(' SOME_PROPERTY')).toEqual('UNKNOWN');
-    expect(recognizeCase('SOME-PROPERTY')).toEqual('UNKNOWN');
+  });
+
+  test('kebab case', () => {
+    expect(recognizeCase('some-property')).toEqual('KEBAB');
+    expect(recognizeCase('some-other-property')).toEqual('KEBAB');
   });
 
   test('unknown case', () => {

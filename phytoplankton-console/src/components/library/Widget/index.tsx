@@ -6,7 +6,7 @@ import WidgetBase from './WidgetBase';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import { download } from '@/utils/browser';
 import { message } from '@/components/library/Message';
-import DownloadAsPDF from '@/components/SanctionsTable/SearchResultDetailsModal/DownloadAsPDF';
+import DownloadAsPDF from '@/components/SanctionsTable/SearchResultDetailsDrawer/DownloadAsPDF';
 
 const DEFAULT_FIXED_HEIGHT = 400;
 
@@ -66,8 +66,8 @@ export function DownloadButton(props: {
 
     try {
       const { data, fileName, pdfRef, tableTitle } = await onDownload();
-      if (pdfRef) {
-        await DownloadAsPDF({ pdfRef, fileName, data, tableTitle });
+      if (pdfRef?.current) {
+        await DownloadAsPDF({ pdfRef: pdfRef?.current, fileName, data, tableTitle });
       } else {
         if (data && data.length) {
           download(fileName, data);

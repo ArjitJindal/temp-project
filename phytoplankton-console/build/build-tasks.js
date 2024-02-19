@@ -85,7 +85,19 @@ async function buildCode(env, options) {
     define['API_BASE_PATH'] = null;
   }
 
-  return await esbuild.build({
+  async function writeFiles(buildResult) {
+    await Promise.all(
+      buildResult.outputFiles.map(async (file) => {
+        // ignore chunk css files since they are already included in main css file
+        if (/chunks\/.*\.css$/.test(file.path) || /chunks\/.*\.css.map$/.test(file.path)) {
+          return;
+        }
+        await fs.outputFile(file.path, file.contents);
+      }),
+    );
+  }
+
+  const result = await esbuild.build({
     entryPoints: [path.join(SRC_FOLDER, entry)],
     entryNames: outFile,
     bundle: true,
@@ -149,18 +161,23 @@ async function buildCode(env, options) {
     write: false,
     watch: watch
       ? {
-          onRebuild(e, result) {
-            if (e) {
-              notify(`ERROR: ${e.message || 'Unknown error'}`);
-              error(`Watch build failed:`, e);
-            } else {
-              notify('Re-built successfully');
-              log('Re-built successfully');
-            }
+          onRebuild: (e, result) => {
+            (e ? Promise.reject(e) : writeFiles(result)).then(
+              () => {
+                notify('Re-built successfully');
+                log('Re-built successfully');
+              },
+              () => {
+                notify(`ERROR: ${e.message || 'Unknown error'}`);
+                error(`Watch build failed:`, e);
+              },
+            );
           },
         }
       : null,
   });
+  await writeFiles(result);
+  return result;
 }
 
 module.exports = {

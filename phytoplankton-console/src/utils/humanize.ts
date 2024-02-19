@@ -1,18 +1,37 @@
-import { capitalize, startCase, toLower } from 'lodash';
+import { startCase, toLower } from 'lodash';
 import { neverReturn } from '@/utils/lang';
+
+const ABBREVIATIONS = ['pep', 'aml', 'cft'];
 
 /*
   SOME_CONSTANT_NAME => Some constant name
  */
 export function humanizeConstant(name: string): string {
-  return capitalize(toLower(name?.split('_')?.join(' ')));
+  return humanizeSnakeCase(toLower(name));
 }
 
 /*
   bank_smart_iban => Bank smart iban
  */
 export function humanizeSnakeCase(name: string): string {
-  return capitalize(toLower(name?.split('_')?.join(' ')));
+  return firstLetterUpper(
+    toLower(name)
+      .split('_')
+      .map((x) => (ABBREVIATIONS.includes(x.toLocaleLowerCase()) ? x.toLocaleUpperCase() : x))
+      .join(' '),
+  );
+}
+
+/*
+  bank-smart-iban => Bank smart iban
+ */
+export function humanizeKebabCase(value: string): string {
+  return firstLetterUpper(
+    value
+      .split('-')
+      .map((x) => (ABBREVIATIONS.includes(x.toLocaleLowerCase()) ? x.toLocaleUpperCase() : x))
+      .join(' '),
+  );
 }
 
 /*
@@ -26,6 +45,7 @@ export function humanizeCamelCase(name: string): string {
     .replace(/^[a-z]/, (v) => v.toUpperCase()) // Capitalize the first letter of the string
     .replace(/ id$/, ' ID');
 }
+
 export function humanizeAuto(value: string): string {
   const caseType = recognizeCase(value);
   switch (caseType) {
@@ -35,6 +55,8 @@ export function humanizeAuto(value: string): string {
       return humanizeSnakeCase(value);
     case 'CONSTANT':
       return humanizeConstant(value);
+    case 'KEBAB':
+      return humanizeKebabCase(value);
     case 'UNKNOWN':
       return value;
   }
@@ -53,10 +75,11 @@ export function humanizeStrings(items: string[]): string {
 
 export function recognizeCase(
   string: string,
-): 'CAMEL_CASE' | 'SNAKE_CASE' | 'CONSTANT' | 'UNKNOWN' {
+): 'CAMEL_CASE' | 'SNAKE_CASE' | 'CONSTANT' | 'UNKNOWN' | 'KEBAB' {
   const isSnakeCase = string.match(/^[a-z0-9]+(?:_[a-z0-9]+)*$/);
   const isCamelCase = string.match(/^([A-Z]*[a-z0-9]+)+$/);
   const isConstant = string.match(/^[A-Z0-9]+(_[A-Z0-9]+)*$/);
+  const isKebab = string.match(/^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*$/);
   if (isSnakeCase) {
     return 'SNAKE_CASE';
   }
@@ -65,6 +88,9 @@ export function recognizeCase(
   }
   if (isConstant) {
     return 'CONSTANT';
+  }
+  if (isKebab) {
+    return 'KEBAB';
   }
   return 'UNKNOWN';
 }
