@@ -11,3 +11,23 @@ jobs:
     steps:
       - uses: actions/labeler@v4
       - uses: kentaro-m/auto-assign-action@v1.2.5
+  notion:
+    strategy:
+      matrix:
+        node-version: [18.x]
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Corepack enable
+        run: corepack enable && yarn set version 4.0.2
+      - name: Use Node.js 18x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "yarn"
+          cache-dependency-path: "yarn.lock"
+      - run: yarn install --immutable
+      - name: Update Notion ticket
+        run: |
+          BRANCH_NAME=${{ github.event.pull_request.head.ref }} PR_URL=${{ github.event.pull_request.html_url }} npm run update-notion-ticket:create

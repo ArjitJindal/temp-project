@@ -26,6 +26,7 @@ import { PRODUCTION_REGIONS } from '@flagright/lib/constants/deploy'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { databricksDeployStage } from './utils/databricks-deploy'
 import { BudgetServiceTypes, createBudget } from '@flagright/lib/cdk-utils'
+import { integrationsUpdateBuildProject } from './utils/integrations-update'
 const PIPLINE_NAME = 'orca-pipeline'
 
 export type CdkOrcaPipelineStackProps = StackProps
@@ -266,6 +267,13 @@ export class CdkOrcaPipelineStack extends Stack {
         {
           stageName: 'Post_Deploy_Prod',
           actions: [
+            new codepipline_actions.CodeBuildAction({
+              actionName: 'Integrations_Update',
+              project: integrationsUpdateBuildProject(this, role),
+              input: sourceOutput,
+              environmentVariables: getSentryReleaseSpec(false).actionEnv,
+              extraInputs: [tarponBuildOutput],
+            }),
             ...PRODUCTION_REGIONS.map((region) => {
               return new codepipline_actions.CodeBuildAction({
                 actionName: `Post_Deploy_Prod_${region
