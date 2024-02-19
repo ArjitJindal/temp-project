@@ -35,7 +35,7 @@
   },
   "homepage": "https://github.com/flagright/tarpon#readme",
   "lint-staged": {
-    "{lib,bin,scripts}/**/*.{js,ts}": [
+    "{bin,scripts}/**/*.{js,ts}": [
       "prettier --write"
     ]
   },
