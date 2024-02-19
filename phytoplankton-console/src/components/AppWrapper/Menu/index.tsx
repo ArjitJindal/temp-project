@@ -41,6 +41,7 @@ const icons = {
 };
 
 const branding = getBranding();
+const currentEnv = process.env.ENV_NAME;
 
 function renderItems(
   parentTranslationKey: string,
@@ -119,11 +120,25 @@ export default function Menu(props: {
             i18n,
             isCollapsed,
           ).concat([
-            ...(branding.knowledgeBaseUrl
+            ...(currentEnv == 'prod'
+              ? branding.prodKnowledgeBaseUrl
+                ? [
+                    <TopLevelLink
+                      key="help"
+                      to={branding.prodKnowledgeBaseUrl}
+                      isExternal={true}
+                      icon={<QuestionLineIcon />}
+                      isCollapsed={isCollapsed}
+                    >
+                      Help
+                    </TopLevelLink>,
+                  ]
+                : []
+              : branding.sandboxKnowledgeBaseUrl
               ? [
                   <TopLevelLink
                     key="help"
-                    to={branding.knowledgeBaseUrl}
+                    to={branding.sandboxKnowledgeBaseUrl}
                     isExternal={true}
                     icon={<QuestionLineIcon />}
                     isCollapsed={isCollapsed}
