@@ -496,6 +496,7 @@ class DatabricksStack extends TerraformStack {
         this,
         'dlt-cluster',
         {
+          provider: workspaceProvider,
           clusterName: `dlt-execution-${pl.id}`,
         }
       )
