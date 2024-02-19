@@ -16,7 +16,7 @@ import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { QuestionVariableOption } from '@/@types/openapi-internal/QuestionVariableOption'
 import { GetQuestionsResponse } from '@/@types/openapi-internal/GetQuestionsResponse'
 import { logger } from '@/core/logger'
-import { ask } from '@/utils/openapi'
+import { prompt } from '@/utils/openapi'
 import { getUserName } from '@/utils/helpers'
 import { AccountsService } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
@@ -237,25 +237,32 @@ export class QuestionService {
     throw new Error(`Unsupported question type`)
   }
 
-  private async gpt(ctx: InvestigationContext, question: string) {
-    const prompt = `
-    ${JSON.stringify(getQueries())}
-Please parse "${question}" to give the best matching query and variables values that should be set. The only output you will provide will be in the following format, defined in typescript, with no extra context or content. 
-Dates and datetimes should be output in ISO format, for example the datetime now is ${new Date().toISOString()}. This user's ID is ${
-      ctx.userId
-    }. This case's ID is ${ctx.caseId}. This alert's ID is ${ctx.alertId}:
+  private async gpt(ctx: InvestigationContext, questionPrompt: string) {
+    try {
+      const response = await prompt([
+        {
+          role: 'system',
+          content: `You are a machine with the following available "questions" with their corresponding "variables": ${JSON.stringify(
+            getQueries()
+          )}
+            You will be asked a to provide a single "questionId" and it's corresponding "variables" based on user input. You will communicate datetimes in the following format ${new Date().toISOString()}. You must reply with valid, iterable RFC8259 compliant JSON in your responses with the following structure as defined in typescript:
 {
   questionId: string,
   variables: {
     [key: string]: string | number
   }
-}`
-
-    try {
-      const result: {
-        questionId: string
-        variables: Variables
-      } = JSON.parse(await ask(prompt))
+}`,
+        },
+        {
+          role: 'system',
+          content: `Today's date is ${new Date().toISOString()}.`,
+        },
+        {
+          role: 'assistant',
+          content: `Please parse "${questionPrompt}" to give the best matching questionId and variables.`,
+        },
+      ])
+      const result = JSON.parse(response)
       const questions = getQuestions()
       const question = questions.find((q) => q.questionId === result.questionId)
 
