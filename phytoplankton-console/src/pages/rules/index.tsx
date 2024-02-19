@@ -95,6 +95,9 @@ const TableList = () => {
                                 setCurrentRule(rule);
                                 setRuleReadOnly(false);
                               }}
+                              onScenarioClick={() => {
+                                setRuleBuilderOpen(true);
+                              }}
                             />
                           </Authorized>
                         ),
@@ -156,6 +159,9 @@ const TableList = () => {
                       onEditRule={(rule) => {
                         setCurrentRule(rule);
                         setRuleReadOnly(false);
+                      }}
+                      onScenarioClick={() => {
+                        setRuleBuilderOpen(true);
                       }}
                     />
                   </Authorized>

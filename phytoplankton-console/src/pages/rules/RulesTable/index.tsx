@@ -26,6 +26,7 @@ interface Props {
   onCreateRule?: () => void;
   onViewRule: (rule: Rule) => void;
   onEditRule: (rule: Rule) => void;
+  onScenarioClick: () => void;
 }
 export const recommendedRules = [
   'R-2',
@@ -48,7 +49,7 @@ const DEFAULT_SORTING: SortingParamsItem = ['id', 'ascend'];
 const branding = getBranding();
 
 export const RulesTable: React.FC<Props> = (props) => {
-  const { onViewRule, onEditRule, onCreateRule, simulationMode } = props;
+  const { onViewRule, onEditRule, onCreateRule, simulationMode, onScenarioClick } = props;
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
@@ -277,6 +278,7 @@ export const RulesTable: React.FC<Props> = (props) => {
           <RulesSearchBar
             rules={getOr(rulesResult.data, { items: [] }).items}
             onSelectedRule={onEditRule}
+            onScenarioClick={onScenarioClick}
           />
         ) : null
       }

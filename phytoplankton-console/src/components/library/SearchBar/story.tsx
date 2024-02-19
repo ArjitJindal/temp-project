@@ -32,6 +32,9 @@ function Example() {
       onSelectItem={(item) => {
         console.info('Selected item', item);
       }}
+      isAIEnabled
+      setIsAIEnabled={() => {}}
+      onClear={() => {}}
     />
   );
 }

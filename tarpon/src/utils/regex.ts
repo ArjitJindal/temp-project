@@ -10,8 +10,10 @@ export function escapeStringRegexp(string: string) {
 }
 
 export const removePunctuation = (input: string) => {
-  const punctuation = /[.,/#!$%^&*;:?{}=\-_`~()]/g
-  return input.replace(punctuation, '')
+  // do not remove hyphens
+  const punctuation = /[!"#$%&'()*+,./:;<=>?@[\]^_`{|}~]/g // eslint-disable-line no-useless-escape
+
+  return input.replace(punctuation, '').replace(/\\/g, '')
 }
 
 export const checkIfWebsite = (input: string | undefined | null) => {

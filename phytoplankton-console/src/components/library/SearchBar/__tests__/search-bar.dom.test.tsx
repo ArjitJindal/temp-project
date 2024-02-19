@@ -11,7 +11,14 @@ interface FilterParams {}
 
 describe('Open/closing dropdown', () => {
   test('Dropdown should open on click and close on click outside', async () => {
-    const { container } = render(<RenderSearchBar items={success([])} />);
+    const { container } = render(
+      <RenderSearchBar
+        items={success([])}
+        isAIEnabled
+        onClear={() => {}}
+        setIsAIEnabled={() => {}}
+      />,
+    );
     expectDropdownOpen(false);
     await userEvent.click(screen.getByClassName(SearchBarStyles.root));
     expectDropdownOpen(true);

@@ -96,10 +96,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Rule'
-              examples: {}
+                $ref: '#/components/schemas/RulesSearchResponse'
       operationId: get-rules-search
       description: ''
       parameters:
@@ -125,6 +122,20 @@ paths:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
           in: query
           name: filterNature
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterTypes
+        - schema:
+            type: boolean
+          in: query
+          name: isAISearch
+        - schema:
+            type: boolean
+          in: query
+          name: disableGptSearch
   /rule-filters:
     get:
       summary: Rule Filters - List
@@ -9603,6 +9614,42 @@ components:
       required:
         - jobId
         - createdBy
+    RulesSearchResponse:
+      title: RulesSearchResponse
+      type: object
+      properties:
+        bestSearches:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+        otherSearches:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+        filtersApplied:
+          type: object
+          properties:
+            typologies:
+              type: array
+              items:
+                type: string
+            ruleNature:
+              type: array
+              items:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
+            checksFor:
+              type: array
+              items:
+                type: string
+            types:
+              type: array
+              items:
+                type: string
+            isAi:
+              type: boolean
+      required:
+        - bestSearches
+        - otherSearches
     SimulationPulseJob:
       title: SimulationPulseJob
       allOf:

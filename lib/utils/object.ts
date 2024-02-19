@@ -1,4 +1,4 @@
-export const replaceMagicKeyword = (
+export const replaceMagicKeyword = <T>(
   input: any,
   keyword: string,
   replacement: string
@@ -8,7 +8,7 @@ export const replaceMagicKeyword = (
       new RegExp(keyword, 'g'),
       replacement.replace(/\$/g, '$$$$')
     )
-  )
+  ) as T
 
 export function getAllValuesByKey<V>(key: string, obj: object): V[] {
   const values: V[] = []

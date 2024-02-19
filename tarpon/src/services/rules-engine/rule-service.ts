@@ -1,10 +1,17 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
 import { removeStopwords, eng } from 'stopword'
-import { isEmpty, set } from 'lodash'
+import { compact, concat, isEmpty, set, uniq } from 'lodash'
 import { replaceMagicKeyword } from '@flagright/lib/utils/object'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
-import { RULES_LIBRARY } from './transaction-rules/library'
+import { singular } from 'pluralize'
+import {
+  RULES_LIBRARY,
+  RuleChecksForField,
+  RuleNature,
+  RuleTypeField,
+  RuleTypology,
+} from './transaction-rules/library'
 import {
   TRANSACTION_FILTERS,
   TRANSACTION_FILTER_DEFAULT_VALUES,
@@ -31,6 +38,16 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleSearchFilter } from '@/@types/rule/rule-actions'
 import { removePunctuation } from '@/utils/regex'
+import { ask } from '@/utils/openapi'
+import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchResponse'
+import { scoreObjects } from '@/utils/search'
+
+type AIFilters = {
+  ruleTypes?: string[]
+  checksFor?: string[]
+  typologies?: string[]
+  nature?: string[]
+}
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
   (attribute) => attribute.name
@@ -141,15 +158,187 @@ export class RuleService {
     )
   }
 
-  async searchRules(
+  public async searchRules(
     queryStr: string,
     filters: RuleSearchFilter
-  ): Promise<Rule[]> {
+  ): Promise<RulesSearchResponse> {
+    const isAISearch = filters?.isAISearch ?? false
+
     const cleanedQueryStr = removePunctuation(
-      removeStopwords(queryStr.split(' '), [...eng, 'rule']).join(' ')
+      compact(
+        removeStopwords(queryStr.split(' '), [...eng, 'rule', 'rules'])
+      ).join(' ')
     )
 
-    return this.ruleRepository.searchRules(cleanedQueryStr, filters)
+    if (isAISearch) {
+      const directMatch = filters.disableGptSearch
+        ? {}
+        : this.checkDirectMatch(queryStr)
+      const isDirectMatch = Object.values(directMatch).some(
+        (value) => value.length > 0
+      )
+      if (isDirectMatch && !filters.disableGptSearch) {
+        filters.filterTypes = directMatch.ruleTypes
+        filters.filterChecksFor = directMatch.checksFor
+        filters.filterTypology = directMatch.typologies
+        filters.filterNature = directMatch.nature as RuleNature[]
+      }
+
+      const aiSearchResult =
+        isDirectMatch || filters.disableGptSearch
+          ? directMatch
+          : await this.aiSearchRuleFilters(queryStr)
+
+      const processFilters = (
+        field: keyof AIFilters,
+        enumValues?: any,
+        regularFilter?: string[]
+      ): string[] => {
+        return compact(
+          uniq(
+            concat(
+              aiSearchResult[field]?.map((value) => enumValues?.[value]),
+              regularFilter
+            )
+          )
+        )
+      }
+
+      const { filterTypes, filterChecksFor, filterTypology, filterNature } =
+        filters
+
+      filters.filterTypes = processFilters(
+        'ruleTypes',
+        RuleTypeField,
+        filterTypes || []
+      )
+      filters.filterChecksFor = processFilters(
+        'checksFor',
+        RuleChecksForField,
+        filterChecksFor || []
+      )
+      filters.filterTypology = processFilters(
+        'typologies',
+        RuleTypology,
+        filterTypology || []
+      )
+      filters.filterNature = processFilters(
+        'nature',
+        RuleNature,
+        filterNature || []
+      ) as RuleNature[]
+    }
+
+    const { bestSearches, otherSearches, filtersApplied } =
+      await this.ruleRepository.searchRules(queryStr, cleanedQueryStr, filters)
+
+    const bestSearchesCount = bestSearches.length
+
+    const {
+      bestSearches: bestSearchesResult,
+      otherSearches: otherSearchesResult,
+    } = this.rankRules(
+      cleanedQueryStr,
+      { bestSearches, otherSearches },
+      isAISearch
+    )
+
+    /**
+     * 1. If bestSearchesCount >= 3, return all bestSearches and otherSearches is 2 only
+     * 2. If bestSearchesCount < 3, return all bestSearches and otherSearches is 8 - bestSearchesCount
+     */
+
+    return {
+      bestSearches: bestSearchesResult,
+      otherSearches: otherSearchesResult.slice(0, 10 - bestSearchesCount),
+      filtersApplied,
+    }
+  }
+
+  private filterRules(rules: Rule[]): Rule[] {
+    return rules.filter(
+      (rule) =>
+        isEmpty(rule.requiredFeatures) ||
+        hasFeatures(rule.requiredFeatures || [])
+    )
+  }
+
+  private rankRules(
+    queryStr: string,
+    results: { bestSearches: Rule[]; otherSearches: Rule[] },
+    isAI: boolean
+  ): { bestSearches: Rule[]; otherSearches: Rule[] } {
+    // Check if the query string is empty or too short
+    if (isEmpty(queryStr) || queryStr.length < 5) {
+      return results
+    }
+
+    // Define weights for each attribute
+    const weightsObject: Partial<Record<keyof Rule, number>> = {
+      id: 200,
+      name: 120,
+      description: 80,
+      checksFor: 30,
+      typologies: 30,
+      defaultNature: 30,
+      types: 30,
+      sampleUseCases: 50,
+    }
+
+    // Determine the threshold based on the query length and whether it's AI
+    const threshold = isAI ? 20 : Math.min(queryStr.length * 1.5, 35)
+
+    // Score and filter the best searches
+    const bestSearches = this.scoreAndFilter(
+      this.filterRules(results.bestSearches),
+      queryStr,
+      weightsObject,
+      threshold
+    )
+
+    // Score and filter other searches
+    let otherSearches = this.scoreAndFilter(
+      this.filterRules(results.otherSearches),
+      queryStr,
+      weightsObject,
+      threshold
+    )
+
+    // If there are not enough best searches, supplement with high-scoring other searches
+    if (bestSearches.length < 3) {
+      const otherSearchesToMove = otherSearches.filter(
+        (result) => result.percentage > threshold * 2
+      )
+      bestSearches.push(
+        ...otherSearchesToMove.slice(0, 3 - bestSearches.length)
+      )
+      otherSearches = otherSearches.filter(
+        (result) => !otherSearchesToMove.includes(result)
+      )
+    }
+
+    // Sort and return the results
+    return {
+      bestSearches: this.sortAndMap(bestSearches),
+      otherSearches: this.sortAndMap(otherSearches),
+    }
+  }
+
+  private scoreAndFilter(
+    rules: Rule[],
+    queryStr: string,
+    weights: Partial<Record<keyof Rule, number>>,
+    threshold: number
+  ): { object: Rule; percentage: number }[] {
+    return scoreObjects(rules, queryStr, weights, {
+      minimumThreshold: threshold,
+    }).filter((result) => result.percentage > threshold)
+  }
+
+  private sortAndMap(results: { object: Rule; percentage: number }[]): Rule[] {
+    return results
+      .sort((a, b) => b.percentage - a.percentage)
+      .map((result) => result.object)
   }
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
@@ -165,6 +354,84 @@ export class RuleService {
       )
     }
     return this.ruleRepository.createOrUpdateRule(rule)
+  }
+
+  private async aiSearchRuleFilters(queryStr: string): Promise<AIFilters> {
+    const checksFor = Object.keys(RuleChecksForField).map((key) => key)
+    const ruleTypes = Object.keys(RuleTypeField).map((key) => key)
+    const typologies = Object.keys(RuleTypology).map((key) => key)
+    const nature = Object.keys(RuleNature).map((key) => key)
+
+    const prompt = `
+  You are expert in suggesting rule filters for a transaction monitoring system. You have been asked to suggest filters for a new rule. You have been given below information about the filters that can be used for a rule.
+  ChecksFor: ${JSON.stringify(checksFor)}
+  RuleTypes: ${JSON.stringify(ruleTypes)}
+  Typology: ${JSON.stringify(typologies)}
+  Nature: ${JSON.stringify(nature)}
+  Please only give what options are provided above for each field.
+  Suggest me as less as possible filters for below query. You also don't need to fill all the keys. Just fill the keys that you think are relevant for the query.
+  If there is a direct match don't suggest other filter options. And please don't suggest any filter options that are not provided for each key.
+  For example, if the query is "Give me Structuring and Layering FRAUD rules", you can suggest below filters
+  {
+    "nature": ["FRAUD"],
+    "typologies": ["Structuring", "Layering"]
+  }
+  Or if the query is "Give me all rules that are for FRAUD", you can suggest below filters
+ {
+    nature: ["FRAUD"]   
+ }
+ It should be flexible enough to handle above mention keys like "nature", "typologies", "checksFor" and "ruleTypes". Please answer very precisely. If you don't know any field, just leave it an empty array
+ Now your query is "${queryStr}"
+You have to answer in below format as string. If you don't know any field, just leave it an empty array
+  Your answer should be in below format
+  {
+    "ruleTypes"?: Array<string>,
+    "checksFor"?: Array<string>,
+    "typologies"?: Array<string>,
+    "nature"?: Array<string>
+  }
+  `
+
+    const reponse = await ask(prompt)
+
+    const json = JSON.parse(reponse)
+
+    return json
+  }
+
+  private checkDirectMatch(queryStr: string): AIFilters {
+    const checksForValues = Object.values(RuleChecksForField)
+    const ruleTypesValues = Object.values(RuleTypeField)
+    const typologiesValues = Object.values(RuleTypology)
+    const natureValues = Object.values(RuleNature)
+    const queryStrArr = queryStr.split(' ')
+
+    const getFilters = (values: string[]) => {
+      return values.filter((value) =>
+        queryStrArr.some((word) => {
+          const singularWord = singular(word)
+          const singularValue = singular(value)
+
+          if (word.length < 5) {
+            return singularValue.toLowerCase() === singularWord.toLowerCase()
+          }
+
+          return (
+            singularValue
+              .toLowerCase()
+              .startsWith(singularWord.toLowerCase()) ||
+            singularWord.toLowerCase().startsWith(singularValue.toLowerCase())
+          )
+        })
+      )
+    }
+
+    const ruleTypes = getFilters(ruleTypesValues)
+    const checksFor = getFilters(checksForValues)
+    const typologies = getFilters(typologiesValues)
+    const nature = getFilters(natureValues)
+
+    return { ruleTypes, checksFor, typologies, nature }
   }
 
   async createOrUpdateRuleInstance(

@@ -41,6 +41,13 @@ describe('Remove punctuation', () => {
     const expected = 'This is a test This is a test'
     expect(removePunctuation(input)).toBe(expected)
   })
+
+  test('Remove punctuation', () => {
+    const input = 'This is a test \\This is a test.'
+    const expected = 'This is a test This is a test'
+
+    expect(removePunctuation(input)).toBe(expected)
+  })
 })
 
 describe('Website validation', () => {

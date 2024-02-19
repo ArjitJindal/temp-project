@@ -2,10 +2,29 @@
 
 @h-padding: 16px;
 
-.root {
+.root,
+.rootEmpty {
   background: white;
   display: flex;
   flex-direction: column;
+}
+
+.rootEmpty {
+  margin-top: 16px;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+}
+
+.aiSection {
+  padding: 0 @h-padding;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
 
 .filters {
@@ -13,6 +32,7 @@
   gap: 8px;
   padding: @h-padding;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .subheader {

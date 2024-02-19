@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { compact, sortBy, uniq } from 'lodash';
+import { compact, isEmpty, isEqual, sortBy, uniq } from 'lodash';
 import { useDebounce, useLocalStorageState } from 'ahooks';
 import { replaceMagicKeyword } from '@flagright/lib/utils/object';
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency';
@@ -10,33 +10,52 @@ import { ItemGroup, Item } from '@/components/library/SearchBar/SearchBarDropdow
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { RULES_UNIVERSAL_SEARCH } from '@/utils/queries/keys';
-import { success } from '@/utils/asyncResource';
+import { AsyncResource, getOr, isLoading, isSuccess, success } from '@/utils/asyncResource';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Option } from '@/components/library/Select';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 type Props = {
   rules: Rule[];
   onSelectedRule: (rule: Rule) => void;
+  onScenarioClick: () => void;
 };
 
 type RuleUniversalSearchFilters = {
-  typology: string[];
+  typologies: string[];
   checksFor: string[];
   defaultNature: RuleNature[];
+  types: string[];
+};
+
+const DEFAULT_FILTER_PARAMS: RuleUniversalSearchFilters = {
+  typologies: [],
+  checksFor: [],
+  defaultNature: [],
+  types: [],
 };
 
 const RECENT_RULE_SEARCHES_KEY = 'recent-rule-searches';
 
+const countFilters = (filters: RuleUniversalSearchFilters) => {
+  return Object.values(filters).reduce((acc, value) => acc + value?.length || 0, 0);
+};
+
 export const RulesSearchBar = (props: Props) => {
-  const { rules, onSelectedRule } = props;
+  const { rules, onSelectedRule, onScenarioClick } = props;
   const settings = useSettings();
 
   const [universalSearchFilterParams, setUniversalSearchFilterParams] =
-    useState<RuleUniversalSearchFilters>({ typology: [], checksFor: [], defaultNature: [] });
+    useState<RuleUniversalSearchFilters>(DEFAULT_FILTER_PARAMS);
 
   const [search, setSearch] = useState<string>();
-
+  const [isAIEnabled, setIsAIEnabled] = useState(false);
   const debouncedSearch = useDebounce(search, { wait: 300 });
+  const [triggerAISearch, setTriggerAISearch] = useState(false);
+
+  const isAllFiltersEmpty = useMemo(() => {
+    return Object.values(universalSearchFilterParams).every((value) => isEmpty(value));
+  }, [universalSearchFilterParams]);
 
   const [recentSearches, setRecentSearches] = useLocalStorageState<
     (Item & { timestamp: number })[]
@@ -71,6 +90,7 @@ export const RulesSearchBar = (props: Props) => {
       getRuleFilter('Typology', 'typologies'),
       getRuleFilter('Checking for', 'checksFor'),
       getRuleFilter('Nature', 'defaultNature'),
+      getRuleFilter('Type', 'types'),
     ];
 
     return filters;
@@ -82,91 +102,247 @@ export const RulesSearchBar = (props: Props) => {
 
   const api = useApi();
 
-  const searchQueryResult = useQuery<ItemGroup[]>(
-    RULES_UNIVERSAL_SEARCH(debouncedSearch || '', universalSearchFilterParams),
-    async () => {
-      if (!debouncedSearch) {
-        return [];
-      }
+  const recentSearchesObj = useMemo(() => {
+    const itemGroups: ItemGroup[] = [
+      {
+        items: recentSearches.map((recentSearch) =>
+          replaceMagicKeyword(
+            recentSearch,
+            DEFAULT_CURRENCY_KEYWORD,
+            settings.defaultValues?.currency ?? 'USD',
+          ),
+        ),
+        title: 'Recent searches',
+      },
+    ];
 
-      const rulesSearchResult = await api.getRulesSearch({
-        queryStr: debouncedSearch || '',
-        filterTypology: universalSearchFilterParams.typology,
-        filterChecksFor: universalSearchFilterParams.checksFor,
-        filterNature: universalSearchFilterParams.defaultNature,
-      });
+    return itemGroups;
+  }, [recentSearches, settings.defaultValues?.currency]);
 
-      const rules = replaceMagicKeyword(
-        rulesSearchResult,
-        DEFAULT_CURRENCY_KEYWORD,
-        settings.defaultValues?.currency ?? 'USD',
-      );
+  const [aiSearchedFilters, setAISearchedData] = useState<RuleUniversalSearchFilters>();
 
-      return [
-        {
-          items: rules.map((rule) => ({
-            itemDescription: rule.description,
-            itemId: rule.id,
-            itemName: rule.name,
-          })),
-          title: 'Best results',
-        },
-      ];
-    },
-  );
+  const searchQueryResult = useQuery<ItemGroup[]>(RULES_UNIVERSAL_SEARCH(''), async () => {
+    if (!debouncedSearch && isAllFiltersEmpty) {
+      return recentSearchesObj;
+    }
 
-  return (
-    <SearchBar
-      filters={universalSearchFilters}
-      items={
-        search
-          ? searchQueryResult.data
-          : success<ItemGroup[]>([
-              {
-                items: recentSearches.map((recentSearch) =>
-                  replaceMagicKeyword(
-                    recentSearch,
-                    DEFAULT_CURRENCY_KEYWORD,
-                    settings.defaultValues?.currency ?? 'USD',
-                  ),
-                ),
-                title: 'Recent searches',
-              },
-            ])
-      }
-      search={search}
-      filterParams={universalSearchFilterParams}
-      onSearch={onSearch}
-      onSelectItem={(item) => {
-        setRecentSearches((prev) => {
-          const newRecentSearches = prev?.filter(
-            (recentSearch) => recentSearch.itemId !== item.itemId,
-          );
+    const isAiFiltersIncreased =
+      isAIEnabled &&
+      aiSearchedFilters &&
+      countFilters(universalSearchFilterParams) > countFilters(aiSearchedFilters)
+        ? true
+        : false;
 
-          newRecentSearches?.unshift({
-            ...item,
-            timestamp: Date.now(),
-          });
+    const sendFilters = !isAIEnabled || isAiFiltersIncreased;
 
-          return (newRecentSearches || []).slice(0, 5);
+    const rulesSearchResult = await api.getRulesSearch({
+      queryStr: debouncedSearch || '',
+      filterTypology: sendFilters ? universalSearchFilterParams.typologies : [],
+      filterChecksFor: sendFilters ? universalSearchFilterParams.checksFor : [],
+      filterNature: sendFilters ? universalSearchFilterParams.defaultNature : [],
+      filterTypes: sendFilters ? universalSearchFilterParams.types : [],
+      isAISearch: isAIEnabled,
+      disableGptSearch: isAIEnabled && isAiFiltersIncreased,
+    });
+
+    const result = replaceMagicKeyword<typeof rulesSearchResult>(
+      rulesSearchResult,
+      DEFAULT_CURRENCY_KEYWORD,
+      settings.defaultValues?.currency ?? 'USD',
+    );
+
+    const bestMatches = result.bestSearches;
+    const otherMatches = result.otherSearches;
+
+    const data = [
+      ...(bestMatches.length > 0
+        ? [
+            {
+              title: 'Best matches',
+              items: bestMatches.map((rule) => ({
+                itemDescription: rule.description,
+                itemId: rule.id,
+                itemName: rule.name,
+              })),
+            },
+          ]
+        : []),
+      ...(otherMatches.length > 0
+        ? [
+            {
+              title: 'Other matches',
+              items: otherMatches.map((rule) => ({
+                itemDescription: rule.description,
+                itemId: rule.id,
+                itemName: rule.name,
+              })),
+            },
+          ]
+        : []),
+    ];
+
+    const filters = {
+      typologies: rulesSearchResult?.filtersApplied?.typologies || [],
+      checksFor: rulesSearchResult?.filtersApplied?.checksFor || [],
+      defaultNature: rulesSearchResult?.filtersApplied?.ruleNature || [],
+      types: rulesSearchResult?.filtersApplied?.types || [],
+    };
+
+    if (isAIEnabled) {
+      setAISearchedData(filters);
+    }
+
+    setUniversalSearchFilterParams((prev) => ({ ...prev, ...filters }));
+
+    return data;
+  });
+
+  useDeepEqualEffect(() => {
+    if (isAIEnabled && triggerAISearch) {
+      searchQueryResult.refetch();
+      setTriggerAISearch(false);
+      return;
+    }
+
+    if (!isAIEnabled) {
+      searchQueryResult.refetch();
+    }
+  }, [universalSearchFilterParams, debouncedSearch, isAIEnabled, triggerAISearch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onSelectItem = useCallback(
+    (item: Item) => {
+      setRecentSearches((prev) => {
+        const newRecentSearches = prev?.filter(
+          (recentSearch) => recentSearch.itemId !== item.itemId,
+        );
+
+        newRecentSearches?.unshift({
+          ...item,
+          timestamp: Date.now(),
         });
 
-        const rule = rules.find((rule) => rule.id === item.itemId);
+        return (newRecentSearches || []).slice(0, 5);
+      });
 
-        if (rule) {
-          onSelectedRule(rule);
+      const rule = rules.find((rule) => rule.id === item.itemId);
+
+      if (rule) {
+        onSelectedRule(rule);
+      }
+    },
+    [onSelectedRule, rules, setRecentSearches],
+  );
+
+  const filters = useMemo(() => {
+    if (isAllFiltersEmpty) {
+      return universalSearchFilters;
+    }
+
+    if (isAIEnabled) {
+      return universalSearchFilters.filter(
+        (filter) => !isEmpty(universalSearchFilterParams[filter.key]),
+      );
+    }
+
+    return universalSearchFilters;
+  }, [isAIEnabled, universalSearchFilterParams, universalSearchFilters, isAllFiltersEmpty]);
+
+  const moreFilters = useMemo(() => {
+    if (isAllFiltersEmpty) {
+      return [];
+    }
+    if (isAIEnabled) {
+      return universalSearchFilters.filter((filter) =>
+        isEmpty(universalSearchFilterParams[filter.key]),
+      );
+    }
+
+    return [];
+  }, [isAIEnabled, universalSearchFilterParams, universalSearchFilters, isAllFiltersEmpty]);
+
+  const items: AsyncResource<ItemGroup[]> = useMemo(() => {
+    if (
+      isAIEnabled &&
+      aiSearchedFilters &&
+      !isEqual(aiSearchedFilters, universalSearchFilterParams) &&
+      isSuccess(searchQueryResult.data)
+    ) {
+      if (countFilters(aiSearchedFilters) > countFilters(universalSearchFilterParams)) {
+        return success([]);
+      }
+    }
+
+    if (!debouncedSearch && isAllFiltersEmpty) {
+      return success(recentSearchesObj);
+    }
+
+    return searchQueryResult.data;
+  }, [
+    debouncedSearch,
+    isAllFiltersEmpty,
+    isAIEnabled,
+    aiSearchedFilters,
+    universalSearchFilterParams,
+    recentSearchesObj,
+    searchQueryResult.data,
+  ]);
+
+  const [showEmptyState, setShowEmptyState] = useState(false);
+
+  useDeepEqualEffect(() => {
+    if (
+      search &&
+      getOr(searchQueryResult.data, []).length === 0 &&
+      !isLoading(searchQueryResult.data)
+    ) {
+      setShowEmptyState(true);
+    } else {
+      setShowEmptyState(false);
+    }
+  }, [search, searchQueryResult.data]);
+
+  return (
+    <SearchBar<RuleUniversalSearchFilters>
+      filters={filters}
+      items={items}
+      search={search}
+      filterParams={universalSearchFilterParams}
+      moreFilters={moreFilters}
+      onSearch={(newValue) => {
+        if (isAIEnabled && !newValue) {
+          setSearch('');
+          setUniversalSearchFilterParams(DEFAULT_FILTER_PARAMS);
         }
+        onSearch(newValue);
       }}
-      onChangeFilterParams={setUniversalSearchFilterParams}
+      onSelectItem={onSelectItem}
+      onChangeFilterParams={(newFilterParams) => {
+        if (
+          isAIEnabled &&
+          countFilters(newFilterParams) > countFilters(universalSearchFilterParams)
+        ) {
+          setTriggerAISearch(true);
+        }
+        setUniversalSearchFilterParams(newFilterParams);
+      }}
       placeholder="Search for any rule or use-case using natural language"
       emptyState={{
         title: 'No matching results',
         description: 'Click on ‘Create scenario’ below to configure your own rule from scratch.',
-        onAction: () => {
-          alert('onAction');
-        },
+        onAction: () => onScenarioClick(),
         actionLabel: 'Create scenario',
       }}
+      onClear={() => {
+        setSearch('');
+        setUniversalSearchFilterParams(DEFAULT_FILTER_PARAMS);
+      }}
+      onAISearch={() => {
+        setTriggerAISearch(true);
+      }}
+      showTitleOnSingleItem={!search || search.length > 10}
+      isAIEnabled={isAIEnabled}
+      setIsAIEnabled={setIsAIEnabled}
+      showEmptyState={() => showEmptyState}
     />
   );
 };

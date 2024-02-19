@@ -15,24 +15,46 @@ export interface SearchBarProps<FilterParams> {
   onSearch?: (newValue: string | undefined) => void;
   onChangeFilterParams?: (filterParams: FilterParams) => void;
   onSelectItem?: (item: Item) => void;
-  onEnter?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   emptyState?: {
     title: string;
     description: string;
     onAction?: () => void;
     actionLabel?: string;
   };
+  showEmptyState?: () => boolean;
+  moreFilters?: FilterProps<FilterParams>[];
+  onClear: () => void;
+  onAISearch?: (search: string) => void;
+  showTitleOnSingleItem?: boolean;
+  isAIEnabled: boolean;
+  setIsAIEnabled: (isAIEnabled: boolean) => void;
 }
 
 export default function SearchBar<FilterParams extends object = object>(
   props: SearchBarProps<FilterParams>,
 ) {
-  const { search, onSearch, onSelectItem, onEnter } = props;
-  const { items, filters, onChangeFilterParams, filterParams, placeholder } = props;
+  const {
+    search,
+    onSearch,
+    onSelectItem,
+    emptyState,
+    showEmptyState,
+    moreFilters,
+    onClear,
+    items,
+    filters,
+    onChangeFilterParams,
+    filterParams,
+    placeholder,
+    onAISearch,
+    showTitleOnSingleItem = true,
+    isAIEnabled,
+    setIsAIEnabled,
+  } = props;
+
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [isFiltersVisible, setFiltersVisible] = useState(false);
   const [isAllItemsShown, setAllItemsShown] = useState(false);
-  const [isEnterPressed, setEnterPressed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,13 +88,12 @@ export default function SearchBar<FilterParams extends object = object>(
     <div className={s.root} ref={rootRef}>
       <SearchBarField
         value={search}
-        onChange={(newValue) => {
-          setEnterPressed(false);
-          onSearch?.(newValue);
-        }}
+        onChange={onSearch}
         onEnter={(e) => {
-          setEnterPressed(true);
-          onEnter?.(e);
+          if (isAIEnabled) {
+            setFiltersVisible(true);
+            onAISearch?.(e.currentTarget.value);
+          }
         }}
         isExpanded={isDropdownVisible}
         placeholder={placeholder}
@@ -83,6 +104,14 @@ export default function SearchBar<FilterParams extends object = object>(
               }
             : undefined
         }
+        filterParams={filterParams}
+        onClear={() => {
+          onClear();
+          setFiltersVisible(false);
+        }}
+        isAIEnabled={isAIEnabled}
+        setIsAIEnabled={setIsAIEnabled}
+        onChangeFilterParams={onChangeFilterParams}
       />
       <div className={s.dropdown}>
         <div className={s.dropdownPosition}>
@@ -90,17 +119,26 @@ export default function SearchBar<FilterParams extends object = object>(
             <SearchBarDropdown<FilterParams>
               key={'dropdown'}
               filters={filters}
+              moreFilters={moreFilters}
               filterParams={filterParams}
               onChangeFilterParams={onChangeFilterParams}
               items={items}
+              search={search}
               showFilters={isFiltersVisible}
               showAllItems={isAllItemsShown}
               onToggleShowAllItems={() => {
                 setAllItemsShown((prevState) => !prevState);
               }}
               onSelectItem={handleClickItem}
-              isEnterPressed={isEnterPressed}
-              emptyState={props.emptyState}
+              emptyState={emptyState}
+              showEmptyState={showEmptyState}
+              isAIEnabled={isAIEnabled}
+              setIsAIEnabled={setIsAIEnabled}
+              onAISearch={(search) => {
+                onAISearch?.(search);
+                setFiltersVisible(true);
+              }}
+              showTitleOnSingleItem={showTitleOnSingleItem}
             />
           )}
         </div>

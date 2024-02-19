@@ -65,7 +65,6 @@ export enum RuleChecksForField {
   Time = 'Time',
   TransactionCurrency = 'Transaction currency',
   NumberOfUsers = 'No. of users',
-  TransactionPaymentMethod = 'Transaction payment method',
   TransactionCountry = 'Transaction country',
   TransactionPaymentMethodCount = 'Transaction payment method count',
   TransactionPaymentMethodIssuedCountry = 'Transaction payment method issued country',
@@ -88,7 +87,7 @@ export enum RuleChecksForField {
   UsersYearOfBirth = 'User’s Y.O.B',
   UsersIndustry = 'User’s industry',
   UsersAddress = 'User’s address',
-  TranasctionDetails = 'Transaction details',
+  TransactionDetails = 'Transaction details',
   Keywords = 'Keywords',
   accountHolderName = 'Account holder name',
 }
@@ -613,7 +612,7 @@ const _RULES_LIBRARY: Array<
       ruleImplementationName: 'transaction-reference-keyword',
       labels: [],
       checksFor: [
-        RuleChecksForField.TranasctionDetails,
+        RuleChecksForField.TransactionDetails,
         RuleChecksForField.Keywords,
       ],
       defaultNature: RuleNature.AML,
@@ -895,6 +894,7 @@ const _RULES_LIBRARY: Array<
       checksFor: [
         RuleChecksForField.TransactionAmount,
         RuleChecksForField.NumberOfTransactions,
+        RuleChecksForField.TransactionPaymentMethodCount,
       ],
       defaultNature: RuleNature.AML,
       defaultCasePriority: 'P1',
