@@ -580,6 +580,20 @@ class DatabricksStack extends TerraformStack {
         })),
       ],
     })
+    new databricks.permissions.Permissions(this, 'serverless-permission', {
+      provider: workspaceProvider,
+      sqlEndpointId: sqlWarehouse.id,
+      accessControl: [
+        {
+          groupName: 'users',
+          permissionLevel: 'CAN_USE',
+        },
+        ...servicePrincipals.map((sp) => ({
+          servicePrincipalName: sp.applicationId,
+          permissionLevel: 'CAN_USE',
+        })),
+      ],
+    })
 
     entities.forEach((entity) => {
       new databricks.sqlTable.SqlTable(this, `backfill-${entity.table}`, {
@@ -685,6 +699,19 @@ class DatabricksStack extends TerraformStack {
           },
         }
       )
+
+      // TODO: Not sure why things aren't working on sandbox. Will figure this out.
+      const host =
+        stage == 'sandbox'
+          ? sqlWarehouse.odbcParams.get(0).hostname
+          : Fn.replace(workspaceProvider.host || '', 'https://', '')
+      const path =
+        stage == 'sandbox'
+          ? sqlWarehouse.odbcParams.get(0).path
+          : `sql/protocolv1/o/${Fn.tostring(workspace.workspaceId)}/${
+              pipelineCluster.clusterId
+            }`
+
       new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
         this,
         `aws-secret-version-${tenant}`,
@@ -692,10 +719,8 @@ class DatabricksStack extends TerraformStack {
           secretId: tenantSecret.id,
           secretString: Fn.jsonencode({
             token: spToken.tokenValue,
-            host: Fn.replace(workspaceProvider.host || '', 'https://', ''),
-            path: `sql/protocolv1/o/${Fn.tostring(workspace.workspaceId)}/${
-              pipelineCluster.clusterId
-            }`,
+            host,
+            path,
           }),
           lifecycle: {
             preventDestroy: preventTenantDestruction,
