@@ -165,6 +165,7 @@ class DatabricksStack extends TerraformStack {
     // This is an unresolved dependency issue.
     this.workspace({
       profileRoleName,
+      workspace,
       workspaceProvider,
     })
   }
@@ -172,9 +173,11 @@ class DatabricksStack extends TerraformStack {
   private workspace({
     profileRoleName,
     workspaceProvider,
+    workspace,
   }: {
     workspaceProvider: databricks.provider.DatabricksProvider
     profileRoleName: string
+    workspace: databricks.mwsWorkspaces.MwsWorkspaces
   }) {
     new databricks.workspaceConf.WorkspaceConf(this, 'workspace-conf', {
       provider: workspaceProvider,
@@ -433,63 +436,69 @@ class DatabricksStack extends TerraformStack {
       source: path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl'),
     })
 
-    // Only deploy in EU-1 for now.
-    if (region === 'eu-1') {
-      new databricks.pipeline.Pipeline(this, `pipeline`, {
-        provider: workspaceProvider,
-        name: 'main',
-        continuous: true,
-        development: stage === 'dev',
-        channel: 'PREVIEW',
-        catalog: catalog.name,
-        cluster: [
-          {
-            ...clusterConfig,
-            nodeTypeId: 'm5d.large',
-            autoscale: {
-              minWorkers: 1,
-              maxWorkers: 1,
-            },
+    const pl = new databricks.pipeline.Pipeline(this, `pipeline`, {
+      provider: workspaceProvider,
+      name: 'main',
+      continuous: true,
+      development: stage === 'dev',
+      channel: 'PREVIEW',
+      catalog: catalog.name,
+      cluster: [
+        {
+          ...clusterConfig,
+          nodeTypeId: 'm5d.large',
+          autoscale: {
+            minWorkers: 1,
+            maxWorkers: 1,
           },
-        ],
-        library: [
-          {
-            notebook: {
-              path: `/Shared/pipeline`,
-            },
+        },
+      ],
+      library: [
+        {
+          notebook: {
+            path: `/Shared/pipeline`,
           },
-        ],
-        target: 'default',
-        notification: [
-          {
-            emailRecipients: adminEmails,
-            alerts: [
-              'on-update-failure',
-              'on-update-fatal-failure',
-              'on-flow-failure',
-            ],
-          },
-        ],
-      })
+        },
+      ],
+      target: 'default',
+      notification: [
+        {
+          emailRecipients: adminEmails,
+          alerts: [
+            'on-update-failure',
+            'on-update-fatal-failure',
+            'on-flow-failure',
+          ],
+        },
+      ],
+    })
 
-      new databricks.job.Job(this, `backfill-job`, {
-        provider: workspaceProvider,
-        name: 'One-time backfill from Mongo',
-        task: [
-          {
-            taskKey: 'backfill',
-            notebookTask: {
-              notebookPath: '/Shared/backfill',
-            },
-            newCluster: {
-              ...clusterConfig,
-              sparkVersion: '14.2.x-scala2.12',
-            },
-            library: clusterLibraries,
+    new databricks.job.Job(this, `backfill-job`, {
+      provider: workspaceProvider,
+      name: 'One-time backfill from Mongo',
+      task: [
+        {
+          taskKey: 'backfill',
+          notebookTask: {
+            notebookPath: '/Shared/backfill',
           },
-        ],
-      })
-    }
+          newCluster: {
+            ...clusterConfig,
+            sparkVersion: '14.2.x-scala2.12',
+          },
+          library: clusterLibraries,
+        },
+      ],
+    })
+
+    const pipelineCluster =
+      new databricks.dataDatabricksCluster.DataDatabricksCluster(
+        this,
+        'dlt-cluster',
+        {
+          clusterName: `dlt-execution-${pl.id}`,
+        }
+      )
 
     new databricks.grant.Grant(this, `grants-admin`, {
       provider: workspaceProvider,
@@ -554,15 +563,15 @@ class DatabricksStack extends TerraformStack {
     )
     new databricks.permissions.Permissions(this, 'sql-permission', {
       provider: workspaceProvider,
-      sqlEndpointId: sqlWarehouse.id,
+      clusterId: pipelineCluster.clusterId,
       accessControl: [
         {
           groupName: 'users',
-          permissionLevel: 'CAN_USE',
+          permissionLevel: 'CAN_ATTACH_TO',
         },
         ...servicePrincipals.map((sp) => ({
           servicePrincipalName: sp.applicationId,
-          permissionLevel: 'CAN_USE',
+          permissionLevel: 'CAN_ATTACH_TO',
         })),
       ],
     })
@@ -678,8 +687,10 @@ class DatabricksStack extends TerraformStack {
           secretId: tenantSecret.id,
           secretString: Fn.jsonencode({
             token: spToken.tokenValue,
-            host: sqlWarehouse.odbcParams.get(0).hostname,
-            path: sqlWarehouse.odbcParams.get(0).path,
+            host: Fn.replace(workspaceProvider.host || '', 'https://', ''),
+            path: `sql/protocolv1/o/${Fn.tostring(workspace.workspaceId)}/${
+              pipelineCluster.clusterId
+            }`,
           }),
           lifecycle: {
             preventDestroy: preventTenantDestruction,

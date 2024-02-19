@@ -96,7 +96,12 @@ def create_entity_tables(entity, schema, dynamo_key, id_column):
             )
         )
 
-        filtered_df = df.filter(col(partition_key_id_path).contains(dynamo_key))
+        filtered_df = (
+            df
+            # ignore tiermoney on sandbox and they have schema breaking data.
+            .filter(lower(col("tenant")) != lower(lit("1RRDYI5GQ4")))
+            .filter(col(partition_key_id_path).contains(dynamo_key))
+        )
         with_structured_df = filtered_df.withColumn("structured_data", deserialisation_udf(col("data")))
         return with_structured_df.select(
             col("structured_data.*"),
