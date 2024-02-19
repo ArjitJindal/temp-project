@@ -31,10 +31,10 @@ export const UniquePaymentIdentifierSent: TableQuestion<Period> = {
     }>(
       `
     select
-      first(t.destinationPaymentDetails.method) as destinationPaymentDetails,
+      first(t.destinationPaymentDetails.method) as method,
       count(*) as count,
       sum(t.destinationAmountDetails.transactionAmount) as sum,
-      t.destinationPaymentDetails
+      t.destinationPaymentDetails as destinationPaymentDetails
     from
       transactions t
     where
