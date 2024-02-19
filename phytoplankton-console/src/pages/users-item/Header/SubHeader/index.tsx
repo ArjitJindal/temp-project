@@ -26,7 +26,9 @@ export default function SubHeader(props: Props) {
           <Form.Layout.Label
             orientation="horizontal"
             title={'CRA risk level'}
-            tooltip={'Manual overrides will be automatically adjusted for rules.'}
+            tooltip={
+              'Manually adjusting CRA risk level will override the user`s risk level for all future rule checks.'
+            }
           >
             <>
               <UserManualRiskPanel userId={userId} />
