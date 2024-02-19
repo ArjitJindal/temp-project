@@ -129,7 +129,7 @@ export default function UserItem() {
               ...(isEntityLinkingEnabled
                 ? [
                     {
-                      title: <div className={s.icon}>Entity linking</div>,
+                      title: <div className={s.icon}>Ontology</div>,
                       key: 'entity-linking',
                       children: <Linking userId={user.userId} />,
                       isClosable: false,

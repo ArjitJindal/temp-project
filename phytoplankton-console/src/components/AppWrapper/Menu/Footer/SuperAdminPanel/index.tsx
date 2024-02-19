@@ -45,7 +45,7 @@ const featureDescriptions: { [key in Feature]: { title: string; description: str
   DEMO_RULES: { title: 'Demo Rules', description: 'Enable demo rules, they don’t work actually' },
   SIMULATOR: { title: 'Simulator', description: 'Enables simulator for rules & risk levels' },
   CRM: { title: "CRM (Don't Use)", description: 'Enables CRM data' },
-  ENTITY_LINKING: { title: 'Entity Linking', description: 'Enables entity linking' },
+  ENTITY_LINKING: { title: 'Entity Linking', description: 'Enables Ontology (entity linking)' },
   ADVANCED_WORKFLOWS: { title: 'Advanced Workflows', description: 'Enables case escalations flow' },
   IBAN_RESOLUTION: {
     title: 'IBAN Resolution',
