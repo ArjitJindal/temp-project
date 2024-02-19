@@ -31,21 +31,21 @@ describe('Dashboard Integration Test', () => {
   it('should configure the dashboard with selected widgets', () => {
     cy.visit('/');
     const endpoints = [
-      '/dashboard_stats/**',
-      '/dashboard_stats/users/**',
-      '/dashboard_stats/hits_per_user**',
-      '/consumer/**',
-      '/dashboard_stats/users/**',
-      '/dashboard_stats/hits_per_user**',
-      '/business/**',
-      '/dashboard_stats/transactions**',
-      '/dashboard_stats/transactions/**',
-      '/dashboard_stats/transactions/**',
-      '/dashboard_stats/**',
-      '/dashboard_stats/**',
-      '/dashboard_stats/**',
-      '/dashboard_stats/**',
-      '/dashboard_stats/**',
+      '**/dashboard_stats/**',
+      '**/dashboard_stats/users/**',
+      '**/dashboard_stats/hits_per_user**',
+      '**/consumer/**',
+      '**/dashboard_stats/users/**',
+      '**/dashboard_stats/hits_per_user**',
+      '**/business/**',
+      '**/dashboard_stats/transactions**',
+      '**/dashboard_stats/transactions/**',
+      '**/dashboard_stats/transactions/**',
+      '**/dashboard_stats/**',
+      '**/dashboard_stats/**',
+      '**/dashboard_stats/**',
+      '**/dashboard_stats/**',
+      '**/dashboard_stats/**',
     ];
 
     endpoints.forEach((endpoint) => {
@@ -74,9 +74,9 @@ describe('Dashboard Integration Test', () => {
 
     cy.get('button[data-cy="dashboard-configure-button"]').click();
 
-    cy.intercept('GET', 'dashboard_stats/**').as('dashboard_stats_Alias');
-    cy.intercept('GET', 'business/**').as('businessAlias');
-    cy.intercept('GET', 'consumer/**').as('consumerAlias');
+    cy.intercept('GET', '**/dashboard_stats/**').as('dashboard_stats_Alias');
+    cy.intercept('GET', '**/business/**').as('businessAlias');
+    cy.intercept('GET', '**/consumer/**').as('consumerAlias');
 
     Object.keys(WIDGETS).forEach((widget) => {
       cy.get(`input[data-cy='${widget}-checkbox']`).then(($checkbox) => {
