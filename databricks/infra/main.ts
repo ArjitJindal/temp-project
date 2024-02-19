@@ -17,7 +17,11 @@ import * as path from 'path'
 const preventTenantDestruction = false
 // Change this to update the table schemas
 const schemaVersion = '5'
-const adminEmails = ['tim+databricks@flagright.com']
+const adminEmails = [
+  'tim+databricks@flagright.com',
+  'nadig@flagright.com',
+  'chia@flagright.com',
+]
 const stage = process.env.STAGE as Stage
 const region = process.env.REGION as FlagrightRegion
 const env = `${stage}-${region}`
