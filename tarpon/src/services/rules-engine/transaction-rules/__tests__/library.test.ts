@@ -1,7 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 import { simpleGit } from 'simple-git'
-
 import { keyBy } from 'lodash'
 import { TRANSACTION_RULES } from '..'
 import { RULES_LIBRARY } from '../library'
