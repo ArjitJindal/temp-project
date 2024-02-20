@@ -6,6 +6,8 @@ import {
   updateTicketStatusByID,
 } from './utils/notion'
 
+const slackifyMarkdown = require('slackify-markdown')
+
 const GITHUB_REPO = 'orca'
 const GITHUB_OWNER = 'flagright'
 const DEPLOYMENT_CHANNEL_ID = 'C03L5KRE2E8'
@@ -17,11 +19,12 @@ async function createGitHubRelease(): Promise<{
   releaseUrl: string
   releaseBody: string
 }> {
+  const latestCommit = execSync('git rev-parse HEAD').toString().trim()
   const release = execSync('git rev-parse --short=7 HEAD').toString().trim()
   const releaseResult = await githubClient.rest.repos.createRelease({
     repo: GITHUB_REPO,
     owner: GITHUB_OWNER,
-    target_commitish: 'main',
+    target_commitish: latestCommit,
     tag_name: release,
     generate_release_notes: true,
   })
@@ -31,7 +34,11 @@ async function createGitHubRelease(): Promise<{
   }
 }
 
-async function notifySlack(releaseUrl: string, releaseBody: string) {
+async function notifySlack(releaseUrl: string, rawReleaseNote: string) {
+  const releaseNote = rawReleaseNote.replace(
+    /(https:\/\/github\.com\/flagright\/orca\/pull\/)(\d+)/g,
+    '[#$2]($1$2)'
+  )
   await slackClient.chat.postMessage({
     channel: DEPLOYMENT_CHANNEL_ID,
     blocks: [
@@ -39,7 +46,9 @@ async function notifySlack(releaseUrl: string, releaseBody: string) {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `[release](${releaseUrl}\n${releaseBody})`,
+          text: slackifyMarkdown(
+            `[NEW PROD RELEASE](${releaseUrl}) 🚀🚀🚀 \n${releaseNote}`
+          ),
         },
       },
     ],
@@ -48,7 +57,7 @@ async function notifySlack(releaseUrl: string, releaseBody: string) {
 
 async function updateNotionTickets() {
   const lastRelease = execSync(
-    'git describe --abbrev=0 --tags `git rev-list --tags --skip=1 --max-count=1`'
+    'git describe --abbrev=0 --tags `git rev-list --tags --max-count=1`'
   )
     .toString()
     .trim()
@@ -79,9 +88,9 @@ async function updateNotionTickets() {
 }
 
 async function main() {
+  await updateNotionTickets()
   const { releaseUrl, releaseBody } = await createGitHubRelease()
   await notifySlack(releaseUrl, releaseBody)
-  await updateNotionTickets()
   console.info(`Release: ${releaseUrl}\n${releaseBody}`)
 }
 
