@@ -381,6 +381,10 @@ export const COUNTRY_ALIASES: { [key in CountryCode]?: string[] } = {
   RU: ['Russia'],
 }
 
+export const COUNTRY_GROUP_LABELS: { [key: string]: string } = {
+  EEA: 'European Economic Area',
+}
+
 export const COUNTRY_GROUPS: { [key: string]: string[] } = {
   EEA: [
     'AT',
@@ -426,3 +430,9 @@ export const COUNTRY_NAME_TO_CODE = Object.fromEntries([
     names.map((name) => [name, code])
   ),
 ])
+
+export function expandCountryGroup(countryCodes: string[]) {
+  return countryCodes.flatMap(
+    (countryCode) => COUNTRY_GROUPS[countryCode] || countryCode
+  )
+}

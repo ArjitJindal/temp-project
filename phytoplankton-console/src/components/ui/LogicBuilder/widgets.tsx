@@ -16,6 +16,7 @@ import {
   DateTimeWidget,
 } from '@react-awesome-query-builder/ui';
 import DatePicker from '../DatePicker';
+import { deserializeCountries, omitCountryGroups, serializeCountries } from './widget-utils';
 import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -168,7 +169,10 @@ function getSelectOptions(
 const customSelectWidget: SelectWidget<BasicConfig> = {
   type: `select`,
   factory: (props) => {
-    const listValues = getSelectOptions(props);
+    let listValues = getSelectOptions(props);
+    if (props.field.includes('country')) {
+      listValues = omitCountryGroups(listValues);
+    }
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <Select
@@ -196,6 +200,8 @@ const customMultiselectWidget: MultiSelectWidget<BasicConfig> = {
   type: `select`,
   factory: (props) => {
     const listValues = getSelectOptions(props);
+    const isCountryField = props.field.includes('country');
+
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <Select<string | number>
@@ -210,9 +216,13 @@ const customMultiselectWidget: MultiSelectWidget<BasicConfig> = {
               return { label: x.title, value: x.value };
             }) ?? []
           }
-          value={props.value ?? undefined}
+          value={
+            isCountryField
+              ? deserializeCountries(props.value as string[])
+              : props.value ?? undefined
+          }
           onChange={(newValue) => {
-            props.setValue(newValue as string[] | number[] | undefined);
+            props.setValue(isCountryField ? serializeCountries(newValue) : newValue);
           }}
         />
       </WidgetWrapper>

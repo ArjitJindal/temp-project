@@ -1,5 +1,9 @@
-import { groupBy, lowerCase, snakeCase, startCase } from 'lodash'
-import { COUNTRIES, CURRENCIES } from '@flagright/lib/constants'
+import { concat, groupBy, lowerCase, snakeCase, startCase } from 'lodash'
+import {
+  COUNTRIES,
+  COUNTRY_GROUP_LABELS,
+  CURRENCIES,
+} from '@flagright/lib/constants'
 import * as Models from '@/@types/openapi-public/all'
 import * as CustomModelData from '@/@types/openapi-public-custom/all'
 export abstract class EntityModel {
@@ -34,10 +38,16 @@ function getOptions(
     }))
   }
   if (enumConstKey === 'COUNTRY_CODES') {
-    return Object.entries(COUNTRIES).map((entry) => ({
-      title: `${entry[1]} (${entry[0]})`,
-      value: entry[0],
-    }))
+    return concat(
+      Object.entries(COUNTRIES).map((entry) => ({
+        title: `${entry[1]} (${entry[0]})`,
+        value: entry[0],
+      })),
+      Object.entries(COUNTRY_GROUP_LABELS).map((entry) => ({
+        title: `${entry[1]} (${entry[0]})`,
+        value: entry[0],
+      }))
+    )
   }
 
   return optionValues.map((value) => ({
