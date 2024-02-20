@@ -7,7 +7,7 @@ export const isValidEmail = (email: string) => {
   // aman@test.one.com should pass
   // aman@test.one. should fail
 
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/
+  const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/
 
   return emailRegex.test(email)
 }
