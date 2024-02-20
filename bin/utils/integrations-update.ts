@@ -20,7 +20,7 @@ export const integrationsUpdateBuildProject = (
           ],
         },
         build: {
-          commands: ['ts-node scripts/create-release.ts'],
+          commands: ['./node_modules/.bin/ts-node scripts/create-release.ts'],
         },
       },
       env: {
