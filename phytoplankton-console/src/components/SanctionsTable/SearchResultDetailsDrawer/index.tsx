@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { startCase, groupBy, uniq } from 'lodash';
+import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
 import s from './index.module.less';
-import DownloadAsPDF from './DownloadAsPDF';
 import ListingCard from './ListingCard';
 import Section from './Section';
 import { normalizeAmlTypes, ADVERSE_MEDIA, TABS_ORDER } from './helpers';

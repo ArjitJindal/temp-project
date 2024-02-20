@@ -6,7 +6,11 @@ import WidgetBase from './WidgetBase';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import { download } from '@/utils/browser';
 import { message } from '@/components/library/Message';
-import DownloadAsPDF from '@/components/SanctionsTable/SearchResultDetailsDrawer/DownloadAsPDF';
+import DownloadAsPDF, {
+  FONT_FAMILY_SEMIBOLD,
+  TableOptions,
+  getTableHeadAndBody,
+} from '@/components/DownloadAsPdf/DownloadAsPDF';
 
 const DEFAULT_FIXED_HEIGHT = 400;
 
@@ -67,7 +71,13 @@ export function DownloadButton(props: {
     try {
       const { data, fileName, pdfRef, tableTitle } = await onDownload();
       if (pdfRef?.current) {
-        await DownloadAsPDF({ pdfRef: pdfRef?.current, fileName, data, tableTitle });
+        const tableOptions = buildDownloadableTable(data);
+        await DownloadAsPDF({
+          pdfRef: pdfRef.current,
+          fileName,
+          tableOptions: tableOptions ? [tableOptions] : [],
+          reportTitle: tableTitle,
+        });
       } else {
         if (data && data.length) {
           download(fileName, data);
@@ -86,4 +96,46 @@ export function DownloadButton(props: {
   return (
     <DownloadLineIcon className={cn(s.icon, isLoading && s.isLoading)} onClick={handleClick} />
   );
+}
+
+function buildDownloadableTable(data?: string): TableOptions | undefined {
+  const tableData = getTableHeadAndBody(data);
+  if (!tableData) return undefined;
+  return {
+    tableOptions: {
+      head: [tableData.head],
+      body: tableData.rows,
+      headStyles: {
+        fillColor: [245, 245, 245],
+        textColor: [38, 38, 38],
+        font: FONT_FAMILY_SEMIBOLD,
+      },
+      alternateRowStyles: { fillColor: [255, 255, 255] },
+      bodyStyles: { fillColor: [250, 250, 250] },
+      didParseCell: (data) => {
+        switch (data.cell.text[0]) {
+          case 'VERY_HIGH': {
+            data.cell.styles.textColor = [245, 34, 45];
+            break;
+          }
+          case 'HIGH': {
+            data.cell.styles.textColor = [250, 140, 22];
+            break;
+          }
+          case 'MEDIUM': {
+            data.cell.styles.textColor = [245, 226, 90];
+            break;
+          }
+          case 'LOW': {
+            data.cell.styles.textColor = [82, 196, 26];
+            break;
+          }
+          case 'VERY_LOW': {
+            data.cell.styles.textColor = [173, 198, 255];
+            break;
+          }
+        }
+      },
+    },
+  };
 }

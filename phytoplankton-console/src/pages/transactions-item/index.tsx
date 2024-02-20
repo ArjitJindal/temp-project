@@ -1,23 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 //components
 import SubHeader from './SubHeader';
 import SenderReceiverDetails from './SenderReceiverDetails';
+import { getTransactionReportTables } from './TransactionReport';
 import PageWrapper from '@/components/PageWrapper';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
+import Button from '@/components/library/Button';
 
 //utils and hooks
 import { makeUrl } from '@/utils/routing';
 import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
-import { ApiException, InternalTransaction } from '@/apis';
+import { Alert, AlertListResponseItem, ApiException, InternalTransaction } from '@/apis';
 import { useApi } from '@/api';
 import PageTabs from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { useElementSize } from '@/utils/browser';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
+import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
+import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { message } from '@/components/library/Message';
 
 export default function TransactionsItem() {
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalTransaction>>(init());
@@ -67,6 +73,58 @@ export default function TransactionsItem() {
     };
   }, [currentTransactionId, transactionId, api]);
 
+  const [transactionAlertsQueryResult, setTransactionAlertQueryResult] = useState<Alert[] | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (currentTransactionId) {
+      api
+        .getAlertList({
+          ...DEFAULT_PARAMS_STATE,
+          pageSize: 100,
+          filterTransactionIds: [currentTransactionId],
+        })
+        .then((res) => {
+          setTransactionAlertQueryResult(res.data.map((item: AlertListResponseItem) => item.alert));
+        });
+    }
+  }, [currentTransactionId, api]);
+
+  const ruleAlertMap = useMemo(() => {
+    const alertDetails = new Map();
+    if (transactionAlertsQueryResult) {
+      transactionAlertsQueryResult.forEach((alert) => {
+        alertDetails.set(alert.ruleInstanceId, {
+          alertId: alert.alertId,
+          caseId: alert.caseId,
+        });
+      });
+    }
+    return alertDetails;
+  }, [transactionAlertsQueryResult]);
+
+  const [isLoading, setLoading] = useState(false);
+
+  const handleReportDownload = async (transaction: InternalTransaction, ruleAlertMap) => {
+    const hideMessage = message.loading('Downloading report...');
+    setLoading(true);
+
+    try {
+      await DownloadAsPDF({
+        fileName: `transaction-${transaction.transactionId}-report.pdf`,
+        tableOptions: getTransactionReportTables(transaction, ruleAlertMap),
+        reportTitle: 'Transaction report',
+      });
+    } catch (err) {
+      message.fatal('Unable to complete the download!', err);
+    } finally {
+      setLoading(false);
+      hideMessage && hideMessage();
+      message.success('Report successfully downloaded');
+    }
+  };
+
   const [headerStickyElRef, setHeaderStickyElRef] = useState<HTMLDivElement | null>(null);
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
@@ -89,6 +147,17 @@ export default function TransactionsItem() {
                   },
                 ]}
                 subHeader={<SubHeader transaction={transaction} />}
+                buttons={[
+                  <Button
+                    type="TETRIARY"
+                    isDisabled={isLoading}
+                    onClick={async () => {
+                      await handleReportDownload(transaction, ruleAlertMap);
+                    }}
+                  >
+                    <DownloadLineIcon height={16} /> Download report
+                  </Button>,
+                ]}
               />
             </Card.Root>
           }
