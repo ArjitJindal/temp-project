@@ -6,14 +6,10 @@ import { compact } from 'lodash'
 export const getSentryReleaseSpec = (isDev: boolean) => {
   return {
     commands: compact<string>([
-      isDev
-        ? `./node_modules/.bin/sentry-cli releases files ${getReleaseVersionTarpon(
-            'latest-version'
-          )} delete --all`
-        : undefined,
-      `./node_modules/.bin/sentry-cli releases set-commits $RELEASE_VERSION --commit flagright/tarpon@$RELEASE_COMMIT`,
-      `./node_modules/.bin/sentry-cli releases files $RELEASE_VERSION upload-sourcemaps --ext js --ext map --ignore-file .sentryignore dist`,
+      `./node_modules/.bin/sentry-cli releases set-commits $RELEASE_VERSION --commit flagright/orca@$RELEASE_COMMIT`,
       `./node_modules/.bin/sentry-cli releases finalize $RELEASE_VERSION`,
+      `./node_modules/.bin/sentry-cli sourcemaps inject dist`,
+      `./node_modules/.bin/sentry-cli sourcemaps upload --release=$RELEASE_VERSION --ext js --ext map --ignore-file .sentryignore dist`,
     ]),
     env: {
       'secrets-manager': {

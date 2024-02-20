@@ -77,7 +77,8 @@ async function buildCode(env, options) {
   ];
   const devMode = watch || config.mode === 'development';
   const envName = config.envName ?? 'unknown_env';
-  const releaseSuffix = process.env.ENV === 'dev' ? 'latest-version' : getGitHeadHash();
+  const commitHash = getGitHeadHash();
+  const releaseSuffix = process.env.ENV === 'dev' ? 'latest-version' : commitHash;
   const release = `phytoplankton#${releaseSuffix}`;
   const define = config.define;
 
@@ -130,20 +131,6 @@ async function buildCode(env, options) {
       cssModulesPlugin(),
       svgrPlugin(),
       resolveVirtuals(),
-
-      ...(devMode || !process.env.SENTRY_UPLOAD
-        ? []
-        : [
-            // let sentry plugin be the last one
-            sentryEsbuildPlugin({
-              org: 'flagright-data-technologies-in',
-              project: 'phytoplankton-console',
-              release,
-              include: './dist',
-              authToken: process.env.SENTRY_AUTH_TOKEN,
-              cleanArtifacts: true,
-            }),
-          ]),
     ],
     outdir: path.join(PROJECT_DIR, OUTPUT_FOLDER),
     mainFields: ['module', 'browser', 'main'],
@@ -177,7 +164,29 @@ async function buildCode(env, options) {
       : null,
   });
   await writeFiles(result);
+
+  if (!devMode && process.env.SENTRY_UPLOAD) {
+    uploadSentrySourceMaps(release, commitHash);
+  }
   return result;
+}
+
+function uploadSentrySourceMaps(release, commitHash) {
+  process.env.SENTRY_ORG = 'flagright-data-technologies-in';
+  process.env.SENTRY_PROJECT = 'phytoplankton-console';
+
+  execSync(
+    `./node_modules/.bin/sentry-cli releases set-commits ${release} --commit flagright/orca@${commitHash}`,
+    { stdio: 'inherit' },
+  );
+  execSync(`./node_modules/.bin/sentry-cli releases finalize ${release}`, { stdio: 'inherit' });
+  execSync(`./node_modules/.bin/sentry-cli sourcemaps inject dist`, { stdio: 'inherit' });
+  execSync(
+    `./node_modules/.bin/sentry-cli sourcemaps upload --release=${release} --ext js --ext map dist`,
+    {
+      stdio: 'inherit',
+    },
+  );
 }
 
 module.exports = {

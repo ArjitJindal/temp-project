@@ -68,7 +68,7 @@ function serve() {
 }
 
 async function main() {
-  const bundleBaseName = `bundle.${Date.now()}`;
+  const bundleBaseName = `bundle`;
   const bundleJs = `${bundleBaseName}.js`;
   const bundleCss = `${bundleBaseName}.css`;
 
