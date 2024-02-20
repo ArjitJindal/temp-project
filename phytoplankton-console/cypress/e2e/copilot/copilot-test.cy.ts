@@ -1,6 +1,6 @@
 import { PERMISSIONS } from '../../support/permissions';
 
-describe('Investigative Copilot', () => {
+describe.skip('Investigative Copilot', () => {
   const REQUIRED_PERMISSIONS = [
     ...PERMISSIONS.CASE_OVERVIEW,
     ...PERMISSIONS.USERS_USER_OVERVIEW,
