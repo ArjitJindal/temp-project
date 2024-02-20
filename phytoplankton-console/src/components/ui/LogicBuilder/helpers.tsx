@@ -5,6 +5,7 @@ import cn from 'clsx';
 import React from 'react';
 import s from './index.module.less';
 import { JSON_LOGIC_FUNCTIONS } from './functions';
+import { JSON_LOGIC_OPERATORS } from './operators';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets } from '@/components/ui/LogicBuilder/widgets';
 import Select, { Option } from '@/components/library/Select';
@@ -53,10 +54,10 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
               valueSources: enabledValueSources,
             },
           }),
-          InitialConfig.operators,
+          JSON_LOGIC_OPERATORS,
         )
       : {
-          ...InitialConfig.operators,
+          ...JSON_LOGIC_OPERATORS,
           ...params.operators,
         },
     fields: fields,
@@ -82,6 +83,7 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       addSubRuleLabel: 'Add sub condition',
       groupActionsPosition: 'bottomLeft',
       canReorder: enableReorder,
+      showErrorMessage: true,
       renderValueSources: (props) => {
         let options: Option<string>[];
         if (Array.isArray(props.valueSources)) {

@@ -15,8 +15,16 @@ import {
   BaseWidgetProps,
   DateTimeWidget,
 } from '@react-awesome-query-builder/ui';
+import moment from 'moment';
+import { TimePicker } from 'antd';
+import { getSecondsFromTimestamp } from '@flagright/lib/utils/time';
 import DatePicker from '../DatePicker';
-import { deserializeCountries, omitCountryGroups, serializeCountries } from './widget-utils';
+import {
+  deserializeCountries,
+  omitCountryGroups,
+  serializeCountries,
+  getSecondsFromFormat,
+} from './widget-utils';
 import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -230,6 +238,37 @@ const customMultiselectWidget: MultiSelectWidget<BasicConfig> = {
   },
 };
 
+const customTimeWidget: DateTimeWidget<BasicConfig> = {
+  type: `time`,
+  jsonLogic: (val) => {
+    if (typeof val === 'number') {
+      return val;
+    }
+    if (typeof val === 'string') {
+      return getSecondsFromFormat(val);
+    }
+    return val;
+  },
+  factory: (props) => {
+    const { value, setValue } = props;
+    const totalSeconds = value?.includes(':') ? getSecondsFromFormat(value as string) : undefined;
+    return (
+      <WidgetWrapper widgetFactoryProps={props}>
+        <TimePicker
+          value={totalSeconds ? moment.unix(totalSeconds) : undefined}
+          onChange={(v) => {
+            const time = v?.valueOf();
+            const seconds = time ? getSecondsFromTimestamp(time) : undefined;
+            const newValue = seconds ? moment.utc(seconds * 1000).format('HH:mm:ss') : undefined;
+            setValue(newValue);
+          }}
+          format={'HH:mm'}
+        />
+      </WidgetWrapper>
+    );
+  },
+};
+
 export const customWidgets: CoreWidgets<Config> = {
   ...BasicConfig.widgets,
   text: customTextWidget,
@@ -242,7 +281,7 @@ export const customWidgets: CoreWidgets<Config> = {
   // treeselect: customTreeselectWidget,
   // treemultiselect: customTreemultiselectWidget,
   // date: customDateWidget,
-  // time: customTimeWidget,
+  time: customTimeWidget,
   datetime: customDateAndTimeWidget,
   boolean: customBooleanWidget,
   // field: customWidget,

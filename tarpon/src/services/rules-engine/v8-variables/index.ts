@@ -32,6 +32,7 @@ import {
   getPublicModelLeafAttrs,
 } from './utils'
 import { USER_TYPE } from './user-type'
+import { TRANSACTION_TIME } from './transaction-time'
 import {
   TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER,
   TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER,
@@ -99,6 +100,7 @@ function withDirection(variables: RuleVariable[]) {
 }
 
 const TRANSACTION_DERIVED_VARIABLES = [
+  TRANSACTION_TIME,
   TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER,
   TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER,
 ]

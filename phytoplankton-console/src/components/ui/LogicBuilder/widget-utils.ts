@@ -1,3 +1,14 @@
+export function getSecondsFromFormat(time: string) {
+  return time.split(':').reduce((total, currentValue, index) => {
+    if (index === 0) {
+      return total + Number(currentValue) * 3600;
+    } else if (index === 1) {
+      return total + Number(currentValue) * 60;
+    } else {
+      return total + Number(currentValue);
+    }
+  }, 0);
+}
 import { difference, uniq } from 'lodash';
 import { COUNTRY_GROUPS, expandCountryGroup } from '@flagright/lib/constants';
 import { ListItem } from '@react-awesome-query-builder/core';

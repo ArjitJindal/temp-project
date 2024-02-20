@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Config, Utils as QbUtils } from '@react-awesome-query-builder/ui';
+import { BasicConfig, Config, Utils as QbUtils } from '@react-awesome-query-builder/ui';
 import { isEqual } from 'lodash';
 import { useLogicBuilderConfig } from '../helpers';
 import LogicBuilder, { Props as LogicBuilderProps } from '@/components/ui/LogicBuilder';
@@ -10,6 +10,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { RuleAggregationVariable, RuleEntityVariableInUse } from '@/apis';
 import { RuleLogic } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/types';
 
+const InitialConfig = BasicConfig;
 interface Props {
   jsonLogic: RuleLogic | undefined;
   entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER'>;
@@ -38,7 +39,10 @@ export function RuleLogicBuilder(props: Props) {
       if (state === null || isConfigChanged) {
         const config = configRes.value;
         setState((prevState) => {
-          const tree = QbUtils.loadFromJsonLogic(props.jsonLogic, config);
+          const tree = QbUtils.loadFromJsonLogic(props.jsonLogic, {
+            ...config,
+            operators: InitialConfig.operators,
+          });
           return {
             ...prevState,
             tree: tree ? QbUtils.checkTree(tree, config) : undefined,
