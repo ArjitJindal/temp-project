@@ -648,45 +648,29 @@ export class RulesEngineService {
     let ruleResult: RuleHitResult | undefined
     if (hasFeature('RULES_ENGINE_V8') && logic) {
       if (transactionWithValidUserId) {
-        let shouldRuleRun = true
-        if (!isEmpty(ruleInstance.filtersLogic)) {
-          const runResult = await this.ruleLogicEvaluator.evaluate(
-            ruleInstance.filtersLogic,
-            [],
+        const { hit, varData, hitDirections } =
+          await this.ruleLogicEvaluator.evaluate(
+            logic,
+            ruleInstance.logicAggregationVariables ?? [],
             {
               baseCurrency: ruleInstance.baseCurrency,
               tenantId: this.tenantId,
             },
-            { transaction, senderUser, receiverUser }
+            {
+              transaction: transactionWithValidUserId,
+              senderUser,
+              receiverUser,
+            }
           )
-          shouldRuleRun = runResult.hit
-        }
-
-        if (shouldRuleRun) {
-          const { hit, varData, hitDirections } =
-            await this.ruleLogicEvaluator.evaluate(
-              logic,
-              ruleInstance.logicAggregationVariables ?? [],
-              {
-                baseCurrency: ruleInstance.baseCurrency,
-                tenantId: this.tenantId,
-              },
-              {
-                transaction: transactionWithValidUserId,
-                senderUser,
-                receiverUser,
-              }
-            )
-          const finalHitDirections = this.getFinalHitDirections(
-            hitDirections,
-            ruleInstance.alertConfig?.alertCreationDirection ?? 'AUTO'
-          )
-          if (hit) {
-            ruleResult = finalHitDirections.map((direction) => ({
-              direction,
-              vars: varData,
-            }))
-          }
+        const finalHitDirections = this.getFinalHitDirections(
+          hitDirections,
+          ruleInstance.alertConfig?.alertCreationDirection ?? 'AUTO'
+        )
+        if (hit) {
+          ruleResult = finalHitDirections.map((direction) => ({
+            direction,
+            vars: varData,
+          }))
         }
       }
     } else {

@@ -13,7 +13,6 @@ export function getMigratedV8Config(
   filters: LegacyFilters = {}
 ): {
   logic: object
-  filtersLogic: object | undefined
   logicAggregationVariables: RuleAggregationVariable[]
   alertCreationDirection?: AlertCreationDirection
 } | null {
@@ -27,11 +26,12 @@ export function getMigratedV8Config(
   const result = migrationFunc(parameters, historicalFilters)
   const filterConditions = getFiltersConditions(filters)
 
-  return {
-    ...result,
-    filtersLogic:
-      filterConditions.length > 0 ? { and: filterConditions } : undefined,
+  if (filterConditions.length > 0) {
+    result.logic = {
+      and: [{ and: filterConditions }, result.logic],
+    }
   }
+  return result
 }
 
 const V8_CONVERSION: {

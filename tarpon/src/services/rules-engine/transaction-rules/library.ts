@@ -1876,7 +1876,6 @@ export const RULES_LIBRARY: Array<Rule> = _RULES_LIBRARY.map((getRule) => {
         : USER_RULES[rule.ruleImplementationName]?.getSchema(),
     defaultLogic: v8Config?.logic,
     defaultLogicAggregationVariables: v8Config?.logicAggregationVariables,
-    defaultFiltersLogic: v8Config?.filtersLogic,
   }
 })
 

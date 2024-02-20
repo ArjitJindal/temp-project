@@ -34,8 +34,6 @@ function toRuleInstance(item: any): RuleInstance {
     ruleDescriptionAlias: item.ruleDescriptionAlias,
     filters: item.filters,
     baseCurrency: item.baseCurrency,
-    filtersLogic: item.filtersLogic,
-    filtersLogicFormValues: item.filtersLogicFormValues,
     logic: item.logic,
     riskLevelLogic: item.riskLevelLogic,
     logicEntityVariables: item.logicEntityVariables,
@@ -105,8 +103,6 @@ export class RuleInstanceRepository {
       logic:
         ruleInstance.logic ??
         Object.values(ruleInstance.riskLevelLogic ?? {})[0],
-      filtersLogic: ruleInstance.filtersLogic,
-      filtersLogicFormValues: ruleInstance.filtersLogicFormValues,
       logicAggregationVariables: await this.getLogicAggVarsWithUpdatedVersion(
         ruleInstance
       ),

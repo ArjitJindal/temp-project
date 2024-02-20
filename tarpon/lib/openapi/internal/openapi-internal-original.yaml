@@ -5682,8 +5682,6 @@ components:
           type: array
           items:
             type: string
-        defaultFiltersLogic:
-          type: object
         defaultLogic:
           type: object
         defaultRiskLevelLogic:
@@ -5879,10 +5877,6 @@ components:
         ruleDescriptionAlias:
           type: string
         filters:
-          type: object
-        filtersLogic:
-          type: object
-        filtersLogicFormValues:
           type: object
         riskLevelParameters:
           $ref: '#/components/schemas/RiskLevelRuleParameters'

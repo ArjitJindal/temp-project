@@ -11,9 +11,6 @@ import RuleIsHitWhenStep, {
   RuleIsHitWhenStepFormValues,
   INITIAL_VALUES as RULE_IS_HIT_WHEN_STEP_INITIAL_VALUES,
 } from './steps/RuleIsHitWhenStep';
-import RuleIsRunWhenStep, {
-  FormValues as RuleIsRunWhenStepFormValues,
-} from './steps/RuleIsRunWhenStep';
 import AlertCreationDetailsStep, {
   FormValues as AlertCreationDetailsStepFormValues,
   INITIAL_VALUES as ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES,
@@ -33,20 +30,13 @@ import { RISK_LEVELS } from '@/utils/risk-levels';
 
 const BASIC_DETAILS_STEP = 'basicDetailsStep';
 const RULE_IS_HIT_WHEN_STEP = 'ruleIsHitWhenStep';
-const RULE_IS_RUN_WHEN_STEP = 'ruleIsRunWhenStep';
 const ALERT_CREATION_DETAILS_STEP = 'alertCreationDetailsStep';
 
-export const STEPS = [
-  BASIC_DETAILS_STEP,
-  RULE_IS_HIT_WHEN_STEP,
-  RULE_IS_RUN_WHEN_STEP,
-  ALERT_CREATION_DETAILS_STEP,
-];
+export const STEPS = [BASIC_DETAILS_STEP, RULE_IS_HIT_WHEN_STEP, ALERT_CREATION_DETAILS_STEP];
 
 export interface RuleConfigurationFormV8Values {
   basicDetailsStep: Partial<BasicDetailsStepFormValues>;
   ruleIsHitWhenStep: Partial<RuleIsHitWhenStepFormValues>;
-  ruleIsRunWhenStep: Partial<RuleIsRunWhenStepFormValues>;
   alertCreationDetailsStep: Partial<AlertCreationDetailsStepFormValues>;
 }
 
@@ -142,12 +132,6 @@ function RuleConfigurationFormV8(
           description: 'Define rule variables and condition for which the rule is hit',
         },
         {
-          key: RULE_IS_RUN_WHEN_STEP,
-          title: 'Rule is run when',
-          isOptional: true,
-          description: 'Define user and transaction filters for the rule to consider',
-        },
-        {
           key: ALERT_CREATION_DETAILS_STEP,
           title: 'Alert creation details',
           isOptional: false,
@@ -219,9 +203,6 @@ function StepSubform(props: { activeStepKey: string; readOnly: boolean }) {
   if (activeStepKey === RULE_IS_HIT_WHEN_STEP) {
     return <RuleIsHitWhenStep />;
   }
-  if (activeStepKey === RULE_IS_RUN_WHEN_STEP) {
-    return <RuleIsRunWhenStep />;
-  }
   if (activeStepKey === ALERT_CREATION_DETAILS_STEP) {
     return <AlertCreationDetailsStep />;
   }
@@ -266,9 +247,6 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
         ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
       },
       ruleIsHitWhenStep,
-      ruleIsRunWhenStep: {
-        filtersLogic: rule?.defaultFiltersLogic,
-      },
       alertCreationDetailsStep: {
         alertCreatedFor: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreatedFor,
         alertCreationInterval: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreationInterval,
@@ -280,7 +258,6 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
   }, [
     isRiskLevelsEnabled,
     rule?.defaultAction,
-    rule?.defaultFiltersLogic,
     rule?.defaultLogic,
     rule?.defaultLogicAggregationVariables,
     rule?.defaultNature,

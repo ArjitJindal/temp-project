@@ -77,7 +77,6 @@ export async function createRule(
       ruleId: createdRule.id as string,
       id: ruleInstance?.ruleInstanceId,
       logic: createdRule.defaultLogic,
-      filtersLogic: createdRule.defaultFiltersLogic,
       logicAggregationVariables: createdRule.defaultLogicAggregationVariables,
       parameters: createdRule.defaultParameters,
       riskLevelParameters: createdRule.defaultRiskLevelParameters,
@@ -264,12 +263,10 @@ export function setUpRulesHooks(
         }
         const {
           logic,
-          filtersLogic,
           logicAggregationVariables,
           alertCreationDirection: alertDirection,
         } = getMigratedV8Config(libraryRuleV8.id, r.defaultParameters, filters)!
 
-        v8Rule.defaultFiltersLogic = filtersLogic
         v8Rule.defaultLogic = logic
         v8Rule.defaultLogicAggregationVariables = logicAggregationVariables
         if (alertDirection) {

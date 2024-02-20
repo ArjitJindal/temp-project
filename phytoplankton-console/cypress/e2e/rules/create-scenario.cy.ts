@@ -34,7 +34,6 @@ describe('Create scenario', () => {
     checkConditionsCount(2, 'LOW');
     checkConditionsCount(2, 'HIGH');
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
-    cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
 
     cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
 
@@ -83,7 +82,6 @@ describe('Create scenario', () => {
         checkConditionsCount(2, 'HIGH');
         checkConditionsCount(3, 'MEDIUM');
         checkConditionsCount(3, 'VERY_HIGH');
-        cy.get('button[data-cy="drawer-next-button-v8"]').eq(1).click();
         cy.get('button[data-cy="drawer-next-button-v8"]').eq(1).click();
         cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
         cy.message(`Rule updated - ${ruleInstanceId}`).should('exist');
