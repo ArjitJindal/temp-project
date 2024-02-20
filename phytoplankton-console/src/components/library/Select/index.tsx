@@ -22,7 +22,7 @@ export interface Option<Value extends Comparable> {
 }
 
 interface CommonProps<Value extends Comparable> {
-  placeholder?: string;
+  placeholder?: string | React.ReactNode;
   size?: 'DEFAULT' | 'LARGE';
   options: Option<Value>[];
   style?: React.CSSProperties;

@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import { RuleEntityVariable, RuleEntityVariableInUse } from '@/apis';
@@ -105,6 +106,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   const [formValues, setFormValues] = useState<FormRuleEntityVariable>(
     getInitialFormValues(variable, entityVariables),
   );
+  const [searchKey, setSearchKey] = useState<string | undefined>();
   const handleUpdateForm = useCallback((newValues: Partial<FormRuleEntityVariable>) => {
     if (
       newValues.type ||
@@ -115,7 +117,16 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
       newValues.variableKey = undefined;
     }
     setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
+    setSearchKey(undefined);
   }, []);
+  const allVariableOptions = useMemo(
+    () =>
+      entityVariables.map((v) => ({
+        value: v.key,
+        label: v.uiDefinition.label,
+      })),
+    [entityVariables],
+  );
   const variableOptions = useMemo(
     () =>
       entityVariables
@@ -150,7 +161,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
         })
         .map((v) => ({
           value: v.key,
-          label: v.uiDefinition.label,
+          label: v.uiDefinition.label.split('/')[1].trim(),
         })),
     [
       entityVariables,
@@ -166,6 +177,25 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   return (
     <>
       <Card.Section direction="vertical">
+        <Select<string | null>
+          value={searchKey}
+          onChange={(variableKey) => {
+            setSearchKey(variableKey ?? undefined);
+            if (variableKey) {
+              setFormValues(getInitialFormValues({ key: variableKey }, entityVariables));
+            }
+          }}
+          placeholder={
+            <span>
+              <SearchIcon style={{ width: 12, height: 12 }} />
+              {'  '}Search for entity variable here or configure below
+            </span>
+          }
+          portaled={true}
+          mode="SINGLE"
+          options={allVariableOptions}
+          testId="variable-search-v8"
+        />
         <Label label="Variable name" required={{ value: false, showHint: true }}>
           <TextInput
             value={formValues.name}
@@ -229,6 +259,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                 value={formValues.variableKey}
                 onChange={(variableKey) => handleUpdateForm({ variableKey })}
                 mode="SINGLE"
+                portaled={true}
                 options={variableOptions}
               />
             </Label>
