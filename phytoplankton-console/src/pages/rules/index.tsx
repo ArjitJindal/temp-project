@@ -1,246 +1,99 @@
 import { useLocalStorageState } from 'ahooks';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { useIsV8Rule, ruleHeaderKeyToDescription } from './utils';
+import { RulesPageWrapper } from 'src/pages/rules/RulesPageWrapper';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
-import { SimulationHistoryTable } from './SimulationHistoryTable';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
-import { useI18n } from '@/locales';
-import RuleConfigurationDrawer, {
-  RuleConfigurationSimulationDrawer,
-} from '@/pages/rules/RuleConfigurationDrawer';
-import { Rule } from '@/apis';
-import { useHasPermissions } from '@/utils/user-utils';
-import { SimulationPageWrapper } from '@/components/SimulationPageWrapper';
 import { Authorized } from '@/components/Authorized';
-import RuleConfigurationDrawerV8 from '@/pages/rules/RuleConfigurationDrawerV8';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { notEmpty } from '@/utils/array';
+import { makeUrl } from '@/utils/routing';
 
 const TableList = () => {
-  const { rule = 'rules-library' } = useParams<'rule'>();
-  const navigate = useNavigate();
-  const [currentHeaderId, setCurrentHeaderId] = useState<string>(`menu.rules.${rule}`);
-  const [currentHeaderDescription, setCurrentHeaderDescription] = useState<string>(
-    ruleHeaderKeyToDescription(rule),
-  );
-  const [, setLocalStorageActiveTab] = useLocalStorageState('rule-active-tab', rule);
-  const i18n = useI18n();
-  const canWriteRules = useHasPermissions(['rules:my-rules:write']);
+  const { tab = 'tab' } = useParams<'tab'>();
+  const [, setLocalStorageActiveTab] = useLocalStorageState('rule-active-tab', tab);
   useEffect(() => {
-    setLocalStorageActiveTab(rule);
-  }, [setLocalStorageActiveTab, rule]);
-
-  const [ruleReadOnly, setRuleReadOnly] = useState<boolean>(false);
-  const [currentRule, setCurrentRule] = useState<Rule | null>(null);
-  const [isSimulationEnabled, setIsSimulationEnabled] = useLocalStorageState<boolean>(
-    'SIMULATION_RULES',
-    false,
-  );
-  const [isRuleBuilderOpen, setRuleBuilderOpen] = useState(false);
-  const isV8 = useIsV8Rule(currentRule);
-
-  useEffect(() => {
-    if (!currentRule) {
-      setRuleReadOnly(false);
-    }
-  }, [currentRule]);
-
-  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
+    setLocalStorageActiveTab(tab);
+  }, [setLocalStorageActiveTab, tab]);
 
   return (
-    <SimulationPageWrapper
-      title={isSimulationEnabled ? 'Simulate rule' : i18n(currentHeaderId as unknown as any)}
-      description={
-        isSimulationEnabled
-          ? 'Test your rule outputs by changing parameters & filters to make better decisions for the actual rule configuration.'
-          : currentHeaderDescription
-      }
-      isSimulationModeEnabled={isSimulationEnabled}
-      onSimulationModeChange={setIsSimulationEnabled}
+    <RulesPageWrapper
+      breadcrumbs={[
+        {
+          title: 'Rules',
+          to: '/rules',
+        },
+        tab === 'my-rules' && {
+          title: 'My rules',
+          to: '/rules/my-rules',
+        },
+        tab === 'rules-library' && {
+          title: 'Library',
+          to: '/rules/rules-library',
+        },
+      ].filter(notEmpty)}
     >
-      {isSimulationEnabled ? (
-        <PageTabs
-          items={[
-            {
-              title: 'New simulation',
-              key: 'new-simulation',
-              children: (
-                <PageWrapperContentContainer>
-                  <PageTabs
-                    isPrimary={false}
-                    items={[
-                      {
-                        title: 'My rules',
-                        key: 'my-rules',
-                        children: (
-                          <Authorized required={['simulator:simulations:read']} showForbiddenPage>
-                            <MyRule simulationMode={isSimulationEnabled} />
-                          </Authorized>
-                        ),
-                      },
-                      {
-                        title: 'Library',
-                        key: 'rules-library',
-                        children: (
-                          <Authorized required={['simulator:simulations:read']} showForbiddenPage>
-                            <RulesTable
-                              simulationMode={isSimulationEnabled}
-                              onViewRule={(rule) => {
-                                setCurrentRule(rule);
-                                setRuleReadOnly(false);
-                              }}
-                              onEditRule={(rule) => {
-                                setCurrentRule(rule);
-                                setRuleReadOnly(false);
-                              }}
-                              onScenarioClick={() => {
-                                setRuleBuilderOpen(true);
-                              }}
-                            />
-                          </Authorized>
-                        ),
-                      },
-                    ]}
-                  />
-                </PageWrapperContentContainer>
-              ),
-            },
-            {
-              title: 'Simulation history',
-              key: 'simulation-history',
-              children: (
-                <Authorized required={['simulator:simulations:read']} showForbiddenPage>
-                  <SimulationHistoryTable />
-                </Authorized>
-              ),
-            },
-          ]}
-        />
-      ) : (
-        <PageTabs
-          activeKey={rule}
-          onChange={(key) => {
-            navigate(`/rules/${key}`, { replace: true });
-            setCurrentHeaderId(`menu.rules.${key}`);
-            setCurrentHeaderDescription(ruleHeaderKeyToDescription(key));
-          }}
-          items={[
-            {
-              title: 'My rules',
-              key: 'my-rules',
-              children: (
-                <PageWrapperContentContainer>
-                  <Authorized required={['rules:my-rules:read']}>
-                    <MyRule />
-                  </Authorized>
-                </PageWrapperContentContainer>
-              ),
-            },
-            {
-              title: 'Library',
-              key: 'rules-library',
-              children: (
-                <PageWrapperContentContainer>
-                  <Authorized required={['rules:library:read']}>
-                    <RulesTable
-                      onCreateRule={
-                        v8Enabled
-                          ? () => {
-                              setRuleBuilderOpen(true);
-                            }
-                          : undefined
-                      }
-                      onViewRule={(rule) => {
-                        setCurrentRule(rule);
-                        setRuleReadOnly(false);
-                      }}
-                      onEditRule={(rule) => {
-                        setCurrentRule(rule);
-                        setRuleReadOnly(false);
-                      }}
-                      onScenarioClick={() => {
-                        setRuleBuilderOpen(true);
-                      }}
-                    />
-                  </Authorized>
-                </PageWrapperContentContainer>
-              ),
-            },
-          ]}
-        />
-      )}
-      <RuleConfigurationDrawerV8
-        isVisible={isRuleBuilderOpen}
-        onChangeVisibility={setRuleBuilderOpen}
-        onRuleInstanceUpdated={() => setRuleBuilderOpen(false)}
-        type={'CREATE'}
-      />
-      {currentRule &&
-        (isSimulationEnabled ? (
-          <RuleConfigurationSimulationDrawer
-            rule={currentRule}
-            ruleInstance={{
-              ruleId: currentRule.id,
-              parameters: currentRule.defaultParameters,
-              riskLevelParameters: currentRule.defaultRiskLevelParameters,
-              action: currentRule.defaultAction,
-              riskLevelActions: currentRule.defaultRiskLevelActions,
-              nature: currentRule.defaultNature,
-              casePriority: currentRule.defaultCasePriority,
-              filters: currentRule.defaultFilters,
-              labels: [],
-              checksFor: currentRule.checksFor,
-              type: currentRule.type,
-            }}
-            isVisible={currentRule != null}
-            onChangeVisibility={(isVisible) => {
-              if (!isVisible) {
-                setCurrentRule(null);
-              }
-            }}
-            onRuleInstanceUpdated={() => {
-              setCurrentRule(null);
-            }}
-          />
-        ) : isV8 ? (
-          <RuleConfigurationDrawerV8
-            rule={currentRule}
-            isVisible={currentRule != null}
-            onChangeVisibility={(isVisible) => {
-              if (!isVisible) {
-                setCurrentRule(null);
-              }
-            }}
-            onRuleInstanceUpdated={() => setCurrentRule(null)}
-            readOnly={!canWriteRules || ruleReadOnly}
-            type="CREATE"
-            isClickAwayEnabled={ruleReadOnly}
-            onChangeToEditMode={() => {
-              setRuleReadOnly(false);
-            }}
-          />
-        ) : (
-          <RuleConfigurationDrawer
-            rule={currentRule}
-            isVisible={currentRule != null}
-            onChangeVisibility={(isVisible) => {
-              if (!isVisible) {
-                setCurrentRule(null);
-              }
-            }}
-            onRuleInstanceUpdated={() => setCurrentRule(null)}
-            readOnly={!canWriteRules || ruleReadOnly}
-            type="CREATE"
-            isClickAwayEnabled={ruleReadOnly}
-            onChangeToEditMode={() => {
-              setRuleReadOnly(false);
-            }}
-          />
-        ))}
-    </SimulationPageWrapper>
+      <Content tab={tab} />
+    </RulesPageWrapper>
   );
 };
+
+function Content(props: { tab: string }) {
+  const navigate = useNavigate();
+  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
+  const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
+  return (
+    <PageTabs
+      activeKey={props.tab}
+      onChange={(key) => {
+        navigate(`/rules/${key}`, { replace: true });
+      }}
+      items={[
+        {
+          title: 'My rules',
+          key: 'my-rules',
+          children: (
+            <PageWrapperContentContainer>
+              <Authorized required={['rules:my-rules:read']}>
+                <MyRule simulationMode={isSimulationEnabled} />
+              </Authorized>
+            </PageWrapperContentContainer>
+          ),
+        },
+        {
+          title: 'Library',
+          key: 'rules-library',
+          children: (
+            <PageWrapperContentContainer>
+              <Authorized required={['rules:library:read']}>
+                <RulesTable
+                  simulationMode={isSimulationEnabled}
+                  onCreateRule={
+                    v8Enabled
+                      ? () => {
+                          navigate(makeUrl('/rules/rules-library/create'));
+                        }
+                      : undefined
+                  }
+                  onViewRule={(rule) => {
+                    navigate(makeUrl('/rules/rules-library/:id', { id: rule.id }));
+                  }}
+                  onEditRule={(rule) => {
+                    navigate(makeUrl('/rules/rules-library/:id', { id: rule.id }));
+                  }}
+                  onScenarioClick={() => {
+                    navigate(makeUrl('/rules/rules-library/create'));
+                  }}
+                />
+              </Authorized>
+            </PageWrapperContentContainer>
+          ),
+        },
+      ]}
+    />
+  );
+}
 
 export default TableList;

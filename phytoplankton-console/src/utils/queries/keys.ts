@@ -153,9 +153,15 @@ export const USER_FILES = (params?: AnyParameters): QueryKey =>
   ['user-files', params].filter(Boolean);
 export const RULES_AND_RULE_INSTANCES = (): QueryKey => ['rules-and-rule-instances'];
 export const GET_RULES = (params: AnyParameters): QueryKey => ['get-rules', params];
+export const GET_RULE = (id: string | undefined): QueryKey => ['rules', 'item', id];
 export const GET_RULE_INSTANCES = (params: AnyParameters): QueryKey => [
   'get-rule-instances',
   params,
+];
+export const GET_RULES_INSTANCE = (id: string | undefined): QueryKey => [
+  'rule-instances',
+  'item',
+  id,
 ];
 export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id].filter(Boolean);
 export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
@@ -190,7 +196,7 @@ export const USERS_ITEM_RISKS_KRS = (userId: string): QueryKey => [
 ];
 export const ALERT_LIST = (params?: AnyParameters): QueryKey =>
   ['alerts', 'list', params].filter(Boolean);
-export const SIMULATION_JOB = (jobId: string): QueryKey => ['simulation', jobId];
+export const SIMULATION_JOB = (jobId: string | undefined): QueryKey => ['simulation', jobId];
 export const SIMULATION_JOB_ITERATION_RESULT = (taskId: string, params?: AnyParameters): QueryKey =>
   ['simulation', 'iteration', taskId, params].filter(Boolean);
 export const SIMULATION_JOBS = (params?: AnyParameters): QueryKey =>

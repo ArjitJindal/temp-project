@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/browser';
-import { Navigate, Route, Routes } from 'react-router';
+import { Navigate, Route, Routes, useParams } from 'react-router';
 import { Debug } from '@sentry/integrations';
 import { FetchCallError } from './apis';
 import AppWrapper from '@/components/AppWrapper';
@@ -12,6 +12,7 @@ import { isRedirect, isTree, RouteItem } from '@/services/routing/types';
 
 import './global.less';
 import { getBranding } from '@/utils/branding';
+import { makeUrl } from '@/utils/routing';
 
 interface HttpError {
   code?: number;
@@ -64,7 +65,7 @@ function renderRoutes(routes: RouteItem[]) {
     <React.Fragment key={route.path}>
       {isTree(route) ? renderRoutes(route.routes) : null}
       {isRedirect(route) ? (
-        <Route path={route.path} element={<Navigate to={route.redirect} replace />} />
+        <Route path={route.path} element={<RedirectWithParams to={route.redirect} />} />
       ) : (
         <Route
           path={route.path}
@@ -73,6 +74,12 @@ function renderRoutes(routes: RouteItem[]) {
       )}
     </React.Fragment>
   ));
+}
+
+function RedirectWithParams(props: { to: string }) {
+  const { to } = props;
+  const params = useParams();
+  return <Navigate to={makeUrl(to, params)} replace />;
 }
 
 function Routing() {

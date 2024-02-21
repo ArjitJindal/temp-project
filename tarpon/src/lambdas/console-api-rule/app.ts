@@ -46,6 +46,11 @@ export const ruleHandler = lambdaApi()(
 
     handlers.registerGetRules(async () => await ruleService.getAllRules())
 
+    handlers.registerGetRule(async (ctx, request) => {
+      const rule = await ruleRepository.getRuleById(request.ruleId)
+      return rule ?? null
+    })
+
     handlers.registerGetRuleFilters(async () => {
       return await ruleService.getAllRuleFilters()
     })
@@ -101,6 +106,13 @@ export const ruleInstanceHandler = lambdaApi()(
     handlers.registerGetRuleInstances(
       async () => await ruleService.getAllRuleInstances()
     )
+
+    handlers.registerGetRuleInstancesItem(async (ctx, request) => {
+      const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
+        request.ruleInstanceId
+      )
+      return ruleInstance
+    })
 
     handlers.registerPutRuleInstancesRuleInstanceId(async (ctx, request) => {
       const oldRuleInstance = await ruleInstanceRepository.getRuleInstanceById(

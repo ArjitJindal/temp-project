@@ -1,9 +1,9 @@
 import { Switch, Tooltip } from 'antd';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { getRuleInstanceDisplayId, useIsV8RuleInstance, useUpdateRuleInstance } from '../utils';
-import RuleConfigurationDrawerV8 from '../RuleConfigurationDrawerV8';
+import { useNavigate } from 'react-router-dom';
+import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
 import s from './style.module.less';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
@@ -18,9 +18,6 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import RuleConfigurationDrawer, {
-  RuleConfigurationSimulationDrawer,
-} from '@/pages/rules/RuleConfigurationDrawer';
 import { getErrorMessage } from '@/utils/lang';
 import { useHasPermissions } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
@@ -30,7 +27,7 @@ import { BOOLEAN, DATE, PRIORITY } from '@/components/library/Table/standardData
 import { message } from '@/components/library/Message';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useScrollToFocus } from '@/utils/hooks';
-import { parseQueryString } from '@/utils/routing';
+import { parseQueryString, makeUrl } from '@/utils/routing';
 import { RuleHitInsightsTag } from '@/components/ui/RuleHitInsightsTag';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { RuleQueueTag } from '@/components/rules/RuleQueueTag';
@@ -39,7 +36,6 @@ const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
 const MyRule = (props: { simulationMode?: boolean }) => {
   useScrollToFocus();
-  const [ruleState, setRuleState] = useState<'DUPLICATE' | 'EDIT' | 'READ'>('READ');
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
@@ -50,31 +46,43 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     actionRef.current?.reload();
   }, []);
 
-  const [showDetail, setShowDetail] = useState<boolean>(false);
+  const navigate = useNavigate();
 
-  const onViewRule = useCallback((entity) => {
-    setCurrentRow(entity);
-    setShowDetail(true);
-    setRuleState('READ');
-  }, []);
+  const onViewRule = useCallback(
+    (entity) => {
+      navigate(
+        makeUrl('/rules/my-rules/:id/:mode', {
+          id: entity.id,
+          mode: 'read',
+        }),
+      );
+    },
+    [navigate],
+  );
 
-  const onEditRule = useCallback((entity) => {
-    setCurrentRow(entity);
-    setShowDetail(true);
-    setRuleState('EDIT');
-  }, []);
+  const onEditRule = useCallback(
+    (entity) => {
+      navigate(
+        makeUrl('/rules/my-rules/:id/:mode', {
+          id: entity.id,
+          mode: 'edit',
+        }),
+      );
+    },
+    [navigate],
+  );
 
-  const onDuplicateRule = useCallback((entity) => {
-    setCurrentRow(entity);
-    setShowDetail(true);
-    setRuleState('DUPLICATE');
-  }, []);
-
-  useEffect(() => {
-    if (!showDetail) {
-      setRuleState('EDIT');
-    }
-  }, [showDetail]);
+  const onDuplicateRule = useCallback(
+    (entity) => {
+      navigate(
+        makeUrl('/rules/my-rules/:id/:mode', {
+          id: entity.id,
+          mode: 'duplicate',
+        }),
+      );
+    },
+    [navigate],
+  );
 
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
@@ -85,7 +93,6 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   const focusId = useMemo(() => parseQueryString(location.search).focus, []);
 
   const [deleting, setDeleting] = useState(false);
-  const [currentRow, setCurrentRow] = useState<RuleInstance>();
   const { rules } = useRules();
   const handleRuleInstanceUpdate = useCallback(async (newRuleInstance: RuleInstance) => {
     const newRuleInstanceId = newRuleInstance.id;
@@ -321,11 +328,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 size="MEDIUM"
                 onClick={() => {
                   if (canWriteRules && !deleting && entity.id) {
-                    setRuleState('DUPLICATE');
-                    onDuplicateRule({
-                      ...entity,
-                      ruleNameAlias: `Copy of ${entity.ruleNameAlias}`,
-                    });
+                    onDuplicateRule(entity);
                   }
                 }}
                 icon={<FileCopyLineIcon />}
@@ -421,18 +424,6 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     };
   });
 
-  const rule = useMemo(
-    () => (currentRow && currentRow.ruleId ? rules[currentRow.ruleId] : undefined),
-    [currentRow, rules],
-  );
-
-  const ruleInstance: RuleInstance | undefined = useMemo<RuleInstance | undefined>(() => {
-    return currentRow && currentRow.id
-      ? updatedRuleInstances[currentRow.id] || currentRow
-      : undefined;
-  }, [currentRow, updatedRuleInstances]);
-  const isV8 = useIsV8RuleInstance(ruleInstance);
-
   return (
     <>
       <QueryResultsTable<RuleInstance>
@@ -447,56 +438,6 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         params={params}
         onChangeParams={setParams}
       />
-      {ruleInstance ? (
-        props.simulationMode ? (
-          <RuleConfigurationSimulationDrawer
-            rule={rule}
-            ruleInstance={ruleInstance}
-            isVisible={showDetail}
-            onChangeVisibility={setShowDetail}
-            onRuleInstanceUpdated={(ruleInstance) => {
-              handleRuleInstanceUpdate(ruleInstance);
-              setShowDetail(false);
-            }}
-          />
-        ) : isV8 ? (
-          <RuleConfigurationDrawerV8
-            rule={rule}
-            readOnly={!canWriteRules || ruleState === 'READ'}
-            ruleInstance={ruleInstance}
-            isVisible={showDetail}
-            onChangeVisibility={setShowDetail}
-            onRuleInstanceUpdated={(ruleInstance) => {
-              handleRuleInstanceUpdate(ruleInstance);
-              setShowDetail(false);
-              reloadTable();
-            }}
-            isClickAwayEnabled={ruleState === 'READ'}
-            onChangeToEditMode={() => {
-              setRuleState('EDIT');
-            }}
-            type={ruleState === 'DUPLICATE' ? 'DUPLICATE' : 'EDIT'}
-          />
-        ) : (
-          <RuleConfigurationDrawer
-            rule={rule}
-            readOnly={!canWriteRules || ruleState === 'READ'}
-            ruleInstance={ruleInstance}
-            isVisible={showDetail}
-            onChangeVisibility={setShowDetail}
-            onRuleInstanceUpdated={(ruleInstance) => {
-              handleRuleInstanceUpdate(ruleInstance);
-              setShowDetail(false);
-              reloadTable();
-            }}
-            isClickAwayEnabled={ruleState === 'READ'}
-            onChangeToEditMode={() => {
-              setRuleState('EDIT');
-            }}
-            type={ruleState === 'DUPLICATE' ? 'DUPLICATE' : 'EDIT'}
-          />
-        )
-      ) : null}
     </>
   );
 };

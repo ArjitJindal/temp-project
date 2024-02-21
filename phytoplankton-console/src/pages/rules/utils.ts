@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { getAllValuesByKey } from '@flagright/lib/utils';
-import { RuleConfigurationFormValues } from './RuleConfigurationDrawer/RuleConfigurationForm';
-import { RuleConfigurationFormV8Values } from './RuleConfigurationDrawerV8/RuleConfigurationFormV8';
+import { RuleConfigurationFormValues } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/RuleConfigurationForm';
+import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8';
 import { useApi } from '@/api';
 import {
   Rule,
@@ -395,11 +395,7 @@ export function formValuesToRuleInstanceV8(
   const defaultTriggersOnHit: TriggersOnHit = {
     usersToCheck: 'ALL',
   };
-  if (
-    alertCreationDetailsStep.alertPriority == null ||
-    basicDetailsStep.ruleNature == null ||
-    basicDetailsStep.ruleLabels == null
-  ) {
+  if (alertCreationDetailsStep.alertPriority == null || basicDetailsStep.ruleNature == null) {
     throw new Error(`Passed form values are not valid`);
   }
   return {
@@ -409,7 +405,7 @@ export function formValuesToRuleInstanceV8(
     ruleDescriptionAlias: basicDetailsStep.ruleDescription,
     casePriority: alertCreationDetailsStep.alertPriority,
     nature: basicDetailsStep.ruleNature,
-    labels: basicDetailsStep.ruleLabels,
+    labels: basicDetailsStep.ruleLabels ?? [],
     checksFor: initialRuleInstance.checksFor ?? [],
     falsePositiveCheckEnabled: alertCreationDetailsStep.falsePositiveCheckEnabled === 'true',
     queueId: alertCreationDetailsStep.queueId,

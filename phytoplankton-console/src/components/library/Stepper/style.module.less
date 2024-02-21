@@ -2,26 +2,29 @@
 @import 'src/components/ui/animation';
 
 .root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+
+  &.layout-VERTICAL {
+    flex-direction: row;
+    gap: 16px;
+  }
+}
+
+.steps {
   --step-gap: 24px;
   --step-number-size: 24px;
 
   display: flex;
-  flex-direction: column;
-  gap: 24px;
-  flex: 1;
+  gap: var(--step-gap);
+  grid-auto-flow: column;
 
   &.layout-VERTICAL {
-    gap: 0;
+    --step-gap: 32px;
 
-    &.root {
-      flex-direction: row;
-    }
-
-    .steps {
-      --step-gap: 32px;
-
-      flex-direction: column;
-    }
+    flex-direction: column;
 
     .step:not(:last-child) {
       &::before {
@@ -35,47 +38,12 @@
         transform: translateX(-50%);
       }
     }
-
-    .steps,
-    .children {
-      padding: 16px;
-    }
-
-    .sticky {
-      border-right: 1px solid @fr-colors-v2-gray-2;
-    }
   }
-
-  .step {
-    position: relative;
-
-    * {
-      transition-duration: @default-animation-speed;
-      transition-timing-function: @default-animation-function;
-    }
-
-    .stepTitle {
-      transition-property: color;
-    }
-    .optional {
-      transition-property: color;
-    }
-    .required {
-      color: @fr-colors-red;
-    }
-    .stepNumber {
-      transition-property: color, background-color;
-    }
-  }
-}
-
-.steps {
-  display: flex;
-  gap: var(--step-gap);
-  grid-auto-flow: column;
 }
 
 .sticky {
+  border-radius: 4px;
+
   .steps {
     position: sticky;
     top: 0;
@@ -88,6 +56,25 @@
   gap: 8px;
   max-width: 250px;
   cursor: pointer;
+  position: relative;
+
+  * {
+    transition-duration: @default-animation-speed;
+    transition-timing-function: @default-animation-function;
+  }
+
+  .stepTitle {
+    transition-property: color;
+  }
+  .optional {
+    transition-property: color;
+  }
+  .required {
+    color: @fr-colors-red;
+  }
+  .stepNumber {
+    transition-property: color, background-color;
+  }
 
   &.isActive {
     .stepTitle {

@@ -10,26 +10,34 @@ import { useQuery } from '@/utils/queries/hooks';
 import { getBranding } from '@/utils/branding';
 import { SIMULATION_COUNT } from '@/utils/queries/keys';
 import Tooltip from '@/components/library/Tooltip';
+import Label from '@/components/library/Label';
+import { AsyncResource, map } from '@/utils/asyncResource';
 
 export type SimulationPageWrapperRef = {
   refetchSimulationCount: () => void;
 };
 
 export type SimulationPageWrapperProps = PageWrapperProps & {
+  header?: (actionButtons: React.ReactNode) => JSX.Element;
   isSimulationModeEnabled: boolean;
   onSimulationModeChange: (value: boolean | undefined) => void;
 };
 
-const SimulationUsageCard = (props: { usageCount: number }) => {
+const SimulationUsageCard = (props: { usageCount: AsyncResource<number> }) => {
   const settings = useSettings();
   const branding = getBranding();
 
-  const remainingSimulations = !settings?.limits?.simulations
-    ? 0
-    : Math.max(settings.limits.simulations - props.usageCount, 0);
   return (
-    <div className={`${s.card} ${s.extraMargin}`}>
-      <P className={s.title}> {`${remainingSimulations} Simulations left`}</P>
+    <div className={s.card}>
+      <P bold variant="m" className={s.title}>
+        <AsyncResourceRenderer renderLoading={() => `Loading...`} resource={props.usageCount}>
+          {(usageCount) => {
+            const simulations = settings?.limits?.simulations;
+            const remainingSimulations = !simulations ? 0 : Math.max(simulations - usageCount, 0);
+            return `${remainingSimulations} simulations left`;
+          }}
+        </AsyncResourceRenderer>
+      </P>
       <a className={s.buyMore} href={`mailto:${branding.supportEmail}`} target="_blank">
         Buy more
       </a>
@@ -59,46 +67,42 @@ export const SimulationPageWrapper = forwardRef<
     () => `This is an advanced feature. Please contact ${branding.supportEmail} to enable it.`,
     [branding.supportEmail],
   );
+  const actionButton = (
+    <div className={s.simulationRoot}>
+      <div className={s.right}>
+        {isSimulationFeatureEnabled && props.isSimulationModeEnabled && (
+          <SimulationUsageCard
+            usageCount={map(simulationCountResults.data, (x) => x.runJobsCount)}
+          />
+        )}
+        <Label label="Simulator" position="RIGHT">
+          {!isSimulationFeatureEnabled ? (
+            <div>
+              <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="bottomLeft">
+                <span>
+                  <Toggle size="SMALL" disabled={true} />
+                </span>
+              </Tooltip>
+            </div>
+          ) : (
+            <Toggle
+              size="SMALL"
+              value={props.isSimulationModeEnabled}
+              onChange={props.onSimulationModeChange}
+            />
+          )}
+        </Label>
+      </div>
+    </div>
+  );
   return (
     <PageWrapper
       {...props}
       superAdminMode={{
         tooltip: 'Turn on to make the simulation jobs triggered from super admin users visible.',
       }}
-      actionButton={
-        <div className={s.simulationRoot}>
-          <div className={s.right}>
-            <div className={s.simulationSwitch}>
-              <div className={s.card}>
-                <div className={s.switchCard}>
-                  <p className={s.simulationSwitchTitle}>Simulator</p>
-                  {!isSimulationFeatureEnabled ? (
-                    <div>
-                      <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="left">
-                        <span>
-                          <Toggle size="SMALL" disabled={true} />
-                        </span>
-                      </Tooltip>
-                    </div>
-                  ) : (
-                    <Toggle
-                      size="SMALL"
-                      value={props.isSimulationModeEnabled}
-                      onChange={props.onSimulationModeChange}
-                      disabled={false}
-                    />
-                  )}
-                </div>
-                {isSimulationFeatureEnabled && props.isSimulationModeEnabled && (
-                  <AsyncResourceRenderer resource={simulationCountResults.data}>
-                    {(data) => <SimulationUsageCard usageCount={data.runJobsCount} />}
-                  </AsyncResourceRenderer>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      }
+      header={props.header && props.header(actionButton)}
+      actionButton={actionButton}
     >
       {props.children}
     </PageWrapper>

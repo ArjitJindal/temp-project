@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useLocalStorageState } from 'ahooks';
+import RulesItemPage from 'src/pages/rules/rules-item';
+import RulesLibraryItemPage from 'src/pages/rules/rules-library-item';
 import AccountsPage from '@/pages/accounts';
 import DashboardAnalysisPage from '@/pages/dashboard/analysis';
 import Page404 from '@/pages/404';
@@ -17,6 +19,8 @@ import UsersItemPage from '@/pages/users-item';
 import CreatedListsPage from '@/pages/lists';
 import ListsItemPage from '@/pages/lists-item';
 import RulesPage from '@/pages/rules';
+import SimulationHistoryPage from '@/pages/rules/simulation-history';
+import SimulationHistoryItemPage from '@/pages/rules/simulation-history-item';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
@@ -209,11 +213,35 @@ export function useRoutes(): RouteItem[] {
         routes: [
           {
             path: '/rules',
-            redirect: lastActiveRuleTab === 'my-rules' ? '/rules/my-rules' : 'rules-library',
+            redirect: lastActiveRuleTab === 'my-rules' ? '/rules/my-rules' : '/rules/rules-library',
           },
           {
-            path: '/rules/:rule',
-            name: 'rule',
+            path: '/rules/simulation-history',
+            name: 'simulation-history',
+            component: SimulationHistoryPage,
+          },
+          {
+            path: '/rules/simulation-history/:id',
+            name: 'simulation-history',
+            component: SimulationHistoryItemPage,
+          },
+          {
+            path: '/rules/my-rules/:id',
+            redirect: '/rules/my-rules/:id/read',
+          },
+          {
+            path: '/rules/my-rules/:id/:mode',
+            name: 'rules-item',
+            component: RulesItemPage,
+          },
+          {
+            path: '/rules/rules-library/:id',
+            name: 'rules-library-item',
+            component: RulesLibraryItemPage,
+          },
+          {
+            path: '/rules/:tab',
+            name: 'my-rules',
             component: RulesPage,
           },
         ],

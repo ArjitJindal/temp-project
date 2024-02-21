@@ -204,7 +204,7 @@ export const RulesTable: React.FC<Props> = (props) => {
         },
       }),
     ]);
-  }, [onViewRule, canWriteRules, simulationMode, onEditRule]);
+  }, [canWriteRules, simulationMode, onEditRule, onViewRule]);
 
   const [params, setParams] = useState<RulesTableParams>({
     ...DEFAULT_PARAMS_STATE,
