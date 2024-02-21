@@ -595,7 +595,7 @@ export class MongoDbTransactionRepository
 
     return await cursorPaginate<InternalTransaction>(collection, filter, {
       pageSize: params.pageSize ? (params.pageSize as number) : 20,
-      sortField: params.sortField,
+      sortField: params.sortField || 'timestamp',
       fromCursorKey: params.start,
       sortOrder: params.sortOrder,
     })
