@@ -3,6 +3,7 @@ import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
 import { TransactionsVelocityRuleParameters } from '../transaction-rules/transactions-velocity'
 import { MultipleSendersWithinTimePeriodRuleParameters } from '../transaction-rules/multiple-senders-within-time-period-base'
 import { FirstActivityAfterLongTimeRuleParameters } from '../transaction-rules/first-activity-after-time-period'
+import { BlacklistCardIssuedCountryRuleParameters } from '../transaction-rules/blacklist-card-issued-country'
 import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
@@ -157,6 +158,36 @@ const V8_CONVERSION: {
       logic: { and: conditions },
       logicAggregationVariables: aggregationVariable,
       alertCreationDirection: 'ORIGIN',
+    }
+  },
+  'R-22': (parameters: BlacklistCardIssuedCountryRuleParameters) => {
+    const conditions: any[] = []
+
+    conditions.push({
+      or: ['origin', 'destination'].map((direction) => ({
+        and: [
+          {
+            '==': [
+              { var: `TRANSACTION:${direction}PaymentDetails-method` },
+              'CARD',
+            ],
+          },
+          {
+            in: [
+              {
+                var: `TRANSACTION:${direction}PaymentDetails-cardIssuedCountry`,
+              },
+              parameters.blacklistedCountries,
+            ],
+          },
+        ],
+      })),
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables: [],
+      alertCreationDirection: 'AUTO',
     }
   },
 }
