@@ -26,6 +26,7 @@ const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
 const TYPE_PREFIX = 'type:'
 const RULE_INSTANCE_PREFIX = 'rule:'
+const QUESTION_ID_PREFIX = 'question:'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
 export type TenantSettingName = keyof TenantSettings
@@ -313,6 +314,15 @@ export const DynamoDbKeys = {
   KRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${KRS_KEY_IDENTIFIER}`,
     SortKeyID: version,
+  }),
+  CACHE_QUESTION_RESULT: (
+    tenantId: string,
+    questionId: string,
+    alertId: string,
+    variableHash: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#${QUESTION_ID_PREFIX}${questionId}-${alertId}`,
+    SortKeyID: variableHash,
   }),
   DRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${DRS_KEY_IDENTIFIER}`,

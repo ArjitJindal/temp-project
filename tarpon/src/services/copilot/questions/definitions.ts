@@ -1,11 +1,4 @@
-import {
-  StackedBarchartQuestion,
-  TableQuestion,
-  TimeseriesQuestion,
-  BarchartQuestion,
-  PropertiesQuestion,
-  EmbeddedQuestion,
-} from './types'
+import { Question } from './types'
 import { CaseHistory } from '@/services/copilot/questions/definitions/case-history'
 import { TrsScore } from '@/services/copilot/questions/definitions/trs-score'
 import { TransactionType } from '@/services/copilot/questions/definitions/transaction-type'
@@ -34,14 +27,7 @@ import { Recommendation } from '@/services/copilot/questions/definitions/recomme
 import { hasFeature } from '@/core/utils/context'
 import { envIsNot } from '@/utils/env'
 
-export const getQuestions = (): (
-  | TableQuestion<any>
-  | StackedBarchartQuestion<any>
-  | BarchartQuestion<any>
-  | TimeseriesQuestion<any>
-  | PropertiesQuestion<any>
-  | EmbeddedQuestion<any>
-)[] =>
+export const getQuestions = (): Question<any>[] =>
   [
     AlertHistory,
     AlertsRelatedToTransaction,

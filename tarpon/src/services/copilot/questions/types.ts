@@ -44,7 +44,7 @@ export type InvestigationContext = {
 
 export type QuestionCategory = 'BUSINESS' | 'CONSUMER'
 
-export type Question<V extends Variables> = {
+export type QuestionBase<V extends Variables> = {
   questionId: CopilotQuestionIds
   title?: (ctx: InvestigationContext, variables: V) => Promise<string>
   explainer?: string
@@ -53,7 +53,15 @@ export type Question<V extends Variables> = {
   categories: QuestionCategory[]
 }
 
-export type AggregationQuestion<V extends Variables, D> = Question<any> & {
+export type Question<T extends Variables> =
+  | TableQuestion<T>
+  | StackedBarchartQuestion<T>
+  | BarchartQuestion<T>
+  | TimeseriesQuestion<T>
+  | PropertiesQuestion<T>
+  | EmbeddedQuestion<T>
+
+export type AggregationQuestion<V extends Variables, D> = QuestionBase<any> & {
   aggregationPipeline: (
     context: InvestigationContext,
     variables: V
@@ -64,7 +72,7 @@ export type TableQuestion<V extends Variables> = {
   type: 'TABLE'
   headers: { name: string; columnType: TableHeadersColumnTypeEnum }[]
 } & AggregationQuestion<
-  V & { pageSize: PageSize; page: number },
+  V & { pageSize?: PageSize; page?: number },
   { items: (string | number | undefined)[][]; total: number }
 >
 
@@ -92,7 +100,7 @@ export type PropertiesQuestion<V extends Variables> = {
 
 export type EmbeddedQuestion<V extends Variables> = {
   type: 'EMBEDDED'
-} & Question<V>
+} & QuestionBase<V>
 
 export type Investigation = {
   alertId: string

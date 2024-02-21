@@ -3,9 +3,16 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  GetCommandInput,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb'
+import { StackConstants } from '@lib/constants'
 import { getQueries, getQuestions } from './definitions'
 import { InvestigationRepository } from './investigation-repository'
-import { InvestigationContext, Variables } from './types'
+import { InvestigationContext, Question, Variables } from './types'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -23,6 +30,9 @@ import dayjs from '@/utils/dayjs'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { traceable } from '@/core/xray'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { generateChecksum } from '@/utils/object'
 
 @traceable
 export class QuestionService {
@@ -36,19 +46,23 @@ export class QuestionService {
 
     return new QuestionService(
       new InvestigationRepository(mongoClient, tenantId),
-      await AccountsService.fromEvent(event)
+      await AccountsService.fromEvent(event),
+      await getDynamoDbClientByEvent(event)
     )
   }
 
   private investigationRepository: InvestigationRepository
   private accountsService: AccountsService
+  private dynamoClient: DynamoDBDocumentClient
 
   constructor(
     investigationRepository: InvestigationRepository,
-    accountService: AccountsService
+    accountService: AccountsService,
+    dynamoClient: DynamoDBDocumentClient
   ) {
     this.investigationRepository = investigationRepository
     this.accountsService = accountService
+    this.dynamoClient = dynamoClient
   }
 
   async addQuestion(
@@ -145,12 +159,52 @@ export class QuestionService {
       varObject = variables
       question = questions.find((qt) => qt.questionId === gptQuestionId)
     }
+    if (!question) {
+      throw new Error('Could not result question')
+    }
+    const partitionKeyId = DynamoDbKeys.CACHE_QUESTION_RESULT(
+      tenantId,
+      alertId,
+      questionId,
+      generateChecksum(varObject)
+    )
+    const getItemInput: GetCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: partitionKeyId,
+    }
+    const result = await this.dynamoClient.send(new GetCommand(getItemInput))
+    if (result.Item) {
+      return result.Item.response as QuestionResponse
+    }
 
+    const response = await this.getQuestionResponse(ctx, varObject, question)
+    void this.dynamoClient.send(
+      new PutCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        Item: {
+          ...partitionKeyId,
+          ttl:
+            question.type === 'TABLE'
+              ? undefined
+              : Math.floor(Date.now() / 1000) + 60 * 60 * 24, // Cache for a day
+          response,
+        },
+      })
+    )
+    return response
+  }
+
+  private async getQuestionResponse(
+    ctx: InvestigationContext,
+    varObject: Variables,
+    question: Question<Variables>
+  ) {
     if (!question?.type) {
       throw new Error()
     }
 
     varObject = { ...question.defaults(ctx), ...varObject }
+
     const common = {
       questionId: question.questionId,
       variableOptions: await Promise.all(
@@ -175,7 +229,9 @@ export class QuestionService {
         )
       ),
       questionType: question.type,
-      title: question.title ? await question.title(ctx, varObject) : questionId,
+      title: question.title
+        ? await question.title(ctx, varObject)
+        : question.questionId,
       explainer: question.explainer,
       variables: Object.entries(varObject).map(([name, value]) => {
         return {
