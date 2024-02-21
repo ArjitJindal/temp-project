@@ -648,7 +648,7 @@ ruleVariantsTest({ aggregation: true, v8: true }, () => {
         expectedHits: [false, true],
       },
       {
-        name: 'Anonymous sender (missing identifier) - hit',
+        name: 'Anonymous sender (missing identifier) - not hit',
         transactions: [
           getTestTransaction({
             originUserId: undefined,

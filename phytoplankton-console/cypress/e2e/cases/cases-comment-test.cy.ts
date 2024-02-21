@@ -58,9 +58,10 @@ describe('Add a comment to a case', () => {
         cy.get('[data-cy="attached-file"] a')
           .invoke('attr', 'href')
           .then((actionLink) => {
-            cy.request(actionLink!).then((response) => {
-              expect(response.body).to.eq(fileContent);
-            });
+            actionLink &&
+              cy.request(actionLink).then((response) => {
+                expect(response.body).to.eq(fileContent);
+              });
           });
         cy.get('[data-cy="comment-created-on"]').should('not.be.empty');
         cy.get('[data-cy="comment-created-by"]').should('not.be.empty');

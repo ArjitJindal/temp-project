@@ -12,7 +12,6 @@ import {
   getRuleVariableByKey,
   isSenderUserVariable,
 } from '../v8-variables'
-import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { getTimestampRange } from '../utils/time-utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { getRuleVariableAggregator } from '../v8-variable-aggregators'
@@ -30,6 +29,7 @@ import {
   RuleVariableBase,
   TransactionRuleVariableContext,
 } from '../v8-variables/types'
+import { getPaymentDetailsIdentifiersKey } from '../v8-variables/payment-details'
 import {
   AggregationData,
   AggregationRepository,
@@ -43,9 +43,9 @@ import { User } from '@/@types/openapi-public/User'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
 import { handleV8TransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
-import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
 import { getSQSClient } from '@/utils/sns-sqs-client'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
+import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
 
 const sqs = getSQSClient()
 
@@ -283,16 +283,23 @@ export class RuleJsonLogicEvaluator {
     transaction: Transaction,
     direction: 'origin' | 'destination',
     type: RuleAggregationType
-  ) {
-    return direction === 'origin'
-      ? getSenderKeyId(this.tenantId, transaction, {
-          disableDirection: true,
-          matchPaymentDetails: type === 'PAYMENT_DETAILS_TRANSACTIONS',
-        })
-      : getReceiverKeyId(this.tenantId, transaction, {
-          disableDirection: true,
-          matchPaymentDetails: type === 'PAYMENT_DETAILS_TRANSACTIONS',
-        })
+  ): string | undefined {
+    const userId =
+      direction === 'origin'
+        ? transaction.originUserId
+        : transaction.destinationUserId
+    if (type === 'PAYMENT_DETAILS_TRANSACTIONS' || !userId) {
+      const paymentDetails =
+        direction === 'origin'
+          ? transaction.originPaymentDetails
+          : transaction.destinationPaymentDetails
+      if (paymentDetails) {
+        return getPaymentDetailsIdentifiersKey(paymentDetails)
+      }
+      return undefined
+    } else {
+      return userId
+    }
   }
 
   /**
@@ -643,6 +650,7 @@ export class RuleJsonLogicEvaluator {
         beforeTimestamp,
         aggregationGranularity
       )) ?? []
+
     const aggFunc = getRuleVariableAggregator(aggregationFunc)
     const result = aggData.reduce((acc, cur) => {
       return aggFunc.merge(acc, cur.value as any)
