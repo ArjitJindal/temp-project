@@ -4,9 +4,10 @@ import { AlertAssignedToInput } from './AlertAssignedToInput/input';
 import { RuleQueueInputField } from './RuleQueueInput';
 import { AlertInvestigationChecklist } from './AlertInvestigationChecklist';
 import CreationIntervalInput, { AlertCreationInterval } from './CreationIntervalInput';
+import { FrozenStatusesInput } from './FrozenStatusInput';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import InputField from '@/components/library/Form/InputField';
-import { AlertCreationDirection, Priority } from '@/apis';
+import { AlertCreationDirection, DerivedStatus, Priority } from '@/apis';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { ALERT_CREATED_FOR, AlertCreatedForEnum, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
 import Select from '@/components/library/Select';
@@ -22,6 +23,7 @@ export interface FormValues {
   alertCreationDirection?: AlertCreationDirection;
   queueId?: string;
   checklistTemplateId?: string;
+  frozenStatuses: DerivedStatus[];
 }
 
 export const INITIAL_VALUES: Partial<FormValues> = {
@@ -32,6 +34,7 @@ export const INITIAL_VALUES: Partial<FormValues> = {
   },
   falsePositiveCheckEnabled: 'false',
   alertAssigneesType: 'EMAIL',
+  frozenStatuses: [],
 };
 
 interface Props {}
@@ -120,6 +123,7 @@ export default function AlertCreationDetailsStep(_props: Props) {
         </div>
         <Divider className={s.divider} />
         <AlertAssignedToInput />
+        <FrozenStatusesInput />
         <Divider className={s.divider} />
         <RuleQueueInputField<FormValues> label="Alert queue" />
         <AlertInvestigationChecklist<FormValues> label="Alert investigation checklist" />

@@ -28,6 +28,19 @@ export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Block', value: 'BLOCK' },
 ];
 
+export type FrozenStatuses = 'IN_PROGRESS' | 'ON_HOLD' | 'IN_REVIEW' | 'ESCALATED' | 'REOPENED';
+
+export const FROZEN_STATUSES: {
+  label: string;
+  value: FrozenStatuses;
+}[] = [
+  { label: 'On hold', value: 'ON_HOLD' },
+  { label: 'In review', value: 'IN_REVIEW' },
+  { label: 'In progress', value: 'IN_PROGRESS' },
+  { label: 'Escalated', value: 'ESCALATED' },
+  { label: 'Re-opened', value: 'REOPENED' },
+];
+
 export function getRuleInstanceDisplayId(
   ruleId: string | undefined,
   ruleInstanceId: string | undefined,
@@ -143,6 +156,7 @@ export function ruleInstanceToFormValues(
             : undefined,
           alertAssignees: ruleInstance.alertConfig?.alertAssignees,
           alertAssigneeRole: ruleInstance.alertConfig?.alertAssigneeRole,
+          frozenStatuses: ruleInstance.alertConfig?.frozenStatuses,
           alertCreatedFor: ruleInstance.alertConfig?.alertCreatedFor ?? ['USER'],
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
@@ -260,6 +274,7 @@ export function ruleInstanceToFormValuesV8(
         : undefined,
       checklistTemplateId: ruleInstance.checklistTemplateId,
       queueId: ruleInstance.queueId,
+      frozenStatuses: ruleInstance.alertConfig?.frozenStatuses,
     },
   };
 }
@@ -304,6 +319,7 @@ export function formValuesToRuleInstance(
           ? basicDetailsStep.alertAssigneeRole
           : undefined,
       alertCreationInterval: basicDetailsStep.alertCreationInterval,
+      frozenStatuses: basicDetailsStep.frozenStatuses,
       alertCreatedFor: basicDetailsStep.alertCreatedFor,
     },
     ...(isRiskLevelsEnabled
@@ -410,6 +426,7 @@ export function formValuesToRuleInstanceV8(
       alertCreationInterval: alertCreationDetailsStep.alertCreationInterval,
       alertCreatedFor: alertCreationDetailsStep.alertCreatedFor,
       alertCreationDirection: alertCreationDetailsStep.alertCreationDirection,
+      frozenStatuses: alertCreationDetailsStep.frozenStatuses,
     },
     baseCurrency,
     logicEntityVariables: ruleLogicEntityVariables,

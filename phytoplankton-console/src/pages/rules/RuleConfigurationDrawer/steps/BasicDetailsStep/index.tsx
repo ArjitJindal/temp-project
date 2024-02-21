@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import StepHeader from '../../StepHeader';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
-import { Priority, Rule, RuleLabels, RuleNature } from '@/apis';
+import { DerivedStatus, Priority, Rule, RuleLabels, RuleNature } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import {
@@ -24,6 +24,7 @@ import CreationIntervalInput, {
 } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/CreationIntervalInput';
 import { AlertAssignedToInput } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/AlertAssignedToInput/input';
 import { AlertInvestigationChecklist } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/AlertInvestigationChecklist';
+import { FrozenStatusesInput } from '@/pages/rules/RuleConfigurationDrawerV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/FrozenStatusInput';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -43,6 +44,7 @@ export interface FormValues {
   alertAssigneeRole?: string;
   alertCreatedFor: AlertCreatedForEnum[];
   checksFor: string[];
+  frozenStatuses: DerivedStatus[];
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -57,6 +59,7 @@ export const INITIAL_VALUES: FormValues = {
   },
   alertAssigneesType: 'EMAIL',
   checksFor: [],
+  frozenStatuses: [],
   alertCreatedFor: ['USER'],
 };
 
@@ -232,6 +235,7 @@ function AlertCreationDetails() {
             />
           )}
         </InputField>
+        <FrozenStatusesInput />
       </PropertyListLayout>
     </>
   );

@@ -30,7 +30,10 @@ import { logger } from '@/core/logger'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
-import { calculateCaseAvailableDate } from '@/lambdas/console-api-case/services/utils'
+import {
+  calculateCaseAvailableDate,
+  getDerivedStatus,
+} from '@/lambdas/console-api-case/services/utils'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { notNullish } from '@/core/utils/array'
 import { getDefaultTimezone } from '@/utils/dayjs'
@@ -357,7 +360,9 @@ export class CaseCreationService {
     // Get the rule hits that are new for this transaction
     const newRuleHits = hitRules.filter(
       (hitRule) =>
-        !alerts.some((alert) => alert.ruleInstanceId === hitRule.ruleInstanceId)
+        !alerts.some((alert) =>
+          this.getFrozenStatusFilter(alert, hitRule, ruleInstances)
+        )
     )
 
     // Get the alerts that are new for this transaction
@@ -376,9 +381,8 @@ export class CaseCreationService {
     // Get the alerts that already existed on the case
     const existingAlerts = alerts.filter(
       (existingAlert) =>
-        !newRuleHits.some(
-          (newRuleHits) =>
-            newRuleHits.ruleInstanceId === existingAlert.ruleInstanceId
+        !newRuleHits.some((newRuleHits) =>
+          this.getFrozenStatusFilter(existingAlert, newRuleHits, ruleInstances)
         )
     )
 
@@ -520,8 +524,8 @@ export class CaseCreationService {
         return alert
       }
       const transactionBelongsToAlert = Boolean(
-        transaction.hitRules.find(
-          (rule) => rule.ruleInstanceId === alert.ruleInstanceId
+        transaction.hitRules.find((rule) =>
+          this.getFrozenStatusFilter(alert, rule, ruleInstances)
         )
       )
       if (!transactionBelongsToAlert) {
@@ -1179,6 +1183,22 @@ export class CaseCreationService {
       .map((user) => user?.user_id)
       .filter((user) => user !== undefined && user !== '')
   })
+
+  private getFrozenStatusFilter(
+    alert: Alert,
+    rule: HitRulesDetails,
+    ruleInstances?: readonly RuleInstance[]
+  ): boolean {
+    if (alert.ruleInstanceId === rule.ruleInstanceId) {
+      const ruleInstance = ruleInstances?.find(
+        (ruleInstance) => ruleInstance.id === alert.ruleInstanceId
+      )
+      return !ruleInstance?.alertConfig?.frozenStatuses?.some(
+        (status) => status === getDerivedStatus(alert.alertStatus)
+      )
+    }
+    return false
+  }
 
   async getRuleAlertAssignee(assignees?: string[], assignedRole?: string) {
     let assigneeId: string | undefined

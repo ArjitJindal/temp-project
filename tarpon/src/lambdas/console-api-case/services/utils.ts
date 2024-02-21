@@ -6,6 +6,8 @@ import dayjs, { Timezone, WEEKDAY_NUMBERS, duration } from '@/utils/dayjs'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseWithoutCaseTransactions } from '@/services/rules-engine/repositories/case-repository'
+import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
+import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 
 export function calculateCaseAvailableDate(
   now: number,
@@ -89,4 +91,28 @@ export function isAlertAvailable(alert: Alert): boolean {
     return true
   }
   return Date.now() > alert.availableAfterTimestamp
+}
+
+export function getDerivedStatus(
+  status: AlertStatus | undefined
+): DerivedStatus {
+  switch (status) {
+    case 'IN_REVIEW_OPEN':
+    case 'IN_REVIEW_CLOSED':
+    case 'IN_REVIEW_REOPENED':
+    case 'IN_REVIEW_ESCALATED': {
+      return 'IN_REVIEW'
+    }
+    case 'OPEN_IN_PROGRESS':
+      return 'IN_PROGRESS'
+    case 'OPEN_ON_HOLD': {
+      return 'ON_HOLD'
+    }
+    case 'ESCALATED_IN_PROGRESS':
+    case 'ESCALATED_ON_HOLD': {
+      return 'ESCALATED'
+    }
+    default:
+      return status as DerivedStatus
+  }
 }

@@ -253,6 +253,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
         alertPriority: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertPriority,
         falsePositiveCheckEnabled:
           ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.falsePositiveCheckEnabled,
+        frozenStatuses: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.frozenStatuses,
       },
     };
   }, [

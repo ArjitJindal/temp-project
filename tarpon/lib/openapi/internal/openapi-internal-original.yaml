@@ -5932,6 +5932,10 @@ components:
                 enum:
                   - USER
                   - PAYMENT_DETAILS
+            frozenStatuses:
+              type: array
+              items:
+                $ref: '#/components/schemas/DerivedStatus'
             alertCreationDirection:
               $ref: '#/components/schemas/AlertCreationDirection'
         checksFor:

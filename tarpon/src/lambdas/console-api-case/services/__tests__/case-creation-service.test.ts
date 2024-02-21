@@ -47,6 +47,7 @@ import { getAlertRepo } from '@/lambdas/console-api-dashboard/repositories/__tes
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { tenantSettings } from '@/core/utils/context'
+import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 
 dynamoDbSetupHook()
 
@@ -99,6 +100,7 @@ async function getServices(tenantId: string) {
     alertsService,
     caseService,
     dynamoDbTranasactionRepository,
+    alertsRepository,
   }
 }
 
@@ -1692,6 +1694,94 @@ describe('Test alert auto assignment', () => {
   })
 })
 
+/** Testing `Don't Add Transactions to alerts */
+
+describe('Testing not adding transactions to alerts in selected status (Frozen Statuses)', () => {
+  beforeAll(async () => {
+    MockDate.set(TODAY)
+  })
+
+  describe('not adding transaction to ON_HOLD alerts ', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+    test('testing not adding transactions', async () => {
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            frozenStatuses: ['ON_HOLD'],
+          },
+        ],
+        async () => {
+          const { caseCreationService, alertsRepository } = await getServices(
+            TEST_TENANT_ID
+          )
+          MockDate.set(TODAY)
+
+          const transaction1 = getTestTransaction({
+            originUserId: TEST_USER_1.userId,
+            destinationUserId: TEST_USER_2.userId,
+          })
+
+          const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+            transaction1,
+          ])
+          const [result] = results
+
+          const subjects = await caseCreationService.getTransactionSubjects({
+            ...transaction1,
+            ...result,
+          })
+          const cases = await caseCreationService.handleTransaction(
+            {
+              ...transaction1,
+              ...result,
+            },
+            await getHitRuleInstances(TEST_TENANT_ID, result),
+            subjects
+          )
+          const selectedAlert = cases[0].alerts?.[0]
+          await alertsRepository.updateAlertsStatus(
+            [selectedAlert?.alertId as string],
+            [selectedAlert?.caseId as string],
+            {
+              userId: TEST_USER_1.userId,
+              caseStatus: 'OPEN_ON_HOLD',
+              timestamp: Date.now(),
+            }
+          )
+          const transaction2 = getTestTransaction({
+            originUserId: TEST_USER_1.userId,
+            destinationUserId: TEST_USER_2.userId,
+          })
+
+          const results2 = await bulkVerifyTransactions(TEST_TENANT_ID, [
+            transaction2,
+          ])
+          const [result2] = results2
+
+          const subjects2 = await caseCreationService.getTransactionSubjects({
+            ...transaction2,
+            ...result2,
+          })
+          const cases2 = await caseCreationService.handleTransaction(
+            {
+              ...transaction2,
+              ...result2,
+            },
+            await getHitRuleInstances(TEST_TENANT_ID, result2),
+            subjects2
+          )
+          expect(cases2[0].alerts).toHaveLength(2) // 2 alerts because the first alert is ON_HOLD
+          expect(cases2[0].alerts?.[0].transactionIds).toHaveLength(1) // 1 transaction because the first alert is ON_HOLD so not added
+          expect(cases2[1].alerts).toHaveLength(1) // 1 alert as the new transaction is added to the case for the other user
+          expect(cases2[1].alerts?.[0].transactionIds).toHaveLength(2) // 2 transaction in one alert in the case for the other user as that alert is not on hold
+        }
+      )
+    })
+  })
+})
+
 /*
   Helpers
  */
@@ -1774,6 +1864,7 @@ async function underRules<R = void>(
     alertCreatedFor?: AlertCreatedForEnum[]
     alertAssignees?: string[]
     alertAssigneeRole?: string
+    frozenStatuses?: DerivedStatus[]
   }[],
   cb: () => Promise<R>
 ): Promise<R> {
@@ -1795,6 +1886,7 @@ async function underRules<R = void>(
             alertAssigneeRole: parameters.alertAssigneeRole,
             alertAssignees: parameters.alertAssignees,
             alertCreationInterval: parameters.alertCreationInterval,
+            frozenStatuses: parameters.frozenStatuses,
             alertCreatedFor: parameters.alertCreatedFor ?? ['USER'],
           },
         }

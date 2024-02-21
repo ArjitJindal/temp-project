@@ -337,6 +337,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
         ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
         falsePositiveCheckEnabled: rule?.defaultFalsePositiveCheckEnabled ?? false,
         checksFor: rule?.checksFor ?? BASIC_DETAILS_STEP_INITIAL_VALUES.checksFor,
+        frozenStatuses: BASIC_DETAILS_STEP_INITIAL_VALUES.frozenStatuses,
         alertCreatedFor: BASIC_DETAILS_STEP_INITIAL_VALUES.alertCreatedFor,
       },
       standardFiltersStep: rule?.defaultFilters ?? STANDARD_FILTERS_STEP_INITIAL_VALUES,
