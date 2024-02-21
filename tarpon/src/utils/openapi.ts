@@ -4,6 +4,7 @@ import { getSecret } from './secrets-manager'
 
 const MAX_TOKEN_INPUT = 1000
 let openai: OpenAIApi | null = null
+const modelVersion: string = 'gpt-4-turbo-preview'
 
 export async function ask(
   prompt: string,
@@ -14,7 +15,7 @@ export async function ask(
     openai = new OpenAIApi(new Configuration({ apiKey }))
   }
   const completion = await openai.createChatCompletion({
-    model: 'gpt-3.5-turbo',
+    model: modelVersion,
     temperature: params?.temperature ?? 0.5,
     messages: [
       {
@@ -36,7 +37,7 @@ export async function prompt(
     openai = new OpenAIApi(new Configuration({ apiKey }))
   }
   const completion = await openai.createChatCompletion({
-    model: 'gpt-3.5-turbo',
+    model: modelVersion,
     temperature: params?.temperature ?? 0.5,
     messages,
     max_tokens: MAX_TOKEN_INPUT,
