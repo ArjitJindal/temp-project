@@ -702,6 +702,7 @@ export class RulesEngineService {
             this.tenantId,
             { user: senderUser!, ongoingScreeningMode },
             { parameters, filters: ruleFilters },
+            { ruleInstance, rule: rule! },
             await getMongoDbClient(),
             this.dynamoDb
           )

@@ -13,11 +13,10 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CrmService } from '@/services/crm'
 import { hasFeature } from '@/core/utils/context'
-import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { LinkerService } from '@/services/linker'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
+import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -143,15 +142,6 @@ export const allUsersViewHandler = lambdaApi()(
       dynamoDb,
       mongoDb: client,
     })
-
-    const alertsRepository = new AlertsRepository(tenantId, {
-      mongoDb: client,
-      dynamoDb,
-    })
-
-    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
-      dynamoDb,
-    })
     const linkerService = new LinkerService(tenantId)
     const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
@@ -231,30 +221,11 @@ export const allUsersViewHandler = lambdaApi()(
       return linkerService.transactions(request.userId)
     })
 
-    handlers.registerGetUserScreeningStatus(async (ctx, request) => {
-      const user = await userService.getUser(request.userId)
-      const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
-      const ongoingRuleInstanceIds: string[] = ruleInstances
-        .filter(
-          (ruleInstance) =>
-            ruleInstance.type === 'USER' &&
-            ruleInstance.parameters?.ongoingScreening
-        )
-        .map((x) => x.id)
-        .filter((x): x is string => typeof x === 'string')
-
-      if (ongoingRuleInstanceIds.length === 0) {
-        return {
-          isOngoingScreening: false,
-        }
-      }
-      const alerts = await alertsRepository.getAlerts({
-        filterUserId: user.userId,
-        filterRuleInstanceId: ongoingRuleInstanceIds,
-        pageSize: 1,
-      })
+    handlers.registerGetUserScreeningStatus(async (_ctx, _request) => {
+      const ongoingScreeningUserRules =
+        await getOngoingScreeningUserRuleInstances(tenantId)
       return {
-        isOngoingScreening: alerts.data.length > 0,
+        isOngoingScreening: ongoingScreeningUserRules.length > 0,
       }
     })
 

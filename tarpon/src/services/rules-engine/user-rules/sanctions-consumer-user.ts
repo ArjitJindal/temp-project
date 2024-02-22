@@ -70,6 +70,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         userId: this.user.userId,
         metadata: {
           entity: 'USER',
+          ruleInstanceIds: [this.ruleInstance.id!],
         },
       }
     )

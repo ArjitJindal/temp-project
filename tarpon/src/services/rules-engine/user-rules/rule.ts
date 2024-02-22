@@ -4,6 +4,8 @@ import { Rule } from '../rule'
 import { Vars } from '../utils/format-description'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { Rule as RuleModel } from '@/@types/openapi-internal/Rule'
 
 export interface UserVars<P> extends Vars {
   user: User | Business
@@ -17,6 +19,8 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   ongoingScreeningMode: boolean
+  ruleInstance: RuleInstance
+  rule: RuleModel
 
   constructor(
     tenantId: string,
@@ -28,6 +32,10 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
       parameters: P
       filters: T
     },
+    context: {
+      ruleInstance: RuleInstance
+      rule: RuleModel
+    },
     mongoDb: MongoClient,
     dynamoDb: DynamoDBDocumentClient
   ) {
@@ -37,6 +45,8 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
     this.ongoingScreeningMode = data.ongoingScreeningMode ?? false
     this.parameters = params.parameters
     this.filters = params.filters || {}
+    this.ruleInstance = context.ruleInstance
+    this.rule = context.rule
     this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
   }

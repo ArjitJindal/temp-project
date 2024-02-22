@@ -117,6 +117,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               userId: this.user.userId,
               metadata: {
                 entity: 'USER',
+                ruleInstanceIds: [this.ruleInstance.id!],
               },
             }
           )

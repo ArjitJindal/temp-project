@@ -27,9 +27,9 @@ export async function getOngoingScreeningUserRuleInstances(
   const ruleInstances = (
     await ruleInstanceRepository.getActiveRuleInstances('USER')
   ).filter((ruleInstance) => {
-    if (isRiskLevelsEnabled) {
+    if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {
       return Boolean(
-        Object.values(ruleInstance.riskLevelParameters ?? {}).find(
+        Object.values(ruleInstance.riskLevelParameters).find(
           (parameters) => parameters?.ongoingScreening
         )
       )
