@@ -1,3 +1,4 @@
+import { removePrefixFromName } from '../utils/transaction-rule-utils'
 import PaymentDetailChangeRuleBase from './payment-detail-change-base'
 import {
   AcceptedPaymentDetails,
@@ -8,7 +9,8 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 export class BankAccountHolderNameChangeRule extends PaymentDetailChangeRuleBase {
   getPaymentDetail(paymentDetails?: PaymentDetails): string | undefined {
     if (isTransactionMethodValid(paymentDetails?.method)) {
-      return (paymentDetails as AcceptedPaymentDetails)?.name
+      const accountholderName = (paymentDetails as AcceptedPaymentDetails)?.name
+      return removePrefixFromName(accountholderName ?? '', true)
     }
   }
 }

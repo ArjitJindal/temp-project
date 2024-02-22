@@ -224,8 +224,8 @@ testAggregationRebuild(
     origin: [
       {
         receiverPreviousPaymentDetail: '',
-        senderPaymentDetailUsage: { LLOYDS: 1, HSBC: 1 },
-        senderPreviousPaymentDetail: 'HSBC',
+        senderPaymentDetailUsage: { lloyds: 1, hsbc: 1 },
+        senderPreviousPaymentDetail: 'hsbc',
         receiverPaymentDetailUsage: {},
         transactionCount: 2,
         hour: '2022010100',
@@ -250,10 +250,10 @@ testAggregationRebuild(
         hour: '2022010100',
       },
       {
-        receiverPreviousPaymentDetail: 'HSBC',
+        receiverPreviousPaymentDetail: 'hsbc',
         senderPaymentDetailUsage: {},
         senderPreviousPaymentDetail: '',
-        receiverPaymentDetailUsage: { LLOYDS: 1, HSBC: 1 },
+        receiverPaymentDetailUsage: { lloyds: 1, hsbc: 1 },
         transactionCount: 2,
         hour: '2022010101',
       },

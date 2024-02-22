@@ -6,6 +6,6 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 @traceable
 export default class BankNameChangeRule extends PaymentDetailChangeRuleBase {
   getPaymentDetail(paymentDetails?: PaymentDetails): string | undefined {
-    return getBankname(paymentDetails)
+    return getBankname(paymentDetails)?.toLowerCase()
   }
 }

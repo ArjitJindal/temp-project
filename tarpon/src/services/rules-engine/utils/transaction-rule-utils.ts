@@ -389,3 +389,40 @@ export function getTransactionStatsTimeGroupLabel(
       return dayjs(timestamp).format('YYYY-MM-DD-HH')
   }
 }
+
+export function removePrefixFromName(
+  name: string,
+  toLowerCase: boolean = false
+): string {
+  prefixes.forEach((prefix) => {
+    name = name!.replace(new RegExp(`^${prefix}\\.? `, 'gi'), '')
+  })
+  if (toLowerCase) {
+    name = name.toLowerCase()
+  }
+  return name
+}
+
+export const prefixes = [
+  'Mr',
+  'Mrs',
+  'Miss',
+  'Ms',
+  'Dr',
+  'Sr',
+  'Sra',
+  'Srta',
+  'Dr',
+  'M',
+  'Mme',
+  'Mlle',
+  'Dr',
+  'Herr',
+  'Frau',
+  'Fräulein',
+  'Dr',
+  'Sr',
+  'Sra',
+  'Srta',
+  'Dr',
+]

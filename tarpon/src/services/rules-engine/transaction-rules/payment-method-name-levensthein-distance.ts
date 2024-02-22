@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import * as levenshtein from 'fast-levenshtein'
 import { RuleHitResultItem } from '../rule'
+import { removePrefixFromName } from '../utils/transaction-rule-utils'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 import { formatConsumerName } from '@/utils/helpers'
@@ -97,13 +98,10 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
     }
 
     // Choose the minimum score from trying with and without the prefixes.
-    let paymentMethodNameWithoutPrefix = paymentMethodName
-    prefixes.forEach((prefix) => {
-      paymentMethodNameWithoutPrefix = paymentMethodNameWithoutPrefix.replace(
-        new RegExp(`^${prefix}\\.? `, 'gi'),
-        ''
-      )
-    })
+    const paymentMethodNameWithoutPrefix = removePrefixFromName(
+      paymentMethodName,
+      true
+    )
 
     const paymentMethodNameWithoutPrexiAndMiddleNames = extractFirstAndLastName(
       paymentMethodNameWithoutPrefix
@@ -112,7 +110,7 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
     const minDistance = Math.min(
       ...[paymentMethodName, paymentMethodNameWithoutPrexiAndMiddleNames].map(
         (str) => {
-          return levenshtein.get(userName, str || '')
+          return levenshtein.get(userName.toLowerCase(), str || '')
         }
       )
     )
@@ -156,30 +154,6 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
     return await Promise.all(tasks)
   }
 }
-
-export const prefixes = [
-  'Mr',
-  'Mrs',
-  'Miss',
-  'Ms',
-  'Dr',
-  'Sr',
-  'Sra',
-  'Srta',
-  'Dr',
-  'M',
-  'Mme',
-  'Mlle',
-  'Dr',
-  'Herr',
-  'Frau',
-  'Fräulein',
-  'Dr',
-  'Sr',
-  'Sra',
-  'Srta',
-  'Dr',
-]
 
 export function extractFirstAndLastName(fullName: string): string | undefined {
   const names = fullName.split(' ')

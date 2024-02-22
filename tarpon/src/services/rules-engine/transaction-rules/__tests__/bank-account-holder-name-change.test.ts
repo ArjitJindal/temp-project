@@ -335,7 +335,7 @@ describe('R-45 - Allowed Distance Percentage', () => {
           getTestTransaction({
             originPaymentDetails: {
               method: 'GENERIC_BANK_ACCOUNT',
-              name: 'TEST2',
+              name: 'Mr. TEST2',
             },
           }),
           getTestTransaction({
@@ -352,6 +352,42 @@ describe('R-45 - Allowed Distance Percentage', () => {
           }),
         ],
         expectedHits: [false, false, true, true],
+      },
+      {
+        name: 'Name matches after removing prefixes and is not under allowed distance -  hit',
+        transactions: [
+          getTestTransaction({
+            originPaymentDetails: {
+              method: 'GENERIC_BANK_ACCOUNT',
+              name: 'Fräulein. TEST1',
+            },
+          }),
+          getTestTransaction({
+            originPaymentDetails: {
+              method: 'GENERIC_BANK_ACCOUNT',
+              name: 'Mr. TEST2',
+            },
+          }),
+          getTestTransaction({
+            originPaymentDetails: {
+              method: 'GENERIC_BANK_ACCOUNT',
+              name: 'Srta. BPLM3',
+            },
+          }),
+          getTestTransaction({
+            originPaymentDetails: {
+              method: 'GENERIC_BANK_ACCOUNT',
+              name: 'Mlle JKLMD',
+            },
+          }),
+          getTestTransaction({
+            originPaymentDetails: {
+              method: 'GENERIC_BANK_ACCOUNT',
+              name: 'Ms. test1',
+            },
+          }),
+        ],
+        expectedHits: [false, false, false, false, false],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(
