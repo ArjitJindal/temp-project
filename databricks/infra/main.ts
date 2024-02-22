@@ -444,6 +444,7 @@ class DatabricksStack extends TerraformStack {
       provider: workspaceProvider,
       name: 'main',
       continuous: true,
+      edition: 'PRO',
       development: stage === 'dev',
       channel: 'PREVIEW',
       catalog: catalog.name,
