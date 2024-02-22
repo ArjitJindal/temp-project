@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { MutableRefObject, useCallback, useMemo, useRef } from 'react';
+import { MutableRefObject, useCallback, useMemo, useRef, useState } from 'react';
 import { snakeCase } from 'lodash';
 import { useLocalStorageState } from 'ahooks';
 import { exportDataForBarGraphs } from '../../../utils/export-data-build-util';
 import Column, { ColumnData } from '../../charts/Column';
+import GranularDatePicker, {
+  GranularityValuesType,
+  timeframe,
+} from '../GranularDatePicker/GranularDatePicker';
 import s from './styles.module.less';
 import { map } from '@/utils/asyncResource';
 import { Dayjs, dayjs } from '@/utils/dayjs';
@@ -31,6 +35,8 @@ interface Props<DataType, ValueType extends string, GroupType extends string> ex
   queryResult: QueryResult<DataType[]>;
   timeRange: { startTimestamp: number; endTimestamp: number };
   onTimeRangeChange: (dateRange: { startTimestamp: number; endTimestamp: number }) => void;
+  setGranularity?: (granularity: GranularityValuesType) => void;
+  showGranularity?: boolean;
 }
 
 export default function DistributionChartWidget<
@@ -48,6 +54,8 @@ export default function DistributionChartWidget<
     onTimeRangeChange,
     valueNames,
     downloadFilenamePrefix,
+    setGranularity,
+    showGranularity,
     ...restProps
   } = props;
   const dateRange = useMemo<[Dayjs, Dayjs]>(
@@ -58,6 +66,7 @@ export default function DistributionChartWidget<
     `dashboard-${restProps.id}`,
     groups[0].name,
   );
+  const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
   const preparedDataRes = map(queryResult.data, (data): ColumnData<string, number, ValueType> => {
     const { attributeDataPrefix } = groups.find((group) => group.name === selectedGroup) ?? {};
     if (groupBy === 'TIME') {
@@ -110,17 +119,34 @@ export default function DistributionChartWidget<
             ref={pdfRef}
             resizing="FIXED"
             {...restProps}
-            extraControls={[
-              <DatePicker.RangePicker
-                value={dateRange}
-                onChange={(e) => {
-                  onTimeRangeChange({
-                    startTimestamp: e?.[0]?.valueOf() ?? 0,
-                    endTimestamp: e?.[1]?.valueOf() ?? 0,
-                  });
-                }}
-              />,
-            ]}
+            extraControls={
+              setGranularity && showGranularity
+                ? [
+                    <GranularDatePicker
+                      timeWindowType={timeWindowType}
+                      setTimeWindowType={setTimeWindowType}
+                      setGranularity={setGranularity}
+                      dateRange={dateRange}
+                      setDateRange={(e) => {
+                        onTimeRangeChange({
+                          startTimestamp: e?.[0]?.valueOf() ?? 0,
+                          endTimestamp: e?.[1]?.valueOf() ?? 0,
+                        });
+                      }}
+                    />,
+                  ]
+                : [
+                    <DatePicker.RangePicker
+                      value={dateRange}
+                      onChange={(e) => {
+                        onTimeRangeChange({
+                          startTimestamp: e?.[0]?.valueOf() ?? 0,
+                          endTimestamp: e?.[1]?.valueOf() ?? 0,
+                        });
+                      }}
+                    />,
+                  ]
+            }
             onDownload={(): Promise<{
               fileName: string;
               data: string;

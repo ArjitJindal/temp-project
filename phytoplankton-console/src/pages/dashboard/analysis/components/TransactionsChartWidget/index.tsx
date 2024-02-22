@@ -6,6 +6,7 @@ import GranularDatePicker, {
   DEFAULT_DATE_RANGE,
   granularityValues,
   GranularityValuesType,
+  timeframe,
 } from '../widgets/GranularDatePicker/GranularDatePicker';
 import { formatDate } from '../../utils/date-utils';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
@@ -25,6 +26,7 @@ import { RuleAction } from '@/apis';
 
 export default function TransactionsChartWidget(props: WidgetProps) {
   const settings = useSettings();
+  const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
 
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const [granularity, setGranularity] = useState<GranularityValuesType>(
@@ -56,6 +58,8 @@ export default function TransactionsChartWidget(props: WidgetProps) {
     <Widget
       extraControls={[
         <GranularDatePicker
+          timeWindowType={timeWindowType}
+          setTimeWindowType={setTimeWindowType}
           setGranularity={setGranularity}
           dateRange={dateRange}
           setDateRange={setDateRange}

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { dayCalc, granularityTypeTitles } from '../../../utils/date-utils';
 import s from './style.module.less';
@@ -20,14 +19,15 @@ export const calcGranularity = (type: string): GranularityValuesType => {
 };
 
 interface Props {
+  timeWindowType: timeframe;
+  setTimeWindowType: (timeWindowType: timeframe) => void;
   setGranularity: (granularity: GranularityValuesType) => void;
   dateRange: RangeValue<Dayjs>;
   setDateRange: (dateRange: RangeValue<Dayjs>) => void;
 }
 
 export default function GranularDatePicker(props: Props) {
-  const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
-  const { setGranularity, dateRange, setDateRange } = props;
+  const { setGranularity, dateRange, setDateRange, timeWindowType, setTimeWindowType } = props;
   return (
     <div className={s.salesExtraWrap}>
       <div className={s.salesExtra}>

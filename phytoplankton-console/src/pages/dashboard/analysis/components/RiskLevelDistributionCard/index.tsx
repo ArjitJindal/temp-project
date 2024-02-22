@@ -2,6 +2,10 @@
 import { useMemo, useState } from 'react';
 import DistributionChartWidget from '../widgets/DistributionChartWidget';
 import {
+  GranularityValuesType,
+  granularityValues,
+} from '../widgets/GranularDatePicker/GranularDatePicker';
+import {
   COLORS_V2_PRIMARY_SHADES_BLUE_50,
   COLORS_V2_PRIMARY_SHADES_BLUE_100,
   COLORS_V2_PRIMARY_SHADES_BLUE_300,
@@ -27,6 +31,7 @@ const RISK_LEVEL_COLORS = {
 
 interface Props extends WidgetProps {
   userType?: 'BUSINESS' | 'CONSUMER';
+  showGranularity?: boolean;
 }
 
 export function RiskLevelDistributionCard(props: Props) {
@@ -34,20 +39,23 @@ export function RiskLevelDistributionCard(props: Props) {
 }
 
 export function RiskLevelBreakdownCard(props: Props) {
-  return <RiskLevelDistributionCardBase {...props} groupBy="TIME" />;
+  return <RiskLevelDistributionCardBase {...props} groupBy="TIME" showGranularity />;
 }
 
 function RiskLevelDistributionCardBase(props: Props & { groupBy: 'VALUE' | 'TIME' }) {
-  const { userType = 'CONSUMER', groupBy, ...restProps } = props;
+  const { userType = 'CONSUMER', groupBy, showGranularity = false, ...restProps } = props;
   const [timeRange, setTimeRange] = useState({
     startTimestamp: dayjs().subtract(1, 'year').valueOf(),
     endTimestamp: dayjs().valueOf(),
   });
+  const [granularity, setGranularity] = useState<GranularityValuesType>(
+    granularityValues.MONTH as GranularityValuesType,
+  );
   const params = {
     userType: userType,
     startTimestamp: timeRange.startTimestamp,
     endTimestamp: timeRange.endTimestamp,
-    granularity: 'MONTH' as 'HOUR' | 'DAY' | 'MONTH',
+    granularity: granularity,
   };
   const settings = useSettings();
   const api = useApi();
@@ -85,6 +93,8 @@ function RiskLevelDistributionCardBase(props: Props & { groupBy: 'VALUE' | 'TIME
       timeRange={timeRange}
       onTimeRangeChange={setTimeRange}
       valueNames={valueNames}
+      setGranularity={setGranularity}
+      showGranularity={showGranularity}
       {...restProps}
     />
   );

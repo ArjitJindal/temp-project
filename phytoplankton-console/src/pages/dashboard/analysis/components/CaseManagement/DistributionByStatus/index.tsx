@@ -9,6 +9,7 @@ import GranularDatePicker, {
   DEFAULT_DATE_RANGE,
   GranularityValuesType,
   granularityValues,
+  timeframe,
 } from '../../widgets/GranularDatePicker/GranularDatePicker';
 import s from './index.module.less';
 import { dayjs, Dayjs } from '@/utils/dayjs';
@@ -47,6 +48,7 @@ export default function DistributionByStatus(props: WidgetProps) {
   const [granularity, setGranularity] = useState<GranularityValuesType>(
     granularityValues.MONTH as GranularityValuesType,
   );
+  const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
 
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const api = useApi();
@@ -89,6 +91,8 @@ export default function DistributionByStatus(props: WidgetProps) {
       {...props}
       extraControls={[
         <GranularDatePicker
+          timeWindowType={timeWindowType}
+          setTimeWindowType={setTimeWindowType}
           setGranularity={setGranularity}
           dateRange={dateRange}
           setDateRange={setDateRange}
