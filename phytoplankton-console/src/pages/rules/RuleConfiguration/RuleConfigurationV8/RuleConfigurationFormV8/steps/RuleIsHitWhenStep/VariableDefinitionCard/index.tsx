@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { v4 as uuid } from 'uuid';
+import { useRuleLogicConfig } from '../helpers';
 import s from './style.module.less';
 import { AggregationVariableForm, FormRuleAggregationVariable } from './AggregationVariableForm';
 import { EntityVariableForm } from './EntityVariableForm';
@@ -8,11 +9,8 @@ import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-lin
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
-import { RuleAggregationVariable, RuleEntityVariableInUse, RuleLogicConfig } from '@/apis';
-import { RULE_LOGIC_CONFIG } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
+import { RuleAggregationVariable, RuleEntityVariableInUse } from '@/apis';
 import { isSuccess } from '@/utils/asyncResource';
-import { useApi } from '@/api';
 import Tag from '@/components/library/Tag';
 import Button from '@/components/library/Button';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -41,7 +39,6 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
   aggregationVariables,
   onChange,
 }) => {
-  const api = useApi();
   const [editingVariable, setEditingVariable] = useState<
     EditingAggVariable | EditingEntityVariable | undefined
   >(undefined);
@@ -75,10 +72,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
       ) === undefined,
     [aggregationVariables, editingVariable?.variable?.key, entityVariables],
   );
-  const ruleLogicConfig = useQuery<RuleLogicConfig>(
-    RULE_LOGIC_CONFIG(),
-    (): Promise<RuleLogicConfig> => api.getRuleLogicConfig(),
-  );
+  const ruleLogicConfig = useRuleLogicConfig();
   const entityVariableDefinitions = useMemo(() => {
     if (isSuccess(ruleLogicConfig.data)) {
       return ruleLogicConfig.data.value.variables ?? [];
@@ -135,6 +129,8 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
           type: 'aggregation',
           variable: {
             key: getNewAggregationVariableKey(),
+            type: 'USER_TRANSACTIONS',
+            direction: 'SENDING_RECEIVING',
             baseCurrency: settings.defaultValues?.currency,
             timeWindow: {
               start: { units: 1, granularity: 'day' },

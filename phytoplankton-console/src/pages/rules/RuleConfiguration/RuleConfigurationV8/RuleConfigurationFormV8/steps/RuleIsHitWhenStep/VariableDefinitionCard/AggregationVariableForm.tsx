@@ -40,8 +40,8 @@ interface AggregationVariableFormProps {
   onCancel: () => void;
 }
 const TYPE_OPTIONS: Array<{ value: RuleAggregationType; label: string }> = [
-  { value: 'USER_TRANSACTIONS', label: 'User transactions' },
-  { value: 'PAYMENT_DETAILS_TRANSACTIONS', label: 'Payment details transactions' },
+  { value: 'USER_TRANSACTIONS', label: 'User ID' },
+  { value: 'PAYMENT_DETAILS_TRANSACTIONS', label: 'Payment ID' },
 ];
 const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; label: string }> = [
   { value: 'SENDING', label: 'Sending' },
@@ -60,13 +60,11 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
   const aggregateFieldOptions = useMemo(
     () =>
       entityVariables
-        // NOTE: As 'Transaction direction' already determines whether to use origin/destination variables,
-        // we only keep origin variabes here and hide 'origin' from the label
-        .filter((v) => v.entity === 'TRANSACTION' && !v.key.startsWith('TRANSACTION:destination'))
+        .filter((v) => v.entity === 'TRANSACTION')
         .map((v) => ({
           value: v.key,
           // NOTE: Remove redundant namespace prefix as we only show transaction variables
-          label: v.uiDefinition.label.replace(/^Transaction\s*\/\s*/, '').replace(/^origin/, ''),
+          label: v.uiDefinition.label.replace(/^Transaction\s*\/\s*/, ''),
         })),
     [entityVariables],
   );
@@ -74,10 +72,11 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     value: RuleAggregationFunc;
     label: string;
   }> = useMemo(() => {
-    const options: Array<{ value: RuleAggregationFunc; label: string }> = [
-      { value: 'COUNT', label: 'Count' },
-    ];
+    const options: Array<{ value: RuleAggregationFunc; label: string }> = [];
     const entityVariable = entityVariables.find((v) => v.key === formValues.aggregationFieldKey);
+    if (entityVariable?.key === 'TRANSACTION:transactionId') {
+      options.push({ value: 'COUNT', label: 'Count' });
+    }
     if (entityVariable?.valueType === 'number') {
       const numberValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
         { value: 'AVG', label: 'Average' },
@@ -149,12 +148,8 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     return 'Auto-generated if left empty';
   }, [entityVariables, formValues, isValidFormValues]);
   const handleUpdateForm = useCallback((newValues: Partial<FormRuleAggregationVariable>) => {
-    if (newValues.aggregationFunc === 'COUNT') {
-      newValues.aggregationFieldKey = 'TRANSACTION:transactionId';
-    }
     setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
   }, []);
-  const isAggFuncCount = formValues.aggregationFunc === 'COUNT';
   return (
     <>
       <Card.Section direction="vertical">
@@ -170,6 +165,13 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
         <PropertyColumns>
           <Label label="Variable type" required={{ value: true, showHint: true }}>
             <SelectionGroup
+              value={'TRANSACTION'}
+              mode={'SINGLE'}
+              options={[{ value: 'TRANSACTION', label: 'Transaction' }]}
+            />
+          </Label>
+          <Label label="Check transactions for" required={{ value: true, showHint: true }}>
+            <SelectionGroup
               value={formValues.type}
               onChange={(type) => handleUpdateForm({ type })}
               mode={'SINGLE'}
@@ -177,7 +179,12 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               testName="variable-type-v8"
             />
           </Label>
-          <Label label="Transaction direction" required={{ value: true, showHint: true }}>
+          <Label
+            label={`Check for ${
+              formValues.type === 'USER_TRANSACTIONS' ? 'user' : 'Payment ID'
+            }'s past transaction direction`}
+            required={{ value: true, showHint: true }}
+          >
             <SelectionGroup
               value={formValues.direction}
               onChange={(direction) => handleUpdateForm({ direction })}
@@ -186,19 +193,19 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               testName="variable-direction-v8"
             />
           </Label>
+          <div></div>
           <Label
             label="Aggregate field"
             required={{ value: true, showHint: true }}
             testId="variable-aggregate-field-v8"
           >
             <Select<string>
-              value={isAggFuncCount ? '-' : formValues.aggregationFieldKey}
+              value={formValues.aggregationFieldKey}
               onChange={(aggregationFieldKey) =>
                 handleUpdateForm({ aggregationFieldKey, aggregationFunc: undefined })
               }
               mode="SINGLE"
               options={aggregateFieldOptions}
-              isDisabled={isAggFuncCount}
             />
             {/* TODO (v8): Base currency design TBD */}
             {formValues.aggregationFieldKey &&

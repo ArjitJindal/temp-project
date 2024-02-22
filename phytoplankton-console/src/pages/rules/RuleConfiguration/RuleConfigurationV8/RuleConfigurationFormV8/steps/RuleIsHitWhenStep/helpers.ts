@@ -21,6 +21,14 @@ function getSupportedOperatorsKeys(operators: RuleOperator[], valueType: string)
   return operators.filter((v) => v.uiDefinition.valueTypes?.includes(valueType)).map((v) => v.key);
 }
 
+export function useRuleLogicConfig() {
+  const api = useApi();
+  return useQuery<RuleLogicConfig>(
+    RULE_LOGIC_CONFIG(),
+    (): Promise<RuleLogicConfig> => api.getRuleLogicConfig(),
+  );
+}
+
 export function useLogicBuilderConfig(
   entityVariableTypes: Array<
     'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER' | 'PAYMENT_DETAILS'
@@ -30,11 +38,7 @@ export function useLogicBuilderConfig(
   configParams: Partial<LogicBuilderConfig>,
 ): AsyncResource<Config> {
   const [result, setResult] = useState<AsyncResource<Config>>(init());
-  const api = useApi();
-  const ruleLogicConfigResult = useQuery<RuleLogicConfig>(
-    RULE_LOGIC_CONFIG(),
-    (): Promise<RuleLogicConfig> => api.getRuleLogicConfig(),
-  );
+  const ruleLogicConfigResult = useRuleLogicConfig();
   const ruleLogicConfigRes = ruleLogicConfigResult.data;
 
   const variablesChanged = useIsChanged([...aggregationVariables, ...(entityVariablesInUse ?? [])]);
