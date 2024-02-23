@@ -4,6 +4,7 @@ import { TransactionsVelocityRuleParameters } from '../transaction-rules/transac
 import { MultipleSendersWithinTimePeriodRuleParameters } from '../transaction-rules/multiple-senders-within-time-period-base'
 import { FirstActivityAfterLongTimeRuleParameters } from '../transaction-rules/first-activity-after-time-period'
 import { BlacklistCardIssuedCountryRuleParameters } from '../transaction-rules/blacklist-card-issued-country'
+import { HighRiskCurrencyRuleParameters } from '../transaction-rules/high-risk-currency'
 import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
@@ -180,6 +181,27 @@ const V8_CONVERSION: {
               parameters.blacklistedCountries,
             ],
           },
+        ],
+      })),
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables: [],
+      alertCreationDirection: 'AUTO',
+    }
+  },
+
+  'R-6': (parameters: HighRiskCurrencyRuleParameters) => {
+    const conditions: any[] = []
+
+    conditions.push({
+      or: ['origin', 'destination'].map((direction) => ({
+        in: [
+          {
+            var: `TRANSACTION:${direction}AmountDetails-transactionCurrency`,
+          },
+          parameters.highRiskCurrencies,
         ],
       })),
     })
