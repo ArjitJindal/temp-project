@@ -43,6 +43,7 @@ export const getQuestions = (): Question<any>[] =>
     TransactionOriginSummary,
     Transactions,
     TransactionDestinationSummary,
+    TrsScore,
     ...(hasFeature('CRM') ? [CrmInsights] : []),
     ...(hasFeature('SAR') ? [SarsFiled] : []),
     ...(hasFeature('MERCHANT_MONITORING')
@@ -53,7 +54,6 @@ export const getQuestions = (): Question<any>[] =>
       ? [
           CheckedTransactions,
           Recommendation,
-          TrsScore,
           TransactionByRulesAction,
           TransactionType,
         ]

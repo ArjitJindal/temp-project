@@ -103,6 +103,17 @@ def create_entity_tables(entity, schema, dynamo_key, id_column, source):
             col("approximateArrivalTimestamp"),
             col("event.eventName").alias("event"),
         )
+
+    dlt.table(cdc,
+        name=cdc_table_name,
+        comment=f"{entity} CDC",
+        partition_cols=["tenant"]
+    )
+
+    @dlt.append_flow(
+        name=backfill_table_name,
+        target=cdc_table_name,
+    )
     def backfill():
         df = spark.readStream.format("delta").table(
             f"default.{backfill_table_name}"
@@ -117,18 +128,6 @@ def create_entity_tables(entity, schema, dynamo_key, id_column, source):
             )
             .withColumn("event", lit("INSERT"))
         )
-
-    dlt.table(cdc,
-        name=cdc_table_name,
-        comment=f"{entity} CDC",
-        partition_cols=["tenant"]
-    )
-
-    dlt.append_flow(
-        backfill,
-        backfill_table_name,
-        cdc_table_name,
-    )
 
     dlt.create_streaming_table(
         name=entity,
