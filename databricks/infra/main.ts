@@ -448,7 +448,7 @@ class DatabricksStack extends TerraformStack {
       continuous: true,
       edition: 'PRO',
       development: stage === 'dev' || region == 'eu-2', // Using eu-2 as a dev environment for the time being as dev is overwritten by deployments too often.
-      channel: 'PREVIEW',
+      channel: 'CURRENT',
       catalog: catalog.name,
       cluster: [
         {
