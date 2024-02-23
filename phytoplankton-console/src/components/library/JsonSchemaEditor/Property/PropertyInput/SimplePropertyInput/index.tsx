@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExtendedSchema } from '../../../types';
+import s from './style.module.less';
 import TextInput from '@/components/library/TextInput';
 import NumberInput from '@/components/library/NumberInput';
 import Checkbox from '@/components/library/Checkbox';
@@ -8,6 +9,8 @@ import { InputProps } from '@/components/library/Form';
 import { getUiSchema } from '@/components/library/JsonSchemaEditor/utils';
 import DatePicker from '@/components/ui/DatePicker';
 import { DATE_TIME_ISO_FORMAT, Dayjs, dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
+import Slider from '@/components/library/Slider';
+import { P } from '@/components/ui/Typography';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -16,7 +19,9 @@ interface Props extends InputProps<any> {
 
 export default function SimplePropertyInput(props: Props) {
   const { schema, ...inputProps } = props;
+
   const uiSchema = getUiSchema(schema);
+
   switch (schema.type) {
     case 'string': {
       if (schema.enum != null) {
@@ -91,6 +96,33 @@ export default function SimplePropertyInput(props: Props) {
           />
         );
       }
+
+      if (schema.maximum != null && schema.minimum != null) {
+        return (
+          <div className={s.header}>
+            {' '}
+            <P className={s.title}>{schema.subTitle}</P>
+            <div className={s.inputGroup}>
+              <NumberInput
+                {...inputProps}
+                min={schema.minimum}
+                max={schema.maximum}
+                allowClear={true}
+              />
+            </div>
+            <p className={s.maxMinDisplay}>{schema.minimum}</p>
+            <Slider
+              mode="SINGLE"
+              min={schema.minimum}
+              max={schema.maximum}
+              {...inputProps}
+              value={inputProps.value ?? false}
+            />
+            <p className={s.maxMinDisplay}>{schema.maximum}</p>
+          </div>
+        );
+      }
+
       return (
         <NumberInput
           placeholder="Enter number"

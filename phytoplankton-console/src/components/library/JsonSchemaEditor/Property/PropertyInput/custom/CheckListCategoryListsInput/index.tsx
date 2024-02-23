@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Divider } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import s from './index.module.less';
 import { ChecklistTemplate } from '@/apis';
 import { InputProps } from '@/components/library/Form';
@@ -42,6 +43,17 @@ export const CheckListCategoryListsInput = (props: Props) => {
     checklistItemIndex: number;
   } | null>(null);
   const [name, setName] = useState<string>('');
+
+  const handleEditChecklistItem = useCallback(
+    (categoryIndex: number, checklistItemIndex: number) => {
+      setCheckListItemEditableIndex({
+        categoryIndex,
+        checklistItemIndex,
+      });
+      setName(value?.[categoryIndex].checklistItems[checklistItemIndex].name ?? '');
+    },
+    [value, setName, setCheckListItemEditableIndex],
+  );
 
   const onChecklistItemNameChange = useCallback(
     (name: string) => {
@@ -192,6 +204,15 @@ export const CheckListCategoryListsInput = (props: Props) => {
                                 {checklistItem.name}
                               </div>
                               <div className={s.editableChecklistItemButtons}>
+                                <Button
+                                  type="TEXT"
+                                  key={`${categoryIndex}-${checklistItemIndex}-edit`}
+                                  icon={<EditOutlined />}
+                                  onClick={() =>
+                                    handleEditChecklistItem(categoryIndex, checklistItemIndex)
+                                  }
+                                  style={{ color: COLORS_V2_GRAY_6 }}
+                                />
                                 <Button
                                   type="TEXT"
                                   key={`${categoryIndex}-${checklistItemIndex}-remove`}

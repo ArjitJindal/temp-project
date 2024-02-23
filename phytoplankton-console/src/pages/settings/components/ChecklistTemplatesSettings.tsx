@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
 import { ChecklistTemplate, Priority } from '@/apis';
@@ -18,6 +18,7 @@ export function ChecklistTemplatesSettings() {
   const api = useApi();
   const queryClient = useQueryClient();
   const tableHelper = new ColumnHelper<ChecklistTemplate>();
+
   const templateDetailsSchema: JSONSchemaType<Pick<ChecklistTemplate, 'name' | 'description'>> = {
     type: 'object',
     properties: {
@@ -60,30 +61,6 @@ export function ChecklistTemplatesSettings() {
     required: ['categories'],
   };
 
-  const qaPassCriteriaSchema: JSONSchemaType<Pick<ChecklistTemplate, 'qaPassCriteria'>> = {
-    type: 'object',
-    properties: {
-      qaPassCriteria: {
-        title: 'QA pass criteria',
-        description: 'Define minimum number of P1 & P2 errors allowed to pass QA',
-        type: 'object',
-        properties: {
-          p1Errors: {
-            type: 'number',
-            title: 'P1 errors allowed',
-            nullable: true,
-          },
-          p2Errors: {
-            type: 'number',
-            title: 'P2 errors allowed',
-            nullable: true,
-          },
-        },
-        nullable: true,
-      },
-    },
-  };
-
   const statusMutation = useMutation(
     async (entity: ChecklistTemplate) => {
       return (
@@ -118,7 +95,6 @@ export function ChecklistTemplatesSettings() {
       const qaPassCriteria = entity.qaPassCriteria?.[level === 'P1' ? 'p1Errors' : 'p2Errors'];
       if (qaPassCriteria) {
         if (getErrorCount(level, entity) < qaPassCriteria) {
-          message.error(`${level} errors allowed cannot be greater than ${level} errors`);
           return false;
         }
       }
@@ -135,6 +111,48 @@ export function ChecklistTemplatesSettings() {
       return checkP1 && checkP2;
     },
     [checkErrorCount],
+  );
+  const [itemsCount, setItemsCount] = useState({ p1: 0, p2: 0 });
+  const handleEntityChange = useCallback((entity: ChecklistTemplate) => {
+    const p1ItemsCount = entity.categories
+      ?.flatMap((c) => c.checklistItems)
+      .filter((c) => c.level === 'P1').length;
+    const p2ItemsCount = entity.categories
+      ?.flatMap((c) => c.checklistItems)
+      .filter((c) => c.level === 'P2').length;
+    setItemsCount({ p1: p1ItemsCount, p2: p2ItemsCount });
+  }, []);
+  const qaPassCriteriaSchema: JSONSchemaType<Pick<ChecklistTemplate, 'qaPassCriteria'>> = useMemo(
+    () => ({
+      type: 'object',
+      properties: {
+        qaPassCriteria: {
+          title: 'QA pass criteria',
+          description: 'Define minimum number of P1 & P2 errors allowed to pass QA',
+          type: 'object',
+          properties: {
+            p1Errors: {
+              type: 'integer',
+              title: 'P1 errors allowed',
+              subTitle: 'If the P1 errors will exceed the allowed limit, QA will fail',
+              nullable: true,
+              minimum: 0,
+              maximum: itemsCount.p1 ?? 0,
+            },
+            p2Errors: {
+              type: 'integer',
+              title: 'P2 errors allowed',
+              subTitle: 'If the P2 errors will exceed the allowed limit, QA will fail',
+              nullable: true,
+              minimum: 0,
+              maximum: itemsCount.p2 ?? 0,
+            },
+          },
+          nullable: true,
+        },
+      },
+    }),
+    [itemsCount.p1, itemsCount.p2],
   );
 
   return (
@@ -171,6 +189,7 @@ export function ChecklistTemplatesSettings() {
           },
           DELETE: (entityId) => api.deleteChecklistTemplate({ checklistTemplateId: entityId }),
         }}
+        onChange={handleEntityChange}
         columns={[
           tableHelper.simple({
             title: 'Name',
