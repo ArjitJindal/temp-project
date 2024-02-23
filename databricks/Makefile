@@ -22,12 +22,18 @@ fix:
 	poetry run black src
 
 generate:
-	command -v openapi-generator-cli >/dev/null 2>&1 || npm install @openapitools/openapi-generator-cli -g
-	npm exec openapi-generator-cli generate -- -i ../tarpon/lib/openapi/public/openapi-public-original.yaml -g python -o ./openapi/gen --template-dir openapi --additional-properties=packageName=src.openapi
 	rm -rf src/openapi
 	mkdir -p src/openapi
 	touch src/openapi/__init__.py
-	mv ./openapi/gen/src/openapi/models src/openapi/models
+	$(MAKE) generate-api API="public"
+	$(MAKE) generate-api API="internal"
+
+generate-api:
+	command -v openapi-generator-cli >/dev/null 2>&1 || npm install @openapitools/openapi-generator-cli -g
+	npm exec openapi-generator-cli generate -- -i ../tarpon/lib/openapi/${API}/openapi-${API}-original.yaml -g python -o ./openapi/gen --template-dir openapi --additional-properties=packageName=src.openapi.${API}
+	mkdir -p src/openapi/${API}
+	touch src/openapi/${API}/__init__.py
+	mv ./openapi/gen/src/openapi/${API}/models src/openapi/${API}/models
 
 patch: generate
 	poetry build

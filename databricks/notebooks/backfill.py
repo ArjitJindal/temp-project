@@ -12,6 +12,8 @@ from databricks.sdk.runtime import *
 
 from src.entities import entities
 
+dbutils.widgets.text("entities", ",".join(entity["table"] for entity in entities), "Entities to backfill")
+
 # MongoDB Connection Setup
 MONGO_USERNAME = dbutils.secrets.get(
     "mongo", "mongo-username"
@@ -24,6 +26,7 @@ MONGO_HOST = dbutils.secrets.get(
 )
 
 def load_mongo(table, schema):
+    mongo_table = table.replace("_", "-")
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("MongoDBToDelta")
     connection_uri = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}"
@@ -39,7 +42,7 @@ def load_mongo(table, schema):
         "overwrite"
     ).saveAsTable(table_path)
 
-    suffix = f"-{table}"
+    suffix = f"-{mongo_table}"
 
     # List the collections and process each
     for coll in db.list_collection_names():
@@ -65,7 +68,11 @@ def load_mongo(table, schema):
             logger.info("Could not backfill from %s", coll)
     logger.info("All collections processed successfully.")
 
+entity_names = dbutils.widgets.get("entities")
+
 for entity in entities:
-    load_mongo(
-        entity["table"], entity["schema"]
-    )
+    is_present = entity["table"] in entity_names.split(',')
+    if is_present:
+        load_mongo(
+            entity["table"], entity["schema"]
+        )

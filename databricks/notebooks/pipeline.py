@@ -21,6 +21,21 @@ aws_secret_key = dbutils.secrets.get(
 
 def define_pipeline(spark):
     @dlt.table(
+        comment="Raw event data from hammerhead Kinesis stream",
+        table_properties={
+            "pipelines.reset.allowed": "false",
+        },
+    )
+    def hammerhead_kinesis_events():
+        return (
+            spark.readStream.format("kinesis")
+            .option("streamName", os.environ["HAMMERHEAD_KINESIS_STREAM"])
+            .option("region", os.environ["AWS_REGION"])
+            .option("awsAccessKey", aws_access_key)
+            .option("awsSecretKey", aws_secret_key)
+            .load()
+        )
+    @dlt.table(
         comment="Raw event data from Kinesis",
         table_properties={
             "pipelines.reset.allowed": "false",
@@ -42,43 +57,20 @@ def define_pipeline(spark):
             entity["schema"],
             entity["partition_key"],
             entity["id_column"],
+            entity["source"],
         )
 
 
-def create_entity_tables(entity, schema, dynamo_key, id_column):
+def create_entity_tables(entity, schema, dynamo_key, id_column, source):
     cdc_table_name = f"{entity}_cdc"
     backfill_table_name = f"{entity}_backfill"
 
-    @dlt.append_flow(
-        name=backfill_table_name,
-        target=cdc_table_name,
-    )
-    def backfill():
-        df = spark.readStream.format("delta").table(
-            f"default.{backfill_table_name}"
-        )
-        return (
-            df.withColumn("PartitionKeyID", concat(df["tenant"], lit(dynamo_key)))
-            .withColumn("SortKeyID", col(id_column))
-            # Timestamp of 0 to indicate the initial data load.
-            .withColumn(
-                "approximateArrivalTimestamp",
-                lit("1970-01-01 00:00:00").cast("timestamp"),
-            )
-            .withColumn("event", lit("INSERT"))
-        )
-
-    @dlt.table(
-        name=cdc_table_name,
-        comment=f"{entity} CDC",
-        partition_cols=["tenant"],
-    )
     def cdc():
         deserialisation_udf = udf(deserialise_dynamo, schema)
         partition_key_id_path = "event.dynamodb.Keys.PartitionKeyID.S"
         sort_key_id_path = "event.dynamodb.Keys.SortKeyID.S"
         df = (
-            dlt.readStream("kinesis_events")
+            dlt.readStream(source)
             .withColumn(
                 "event", from_json(col("data").cast("string"), kinesis_event_schema)
             )
@@ -111,6 +103,32 @@ def create_entity_tables(entity, schema, dynamo_key, id_column):
             col("approximateArrivalTimestamp"),
             col("event.eventName").alias("event"),
         )
+    def backfill():
+        df = spark.readStream.format("delta").table(
+            f"default.{backfill_table_name}"
+        )
+        return (
+            df.withColumn("PartitionKeyID", concat(df["tenant"], lit(dynamo_key)))
+            .withColumn("SortKeyID", col(id_column))
+            # Timestamp of 0 to indicate the initial data load.
+            .withColumn(
+                "approximateArrivalTimestamp",
+                lit("1970-01-01 00:00:00").cast("timestamp"),
+            )
+            .withColumn("event", lit("INSERT"))
+        )
+
+    dlt.table(cdc,
+        name=cdc_table_name,
+        comment=f"{entity} CDC",
+        partition_cols=["tenant"]
+    )
+
+    dlt.append_flow(
+        backfill,
+        backfill_table_name,
+        cdc_table_name,
+    )
 
     dlt.create_streaming_table(
         name=entity,

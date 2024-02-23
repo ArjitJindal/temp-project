@@ -159,7 +159,7 @@ paths:
           in: query
           name: ruleId
     parameters: []
-  /rules/{ruleId}:
+  '/rules/{ruleId}':
     parameters:
       - schema:
           type: string
@@ -250,7 +250,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RuleInstance'
-  /rule_instances/{ruleInstanceId}:
+  '/rule_instances/{ruleInstanceId}':
     parameters:
       - schema:
           type: string
@@ -352,7 +352,7 @@ paths:
                   filename: filename
                   s3Key: s3-key-in-a-bucket
         required: true
-  /imports/{importId}:
+  '/imports/{importId}':
     parameters:
       - schema:
           type: string
@@ -427,7 +427,7 @@ paths:
               schema:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
       operationId: post-list
-  /lists/{listId}:
+  '/lists/{listId}':
     parameters:
       - schema:
           type: string
@@ -480,7 +480,7 @@ paths:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
         '404':
           description: Not found
-  /lists/{listId}/items:
+  '/lists/{listId}/items':
     parameters:
       - schema:
           type: string
@@ -526,7 +526,7 @@ paths:
       responses:
         '200':
           description: OK
-  /lists/{listId}/items/{key}:
+  '/lists/{listId}/items/{key}':
     parameters:
       - schema:
           type: string
@@ -876,7 +876,7 @@ paths:
                 items:
                   type: string
       operationId: get-transactions-uniques
-  /transactions/{transactionId}:
+  '/transactions/{transactionId}':
     parameters:
       - schema:
           type: string
@@ -1175,7 +1175,7 @@ paths:
             type: string
           in: query
           name: referenceCurrency
-  /users/{userId}/crm:
+  '/users/{userId}/crm':
     get:
       summary: CRM Account - List
       x-flagright:
@@ -1197,7 +1197,7 @@ paths:
           name: userId
           in: path
           required: true
-  /users/{userId}/entity:
+  '/users/{userId}/entity':
     get:
       summary: Entity
       x-flagright:
@@ -1219,7 +1219,7 @@ paths:
           name: userId
           required: true
           in: path
-  /users/{userId}/txn-links:
+  '/users/{userId}/txn-links':
     get:
       summary: Transaction Linking
       x-flagright:
@@ -1241,7 +1241,7 @@ paths:
           name: userId
           required: true
           in: path
-  /users/{userId}/screening-status:
+  '/users/{userId}/screening-status':
     get:
       summary: Screening Status
       x-flagright:
@@ -1341,7 +1341,7 @@ paths:
           in: query
           name: sortOrder
     parameters: []
-  /merchant-monitoring/{userId}/update_monitoring_status:
+  '/merchant-monitoring/{userId}/update_monitoring_status':
     post:
       summary: Update Monitoring Status
       operationId: post-update-monitoring-status
@@ -1457,7 +1457,7 @@ paths:
           in: query
           name: sortOrder
     parameters: []
-  /users/{userId}/comments:
+  '/users/{userId}/comments':
     parameters:
       - schema:
           type: string
@@ -1537,7 +1537,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AiSourcesResponse'
-  /users/{userId}/comments/{commentId}:
+  '/users/{userId}/comments/{commentId}':
     parameters:
       - schema:
           type: string
@@ -1558,7 +1558,7 @@ paths:
       responses:
         '200':
           description: OK
-  /consumer/users/{userId}:
+  '/consumer/users/{userId}':
     get:
       summary: Consumer Users - Item - GET
       tags: []
@@ -1687,7 +1687,7 @@ paths:
           in: query
           name: sortOrder
     parameters: []
-  /users/{userId}:
+  '/users/{userId}':
     get:
       summary: Users - Item - Get
       tags: []
@@ -1711,7 +1711,7 @@ paths:
         name: userId
         in: path
         required: true
-  /users/{userId}/events:
+  '/users/{userId}/events':
     get:
       summary: Events - List
       x-flagright:
@@ -1749,7 +1749,7 @@ paths:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
-  /business/users/{userId}:
+  '/business/users/{userId}':
     get:
       summary: Business Users - Item - Get
       tags: []
@@ -2390,7 +2390,7 @@ paths:
                 $ref: '#/components/schemas/AccountRole'
         '403':
           description: Not enough privileges
-  /roles/{roleId}:
+  '/roles/{roleId}':
     patch:
       summary: Role - Patch
       operationId: update-role
@@ -2453,7 +2453,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccountRole'
-  /accounts/{accountId}/change_tenant:
+  '/accounts/{accountId}/change_tenant':
     parameters:
       - schema:
           type: string
@@ -2494,7 +2494,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TenantUsageData'
-  /accounts/{accountId}/settings:
+  '/accounts/{accountId}/settings':
     parameters:
       - schema:
           type: string
@@ -2532,7 +2532,7 @@ paths:
                 $ref: '#/components/schemas/AccountSettings'
         '403':
           description: Not enough privileges
-  /accounts/{accountId}:
+  '/accounts/{accountId}':
     parameters:
       - schema:
           type: string
@@ -2585,7 +2585,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
-  /accounts/{accountId}/resend-invite:
+  '/accounts/{accountId}/resend-invite':
     parameters:
       - schema:
           type: string
@@ -3018,7 +3018,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/WebhookConfiguration'
-  /webhooks/{webhookId}:
+  '/webhooks/{webhookId}':
     post:
       summary: Update a webhook
       operationId: post-webhooks-webhookid
@@ -3053,7 +3053,7 @@ paths:
       responses:
         '200':
           description: OK
-  /webhooks/{webhookId}/secret:
+  '/webhooks/{webhookId}/secret':
     parameters:
       - schema:
           type: string
@@ -3074,7 +3074,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/WebhookSecrets'
       operationId: get-webhooks-webhookId-secret
-  /webhooks/{webhookId}/deliveries:
+  '/webhooks/{webhookId}/deliveries':
     parameters:
       - schema:
           type: string
@@ -3122,7 +3122,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TransactionAction'
-  /alerts/{alertId}/transactions:
+  '/alerts/{alertId}/transactions':
     parameters:
       - schema:
           type: string
@@ -3517,7 +3517,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ValidateAlertsQAStatusRequest'
         required: true
-  /alerts/{alertId}/qa:
+  '/alerts/{alertId}/qa':
     patch:
       summary: Alerts - Item Qa Status
       operationId: patch-alerts-qa-status
@@ -3539,7 +3539,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertChecklistQaUpdateRequest'
         required: true
-  /alerts/{alertId}/checklist:
+  '/alerts/{alertId}/checklist':
     patch:
       summary: Alerts - Qa Status
       operationId: patch-alerts-checklist-status
@@ -3561,7 +3561,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertChecklistUpdateRequest'
         required: true
-  /alerts/{alertId}/qaAssignment:
+  '/alerts/{alertId}/qaAssignment':
     patch:
       summary: Alerts - QA Assignments
       operationId: patch-alerts-qa-assignments
@@ -3615,7 +3615,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertsReviewAssignmentsUpdateRequest'
         required: true
-  /alerts/{alertId}:
+  '/alerts/{alertId}':
     parameters:
       - schema:
           type: string
@@ -3652,7 +3652,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertsToNewCaseRequest'
         required: true
-  /alerts/{alertId}/comments:
+  '/alerts/{alertId}/comments':
     parameters:
       - schema:
           type: string
@@ -3678,7 +3678,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Comment'
         required: true
-  /alerts/{alertId}/comments/{commentId}:
+  '/alerts/{alertId}/comments/{commentId}':
     parameters:
       - schema:
           type: string
@@ -3919,7 +3919,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ManualCasePatchRequest'
         required: true
-  /cases/{caseId}/transactions:
+  '/cases/{caseId}/transactions':
     get:
       summary: Get transactions for a case
       tags: []
@@ -4135,7 +4135,7 @@ paths:
               $ref: '#/components/schemas/CaseType'
           in: query
           name: filterCaseType
-  /cases/users/{userId}/caseIds:
+  '/cases/users/{userId}/caseIds':
     get:
       parameters:
         - schema:
@@ -4207,7 +4207,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CasesReviewAssignmentsUpdateRequest'
         required: true
-  /cases/{caseId}:
+  '/cases/{caseId}':
     parameters:
       - schema:
           type: string
@@ -4229,7 +4229,7 @@ paths:
                 $ref: '#/components/schemas/Case'
         '404':
           description: Not found
-  /cases/{caseId}/escalate:
+  '/cases/{caseId}/escalate':
     parameters:
       - schema:
           type: string
@@ -4255,7 +4255,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CaseEscalationRequest'
         required: true
-  /cases/{caseId}/comments:
+  '/cases/{caseId}/comments':
     parameters:
       - schema:
           type: string
@@ -4281,7 +4281,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Comment'
         required: true
-  /cases/{caseId}/comments/{commentId}:
+  '/cases/{caseId}/comments/{commentId}':
     parameters:
       - schema:
           type: string
@@ -4386,7 +4386,7 @@ paths:
           in: query
           name: beforeTimestamp
       operationId: get-sanctions-screening-stats
-  /sanctions/search/{searchId}:
+  '/sanctions/search/{searchId}':
     get:
       summary: Get single search history
       tags: []
@@ -4495,9 +4495,10 @@ paths:
           in: query
           name: sortField
         - schema:
-            oneOf:
-              - $ref: '#/components/schemas/SimulationPulseType'
-              - $ref: '#/components/schemas/SimulationBeaconType'
+            type: string
+            enum:
+              - PULSE
+              - BEACON
           in: query
           name: type
           required: true
@@ -4505,7 +4506,7 @@ paths:
             type: boolean
           in: query
           name: includeInternal
-  /simulation/jobs/{jobId}:
+  '/simulation/jobs/{jobId}':
     get:
       summary: Get a simulation task by test ID
       operationId: get-simulation-test-id
@@ -4528,7 +4529,7 @@ paths:
         name: jobId
         in: path
         required: true
-  /simulation/tasks/{taskId}/results:
+  '/simulation/tasks/{taskId}/results':
     get:
       summary: Get a simulation task result by task ID
       operationId: get-simulation-task-id-result
@@ -4665,7 +4666,7 @@ paths:
             schema:
               $ref: '#/components/schemas/NarrativeTemplateRequest'
         required: true
-  /tenants/settings/narrative-template/{narrativeTemplateId}:
+  '/tenants/settings/narrative-template/{narrativeTemplateId}':
     get:
       summary: Get narrative
       operationId: get-narrative-template
@@ -4833,7 +4834,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Report'
         required: true
-  /reports/{reportId}:
+  '/reports/{reportId}':
     parameters:
       - schema:
           type: string
@@ -4854,7 +4855,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Report'
       operationId: get-reports-reportId
-  /reports/{reportId}/draft:
+  '/reports/{reportId}/draft':
     parameters:
       - schema:
           type: string
@@ -4881,7 +4882,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Report'
         required: true
-  /reports/{reportId}/status:
+  '/reports/{reportId}/status':
     parameters:
       - schema:
           type: string
@@ -4968,7 +4969,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DeleteTenant'
         required: true
-  /tenants/settings/checklist-templates/{checklistTemplateId}:
+  '/tenants/settings/checklist-templates/{checklistTemplateId}':
     parameters:
       - schema:
           type: string
@@ -5061,7 +5062,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RuleQueue'
         required: true
-  /tenants/settings/rule-queues/{ruleQueueId}:
+  '/tenants/settings/rule-queues/{ruleQueueId}':
     parameters:
       - schema:
           type: string
@@ -5131,7 +5132,7 @@ paths:
           in: query
           name: alertId
           required: true
-  /questions/{questionId}/{variableKey}/autocomplete:
+  '/questions/{questionId}/{variableKey}/autocomplete':
     get:
       summary: Get question variable autocompletion
       x-flagright:
@@ -5161,7 +5162,7 @@ paths:
           in: query
           name: search
           required: true
-  /alert/{alertId}/questions:
+  '/alert/{alertId}/questions':
     get:
       summary: Get questions
       operationId: get-questions
@@ -5223,19 +5224,11 @@ components:
         name:
           type: string
         value:
-          oneOf:
-            - type: string
-            - type: number
-            - type: boolean
-            - type: array
-              items:
-                oneOf:
-                  - type: string
-                  - type: number
-                  - type: boolean
+          $ref: '#/components/schemas/AnyValue'
       required:
         - name
         - value
+    AnyValue: {}
     QuestionRequest:
       title: QuestionRequest
       type: object
@@ -6700,7 +6693,7 @@ components:
             type: object
             properties:
               kycStatus:
-                $ref: '#/components/schemas/KYCStatus'
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
               percentage:
                 type: string
               count:
@@ -7005,12 +6998,7 @@ components:
               secret:
                 type: boolean
               value:
-                oneOf:
-                  - type: string
-                  - type: array
-                    items:
-                      type: string
-                  - type: integer
+                $ref: '#/components/schemas/AnyValue'
             required:
               - attribute
               - value
@@ -7534,10 +7522,7 @@ components:
           enum:
             - LITERAL
         content:
-          oneOf:
-            - type: string
-            - type: number
-            - type: boolean
+          $ref: '#/components/schemas/AnyValue'
       required:
         - kind
     RiskParameterValueRange:

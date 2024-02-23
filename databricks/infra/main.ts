@@ -30,6 +30,7 @@ const awsRegion = config.env.region || ''
 const regionalAdminGroupName = `admins-${awsRegion}`
 const stateBucket = `flagright-terraform-state-databricks-${env}`
 const kinesisStreamName = 'tarponDynamoChangeCaptureStream'
+const hammerheadKinesisStreamName = 'hammerheadDynamoChangeCaptureStream'
 const prefix = `flagright-databricks-${stage}-${region}`
 const cidrBlock = '10.4.0.0/16'
 const databricksClientId = 'cb9efcf2-ffd5-484a-badc-6317ba4aef91'
@@ -370,6 +371,7 @@ class DatabricksStack extends TerraformStack {
       sparkEnvVars: {
         AWS_REGION: awsRegion,
         KINESIS_STREAM: kinesisStreamName,
+        HAMMERHEAD_KINESIS_STREAM: hammerheadKinesisStreamName,
         STAGE: stage,
       },
       awsAttributes: {
@@ -445,7 +447,7 @@ class DatabricksStack extends TerraformStack {
       name: 'main',
       continuous: true,
       edition: 'PRO',
-      development: stage === 'dev',
+      development: stage === 'dev' || region == 'eu-2', // Using eu-2 as a dev environment for the time being as dev is overwritten by deployments too often.
       channel: 'PREVIEW',
       catalog: catalog.name,
       cluster: [
@@ -478,9 +480,23 @@ class DatabricksStack extends TerraformStack {
       ],
     })
 
+    const entities = [
+      { table: 'users', idColumn: 'userId' },
+      { table: 'transactions', idColumn: 'transactionId' },
+      { table: 'kyc_risk_values', idColumn: 'userId' },
+      { table: 'action_risk_values', idColumn: 'transactionId' },
+      { table: 'dynamic_risk_values', idColumn: 'userId' },
+    ]
+
     new databricks.job.Job(this, `backfill-job`, {
       provider: workspaceProvider,
       name: 'One-time backfill from Mongo',
+      parameter: [
+        {
+          name: 'entities',
+          default: entities.map((entity) => entity.table).join(','),
+        },
+      ],
       task: [
         {
           taskKey: 'backfill',
@@ -503,6 +519,7 @@ class DatabricksStack extends TerraformStack {
         {
           provider: workspaceProvider,
           clusterName: `dlt-execution-${pl.id}`,
+          dependsOn: [pl],
         }
       )
 
@@ -519,10 +536,6 @@ class DatabricksStack extends TerraformStack {
       name: 'default',
     })
 
-    const entities = [
-      { table: 'users', idColumn: 'userId' },
-      { table: 'transactions', idColumn: 'transactionId' },
-    ]
     const tables = new databricks.dataDatabricksTables.DataDatabricksTables(
       this,
       `tables`,
