@@ -115,7 +115,8 @@ def create_entity_tables(entity, schema, dynamo_key, id_column, source):
         target=cdc_table_name,
     )
     def backfill():
-        df = spark.readStream.format("delta").table(backfill_table_name)
+        stage = os.environ["STAGE"]
+        df = spark.readStream.format("delta").table(f"{stage}.default.{backfill_table_name}")
         return (
             df.withColumn("PartitionKeyID", concat(df["tenant"], lit(dynamo_key)))
             .withColumn("SortKeyID", col(id_column))
