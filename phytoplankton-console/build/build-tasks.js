@@ -166,7 +166,11 @@ async function buildCode(env, options) {
   await writeFiles(result);
 
   if (!devMode && process.env.SENTRY_UPLOAD) {
-    uploadSentrySourceMaps(release, commitHash);
+    try {
+      uploadSentrySourceMaps(release, commitHash);
+    } catch (e) {
+      console.warn("Unable to upload sentry source maps", e)
+    }
   }
   return result;
 }
