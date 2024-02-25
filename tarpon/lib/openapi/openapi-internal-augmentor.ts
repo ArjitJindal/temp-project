@@ -218,6 +218,7 @@ export const ConsoleApiPathToLambda: any = {
   '/alerts/{alertId}/qaAssignment':
     StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/{alertId}/checklist': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/clueso/token': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(
