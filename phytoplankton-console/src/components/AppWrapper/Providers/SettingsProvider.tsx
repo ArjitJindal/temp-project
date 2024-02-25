@@ -28,11 +28,8 @@ interface ContextValue {
 
 export const Context = React.createContext<ContextValue | null>(null);
 
-export default function SettingsProvider(props: {
-  globalFeatures?: FeatureName[];
-  children: React.ReactNode;
-}) {
-  const globalFeatures = props.globalFeatures;
+export default function SettingsProvider(props: { children: React.ReactNode }) {
+  const globalFeatures = FEATURES_ENABLED as FeatureName[];
   const api = useApi();
 
   const queryResults = useQuery(

@@ -2351,6 +2351,22 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TenantApiKey'
+  /clueso/token:
+    get:
+      summary: Clueso auth token
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+      operationId: get-clueso-auth-token
+    parameters: []
   /roles:
     get:
       summary: Role - List

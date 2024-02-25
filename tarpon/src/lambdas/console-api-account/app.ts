@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import createHttpError from 'http-errors'
+import jwt from 'jsonwebtoken'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -12,6 +13,7 @@ import {
 } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { getSecretByName } from '@/utils/secrets-manager'
 
 export const accountsHandler = lambdaApi()(
   async (
@@ -93,7 +95,16 @@ export const accountsHandler = lambdaApi()(
           request.AccountSettings
         )
     )
-
+    handlers.registerGetCluesoAuthToken(async () => {
+      const cluesoSecret = await getSecretByName('clueso')
+      const payload = {}
+      const token = jwt.sign(payload, cluesoSecret.privateKey, {
+        algorithm: 'HS256',
+      })
+      return {
+        token,
+      }
+    })
     return await handlers.handle(event)
   }
 )

@@ -4,6 +4,9 @@ export type Secrets = {
     password: string
     host: string
   }
+  clueso: {
+    privateKey: string
+  }
   complyAdvantageCreds: { apiKey: string }
   openAI: string
   ibanComCreds: { apiKey: string }

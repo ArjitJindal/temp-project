@@ -16,13 +16,14 @@ import Footer from './Footer';
 import Article from '@/components/ui/icons/Remix/document/article-line.react.svg';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import BarChartFillIcon from '@/components/ui/icons/Remix/business/bar-chart-fill.react.svg';
-import QuestionLineIcon from '@/components/ui/icons/Remix/system/question-line.react.svg';
 import AlarmWarningLineIcon from '@/components/ui/icons/Remix/system/alarm-warning-line.react.svg';
+import QuestionLineIcon from '@/components/ui/icons/Remix/system/question-line.react.svg';
 import { I18n, TranslationId, useI18n } from '@/locales';
 import { useRoutes } from '@/services/routing';
 import { isLeaf, RouteItem } from '@/services/routing/types';
-import { getBranding } from '@/utils/branding';
 import TopLevelLink from '@/components/AppWrapper/Menu/TopLevelLink';
+import { getBranding } from '@/utils/branding';
+import { CluesoContext } from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 
 const icons = {
   accounts: <AddUsersIcon />,
@@ -32,6 +33,7 @@ const icons = {
   users: <TeamOutlined />,
   'risk-scoring': <AlarmWarningLineIcon />,
   'case-management': <StackLineIcon />,
+  help: <QuestionLineIcon />,
   transactions: <TransactionsIcon />,
   settings: <SettingsIcon />,
   dashboard: <BarChartFillIcon />,
@@ -41,7 +43,6 @@ const icons = {
 };
 
 const branding = getBranding();
-const currentEnv = process.env.ENV_NAME;
 
 function renderItems(
   parentTranslationKey: string,
@@ -94,6 +95,7 @@ export default function Menu(props: {
   const i18n = useI18n();
   const routes = useRoutes();
   const sideBarCollapseContext = useContext(SideBarContext);
+  const cluesoToken = useContext(CluesoContext);
 
   useEffect(() => {
     if (sideBarCollapseContext.collapseSideBar === 'AUTOMATIC') {
@@ -120,33 +122,15 @@ export default function Menu(props: {
             i18n,
             isCollapsed,
           ).concat([
-            ...(currentEnv == 'prod'
-              ? branding.prodKnowledgeBaseUrl
-                ? [
-                    <TopLevelLink
-                      key="help"
-                      to={branding.prodKnowledgeBaseUrl}
-                      isExternal={true}
-                      icon={<QuestionLineIcon />}
-                      isCollapsed={isCollapsed}
-                    >
-                      Help
-                    </TopLevelLink>,
-                  ]
-                : []
-              : branding.sandboxKnowledgeBaseUrl
-              ? [
-                  <TopLevelLink
-                    key="help"
-                    to={branding.sandboxKnowledgeBaseUrl}
-                    isExternal={true}
-                    icon={<QuestionLineIcon />}
-                    isCollapsed={isCollapsed}
-                  >
-                    Help
-                  </TopLevelLink>,
-                ]
-              : []),
+            <TopLevelLink
+              key="help"
+              to={`${branding.knowledgeBaseUrl}?token=${cluesoToken}`}
+              isExternal={true}
+              icon={<QuestionLineIcon />}
+              isCollapsed={isCollapsed}
+            >
+              {i18n('menu.support')}
+            </TopLevelLink>,
           ])}
         </div>
       </div>

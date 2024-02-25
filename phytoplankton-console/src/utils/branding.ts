@@ -19,8 +19,7 @@ interface BrandingSettings {
   companyName: string;
   logoUrl: string;
   demoModeLogoUrl?: string;
-  prodKnowledgeBaseUrl?: string;
-  sandboxKnowledgeBaseUrl?: string;
+  knowledgeBaseUrl?: string;
   notProvisionedWarning: string;
   apiDocsLinks: {
     webhooks: string;
@@ -37,8 +36,10 @@ const FLAGRIGHT_BRANDING: BrandingSettings = {
   logoUrl: FlagrightLogoSvg,
   companyName: 'Flagright',
   demoModeLogoUrl: FlagrightDemoLogoSvg,
-  prodKnowledgeBaseUrl: 'https://support.flagright.com/',
-  sandboxKnowledgeBaseUrl: 'https://sandbox.support.flagright.com/',
+  knowledgeBaseUrl:
+    process.env.ENV_NAME === 'sandbox'
+      ? 'https://sandbox.support.flagright.com/'
+      : 'https://support.flagright.com/',
   notProvisionedWarning: `User does not have a provisioned Flagright Account. If your organization already uses Flagright, please ask your Flagright Console Admin to add you to the Console. If you are not a Flagright customer yet, please contact Flagright Sales Team at hello@flagright.com`,
   apiDocsLinks: {
     webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',

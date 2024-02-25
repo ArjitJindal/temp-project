@@ -35,6 +35,7 @@ import {
 import { Permission } from '@/apis';
 import ForbiddenPage from '@/pages/403';
 import ReportsList from '@/pages/reports';
+import Clueso from '@/pages/auth/clueso';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -422,6 +423,12 @@ export function useRoutes(): RouteItem[] {
         path: '/',
         redirect: '/dashboard/analysis',
         permissions: ['dashboard:download-data:read'],
+      },
+      {
+        path: '/auth/clueso',
+        name: 'clueso',
+        component: Clueso,
+        hideInMenu: true,
       },
       {
         name: '404',

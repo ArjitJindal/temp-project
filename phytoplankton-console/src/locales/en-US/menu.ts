@@ -50,6 +50,7 @@ export default {
   'menu.settings.rules': 'Rules',
   'menu.settings.risk-scoring': 'Risk scoring',
   'menu.settings.notifications': 'Notifications',
+  'menu.support': 'Help',
   'menu.settings.addons': 'Add-ons',
   'menu.settings.developers': 'Developers',
   'menu.auditlog': 'Audit log',
