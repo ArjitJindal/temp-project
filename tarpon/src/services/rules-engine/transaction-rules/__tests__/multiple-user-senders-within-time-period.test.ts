@@ -24,7 +24,7 @@ const DEFAULT_RULE_PARAMETERS: MultipleSendersWithinTimePeriodRuleParameters = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Core logic', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -85,7 +85,7 @@ ruleVariantsTest({ aggregation: true }, () => {
 
     describe.each<TransactionRuleTestCase>([
       {
-        name: 'Same sender user transacting with different originUserID (within time period) - not hit',
+        name: 'Same sender user transacting with different destinationUserId (within time period) - not hit',
         transactions: [
           getTestTransaction({
             originUserId: '1-1',
@@ -106,7 +106,7 @@ ruleVariantsTest({ aggregation: true }, () => {
         expectedHits: [false, false, false],
       },
       {
-        name: 'Different sender user transacting with same originUserID (within time period) - hit',
+        name: 'Different sender user transacting with same destinationUserId (within time period) - hit',
         transactions: [
           getTestTransaction({
             originUserId: '2-2',
@@ -123,8 +123,13 @@ ruleVariantsTest({ aggregation: true }, () => {
             destinationUserId: '2-1',
             timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
           }),
+          getTestTransaction({
+            originUserId: '2-5',
+            destinationUserId: '2-1',
+            timestamp: dayjs('2022-01-05T00:00:00.000Z').valueOf(),
+          }),
         ],
-        expectedHits: [false, false, true],
+        expectedHits: [false, false, true, true],
       },
       {
         name: 'Different sender user transacting with same originUserID (not within time period) - not hit',
@@ -167,6 +172,164 @@ ruleVariantsTest({ aggregation: true }, () => {
           }),
         ],
         expectedHits: [false, false, false],
+      },
+      {
+        name: 'Different sender user transacting with different destinationUserId (within time period) - hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '2-2',
+            destinationUserId: '2-1-1',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '2-3',
+            destinationUserId: '2-1-2',
+            timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '2-4',
+            destinationUserId: '2-1-3',
+            timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '2-5',
+            destinationUserId: '2-1-4',
+            timestamp: dayjs('2022-01-05T00:00:00.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, false, false],
+      },
+      {
+        name: 'Transacting with destinationUserID not defined (within time period) - hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '5-1',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097cce',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+          getTestTransaction({
+            originUserId: '5-2',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097cce',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+          getTestTransaction({
+            originUserId: '5-3',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097cce',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+          getTestTransaction({
+            originUserId: '5-4',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-05T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097cce',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+        ],
+        expectedHits: [false, false, true, true],
+      },
+      {
+        name: 'Transacting with destinationUserID undefined (within time period) - no hit and hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '5-1',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097dde',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+          getTestTransaction({
+            originUserId: '5-2',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097cce',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+          getTestTransaction({
+            originUserId: '5-3',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097bbe',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+          getTestTransaction({
+            originUserId: '5-3',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-05T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097ffe',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+          getTestTransaction({
+            originUserId: '5-4',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-06T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097ffe',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+          getTestTransaction({
+            originUserId: '5-5',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-07T00:00:00.000Z').valueOf(),
+            destinationPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '98ju00fed8ef913aefb17cfae1097ffe',
+              cardIssuedCountry: 'CH',
+              transactionReferenceField: 'DEPOSIT',
+              '3dsDone': true,
+            },
+          }),
+        ],
+        expectedHits: [false, false, false, false, false, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(

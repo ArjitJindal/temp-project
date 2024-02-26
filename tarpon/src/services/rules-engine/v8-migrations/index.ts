@@ -290,6 +290,32 @@ const V8_CONVERSION: {
     }
   },
 
+  'R-9': (parameters: MultipleSendersWithinTimePeriodRuleParameters) => {
+    const logicAggregationVariables: RuleAggregationVariable[] = []
+    const alertCreationDirection: AlertCreationDirection = 'ORIGIN'
+
+    logicAggregationVariables.push({
+      key: 'agg:sending',
+      type: 'USER_TRANSACTIONS',
+      direction: 'RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:originUserId',
+      aggregationFunc: 'UNIQUE_COUNT',
+      timeWindow: {
+        start: parameters.timeWindow,
+        end: { units: 0, granularity: 'day' },
+      },
+      filtersLogic: {
+        '!=': { var: 'TRANSACTION:originUserId' },
+      },
+    })
+    return {
+      logic: {
+        '>': [{ var: 'agg:sending' }, parameters.sendersCount],
+      },
+      logicAggregationVariables,
+      alertCreationDirection,
+    }
+  },
   'R-6': (parameters: HighRiskCurrencyRuleParameters) => {
     const conditions: any[] = []
 
