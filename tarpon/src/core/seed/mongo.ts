@@ -5,7 +5,6 @@ import { data as krsAndDrsScoreData } from './data/risk-scores'
 import { getCases } from './data/cases'
 import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
 import {
-  ARS_SCORES_COLLECTION,
   CASES_COLLECTION,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
@@ -27,7 +26,6 @@ import {
 import { getTransactions } from '@/core/seed/data/transactions'
 import { getUsers, getMerchantMonitoring } from '@/core/seed/data/users'
 import { auditlogs } from '@/core/seed/data/auditlogs'
-import { getArsScores } from '@/core/seed/data/ars_scores'
 import { getSanctions } from '@/core/seed/data/sanctions'
 import { getReports } from '@/core/seed/data/reports'
 import { getSimulations } from '@/core/seed/data/simulation'
@@ -52,7 +50,6 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [USERS_COLLECTION, () => getUsers()],
   [KRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[0]],
   [AUDITLOG_COLLECTION, () => auditlogs()],
-  [ARS_SCORES_COLLECTION, () => getArsScores()],
   [DRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[1]],
   [TRANSACTION_EVENTS_COLLECTION, () => transactionEvents()],
   [MERCHANT_MONITORING_DATA_COLLECTION, () => getMerchantMonitoring()],

@@ -23,6 +23,8 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { isDemoTenant } from '@/utils/tenant'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { RuleService } from '@/services/rules-engine'
+import { getArsScores } from '@/core/seed/data/ars_scores'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -80,6 +82,19 @@ export async function seedDynamo(
       executedRules: publicTxn.executedRules,
       hitRules: publicTxn.hitRules,
     })
+  }
+
+  const riskRepo = new RiskRepository(tenantId, {
+    dynamoDb,
+  })
+  for (const arsScore of getArsScores()) {
+    await riskRepo.createOrUpdateArsScore(
+      arsScore.transactionId as string,
+      arsScore.arsScore,
+      arsScore.originUserId,
+      arsScore.destinationUserId,
+      arsScore.components
+    )
   }
 
   if (isDemoTenant(tenantId)) {
