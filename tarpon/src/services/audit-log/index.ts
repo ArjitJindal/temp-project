@@ -22,20 +22,45 @@ export async function publishAuditLog(
         ...auditlog,
       },
     }
+
     if (process.env.NODE_ENV === 'development') {
       const { auditLogConsumerHandler } = await import(
         '@/lambdas/audit-log-consumer/app'
       )
+      const { notificationsConsumerHandler } = await import(
+        '@/lambdas/notifications-consumer/app'
+      )
       const { createSqsEventForSns } = await import(
         '@/test-utils/sqs-test-utils'
       )
-      await (auditLogConsumerHandler as any)(
+
+      await Promise.all([
+        (auditLogConsumerHandler as any)(
+          createSqsEventForSns([auditLogRecord]),
+          {},
+          {}
+        ),
+        (notificationsConsumerHandler as any)(
+          createSqsEventForSns([auditLogRecord]),
+          {},
+          {}
+        ),
+      ])
+
+      return
+    } else if (envIs('test')) {
+      const { notificationsConsumerHandler } = await import(
+        '@/lambdas/notifications-consumer/app'
+      )
+      const { createSqsEventForSns } = await import(
+        '@/test-utils/sqs-test-utils'
+      )
+
+      await (notificationsConsumerHandler as any)(
         createSqsEventForSns([auditLogRecord]),
         {},
         {}
       )
-      return
-    } else if (envIs('test')) {
       return
     }
 

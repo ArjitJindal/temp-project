@@ -113,12 +113,19 @@ export const casesHandler = lambdaApi()(
     )
     handlers.registerPatchCasesAssignment(async (ctx, request) => {
       const { caseIds, assignments } = request.CasesAssignmentsUpdateRequest
-      await caseService.updateCasesAssignments(caseIds, assignments)
-      return await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
-        caseIds,
-        { assignments },
-        'ASSIGNMENT'
-      )
+      const existingCases = await caseRepository.getCasesByIds(caseIds)
+
+      await Promise.all([
+        caseService.updateCasesAssignments(caseIds, assignments),
+        ...caseIds.map(async (caseId) => {
+          const oldCase = existingCases.find((c) => c.caseId === caseId)
+          await casesAlertsAuditLogService.handleAuditLogForCaseAssignment(
+            caseId,
+            { assignments: oldCase?.assignments },
+            { assignments }
+          )
+        }),
+      ])
     })
 
     handlers.registerAlertsQaStatusChange(async (ctx, request) => {
@@ -262,12 +269,21 @@ export const casesHandler = lambdaApi()(
 
     handlers.registerAlertsAssignment(async (ctx, request) => {
       const { alertIds, assignments } = request.AlertsAssignmentsUpdateRequest
-      await alertsService.updateAlertsAssignments(alertIds, assignments)
-      return await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
-        alertIds,
-        { assignments },
-        'ASSIGNMENT'
-      )
+
+      const existingAlers = await alertsService.getAlertsByIds(alertIds)
+
+      await Promise.all([
+        alertsService.updateAlertsAssignments(alertIds, assignments),
+        ...alertIds.map(async (alertId) => {
+          const oldAlert = existingAlers.find((a) => a.alertId === alertId)
+
+          await casesAlertsAuditLogService.handleAuditLogForAlertAssignment(
+            alertId,
+            { assignments: oldAlert?.assignments },
+            { assignments }
+          )
+        }),
+      ])
     })
 
     handlers.registerAlertsReviewAssignment(async (ctx, request) => {

@@ -14,7 +14,6 @@ import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { CasesAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesAssignmentsUpdateRequest'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
-import { AlertsAssignmentsUpdateRequest } from '@/@types/openapi-internal/AlertsAssignmentsUpdateRequest'
 import { AlertsReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/AlertsReviewAssignmentsUpdateRequest'
 import { CasesReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesReviewAssignmentsUpdateRequest'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
@@ -22,6 +21,11 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { traceable } from '@/core/xray'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
+import {
+  AlertLogMetaDataType,
+  AuditLogAssignmentsImage,
+  CaseLogMetaDataType,
+} from '@/@types/audit-log'
 
 type AuditLogCreateRequest = {
   caseId: string
@@ -59,13 +63,23 @@ export class CasesAlertsAuditLogService {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
   }
 
+  public async handleAuditLogForCaseAssignment(
+    caseId: string,
+    oldAssignments: AuditLogAssignmentsImage,
+    newAssignments: AuditLogAssignmentsImage
+  ): Promise<void> {
+    await this.createAuditLog({
+      caseId,
+      logAction: 'UPDATE',
+      oldImage: oldAssignments,
+      newImage: newAssignments,
+      subtype: 'ASSIGNMENT',
+    })
+  }
+
   public async handleAuditLogForCaseUpdate(
     caseIds: string[],
-    updates: Partial<
-      CaseStatusUpdate &
-        CasesAssignmentsUpdateRequest &
-        CasesReviewAssignmentsUpdateRequest
-    >,
+    updates: Partial<CaseStatusUpdate & CasesReviewAssignmentsUpdateRequest>,
     subtype?: AuditLogSubtypeEnum
   ): Promise<void> {
     await Promise.all(
@@ -92,12 +106,32 @@ export class CasesAlertsAuditLogService {
     )
   }
 
+  public async handleAuditLogForAlertAssignment(
+    alertId: string,
+    oldImage: AuditLogAssignmentsImage,
+    newImage: AuditLogAssignmentsImage
+  ): Promise<void> {
+    const alertsRepository = new AlertsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
+    const alertEntity = await alertsRepository.getAlertById(alertId)
+
+    await this.createAlertAuditLog({
+      alertId,
+      logAction: 'UPDATE',
+      oldImage: oldImage,
+      newImage: newImage,
+      alertDetails: alertEntity,
+      subtype: 'ASSIGNMENT',
+    })
+  }
+
   public async handleAuditLogForAlertsUpdate(
     alertIds: string[],
     updates: Partial<
-      AlertStatusUpdateRequest &
-        AlertsAssignmentsUpdateRequest &
-        AlertsReviewAssignmentsUpdateRequest
+      AlertStatusUpdateRequest & AlertsReviewAssignmentsUpdateRequest
     >,
     subtype?: AuditLogSubtypeEnum
   ): Promise<void> {
@@ -314,7 +348,9 @@ export class CasesAlertsAuditLogService {
 
     const caseEntity = caseDetails ?? (await caseRepository.getCaseById(caseId))
 
-    const auditLog: AuditLog = {
+    const auditLog: Omit<AuditLog, 'logMetadata'> & {
+      logMetadata: CaseLogMetaDataType
+    } = {
       type: 'CASE',
       action: logAction,
       timestamp: Date.now(),
@@ -323,9 +359,10 @@ export class CasesAlertsAuditLogService {
       oldImage: oldImage,
       newImage: newImage,
       logMetadata: {
-        caseAssignment: caseEntity?.assignments,
+        caseAssignment: caseEntity?.assignments ?? [],
         caseCreationTimestamp: caseEntity?.createdTimestamp,
         casePriority: caseEntity?.priority,
+        caseStatus: caseEntity?.caseStatus,
       },
     }
     await publishAuditLog(this.tenantId, auditLog)
@@ -345,7 +382,9 @@ export class CasesAlertsAuditLogService {
     const alertEntity =
       alertDetails ?? (await alertsRepository.getAlertById(alertId))
 
-    const auditLog: AuditLog = {
+    const auditLog: Omit<AuditLog, 'logMetadata'> & {
+      logMetadata: AlertLogMetaDataType
+    } = {
       type: 'ALERT',
       action: logAction,
       timestamp: Date.now(),
@@ -357,6 +396,7 @@ export class CasesAlertsAuditLogService {
         alertAssignment: alertEntity?.assignments,
         alertCreationTimestamp: alertEntity?.createdTimestamp,
         alertPriority: alertEntity?.priority,
+        alertStatus: alertEntity?.alertStatus,
       },
     }
     await publishAuditLog(this.tenantId, auditLog)

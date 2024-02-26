@@ -25,7 +25,7 @@ import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
 
-const featureDescriptions: { [key in Feature]: { title: string; description: string } } = {
+const featureDescriptions: Record<Feature, { title: string; description: string }> = {
   RISK_LEVELS: { title: 'Risk Levels', description: 'Enable risk levels' },
   RISK_SCORING: { title: ' Risk Scoring', description: 'Enables risk scoring' },
   AUDIT_LOGS: { title: 'Audit Logs', description: 'Enables audit log' },
@@ -69,6 +69,10 @@ const featureDescriptions: { [key in Feature]: { title: string; description: str
   SYNC_TRS_CALCULATION: {
     title: 'Sync TRS Calculation',
     description: 'Allows to sync TRS calculation along with API call',
+  },
+  NOTIFICATIONS: {
+    title: 'Notifications (In Development)',
+    description: 'Enables notifications (currently in development)',
   },
 };
 

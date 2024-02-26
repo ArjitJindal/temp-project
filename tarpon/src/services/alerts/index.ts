@@ -654,6 +654,10 @@ export class AlertsService extends CaseAlertsCommonService {
     return body
   }
 
+  public async getAlertsByIds(alertIds: string[]): Promise<Alert[]> {
+    return this.alertsRepository.getAlertsByIds(alertIds)
+  }
+
   public async updateAlertsStatus(
     alertIds: string[],
     statusUpdateRequest: AlertStatusUpdateRequest,
@@ -707,7 +711,7 @@ export class AlertsService extends CaseAlertsCommonService {
     let isReview = false
 
     const [alerts, cases] = await Promise.all([
-      this.alertsRepository.getAlertsByIds(alertIds),
+      this.getAlertsByIds(alertIds),
       caseRepository.getCasesByAlertIds(alertIds),
     ])
 
@@ -1084,7 +1088,7 @@ export class AlertsService extends CaseAlertsCommonService {
     userId: string,
     update: AlertQaStatusUpdateRequest
   ): Promise<void> {
-    const alerts = await this.alertsRepository.getAlertsByIds(update.alertIds)
+    const alerts = await this.getAlertsByIds(update.alertIds)
     await Promise.all(
       alerts.map(async (alert) => {
         if (update.checklistStatus === 'FAILED') {

@@ -1,0 +1,55 @@
+import {
+  AlertLogMetaDataType,
+  AuditLogAssignmentsImage,
+  CaseLogMetaDataType,
+} from '@/@types/audit-log'
+import {
+  NotificationRawPayload,
+  PartialNotification,
+} from '@/@types/notifications'
+import { Notification } from '@/@types/openapi-internal/Notification'
+import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
+
+export const getAssignmentNotification = (
+  payload: NotificationRawPayload<
+    AuditLogAssignmentsImage,
+    AlertLogMetaDataType | CaseLogMetaDataType
+  >,
+  type: 'ALERT' | 'CASE'
+): PartialNotification | undefined => {
+  const { newImage, oldImage } = payload
+
+  const newAssignments = newImage?.assignments || []
+  const oldAssignments = oldImage?.assignments || []
+
+  const newAssignmentIds = newAssignments.map(
+    (assignment) => assignment.assigneeUserId
+  )
+
+  const oldAssignmentIds = oldAssignments.map(
+    (assignment) => assignment.assigneeUserId
+  )
+
+  const addedAssignments = newAssignments.filter(
+    (assignment) => !oldAssignmentIds.includes(assignment.assigneeUserId)
+  )
+
+  if (addedAssignments.length === 0) {
+    return
+  }
+
+  const notification: Omit<Notification, 'notificationChannel' | 'id'> = {
+    notificationType: `${type}_ASSIGNMENT`,
+    createdAt: Date.now(),
+    entityId: payload.entityId,
+    triggeredBy: payload.user?.id ?? FLAGRIGHT_SYSTEM_USER,
+    entityType: type,
+    recievers: newAssignmentIds,
+    notificationData: {
+      type: 'ASSIGNMENT',
+      assignments: newAssignments,
+    },
+  }
+
+  return notification
+}

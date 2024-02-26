@@ -19,11 +19,12 @@ export class RoleService {
 
   async getTenantRoles(tenantId: string): Promise<AccountRole[]> {
     // Prefixed so we don't return internal roles (ROOT, TENANT_ROOT) or tenant-scopes roles (in the future).
-    const defaultRoles = await this.rolesByNamespace('default')
-    const tenantRoles = await this.rolesByNamespace(tenantId)
+    const roles = await Promise.all([
+      this.rolesByNamespace('default'),
+      this.rolesByNamespace(tenantId),
+    ])
 
-    // We don't return permissions in this call due to latency.
-    return defaultRoles.concat(tenantRoles)
+    return roles.flat()
   }
   async createRole(
     tenantId: string,
@@ -156,7 +157,7 @@ export class RoleService {
     }
   }
 
-  private async rolesByNamespace(namespace: string): Promise<AccountRole[]> {
+  private async rolesByNamespace(namespace: string) {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )

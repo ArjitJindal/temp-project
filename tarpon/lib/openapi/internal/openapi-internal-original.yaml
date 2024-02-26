@@ -7352,6 +7352,13 @@ components:
           $ref: '#/components/schemas/Timezone'
         auth0Domain:
           type: string
+        notificationsSubscriptions:
+          type: object
+          properties:
+            console:
+              type: array
+              items:
+                $ref: '#/components/schemas/NotificationType'
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object
@@ -7751,6 +7758,7 @@ components:
         - AI_RISK_SCORE
         - RULES_ENGINE_V8
         - SYNC_TRS_CALCULATION
+        - NOTIFICATIONS
       description: ''
     ManagedRoleName:
       type: string
@@ -9418,6 +9426,8 @@ components:
             - CHECKLIST_ITEM_STATUS_CHANGE
             - USER_STATUS_CHANGE
             - USER_KYC_STATUS_CHANGE
+            - REVIEW_ASSIGNMENT
+            - IN_REVIEW_ASSIGNMENT
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:
@@ -10792,6 +10802,93 @@ components:
       required:
         - score
         - components
+    NotificationType:
+      title: NotificationType
+      type: string
+      enum:
+        - CASE_ASSIGNMENT
+        - ALERT_ASSIGNMENT
+    NotificationChannels:
+      title: NotificationChannels
+      type: string
+      enum:
+        - CONSOLE
+    AssignmentNotification:
+      title: AssignmentNotification
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - ASSIGNMENT
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+      required:
+        - assignments
+    ConsoleNotificationStatus:
+      title: ConsoleNotificationStatus
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - SENT
+            - READ
+        stausUpdatedAt:
+          type: number
+        recieverUserId:
+          type: string
+      required:
+        - status
+        - stausUpdatedAt
+        - recieverUserId
+    NotificationPayload:
+      title: NotificationPayload
+      oneOf:
+        - $ref: '#/components/schemas/AssignmentNotification'
+    Notification:
+      title: Notification
+      type: object
+      properties:
+        id:
+          type: string
+        notificationType:
+          $ref: '#/components/schemas/NotificationType'
+        notificationChannel:
+          $ref: '#/components/schemas/NotificationChannels'
+        createdAt:
+          type: number
+        triggeredBy:
+          type: string
+        recievers:
+          type: array
+          items:
+            type: string
+        entityId:
+          type: string
+        entityType:
+          type: string
+          enum:
+            - CASE
+            - ALERT
+        notificationData:
+          $ref: '#/components/schemas/NotificationPayload'
+        consoleNotificationStatuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsoleNotificationStatus'
+      required:
+        - id
+        - notificationType
+        - notificationChannels
+        - createdAt
+        - triggeredBy
+        - recievers
+        - entityId
+        - entityType
+        - notificationData
   securitySchemes:
     Authorization:
       type: http

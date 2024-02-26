@@ -1,0 +1,213 @@
+import { MongoClient } from 'mongodb'
+import { compact, memoize } from 'lodash'
+import { v4 as uuid } from 'uuid'
+import { Account, AccountsService } from '../accounts'
+import { RoleService } from '../roles'
+import { NotificationsChannels } from './notifications-channels'
+import { ConsoleNotifications } from './console-notifications'
+import { NotificationRepository } from './notifications-repository'
+import { AlertAssignees } from './subscriptions/alert-assignment'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { Notification } from '@/@types/openapi-internal/Notification'
+import { traceable } from '@/core/xray'
+import { NotificationType } from '@/@types/openapi-internal/NotificationType'
+import { getContext } from '@/core/utils/context'
+import { AccountRole } from '@/@types/openapi-internal/AccountRole'
+import { Permission } from '@/@types/openapi-internal/Permission'
+import {
+  NotificationRawPayload,
+  PartialNotification,
+} from '@/@types/notifications'
+
+@traceable
+export class NotificationsService {
+  tenantId: string
+  mongoDb: MongoClient
+
+  constructor(tenantId: string, connections: { mongoDb: MongoClient }) {
+    this.tenantId = tenantId
+    this.mongoDb = connections.mongoDb
+  }
+
+  private allUsers = memoize(async () => {
+    const settings = getContext()?.settings
+    const auth0Domain =
+      settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+    const accountsService = new AccountsService(
+      { auth0Domain },
+      { mongoDb: this.mongoDb }
+    )
+    const tenant = await accountsService.getTenantById(this.tenantId)
+    if (!tenant) {
+      throw new Error('Tenant not found')
+    }
+    return accountsService.getTenantAccounts(tenant)
+  })
+
+  private allRoles = memoize(async () => {
+    const settings = getContext()?.settings
+    const auth0Domain =
+      settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+
+    const accountsService = new RoleService({ auth0Domain })
+
+    return accountsService.getTenantRoles(this.tenantId)
+  })
+
+  private roleById = memoize(
+    async (roleId: string) => {
+      const auth0Domain =
+        getContext()?.settings?.auth0Domain ||
+        (process.env.AUTH0_DOMAIN as string)
+
+      const rolesService = new RoleService({ auth0Domain })
+      return rolesService.getRole(roleId)
+    },
+    (roleId) => roleId
+  )
+
+  private async getAllUsers(): Promise<Account[]> {
+    return await this.allUsers()
+  }
+
+  private async getAllRoles(): Promise<AccountRole[]> {
+    return await this.allRoles()
+  }
+
+  private async getRoleById(roleId: string): Promise<AccountRole> {
+    return await this.roleById(roleId)
+  }
+
+  private async getNotifications(
+    payload: NotificationRawPayload
+  ): Promise<PartialNotification[]> {
+    const notifications: PartialNotification[] = []
+
+    const subscriptions = [new AlertAssignees()]
+
+    for (const subscription of subscriptions) {
+      if (await subscription.toSend(payload)) {
+        const notification = await subscription.getNotification(payload)
+        if (notification) {
+          notifications.push(notification)
+        }
+      }
+    }
+
+    return notifications
+  }
+
+  private isNotificationSubscribed(
+    channel: NotificationsChannels,
+    notificationType: NotificationType
+  ): boolean {
+    return channel.subscribedNotificationTypes().includes(notificationType)
+  }
+
+  private async validateRBAC(
+    recipientId: string,
+    notificationType: NotificationType
+  ): Promise<boolean> {
+    const notificationTypeToPermission: Record<NotificationType, Permission[]> =
+      {
+        ALERT_ASSIGNMENT: ['case-management:case-overview:read'],
+        CASE_ASSIGNMENT: ['case-management:case-overview:read'],
+      }
+
+    const [allUsers, allRoles] = await Promise.all([
+      this.getAllUsers(),
+      this.getAllRoles(),
+    ])
+
+    const recipient = allUsers.find((user) => user.id === recipientId)
+
+    if (!recipient) {
+      return false
+    }
+
+    const role = allRoles.find((role) => role.name === recipient.role)
+
+    if (!role) {
+      return false
+    }
+
+    const permissionsRequired = notificationTypeToPermission[notificationType]
+
+    if (!permissionsRequired) {
+      return false
+    }
+
+    const rolePermissions = (await this.getRoleById(role.id)).permissions
+
+    const isAllPermissions = permissionsRequired.every((permission) =>
+      rolePermissions.includes(permission)
+    )
+
+    return isAllPermissions
+  }
+
+  private async getFinalRecievers(
+    notification: PartialNotification
+  ): Promise<string[]> {
+    const recievers = notification.recievers
+
+    const validRecievers = await Promise.all(
+      recievers.map(async (reciever) => {
+        if (reciever === notification.triggeredBy) {
+          return null
+        }
+
+        const isValid = await this.validateRBAC(
+          reciever,
+          notification.notificationType
+        )
+        return isValid ? reciever : null
+      })
+    )
+
+    return compact(validRecievers)
+  }
+
+  public async handleNotification(payload: AuditLog): Promise<void> {
+    const notifications = await this.getNotifications(
+      payload as NotificationRawPayload
+    )
+
+    const notificationRepository = new NotificationRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+
+    if (notifications.length === 0) {
+      return
+    }
+
+    const notificationChannels: NotificationsChannels[] = [
+      new ConsoleNotifications(this.tenantId, { mongoDb: this.mongoDb }),
+    ]
+
+    for (const notification of notifications) {
+      for (const channel of notificationChannels) {
+        if (
+          this.isNotificationSubscribed(channel, notification.notificationType)
+        ) {
+          const finalRecievers = await this.getFinalRecievers(notification)
+
+          if (finalRecievers.length === 0) {
+            continue
+          }
+
+          const notificationObj: Notification = {
+            ...notification,
+            id: uuid(),
+            notificationChannel: channel.channel,
+            recievers: finalRecievers,
+          }
+
+          await notificationRepository.addNotification(notificationObj)
+
+          await channel.send(notificationObj)
+        }
+      }
+    }
+  }
+}

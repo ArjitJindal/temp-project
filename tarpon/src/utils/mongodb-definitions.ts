@@ -216,6 +216,10 @@ export const TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION = (
   return `${tenantId}-transaction-type-distribution`
 }
 
+export const NOTIFICATIONS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-notifications`
+}
+
 /** Rules Collection */
 export const RULES_COLLECTION = FLAGRIGHT_TENANT_ID + '-rules'
 /** DynamoDB Keys Collection */
