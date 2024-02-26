@@ -58,3 +58,52 @@
     width: 20px;
   }
 }
+
+.mentionsList {
+  position: relative;
+  pointer-events: all;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 2px;
+  max-height: 200px;
+  overflow-y: scroll;
+  box-shadow: 0 1px 7px -1px #0000000a;
+}
+
+.mentionItem {
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  &:hover {
+    background-color: @fr-colors-brandBlueTint;
+  }
+}
+
+.mention {
+  color: @fr-colors-brandBlue;
+  cursor: pointer;
+  text-decoration: none !important;
+}
+
+.hideCursor {
+  cursor: none;
+}
+
+.mentionIcon {
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mentionText {
+  font-size: 14px;
+  line-height: 24px;
+}

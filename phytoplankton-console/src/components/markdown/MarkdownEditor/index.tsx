@@ -4,12 +4,19 @@ import { Editor } from '@toast-ui/react-editor';
 import React from 'react';
 import { ToolbarItemOptions } from '@toast-ui/editor/types/ui';
 import s from './styles.module.less';
+import { getNode } from './mention-utlis';
 
+export interface MentionItem {
+  id: string;
+  label: string;
+}
 interface Props {
   initialValue: string;
   placeholder?: string;
   onAttachFiles?: () => void;
   onChange: (value: string) => void;
+  mentionsEnabled?: boolean;
+  mentionsList?: Array<MentionItem>;
 }
 
 export default class MarkdownEditor extends React.Component<Props> {
@@ -19,6 +26,20 @@ export default class MarkdownEditor extends React.Component<Props> {
 
   reset() {
     this.editorRef.current?.getInstance()?.reset();
+  }
+
+  node(searchPhrase: string) {
+    const node = getNode(searchPhrase, this.props.mentionsList);
+
+    node.addEventListener('mousedown', (e) => {
+      const target = e.target as HTMLDivElement;
+      const id =
+        this.props.mentionsList?.find((mentionItem) => mentionItem.label === target.id)?.id ?? '';
+      this.insertMention({ id: id, label: target.id }, searchPhrase);
+      node.remove();
+    });
+
+    return node;
   }
 
   constructor(props: Props) {
@@ -62,30 +83,111 @@ export default class MarkdownEditor extends React.Component<Props> {
   }
 
   componentDidMount() {
-    if (this.editorRef.current) {
-      this.editorRef.current?.getRootElement().classList.add(s.root);
+    const currentEditor = this.editorRef.current;
+    if (currentEditor) {
+      currentEditor.getRootElement().classList.add(s.root);
+    }
+  }
+
+  regex = /\[(@\S+)\]\((\S+)\)/g;
+
+  insertMention = (mentionItem: MentionItem, searchPhrase) => {
+    const editor = this.editorRef.current?.getInstance();
+    if (editor) {
+      const [start, end] = editor.getSelection();
+      const label = mentionItem.label.split('@')[0];
+      editor.replaceSelection(
+        `[@${label}](${mentionItem.id}) `,
+        (start as number) - searchPhrase.length - 1,
+        end as number,
+      );
+    }
+  };
+
+  handlePressEnter(searchPhrase) {
+    const reducedSearchPhrase = searchPhrase.substring(0, searchPhrase.length - 2);
+    const users =
+      this.props.mentionsList?.filter((mentionItem) =>
+        mentionItem.label.startsWith(reducedSearchPhrase),
+      ) ?? [];
+    if (users.length > 0) {
+      this.insertMention(users[0], searchPhrase);
+    }
+  }
+
+  handleMention(_a, event) {
+    if (!this.props.mentionsEnabled) return;
+    const { key } = event;
+    const text = this.editorRef.current?.getInstance()?.getMarkdown() ?? '';
+    const cursorPos: number = this.editorRef.current?.getInstance()?.getSelection()[1] as number;
+    let cursorIndex = cursorPos - 1;
+    const mentionRegexMatchesCount = (text.substring(0, cursorIndex).match(this.regex) || [])
+      .length;
+
+    cursorIndex -= mentionRegexMatchesCount * 2 + 1;
+    let mentionStartIndex = -1;
+
+    // Finding the start index of the partial mention
+    for (let i = cursorIndex; i >= 0; i--) {
+      if (text[i] === '@' || text[i] === ' ') {
+        mentionStartIndex = i;
+        break;
+      }
+    }
+
+    const partialMention = text.substring(mentionStartIndex, cursorIndex + 1);
+
+    // Handling mentions based on key events and partial mention
+    if (key === '@' || partialMention.startsWith('@')) {
+      const partialUsername = partialMention.substring(1);
+      if (key === 'Enter' && partialUsername.length) {
+        this.handlePressEnter(partialUsername);
+      } else {
+        const mentionNode = this.node(partialUsername.toLowerCase());
+        this.editorRef.current?.getInstance()?.addWidget(mentionNode, 'bottom');
+      }
     }
   }
 
   render() {
     return (
-      <Editor
-        height={'200px'}
-        hideModeSwitch={true}
-        previewStyle="vertical"
-        initialEditType="wysiwyg"
-        initialValue={this.props.initialValue}
-        ref={this.editorRef}
-        toolbarItems={this.toolbarItems}
-        onChange={() => {
-          const editor = this.editorRef.current?.getInstance();
-          if (editor) {
-            this.props.onChange(editor.getMarkdown());
+      <>
+        <Editor
+          height={'200px'}
+          hideModeSwitch={true}
+          previewStyle="vertical"
+          initialEditType="wysiwyg"
+          initialValue={this.props.initialValue}
+          ref={this.editorRef}
+          toolbarItems={this.toolbarItems}
+          onChange={() => {
+            const editor = this.editorRef.current?.getInstance();
+            if (editor) {
+              this.props.onChange(editor.getMarkdown());
+            }
+          }}
+          widgetRules={
+            this.props.mentionsEnabled
+              ? [
+                  {
+                    rule: this.regex,
+                    toDOM: (text) => {
+                      const match = this.regex.exec(text);
+                      const span = document.createElement('span');
+                      span.classList.add(s.mention);
+
+                      span.innerText = match?.[1] ?? '';
+                      return span;
+                    },
+                  },
+                ]
+              : []
           }
-        }}
-        usageStatistics={false}
-        placeholder={this.props.placeholder}
-      />
+          onKeyup={this.handleMention.bind(this)}
+          usageStatistics={false}
+          placeholder={this.props.placeholder}
+        />
+      </>
     );
   }
 }

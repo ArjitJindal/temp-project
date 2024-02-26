@@ -64,6 +64,7 @@ import Filter from '@/components/library/Filter/story';
 import LogicBuilder from '@/components/ui/LogicBuilder/story';
 import Tag from '@/components/library/Tag/story';
 import AgeRangeInput from '@/components/library/AgeRangeInput/story';
+import MarkdownEditor from '@/components/markdown/story';
 
 const config: Config = [
   {
@@ -241,6 +242,10 @@ const config: Config = [
       {
         key: 'Spinner',
         story: Spinner,
+      },
+      {
+        key: 'MarkdownEditor',
+        story: MarkdownEditor,
       },
     ],
   },

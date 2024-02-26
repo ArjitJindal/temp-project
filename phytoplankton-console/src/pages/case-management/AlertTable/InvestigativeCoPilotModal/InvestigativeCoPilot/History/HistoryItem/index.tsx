@@ -17,6 +17,7 @@ import HistoryItemProperties from '@/pages/case-management/AlertTable/Investigat
 import HistoryItemEmbedded from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemEmbedded';
 import { CommonParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 
 interface Props {
   alertId: string;
@@ -63,7 +64,7 @@ export default function HistoryItem(props: Props) {
     async (values: CommentEditorFormValues) => {
       return await api.createAlertsComment({
         alertId,
-        Comment: { body: values.comment, files: values.files },
+        Comment: { body: sanitizeComment(values.comment), files: values.files },
       });
     },
     {

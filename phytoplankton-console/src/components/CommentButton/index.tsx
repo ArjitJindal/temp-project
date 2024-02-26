@@ -1,6 +1,7 @@
 import { Popover } from 'antd';
 import React, { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { sanitizeComment } from '../markdown/MarkdownEditor/mention-utlis';
 import s from './styles.module.less';
 import { message } from '@/components/library/Message';
 
@@ -70,7 +71,10 @@ export default function CommentButton(props: Props) {
             submitRes={getMutationAsyncResource(commentSubmitMutation)}
             onChangeValues={setCommentFormValues}
             onSubmit={() => {
-              commentSubmitMutation.mutate(commentFormValues);
+              commentSubmitMutation.mutate({
+                ...commentFormValues,
+                comment: sanitizeComment(commentFormValues.comment),
+              });
             }}
             disabled={props.disabled}
           />

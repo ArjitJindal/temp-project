@@ -17,6 +17,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { ALERT_ITEM, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import { useMutation } from '@/utils/queries/mutations/hooks';
+import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 
 interface Props {
   alertId: string | null;
@@ -44,7 +45,7 @@ export default function Comments(props: Props) {
     async ({ alertId, values }): Promise<ApiComment> => {
       return await api.createAlertsComment({
         alertId,
-        Comment: { body: values.comment, files: values.files },
+        Comment: { body: sanitizeComment(values.comment), files: values.files },
       });
     },
     {
