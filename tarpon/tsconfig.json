@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "scripts/coverage-report/generate-coverage-stats.js"],
   "exclude": ["node_modules", "**/*.spec.ts", "cdk.out", "cdktf.out"],
   "compilerOptions": {
     "alwaysStrict": true,

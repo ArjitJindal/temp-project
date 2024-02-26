@@ -49,9 +49,9 @@
     "deploy:test:canary": "ENV=dev && TYPE=canary && yarn clear && yarn && yarn build && cdk synth --quiet dev-tarpon-test-canary && cdk deploy --quiet dev-tarpon-test-canary --auto-approve --require-approval=never",
     "delete:test:canary": "ENV=dev && TYPE=canary && cdk destroy --quiet dev-tarpon-test-canary --force",
     "test": "jest --forceExit --config jest.config.ts",
-    "test:coverage": "jest --forceExit --config jest.config.ts --coverage && node ../scripts/generate-coverage-stats.js",
+    "test:coverage:comment": " ts-node scripts/coverage-report/index.ts",
+    "test:ci": "EXEC_SOURCE=CI NODE_OPTIONS='--max-old-space-size=12288' npm run test -- --silent --ci --coverage --cacheDirectory ~/.jest-cache",
     "test:silent": "yarn test -- --silent",
-    "test:ci": "EXEC_SOURCE=CI NODE_OPTIONS='--max-old-space-size=12288' npm run test -- --silent --ci --cacheDirectory ~/.jest-cache",
     "test:watch": "yarn test -- --watch",
     "format": "prettier --write . && yarn openapi:format",
     "format:check": "prettier --check .",
@@ -189,6 +189,8 @@
     "yaml": "^2.1.1"
   },
   "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/github": "^6.0.0",
     "@aws-sdk/client-api-gateway": "^3.262.0",
     "@aws-sdk/client-cloudwatch": "^3.301.0",
     "@aws-sdk/client-dynamodb": "^3.438.0",
@@ -235,6 +237,7 @@
     "base-x": "^3.0.9",
     "cdktf": "^0.18.2",
     "cdktf-cli": "^0.18.2",
+    "coverage-diff": "^3.2.0",
     "currency-symbol-map": "^5.1.0",
     "dataloader": "^2.2.2",
     "deep-object-diff": "^1.1.7",
