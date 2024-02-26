@@ -8,6 +8,6 @@ export type RuleOperator<LHS = any, RHS = any> = {
   run: (
     lhs: LHS,
     rhs: RHS,
-    context: { tenantId: string; dynamoDb: DynamoDBDocumentClient }
+    context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient }
   ) => Promise<boolean>
 }

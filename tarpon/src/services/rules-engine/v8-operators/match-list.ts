@@ -1,5 +1,6 @@
 import { RuleOperator } from './types'
 import { getNegatedOperator } from './utils'
+import { logger } from '@/core/logger'
 import { ListRepository } from '@/services/list/repositories/list-repository'
 
 export const MATCH_LIST_OPERATOR: RuleOperator<string, string[]> = {
@@ -10,6 +11,10 @@ export const MATCH_LIST_OPERATOR: RuleOperator<string, string[]> = {
     valueSources: ['value'],
   },
   run: async (value, listIds, context) => {
+    if (!context) {
+      logger.error('No context provided')
+      return false
+    }
     const listRepo = new ListRepository(context.tenantId, context.dynamoDb)
     const result = await Promise.all(
       listIds.map(async (listId) => {

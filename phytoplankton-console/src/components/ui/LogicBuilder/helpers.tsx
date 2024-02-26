@@ -27,9 +27,10 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
     addGroupLabel = 'Add group',
     enabledValueSources = undefined,
   } = params;
-  // todo: make a proper config initialization instead of mutating 3rd party config
-  InitialConfig.operators.select_any_in.valueTypes = ['multiselect', 'text'];
-  InitialConfig.operators.select_not_any_in.valueTypes = ['multiselect', 'text'];
+  const operators = {
+    ...JSON_LOGIC_OPERATORS,
+    ...params.operators,
+  };
   return {
     ...InitialConfig,
     widgets: customWidgets,
@@ -42,24 +43,16 @@ export function makeConfig(params: LogicBuilderConfig): BasicConfig {
       ...params.funcs,
       ...JSON_LOGIC_FUNCTIONS,
     },
-    operators: enabledValueSources
-      ? Object.entries({
-          ...InitialConfig.operators,
-          ...params.operators,
-        }).reduce(
-          (acc, [key, value]) => ({
-            ...acc,
-            [key]: {
-              ...value,
-              valueSources: enabledValueSources,
-            },
-          }),
-          JSON_LOGIC_OPERATORS,
-        )
-      : {
-          ...JSON_LOGIC_OPERATORS,
-          ...params.operators,
+    operators: Object.entries(operators).reduce(
+      (acc, [key, value]) => ({
+        ...acc,
+        [key]: {
+          ...value,
+          valueSources: enabledValueSources ?? value.valueSources,
         },
+      }),
+      JSON_LOGIC_OPERATORS,
+    ),
     fields: fields,
     settings: {
       ...InitialConfig.settings,

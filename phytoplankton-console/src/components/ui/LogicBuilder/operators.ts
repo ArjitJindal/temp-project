@@ -1,4 +1,5 @@
 import { BasicConfig, Config, CoreOperators } from '@react-awesome-query-builder/ui';
+import { omit } from 'lodash';
 
 const jsonLogicForBetween = (field, _op, values) => {
   const valFrom = values[0];
@@ -35,8 +36,17 @@ const isTimeValue = (value: string) => {
   return value.split(':').length === 3;
 };
 
+const BUILT_IN_OPERATORS = omit(BasicConfig.operators, ['starts_with', 'ends_with', 'proximity']);
 export const JSON_LOGIC_OPERATORS: CoreOperators<Config> = {
-  ...BasicConfig.operators,
+  ...BUILT_IN_OPERATORS,
+  select_any_in: {
+    ...BasicConfig.operators.select_any_in,
+    valueTypes: ['multiselect', 'text'],
+  },
+  select_not_any_in: {
+    ...BasicConfig.operators.select_not_any_in,
+    valueTypes: ['multiselect', 'text'],
+  },
   between: {
     ...BasicConfig.operators.between,
     jsonLogic: jsonLogicForBetween,

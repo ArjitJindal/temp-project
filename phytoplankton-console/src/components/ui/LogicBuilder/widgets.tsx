@@ -64,15 +64,20 @@ const customNumberWidget: NumberWidget<BasicConfig> = {
   },
 };
 
+const MULTI_SELECT_TEXT_OPERATORS: RuleOperatorType[] = [
+  'op:inlist',
+  'op:!inlist',
+  'op:startswith',
+  'op:endswith',
+];
+const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
 const customTextWidget: TextWidget<BasicConfig> = {
   type: `text`,
   factory: (props) => {
     const operator = props.operator as RuleOperatorType;
     if (
-      operator === 'op:inlist' ||
-      operator === 'op:!inlist' ||
-      operator === 'select_any_in' ||
-      operator === 'select_not_any_in'
+      MULTI_SELECT_TEXT_OPERATORS.includes(operator) ||
+      MULTI_SELECT_BUILTIN_OPERATORS.includes(operator)
     ) {
       // TODO (V8): Create a ListSelect component which loads whitelist/blacklist from server
       return (
