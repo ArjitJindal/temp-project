@@ -26,6 +26,7 @@ export function useRuleLogicConfig() {
   return useQuery<RuleLogicConfig>(
     RULE_LOGIC_CONFIG(),
     (): Promise<RuleLogicConfig> => api.getRuleLogicConfig(),
+    { refetchOnMount: false },
   );
 }
 

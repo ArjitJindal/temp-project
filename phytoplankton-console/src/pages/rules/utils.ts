@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllValuesByKey } from '@flagright/lib/utils';
 import { RuleConfigurationFormValues } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/RuleConfigurationForm';
 import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8';
@@ -21,6 +21,7 @@ import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { humanizeConstant } from '@/utils/humanize';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
+import { GET_RULES_INSTANCE } from '@/utils/queries/keys';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -484,6 +485,7 @@ export function useUpdateRuleInstance(
   onRuleInstanceUpdated?: (ruleInstance: RuleInstance) => void,
 ) {
   const api = useApi();
+  const queryClient = useQueryClient();
   return useMutation<RuleInstance, unknown, RuleInstance>(
     async (ruleInstance: RuleInstance) => {
       if (ruleInstance.id == null) {
@@ -499,6 +501,7 @@ export function useUpdateRuleInstance(
         if (onRuleInstanceUpdated) {
           onRuleInstanceUpdated(updatedRuleInstance);
         }
+        await queryClient.invalidateQueries(GET_RULES_INSTANCE(updatedRuleInstance.id));
         const ruleInfo = [
           updatedRuleInstance.id,
           updatedRuleInstance.ruleId && `(${updatedRuleInstance.ruleId})`,
