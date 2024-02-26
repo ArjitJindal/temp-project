@@ -1,8 +1,6 @@
-import { BasicConfig } from '@react-awesome-query-builder/ui';
+import { BasicConfig, CoreOperators, Config } from '@react-awesome-query-builder/ui';
 import '@react-awesome-query-builder/ui/css/styles.css';
-
 import cn from 'clsx';
-import React from 'react';
 import s from './index.module.less';
 import { JSON_LOGIC_FUNCTIONS } from './functions';
 import { JSON_LOGIC_OPERATORS } from './operators';
@@ -17,7 +15,9 @@ import Button from '@/components/library/Button';
 
 const InitialConfig = BasicConfig;
 
-export function makeConfig(params: LogicBuilderConfig): BasicConfig {
+export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'> & {
+  operators: Omit<CoreOperators<Config>, 'multiselect_not_contains' | 'multiselect_contains'>;
+} {
   const {
     fields,
     enableNesting = true,

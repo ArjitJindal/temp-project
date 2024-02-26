@@ -3,6 +3,7 @@ import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
 import { TransactionsVelocityRuleParameters } from '../transaction-rules/transactions-velocity'
 import { MultipleSendersWithinTimePeriodRuleParameters } from '../transaction-rules/multiple-senders-within-time-period-base'
 import { FirstActivityAfterLongTimeRuleParameters } from '../transaction-rules/first-activity-after-time-period'
+import { MerchantReceiverNameRuleParameters } from '../transaction-rules/merchant-receiver-name'
 import { BlacklistCardIssuedCountryRuleParameters } from '../transaction-rules/blacklist-card-issued-country'
 import { HighRiskCurrencyRuleParameters } from '../transaction-rules/high-risk-currency'
 import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
@@ -159,6 +160,42 @@ const V8_CONVERSION: {
       logic: { and: conditions },
       logicAggregationVariables: aggregationVariable,
       alertCreationDirection: 'ORIGIN',
+    }
+  },
+  'R-13': (parameters: MerchantReceiverNameRuleParameters) => {
+    const conditions: any[] = []
+
+    conditions.push({
+      '==': [
+        {
+          var: 'TRANSACTION:destinationPaymentDetails-method',
+        },
+        'WALLET',
+      ],
+    })
+
+    conditions.push({
+      '!=': [
+        {
+          var: 'TRANSACTION:destinationPaymentDetails-name',
+        },
+        null,
+      ],
+    })
+
+    conditions.push({
+      'op:contains': [
+        {
+          var: 'TRANSACTION:destinationPaymentDetails-name',
+        },
+        parameters.merchantNames,
+      ],
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables: [],
+      alertCreationDirection: 'DESTINATION',
     }
   },
   'R-22': (parameters: BlacklistCardIssuedCountryRuleParameters) => {

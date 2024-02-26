@@ -169,7 +169,7 @@ async function buildCode(env, options) {
     try {
       uploadSentrySourceMaps(release, commitHash);
     } catch (e) {
-      console.warn("Unable to upload sentry source maps", e)
+      console.warn('Unable to upload sentry source maps', e);
     }
   }
   return result;

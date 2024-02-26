@@ -36,7 +36,16 @@ const isTimeValue = (value: string) => {
   return value.split(':').length === 3;
 };
 
-const BUILT_IN_OPERATORS = omit(BasicConfig.operators, ['starts_with', 'ends_with', 'proximity']);
+const BUILT_IN_OPERATORS = omit(BasicConfig.operators, [
+  'starts_with',
+  'ends_with',
+  'proximity',
+  'like',
+  'not_like',
+  'multi_select_contains',
+  'multi_select_not_contains',
+]);
+
 export const JSON_LOGIC_OPERATORS: CoreOperators<Config> = {
   ...BUILT_IN_OPERATORS,
   select_any_in: {

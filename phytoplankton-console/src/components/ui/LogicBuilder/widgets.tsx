@@ -69,8 +69,12 @@ const MULTI_SELECT_TEXT_OPERATORS: RuleOperatorType[] = [
   'op:!inlist',
   'op:startswith',
   'op:endswith',
+  'op:!contains',
+  'op:contains',
 ];
+
 const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
+
 const customTextWidget: TextWidget<BasicConfig> = {
   type: `text`,
   factory: (props) => {

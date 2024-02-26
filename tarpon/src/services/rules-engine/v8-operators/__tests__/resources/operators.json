@@ -1,1 +1,8 @@
-["op:inlist", "op:!inlist", "op:startswith", "op:endswith"]
+[
+  "op:inlist",
+  "op:!inlist",
+  "op:contains",
+  "op:!contains",
+  "op:startswith",
+  "op:endswith"
+]
