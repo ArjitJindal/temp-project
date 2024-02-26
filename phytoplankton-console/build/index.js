@@ -1,5 +1,6 @@
 /* eslint-disable */
 const path = require('path');
+const { uniq } = require('lodash');
 const {
   log,
   error,
@@ -13,6 +14,8 @@ const express = require('express');
 const fallback = require('express-history-api-fallback');
 const fs = require('fs-extra');
 const { notify } = require('./helpers.js');
+const https = require('node:https');
+const { Metafile } = require('esbuild');
 
 const SCRIPT_DIR = __dirname;
 
@@ -40,30 +43,18 @@ function serve() {
   });
 
   /*
-  openssl genrsa -out build/certificates/self_priv.pem 1024
+  openssl genrsa -out build/certificates/self_priv.pem 2048
   openssl req -new -key build/certificates/self_priv.pem -out build/certificates/certrequest.csr
   openssl x509 -req -in build/certificates/certrequest.csr -signkey build/certificates/self_priv.pem -out build/certificates/self_cert.pem
+  rm build/certificates/certrequest.csr
   */
-  const USE_HTTPS = true;
-
   const options = {
     passphrase: process.env.HTTPS_PASSPHRASE || '',
+    key: fs.readFileSync(path.resolve(SCRIPT_DIR, 'certificates', 'self_priv.pem'), 'utf8'),
+    cert: fs.readFileSync(path.resolve(SCRIPT_DIR, 'certificates', 'self_cert.pem'), 'utf8'),
   };
-
-  if (USE_HTTPS) {
-    options.key = fs.readFileSync(
-      path.resolve(SCRIPT_DIR, 'certificates', 'self_priv.pem'),
-      'utf8',
-    );
-    options.cert = fs.readFileSync(
-      path.resolve(SCRIPT_DIR, 'certificates', 'self_cert.pem'),
-      'utf8',
-    );
-  }
-
-  const http = USE_HTTPS ? require('https') : require('http');
-  const server = http.createServer(options, app);
-  log(`Serving files on ${USE_HTTPS ? 'https' : 'http'}://flagright.local:${port}...`);
+  const server = https.createServer(options, app);
+  log(`Serving files on https://flagright.local:${port}...`);
   server.listen(port);
 }
 
@@ -87,25 +78,29 @@ async function main() {
     config,
     watch: env.WATCH,
   });
+  await fs.writeJson(path.resolve(env.PROJECT_DIR, 'esbuild.json'), buildResult.metafile);
   await buildHtml(env, {
     file: 'index.html',
     context: {
       bundleJs: bundleJs,
       bundleCss: bundleCss,
+      preload: collectModulePreloads(
+        `${env.OUTPUT_FOLDER}/${bundleJs}`,
+        buildResult.metafile.outputs,
+      )
+        .map((x) => `<link rel="modulepreload" href="/${x}" as="script" />`)
+        .join('\n'),
       inlineLoader: await fs.readFile(
         path.join(env.PROJECT_DIR, env.SRC_FOLDER, 'inline/loader.html'),
       ),
       ...config.define,
     },
   });
-  if (buildResult.metafile) {
-    await fs.writeJson(path.resolve(env.PROJECT_DIR, 'esbuild.json'), buildResult.metafile);
-  }
 
   if (env.WATCH) {
     log('Build finished, watching for changes');
     notify('Build finished, watching for changes');
-    serve();
+    await serve();
   } else {
     log('Build finished');
     notify('Build finished');
@@ -116,3 +111,16 @@ main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
+
+/*
+  Utils
+ */
+
+function collectModulePreloads(entry, outputs) {
+  function traverse(next) {
+    const imports = outputs[next]?.imports ?? [];
+    const staticImports = imports.filter(({ kind }) => kind === 'import-statement');
+    return [next, ...staticImports.flatMap(({ path }) => traverse(path, outputs))];
+  }
+  return uniq(traverse(entry)).map((x) => path.relative(env.OUTPUT_FOLDER, x));
+}

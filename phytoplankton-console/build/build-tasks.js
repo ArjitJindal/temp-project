@@ -142,7 +142,7 @@ async function buildCode(env, options) {
     assetNames: 'public/[name].[hash]',
     publicPath: '/',
     minify: !devMode,
-    metafile: !devMode,
+    metafile: true,
     sourcemap: devMode || 'external',
     treeShaking: !devMode,
     write: false,
