@@ -1,8 +1,10 @@
 import { pickBy } from 'lodash'
+import { expandCountryGroup } from '@flagright/lib/constants'
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
 import { TransactionsVelocityRuleParameters } from '../transaction-rules/transactions-velocity'
 import { MultipleSendersWithinTimePeriodRuleParameters } from '../transaction-rules/multiple-senders-within-time-period-base'
 import { FirstActivityAfterLongTimeRuleParameters } from '../transaction-rules/first-activity-after-time-period'
+import { TooManyTransactionsToHighRiskCountryRuleParameters } from '../transaction-rules/too-many-transactions-to-high-risk-country'
 import { MerchantReceiverNameRuleParameters } from '../transaction-rules/merchant-receiver-name'
 import { BlacklistCardIssuedCountryRuleParameters } from '../transaction-rules/blacklist-card-issued-country'
 import { HighRiskCurrencyRuleParameters } from '../transaction-rules/high-risk-currency'
@@ -160,6 +162,65 @@ const V8_CONVERSION: {
       logic: { and: conditions },
       logicAggregationVariables: aggregationVariable,
       alertCreationDirection: 'ORIGIN',
+    }
+  },
+  'R-77': (
+    parameters: TooManyTransactionsToHighRiskCountryRuleParameters,
+    filters
+  ) => {
+    const { logicAggregationVariables, alertCreationDirection } =
+      migrateCheckDirectionParameters('COUNT', parameters, filters)
+
+    const conditions: any[] = []
+    if (logicAggregationVariables.length === 1) {
+      const v = logicAggregationVariables[0]
+      conditions.push({
+        '>': [{ var: v.key }, parameters.transactionsLimit],
+      })
+    } else if (logicAggregationVariables.length > 1) {
+      conditions.push({
+        or: logicAggregationVariables.map((v) => ({
+          '>': [{ var: v.key }, parameters.transactionsLimit],
+        })),
+      })
+    }
+
+    const { highRiskCountries, highRiskCountriesExclusive } = parameters
+
+    const orConditions: any[] = []
+
+    ;['origin', 'destination'].forEach((direction) => {
+      if (highRiskCountries?.length) {
+        orConditions.push({
+          in: [
+            { var: `TRANSACTION:${direction}AmountDetails-country` },
+            expandCountryGroup(highRiskCountries),
+          ],
+        })
+      }
+
+      if (highRiskCountriesExclusive?.length) {
+        orConditions.push({
+          '!': {
+            in: [
+              { var: `TRANSACTION:${direction}AmountDetails-country` },
+              expandCountryGroup(highRiskCountriesExclusive),
+            ],
+          },
+        })
+      }
+    })
+
+    conditions.push({
+      or: orConditions,
+    })
+
+    // TODO (V8): Implement Initial Transactions Threshold Parameter
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection,
     }
   },
   'R-13': (parameters: MerchantReceiverNameRuleParameters) => {
