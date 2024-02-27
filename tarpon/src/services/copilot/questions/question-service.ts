@@ -318,7 +318,10 @@ export class QuestionService {
           content: `Please parse "${questionPrompt}" to give the best matching questionId and variables.`,
         },
       ])
-      const result = JSON.parse(response)
+      const formattedResponse = response.split('\n')
+      formattedResponse.shift()
+      formattedResponse.pop()
+      const result = JSON.parse(formattedResponse.join('\n'))
       const questions = getQuestions()
       const question = questions.find((q) => q.questionId === result.questionId)
 

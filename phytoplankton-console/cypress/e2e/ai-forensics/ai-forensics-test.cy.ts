@@ -1,6 +1,6 @@
 import { PERMISSIONS } from '../../support/permissions';
 
-describe.skip('Investigative Copilot', () => {
+describe('Investigative Copilot', () => {
   const REQUIRED_PERMISSIONS = [
     ...PERMISSIONS.CASE_OVERVIEW,
     ...PERMISSIONS.USERS_USER_OVERVIEW,
@@ -42,7 +42,7 @@ describe.skip('Investigative Copilot', () => {
     cy.wait('@query', { timeout: 15000 }).its('response.statusCode').should('be.oneOf', [200, 304]);
 
     // Check autocomplete works
-    cy.get('[data-cy="investigation-input"]').type('Aler');
+    cy.get('[data-cy="investigation-input"]').type('Aler', { timeout: 20000 });
     cy.get('[data-cy="investigation-suggestion-button"]')
       .eq(0)
       .should((button) => {
