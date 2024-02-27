@@ -715,16 +715,8 @@ class DatabricksStack extends TerraformStack {
       )
 
       // TODO: Not sure why things aren't working on sandbox. Will figure this out.
-      const host =
-        stage !== 'dev'
-          ? sqlWarehouse.odbcParams.get(0).hostname
-          : Fn.replace(workspaceProvider.host || '', 'https://', '')
-      const path =
-        stage !== 'dev'
-          ? sqlWarehouse.odbcParams.get(0).path
-          : `sql/protocolv1/o/${Fn.tostring(workspace.workspaceId)}/${
-              pipelineCluster.clusterId
-            }`
+      const host = sqlWarehouse.odbcParams.get(0).hostname
+      const path = sqlWarehouse.odbcParams.get(0).path
 
       new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
         this,

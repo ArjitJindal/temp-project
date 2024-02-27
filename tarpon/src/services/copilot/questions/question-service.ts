@@ -400,7 +400,7 @@ export class QuestionService {
           if (key in varObject) {
             if (isIsoDate(varObject[key])) {
               varObject[key] = new Date(varObject[key] as number).valueOf()
-            } else {
+            } else if (typeof varObject[key] !== 'number') {
               delete varObject[key]
             }
           }
