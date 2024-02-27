@@ -68,9 +68,6 @@ async function main() {
   for (let i = 0; i < MAX_RETRIES; i++) {
     try {
       exec(
-        `./node_modules/.bin/stoplight push --ci-token ${PUBLIC_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/public --branch ${BRANCH_NAME}`
-      )
-      exec(
         `./node_modules/.bin/stoplight push --ci-token ${PUBLIC_MANAGEMENT_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/public-management --branch ${BRANCH_NAME}`
       )
       exec(

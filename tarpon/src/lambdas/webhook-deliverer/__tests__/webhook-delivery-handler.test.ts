@@ -60,6 +60,7 @@ function getExpectedPayload(deliveryTask: WebhookDeliveryTask): WebhookEvent {
     type: deliveryTask.event as WebhookEventType,
     data: deliveryTask.payload,
     createdTimestamp: deliveryTask.createdAt,
+    triggeredBy: deliveryTask.triggeredBy,
   }
 }
 

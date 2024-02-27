@@ -19,17 +19,17 @@ paths:
         ## POST Transactions
 
 
-        `/transactions` endpoint allows you to operate on the [Transaction entity.](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships#transaction)
+        `/transactions` endpoint allows you to operate on the [Transaction entity.](/guides/overview/entities#transaction)
 
 
-        In order to pass the payload of a transaction to Flagright and verify the transaciton, you will need to call this endpoint with the transaction payload. Not all fields are mandatory, you will only need to pass in the fields that you have and are relevant for your compliance setup. 
+        In order to pass the payload of a transaction to Flagright and verify the transaction, you will need to call this endpoint with the transaction payload. Not all fields are mandatory, you will only need to pass in the fields that you have and are relevant for your compliance setup. 
 
 
 
         ### Payload
 
 
-        Here are some of the most used payload fields explained (you can find the full payload [schema below](https://docs.flagright.com/docs/flagright-api/87742ed31b30e-verify-a-transaction#request-body) with 1 line descriptions):
+        Here are some of the most used payload fields explained (you can find the full payload [schema below](/api-reference/api-reference/transactions/verify#request) with 1 line descriptions):
 
 
         * `type`: Type of transaction (Ex: `WITHDRAWAL`, `DEPOSIT`, `TRANSFER` etc). 
@@ -38,11 +38,11 @@ paths:
 
         * `timestamp` - UNIX timestamp in *milliseconds* of when the transaction took place
 
-        * `transactionState` - The state of the transaction, set to `CREATED` by default. [More details here](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships-in-the-api#transaction-lifecycle-through-transaction-events)
+        * `transactionState` - The state of the transaction, set to `CREATED` by default. [More details here](/guides/overview/entities#transaction-lifecycle-through-transaction-events)
 
-        * `originUserId` - Unique identifier (if any) of the user who is sending the money. This user must be created within the Flagright system before using the [create a consumer user](https://docs.flagright.com/docs/flagright-api/18132cd454603-create-a-consumer-user) or [create a business user](https://docs.flagright.com/docs/flagright-api/f651463db29d8-create-a-business-user) endpoint
+        * `originUserId` - Unique identifier (if any) of the user who is sending the money. This user must be created within the Flagright system before using the [create a consumer user](/api-reference/api-reference/consumer-users/create) or [create a business user](/api-reference/api-reference/business-users/create) endpoint
 
-        * `destinationUserId` - Unique identifier (if any) of the user who is receiving the money. This user must be created within the Flagright system before using the [create a consumer user](https://docs.flagright.com/docs/flagright-api/18132cd454603-create-a-consumer-user) or [create a business user](https://docs.flagright.com/docs/flagright-api/f651463db29d8-create-a-business-user) endpoint
+        * `destinationUserId` - Unique identifier (if any) of the user who is receiving the money. This user must be created within the Flagright system before using the [create a consumer user](/api-reference/api-reference/consumer-users/create) or [create a business user](/api-reference/api-reference/business-users/create) endpoint
 
         * `originAmountDetails` - Details of the amount being sent from the origin
 
@@ -190,7 +190,7 @@ paths:
         ### GET Transactions
 
 
-        `/transactions` endpoint allows you to operate on the [Transaction entity](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships#transaction).
+        `/transactions` endpoint allows you to operate on the [Transaction entity](/guides/overview/entities#transaction).
 
 
         Calling `GET /transactions/{transactionId}` will return the entire transaction payload and rule execution results for the transaction with the corresponding `transactionId`
@@ -304,13 +304,13 @@ paths:
         ## POST Transaction Events
 
 
-        `/events/transaction` endpoint allows you to operate on the [Transaction Events entity.](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships#transaction-event)
+        `/events/transaction` endpoint allows you to operate on the [Transaction Events entity.](/guides/overview/entities#transaction-event)
 
 
         Transaction events are created after the initial `POST /transactions` call (which creates a transaction) and are used to:
 
 
-        * Update the STATE of the transaction, using the `transactionState` field and manage the [Transaction Lifecycle](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships#transaction-lifecycle-through-transaction-events)
+        * Update the STATE of the transaction, using the `transactionState` field and manage the [Transaction Lifecycle](/guides/overview/entities#transaction-lifecycle-through-transaction-events)
 
         * Update the transaction details, using the `updatedTransactionAttributes` field.
 
@@ -463,10 +463,10 @@ paths:
         ### GET Transaction Events
 
 
-        `/events/transaction` endpoint allows you to operate on the [Transaction Events entity.](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships#transaction-event). 
+        `/events/transaction` endpoint allows you to operate on the [Transaction Events entity.](/guides/overview/entities#transaction-event). 
 
 
-        You can retrieve any transaction event you create using the [POST Transaction Events](https://docs.flagright.com/docs/flagright-api/d7c4dc4d02850-create-a-transaction-event) call.
+        You can retrieve any transaction event you create using the [POST Transaction Events](/api-reference/api-reference/transaction-events/create) call.
       operationId: get-transaction-event
       parameters:
         - name: eventId
@@ -516,7 +516,7 @@ paths:
         ## POST Consumer User
 
 
-        `/consumer/user` endpoint allows you to operate on the [Consumer user entity.](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships#user)
+        `/consumer/user` endpoint allows you to operate on the Consumer user entity.
 
 
         In order to pass the payload of a User to Flagright and verify the User, you will need to call this endpoint with the User payload. Not all fields are mandatory, you will only need to pass in the fields that you have and are relevant for your compliance setup.
@@ -525,7 +525,7 @@ paths:
         ### Payload
 
 
-        Each consumer User entity needs three mandatory fields:
+        Each consumer user needs two mandatory fields:
 
 
         * `userId` - Unique identifier for the user
@@ -622,7 +622,7 @@ paths:
         ### GET Consumer User
 
 
-        `/consumer/user` endpoint allows you to operate on the [Consumer User entity](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships#user).
+        `/consumer/user` endpoint allows you to operate on the Consumer User entity.
 
 
         Calling `GET /consumer/user/{userId}` will return the entire user payload and rule execution results for the user with the corresponding `userId`
@@ -711,7 +711,7 @@ paths:
         ## POST Business User
 
 
-        `/business/user` endpoint allows you to operate on the [Business user entity.](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships#user)
+        `/business/user` endpoint allows you to operate on the Business user entity.
 
 
         In order to pass the payload of a User to Flagright and verify the User, you will need to call this endpoint with the User payload. Not all fields are mandatory, you will only need to pass in the fields that you have and are relevant for your compliance setup.
@@ -721,7 +721,7 @@ paths:
 
 
 
-        Each consumer Business entity needs three mandatory fields:
+        Each business user needs three mandatory fields:
 
 
         * `userId` - Unique identifier for the user
@@ -778,7 +778,7 @@ paths:
         ### GET Business User
 
 
-        `/business/user` endpoint allows you to operate on the [Business User entity](https://docs.flagright.com/docs/flagright-api/0f8fac59d1995-entities-and-relationships#user).
+        `/business/user` endpoint allows you to operate on the Business User entity.
 
 
         Calling `GET /business/user/{userId}` will return the entire User payload and rule execution results for the User with the corresponding `userId`
@@ -2549,7 +2549,7 @@ components:
           description: Legal name of the company
         businessIndustry:
           type: array
-          description: The industry the business operates in for a business customer
+          description: The industry in which the business operates for a business customer
           items:
             type: string
         mainProductsServicesSold:
@@ -2590,7 +2590,7 @@ components:
           description: Tax ID number of the registered entity
         legalEntityType:
           type: string
-          description: 'Type of legal entity. Ex: Limited Liability'
+          description: Type of legal entity, e.g., Limited Liability
         dateOfRegistration:
           type: string
           pattern: ^(\d{4}-\d{2}-\d{2})*$
@@ -4022,8 +4022,6 @@ components:
       title: AcquisitionChannel
       minLength: 1
       description: Model for User acquisition channel
-      x-stoplight:
-        id: e7674363b9512
       enum:
         - ORGANIC
         - PAID
@@ -4141,8 +4139,6 @@ components:
         - isPepHit
     KYCStatusDetails:
       title: KYCStatusDetails
-      x-stoplight:
-        id: ev3mulr4s7fqf
       type: object
       properties:
         reason:
@@ -4166,8 +4162,6 @@ components:
     CaseClosedDetails:
       title: CaseClosedDetails
       type: object
-      x-stoplight:
-        id: ev3mslr5s7fqf
       properties:
         caseId:
           type: string
@@ -4204,8 +4198,6 @@ components:
     AlertClosedDetails:
       title: AlertClosedDetails
       type: object
-      x-stoplight:
-        id: ev3mslr5skdfhg
       properties:
         alertId:
           type: string
@@ -4236,8 +4228,6 @@ components:
     TransactionStatusDetails:
       title: TransactionStatusDetails
       type: object
-      x-stoplight:
-        id: ev3mslr5s7fqf
       properties:
         transactionId:
           type: string
@@ -4254,8 +4244,6 @@ components:
     RiskLevel:
       type: string
       title: RiskLevel
-      x-stoplight:
-        id: i5dg6voh82ds3
       enum:
         - VERY_HIGH
         - HIGH
@@ -4264,8 +4252,6 @@ components:
         - VERY_LOW
     CardExpiry:
       title: CardExpiry
-      x-stoplight:
-        id: yzuf7hk7abyg6
       type: object
       properties:
         month:
@@ -4279,8 +4265,6 @@ components:
     TransactionType:
       type: string
       title: TransactionType
-      x-stoplight:
-        id: ltkop9ozj12if
       enum:
         - DEPOSIT
         - TRANSFER
@@ -4288,42 +4272,51 @@ components:
         - WITHDRAWAL
         - REFUND
         - OTHER
-    WebhookEvent:
-      title: WebhookEvent
-      x-stoplight:
-        id: w7v0f2eqgzubk
+    WebhookEventBase:
+      title: WebhookEventBase
       type: object
       properties:
         id:
           type: string
-        type:
-          $ref: '#/components/schemas/WebhookEventType'
+          description: Unique identifier for the event
         triggeredBy:
           type: string
+          description: Event triggered by a user or system
           enum:
             - MANUAL
             - SYSTEM
-        data:
-          oneOf:
-            - $ref: '#/components/schemas/UserStateDetails'
-            - $ref: '#/components/schemas/CaseClosedDetails'
-            - $ref: '#/components/schemas/CaseOpenedDetails'
-            - $ref: '#/components/schemas/AlertClosedDetails'
-            - $ref: '#/components/schemas/TransactionStatusDetails'
-            - $ref: '#/components/schemas/KYCStatusDetails'
         createdTimestamp:
           type: number
+          description:
+            Time at which the event was created. Measured in ms since the Unix
+            epoch.
           minimum: 1262300400000
       required:
         - id
-        - type
-        - data
+        - triggeredBy
         - createdTimestamp
+    WebhookEvent:
+      title: WebhookEvent
+      allOf:
+        - $ref: '#/components/schemas/WebhookEventBase'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/WebhookEventType'
+            data:
+              oneOf:
+                - $ref: '#/components/schemas/UserStateDetails'
+                - $ref: '#/components/schemas/CaseClosedDetails'
+                - $ref: '#/components/schemas/CaseOpenedDetails'
+                - $ref: '#/components/schemas/AlertClosedDetails'
+                - $ref: '#/components/schemas/TransactionStatusDetails'
+                - $ref: '#/components/schemas/KYCStatusDetails'
+          required:
+            - type
+            - data
     WebhookEventType:
       type: string
       title: WebhookEventType
-      x-stoplight:
-        id: 5rtg1zffpod4f
       enum:
         - CASE_CLOSED
         - USER_STATE_UPDATED
@@ -4445,8 +4438,6 @@ components:
     PaymentMethod:
       type: string
       title: PaymentMethod
-      x-stoplight:
-        id: m0vgh0ergujca
       enum:
         - ACH
         - CARD
@@ -4459,8 +4450,6 @@ components:
         - CHECK
     CardMerchantDetails:
       title: CardMerchantDetails
-      x-stoplight:
-        id: 066ggphgour1t
       type: object
       properties:
         id:
@@ -4481,8 +4470,6 @@ components:
           type: string
     CheckDetails:
       title: CheckDetails
-      x-stoplight:
-        id: iuga8fruhbjdz
       type: object
       properties:
         method:
@@ -4510,8 +4497,6 @@ components:
     CountryCode:
       type: string
       title: CountryCode
-      x-stoplight:
-        id: 8uh01wccoglx5
       enum:
         - AF
         - AL
@@ -5043,8 +5028,6 @@ components:
         - ZWL
     MCCDetails:
       title: MCCDetails
-      x-stoplight:
-        id: bcfmwh6s5bbyq
       type: object
       properties:
         code:
@@ -5081,8 +5064,6 @@ components:
           $ref: '#/components/schemas/Amount'
     TransactionLimit:
       title: TransactionLimit
-      x-stoplight:
-        id: uu3baej63ppba
       type: object
       properties:
         transactionCountLimit:
@@ -5093,8 +5074,6 @@ components:
           $ref: '#/components/schemas/TransactionAmountLimit'
     FalsePositiveDetails:
       title: FalsePositiveDetails
-      x-stoplight:
-        id: swgf3yejk9wep
       type: object
       properties:
         isFalsePositive:
@@ -5107,8 +5086,6 @@ components:
     SanctionsDetails:
       title: SanctionsDetails
       type: object
-      x-stoplight:
-        id: b3f3f522e84a3
       properties:
         name:
           type: string
@@ -5135,8 +5112,6 @@ components:
         - BANK_NAME
     BusinessEntityLink:
       title: BusinessEntityLink
-      x-stoplight:
-        id: qqn80q54vrs3w
       type: object
       properties:
         parentUserId:
@@ -5162,8 +5137,6 @@ components:
                 $ref: '#/components/schemas/HitRulesDetails'
     UserRiskScoreDetails:
       title: UserRiskScoreDetails
-      x-stoplight:
-        id: 4b3f3f522e84a3
       type: object
       properties:
         kycRiskScore:

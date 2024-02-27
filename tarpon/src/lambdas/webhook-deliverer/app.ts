@@ -57,6 +57,7 @@ async function deliverWebhookEvent(
     type: webhookDeliveryTask.event,
     data: webhookDeliveryTask.payload,
     createdTimestamp: webhookDeliveryTask.createdAt,
+    triggeredBy: webhookDeliveryTask.triggeredBy,
   }
 
   const postPayloadString = JSON.stringify(postPayload)
