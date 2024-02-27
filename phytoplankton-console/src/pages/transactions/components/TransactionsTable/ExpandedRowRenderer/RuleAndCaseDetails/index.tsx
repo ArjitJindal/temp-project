@@ -28,18 +28,21 @@ export default function RuleAndCaseDetails(props: Props) {
   const api = useApi();
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
 
-  const queryResults = usePaginatedQuery<Alert>(ALERT_LIST(params), async ({ page }) => {
-    const response = await api.getAlertList({
-      ...params,
-      page: page ?? params.page,
-      filterAction: action ? action : undefined,
-      filterTransactionIds: [transaction.transactionId],
-    });
-    return {
-      items: response.data.map(({ alert }) => alert),
-      total: response.total,
-    };
-  });
+  const queryResults = usePaginatedQuery<Alert>(
+    ALERT_LIST({ action, transactionId: transaction.transactionId, ...params }),
+    async ({ page }) => {
+      const response = await api.getAlertList({
+        ...params,
+        page: page ?? params.page,
+        filterAction: action ? action : undefined,
+        filterTransactionIds: [transaction.transactionId],
+      });
+      return {
+        items: response.data.map(({ alert }) => alert),
+        total: response.total,
+      };
+    },
+  );
   const ruleOptions = useRuleOptions();
 
   return (
