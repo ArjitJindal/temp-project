@@ -47,6 +47,22 @@ const getTestCase = (case_: Partial<Case> = {}): Case => {
   }
 }
 
+const getSpyes = (users: Account[], roles: AccountRole[]) => {
+  jest
+    .spyOn(NotificationsService.prototype as any, 'getAllUsers')
+    .mockReturnValue(users)
+
+  jest
+    .spyOn(NotificationsService.prototype as any, 'getAllRoles')
+    .mockReturnValue(roles)
+
+  jest
+    .spyOn(NotificationsService.prototype as any, 'getRoleById')
+    .mockImplementation((async (roleId: string) => {
+      return roles.find((role) => role.id === roleId) as AccountRole
+    }) as any)
+}
+
 describe('Test notifications service', () => {
   test('should send notification on assignments update', async () => {
     const mongoDb = await getMongoDbClient()
@@ -96,19 +112,7 @@ describe('Test notifications service', () => {
       { id: user2, email: 'user2@test.com', role: 'Admin' } as Account,
     ]
 
-    jest
-      .spyOn(NotificationsService.prototype as any, 'getAllUsers')
-      .mockReturnValue(users)
-
-    jest
-      .spyOn(NotificationsService.prototype as any, 'getAllRoles')
-      .mockReturnValue(roles)
-
-    jest
-      .spyOn(NotificationsService.prototype as any, 'getRoleById')
-      .mockImplementation((async (roleId: string) => {
-        return roles.find((role) => role.id === roleId) as AccountRole
-      }) as any)
+    getSpyes(users, roles)
 
     await casesHandler(event, null as any, null as any)
 
@@ -182,19 +186,7 @@ describe('Test notifications service', () => {
       { id: user2, email: 'user2@test.com', role: 'Some role' } as Account,
     ]
 
-    jest
-      .spyOn(NotificationsService.prototype as any, 'getAllUsers')
-      .mockReturnValue(users)
-
-    jest
-      .spyOn(NotificationsService.prototype as any, 'getAllRoles')
-      .mockReturnValue(roles)
-
-    jest
-      .spyOn(NotificationsService.prototype as any, 'getRoleById')
-      .mockImplementation((async (roleId: string) => {
-        return roles.find((role) => role.id === roleId) as AccountRole
-      }) as any)
+    getSpyes(users, roles)
 
     await casesHandler(event, null as any, null as any)
 
@@ -206,5 +198,77 @@ describe('Test notifications service', () => {
       await notificationsService.getNotificationsByRecipient(user2)
 
     expect(notifications.length).toBe(0)
+  })
+
+  test('Send Unassignment notification', async () => {
+    const mongoDb = await getMongoDbClient()
+    const user = 'USER-1'
+    const user2 = 'USER-2'
+
+    const tenantId = getTestTenantId()
+
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+    })
+
+    const case_ = await caseRepository.addCaseMongo(
+      getTestCase({
+        assignments: [
+          {
+            assigneeUserId: user2,
+            assignedByUserId: user,
+            timestamp: Date.now(),
+          },
+        ],
+      })
+    )
+
+    const event = getApiGatewayPatchEvent(tenantId, '/cases/assignments', {
+      caseIds: [case_?.caseId],
+      assignments: [],
+    })
+
+    const role: AccountRole = {
+      description: 'Admin',
+      id: 'ADMIN',
+      name: 'Admin',
+      permissions: PERMISSIONS,
+    }
+
+    const roles: AccountRole[] = [role]
+
+    getContextMocker.mockReturnValue({
+      tenantId,
+      settings: {
+        notificationsSubscriptions: {
+          console: ['CASE_UNASSIGNMENT'],
+        },
+      },
+      features: ['NOTIFICATIONS'],
+      user: { id: user, role: 'Admin' },
+    })
+
+    const users: Account[] = [
+      { id: user, email: `${user}@test.com`, role: 'Admin' } as Account,
+      { id: user2, email: `${user2}@test.com`, role: 'Admin' } as Account,
+    ]
+
+    getSpyes(users, roles)
+
+    await casesHandler(event, null as any, null as any)
+
+    const notificationsService = new NotificationRepository(tenantId, {
+      mongoDb,
+    })
+
+    const notifications =
+      await notificationsService.getNotificationsByRecipient(user2)
+
+    expect(notifications.length).toBe(1)
+    expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
+      'SENT'
+    )
+    expect(notifications[0]?.notificationType).toBe('CASE_UNASSIGNMENT')
+    expect(notifications[0]?.recievers).toContain(user2)
   })
 })

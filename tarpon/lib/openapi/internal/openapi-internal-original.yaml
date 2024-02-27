@@ -10863,6 +10863,8 @@ components:
       enum:
         - CASE_ASSIGNMENT
         - ALERT_ASSIGNMENT
+        - CASE_UNASSIGNMENT
+        - ALERT_UNASSIGNMENT
     NotificationChannels:
       title: NotificationChannels
       type: string

@@ -53,3 +53,45 @@ export const getAssignmentNotification = (
 
   return notification
 }
+
+export const getUnassignmentNotification = (
+  payload: NotificationRawPayload<
+    AuditLogAssignmentsImage,
+    AlertLogMetaDataType | CaseLogMetaDataType
+  >,
+  type: 'ALERT' | 'CASE'
+): PartialNotification | undefined => {
+  const { newImage, oldImage } = payload
+
+  const newAssignments = newImage?.assignments || []
+  const oldAssignments = oldImage?.assignments || []
+
+  const newAssignmentIds = newAssignments.map(
+    (assignment) => assignment.assigneeUserId
+  )
+
+  const removedAssignments = oldAssignments.filter(
+    (assignment) => !newAssignmentIds.includes(assignment.assigneeUserId)
+  )
+
+  if (removedAssignments.length === 0) {
+    return
+  }
+
+  const notification: Omit<Notification, 'notificationChannel' | 'id'> = {
+    notificationType: `${type}_UNASSIGNMENT`,
+    createdAt: Date.now(),
+    entityId: payload.entityId,
+    triggeredBy: payload.user?.id ?? FLAGRIGHT_SYSTEM_USER,
+    entityType: type,
+    recievers: removedAssignments.map(
+      (assignment) => assignment.assigneeUserId
+    ),
+    notificationData: {
+      type: 'ASSIGNMENT',
+      assignments: removedAssignments,
+    },
+  }
+
+  return notification
+}

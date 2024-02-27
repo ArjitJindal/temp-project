@@ -7,6 +7,10 @@ import { NotificationsChannels } from './notifications-channels'
 import { ConsoleNotifications } from './console-notifications'
 import { NotificationRepository } from './notifications-repository'
 import { AlertAssignees } from './subscriptions/alert-assignment'
+import { CaseAssignees } from './subscriptions/case-assignments'
+import { Subscriptions } from './subscriptions'
+import { CaseUnassignment } from './subscriptions/case-unassignment'
+import { AlertUnassignment } from './subscriptions/alert-unassignment'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
@@ -83,7 +87,12 @@ export class NotificationsService {
   ): Promise<PartialNotification[]> {
     const notifications: PartialNotification[] = []
 
-    const subscriptions = [new AlertAssignees()]
+    const subscriptions: Subscriptions[] = [
+      new AlertAssignees(),
+      new CaseAssignees(),
+      new CaseUnassignment(),
+      new AlertUnassignment(),
+    ]
 
     for (const subscription of subscriptions) {
       if (await subscription.toSend(payload)) {
@@ -112,6 +121,8 @@ export class NotificationsService {
       {
         ALERT_ASSIGNMENT: ['case-management:case-overview:read'],
         CASE_ASSIGNMENT: ['case-management:case-overview:read'],
+        CASE_UNASSIGNMENT: ['case-management:case-overview:read'],
+        ALERT_UNASSIGNMENT: ['case-management:case-overview:read'],
       }
 
     const [allUsers, allRoles] = await Promise.all([
