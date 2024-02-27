@@ -743,7 +743,7 @@ export class CaseService extends CaseAlertsCommonService {
   public async escalateCase(
     caseId: string,
     caseUpdateRequest: CaseEscalationsUpdateRequest
-  ): Promise<{ assigneeIds: string[] }> {
+  ): Promise<{ assigneeIds: string[]; oldCase: Case }> {
     const context = getContext()
     const accountsService = new AccountsService(
       {
@@ -800,6 +800,7 @@ export class CaseService extends CaseAlertsCommonService {
 
     return {
       assigneeIds: reviewAssignments.map((v) => v.assigneeUserId),
+      oldCase: case_,
     }
   }
 

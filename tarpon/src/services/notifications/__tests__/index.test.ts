@@ -1,7 +1,10 @@
 import { NotificationRepository } from '../notifications-repository'
 import { casesHandler } from '@/lambdas/console-api-case/app'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
-import { getApiGatewayPatchEvent } from '@/test-utils/apigateway-test-utils'
+import {
+  getApiGatewayPatchEvent,
+  getApiGatewayPostEvent,
+} from '@/test-utils/apigateway-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -12,9 +15,11 @@ import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { Case } from '@/@types/openapi-internal/Case'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
+import { AccountsService } from '@/services/accounts'
 
 dynamoDbSetupHook()
-withFeatureHook(['NOTIFICATIONS'])
+withFeatureHook(['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'])
 
 const getContextMocker = jest.spyOn(Context, 'getContext')
 
@@ -61,6 +66,16 @@ const getSpyes = (users: Account[], roles: AccountRole[]) => {
     .mockImplementation((async (roleId: string) => {
       return roles.find((role) => role.id === roleId) as AccountRole
     }) as any)
+
+  jest
+    .spyOn(AccountsService.prototype, 'getAllActiveAccounts')
+    .mockReturnValue(Promise.resolve(users))
+
+  jest
+    .spyOn(AccountsService.prototype, 'getAccount')
+    .mockImplementation(async (userId: string) => {
+      return users.find((user) => user.id === userId) as Account
+    })
 }
 
 describe('Test notifications service', () => {
@@ -270,5 +285,218 @@ describe('Test notifications service', () => {
     )
     expect(notifications[0]?.notificationType).toBe('CASE_UNASSIGNMENT')
     expect(notifications[0]?.recievers).toContain(user2)
+  })
+
+  test('Send Case Escalation notification', async () => {
+    const mongoDb = await getMongoDbClient()
+    const user = 'USER-1'
+    const user2 = 'USER-2'
+
+    const tenantId = getTestTenantId()
+
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+    })
+
+    const case_ = await caseRepository.addCaseMongo(
+      getTestCase({
+        caseStatus: 'OPEN',
+      })
+    )
+
+    const requestBody: CaseEscalationRequest = {
+      caseUpdateRequest: {
+        reason: ['False positive'],
+        comment: 'Escalating case',
+        caseStatus: 'ESCALATED',
+      },
+    }
+
+    const event = getApiGatewayPostEvent(
+      tenantId,
+      `/cases/{caseId}/escalate`,
+      requestBody,
+      {
+        pathParameters: {
+          caseId: case_?.caseId as string,
+        },
+      }
+    )
+
+    const role: AccountRole = {
+      description: 'Admin',
+      id: 'ADMIN',
+      name: 'Admin',
+      permissions: PERMISSIONS,
+    }
+
+    const roles: AccountRole[] = [role]
+
+    const users: Account[] = [
+      {
+        id: user,
+        email: `${user}@test.com`,
+        role: 'Admin',
+        isEscalationContact: false,
+      } as Account,
+      {
+        id: user2,
+        email: `${user2}@test.com`,
+        role: 'Admin',
+        isEscalationContact: true,
+      } as Account,
+    ]
+
+    getContextMocker.mockReturnValue({
+      tenantId,
+      settings: {
+        notificationsSubscriptions: {
+          console: ['CASE_ESCALATION'],
+        },
+      },
+      features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
+      user: users[0],
+    })
+
+    getSpyes(users, roles)
+
+    await casesHandler(event, null as any, null as any)
+
+    const case_1 = await caseRepository.getCaseById(case_?.caseId as string)
+    const notificationsService = new NotificationRepository(tenantId, {
+      mongoDb,
+    })
+
+    const notifications =
+      await notificationsService.getNotificationsByRecipient(user2)
+
+    expect(notifications.length).toBe(1)
+    expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
+      'SENT'
+    )
+    expect(notifications[0]?.notificationType).toBe('CASE_ESCALATION')
+    expect(notifications[0]?.recievers).toContain(user2)
+    expect(case_1?.caseStatus).toBe('ESCALATED')
+  })
+
+  test('Send Alert Escalation notification', async () => {
+    const mongoDb = await getMongoDbClient()
+    const user = 'USER-1'
+    const user2 = 'USER-2'
+
+    const tenantId = getTestTenantId()
+
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+    })
+
+    const case_ = await caseRepository.addCaseMongo(
+      getTestCase({
+        caseStatus: 'OPEN',
+        alerts: [
+          {
+            alertId: `A-${Date.now()}`,
+            alertStatus: 'OPEN',
+            assignments: [],
+            createdTimestamp: Date.now(),
+            numberOfTransactionsHit: 0,
+            priority: 'P1',
+            ruleAction: 'ALLOW',
+            ruleDescription: 'Test rule',
+            ruleInstanceId: `R-${Date.now()}`,
+            ruleName: 'Test rule',
+            transactionIds: ['T-1', 'T-2', 'T-3'],
+          },
+        ],
+      })
+    )
+
+    const requestBody = {
+      caseUpdateRequest: {
+        reason: ['Anti-money laundering'],
+        comment: 'Test',
+        files: [],
+      },
+      alertEscalations: [
+        {
+          alertId: case_?.alerts?.[0]?.alertId,
+          transactionIds: ['T-1', 'T-2'],
+        },
+      ],
+      closeSourceCase: false,
+    }
+
+    const event = getApiGatewayPostEvent(
+      tenantId,
+      `/cases/{caseId}/escalate`,
+      requestBody,
+      {
+        pathParameters: {
+          caseId: case_?.caseId as string,
+        },
+      }
+    )
+
+    const role: AccountRole = {
+      description: 'Admin',
+      id: 'ADMIN',
+      name: 'Admin',
+      permissions: PERMISSIONS,
+    }
+
+    const roles: AccountRole[] = [role]
+
+    const users: Account[] = [
+      {
+        id: user,
+        email: `${user}@test.com`,
+        isEscalationContact: false,
+        role: 'Admin',
+      } as Account,
+      {
+        id: user2,
+        email: `${user2}@test.com`,
+        isEscalationContact: true,
+        role: 'Admin',
+      } as Account,
+    ]
+
+    getContextMocker.mockReturnValue({
+      tenantId,
+      settings: {
+        notificationsSubscriptions: {
+          console: ['ALERT_ESCALATION'],
+        },
+      },
+      features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
+      user: users[0],
+    })
+
+    getSpyes(users, roles)
+
+    await casesHandler(event, null as any, null as any)
+
+    const case_1 = await caseRepository.getCaseById(`${case_?.caseId}.1`)
+    const notificationsService = new NotificationRepository(tenantId, {
+      mongoDb,
+    })
+
+    const notifications =
+      await notificationsService.getNotificationsByRecipient(user2)
+
+    expect(notifications.length).toBe(1)
+    expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
+      'SENT'
+    )
+    expect(notifications[0]?.notificationType).toBe('ALERT_ESCALATION')
+    expect(notifications[0]?.recievers).toContain(user2)
+    expect(case_1?.caseStatus).toBe('ESCALATED')
+    expect(case_1?.alerts?.[0]?.alertStatus).toBe('ESCALATED')
+
+    const originalCase = await caseRepository.getCaseById(
+      case_?.caseId as string
+    )
+
+    expect(originalCase?.caseStatus).toBe('OPEN')
   })
 })

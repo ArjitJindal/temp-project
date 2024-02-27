@@ -1,6 +1,8 @@
+import { AlertStatusUpdateRequest } from '../openapi-internal/AlertStatusUpdateRequest'
 import { Assignment } from '../openapi-internal/Assignment'
 import { AuditLog } from '../openapi-internal/AuditLog'
 import { CaseStatus } from '../openapi-internal/CaseStatus'
+import { CaseStatusUpdate } from '../openapi-internal/CaseStatusUpdate'
 import { Priority } from '../openapi-internal/Priority'
 
 export type AuditLogRecord = {
@@ -24,4 +26,15 @@ export type AlertLogMetaDataType = {
 
 export type AuditLogAssignmentsImage = {
   assignments?: Assignment[]
+}
+
+export interface CaseEscalationAuditLogImage extends Partial<CaseStatusUpdate> {
+  reviewAssignments?: Assignment[]
+  updatedTransactions?: string[]
+}
+
+export interface AlertEscalationAuditLogImage
+  extends Partial<AlertStatusUpdateRequest> {
+  reviewAssignments?: Assignment[]
+  updatedTransactions?: string[]
 }

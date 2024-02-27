@@ -7,6 +7,7 @@ import {
   NotificationRawPayload,
   PartialNotification,
 } from '@/@types/notifications'
+import { AssignmentNotification } from '@/@types/openapi-internal/AssignmentNotification'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 
@@ -16,7 +17,7 @@ export const getAssignmentNotification = (
     AlertLogMetaDataType | CaseLogMetaDataType
   >,
   type: 'ALERT' | 'CASE'
-): PartialNotification | undefined => {
+): PartialNotification<AssignmentNotification> | undefined => {
   const { newImage, oldImage } = payload
 
   const newAssignments = newImage?.assignments || []
@@ -60,7 +61,7 @@ export const getUnassignmentNotification = (
     AlertLogMetaDataType | CaseLogMetaDataType
   >,
   type: 'ALERT' | 'CASE'
-): PartialNotification | undefined => {
+): PartialNotification<AssignmentNotification> | undefined => {
   const { newImage, oldImage } = payload
 
   const newAssignments = newImage?.assignments || []

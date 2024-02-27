@@ -166,7 +166,8 @@ export const casesHandler = lambdaApi()(
       await caseService.updateCasesReviewAssignments(caseIds, reviewAssignments)
       return await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
         caseIds,
-        { reviewAssignments }
+        { reviewAssignments },
+        'REVIEW_ASSIGNMENT'
       )
     })
 
@@ -365,7 +366,7 @@ export const casesHandler = lambdaApi()(
         !escalationRequest.alertEscalations ||
         escalationRequest.alertEscalations.length === 0
       ) {
-        const { assigneeIds } = await caseService.escalateCase(
+        const { assigneeIds, oldCase } = await caseService.escalateCase(
           caseId,
           escalationRequest.caseUpdateRequest
         )
@@ -373,14 +374,10 @@ export const casesHandler = lambdaApi()(
           childCaseId: undefined,
           assigneeIds,
         }
-        const caseItem = await caseService.getCase(caseId)
         await casesAlertsAuditLogService.handleAuditLogForCaseEscalation(
-          [caseId],
-          {
-            reason: escalationRequest.caseUpdateRequest.reason,
-            caseStatus: caseItem.caseStatus,
-          },
-          'STATUS_CHANGE'
+          caseId,
+          escalationRequest.caseUpdateRequest,
+          oldCase
         )
         return response
       } else if (escalationRequest.alertEscalations) {

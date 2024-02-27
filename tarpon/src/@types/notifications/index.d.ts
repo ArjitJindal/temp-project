@@ -1,4 +1,6 @@
+import { AssignmentNotification } from '../openapi-internal/AssignmentNotification'
 import { AuditLog } from '../openapi-internal/AuditLog'
+import { EscalationNotification } from '../openapi-internal/EscalationNotification'
 import { Notification } from '../openapi-internal/Notification'
 
 export interface NotificationRawPayload<I = object, M = object>
@@ -9,5 +11,11 @@ export interface NotificationRawPayload<I = object, M = object>
   entityId: string
 }
 
-export interface PartialNotification
-  extends Omit<Notification, 'notificationChannel' | 'id'> {}
+export type NotificationData = AssignmentNotification | EscalationNotification
+export interface PartialNotification<T extends NotificationData = object>
+  extends Omit<
+    Notification,
+    'notificationChannel' | 'id' | 'notificationData'
+  > {
+  notificationData: T
+}

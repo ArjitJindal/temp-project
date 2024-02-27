@@ -478,35 +478,35 @@ export class AlertsService extends CaseAlertsCommonService {
       caseStatus: newCase.caseStatus,
     })
 
-    const assigneeIds = reviewAssignments
-      .map((v) => v.assigneeUserId)
-      .filter(Boolean)
-
     const updatedTransactions =
       alertEscalations?.flatMap((item) => item.transactionIds ?? []) ?? []
 
     if (childCaseId) {
       await this.auditLogService.handleAuditLogForCaseEscalation(
-        [caseId],
+        caseId,
         {
           ...caseUpdateRequest,
-          caseStatus: 'ESCALATED',
-          alertCaseId: childCaseId,
-          updatedAlertIds: alertIds,
+          reason: caseUpdateRequest?.reason ?? [],
+          updatedTransactions,
         },
-        'STATUS_CHANGE'
+        c
       )
     }
     await this.auditLogService.handleAuditLogForAlertsEscalation(
       alertIds,
       {
         ...caseUpdateRequest,
-        alertStatus: 'ESCALATED',
         alertCaseId: childCaseId,
         updatedTransactions,
+        reason: caseUpdateRequest?.reason ?? [],
+        reviewAssignments,
       },
-      'STATUS_CHANGE'
+      c
     )
+
+    const assigneeIds = reviewAssignments
+      .map((v) => v.assigneeUserId)
+      .filter(Boolean)
 
     return { childCaseId, assigneeIds }
   }

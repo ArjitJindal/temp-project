@@ -11,6 +11,8 @@ import { CaseAssignees } from './subscriptions/case-assignments'
 import { Subscriptions } from './subscriptions'
 import { CaseUnassignment } from './subscriptions/case-unassignment'
 import { AlertUnassignment } from './subscriptions/alert-unassignment'
+import { CaseEscalation } from './subscriptions/case-escalation'
+import { AlertEscalations } from './subscriptions/alert-escalation'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
@@ -92,6 +94,8 @@ export class NotificationsService {
       new CaseAssignees(),
       new CaseUnassignment(),
       new AlertUnassignment(),
+      new CaseEscalation(),
+      new AlertEscalations(),
     ]
 
     for (const subscription of subscriptions) {
@@ -123,6 +127,8 @@ export class NotificationsService {
         CASE_ASSIGNMENT: ['case-management:case-overview:read'],
         CASE_UNASSIGNMENT: ['case-management:case-overview:read'],
         ALERT_UNASSIGNMENT: ['case-management:case-overview:read'],
+        CASE_ESCALATION: ['case-management:case-overview:read'],
+        ALERT_ESCALATION: ['case-management:case-overview:read'],
       }
 
     const [allUsers, allRoles] = await Promise.all([
