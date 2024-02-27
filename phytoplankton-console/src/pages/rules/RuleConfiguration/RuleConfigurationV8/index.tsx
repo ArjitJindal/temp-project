@@ -120,7 +120,8 @@ export default function RuleConfigurationV8(props: Props) {
             Next
           </Button>
         )}
-        {(!readOnly || ['CREATE', 'DUPLICATE'].includes(type)) &&
+        {type !== 'READ' &&
+          (!readOnly || ['CREATE', 'DUPLICATE'].includes(type)) &&
           activeStepIndex === STEPS.length - 1 && (
             <>
               {isValuesSame && ['DUPLICATE'].includes(type) ? (

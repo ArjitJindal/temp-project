@@ -45,31 +45,18 @@ export default function RulesItemPage() {
     return rule;
   });
 
-  const formMode: Mode = useMemo((): Mode => {
-    if (mode === 'edit') {
-      return 'EDIT';
-    }
-    if (mode === 'create') {
-      return 'CREATE';
-    }
-    if (mode === 'duplicate') {
-      return 'DUPLICATE';
-    }
-    return 'READ';
-  }, [mode]);
-
   return (
     <AsyncResourceRenderer resource={ruleInstanceResult.data}>
       {(ruleInstance) => (
         <AsyncResourceRenderer resource={ruleResult.data}>
-          {(rule) => <Content rule={rule} ruleInstance={ruleInstance} mode={formMode} />}
+          {(rule) => <Content rule={rule} ruleInstance={ruleInstance} mode={mode} />}
         </AsyncResourceRenderer>
       )}
     </AsyncResourceRenderer>
   );
 }
 
-function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: Mode }) {
+function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: string }) {
   const { rule, ruleInstance, mode } = props;
   const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
   const navigate = useNavigate();
@@ -85,6 +72,18 @@ function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: M
     title = ruleInstanceTitle;
   }
   title = title.replace('Copy of ', '');
+  const formType: Mode = useMemo((): Mode => {
+    if (mode === 'edit') {
+      return 'EDIT';
+    }
+    if (mode === 'create') {
+      return 'CREATE';
+    }
+    if (mode === 'duplicate') {
+      return 'DUPLICATE';
+    }
+    return 'READ';
+  }, [mode]);
   return (
     <RulesPageWrapper
       breadcrumbs={[
@@ -106,7 +105,7 @@ function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: M
         isSimulation={isSimulationEnabled}
         rule={rule ?? undefined}
         ruleInstance={ruleInstance}
-        type={mode}
+        type={formType}
         onRuleInstanceUpdated={() => {
           navigate(makeUrl(`/rules/my-rules`));
         }}
