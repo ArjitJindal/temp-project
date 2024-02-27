@@ -140,17 +140,25 @@ export class RuleService {
     await this.ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
   }
 
-  async getAllRules(): Promise<Array<Rule>> {
-    const rulesPromise = this.ruleRepository.getAllRules()
-
+  private async replaceDefaultCurrency(rule: Rule): Promise<Rule> {
     const settings = await tenantSettings(this.ruleInstanceRepository.tenantId)
-
-    const rules = replaceMagicKeyword(
-      await rulesPromise,
+    return replaceMagicKeyword(
+      rule,
       DEFAULT_CURRENCY_KEYWORD,
       settings?.defaultValues?.currency ?? 'USD'
-    ) as Array<Rule>
+    ) as Rule
+  }
 
+  async getRuleById(ruleId: string): Promise<Rule | null> {
+    const rule = await this.ruleRepository.getRuleById(ruleId)
+    return rule ? this.replaceDefaultCurrency(rule) : null
+  }
+
+  async getAllRules(): Promise<Array<Rule>> {
+    let rules = await this.ruleRepository.getAllRules()
+    rules = await Promise.all(
+      rules.map((rule) => this.replaceDefaultCurrency(rule))
+    )
     return rules.filter(
       (rule) =>
         isEmpty(rule.requiredFeatures) ||

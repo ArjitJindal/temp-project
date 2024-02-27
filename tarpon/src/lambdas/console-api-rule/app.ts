@@ -46,9 +46,8 @@ export const ruleHandler = lambdaApi()(
 
     handlers.registerGetRules(async () => await ruleService.getAllRules())
 
-    handlers.registerGetRule(async (ctx, request) => {
-      const rule = await ruleRepository.getRuleById(request.ruleId)
-      return rule ?? null
+    handlers.registerGetRule(async (_ctx, request) => {
+      return (await ruleService.getRuleById(request.ruleId)) ?? null
     })
 
     handlers.registerGetRuleFilters(async () => {
