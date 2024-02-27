@@ -178,7 +178,6 @@ class DatabricksStack extends TerraformStack {
   private workspace({
     profileRoleName,
     workspaceProvider,
-    workspace,
   }: {
     workspaceProvider: databricks.provider.DatabricksProvider
     profileRoleName: string
