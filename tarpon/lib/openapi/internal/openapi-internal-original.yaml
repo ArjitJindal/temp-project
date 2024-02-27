@@ -5265,7 +5265,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QuestionResponse'
+                $ref: '#/components/schemas/GetQuestionsResponse'
       operationId: post-question
       x-flagright:
         permissions:
@@ -5302,7 +5302,7 @@ components:
       title: QuestionRequest
       type: object
       properties:
-        questionId:
+        question:
           type: string
         variables:
           type: array

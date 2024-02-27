@@ -39,7 +39,7 @@ export default function InvestigativeCoPilot(props: Props) {
     });
   });
 
-  const historyRes = map(historyQuery.data, ({ data }) => (data ?? []).map(parseQuestionResponse));
+  const historyRes = map(historyQuery.data, parseQuestionResponse);
   const isHistoryLoaded = useFinishedSuccessfully(historyRes);
   useEffect(() => {
     if (isHistoryLoaded && isSuccess(historyRes)) {
@@ -47,11 +47,11 @@ export default function InvestigativeCoPilot(props: Props) {
     }
   }, [historyRes, isHistoryLoaded]);
 
-  const mutation = useMutation<QuestionResponse, unknown, FormValues>(
+  const mutation = useMutation<QuestionResponse[], unknown, FormValues>(
     async ({ searchString }) => {
       const response = await api.postQuestion({
         QuestionRequest: {
-          questionId: searchString,
+          question: searchString,
           variables: Object.entries(DEFAULT_PARAMS_STATE)
             .filter(([_, value]) => value != null)
             .map(([name, value]) => ({ name, value })),
@@ -62,7 +62,7 @@ export default function InvestigativeCoPilot(props: Props) {
     },
     {
       onSuccess: (data) => {
-        setHistory((prevState) => [...prevState, data]);
+        setHistory((prevState) => [...prevState, ...data]);
       },
       onError: (error) => {
         message.error(getErrorMessage(error));

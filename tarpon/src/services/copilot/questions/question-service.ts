@@ -75,12 +75,12 @@ export class QuestionService {
     if (!a.alertId) {
       throw new Error('No alert ID')
     }
+    const question = getQuestions().find((q) => q.questionId == questionId)
+    if (!question) {
+      throw new Error('No question')
+    }
 
-    const varObject = vars.reduce<Variables>((acc, v) => {
-      acc[v.name] = v.value
-      return acc
-    }, {})
-
+    const varObject = this.prepareVariables(question, vars)
     const answer = await this.answer(questionId, varObject, c, a)
     if (answer) {
       const questionResponse = {
@@ -96,6 +96,45 @@ export class QuestionService {
       return questionResponse
     }
     throw new Error(`Unsupported question type`)
+  }
+
+  async answerQuestionFromString(
+    createdById: string,
+    questionString: string,
+    vars: QuestionVariable[],
+    c: Case,
+    a: Alert
+  ): Promise<GetQuestionsResponse> {
+    const question = getQuestions().find(
+      (qt) => qt.questionId === questionString
+    )
+    if (question) {
+      const answer = await this.addQuestion(
+        createdById,
+        questionString,
+        vars,
+        c,
+        a
+      )
+      return {
+        data: [answer],
+      }
+    }
+
+    const questions = await this.gpt(questionString)
+    return {
+      data: await Promise.all(
+        questions.map(async (question) => {
+          return await this.addQuestion(
+            createdById,
+            question.questionId,
+            question.variables,
+            c,
+            a
+          )
+        })
+      ),
+    }
   }
 
   async getQuestions(alert: Alert, c: Case): Promise<GetQuestionsResponse> {
@@ -150,15 +189,7 @@ export class QuestionService {
     }
 
     const questions = getQuestions()
-    let question = questions.find((qt) => qt.questionId === questionId)
-    if (!question) {
-      const { questionId: gptQuestionId, variables } = await this.gpt(
-        ctx,
-        questionId
-      )
-      varObject = variables
-      question = questions.find((qt) => qt.questionId === gptQuestionId)
-    }
+    const question = questions.find((qt) => qt.questionId === questionId)
     if (!question) {
       throw new Error('Could not result question')
     }
@@ -293,7 +324,7 @@ export class QuestionService {
     throw new Error(`Unsupported question type`)
   }
 
-  private async gpt(ctx: InvestigationContext, questionPrompt: string) {
+  private async gpt(questionPrompt: string) {
     try {
       const response = await prompt([
         {
@@ -301,74 +332,82 @@ export class QuestionService {
           content: `You are a machine with the following available "questions" with their corresponding "variables": ${JSON.stringify(
             getQueries()
           )}
-            You will be asked a to provide a single "questionId" and it's corresponding "variables" based on user input. You will communicate datetimes in the following format ${new Date().toISOString()}. You must reply with valid, iterable RFC8259 compliant JSON in your responses with the following structure as defined in typescript:
-{
-  questionId: string,
-  variables: {
-    [key: string]: string | number
-  }
-}`,
+            You will be asked a to provide an array of questionId's and their corresponding "variables" based on user input.`,
         },
         {
           role: 'system',
-          content: `Today's date is ${new Date().toISOString()}.`,
+          content: `Today's date is ${new Date().toISOString()}. You will communicate datetimes in the following format ${new Date().toISOString()}.`,
+        },
+        {
+          role: 'system',
+          content: `You must reply with valid, iterable RFC8259 compliant JSON in your responses with the following structure as defined in typescript:
+{
+  questionId: string,
+  variables: { name: string, value: any }[]
+}[]`,
         },
         {
           role: 'assistant',
           content: `Please parse "${questionPrompt}" to give the best matching questionId and variables.`,
         },
       ])
-      const formattedResponse = response.split('\n')
-      formattedResponse.shift()
-      formattedResponse.pop()
-      const result = JSON.parse(formattedResponse.join('\n'))
-      const questions = getQuestions()
-      const question = questions.find((q) => q.questionId === result.questionId)
-
-      // Workaround in case GPT sets variable type as the value.
-      Object.entries(result.variables).map(([key, value]) => {
-        // TODO make an enum type for this.
-        if (
-          typeof value === 'string' &&
-          ['DATE', 'DATETIME', 'STRING', 'INTEGER', 'FLOAT'].indexOf(value) > -1
-        ) {
-          delete result.variables[key]
-        }
-      })
-
-      // Workaround for GPT setting from/to dates to the same value
-      if (
-        result.variables['from'] === result.variables['to'] &&
-        typeof result.variables['from'] === 'string' &&
-        result.variables['from'].length > 0
-      ) {
-        result.variables['from'] = dayjs(result.variables['to'] as number)
-          .subtract(1, 'day')
-          .format('YYYY-MM-DD')
+      const results: {
+        questionId: string
+        variables: QuestionVariable[]
+      }[] = JSON.parse(response.replace('```json', '').replace('```', ''))
+      if (!Array.isArray(results) || results.length === 0) {
+        throw new BadRequest('AI could not understand this query')
       }
-
-      // Parse datetime variables
-      if (question?.variableOptions) {
-        Object.entries(question.variableOptions).map(([key, type]) => {
-          if (type === 'DATETIME' || type === 'DATE') {
-            if (key in result.variables) {
-              if (isIsoDate(result.variables[key])) {
-                result.variables[key] = new Date(
-                  result.variables[key] as number
-                ).valueOf()
-              } else {
-                delete result.variables[key]
-              }
-            }
-          }
-        })
-      }
-
-      return result
+      return results
     } catch (e) {
       logger.error(e)
       throw new BadRequest('AI could not understand this query')
     }
+  }
+
+  private prepareVariables(question: Question<any>, vars: Variables) {
+    const varObject = vars.reduce((acc, v) => {
+      acc[v.name] = v.value
+      return acc
+    }, {})
+
+    // Workaround in case GPT sets variable type as the value.
+    Object.entries(varObject).map(([key, value]) => {
+      // TODO make an enum type for this.
+      if (
+        typeof value === 'string' &&
+        ['DATE', 'DATETIME', 'STRING', 'INTEGER', 'FLOAT'].indexOf(value) > -1
+      ) {
+        delete varObject[key]
+      }
+    })
+
+    // Workaround for GPT setting from/to dates to the same value
+    if (
+      varObject['from'] === varObject['to'] &&
+      typeof varObject['from'] === 'string' &&
+      varObject['from'].length > 0
+    ) {
+      varObject['from'] = dayjs(varObject['to'] as number)
+        .subtract(1, 'day')
+        .format('YYYY-MM-DD')
+    }
+
+    // Parse datetime variables
+    if (question?.variableOptions) {
+      Object.entries(question.variableOptions).map(([key, type]) => {
+        if (type === 'DATETIME' || type === 'DATE') {
+          if (key in varObject) {
+            if (isIsoDate(varObject[key])) {
+              varObject[key] = new Date(varObject[key] as number).valueOf()
+            } else {
+              delete varObject[key]
+            }
+          }
+        }
+      })
+    }
+    return varObject
   }
 
   async autocompleteVariable(

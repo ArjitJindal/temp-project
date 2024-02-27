@@ -40,15 +40,15 @@ export default function HistoryItem(props: Props) {
         throw new Error(`Question id is not defined`);
       }
       const response = await api.postQuestion({
-        alertId: alertId,
+        alertId,
         QuestionRequest: {
-          questionId,
+          question: questionId,
           variables: Object.entries(variables)
             .filter(([_, value]) => value != null)
             .map(([name, value]) => ({ name, value })),
         },
       });
-      return parseQuestionResponse(response);
+      return parseQuestionResponse(response)[0];
     },
     {
       onSuccess: (data) => {

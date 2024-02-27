@@ -44,43 +44,47 @@ export type QuestionResponse =
   | QuestionResponseProperties
   | QuestionResponseEmbedded;
 
-export function parseQuestionResponse(response: Api.QuestionResponse): QuestionResponse {
-  const { questionType, ...rest } = response;
-  if (questionType === 'TABLE') {
-    return {
-      questionType: 'TABLE' as const,
-      ...rest,
-    };
-  }
-  if (questionType === 'TIME_SERIES') {
-    return {
-      questionType: 'TIME_SERIES' as const,
-      ...rest,
-    };
-  }
-  if (questionType === 'STACKED_BARCHART') {
-    return {
-      questionType: 'STACKED_BARCHART' as const,
-      ...rest,
-    };
-  }
-  if (questionType === 'PROPERTIES') {
-    return {
-      questionType: 'PROPERTIES' as const,
-      ...rest,
-    };
-  }
-  if (questionType === 'BARCHART') {
-    return {
-      questionType: 'BARCHART' as const,
-      ...rest,
-    };
-  }
-  if (questionType === 'EMBEDDED') {
-    return {
-      questionType: 'EMBEDDED' as const,
-      ...rest,
-    };
-  }
-  throw new Error(`Not able to parse response. Unsupported question type: "${questionType}"`);
+export function parseQuestionResponse(responses: Api.GetQuestionsResponse): QuestionResponse[] {
+  return (
+    responses.data?.map((response) => {
+      const { questionType, ...rest } = response;
+      if (questionType === 'TABLE') {
+        return {
+          questionType: 'TABLE' as const,
+          ...rest,
+        };
+      }
+      if (questionType === 'TIME_SERIES') {
+        return {
+          questionType: 'TIME_SERIES' as const,
+          ...rest,
+        };
+      }
+      if (questionType === 'STACKED_BARCHART') {
+        return {
+          questionType: 'STACKED_BARCHART' as const,
+          ...rest,
+        };
+      }
+      if (questionType === 'PROPERTIES') {
+        return {
+          questionType: 'PROPERTIES' as const,
+          ...rest,
+        };
+      }
+      if (questionType === 'BARCHART') {
+        return {
+          questionType: 'BARCHART' as const,
+          ...rest,
+        };
+      }
+      if (questionType === 'EMBEDDED') {
+        return {
+          questionType: 'EMBEDDED' as const,
+          ...rest,
+        };
+      }
+      throw new Error(`Not able to parse response. Unsupported question type: "${questionType}"`);
+    }) || []
+  );
 }
