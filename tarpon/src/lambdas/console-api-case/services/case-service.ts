@@ -639,6 +639,39 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
+  public async saveCommentReply(
+    caseId: string,
+    commentId: string,
+    reply: Comment
+  ) {
+    const caseEntity = await this.caseRepository.getCaseById(caseId)
+
+    if (!caseEntity) {
+      throw new createError.NotFound(`Case ${caseId} not found`)
+    }
+
+    const comment = caseEntity?.comments?.find(
+      (comment) => comment.id === commentId
+    )
+
+    if (!comment) {
+      throw new createError.NotFound(`Comment ${commentId} not found`)
+    }
+
+    const files = await this.copyFiles(reply.files ?? [])
+
+    const savedReply = await this.caseRepository.saveCasesComment([caseId], {
+      ...reply,
+      files,
+      parentId: commentId,
+    })
+
+    return {
+      ...savedReply,
+      files: await this.getUpdatedFiles(savedReply.files),
+    }
+  }
+
   private async saveCasesComment(caseIds: string[], comment: Comment) {
     const files = await this.copyFiles(comment.files ?? [])
 

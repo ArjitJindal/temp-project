@@ -14,7 +14,6 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-
 import { get, isEmpty, set } from 'lodash'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { User } from '@/@types/openapi-public/User'
@@ -880,23 +879,19 @@ export class UserRepository {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     }
-    await collection.updateOne(
+    await collection.updateOne({ userId }, [
       {
-        userId,
-      },
-      [
-        {
-          $set: {
-            comments: {
-              $ifNull: [
-                { $concatArrays: ['$comments', [commentToSave]] },
-                [commentToSave],
-              ],
-            },
+        $set: {
+          comments: {
+            $ifNull: [
+              { $concatArrays: ['$comments', [commentToSave]] },
+              [commentToSave],
+            ],
           },
         },
-      ]
-    )
+      },
+    ])
+
     return commentToSave
   }
 

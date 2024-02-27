@@ -535,6 +535,37 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
+  public async saveAlertCommentReply(
+    alertId: string,
+    commentId: string,
+    reply: Comment
+  ): Promise<Comment> {
+    const alert = await this.alertsRepository.getAlertById(alertId)
+
+    if (alert == null) {
+      throw new NotFound(`"${alertId}" alert not found`)
+    }
+
+    const comment = alert.comments?.find((c) => c.id === commentId)
+
+    if (comment == null) {
+      throw new NotFound(`"${commentId}" comment not found`)
+    }
+
+    const files = await this.copyFiles(reply.files || [])
+
+    const savedComment = await this.alertsRepository.saveAlertsComment(
+      [alertId],
+      [alert.caseId!],
+      { ...reply, files, parentId: commentId }
+    )
+
+    return {
+      ...savedComment,
+      files: await this.getUpdatedFiles(savedComment.files),
+    }
+  }
+
   private async saveAlertsComment(
     alertIds: string[],
     caseIds: string[],

@@ -617,29 +617,12 @@ export class AlertsRepository {
     }
 
     await collection.updateMany(
+      { caseId: { $in: caseIds } },
       {
-        caseId: {
-          $in: caseIds,
-        },
+        $push: { 'alerts.$[alert].comments': commentToSave },
+        $set: { updatedAt: now, 'alerts.$[alert].updatedAt': now },
       },
-      {
-        $push: {
-          'alerts.$[alert].comments': commentToSave,
-        },
-        $set: {
-          updatedAt: now,
-          'alerts.$[alert].updatedAt': now,
-        },
-      },
-      {
-        arrayFilters: [
-          {
-            'alert.alertId': {
-              $in: alertIds,
-            },
-          },
-        ],
-      }
+      { arrayFilters: [{ 'alert.alertId': { $in: alertIds } }] }
     )
 
     return commentToSave

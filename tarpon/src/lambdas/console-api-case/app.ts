@@ -397,6 +397,40 @@ export const casesHandler = lambdaApi()(
       throw new BadRequest('Invalid request of escalation')
     })
 
+    handlers.registerCreateAlertsCommentReply(async (ctx, request) => {
+      const { alertId, commentId, Comment: comment } = request
+
+      const saveCommentResult = await alertsService.saveAlertCommentReply(
+        alertId,
+        commentId,
+        { ...comment, userId }
+      )
+
+      await casesAlertsAuditLogService.createAlertAuditLog({
+        alertId,
+        logAction: 'CREATE',
+        oldImage: {},
+        newImage: comment,
+        subtype: 'COMMENT',
+      })
+
+      return saveCommentResult
+    })
+
+    handlers.registerPostCaseCommentsReply(async (ctx, request) => {
+      const { commentId, Comment: comment, caseId } = request
+      const commentCreated = await caseService.saveCommentReply(
+        caseId,
+        commentId,
+        { ...comment, userId }
+      )
+
+      await casesAlertsAuditLogService.handleAuditLogForComments(
+        caseId,
+        commentCreated
+      )
+    })
+
     return await handlers.handle(event)
   }
 )

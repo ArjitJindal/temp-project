@@ -968,24 +968,19 @@ export class CaseRepository {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     }
-    await collection.updateOne(
+    await collection.updateOne({ caseId }, [
       {
-        caseId,
-      },
-      [
-        {
-          $set: {
-            comments: {
-              $ifNull: [
-                { $concatArrays: ['$comments', [commentToSave]] },
-                [commentToSave],
-              ],
-            },
-            updatedAt: Date.now(),
+        $set: {
+          comments: {
+            $ifNull: [
+              { $concatArrays: ['$comments', [commentToSave]] },
+              [commentToSave],
+            ],
           },
+          updatedAt: Date.now(),
         },
-      ]
-    )
+      },
+    ])
     return commentToSave
   }
 

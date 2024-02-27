@@ -751,6 +751,34 @@ export class UserService {
       files: await this.getUpdatedFiles(savedComment.files),
     }
   }
+
+  public async saveUserCommentReply(
+    userId: string,
+    commentId: string,
+    reply: Comment
+  ) {
+    const user = await this.userRepository.getUserById(userId)
+
+    if (!user) {
+      throw new createError.NotFound(`User ${userId} not found`)
+    }
+
+    const comment = user?.comments?.find((comment) => comment.id === commentId)
+
+    if (!comment) {
+      throw new createError.NotFound(`Comment ${commentId} not found`)
+    }
+
+    const savedReply = await this.userRepository.saveUserComment(userId, {
+      ...reply,
+      parentId: commentId,
+    })
+
+    return {
+      ...savedReply,
+      files: await this.getUpdatedFiles(savedReply.files),
+    }
+  }
   public async deleteUserComment(userId: string, commentId: string) {
     const user = await this.userRepository.getUserById(userId)
     if (!user) {

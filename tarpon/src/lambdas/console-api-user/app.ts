@@ -17,6 +17,7 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { LinkerService } from '@/services/linker'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
+import { Comment } from '@/@types/openapi-internal/Comment'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -227,6 +228,24 @@ export const allUsersViewHandler = lambdaApi()(
       return {
         isOngoingScreening: ongoingScreeningUserRules.length > 0,
       }
+    })
+
+    handlers.registerPostUsersCommentsReply(async (ctx, request) => {
+      const comment: Comment = {
+        ...request.Comment,
+        userId,
+      }
+
+      const createdComment = await userService.saveUserCommentReply(
+        request.userId,
+        request.commentId,
+        comment
+      )
+
+      await userAuditLogService.handleAuditLogForAddComment(
+        request.userId,
+        createdComment
+      )
     })
 
     return await handlers.handle(event)

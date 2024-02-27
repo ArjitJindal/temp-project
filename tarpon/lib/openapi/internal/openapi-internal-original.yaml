@@ -1558,6 +1558,23 @@ paths:
       responses:
         '200':
           description: OK
+    post:
+      summary: Create a User Comment Reply
+      operationId: post-users-comments-reply
+      x-flagright:
+        permissions:
+          - users:user-comments:write
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+        required: true
   /consumer/users/{userId}:
     get:
       summary: Consumer Users - Item - GET
@@ -3715,6 +3732,25 @@ paths:
       x-flagright:
         permissions:
           - case-management:case-overview:write
+    post:
+      summary: Alerts - New comment reply
+      operationId: create-alerts-comment-reply
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+        required: true
   /cases:
     get:
       summary: Cases - List
@@ -4318,6 +4354,23 @@ paths:
       responses:
         '200':
           description: OK
+    post:
+      summary: Create a Comment Reply
+      operationId: post-case-comments-reply
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+        required: true
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not found
   /sanctions/search:
     post:
       summary: Search Sanctions
@@ -6961,6 +7014,8 @@ components:
           type: string
           enum:
             - STATUS_CHANGE
+        parentId:
+          type: string
       required:
         - body
     NarrativeRequest:
