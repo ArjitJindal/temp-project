@@ -5790,6 +5790,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleAggregationVariable'
+        defaultBaseCurrency:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
         parametersSchema:
           type: object
         defaultParameters:

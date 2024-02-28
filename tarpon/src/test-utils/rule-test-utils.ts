@@ -78,6 +78,7 @@ export async function createRule(
       id: ruleInstance?.ruleInstanceId,
       logic: createdRule.defaultLogic,
       logicAggregationVariables: createdRule.defaultLogicAggregationVariables,
+      baseCurrency: createdRule.defaultBaseCurrency,
       parameters: createdRule.defaultParameters,
       riskLevelParameters: createdRule.defaultRiskLevelParameters,
       action: createdRule.defaultAction,

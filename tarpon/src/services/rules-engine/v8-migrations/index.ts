@@ -8,9 +8,11 @@ import { TooManyTransactionsToHighRiskCountryRuleParameters } from '../transacti
 import { MerchantReceiverNameRuleParameters } from '../transaction-rules/merchant-receiver-name'
 import { BlacklistCardIssuedCountryRuleParameters } from '../transaction-rules/blacklist-card-issued-country'
 import { HighRiskCurrencyRuleParameters } from '../transaction-rules/high-risk-currency'
+import { TransactionAmountRuleParameters } from '../transaction-rules/transaction-amount'
 import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 
 export function getMigratedV8Config(
   ruleId: string,
@@ -20,6 +22,7 @@ export function getMigratedV8Config(
   logic: object
   logicAggregationVariables: RuleAggregationVariable[]
   alertCreationDirection?: AlertCreationDirection
+  baseCurrency?: CurrencyCode
 } | null {
   const migrationFunc = V8_CONVERSION[ruleId]
   if (!migrationFunc) {
@@ -47,6 +50,7 @@ const V8_CONVERSION: {
     logic: object
     logicAggregationVariables: RuleAggregationVariable[]
     alertCreationDirection?: AlertCreationDirection
+    baseCurrency?: CurrencyCode
   }
 } = {
   'R-30': (parameters: TransactionsVelocityRuleParameters, filters) => {
@@ -334,6 +338,26 @@ const V8_CONVERSION: {
       logic: { and: conditions },
       logicAggregationVariables: [],
       alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-2': (parameters: TransactionAmountRuleParameters) => {
+    const [currency, threshold] = Object.entries(
+      parameters.transactionAmountThreshold
+    )[0]
+    return {
+      logic: {
+        and: [
+          {
+            '>=': [
+              { var: 'TRANSACTION:originAmountDetails-transactionAmount' },
+              threshold,
+            ],
+          },
+        ],
+      },
+      logicAggregationVariables: [],
+      alertCreationDirection: 'ALL',
+      baseCurrency: currency as CurrencyCode,
     }
   },
 }

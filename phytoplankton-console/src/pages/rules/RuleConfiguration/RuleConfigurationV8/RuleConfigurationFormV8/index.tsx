@@ -224,6 +224,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
       ruleLogic: rule?.defaultLogic,
       ruleLogicEntityVariables: getAllEntityVariables(rule?.defaultLogic),
       ruleLogicAggregationVariables: rule?.defaultLogicAggregationVariables ?? [],
+      baseCurrency: rule?.defaultBaseCurrency,
     };
     if (isRiskLevelsEnabled) {
       ruleIsHitWhenStep.riskLevelRuleLogic = rule?.defaultRiskLevelLogic ?? {
@@ -272,5 +273,6 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
     rule?.description,
     rule?.labels,
     rule?.name,
+    rule?.defaultBaseCurrency,
   ]);
 }
