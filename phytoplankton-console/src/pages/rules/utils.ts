@@ -20,7 +20,6 @@ import { getErrorMessage } from '@/utils/lang';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { humanizeConstant } from '@/utils/humanize';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 import { GET_RULES_INSTANCE } from '@/utils/queries/keys';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
@@ -547,21 +546,22 @@ export function useCreateRuleInstance(
   );
 }
 
+export function isV8RuleInstance(v8Enabled: boolean, ruleInstance?: RuleInstance | null): boolean {
+  return v8Enabled && ruleInstance && (ruleInstance.logic || ruleInstance.riskLevelLogic);
+}
+
 export function useIsV8RuleInstance(ruleInstance?: RuleInstance | null): boolean {
-  const user = useAuth0User();
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
-  return (
-    isSuperAdmin(user) &&
-    v8Enabled &&
-    ruleInstance &&
-    (ruleInstance.logic || ruleInstance.riskLevelLogic)
-  );
+  return isV8RuleInstance(v8Enabled, ruleInstance);
+}
+
+export function isV8Rule(v8Enabled: boolean, rule?: Rule | null): boolean {
+  return v8Enabled && rule && rule.defaultLogic;
 }
 
 export function useIsV8Rule(rule?: Rule | null): boolean {
-  const user = useAuth0User();
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
-  return isSuperAdmin(user) && v8Enabled && rule && rule.defaultLogic;
+  return isV8Rule(v8Enabled, rule);
 }
 
 export function getAllEntityVariables(logic: object): RuleEntityVariableInUse[] {

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { isV8Rule } from '../utils';
 import style from './style.module.less';
 import { RulesSearchBar } from './RulesSearchBar';
 import { Rule } from '@/apis';
@@ -48,6 +49,11 @@ const DEFAULT_SORTING: SortingParamsItem = ['id', 'ascend'];
 
 const branding = getBranding();
 
+// TODO: Enalbe simulation for v8 rule (FR-4064)
+function canSimulate(isV8Enabled: boolean, rule: Rule) {
+  return rule.type === 'TRANSACTION' && !isV8Rule(isV8Enabled, rule);
+}
+
 export const RulesTable: React.FC<Props> = (props) => {
   const { onViewRule, onEditRule, onCreateRule, simulationMode, onScenarioClick } = props;
   const api = useApi();
@@ -69,6 +75,9 @@ export const RulesTable: React.FC<Props> = (props) => {
               <>
                 <a
                   onClick={() => {
+                    if (simulationMode && !canSimulate(isV8Enabled, entity)) {
+                      return;
+                    }
                     onViewRule(entity);
                   }}
                 >
@@ -191,20 +200,20 @@ export const RulesTable: React.FC<Props> = (props) => {
                 size="MEDIUM"
                 type="PRIMARY"
                 onClick={() => onEditRule(entity)}
-                isDisabled={!canWriteRules}
+                isDisabled={!canWriteRules || (simulationMode && !canSimulate(isV8Enabled, entity))}
                 requiredPermissions={
                   simulationMode ? ['simulator:simulations:write'] : ['rules:my-rules:write']
                 }
                 testName="configure-rule-button"
               >
-                {simulationMode ? 'New simulation' : 'Configure'}
+                {simulationMode ? 'Simulate' : 'Configure'}
               </Button>
             </span>
           );
         },
       }),
     ]);
-  }, [canWriteRules, simulationMode, onEditRule, onViewRule]);
+  }, [onViewRule, canWriteRules, simulationMode, isV8Enabled, onEditRule]);
 
   const [params, setParams] = useState<RulesTableParams>({
     ...DEFAULT_PARAMS_STATE,

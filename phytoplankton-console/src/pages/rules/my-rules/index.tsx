@@ -3,7 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
+import { getRuleInstanceDisplayId, isV8RuleInstance, useUpdateRuleInstance } from '../utils';
 import s from './style.module.less';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
@@ -31,13 +31,20 @@ import { parseQueryString, makeUrl } from '@/utils/routing';
 import { RuleHitInsightsTag } from '@/components/ui/RuleHitInsightsTag';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { RuleQueueTag } from '@/components/rules/RuleQueueTag';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
+
+// TODO: Enalbe simulation for v8 rule (FR-4064)
+function canSimulate(isV8Enabled: boolean, ruleInstance: RuleInstance) {
+  return ruleInstance.type === 'TRANSACTION' && !isV8RuleInstance(isV8Enabled, ruleInstance);
+}
 
 const MyRule = (props: { simulationMode?: boolean }) => {
   useScrollToFocus();
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
+  const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );
@@ -162,6 +169,9 @@ const MyRule = (props: { simulationMode?: boolean }) => {
               <a
                 onClick={() => {
                   if (props.simulationMode) {
+                    if (!canSimulate(isV8Enabled, entity)) {
+                      return;
+                    }
                     onEditRule(entity);
                   } else {
                     onViewRule(entity);
@@ -303,8 +313,9 @@ const MyRule = (props: { simulationMode?: boolean }) => {
               size="MEDIUM"
               type="PRIMARY"
               onClick={() => onEditRule(entity)}
+              isDisabled={!canSimulate(isV8Enabled, entity)}
             >
-              New simulation
+              Simulate
             </Button>
           ) : (
             <div className={s.actionIconsContainer}>
@@ -369,15 +380,16 @@ const MyRule = (props: { simulationMode?: boolean }) => {
       }),
     ]);
   }, [
+    props.simulationMode,
+    onEditRule,
     onViewRule,
     updatedRuleInstances,
     rules,
     canWriteRules,
     handleActivationChange,
-    props.simulationMode,
+    isV8Enabled,
     deleting,
     handleDeleteRuleInstanceMutation,
-    onEditRule,
     onDuplicateRule,
   ]);
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(params), async (paginationParams) => {

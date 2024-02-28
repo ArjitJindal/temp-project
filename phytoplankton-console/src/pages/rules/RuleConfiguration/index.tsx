@@ -31,8 +31,23 @@ export default function RuleConfiguration(props: Props) {
   if (isV8 || props.rule == null) {
     return <RuleConfigurationV8 {...props} ruleInstance={ruleInstance} readOnly={readOnly} />;
   }
-  return props.isSimulation && ruleInstance ? (
-    <RuleConfigurationSimulation {...props} ruleInstance={ruleInstance} />
+  return props.isSimulation ? (
+    <RuleConfigurationSimulation
+      {...props}
+      ruleInstance={{
+        ruleId: props.rule.id,
+        parameters: props.rule.defaultParameters,
+        riskLevelParameters: props.rule.defaultRiskLevelParameters,
+        action: props.rule.defaultAction,
+        riskLevelActions: props.rule.defaultRiskLevelActions,
+        nature: props.rule.defaultNature,
+        casePriority: props.rule.defaultCasePriority,
+        filters: props.rule.defaultFilters,
+        labels: [],
+        checksFor: props.rule.checksFor,
+        type: props.rule.type,
+      }}
+    />
   ) : (
     <RuleConfigurationV2 {...props} ruleInstance={ruleInstance} readOnly={readOnly} />
   );

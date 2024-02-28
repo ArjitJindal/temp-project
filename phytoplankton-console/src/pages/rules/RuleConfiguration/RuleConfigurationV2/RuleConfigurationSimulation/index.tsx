@@ -261,9 +261,9 @@ export function RuleConfigurationSimulation(props: Props) {
                         ) : undefined}
                       </Card.Section>
                     </Card.Root>
+                    <H4>Changed rule parameters</H4>
                   </div>
                 )}
-                <H4>Changed rule parameters</H4>
                 <RuleConfigurationForm
                   key={iteration.ruleInstance?.ruleId}
                   readOnly={Boolean(jobId)}

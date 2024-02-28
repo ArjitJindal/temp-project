@@ -24,7 +24,7 @@ export const SimulateRiskClassification = (props: Props): JSX.Element => {
   const ref = useRef<SimulationRef>(null);
   const tabItems: TabItem[] = [
     {
-      title: 'New simulation',
+      title: 'Simulate',
       children: (
         <NewSimulation
           ref={ref}
