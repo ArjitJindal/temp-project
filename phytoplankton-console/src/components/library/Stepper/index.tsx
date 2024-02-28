@@ -41,7 +41,7 @@ export function StepperSteps(
   const { active, layout, onChange, steps, stepsClassName } = props;
   const stepIndex = steps.findIndex(({ key }) => key === active);
   return (
-    <div className={cn(s.steps, stepsClassName, s[`layout-${layout}`])}>
+    <div className={cn(s.steps, stepsClassName, s[`layout-${layout}`])} data-cy="stepper">
       {steps.map((step, i) => {
         const isPassed = i < stepIndex;
         const isActive = active === step.key;
@@ -58,6 +58,7 @@ export function StepperSteps(
             onClick={() => {
               onChange(step.key);
             }}
+            data-cy="step-prop"
           >
             <div className={s.stepNumber}>
               {isPassed && (isUnfilled || isInvalid ? <MoreLineIcon /> : <CheckLineIcon />)}
@@ -67,7 +68,9 @@ export function StepperSteps(
               <div className={s.stepTitle}>
                 {step.title}
                 {step.isOptional ? (
-                  <span className={s.optional}>{' - optional'}</span>
+                  <span className={s.optional} data-cy="optional-span">
+                    {' - optional'}
+                  </span>
                 ) : (
                   <span className={s.required}>{' *'}</span>
                 )}
