@@ -12,7 +12,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { ReportService } from '@/services/sar/service'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { ask } from '@/utils/openapi'
+import { ask } from '@/utils/openai'
 import { logger } from '@/core/logger'
 
 export const sarHandler = lambdaApi()(

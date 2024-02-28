@@ -38,7 +38,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleSearchFilter } from '@/@types/rule/rule-actions'
 import { removePunctuation } from '@/utils/regex'
-import { ask } from '@/utils/openapi'
+import { ask } from '@/utils/openai'
 import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchResponse'
 import { scoreObjects } from '@/utils/search'
 

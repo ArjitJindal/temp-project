@@ -26,7 +26,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { ask } from '@/utils/openapi'
+import { ask } from '@/utils/openai'
 import { AI_ATTRIBUTES } from '@/@types/openapi-internal-custom/AIAttribute'
 import { tenantSettings } from '@/core/utils/context'
 

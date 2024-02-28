@@ -8,7 +8,7 @@ import { MerchantRepository } from '@/lambdas/console-api-merchant/merchant-repo
 import { logger } from '@/core/logger'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { traceable } from '@/core/xray'
-import { ask } from '@/utils/openapi'
+import { ask } from '@/utils/openai'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { ensureHttps } from '@/utils/http'
 import { apiFetch } from '@/utils/api-fetch'
