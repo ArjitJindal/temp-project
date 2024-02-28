@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } 
 import Upload from 'antd/es/upload/Upload';
 import { uniqBy } from 'lodash';
 import NarrativeTemplateSelect from '../NarrativeTemplateSelect';
+import { useFeatureEnabled } from '../AppWrapper/Providers/SettingsProvider';
 import s from './styles.module.less';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
@@ -66,6 +67,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
   const editorRef = useRef<MarkdownEditor>(null);
   const uploadRef = useRef<HTMLButtonElement>(null);
 
+  const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');
   useImperativeHandle(ref, () => ({
     reset: () => {
       editorRef.current?.reset();
@@ -101,6 +103,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             }
           }}
           placeholder={placeholder}
+          mentionsEnabled={isMentionsEnabled}
           mentionsList={Object.keys(users).map((userId) => ({
             label: users[userId].email,
             id: users[userId].id,

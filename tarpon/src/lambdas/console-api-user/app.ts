@@ -18,6 +18,7 @@ import { LinkerService } from '@/services/linker'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { Comment } from '@/@types/openapi-internal/Comment'
+import { getMentionsFromComments, getParsedCommentBody } from '@/utils/helpers'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -155,18 +156,22 @@ export const allUsersViewHandler = lambdaApi()(
     )
 
     handlers.registerPostUserComments(async (ctx, request) => {
+      const { Comment: rawComment } = request
+      const mentions = getMentionsFromComments(rawComment.body)
       const comment = {
-        ...request.Comment,
+        ...rawComment,
         userId,
+        mentions,
       }
       const createdComment = await userService.saveUserComment(
         request.userId,
         comment
       )
-      await userAuditLogService.handleAuditLogForAddComment(
-        request.userId,
-        createdComment
-      )
+      await userAuditLogService.handleAuditLogForAddComment(request.userId, {
+        ...rawComment,
+        mentions,
+        body: getParsedCommentBody(rawComment.body),
+      })
       return createdComment
     })
 
@@ -231,9 +236,12 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerPostUsersCommentsReply(async (ctx, request) => {
+      const { Comment: rawComment } = request
+      const mentions = getMentionsFromComments(rawComment.body)
       const comment: Comment = {
-        ...request.Comment,
+        ...rawComment,
         userId,
+        mentions,
       }
 
       const createdComment = await userService.saveUserCommentReply(
@@ -242,10 +250,12 @@ export const allUsersViewHandler = lambdaApi()(
         comment
       )
 
-      await userAuditLogService.handleAuditLogForAddComment(
-        request.userId,
-        createdComment
-      )
+      await userAuditLogService.handleAuditLogForAddComment(request.userId, {
+        ...rawComment,
+        mentions,
+        body: getParsedCommentBody(rawComment.body),
+      })
+      return createdComment
     })
 
     return await handlers.handle(event)

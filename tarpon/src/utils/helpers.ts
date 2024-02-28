@@ -1,4 +1,6 @@
 import { isValidEmail } from '@flagright/lib/utils'
+import { uniq } from 'lodash'
+import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants'
 import { UserDetails } from '@/@types/openapi-public/UserDetails'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -90,4 +92,20 @@ export function shouldUseReviewAssignments(
   status: CaseStatus | undefined
 ): boolean {
   return statusEscalated(status) || isStatusInReview(status)
+}
+
+export function getMentionsFromComments(body?: string): string[] {
+  if (!body) return []
+  const mentions = body?.match(mentionRegex)?.map((mention) => {
+    return mention
+      .match(mentionIdRegex)
+      ?.map((s) => s.substring(1, s.length - 1))[0]
+  })
+  return uniq(mentions).filter(Boolean) as string[]
+}
+
+export function getParsedCommentBody(body?: string) {
+  if (!body) return ''
+  const result = body.split(mentionRegex)
+  return result.filter((e) => !e.match(/^(google-oauth2|auth0)\|\S+$/)).join('')
 }

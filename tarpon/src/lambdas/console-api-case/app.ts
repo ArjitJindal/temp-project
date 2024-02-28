@@ -20,6 +20,7 @@ import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
 import { CaseEscalationResponse } from '@/@types/openapi-internal/CaseEscalationResponse'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { getMentionsFromComments, getParsedCommentBody } from '@/utils/helpers'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -180,13 +181,18 @@ export const casesHandler = lambdaApi()(
 
     handlers.registerPostCaseComments(async (ctx, request) => {
       const { Comment: comment } = request
+      const mentions = getMentionsFromComments(comment.body)
       const saveCommentResult = await caseService.saveCaseComment(
         request.caseId,
-        { ...comment, userId }
+        { ...comment, userId, mentions }
       )
       await casesAlertsAuditLogService.handleAuditLogForComments(
         request.caseId,
-        comment
+        {
+          ...comment,
+          body: getParsedCommentBody(comment.body),
+          mentions,
+        }
       )
       return saveCommentResult
     })
@@ -343,15 +349,21 @@ export const casesHandler = lambdaApi()(
 
     handlers.registerCreateAlertsComment(async (ctx, request) => {
       const { alertId, Comment: comment } = request
+      const mentions = getMentionsFromComments(comment.body)
       const saveCommentResult = await alertsService.saveAlertComment(alertId, {
         ...comment,
         userId,
+        mentions,
       })
       await casesAlertsAuditLogService.createAlertAuditLog({
         alertId,
         logAction: 'CREATE',
         oldImage: {},
-        newImage: comment,
+        newImage: {
+          ...comment,
+          body: getParsedCommentBody(comment.body),
+          mentions,
+        },
         subtype: 'COMMENT',
       })
       return saveCommentResult
@@ -396,18 +408,22 @@ export const casesHandler = lambdaApi()(
 
     handlers.registerCreateAlertsCommentReply(async (ctx, request) => {
       const { alertId, commentId, Comment: comment } = request
-
+      const mentions = getMentionsFromComments(comment.body)
       const saveCommentResult = await alertsService.saveAlertCommentReply(
         alertId,
         commentId,
-        { ...comment, userId }
+        { ...comment, userId, mentions }
       )
 
       await casesAlertsAuditLogService.createAlertAuditLog({
         alertId,
         logAction: 'CREATE',
         oldImage: {},
-        newImage: comment,
+        newImage: {
+          ...comment,
+          body: getParsedCommentBody(comment.body),
+          mentions,
+        },
         subtype: 'COMMENT',
       })
 
@@ -416,16 +432,19 @@ export const casesHandler = lambdaApi()(
 
     handlers.registerPostCaseCommentsReply(async (ctx, request) => {
       const { commentId, Comment: comment, caseId } = request
+      const mentions = getMentionsFromComments(comment.body)
       const commentCreated = await caseService.saveCommentReply(
         caseId,
         commentId,
-        { ...comment, userId }
+        { ...comment, userId, mentions }
       )
 
-      await casesAlertsAuditLogService.handleAuditLogForComments(
-        caseId,
-        commentCreated
-      )
+      await casesAlertsAuditLogService.handleAuditLogForComments(caseId, {
+        ...comment,
+        body: getParsedCommentBody(comment.body),
+        mentions,
+      })
+      return commentCreated
     })
 
     return await handlers.handle(event)

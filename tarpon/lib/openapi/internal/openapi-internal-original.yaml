@@ -1567,6 +1567,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
         '404':
           description: Not Found
       requestBody:
@@ -4369,6 +4373,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
         '404':
           description: Not found
   /sanctions/search:
@@ -7016,6 +7024,10 @@ components:
             - STATUS_CHANGE
         parentId:
           type: string
+        mentions:
+          type: array
+          items:
+            type: string
       required:
         - body
     NarrativeRequest:

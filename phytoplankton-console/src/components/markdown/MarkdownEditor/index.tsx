@@ -3,6 +3,7 @@ import '../shared-styles.less';
 import { Editor } from '@toast-ui/react-editor';
 import React from 'react';
 import { ToolbarItemOptions } from '@toast-ui/editor/types/ui';
+import { mentionRegex } from '@flagright/lib/constants';
 import s from './styles.module.less';
 import { getNode } from './mention-utlis';
 
@@ -89,8 +90,6 @@ export default class MarkdownEditor extends React.Component<Props> {
     }
   }
 
-  regex = /\[(@\S+)\]\((\S+)\)/g;
-
   insertMention = (mentionItem: MentionItem, searchPhrase) => {
     const editor = this.editorRef.current?.getInstance();
     if (editor) {
@@ -121,7 +120,7 @@ export default class MarkdownEditor extends React.Component<Props> {
     const text = this.editorRef.current?.getInstance()?.getMarkdown() ?? '';
     const cursorPos: number = this.editorRef.current?.getInstance()?.getSelection()[1] as number;
     let cursorIndex = cursorPos - 1;
-    const mentionRegexMatchesCount = (text.substring(0, cursorIndex).match(this.regex) || [])
+    const mentionRegexMatchesCount = (text.substring(0, cursorIndex).match(mentionRegex) || [])
       .length;
 
     cursorIndex -= mentionRegexMatchesCount * 2 + 1;
@@ -170,9 +169,9 @@ export default class MarkdownEditor extends React.Component<Props> {
             this.props.mentionsEnabled
               ? [
                   {
-                    rule: this.regex,
+                    rule: mentionRegex,
                     toDOM: (text) => {
-                      const match = this.regex.exec(text);
+                      const match = mentionRegex.exec(text);
                       const span = document.createElement('span');
                       span.classList.add(s.mention);
 
