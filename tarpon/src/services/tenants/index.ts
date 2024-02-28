@@ -418,8 +418,8 @@ export class TenantService {
     const quotaLeft = quotaLeftData?.[quotaLeftData.length - 1]?.[1]
 
     return {
-      burstCapacity: usagePlan.throttle?.burstLimit ?? 0,
-      rateLimit: usagePlan.throttle?.rateLimit ?? 0,
+      burstCapacityInRps: usagePlan.throttle?.burstLimit ?? 0,
+      rateLimitInRps: usagePlan.throttle?.rateLimit ?? 0,
       quotaLimit: process.env.ENV?.startsWith('prod')
         ? 'UNLIMITED'
         : usagePlan.quota?.limit?.toString() ?? '0',

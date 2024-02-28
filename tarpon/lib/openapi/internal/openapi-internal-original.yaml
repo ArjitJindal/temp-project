@@ -6103,9 +6103,9 @@ components:
       title: TenantUsageData
       type: object
       properties:
-        burstCapacity:
+        burstCapacityInRps:
           type: number
-        rateLimit:
+        rateLimitInRps:
           type: number
         quotaLimit:
           type: string
@@ -6114,8 +6114,8 @@ components:
         quotaRenewalRate:
           type: string
       required:
-        - burstCapacity
-        - rateLimit
+        - burstCapacityInRps
+        - rateLimitInRps
         - quotaLimit
         - quotaLeft
         - quotaRenewalRate
