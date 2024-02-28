@@ -210,6 +210,11 @@ export const DEVICE_DATA_COLLECTION = (tenantId: string) => {
   return `${tenantId}-device-data-metrics`
 }
 
+/** Collection to log Requests and Responses to GPT */
+export const GPT_REQUESTS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-gpt-request-logs`
+}
+
 export const TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION = (
   tenantId: string
 ) => {

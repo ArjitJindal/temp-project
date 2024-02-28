@@ -1,19 +1,30 @@
 import { Configuration, OpenAIApi } from 'openai'
 import { ChatCompletionRequestMessage } from 'openai/api'
 import { getSecret } from './secrets-manager'
+import { GPT_REQUESTS_COLLECTION } from './mongodb-definitions'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getContext } from '@/core/utils/context'
 
 const MAX_TOKEN_INPUT = 1000
 let openai: OpenAIApi | null = null
 const modelVersion: string = 'gpt-4-turbo-preview'
 
+export type GPTLogObject = {
+  prompts: string[] | ChatCompletionRequestMessage[]
+  response: string
+  createdAt: number
+}
+
 export async function ask(
   prompt: string,
   params?: { temperature: number }
 ): Promise<string> {
+  const tenantId = getContext()?.tenantId
   if (!openai) {
     const { apiKey } = await getSecret<{ apiKey: string }>('openAI')
     openai = new OpenAIApi(new Configuration({ apiKey }))
   }
+
   const completion = await openai.createChatCompletion({
     model: modelVersion,
     temperature: params?.temperature ?? 0.5,
@@ -25,22 +36,48 @@ export async function ask(
     ],
     max_tokens: MAX_TOKEN_INPUT,
   })
-  return completion.data.choices[0].message?.content || ''
+  const completionChoice = completion.data.choices[0].message?.content || ''
+  tenantId && (await logGPTResponses(tenantId, [prompt], completionChoice))
+  return completionChoice
 }
 
 export async function prompt(
   messages: ChatCompletionRequestMessage[],
   params?: { temperature: number }
 ): Promise<string> {
+  const tenantId = getContext()?.tenantId
+
   if (!openai) {
     const { apiKey } = await getSecret<{ apiKey: string }>('openAI')
     openai = new OpenAIApi(new Configuration({ apiKey }))
   }
+
   const completion = await openai.createChatCompletion({
     model: modelVersion,
     temperature: params?.temperature ?? 0.5,
     messages,
     max_tokens: MAX_TOKEN_INPUT,
   })
-  return completion.data.choices[0].message?.content || ''
+  const completionChoice = completion.data.choices[0].message?.content || ''
+
+  tenantId && (await logGPTResponses(tenantId, messages, completionChoice))
+
+  return completionChoice
+}
+
+async function logGPTResponses(
+  tenantId: string,
+  prompts: string[] | ChatCompletionRequestMessage[],
+  completionChoice: string
+) {
+  const mongodbClient = await getMongoDbClient()
+  const db = mongodbClient.db()
+  const collection = db.collection<GPTLogObject>(
+    GPT_REQUESTS_COLLECTION(tenantId)
+  )
+  await collection.insertOne({
+    prompts: prompts,
+    response: completionChoice,
+    createdAt: Date.now(),
+  })
 }
