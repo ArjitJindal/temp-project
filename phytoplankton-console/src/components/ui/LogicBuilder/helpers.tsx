@@ -56,6 +56,8 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
     fields: fields,
     settings: {
       ...InitialConfig.settings,
+      removeEmptyGroupsOnLoad: false,
+      removeIncompleteRulesOnLoad: false,
       showLabels: !hideLabels,
       fieldSources: ['field', 'func'],
       valueSourcesInfo: {
