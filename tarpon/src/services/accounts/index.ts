@@ -236,7 +236,6 @@ export class AccountsService {
       role: inviteRole,
       isEscalationContact,
     })
-    await this.roleService.setRole(organization.id, user.id, inviteRole)
 
     return user
   }
@@ -277,6 +276,12 @@ export class AccountsService {
               },
               { blocked: false }
             )
+          )
+
+          await this.roleService.setRole(
+            tenant.id,
+            user.user_id as string,
+            params.role
           )
         } else {
           throw new BadRequest('The user already exists.')

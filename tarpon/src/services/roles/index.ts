@@ -281,15 +281,8 @@ export class RoleService {
     // Set app metadata
     const user = await auth0AsyncWrapper(() => userManager.get({ id: userId }))
     await userManager.update(
-      {
-        id: userId,
-      },
-      {
-        app_metadata: {
-          ...user.app_metadata,
-          role: roleName,
-        },
-      }
+      { id: userId },
+      { app_metadata: { ...user.app_metadata, role: roleName } }
     )
   }
 }
