@@ -1,1 +1,7 @@
-["lowercase", "uppercase"]
+[
+  "truncate_decimal",
+  "string_to_number",
+  "number_to_string",
+  "lowercase",
+  "uppercase"
+]
