@@ -7821,6 +7821,7 @@ components:
         - QA
         - AI_RISK_SCORE
         - RULES_ENGINE_V8
+        - RULES_ENGINE_V8_LIBRARY
         - SYNC_TRS_CALCULATION
         - NOTIFICATIONS
       description: ''
