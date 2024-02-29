@@ -55,6 +55,7 @@ const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; 
   { value: 'RECEIVING', label: 'Receiving' },
   { value: 'SENDING_RECEIVING', label: 'Both' },
 ];
+
 export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = ({
   variable,
   entityVariables,
@@ -81,17 +82,16 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
   }> = useMemo(() => {
     const options: Array<{ value: RuleAggregationFunc; label: string }> = [];
     const entityVariable = entityVariables.find((v) => v.key === formValues.aggregationFieldKey);
-    if (entityVariable?.key === 'TRANSACTION:transactionId') {
-      options.push({ value: 'COUNT', label: 'Count' });
-    }
+
     if (entityVariable?.valueType === 'number') {
       const numberValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
         { value: 'AVG', label: 'Average' },
         { value: 'SUM', label: 'Sum' },
       ];
       options.push(...numberValueOptions);
+    } else if (entityVariable?.key === 'TRANSACTION:transactionId') {
+      options.push({ value: 'COUNT', label: 'Count' });
     } else if (entityVariable?.valueType === 'string') {
-      // TODO (V8): Only allow low cardinality fields. Fields like transaction id should not be allowed.
       const stringValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
         { value: 'UNIQUE_COUNT', label: 'Unique count' },
         { value: 'UNIQUE_VALUES', label: 'Unique values' },

@@ -364,13 +364,26 @@ export async function batchWrite(
   table: string = StackConstants.TARPON_DYNAMODB_TABLE_NAME
 ): Promise<void> {
   for (const nextChunk of chunk(requests, 25)) {
-    await dynamoDb.send(
-      new BatchWriteCommand({
-        RequestItems: {
-          [table]: nextChunk,
-        },
-      })
-    )
+    try {
+      await dynamoDb.send(
+        new BatchWriteCommand({
+          RequestItems: {
+            [table]: nextChunk,
+          },
+        })
+      )
+    } catch (e) {
+      if (
+        (e as any)?.name === 'ValidationException' &&
+        (e as any)?.message.includes(
+          'Item size has exceeded the maximum allowed size'
+        )
+      ) {
+        logger.error(`Item size has exceeded the maximum allowed size (400 KB)`)
+      } else {
+        throw e
+      }
+    }
   }
 }
 

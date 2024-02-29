@@ -1,9 +1,8 @@
 import { StackConstants } from '@lib/constants'
 import { chunk, range } from 'lodash'
 import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
-import { getDynamoDbClient, paginateQuery } from '../dynamodb'
+import { batchWrite, getDynamoDbClient, paginateQuery } from '../dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-
 const MOCK_RECORDS_COUNT = 250
 const MOCK_ATTRIBUTES = {
   attribute1: new Array(1000).fill(0),
@@ -199,5 +198,44 @@ describe('paginateQuery', () => {
         },
       ],
     })
+  })
+})
+
+describe('batchWrite', () => {
+  test('Throws an error when item size exceeds the maximum allowed size', async () => {
+    const largeItem = {
+      // Create a large item with size greater than 400KB
+      PartitionKeyID: 'partition',
+      SortKeyID: `1212`,
+      attribute1: new Array(100000).fill(0),
+      attribute2: new Array(100000).fill(0),
+      attribute3: new Array(100000).fill(0),
+    }
+
+    const requests = [
+      {
+        PutRequest: {
+          Item: largeItem,
+        },
+      },
+    ]
+    await expect(batchWrite(dynamoDb, requests)).resolves.not.toThrow()
+  })
+
+  test('Throws an error for some other issue', async () => {
+    const invalidItem = {
+      // Create an invalid item with missing required attributes
+      attribute1: 'value1',
+      attribute2: 'value2',
+    }
+
+    const requests = [
+      {
+        PutRequest: {
+          Item: invalidItem,
+        },
+      },
+    ]
+    await expect(batchWrite(dynamoDb, requests)).rejects.toThrow()
   })
 })
