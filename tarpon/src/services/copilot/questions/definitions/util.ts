@@ -10,6 +10,7 @@ import { getUserName } from '@/utils/helpers'
 
 export const MONGO_DATE_FORMAT = '%Y-%m-%d'
 export const DATE_FORMAT = 'YYYY-MM-DD'
+export const MONTH_FORMAT = 'YYYY-MM'
 export const DATE_GRAPH_FORMAT = 'D/M/YYYY'
 export const DATETIME_GRAPH_FORMAT = 'D/M/YYYY HH:mm'
 export const TIME_GRAPH_FORMAT = 'HH:mm'
@@ -70,6 +71,17 @@ export function dates(period: Period): string[] {
   while (cursor <= end) {
     output.push(cursor.format(DATE_FORMAT))
     cursor = cursor.add(1, 'd')
+  }
+
+  return output
+}
+export function months(period: Period): string[] {
+  let cursor = dayjs(period.from)
+  const end = dayjs(period.to)
+  const output: string[] = []
+  while (cursor <= end) {
+    output.push(cursor.format(MONTH_FORMAT))
+    cursor = cursor.add(1, 'month')
   }
   return output
 }

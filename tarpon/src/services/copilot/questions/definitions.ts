@@ -1,6 +1,6 @@
 import { Question } from './types'
 import { CaseHistory } from '@/services/copilot/questions/definitions/case-history'
-import { TrsScore } from '@/services/copilot/questions/definitions/trs-score'
+import { TransactionAggregations } from '@/services/copilot/questions/definitions/transaction-aggregations'
 import { TransactionType } from '@/services/copilot/questions/definitions/transaction-type'
 import { TransactionByRulesAction } from '@/services/copilot/questions/definitions/transaction-by-rules-action'
 import { UsersSentMoneyTo } from '@/services/copilot/questions/definitions/users-sent-money-to'
@@ -27,6 +27,17 @@ import { Recommendation } from '@/services/copilot/questions/definitions/recomme
 import { hasFeature } from '@/core/utils/context'
 import { envIsNot } from '@/utils/env'
 
+export const isValidQuestion = (questionId: string) =>
+  !!getQuestions().find((q) => q.questionId === questionId)
+
+export const getQuestion = (questionId: string): Question<any> => {
+  const q = getQuestions().find((q) => q.questionId === questionId)
+  if (!q) {
+    throw new Error('No question')
+  }
+  return q
+}
+
 export const getQuestions = (): Question<any>[] =>
   [
     AlertHistory,
@@ -43,7 +54,7 @@ export const getQuestions = (): Question<any>[] =>
     TransactionOriginSummary,
     Transactions,
     TransactionDestinationSummary,
-    TrsScore,
+    ...TransactionAggregations,
     ...(hasFeature('CRM') ? [CrmInsights] : []),
     ...(hasFeature('SAR') ? [SarsFiled] : []),
     ...(hasFeature('MERCHANT_MONITORING')

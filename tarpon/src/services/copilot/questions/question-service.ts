@@ -10,7 +10,12 @@ import {
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { getQueries, getQuestions } from './definitions'
+import {
+  getQueries,
+  getQuestion,
+  getQuestions,
+  isValidQuestion,
+} from './definitions'
 import { InvestigationRepository } from './investigation-repository'
 import { InvestigationContext, Question, Variables } from './types'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
@@ -81,7 +86,7 @@ export class QuestionService {
     }
 
     const varObject = this.prepareVariables(question, vars)
-    const answer = await this.answer(questionId, varObject, c, a)
+    const answer = await this.answer(question, varObject, c, a)
     if (answer) {
       const questionResponse = {
         createdAt: Date.now().valueOf(),
@@ -146,19 +151,26 @@ export class QuestionService {
     )
     return {
       data: await Promise.all(
-        investigation.questions.map(async (q) => {
-          return {
-            createdById: q.createdById,
-            createdAt: q.createdAt,
-            ...(await this.answer(q.questionId, q.variables, c, alert)),
-          }
-        })
+        investigation.questions
+          .filter((q) => isValidQuestion(q.questionId))
+          .map(async (q) => {
+            return {
+              createdById: q.createdById,
+              createdAt: q.createdAt,
+              ...(await this.answer(
+                getQuestion(q.questionId),
+                q.variables,
+                c,
+                alert
+              )),
+            }
+          })
       ),
     }
   }
 
   private async answer(
-    questionId: string,
+    question: Question<any>,
     varObject: Variables,
     c: Case,
     a: Alert
@@ -188,15 +200,10 @@ export class QuestionService {
       accountService: this.accountsService,
     }
 
-    const questions = getQuestions()
-    const question = questions.find((qt) => qt.questionId === questionId)
-    if (!question) {
-      throw new Error('Could not result question')
-    }
     const partitionKeyId = DynamoDbKeys.CACHE_QUESTION_RESULT(
       tenantId,
       alertId,
-      questionId,
+      question.questionId,
       generateChecksum(varObject)
     )
     const getItemInput: GetCommandInput = {
