@@ -7,7 +7,12 @@ import { getContext } from '@/core/utils/context'
 
 const MAX_TOKEN_INPUT = 1000
 let openai: OpenAIApi | null = null
-const modelVersion: string = 'gpt-4-turbo-preview'
+
+export enum ModelVersion {
+  GPT3 = 'gpt-3.5-turbo',
+  GPT4 = 'gpt-4-turbo-preview',
+}
+const modelVersion: ModelVersion = ModelVersion.GPT4
 
 export type GPTLogObject = {
   prompts: string[] | ChatCompletionRequestMessage[]
@@ -17,7 +22,7 @@ export type GPTLogObject = {
 
 export async function ask(
   prompt: string,
-  params?: { temperature: number }
+  params?: { temperature?: number; modelVersion?: ModelVersion }
 ): Promise<string> {
   const tenantId = getContext()?.tenantId
   if (!openai) {
@@ -26,7 +31,7 @@ export async function ask(
   }
 
   const completion = await openai.createChatCompletion({
-    model: modelVersion,
+    model: params?.modelVersion ?? modelVersion,
     temperature: params?.temperature ?? 0.5,
     messages: [
       {
@@ -43,7 +48,7 @@ export async function ask(
 
 export async function prompt(
   messages: ChatCompletionRequestMessage[],
-  params?: { temperature: number }
+  params?: { temperature?: number; modelVersion?: ModelVersion }
 ): Promise<string> {
   const tenantId = getContext()?.tenantId
 
@@ -53,7 +58,7 @@ export async function prompt(
   }
 
   const completion = await openai.createChatCompletion({
-    model: modelVersion,
+    model: params?.modelVersion ?? modelVersion,
     temperature: params?.temperature ?? 0.5,
     messages,
     max_tokens: MAX_TOKEN_INPUT,

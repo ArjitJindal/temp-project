@@ -38,9 +38,10 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleSearchFilter } from '@/@types/rule/rule-actions'
 import { removePunctuation } from '@/utils/regex'
-import { ask } from '@/utils/openai'
+import { ModelVersion, ask } from '@/utils/openai'
 import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchResponse'
 import { scoreObjects } from '@/utils/search'
+import { logger } from '@/core/logger'
 
 type AIFilters = {
   ruleTypes?: string[]
@@ -400,9 +401,19 @@ You have to answer in below format as string. If you don't know any field, just 
   }
   `
 
-    const reponse = await ask(prompt)
+    const response = await ask(prompt, { modelVersion: ModelVersion.GPT3 }) // Above prompt is optimized for GPT-3.5-turbo model
+    let json: AIFilters = {}
 
-    const json = JSON.parse(reponse)
+    try {
+      json = JSON.parse(response) as AIFilters
+    } catch (error) {
+      logger.error(
+        `Error parsing response from GPT: ${response}: query: ${queryStr}: error: ${
+          (error as Error).message
+        }`
+      )
+      return {}
+    }
 
     return json
   }
