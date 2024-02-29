@@ -8,6 +8,7 @@ import GranularDatePicker, {
   GranularityValuesType,
   timeframe,
 } from '../GranularDatePicker/GranularDatePicker';
+import { formatDate } from '../../../utils/date-utils';
 import s from './styles.module.less';
 import { map } from '@/utils/asyncResource';
 import { Dayjs, dayjs } from '@/utils/dayjs';
@@ -73,7 +74,7 @@ export default function DistributionChartWidget<
       return data.flatMap((dataItem): ColumnData<string, number, ValueType> => {
         return values.map((value) => {
           return {
-            xValue: dataItem._id ?? '-',
+            xValue: dataItem.time ?? '-',
             yValue: dataItem[`${attributeDataPrefix}_${value}`] ?? 0,
             series: value,
           };
@@ -190,11 +191,11 @@ export default function DistributionChartWidget<
                     <Column<ValueType, string>
                       data={data}
                       colors={attributeColors}
-                      rotateLabel={false}
                       hideLegend={groupBy === 'VALUE'}
                       height={size.height}
+                      rotateLabel={groupBy === 'TIME'}
                       formatSeries={getValueName}
-                      formatX={getValueName}
+                      formatX={groupBy === 'VALUE' ? getValueName : formatDate}
                     />
                   )}
                 </ContainerRectMeasure>

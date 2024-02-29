@@ -121,9 +121,7 @@ export default function DistributionByStatus(props: WidgetProps) {
                     CLOSED: COLORS_V2_ANALYTICS_CHARTS_08,
                     REOPENED: COLORS_V2_ANALYTICS_CHARTS_02,
                   }}
-                  formatX={(xValue) => {
-                    return formatDate(xValue);
-                  }}
+                  formatX={formatDate}
                   formatSeries={(seriesValue) => {
                     return seriesValue === 'REOPENED'
                       ? 'Re-opened'

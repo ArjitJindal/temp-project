@@ -1,7 +1,6 @@
 import { nanoid } from 'nanoid'
 import { isNil, omitBy } from 'lodash'
 import { getRiskRepo, getStatsRepo, getUserRepo } from './helpers'
-import { getTestTenantIdAndCreateCollections } from '@/test-utils/tenant-test-utils'
 import dayjs from '@/utils/dayjs'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
@@ -12,6 +11,7 @@ import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { USER_TYPES, UserType } from '@/@types/user/user-type'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 
 type RiskType = 'KRS' | 'DRS'
 describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
@@ -19,7 +19,7 @@ describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
     describe('Env #1 (empty)', () => {
       let TENANT_ID: string
       beforeAll(async () => {
-        TENANT_ID = await getTestTenantIdAndCreateCollections()
+        TENANT_ID = await getTestTenantId()
       })
       test(`Empty db`, async () => {
         const statsRepository = await getStatsRepo(TENANT_ID)
@@ -41,7 +41,7 @@ describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
       let TENANT_ID: string
       let statsRepository: DashboardStatsRepository
       beforeAll(async () => {
-        TENANT_ID = await getTestTenantIdAndCreateCollections()
+        TENANT_ID = await getTestTenantId()
         const usersRepo = await getUserRepo(TENANT_ID)
         const riskRepo = await getRiskRepo(TENANT_ID)
         const riskLevels = await getRiskScores(riskRepo)
@@ -57,7 +57,7 @@ describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
           }
         }
         statsRepository = await getStatsRepo(TENANT_ID)
-        await statsRepository.refreshAllStats()
+        await statsRepository.refreshUserStats()
       })
       test(`Check by hours`, async () => {
         const result = await statsRepository.getUserTimewindowStats(
@@ -129,7 +129,7 @@ describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
       let TENANT_ID: string
       let statsRepository: DashboardStatsRepository
       beforeAll(async () => {
-        TENANT_ID = await getTestTenantIdAndCreateCollections()
+        TENANT_ID = await getTestTenantId()
         const usersRepo = await getUserRepo(TENANT_ID)
         const riskRepo = await getRiskRepo(TENANT_ID)
         const riskLevels = await getRiskScores(riskRepo)
@@ -159,7 +159,7 @@ describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
           await usersRepo.saveUserMongo(user)
         }
         statsRepository = await getStatsRepo(TENANT_ID)
-        await statsRepository.refreshAllStats()
+        await statsRepository.refreshUserStats()
       })
       test(`Check one month`, async () => {
         const result = await statsRepository.getUserTimewindowStats(
@@ -279,7 +279,7 @@ function expectedStats(
   return expect.objectContaining(
     omitBy(
       {
-        _id: date,
+        time: date,
         [`${riskType.toLowerCase()}RiskLevel_HIGH`]: stats.HIGH,
         [`${riskType.toLowerCase()}RiskLevel_LOW`]: stats.LOW,
         [`${riskType.toLowerCase()}RiskLevel_MEDIUM`]: stats.MEDIUM,

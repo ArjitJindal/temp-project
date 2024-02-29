@@ -6544,13 +6544,6 @@ components:
         - TEST_FARGATE
     DashboardStatsTransactionsCount:
       type: object
-      x-examples:
-        example-1:
-          data:
-            - _id: 2020-01-04
-              totalTransactions: 2344
-              flaggedTransactions: 121
-              stoppedTransactions: 33
       title: DashboardStatsTransactionsCount
       properties:
         data:
@@ -6558,7 +6551,7 @@ components:
           items:
             type: object
             properties:
-              _id:
+              time:
                 type: string
               status_ALLOW:
                 type: number
@@ -6609,30 +6602,15 @@ components:
               transactionType_OTHER:
                 type: number
             required:
-              - _id
+              - time
       required:
         - data
     DashboardStatsTransactionsCountItem:
       type: object
-      x-examples:
-        example-1:
-          data:
-            - _id: 2020-01-04
-              totalTransactions: 2344
-              flaggedTransactions: 121
-              stoppedTransactions: 33
       title: DashboardStatsTransactionsCountItem
       properties:
-        _id:
+        time:
           type: string
-        totalTransactions:
-          type: number
-        flaggedTransactions:
-          type: number
-        stoppedTransactions:
-          type: number
-        suspendedTransactions:
-          type: number
         paymentMethods_ACH:
           type: number
         paymentMethods_CARD:
@@ -6674,7 +6652,7 @@ components:
         transactionType_OTHER:
           type: number
       required:
-        - _id
+        - time
     DashboardStatsRulesCount:
       type: object
       x-examples: {}
@@ -6704,7 +6682,7 @@ components:
       type: object
       title: DashboardStatsUsersStats
       properties:
-        _id:
+        time:
           type: string
         drsRiskLevel_VERY_LOW:
           type: number
@@ -6737,7 +6715,7 @@ components:
         kycStatus_MANUAL_REVIEW:
           type: number
       required:
-        - data
+        - time
     DashboardStatsKRSDistribution:
       type: object
       x-examples: {}

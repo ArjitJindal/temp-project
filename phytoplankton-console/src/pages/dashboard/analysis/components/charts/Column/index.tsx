@@ -74,7 +74,7 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
           autoHide: true,
           rotate: rotateLabel ? -Math.PI / 6 : 0,
           offsetX: -10,
-          offsetY: 10,
+          offsetY: 10 + (rotateLabel ? 7 : 0),
           style: {
             textAlign: 'center',
             textBaseline: 'bottom',

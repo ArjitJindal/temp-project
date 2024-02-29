@@ -56,12 +56,31 @@ function getCollectionsByUserType(
   }
 }
 
+async function createInexes(tenantId) {
+  const db = await getMongoDbClientDb()
+  for (const collection of [
+    ...Object.values(getCollectionsByUserType(tenantId, 'CONSUMER')),
+    ...Object.values(getCollectionsByUserType(tenantId, 'BUSINESS')),
+  ]) {
+    await db.collection(collection).createIndex(
+      {
+        time: 1,
+        ready: 1,
+      },
+      {
+        unique: true,
+      }
+    )
+  }
+}
+
 @traceable
 export class UserStats {
   public static async refresh(
     tenantId,
     userCreatedTimeRange?: TimeRange
   ): Promise<void> {
+    await createInexes(tenantId)
     const lastUpdatedAt = Date.now()
     const dynamoDb = getDynamoDbClient()
     const riskRepository = new RiskRepository(tenantId, {
@@ -100,7 +119,6 @@ export class UserStats {
           default: 'LOW',
         },
       }
-
       await usersCollection
         .aggregate(
           withUpdatedAt(
@@ -166,6 +184,13 @@ export class UserStats {
           }
         )
         .next()
+      await cleanUpStaleData(
+        hourlyCollectionName,
+        'time',
+        lastUpdatedAt,
+        userCreatedTimeRange,
+        'HOUR'
+      )
 
       await db
         .collection<DashboardStatsUsersStats>(hourlyCollectionName)
@@ -183,6 +208,13 @@ export class UserStats {
           }
         )
         .next()
+      await cleanUpStaleData(
+        dailyCollectionName,
+        'time',
+        lastUpdatedAt,
+        userCreatedTimeRange,
+        'DAY'
+      )
 
       await db
         .collection<DashboardStatsUsersStats>(dailyCollectionName)
@@ -200,30 +232,13 @@ export class UserStats {
           }
         )
         .next()
-
-      await Promise.all([
-        cleanUpStaleData(
-          hourlyCollectionName,
-          '_id',
-          lastUpdatedAt,
-          userCreatedTimeRange,
-          'HOUR'
-        ),
-        cleanUpStaleData(
-          dailyCollectionName,
-          '_id',
-          lastUpdatedAt,
-          userCreatedTimeRange,
-          'DAY'
-        ),
-        cleanUpStaleData(
-          monthlyCollectionName,
-          '_id',
-          lastUpdatedAt,
-          userCreatedTimeRange,
-          'MONTH'
-        ),
-      ])
+      await cleanUpStaleData(
+        monthlyCollectionName,
+        'time',
+        lastUpdatedAt,
+        userCreatedTimeRange,
+        'MONTH'
+      )
     }
   }
 
@@ -278,20 +293,21 @@ export class UserStats {
 
     const dashboardStats = await collection
       .find({
-        _id: {
+        time: {
           $gte: startDate,
           $lte: endDate,
         },
+        ready: { $ne: false },
       })
-      .sort({ _id: 1 })
+      .sort({ time: 1 })
       .allowDiskUse()
       .toArray()
 
-    const dashboardStatsById = keyBy(dashboardStats, '_id')
+    const dashboardStatsById = keyBy(dashboardStats, 'time')
     return timeLabels.map((timeLabel) => {
       const stat = dashboardStatsById[timeLabel]
       return {
-        _id: timeLabel,
+        time: timeLabel,
         ...stat,
       }
     })

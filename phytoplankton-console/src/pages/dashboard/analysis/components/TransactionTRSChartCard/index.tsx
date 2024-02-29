@@ -62,7 +62,7 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
     for (const datum of value?.data ?? []) {
       for (const riskLevel of RISK_LEVELS) {
         result.push({
-          xValue: datum._id,
+          xValue: datum.time,
           yValue: datum[`arsRiskLevel_${riskLevel}`] ?? 0,
           series: riskLevel,
         });
@@ -103,9 +103,7 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
                 formatSeries={(series) => {
                   return getRiskLevelLabel(series, settings);
                 }}
-                formatX={(xValue) => {
-                  return formatDate(xValue);
-                }}
+                formatX={formatDate}
               />
             );
           }}

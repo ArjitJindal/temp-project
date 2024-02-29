@@ -6,12 +6,9 @@ import {
   notHitRule,
 } from './helpers'
 import dayjs from '@/utils/dayjs'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/all'
-
-dynamoDbSetupHook()
 
 describe('Verify transactions counting statistics', () => {
   test('Single transaction with no hits should only count 1 total transaction', async () => {
@@ -38,7 +35,7 @@ describe('Verify transactions counting statistics', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         status_ALLOW: 1,
       }),
     ])
@@ -83,7 +80,7 @@ describe('Verify transactions counting statistics', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         status_FLAG: 1,
         status_BLOCK: 1,
         status_SUSPEND: 1,
@@ -121,7 +118,7 @@ describe('Verify transactions counting statistics', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         status_BLOCK: 1,
       }),
     ])
@@ -150,7 +147,7 @@ describe('Verify transactions counting statistics', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         status_ALLOW: 1,
       }),
     ])
@@ -182,15 +179,15 @@ describe('Verify transactions counting statistics', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30T01',
+        time: '2022-01-30T01',
         status_ALLOW: 1,
       }),
       expect.objectContaining({
-        _id: '2022-01-30T02',
+        time: '2022-01-30T02',
         status_ALLOW: 1,
       }),
       expect.objectContaining({
-        _id: '2022-01-30T03',
+        time: '2022-01-30T03',
         status_ALLOW: 1,
       }),
     ])
@@ -224,15 +221,15 @@ describe('Verify transactions counting statistics', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30T01',
+        time: '2022-01-30T01',
         status_SUSPEND: 1,
       }),
       expect.objectContaining({
-        _id: '2022-01-30T02',
+        time: '2022-01-30T02',
         status_SUSPEND: 1,
       }),
       expect.objectContaining({
-        _id: '2022-01-30T03',
+        time: '2022-01-30T03',
         status_SUSPEND: 1,
       }),
     ])
@@ -266,22 +263,22 @@ describe('Verify transactions counting statistics', () => {
     )
     expect(hourlyStats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30T00',
+        time: '2022-01-30T00',
       }),
       expect.objectContaining({
-        _id: '2022-01-30T01',
+        time: '2022-01-30T01',
         status_BLOCK: 1,
       }),
       expect.objectContaining({
-        _id: '2022-01-30T02',
+        time: '2022-01-30T02',
         status_BLOCK: 1,
       }),
       expect.objectContaining({
-        _id: '2022-01-30T03',
+        time: '2022-01-30T03',
         status_BLOCK: 1,
       }),
       expect.objectContaining({
-        _id: '2022-01-30T04',
+        time: '2022-01-30T04',
       }),
     ])
     const dailyStats = await statsRepository.getTransactionCountStats(
@@ -291,14 +288,14 @@ describe('Verify transactions counting statistics', () => {
     )
     expect(dailyStats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-29',
+        time: '2022-01-29',
       }),
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         status_BLOCK: 3,
       }),
       expect.objectContaining({
-        _id: '2022-01-31',
+        time: '2022-01-31',
       }),
     ])
     const monthlyStats = await statsRepository.getTransactionCountStats(
@@ -308,11 +305,11 @@ describe('Verify transactions counting statistics', () => {
     )
     expect(monthlyStats).toEqual([
       expect.objectContaining({
-        _id: '2022-01',
+        time: '2022-01',
         status_BLOCK: 3,
       }),
       expect.objectContaining({
-        _id: '2022-02',
+        time: '2022-02',
       }),
     ])
   })
@@ -349,7 +346,7 @@ describe('Verify transactions counting ARS risk levels', () => {
 
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         arsRiskLevel_VERY_HIGH: 1,
       }),
     ])
@@ -389,7 +386,7 @@ describe('Verify transactions counting ARS risk levels', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         arsRiskLevel_VERY_HIGH: 1,
         arsRiskLevel_HIGH: 2,
         arsRiskLevel_MEDIUM: 3,
@@ -433,7 +430,7 @@ describe('Verify transactions counting payment methods', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         paymentMethods_CARD: 1,
       }),
     ])
@@ -470,7 +467,7 @@ describe('Verify transactions counting payment methods', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         paymentMethods_CARD: 1,
       }),
     ])
@@ -513,7 +510,7 @@ describe('Verify transactions counting payment methods', () => {
     )
     expect(stats).toEqual([
       expect.objectContaining({
-        _id: '2022-01-30',
+        time: '2022-01-30',
         paymentMethods_CARD: 2,
       }),
     ])

@@ -25,9 +25,29 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 import { traceable } from '@/core/xray'
 
+async function createInexes(tenantId) {
+  const db = await getMongoDbClientDb()
+  for (const collection of [
+    DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId),
+    DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId),
+    DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId),
+  ]) {
+    await db.collection(collection).createIndex(
+      {
+        time: 1,
+        ready: 1,
+      },
+      {
+        unique: true,
+      }
+    )
+  }
+}
+
 @traceable
 export class TransactionStatsDashboardMetric {
   public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
+    await createInexes(tenantId)
     const db = await getMongoDbClientDb()
     const lastUpdatedAt = Date.now()
     const transactionsCollection = db.collection<InternalTransaction>(
@@ -113,6 +133,13 @@ export class TransactionStatsDashboardMetric {
         }
       )
       .next()
+    await cleanUpStaleData(
+      aggregatedHourlyCollectionName,
+      'time',
+      lastUpdatedAt,
+      timeRange,
+      'HOUR'
+    )
 
     // Daily stats
     await db
@@ -133,6 +160,13 @@ export class TransactionStatsDashboardMetric {
         }
       )
       .next()
+    await cleanUpStaleData(
+      aggregatedDailyCollectionName,
+      'time',
+      lastUpdatedAt,
+      timeRange,
+      'DAY'
+    )
 
     // Monthly stats
     await db
@@ -153,30 +187,13 @@ export class TransactionStatsDashboardMetric {
         }
       )
       .next()
-
-    await Promise.all([
-      cleanUpStaleData(
-        aggregatedHourlyCollectionName,
-        '_id',
-        lastUpdatedAt,
-        timeRange,
-        'HOUR'
-      ),
-      cleanUpStaleData(
-        aggregatedDailyCollectionName,
-        '_id',
-        lastUpdatedAt,
-        timeRange,
-        'DAY'
-      ),
-      cleanUpStaleData(
-        aggregatedMonthlyCollectionName,
-        '_id',
-        lastUpdatedAt,
-        timeRange,
-        'MONTH'
-      ),
-    ])
+    await cleanUpStaleData(
+      aggregatedMonthlyCollectionName,
+      'time',
+      lastUpdatedAt,
+      timeRange,
+      'MONTH'
+    )
   }
 
   public static async get(
@@ -229,20 +246,21 @@ export class TransactionStatsDashboardMetric {
 
     const dashboardStats = await collection
       .find({
-        _id: {
+        time: {
           $gte: startDate,
           $lte: endDate,
         },
+        ready: { $ne: false },
       })
-      .sort({ _id: 1 })
+      .sort({ time: 1 })
       .allowDiskUse()
       .toArray()
 
-    const dashboardStatsById = keyBy(dashboardStats, '_id')
+    const dashboardStatsById = keyBy(dashboardStats, 'time')
     return timeLabels.map((timeLabel) => {
       const stat = dashboardStatsById[timeLabel]
       return {
-        _id: timeLabel,
+        time: timeLabel,
         ...stat,
       }
     })

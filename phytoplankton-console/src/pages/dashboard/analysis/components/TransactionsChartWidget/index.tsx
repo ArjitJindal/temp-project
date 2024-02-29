@@ -74,22 +74,22 @@ export default function TransactionsChartWidget(props: WidgetProps) {
             (item): ColumnData<string, number, RuleAction> => {
               return [
                 {
-                  xValue: item._id,
+                  xValue: item.time,
                   yValue: item.status_BLOCK ?? 0,
                   series: 'BLOCK',
                 },
                 {
-                  xValue: item._id,
+                  xValue: item.time,
                   yValue: item.status_SUSPEND ?? 0,
                   series: 'SUSPEND',
                 },
                 {
-                  xValue: item._id,
+                  xValue: item.time,
                   yValue: item.status_FLAG ?? 0,
                   series: 'FLAG',
                 },
                 {
-                  xValue: item._id,
+                  xValue: item.time,
                   yValue: item.status_ALLOW ?? 0,
                   series: 'ALLOW',
                 },
@@ -106,9 +106,7 @@ export default function TransactionsChartWidget(props: WidgetProps) {
                   formatSeries={(action) => {
                     return getRuleActionLabel(action, settings) ?? action;
                   }}
-                  formatX={(xValue) => {
-                    return formatDate(xValue);
-                  }}
+                  formatX={formatDate}
                   colors={{
                     SUSPEND: getRuleActionColorForDashboard('SUSPEND'),
                     FLAG: getRuleActionColorForDashboard('FLAG'),

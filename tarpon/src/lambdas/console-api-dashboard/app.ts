@@ -12,13 +12,20 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { DashboardStatsTransactionsCountItem } from '@/@types/openapi-internal/DashboardStatsTransactionsCountItem'
 
+let localRefreshedAll = false
+
 export function shouldRefreshAll(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
   >
 ): boolean {
   if (process.env.ENV === 'local') {
-    return true
+    if (localRefreshedAll) {
+      return false
+    } else {
+      localRefreshedAll = true
+      return true
+    }
   }
   if (event.queryStringParameters?.forceRefresh) {
     assertCurrentUserRole('root')
@@ -98,7 +105,7 @@ export const dashboardStatsHandler = lambdaApi()(
         }
         return {
           data: {
-            _id: 'TOTAL',
+            time: 'TOTAL',
             ...result,
           },
         }

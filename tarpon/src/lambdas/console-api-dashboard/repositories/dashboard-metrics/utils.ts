@@ -25,7 +25,7 @@ export function withUpdatedAt(
 export async function cleanUpStaleData(
   collection: string,
   timeField: string,
-  latUpdatedAt: number,
+  lastUpdatedAt: number,
   timeRange?: TimeRange,
   timeRangeGranularity: 'HOUR' | 'DAY' | 'MONTH' = 'HOUR',
   additionalMatch: Filter<any> = {}
@@ -47,11 +47,19 @@ export async function cleanUpStaleData(
   }
   await db.collection(collection).deleteMany({
     updatedAt: {
-      $lt: latUpdatedAt,
+      $lt: lastUpdatedAt,
     },
     ...timeCondition,
     ...additionalMatch,
   })
+  await db.collection(collection).updateMany(
+    {
+      updatedAt: {
+        $gte: lastUpdatedAt,
+      },
+    },
+    { $unset: { ready: '' } }
+  )
 }
 
 export function getAttributeCountStatsPipeline(
@@ -145,7 +153,7 @@ export function getAttributeCountStatsPipeline(
         newRoot: {
           $mergeObjects: [
             {
-              _id: '$_id',
+              time: '$_id',
             },
             '$items',
           ],
@@ -153,8 +161,14 @@ export function getAttributeCountStatsPipeline(
       },
     },
     {
+      $addFields: {
+        ready: false,
+      },
+    },
+    {
       $merge: {
         into: aggregationCollection,
+        on: ['time', 'ready'],
         whenMatched: 'merge',
       },
     },
@@ -171,7 +185,7 @@ export function getAttributeSumStatsDerivedPipeline(
     const { start, end } = getAffectedInterval(timeRange, granularity)
     const format = getDateFormatJsByGranularity(granularity)
     timestampMatch = {
-      _id: {
+      time: {
         $gte: dayjs(start).format(format),
         $lt: dayjs(end).format(format),
       },
@@ -181,8 +195,8 @@ export function getAttributeSumStatsDerivedPipeline(
     { $match: { ...timestampMatch } },
     {
       $addFields: {
-        time: {
-          $substr: ['$_id', 0, granularity === 'DAY' ? 10 : 7],
+        newTime: {
+          $substr: ['$time', 0, granularity === 'DAY' ? 10 : 7],
         },
         fieldsArray: {
           $objectToArray: '$$ROOT',
@@ -195,14 +209,14 @@ export function getAttributeSumStatsDerivedPipeline(
     {
       $match: {
         'fieldsArray.k': {
-          $nin: ['_id', 'updatedAt'],
+          $nin: ['time', 'updatedAt'],
         },
       },
     },
     {
       $group: {
         _id: {
-          time: '$time',
+          time: '$newTime',
           k: '$fieldsArray.k',
         },
         v: { $sum: '$fieldsArray.v' },
@@ -219,7 +233,7 @@ export function getAttributeSumStatsDerivedPipeline(
         newRoot: {
           $mergeObjects: [
             {
-              _id: '$_id',
+              time: '$_id',
             },
             {
               $arrayToObject: '$fields',
@@ -229,8 +243,17 @@ export function getAttributeSumStatsDerivedPipeline(
       },
     },
     {
+      $addFields: {
+        ready: false,
+      },
+    },
+    {
+      $unset: '_id',
+    },
+    {
       $merge: {
         into: destAggregationCollection,
+        on: ['time', 'ready'],
         whenMatched: 'merge',
       },
     },
