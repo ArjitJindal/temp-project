@@ -16,6 +16,7 @@ import {
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
+import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
 
 function isRule(rule: Rule | RuleInstance) {
   return !!(rule as Rule).defaultParameters
@@ -458,4 +459,106 @@ export const deleteRules = async (ruleIds: string[]) => {
       console.info(`Deleted 'rule' ${ruleId}`)
     })
   )
+}
+
+export const replaceMagicKeywordInLogic = <T>(
+  keyword: string,
+  replacement: string,
+  input: object,
+  type: 'var' | 'func' | 'op'
+): T => {
+  if (typeof input !== 'object' || input === null) {
+    return input
+  }
+
+  if (Array.isArray(input)) {
+    return input.map((item) =>
+      replaceMagicKeywordInLogic(keyword, replacement, item, type)
+    ) as any
+  }
+  const newObject: Record<string, any> = {}
+  for (const [key, value] of Object.entries(input)) {
+    if (typeof value === 'string' && type === 'var' && value === keyword) {
+      newObject[key] = replacement
+      continue
+    }
+    const newKey = type === 'var' || key !== keyword ? key : replacement
+
+    newObject[newKey] = replaceMagicKeywordInLogic(
+      keyword,
+      replacement,
+      value,
+      type
+    )
+  }
+
+  return newObject as T
+}
+
+export const renameV8KeyForTenant = async (
+  oldKey: string,
+  newKey: string,
+  type: 'var' | 'func' | 'op',
+  tenantId: string
+) => {
+  const dynamoDb = getDynamoDbClient()
+  const ruleRepository = new RuleInstanceRepository(tenantId, { dynamoDb })
+  const ruleInstances = await (
+    ruleRepository as RuleInstanceRepository
+  ).getAllRuleInstances()
+
+  for (const ruleInstance of ruleInstances) {
+    ruleInstance.logic = replaceMagicKeywordInLogic(
+      oldKey,
+      newKey,
+      ruleInstance.logic,
+      type
+    )
+    ruleInstance.riskLevelLogic = Object.keys(
+      ruleInstance?.riskLevelLogic ?? {}
+    ).reduce((acc, riskLevel) => {
+      return {
+        ...acc,
+        [riskLevel]: replaceMagicKeywordInLogic(
+          oldKey,
+          newKey,
+          ruleInstance.riskLevelLogic?.[riskLevel],
+          type
+        ),
+      }
+    }, {}) as RiskLevelRuleLogic
+    if (type === 'var') {
+      ruleInstance.logicEntityVariables =
+        ruleInstance.logicEntityVariables?.map((entityVar) => ({
+          ...entityVar,
+          key: newKey,
+        }))
+      ruleInstance.logicAggregationVariables =
+        ruleInstance.logicAggregationVariables?.map((aggVar) => {
+          return {
+            ...aggVar,
+            aggregationFieldKey: newKey,
+            filtersLogic: replaceMagicKeywordInLogic(
+              oldKey,
+              newKey,
+              aggVar.filtersLogic,
+              type
+            ),
+          }
+        })
+    }
+    await (ruleRepository as RuleInstanceRepository).createOrUpdateRuleInstance(
+      ruleInstance
+    )
+  }
+}
+
+export const renameV8Key = async (
+  oldKey: string,
+  newKey: string,
+  type: 'var' | 'func' | 'op'
+) => {
+  await migrateAllTenants(async (tenant) => {
+    await renameV8KeyForTenant(oldKey, newKey, type, tenant.id)
+  })
 }

@@ -7,7 +7,7 @@ const config: Config = {
     '@/(.*)': '<rootDir>/src/$1',
     '@lib/(.*)': '<rootDir>/lib/$1',
   },
-  testMatch: ['<rootDir>/src/**/__tests__/**/*.test.ts?(x)'],
+  testMatch: ['<rootDir>/**/__tests__/**/*.test.ts?(x)'],
   setupFiles: ['<rootDir>/jest-setup.ts'],
   globalTeardown: '<rootDir>/jest-teardown.ts',
   globals: {
