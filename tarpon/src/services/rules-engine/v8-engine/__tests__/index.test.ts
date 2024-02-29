@@ -1,9 +1,13 @@
-import { RuleJsonLogicEvaluator } from '..'
+import { STARTS_WITH_OPERATOR } from '../../v8-operators/starts-ends-with'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { LegalDocument } from '@/@types/openapi-public/LegalDocument'
+
+const operatorSpy = jest.spyOn(STARTS_WITH_OPERATOR, 'run')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const RuleJsonLogicEvaluator = require('..').RuleJsonLogicEvaluator
 
 dynamoDbSetupHook()
 
@@ -662,5 +666,47 @@ describe('Testing dataLoader Cache', () => {
     )
     /** Validating if the cache is called twice as we have two distinct aggregationFunc (COUNT & SUM) accross two evaluate calls */
     expect(loadAggregationDataSpy).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('operators', () => {
+  beforeEach(() => {
+    operatorSpy.mockRestore()
+  })
+  test('be called multiple times for different lhs/rhs values', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    await evaluator.evaluate(
+      { and: [{ 'op:startswith': ['a', ['b']] }] },
+      [],
+      { baseCurrency: 'EUR', tenantId },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    await evaluator.evaluate(
+      { and: [{ 'op:startswith': ['b', ['b']] }] },
+      [],
+      { baseCurrency: 'EUR', tenantId },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(operatorSpy).toBeCalledTimes(2)
+  })
+  test('be called once for the same lhs/rhs values', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    await evaluator.evaluate(
+      { and: [{ 'op:startswith': ['a', ['b']] }] },
+      [],
+      { baseCurrency: 'EUR', tenantId },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    await evaluator.evaluate(
+      { and: [{ 'op:startswith': ['a', ['b']] }] },
+      [],
+      { baseCurrency: 'EUR', tenantId },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(operatorSpy).toBeCalledTimes(1)
   })
 })

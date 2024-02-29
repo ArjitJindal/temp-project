@@ -66,7 +66,7 @@ const getJsonLogicEngine = memoizeOne(
         v.key,
         memoize(
           ([lhr, rhs]) => v.run(lhr, rhs, { tenantId, dynamoDb }),
-          generateChecksum
+          (v) => generateChecksum(v)
         )
       )
     )
