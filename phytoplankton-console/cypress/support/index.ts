@@ -30,6 +30,12 @@ declare global {
       ): Chainable<Promise<Element>>;
       navigateToPage(url: string, pageTitle: string): Chainable<Promise<Element>>;
       toggleFeatures(features: Partial<Record<Feature, boolean>>): Chainable<Promise<Element>>;
+      publicApiHandler(
+        method: string,
+        endpoint: string,
+        requestBody: any,
+      ): Chainable<Promise<Element>>;
+
       /**
        * Looks for a popup message by a text
        * @param text
