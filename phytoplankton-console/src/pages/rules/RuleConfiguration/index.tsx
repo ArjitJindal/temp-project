@@ -7,6 +7,7 @@ import RuleConfigurationV2, { Props as V2Props } from './RuleConfigurationV2';
 import RuleConfigurationV8, { Props as V8Props } from './RuleConfigurationV8';
 import { useIsV8RuleInstance } from '@/pages/rules/utils';
 import { useHasPermissions } from '@/utils/user-utils';
+import { RuleInstance } from '@/apis';
 
 type Props = V8Props &
   V2Props &
@@ -26,7 +27,12 @@ export default function RuleConfiguration(props: Props) {
     };
   }
 
-  const isV8 = useIsV8RuleInstance(ruleInstance);
+  const isV8 = useIsV8RuleInstance({
+    ruleId: props.rule?.id,
+    type: props.rule?.type ?? 'TRANSACTION',
+    logic: props.rule?.defaultLogic,
+    logicAggregationVariables: props.rule?.defaultLogicAggregationVariables,
+  } as RuleInstance);
 
   if (isV8 || props.rule == null) {
     return <RuleConfigurationV8 {...props} ruleInstance={ruleInstance} readOnly={readOnly} />;

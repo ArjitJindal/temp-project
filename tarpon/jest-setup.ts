@@ -41,7 +41,6 @@ module.exports = async function () {
       exec(
         'docker run --name local-dynamodb-test -p 7999:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb'
       )
-      await new Promise((resolve) => setTimeout(resolve, 10000))
     }
   }
 }

@@ -669,7 +669,7 @@ export class RulesEngineService {
         if (hit) {
           ruleResult = finalHitDirections.map((direction) => ({
             direction,
-            vars: varData,
+            vars: { varData },
           }))
         }
       }
@@ -865,14 +865,14 @@ export class RulesEngineService {
               this.updatedAggregationVariables.add(hash)
 
               return [
-                aggVar.direction !== 'RECEIVING'
+                aggVar.transactionDirection !== 'RECEIVING'
                   ? await this.ruleLogicEvaluator.updateAggregationVariable(
                       aggVar,
                       { transaction: options.transaction },
                       'origin'
                     )
                   : undefined,
-                aggVar.direction !== 'SENDING'
+                aggVar.transactionDirection !== 'SENDING'
                   ? await this.ruleLogicEvaluator.updateAggregationVariable(
                       aggVar,
                       { transaction: options.transaction },

@@ -51,7 +51,7 @@ describe('createOrUpdateRuleInstance', () => {
         {
           key: 'agg:1',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING_RECEIVING',
+          transactionDirection: 'SENDING_RECEIVING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {

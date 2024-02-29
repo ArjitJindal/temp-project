@@ -584,7 +584,7 @@ describe('Verify Transaction: V8 engine', () => {
           {
             key: 'agg:123',
             type: 'PAYMENT_DETAILS_TRANSACTIONS',
-            direction: 'SENDING',
+            transactionDirection: 'SENDING',
             aggregationFieldKey: 'TRANSACTION:transactionId',
             aggregationFunc: 'COUNT',
             timeWindow: {
@@ -683,7 +683,7 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
   const aggregationVariables: RuleAggregationVariable = {
     key: 'agg:123',
     type: 'PAYMENT_DETAILS_TRANSACTIONS',
-    direction: 'SENDING',
+    transactionDirection: 'SENDING',
     aggregationFieldKey: 'TRANSACTION:transactionId',
     aggregationFunc: 'COUNT',
     timeWindow: {
@@ -737,7 +737,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
         {
           key: 'agg:123',
           type: 'PAYMENT_DETAILS_TRANSACTIONS',
-          direction: 'SENDING',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -834,7 +834,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
         {
           key: 'agg:123',
           type: 'PAYMENT_DETAILS_TRANSACTIONS',
-          direction: 'SENDING',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {

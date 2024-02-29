@@ -129,9 +129,9 @@ export class RuleJsonLogicEvaluator {
     data: RuleData
   ): Promise<{
     hit: boolean
-    varData: {
+    varData: Array<{
       [key: string]: unknown
-    }
+    }>
     hitDirections: RuleHitDirection[]
   }> {
     const entityVarDataloader = getDataLoader(data, {
@@ -164,8 +164,8 @@ export class RuleJsonLogicEvaluator {
         return aggVariable
       })
       .filter(Boolean) as RuleAggregationVariable[]
-    const aggHasBothDirections = aggVariables.some(
-      (v) => v.direction === 'SENDING_RECEIVING'
+    const aggHasBothUserDirections = aggVariables.some(
+      (v) => !v.userDirection || v.userDirection === 'SENDER_OR_RECEIVER'
     )
     const aggVarData = await Promise.all(
       aggVariables.map(async (aggVariable) => {
@@ -183,14 +183,16 @@ export class RuleJsonLogicEvaluator {
         return {
           variable: aggVariable,
           origin:
-            aggVariable.direction !== 'RECEIVING'
+            aggVariable.userDirection !== 'RECEIVER' &&
+            aggVariable.transactionDirection !== 'RECEIVING'
               ? await aggregationVarLoader.load({
                   direction: 'origin',
                   aggVariable,
                 })
               : null,
           destination:
-            aggVariable.direction !== 'SENDING'
+            aggVariable.userDirection !== 'SENDER' &&
+            aggVariable.transactionDirection !== 'SENDING'
               ? await aggregationVarLoader.load({
                   direction: 'destination',
                   aggVariable,
@@ -199,9 +201,9 @@ export class RuleJsonLogicEvaluator {
         }
       })
     )
-    // NOTE: If a aggregation variable has both directions, we need to evaluate the logic
+    // NOTE: If a aggregation variable has both user directions, we need to evaluate the logic
     // twice, one for each direction
-    const directions = aggHasBothDirections
+    const directions = aggHasBothUserDirections
       ? ['origin', 'destination']
       : ['origin']
     let hit = false
@@ -209,16 +211,16 @@ export class RuleJsonLogicEvaluator {
     // by setting alertConfig.alertCreationDirection
     const hitDirections: RuleHitDirection[] =
       aggVariables.length > 0 ? [] : ['ORIGIN', 'DESTINATION']
-    let varData = {}
+    const varDatas: Array<{ [key: string]: any }> = []
     for (const direction of directions) {
       const aggVarEntries: Array<{
         entry: [string, any]
         direction: RuleHitDirection
       }> = aggVarData.map((v) => {
         const directionToUse =
-          v.variable.direction === 'SENDING'
+          v.variable.userDirection === 'SENDER'
             ? 'origin'
-            : v.variable.direction === 'RECEIVING'
+            : v.variable.userDirection === 'RECEIVER'
             ? 'destination'
             : direction
         return {
@@ -226,9 +228,10 @@ export class RuleJsonLogicEvaluator {
           direction: directionToUse === 'origin' ? 'ORIGIN' : 'DESTINATION',
         }
       })
-      varData = Object.fromEntries(
+      const varData = Object.fromEntries(
         entityVarEntries.concat(aggVarEntries.map((v) => v.entry))
       )
+      varDatas.push(varData)
       const jsonLogicEngine = getJsonLogicEngine(this.tenantId, this.dynamoDb)
       const resultHit = await jsonLogicEngine.run(jsonLogic, varData)
       if (resultHit) {
@@ -241,7 +244,7 @@ export class RuleJsonLogicEvaluator {
     return {
       hit,
       // TODO (V8): Persist varData for both directions
-      varData,
+      varData: varDatas,
       hitDirections: hit ? uniq(hitDirections) : [],
     }
   }
@@ -371,9 +374,9 @@ export class RuleJsonLogicEvaluator {
         afterTimestamp,
         beforeTimestamp,
         checkType:
-          aggregationVariable.direction === 'SENDING'
+          aggregationVariable.transactionDirection === 'SENDING'
             ? 'sending'
-            : aggregationVariable.direction === 'RECEIVING'
+            : aggregationVariable.transactionDirection === 'RECEIVING'
             ? 'receiving'
             : 'all',
         matchPaymentMethodDetails:

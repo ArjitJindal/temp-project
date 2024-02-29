@@ -13,6 +13,7 @@ import {
   RuleAggregationFunc,
   RuleAggregationTransactionDirection,
   RuleAggregationType,
+  RuleAggregationUserDirection,
   RuleAggregationVariable,
   RuleAggregationVariableTimeWindow,
   RuleEntityVariable,
@@ -43,10 +44,16 @@ const TYPE_OPTIONS: Array<{ value: RuleAggregationType; label: string }> = [
   { value: 'USER_TRANSACTIONS', label: 'User ID' },
   { value: 'PAYMENT_DETAILS_TRANSACTIONS', label: 'Payment ID' },
 ];
+const USER_DIRECTION_OPTIONS: Array<{ value: RuleAggregationUserDirection; label: string }> = [
+  { value: 'SENDER', label: 'Sender' },
+  { value: 'RECEIVER', label: 'Receiver' },
+  { value: 'SENDER_OR_RECEIVER', label: 'Both' },
+];
+
 const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; label: string }> = [
   { value: 'SENDING', label: 'Sending' },
   { value: 'RECEIVING', label: 'Receiving' },
-  { value: 'SENDING_RECEIVING', label: 'All' },
+  { value: 'SENDING_RECEIVING', label: 'Both' },
 ];
 export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = ({
   variable,
@@ -123,7 +130,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       : false;
     return (
       formValues.type &&
-      formValues.direction &&
+      formValues.transactionDirection &&
       formValues.aggregationFieldKey &&
       (!isTxAmount || (isTxAmount && formValues.baseCurrency)) &&
       formValues.aggregationFunc &&
@@ -133,7 +140,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     formValues.aggregationFieldKey,
     formValues.aggregationFunc,
     formValues.baseCurrency,
-    formValues.direction,
+    formValues.transactionDirection,
     formValues.type,
     isValidTimeWindow,
   ]);
@@ -179,6 +186,15 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               testName="variable-type-v8"
             />
           </Label>
+          <Label label={`Check for sender / receiver`} required={{ value: true, showHint: true }}>
+            <SelectionGroup
+              value={formValues.userDirection}
+              onChange={(userDirection) => handleUpdateForm({ userDirection })}
+              mode={'SINGLE'}
+              options={USER_DIRECTION_OPTIONS}
+              testName="variable-user-direction-v8"
+            />
+          </Label>
           <Label
             label={`Check for ${
               formValues.type === 'USER_TRANSACTIONS' ? 'user' : 'Payment ID'
@@ -186,14 +202,13 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             required={{ value: true, showHint: true }}
           >
             <SelectionGroup
-              value={formValues.direction}
-              onChange={(direction) => handleUpdateForm({ direction })}
+              value={formValues.transactionDirection}
+              onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
               mode={'SINGLE'}
               options={TX_DIRECTION_OPTIONS}
-              testName="variable-direction-v8"
+              testName="variable-tx-direction-v8"
             />
           </Label>
-          <div></div>
           <Label
             label="Aggregate field"
             required={{ value: true, showHint: true }}

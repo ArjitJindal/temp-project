@@ -130,7 +130,8 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
           variable: {
             key: getNewAggregationVariableKey(),
             type: 'USER_TRANSACTIONS',
-            direction: 'SENDING_RECEIVING',
+            userDirection: 'SENDER_OR_RECEIVER',
+            transactionDirection: 'SENDING_RECEIVING',
             baseCurrency: settings.defaultValues?.currency,
             timeWindow: {
               start: { units: 1, granularity: 'day' },

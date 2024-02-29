@@ -20,7 +20,7 @@ describe('entity variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: { 'TRANSACTION:type': 'TRANSFER' },
+      varData: [{ 'TRANSACTION:type': 'TRANSFER' }],
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
@@ -37,7 +37,7 @@ describe('entity variable', () => {
     )
     expect(result).toEqual({
       hit: false,
-      varData: { 'TRANSACTION:type': 'DEPOSIT' },
+      varData: [{ 'TRANSACTION:type': 'DEPOSIT' }],
       hitDirections: [],
     })
   })
@@ -96,12 +96,14 @@ describe('entity variable (array)', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: {
-        'TRANSACTION:tags': [
-          { key: '1', value: '2' },
-          { key: 'a', value: 'b' },
-        ],
-      },
+      varData: [
+        {
+          'TRANSACTION:tags': [
+            { key: '1', value: '2' },
+            { key: 'a', value: 'b' },
+          ],
+        },
+      ],
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
@@ -161,9 +163,11 @@ describe('entity variable (array)', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: {
-        'CONSUMER_USER:legalDocuments__SENDER': testLegalDocuments,
-      },
+      varData: [
+        {
+          'CONSUMER_USER:legalDocuments__SENDER': testLegalDocuments,
+        },
+      ],
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
@@ -207,7 +211,8 @@ describe('aggregation variable', () => {
         {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          userDirection: 'SENDER',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -221,7 +226,7 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: { 'agg:123': 1 },
+      varData: [{ 'agg:123': 1 }],
       hitDirections: ['ORIGIN'],
     })
   })
@@ -236,7 +241,8 @@ describe('aggregation variable', () => {
         {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
-          direction: 'RECEIVING',
+          userDirection: 'RECEIVER',
+          transactionDirection: 'RECEIVING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -250,7 +256,7 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: { 'agg:123': 1 },
+      varData: [{ 'agg:123': 1 }],
       hitDirections: ['DESTINATION'],
     })
   })
@@ -270,7 +276,8 @@ describe('aggregation variable', () => {
         {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          userDirection: 'SENDER',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -281,7 +288,8 @@ describe('aggregation variable', () => {
         {
           key: 'agg:456',
           type: 'USER_TRANSACTIONS',
-          direction: 'RECEIVING',
+          userDirection: 'RECEIVER',
+          transactionDirection: 'RECEIVING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -295,7 +303,7 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: { 'agg:123': 1, 'agg:456': 1 },
+      varData: [{ 'agg:123': 1, 'agg:456': 1 }],
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
@@ -310,7 +318,8 @@ describe('aggregation variable', () => {
         {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING_RECEIVING',
+          userDirection: 'SENDER_OR_RECEIVER',
+          transactionDirection: 'SENDING_RECEIVING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -324,8 +333,68 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: { 'agg:123': 1 },
+      varData: [{ 'agg:123': 1 }, { 'agg:123': 1 }],
       hitDirections: ['ORIGIN', 'DESTINATION'],
+    })
+  })
+
+  test('executes the json logic (sender-only; sending_receiving)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
+          transactionDirection: 'SENDING_RECEIVING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      { baseCurrency: 'EUR', tenantId },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(result).toEqual({
+      hit: true,
+      varData: [{ 'agg:123': 1 }],
+      hitDirections: ['ORIGIN'],
+    })
+  })
+
+  test('executes the json logic (receiver-only; sending_receiving)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          userDirection: 'RECEIVER',
+          transactionDirection: 'SENDING_RECEIVING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      { baseCurrency: 'EUR', tenantId },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(result).toEqual({
+      hit: true,
+      varData: [{ 'agg:123': 1 }],
+      hitDirections: ['DESTINATION'],
     })
   })
 
@@ -336,7 +405,8 @@ describe('aggregation variable', () => {
     const testAggVar = {
       key: 'agg:123',
       type: 'USER_TRANSACTIONS',
-      direction: 'RECEIVING',
+      userDirection: 'RECEIVER',
+      transactionDirection: 'RECEIVING',
       aggregationFieldKey: 'TRANSACTION:transactionId',
       aggregationFunc: 'COUNT',
       timeWindow: {
@@ -359,7 +429,7 @@ describe('aggregation variable', () => {
     )
     expect(resultFilteredOut).toEqual({
       hit: false,
-      varData: { 'agg:123': 0 },
+      varData: [{ 'agg:123': 0 }],
       hitDirections: [],
     })
     const resultFiltered = await evaluator.evaluate(
@@ -377,7 +447,7 @@ describe('aggregation variable', () => {
     )
     expect(resultFiltered).toEqual({
       hit: true,
-      varData: { 'agg:123': 1 },
+      varData: [{ 'agg:123': 1 }],
       hitDirections: ['DESTINATION'],
     })
   })
@@ -389,7 +459,8 @@ describe('aggregation variable', () => {
     const testAggVar = {
       key: 'agg:123',
       type: 'USER_TRANSACTIONS',
-      direction: 'SENDING',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
       aggregationFieldKey: 'TRANSACTION:transactionId',
       aggregationFunc: 'COUNT',
     } as const
@@ -409,7 +480,7 @@ describe('aggregation variable', () => {
     )
     expect(resultNotWithinTimeWindow).toEqual({
       hit: false,
-      varData: { 'agg:123': 0 },
+      varData: [{ 'agg:123': 0 }],
       hitDirections: [],
     })
     const resultWithinTimeWindow = await evaluator.evaluate(
@@ -428,7 +499,7 @@ describe('aggregation variable', () => {
     )
     expect(resultWithinTimeWindow).toEqual({
       hit: true,
-      varData: { 'agg:123': 1 },
+      varData: [{ 'agg:123': 1 }],
       hitDirections: ['ORIGIN'],
     })
   })
@@ -443,7 +514,8 @@ describe('aggregation variable', () => {
         {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          userDirection: 'SENDER',
+          transactionDirection: 'SENDING',
           aggregationFieldKey:
             'TRANSACTION:originAmountDetails-transactionAmount',
           aggregationFunc: 'AVG',
@@ -466,7 +538,7 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: { 'agg:123': 106.85660242529653 },
+      varData: [{ 'agg:123': 106.85660242529653 }],
       hitDirections: ['ORIGIN'],
     })
   })
@@ -497,7 +569,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -508,7 +580,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:124',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -519,7 +591,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:125',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -530,7 +602,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:126',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'SUM',
           timeWindow: {
@@ -554,7 +626,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -565,7 +637,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:124',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
           timeWindow: {
@@ -576,7 +648,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:126',
           type: 'USER_TRANSACTIONS',
-          direction: 'SENDING',
+          transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'SUM',
           timeWindow: {

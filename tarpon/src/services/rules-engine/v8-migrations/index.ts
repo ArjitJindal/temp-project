@@ -102,7 +102,8 @@ const V8_CONVERSION: {
     logicAggregationVariables.push({
       key: 'agg:receiving',
       type: 'USER_TRANSACTIONS',
-      direction: 'RECEIVING',
+      userDirection: 'RECEIVER',
+      transactionDirection: 'RECEIVING',
       aggregationFieldKey: 'TRANSACTION:paymentDetailsIdentifier__SENDER',
       aggregationFunc: 'UNIQUE_COUNT',
       timeWindow: {
@@ -301,7 +302,8 @@ const V8_CONVERSION: {
     logicAggregationVariables.push({
       key: 'agg:sending',
       type: 'USER_TRANSACTIONS',
-      direction: 'RECEIVING',
+      userDirection: 'RECEIVER',
+      transactionDirection: 'RECEIVING',
       aggregationFieldKey: 'TRANSACTION:originUserId',
       aggregationFunc: 'UNIQUE_COUNT',
       timeWindow: {

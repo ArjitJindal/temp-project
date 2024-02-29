@@ -112,7 +112,7 @@ describe('Create scenario', () => {
     cy.get('[role="menuitem"]').contains('Aggregate variable').click();
     cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}`).blur();
     cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
-    cy.get('input[data-cy="variable-direction-v8"]').eq(0).click();
+    cy.get('input[data-cy="variable-tx-direction-v8"]').eq(0).click();
     cy.wait('@ruleLogicConfig').then((interception) => {
       expect(interception.response?.statusCode).to.oneOf([200, 304]);
       cy.get('[data-cy="variable-aggregate-field-v8"]')

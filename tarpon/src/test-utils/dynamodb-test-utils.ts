@@ -4,6 +4,7 @@ import {
   DeleteTableCommand,
   DynamoDBClient,
 } from '@aws-sdk/client-dynamodb'
+import { backOff } from 'exponential-backoff'
 import { range } from 'lodash'
 
 export const TEST_DYNAMODB_TABLE_NAME_PREFIX = '__test__'
@@ -13,11 +14,16 @@ export const TEST_DYNAMODB_TABLE_NAMES = range(0, 4).map(
   (i) => `${TEST_DYNAMODB_TABLE_NAME_PREFIX}${process.env.JEST_WORKER_ID}-${i}`
 )
 
+const retryOptions = {
+  startingDelay: 2000,
+  maxDelay: 2000,
+  numOfAttempts: 10,
+} as const
 export function dynamoDbSetupHook() {
   beforeAll(async () => {
     for (const table of TEST_DYNAMODB_TABLE_NAMES) {
-      await deleteTable(table, true)
-      await createTable(table)
+      await backOff(() => deleteTable(table, true), retryOptions)
+      await backOff(() => createTable(table), retryOptions)
     }
   })
   afterAll(() => {
@@ -31,23 +37,17 @@ export function dynamoDbSetupHook() {
 }
 
 async function createTable(tableName: string) {
-  let error: any = null
-  for (let i = 0; i < 5; i++) {
-    try {
-      const { getDynamoDbRawClient } = await import('@/utils/dynamodb')
-      const dynamodb = getDynamoDbRawClient()
-      await dynamodb.send(new CreateTableCommand(createSchema(tableName)))
-      dynamodb.destroy()
-      return
-    } catch (e: any) {
-      error = e
-    }
+  try {
+    const { getDynamoDbRawClient } = await import('@/utils/dynamodb')
+    const dynamodb = getDynamoDbRawClient()
+    await dynamodb.send(new CreateTableCommand(createSchema(tableName)))
+    dynamodb.destroy()
+    return
+  } catch (e: any) {
+    throw new Error(
+      `Unable to create table "${tableName}"; ${e?.message ?? 'Unknown error'}`
+    )
   }
-  throw new Error(
-    `Unable to create table "${tableName}"; ${
-      error?.message ?? 'Unknown error'
-    }`
-  )
 }
 
 async function deleteTable(tableName: string, silent = false) {

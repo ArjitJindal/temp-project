@@ -28,7 +28,7 @@ export type AggregationData<T = unknown> = { value: T }
 const GLOBAL_AGG_VERSION = 'v1'
 const RULE_AGG_VAR_CHECKSUM_FIELDS: Array<keyof RuleAggregationVariable> = [
   'type',
-  'direction',
+  'transactionDirection',
   'aggregationFieldKey',
   'aggregationFunc',
   'timeWindow',
