@@ -10876,6 +10876,9 @@ components:
         - ALERT_UNASSIGNMENT
         - CASE_ESCALATION
         - ALERT_ESCALATION
+        - ALERT_COMMENT_MENTION
+        - CASE_COMMENT_MENTION
+        - USER_COMMENT_MENTION
     NotificationChannels:
       title: NotificationChannels
       type: string
@@ -10921,6 +10924,21 @@ components:
         - reason
         - reviewAssignments
         - status
+    CommentMentionNotification:
+      title: CommentMentionNotification
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - COMMENT_MENTION
+        mentions:
+          type: array
+          items:
+            type: string
+      required:
+        - type
+        - assignments
     ConsoleNotificationStatus:
       title: ConsoleNotificationStatus
       type: object
@@ -10963,6 +10981,7 @@ components:
           enum:
             - CASE
             - ALERT
+            - USER
         notificationData:
           type: object
         consoleNotificationStatuses:

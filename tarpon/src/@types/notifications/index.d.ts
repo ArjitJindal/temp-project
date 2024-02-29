@@ -11,7 +11,10 @@ export interface NotificationRawPayload<I = object, M = object>
   entityId: string
 }
 
-export type NotificationData = AssignmentNotification | EscalationNotification
+export type NotificationData =
+  | AssignmentNotification
+  | EscalationNotification
+  | CommentMentionNotification
 export interface PartialNotification<T extends NotificationData = object>
   extends Omit<
     Notification,

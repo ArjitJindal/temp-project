@@ -17,6 +17,10 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
 import { AccountsService } from '@/services/accounts'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getTestUser } from '@/test-utils/user-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { allUsersViewHandler } from '@/lambdas/console-api-user/app'
 
 dynamoDbSetupHook()
 withFeatureHook(['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'])
@@ -498,5 +502,155 @@ describe('Test notifications service', () => {
     )
 
     expect(originalCase?.caseStatus).toBe('OPEN')
+  })
+  test('Send mentions notification for case', async () => {
+    const mongoDb = await getMongoDbClient()
+    const user = 'auth0|user1'
+    const user2 = 'auth0|user2'
+
+    const tenantId = getTestTenantId()
+
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+    })
+
+    const case_ = await caseRepository.addCaseMongo(
+      getTestCase({
+        comments: [],
+      })
+    )
+    const event = getApiGatewayPostEvent(
+      tenantId,
+      `/cases/{caseId}/comments`,
+      {
+        body: 'Test comment for [@user1](auth0|user1) and [@user2](auth0|user2)',
+        files: [],
+      },
+      {
+        pathParameters: {
+          caseId: case_?.caseId as string,
+        },
+      }
+    )
+    const role: AccountRole = {
+      description: 'Admin',
+      id: 'ADMIN',
+      name: 'Admin',
+      permissions: PERMISSIONS,
+    }
+    const roles: AccountRole[] = [role]
+
+    getContextMocker.mockReturnValue({
+      tenantId,
+      settings: {
+        notificationsSubscriptions: {
+          console: ['CASE_COMMENT_MENTION'],
+        },
+      },
+      features: ['NOTIFICATIONS'],
+      user: { id: user, role: 'Admin' },
+    })
+
+    const users: Account[] = [
+      { id: user, email: `${user}@test.com`, role: 'Admin' } as Account,
+      { id: user2, email: `${user2}@test.com`, role: 'Admin' } as Account,
+    ]
+
+    getSpyes(users, roles)
+
+    await casesHandler(event, null as any, null as any)
+
+    const notificationsService = new NotificationRepository(tenantId, {
+      mongoDb,
+    })
+
+    const notifications =
+      await notificationsService.getNotificationsByRecipient(user2)
+
+    const sendersNotifications =
+      await notificationsService.getNotificationsByRecipient(user)
+    expect(notifications.length).toBe(1)
+    expect(sendersNotifications.length).toBe(0)
+    expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
+      'SENT'
+    )
+    expect(notifications[0]?.notificationType).toBe('CASE_COMMENT_MENTION')
+    expect(notifications[0]?.recievers).toContain(user2)
+  })
+  test('Send mentions notification for user', async () => {
+    const mongoDb = await getMongoDbClient()
+    const user = 'auth0|user1'
+    const user2 = 'auth0|user2'
+
+    const tenantId = getTestTenantId()
+
+    const userRepository = new UserRepository(tenantId, {
+      dynamoDb: getDynamoDbClient(),
+      mongoDb,
+    })
+
+    const savedUser = await userRepository.saveUser(
+      getTestUser({
+        comments: [],
+      }),
+      'CONSUMER'
+    )
+    const event = getApiGatewayPostEvent(
+      tenantId,
+      `/users/{userId}/comments`,
+      {
+        body: 'Test comment for [@user1](auth0|user1) and [@user2](auth0|user2)',
+        files: [],
+      },
+      {
+        pathParameters: {
+          userId: savedUser?.userId as string,
+        },
+      }
+    )
+    const role: AccountRole = {
+      description: 'Admin',
+      id: 'ADMIN',
+      name: 'Admin',
+      permissions: PERMISSIONS,
+    }
+    const roles: AccountRole[] = [role]
+
+    getContextMocker.mockReturnValue({
+      tenantId,
+      settings: {
+        notificationsSubscriptions: {
+          console: ['USER_COMMENT_MENTION'],
+        },
+      },
+      features: ['NOTIFICATIONS'],
+      user: { id: user, role: 'Admin' },
+    })
+
+    const users: Account[] = [
+      { id: user, email: `${user}@test.com`, role: 'Admin' } as Account,
+      { id: user2, email: `${user2}@test.com`, role: 'Admin' } as Account,
+    ]
+
+    getSpyes(users, roles)
+
+    await allUsersViewHandler(event, null as any, null as any)
+
+    const notificationsService = new NotificationRepository(tenantId, {
+      mongoDb,
+    })
+
+    const notifications =
+      await notificationsService.getNotificationsByRecipient(user2)
+
+    const sendersNotifications =
+      await notificationsService.getNotificationsByRecipient(user)
+    expect(notifications.length).toBe(1)
+    expect(sendersNotifications.length).toBe(0)
+    expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
+      'SENT'
+    )
+    expect(notifications[0]?.notificationType).toBe('USER_COMMENT_MENTION')
+    expect(notifications[0]?.recievers).toContain(user2)
   })
 })
