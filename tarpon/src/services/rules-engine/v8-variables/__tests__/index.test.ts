@@ -16,6 +16,7 @@ describe('List of entity variables', () => {
           key: 'TRANSACTION:type',
           entity: 'TRANSACTION',
           valueType: 'string',
+          sourceField: 'type',
           uiDefinition: {
             label: 'Transaction / type',
             type: 'select',
@@ -38,6 +39,7 @@ describe('List of entity variables', () => {
           key: 'TRANSACTION:transactionId',
           entity: 'TRANSACTION',
           valueType: 'string',
+          sourceField: 'transactionId',
           uiDefinition: {
             label: 'Transaction / transaction id',
             type: 'text',
@@ -48,6 +50,7 @@ describe('List of entity variables', () => {
           key: 'TRANSACTION:originAmountDetails-transactionCurrency',
           entity: 'TRANSACTION',
           valueType: 'string',
+          sourceField: 'originAmountDetails',
           uiDefinition: {
             label: 'Transaction / origin amount details > transaction currency',
             type: 'select',
@@ -118,6 +121,7 @@ describe('List of entity variables', () => {
           key: 'TRANSACTION:tags',
           entity: 'TRANSACTION',
           valueType: 'array',
+          sourceField: 'tags',
           uiDefinition: {
             label: 'Transaction / tags',
             type: '!group',

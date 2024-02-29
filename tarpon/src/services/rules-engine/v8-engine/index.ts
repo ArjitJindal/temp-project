@@ -10,6 +10,7 @@ import { RULE_OPERATORS } from '../v8-operators'
 import {
   VARIABLE_NAMESPACE_SEPARATOR,
   getRuleVariableByKey,
+  getTransactionEntityVariables,
   isSenderUserVariable,
 } from '../v8-variables'
 import { getTimestampRange } from '../utils/time-utils'
@@ -138,16 +139,8 @@ export class RuleJsonLogicEvaluator {
       ...context,
       dynamoDb: this.dynamoDb,
     })
-    const variableKeys = uniq(
-      getAllValuesByKey<string>('var', jsonLogic).filter((v) =>
-        // NOTE: We don't need to load the subfields of an array-type variable
-        v.includes(VARIABLE_NAMESPACE_SEPARATOR)
-      )
-    )
-    const entityVariableKeys = variableKeys.filter(
-      (k) => !isAggregationVariable(k)
-    )
-    const aggVariableKeys = variableKeys.filter(isAggregationVariable)
+    const { entityVariableKeys, aggVariableKeys } =
+      this.getVariableKeysFromLogic(jsonLogic)
     const entityVarEntries = await Promise.all(
       entityVariableKeys.map(async (key) => [
         key,
@@ -362,6 +355,7 @@ export class RuleJsonLogicEvaluator {
     const aggregationGranularity =
       this.getAggregationGranularity(aggregationVariable)
 
+    const fieldsToFetch = this.getTransactionFieldsToFetch(aggregationVariable)
     const generator = getTransactionsGenerator(
       direction == 'origin'
         ? ruleData.transaction.originUserId
@@ -383,10 +377,7 @@ export class RuleJsonLogicEvaluator {
           aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS',
         filters: {},
       },
-      // TODO (V8): Optimize to only fetch the required attributes
-      Transaction.attributeTypeMap
-        .map((v) => v.name)
-        .concat(['senderKeyId', 'receiverKeyId']) as Array<keyof Transaction>
+      fieldsToFetch as Array<keyof Transaction>
     )
     let timeAggregatedResult: {
       [time: string]: AggregationData
@@ -588,6 +579,35 @@ export class RuleJsonLogicEvaluator {
     logger.info('Updated aggregation')
   }
 
+  private getTransactionFieldsToFetch(
+    aggregationVariable: RuleAggregationVariable
+  ): string[] {
+    const fieldsToFetch: Set<string> = new Set()
+
+    const addFieldToFetch = (variable: string) => {
+      const entityVar = getTransactionEntityVariables()[variable]
+      if (entityVar) {
+        fieldsToFetch.add(entityVar.sourceField)
+      }
+    }
+    if (aggregationVariable.filtersLogic) {
+      this.getVariableKeysFromLogic(
+        aggregationVariable.filtersLogic
+      ).entityVariableKeys.forEach((variable) => {
+        addFieldToFetch(variable)
+      })
+    }
+    if (aggregationVariable.aggregationFieldKey) {
+      addFieldToFetch(aggregationVariable.aggregationFieldKey)
+    }
+    return uniq([
+      ...Array.from(fieldsToFetch),
+      'senderKeyId',
+      'receiverKeyId',
+      'timestamp',
+    ])
+  }
+
   private async loadAggregationData(
     direction: 'origin' | 'destination',
     aggregationVariable: RuleAggregationVariable,
@@ -665,6 +685,23 @@ export class RuleJsonLogicEvaluator {
         )
       ).hit
     )
+  }
+
+  private getVariableKeysFromLogic(jsonLogic: object): {
+    entityVariableKeys: string[]
+    aggVariableKeys: string[]
+  } {
+    const variableKeys = uniq(
+      getAllValuesByKey<string>('var', jsonLogic).filter((v) =>
+        // NOTE: We don't need to load the subfields of an array-type variable
+        v.includes(VARIABLE_NAMESPACE_SEPARATOR)
+      )
+    )
+    const entityVariableKeys = variableKeys.filter(
+      (k) => !isAggregationVariable(k)
+    )
+    const aggVariableKeys = variableKeys.filter(isAggregationVariable)
+    return { entityVariableKeys, aggVariableKeys }
   }
 
   private isNewDataWithinTimeWindow(

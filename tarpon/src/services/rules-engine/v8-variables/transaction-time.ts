@@ -21,4 +21,5 @@ export const TRANSACTION_TIME: TransactionRuleVariable = {
   uiDefinition: getUiDefinition(),
   load: async (transaction: InternalTransaction | Transaction) =>
     getSecondsFromTimestamp(transaction.timestamp),
+  sourceField: 'timestamp',
 }

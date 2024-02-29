@@ -186,16 +186,35 @@ function updatedTransactionEntityVariables(
   }
 }
 
-export const getTransactionRuleEntityVariables = memoize(
-  (): { [key: string]: RuleVariable } => {
+export const getTransactionEntityVariables = memoize(
+  (): { [key: string]: TransactionRuleVariable } => {
+    const transactionAutoRuleEntityVariables = getAutoRuleEntityVariables(
+      'TRANSACTION',
+      Transaction
+    ).map(
+      (variable) =>
+        ({
+          ...variable,
+          sourceField: variable.key.split('.')[0],
+        } as TransactionRuleVariable)
+    )
     const transactionEntityVariables = [
-      ...getAutoRuleEntityVariables('TRANSACTION', Transaction),
+      ...transactionAutoRuleEntityVariables,
       ...TRANSACTION_DERIVED_VARIABLES,
     ]
+    return Object.fromEntries(transactionEntityVariables.map((v) => [v.key, v]))
+  }
+)
+
+export const getTransactionRuleEntityVariables = memoize(
+  (): { [key: string]: RuleVariable } => {
+    const transactionEntityVariables = Object.values(
+      getTransactionEntityVariables()
+    )
+
     updatedTransactionEntityVariables(
       transactionEntityVariables as TransactionRuleVariable[]
     )
-
     const consumerUserEntityVariables = getAutoRuleEntityVariables(
       'CONSUMER_USER',
       User

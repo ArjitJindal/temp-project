@@ -39,6 +39,7 @@ export interface TransactionRuleVariable<ReturnType = unknown>
     transaction: Transaction,
     context: TransactionRuleVariableContext
   ) => Promise<ReturnType>
+  sourceField: keyof Transaction
 }
 
 export interface ConsumerUserRuleVariable<ReturnType = unknown>

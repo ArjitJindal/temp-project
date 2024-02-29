@@ -46,6 +46,10 @@ const createPaymentDetailsIdentifier = (
         ? getPaymentDetailsIdentifiersKey(transaction.destinationPaymentDetails)
         : ''
     },
+    sourceField:
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails',
   }
 }
 
