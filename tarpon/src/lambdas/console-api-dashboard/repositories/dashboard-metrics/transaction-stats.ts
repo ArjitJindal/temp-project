@@ -41,6 +41,9 @@ async function createInexes(tenantId) {
         unique: true,
       }
     )
+    await db.collection(collection).createIndex({
+      updatedAt: 1,
+    })
   }
 }
 
