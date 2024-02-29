@@ -331,6 +331,7 @@ describe('Simulation (Pulse) batch job runner', () => {
               ],
               parameterType: 'VARIABLE',
               defaultRiskLevel: DEFAULT_RISK_LEVEL,
+              weight: 1,
             },
             {
               parameter: 'originAmountDetails.country',
@@ -369,6 +370,7 @@ describe('Simulation (Pulse) batch job runner', () => {
               ],
               parameterType: 'VARIABLE',
               defaultRiskLevel: DEFAULT_RISK_LEVEL,
+              weight: 1,
             },
           ],
           sampling: {

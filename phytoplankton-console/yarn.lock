@@ -6793,6 +6793,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-katex@npm:^3":
+  version: 3.0.4
+  resolution: "@types/react-katex@npm:3.0.4"
+  dependencies:
+    "@types/react": "npm:*"
+  checksum: 919d5752eb5ea8e5eb72dde1cb2f2b3e0b0d7e74e463eb95a8da4a3a12478223b92e78c0b1bece53ce9e5404aa1a0ac63955ef1a4e00829080ad41808ee82538
+  languageName: node
+  linkType: hard
+
 "@types/react-reconciler@npm:^0.26.7":
   version: 0.26.7
   resolution: "@types/react-reconciler@npm:0.26.7"
@@ -9181,7 +9190,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:8.3.0":
+"commander@npm:8.3.0, commander@npm:^8.3.0":
   version: 8.3.0
   resolution: "commander@npm:8.3.0"
   checksum: 8b043bb8322ea1c39664a1598a95e0495bfe4ca2fad0d84a92d7d1d8d213e2a155b441d2470c8e08de7c4a28cf2bc6e169211c49e1b21d9f7edc6ae4d9356060
@@ -15139,6 +15148,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"katex@npm:^0.16.0":
+  version: 0.16.9
+  resolution: "katex@npm:0.16.9"
+  dependencies:
+    commander: "npm:^8.3.0"
+  bin:
+    katex: cli.js
+  checksum: 750b1d61063eda970b97bfb2e8e26c898548ce2b544286813982498b1ce1d4cfae41dd32fa7e9488b6118a4c8df5cf06871746993d45227de34ea224c63199df
+  languageName: node
+  linkType: hard
+
 "kdbush@npm:^3.0.0":
   version: 3.0.0
   resolution: "kdbush@npm:3.0.0"
@@ -17210,6 +17230,7 @@ __metadata:
     "@types/react": "npm:^17.0.0"
     "@types/react-dom": "npm:^17.0.0"
     "@types/react-helmet": "npm:^6.1.6"
+    "@types/react-katex": "npm:^3"
     "@types/react-resizable": "npm:^3.0.2"
     "@types/react-test-renderer": "npm:^17.0.0"
     "@types/uuid": "npm:^9.0.1"
@@ -17276,6 +17297,7 @@ __metadata:
     react-device-detect: "npm:^2.2.2"
     react-dom: "npm:18.0.0"
     react-helmet: "npm:^6.1.0"
+    react-katex: "npm:^3.0.1"
     react-resizable: "npm:^3.0.4"
     react-router: "npm:^6.3.0"
     react-router-dom: "npm:^6.3.0"
@@ -18834,6 +18856,18 @@ __metadata:
   version: 17.0.2
   resolution: "react-is@npm:17.0.2"
   checksum: 2bdb6b93fbb1820b024b496042cce405c57e2f85e777c9aabd55f9b26d145408f9f74f5934676ffdc46f3dcff656d78413a6e43968e7b3f92eea35b3052e9053
+  languageName: node
+  linkType: hard
+
+"react-katex@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "react-katex@npm:3.0.1"
+  dependencies:
+    katex: "npm:^0.16.0"
+  peerDependencies:
+    prop-types: ^15.8.1
+    react: ">=15.3.2 <=18"
+  checksum: f11e78ed9983f97f2f7b5f2810a847ff559891e9a2dd4b78c7d3d7abb4ff8af62147dd82c25b7ab4e49ffb23314e106d93a5d4527a3ab6d5aa3e2b7a9bf1f39b
   languageName: node
   linkType: hard
 

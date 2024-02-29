@@ -141,6 +141,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'userDetails.countryOfResidence',
@@ -151,6 +152,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'userDetails.countryOfNationality',
@@ -161,6 +163,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'userDetails.dateOfBirth',
@@ -171,6 +174,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'userSegment',
@@ -181,6 +185,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'employmentStatus',
@@ -191,6 +196,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'occupation',
@@ -201,6 +207,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'reasonForAccountOpening',
@@ -211,6 +218,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'sourceOfFunds',
@@ -221,6 +229,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
 ];
 
@@ -287,6 +296,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'legalEntity.companyRegistrationDetails.registrationCountry',
@@ -297,6 +307,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'shareHolders',
@@ -308,6 +319,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'ITERABLE',
     targetIterableParameter: 'generalDetails.countryOfNationality',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'directors',
@@ -319,6 +331,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'ITERABLE',
     targetIterableParameter: 'generalDetails.countryOfNationality',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'legalEntity.companyGeneralDetails.businessIndustry',
@@ -329,6 +342,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'ITERABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
@@ -339,6 +353,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'legalEntity.companyGeneralDetails.userSegment',
@@ -349,6 +364,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
@@ -359,6 +375,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
 ];
 
@@ -372,6 +389,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'destinationPaymentDetails.method',
@@ -382,6 +400,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'originAmountDetails.country',
@@ -392,6 +411,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'destinationAmountDetails.country',
@@ -402,6 +422,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'originAmountDetails.transactionCurrency',
@@ -412,6 +433,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'destinationAmountDetails.transactionCurrency',
@@ -422,6 +444,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'consumerCreatedTimestamp',
@@ -432,6 +455,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'businessCreatedTimestamp',
@@ -442,6 +466,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'ipAddressCountry',
@@ -452,6 +477,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'type',
@@ -462,6 +488,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'domesticOrForeignOriginCountryConsumer',
@@ -473,6 +500,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'domesticOrForeignDestinationCountryConsumer',
@@ -484,6 +512,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'domesticOrForeignOriginCountryBusiness',
@@ -495,6 +524,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'domesticOrForeignDestinationCountryBusiness',
@@ -506,6 +536,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'timestamp',
@@ -516,6 +547,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: '_3dsDone',
@@ -527,6 +559,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     isNullableAllowed: true,
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'cardIssuedCountry',
@@ -537,6 +570,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'originMccCode',
@@ -547,6 +581,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'destinationMccCode',
@@ -557,6 +592,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'originPaymentDetails.bankName',
@@ -568,6 +604,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'destinationPaymentDetails.bankName',
@@ -579,6 +616,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'originUserSarFiled',
@@ -590,6 +628,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     isNullableAllowed: true,
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
     requiredFeatures: ['SAR', 'DEMO_MODE'],
   },
   {
@@ -602,6 +641,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     isNullableAllowed: true,
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
     requiredFeatures: ['SAR', 'DEMO_MODE'],
   },
   {
@@ -614,6 +654,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     isNullableAllowed: false,
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   {
     parameter: 'destinationAmountDetails.transactionAmount',
@@ -625,6 +666,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     isNullableAllowed: true,
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
 ];
 

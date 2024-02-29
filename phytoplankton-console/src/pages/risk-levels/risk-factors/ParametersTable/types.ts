@@ -97,6 +97,7 @@ export type ParameterSettings = {
   isActive: boolean;
   values: ParameterValues;
   defaultRiskLevel: RiskLevel;
+  weight: number;
 };
 
 export interface RiskLevelTableItem {
@@ -112,6 +113,7 @@ export interface RiskLevelTableItem {
   isNullableAllowed?: boolean;
   defaultRiskLevel: RiskLevel;
   requiredFeatures?: Feature[];
+  weight: number;
 }
 
 export type RiskLevelTable = RiskLevelTableItem[];

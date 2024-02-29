@@ -2,6 +2,9 @@
   color: black;
   background: white;
   border-radius: 2px;
+  overflow: hidden;
+  font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 .KRSformula {
@@ -38,4 +41,19 @@
   max-width: 350px;
   margin: 0;
   padding: 0;
+}
+
+.container li {
+  margin-bottom: 0.5rem;
+}
+
+:global {
+  .katex-html {
+    display: none;
+  }
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
 }

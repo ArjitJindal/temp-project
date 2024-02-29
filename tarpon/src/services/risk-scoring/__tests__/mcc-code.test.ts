@@ -48,6 +48,7 @@ const RISK_FACTOR: (
   ],
   parameterType: 'VARIABLE',
   defaultRiskLevel: 'LOW',
+  weight: 1,
 })
 
 createArsRiskFactorTestCases(

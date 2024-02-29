@@ -30,6 +30,8 @@ import { useApi } from '@/api';
 import { SETTINGS } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import Alert from '@/components/library/Alert';
+import Slider from '@/components/library/Slider';
+import NumberInput from '@/components/library/NumberInput';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -39,8 +41,10 @@ interface Props {
     newValues: ParameterValues,
     entity: Entity,
     defaultRiskLevel: RiskLevel,
+    weight: number,
   ) => void;
   currentDefaultRiskLevel: AsyncResource<RiskLevel>;
+  currentWeight: AsyncResource<number>;
 }
 
 const labelsExist: { [key in DataType]?: { input: boolean; value: boolean } } = {
@@ -57,12 +61,15 @@ const labelExistsStyle = (dataType: DataType, type: 'input' | 'value'): React.CS
 };
 
 export default function ValuesTable(props: Props) {
-  const { currentValuesRes, item, onSave, currentDefaultRiskLevel } = props;
+  const { currentValuesRes, item, onSave, currentDefaultRiskLevel, currentWeight } = props;
+
   const { parameter, dataType, entity } = item;
   const lastValues = useLastSuccessValue(currentValuesRes, []);
   const lastDefaultRiskLevel = useLastSuccessValue(currentDefaultRiskLevel, DEFAULT_RISK_LEVEL);
+  const lastWeight = useLastSuccessValue(currentWeight, 1);
   const [values, setValues] = useState(lastValues);
   const [defaultRiskLevel, setDefaultRiskLevel] = useState(lastDefaultRiskLevel);
+  const [weight, setWeight] = useState(lastWeight);
   const api = useApi();
   const queryData = useQuery(SETTINGS(), () => api.getTenantsSettings());
   const defaultCurrency = getOr(queryData.data, {}).defaultValues?.currency ?? 'USD';
@@ -73,8 +80,8 @@ export default function ValuesTable(props: Props) {
   }, [lastValues]);
 
   const isEqual = equal(
-    { values, defaultRiskLevel },
-    { values: lastValues, defaultRiskLevel: lastDefaultRiskLevel },
+    { values, defaultRiskLevel, weight },
+    { values: lastValues, defaultRiskLevel: lastDefaultRiskLevel, weight: lastWeight },
   );
 
   const loading = isLoading(currentValuesRes);
@@ -104,11 +111,13 @@ export default function ValuesTable(props: Props) {
   };
 
   const handleSave = () => {
-    onSave(parameter, values, entity, defaultRiskLevel);
+    onSave(parameter, values, entity, defaultRiskLevel, weight);
   };
 
   const handleCancel = () => {
     setValues(lastValues);
+    setDefaultRiskLevel(lastDefaultRiskLevel);
+    setWeight(lastWeight);
   };
 
   const newValueValidationMessage: string | null = NEW_VALUE_VALIDATIONS.reduce<string | null>(
@@ -173,6 +182,53 @@ export default function ValuesTable(props: Props) {
     <div className={style.root}>
       <div className={style.table}>
         <div className={style.topHeader}>
+          <div className={style.header}>Weight</div>
+          <P grey variant="m" fontWeight="normal" className={style.description}>
+            Weights range from 0.1 (minimum impact) to 1 (maximum impact) and determine the risk
+            factor's influence on the overall risk score. If a weight is not assigned, the system
+            defaults it to 1.
+          </P>
+        </div>
+        <div className={style.weight}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <P variant="m" fontWeight="normal">
+              0.1
+            </P>
+            <Slider
+              mode="SINGLE"
+              min={0.1}
+              max={1}
+              step={0.1}
+              value={weight}
+              onChange={(value) => {
+                if (value != null) {
+                  setWeight(value);
+                }
+              }}
+            />
+            <P variant="m" fontWeight="normal" style={{ marginLeft: '0.25rem' }}>
+              1
+            </P>
+            <div style={{ marginLeft: '0.5rem' }}>
+              <NumberInput
+                value={weight}
+                onChange={(value) => {
+                  if (value != null) {
+                    setWeight(value);
+                  }
+                }}
+                max={1}
+                min={0.1}
+                htmlAttrs={{
+                  style: { width: '2.5rem', textAlign: 'center' },
+                }}
+                step={0.1}
+              />
+            </div>
+          </div>
+        </div>
+        <div /> {/* Empty div to align with the rest of the table */}
+        <div className={style.topHeader}>
           <div className={style.header}>Default risk level</div>
           <P grey variant="m" fontWeight="normal" className={style.description}>
             Any value lacking an assigned risk level will be categorized under default risk level.
@@ -191,8 +247,7 @@ export default function ValuesTable(props: Props) {
             }}
           />
         </div>
-      </div>
-      <div className={style.table}>
+        <div /> {/* Empty div to align with the rest of the table */}
         <div className={style.header}>Value</div>
         <div className={style.header}>Risk level</div>
         <div className={style.header}>

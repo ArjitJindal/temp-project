@@ -11,6 +11,7 @@ export interface TableRow {
   value: unknown;
   riskScore: number;
   riskLevel: RiskLevel;
+  weight: number;
 }
 
 const helper = new ColumnHelper<TableRow>();
@@ -45,6 +46,13 @@ export const columns = helper.list([
     key: 'riskScore',
     type: {
       render: (value) => <>{Number((value ?? 0.0)?.toFixed(2))}</>,
+    },
+  }),
+  helper.simple({
+    title: 'Weight',
+    key: 'weight',
+    type: {
+      render: (value) => <>{Number(value ?? 1)}</>,
     },
   }),
   helper.simple({

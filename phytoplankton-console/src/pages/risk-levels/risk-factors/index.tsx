@@ -82,6 +82,7 @@ export default function () {
               riskEntityType: riskLevelTableItem.entity,
               riskLevelAssignmentValues: settings.values,
               defaultRiskLevel: settings.defaultRiskLevel,
+              weight: settings.weight,
             },
           },
         });
@@ -92,6 +93,7 @@ export default function () {
             isActive: response.isActive,
             values: response.riskLevelAssignmentValues,
             defaultRiskLevel: response.defaultRiskLevel,
+            weight: response.weight,
           }),
         );
         message.success('Saved!');
@@ -115,6 +117,7 @@ export default function () {
       newValues: ParameterValues,
       entityType: Entity,
       defaultRiskLevel: RiskLevel,
+      weight: number,
     ) => {
       const currentParams = getOr<ParameterSettings | null>(
         valuesResources[entityType]?.[parameter] ?? init(),
@@ -125,6 +128,7 @@ export default function () {
           ...currentParams,
           values: newValues,
           defaultRiskLevel: defaultRiskLevel,
+          weight,
         });
       }
     },
@@ -162,6 +166,7 @@ export default function () {
             isActive: response?.isActive ?? false,
             values: response?.riskLevelAssignmentValues ?? [],
             defaultRiskLevel: response?.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
+            weight: response?.weight ?? 1,
           }),
         );
       } catch (e) {
@@ -173,6 +178,7 @@ export default function () {
             isActive: false,
             values: [],
             defaultRiskLevel: DEFAULT_RISK_LEVEL,
+            weight: 1,
           }),
         );
       }

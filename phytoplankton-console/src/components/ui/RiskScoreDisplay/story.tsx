@@ -18,6 +18,7 @@ export default function (): JSX.Element {
                 score: value,
                 manualRiskLevel: riskLevel,
                 createdAt: x,
+                weight: 1,
                 components: [
                   {
                     score: 90,
@@ -25,6 +26,7 @@ export default function (): JSX.Element {
                     value: 1,
                     entityType: 'TRANSACTION',
                     parameter: 'createdTimestamp',
+                    weight: 1,
                   },
                   {
                     score: 90,
@@ -32,6 +34,7 @@ export default function (): JSX.Element {
                     value: 'IN',
                     entityType: 'TRANSACTION',
                     parameter: 'destinationAmountDetails.country',
+                    weight: 0.5,
                   },
                   {
                     score: 90,
@@ -39,6 +42,7 @@ export default function (): JSX.Element {
                     value: 'INR',
                     entityType: 'TRANSACTION',
                     parameter: 'destinationAmountDetails.transactionCurrency',
+                    weight: 0.5,
                   },
                   {
                     score: 90,
@@ -46,6 +50,7 @@ export default function (): JSX.Element {
                     value: 'CARD',
                     entityType: 'TRANSACTION',
                     parameter: 'destinationPaymentDetails.method',
+                    weight: 1,
                   },
                   {
                     score: 90,
@@ -53,6 +58,7 @@ export default function (): JSX.Element {
                     value: 'DE',
                     entityType: 'TRANSACTION',
                     parameter: 'originAmountDetails.country',
+                    weight: 1,
                   },
                   {
                     score: 90,
@@ -60,6 +66,7 @@ export default function (): JSX.Element {
                     value: 'EUR',
                     entityType: 'TRANSACTION',
                     parameter: 'originAmountDetails.transactionCurrency',
+                    weight: 1,
                   },
                   {
                     score: 90,
@@ -67,6 +74,7 @@ export default function (): JSX.Element {
                     value: 'CARD',
                     entityType: 'TRANSACTION',
                     parameter: 'originPaymentDetails.method',
+                    weight: 1,
                   },
                   {
                     score: 90,
@@ -74,6 +82,7 @@ export default function (): JSX.Element {
                     value: 'CARD',
                     entityType: 'TRANSACTION',
                     parameter: 'originPaymentDetails.method_2',
+                    weight: 1,
                   },
                   {
                     score: 90,
@@ -81,6 +90,7 @@ export default function (): JSX.Element {
                     value: 'CARD',
                     entityType: 'TRANSACTION',
                     parameter: 'originPaymentDetails.method_3',
+                    weight: 1,
                   },
                 ],
               }))}

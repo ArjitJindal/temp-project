@@ -16,6 +16,7 @@ import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 
 export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'originAmountDetails.country',
+  weight: 1,
   isActive: true,
   isDerived: false,
   riskEntityType: 'TRANSACTION',
@@ -46,6 +47,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isDerived: false,
       riskEntityType: 'TRANSACTION',
       defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      weight: 1,
       riskLevelAssignmentValues: [
         {
           parameterValue: {
@@ -68,6 +70,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       parameter: 'destinationAmountDetails.country',
       isActive: true,
       isDerived: false,
+      weight: 1,
       riskEntityType: 'TRANSACTION',
       defaultRiskLevel: DEFAULT_RISK_LEVEL,
       riskLevelAssignmentValues: [
@@ -92,6 +95,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       parameter: 'destinationPaymentDetails.method',
       isActive: true,
       isDerived: false,
+      weight: 1,
       riskEntityType: 'TRANSACTION',
       defaultRiskLevel: DEFAULT_RISK_LEVEL,
       riskLevelAssignmentValues: [
@@ -116,6 +120,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       parameter: 'originPaymentDetails.method',
       isActive: true,
       isDerived: false,
+      weight: 1,
       riskEntityType: 'TRANSACTION',
       defaultRiskLevel: DEFAULT_RISK_LEVEL,
       riskLevelAssignmentValues: [
@@ -140,6 +145,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       parameter: 'originAmountDetails.transactionCurrency',
       isActive: true,
       isDerived: false,
+      weight: 1,
       riskEntityType: 'TRANSACTION',
       defaultRiskLevel: DEFAULT_RISK_LEVEL,
       riskLevelAssignmentValues: [
@@ -164,6 +170,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       parameter: 'destinationAmountDetails.transactionCurrency',
       isActive: true,
       isDerived: false,
+      weight: 1,
       riskEntityType: 'TRANSACTION',
       defaultRiskLevel: DEFAULT_RISK_LEVEL,
       riskLevelAssignmentValues: [
@@ -188,6 +195,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       parameter: 'ipAddressCountry',
       isActive: true,
       isDerived: true,
+      weight: 1,
       riskEntityType: 'TRANSACTION',
       defaultRiskLevel: DEFAULT_RISK_LEVEL,
       riskLevelAssignmentValues: [
@@ -213,6 +221,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isActive: true,
       isDerived: true,
       riskEntityType: 'TRANSACTION',
+      weight: 1,
       defaultRiskLevel: DEFAULT_RISK_LEVEL,
       riskLevelAssignmentValues: [
         {
@@ -233,6 +242,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isActive: true,
       isDerived: true,
       riskEntityType: 'TRANSACTION',
+      weight: 1,
       riskLevelAssignmentValues: [
         {
           parameterValue: {
@@ -253,6 +263,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       parameter: 'destinationAmountDetails.transactionAmount',
       isActive: true,
       isDerived: true,
+      weight: 1,
       riskEntityType: 'TRANSACTION',
       riskLevelAssignmentValues: [
         {
@@ -275,6 +286,7 @@ export const TEST_ITERABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'shareHolders',
   targetIterableParameter: 'generalDetails.countryOfNationality',
   isActive: true,
+  weight: 1,
   isDerived: false,
   riskEntityType: 'TRANSACTION',
   defaultRiskLevel: DEFAULT_RISK_LEVEL,

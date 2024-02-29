@@ -35,6 +35,7 @@ interface Props {
     newValues: ParameterValues,
     entityType: Entity,
     defaultRiskLevel: RiskLevel,
+    weight: number,
   ) => void;
   onActivate: (entityType: Entity, parameter: ParameterName, isActive: boolean) => void;
 }
@@ -145,6 +146,15 @@ export default function ParametersTable(props: Props) {
               },
             )}
             onSave={onSaveValues}
+            currentWeight={
+              map(
+                (parameterSettings && parameterSettings[item.parameter]) ??
+                  init<ParameterSettings>(),
+                (x) => {
+                  return x.weight;
+                },
+              ) ?? 1
+            }
             currentDefaultRiskLevel={
               map(
                 (parameterSettings && parameterSettings[item.parameter]) ??

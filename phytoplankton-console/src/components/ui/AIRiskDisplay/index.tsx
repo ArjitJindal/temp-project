@@ -87,6 +87,7 @@ const randomizedData = (rawData: {
           riskLevel,
           parameter: component.parameter as string,
           value: component.value,
+          weight: component.weight ?? 1,
         };
       },
     );

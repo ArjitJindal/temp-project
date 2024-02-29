@@ -7521,12 +7521,15 @@ components:
           type: number
         value:
           type: object
+        weight:
+          type: number
       required:
         - entityType
         - parameter
         - riskLevel
         - score
         - value
+        - weight
     RiskClassificationConfig:
       type: object
       title: RiskClassificationConfig
@@ -7775,6 +7778,10 @@ components:
           type: string
           enum:
             - generalDetails.countryOfNationality
+        weight:
+          type: number
+          minimum: 0.1
+          maximum: 1
         isNullableAllowed:
           type: boolean
         defaultRiskLevel:
@@ -7786,6 +7793,7 @@ components:
         - riskEntityType
         - riskLevelAssignmentValues
         - defaultRiskLevel
+        - weight
     Feature:
       type: string
       title: Feature

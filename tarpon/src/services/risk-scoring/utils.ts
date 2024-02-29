@@ -2,6 +2,7 @@ import { mean } from 'lodash'
 import dayjs from '@/utils/dayjs'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 
 type OptionRequirements = Record<RiskLevel, number>
 
@@ -71,4 +72,19 @@ export const getRiskScoreBoundsFromLevel = (
     }
   })
   return { lowerBoundRiskScore, upperBoundRiskScore }
+}
+
+export const weightedRiskScoreCalculation = (
+  riskScores: RiskScoreComponent[]
+) => {
+  // (riskScore1 * weight1 + riskScore2 * weight2 + ... + riskScoreN * weightN) / (weight1 + weight2 + ... + weightN)
+  let weightedRiskScore = 0
+  let totalWeight = 0
+
+  riskScores.forEach((riskScore) => {
+    weightedRiskScore += riskScore.score * riskScore.weight
+    totalWeight += riskScore.weight
+  })
+
+  return weightedRiskScore / totalWeight
 }

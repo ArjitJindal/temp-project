@@ -27,6 +27,7 @@ export function sampleConsumerUserRiskScoreComponents(
       entityType: 'CONSUMER_USER',
       parameter: 'type',
       value: 'CONSUMER',
+      weight: 1,
     },
     {
       score: scores[1],
@@ -37,6 +38,7 @@ export function sampleConsumerUserRiskScoreComponents(
       entityType: 'CONSUMER_USER',
       parameter: 'userDetails.countryOfNationality',
       value: consumer?.userDetails?.countryOfNationality,
+      weight: 1,
     },
     {
       score: scores[2],
@@ -47,6 +49,7 @@ export function sampleConsumerUserRiskScoreComponents(
       entityType: 'CONSUMER_USER',
       parameter: 'userDetails.dateOfBirth',
       value: consumer?.userDetails?.dateOfBirth,
+      weight: 1,
     },
     {
       score: scores[3],
@@ -57,6 +60,7 @@ export function sampleConsumerUserRiskScoreComponents(
       entityType: 'CONSUMER_USER',
       parameter: 'userDetails.countryOfResidence',
       value: consumer?.userDetails?.countryOfResidence,
+      weight: 1,
     },
   ]
 }
@@ -77,6 +81,7 @@ export function sampleBusinessUserRiskScoreComponents(
       entityType: 'BUSINESS',
       parameter: 'type',
       value: 'BUSINESS',
+      weight: 1,
     },
     {
       score: scores[1],
@@ -88,6 +93,7 @@ export function sampleBusinessUserRiskScoreComponents(
       parameter: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
       value:
         business?.legalEntity?.companyGeneralDetails?.userRegistrationStatus,
+      weight: 1,
     },
     {
       score: scores[2],
@@ -99,6 +105,7 @@ export function sampleBusinessUserRiskScoreComponents(
       parameter: 'legalEntity.companyRegistrationDetails.registrationCountry',
       value:
         business?.legalEntity?.companyRegistrationDetails?.registrationCountry,
+      weight: 1,
     },
     {
       score: scores[3],
@@ -109,6 +116,7 @@ export function sampleBusinessUserRiskScoreComponents(
       entityType: 'BUSINESS',
       parameter: 'legalEntity.companyGeneralDetails.userSegment',
       value: business?.legalEntity?.companyGeneralDetails?.userSegment,
+      weight: 1,
     },
   ]
 }
@@ -130,6 +138,7 @@ export const sampleTransactionRiskScoreComponents = (
       entityType: 'TRANSACTION',
       parameter: 'type',
       value: transaction?.type ?? pickRandom(TRANSACTION_TYPES),
+      weight: 1,
     },
     {
       score: scores[1],
@@ -142,6 +151,7 @@ export const sampleTransactionRiskScoreComponents = (
       value:
         transaction?.originAmountDetails?.transactionCurrency ??
         sampleCurrency(),
+      weight: 1,
     },
     {
       score: scores[2],
@@ -154,6 +164,7 @@ export const sampleTransactionRiskScoreComponents = (
       value:
         transaction?.originPaymentDetails?.method ??
         pickRandom(PAYMENT_METHODS),
+      weight: 1,
     },
     {
       score: scores[3],
@@ -164,6 +175,7 @@ export const sampleTransactionRiskScoreComponents = (
       entityType: 'TRANSACTION',
       parameter: 'destinationAmountDetails.country',
       value: transaction?.destinationAmountDetails?.country ?? sampleCountry(),
+      weight: 1,
     },
   ]
 }

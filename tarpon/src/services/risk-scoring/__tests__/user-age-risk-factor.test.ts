@@ -58,6 +58,7 @@ createKrsRiskFactorTestCases(
       },
     ],
     parameterType: 'VARIABLE',
+    weight: 1,
   },
   [
     {
@@ -125,6 +126,7 @@ createKrsRiskFactorTestCases(
     ],
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   [
     {
@@ -200,6 +202,7 @@ createArsRiskFactorTestCases(
     ],
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   [
     {
@@ -301,6 +304,7 @@ createArsRiskFactorTestCases(
     ],
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
   },
   [
     {

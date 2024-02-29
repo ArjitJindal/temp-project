@@ -26,6 +26,7 @@ createKrsRiskFactorTestCases(
   CLASSFICATIONS,
   {
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
     parameter: 'type',
     isActive: true,
     isDerived: true,
@@ -66,6 +67,7 @@ createKrsRiskFactorTestCases(
   CLASSFICATIONS,
   {
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    weight: 1,
     parameter: 'type',
     isActive: true,
     isDerived: true,

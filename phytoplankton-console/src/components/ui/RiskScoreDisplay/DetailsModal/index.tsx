@@ -98,6 +98,7 @@ export default function DetailsModal(props: Props) {
                   parameter: component.parameter as ParameterName,
                   value: component.value,
                   riskScore: component.score,
+                  weight: component.weight,
                   riskLevel: component.riskLevel,
                 })),
               }}

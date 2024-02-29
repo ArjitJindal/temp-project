@@ -13,6 +13,7 @@ import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
   riskLevelPrecendence,
+  weightedRiskScoreCalculation,
 } from './utils'
 import {
   getTransactionDerivedRiskFactorHandler,
@@ -289,7 +290,7 @@ export class RiskScoringService {
     logger.info(`Calculated KRS score for user ${user.userId}`)
     return {
       score: components.length
-        ? mean(components.map(({ score }) => score))
+        ? weightedRiskScoreCalculation(components)
         : getDefaultRiskValue(riskClassificationValues),
       components,
     }
@@ -352,7 +353,7 @@ export class RiskScoringService {
     )
     return {
       score: components.length
-        ? mean(components.map(({ score }) => score))
+        ? weightedRiskScoreCalculation(components)
         : getDefaultRiskValue(riskClassificationValues),
       components,
     }
@@ -651,6 +652,7 @@ export class RiskScoringService {
           riskLevel,
           value: value,
           score: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
+          weight: parameterAttributeDetails.weight,
         })
       )
     }

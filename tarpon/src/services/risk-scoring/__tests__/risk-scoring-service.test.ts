@@ -245,7 +245,7 @@ describe('Risk Scoring Service ARS ', () => {
   )
 })
 
-const TEST_PARAMETERS = [
+const TEST_PARAMETERS: ParameterAttributeRiskValues[] = [
   {
     parameterType: 'VARIABLE',
     isDerived: false,
@@ -268,6 +268,8 @@ const TEST_PARAMETERS = [
     parameter: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
     isActive: true,
     riskEntityType: 'BUSINESS',
+    weight: 0.5,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameterType: 'VARIABLE',
@@ -291,6 +293,8 @@ const TEST_PARAMETERS = [
     parameter: 'userSegment',
     isActive: true,
     riskEntityType: 'BUSINESS',
+    weight: 0.1,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameterType: 'VARIABLE',
@@ -314,6 +318,8 @@ const TEST_PARAMETERS = [
     parameter: 'legalEntity.companyRegistrationDetails.registrationCountry',
     isActive: true,
     riskEntityType: 'BUSINESS',
+    weight: 1,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameter: 'directors',
@@ -337,6 +343,9 @@ const TEST_PARAMETERS = [
     ],
     isActive: true,
     riskEntityType: 'BUSINESS',
+    weight: 0.7,
+    defaultRiskLevel: 'VERY_HIGH',
+    isDerived: false,
   },
   {
     parameter: 'shareHolders',
@@ -361,6 +370,8 @@ const TEST_PARAMETERS = [
     ],
     isActive: true,
     riskEntityType: 'BUSINESS',
+    weight: 0.8,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameterType: 'VARIABLE',
@@ -384,6 +395,8 @@ const TEST_PARAMETERS = [
     parameter: 'type',
     isActive: true,
     riskEntityType: 'BUSINESS',
+    weight: 1,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameterType: 'ITERABLE',
@@ -402,12 +415,14 @@ const TEST_PARAMETERS = [
           },
         },
         riskLevel: 'LOW',
-        isNullableAllowed: true,
       },
     ],
+    isNullableAllowed: true,
     parameter: 'legalEntity.companyGeneralDetails.businessIndustry',
     isActive: true,
     riskEntityType: 'BUSINESS',
+    weight: 0.3,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameterType: 'VARIABLE',
@@ -431,6 +446,8 @@ const TEST_PARAMETERS = [
     parameter: 'type',
     isActive: true,
     riskEntityType: 'CONSUMER_USER',
+    weight: 0.4,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameterType: 'VARIABLE',
@@ -454,6 +471,8 @@ const TEST_PARAMETERS = [
     parameter: 'userDetails.countryOfResidence',
     isActive: true,
     riskEntityType: 'CONSUMER_USER',
+    weight: 0.1,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameterType: 'VARIABLE',
@@ -477,6 +496,8 @@ const TEST_PARAMETERS = [
     parameter: 'userDetails.countryOfNationality',
     isActive: true,
     riskEntityType: 'CONSUMER_USER',
+    weight: 0.9,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameterType: 'VARIABLE',
@@ -500,6 +521,8 @@ const TEST_PARAMETERS = [
     parameter: 'userSegment',
     isActive: true,
     riskEntityType: 'CONSUMER_USER',
+    weight: 0.6,
+    defaultRiskLevel: 'VERY_HIGH',
   },
   {
     parameterType: 'VARIABLE',
@@ -523,8 +546,10 @@ const TEST_PARAMETERS = [
     parameter: 'employmentStatus',
     isActive: true,
     riskEntityType: 'CONSUMER_USER',
+    weight: 0.3,
+    defaultRiskLevel: 'VERY_HIGH',
   },
-] as ParameterAttributeRiskValues[]
+]
 
 describe('Risk Scoring Service KRS', () => {
   it('Should only check for Consumer User Risk Score', async () => {
@@ -574,7 +599,7 @@ describe('Risk Scoring Service KRS', () => {
       TEST_PARAMETERS
     )
 
-    expect(score).toEqual(50)
+    expect(Math.round(score)).toEqual(47)
     expect(components).toMatchObject([
       {
         entityType: 'CONSUMER_USER',
@@ -582,6 +607,7 @@ describe('Risk Scoring Service KRS', () => {
         riskLevel: 'MEDIUM',
         value: 'CONSUMER',
         score: 50,
+        weight: 0.4,
       },
       {
         entityType: 'CONSUMER_USER',
@@ -691,7 +717,7 @@ describe('Risk Scoring Service KRS', () => {
       DEFAULT_CLASSIFICATION_SETTINGS,
       TEST_PARAMETERS
     )
-    expect(score).toEqual(30)
+    expect(Math.round(score)).toEqual(26)
     expect(components).toMatchObject([
       {
         entityType: 'BUSINESS',
