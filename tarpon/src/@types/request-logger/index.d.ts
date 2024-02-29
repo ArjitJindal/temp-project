@@ -1,7 +1,9 @@
 import { Context } from 'aws-lambda'
+import { APIGatewayProxyEventHeaders } from 'aws-lambda/trigger/api-gateway-proxy'
 
 export type ApiRequestLog = {
   context: Context
+  headers: APIGatewayProxyEventHeaders
   path: string
   method: string
   userId?: string

@@ -74,6 +74,7 @@ async function logRequest(
       path: event.path,
       timestamp: Date.now(),
       userId: localContext?.user?.id,
+      headers: event.headers,
       payload,
       queryStringParameters: event.queryStringParameters,
       pathParameters: event.pathParameters,

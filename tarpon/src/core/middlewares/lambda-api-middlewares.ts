@@ -11,6 +11,7 @@ import { Feature } from '@/@types/openapi-internal/Feature'
 import { rbacMiddleware } from '@/core/middlewares/rbac'
 import { xrayMiddleware } from '@/core/middlewares/xray-middleware'
 import { bgProcessingMiddleware } from '@/core/middlewares/bg-processing-middleware'
+import { checkHeaders } from '@/core/middlewares/check-headers'
 
 export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
   registerUnhandledErrorHandler()
@@ -24,6 +25,7 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     jsonSerializer(),
     rbacMiddleware(),
     initSentryLambda(),
+    checkHeaders(),
     featureProtected(options?.requiredFeatures),
   ] as const
   return compose(...middlewares)
