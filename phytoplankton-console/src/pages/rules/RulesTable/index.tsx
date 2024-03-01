@@ -59,6 +59,7 @@ export const RulesTable: React.FC<Props> = (props) => {
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
+  const isV8LibraryEnabled = useFeatureEnabled('RULES_ENGINE_V8_LIBRARY');
 
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const helper = new ColumnHelper<Rule>();
@@ -75,7 +76,7 @@ export const RulesTable: React.FC<Props> = (props) => {
               <>
                 <a
                   onClick={() => {
-                    if (simulationMode && !canSimulate(isV8Enabled, entity)) {
+                    if (simulationMode && !canSimulate(isV8Enabled && isV8LibraryEnabled, entity)) {
                       return;
                     }
                     onViewRule(entity);
@@ -200,7 +201,10 @@ export const RulesTable: React.FC<Props> = (props) => {
                 size="MEDIUM"
                 type="PRIMARY"
                 onClick={() => onEditRule(entity)}
-                isDisabled={!canWriteRules || (simulationMode && !canSimulate(isV8Enabled, entity))}
+                isDisabled={
+                  !canWriteRules ||
+                  (simulationMode && !canSimulate(isV8Enabled && isV8LibraryEnabled, entity))
+                }
                 requiredPermissions={
                   simulationMode ? ['simulator:simulations:write'] : ['rules:my-rules:write']
                 }
@@ -213,7 +217,7 @@ export const RulesTable: React.FC<Props> = (props) => {
         },
       }),
     ]);
-  }, [onViewRule, canWriteRules, simulationMode, isV8Enabled, onEditRule]);
+  }, [simulationMode, isV8Enabled, isV8LibraryEnabled, onViewRule, canWriteRules, onEditRule]);
 
   const [params, setParams] = useState<RulesTableParams>({
     ...DEFAULT_PARAMS_STATE,
