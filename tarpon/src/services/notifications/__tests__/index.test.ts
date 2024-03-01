@@ -653,4 +653,179 @@ describe('Test notifications service', () => {
     expect(notifications[0]?.notificationType).toBe('USER_COMMENT_MENTION')
     expect(notifications[0]?.recievers).toContain(user2)
   })
+
+  test('Send in review notification for case', async () => {
+    const mongoDb = await getMongoDbClient()
+    const user = 'USER-1'
+    const user2 = 'USER-2'
+
+    const tenantId = getTestTenantId()
+
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+    })
+
+    const case_ = await caseRepository.addCaseMongo(
+      getTestCase({
+        caseStatus: 'OPEN',
+      })
+    )
+
+    const event = getApiGatewayPatchEvent(tenantId, '/cases/statusChange', {
+      caseIds: [case_?.caseId as string],
+      updates: {
+        reason: ['Investigation completed'],
+        caseStatus: 'CLOSED',
+        comment: 'Test',
+        files: [],
+      },
+    })
+
+    const role: AccountRole = {
+      description: 'Admin',
+      id: 'ADMIN',
+      name: 'Admin',
+      permissions: PERMISSIONS,
+    }
+
+    const roles: AccountRole[] = [role]
+
+    const users: Account[] = [
+      {
+        id: user,
+        email: `${user}@gmail.com`,
+        role: 'Admin',
+        reviewerId: user2,
+      } as Account,
+      {
+        id: user2,
+        email: `${user2}@gmail.com`,
+        role: 'Admin',
+      } as Account,
+    ]
+
+    getContextMocker.mockReturnValue({
+      tenantId,
+      settings: {
+        notificationsSubscriptions: {
+          console: ['CASE_IN_REVIEW'],
+        },
+      },
+      features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
+      user: users[0],
+    })
+
+    getSpyes(users, roles)
+
+    await casesHandler(event, null as any, null as any)
+
+    const notificationsService = new NotificationRepository(tenantId, {
+      mongoDb,
+    })
+
+    const notifications =
+      await notificationsService.getNotificationsByRecipient(user2)
+
+    expect(notifications.length).toBe(1)
+    expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
+      'SENT'
+    )
+    expect(notifications[0]?.notificationType).toBe('CASE_IN_REVIEW')
+    expect(notifications[0]?.recievers).toContain(user2)
+  })
+
+  test('Send in review notification for alert', async () => {
+    const mongoDb = await getMongoDbClient()
+    const user = 'USER-1'
+    const user2 = 'USER-2'
+
+    const tenantId = getTestTenantId()
+
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+    })
+
+    const case_ = await caseRepository.addCaseMongo(
+      getTestCase({
+        caseStatus: 'OPEN',
+        alerts: [
+          {
+            alertId: `A-${Date.now()}`,
+            alertStatus: 'OPEN',
+            assignments: [],
+            createdTimestamp: Date.now(),
+            numberOfTransactionsHit: 0,
+            priority: 'P1',
+            ruleAction: 'ALLOW',
+            ruleDescription: 'Test rule',
+            ruleInstanceId: `R-${Date.now()}`,
+            ruleName: 'Test rule',
+          },
+        ],
+      })
+    )
+
+    const event = getApiGatewayPatchEvent(tenantId, '/alerts/statusChange', {
+      alertIds: [case_?.alerts?.[0]?.alertId as string],
+      updates: {
+        reason: ['Investigation completed'],
+        alertStatus: 'CLOSED',
+        comment: 'Test',
+        files: [],
+      },
+    })
+
+    const role: AccountRole = {
+      description: 'Admin',
+      id: 'ADMIN',
+      name: 'Admin',
+      permissions: PERMISSIONS,
+    }
+
+    const roles: AccountRole[] = [role]
+
+    const users: Account[] = [
+      {
+        id: user,
+        email: `${user}@test.com`,
+        role: 'Admin',
+        reviewerId: user2,
+      } as Account,
+      {
+        id: user2,
+        email: `${user2}@test.com`,
+        role: 'Admin',
+      } as Account,
+    ]
+
+    getContextMocker.mockReturnValue({
+      tenantId,
+      settings: {
+        notificationsSubscriptions: {
+          console: ['ALERT_IN_REVIEW'],
+        },
+      },
+      features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
+      user: users[0],
+    })
+
+    getSpyes(users, roles)
+
+    await casesHandler(event, null as any, null as any)
+
+    const notificationsService = new NotificationRepository(tenantId, {
+      mongoDb,
+    })
+
+    const notifications =
+      await notificationsService.getNotificationsByRecipient(user2)
+
+    expect(notifications.length).toBe(1)
+    expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
+      'SENT'
+    )
+    expect(notifications[0]?.notificationType).toBe('ALERT_IN_REVIEW')
+    expect(notifications[0]?.recievers).toContain(user2)
+    expect(notifications[0]?.notificationData?.status).toBe('IN_REVIEW_CLOSED')
+  })
 })

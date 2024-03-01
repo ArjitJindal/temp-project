@@ -10879,6 +10879,8 @@ components:
         - ALERT_COMMENT_MENTION
         - CASE_COMMENT_MENTION
         - USER_COMMENT_MENTION
+        - CASE_IN_REVIEW
+        - ALERT_IN_REVIEW
     NotificationChannels:
       title: NotificationChannels
       type: string
@@ -10923,6 +10925,19 @@ components:
         - type
         - reason
         - reviewAssignments
+        - status
+    UpdateNotification:
+      title: UpdateNotification
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - UPDATE
+        status:
+          $ref: '#/components/schemas/CaseStatus'
+      required:
+        - type
         - status
     CommentMentionNotification:
       title: CommentMentionNotification
