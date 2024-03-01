@@ -130,7 +130,7 @@ paths:
                   tags:
                     - key: customKey
                       value: customValue
-        required: false
+        required: true
       responses:
         '201':
           description: Created
@@ -354,7 +354,7 @@ paths:
                     deviceLongitude: 76.102898
                     ipAddress: 79.144.2.20
                     vpnUsed: true
-        required: false
+        required: true
       responses:
         '201':
           description: Created
@@ -581,7 +581,7 @@ paths:
                   tags:
                     - key: customKey
                       value: customValue
-        required: false
+        required: true
       responses:
         '201':
           description: Created
@@ -737,7 +737,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Business'
-        required: false
+        required: true
       responses:
         '201':
           description: Created
@@ -981,7 +981,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConsumerUserEvent'
-        required: false
+        required: true
       responses:
         '201':
           description: Created
@@ -1056,7 +1056,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BusinessUserEvent'
-        required: false
+        required: true
       responses:
         '201':
           description: Created

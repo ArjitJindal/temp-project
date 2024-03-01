@@ -37,7 +37,10 @@ async function getTransactionMissingUsers(
   transaction: Transaction,
   tenantId: string,
   dynamoDb: DynamoDBDocumentClient,
-  validationParams?: DefaultApiPostConsumerTransactionRequest
+  validationParams?: Omit<
+    DefaultApiPostConsumerTransactionRequest,
+    'Transaction'
+  >
 ): Promise<(MissingUserIdMap | undefined)[]> {
   const userRepository = new UserRepository(tenantId, { dynamoDb })
   let userIds: string[] = Array.from(
@@ -240,8 +243,10 @@ export const userEventsHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
     const { allowUserTypeConversion } =
-      (event.queryStringParameters as DefaultApiPostBusinessUserEventRequest) ??
-      {}
+      (event.queryStringParameters as Omit<
+        DefaultApiPostBusinessUserEventRequest,
+        'BusinessUserEvent'
+      >) ?? {}
 
     if (
       event.httpMethod === 'POST' &&

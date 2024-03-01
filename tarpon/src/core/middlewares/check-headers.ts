@@ -4,8 +4,8 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
+import { BadRequest } from 'http-errors'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { logger } from '@/core/logger'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
@@ -17,8 +17,11 @@ export const checkHeaders =
   async (event, ctx): Promise<APIGatewayProxyResult> => {
     const contentType =
       event.headers?.['content-type'] || event.headers?.['Content-Type']
-    if (!contentType || !contentType.includes('application/json')) {
-      logger.error('content type is not correct', contentType)
+    if (
+      ['POST', 'PUT', 'PATCH'].includes(event.httpMethod) &&
+      !contentType?.includes('application/json')
+    ) {
+      throw new BadRequest("Content-Type header should be 'application/json'")
     }
     return await handler(event, ctx)
   }
