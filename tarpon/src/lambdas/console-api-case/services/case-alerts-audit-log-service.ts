@@ -1,6 +1,5 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { get } from 'lodash'
 import { getLatestInvestigationTime } from './utils'
 import {
   AuditLog,
@@ -13,18 +12,16 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
-import { AlertsReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/AlertsReviewAssignmentsUpdateRequest'
-import { CasesReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesReviewAssignmentsUpdateRequest'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { traceable } from '@/core/xray'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
 import {
-  AlertEscalationAuditLogImage,
+  AlertUpdateAuditLogImage,
   AlertLogMetaDataType,
   AuditLogAssignmentsImage,
-  CaseEscalationAuditLogImage,
+  CaseUpdateAuditLogImage,
   CaseLogMetaDataType,
 } from '@/@types/audit-log'
 
@@ -74,25 +71,27 @@ export class CasesAlertsAuditLogService {
       logAction: 'UPDATE',
       oldImage: oldAssignments,
       newImage: newAssignments,
-      subtype: 'ASSIGNMENT',
+      subtype: newAssignments.assignments ? 'ASSIGNMENT' : 'REVIEW_ASSIGNMENT',
     })
   }
 
   public async handleAuditLogForCaseUpdate(
-    caseIds: string[],
-    updates: Partial<CaseStatusUpdate & CasesReviewAssignmentsUpdateRequest>,
-    subtype: AuditLogSubtypeEnum
+    oldCases: Case[],
+    updates: Partial<CaseStatusUpdate>
   ): Promise<void> {
     await Promise.all(
-      caseIds.map(async (caseId) => {
-        await this.handleCaseUpdateAuditLog(caseId, 'UPDATE', updates, subtype)
+      oldCases.map(async (case_) => {
+        await this.handleCaseUpdateAuditLog(
+          case_,
+          updates as CaseUpdateAuditLogImage
+        )
       })
     )
   }
 
   public async handleAuditLogForCaseEscalation(
     caseId: string,
-    data: CaseEscalationAuditLogImage,
+    data: CaseUpdateAuditLogImage,
     oldCase: Case
   ): Promise<void> {
     const caseRepo = new CaseRepository(this.tenantId, {
@@ -101,13 +100,13 @@ export class CasesAlertsAuditLogService {
     })
     const caseEntity = await caseRepo.getCaseById(caseId)
 
-    const oldImage: CaseEscalationAuditLogImage = {
+    const oldImage: CaseUpdateAuditLogImage = {
       caseStatus: oldCase.caseStatus,
       reviewAssignments: oldCase.reviewAssignments,
     }
 
     const { reason, updatedTransactions } = data
-    const newImage: CaseEscalationAuditLogImage = {
+    const newImage: CaseUpdateAuditLogImage = {
       ...data,
       caseStatus: caseEntity?.caseStatus,
       reviewAssignments: caseEntity?.reviewAssignments,
@@ -143,16 +142,13 @@ export class CasesAlertsAuditLogService {
       oldImage: oldImage,
       newImage: newImage,
       alertDetails: alertEntity,
-      subtype: 'ASSIGNMENT',
+      subtype: newImage.assignments ? 'ASSIGNMENT' : 'REVIEW_ASSIGNMENT',
     })
   }
 
   public async handleAuditLogForAlertsUpdate(
-    alertIds: string[],
-    updates: Partial<
-      AlertStatusUpdateRequest & AlertsReviewAssignmentsUpdateRequest
-    >,
-    subtype?: AuditLogSubtypeEnum
+    oldAlerts: Alert[],
+    updates: AlertStatusUpdateRequest
   ): Promise<void> {
     const alertsRepository = new AlertsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -160,22 +156,28 @@ export class CasesAlertsAuditLogService {
     })
 
     await Promise.all(
-      alertIds.map(async (alertId) => {
+      oldAlerts.map(async (oldAlert) => {
+        const alertId = oldAlert.alertId as string
         const alertEntity = await alertsRepository.getAlertById(alertId)
-        const oldImage: { [key: string]: string } = {}
-        for (const field in Object.keys(updates)) {
-          const oldValue = get(alertEntity, field)
-          if (oldValue) {
-            oldImage[field] = oldValue
-          }
+
+        const oldImage: AlertUpdateAuditLogImage = {
+          alertStatus: oldAlert.alertStatus,
+          reviewAssignments: oldAlert.reviewAssignments,
         }
+
+        const newImage: AlertUpdateAuditLogImage = {
+          ...updates,
+          alertStatus: updates.alertStatus,
+          reviewAssignments: alertEntity?.reviewAssignments,
+        }
+
         await this.createAlertAuditLog({
           alertId: alertId,
           logAction: 'UPDATE',
-          oldImage: oldImage,
-          newImage: updates,
+          oldImage,
+          newImage,
           alertDetails: alertEntity,
-          subtype,
+          subtype: 'STATUS_CHANGE',
         })
       })
     )
@@ -183,7 +185,7 @@ export class CasesAlertsAuditLogService {
 
   public async handleAuditLogForAlertsEscalation(
     alertIds: string[],
-    data: AlertEscalationAuditLogImage,
+    data: AlertUpdateAuditLogImage,
     oldCase: Case
   ): Promise<void> {
     for (const alertId of alertIds) {
@@ -195,7 +197,7 @@ export class CasesAlertsAuditLogService {
         continue
       }
 
-      const oldImage: AlertEscalationAuditLogImage = {
+      const oldImage: AlertUpdateAuditLogImage = {
         alertStatus: alertEntity.alertStatus,
         reviewAssignments: alertEntity.reviewAssignments,
       }
@@ -204,10 +206,7 @@ export class CasesAlertsAuditLogService {
         alertId: alertId,
         logAction: 'ESCALATE',
         oldImage: oldImage,
-        newImage: {
-          ...data,
-          alertStatus: 'ESCALATED',
-        },
+        newImage: { ...data, alertStatus: 'ESCALATED' },
         alertDetails: alertEntity,
         subtype: 'STATUS_CHANGE',
       })
@@ -310,37 +309,42 @@ export class CasesAlertsAuditLogService {
   }
 
   private async handleCaseUpdateAuditLog(
-    caseId: string,
-    logAction: AuditLogActionEnum,
-    updates: Partial<CaseStatusUpdate & CasesReviewAssignmentsUpdateRequest>,
-    subtype: AuditLogSubtypeEnum
+    oldCase: Case,
+    updates: CaseUpdateAuditLogImage
   ) {
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
 
+    const caseId = oldCase.caseId as string
+
     const caseEntity = await caseRepository.getCaseById(caseId)
 
-    const oldImage: { [key: string]: string } = {}
-    for (const field in Object.keys(updates)) {
-      const oldValue = get(caseEntity, field)
-      if (oldValue) {
-        oldImage[field] = oldValue
-      }
+    const oldImage: CaseUpdateAuditLogImage = {
+      caseStatus: oldCase.caseStatus,
+      reviewAssignments: oldCase.reviewAssignments,
     }
+
+    let investigationTime: number | undefined
     if (updates.caseStatus === 'CLOSED') {
-      const investigationTime = getLatestInvestigationTime(caseEntity)
-      if (investigationTime !== null)
-        updates['investigationTime'] = investigationTime
+      investigationTime = getLatestInvestigationTime(caseEntity) || undefined
     }
+
+    const newImage: CaseUpdateAuditLogImage = {
+      ...updates,
+      caseStatus: caseEntity?.caseStatus,
+      reviewAssignments: caseEntity?.reviewAssignments,
+      investigationTime,
+    }
+
     await this.createAuditLog({
       caseId: caseId,
-      logAction: logAction,
+      logAction: 'UPDATE',
       oldImage: oldImage,
-      newImage: updates,
+      newImage: newImage,
       caseDetails: caseEntity,
-      subtype,
+      subtype: 'STATUS_CHANGE',
     })
   }
 

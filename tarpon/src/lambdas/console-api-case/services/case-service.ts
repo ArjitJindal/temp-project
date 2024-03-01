@@ -398,7 +398,7 @@ export class CaseService extends CaseAlertsCommonService {
       filterInReview?: boolean
       updateChecklistStatus?: boolean
     }
-  ): Promise<void> {
+  ): Promise<{ oldCases: Case[] }> {
     const {
       cascadeAlertsUpdate = true,
       skipReview = false,
@@ -553,13 +553,13 @@ export class CaseService extends CaseAlertsCommonService {
 
         const message = `Case of this alert was ${otherReason}`
 
-        const alertsStatusChange = {
+        const alertsStatusChange: AlertStatusUpdateRequest = {
           alertStatus: updates.caseStatus,
           comment: updates.comment,
           otherReason: message,
           reason: ['Other'],
           files: updates.files,
-        } as AlertStatusUpdateRequest
+        }
 
         const alertIds = alerts.map((a) => a.alertId!)
         await Promise.all([
@@ -571,9 +571,8 @@ export class CaseService extends CaseAlertsCommonService {
             updateChecklistStatus: false,
           }),
           this.auditLogService.handleAuditLogForAlertsUpdate(
-            alertIds,
-            alertsStatusChange,
-            'STATUS_CHANGE'
+            alerts,
+            alertsStatusChange
           ),
         ])
       }
@@ -595,7 +594,8 @@ export class CaseService extends CaseAlertsCommonService {
         })
       )
     }
-    return
+
+    return { oldCases: cases }
   }
 
   public async getCase(

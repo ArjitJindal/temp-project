@@ -9492,7 +9492,6 @@ components:
             - USER_STATUS_CHANGE
             - USER_KYC_STATUS_CHANGE
             - REVIEW_ASSIGNMENT
-            - IN_REVIEW_ASSIGNMENT
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:

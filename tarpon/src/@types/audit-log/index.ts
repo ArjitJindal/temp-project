@@ -26,14 +26,16 @@ export type AlertLogMetaDataType = {
 
 export type AuditLogAssignmentsImage = {
   assignments?: Assignment[]
+  reviewAssignments?: Assignment[]
 }
 
-export interface CaseEscalationAuditLogImage extends Partial<CaseStatusUpdate> {
+export interface CaseUpdateAuditLogImage extends Partial<CaseStatusUpdate> {
   reviewAssignments?: Assignment[]
   updatedTransactions?: string[]
+  investigationTime?: number
 }
 
-export interface AlertEscalationAuditLogImage
+export interface AlertUpdateAuditLogImage
   extends Partial<AlertStatusUpdateRequest> {
   reviewAssignments?: Assignment[]
   updatedTransactions?: string[]

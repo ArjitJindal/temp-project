@@ -5,13 +5,13 @@ import {
   PartialNotification,
 } from '@/@types/notifications'
 import {
-  AlertEscalationAuditLogImage,
+  AlertUpdateAuditLogImage,
   AlertLogMetaDataType,
 } from '@/@types/audit-log'
 import { EscalationNotification } from '@/@types/openapi-internal/EscalationNotification'
 
 type Payload = NotificationRawPayload<
-  AlertEscalationAuditLogImage,
+  AlertUpdateAuditLogImage,
   AlertLogMetaDataType
 >
 

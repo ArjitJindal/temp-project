@@ -84,13 +84,12 @@ export const casesHandler = lambdaApi()(
 
     handlers.registerPatchCasesStatusChange(async (ctx, request) => {
       const { caseIds, updates } = request.CasesStatusUpdateRequest
-      const updateResult = await caseService.updateCasesStatus(caseIds, updates)
+      const { oldCases } = await caseService.updateCasesStatus(caseIds, updates)
       await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
-        caseIds,
-        updates,
-        'STATUS_CHANGE'
+        oldCases,
+        updates
       )
-      return updateResult
+      return
     })
     handlers.registerPatchAlertsQaStatus((_ctx, request) =>
       alertsService.updateAlertChecklistQaStatus(
@@ -164,12 +163,19 @@ export const casesHandler = lambdaApi()(
       const { caseIds, reviewAssignments } =
         request.CasesReviewAssignmentsUpdateRequest
 
-      await caseService.updateCasesReviewAssignments(caseIds, reviewAssignments)
-      return await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
-        caseIds,
-        { reviewAssignments },
-        'REVIEW_ASSIGNMENT'
-      )
+      const oldCases = await caseRepository.getCasesByIds(caseIds)
+
+      await Promise.all([
+        caseService.updateCasesReviewAssignments(caseIds, reviewAssignments),
+        ...caseIds.map(async (caseId) => {
+          const oldCase = oldCases.find((c) => c.caseId === caseId)
+          await casesAlertsAuditLogService.handleAuditLogForCaseAssignment(
+            caseId,
+            { reviewAssignments: oldCase?.reviewAssignments },
+            { reviewAssignments }
+          )
+        }),
+      ])
     })
 
     handlers.registerGetCase(async (ctx, request) => {
@@ -266,11 +272,14 @@ export const casesHandler = lambdaApi()(
       if (!alertIds?.length) {
         throw new BadRequest('Missing alertIds in request body or empty array')
       }
-      await alertsService.updateAlertsStatus(alertIds, updates)
-      return await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
+
+      const { oldAlerts } = await alertsService.updateAlertsStatus(
         alertIds,
-        updates,
-        'STATUS_CHANGE'
+        updates
+      )
+      return await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
+        oldAlerts,
+        updates
       )
     })
 
@@ -296,14 +305,24 @@ export const casesHandler = lambdaApi()(
     handlers.registerAlertsReviewAssignment(async (ctx, request) => {
       const { alertIds, reviewAssignments } =
         request.AlertsReviewAssignmentsUpdateRequest
-      await alertsService.updateAlertsReviewAssignments(
-        alertIds,
-        reviewAssignments
-      )
-      return await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
-        alertIds,
-        { reviewAssignments }
-      )
+
+      const existingAlerts = await alertsService.getAlertsByIds(alertIds)
+
+      await Promise.all([
+        alertsService.updateAlertsReviewAssignments(
+          alertIds,
+          reviewAssignments
+        ),
+        ...alertIds.map(async (alertId) => {
+          const oldAlert = existingAlerts.find((a) => a.alertId === alertId)
+
+          await casesAlertsAuditLogService.handleAuditLogForAlertAssignment(
+            alertId,
+            { reviewAssignments: oldAlert?.reviewAssignments },
+            { reviewAssignments }
+          )
+        }),
+      ])
     })
 
     handlers.registerGetAlert(async (ctx, request) => {

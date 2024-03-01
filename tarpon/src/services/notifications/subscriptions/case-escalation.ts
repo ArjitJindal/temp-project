@@ -4,7 +4,7 @@ import {
   PartialNotification,
 } from '@/@types/notifications'
 import {
-  CaseEscalationAuditLogImage,
+  CaseUpdateAuditLogImage,
   CaseLogMetaDataType,
 } from '@/@types/audit-log'
 import { NotificationType } from '@/@types/openapi-internal/NotificationType'
@@ -12,7 +12,7 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/aler
 import { EscalationNotification } from '@/@types/openapi-internal/EscalationNotification'
 
 type Payload = NotificationRawPayload<
-  CaseEscalationAuditLogImage,
+  CaseUpdateAuditLogImage,
   CaseLogMetaDataType
 >
 

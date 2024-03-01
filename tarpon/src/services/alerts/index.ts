@@ -699,7 +699,7 @@ export class AlertsService extends CaseAlertsCommonService {
       account?: Account
       updateChecklistStatus?: boolean
     }
-  ): Promise<void> {
+  ): Promise<{ oldAlerts: Alert[] }> {
     const {
       bySystem,
       cascadeCaseUpdates = true,
@@ -877,9 +877,8 @@ export class AlertsService extends CaseAlertsCommonService {
             }
           ),
           this.auditLogService.handleAuditLogForCaseUpdate(
-            caseIdsWithAllAlertsSameStatus,
-            caseUpdateStatus,
-            'STATUS_CHANGE'
+            cases,
+            caseUpdateStatus
           ),
         ])
       }
@@ -908,6 +907,8 @@ export class AlertsService extends CaseAlertsCommonService {
     if (statusUpdateRequest.alertStatus === 'CLOSED') {
       await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
     }
+
+    return { oldAlerts: alerts }
   }
 
   private async sendAlertClosedWebhook(
