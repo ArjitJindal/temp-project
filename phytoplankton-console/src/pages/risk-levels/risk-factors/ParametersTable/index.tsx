@@ -108,6 +108,11 @@ export default function ParametersTable(props: Props) {
               );
             },
           }),
+          columnHelper.simple({
+            title: 'Weight',
+            key: 'weight',
+            defaultWidth: 100,
+          }),
           columnHelper.display({
             title: 'Actions',
             render: (item) => {

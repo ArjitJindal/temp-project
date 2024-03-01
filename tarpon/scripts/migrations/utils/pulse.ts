@@ -23,7 +23,7 @@ async function addNewPulseRiskParameterFieldPrivate(
   parameterNewFieldRequest: ParameterNewFieldRequest,
   tenantId: string
 ) {
-  const dynamoDb = await getDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
 

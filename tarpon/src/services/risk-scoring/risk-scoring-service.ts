@@ -569,7 +569,8 @@ export class RiskScoringService {
       riskFactors?.filter(
         (parameterAttributeDetails) =>
           parameterAttributeDetails.isActive &&
-          entityTypes.includes(parameterAttributeDetails.riskEntityType)
+          entityTypes.includes(parameterAttributeDetails.riskEntityType) &&
+          parameterAttributeDetails.weight > 0
       ) ?? []
 
     const result: RiskScoreComponent[] = []

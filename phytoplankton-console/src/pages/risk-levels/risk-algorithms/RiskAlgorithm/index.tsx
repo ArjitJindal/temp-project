@@ -51,11 +51,11 @@ const RiskAlgorithmTable: React.FC = () => {
             <li>
               <H4 bold>How does weights impact the risk score?</H4>
               <P variant="m">
-                Weights range from 0.1 (minimum impact) to 1 (maximum impact) and determine the
-                factor's influence on the overall risk score. It determines the impact of each risk
-                factor on the overall risk score. Higher weights increase a factor's influence,
-                raising the score for more significant risks, while lower weights reduce it for less
-                critical risks.
+                Weights range from 0 (no impact) to 1 (maximum impact) and determine the factor's
+                influence on the overall risk score. It determines the impact of each risk factor on
+                the overall risk score. Higher weights increase a factor's influence, raising the
+                score for more significant risks, while lower weights reduce it for less critical
+                risks.
               </P>
             </li>
           </ul>

@@ -184,21 +184,21 @@ export default function ValuesTable(props: Props) {
         <div className={style.topHeader}>
           <div className={style.header}>Weight</div>
           <P grey variant="m" fontWeight="normal" className={style.description}>
-            Weights range from 0.1 (minimum impact) to 1 (maximum impact) and determine the risk
-            factor's influence on the overall risk score. If a weight is not assigned, the system
-            defaults it to 1.
+            Weights range from 0 (no impact) to 1 (maximum impact) and determine the risk factor's
+            influence on the overall risk score. If a weight is not assigned, the system defaults it
+            to 1.
           </P>
         </div>
         <div className={style.weight}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <P variant="m" fontWeight="normal">
-              0.1
+              0
             </P>
             <Slider
               mode="SINGLE"
-              min={0.1}
+              min={0.01}
               max={1}
-              step={0.1}
+              step={0.01}
               value={weight}
               onChange={(value) => {
                 if (value != null) {
