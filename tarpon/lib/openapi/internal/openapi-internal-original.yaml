@@ -7,7 +7,7 @@ servers:
 paths:
   /apikey:
     parameters: []
-    post:
+    get:
       summary: Tarpon API Key - Create
       operationId: post-apikey
       responses:
@@ -372,7 +372,7 @@ paths:
       operationId: get-import-importId
   /files/getPresignedUrl:
     parameters: []
-    post:
+    get:
       summary: Files - Get Presigned URL
       operationId: post-getPresignedUrl
       responses:
@@ -4825,7 +4825,7 @@ paths:
                 $ref: '#/components/schemas/ReportTypesResponse'
       operationId: get-report-types
   /reports/draft:
-    post:
+    get:
       summary: Get a report draft
       tags: []
       x-flagright:
