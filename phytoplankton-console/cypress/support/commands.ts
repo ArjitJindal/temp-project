@@ -1,7 +1,7 @@
 /// <reference types="cypress" />
 
 import { Feature, TenantSettings } from '../../src/apis';
-import { getAccessToken, getAuthTokenKey, getBaseUrl } from './utils';
+import { getAccessToken, getAuthTokenKey, getBaseApiUrl, getBaseUrl } from './utils';
 
 Cypress.Commands.add('loginByRole', (role, sessionSuffix = '') => {
   cy.session(
@@ -231,5 +231,41 @@ Cypress.Commands.add('toggleFeatures', (features) => {
       });
       cy.reload();
     }
+  });
+});
+
+Cypress.Commands.add('publicApiHandler', (method, endpoint, requestBody) => {
+  cy.apiHandler({
+    endpoint: 'tenant/apiKeys',
+    method: 'GET',
+    body: requestBody,
+  }).then((response) => {
+    expect(response['status']).to.eq(200);
+    const unmaskApiKeyId = response['body'][0].id;
+    cy.apiHandler({
+      endpoint: `tenant/apiKeys?unmask=true&unmaskApiKeyId=${unmaskApiKeyId}`,
+      method: 'GET',
+      body: requestBody,
+    }).then((response) => {
+      expect(response['status']).to.eq(200);
+      const apiKey = response['body'][0].key;
+      const headers = {
+        'tenant-id': 'cypress-tenant',
+        'x-api-key': apiKey,
+        'content-type': 'application/json',
+      };
+      const postUrl = getBaseApiUrl();
+      const url = `${postUrl}${endpoint}`;
+      cy.request({
+        method,
+        url,
+        headers,
+        body: requestBody,
+      }).then((response) => {
+        expect(response.status).to.eq(200);
+        /* eslint-disable-next-line cypress/no-unnecessary-waiting */
+        cy.wait(3000);
+      });
+    });
   });
 });
