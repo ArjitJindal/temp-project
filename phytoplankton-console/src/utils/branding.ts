@@ -46,7 +46,7 @@ const FLAGRIGHT_BRANDING: BrandingSettings = {
       : 'https://support.flagright.com/',
   notProvisionedWarning: `User does not have a provisioned Flagright Account. If your organization already uses Flagright, please ask your Flagright Console Admin to add you to the Console. If you are not a Flagright customer yet, please contact Flagright Sales Team at hello@flagright.com`,
   apiDocsLinks: {
-    webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
+    webhooks: 'https://docs.flagright.com/guides/webhooks/introduction',
   },
   faviconUrl: FlagrightFavicon,
   systemAvatarUrl: FlagrightNoTextLogo,
@@ -59,7 +59,7 @@ const BUREAU_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> =
   companyName: 'Bureau',
   notProvisionedWarning: `User does not have a provisioned Bureau Account.`,
   apiDocsLinks: {
-    webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
+    webhooks: 'https://docs.flagright.com/guides/webhooks/introduction',
   },
   // TODO: We can remove `redirectPath` here after https://tm.sandbox.bureau.id is correctly redirectly to Console.
   redirectPath: '/dashboard/analysis',
@@ -75,7 +75,7 @@ const REGTANK_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> 
   companyName: 'Regtank',
   notProvisionedWarning: `User does not have a provisioned Regtank Account.`,
   apiDocsLinks: {
-    webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
+    webhooks: 'https://docs.flagright.com/guides/webhooks/introduction',
   },
   faviconUrl: RegtankFaviconSvg,
   systemAvatarUrl: RegtankFaviconSvg,
@@ -88,7 +88,7 @@ const ZIGRAM_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> =
   companyName: 'Transact Comply',
   notProvisionedWarning: `User does not have a provisioned Transact Comply Account.`,
   apiDocsLinks: {
-    webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
+    webhooks: 'https://docs.flagright.com/guides/webhooks/introduction',
   },
   faviconUrl: ZigramFaivcon,
   systemAvatarUrl: ZigramFaivcon,
@@ -101,7 +101,7 @@ const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0Client
   companyName: 'Traxion right',
   notProvisionedWarning: `User does not have a provisioned Traxion right Account.`,
   apiDocsLinks: {
-    webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
+    webhooks: 'https://docs.flagright.com/guides/webhooks/introduction',
   },
   faviconUrl: TraxionRightFavicon,
   systemAvatarUrl: TraxionRightFavicon,
