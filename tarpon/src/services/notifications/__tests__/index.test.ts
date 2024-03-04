@@ -1,4 +1,5 @@
 import { NotificationRepository } from '../notifications-repository'
+import { ConsoleNotifications } from '../console-notifications'
 import { casesHandler } from '@/lambdas/console-api-case/app'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import {
@@ -21,6 +22,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { allUsersViewHandler } from '@/lambdas/console-api-user/app'
+import { Notification } from '@/@types/openapi-internal/Notification'
 
 dynamoDbSetupHook()
 withFeatureHook(['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'])
@@ -982,5 +984,122 @@ describe('Test notifications service', () => {
     expect(notifications[0]?.recievers).toContain(user2)
     expect(notifications[0]?.notificationData?.status).toBe('CLOSED')
     expect(notifications[0]?.notificationData?.type).toBe('UPDATE')
+  })
+})
+
+const getTestNotification = (payload: Partial<Notification>): Notification => {
+  return {
+    createdAt: Date.now(),
+    id: 'test-id',
+    notificationChannel: 'CONSOLE',
+    notificationType: 'ALERT_ASSIGNMENT',
+    recievers: ['test-account'],
+    entityId: 'test-entity-id',
+    entityType: 'ALERT',
+    triggeredBy: 'test-triggered-by',
+    notificationData: {},
+    consoleNotificationStatuses: [
+      {
+        recieverUserId: 'test-account',
+        status: 'SENT',
+        stausUpdatedAt: Date.now(),
+      },
+    ],
+    ...payload,
+  }
+}
+
+describe('Console Notifications Service Tests', () => {
+  test('Mark all as read', async () => {
+    jest.clearAllMocks()
+    const mongoDb = await getMongoDbClient()
+    const testTenantId = getTestTenantId()
+    const notificationsRepository = new NotificationRepository(testTenantId, {
+      mongoDb,
+    })
+
+    const notificationsService = new ConsoleNotifications(testTenantId, {
+      mongoDb,
+    })
+
+    const accountId = 'test-account'
+    const account2Id = 'test-account-2'
+
+    await notificationsRepository.addNotification(
+      getTestNotification({
+        recievers: [accountId, account2Id],
+        consoleNotificationStatuses: [
+          {
+            recieverUserId: accountId,
+            status: 'SENT',
+            stausUpdatedAt: Date.now(),
+          },
+          {
+            recieverUserId: account2Id,
+            status: 'SENT',
+            stausUpdatedAt: Date.now(),
+          },
+        ],
+      })
+    )
+
+    await notificationsService.markAllAsRead(accountId)
+
+    const notifications = await notificationsService.getConsoleNotifications(
+      accountId,
+      { page: 1 }
+    )
+
+    expect(notifications.length).toBe(1)
+    expect(notifications?.[0]?.consoleNotificationStatuses?.[0]?.status).toBe(
+      'READ'
+    )
+    expect(notifications?.[0]?.recievers?.length).toBe(1)
+  })
+
+  test('Mark as read', async () => {
+    const mongoDb = await getMongoDbClient()
+    const testTenantId = getTestTenantId()
+    const notificationsRepository = new NotificationRepository(testTenantId, {
+      mongoDb,
+    })
+    const notificationsService = new ConsoleNotifications(testTenantId, {
+      mongoDb,
+    })
+
+    const accountId = 'test-account'
+    const account2Id = 'test-account-2'
+
+    const notification = await notificationsRepository.addNotification(
+      getTestNotification({
+        recievers: [accountId, account2Id],
+        consoleNotificationStatuses: [
+          {
+            recieverUserId: accountId,
+            status: 'SENT',
+            stausUpdatedAt: Date.now(),
+          },
+          {
+            recieverUserId: account2Id,
+            status: 'SENT',
+            stausUpdatedAt: Date.now(),
+          },
+        ],
+      })
+    )
+
+    await notificationsService.markAsRead(accountId, notification.id)
+
+    const notificationsAfterMarkAsRead =
+      await notificationsService.getConsoleNotifications(accountId, {
+        page: 1,
+      })
+
+    expect(notificationsAfterMarkAsRead.length).toBe(1)
+    expect(
+      notificationsAfterMarkAsRead?.[0]?.consoleNotificationStatuses?.[0]
+        ?.status
+    ).toBe('READ')
+    expect(notificationsAfterMarkAsRead?.[0]?.recievers?.length).toBe(1)
   })
 })

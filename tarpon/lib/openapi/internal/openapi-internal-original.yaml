@@ -5285,8 +5285,63 @@ paths:
           in: path
           name: alertId
           required: true
+  /notifications:
+    get:
+      summary: Get notifications
+      operationId: get-notifications
+      x-flagright:
+        permissions:
+          - notifications:all:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsResponse'
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: page
+  /notifications/{notificationId}/read:
+    parameters:
+      - schema:
+          type: string
+        name: notificationId
+        in: path
+        required: true
+    post:
+      summary: Mark notification as read
+      operationId: post-notifications-read-notificationId
+      x-flagright:
+        permissions:
+          - notifications:all:read
+      responses:
+        '200':
+          description: OK
+  /notifications/mark-all-read:
+    post:
+      summary: Mark all notifications as read
+      operationId: post-notifications-mark-all-read
+      x-flagright:
+        permissions:
+          - notifications:all:read
+      responses:
+        '200':
+          description: OK
 components:
   schemas:
+    NotificationsResponse:
+      title: NotificationsResponse
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+      required:
+        - data
     QuestionAutocompleteResponse:
       title: QuestionAutocompleteResponse
       type: object
@@ -7928,6 +7983,7 @@ components:
         - reports:generated:write
         - copilot:narrative:read
         - copilot:narrative:write
+        - notifications:all:read
     CaseStatus:
       type: string
       title: CaseStatus

@@ -14,13 +14,15 @@ export class NotificationRepository {
     this.mongoDb = connections.mongoDb
   }
 
-  async addNotification(notification: Notification): Promise<void> {
+  async addNotification(notification: Notification): Promise<Notification> {
     const db = this.mongoDb.db()
     const notificationsCollection = db.collection<Notification>(
       NOTIFICATIONS_COLLECTION(this.tenantId)
     )
 
     await notificationsCollection.insertOne(notification)
+
+    return notification
   }
 
   async updateConsoleNotification(
@@ -38,6 +40,7 @@ export class NotificationRepository {
       { $set: { consoleNotificationStatuses: statuses } }
     )
   }
+
   async getNotificationsByRecipient(
     recipient: string
   ): Promise<Notification[]> {
@@ -49,5 +52,53 @@ export class NotificationRepository {
     )
 
     return notificationsCollection.find({ recievers: recipient }).toArray()
+  }
+
+  async getConsoleNotifications(
+    accountId: string,
+    params: { page: number }
+  ): Promise<Notification[]> {
+    const db = this.mongoDb.db()
+    const notificationsCollectionName = NOTIFICATIONS_COLLECTION(this.tenantId)
+
+    const notificationsCollection = db.collection<Notification>(
+      notificationsCollectionName
+    )
+
+    return notificationsCollection
+      .find({ recievers: accountId, notificationChannel: 'CONSOLE' })
+      .skip((params.page - 1) * 50)
+      .limit(50)
+      .toArray()
+  }
+
+  async markAllAsRead(accountId: string): Promise<void> {
+    const db = this.mongoDb.db()
+    const notificationsCollectionName = NOTIFICATIONS_COLLECTION(this.tenantId)
+
+    const notificationsCollection = db.collection<Notification>(
+      notificationsCollectionName
+    )
+
+    await notificationsCollection.updateMany(
+      { recievers: accountId },
+      { $set: { 'consoleNotificationStatuses.$[user].status': 'READ' } },
+      { arrayFilters: [{ 'user.recieverUserId': accountId }] }
+    )
+  }
+
+  async markAsRead(accountId: string, notificationId: string): Promise<void> {
+    const db = this.mongoDb.db()
+    const notificationsCollectionName = NOTIFICATIONS_COLLECTION(this.tenantId)
+
+    const notificationsCollection = db.collection<Notification>(
+      notificationsCollectionName
+    )
+
+    await notificationsCollection.updateOne(
+      { id: notificationId, recievers: accountId },
+      { $set: { 'consoleNotificationStatuses.$[user].status': 'READ' } },
+      { arrayFilters: [{ 'user.recieverUserId': accountId }] }
+    )
   }
 }

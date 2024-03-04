@@ -38,4 +38,47 @@ export class ConsoleNotifications extends NotificationsChannels {
 
     return subscribedNotifications
   }
+
+  public async getConsoleNotifications(
+    accountId: string,
+    params: { page: number }
+  ): Promise<Notification[]> {
+    const notificationRepository = this.getNotificationRepository()
+
+    const notifications = await notificationRepository.getConsoleNotifications(
+      accountId,
+      params
+    )
+
+    const filteredNotifications = notifications.map((notification) => {
+      const recievers = notification.recievers.filter(
+        (reciever) => reciever === accountId
+      )
+
+      const consoleNotificationStatuses =
+        notification?.consoleNotificationStatuses?.filter(
+          (status) => status.recieverUserId === accountId
+        )
+
+      return {
+        ...notification,
+        recievers,
+        consoleNotificationStatuses,
+      }
+    })
+
+    return filteredNotifications
+  }
+
+  public async markAsRead(accountId: string, notificationId: string) {
+    const notificationRepository = this.getNotificationRepository()
+
+    await notificationRepository.markAsRead(accountId, notificationId)
+  }
+
+  public async markAllAsRead(accountId: string) {
+    const notificationRepository = this.getNotificationRepository()
+
+    await notificationRepository.markAllAsRead(accountId)
+  }
 }

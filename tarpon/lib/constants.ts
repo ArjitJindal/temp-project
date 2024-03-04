@@ -161,6 +161,9 @@ export const StackConstants = {
   CONSOLE_API_SAR_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSarFunction'
   ),
+  CONSOLE_API_NOTIFICATIONS_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiNotificationsFunction'
+  ),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
   API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,

@@ -208,6 +208,11 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       name: StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
     })
 
+    /* Notifications */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_NOTIFICATIONS_FUNCTION_NAME,
+    })
+
     /* Consumer users view */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
