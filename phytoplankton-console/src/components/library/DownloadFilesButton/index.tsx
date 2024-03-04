@@ -43,7 +43,7 @@ export default function DownloadFilesButton(props: Props) {
   );
 }
 
-async function createZipFile(files: Array<FileInfo | undefined>) {
+export async function createZipFile(files: Array<FileInfo | undefined>) {
   const zip = new JSZip();
   const fetchPromises: Promise<JSZip>[] = [];
 
