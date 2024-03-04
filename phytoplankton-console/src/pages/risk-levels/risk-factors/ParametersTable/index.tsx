@@ -108,10 +108,16 @@ export default function ParametersTable(props: Props) {
               );
             },
           }),
-          columnHelper.simple({
+          columnHelper.display({
             title: 'Weight',
-            key: 'weight',
-            defaultWidth: 100,
+            render: (item) => {
+              const parameterRes =
+                (parameterSettings && parameterSettings[item.parameter]) ??
+                init<ParameterSettings>();
+              const weightRes = map(parameterRes, (x) => x.weight);
+              const weight = getOr(weightRes, 1);
+              return weight;
+            },
           }),
           columnHelper.display({
             title: 'Actions',

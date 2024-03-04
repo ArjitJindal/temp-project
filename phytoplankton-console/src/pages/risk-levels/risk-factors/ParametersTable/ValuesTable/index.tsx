@@ -214,15 +214,17 @@ export default function ValuesTable(props: Props) {
                 value={weight}
                 onChange={(value) => {
                   if (value != null) {
-                    setWeight(value);
+                    const valueUptoTwoDecimal = parseFloat(value.toFixed(2));
+                    setWeight(valueUptoTwoDecimal);
                   }
                 }}
                 max={1}
-                min={0.1}
+                min={0.01}
                 htmlAttrs={{
-                  style: { width: '2.5rem', textAlign: 'center' },
+                  style: { width: '3rem', textAlign: 'center' },
+                  step: 0.01,
                 }}
-                step={0.1}
+                step={0.01}
               />
             </div>
           </div>
