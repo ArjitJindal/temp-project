@@ -38,10 +38,12 @@ export interface CaseUpdateAuditLogImage extends Partial<CaseStatusUpdate> {
   reviewAssignments?: Assignment[]
   updatedTransactions?: string[]
   investigationTime?: number
+  assignments?: Assignment[]
 }
 
 export interface AlertUpdateAuditLogImage
   extends Partial<AlertStatusUpdateRequest> {
   reviewAssignments?: Assignment[]
   updatedTransactions?: string[]
+  assignments?: Assignment[]
 }

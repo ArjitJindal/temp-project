@@ -163,6 +163,7 @@ export class CasesAlertsAuditLogService {
         const oldImage: AlertUpdateAuditLogImage = {
           alertStatus: oldAlert.alertStatus,
           reviewAssignments: oldAlert.reviewAssignments,
+          assignments: oldAlert.assignments,
         }
 
         const newImage: AlertUpdateAuditLogImage = {
@@ -336,6 +337,7 @@ export class CasesAlertsAuditLogService {
     const oldImage: CaseUpdateAuditLogImage = {
       caseStatus: oldCase.caseStatus,
       reviewAssignments: oldCase.reviewAssignments,
+      assignments: oldCase.assignments,
     }
 
     let investigationTime: number | undefined

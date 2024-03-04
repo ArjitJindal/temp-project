@@ -904,4 +904,83 @@ describe('Test notifications service', () => {
 
     expect(notifications.length).toBe(1)
   })
+
+  test('Case update notification', async () => {
+    const mongoDb = await getMongoDbClient()
+    const user = 'USER-1'
+    const user2 = 'USER-2'
+
+    const tenantId = getTestTenantId()
+
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+    })
+
+    const case_ = await caseRepository.addCaseMongo(
+      getTestCase({
+        assignments: [
+          {
+            assigneeUserId: user2,
+            assignedByUserId: user,
+            timestamp: Date.now(),
+          },
+        ],
+      })
+    )
+
+    const event = getApiGatewayPatchEvent(tenantId, '/cases/statusChange', {
+      caseIds: [case_?.caseId as string],
+      updates: {
+        reason: ['Investigation completed'],
+        caseStatus: 'CLOSED',
+        comment: 'Test',
+        files: [],
+      },
+    })
+
+    const role: AccountRole = {
+      description: 'Admin',
+      id: 'ADMIN',
+      name: 'Admin',
+      permissions: PERMISSIONS,
+    }
+
+    const roles: AccountRole[] = [role]
+
+    const users: Account[] = [
+      { id: user, email: `${user}@test.com`, role: 'Admin' } as Account,
+      { id: user2, email: `${user2}@test.com`, role: 'Admin' } as Account,
+    ]
+
+    getContextMocker.mockReturnValue({
+      tenantId,
+      settings: {
+        notificationsSubscriptions: {
+          console: ['CASE_STATUS_UPDATE'],
+        },
+      },
+      features: ['NOTIFICATIONS'],
+      user: { id: user, role: 'Admin' },
+    })
+
+    getSpyes(users, roles)
+
+    await casesHandler(event, null as any, null as any)
+
+    const notificationsService = new NotificationRepository(tenantId, {
+      mongoDb,
+    })
+
+    const notifications =
+      await notificationsService.getNotificationsByRecipient(user2)
+
+    expect(notifications.length).toBe(1)
+    expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
+      'SENT'
+    )
+    expect(notifications[0]?.notificationType).toBe('CASE_STATUS_UPDATE')
+    expect(notifications[0]?.recievers).toContain(user2)
+    expect(notifications[0]?.notificationData?.status).toBe('CLOSED')
+    expect(notifications[0]?.notificationData?.type).toBe('UPDATE')
+  })
 })

@@ -20,6 +20,8 @@ import { AlertInReview } from './subscriptions/alert-in-review'
 import { CaseInReview } from './subscriptions/case-in-review'
 import { CaseComment } from './subscriptions/alert-comment'
 import { AlertComment } from './subscriptions/case-comment'
+import { AlertStatusUpdate } from './subscriptions/alert-status-update'
+import { CaseStatusUpdate } from './subscriptions/case-status-update'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
@@ -110,6 +112,8 @@ export class NotificationsService {
       new AlertInReview(),
       new CaseComment(),
       new AlertComment(),
+      new AlertStatusUpdate(),
+      new CaseStatusUpdate(),
     ]
 
     for (const subscription of subscriptions) {
@@ -150,6 +154,8 @@ export class NotificationsService {
         CASE_IN_REVIEW: ['case-management:case-overview:read'],
         ALERT_COMMENT: ['case-management:case-details:read'],
         CASE_COMMENT: ['case-management:case-details:read'],
+        ALERT_STATUS_UPDATE: ['case-management:case-overview:read'],
+        CASE_STATUS_UPDATE: ['case-management:case-overview:read'],
       }
 
     const [allUsers, allRoles] = await Promise.all([
