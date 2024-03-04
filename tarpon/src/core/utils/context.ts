@@ -35,7 +35,7 @@ type LogMetaData = {
   tenantName?: string
 }
 export type ContextUser =
-  | (Pick<Account, 'id' | 'role' | 'allowTenantDeletion'> & {
+  | (Pick<Account, 'id' | 'role' | 'allowTenantDeletion' | 'allowedRegions'> & {
       email?: string
     })
   | undefined
@@ -80,6 +80,7 @@ export async function getInitialContext(
       role,
       encodedPermissions,
       allowTenantDeletion,
+      encodedAllowedRegions,
     } = (event as APIGatewayEvent)?.requestContext?.authorizer || {}
 
     if (tenantId) {
@@ -99,6 +100,8 @@ export async function getInitialContext(
     encodedPermissions
       ?.split(',')
       .forEach((p) => permissions.set(p as Permission, true))
+
+    const allowedRegions = encodedAllowedRegions?.split(',')
 
     const trace = utils.processTraceData(process.env._X_AMZN_TRACE_ID)
 
@@ -131,6 +134,7 @@ export async function getInitialContext(
             email: verifiedEmail,
             role: role!,
             allowTenantDeletion: Boolean(allowTenantDeletion),
+            allowedRegions,
           }
         : undefined,
       settings,

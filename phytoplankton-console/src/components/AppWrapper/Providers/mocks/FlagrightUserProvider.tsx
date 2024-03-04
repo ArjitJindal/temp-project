@@ -22,6 +22,7 @@ export default function FlagrightUserProviderMock_(props: { children: React.Reac
           demoMode: false,
           permissions,
           allowTenantDeletion: false,
+          allowedRegions: ['eu-1'],
         },
       }}
     >

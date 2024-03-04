@@ -35,6 +35,7 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
+import { envIsNot } from '@/utils/env'
 
 // todo: move to config?
 const CONNECTION_NAME = 'Username-Password-Authentication'
@@ -459,6 +460,7 @@ export class AccountsService {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
+    const user = getContext()?.user
     const organizationManager = managementClient.organizations
     let pageNumber = 0
     const limitPerPage = 100
@@ -479,7 +481,22 @@ export class AccountsService {
       morePagesAvailable = pagedOrganizations.total > organizations.length
     }
 
-    return organizations.map(AccountsService.organizationToTenant)
+    const tenants = organizations.map(AccountsService.organizationToTenant)
+
+    if (envIsNot('prod') || !user?.allowedRegions) {
+      return tenants
+    }
+
+    return tenants.map((tenant) => {
+      if (user?.allowedRegions?.includes(tenant.region)) {
+        return tenant
+      }
+
+      return {
+        ...tenant,
+        isProductionAccessDisabled: true,
+      }
+    })
   }
 
   async changeUserTenant(
@@ -493,6 +510,7 @@ export class AccountsService {
     if (newTenant == null) {
       throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
     }
+
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )

@@ -7,6 +7,7 @@ import {
   MANAGED_ROLE_NAMES,
   isValidManagedRoleName,
 } from '@/@types/openapi-internal-custom/ManagedRoleName'
+import { envIsNot } from '@/utils/env'
 
 export function isRoleAboveAdmin(role: string) {
   return isAbove(role, 'admin')
@@ -34,6 +35,36 @@ export function assertCurrentUserRoleAboveAdmin() {
   return assertCurrentUserRole(
     ...MANAGED_ROLE_NAMES.slice(0, MANAGED_ROLE_NAMES.indexOf('admin'))
   )
+}
+
+export function assertAllowAccessTenant() {
+  const user = currentUser()
+  const tenantSettings = getContext()?.settings
+
+  if (envIsNot('prod')) {
+    return
+  }
+
+  if (!user) {
+    throw new Forbidden('Unknown user')
+  }
+
+  const currentRegion = process.env.REGION as string
+
+  // Explicitly check for false, as undefined means tenantSettings it is available
+  if (tenantSettings?.isProductionAccessEnabled === false) {
+    throw new Forbidden('Production access is disabled')
+  }
+
+  if (!user?.allowedRegions) {
+    return
+  }
+
+  if (!user?.allowedRegions?.includes(currentRegion)) {
+    throw new Forbidden(
+      `You need to have access to ${currentRegion} to perform this action`
+    )
+  }
 }
 
 export function assertCurrentUserRole(...requiredRoles: ManagedRoleName[]) {
@@ -111,6 +142,7 @@ export function assertPermissions(requiredPermissions: Permission[]) {
 
   // If user is root, ignore RBAC.
   if (context?.user?.role === 'root') {
+    assertAllowAccessTenant()
     return
   }
 
@@ -140,4 +172,5 @@ export interface JWTAuthorizerResult extends Credentials {
   verifiedEmail: string
   auth0Domain: string
   allowTenantDeletion: boolean
+  encodedAllowedRegions: string
 }

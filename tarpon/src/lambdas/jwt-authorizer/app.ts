@@ -179,7 +179,20 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     ) {
       permissionsArray = verifiedDecoded[`permissions`]
     }
+    let allowedRegions: string[] | undefined = []
+    if (
+      verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/allowedRegions`] !==
+        undefined &&
+      Array.isArray(
+        verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/allowedRegions`]
+      )
+    ) {
+      allowedRegions =
+        verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/allowedRegions`]
+    }
+
     const encodedPermissions = permissionsArray.join(',')
+    const encodedAllowedRegions = allowedRegions?.join(',')
     return {
       principalId: fullTenantId,
       policyDocument: {
@@ -205,6 +218,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
         encodedPermissions,
         auth0Domain,
         allowTenantDeletion,
+        encodedAllowedRegions,
       } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
     }
   }

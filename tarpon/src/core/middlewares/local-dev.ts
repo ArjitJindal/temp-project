@@ -57,7 +57,11 @@ export const localDev =
 
         const fullTenantId = getFullTenantId(tenantId as string, demoMode)
         const permissionsArray = (userInfo[`permissions`] || []) as Permission[]
+        const allowedRegions = userInfo[
+          `${CUSTOM_CLAIMS_NS}/allowedRegions`
+        ] as string[] | undefined
         const encodedPermissions = permissionsArray.join(',')
+        const encodedAllowedRegions = allowedRegions?.join(',')
 
         const jwtAuthorizerResult: JWTAuthorizerResult = {
           principalId: fullTenantId,
@@ -72,6 +76,7 @@ export const localDev =
           auth0Domain: 'dev-flagright.eu.auth0.com',
           allowTenantDeletion:
             userInfo[`${CUSTOM_CLAIMS_NS}/allowTenantDeletion`] === true,
+          encodedAllowedRegions,
           ...authorizer,
         }
         event.requestContext.authorizer = jwtAuthorizerResult

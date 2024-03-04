@@ -40,7 +40,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
       const permissionsList: Permission[] = user[`permissions`] ?? [];
       const permissions = new Map<Permission, boolean>();
       const allowTenantDeletion = user[`${NAMESPACE}/allowTenantDeletion`] ?? false;
-
+      const allowedRegions = user[`${NAMESPACE}/allowedRegions`] ?? [];
       permissionsList.map((p) => permissions.set(p, true));
 
       if (tenantConsoleApiUrl == null || tenantId == null || tenantName == null) {
@@ -60,6 +60,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
         demoMode: demoMode === true,
         permissions,
         allowTenantDeletion,
+        allowedRegions,
       };
 
       return appUser;

@@ -18,6 +18,7 @@ exports.onExecutePostLogin = async (event, api) => {
     consoleApiUrl,
     apiAudience,
     allowTenantDeletion,
+    allowedRegions,
   } = app_metadata
   let auth0Domain = ''
 
@@ -91,5 +92,11 @@ exports.onExecutePostLogin = async (event, api) => {
       namespace + '/allowTenantDeletion',
       allowTenantDeletion === true
     )
+    if (allowedRegions) {
+      api.accessToken.setCustomClaim(
+        namespace + '/allowedRegions',
+        allowedRegions
+      )
+    }
   }
 }

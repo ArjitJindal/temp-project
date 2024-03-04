@@ -30,6 +30,7 @@ export interface FlagrightAuth0User {
   demoMode: boolean;
   permissions?: Map<Permission, boolean>;
   allowTenantDeletion?: boolean;
+  allowedRegions?: string[];
 }
 
 export const NAMESPACE = 'https://flagright.com';
