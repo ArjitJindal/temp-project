@@ -1,7 +1,6 @@
 /* eslint-disable */
 const fs = require('fs-extra');
 const esbuild = require('esbuild');
-const { sentryEsbuildPlugin } = require('@sentry/esbuild-plugin');
 const path = require('path');
 const { execSync } = require('child_process');
 const LessImportResolvePlugin = require('./less-import-resolve-plugin.js');
@@ -79,7 +78,7 @@ async function buildCode(env, options) {
   const envName = config.envName ?? 'unknown_env';
   const commitHash = getGitHeadHash();
   const releaseSuffix = process.env.ENV === 'dev' ? 'latest-version' : commitHash;
-  const release = `phytoplankton#${releaseSuffix}`;
+  const release = `phytoplankton:${releaseSuffix}`;
   const define = config.define;
 
   if (process.env.QA === 'true' && !process.env.TARPON_BRANCH) {
@@ -166,11 +165,7 @@ async function buildCode(env, options) {
   await writeFiles(result);
 
   if (!devMode && process.env.SENTRY_UPLOAD) {
-    try {
-      uploadSentrySourceMaps(release, commitHash);
-    } catch (e) {
-      console.warn('Unable to upload sentry source maps', e);
-    }
+    uploadSentrySourceMaps(release, commitHash);
   }
   return result;
 }
