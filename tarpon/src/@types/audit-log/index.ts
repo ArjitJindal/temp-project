@@ -3,6 +3,7 @@ import { Assignment } from '../openapi-internal/Assignment'
 import { AuditLog } from '../openapi-internal/AuditLog'
 import { CaseStatus } from '../openapi-internal/CaseStatus'
 import { CaseStatusUpdate } from '../openapi-internal/CaseStatusUpdate'
+import { Comment } from '../openapi-internal/Comment'
 import { Priority } from '../openapi-internal/Priority'
 
 export type AuditLogRecord = {
@@ -10,11 +11,14 @@ export type AuditLogRecord = {
   payload: AuditLog
 }
 
+export interface CommentAuditLogImage extends Comment {}
+
 export type CaseLogMetaDataType = {
   caseAssignment?: Assignment[]
   caseCreationTimestamp?: number
   casePriority?: Priority
   caseStatus?: CaseStatus
+  reviewAssignments?: Assignment[]
 }
 
 export type AlertLogMetaDataType = {
@@ -22,6 +26,7 @@ export type AlertLogMetaDataType = {
   alertCreationTimestamp?: number
   alertPriority?: Priority
   alertStatus?: CaseStatus
+  reviewAssignments?: Assignment[]
 }
 
 export type AuditLogAssignmentsImage = {

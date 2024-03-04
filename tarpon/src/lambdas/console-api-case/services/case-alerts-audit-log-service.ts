@@ -8,7 +8,6 @@ import {
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { publishAuditLog } from '@/services/audit-log'
 import { Case } from '@/@types/openapi-internal/Case'
-import { Comment } from '@/@types/openapi-internal/Comment'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
@@ -23,6 +22,7 @@ import {
   AuditLogAssignmentsImage,
   CaseUpdateAuditLogImage,
   CaseLogMetaDataType,
+  CommentAuditLogImage,
 } from '@/@types/audit-log'
 
 type AuditLogCreateRequest = {
@@ -246,9 +246,9 @@ export class CasesAlertsAuditLogService {
     })
   }
 
-  public async handleAuditLogForComments(
+  public async handleAuditLogForCasesComments(
     caseId: string,
-    comment: Comment
+    comment: CommentAuditLogImage
   ): Promise<void> {
     await this.createAuditLog({
       caseId,
@@ -258,9 +258,21 @@ export class CasesAlertsAuditLogService {
     })
   }
 
+  public async handleAuditLogForAlertsComments(
+    alertId: string,
+    comment: CommentAuditLogImage
+  ): Promise<void> {
+    await this.createAlertAuditLog({
+      alertId,
+      logAction: 'CREATE',
+      newImage: comment,
+      subtype: 'COMMENT',
+    })
+  }
+
   public async handleAuditLogForCommentDelete(
     caseId: string,
-    comment: Comment
+    comment: CommentAuditLogImage
   ): Promise<void> {
     await this.createAuditLog({
       caseId,
@@ -381,6 +393,7 @@ export class CasesAlertsAuditLogService {
         caseCreationTimestamp: caseEntity?.createdTimestamp,
         casePriority: caseEntity?.priority,
         caseStatus: caseEntity?.caseStatus,
+        reviewAssignments: caseEntity?.reviewAssignments ?? [],
       },
     }
     await publishAuditLog(this.tenantId, auditLog)

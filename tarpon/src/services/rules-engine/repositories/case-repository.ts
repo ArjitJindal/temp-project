@@ -43,7 +43,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getPaymentDetailsIdentifiers } from '@/core/dynamodb/dynamodb-keys'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
-import { isStatusInReview, statusEscalated } from '@/utils/helpers'
+import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { Account } from '@/@types/openapi-internal/Account'
 
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
@@ -270,8 +270,8 @@ export class CaseRepository {
   private getAssignmentsStatus = (
     key: 'reviewAssignments' | 'assignments'
   ): CaseStatus[] => {
-    const reviewAssignmentsStatus = CASE_STATUSS.filter(
-      (status) => statusEscalated(status) || isStatusInReview(status)
+    const reviewAssignmentsStatus = CASE_STATUSS.filter((status) =>
+      shouldUseReviewAssignments(status)
     )
     const assignmentsStatus = difference(CASE_STATUSS, reviewAssignmentsStatus)
 

@@ -10881,6 +10881,8 @@ components:
         - USER_COMMENT_MENTION
         - CASE_IN_REVIEW
         - ALERT_IN_REVIEW
+        - ALERT_COMMENT
+        - CASE_COMMENT
     NotificationChannels:
       title: NotificationChannels
       type: string
@@ -10954,6 +10956,19 @@ components:
       required:
         - type
         - assignments
+    CommentNotification:
+      title: CommentNotification
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - COMMENT
+        comment:
+          $ref: '#/components/schemas/Comment'
+      required:
+        - type
+        - comment
     ConsoleNotificationStatus:
       title: ConsoleNotificationStatus
       type: object

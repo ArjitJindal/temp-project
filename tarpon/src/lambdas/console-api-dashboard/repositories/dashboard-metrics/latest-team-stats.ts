@@ -20,15 +20,15 @@ import { traceable } from '@/core/xray'
 import { DashboardLatestTeamStatsItem } from '@/@types/openapi-internal/DashboardLatestTeamStatsItem'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
-import { isStatusInReview, statusEscalated } from '@/utils/helpers'
+import { shouldUseReviewAssignments } from '@/utils/helpers'
 
 @traceable
 export class LatestTeamStatsDashboardMetric {
   private static getStatusAccordingToAssignment(
     key: 'assignemnts' | 'reviewAssignments'
   ): CaseStatus[] {
-    const reviewAssignmentsStatus = CASE_STATUSS.filter(
-      (status) => statusEscalated(status) || isStatusInReview(status)
+    const reviewAssignmentsStatus = CASE_STATUSS.filter((status) =>
+      shouldUseReviewAssignments(status)
     )
     const assignmentsStatus = difference(CASE_STATUSS, reviewAssignmentsStatus)
     return key === 'reviewAssignments'

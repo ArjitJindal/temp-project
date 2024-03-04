@@ -39,7 +39,7 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { traceable } from '@/core/xray'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { ALERT_STATUSS } from '@/@types/openapi-internal-custom/AlertStatus'
-import { isStatusInReview, statusEscalated } from '@/utils/helpers'
+import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { Account } from '@/@types/openapi-internal/Account'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
@@ -139,8 +139,8 @@ export class AlertsRepository {
   private getAssignmentsStatus = (
     key: 'reviewAssignments' | 'assignments'
   ): AlertStatus[] => {
-    const reviewAssignmentsStatus = ALERT_STATUSS.filter(
-      (status) => statusEscalated(status) || isStatusInReview(status)
+    const reviewAssignmentsStatus = ALERT_STATUSS.filter((status) =>
+      shouldUseReviewAssignments(status)
     )
     const assignmentsStatus = difference(ALERT_STATUSS, reviewAssignmentsStatus)
 

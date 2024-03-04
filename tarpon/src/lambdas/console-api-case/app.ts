@@ -192,7 +192,7 @@ export const casesHandler = lambdaApi()(
         request.caseId,
         { ...comment, userId, mentions }
       )
-      await casesAlertsAuditLogService.handleAuditLogForComments(
+      await casesAlertsAuditLogService.handleAuditLogForCasesComments(
         request.caseId,
         {
           ...comment,
@@ -374,17 +374,16 @@ export const casesHandler = lambdaApi()(
         userId,
         mentions,
       })
-      await casesAlertsAuditLogService.createAlertAuditLog({
+
+      await casesAlertsAuditLogService.handleAuditLogForAlertsComments(
         alertId,
-        logAction: 'CREATE',
-        oldImage: {},
-        newImage: {
+        {
           ...comment,
           body: getParsedCommentBody(comment.body),
           mentions,
-        },
-        subtype: 'COMMENT',
-      })
+        }
+      )
+
       return saveCommentResult
     })
 
@@ -434,17 +433,14 @@ export const casesHandler = lambdaApi()(
         { ...comment, userId, mentions }
       )
 
-      await casesAlertsAuditLogService.createAlertAuditLog({
+      await casesAlertsAuditLogService.handleAuditLogForAlertsComments(
         alertId,
-        logAction: 'CREATE',
-        oldImage: {},
-        newImage: {
+        {
           ...comment,
           body: getParsedCommentBody(comment.body),
           mentions,
-        },
-        subtype: 'COMMENT',
-      })
+        }
+      )
 
       return saveCommentResult
     })
@@ -458,7 +454,7 @@ export const casesHandler = lambdaApi()(
         { ...comment, userId, mentions }
       )
 
-      await casesAlertsAuditLogService.handleAuditLogForComments(caseId, {
+      await casesAlertsAuditLogService.handleAuditLogForCasesComments(caseId, {
         ...comment,
         body: getParsedCommentBody(comment.body),
         mentions,
