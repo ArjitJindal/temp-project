@@ -1,5 +1,6 @@
 import type { UserOptions } from 'jspdf-autotable';
-import FlagrightDemoLogoSvg from '@/branding/flagright-logo-demo.svg';
+import type { jsPDF } from 'jspdf';
+import { getBranding } from '@/utils/branding';
 
 interface Props {
   pdfRef?: HTMLElement;
@@ -23,8 +24,9 @@ const DownloadAsPDF = async (props: Props) => {
   await import('./NotoSans-SemiBold');
   const { pdfRef, fileName, tableOptions, reportTitle } = props;
   try {
+    const Logo = getBranding().logoDark;
     const logoImage = new Image();
-    logoImage.src = FlagrightDemoLogoSvg;
+    logoImage.src = Logo;
 
     await new Promise((resolve, reject) => {
       logoImage.onload = resolve;
@@ -38,7 +40,7 @@ const DownloadAsPDF = async (props: Props) => {
     let position = 30;
     addAndSetFonts(doc);
 
-    addTopFormatting({ doc, logoImage });
+    addTopFormatting(doc, logoImage);
     if (reportTitle) {
       doc.setFontSize(16);
       doc.text(reportTitle, 15, position + 7);
@@ -95,7 +97,7 @@ export const getTableHeadAndBody = (data?: string) => {
   return null;
 };
 
-const getLogoImageData = ({ logoImage }): string => {
+const getLogoImageData = (logoImage: HTMLImageElement): string => {
   const logoCanvas = document.createElement('canvas');
   logoCanvas.width = 548;
   logoCanvas.height = 112;
@@ -105,14 +107,30 @@ const getLogoImageData = ({ logoImage }): string => {
   return logoData;
 };
 
-const addTopFormatting = ({ doc, logoImage }) => {
+const addTopFormatting = (doc: jsPDF, logoImage: HTMLImageElement) => {
   doc.setFillColor(17, 105, 249);
   doc.rect(0, 0, 210, 1, 'F');
-  const logoData = getLogoImageData({ logoImage });
-  doc.addImage(logoData, 'PNG', 12, 10, 70, 14);
+  const logoData = getLogoImageData(logoImage);
+  const LOGO_HEIGHT = 14;
+  const scaleRatio = LOGO_HEIGHT / logoImage.height;
+  doc.addImage(logoData, 'PNG', 12, 10, logoImage.width * scaleRatio, LOGO_HEIGHT);
 };
 
-const addTable = ({ imgHeight, position, doc, tableOptions, logoImage, autoTable }) => {
+const addTable = ({
+  imgHeight,
+  position,
+  doc,
+  tableOptions,
+  logoImage,
+  autoTable,
+}: {
+  imgHeight: number;
+  position: number;
+  doc: jsPDF;
+  tableOptions?: TableOptions[];
+  logoImage: HTMLImageElement;
+  autoTable: any;
+}) => {
   if (tableOptions?.length) {
     const tableWidth = 180;
     tableOptions.map((table: TableOptions, index) => {
@@ -122,14 +140,14 @@ const addTable = ({ imgHeight, position, doc, tableOptions, logoImage, autoTable
           table.tableTitle,
           15,
           (index === 0 ? (imgHeight + position) % PAGE_HEIGHT : 0) +
-            (doc.autoTable?.previous?.finalY ?? 0) +
+            ((doc as any).autoTable?.previous?.finalY ?? 0) +
             12,
         );
       }
       autoTable.default(doc, {
         ...(index === 0
           ? { startY: (imgHeight + position + 14) % PAGE_HEIGHT }
-          : { startY: (doc.autoTable?.previous?.finalY ?? 0) + 16 }),
+          : { startY: ((doc as any).autoTable?.previous?.finalY ?? 0) + 16 }),
         tableWidth: tableWidth,
         margin: { top: 32, bottom: 12 },
         styles: {
@@ -139,7 +157,7 @@ const addTable = ({ imgHeight, position, doc, tableOptions, logoImage, autoTable
         },
         ...table.tableOptions,
         willDrawPage: () => {
-          addTopFormatting({ doc, logoImage });
+          addTopFormatting(doc, logoImage);
         },
         didDrawPage: () => {
           addPageNumber({ doc });
@@ -154,7 +172,7 @@ function addPageNumber({ doc }) {
   doc.text(`${pageNumber}`, 190, 290);
 }
 
-function addAndSetFonts(doc) {
+function addAndSetFonts(doc: jsPDF) {
   doc.setFont(FONT_FAMILY_SEMIBOLD);
   doc.setFontSize(12);
 }

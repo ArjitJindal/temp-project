@@ -1,15 +1,19 @@
-import FlagrightLogoSvg from '@/branding/flagright-logo.svg';
-import FlagrightDemoLogoSvg from '@/branding/flagright-logo-demo.svg';
-import FlagrightNoTextLogo from '@/branding/flagright-no-text.svg';
-import FlagrightFavicon from '@/branding/flagright-favicon.png';
-import BureauLogoSvg from '@/branding/bureau-logo.svg';
+import FlagrightLightLogo from '@/branding/flagright-logo-light.svg';
+import FlagrightDarkLogo from '@/branding/flagright-logo-dark.svg';
+import BureauLightLogo from '@/branding/bureau-logo-light.svg';
+import BureauDarkLogo from '@/branding/bureau-logo-dark.svg';
+import RegtankLightLogo from '@/branding/regtank-logo-light.svg';
+import RegtankDarkLogo from '@/branding/regtank-logo-dark.svg';
+import ZigramLightLogo from '@/branding/zigram-logo-light.png';
+import ZigramDarkLogo from '@/branding/zigram-logo-dark.svg';
+import TraxionRightLightLogo from '@/branding/traxionright-logo-light.png';
+import TraxionRightDarkLogo from '@/branding/traxion-logo-dark.svg';
 import BureauFaviconSvg from '@/branding/bureau-favicon.svg';
-import RegtankLogoSvg from '@/branding/regtank-logo.svg';
+import FlagrightFavicon from '@/branding/flagright-favicon.png';
+import FlagrightNoTextLogo from '@/branding/flagright-no-text.svg';
 import RegtankFaviconSvg from '@/branding/regtank-favicon.svg';
-import ZigramLogo from '@/branding/zigram-logo-white.png';
-import ZigramFavicon from '@/branding/zigram-favicon.png';
-import TraxionRightLogo from '@/branding/traxionright-logo.png';
-import TraxionRightFavicon from '@/branding/traxionright-favicon.png';
+import ZigramFaivcon from '@/branding/zigram-favicon.png';
+import TraxionRightFavicon from '@/branding/traxion-favicon.svg';
 
 interface BrandingSettings {
   apiBasePath?: string;
@@ -17,8 +21,8 @@ interface BrandingSettings {
   auth0ClientId: string;
   supportEmail: string;
   companyName: string;
-  logoUrl: string;
-  demoModeLogoUrl?: string;
+  logoLight: string;
+  logoDark: string;
   knowledgeBaseUrl?: string;
   notProvisionedWarning: string;
   apiDocsLinks: {
@@ -33,9 +37,9 @@ const FLAGRIGHT_BRANDING: BrandingSettings = {
   auth0Domain: AUTH0_DOMAIN,
   auth0ClientId: AUTH0_CLIENT_ID,
   supportEmail: 'support@flagright.com',
-  logoUrl: FlagrightLogoSvg,
+  logoLight: FlagrightLightLogo,
   companyName: 'Flagright',
-  demoModeLogoUrl: FlagrightDemoLogoSvg,
+  logoDark: FlagrightDarkLogo,
   knowledgeBaseUrl:
     process.env.ENV_NAME === 'sandbox'
       ? 'https://sandbox.support.flagright.com/'
@@ -50,8 +54,8 @@ const FLAGRIGHT_BRANDING: BrandingSettings = {
 
 const BUREAU_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
   supportEmail: 'helpdesk@bureau.id',
-  logoUrl: BureauLogoSvg,
-  demoModeLogoUrl: BureauLogoSvg,
+  logoLight: BureauLightLogo,
+  logoDark: BureauDarkLogo,
   companyName: 'Bureau',
   notProvisionedWarning: `User does not have a provisioned Bureau Account.`,
   apiDocsLinks: {
@@ -66,8 +70,8 @@ const BUREAU_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> =
 const REGTANK_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
   // TBD
   supportEmail: 'support@regtank.com',
-  logoUrl: RegtankLogoSvg,
-  demoModeLogoUrl: RegtankLogoSvg,
+  logoLight: RegtankLightLogo,
+  logoDark: RegtankDarkLogo,
   companyName: 'Regtank',
   notProvisionedWarning: `User does not have a provisioned Regtank Account.`,
   apiDocsLinks: {
@@ -79,21 +83,21 @@ const REGTANK_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> 
 
 const ZIGRAM_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
   supportEmail: 'tmsupport@zigram.tech',
-  logoUrl: ZigramLogo,
-  demoModeLogoUrl: ZigramLogo,
+  logoLight: ZigramLightLogo,
+  logoDark: ZigramDarkLogo,
   companyName: 'Transact Comply',
   notProvisionedWarning: `User does not have a provisioned Transact Comply Account.`,
   apiDocsLinks: {
     webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
   },
-  faviconUrl: ZigramFavicon,
-  systemAvatarUrl: ZigramFavicon,
+  faviconUrl: ZigramFaivcon,
+  systemAvatarUrl: ZigramFaivcon,
 };
 
 const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
   supportEmail: 'support@traxionright.com',
-  logoUrl: TraxionRightLogo,
-  demoModeLogoUrl: TraxionRightLogo,
+  logoLight: TraxionRightLightLogo,
+  logoDark: TraxionRightDarkLogo,
   companyName: 'Traxion right',
   notProvisionedWarning: `User does not have a provisioned Traxion right Account.`,
   apiDocsLinks: {

@@ -23,7 +23,7 @@ export default function Header(props: Props) {
       <div className={cn(s.top)}>
         <div className={s.logoWrapper}>
           <Link to="/">
-            <img className={s.logo} src={branding.logoUrl} alt="logo" />
+            <img className={s.logo} src={branding.logoLight} alt="logo" />
           </Link>
         </div>
         <CollapseButton className={s.collapseButton} onClick={handleClick} />
