@@ -184,7 +184,11 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     <Card.Root>
       <Card.Section>
         <div className={s.header}>
-          <Label label={cardTitleInfo?.title} description={cardTitleInfo?.description} />
+          <Label
+            label={cardTitleInfo?.title}
+            required={true}
+            description={cardTitleInfo?.description}
+          />
           {!editingVariable && (
             <Dropdown<VariableType>
               options={[
