@@ -21,6 +21,19 @@ async function createGitHubRelease(): Promise<{
 }> {
   const latestCommit = execSync('git rev-parse HEAD').toString().trim()
   const release = execSync('git rev-parse --short=7 HEAD').toString().trim()
+  try {
+    const existingRelease = await githubClient.rest.repos.getReleaseByTag({
+      repo: GITHUB_REPO,
+      owner: GITHUB_OWNER,
+      tag: release,
+    })
+    return {
+      releaseUrl: existingRelease.data.html_url,
+      releaseBody: existingRelease.data.body ?? 'Unknown',
+    }
+  } catch (e) {
+    // No release found
+  }
   const releaseResult = await githubClient.rest.repos.createRelease({
     repo: GITHUB_REPO,
     owner: GITHUB_OWNER,
@@ -39,19 +52,32 @@ async function notifySlack(releaseUrl: string, rawReleaseNote: string) {
     /(https:\/\/github\.com\/flagright\/orca\/pull\/)(\d+)/g,
     '[#$2]($1$2)'
   )
+  const finalText = slackifyMarkdown(
+    `[NEW PROD RELEASE](${releaseUrl}) 🚀🚀🚀 \n${releaseNote}`
+  )
+  const lines = finalText.split('\n')
+  const chunks: string[] = []
+  let currentChunk = ''
+  for (const line of lines) {
+    if (currentChunk.length + line.length > 3000) {
+      chunks.push(currentChunk)
+      currentChunk = ''
+    }
+    currentChunk += `${line}\n`
+  }
+  if (currentChunk) {
+    chunks.push(currentChunk)
+  }
+
   await slackClient.chat.postMessage({
     channel: DEPLOYMENT_CHANNEL_ID,
-    blocks: [
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: slackifyMarkdown(
-            `[NEW PROD RELEASE](${releaseUrl}) 🚀🚀🚀 \n${releaseNote}`
-          ),
-        },
+    blocks: chunks.map((chunk) => ({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: chunk.trim(),
       },
-    ],
+    })),
   })
 }
 
@@ -67,6 +93,7 @@ async function updateNotionTickets() {
     .toString()
     .trim()
     .split('\n')
+    .filter(Boolean)
 
   const headRefs = await Promise.all(
     prNumbers.map(async (prNumber) => {
