@@ -9,6 +9,7 @@ import { MerchantReceiverNameRuleParameters } from '../transaction-rules/merchan
 import { BlacklistCardIssuedCountryRuleParameters } from '../transaction-rules/blacklist-card-issued-country'
 import { HighRiskCurrencyRuleParameters } from '../transaction-rules/high-risk-currency'
 import { TransactionAmountRuleParameters } from '../transaction-rules/transaction-amount'
+import { TransactionMatchesPatternRuleParameters } from '../transaction-rules/transaction-amount-pattern'
 import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
@@ -360,6 +361,34 @@ const V8_CONVERSION: {
       logicAggregationVariables: [],
       alertCreationDirection: 'ALL',
       baseCurrency: currency as CurrencyCode,
+    }
+  },
+  'R-117': (parameters: TransactionMatchesPatternRuleParameters) => {
+    const variable = 'TRANSACTION:originAmountDetails-transactionAmount'
+    const innerCondition = parameters.checkDecimal
+      ? { var: variable }
+      : {
+          truncate_decimal: [
+            {
+              var: variable,
+            },
+          ],
+        }
+    return {
+      logic: {
+        and: [
+          {
+            'op:endswith': [
+              {
+                number_to_string: [innerCondition],
+              },
+              parameters.patterns,
+            ],
+          },
+        ],
+      },
+      alertCreationDirection: 'ORIGIN',
+      logicAggregationVariables: [],
     }
   },
 }
