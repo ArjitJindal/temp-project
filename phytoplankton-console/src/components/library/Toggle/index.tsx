@@ -27,6 +27,7 @@ export default function Toggle(props: Props) {
   }
   return (
     <Switch
+      data-cy="toggle"
       height={height}
       width={width}
       uncheckedIcon={showLabel ? <div className={s.label}>{label ?? 'OFF'}</div> : false}
