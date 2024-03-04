@@ -511,17 +511,6 @@ class DatabricksStack extends TerraformStack {
       ],
     })
 
-    const pipelineCluster =
-      new databricks.dataDatabricksCluster.DataDatabricksCluster(
-        this,
-        'dlt-cluster',
-        {
-          provider: workspaceProvider,
-          clusterName: `dlt-execution-${pl.id}`,
-          dependsOn: [pl],
-        }
-      )
-
     new databricks.grant.Grant(this, `grants-admin`, {
       provider: workspaceProvider,
       catalog: catalog.id,
@@ -579,20 +568,6 @@ class DatabricksStack extends TerraformStack {
         ],
       }
     )
-    new databricks.permissions.Permissions(this, 'sql-permission', {
-      provider: workspaceProvider,
-      clusterId: pipelineCluster.clusterId,
-      accessControl: [
-        {
-          groupName: 'users',
-          permissionLevel: 'CAN_ATTACH_TO',
-        },
-        ...servicePrincipals.map((sp) => ({
-          servicePrincipalName: sp.applicationId,
-          permissionLevel: 'CAN_ATTACH_TO',
-        })),
-      ],
-    })
     new databricks.permissions.Permissions(this, 'serverless-permission', {
       provider: workspaceProvider,
       sqlEndpointId: sqlWarehouse.id,
