@@ -14,7 +14,7 @@ interface Props {
   riskScoreAlgo: (value: ValueItem) => number;
 }
 
-function sortByDate<T extends { createdAt: number }>(items: T[]): T[] {
+export function sortByDate<T extends { createdAt: number }>(items: T[]): T[] {
   const result = [...items];
   result.sort((x, y) => x.createdAt - y.createdAt);
   return result;

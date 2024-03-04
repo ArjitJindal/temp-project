@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { MannualCaseCreationModal } from '../ManualCaseCreationModal';
 import Button from '@/components/library/Button';
+import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 
 type Props = {
   userId: string;
   type: 'CREATE' | 'EDIT';
   transactionIds?: string[];
+  className?: string;
 };
 
 export const ManualCaseCreationButton = (props: Props) => {
@@ -18,7 +20,9 @@ export const ManualCaseCreationButton = (props: Props) => {
           setIsModalOpen(true);
         }}
         requiredPermissions={['case-management:case-details:write']}
+        className={props.className}
       >
+        <CaseIcon height={15} />
         {props.type === 'CREATE' ? 'Create case' : 'Add to existing case'}
       </Button>
       <MannualCaseCreationModal

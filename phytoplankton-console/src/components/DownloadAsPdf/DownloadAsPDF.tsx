@@ -99,10 +99,12 @@ export const getTableHeadAndBody = (data?: string) => {
 
 const getLogoImageData = (logoImage: HTMLImageElement): string => {
   const logoCanvas = document.createElement('canvas');
-  logoCanvas.width = 548;
-  logoCanvas.height = 112;
+  // logoCanvas.width = 548;
+  // logoCanvas.height = 112;
+  logoCanvas.width = 2192;
+  logoCanvas.height = 448;
   const logoContext = logoCanvas.getContext('2d');
-  logoContext?.drawImage(logoImage, 0, 0, 548, 112);
+  logoContext?.drawImage(logoImage, 0, 0, 2192, 448);
   const logoData = logoCanvas.toDataURL('image/png');
   return logoData;
 };
