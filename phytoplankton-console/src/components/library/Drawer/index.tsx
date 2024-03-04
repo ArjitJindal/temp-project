@@ -76,7 +76,10 @@ export default function Drawer(props: Props) {
 
         {isVisible && <div className={s.children}>{children}</div>}
         {footer && (
-          <div className={cn(s.footer, props.rightAlignButtonsFooter && s.rightAlignButtonsFooter)}>
+          <div
+            className={cn(s.footer, props.rightAlignButtonsFooter && s.rightAlignButtonsFooter)}
+            data-cy="drawer-footer"
+          >
             {footer}
           </div>
         )}
