@@ -515,14 +515,10 @@ export class AccountsService {
       this.config.auth0Domain
     )
     const organizationManager = managementClient.organizations
-    const user = await this.getAccount(userId)
-    await organizationManager.deleteMembers(
-      { id: oldTenant.orgId },
-      { members: [userId] }
-    )
     // Need to do this call to make sure operations are executed in exact order.
     // Without it if you try to remove and add member from the same organization,
     // it will be removed but will not be added
+    const user = await this.getAccount(userId)
     await organizationManager.getMembers({
       id: newTenant.orgId,
     })
@@ -530,7 +526,19 @@ export class AccountsService {
       { id: newTenant.orgId },
       { members: [userId] }
     )
-
+    try {
+      await organizationManager.deleteMembers(
+        { id: oldTenant.orgId },
+        { members: [userId] }
+      )
+    } catch (e) {
+      // If the user was not deleted from the old tenant, we need to remove it from the new tenant
+      await organizationManager.deleteMembers(
+        { id: newTenant.orgId },
+        { members: [userId] }
+      )
+      throw e
+    }
     await this.deleteAuth0UserFromMongo(oldTenant.id, userId)
 
     if (user) {
