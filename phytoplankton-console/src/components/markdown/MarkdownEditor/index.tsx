@@ -18,6 +18,7 @@ interface Props {
   onChange: (value: string) => void;
   mentionsEnabled?: boolean;
   mentionsList?: Array<MentionItem>;
+  editorHeight?: number;
 }
 
 export default class MarkdownEditor extends React.Component<Props> {
@@ -152,7 +153,7 @@ export default class MarkdownEditor extends React.Component<Props> {
     return (
       <>
         <Editor
-          height={'200px'}
+          height={`${this.props.editorHeight ?? 200}px`}
           hideModeSwitch={true}
           previewStyle="vertical"
           initialEditType="wysiwyg"

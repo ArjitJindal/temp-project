@@ -645,7 +645,7 @@ export class AlertsRepository {
       {
         $pull: {
           'alerts.$[alert].comments': {
-            id: commentId,
+            $or: [{ id: commentId }, { parentId: commentId }],
           },
         },
         $set: {

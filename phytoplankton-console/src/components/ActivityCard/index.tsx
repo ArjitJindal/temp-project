@@ -4,12 +4,21 @@ import ScopeSelector, { ScopeSelectorValue } from './ScopeSelector';
 import s from './index.module.less';
 import LogCard from './LogCard';
 import * as Card from '@/components/ui/Card';
-import { AlertStatus, Case, CaseStatus, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import {
+  AlertStatus,
+  Case,
+  CaseStatus,
+  Comment,
+  InternalBusinessUser,
+  InternalConsumerUser,
+  Permission,
+} from '@/apis';
 import { Mutation } from '@/utils/queries/types';
 import { StatePair } from '@/utils/state';
 import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
 import { map, getOr, AsyncResource } from '@/utils/asyncResource';
 import DownloadFilesButton from '@/components/library/DownloadFilesButton';
+import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 
 export type Tab = ScopeSelectorValue;
 
@@ -21,6 +30,9 @@ interface Props {
   comments: {
     dataRes: AsyncResource<CommentGroup[]>;
     deleteCommentMutation: Mutation<unknown, unknown, { commentId: string; groupId: string }>;
+    handleAddComment: (commentFormValues: CommentEditorFormValues) => Promise<Comment>;
+    onCommentAdded: (newComment: Comment) => void;
+    writePermissions: Permission[];
   };
 }
 
@@ -73,6 +85,9 @@ export default function ActivityCard(props: Props) {
           <CommentsCard
             commentsQuery={comments.dataRes}
             deleteCommentMutation={comments.deleteCommentMutation}
+            handleAddComment={comments.handleAddComment}
+            onCommentAdded={comments.onCommentAdded}
+            writePermissions={comments.writePermissions}
           />
         )}
         {selectedSection === 'LOG' && <LogCard logQueryRequest={logs.request} params={params} />}

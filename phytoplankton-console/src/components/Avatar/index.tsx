@@ -1,12 +1,14 @@
 import cn from 'clsx';
 import { COLORS_V2_GRAY_3 } from '../ui/colors';
+import Spinner from '../library/Spinner';
 import s from './index.module.less';
 import { Account } from '@/apis';
 import { getBranding } from '@/utils/branding';
 
 interface Props {
   user: Account | null;
-  size?: 'small' | 'large';
+  size?: 'small' | 'large' | 'medium';
+  isLoading?: boolean;
 }
 
 const DEFAULT_AVATAR_STYLE = {
@@ -15,16 +17,22 @@ const DEFAULT_AVATAR_STYLE = {
 };
 
 const Avatar = (props: Props) => {
-  const { user, size = 'small' } = props;
+  const { user, size = 'small', isLoading = false } = props;
   const branding = getBranding();
   const { companyName } = branding;
   const brandingName = `${companyName} System`;
   const role = user?.role;
   const systemDisplay =
     role === 'root' || brandingName === user?.name ? branding.systemAvatarUrl : null;
-  return (
+  const imgHeight = size === 'small' ? 16 : size === 'medium' ? 20 : 24;
+
+  return isLoading ? (
+    <div className={cn(s.avatar, s[size])}>
+      <Spinner size="SMALL" />
+    </div>
+  ) : (
     <div
-      className={cn(s.avatar, size === 'small' ? s.small : s.large)}
+      className={cn(s.avatar, s[size])}
       style={
         !systemDisplay && user?.picture
           ? {
@@ -36,7 +44,7 @@ const Avatar = (props: Props) => {
       }
       title={`${user?.name || user?.email} avatar`}
     >
-      {systemDisplay && <img src={systemDisplay} height={size === 'small' ? 16 : 24} />}
+      {systemDisplay && <img src={systemDisplay} height={imgHeight} />}
     </div>
   );
 };

@@ -60,15 +60,22 @@ import { useUsers } from '@/utils/user-utils';
 import Avatar from '@/components/Avatar';
 import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
+import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 
 interface Props {
   caseItem: Case;
   expandedAlertId?: string;
   headerStickyElRef: HTMLDivElement | null;
+  comments: CommentsHandlers;
+}
+
+interface CommentsHandlers {
+  handleAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
+  onCommentAdded: (newComment: ApiComment) => void;
 }
 
 function CaseDetails(props: Props) {
-  const { caseItem, headerStickyElRef, expandedAlertId } = props;
+  const { caseItem, headerStickyElRef, expandedAlertId, comments } = props;
   useScrollToFocus();
   const navigate = useNavigate();
 
@@ -77,7 +84,7 @@ function CaseDetails(props: Props) {
     .filter((alertId): alertId is string => typeof alertId === 'string');
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
-  const tabs = useTabs(caseItem, expandedAlertId, alertIds);
+  const tabs = useTabs(caseItem, expandedAlertId, alertIds, comments);
   const { tab = tabs[0].key } = useParams<'list' | 'id' | 'tab'>();
   return (
     <>
@@ -144,6 +151,7 @@ export function useTabs(
   caseItem: Case,
   expandedAlertId: string | undefined,
   alertIds: string[],
+  comments: CommentsHandlers,
 ): TabItem[] {
   const { subjectType = 'USER' } = caseItem;
   const api = useApi();
@@ -397,6 +405,9 @@ export function useTabs(
                 ),
               }}
               comments={{
+                writePermissions: ['case-management:case-details:write'],
+                handleAddComment: comments.handleAddComment,
+                onCommentAdded: comments.onCommentAdded,
                 deleteCommentMutation: deleteCommentMutation,
                 dataRes: success(
                   [

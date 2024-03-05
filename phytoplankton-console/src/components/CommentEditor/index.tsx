@@ -20,6 +20,7 @@ export const MAX_COMMENT_LENGTH = 10000;
 export interface FormValues {
   comment: string;
   files: FileInfo[];
+  parentCommentId?: string;
 }
 
 interface Props {
@@ -32,6 +33,7 @@ interface Props {
   disabled?: boolean;
   submitButtonTitle?: string;
   hideNarrativeTemplateSelect?: boolean;
+  editorHeight?: number;
 }
 
 export interface CommentEditorRef {
@@ -50,6 +52,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
     onSubmit,
     submitButtonTitle = 'Add comment',
     hideNarrativeTemplateSelect = false,
+    editorHeight,
   } = props;
   const api = useApi();
   const [uploadingCount, setUploadingCount] = useState(0);
@@ -108,6 +111,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             label: users[userId].email,
             id: users[userId].id,
           }))}
+          editorHeight={editorHeight}
         />
       </div>
       {isCommentTooLong && (

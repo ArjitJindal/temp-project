@@ -27,6 +27,7 @@ import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import UserActivityCard from '@/pages/users-item/UserDetails/UserActivityCard';
+import { FormValues } from '@/components/CommentEditor';
 
 export default function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
@@ -57,6 +58,20 @@ export default function UserItem() {
         };
       },
     );
+  };
+
+  const handleAddCommentReply = async (commentFormValues: FormValues) => {
+    if (id == null) {
+      throw new Error(`User ID is not defined`);
+    }
+    const commentData = {
+      Comment: { body: commentFormValues.comment, files: commentFormValues.files },
+    };
+    return await api.postUsersCommentsReply({
+      userId: id,
+      commentId: commentFormValues.parentCommentId ?? '',
+      ...commentData,
+    });
   };
 
   const navigate = useNavigate();
@@ -181,7 +196,15 @@ export default function UserItem() {
               {
                 title: 'Activity',
                 key: 'activity',
-                children: <UserActivityCard user={user} />,
+                children: (
+                  <UserActivityCard
+                    user={user}
+                    comments={{
+                      handleAddComment: handleAddCommentReply,
+                      onCommentAdded: handleNewComment,
+                    }}
+                  />
+                ),
                 isClosable: false,
                 isDisabled: false,
               },

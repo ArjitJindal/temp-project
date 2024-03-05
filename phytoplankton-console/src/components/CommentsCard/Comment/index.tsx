@@ -1,25 +1,54 @@
 import * as Ant from 'antd';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import cn from 'clsx';
+import pluralize from 'pluralize';
+import { Reply } from '../Reply';
+import { CommentWithReplies } from '..';
 import styles from './index.module.less';
-import { Comment as ApiComment } from '@/apis';
-import { useUser } from '@/utils/user-utils';
+import { useUsers } from '@/utils/user-utils';
 import FilesList from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import Avatar from '@/components/Avatar';
-import { getAccountUserName } from '@/utils/account';
+import { getNonSuperAdminUserName } from '@/utils/account';
 import { Mutation } from '@/utils/queries/types';
+import Spinner from '@/components/library/Spinner';
+import { Comment as ApiComment } from '@/apis';
+import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   currentUserId: string | undefined;
-  comment: ApiComment;
+  comment: CommentWithReplies;
   deleteCommentMutation: Mutation<unknown, unknown, { commentId: string }>;
+  level?: number;
+  hasCommentWritePermission: boolean;
+  handleAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
+  onCommentAdded: (newComment: ApiComment) => void;
 }
 
 export default function Comment(props: Props) {
-  const { comment, currentUserId, deleteCommentMutation } = props;
-  const user = useUser(comment.userId);
-
+  const {
+    comment,
+    currentUserId,
+    deleteCommentMutation,
+    level = 1,
+    hasCommentWritePermission,
+    handleAddComment,
+    onCommentAdded,
+  } = props;
+  const [users, isLoading] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
+  const [showReplyEditor, setShowReplyEditor] = useState(false);
+  const [showReplies, setShowReplies] = useState(false);
+  const [user, currentUser] = useMemo(() => {
+    let user, currentUser;
+    if (comment.userId) {
+      user = users[comment.userId];
+    }
+    if (currentUserId) {
+      currentUser = users[currentUserId];
+    }
+    return [user, currentUser];
+  }, [users, comment.userId, currentUserId]);
   const [isDeleting, setDeleting] = useState(false);
 
   const handleClickDelete = async () => {
@@ -34,10 +63,39 @@ export default function Comment(props: Props) {
     }
   };
 
+  const areRepliesEnabled = useFeatureEnabled('NOTIFICATIONS');
+
+  const handleShowReplies = () => {
+    setShowReplies(!showReplies);
+    if (showReplies) {
+      setShowReplyEditor(false);
+    }
+  };
+
+  const handleShowReplyEditor = () => {
+    if (!showReplies) {
+      setShowReplies(true);
+    }
+    setShowReplyEditor(!showReplyEditor);
+  };
+
+  const replies = comment.replies?.length ?? 0;
   return (
     <div className={cn(styles.root, isDeleting && styles.isDeleting)} data-cy="comment">
-      <div className={styles.left}>
-        <Avatar user={user} size={'large'} />
+      <div className={styles.info}>
+        <Avatar user={user} size={'medium'} isLoading={isLoading} />
+        <div>
+          {isLoading ? (
+            <Spinner size="SMALL" />
+          ) : (
+            <div className={styles.name} data-cy="comment-created-by">
+              {user ? getNonSuperAdminUserName(user) : 'Unknown'}
+            </div>
+          )}
+          <div className={styles.date} data-cy="comment-created-on">
+            Added On: {comment.createdAt && new Date(comment.createdAt).toLocaleString()}
+          </div>
+        </div>
       </div>
       <div className={styles.right}>
         <div className={styles.commentBody}>
@@ -45,24 +103,37 @@ export default function Comment(props: Props) {
         </div>
         <FilesList files={comment.files ? comment.files : []} />
         <div className={styles.footer}>
-          {comment.createdAt && (
+          {areRepliesEnabled && comment.createdAt && level === 1 && (
             <div
               data-cy="comment-created-on"
               className={styles.footerText}
               style={{ width: 'fit-content' }}
+              onClick={handleShowReplies}
             >
-              Added On: {new Date(comment.createdAt).toLocaleString()}
+              {replies} {pluralize('Reply', replies)}
             </div>
           )}
-          <div
-            data-cy="comment-created-by"
-            className={styles.footerText}
-            style={{ width: 'fit-content' }}
-          >
-            Added by: {user ? getAccountUserName(user) : 'Unknown'}
-          </div>
+          {level === 1 && areRepliesEnabled && <div className={styles.separator}>.</div>}
+          {areRepliesEnabled && level === 1 && (
+            <div
+              data-cy="comment-created-by"
+              className={styles.footerText}
+              style={{ width: 'fit-content' }}
+              onClick={handleShowReplyEditor}
+            >
+              Reply
+            </div>
+          )}
+          {currentUserId === comment.userId && level === 1 && areRepliesEnabled && (
+            <div className={styles.separator}>.</div>
+          )}
+
           {currentUserId === comment.userId && (
-            <Ant.Tooltip key="delete" title="Delete" className={styles.footerText}>
+            <Ant.Tooltip
+              key="delete"
+              title="Delete"
+              className={cn(styles.footerText, styles.delete)}
+            >
               <span
                 onClick={handleClickDelete}
                 style={{ cursor: 'pointer' }}
@@ -73,6 +144,35 @@ export default function Comment(props: Props) {
             </Ant.Tooltip>
           )}
         </div>
+        {level === 1 && areRepliesEnabled && (replies !== 0 || showReplyEditor) && (
+          <div className={cn(styles.repliesContainer, !showReplies ? styles.hideReplies : '')}>
+            {!!comment.replies?.length && (
+              <div className={styles.replyWrapper}>
+                {comment.replies.map((reply) => (
+                  <Comment
+                    comment={reply}
+                    deleteCommentMutation={deleteCommentMutation}
+                    currentUserId={currentUserId}
+                    level={level + 1}
+                    hasCommentWritePermission={hasCommentWritePermission}
+                    handleAddComment={handleAddComment}
+                    onCommentAdded={onCommentAdded}
+                  />
+                ))}
+              </div>
+            )}
+            {showReplyEditor && (
+              <div className={styles.replyEditor}>
+                <Avatar user={currentUser} size={'medium'} isLoading={isLoading} />
+                <Reply
+                  submitRequest={handleAddComment}
+                  onSuccess={onCommentAdded}
+                  parentCommentId={comment.id}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

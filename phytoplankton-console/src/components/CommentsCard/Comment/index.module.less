@@ -3,9 +3,10 @@
 
 .root {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   transition-property: opacity;
   transition-duration: @default-animation-speed;
+  flex-direction: column;
 
   &.isDeleting {
     opacity: 0.5;
@@ -28,11 +29,66 @@
 
 .footer {
   display: flex;
-  gap: 16px;
+  gap: 8px;
 }
 
 .footerText {
-  color: @fr-colors-v2-gray-6;
+  color: @fr-colors-v2-primary-flagrightBlue;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.delete {
+  color: @fr-colors-v2-alert-critical-dark;
+}
+
+.info {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.name {
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
+  color: @fr-colors-v2-gray-10;
+}
+
+.date {
   font-size: 12px;
   line-height: 20px;
+  color: @fr-colors-v2-gray-6;
+}
+
+.repliesContainer {
+  background-color: @fr-colors-v2-card-background;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: 4px;
+}
+
+.hideReplies {
+  display: none;
+}
+
+.replyWrapper {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.separator {
+  color: @fr-colors-v2-gray-6;
+  font-weight: 600;
+  line-height: 12px;
+}
+
+.replyEditor {
+  margin: 12px 16px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
 }

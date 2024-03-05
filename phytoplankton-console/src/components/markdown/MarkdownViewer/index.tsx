@@ -29,6 +29,7 @@ function customHTMLSanitizer(htmlString: string): string {
   const anchorTags = tempDiv.querySelectorAll('a');
   anchorTags.forEach((tag) => {
     tag.classList.add(s.anchorTagStyle);
+    tag.href = '#';
   });
   return tempDiv.innerHTML;
 }

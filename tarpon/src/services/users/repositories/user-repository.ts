@@ -915,7 +915,9 @@ export class UserRepository {
         userId,
       },
       {
-        $pull: { comments: { id: commentId } },
+        $pull: {
+          comments: { $or: [{ id: commentId }, { parentId: commentId }] },
+        },
       }
     )
   }

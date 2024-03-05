@@ -2,15 +2,20 @@ import React, { useMemo } from 'react';
 import { maxBy, orderBy } from 'lodash';
 import s from './index.module.less';
 import Comment from './Comment';
+import { getCommentsWithReplies } from './utils';
 import * as Card from '@/components/ui/Card';
-import { useAuth0User } from '@/utils/user-utils';
-import { Comment as ApiComment } from '@/apis';
+import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { Comment as ApiComment, Permission } from '@/apis';
 import { P } from '@/components/ui/Typography';
 import { Mutation } from '@/utils/queries/types';
 import { map, getOr, AsyncResource } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
+import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 
+export interface CommentWithReplies extends ApiComment {
+  replies?: ApiComment[];
+}
 export interface CommentGroup {
   title?: string;
   id: string;
@@ -22,13 +27,21 @@ interface Props {
   title?: string;
   commentsQuery: AsyncResource<CommentGroup[]>;
   deleteCommentMutation: Mutation<unknown, unknown, { commentId: string; groupId: string }>;
+  handleAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
+  onCommentAdded: (newComment: ApiComment) => void;
+  writePermissions: Permission[];
 }
 
 export default function CommentsCard(props: Props) {
-  const { commentsQuery, deleteCommentMutation } = props;
+  const {
+    commentsQuery,
+    deleteCommentMutation,
+    handleAddComment,
+    onCommentAdded,
+    writePermissions,
+  } = props;
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
-
   const orderedCommentsRes = useMemo(() => {
     return map(commentsQuery, (comments) => {
       return orderBy(
@@ -70,12 +83,16 @@ export default function CommentsCard(props: Props) {
                         return { ...variables, groupId: group.id };
                       },
                     );
+                    const commentsWithReplies = getCommentsWithReplies(group.comments);
                     if (nonEmptyGroups.length < 2 && !group.title) {
                       return (
                         <Comments
-                          comments={group.comments}
+                          comments={commentsWithReplies}
                           deleteCommentMutation={adaptedMutation}
                           currentUserId={currentUserId}
+                          writePermissions={writePermissions}
+                          hanldeAddComment={handleAddComment}
+                          onCommentAdded={onCommentAdded}
                         />
                       );
                     }
@@ -84,9 +101,12 @@ export default function CommentsCard(props: Props) {
                         <P bold>{group.title}</P>
                         <div className={s.groupComments}>
                           <Comments
-                            comments={group.comments}
+                            comments={commentsWithReplies}
                             deleteCommentMutation={adaptedMutation}
                             currentUserId={currentUserId}
+                            writePermissions={writePermissions}
+                            hanldeAddComment={handleAddComment}
+                            onCommentAdded={onCommentAdded}
                           />
                         </div>
                       </div>
@@ -103,11 +123,23 @@ export default function CommentsCard(props: Props) {
 }
 
 function Comments(props: {
-  comments: ApiComment[];
+  comments: CommentWithReplies[];
   currentUserId: string;
   deleteCommentMutation: Mutation<unknown, unknown, { commentId: string }>;
+  writePermissions: Permission[];
+  hanldeAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
+  onCommentAdded: (newComment: ApiComment) => void;
 }) {
-  const { comments, currentUserId, deleteCommentMutation } = props;
+  const {
+    comments,
+    currentUserId,
+    deleteCommentMutation,
+    writePermissions,
+    hanldeAddComment,
+    onCommentAdded,
+  } = props;
+
+  const hasCommentWritePermission = useHasPermissions(writePermissions);
   return (
     <div className={s.comments}>
       {comments.map((comment) => (
@@ -116,6 +148,9 @@ function Comments(props: {
           comment={comment}
           currentUserId={currentUserId}
           deleteCommentMutation={deleteCommentMutation}
+          hasCommentWritePermission={hasCommentWritePermission}
+          handleAddComment={hanldeAddComment}
+          onCommentAdded={onCommentAdded}
         />
       ))}
     </div>

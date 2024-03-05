@@ -14,19 +14,24 @@ import {
   isActionEscalate,
   isActionDelete,
 } from '@/components/ActivityCard/helpers';
-import { AuditLog, Account, InternalConsumerUser, InternalBusinessUser } from '@/apis';
+import { AuditLog, Account, InternalConsumerUser, InternalBusinessUser, Comment } from '@/apis';
 import { success } from '@/utils/asyncResource';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { USERS_ITEM } from '@/utils/queries/keys';
 import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
+import { FormValues } from '@/components/CommentEditor';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
+  comments: {
+    handleAddComment: (commentFormValues: FormValues) => Promise<Comment>;
+    onCommentAdded: (newComment: Comment) => void;
+  };
 }
 
 export default function UserActivityCard(props: Props) {
-  const { user } = props;
+  const { user, comments } = props;
   const api = useApi();
   const [users, _] = useUsers();
 
@@ -99,6 +104,9 @@ export default function UserActivityCard(props: Props) {
         },
       }}
       comments={{
+        writePermissions: ['users:user-comments:write'],
+        handleAddComment: comments.handleAddComment,
+        onCommentAdded: comments.onCommentAdded,
         dataRes: success([
           {
             id: 'user-comments',

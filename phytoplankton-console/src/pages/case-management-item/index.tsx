@@ -15,6 +15,7 @@ import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/Side
 import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import { Authorized } from '@/components/Authorized';
+import { FormValues } from '@/components/CommentEditor';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
@@ -61,6 +62,20 @@ function CaseManagementItemPage() {
     });
   };
 
+  const handleAddCommentReply = async (commentFormValues: FormValues) => {
+    if (caseId == null) {
+      throw new Error(`Case ID is not defined`);
+    }
+    const commentData = {
+      Comment: { body: commentFormValues.comment, files: commentFormValues.files },
+    };
+    return await api.postCaseCommentsReply({
+      caseId: caseId,
+      commentId: commentFormValues.parentCommentId ?? '',
+      ...commentData,
+    });
+  };
+
   const onReload = () => {
     queryResults.refetch();
     queryClient.invalidateQueries({ queryKey: ALERT_LIST() });
@@ -87,6 +102,10 @@ function CaseManagementItemPage() {
             caseItem={caseItem}
             headerStickyElRef={headerStickyElRef}
             expandedAlertId={expandedAlertId ? expandedAlertId : ''}
+            comments={{
+              handleAddComment: handleAddCommentReply,
+              onCommentAdded: handleCommentAdded,
+            }}
           />
         </PageWrapper>
       )}

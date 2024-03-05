@@ -1,5 +1,13 @@
+import { UserRole, isSuperAdmin } from './user-utils';
 import { Account } from '@/apis';
 
 export const getAccountUserName = (account: Account | undefined): string => {
   return (account?.name || account?.email || account?.id) + (account?.blocked ? ' (Deleted)' : '');
+};
+
+export const getNonSuperAdminUserName = (account: Account | undefined): string => {
+  if (account && (isSuperAdmin(account) || account.role === UserRole.WHITELABEL_ROOT)) {
+    return 'System';
+  }
+  return getAccountUserName(account);
 };
