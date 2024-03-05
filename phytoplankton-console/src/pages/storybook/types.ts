@@ -5,6 +5,8 @@ export interface StoryProps {}
 export interface CategoryComponent {
   key: string;
   story: React.FunctionComponent<StoryProps>;
+  alternativeNames?: string[];
+  designLink?: string;
 }
 
 export interface Category {

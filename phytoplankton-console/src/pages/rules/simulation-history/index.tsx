@@ -1,7 +1,7 @@
 import React from 'react';
 import { SimulationHistoryTable } from 'src/pages/rules/simulation-history/SimulationHistoryTable';
+import { Authorized } from '@/components/utils/Authorized';
 import { RulesPageWrapper } from '@/pages/rules/RulesPageWrapper';
-import { Authorized } from '@/components/Authorized';
 
 export default function SimulationHistoryPage() {
   return (

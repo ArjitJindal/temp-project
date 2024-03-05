@@ -1,8 +1,8 @@
 import cn from 'clsx';
 import React from 'react';
 import s from './index.module.less';
+import ErrorBoundary from '@/components/utils/ErrorBoundary';
 import { WidgetProps } from '@/components/library/Widget/types';
-import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface Props {
   groups: {

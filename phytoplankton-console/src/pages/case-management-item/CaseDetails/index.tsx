@@ -57,7 +57,7 @@ import {
   isActionDelete,
 } from '@/components/ActivityCard/helpers';
 import { useUsers } from '@/utils/user-utils';
-import Avatar from '@/components/Avatar';
+import Avatar from '@/components/library/Avatar';
 import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';

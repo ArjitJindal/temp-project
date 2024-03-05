@@ -3,6 +3,7 @@ import { useLocation, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePrevious } from 'ahooks';
 import Header from './components/Header';
+import { Authorized } from '@/components/utils/Authorized';
 import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
@@ -14,7 +15,6 @@ import CaseDetails from '@/pages/case-management-item/CaseDetails';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
-import { Authorized } from '@/components/Authorized';
 import { FormValues } from '@/components/CommentEditor';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;

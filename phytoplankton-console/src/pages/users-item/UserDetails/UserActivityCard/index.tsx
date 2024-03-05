@@ -6,7 +6,7 @@ import { useApi } from '@/api';
 import { useUsers } from '@/utils/user-utils';
 import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
 import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
-import Avatar from '@/components/Avatar';
+import Avatar from '@/components/library/Avatar';
 import {
   getCreateStatement,
   isActionUpdate,

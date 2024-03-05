@@ -8,7 +8,7 @@ import styles from './index.module.less';
 import { useUsers } from '@/utils/user-utils';
 import FilesList from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
-import Avatar from '@/components/Avatar';
+import Avatar from '@/components/library/Avatar';
 import { getNonSuperAdminUserName } from '@/utils/account';
 import { Mutation } from '@/utils/queries/types';
 import Spinner from '@/components/library/Spinner';

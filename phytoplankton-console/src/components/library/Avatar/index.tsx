@@ -1,6 +1,6 @@
 import cn from 'clsx';
-import { COLORS_V2_GRAY_3 } from '../ui/colors';
-import Spinner from '../library/Spinner';
+import { COLORS_V2_GRAY_3 } from '../../ui/colors';
+import Spinner from '../Spinner';
 import s from './index.module.less';
 import { Account } from '@/apis';
 import { getBranding } from '@/utils/branding';

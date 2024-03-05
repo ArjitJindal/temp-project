@@ -12,6 +12,7 @@ import { Step } from '../Stepper';
 import { message } from '../Message';
 import { ColumnHelper } from '../Table/columnHelper';
 import Button from '../Button';
+import { Authorized } from '@/components/utils/Authorized';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Confirm from '@/components/utils/Confirm';
 import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
@@ -21,7 +22,6 @@ import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { Permission } from '@/apis';
 import { useHasPermissions } from '@/utils/user-utils';
-import { Authorized } from '@/components/Authorized';
 
 function getDrawerTitle(drawerMode: DrawerMode, entityName: string): string {
   let verb = '';

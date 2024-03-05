@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Space, Col, Row, Typography } from 'antd';
 import cn from 'clsx';
 import { Link } from 'react-router-dom';
-import ErrorBoundary from '../ErrorBoundary';
+import ErrorBoundary from '../utils/ErrorBoundary';
 import SuperAdminContainer from '../library/SuperAdminContainer';
 import COLORS from '../ui/colors';
 import Toggle from '../library/Toggle';

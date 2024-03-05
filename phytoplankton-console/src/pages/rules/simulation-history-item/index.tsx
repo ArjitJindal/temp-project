@@ -1,6 +1,7 @@
 import { useParams } from 'react-router';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Authorized } from '@/components/utils/Authorized';
 import { RulesPageWrapper } from '@/pages/rules/RulesPageWrapper';
 import { makeUrl } from '@/utils/routing';
 import { RuleConfigurationSimulation } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/RuleConfigurationSimulation';
@@ -10,7 +11,6 @@ import { useApi } from '@/api';
 import { SimulationBeaconJob } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useRules } from '@/utils/rules';
-import { Authorized } from '@/components/Authorized';
 
 export default function SimulationHistoryItemPage() {
   const { id: jobId } = useParams<'id'>();

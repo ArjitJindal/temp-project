@@ -3,6 +3,7 @@ import { useLocalStorageState } from 'ahooks';
 import RiskClassification from './RiskClassification';
 import { SimulateRiskClassification } from './SimulateRiskClassification';
 import { parseApiState, State } from './RiskClassificationTable';
+import { Authorized } from '@/components/utils/Authorized';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
@@ -14,7 +15,6 @@ import { getOr, isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
-import { Authorized } from '@/components/Authorized';
 
 export default function () {
   const i18n = useI18n();

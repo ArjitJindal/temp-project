@@ -3,11 +3,11 @@ import { useNavigate, useParams } from 'react-router';
 import { startCase } from 'lodash';
 import Roles from './Roles';
 import Team from './Team';
+import { Authorized } from '@/components/utils/Authorized';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
-import { Authorized } from '@/components/Authorized';
 
 export default function () {
   const { section = 'team' } = useParams<'section'>() as {

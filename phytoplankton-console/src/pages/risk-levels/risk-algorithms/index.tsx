@@ -1,9 +1,9 @@
 import React from 'react';
 import RiskAlgorithmTable from './RiskAlgorithm';
+import { Authorized } from '@/components/utils/Authorized';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { Authorized } from '@/components/Authorized';
 
 export default function () {
   const i18n = useI18n();

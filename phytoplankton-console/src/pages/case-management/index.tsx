@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import CaseTableWrapper from './CaseTableWrapper';
 import AlertTable from './AlertTable';
 import s from './index.module.less';
+import { Authorized } from '@/components/utils/Authorized';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
@@ -24,7 +25,6 @@ import QaTable from '@/pages/case-management/QaTable';
 import { useQaMode } from '@/utils/qa-mode';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
-import { Authorized } from '@/components/Authorized';
 import { DerivedStatus } from '@/apis';
 
 export default function CaseManagementPage() {

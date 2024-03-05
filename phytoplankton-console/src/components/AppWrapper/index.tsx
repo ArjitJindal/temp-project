@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet';
 import Providers, { StorybookMockProviders } from './Providers';
 import Menu from './Menu';
 import s from './styles.module.less';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/utils/ErrorBoundary';
 import StorybookPage from '@/pages/storybook';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
