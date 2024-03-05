@@ -70,6 +70,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
+          name: tarpon-coverage.json
           path: tarpon/coverage/coverage-summary.json
           overwrite: true
       - name: Download coverage report from artifact
