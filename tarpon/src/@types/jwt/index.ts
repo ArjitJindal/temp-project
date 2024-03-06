@@ -56,7 +56,7 @@ export function assertAllowAccessTenant() {
     throw new Forbidden('Production access is disabled')
   }
 
-  if (!user?.allowedRegions) {
+  if (!user?.allowedRegions?.length) {
     return
   }
 
