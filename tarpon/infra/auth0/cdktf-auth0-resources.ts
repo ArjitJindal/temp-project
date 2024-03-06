@@ -6,6 +6,7 @@ import * as auth0 from '@cdktf/providers/auth0'
 
 import { Config } from '@flagright/lib/config/config'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
+import { ClientCreateAddonsSamlp } from 'auth0'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { DEFAULT_ROLES } from '@/core/default-roles'
 import { getAuth0Domain } from '@/utils/auth0-utils'
@@ -69,6 +70,38 @@ export const createAuth0TenantResources = (
     }
   )
 
+  const callbacks = tenantConfig.allowedCallbackUrls
+  let samlp: ClientCreateAddonsSamlp | undefined
+  if (tenantName == 'flagright') {
+    // The ordering here matters as auth0 implicitly selects the first application callback as the callback for the SAMLP addon.
+    callbacks.unshift(
+      'https://flagright.myfreshworks.com/sp/SAML/685070992565714549/callback'
+    )
+
+    // SAML configuration values taken from Freshdesk installation having following this walkthrough:
+    // https://auth0.com/docs/authenticate/single-sign-on/outbound-single-sign-on/configure-auth0-saml-identity-provider/configure-auth0-as-identity-provider-for-freshdesk
+    samlp = {
+      audience:
+        'https://flagright.myfreshworks.com/sp/SAML/685070992565714549/metadata',
+      mappings: {
+        email:
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+        given_name:
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+        family_name:
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+      },
+      createUpnClaim: false,
+      passthroughClaimsWithNoMapping: false,
+      mapUnknownClaimsAsIs: false,
+      mapIdentities: false,
+      nameIdentifierFormat:
+        'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+      nameIdentifierProbes: [
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+      ],
+    }
+  }
   /**
    * Applications::Applications
    */
@@ -76,10 +109,13 @@ export const createAuth0TenantResources = (
     provider,
     name: tenantConfig.consoleApplicationName,
     appType: 'spa',
-    callbacks: tenantConfig.allowedCallbackUrls,
+    callbacks,
     allowedOrigins: tenantConfig.allowedOrigins,
     allowedLogoutUrls: tenantConfig.allowedOrigins,
     webOrigins: tenantConfig.allowedOrigins,
+    addons: {
+      samlp,
+    },
     oidcConformant: true,
     tokenEndpointAuthMethod: 'none',
     grantTypes: ['authorization_code', 'implicit', 'password', 'refresh_token'],
