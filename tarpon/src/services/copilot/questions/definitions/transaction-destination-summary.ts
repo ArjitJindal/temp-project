@@ -27,11 +27,10 @@ export const TransactionDestinationSummary: PropertiesQuestion<Period> = {
       `
     select
       count(*) as count,
-      coalesce(min(t.originAmountDetails.transactionAmount), 0) as min,
-      coalesce(min(t.originAmountDetails.transactionAmount), 0) as max,
-      coalesce(sum(t.originAmountDetails.transactionAmount), 0) as total,
-      coalesce(min(t.originAmountDetails.transactionAmount), 0) as max,
-      coalesce(avg(t.originAmountDetails.transactionAmount), 0) as avg
+      coalesce(min(t.destinationAmountDetails.transactionAmount), 0) as min,
+      coalesce(max(t.destinationAmountDetails.transactionAmount), 0) as max,
+      coalesce(sum(t.destinationAmountDetails.transactionAmount), 0) as total,
+      coalesce(avg(t.destinationAmountDetails.transactionAmount), 0) as avg
     from
       transactions t
       where t.destinationUserId = :userId

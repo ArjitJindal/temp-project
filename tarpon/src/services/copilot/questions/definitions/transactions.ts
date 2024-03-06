@@ -10,6 +10,8 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
 import { Transaction } from '@/@types/openapi-internal/Transaction'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { formatConsumerName } from '@/utils/helpers'
 
 export const Transactions: TableQuestion<Period> = {
   type: 'TABLE',
@@ -40,6 +42,10 @@ export const Transactions: TableQuestion<Period> = {
       columnType: 'ID',
     },
     {
+      name: 'Origin user',
+      columnType: 'STRING',
+    },
+    {
       name: 'Origin amount',
       columnType: 'MONEY_AMOUNT',
     },
@@ -56,6 +62,10 @@ export const Transactions: TableQuestion<Period> = {
       columnType: 'ID',
     },
     {
+      name: 'Destination user',
+      columnType: 'STRING',
+    },
+    {
       name: 'Destination amount',
       columnType: 'MONEY_AMOUNT',
     },
@@ -68,7 +78,7 @@ export const Transactions: TableQuestion<Period> = {
       columnType: 'COUNTRY',
     },
     {
-      name: 'Referene',
+      name: 'Reference',
       columnType: 'STRING',
     },
   ],
@@ -76,9 +86,32 @@ export const Transactions: TableQuestion<Period> = {
     { userId, username },
     { page, pageSize, ...period }
   ) => {
-    const { rows, total } = await paginatedSqlQuery<Transaction>(
-      `select * 
-        from transactions t where t.timestamp between :from and :to
+    const { rows, total } = await paginatedSqlQuery<
+      Transaction & {
+        originBusinessName?: string
+        destinationBusinessName?: string
+        originConsumerName: ConsumerName
+        destinationConsumerName: ConsumerName
+      }
+    >(
+      `select
+  t.type,
+  t.timestamp,
+  t.transactionState,
+  t.originUserId,
+  t.originAmountDetails,
+  t.destinationUserId,
+  t.destinationAmountDetails,
+  t.reference,
+  origin.userDetails.name as originConsumerName,
+  origin.legalEntity.companyGeneralDetails.legalName as originBusinessName,
+  destination.userDetails.name as destinationConsumerName,
+  destination.legalEntity.companyGeneralDetails.legalName as destinationBusinessName
+from
+  transactions t
+  join users origin on t.originUserId = origin.userId
+  join users destination on t.destinationUserId = destination.userId
+        where t.timestamp between :from and :to
         and (t.originUserId = :userId or t.destinationUserId = :userId)
       `,
       {
@@ -95,10 +128,16 @@ export const Transactions: TableQuestion<Period> = {
         t.timestamp,
         t.transactionState,
         t.originUserId,
+        t.originConsumerName
+          ? formatConsumerName(t.originConsumerName)
+          : t.originBusinessName,
         t.originAmountDetails?.transactionAmount,
         t.originAmountDetails?.transactionCurrency,
         t.originAmountDetails?.country,
         t.destinationUserId,
+        t.destinationConsumerName
+          ? formatConsumerName(t.destinationConsumerName)
+          : t.destinationBusinessName,
         t.destinationAmountDetails?.transactionAmount,
         t.destinationAmountDetails?.transactionCurrency,
         t.destinationAmountDetails?.country,

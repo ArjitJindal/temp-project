@@ -27,7 +27,7 @@ export const transactionAggregationQuestion = (
   aggregationPipeline: async ({ userId }, period) => {
     let timeFormat = 'yyyy-MM'
     let xAxis = months(period)
-    if (dayjs(period.to).diff(dayjs(period.from), 'd') < 90) {
+    if (dayjs(period.to).diff(dayjs(period.from), 'd') < 180) {
       timeFormat = 'yyyy-MM-dd'
       xAxis = dates(period)
     }

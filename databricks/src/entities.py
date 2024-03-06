@@ -1,9 +1,11 @@
 from pyspark.sql.types import StringType, StructField, StructType
 
 from src.openapi.internal.models import ArsScore, DrsScore, KrsScore
-from src.openapi.public.models.business import Business
-from src.openapi.public.models.transaction import Transaction
-from src.openapi.public.models.user import User
+from src.openapi.public.models import (
+    BusinessWithRulesResult,
+    TransactionWithRulesResult,
+    UserWithRulesResult,
+)
 
 
 def merge_schemas(*schemas):
@@ -17,7 +19,7 @@ def sanitise_scoring_schema(schema):
 entities = [
     {
         "table": "transactions",
-        "schema": Transaction,
+        "schema": TransactionWithRulesResult,
         "partition_key": "transaction#primary",
         "id_column": "transactionId",
         "source": "kinesis_events",
@@ -25,7 +27,9 @@ entities = [
     {
         "table": "users",
         "schema": merge_schemas(
-            User, Business, StructType([StructField("type", StringType(), True)])
+            UserWithRulesResult,
+            BusinessWithRulesResult,
+            StructType([StructField("type", StringType(), True)]),
         ),
         "partition_key": "user#primary",
         "id_column": "userId",

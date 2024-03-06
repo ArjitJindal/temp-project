@@ -28,9 +28,8 @@ export const TransactionOriginSummary: PropertiesQuestion<Period> = {
     select
       count(*) as count,
       coalesce(min(t.originAmountDetails.transactionAmount), 0) as min,
-      coalesce(min(t.originAmountDetails.transactionAmount), 0) as max,
+      coalesce(max(t.originAmountDetails.transactionAmount), 0) as max,
       coalesce(sum(t.originAmountDetails.transactionAmount), 0) as total,
-      coalesce(min(t.originAmountDetails.transactionAmount), 0) as max,
       coalesce(avg(t.originAmountDetails.transactionAmount), 0) as avg
     from
       transactions t

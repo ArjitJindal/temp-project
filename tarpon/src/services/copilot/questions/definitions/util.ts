@@ -15,7 +15,7 @@ export const DATE_GRAPH_FORMAT = 'D/M/YYYY'
 export const DATETIME_GRAPH_FORMAT = 'D/M/YYYY HH:mm'
 export const TIME_GRAPH_FORMAT = 'HH:mm'
 
-export const periodDefaults = (days = 30): Period => {
+export const periodDefaults = (days = 90): Period => {
   return {
     from: dayjs().subtract(days, 'days').valueOf(),
     to: dayjs().valueOf(),

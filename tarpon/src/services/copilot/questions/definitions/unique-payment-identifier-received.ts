@@ -53,14 +53,16 @@ export const UniquePaymentIdentifierReceived: TableQuestion<Period> = {
       pageSize
     )
 
-    const items = rows.map((r) => {
-      return [
-        getPaymentMethodId(r.originPaymentDetails),
-        r.method,
-        r.count,
-        r.sum,
-      ]
-    })
+    const items = rows
+      .filter((r) => !!getPaymentMethodId(r.originPaymentDetails))
+      .map((r) => {
+        return [
+          getPaymentMethodId(r.originPaymentDetails),
+          r.method,
+          r.count,
+          r.sum,
+        ]
+      })
 
     return {
       data: {
