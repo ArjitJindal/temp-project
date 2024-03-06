@@ -179,7 +179,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     ) {
       permissionsArray = verifiedDecoded[`permissions`]
     }
-    let allowedRegions: string[] | undefined = []
+    let allowedRegions: string[] | undefined
     if (
       verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/allowedRegions`] !==
         undefined &&
