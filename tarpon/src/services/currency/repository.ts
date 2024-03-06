@@ -10,6 +10,8 @@ import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
+const TableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+
 @traceable
 export class CurrencyRepository {
   public async storeCache(
@@ -18,7 +20,7 @@ export class CurrencyRepository {
     const dynamoDb = getDynamoDbClient()
     const keys = DynamoDbKeys.CURRENCY_CACHE()
     const command = new PutCommand({
-      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+      TableName,
       Item: {
         ...keys,
         ...cdnData,
@@ -35,7 +37,7 @@ export class CurrencyRepository {
     const dynamoDb = getDynamoDbClient()
     const command = await dynamoDb.send(
       new GetCommand({
-        TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+        TableName,
         Key: keys,
       })
     )
@@ -47,7 +49,7 @@ export class CurrencyRepository {
     const dynamoDb = getDynamoDbClient()
     const keys = DynamoDbKeys.CURRENCY_CACHE()
     const command = new DeleteCommand({
-      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+      TableName,
       Key: keys,
     })
 
@@ -58,7 +60,7 @@ export class CurrencyRepository {
     const dynamoDb = getDynamoDbClient()
     const keys = DynamoDbKeys.CURRENCY_CACHE()
     const command = new UpdateCommand({
-      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+      TableName,
       Key: keys,
       UpdateExpression: 'set #date = :date',
       ExpressionAttributeNames: {
