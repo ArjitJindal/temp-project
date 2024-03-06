@@ -1,7 +1,7 @@
 import { exec, execSync } from 'child_process'
 import { TEST_DYNAMODB_TABLE_NAMES } from './src/test-utils/dynamodb-test-utils'
 import { mockedCurrencyExchangeRates as MOCKED_CURRENCY_EXCHANGE_RATES } from './test-resources/mocked-currency-exchange-rates'
-import { CurrencyExchangeUSDType, CurrencyService } from '@/services/currency'
+import { CurrencyService } from '@/services/currency'
 process.env.ENV = 'local'
 process.env.DYNAMODB_URI = 'http://localhost:7999'
 if (!process.env.EXEC_SOURCE) {
@@ -20,7 +20,9 @@ jest.mock('@lib/constants', () => ({
 jest
   .spyOn(CurrencyService.prototype, 'getExchangeData')
   .mockReturnValue(
-    Promise.resolve(MOCKED_CURRENCY_EXCHANGE_RATES as CurrencyExchangeUSDType)
+    Promise.resolve(
+      CurrencyService.parseCoinbaseResponse(MOCKED_CURRENCY_EXCHANGE_RATES)
+    )
   )
 
 module.exports = async function () {

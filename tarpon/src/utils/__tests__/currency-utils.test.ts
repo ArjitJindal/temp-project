@@ -37,8 +37,8 @@ describe('Test Currency Utils', () => {
     // Cache is missing, CDN is called
     expect(mockCDNGet).toHaveBeenCalledTimes(1)
     expect(exchangeRate).toEqual(
-      MOCKED_CURRENCY_EXCHANGE_RATES.usd.inr /
-        MOCKED_CURRENCY_EXCHANGE_RATES.usd.eur
+      parseFloat(MOCKED_CURRENCY_EXCHANGE_RATES.data.rates.INR) /
+        parseFloat(MOCKED_CURRENCY_EXCHANGE_RATES.data.rates.EUR)
     )
     expect(mockDynamoDbGet).toHaveBeenCalledTimes(2)
 

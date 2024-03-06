@@ -542,7 +542,7 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 106.85660242529653 }],
+      varData: [{ 'agg:123': 108.24283106705523 }],
       hitDirections: ['ORIGIN'],
     })
   })

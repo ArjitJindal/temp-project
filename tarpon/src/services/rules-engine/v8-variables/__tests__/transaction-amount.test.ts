@@ -20,7 +20,7 @@ test('transaction amount (w/ currency conversion)', async () => {
     { baseCurrency: 'USD', tenantId: 'test', dynamoDb: getDynamoDbClient() }
   )
 
-  expect(value).toBe(10.685660242529654)
+  expect(value).toBe(10.824283106705524)
 })
 
 test('transaction amount (w/o currency conversion)', async () => {

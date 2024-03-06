@@ -1,19 +1,27 @@
-import { isEmpty, set } from 'lodash'
+import { isEmpty, mapValues, set } from 'lodash'
 import * as Sentry from '@sentry/serverless'
+import { mockedCurrencyExchangeRates } from '../../../test-resources/mocked-currency-exchange-rates'
 import { CurrencyRepository } from './repository'
 import { apiFetch } from '@/utils/api-fetch'
 import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import dayjs from '@/utils/dayjs'
+import { envIs } from '@/utils/env'
 
 const cachedData: Partial<CurrencyExchangeUSDType> = {}
 
 export type Currency = string
 
+export type CoinbaseResponse = {
+  data: {
+    rates: Record<CurrencyCode, string>
+  }
+}
+
 export type CurrencyExchangeUSDType = {
+  rates: Record<CurrencyCode, number>
   date: string
-  usd: Record<Lowercase<Currency>, number>
 }
 
 export class CurrencyService {
@@ -23,15 +31,25 @@ export class CurrencyService {
     this.repository = new CurrencyRepository()
   }
 
+  public static parseCoinbaseResponse(
+    coinbaseResponse: CoinbaseResponse
+  ): CurrencyExchangeUSDType {
+    return {
+      rates: mapValues(coinbaseResponse.data.rates, parseFloat) as Record<
+        CurrencyCode,
+        number
+      >,
+      date: dayjs().format('YYYY-MM-DD'),
+    }
+  }
   public async getExchangeData(): Promise<CurrencyExchangeUSDType> {
-    const data = await apiFetch<CurrencyExchangeUSDType>(
-      `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/${dayjs().format(
-        'YYYY-MM-DD'
-      )}/currencies/usd.min.json`
+    if (envIs('local')) {
+      return CurrencyService.parseCoinbaseResponse(mockedCurrencyExchangeRates)
+    }
+    const response = await apiFetch<CoinbaseResponse>(
+      `https://api.coinbase.com/v2/exchange-rates?currency=USD`
     )
-
-    logger.info(`Fetched currency exchange data from CDN`)
-    return data.result
+    return CurrencyService.parseCoinbaseResponse(response.result)
   }
 
   public async getCurrencyExchangeRate(
@@ -71,7 +89,10 @@ export class CurrencyService {
   }
 
   private isCacheExpired(exchangeData: CurrencyExchangeUSDType): boolean {
-    return dayjs(exchangeData.date).isBefore(dayjs().subtract(1, 'day'))
+    return (
+      dayjs(exchangeData.date).isBefore(dayjs().subtract(1, 'day')) ||
+      !exchangeData.rates
+    )
   }
 
   private getExchangeRate(
@@ -79,13 +100,8 @@ export class CurrencyService {
     targetCurrency: Currency,
     exchangeData: CurrencyExchangeUSDType
   ): number {
-    const sourceCurrencyCode =
-      sourceCurrency.toLowerCase() as Lowercase<Currency>
-    const targetCurrencyCode =
-      targetCurrency.toLowerCase() as Lowercase<Currency>
-
-    const sourceCurrencyExchangeRateInUSD = exchangeData.usd[sourceCurrencyCode]
-    const targetCurrencyExchangeRateInUSD = exchangeData.usd[targetCurrencyCode]
+    const sourceCurrencyExchangeRateInUSD = exchangeData.rates[sourceCurrency]
+    const targetCurrencyExchangeRateInUSD = exchangeData.rates[targetCurrency]
 
     const exchangeRate =
       targetCurrencyExchangeRateInUSD / sourceCurrencyExchangeRateInUSD
@@ -114,28 +130,28 @@ export class CurrencyService {
   }
 
   private async getCache(): Promise<CurrencyExchangeUSDType | undefined> {
-    if (!isEmpty(cachedData) && cachedData.date && cachedData.usd) {
+    if (!isEmpty(cachedData) && cachedData.date && cachedData.rates) {
       return cachedData as CurrencyExchangeUSDType
     }
 
     const dynamoCachedData = await this.repository.getCache()
-    if (dynamoCachedData && dynamoCachedData.date && dynamoCachedData.usd) {
+    if (dynamoCachedData && dynamoCachedData.date && dynamoCachedData.rates) {
       set(cachedData, 'date', dynamoCachedData?.date)
-      set(cachedData, 'usd', dynamoCachedData?.usd)
+      set(cachedData, 'rates', dynamoCachedData?.rates)
     }
     return dynamoCachedData
   }
 
   public resetLocalCache(): void {
     cachedData.date = undefined
-    cachedData.usd = undefined
+    cachedData.rates = undefined
   }
 
   private async storeCache(
     cdnData: CurrencyExchangeUSDType
   ): Promise<CurrencyExchangeUSDType> {
     set(cachedData, 'date', cdnData.date)
-    set(cachedData, 'usd', cdnData.usd)
+    set(cachedData, 'rates', cdnData.rates)
 
     return this.repository.storeCache(cdnData)
   }
