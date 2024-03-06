@@ -10,7 +10,11 @@ const slackifyMarkdown = require('slackify-markdown')
 
 const GITHUB_REPO = 'orca'
 const GITHUB_OWNER = 'flagright'
-const DEPLOYMENT_CHANNEL_ID = 'C03L5KRE2E8'
+
+const CHANNELS = {
+  PRODUCT_RELEASE: 'C05MPLSLQKC',
+  DEPLOYMENT: 'C03L5KRE2E8',
+} as const
 
 const githubClient = new Octokit({ auth: process.env.GITHUB_TOKEN })
 const slackClient = new WebClient(process.env.SLACK_TOKEN)
@@ -47,38 +51,55 @@ async function createGitHubRelease(): Promise<{
   }
 }
 
+const getFinalText = (
+  releaseUrl: string,
+  releaseNote: string,
+  channel: keyof typeof CHANNELS
+) => {
+  // tag @closers groupId: S05G5GF1NDN
+  if (channel === 'PRODUCT_RELEASE') {
+    return slackifyMarkdown(
+      `Hey <!subteam^S05G5GF1NDN>! We have a new deployment! 🚀🚀🚀\n${releaseNote}`
+    )
+  }
+
+  return slackifyMarkdown(
+    `[NEW PROD RELEASE](${releaseUrl}) 🚀🚀🚀 \n${releaseNote}`
+  )
+}
+
 async function notifySlack(releaseUrl: string, rawReleaseNote: string) {
   const releaseNote = rawReleaseNote.replace(
     /(https:\/\/github\.com\/flagright\/orca\/pull\/)(\d+)/g,
     '[#$2]($1$2)'
   )
-  const finalText = slackifyMarkdown(
-    `[NEW PROD RELEASE](${releaseUrl}) 🚀🚀🚀 \n${releaseNote}`
-  )
-  const lines = finalText.split('\n')
-  const chunks: string[] = []
-  let currentChunk = ''
-  for (const line of lines) {
-    if (currentChunk.length + line.length > 3000) {
-      chunks.push(currentChunk)
-      currentChunk = ''
-    }
-    currentChunk += `${line}\n`
-  }
-  if (currentChunk) {
-    chunks.push(currentChunk)
-  }
 
-  await slackClient.chat.postMessage({
-    channel: DEPLOYMENT_CHANNEL_ID,
-    blocks: chunks.map((chunk) => ({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: chunk.trim(),
-      },
-    })),
-  })
+  for (const channel of Object.keys(CHANNELS) as (keyof typeof CHANNELS)[]) {
+    const finalText = getFinalText(releaseUrl, releaseNote, channel)
+
+    const lines = finalText.split('\n')
+    const chunks: string[] = []
+    let currentChunk = ''
+    for (const line of lines) {
+      if (currentChunk.length + line.length > 3000) {
+        chunks.push(currentChunk)
+        currentChunk = ''
+      }
+      currentChunk += `${line}\n`
+    }
+
+    if (currentChunk) {
+      chunks.push(currentChunk)
+    }
+
+    await slackClient.chat.postMessage({
+      channel: CHANNELS[channel],
+      blocks: chunks.map((chunk) => ({
+        type: 'section',
+        text: { type: 'mrkdwn', text: chunk.trim() },
+      })),
+    })
+  }
 }
 
 async function updateNotionTickets() {
