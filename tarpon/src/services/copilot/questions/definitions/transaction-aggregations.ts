@@ -1,4 +1,4 @@
-import { COPILOT_QUESTIONS, CopilotQuestionIds } from '@flagright/lib/utils'
+import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
 import { TimeseriesQuestion } from '@/services/copilot/questions/types'
 import {
   dates,
@@ -13,7 +13,7 @@ import { executeSql } from '@/utils/databricks'
 import dayjs from '@/utils/dayjs'
 
 export const transactionAggregationQuestion = (
-  questionId: CopilotQuestionIds,
+  questionId: QuestionId,
   title: string,
   agg: string,
   join: string = ''

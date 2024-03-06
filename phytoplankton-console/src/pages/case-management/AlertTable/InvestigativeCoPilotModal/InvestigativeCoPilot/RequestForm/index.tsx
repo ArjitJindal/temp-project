@@ -3,7 +3,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import cn from 'clsx';
 import { useDebounce } from 'ahooks';
 import { compact } from 'lodash';
-import { COPILOT_QUESTIONS, CopilotQuestionIds } from '@flagright/lib/utils';
+import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils';
 import s from './index.module.less';
 import { useQuery } from '@/utils/queries/hooks';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
@@ -21,7 +21,7 @@ export type FormValues = {
   searchString: string;
 };
 
-const SUGGESTIONS_ORDER: readonly CopilotQuestionIds[] = [
+const SUGGESTIONS_ORDER: readonly QuestionId[] = [
   COPILOT_QUESTIONS.USER_DETAILS,
   COPILOT_QUESTIONS.ALERTS,
   COPILOT_QUESTIONS.TRS_SCORE,

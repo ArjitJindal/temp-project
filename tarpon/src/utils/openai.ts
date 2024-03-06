@@ -1,5 +1,8 @@
 import { Configuration, OpenAIApi } from 'openai'
-import { ChatCompletionRequestMessage } from 'openai/api'
+import {
+  ChatCompletionRequestMessage,
+  CreateChatCompletionRequest,
+} from 'openai/api'
 import { getSecret } from './secrets-manager'
 import { GPT_REQUESTS_COLLECTION } from './mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -27,7 +30,11 @@ export async function ask(
   const tenantId = getContext()?.tenantId
   if (!openai) {
     const { apiKey } = await getSecret<{ apiKey: string }>('openAI')
-    openai = new OpenAIApi(new Configuration({ apiKey }))
+    openai = new OpenAIApi(
+      new Configuration({
+        apiKey,
+      })
+    )
   }
 
   const completion = await openai.createChatCompletion({
@@ -48,20 +55,25 @@ export async function ask(
 
 export async function prompt(
   messages: ChatCompletionRequestMessage[],
-  params?: { temperature?: number; modelVersion?: ModelVersion }
+  params?: Partial<CreateChatCompletionRequest>
 ): Promise<string> {
   const tenantId = getContext()?.tenantId
 
   if (!openai) {
     const { apiKey } = await getSecret<{ apiKey: string }>('openAI')
-    openai = new OpenAIApi(new Configuration({ apiKey }))
+    openai = new OpenAIApi(
+      new Configuration({
+        apiKey,
+      })
+    )
   }
 
   const completion = await openai.createChatCompletion({
-    model: params?.modelVersion ?? modelVersion,
+    model: modelVersion,
     temperature: params?.temperature ?? 0.5,
     messages,
     max_tokens: MAX_TOKEN_INPUT,
+    ...params,
   })
   const completionChoice = completion.data.choices[0].message?.content || ''
 

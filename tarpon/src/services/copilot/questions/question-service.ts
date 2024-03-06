@@ -2,20 +2,15 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { BadRequest } from 'http-errors'
 import {
   DynamoDBDocumentClient,
   GetCommand,
   GetCommandInput,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
+import { BadRequest } from 'http-errors'
 import { StackConstants } from '@lib/constants'
-import {
-  getQueries,
-  getQuestion,
-  getQuestions,
-  isValidQuestion,
-} from './definitions'
+import { getQuestion, getQuestions, isValidQuestion } from './definitions'
 import { InvestigationRepository } from './investigation-repository'
 import { InvestigationContext, Question, Variables } from './types'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
@@ -27,8 +22,6 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { QuestionVariableOption } from '@/@types/openapi-internal/QuestionVariableOption'
 import { GetQuestionsResponse } from '@/@types/openapi-internal/GetQuestionsResponse'
-import { logger } from '@/core/logger'
-import { prompt } from '@/utils/openai'
 import { getUserName } from '@/utils/helpers'
 import { AccountsService } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
@@ -38,6 +31,7 @@ import { traceable } from '@/core/xray'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { generateChecksum } from '@/utils/object'
+import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
 
 @traceable
 export class QuestionService {
@@ -60,6 +54,8 @@ export class QuestionService {
   private accountsService: AccountsService
   private dynamoClient: DynamoDBDocumentClient
 
+  private autocompleteService: AutocompleteService
+
   constructor(
     investigationRepository: InvestigationRepository,
     accountService: AccountsService,
@@ -68,6 +64,7 @@ export class QuestionService {
     this.investigationRepository = investigationRepository
     this.accountsService = accountService
     this.dynamoClient = dynamoClient
+    this.autocompleteService = new AutocompleteService()
   }
 
   async addQuestion(
@@ -126,7 +123,13 @@ export class QuestionService {
       }
     }
 
-    const questions = await this.gpt(questionString)
+    const questions = await this.autocompleteService.interpretQuestion(
+      questionString
+    )
+    if (questions.length == 0) {
+      throw new BadRequest('AI was unable to understand your question')
+    }
+
     return {
       data: await Promise.all(
         questions.map(async (question) => {
@@ -331,50 +334,11 @@ export class QuestionService {
     throw new Error(`Unsupported question type`)
   }
 
-  private async gpt(questionPrompt: string) {
-    try {
-      const response = await prompt([
-        {
-          role: 'system',
-          content: `You are a machine with the following available "questions" with their corresponding "variables": ${JSON.stringify(
-            getQueries()
-          )}
-            You will be asked a to provide an array of questionId's and their corresponding "variables" based on user input.`,
-        },
-        {
-          role: 'system',
-          content: `Today's date is ${new Date().toISOString()}. You will communicate datetimes in the following format ${new Date().toISOString()}.`,
-        },
-        {
-          role: 'system',
-          content: `You must reply with valid, iterable RFC8259 compliant JSON in your responses with the following structure as defined in typescript:
-{
-  questionId: string,
-  variables: { name: string, value: any }[]
-}[]`,
-        },
-        {
-          role: 'assistant',
-          content: `Please parse "${questionPrompt}" to give the best matching questionId and variables.`,
-        },
-      ])
-      const results: {
-        questionId: string
-        variables: QuestionVariable[]
-      }[] = JSON.parse(response.replace('```json', '').replace('```', ''))
-      if (!Array.isArray(results) || results.length === 0) {
-        throw new BadRequest('AI could not understand this query')
-      }
-      return results
-    } catch (e) {
-      logger.error(e)
-      throw new BadRequest('AI could not understand this query')
-    }
-  }
-
   private prepareVariables(question: Question<any>, vars: Variables) {
     const varObject = vars.reduce((acc, v) => {
-      acc[v.name] = v.value
+      if (v.value) {
+        acc[v.name] = v.value
+      }
       return acc
     }, {})
 
@@ -406,7 +370,7 @@ export class QuestionService {
         if (type === 'DATETIME' || type === 'DATE') {
           if (key in varObject) {
             if (isIsoDate(varObject[key])) {
-              varObject[key] = new Date(varObject[key] as number).valueOf()
+              varObject[key] = new Date(varObject[key] as string).valueOf()
             } else if (typeof varObject[key] !== 'number') {
               delete varObject[key]
             }
@@ -416,32 +380,15 @@ export class QuestionService {
     }
     return varObject
   }
-
-  async autocompleteVariable(
-    questionId: string,
-    variable: string,
-    search: string
-  ) {
-    const tenantId = getContext()?.tenantId
-
-    const variableOption = getQuestions().find(
-      (q) => q.questionId === questionId
-    )?.variableOptions[variable]
-    // TODO make the typing here a bit nicer.
-    if (
-      tenantId &&
-      variableOption &&
-      typeof variableOption !== 'string' &&
-      variableOption.type === 'SEARCH'
-    ) {
-      return variableOption.search(tenantId, search)
-    }
-    return []
-  }
 }
 
 function isIsoDate(str) {
-  if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false
-  const d = new Date(str)
-  return d instanceof Date && !isNaN(d.getTime()) && d.toISOString() === str // valid date
+  if (
+    /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str) ||
+    /\d{4}-\d{2}-\d{2}/.test(str)
+  ) {
+    const d = new Date(str)
+    return d instanceof Date && !isNaN(d.getTime())
+  }
+  return false
 }

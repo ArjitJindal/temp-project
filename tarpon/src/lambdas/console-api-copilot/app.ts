@@ -128,8 +128,9 @@ export const copilotHandler = lambdaApi({})(
     })
 
     handlers.registerGetQuestionVariableAutocomplete(async (ctx, request) => {
+      const autocomplete = new AutocompleteService()
       return {
-        suggestions: await questionService.autocompleteVariable(
+        suggestions: await autocomplete.autocompleteVariable(
           request.questionId,
           request.variableKey,
           request.search

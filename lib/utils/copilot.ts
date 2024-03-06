@@ -31,5 +31,5 @@ export const COPILOT_QUESTIONS = {
   WEBSITE: 'Website',
 } as const
 
-export type CopilotQuestionIds =
+export type QuestionId =
   (typeof COPILOT_QUESTIONS)[keyof typeof COPILOT_QUESTIONS]

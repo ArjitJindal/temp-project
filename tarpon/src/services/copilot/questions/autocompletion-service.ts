@@ -1,9 +1,17 @@
 import { uniq } from 'lodash'
-import { getQuestions } from '@/services/copilot/questions/definitions'
+import {
+  getQueries,
+  getQuestions,
+} from '@/services/copilot/questions/definitions'
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { prompt } from '@/utils/openai'
+import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
+import { logger } from '@/core/logger'
+import dayjs from '@/utils/dayjs'
+import { getContext } from '@/core/utils/context'
 
 const MAX_DISTANCE = 2
 const LIMIT = 30
@@ -91,6 +99,98 @@ export class AutocompleteService {
     }
 
     return matrix[a.length][b.length]
+  }
+
+  public async interpretQuestion(questionPrompt: string): Promise<
+    {
+      questionId: string
+      variables: QuestionVariable[]
+    }[]
+  > {
+    try {
+      const response = await prompt(
+        [
+          {
+            role: 'system',
+            content: `You are a machine with the following available "questions" with their corresponding "variables": ${JSON.stringify(
+              getQueries().map((q) => {
+                const preparedVariables = Object.entries(
+                  q.variableOptions
+                ).flatMap(([name, definition]) => {
+                  if (typeof definition !== 'string') {
+                    return [{ name, definition: 'STRING' }]
+                  }
+                  return [{ name, definition }]
+                })
+                return {
+                  questionId: q.questionId,
+                  variables: preparedVariables,
+                }
+              })
+            )}
+            You will be asked a to provide an array of questionId's and their corresponding "variables" based on user input. If no time range is specified, don't include "from" and "to" variables. If you aren't able to determine any other variable, don't include it in the response either.`,
+          },
+          {
+            role: 'system',
+            content: `Today's date is ${dayjs().format(
+              'YYYY-MM-DD'
+            )}. You will communicate dates in the same format.`,
+          },
+          {
+            role: 'system',
+            content: `You must reply with valid, iterable RFC8259 compliant JSON in your responses with the following structure as defined in typescript:
+{
+  questionId: string,
+  variables: { name: string, value: any }[]
+}[]`,
+          },
+          {
+            role: 'assistant',
+            content: `Please parse "${questionPrompt}" to give the best matching questionId and variables.`,
+          },
+        ],
+        {
+          temperature: 0.6,
+          frequency_penalty: 0.15,
+          presence_penalty: 0.15,
+          top_p: 0.95,
+        }
+      )
+      const results: {
+        questionId: string
+        variables: QuestionVariable[]
+      }[] = JSON.parse(response.replace('```json', '').replace('```', ''))
+      if (!Array.isArray(results) || results.length === 0) {
+        logger.error('AI could not determine a relevant question', results)
+        return []
+      }
+      return results
+    } catch (e) {
+      logger.error('Failed to parse JSON in reseponse from GPT', e)
+      return []
+    }
+  }
+
+  async autocompleteVariable(
+    questionId: string,
+    variable: string,
+    search: string
+  ) {
+    const tenantId = getContext()?.tenantId
+
+    const variableOption = getQuestions().find(
+      (q) => q.questionId === questionId
+    )?.variableOptions[variable]
+    // TODO make the typing here a bit nicer.
+    if (
+      tenantId &&
+      variableOption &&
+      typeof variableOption !== 'string' &&
+      variableOption.type === 'SEARCH'
+    ) {
+      return variableOption.search(tenantId, search)
+    }
+    return []
   }
 }
 
