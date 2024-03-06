@@ -77,8 +77,8 @@ export const UserStatusTriggersAdvancedOptionsForm = (
                 onChange={(value) => {
                   if (value) {
                     setIsUserStateDetailsOpen(true);
-                    inputProps?.onChange?.(value);
                   }
+                  inputProps?.onChange?.(value);
                 }}
               />
             )}
@@ -118,8 +118,8 @@ export const UserStatusTriggersAdvancedOptionsForm = (
                 onChange={(value) => {
                   if (value) {
                     setIsKYCStatusDetailsOpen(true);
-                    inputProps?.onChange?.(value);
                   }
+                  inputProps?.onChange?.(value);
                 }}
               />
             )}
