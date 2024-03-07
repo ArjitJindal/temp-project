@@ -132,6 +132,7 @@ export default function CaseManagementPage() {
               disabled={false}
               showLabel
               label={'QA'}
+              testId="qa-toggle"
             />
           ) : (
             <Tooltip
