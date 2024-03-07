@@ -11,8 +11,9 @@ import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import { useUsers } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, NUMBER } from '@/components/library/Table/standardDataTypes';
-import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
+import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
+import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 
 type SimulationHistoryProps = {
   setResult: (results: SimulationPostResponse) => void;
@@ -40,10 +41,10 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
     type: 'PULSE',
     sort: [['createdAt', 'descend']],
   });
-  const context = useContext(PageWrapperContext);
+  const context = useContext(SuperAdminModeContext);
   const finalParams = useMemo(
-    () => ({ ...params, includeInternal: context?.superAdminMode }),
-    [context?.superAdminMode, params],
+    () => ({ ...params, includeInternal: context?.isSuperAdminMode }),
+    [context?.isSuperAdminMode, params],
   );
   const allSimulationsQueryResult = usePaginatedQuery(
     SIMULATION_JOBS(finalParams),

@@ -1,18 +1,12 @@
-import React, { useState } from 'react';
-import { Space, Col, Row, Typography } from 'antd';
+import React from 'react';
+import { Col, Row, Typography } from 'antd';
 import cn from 'clsx';
 import { Link } from 'react-router-dom';
 import ErrorBoundary from '../utils/ErrorBoundary';
-import SuperAdminContainer from '../library/SuperAdminContainer';
-import COLORS from '../ui/colors';
-import Toggle from '../library/Toggle';
 import s from './styles.module.less';
 import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
-import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 
 export const PAGE_WRAPPER_PADDING = 16;
-
-export const PageWrapperContext = React.createContext<{ superAdminMode: boolean } | null>(null);
 
 export interface PageWrapperProps {
   title?: string;
@@ -24,42 +18,25 @@ export interface PageWrapperProps {
   };
   actionButton?: React.ReactNode;
   loading?: boolean;
-  superAdminMode?: {
-    tooltip: string;
-  };
   children?: React.ReactNode;
 }
 
 export default function PageWrapper(props: PageWrapperProps) {
-  const [isSuperAdminMode, setIsSuperAdminMode] = useState(false);
-
   return (
-    <PageWrapperContext.Provider value={{ superAdminMode: isSuperAdminMode }}>
-      <div className={s.root} id="page-wrapper-root">
-        <Header
-          {...props}
-          isSuperAdminMode={isSuperAdminMode}
-          onSuperAdminModeChange={setIsSuperAdminMode}
-        />
-        <div
-          className={cn(s.body, 'print-container')}
-          style={{ padding: PAGE_WRAPPER_PADDING, paddingTop: 8 }}
-        >
-          <ErrorBoundary>{props.children}</ErrorBoundary>
-        </div>
+    <div className={s.root} id="page-wrapper-root">
+      <Header {...props} />
+      <div
+        className={cn(s.body, 'print-container')}
+        style={{ padding: PAGE_WRAPPER_PADDING, paddingTop: 8 }}
+      >
+        <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>
-    </PageWrapperContext.Provider>
+    </div>
   );
 }
 
-function Header(
-  props: PageWrapperProps & {
-    isSuperAdminMode: boolean;
-    onSuperAdminModeChange: (isSuperAdminMode: boolean) => void;
-  },
-) {
-  const user = useAuth0User();
-  const { header, title, description, backButton, actionButton, superAdminMode } = props;
+function Header(props: PageWrapperProps) {
+  const { header, title, description, backButton, actionButton } = props;
   if (header != null) {
     return <>{header}</>;
   }
@@ -86,31 +63,9 @@ function Header(
               )}
             </Col>
             <Col xs={6}>
-              {(actionButton || superAdminMode) && (
-                <div style={{ textAlign: 'end', display: 'flex', justifyContent: 'end' }}>
-                  <Space>
-                    {superAdminMode && isSuperAdmin(user) && (
-                      <div className={cn(actionButton && s.simulationShift)}>
-                        <SuperAdminContainer
-                          tooltip={superAdminMode?.tooltip}
-                          tooltipPlacement="left"
-                        >
-                          <Toggle
-                            height={20}
-                            width={40}
-                            uncheckedIcon={false}
-                            checkedIcon={false}
-                            onColor={COLORS.red.base}
-                            value={props.isSuperAdminMode}
-                            onChange={(v) => props.onSuperAdminModeChange(Boolean(v))}
-                          />
-                        </SuperAdminContainer>
-                      </div>
-                    )}
-                    {actionButton}
-                  </Space>
-                </div>
-              )}
+              <div style={{ textAlign: 'end', display: 'flex', justifyContent: 'end' }}>
+                {actionButton}
+              </div>
             </Col>
           </Row>
         </header>
@@ -118,7 +73,6 @@ function Header(
     </>
   );
 }
-
 export function PageWrapperContentContainer(props: { children: React.ReactNode }) {
   return <div className={s.contentContainer}>{props.children}</div>;
 }

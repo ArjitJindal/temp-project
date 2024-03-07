@@ -1,0 +1,49 @@
+@import 'src/components/ui/colors';
+
+.root {
+  overflow: hidden;
+}
+
+.button {
+  display: flex;
+  color: white;
+  white-space: nowrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 20px;
+  border-radius: 4px;
+  min-height: 46px;
+
+  .switch {
+    display: flex;
+    position: relative;
+    border: none;
+    cursor: pointer;
+    margin: 0;
+    background: fade(white, 4%);
+    padding: 4px;
+    border-radius: 4px;
+
+    .item {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+
+      &.isOn {
+        background: @fr-colors-red;
+        font-weight: 600;
+      }
+      &.isOff {
+        background: @fr-colors-brandBlue;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+.icon {
+  color: white;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}

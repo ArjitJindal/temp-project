@@ -98,9 +98,6 @@ export const SimulationPageWrapper = forwardRef<
   return (
     <PageWrapper
       {...props}
-      superAdminMode={{
-        tooltip: 'Turn on to make the simulation jobs triggered from super admin users visible.',
-      }}
       header={props.header && props.header(actionButton)}
       actionButton={actionButton}
     >

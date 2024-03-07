@@ -11,10 +11,11 @@ import { SIMULATION_JOBS } from '@/utils/queries/keys';
 import { useUsers } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, NUMBER } from '@/components/library/Table/standardDataTypes';
-import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
+import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
 import { useRules } from '@/utils/rules';
 import { makeUrl } from '@/utils/routing';
+import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 
 export function SimulationHistoryTable() {
   const api = useApi();
@@ -25,10 +26,10 @@ export function SimulationHistoryTable() {
     page: 1,
     type: 'BEACON',
   });
-  const context = useContext(PageWrapperContext);
+  const context = useContext(SuperAdminModeContext);
   const finalParams = useMemo(
-    () => ({ ...params, includeInternal: context?.superAdminMode }),
-    [context?.superAdminMode, params],
+    () => ({ ...params, includeInternal: context?.isSuperAdminMode }),
+    [context?.isSuperAdminMode, params],
   );
   const queryResults = usePaginatedQuery(SIMULATION_JOBS(finalParams), async (paginationParams) => {
     const simulations = await api.getSimulations({ ...finalParams, ...paginationParams });

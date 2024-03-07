@@ -9,6 +9,7 @@ import AuthProvider from './AuthProvider';
 import SettingsProviderMock from './mocks/SettingsProvider';
 import FlagrightUserProviderMock from './mocks/FlagrightUserProvider';
 import { BrowserSupportProvider } from './BrowserSupportProvider';
+import { SuperAdminModeProvider } from './SuperAdminModeProvider';
 import CluesoTokenProvider from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 
 interface Props {
@@ -37,6 +38,7 @@ const AllProviders = withProviders(
   BrowserSupportProvider,
   SideBarProvider,
   DemoModeProvider,
+  SuperAdminModeProvider,
   CluesoTokenProvider,
 );
 export function StorybookMockProviders(props: Props) {

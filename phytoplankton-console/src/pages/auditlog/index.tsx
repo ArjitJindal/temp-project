@@ -8,7 +8,6 @@ export default function AuditLogPage() {
     <PageWrapper
       title={i18n('menu.auditlog')}
       description="Audit logs automatically track all the activity in your account"
-      superAdminMode={{ tooltip: 'Turn on to make the audit logs from super admin users visible.' }}
     >
       <AuditLog />
     </PageWrapper>

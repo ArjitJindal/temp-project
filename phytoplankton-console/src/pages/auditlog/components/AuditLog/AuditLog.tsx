@@ -19,18 +19,19 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
 import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
-import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
+import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import AccountTag from '@/components/AccountTag';
 import { dayjs, Dayjs } from '@/utils/dayjs';
+import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 
 export default function AuditLogTable() {
   const api = useApi();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
-  const context = useContext(PageWrapperContext);
+  const context = useContext(SuperAdminModeContext);
   const finalParams = useMemo(
-    () => ({ ...params, includeRootUserRecords: context?.superAdminMode }),
-    [context?.superAdminMode, params],
+    () => ({ ...params, includeRootUserRecords: context?.isSuperAdminMode }),
+    [context?.isSuperAdminMode, params],
   );
 
   const startTime = dayjs().subtract(1, 'day').startOf('day');
