@@ -679,9 +679,10 @@ export const ALL_RISK_PARAMETERS = [
 const MultipleSelect: React.FC<
   InputRendererProps<'MULTIPLE'> & {
     options: Array<{ value: string; label: string; alternativeLabels?: string[] }>;
+    mode?: 'MULTIPLE' | 'TAGS';
   }
 > = (props) => {
-  const { value, disabled, onChange, options, existedValues = [] } = props;
+  const { value, disabled, onChange, options, existedValues = [], mode = 'MULTIPLE' } = props;
   const disabledOptions: string[] = existedValues.flatMap((x) =>
     x.values.map((y) => `${y.content}`),
   );
@@ -694,14 +695,11 @@ const MultipleSelect: React.FC<
       style={{ width: '100%' }}
       value={value?.values.map(({ content }) => `${content}`) ?? []}
       onChange={(value) => {
-        if (!value) {
-          return;
-        }
-        onChange(riskValueMultiple(value.map((x) => riskValueLiteral(x))));
+        onChange(riskValueMultiple((value ?? []).map((x) => riskValueLiteral(x))));
       }}
       isDisabled={disabled}
       options={optionsFixed}
-      mode="MULTIPLE"
+      mode={mode}
     />
   );
 };
@@ -763,6 +761,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
           value: entry,
           label: entry,
         }))}
+        mode="TAGS"
         {...props}
       />
     );
@@ -780,6 +779,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
           value: entry,
           label: entry,
         }))}
+        mode="TAGS"
         {...props}
       />
     );
