@@ -510,6 +510,9 @@ export class AccountsService {
     if (newTenant == null) {
       throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
     }
+    if (oldTenant.name === newTenant.name) {
+      return
+    }
 
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
