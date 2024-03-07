@@ -25,7 +25,12 @@ const config: Config = {
     ],
   },
   collectCoverage: true,
-  collectCoverageFrom: ['<rootDir>/src/**/*.{ts}', '!**/node_modules/**'],
+  collectCoverageFrom: [
+    '<rootDir>/src/**/*.ts',
+    '!**/node_modules/**',
+    '!<rootDir>/src/@types/**',
+    '!<rootDir>/src/canaries/**',
+  ],
   coverageReporters: ['json-summary'],
 }
 module.exports = config
