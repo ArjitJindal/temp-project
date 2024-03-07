@@ -12,10 +12,21 @@ interface Props extends InputProps<boolean>, Omit<ReactSwitchProps, 'checked' | 
   green?: boolean;
   loading?: boolean;
   label?: string;
+  testId?: string;
 }
 
 export default function Toggle(props: Props) {
-  const { value, onChange, showLabel, size = 'DEFAULT', green, disabled, label, ...rest } = props;
+  const {
+    value,
+    onChange,
+    showLabel,
+    size = 'DEFAULT',
+    green,
+    disabled,
+    label,
+    testId,
+    ...rest
+  } = props;
   let height = 32;
   let width = 72;
   if (size === 'SMALL') {
@@ -26,19 +37,21 @@ export default function Toggle(props: Props) {
     width = 80;
   }
   return (
-    <Switch
-      data-cy="toggle"
-      height={height}
-      width={width}
-      uncheckedIcon={showLabel ? <div className={s.label}>{label ?? 'OFF'}</div> : false}
-      checkedIcon={showLabel ? <div className={s.label}>{label ?? 'ON'}</div> : false}
-      onColor={disabled ? COLORS.gray5 : green ? COLORS.leafGreen.base : COLORS.brandBlue.base}
-      checked={value === true}
-      onChange={(value) => {
-        onChange?.(value);
-      }}
-      disabled={disabled}
-      {...rest}
-    />
+    <div data-cy={testId}>
+      <Switch
+        data-cy={'toggle'}
+        height={height}
+        width={width}
+        uncheckedIcon={showLabel ? <div className={s.label}>{label ?? 'OFF'}</div> : false}
+        checkedIcon={showLabel ? <div className={s.label}>{label ?? 'ON'}</div> : false}
+        onColor={disabled ? COLORS.gray5 : green ? COLORS.leafGreen.base : COLORS.brandBlue.base}
+        checked={value === true}
+        onChange={(value) => {
+          onChange?.(value);
+        }}
+        disabled={disabled}
+        {...rest}
+      />
+    </div>
   );
 }

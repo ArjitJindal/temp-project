@@ -19,15 +19,16 @@ describe('Case Creation test', () => {
     const isQAenv = checkQAUrl();
     isQAenv ? skipOn(true) : skipOn(false);
     const transactionId = `Tx-${Cypress._.random(0, 10000000)}`;
-    const userId = `User-${Cypress._.random(0, 10000000)}`;
-    const ruleName = 'Test rule : Transaction too high';
-    const userRequestBody = generateUserRequestBody(userId);
-    cy.publicApiHandler('POST', 'consumer/users', userRequestBody);
+    const originUserId = `User-${Cypress._.random(0, 10000000)}`;
+    const destinationUserId = `User-${Cypress._.random(0, 10000000)}`;
+    cy.publicApiHandler('POST', 'consumer/users', generateUserRequestBody(originUserId));
+    cy.publicApiHandler('POST', 'consumer/users', generateUserRequestBody(destinationUserId));
 
     //1.create rule
     cy.visit('/rules/rules-library');
     cy.intercept('POST', '**/rule_instances').as('createdRule');
     cy.get('button[data-cy="configure-rule-button"]').eq(1).click();
+    const ruleName = 'Test rule : Transaction too high';
     cy.get('input[placeholder="Enter rule name"]').clear().type(ruleName);
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
@@ -39,7 +40,11 @@ describe('Case Creation test', () => {
 
       //2.create case and verify
       //making a post request to api.dev.flagright/transactions to hit the rule R-2
-      const requestBody = generateTransactionRequestBody(transactionId, userId);
+      const requestBody = generateTransactionRequestBody(
+        transactionId,
+        originUserId,
+        destinationUserId,
+      );
 
       cy.publicApiHandler('POST', 'transactions', requestBody);
       cy.visit('/case-management/cases');
@@ -59,8 +64,8 @@ describe('Case Creation test', () => {
         .type(`${ruleName} ${ruleInstanceId} (R-2){enter}`)
         .click();
 
-      cy.contains(userId).should('exist');
-      cy.contains(requestBody.destinationUserId).should('exist');
+      cy.contains(originUserId).should('exist');
+      cy.contains(destinationUserId).should('exist');
 
       // 3. delete rule
       deleteRule(ruleInstanceId);

@@ -29,7 +29,11 @@ export function getAccessToken(authTokenKey) {
   return accessToken;
 }
 
-export function generateTransactionRequestBody(transactionId: string, userId: string): any {
+export function generateTransactionRequestBody(
+  transactionId: string,
+  originUserId: string,
+  destinationUserId: string,
+): any {
   return {
     transactionId: `${transactionId}`,
     type: 'TRANSFER',
@@ -64,8 +68,8 @@ export function generateTransactionRequestBody(transactionId: string, userId: st
       cardBrand: 'DISCOVER',
       cardFunding: 'CREDIT',
     },
-    originUserId: `${userId}`,
-    destinationUserId: 'U-154',
+    originUserId,
+    destinationUserId,
     reference: 'dog',
     tags: [{ key: 'flowType', value: 'wallet' }],
   };

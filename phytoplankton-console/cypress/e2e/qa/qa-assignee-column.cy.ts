@@ -21,7 +21,7 @@ describe('QA Assignee Column', () => {
 
   it('should be present when QA feature flag is turned on', () => {
     cy.visit('/case-management/cases');
-    cy.get('.ant-space-item').click();
+    cy.get('[data-cy="qa-toggle"]').click();
     cy.contains('QA assignee').should('exist');
 
     //to check if the QA assigned to column is present inside the alert investigation view
