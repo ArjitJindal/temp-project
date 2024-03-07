@@ -29,7 +29,7 @@ import { xlsxValue } from '@/utils/xlsx';
 import { getCurrentDomain } from '@/utils/routing';
 import Alert from '@/components/library/Alert';
 
-const MAXIMUM_EXPORT_ITEMS = 25000;
+const MAXIMUM_EXPORT_ITEMS = 100000;
 
 type Props<Item extends object, Params extends object> = {
   onPaginateData: (params: PaginationParams) => Promise<TableData<Item>>;
@@ -209,7 +209,7 @@ export default function DownloadButton<T extends object, Params extends object>(
         const totalItemsCount = total ?? items.length;
         if (
           pagesMode === 'ALL' &&
-          (totalItemsCount > MAXIMUM_EXPORT_ITEMS || runningTotal > MAXIMUM_EXPORT_ITEMS)
+          (totalItemsCount >= MAXIMUM_EXPORT_ITEMS || runningTotal >= MAXIMUM_EXPORT_ITEMS)
         ) {
           message.error(
             `There is too much items to export (> ${MAXIMUM_EXPORT_ITEMS}). Try to change filters or export only current page.`,
@@ -311,7 +311,7 @@ export default function DownloadButton<T extends object, Params extends object>(
             )}
             {pagesMode === 'ALL' && (
               <Alert type="info">
-                This option downloads up to 25,000 rows. Browser capacity may also impact the
+                This option downloads up to 100,000 rows. Browser capacity may also impact the
                 download.
               </Alert>
             )}
