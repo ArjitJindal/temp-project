@@ -1,6 +1,7 @@
 import React from 'react';
-import { PropertyItem } from '../types';
-import { getUiSchema } from '../utils';
+import cn from 'clsx';
+import { ExtendedSchema, PropertyItem } from '../types';
+import { getUiSchema, useOrderedProps } from '../utils';
 import PropertyInput from './PropertyInput';
 import s from './style.module.less';
 import { Props as LabelProps } from '@/components/library/Label';
@@ -17,10 +18,11 @@ interface Props {
   item: PropertyItem;
   labelProps?: Partial<LabelProps>;
   collapseForNestedProperties?: boolean;
+  parentSchema?: ExtendedSchema;
 }
 
 export default function Property(props: Props) {
-  const { item, labelProps, collapseForNestedProperties } = props;
+  const { item, labelProps, collapseForNestedProperties, parentSchema } = props;
   const { schema: _schema, name } = item;
 
   const settings = useJsonSchemaEditorSettings();
@@ -73,6 +75,7 @@ export default function Property(props: Props) {
     labelPosition = 'RIGHT';
   }
 
+  const siblingPropertiesCount = useOrderedProps(parentSchema).length;
   const requiredFeatures = uiSchema['ui:requiredFeatures'] ?? [];
   const canShowProperty = useFeaturesEnabled(requiredFeatures);
   return canShowProperty ? (
@@ -96,7 +99,9 @@ export default function Property(props: Props) {
       >
         {(inputProps) =>
           schema.type === 'object' && (!collapseForNestedProperties || !labelProps?.level) ? (
-            <div className={s.children}>
+            <div
+              className={cn(s.children, siblingPropertiesCount === 1 ? s.childrenSeparator : '')}
+            >
               <PropertyInput {...inputProps} schema={schema} labelProps={labelProps} />
             </div>
           ) : (

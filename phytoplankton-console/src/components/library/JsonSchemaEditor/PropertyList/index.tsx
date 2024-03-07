@@ -51,6 +51,7 @@ export default function PropertyList(props: Props): JSX.Element {
             item={item}
             labelProps={labelProps}
             collapseForNestedProperties={collapseForNestedProperties}
+            parentSchema={parentSchema}
           />
         ))}
       </PropertyListLayout>
