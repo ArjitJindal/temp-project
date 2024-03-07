@@ -12,6 +12,7 @@ export const COPILOT_QUESTIONS = {
   LINKEDIN: 'Linkedin',
   PAYMENT_IDENTIFIERS_OF_RECEIVERS: 'Payment identifiers of receivers',
   PAYMENT_IDENTIFIERS_OF_SENDERS: 'Payment identifiers of senders',
+  REFERENCES_WORD_COUNT: 'References word count',
   RECOMMENDATION: 'Recommendation',
   SHAREHOLDERS: 'Shareholders',
   TRANSACTION_INSIGHTS_FOR_DESTINATION: 'Transaction insights for destination',

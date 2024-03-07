@@ -26,6 +26,7 @@ import { KycScoring } from '@/services/copilot/questions/definitions/kyc-score'
 import { Recommendation } from '@/services/copilot/questions/definitions/recommendation'
 import { hasFeature } from '@/core/utils/context'
 import { envIsNot } from '@/utils/env'
+import { ReferenceWordCount } from '@/services/copilot/questions/definitions/reference-word-count'
 
 export const isValidQuestion = (questionId: string) =>
   !!getQuestions().find((q) => q.questionId === questionId)
@@ -54,6 +55,7 @@ export const getQuestions = (): Question<any>[] =>
     TransactionOriginSummary,
     Transactions,
     TransactionDestinationSummary,
+    ReferenceWordCount,
     ...TransactionAggregations,
     ...(hasFeature('CRM') ? [CrmInsights] : []),
     ...(hasFeature('SAR') ? [SarsFiled] : []),
