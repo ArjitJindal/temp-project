@@ -1,16 +1,20 @@
 import SettingsCard from '@/components/library/SettingsCard';
 import Confirm from '@/components/utils/Confirm/index';
 import {
+  useFeatureEnabled,
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { isWhiteLabeled } from '@/utils/branding';
 import Toggle from '@/components/library/Toggle';
+import Tooltip from '@/components/library/Tooltip';
 
 const whiteLabeled = isWhiteLabeled();
 
 export const FlagrightAISettings = () => {
   const settings = useSettings();
+  const isNarrativeCopilotEnabled = useFeatureEnabled('NARRATIVE_COPILOT');
+  const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
 
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleDisable = () => {
@@ -30,15 +34,23 @@ export const FlagrightAISettings = () => {
         title={whiteLabeled ? 'AI Features' : 'Flagright AI features'}
         description="Supercharge your productivity with AI Features including GPT."
       >
-        <Confirm title="Are you sure?" text={displayText} onConfirm={handleEnable}>
-          {({ onClick }) => (
-            <Toggle
-              value={settings.isAiEnabled}
-              onChange={!settings.isAiEnabled ? onClick : handleDisable}
-              loading={mutateTenantSettings.isLoading}
-            />
-          )}
-        </Confirm>
+        {isNarrativeCopilotEnabled || isAiForensicsEnabled ? (
+          <Confirm title="Are you sure?" text={displayText} onConfirm={handleEnable}>
+            {({ onClick }) => (
+              <Toggle
+                value={settings.isAiEnabled}
+                onChange={!settings.isAiEnabled ? onClick : handleDisable}
+                loading={mutateTenantSettings.isLoading}
+              />
+            )}
+          </Confirm>
+        ) : (
+          <Tooltip title={`Contact us to purchase AI features.`} placement="topLeft">
+            <div>
+              <Toggle value={false} disabled={true} />
+            </div>
+          </Tooltip>
+        )}
       </SettingsCard>
     </div>
   );
