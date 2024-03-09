@@ -259,6 +259,7 @@ const customTimeWidget: DateTimeWidget<BasicConfig> = {
     return val;
   },
   factory: (props) => {
+    const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const { value, setValue } = props;
     const totalSeconds = value?.includes(':') ? getSecondsFromFormat(value as string) : undefined;
     return (
@@ -271,7 +272,10 @@ const customTimeWidget: DateTimeWidget<BasicConfig> = {
             const newValue = seconds ? moment.utc(seconds * 1000).format('HH:mm:ss') : undefined;
             setValue(newValue);
           }}
+          placeholder=""
+          suffixIcon={<Label label={currentTimeZone}></Label>}
           format={'HH:mm'}
+          showNow={true}
         />
       </WidgetWrapper>
     );
