@@ -37,7 +37,7 @@ export const config: Config = {
     DYNAMODB: {
       BILLING_MODE: BillingMode.PAY_PER_REQUEST,
     },
-    DATABRICKS: true,
+    DATABRICKS_ENABLED: false,
     PUBLIC_API_GATEWAY: {},
     CONSOLE_API_GATEWAY: {},
     LAMBDA_DEFAULT: {
