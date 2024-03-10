@@ -33,6 +33,7 @@ def define_pipeline(spark):
             .option("region", os.environ["AWS_REGION"])
             .option("awsAccessKey", aws_access_key)
             .option("awsSecretKey", aws_secret_key)
+            .option("startingOffsets", "earliest")
             .load()
         )
     @dlt.table(
@@ -48,6 +49,7 @@ def define_pipeline(spark):
             .option("region", os.environ["AWS_REGION"])
             .option("awsAccessKey", aws_access_key)
             .option("awsSecretKey", aws_secret_key)
+            .option("startingOffsets", "earliest")
             .load()
         )
 
