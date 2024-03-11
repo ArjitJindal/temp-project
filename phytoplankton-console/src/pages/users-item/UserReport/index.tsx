@@ -1,5 +1,5 @@
 import { COUNTRIES } from '@flagright/lib/constants';
-import { RiskScore, RiskScores } from '../Header/HeaderMenu';
+import { RiskScores } from '../Header/HeaderMenu';
 import { InternalBusinessUser, InternalConsumerUser, LegalEntity, Person } from '@/apis';
 import { TableOptions } from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { ReportItem, getTable, getWidgetTable } from '@/components/DownloadAsPdf/report-utils';
@@ -8,8 +8,10 @@ import { humanizeAuto } from '@/utils/humanize';
 
 const getUserWidgetsProps = (
   user: InternalBusinessUser | InternalConsumerUser,
-  drsRiskScore?: RiskScore,
+  riskScores: RiskScores,
 ): ReportItem[] => {
+  const drsRiskScore = riskScores?.drsRiskScore;
+  const kycRiskScore = riskScores?.kycRiskScore;
   const userType = user.type;
   const companyDetails =
     user.type === 'BUSINESS' ? user.legalEntity.companyGeneralDetails : undefined;
@@ -52,16 +54,26 @@ const getUserWidgetsProps = (
       title: 'User status',
       value: humanizeAuto(user.userStateDetails?.state ?? '-'),
     },
-    {
-      title: 'KYC risk score (KRS)',
-      value: `${humanizeAuto(user.krsScore?.riskLevel ?? '-')} (${user.krsScore?.krsScore ?? '-'})`,
-    },
-    {
-      title: 'CRA risk score',
-      value: `${humanizeAuto(drsRiskScore?.riskLevel ?? drsRiskScore?.manualRiskLevel ?? '-')} (${
-        drsRiskScore?.score ?? '-'
-      })`,
-    },
+    ...(kycRiskScore !== null
+      ? [
+          {
+            title: 'KYC risk score (KRS)',
+            value: `${humanizeAuto(user.krsScore?.riskLevel ?? '-')} (${
+              user.krsScore?.krsScore ?? '-'
+            })`,
+          },
+        ]
+      : []),
+    ...(drsRiskScore !== null
+      ? [
+          {
+            title: 'CRA risk score',
+            value: `${humanizeAuto(
+              drsRiskScore?.riskLevel ?? drsRiskScore?.manualRiskLevel ?? '-',
+            )} ${drsRiskScore?.components ? `(${drsRiskScore?.score ?? '-'})` : ``}`,
+          },
+        ]
+      : []),
     ...(userType === 'CONSUMER'
       ? [
           {
@@ -179,9 +191,9 @@ function getPersonDetails(shareHolders: Array<Person>): ReportItem[] {
 
 const getUserWidgetTable = (
   user: InternalBusinessUser | InternalConsumerUser,
-  drsRiskScore?: RiskScore,
+  riskScores: RiskScores,
 ): TableOptions => {
-  const props = getUserWidgetsProps(user, drsRiskScore);
+  const props = getUserWidgetsProps(user, riskScores);
   return getWidgetTable(props);
 };
 
@@ -219,8 +231,5 @@ export const getUserReportTables = (
   user: InternalBusinessUser | InternalConsumerUser,
   riskScores: RiskScores,
 ): TableOptions[] => {
-  return [
-    getUserWidgetTable(user, riskScores.drsRiskScore),
-    ...getUserSupportTables(user, riskScores),
-  ];
+  return [getUserWidgetTable(user, riskScores), ...getUserSupportTables(user, riskScores)];
 };

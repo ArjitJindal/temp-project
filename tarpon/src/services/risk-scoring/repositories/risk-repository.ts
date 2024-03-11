@@ -1,4 +1,4 @@
-import { FindCursor, MongoClient } from 'mongodb'
+import { FindCursor, MongoClient, WithId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 
 import { InternalServerError } from 'http-errors'
@@ -506,7 +506,19 @@ export class RiskRepository {
     const krsValuesCollection = db.collection<KrsScore>(
       KRS_SCORES_COLLECTION(this.tenantId)
     )
-    return await krsValuesCollection.findOne({ userId })
+    const krsValue: WithId<KrsScore> | null = await krsValuesCollection.findOne(
+      { userId }
+    )
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    return krsValue
+      ? {
+          ...krsValue,
+          riskLevel: getRiskLevelFromScore(
+            riskClassificationValues,
+            krsValue.krsScore
+          ),
+        }
+      : null
   }
 
   async addArsValueToMongo(arsScore: ArsScore): Promise<ArsScore> {
@@ -545,11 +557,20 @@ export class RiskRepository {
     const drsValuesCollection = db.collection<DrsScore>(
       DRS_SCORES_COLLECTION(this.tenantId)
     )
-    return await drsValuesCollection
+    const drsValues: WithId<DrsScore>[] = await drsValuesCollection
       .find({ userId })
       .sort({ createdAt: -1 })
       .limit(RISK_SCORE_HISTORY_ITEMS_TO_SHOW)
       .toArray()
+    const riskClassificationValues = await this.getRiskClassificationValues()
+
+    return drsValues.map((drsValue) => ({
+      ...drsValue,
+      derivedRiskLevel: getRiskLevelFromScore(
+        riskClassificationValues,
+        drsValue.drsScore
+      ),
+    }))
   }
 }
 
