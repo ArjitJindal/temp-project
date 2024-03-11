@@ -66,6 +66,7 @@ import Tag from '@/components/library/Tag/story';
 import AgeRangeInput from '@/components/library/AgeRangeInput/story';
 import Avatar from '@/components/library/Avatar/story';
 import MarkdownEditor from '@/components/markdown/story';
+import NotificationsDrawerList from '@/components/AppWrapper/Menu/NotificationsDrawer/story';
 
 const config: Config = [
   {
@@ -341,6 +342,10 @@ const config: Config = [
     key: 'misc',
     title: 'Miscellaneous',
     components: [
+      {
+        key: '@/components/AppWrapper/Menu/NotificationsDrawer',
+        story: NotificationsDrawerList,
+      },
       {
         key: '@/components/ui/Typography',
         story: Typography,

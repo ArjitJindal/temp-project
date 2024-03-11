@@ -7,7 +7,7 @@ import ChevronDownIcon from './chevron-down.react.svg';
 import { getBranding } from '@/utils/branding';
 
 interface Props {
-  to: string;
+  to?: string;
   icon: React.ReactNode;
   children: string;
   isExternal?: boolean;
@@ -16,6 +16,7 @@ interface Props {
   isDisabled?: boolean;
   submenu?: SubMenuItem[];
   disabledByFeature?: boolean;
+  onClick?: () => void;
 }
 
 export default function TopLevelLink(props: Props) {
@@ -29,6 +30,7 @@ export default function TopLevelLink(props: Props) {
     isActive,
     isDisabled,
     disabledByFeature,
+    onClick,
   } = props;
   const branding = getBranding();
   const disabledMessage = disabledByFeature ? (
@@ -76,7 +78,7 @@ export default function TopLevelLink(props: Props) {
         {newChildren}
       </a>
     );
-  } else {
+  } else if (to != null) {
     resultEl = (
       <ReactRouterNavLink
         {...sharedProps}
@@ -85,6 +87,12 @@ export default function TopLevelLink(props: Props) {
       >
         {newChildren}
       </ReactRouterNavLink>
+    );
+  } else {
+    resultEl = (
+      <div {...sharedProps} onClick={onClick}>
+        {newChildren}
+      </div>
     );
   }
 

@@ -32,14 +32,14 @@ interface Props<FormValues> {
   fieldValidators?: FieldValidators<FormValues>;
   className?: string;
   alwaysShowErrors?: boolean;
-  portalled?: boolean; // useful for creating nested forms
+  portaled?: boolean; // useful for creating nested forms
   onSubmit?: (values: FormValues, state: { isValid: boolean }) => void;
   onChange?: (state: { values: FormValues; isValid: boolean }) => void;
 }
 
 function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormValues>>) {
   const {
-    portalled,
+    portaled,
     id,
     initialValues,
     children,
@@ -135,7 +135,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
     </FormContext.Provider>
   );
 
-  if (portalled) {
+  if (portaled) {
     return (
       <>
         <Portal>

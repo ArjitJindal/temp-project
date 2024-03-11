@@ -1,7 +1,10 @@
 import { UserRole, isSuperAdmin } from './user-utils';
 import { Account } from '@/apis';
 
-export const getAccountUserName = (account: Account | undefined): string => {
+export const getAccountUserName = (account: Account | undefined, defaultStr?: string): string => {
+  if (account == null && defaultStr != null) {
+    return defaultStr;
+  }
   return (account?.name || account?.email || account?.id) + (account?.blocked ? ' (Deleted)' : '');
 };
 

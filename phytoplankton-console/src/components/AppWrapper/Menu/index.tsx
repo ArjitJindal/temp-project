@@ -1,7 +1,9 @@
 import { ImportOutlined } from '@ant-design/icons';
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import cn from 'clsx';
+import { useLocation } from 'react-router';
 import { SideBarContext } from '../Providers/SidebarProvider';
-import { useFeaturesEnabled } from '../Providers/SettingsProvider';
+import { useFeaturesEnabled, useFeatureEnabled } from '../Providers/SettingsProvider';
 import TeamOutlined from './icons/Team_Outlined.react.svg';
 import ListsIcon from './icons/lists.react.svg';
 import GavelIcon from './icons/gavel.react.svg';
@@ -17,13 +19,15 @@ import Article from '@/components/ui/icons/Remix/document/article-line.react.svg
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import BarChartFillIcon from '@/components/ui/icons/Remix/business/bar-chart-fill.react.svg';
 import AlarmWarningLineIcon from '@/components/ui/icons/Remix/system/alarm-warning-line.react.svg';
+import NotificationLineIcon from '@/components/ui/icons/Remix/media/notification-line.react.svg';
 import QuestionLineIcon from '@/components/ui/icons/Remix/system/question-line.react.svg';
 import { I18n, TranslationId, useI18n } from '@/locales';
 import { useRoutes } from '@/services/routing';
-import { isLeaf, RouteItem } from '@/services/routing/types';
+import { isLeaf, RouteItem, RouteWithPath } from '@/services/routing/types';
 import TopLevelLink from '@/components/AppWrapper/Menu/TopLevelLink';
 import { getBranding } from '@/utils/branding';
 import { CluesoContext } from '@/components/AppWrapper/Providers/CluesoTokenProvider';
+import NotificationsDrawer from '@/components/AppWrapper/Menu/NotificationsDrawer';
 
 const icons = {
   accounts: <AddUsersIcon />,
@@ -44,58 +48,26 @@ const icons = {
 
 const branding = getBranding();
 
-function renderItems(
-  parentTranslationKey: string,
-  items: RouteItem[],
-  i18n: I18n,
-  isCollapsed: boolean,
-): React.ReactNode[] {
-  return items
-    .filter((route) => ('redirect' in route ? false : !route.hideInMenu))
-    .map((item): React.ReactNode => {
-      if ('redirect' in item) {
-        return null;
-      }
-      const fullKey = `${parentTranslationKey}.${item.name}`;
-      const icon = item.icon ? icons[item.icon] : undefined;
-
-      const submenu =
-        'routes' in item && !item.hideChildrenInMenu
-          ? item.routes
-              .filter(isLeaf)
-              .filter((x) => !x.hideInMenu)
-              .map((x) => ({
-                to: x.path,
-                title: i18n(`${fullKey}.${x.name}` as TranslationId),
-              }))
-          : undefined;
-      const disabledByFeature = !useFeaturesEnabled(item.associatedFeatures ?? []);
-      return (
-        <TopLevelLink
-          key={item.name}
-          to={item.path}
-          isCollapsed={isCollapsed}
-          isDisabled={item.disabled}
-          icon={icon}
-          submenu={submenu}
-          disabledByFeature={disabledByFeature}
-        >
-          {i18n(fullKey as TranslationId)}
-        </TopLevelLink>
-      );
-    });
-}
-
-export default function Menu(props: {
+interface Props {
   isCollapsed: boolean;
   onChangeCollapsed: (value: boolean) => void;
-}) {
+}
+
+export default function Menu(props: Props) {
   const { isCollapsed, onChangeCollapsed } = props;
+  const [isNotificationsDrawerVisible, setIsNotificationsDrawerVisible] = useState(false);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    setIsNotificationsDrawerVisible(false);
+  }, [location]);
 
   const i18n = useI18n();
   const routes = useRoutes();
   const sideBarCollapseContext = useContext(SideBarContext);
   const cluesoToken = useContext(CluesoContext);
+  const notificationsFeatureEnabled = useFeatureEnabled('NOTIFICATIONS');
 
   useEffect(() => {
     if (sideBarCollapseContext.collapseSideBar === 'AUTOMATIC') {
@@ -131,10 +103,92 @@ export default function Menu(props: {
             >
               {i18n('menu.support')}
             </TopLevelLink>,
+            notificationsFeatureEnabled && (
+              <TopLevelLink
+                key="notifications"
+                icon={<NotificationLineIcon />}
+                isActive={isNotificationsDrawerVisible}
+                isCollapsed={isCollapsed}
+                onClick={() => {
+                  setIsNotificationsDrawerVisible((x) => !x);
+                }}
+              >
+                Notifications
+              </TopLevelLink>
+            ),
           ])}
         </div>
       </div>
       <Footer isCollapsed={isCollapsed} />
+      <div className={cn(s.drawerContainer, isNotificationsDrawerVisible && s.isVisible)}>
+        <NotificationsDrawer
+          notifications={[]}
+          isVisible={isNotificationsDrawerVisible}
+          onReadNotification={(id) => {
+            throw new Error(`Not implemented: read notification ${id}`);
+          }}
+          onChangeVisibility={setIsNotificationsDrawerVisible}
+        />
+      </div>
     </div>
   );
+}
+
+function RenderItem(props: {
+  parentTranslationKey: string;
+  item: RouteWithPath;
+  i18n: I18n;
+  isCollapsed: boolean;
+}) {
+  const { i18n, isCollapsed, item, parentTranslationKey } = props;
+  const disabledByFeature = !useFeaturesEnabled(item.associatedFeatures ?? []);
+  const fullKey = `${parentTranslationKey}.${item.name}`;
+  const icon = item.icon ? icons[item.icon] : undefined;
+
+  const submenu =
+    'routes' in item && !item.hideChildrenInMenu
+      ? item.routes
+          .filter(isLeaf)
+          .filter((x) => !x.hideInMenu)
+          .map((x) => ({
+            to: x.path,
+            title: i18n(`${fullKey}.${x.name}` as TranslationId),
+          }))
+      : undefined;
+  return (
+    <TopLevelLink
+      key={item.name}
+      to={item.path}
+      isCollapsed={isCollapsed}
+      isDisabled={item.disabled}
+      icon={icon}
+      submenu={submenu}
+      disabledByFeature={disabledByFeature}
+    >
+      {i18n(fullKey as TranslationId)}
+    </TopLevelLink>
+  );
+}
+
+function renderItems(
+  parentTranslationKey: string,
+  items: RouteItem[],
+  i18n: I18n,
+  isCollapsed: boolean,
+): React.ReactNode[] {
+  return items
+    .filter((route) => ('redirect' in route ? false : !route.hideInMenu))
+    .map((item): React.ReactNode => {
+      if ('redirect' in item) {
+        return null;
+      }
+      return (
+        <RenderItem
+          parentTranslationKey={parentTranslationKey}
+          item={item}
+          i18n={i18n}
+          isCollapsed={isCollapsed}
+        />
+      );
+    });
 }

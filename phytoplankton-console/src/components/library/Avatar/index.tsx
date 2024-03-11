@@ -27,12 +27,12 @@ const Avatar = (props: Props) => {
   const imgHeight = size === 'small' ? 16 : size === 'medium' ? 20 : 24;
 
   return isLoading ? (
-    <div className={cn(s.avatar, s[size])}>
+    <div className={cn(s.avatar, s[`size-${size}`])}>
       <Spinner size="SMALL" />
     </div>
   ) : (
     <div
-      className={cn(s.avatar, s[size])}
+      className={cn(s.avatar, s[`size-${size}`])}
       style={
         !systemDisplay && user?.picture
           ? {
@@ -44,7 +44,7 @@ const Avatar = (props: Props) => {
       }
       title={`${user?.name || user?.email} avatar`}
     >
-      {systemDisplay && <img src={systemDisplay} height={imgHeight} />}
+      {systemDisplay && <img className={s.image} src={systemDisplay} height={imgHeight} />}
     </div>
   );
 };

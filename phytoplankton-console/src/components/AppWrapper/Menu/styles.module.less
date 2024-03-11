@@ -1,5 +1,6 @@
 @import 'src/components/ui/colors.less';
 @import 'src/components/ui/animation.less';
+@import 'src/components/ui/z-indexes.less';
 
 .root {
   background: @fr-colors-navyBlueShade;
@@ -7,6 +8,7 @@
   flex-direction: column;
   flex: 1;
   height: 100%;
+  position: relative;
 }
 
 .menuWrapper {
@@ -61,5 +63,19 @@
     border-top: 1px solid @fr-colors-navyBlue;
     margin-top: 8px;
     padding-top: 8px;
+  }
+}
+
+.drawerContainer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  transform: translateX(100%);
+  width: 100vw;
+  overflow: hidden;
+
+  &:not(.isVisible) {
+    pointer-events: none;
   }
 }

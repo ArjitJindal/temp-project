@@ -16,6 +16,8 @@ interface Props {
   noPadding?: boolean;
   isClickAwayEnabled?: boolean;
   rightAlignButtonsFooter?: boolean;
+  portaled?: boolean;
+  position?: 'LEFT' | 'RIGHT';
 }
 
 export default function Drawer(props: Props) {
@@ -26,8 +28,10 @@ export default function Drawer(props: Props) {
     onChangeVisibility,
     children,
     footer,
+    position = 'RIGHT',
     noPadding = false,
     isClickAwayEnabled = false,
+    portaled = true,
   } = props;
 
   const handleClose = () => {
@@ -45,9 +49,14 @@ export default function Drawer(props: Props) {
 
   const ref = React.useRef<HTMLDivElement>(null);
 
-  return ReactDOM.createPortal(
+  const result = (
     <div
-      className={cn(s.root, isVisible && s.isVisible, noPadding && s.noPadding)}
+      className={cn(
+        s.root,
+        isVisible && s.isVisible,
+        noPadding && s.noPadding,
+        s[`position-${position}`],
+      )}
       onClick={() => {
         if (isClickAwayEnabled) {
           handleClose();
@@ -84,7 +93,16 @@ export default function Drawer(props: Props) {
           </div>
         )}
       </div>
-    </div>,
-    window.document.body,
+    </div>
+  );
+  return (
+    <>
+      {portaled
+        ? ReactDOM.createPortal(
+            <div className={cn(s.portaledMenuContainer, isVisible && s.isVisible)}>{result}</div>,
+            window.document.body,
+          )
+        : result}
+    </>
   );
 }

@@ -11,15 +11,19 @@
 .root {
   display: flex;
   justify-content: flex-end;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   transition: visibility @default-animation-speed, background @default-animation-speed;
   visibility: hidden;
   background: transparent;
-  z-index: @drawer-z-index;
+  width: 100%;
+  height: 100%;
+
+  &.position-LEFT {
+    justify-content: flex-start;
+
+    .content {
+      transform: translateX(-100%);
+    }
+  }
 
   &.isVisible {
     visibility: visible;
@@ -35,6 +39,14 @@
       padding: 0;
     }
   }
+}
+
+.fixedPosition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .header {
@@ -97,4 +109,17 @@
 .rightAlignButtonsFooter {
   justify-content: flex-end;
   width: 100%;
+}
+
+.portaledMenuContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: @drawer-z-index;
+  height: 100%;
+  width: 100%;
+
+  &:not(.isVisible) {
+    pointer-events: none;
+  }
 }

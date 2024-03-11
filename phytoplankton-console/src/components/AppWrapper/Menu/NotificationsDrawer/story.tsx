@@ -1,0 +1,169 @@
+import React from 'react';
+import { UseCase } from '@/pages/storybook/components';
+import NotificationsDrawerItem, {
+  Notification,
+} from '@/components/AppWrapper/Menu/NotificationsDrawer/NotificationsDrawerItem';
+import NotificationsDrawer from '@/components/AppWrapper/Menu/NotificationsDrawer';
+import Button from '@/components/library/Button';
+import { humanizeConstant } from '@/utils/humanize';
+import Select from '@/components/library/Select';
+import { useUsers } from '@/utils/user-utils';
+import { NotificationType, Account } from '@/apis';
+
+export default function (): JSX.Element {
+  const [users] = useUsers();
+  return (
+    <>
+      <UseCase
+        title="Drawer"
+        initialState={{
+          isVisible: false,
+          notifications: [],
+          newNotificationType: 'CASE_ASSIGNMENT',
+        }}
+      >
+        {([state, setState]) => (
+          <>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Select
+                placeholder="Notification type"
+                allowClear={false}
+                options={[
+                  'CASE_ASSIGNMENT',
+                  'ALERT_ASSIGNMENT',
+                  'CASE_UNASSIGNMENT',
+                  'ALERT_UNASSIGNMENT',
+                  'CASE_ESCALATION',
+                  'ALERT_ESCALATION',
+                  'ALERT_COMMENT_MENTION',
+                  'CASE_COMMENT_MENTION',
+                  'USER_COMMENT_MENTION',
+                  'CASE_IN_REVIEW',
+                  'ALERT_IN_REVIEW',
+                  'ALERT_COMMENT',
+                  'CASE_COMMENT',
+                  'ALERT_STATUS_UPDATE',
+                  'CASE_STATUS_UPDATE',
+                ].map((notificationType) => ({
+                  value: notificationType,
+                  label: humanizeConstant(notificationType),
+                }))}
+                value={state.newNotificationType}
+                onChange={(newNotificationType) => {
+                  setState((prevState) => ({ ...prevState, newNotificationType }));
+                }}
+              />
+              <Button
+                onClick={() => {
+                  const notification = sampleNotification(
+                    state.newNotificationType,
+                    Object.values(users),
+                  );
+                  setState((prevState) => ({
+                    ...prevState,
+                    notifications: [notification, ...prevState.notifications],
+                  }));
+                }}
+              >
+                Create "{humanizeConstant(state.newNotificationType)}" notification
+              </Button>
+            </div>
+            {state.notifications.map((notification) => (
+              <NotificationsDrawerItem key={notification.id} notification={notification} />
+            ))}
+            <Button
+              onClick={() => {
+                setState((prevState) => ({ ...prevState, isVisible: !prevState.isVisible }));
+              }}
+            >
+              Show in drawer
+            </Button>
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 1,
+                pointerEvents: state.isVisible ? undefined : 'none',
+              }}
+            >
+              <NotificationsDrawer
+                notifications={state.notifications}
+                onReadNotification={() => {
+                  setState((prevState) => ({
+                    ...prevState,
+                    notifications: prevState.notifications.map((x) => ({
+                      ...x,
+                      consoleNotificationStatuses: [
+                        ...(x.consoleNotificationStatuses ?? []),
+                        {
+                          status: 'READ',
+                          stausUpdatedAt: Date.now(),
+                          recieverUserId: '1',
+                        },
+                      ],
+                    })),
+                  }));
+                }}
+                isVisible={state.isVisible}
+                onChangeVisibility={(isShown) => {
+                  setState((prevState) => ({ ...prevState, isVisible: isShown }));
+                }}
+              />
+            </div>
+          </>
+        )}
+      </UseCase>
+    </>
+  );
+}
+
+function sampleNotification(notificationType: NotificationType, users: Account[]) {
+  const usersList = Object.values(users);
+  const randomUser1 = usersList[Math.floor(Math.random() * usersList.length)];
+  const randomUser2 = usersList[Math.floor(Math.random() * usersList.length)];
+  let entityType;
+  switch (notificationType) {
+    case 'CASE_ASSIGNMENT':
+    case 'CASE_UNASSIGNMENT':
+    case 'CASE_ESCALATION':
+    case 'CASE_COMMENT_MENTION':
+    case 'CASE_IN_REVIEW':
+    case 'CASE_STATUS_UPDATE':
+    case 'CASE_COMMENT':
+      entityType = 'CASE';
+      break;
+    case 'ALERT_ASSIGNMENT':
+    case 'ALERT_UNASSIGNMENT':
+    case 'ALERT_ESCALATION':
+    case 'ALERT_COMMENT_MENTION':
+    case 'ALERT_COMMENT':
+    case 'ALERT_IN_REVIEW':
+    case 'ALERT_STATUS_UPDATE':
+      entityType = 'ALERT';
+      break;
+    case 'USER_COMMENT_MENTION':
+      entityType = 'USER';
+      break;
+  }
+  const notification: Notification = {
+    id: `${Date.now()}`,
+    notificationType: notificationType,
+    createdAt: Date.now(),
+    triggeredBy: randomUser1?.id,
+    recievers: [],
+    entityId: `E-${Math.round(Math.random() * 1000)}`,
+    entityType: entityType,
+    notificationData: null,
+    consoleNotificationStatuses: [
+      {
+        status: 'SENT',
+        stausUpdatedAt: 1686312000000,
+        recieverUserId: randomUser2.id,
+      },
+    ],
+  };
+  return notification;
+}

@@ -7,10 +7,12 @@ import DemoModeProvider from './DemoModeProvider';
 import FlagrightUserProvider from './FlagrightUserProvider';
 import AuthProvider from './AuthProvider';
 import SettingsProviderMock from './mocks/SettingsProvider';
+import ApiProviderMock from './mocks/ApiProvider';
 import FlagrightUserProviderMock from './mocks/FlagrightUserProvider';
 import { BrowserSupportProvider } from './BrowserSupportProvider';
 import { SuperAdminModeProvider } from './SuperAdminModeProvider';
 import CluesoTokenProvider from '@/components/AppWrapper/Providers/CluesoTokenProvider';
+import ApiProvider from '@/components/AppWrapper/Providers/ApiProvider';
 
 interface Props {
   children?: React.ReactNode;
@@ -23,6 +25,7 @@ const withProviders =
     components.reduceRight((acc, Comp) => <Comp>{acc}</Comp>, children);
 
 const StoryBookProviders = withProviders(
+  ApiProviderMock,
   AntConfigProvider,
   QueryClientProvider,
   FlagrightUserProviderMock,
@@ -34,6 +37,7 @@ const AllProviders = withProviders(
   AntConfigProvider,
   QueryClientProvider,
   FlagrightUserProvider,
+  ApiProvider,
   SettingsProvider,
   BrowserSupportProvider,
   SideBarProvider,
