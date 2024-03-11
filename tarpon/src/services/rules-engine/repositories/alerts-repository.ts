@@ -491,7 +491,7 @@ export class AlertsRepository {
     return result.flatMap((caseItem) => caseItem.alerts ?? [])
   }
 
-  public async saveAlertComment(
+  public async saveComment(
     caseId: string,
     alertId: string,
     comment: Comment
@@ -628,7 +628,7 @@ export class AlertsRepository {
     return commentToSave
   }
 
-  public async deleteAlertComment(
+  public async deleteComment(
     caseId: string,
     alertId: string,
     commentId: string
@@ -663,7 +663,7 @@ export class AlertsRepository {
     )
   }
 
-  public async updateAlertsStatus(
+  public async updateStatus(
     alertIds: string[],
     caseIds: string[],
     statusChange: CaseStatusChange,
@@ -815,14 +815,14 @@ export class AlertsRepository {
     return result
   }
 
-  public async updateAlertsReviewAssignments(
+  public async updateReviewAssignments(
     alertIds: string[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
     return this.updateReviewAssigneeToAlertsPrivate(alertIds, reviewAssignments)
   }
 
-  public async updateAlertsAssignments(
+  public async updateAssignments(
     alertIds: string[],
     assignments: Assignment[]
   ): Promise<void> {

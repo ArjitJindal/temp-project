@@ -158,7 +158,6 @@ async function transactionHandler(
   const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
-  const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
   const riskScoringService = new RiskScoringService(tenantId, {
     dynamoDb,
@@ -185,13 +184,10 @@ async function transactionHandler(
     ),
   ])
 
-  const caseCreationService = new CaseCreationService(
-    casesRepo,
-    usersRepo,
-    ruleInstancesRepo,
-    transactionsRepo,
-    settings
-  )
+  const caseCreationService = new CaseCreationService(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
 
   const userService = new UserService(tenantId, { dynamoDb, mongoDb })
 
@@ -263,25 +259,19 @@ async function userHandler(
   let internalUser = user as InternalUser
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
-  const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
   const casesRepo = new CaseRepository(tenantId, {
     mongoDb,
     dynamoDb,
   })
-  const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
-    dynamoDb,
-  })
+
   const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
   const settings = await tenantSettings(tenantId)
 
-  const caseCreationService = new CaseCreationService(
-    casesRepo,
-    usersRepo,
-    ruleInstancesRepo,
-    transactionsRepo,
-    settings
-  )
+  const caseCreationService = new CaseCreationService(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
 
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
   const isRiskScoringEnabled = settings?.features?.includes('RISK_SCORING')

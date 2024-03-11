@@ -270,7 +270,7 @@ export const transactionsViewHandler = lambdaApi()(
               alert.alertId &&
               alert.ruleAction === 'SUSPEND'
             ) {
-              await alertService.saveAlertComment(alert.alertId, {
+              await alertService.saveComment(alert.alertId, {
                 body: `${txnIds.join(', ')} set to ${
                   req.TransactionAction.action
                 }. Reasons: ${req.TransactionAction.reason.join(

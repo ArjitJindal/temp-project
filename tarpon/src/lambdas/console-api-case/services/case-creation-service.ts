@@ -10,6 +10,9 @@ import {
 } from 'lodash'
 import pluralize from 'pluralize'
 import createHttpError from 'http-errors'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { MongoClient } from 'mongodb'
+import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -34,7 +37,6 @@ import {
   calculateCaseAvailableDate,
   getDerivedStatus,
 } from '@/lambdas/console-api-case/services/utils'
-import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { notNullish } from '@/core/utils/array'
 import { getDefaultTimezone } from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
@@ -51,6 +53,8 @@ import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 import {
   tenantSettings as contextTenantSettings,
   getContext,
+  tenantSettings,
+  tenantTimezone,
 } from '@/core/utils/context'
 import { uniqObjects } from '@/utils/object'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
@@ -80,20 +84,34 @@ export class CaseCreationService {
   userRepository: UserRepository
   ruleInstanceRepository: RuleInstanceRepository
   transactionRepository: MongoDbTransactionRepository
-  tenantSettings: TenantSettings
+  auditLogService: CasesAlertsAuditLogService
+  tenantId: string
+  mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
+
   constructor(
-    caseRepository: CaseRepository,
-    userRepository: UserRepository,
-    ruleInstanceRepository: RuleInstanceRepository,
-    transactionRepository: MongoDbTransactionRepository,
-    tenantSettings: TenantSettings
+    tenantID: string,
+    connections: { dynamoDb: DynamoDBDocumentClient; mongoDb: MongoClient }
   ) {
-    this.caseRepository = caseRepository
-    this.userRepository = userRepository
-    this.ruleInstanceRepository = ruleInstanceRepository
-    this.transactionRepository = transactionRepository
-    this.tenantSettings = tenantSettings
+    this.caseRepository = new CaseRepository(tenantID, connections)
+    this.userRepository = new UserRepository(tenantID, connections)
+    this.ruleInstanceRepository = new RuleInstanceRepository(
+      tenantID,
+      connections
+    )
+    this.transactionRepository = new MongoDbTransactionRepository(
+      tenantID,
+      connections.mongoDb
+    )
+    this.auditLogService = new CasesAlertsAuditLogService(tenantID, connections)
+    this.tenantId = tenantID
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
   }
+
+  private tenantSettings = memoize(async () => {
+    return await tenantSettings(this.tenantId)
+  })
 
   private async sendCasesOpenedWebhook(cases: Case[]) {
     const webhookTasks: ThinWebhookDeliveryTask<CaseOpenedDetails>[] =
@@ -110,10 +128,7 @@ export class CaseCreationService {
         },
       }))
 
-    await sendWebhookTasks<CaseOpenedDetails>(
-      this.caseRepository.tenantId,
-      webhookTasks
-    )
+    await sendWebhookTasks<CaseOpenedDetails>(this.tenantId, webhookTasks)
   }
 
   private getManualCaseComment(
@@ -231,7 +246,16 @@ export class CaseCreationService {
       transactions.map((t) => t.transactionId)
     )
 
-    await this.caseRepository.saveCaseComment(case_.caseId!, comment)
+    await this.auditLogService.createAuditLog({
+      caseId: case_?.caseId ?? '',
+      logAction: 'CREATE',
+      caseDetails: case_, // Removed case transactions to prevent sqs message size limit
+      newImage: case_,
+      oldImage: {},
+      subtype: 'MANUAL_CASE_CREATION',
+    })
+
+    await this.caseRepository.saveComment(case_.caseId!, comment)
 
     return case_
   }
@@ -458,7 +482,8 @@ export class CaseCreationService {
             ? calculateCaseAvailableDate(
                 now,
                 ruleInstanceMatch?.alertConfig?.alertCreationInterval,
-                this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
+                (await this.tenantSettings()).tenantTimezone ??
+                  getDefaultTimezone()
               )
             : undefined
         const ruleChecklist = checkListTemplates?.find(
@@ -700,18 +725,25 @@ export class CaseCreationService {
       oldCaseAlertsTransactions.map(({ transactionId }) => transactionId)
     )
 
-    // Save old case
-    await this.addOrUpdateCase({
-      ...sourceCase,
-      alerts: oldCaseAlerts,
-      caseTransactionsIds: oldCaseTransactionsIds,
-      caseTransactionsCount: oldCaseTransactionsIds.length,
-      priority: minBy(oldCaseAlerts, 'priority')?.priority ?? last(PRIORITYS),
-      updatedAt: now,
-      caseAggregates: this.getCaseAggregatesFromTransactions(
-        oldCaseAlertsTransactions ?? []
+    await Promise.all([
+      this.addOrUpdateCase({
+        ...sourceCase,
+        alerts: oldCaseAlerts,
+        caseTransactionsIds: oldCaseTransactionsIds,
+        caseTransactionsCount: oldCaseTransactionsIds.length,
+        priority: minBy(oldCaseAlerts, 'priority')?.priority ?? last(PRIORITYS),
+        updatedAt: now,
+        caseAggregates: this.getCaseAggregatesFromTransactions(
+          oldCaseAlertsTransactions ?? []
+        ),
+      }),
+      this.auditLogService.handleAuditLogForNewCase(newCase),
+      this.auditLogService.handleAuditLogForAlerts(
+        sourceCase.caseId as string,
+        sourceCase.alerts,
+        newCase.alerts
       ),
-    })
+    ])
 
     return newCase
   }
@@ -721,8 +753,8 @@ export class CaseCreationService {
     hitRules: HitRulesDetails[]
   ): Promise<ChecklistTemplate[]> {
     const checklistTemplatesService = new ChecklistTemplatesService(
-      this.userRepository.tenantId,
-      this.userRepository.mongoDb
+      this.tenantId,
+      this.mongoDb
     )
 
     const checkListTemplateIds = uniq(
@@ -850,7 +882,7 @@ export class CaseCreationService {
         }
       }
       const now = Date.now()
-
+      const timezone = await tenantTimezone(this.tenantId)
       const delayTimestamps = filteredHitRules.map((hitRule) => {
         const ruleInstanceMatch: RuleInstance | undefined = ruleInstances.find(
           (x) => hitRule.ruleInstanceId === x.id
@@ -860,9 +892,10 @@ export class CaseCreationService {
             ? calculateCaseAvailableDate(
                 now,
                 ruleInstanceMatch?.alertConfig?.alertCreationInterval,
-                this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
+                timezone
               )
             : undefined
+
         return {
           hitRule,
           ruleInstance: ruleInstanceMatch,
@@ -1174,7 +1207,7 @@ export class CaseCreationService {
   }
 
   getUsersByRole = memoize(async (assignedRole) => {
-    const settings = await contextTenantSettings(this.caseRepository.tenantId)
+    const settings = await contextTenantSettings(this.tenantId)
     const roleService = new RoleService({
       auth0Domain:
         settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string),

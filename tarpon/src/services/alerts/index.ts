@@ -61,7 +61,11 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { isStatusInReview } from '@/utils/helpers'
+import {
+  getMentionsFromComments,
+  getParsedCommentBody,
+  isStatusInReview,
+} from '@/utils/helpers'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
 import { ChecklistDoneStatus } from '@/@types/openapi-internal/ChecklistDoneStatus'
@@ -120,7 +124,7 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
-  public async getAlert(alertId: string): Promise<Alert | null> {
+  public async getAlert(alertId: string, options?: { auditLog?: boolean }) {
     const caseGetSegment = await addNewSubsegment(
       'Case Service',
       'Mongo Get Alert Query'
@@ -152,20 +156,34 @@ export class AlertsService extends CaseAlertsCommonService {
         })
       )
 
+      if (options?.auditLog) {
+        await this.auditLogService.createAlertAuditLog({
+          alertId,
+          logAction: 'VIEW',
+          oldImage: {},
+          newImage: {},
+          alertDetails: alert,
+        })
+      }
+
       return alert
     } finally {
       caseGetSegment?.close()
     }
   }
 
-  public async validateAlertsQAStatus(alertIds: string[]): Promise<boolean> {
+  public async validateAlertsQAStatus(
+    alertIds: string[]
+  ): Promise<{ valid: boolean }> {
     const alerts = await this.alertsRepository.validateAlertsQAStatus(alertIds)
     const requiredAlerts = alerts.filter((alert) =>
       alertIds.includes(alert.alertId!)
     )
-    return requiredAlerts.every((alert) =>
+    const valid = requiredAlerts.every((alert) =>
       alert.ruleChecklist?.every((item) => item.status)
     )
+
+    return { valid }
   }
 
   public async escalateAlerts(
@@ -268,7 +286,7 @@ export class AlertsService extends CaseAlertsCommonService {
       !isStatusInReview(remainingAlerts?.[0]?.alertStatus) &&
       !isTransactionsEscalation
     ) {
-      await this.updateAlertsStatus(
+      await this.updateStatus(
         alertIds,
         {
           alertStatus: 'ESCALATED',
@@ -283,7 +301,7 @@ export class AlertsService extends CaseAlertsCommonService {
       )
 
       if (caseUpdateRequest?.caseStatus) {
-        await caseService.updateCasesStatus(
+        await caseService.updateStatus(
           [caseId],
           {
             reason: caseUpdateRequest?.reason ?? [],
@@ -473,7 +491,7 @@ export class AlertsService extends CaseAlertsCommonService {
     await caseRepository.addCaseMongo(omit(newCase, '_id'))
     await caseRepository.addCaseMongo(updatedExistingCase)
 
-    await caseService.updateCasesStatus([newCase.caseId!], {
+    await caseService.updateStatus([newCase.caseId!], {
       ...caseUpdateRequest,
       caseStatus: newCase.caseStatus,
     })
@@ -511,7 +529,7 @@ export class AlertsService extends CaseAlertsCommonService {
     return { childCaseId, assigneeIds }
   }
 
-  public async saveAlertComment(
+  public async saveComment(
     alertId: string,
     comment: Comment
   ): Promise<Comment> {
@@ -522,12 +540,20 @@ export class AlertsService extends CaseAlertsCommonService {
     }
 
     const files = await this.copyFiles(comment.files || [])
+    const mentions = getMentionsFromComments(comment.body)
+    const userId = getContext()?.user?.id
 
-    const savedComment = await this.alertsRepository.saveAlertComment(
+    const savedComment = await this.alertsRepository.saveComment(
       alert.caseId!,
       alertId,
-      { ...comment, files }
+      { ...comment, files, userId }
     )
+
+    await this.auditLogService.handleAuditLogForAlertsComments(alertId, {
+      ...savedComment,
+      body: getParsedCommentBody(savedComment.body),
+      mentions,
+    })
 
     return {
       ...savedComment,
@@ -535,7 +561,7 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
-  public async saveAlertCommentReply(
+  public async saveCommentReply(
     alertId: string,
     commentId: string,
     reply: Comment
@@ -552,21 +578,10 @@ export class AlertsService extends CaseAlertsCommonService {
       throw new NotFound(`"${commentId}" comment not found`)
     }
 
-    const files = await this.copyFiles(reply.files || [])
-
-    const savedComment = await this.alertsRepository.saveAlertsComment(
-      [alertId],
-      [alert.caseId!],
-      { ...reply, files, parentId: commentId }
-    )
-
-    return {
-      ...savedComment,
-      files: await this.getUpdatedFiles(savedComment.files),
-    }
+    return this.saveComment(alertId, { ...reply, parentId: commentId })
   }
 
-  private async saveAlertsComment(
+  private async saveComments(
     alertIds: string[],
     caseIds: string[],
     comment: Comment
@@ -585,60 +600,85 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
-  public async updateAlertsAssignments(
+  public async updateAssignments(
     alertIds: string[],
     assignments: Assignment[]
   ): Promise<void> {
     const timestamp = Date.now()
+    const existingAlerts = await this.getAlertsByIds(alertIds)
 
     assignments.forEach((a) => {
       a.timestamp = timestamp
     })
 
-    await this.alertsRepository.updateAlertsAssignments(alertIds, assignments)
+    await Promise.all([
+      this.alertsRepository.updateAssignments(alertIds, assignments),
+      ...alertIds.map(async (alertId) => {
+        const oldAlert = existingAlerts.find((a) => a.alertId === alertId)
+
+        await this.auditLogService.handleAuditLogForAlertAssignment(
+          alertId,
+          { assignments: oldAlert?.assignments },
+          { assignments }
+        )
+      }),
+    ])
   }
 
-  public async updateAlertsReviewAssignments(
+  public async updateReviewAssignments(
     alertIds: string[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
     const timestamp = Date.now()
+    const existingAlerts = await this.getAlertsByIds(alertIds)
 
     reviewAssignments.forEach((a) => {
       a.timestamp = timestamp
     })
 
-    await this.alertsRepository.updateAlertsReviewAssignments(
-      alertIds,
-      reviewAssignments
-    )
+    await Promise.all([
+      this.alertsRepository.updateReviewAssignments(
+        alertIds,
+        reviewAssignments
+      ),
+      ...alertIds.map(async (alertId) => {
+        const oldAlert = existingAlerts.find((a) => a.alertId === alertId)
+
+        await this.auditLogService.handleAuditLogForAlertAssignment(
+          alertId,
+          { reviewAssignments: oldAlert?.reviewAssignments },
+          { reviewAssignments }
+        )
+      }),
+    ])
   }
 
-  public async deleteAlertComment(
+  public async deleteComment(
     alertId: string,
     commentId: string
-  ): Promise<Comment> {
+  ): Promise<void> {
     const alert = await this.alertsRepository.getAlertById(alertId)
     const comment = alert?.comments?.find(({ id }) => id === commentId) ?? null
-    if (comment == null) {
-      throw new NotFound(`"${commentId}" comment not found`)
+
+    if (comment == null || alert == null) {
+      throw new NotFound(`Alert comment not found`)
     }
 
-    if (alert == null) {
-      throw new NotFound(`"${alertId}" alert not found`)
-    }
+    const caseId = alert.caseId
 
-    if (alert.caseId == null) {
+    if (caseId == null) {
       throw new Error(`Alert case id is null`)
     }
 
-    await this.alertsRepository.deleteAlertComment(
-      alert.caseId,
-      alertId,
-      commentId
-    )
-
-    return comment
+    await withTransaction(async () => {
+      await Promise.all([
+        this.alertsRepository.deleteComment(caseId, alertId, commentId),
+        this.auditLogService.handleAuditLogForAlertsCommentDelete(
+          alertId,
+          comment
+        ),
+      ])
+    })
   }
 
   private getAlertStatusChangeCommentBody(
@@ -689,7 +729,7 @@ export class AlertsService extends CaseAlertsCommonService {
     return this.alertsRepository.getAlertsByIds(alertIds)
   }
 
-  public async updateAlertsStatus(
+  public async updateStatus(
     alertIds: string[],
     statusUpdateRequest: AlertStatusUpdateRequest,
     options?: {
@@ -699,7 +739,11 @@ export class AlertsService extends CaseAlertsCommonService {
       account?: Account
       updateChecklistStatus?: boolean
     }
-  ): Promise<{ oldAlerts: Alert[] }> {
+  ): Promise<void> {
+    if (!alertIds.length) {
+      return
+    }
+
     const {
       bySystem,
       cascadeCaseUpdates = true,
@@ -797,12 +841,8 @@ export class AlertsService extends CaseAlertsCommonService {
 
     await withTransaction(async () => {
       const [response] = await Promise.all([
-        this.alertsRepository.updateAlertsStatus(
-          alertIds,
-          caseIds,
-          statusChange
-        ),
-        this.saveAlertsComment(alertIds, caseIds, {
+        this.alertsRepository.updateStatus(alertIds, caseIds, statusChange),
+        this.saveComments(alertIds, caseIds, {
           userId: statusChange.userId,
           body: commentBody,
           files: statusUpdateRequest.files,
@@ -845,6 +885,11 @@ export class AlertsService extends CaseAlertsCommonService {
           : []),
       ])
 
+      await this.auditLogService.handleAuditLogForAlertsUpdate(
+        alerts,
+        statusUpdateRequest
+      )
+
       const caseIdsWithAllAlertsSameStatus =
         response.caseIdsWithAllAlertsSameStatus
 
@@ -865,22 +910,17 @@ export class AlertsService extends CaseAlertsCommonService {
           otherReason,
           files: statusUpdateRequest.files,
         }
-        await Promise.all([
-          caseService.updateCasesStatus(
-            caseIdsWithAllAlertsSameStatus,
-            caseUpdateStatus,
-            {
-              bySystem: true,
-              cascadeAlertsUpdate: false,
-              account: userAccount,
-              updateChecklistStatus: false,
-            }
-          ),
-          this.auditLogService.handleAuditLogForCaseUpdate(
-            cases,
-            caseUpdateStatus
-          ),
-        ])
+
+        await caseService.updateStatus(
+          caseIdsWithAllAlertsSameStatus,
+          caseUpdateStatus,
+          {
+            bySystem: true,
+            cascadeAlertsUpdate: false,
+            account: userAccount,
+            updateChecklistStatus: false,
+          }
+        )
       }
 
       if (
@@ -907,8 +947,6 @@ export class AlertsService extends CaseAlertsCommonService {
     if (statusUpdateRequest.alertStatus === 'CLOSED') {
       await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
     }
-
-    return { oldAlerts: alerts }
   }
 
   private async sendAlertClosedWebhook(

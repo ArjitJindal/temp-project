@@ -22,20 +22,12 @@ function useCreateNewCaseMutation({ onResetSelection }: { onResetSelection: () =
   const createNewCaseMutation = useMutation<
     Case,
     unknown,
-    {
-      sourceCaseId: string;
-      alertIds: string[];
-    }
+    { sourceCaseId: string; alertIds: string[] }
   >(
     async ({ alertIds, sourceCaseId }) => {
       const hideLoading = message.loading('Moving alerts to new case');
       try {
-        return await api.alertsNoNewCase({
-          AlertsToNewCaseRequest: {
-            sourceCaseId,
-            alertIds,
-          },
-        });
+        return await api.alertsNoNewCase({ AlertsToNewCaseRequest: { sourceCaseId, alertIds } });
       } finally {
         hideLoading();
       }
@@ -43,12 +35,9 @@ function useCreateNewCaseMutation({ onResetSelection }: { onResetSelection: () =
     {
       onSuccess: async (response, variables) => {
         message.success(`New case ${response.caseId} successfully created`);
-        await queryClient.invalidateQueries({
-          queryKey: CASES_ITEM_ALERT_LIST(variables.sourceCaseId),
-        });
-        await queryClient.invalidateQueries({
-          queryKey: CASES_LIST({}),
-        });
+        const queryKey = CASES_ITEM_ALERT_LIST(variables.sourceCaseId);
+        await queryClient.invalidateQueries({ queryKey });
+        await queryClient.invalidateQueries({ queryKey: CASES_LIST({}) });
         onResetSelection();
       },
       onError: (e) => {

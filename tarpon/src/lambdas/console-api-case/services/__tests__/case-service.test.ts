@@ -550,7 +550,7 @@ describe('Post APIs Alerts Tests', () => {
       body: 'some-comment-2',
     }
 
-    await alertsService.saveAlertComment(TEST_ALERT_1.alertId!, comment)
+    await alertsService.saveComment(TEST_ALERT_1.alertId!, comment)
 
     const c = await caseService.getCase('C-1')
 
@@ -583,8 +583,8 @@ describe('Post APIs Alerts Tests', () => {
         },
       ],
     })
-    await alertsService.saveAlertComment(TEST_ALERT_2.alertId!, comment2)
-    await alertsService.deleteAlertComment(TEST_ALERT_1.alertId!, COMMENT_ID_1)
+    await alertsService.saveComment(TEST_ALERT_2.alertId!, comment2)
+    await alertsService.deleteComment(TEST_ALERT_1.alertId!, COMMENT_ID_1)
 
     const caseAfterDeletion = await caseService.getCase('C-1')
 
@@ -645,8 +645,8 @@ describe('Post APIs Alerts Tests', () => {
       body: 'some-comment-2',
     }
 
-    await alertsService.saveAlertComment(TEST_ALERT_1.alertId!, comment)
-    await alertsService.saveAlertComment(TEST_ALERT_1.alertId!, comment2)
+    await alertsService.saveComment(TEST_ALERT_1.alertId!, comment)
+    await alertsService.saveComment(TEST_ALERT_1.alertId!, comment2)
 
     const c = await caseService.getCase('C-1')
 
@@ -682,7 +682,7 @@ describe('Post APIs Alerts Tests', () => {
       ],
     })
 
-    await alertsService.deleteAlertComment(TEST_ALERT_1.alertId!, COMMENT_ID_1)
+    await alertsService.deleteComment(TEST_ALERT_1.alertId!, COMMENT_ID_1)
 
     const caseAfterDeletion = await caseService.getCase('C-1')
 
@@ -725,7 +725,7 @@ describe('Post APIs Alerts Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await alertsService.updateAlertsStatus(['A-1'], {
+    await alertsService.updateStatus(['A-1'], {
       alertStatus: 'CLOSED',
       priority: 'P1',
       comment: 'some comment',
@@ -827,7 +827,7 @@ describe('Post APIs Alerts Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await alertsService.updateAlertsStatus(['A-1'], {
+    await alertsService.updateStatus(['A-1'], {
       alertStatus: 'CLOSED',
       priority: 'P1',
       comment: 'some comment',
@@ -899,7 +899,7 @@ describe('Post APIs Alerts Tests', () => {
     const USER_ID_1 = nanoid()
     const USER_ID_2 = nanoid()
 
-    await alertsService.updateAlertsAssignments(
+    await alertsService.updateAssignments(
       ['A-1'],
       [
         {
@@ -949,7 +949,7 @@ describe('Case Service - Post Api Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await caseService.updateCasesStatus(['C-1-2'], {
+    await caseService.updateStatus(['C-1-2'], {
       caseStatus: 'CLOSED',
       reason: ['False positive'],
       comment: 'some comment',
@@ -1003,7 +1003,7 @@ describe('Case Service - Post Api Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await caseService.updateCasesStatus(['C-1-1'], {
+    await caseService.updateStatus(['C-1-1'], {
       caseStatus: 'CLOSED',
       reason: ['False positive'],
       comment: 'some comment',
@@ -1102,7 +1102,7 @@ describe('Case Service - Post Api Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await caseService.updateCasesAssignments(
+    await caseService.updateAssignments(
       ['C-1-2'],
       [
         {
@@ -1145,7 +1145,7 @@ describe('Case Service - Post Api Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await caseService.updateCasesReviewAssignments(
+    await caseService.updateReviewAssignments(
       ['C-1-3'],
       [
         {
@@ -1199,7 +1199,7 @@ describe('Case Service - Post Api Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await caseService.updateCasesAssignments(
+    await caseService.updateAssignments(
       ['C-1-4', 'C-1-5'],
       [
         {
@@ -1270,7 +1270,7 @@ describe('Case Service - Post Api Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await caseService.updateCasesReviewAssignments(
+    await caseService.updateReviewAssignments(
       ['C-1-4', 'C-1-5'],
       [
         {
@@ -1330,7 +1330,7 @@ describe('Case Service - Post Api Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await caseService.updateCasesStatus(['C-1-6'], {
+    await caseService.updateStatus(['C-1-6'], {
       caseStatus: 'CLOSED',
       comment: 'I am closing this case',
       reason: ['False positive', 'Other'],
@@ -1412,7 +1412,7 @@ describe('Case Service - Post Api Tests', () => {
       ],
     })
 
-    await caseService.updateCasesStatus(['C-1-6'], {
+    await caseService.updateStatus(['C-1-6'], {
       caseStatus: 'REOPENED',
       reason: ['Other'],
       otherReason: 'This is a duplicate case',
@@ -1531,7 +1531,7 @@ describe('Case Service - Post Api Tests', () => {
     })
 
     // Add assignments to the case
-    await caseService.updateCasesAssignments(
+    await caseService.updateAssignments(
       ['C-1-5'],
       [
         {
@@ -1584,7 +1584,7 @@ describe('Case Service - Post Api Tests', () => {
     })
 
     // Add assignments to the case
-    await caseService.updateCasesReviewAssignments(
+    await caseService.updateReviewAssignments(
       ['C-1-5'],
       [
         {
@@ -1635,7 +1635,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseType: 'SYSTEM',
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
-    await caseService.updateCasesStatus(['C-1-5'], {
+    await caseService.updateStatus(['C-1-5'], {
       caseStatus: 'CLOSED',
       reason: ['False positive'],
       otherReason: 'This is a duplicate case',
@@ -1816,7 +1816,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await caseService.updateCasesStatus([caseId], {
+    await caseService.updateStatus([caseId], {
       caseStatus: 'CLOSED',
       reason: ['False positive'],
       otherReason: 'This is a duplicate case',
@@ -1852,7 +1852,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         },
       ],
     })
-    await caseService.updateCasesStatus([caseId], {
+    await caseService.updateStatus([caseId], {
       caseStatus: 'CLOSED',
       reason: [],
     })
@@ -1944,13 +1944,13 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseType: 'SYSTEM',
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
-    await caseService.updateCasesStatus([caseId], {
+    await caseService.updateStatus([caseId], {
       caseStatus: 'CLOSED',
       reason: ['False positive'],
       otherReason: 'This is a duplicate case',
       comment: 'I am closing this case',
     })
-    await caseService.updateCasesStatus([caseId], {
+    await caseService.updateStatus([caseId], {
       caseStatus: 'OPEN',
       reason: [],
     })
@@ -2124,7 +2124,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     expect(c?.caseStatus).toBe('IN_REVIEW_ESCALATED')
     expect(c?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
     expect(c?.alerts?.[1]?.alertStatus).toBe('CLOSED')
-    await caseService.updateCasesStatus([caseId], {
+    await caseService.updateStatus([caseId], {
       caseStatus: 'OPEN',
       reason: [],
     })
@@ -2193,7 +2193,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseType: 'SYSTEM',
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
-    await alertsService.updateAlertsStatus([testAlertId], {
+    await alertsService.updateStatus([testAlertId], {
       alertStatus: 'CLOSED',
       reason: ['False positive'],
       otherReason: 'This is a duplicate alert',
@@ -2331,7 +2331,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     const c4 = await caseService.getCase(`${caseId2}.1`)
     expect(c4?.caseStatus).toBe('IN_REVIEW_ESCALATED')
     expect(c4?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
-    await alertsService.updateAlertsStatus([testAlertIds[1]], {
+    await alertsService.updateStatus([testAlertIds[1]], {
       alertStatus: 'OPEN',
       reason: [],
     })
@@ -2339,7 +2339,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     expect(c5?.caseStatus).toBe('OPEN')
     expect(c5?.alerts?.[1]?.alertStatus).toBe('OPEN')
     expect(c5?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
-    await caseService.updateCasesStatus([caseId2], {
+    await caseService.updateStatus([caseId2], {
       reason: [],
       caseStatus: 'CLOSED',
     })
@@ -2384,7 +2384,7 @@ describe('Case/Alerts Service - Status Change Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await caseService.updateCasesStatus([caseId], {
+    await caseService.updateStatus([caseId], {
       caseStatus: 'CLOSED',
       reason: ['False positive'],
     })
@@ -2458,7 +2458,7 @@ describe('Case/Alerts Service - Status Change Tests', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
 
-    await alertService.updateAlertsStatus([alertId], {
+    await alertService.updateStatus([alertId], {
       alertStatus: 'CLOSED',
       reason: ['False positive'],
     })

@@ -49,7 +49,11 @@ import {
 import { AlertsService } from '@/services/alerts'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { isStatusInReview } from '@/utils/helpers'
+import {
+  getMentionsFromComments,
+  getParsedCommentBody,
+  isStatusInReview,
+} from '@/utils/helpers'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -230,6 +234,15 @@ export class CaseService extends CaseAlertsCommonService {
       transactionsCount
     )
 
+    await this.auditLogService.createAuditLog({
+      caseId: caseId,
+      logAction: 'UPDATE',
+      caseDetails: updatedCase,
+      newImage: updatedCase,
+      oldImage: case_,
+      subtype: 'MANUAL_CASE_TRANSACTIONS_ADDITION',
+    })
+
     return updatedCase as Case
   }
 
@@ -386,7 +399,7 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
-  public async updateCasesStatus(
+  public async updateStatus(
     caseIds: string[],
     updates: CaseStatusUpdate,
     options?: {
@@ -398,7 +411,7 @@ export class CaseService extends CaseAlertsCommonService {
       filterInReview?: boolean
       updateChecklistStatus?: boolean
     }
-  ): Promise<{ oldCases: Case[] }> {
+  ): Promise<void> {
     const {
       cascadeAlertsUpdate = true,
       skipReview = false,
@@ -516,6 +529,7 @@ export class CaseService extends CaseAlertsCommonService {
           ? [this.caseRepository.markAllChecklistItemsAsDone(caseIds)]
           : []),
       ])
+      await this.auditLogService.handleAuditLogForCaseUpdate(cases, updates)
 
       if (updates.caseStatus && cascadeAlertsUpdate && !isInProgressOrOnHold) {
         const alerts = cases
@@ -539,7 +553,7 @@ export class CaseService extends CaseAlertsCommonService {
         }
 
         if (updates.caseStatus === 'ESCALATED' && options?.reviewAssignments) {
-          await this.alertsService.updateAlertsReviewAssignments(
+          await this.alertsService.updateReviewAssignments(
             alerts.map((a) => a.alertId!),
             options.reviewAssignments
           )
@@ -562,19 +576,14 @@ export class CaseService extends CaseAlertsCommonService {
         }
 
         const alertIds = alerts.map((a) => a.alertId!)
-        await Promise.all([
-          this.alertsService.updateAlertsStatus(alertIds, alertsStatusChange, {
-            bySystem: true,
-            cascadeCaseUpdates: false,
-            account,
-            skipReview: skipReview || isLastInReview,
-            updateChecklistStatus: false,
-          }),
-          this.auditLogService.handleAuditLogForAlertsUpdate(
-            alerts,
-            alertsStatusChange
-          ),
-        ])
+
+        await this.alertsService.updateStatus(alertIds, alertsStatusChange, {
+          bySystem: true,
+          cascadeCaseUpdates: false,
+          account,
+          skipReview: skipReview || isLastInReview,
+          updateChecklistStatus: false,
+        })
       }
     })
 
@@ -594,8 +603,6 @@ export class CaseService extends CaseAlertsCommonService {
         })
       )
     }
-
-    return { oldCases: cases }
   }
 
   public async getCase(
@@ -621,16 +628,25 @@ export class CaseService extends CaseAlertsCommonService {
     return case_
   }
 
-  public async saveCaseComment(caseId: string | undefined, comment: Comment) {
-    // Copy the files from tmp bucket to document bucket
+  public async saveComment(caseId: string | undefined, comment: Comment) {
     if (!caseId) {
       throw new BadRequest('Case id is required')
     }
-    const files = await this.copyFiles(comment.files ?? [])
 
-    const savedComment = await this.caseRepository.saveCaseComment(caseId, {
+    const files = await this.copyFiles(comment.files ?? [])
+    const mentions = getMentionsFromComments(comment.body)
+    const userId = getContext()?.user?.id
+
+    const savedComment = await this.caseRepository.saveComment(caseId, {
       ...comment,
       files,
+      userId,
+    })
+
+    await this.auditLogService.handleAuditLogForCasesComments(caseId, {
+      ...savedComment,
+      body: getParsedCommentBody(savedComment.body),
+      mentions,
     })
 
     return {
@@ -641,7 +657,7 @@ export class CaseService extends CaseAlertsCommonService {
 
   public async saveCommentReply(
     caseId: string,
-    commentId: string,
+    parentId: string,
     reply: Comment
   ) {
     const caseEntity = await this.caseRepository.getCaseById(caseId)
@@ -651,25 +667,14 @@ export class CaseService extends CaseAlertsCommonService {
     }
 
     const comment = caseEntity?.comments?.find(
-      (comment) => comment.id === commentId
+      (comment) => comment.id === parentId
     )
 
     if (!comment) {
-      throw new createError.NotFound(`Comment ${commentId} not found`)
+      throw new createError.NotFound(`Comment ${parentId} not found`)
     }
 
-    const files = await this.copyFiles(reply.files ?? [])
-
-    const savedReply = await this.caseRepository.saveCasesComment([caseId], {
-      ...reply,
-      files,
-      parentId: commentId,
-    })
-
-    return {
-      ...savedReply,
-      files: await this.getUpdatedFiles(savedReply.files),
-    }
+    return this.saveComment(caseId, { ...reply, parentId })
   }
 
   private async saveCasesComment(caseIds: string[], comment: Comment) {
@@ -688,14 +693,12 @@ export class CaseService extends CaseAlertsCommonService {
 
   public async deleteCaseComment(caseId: string, commentId: string) {
     const caseEntity = await this.caseRepository.getCaseById(caseId)
-    if (!caseEntity) {
-      throw new createError.NotFound(`Case ${caseId} not found`)
-    }
 
     const comment = caseEntity?.comments?.find(
       (comment) => comment.id === commentId
     )
-    if (!comment) {
+
+    if (!comment || !caseEntity) {
       throw new createError.NotFound(`Comment ${commentId} not found`)
     }
 
@@ -705,6 +708,7 @@ export class CaseService extends CaseAlertsCommonService {
         Delete: { Objects: comment.files.map((file) => ({ Key: file.s3Key })) },
       })
     }
+
     await withTransaction(async () => {
       await this.caseRepository.deleteCaseComment(caseId, commentId)
       await this.handleAuditLogForDeleteComment(comment, caseId)
@@ -715,18 +719,7 @@ export class CaseService extends CaseAlertsCommonService {
     comment: Comment,
     caseId: string
   ) {
-    const casesAlertsAuditLogService = new CasesAlertsAuditLogService(
-      this.tenantId,
-      {
-        mongoDb: this.mongoDb,
-        dynamoDb: this.caseRepository.dynamoDb,
-      }
-    )
-
-    await casesAlertsAuditLogService.handleAuditLogForCommentDelete(
-      caseId,
-      comment
-    )
+    await this.auditLogService.handleAuditLogForCommentDelete(caseId, comment)
   }
 
   private async getAugmentedCase(caseEntity: Case) {
@@ -743,7 +736,7 @@ export class CaseService extends CaseAlertsCommonService {
   public async escalateCase(
     caseId: string,
     caseUpdateRequest: CaseEscalationsUpdateRequest
-  ): Promise<{ assigneeIds: string[]; oldCase: Case }> {
+  ): Promise<{ assigneeIds: string[] }> {
     const context = getContext()
     const accountsService = new AccountsService(
       {
@@ -775,7 +768,7 @@ export class CaseService extends CaseAlertsCommonService {
         { assigneeUserId: account.id, timestamp: Date.now() },
       ]
 
-      await this.caseRepository.updateCasesAssignments(
+      await this.caseRepository.updateAssignments(
         [caseId],
         caseUpdateRequest.assignments ?? []
       )
@@ -790,21 +783,26 @@ export class CaseService extends CaseAlertsCommonService {
     }
 
     await Promise.all([
-      this.updateCasesStatus([caseId], statusChange, {
+      this.updateStatus([caseId], statusChange, {
         cascadeAlertsUpdate: true,
         reviewAssignments,
       }),
       !isEqual(case_.reviewAssignments, reviewAssignments) &&
-        this.updateCasesReviewAssignments([caseId], reviewAssignments),
+        this.updateReviewAssignments([caseId], reviewAssignments),
     ])
+
+    await this.auditLogService.handleAuditLogForCaseEscalation(
+      caseId,
+      caseUpdateRequest,
+      case_
+    )
 
     return {
       assigneeIds: reviewAssignments.map((v) => v.assigneeUserId),
-      oldCase: case_,
     }
   }
 
-  public async updateCasesAssignments(
+  public async updateAssignments(
     caseIds: string[],
     assignments: Assignment[]
   ): Promise<void> {
@@ -814,22 +812,46 @@ export class CaseService extends CaseAlertsCommonService {
       assignment.timestamp = timestamp
     })
 
-    await this.caseRepository.updateCasesAssignments(caseIds, assignments)
+    const oldCases = await this.caseRepository.getCasesByIds(caseIds)
+
+    await Promise.all([
+      this.caseRepository.updateAssignments(caseIds, assignments),
+      ...caseIds.map(async (caseId) => {
+        const oldCase = oldCases.find((c) => c.caseId === caseId)
+        await this.auditLogService.handleAuditLogForCaseAssignment(
+          caseId,
+          { assignments: oldCase?.assignments },
+          { assignments }
+        )
+      }),
+    ])
   }
 
-  public async updateCasesReviewAssignments(
+  public async updateReviewAssignments(
     caseIds: string[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
     const timestamp = Date.now()
 
+    const oldCases = await this.caseRepository.getCasesByIds(caseIds)
+
     reviewAssignments.forEach((assignment) => {
       assignment.timestamp = timestamp
     })
 
-    await this.caseRepository.updateReviewAssignmentsOfCases(
-      caseIds,
-      reviewAssignments
-    )
+    await Promise.all([
+      this.caseRepository.updateReviewAssignmentsOfCases(
+        caseIds,
+        reviewAssignments
+      ),
+      ...caseIds.map(async (caseId) => {
+        const oldCase = oldCases.find((c) => c.caseId === caseId)
+        await this.auditLogService.handleAuditLogForCaseAssignment(
+          caseId,
+          { reviewAssignments: oldCase?.reviewAssignments },
+          { reviewAssignments }
+        )
+      }),
+    ])
   }
 }

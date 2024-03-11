@@ -103,6 +103,7 @@ export class CasesAlertsAuditLogService {
     const oldImage: CaseUpdateAuditLogImage = {
       caseStatus: oldCase.caseStatus,
       reviewAssignments: oldCase.reviewAssignments,
+      assignments: oldCase.assignments,
     }
 
     const { reason, updatedTransactions } = data
@@ -112,6 +113,7 @@ export class CasesAlertsAuditLogService {
       reviewAssignments: caseEntity?.reviewAssignments,
       reason: reason,
       updatedTransactions: updatedTransactions,
+      assignments: caseEntity?.assignments,
     }
 
     await this.createAuditLog({
@@ -170,6 +172,7 @@ export class CasesAlertsAuditLogService {
           ...updates,
           alertStatus: updates.alertStatus,
           reviewAssignments: alertEntity?.reviewAssignments,
+          assignments: alertEntity?.assignments,
         }
 
         await this.createAlertAuditLog({
@@ -201,6 +204,7 @@ export class CasesAlertsAuditLogService {
       const oldImage: AlertUpdateAuditLogImage = {
         alertStatus: alertEntity.alertStatus,
         reviewAssignments: alertEntity.reviewAssignments,
+        assignments: alertEntity.assignments,
       }
 
       await this.createAlertAuditLog({
@@ -284,6 +288,19 @@ export class CasesAlertsAuditLogService {
     })
   }
 
+  public async handleAuditLogForAlertsCommentDelete(
+    alertId: string,
+    comment: CommentAuditLogImage
+  ): Promise<void> {
+    await this.createAlertAuditLog({
+      alertId,
+      logAction: 'DELETE',
+      subtype: 'COMMENT',
+      oldImage: comment,
+      newImage: {},
+    })
+  }
+
   public async handleAuditLogForAlerts(
     caseId: string,
     oldAlerts: Alert[] | undefined,
@@ -350,6 +367,7 @@ export class CasesAlertsAuditLogService {
       caseStatus: caseEntity?.caseStatus,
       reviewAssignments: caseEntity?.reviewAssignments,
       investigationTime,
+      assignments: caseEntity?.assignments,
     }
 
     await this.createAuditLog({

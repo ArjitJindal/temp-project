@@ -6,9 +6,7 @@ import { CaseCreationService } from '@/lambdas/console-api-case/services/case-cr
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
   bulkVerifyTransactions,
@@ -46,7 +44,6 @@ import { AlertCreatedForEnum } from '@/services/rules-engine/utils/rule-paramete
 import { getAlertRepo } from '@/lambdas/console-api-dashboard/repositories/__tests__/helpers'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { tenantSettings } from '@/core/utils/context'
 import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 
 dynamoDbSetupHook()
@@ -57,27 +54,12 @@ async function getServices(tenantId: string) {
   const caseRepository = new CaseRepository(tenantId, {
     mongoDb,
   })
-  const userRepository = new UserRepository(tenantId, {
+
+  const caseCreationService = new CaseCreationService(tenantId, {
     dynamoDb,
     mongoDb,
   })
-  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
-    dynamoDb,
-  })
-  const transactionRepository = new MongoDbTransactionRepository(
-    tenantId,
-    mongoDb
-  )
 
-  const settings = await tenantSettings(tenantId)
-
-  const caseCreationService = new CaseCreationService(
-    caseRepository,
-    userRepository,
-    ruleInstanceRepository,
-    transactionRepository,
-    settings
-  )
   const dynamoDbTranasactionRepository = new DynamoDbTransactionRepository(
     tenantId,
     dynamoDb
@@ -447,7 +429,7 @@ describe('Cases (Transaction hit)', () => {
         // Close the first alert in the case and assert transction not added
         const alertRepo = await getAlertRepo(TEST_TENANT_ID)
         const alert = nextCase.alerts?.at(0)
-        await alertRepo.updateAlertsStatus(
+        await alertRepo.updateStatus(
           [alert?.alertId as string],
           [nextCase.caseId as string],
           {
@@ -1741,7 +1723,7 @@ describe('Testing not adding transactions to alerts in selected status (Frozen S
             subjects
           )
           const selectedAlert = cases[0].alerts?.[0]
-          await alertsRepository.updateAlertsStatus(
+          await alertsRepository.updateStatus(
             [selectedAlert?.alertId as string],
             [selectedAlert?.caseId as string],
             {

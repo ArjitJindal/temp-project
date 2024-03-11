@@ -857,7 +857,7 @@ export class CaseRepository {
     )
   }
 
-  public async updateCasesAssignments(
+  public async updateAssignments(
     caseIds: string[],
     assignments: Assignment[]
   ): Promise<void> {
@@ -956,10 +956,7 @@ export class CaseRepository {
     ])
   }
 
-  public async saveCaseComment(
-    caseId: string,
-    comment: Comment
-  ): Promise<Comment> {
+  public async saveComment(caseId: string, comment: Comment): Promise<Comment> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const commentToSave: Comment = {

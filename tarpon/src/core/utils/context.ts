@@ -29,6 +29,7 @@ import { Metric } from '@/core/cloudwatch/metrics'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { envIs } from '@/utils/env'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { Timezone, getDefaultTimezone } from '@/utils/dayjs'
 
 type LogMetaData = {
   tenantId?: string
@@ -372,4 +373,10 @@ export async function tenantSettings(
   }
 
   return settings
+}
+
+export async function tenantTimezone(tenantId: string): Promise<Timezone> {
+  return (
+    (await tenantSettings(tenantId))?.tenantTimezone ?? getDefaultTimezone()
+  )
 }
