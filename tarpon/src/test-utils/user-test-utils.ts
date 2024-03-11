@@ -1,5 +1,7 @@
+import { uniq } from 'lodash'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Business } from '@/@types/openapi-public/Business'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
@@ -84,6 +86,37 @@ export async function createConsumerUsers(
   for (const user of users) {
     await createConsumerUser(testTenantId, user)
   }
+}
+
+export async function createUsersForTransactions(
+  tenantId: string,
+  transactions: Transaction[]
+): Promise<Array<() => Promise<void>>> {
+  const cleanUps: Array<() => Promise<void>> = []
+
+  const dynamoDb = getDynamoDbClient()
+  const userRepository = new UserRepository(tenantId, { dynamoDb })
+  const userIds = uniq(
+    transactions
+      .flatMap((t) => [t.originUserId, t.destinationUserId])
+      .filter(Boolean) as string[]
+  )
+
+  cleanUps.concat(
+    await Promise.all(
+      userIds.map(async (userId) => {
+        const user = await userRepository.getUser(userId)
+        if (!user) {
+          return await createConsumerUser(tenantId, getTestUser({ userId }))
+        }
+        return async () => {
+          return
+        }
+      })
+    )
+  )
+
+  return cleanUps
 }
 
 export async function createConsumerUser(

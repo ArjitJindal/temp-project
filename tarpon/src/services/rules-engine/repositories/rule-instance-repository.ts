@@ -19,11 +19,11 @@ import {
   RuleInstance,
   RuleInstanceStatusEnum,
 } from '@/@types/openapi-internal/RuleInstance'
-import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { RuleType } from '@/@types/openapi-internal/RuleType'
 
 function toRuleInstance(item: any): RuleInstance {
   return {
@@ -194,7 +194,7 @@ export class RuleInstanceRepository {
   }
 
   public async getActiveRuleInstances(
-    type: RuleTypeEnum
+    type: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {
     const status: RuleInstanceStatusEnum = 'ACTIVE'
     return this.getRuleInstances({

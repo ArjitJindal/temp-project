@@ -5,6 +5,7 @@ import SanctionsBusinessUserRule from './sanctions-business-user'
 import SanctionsConsumerUserRule from './sanctions-consumer-user'
 import TestAlwaysHitRule from './tests/test-always-hit-rule'
 import UserAddressChange from './user-address-change'
+import UserInactivity from './user-inactivity'
 import { traceable } from '@/core/xray'
 import MerchantMonitoringIndustryUserRule from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 
@@ -22,7 +23,7 @@ export const _USER_RULES = {
   'sanctions-bank-name': SanctionsBankUserRule,
   'sanctions-consumer-user': SanctionsConsumerUserRule,
   'user-address-change': UserAddressChange,
-
+  'user-inactivity': UserInactivity,
   // TESTING-ONLY RULES
   'tests/test-always-hit-rule': TestAlwaysHitRule,
 } as const

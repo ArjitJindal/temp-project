@@ -1,6 +1,6 @@
-import { last, omit, uniq } from 'lodash'
+import { last, omit } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
-import { createConsumerUser, getTestUser } from './user-test-utils'
+import { createUsersForTransactions } from './user-test-utils'
 import { withFeatureHook } from './feature-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -22,7 +22,6 @@ import {
   getRuleByRuleId,
 } from '@/services/rules-engine/transaction-rules/library'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { UserRepository } from '@/services/users/repositories/user-repository'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
 import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
@@ -141,24 +140,9 @@ export async function bulkVerifyTransactions(
 ): Promise<TransactionMonitoringResult[] | DuplicateTransactionReturnType[]> {
   const dynamoDb = getDynamoDbClient()
   let cleanUps: Array<() => Promise<void>> = []
+
   if (options?.autoCreateUser) {
-    const userRepository = new UserRepository(tenantId, { dynamoDb })
-    const userIds = uniq(
-      transactions
-        .flatMap((t) => [t.originUserId, t.destinationUserId])
-        .filter(Boolean) as string[]
-    )
-    cleanUps = await Promise.all(
-      userIds.map(async (userId) => {
-        const user = await userRepository.getUser(userId)
-        if (!user) {
-          return await createConsumerUser(tenantId, getTestUser({ userId }))
-        }
-        return async () => {
-          return
-        }
-      })
-    )
+    cleanUps = await createUsersForTransactions(tenantId, transactions)
   }
 
   const results: any[] = []

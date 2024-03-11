@@ -320,10 +320,7 @@ components:
         id:
           type: string
         type:
-          type: string
-          enum:
-            - TRANSACTION
-            - USER
+          $ref: '#/components/schemas/RuleType'
         ruleId:
           type: string
         runCount:
@@ -528,6 +525,13 @@ components:
         - MEDIUM
         - LOW
         - VERY_LOW
+    RuleType:
+      title: RuleType
+      type: string
+      enum:
+        - TRANSACTION
+        - USER
+        - USER_ONGOING_SCREENING
     Rule:
       title: Rule
       type: object
@@ -546,10 +550,7 @@ components:
         id:
           type: string
         type:
-          type: string
-          enum:
-            - TRANSACTION
-            - USER
+          $ref: '#/components/schemas/RuleType'
         name:
           type: string
         types:

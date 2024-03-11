@@ -19,14 +19,24 @@ const CONCURRENT_BATCH_SIZE = 10
 export async function getOngoingScreeningUserRuleInstances(
   tenantId: string
 ): Promise<RuleInstance[]> {
-  const dynamoDb = await getDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const isRiskLevelsEnabled = await tenantHasFeature(tenantId, 'RISK_LEVELS')
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
-  const ruleInstances = (
-    await ruleInstanceRepository.getActiveRuleInstances('USER')
-  ).filter((ruleInstance) => {
+
+  const allRuleInstancess = (
+    await Promise.all([
+      ruleInstanceRepository.getActiveRuleInstances('USER'),
+      ruleInstanceRepository.getActiveRuleInstances('USER_ONGOING_SCREENING'),
+    ])
+  ).flat()
+
+  const ruleInstances = allRuleInstancess.filter((ruleInstance) => {
+    if (ruleInstance.type === 'USER_ONGOING_SCREENING') {
+      return true
+    }
+
     if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {
       return Boolean(
         Object.values(ruleInstance.riskLevelParameters).find(
@@ -36,6 +46,7 @@ export async function getOngoingScreeningUserRuleInstances(
     }
     return Boolean(ruleInstance.parameters?.ongoingScreening)
   })
+
   return ruleInstances
 }
 

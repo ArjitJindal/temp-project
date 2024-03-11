@@ -24,10 +24,8 @@ import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { Alert } from '@/@types/openapi-internal/Alert'
-import {
-  RuleInstance,
-  RuleInstanceTypeEnum,
-} from '@/@types/openapi-internal/RuleInstance'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { RuleType } from '@/@types/openapi-internal/RuleType'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { AlertCreationIntervalInstantly } from '@/@types/openapi-internal/AlertCreationIntervalInstantly'
@@ -1780,7 +1778,7 @@ function setupRules(
   parameters: {
     hitDirections?: RuleHitDirection[]
     rulesCount?: number
-    ruleType?: RuleInstanceTypeEnum
+    ruleType?: RuleType
   } = {}
 ) {
   const ruleType = parameters.ruleType ?? 'TRANSACTION'
@@ -1838,7 +1836,7 @@ async function underRules<R = void>(
     ruleInstanceId?: string
     hitDirections?: RuleHitDirection[]
     rulesCount?: number
-    ruleType?: RuleInstanceTypeEnum
+    ruleType?: RuleType
     alertCreationInterval?:
       | AlertCreationIntervalInstantly
       | AlertCreationIntervalWeekly

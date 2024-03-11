@@ -1,7 +1,10 @@
 import { v4 as uuidv4 } from 'uuid'
+import { createUsersForTransactions } from './user-test-utils'
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export function getTestTransaction(
   transaction: Partial<Transaction | InternalTransaction> = {}
@@ -40,4 +43,46 @@ export function getTestTransaction(
     },
     ...transaction,
   }
+}
+
+export async function createTransaction(
+  testTenantId: string,
+  transaction: Transaction
+): Promise<() => Promise<void>> {
+  const transactionRepository = new DynamoDbTransactionRepository(
+    testTenantId,
+    getDynamoDbClient()
+  )
+  await transactionRepository.saveTransaction(transaction)
+
+  return async () => {
+    await transactionRepository.deleteTransaction(transaction)
+  }
+}
+
+export function setUpTransactionsHooks(
+  tenantId: string,
+  transactions: Transaction[]
+) {
+  const cleanUps: Array<() => Promise<void>> = []
+
+  beforeAll(async () => {
+    cleanUps.push(
+      ...(await Promise.all(
+        await createUsersForTransactions(tenantId, transactions)
+      ))
+    )
+
+    cleanUps.push(
+      ...(await Promise.all(
+        transactions.map(async (transaction) => {
+          return createTransaction(tenantId, transaction)
+        })
+      ))
+    )
+  })
+
+  afterAll(async () => {
+    await Promise.all(cleanUps.map((cleanUp) => cleanUp()))
+  })
 }

@@ -13,6 +13,7 @@ import { SanctionsBankUserRuleParameters } from '../user-rules/sanctions-bank-na
 import { SanctionsConsumerUserRuleParameters } from '../user-rules/sanctions-consumer-user'
 import { UserAddressChangeRuleParameters } from '../user-rules/user-address-change'
 import { getMigratedV8Config } from '../v8-migrations'
+import { UserInactivityRuleParameters } from '../user-rules/user-inactivity'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -57,6 +58,7 @@ import { SamePaymentDetailsParameters } from '@/services/rules-engine/transactio
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
+
 export enum RuleChecksForField {
   FirstTransaction = '1st transaction',
   TransactionAmount = 'Transaction amount',
@@ -1705,6 +1707,32 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:
         'Resolve an IBAN number to check if the bank name have matched against Sanctions/ PEP/ AM.',
+    }
+  },
+  () => {
+    const defaultParameters: UserInactivityRuleParameters = {
+      inactivityDays: 365,
+      checkDirection: 'sending',
+    }
+
+    return {
+      id: 'R-33',
+      name: 'User inactivity',
+      type: 'USER_ONGOING_SCREENING',
+      description: 'Check if a user has been inactive for x days',
+      descriptionTemplate:
+        'User has been inactive for more than {{ parameters.inactivityDays }} days',
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'user-inactivity',
+      labels: [],
+      checksFor: [RuleChecksForField.Time],
+      defaultNature: RuleNature.FRAUD,
+      defaultCasePriority: 'P1',
+      types: [RuleTypeField.AnomalyDetection, RuleTypeField.Screening],
+      typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'A user has been inactive for more than 365 days, prompting a review of the account.',
     }
   },
   () => {

@@ -5884,10 +5884,7 @@ components:
         id:
           type: string
         type:
-          type: string
-          enum:
-            - TRANSACTION
-            - USER
+          $ref: '#/components/schemas/RuleType'
         name:
           type: string
         description:
@@ -6059,6 +6056,13 @@ components:
         - Sanctions hit
         - Risky profile
         - Other
+    RuleType:
+      title: RuleType
+      type: string
+      enum:
+        - TRANSACTION
+        - USER
+        - USER_ONGOING_SCREENING
     RuleInstance:
       title: RuleInstance
       type: object
@@ -6088,10 +6092,7 @@ components:
         action:
           $ref: '#/components/schemas/RuleAction'
         type:
-          type: string
-          enum:
-            - TRANSACTION
-            - USER
+          $ref: '#/components/schemas/RuleType'
         ruleNameAlias:
           type: string
         ruleDescriptionAlias:

@@ -130,6 +130,36 @@ export class DynamoDbTransactionRepository
     return transaction
   }
 
+  public async deleteTransaction(transaction: Transaction): Promise<void> {
+    const primaryKey = DynamoDbKeys.TRANSACTION(
+      this.tenantId,
+      transaction.transactionId
+    )
+    const auxiliaryIndexes = this.getTransactionAuxiliaryIndexes(transaction)
+
+    const batchWriteItemParams: BatchWriteCommandInput = {
+      RequestItems: {
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
+          {
+            DeleteRequest: {
+              Key: primaryKey,
+            },
+          },
+          ...auxiliaryIndexes.map((item) => ({
+            DeleteRequest: {
+              Key: {
+                PartitionKeyID: item.PartitionKeyID,
+                SortKeyID: item.SortKeyID,
+              },
+            },
+          })),
+        ],
+      },
+    }
+
+    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
+  }
+
   // TODO: We can remove this after 2024-04-01 assuming that a transaction event won't be created
   // for a transaction which was created more than 6 months ago
   private async removeOldAuxiliaryIndexesIfNeeded(

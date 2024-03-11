@@ -21,7 +21,8 @@ import {
 import { isV8Rule, isV8RuleInstance } from './utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { Rule, RuleTypeEnum } from '@/@types/openapi-internal/Rule'
+import { Rule } from '@/@types/openapi-internal/Rule'
+import { RuleType } from '@/@types/openapi-internal/RuleType'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { TRANSACTION_RULES } from '@/services/rules-engine/transaction-rules'
@@ -494,7 +495,7 @@ You have to answer in below format as string. If you don't know any field, just 
   }
 
   async getActiveRuleInstances(
-    type: RuleTypeEnum
+    type: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {
     return this.ruleInstanceRepository.getActiveRuleInstances(type)
   }

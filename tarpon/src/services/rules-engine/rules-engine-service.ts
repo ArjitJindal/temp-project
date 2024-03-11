@@ -438,15 +438,29 @@ export class RulesEngineService {
     user: UserWithRulesResult | BusinessWithRulesResult,
     options?: { ongoingScreeningMode?: boolean }
   ): Promise<ConsumerUsersResponse | BusinessUsersResponse> {
+    const allRuleInstances: RuleInstance[] = []
+
     const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
 
+    allRuleInstances.push(...ruleInstances)
+
+    if (options?.ongoingScreeningMode) {
+      const ongoingScreeningRuleInstances =
+        await this.ruleInstanceRepository.getActiveRuleInstances(
+          'USER_ONGOING_SCREENING'
+        )
+
+      allRuleInstances.push(...ongoingScreeningRuleInstances)
+    }
+
     const rules = await this.ruleRepository.getRulesByIds(
-      ruleInstances
+      allRuleInstances
         .map((ruleInstance) => ruleInstance.ruleId)
         .filter(Boolean) as string[]
     )
-    return this.verifyUserByRules(user, ruleInstances, rules, options)
+
+    return this.verifyUserByRules(user, allRuleInstances, rules, options)
   }
 
   public async verifyUserByRules(
