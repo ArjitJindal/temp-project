@@ -1,13 +1,13 @@
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
 import { TimeseriesQuestion } from '@/services/copilot/questions/types'
 import {
-  dates,
+  GRANULARITIES,
   humanReadablePeriod,
-  months,
   Period,
   periodDefaults,
   periodVars,
-  sqlPeriod,
+  TimeGranularity,
+  timeXAxis,
 } from '@/services/copilot/questions/definitions/util'
 import { executeSql } from '@/utils/databricks'
 import dayjs from '@/utils/dayjs'
@@ -15,55 +15,74 @@ import dayjs from '@/utils/dayjs'
 export const transactionAggregationQuestion = (
   questionId: QuestionId,
   title: string,
-  agg: string,
-  join: string = ''
-): TimeseriesQuestion<Period> => ({
+  aggregationExpression: (granularity: TimeGranularity) => string,
+  joins: string = ''
+): TimeseriesQuestion<Period & { granularity: TimeGranularity }> => ({
   type: 'TIME_SERIES',
   questionId,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `${title} ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ userId }, period) => {
-    let timeFormat = 'yyyy-MM'
-    let xAxis = months(period)
-    if (dayjs(period.to).diff(dayjs(period.from), 'd') < 180) {
-      timeFormat = 'yyyy-MM-dd'
-      xAxis = dates(period)
-    }
-    const result = await executeSql<{ date: string; agg: number }>(
+  aggregationPipeline: async (ctx, { granularity, ...period }) => {
+    const sqlExpression = timeXAxis(granularity)
+    const rows = await executeSql<{
+      timestamp: number
+      date: string
+      agg: number
+    }>(
       `
-      select
-        date_format(DATE(
-          FROM_UNIXTIME(CAST(t.timestamp / 1000 AS BIGINT))
-        ), '${timeFormat}') as date,
-        ${agg} as agg
-      from
-        transactions t
-        ${join}
-      where
-        (t.originUserId = :userId or t.destinationUserId = :userId)
-        and t.timestamp between :from and :to
-      group by
-        date
-      order by
-        date asc
+        WITH DateSeries AS (
+  SELECT
+    date_trunc('${sqlExpression}', date) AS period_start
+  FROM
+    (
+      SELECT
+        EXPLODE(
+          SEQUENCE(
+            TO_DATE(:from),
+            TO_DATE(:to),
+            INTERVAL ${
+              sqlExpression === 'QUARTER' ? '3 MONTH' : `1 ${sqlExpression}`
+            }
+          )
+        ) AS date
+    )
+  GROUP BY
+    date_trunc('${sqlExpression}', date)
+)
+SELECT
+  any_value(ds.period_start) as timestamp,
+  date_format(ds.period_start, 'yyyy-MM-dd') as date,
+  ${aggregationExpression(granularity)} as agg
+FROM
+  DateSeries ds
+  LEFT JOIN transactions t ON date_trunc('${sqlExpression}', CAST(DATE(FROM_UNIXTIME(CAST(t.timestamp / 1000 AS BIGINT))) AS DATE)) = ds.period_start
+  ${joins}
+  AND (
+    t.originUserId = :userId
+    OR t.destinationUserId = :userId
+  )
+GROUP BY
+  date
+ORDER BY
+  date ASC
     `,
       {
-        userId,
-        ...sqlPeriod(period),
+        userId: ctx.userId,
+        from: dayjs(period.from).format('YYYY-MM-DD'),
+        to: dayjs(period.to).format('YYYY-MM-DD'),
       }
     )
 
-    const avgMap = new Map(result.map((item) => [item.date, item.agg]))
     return {
       data: [
         {
           label: '',
-          values: xAxis.map((d) => {
+          values: rows.map((row) => {
             return {
-              time: new Date(d).valueOf(),
-              value: avgMap.get(d) || 0,
+              time: row.timestamp,
+              value: row.agg,
             }
           }),
         },
@@ -73,46 +92,64 @@ export const transactionAggregationQuestion = (
   },
   variableOptions: {
     ...periodVars,
+    granularity: {
+      // TODO implement an "options" variable type
+      type: 'AUTOCOMPLETE',
+      options: () => GRANULARITIES,
+    },
   },
   defaults: () => {
-    return periodDefaults()
+    return { ...periodDefaults(), granularity: 'Daily' }
   },
 })
 
 export const TrsScore = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TRS_SCORE,
   'TRS score distribution',
-  'avg(ar.arsScore)',
-  'join action_risk_values ar on ar.transactionId = t.transactionId'
+  () => 'avg(ar.arsScore)',
+  'left join action_risk_values ar on ar.transactionId = t.transactionId'
 )
 
 export const TransactionCount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TRANSACTION_COUNT,
   'Transaction count',
-  'count(*)'
+  () => 'count(t.transactionId)'
 )
 
 export const MaxTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MAX_TRANSACTION_AMOUNT,
   'Max transaction amount',
-  'max(originAmountDetails.transactionAmount)'
+  () => 'max(originAmountDetails.transactionAmount)'
 )
 
 export const MinTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MIN_TRANSACTION_AMOUNT,
   'Min transaction amount',
-  'min(originAmountDetails.transactionAmount)'
+  () => 'min(originAmountDetails.transactionAmount)'
 )
 export const AverageTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.AVERAGE_TRANSACTION_AMOUNT,
   'Average transaction amount',
-  'avg(originAmountDetails.transactionAmount)'
+  () => 'avg(originAmountDetails.transactionAmount)'
 )
 
 export const MedianTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MEDIAN_TRANSACTION_AMOUNT,
   'Median transaction amount',
-  'percentile_approx(originAmountDetails.transactionAmount, 0.5)'
+  () => 'percentile_approx(originAmountDetails.transactionAmount, 0.5)'
+)
+
+export const TotalTransactionAmount = transactionAggregationQuestion(
+  COPILOT_QUESTIONS.TOTAL_TRANSACTION_AMOUNT,
+  'Total transaction amount',
+  () => 'sum(originAmountDetails.transactionAmount)'
+)
+
+export const TransactionLimit = transactionAggregationQuestion(
+  COPILOT_QUESTIONS.TRANSACTION_LIMIT,
+  'Remaining transaction limit',
+  (granularity) =>
+    `(select transactionLimits.maximum${granularity}TransactionLimit.amountValue from users where userId = :userId LIMIT 1) - COALESCE(SUM(originAmountDetails.transactionAmount), 0)`
 )
 
 export const TransactionAggregations = [
@@ -122,4 +159,6 @@ export const TransactionAggregations = [
   MaxTransactionAmount,
   MinTransactionAmount,
   MedianTransactionAmount,
+  TransactionLimit,
+  TotalTransactionAmount,
 ]

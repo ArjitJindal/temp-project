@@ -25,6 +25,8 @@ export const COPILOT_QUESTIONS = {
   MAX_TRANSACTION_AMOUNT: 'Max transaction amount',
   MIN_TRANSACTION_AMOUNT: 'Min transaction amount',
   MEDIAN_TRANSACTION_AMOUNT: 'Median transaction amount',
+  TOTAL_TRANSACTION_AMOUNT: 'Total transaction amount',
+  TRANSACTION_LIMIT: 'Remaining transaction limit',
   AVERAGE_TRANSACTION_AMOUNT: 'Average transaction amount',
   USER_DETAILS: 'User details',
   USERS_MONEY_RECEIVED_FROM: 'Users money received from',

@@ -1,9 +1,9 @@
 import React from 'react';
 import { QuestionResponseTimeSeries } from '../../../types';
 import { notEmpty } from '@/utils/array';
-import { ALL_CHART_COLORS } from '@/components/ui/colors';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import Line, { LineData } from '@/pages/dashboard/analysis/components/charts/Line';
+import { ALL_CHART_COLORS } from '@/components/ui/colors';
 
 interface Props {
   item: QuestionResponseTimeSeries;

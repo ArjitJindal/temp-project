@@ -9,8 +9,6 @@ import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getUserName } from '@/utils/helpers'
 
 export const MONGO_DATE_FORMAT = '%Y-%m-%d'
-export const DATE_FORMAT = 'YYYY-MM-DD'
-export const MONTH_FORMAT = 'YYYY-MM'
 export const DATE_GRAPH_FORMAT = 'D/M/YYYY'
 export const DATETIME_GRAPH_FORMAT = 'D/M/YYYY HH:mm'
 export const TIME_GRAPH_FORMAT = 'HH:mm'
@@ -64,26 +62,29 @@ export function humanReadablePeriod(period: Period): string {
   )}`
 }
 
-export function dates(period: Period): string[] {
-  let cursor = dayjs(period.from)
-  const end = dayjs(period.to)
-  const output: string[] = []
-  while (cursor <= end) {
-    output.push(cursor.format(DATE_FORMAT))
-    cursor = cursor.add(1, 'd')
-  }
+export const GRANULARITIES = [
+  'Daily',
+  'Weekly',
+  'Monthly',
+  'Quarterly',
+  'Yearly',
+]
+export type TimeGranularity = (typeof GRANULARITIES)[number]
 
-  return output
-}
-export function months(period: Period): string[] {
-  let cursor = dayjs(period.from)
-  const end = dayjs(period.to)
-  const output: string[] = []
-  while (cursor <= end) {
-    output.push(cursor.format(MONTH_FORMAT))
-    cursor = cursor.add(1, 'month')
+export function timeXAxis(granularity: TimeGranularity = 'Daily'): string {
+  switch (granularity) {
+    case 'Daily':
+      return 'DAY'
+    case 'Weekly':
+      return 'WEEK'
+    case 'Monthly':
+      return 'MONTH'
+    case 'Quarterly':
+      return 'QUARTER'
+    case 'Yearly':
+      return 'YEAR'
   }
-  return output
+  throw new BadRequest(`Unknown time granularity: ${granularity}`)
 }
 
 export function matchPeriod(timestampField: string, period: Period) {
@@ -105,6 +106,18 @@ export function sqlPeriod(period: Period) {
     from: (period.from || 0).toFixed(2),
     to: (period.to || new Date().valueOf()).toFixed(2),
   }
+}
+
+export function dates(period: Period): string[] {
+  let cursor = dayjs(period.from)
+  const end = dayjs(period.to)
+  const output: string[] = []
+  while (cursor <= end) {
+    output.push(cursor.format('YYYY-MM-DD'))
+    cursor = cursor.add(1, 'd')
+  }
+
+  return output
 }
 
 export function calculatePercentageBreakdown(data: string[]): string {
