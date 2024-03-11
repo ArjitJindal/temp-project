@@ -52,8 +52,8 @@ export function useUsers(search: string): QueryResult<UsersResponse> {
     });
 
     return {
-      total: users.total,
-      users: users.data,
+      total: users.count,
+      users: users.items,
     };
   });
 }

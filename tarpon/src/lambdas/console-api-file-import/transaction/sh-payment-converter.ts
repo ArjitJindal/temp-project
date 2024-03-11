@@ -38,11 +38,11 @@ export class ShPaymentTransactionConverter
     const userRepository = new UserRepository(tenantId, {
       mongoDb: connections.mongoDb,
     })
-    const allBusinessUsers = await userRepository.getMongoBusinessUsers({
+    const allBusinessUsers = await userRepository.getMongoUsersCursorsPaginate({
       pageSize: 'DISABLED',
       beforeTimestamp: Infinity,
     })
-    allBusinessUsers.data.forEach((user) => {
+    allBusinessUsers.items.forEach((user) => {
       const account = user.tags?.filter((tag) => tag.key === 'Account')[0].value
       if (account) {
         this.accountToUserId[account] = user.userId

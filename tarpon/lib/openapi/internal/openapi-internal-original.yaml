@@ -1290,9 +1290,16 @@ paths:
           in: query
           name: pageSize
         - schema:
-            $ref: '#/components/schemas/Page'
+            type: string
           in: query
-          name: page
+          name: start
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
         - schema:
             type: number
           in: query
@@ -1402,9 +1409,16 @@ paths:
           in: query
           name: pageSize
         - schema:
-            $ref: '#/components/schemas/Page'
+            type: string
           in: query
-          name: page
+          name: start
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
         - schema:
             type: number
           in: query
@@ -1645,9 +1659,16 @@ paths:
           in: query
           name: pageSize
         - schema:
-            $ref: '#/components/schemas/Page'
+            type: string
           in: query
-          name: page
+          name: start
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
         - schema:
             type: number
           in: query
@@ -6610,41 +6631,95 @@ components:
       title: ConsumerUsersListResponse
       type: object
       properties:
-        total:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
           type: number
-        data:
+        limit:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
           type: array
           items:
             $ref: '#/components/schemas/InternalConsumerUser'
       required:
-        - total
-        - data
+        - hasPrev
+        - prev
+        - next
+        - hasNext
+        - items
+        - count
+        - limit
+        - last
     BusinessUsersListResponse:
       title: BusinessUsersListResponse
       type: object
       properties:
-        total:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
           type: number
-        data:
+        limit:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
           type: array
           items:
             $ref: '#/components/schemas/InternalBusinessUser'
       required:
-        - total
-        - data
+        - hasPrev
+        - prev
+        - next
+        - hasNext
+        - items
+        - count
+        - limit
+        - last
     AllUsersListResponse:
       title: AllUsersListResponse
       type: object
       properties:
-        total:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
           type: number
-        data:
+        limit:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
           type: array
           items:
             $ref: '#/components/schemas/InternalUser'
       required:
-        - total
-        - data
+        - hasPrev
+        - prev
+        - next
+        - hasNext
+        - items
+        - count
+        - limit
+        - last
     TenantTriggerBatchJobRequest:
       title: TenantTriggerBatchJobRequest
       type: object

@@ -57,7 +57,7 @@ export default function UserStatusDistributionCard(props: Props) {
     <AsyncResourceRenderer resource={usersResult.data}>
       {(users: ConsumerUsersListResponse | BusinessUsersListResponse) => {
         const frequencyMap: { [key in UserState]?: number } = {};
-        for (const user of users.data) {
+        for (const user of users.items) {
           const { userStateDetails } = user;
           if (userStateDetails !== undefined) {
             frequencyMap[userStateDetails.state] = (frequencyMap[userStateDetails.state] ?? 0) + 1;

@@ -1,4 +1,4 @@
-import { Filter, MongoClient, Document, FindCursor } from 'mongodb'
+import { Filter, MongoClient, Document, FindCursor, WithId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { v4 as uuidv4 } from 'uuid'
 import {
@@ -42,9 +42,11 @@ import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { neverThrow } from '@/utils/lang'
 import {
-  OptionalPaginationParams,
   PaginationParams,
   COUNT_QUERY_LIMIT,
+  OptionalPagination,
+  OptionalPaginationParams,
+  cursorPaginate,
 } from '@/utils/pagination'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrationStatus'
@@ -60,6 +62,9 @@ import { BusinessResponse } from '@/@types/openapi-public/BusinessResponse'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
+import { DefaultApiGetAllUsersListRequest } from '@/@types/openapi-internal/RequestParameters'
+import { Case } from '@/@types/openapi-internal/Case'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
 @traceable
 export class UserRepository {
@@ -79,46 +84,169 @@ export class UserRepository {
     this.tenantId = tenantId
   }
 
-  public async getMongoBusinessUsers(
-    params: OptionalPaginationParams & {
-      afterTimestamp?: number
-      beforeTimestamp: number
-      filterId?: string
-      filterName?: string
-      filterOperator?: FilterOperator
-      filterBusinessIndustry?: string
-      filterTagKey?: string
-      filterTagValue?: string
-      filterRiskLevel?: RiskLevel[]
-      filterUserRegistrationStatus?: UserRegistrationStatus[]
-      sortField?: string
-      sortOrder?: SortOrder
-      filterRiskLevelLocked?: string
-    }
-  ): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
-    return (await this.getMongoUsers(params, 'BUSINESS')) as {
-      total: number
-      data: Array<InternalBusinessUser>
-    }
+  private isPulseEnabled() {
+    return hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')
   }
 
-  public async getMongoConsumerUsers(
-    params: PaginationParams & {
-      afterTimestamp?: number
-      beforeTimestamp: number
-      filterId?: string
-      filterName?: string
-      filterOperator?: FilterOperator
-      filterTagKey?: string
-      filterTagValue?: string
-      filterRiskLevel?: RiskLevel[]
-      filterRiskLevelLocked?: string
+  private async getRiskClassificationValues(): Promise<
+    RiskClassificationScore[]
+  > {
+    const riskRepository = new RiskRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    return this.isPulseEnabled()
+      ? await riskRepository.getRiskClassificationValues()
+      : []
+  }
+  public async getMongoUsersCursorsPaginate(
+    params: OptionalPagination<DefaultApiGetAllUsersListRequest>,
+    userType?: UserType
+  ): Promise<{
+    items: Array<InternalBusinessUser | InternalConsumerUser>
+    next: string
+    prev: string
+    hasPrev: boolean
+    hasNext: boolean
+    count: number
+    limit: number
+    last: string
+  }> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<
+      InternalBusinessUser | InternalConsumerUser
+    >(USERS_COLLECTION(this.tenantId))
+    const isPulseEnabled = this.isPulseEnabled()
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    const query = await this.getMongoUsersQuery(
+      params,
+      riskClassificationValues,
+      isPulseEnabled,
+      userType
+    )
+    let result = await cursorPaginate<
+      InternalBusinessUser | InternalConsumerUser
+    >(
+      collection,
+      { $and: query },
+      {
+        pageSize: params.pageSize ? (params.pageSize as number) : 20,
+        sortField: params.sortField || 'createdTimestamp',
+        fromCursorKey: params.start,
+        sortOrder: params.sortOrder,
+      }
+    )
+    const userIds = result.items.map((user) => user.userId)
+    const casesCountPipeline = [
+      {
+        $match: {
+          caseStatus: {
+            $nin: ['CLOSED'],
+          },
+        },
+      },
+      {
+        $limit: COUNT_QUERY_LIMIT,
+      },
+      {
+        $group: {
+          _id: {
+            $ifNull: [
+              '$caseUsers.origin.userId',
+              '$caseUsers.destination.userId',
+            ],
+          },
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $match: {
+          _id: {
+            $in: userIds,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          userId: '$_id',
+          casesCount: '$count',
+        },
+      },
+    ]
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const casesCount = await casesCollection
+      .aggregate(casesCountPipeline)
+      .toArray()
+    result = {
+      ...result,
+      items: params.includeCasesCount
+        ? result.items.map((user) => {
+            const casesCountItem = casesCount.find(
+              (item) => item.userId === user.userId
+            )
+            return {
+              ...user,
+              casesCount: casesCountItem?.casesCount || 0,
+            }
+          })
+        : result.items,
     }
-  ): Promise<{ total: number; data: Array<InternalConsumerUser> }> {
-    return (await this.getMongoUsers(params, 'CONSUMER')) as {
-      total: number
-      data: Array<InternalConsumerUser>
+
+    if (isPulseEnabled) {
+      result.items = this.insertRiskScores(
+        result.items,
+        riskClassificationValues
+      )
     }
+    return result
+  }
+
+  private insertRiskScores(
+    items:
+      | WithId<InternalBusinessUser | InternalConsumerUser>[]
+      | (InternalBusinessUser | InternalConsumerUser)[],
+    riskClassificationValues: RiskClassificationScore[]
+  ) {
+    const updatedItems = items.map((user) => {
+      const drsScore = user?.drsScore
+      const krsScore = user?.krsScore
+      let newUser = user
+      if (drsScore != null) {
+        const derivedRiskLevel = drsScore?.manualRiskLevel
+          ? undefined
+          : getRiskLevelFromScore(riskClassificationValues, drsScore?.drsScore)
+        const newDrsScore: DrsScore = {
+          ...drsScore,
+          derivedRiskLevel,
+        }
+        newUser = {
+          ...newUser,
+          drsScore: newDrsScore,
+        }
+      }
+
+      if (krsScore != null) {
+        const derivedRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          krsScore?.krsScore
+        )
+
+        const newKrsScore: KrsScore = {
+          ...krsScore,
+          riskLevel: derivedRiskLevel,
+        }
+
+        newUser = {
+          ...newUser,
+          krsScore: newKrsScore,
+        }
+      }
+      return newUser
+    })
+    return updatedItems
   }
 
   public async getMongoAllUsers(
@@ -146,28 +274,7 @@ export class UserRepository {
     }
   }
 
-  public async updateMonitoringStatus(
-    userId: string,
-    isMonitoringEnabled: boolean
-  ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalBusinessUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    await collection.updateOne({ userId }, { $set: { isMonitoringEnabled } })
-  }
-
-  public async getTotalEnabledOngoingMonitoringUsers(): Promise<number> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalBusinessUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    return await collection.countDocuments({ isMonitoringEnabled: true })
-  }
-
-  private async getMongoUsers(
+  private async getMongoUsersQuery(
     params: OptionalPaginationParams & {
       afterTimestamp?: number
       beforeTimestamp?: number
@@ -178,31 +285,19 @@ export class UserRepository {
       filterRiskLevel?: RiskLevel[]
       filterTagKey?: string
       filterTagValue?: string
-      includeCasesCount?: boolean
       filterUserRegistrationStatus?: UserRegistrationStatus[]
       sortField?: string
       sortOrder?: SortOrder
       filterRiskLevelLocked?: string
     },
-    userType?: UserType
-  ): Promise<{
-    total: number
-    data: Array<InternalBusinessUser | InternalConsumerUser | InternalUser>
-  }> {
-    const db = this.mongoDb.db()
-
-    const collectionName = USERS_COLLECTION(this.tenantId)
-    const collection = db.collection<
-      InternalBusinessUser | InternalConsumerUser
-    >(collectionName)
-
+    riskClassificationValues: RiskClassificationScore[],
+    isPulseEnabled: boolean,
+    userType?: UserType | undefined
+  ) {
     const filterConditions: Filter<
       InternalBusinessUser | InternalConsumerUser
     >[] = []
 
-    const isPulseEnabled =
-      hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')
-    console.log('FILTER_RISK_LEVEL_LOCKED', params.filterRiskLevelLocked)
     if (params.filterRiskLevelLocked != null) {
       const isUpdatable = params.filterRiskLevelLocked === 'true' ? false : true
       filterConditions.push({
@@ -263,13 +358,6 @@ export class UserRepository {
       }
       filterConditions.push({ $and: filterNameConditions })
     }
-    const riskRepository = new RiskRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-      mongoDb: this.mongoDb,
-    })
-    const riskClassificationValues = isPulseEnabled
-      ? await riskRepository.getRiskClassificationValues()
-      : []
 
     const queryConditions: Filter<
       InternalBusinessUser | InternalConsumerUser
@@ -332,6 +420,67 @@ export class UserRepository {
             }
       )
     }
+    return queryConditions
+  }
+
+  public async updateMonitoringStatus(
+    userId: string,
+    isMonitoringEnabled: boolean
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalBusinessUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    await collection.updateOne({ userId }, { $set: { isMonitoringEnabled } })
+  }
+
+  public async getTotalEnabledOngoingMonitoringUsers(): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalBusinessUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    return await collection.countDocuments({ isMonitoringEnabled: true })
+  }
+
+  private async getMongoUsers(
+    params: OptionalPaginationParams & {
+      afterTimestamp?: number
+      beforeTimestamp?: number
+      filterId?: string
+      filterName?: string
+      filterOperator?: FilterOperator
+      filterBusinessIndustries?: string
+      filterRiskLevel?: RiskLevel[]
+      filterTagKey?: string
+      filterTagValue?: string
+      includeCasesCount?: boolean
+      filterUserRegistrationStatus?: UserRegistrationStatus[]
+      sortField?: string
+      sortOrder?: SortOrder
+      filterRiskLevelLocked?: string
+    },
+    userType?: UserType
+  ): Promise<{
+    total: number
+    data: Array<InternalBusinessUser | InternalConsumerUser | InternalUser>
+  }> {
+    const db = this.mongoDb.db()
+
+    const collectionName = USERS_COLLECTION(this.tenantId)
+    const collection = db.collection<
+      InternalBusinessUser | InternalConsumerUser
+    >(collectionName)
+
+    const isPulseEnabled = this.isPulseEnabled()
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    const queryConditions = await this.getMongoUsersQuery(
+      params,
+      riskClassificationValues,
+      isPulseEnabled,
+      userType
+    )
 
     const query = {
       $and: queryConditions,
@@ -414,48 +563,8 @@ export class UserRepository {
         ...(params.includeCasesCount ? casesCountPipeline : []),
       ])
       .toArray()
-
     if (isPulseEnabled) {
-      users = users.map((user) => {
-        const drsScore = user?.drsScore
-        const krsScore = user?.krsScore
-        let newUser = user
-        if (drsScore != null) {
-          const derivedRiskLevel = drsScore?.manualRiskLevel
-            ? undefined
-            : getRiskLevelFromScore(
-                riskClassificationValues,
-                drsScore?.drsScore
-              )
-          const newDrsScore: DrsScore = {
-            ...drsScore,
-            derivedRiskLevel,
-          }
-          newUser = {
-            ...newUser,
-            drsScore: newDrsScore,
-          }
-        }
-
-        if (krsScore != null) {
-          const derivedRiskLevel = getRiskLevelFromScore(
-            riskClassificationValues,
-            krsScore?.krsScore
-          )
-
-          const newKrsScore: KrsScore = {
-            ...krsScore,
-            riskLevel: derivedRiskLevel,
-          }
-
-          newUser = {
-            ...newUser,
-            krsScore: newKrsScore,
-          }
-        }
-
-        return newUser
-      })
+      users = this.insertRiskScores(users, riskClassificationValues)
     }
 
     const total = await collection.countDocuments(query, {

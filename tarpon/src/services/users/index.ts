@@ -129,15 +129,18 @@ export class UserService {
   public async getBusinessUsers(
     params: DefaultApiGetBusinessUsersListRequest
   ): Promise<BusinessUsersListResponse> {
-    const result = await this.userRepository.getMongoBusinessUsers(params)
-    const data = await Promise.all(
-      result.data.map(
+    const result = await this.userRepository.getMongoUsersCursorsPaginate(
+      params,
+      'BUSINESS'
+    )
+    const items = await Promise.all(
+      result.items.map(
         async (user) => await this.getAugmentedUser<InternalBusinessUser>(user)
       )
     )
     return {
       ...result,
-      data,
+      items,
     }
   }
 
@@ -537,30 +540,35 @@ export class UserService {
   public async getConsumerUsers(
     params: DefaultApiGetConsumerUsersListRequest
   ): Promise<ConsumerUsersListResponse> {
-    const result = await this.userRepository.getMongoConsumerUsers(params)
-    const data = await Promise.all(
-      result.data.map(
+    const result = await this.userRepository.getMongoUsersCursorsPaginate(
+      params,
+      'CONSUMER'
+    )
+    const items = await Promise.all(
+      result.items.map(
         async (user) => await this.getAugmentedUser<InternalConsumerUser>(user)
       )
     )
     return {
       ...result,
-      data,
+      items,
     }
   }
 
   public async getUsers(
     params: DefaultApiGetAllUsersListRequest
   ): Promise<AllUsersListResponse> {
-    const result = await this.userRepository.getMongoAllUsers(params)
-    const data = await Promise.all(
-      result.data.map(
+    const result = await this.userRepository.getMongoUsersCursorsPaginate(
+      params
+    )
+    const items = await Promise.all(
+      result.items.map(
         async (user) => await this.getAugmentedUser<InternalUser>(user)
       )
     )
     return {
       ...result,
-      data,
+      items,
     }
   }
 
@@ -585,9 +593,8 @@ export class UserService {
       filterId: userId,
       beforeTimestamp: Number.MAX_SAFE_INTEGER,
     })
-
-    if (usersListResponse.data && usersListResponse.data.length > 0) {
-      return usersListResponse.data[0]
+    if (usersListResponse.items && usersListResponse.items.length > 0) {
+      return usersListResponse.items[0]
     }
     throw new NotFound('User not found')
   }
