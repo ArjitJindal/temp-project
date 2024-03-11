@@ -12,8 +12,6 @@ import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSe
 import dayjs from '@/utils/dayjs'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { traceable } from '@/core/xray'
-import { SanctionsSearchHistoryMetadata } from '@/@types/openapi-internal/SanctionsSearchHistoryMetadata'
-import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -43,9 +41,8 @@ export class SanctionsSearchRepository {
     response: SanctionsSearchResponse
     createdAt?: number
     updatedAt?: number
-    metadata?: SanctionsSearchHistoryMetadata
   }): Promise<void> {
-    const { request, response, createdAt, updatedAt, metadata } = props
+    const { request, response, createdAt, updatedAt } = props
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
@@ -62,32 +59,9 @@ export class SanctionsSearchRepository {
           ...(!request.monitoring?.enabled && {
             expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
           }),
-          ...(metadata && {
-            metadata,
-          }),
         },
       },
       { upsert: true }
-    )
-  }
-
-  public async saveSearchResultMetadata(props: {
-    searchId: string
-    metadata?: SanctionsSearchHistoryMetadata
-  }): Promise<void> {
-    const { searchId, metadata } = props
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsSearchHistory>(
-      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
-    )
-
-    await collection.updateOne(
-      { _id: searchId },
-      {
-        $set: {
-          metadata: metadata,
-        },
-      }
     )
   }
 
@@ -248,73 +222,5 @@ export class SanctionsSearchRepository {
       { _id: searchId },
       { $set: { 'request.monitoring': monitoring } }
     )
-  }
-
-  private extractStats(stats, entityType) {
-    const stat = stats.find((stat) => stat._id === entityType)
-    const bankStat = stats.find((stat) => stat._id === 'IBAN')
-
-    return {
-      hitCount:
-        entityType === 'BANK'
-          ? (stat?.hitCount ?? 0) + (bankStat?.hitCount ?? 0)
-          : stat?.hitCount ?? 0,
-      screenedCount:
-        entityType === 'BANK'
-          ? (stat?.screenedCount ?? 0) + (bankStat?.screenedCount ?? 0)
-          : stat?.screenedCount ?? 0,
-    }
-  }
-
-  public async getSanctionsScreeningStats(timestampRange?: {
-    from: number
-    to: number
-  }): Promise<SanctionsScreeningStats> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsSearchHistory>(
-      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
-    )
-    const result = await collection
-      .aggregate([
-        {
-          $match: {
-            metadata: { $exists: true },
-            ...(timestampRange && {
-              createdAt: {
-                $gte: timestampRange.from,
-                $lte: timestampRange.to,
-              },
-            }),
-          },
-        },
-        {
-          $group: {
-            _id: '$metadata.entity',
-            hitCount: {
-              $sum: {
-                $cond: {
-                  if: { $gt: [{ $size: '$response.data' }, 0] },
-                  then: 1,
-                  else: 0,
-                },
-              },
-            },
-            screenedCount: { $sum: 1 },
-          },
-        },
-      ])
-      .toArray()
-
-    const user = this.extractStats(result, 'USER')
-    const counterPartyUser = this.extractStats(result, 'EXTERNAL_USER')
-    const iban = this.extractStats(result, 'IBAN')
-    const bank = this.extractStats(result, 'BANK')
-
-    return {
-      user,
-      bank,
-      iban,
-      counterPartyUser,
-    }
   }
 }

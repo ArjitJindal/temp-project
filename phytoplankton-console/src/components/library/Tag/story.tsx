@@ -22,7 +22,7 @@ export default function (): JSX.Element {
           ].map((text) => (
             <Tag
               key={text}
-              kind="TAG_WITH_ACTIONS"
+              kind="ACTION"
               actions={[
                 {
                   key: 'edit',

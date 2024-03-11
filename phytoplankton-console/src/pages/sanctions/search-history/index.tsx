@@ -23,7 +23,7 @@ type TableSearchParams = CommonParams & {
   createdAt?: RangeValue<Dayjs>;
 };
 
-const sanctionsSerachLink = (searchId: string) => `/sanctions/search/${searchId}`;
+const sanctionsSearchLink = (searchId: string) => `/sanctions/search/${searchId}`;
 
 export const SanctionsSearchHistoryTable: React.FC = () => {
   const api = useApi();
@@ -63,12 +63,12 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
       key: 'request.searchTerm',
       type: {
         render: (searchTerm, { item: entity }) => (
-          <Id to={sanctionsSerachLink(entity._id)}>{searchTerm}</Id>
+          <Id to={sanctionsSearchLink(entity._id)}>{searchTerm}</Id>
         ),
         stringify(value, item) {
           return item.request.searchTerm;
         },
-        link: (value, item) => sanctionsSerachLink(item._id),
+        link: (value, item) => sanctionsSearchLink(item._id),
       },
     }),
   ];

@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { SanctionsSearchTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
-import { Activity } from './activity';
+import { SanctionsScreeningActivity } from './activity';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { useI18n } from '@/locales';
@@ -42,7 +42,7 @@ const SanctionsPage: React.FC = () => {
             title: 'Activity',
             children: (
               <PageWrapperContentContainer>
-                <Activity />
+                <SanctionsScreeningActivity />
               </PageWrapperContentContainer>
             ),
           },

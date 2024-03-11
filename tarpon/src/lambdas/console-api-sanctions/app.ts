@@ -53,16 +53,24 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       }
     })
 
-    handlers.registerGetSanctionsScreeningStats(async (_ctx, request) => {
-      if (!request.afterTimestamp || !request.beforeTimestamp) {
-        return await sanctionsService.getSanctionsScreeningStats()
-      }
+    handlers.registerGetSanctionsScreeningActivityStats(
+      async (_ctx, request) => {
+        if (!request.afterTimestamp || !request.beforeTimestamp) {
+          return await sanctionsService.getSanctionsScreeningStats()
+        }
 
-      return await sanctionsService.getSanctionsScreeningStats({
-        from: request.afterTimestamp,
-        to: request.beforeTimestamp,
-      })
-    })
+        return await sanctionsService.getSanctionsScreeningStats({
+          from: request.afterTimestamp,
+          to: request.beforeTimestamp,
+        })
+      }
+    )
+
+    handlers.registerGetSanctionsScreeningActivityDetails(
+      async (_ctx, request) => {
+        return await sanctionsService.getSanctionsScreeningDetails(request)
+      }
+    )
 
     return await handlers.handle(event)
   }

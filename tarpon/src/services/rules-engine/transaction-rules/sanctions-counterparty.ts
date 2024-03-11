@@ -206,9 +206,9 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
               },
             },
             {
-              metadata: {
-                entity: 'EXTERNAL_USER',
-              },
+              entity: 'EXTERNAL_USER',
+              ruleInstanceId: this.ruleInstance.id!,
+              transactionId: this.transaction.transactionId,
             }
           )
 

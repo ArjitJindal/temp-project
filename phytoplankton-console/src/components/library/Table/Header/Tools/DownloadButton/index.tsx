@@ -400,7 +400,7 @@ function getColumnTitile<T extends object>(column: TableColumn<T>, props: Props<
       filterValueOptions = filterValue.toString();
     }
 
-    title += ` (Filter: ${filterValueOptions})`?.trim();
+    title += ` (Filter: ${filterValueOptions})`;
   }
   return title;
 }

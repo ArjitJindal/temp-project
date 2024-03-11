@@ -60,7 +60,9 @@ export interface Props<Item extends object, Params extends object = CommonParams
   rowHeightMode?: RowHeightMode;
   disableSorting?: boolean;
   extraFilters?: ExtraFilterProps<Params>[];
+  leftTools?: React.ReactNode;
   extraTools?: ToolRenderer[];
+  extraHeaderInfo?: React.ReactNode;
   isExpandable?: (item: TableRow<Item>) => boolean;
   renderExpanded?: (item: Item) => JSX.Element;
   fitHeight?: boolean | number;
@@ -76,7 +78,6 @@ export interface Props<Item extends object, Params extends object = CommonParams
   externalState?: unknown;
   selectionInfo?: SelectionInfo;
   expandedRowId?: string;
-  leftTools?: React.ReactNode;
 }
 
 export type SelectionInfo = {
@@ -107,6 +108,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     disableSorting = false,
     fixedExpandedContainer = false,
     externalHeader = false,
+    extraHeaderInfo,
     sizingMode = 'SCROLL',
     toolsOptions,
     renderExpanded,
@@ -234,6 +236,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
         extraTools={extraTools}
         toolsOptions={toolsOptions}
         externalHeader={externalHeader}
+        extraHeaderInfo={extraHeaderInfo}
         onChangeParams={(newParams) => {
           handleChangeParams({
             ...pickSortingParams(params),

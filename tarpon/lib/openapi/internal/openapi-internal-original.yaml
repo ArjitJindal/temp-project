@@ -4439,9 +4439,9 @@ paths:
               $ref: '#/components/schemas/SanctionsSearchType'
           in: query
           name: types
-  /sanctions/stats:
+  /sanctions/activity/stats:
     get:
-      summary: Get sanctions screening stats
+      summary: Get sanctions screening activity stats
       tags: []
       x-flagright:
         permissions:
@@ -4462,7 +4462,61 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
-      operationId: get-sanctions-screening-stats
+      operationId: get-sanctions-screening-activity-stats
+  /sanctions/activity/details:
+    get:
+      summary: Get sanctions screening activity details
+      tags: []
+      x-flagright:
+        permissions:
+          - sanctions:search:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsScreeningDetailsResponse'
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SanctionsScreeningEntity'
+          in: query
+          name: filterEntities
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: filterIsHit
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: filterIsOngoingScreening
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: filterIsNew
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+      operationId: get-sanctions-screening-activity-details
   /sanctions/search/{searchId}:
     get:
       summary: Get single search history
@@ -6602,6 +6656,7 @@ components:
       title: BatchJobNames
       type: string
       enum:
+        - ONGOING_SCREENING_USER_RULE
         - ONGOING_MERCHANT_MONITORING
         - PULSE_USERS_BACKFILL_RISK_SCORE
         - DEMO_MODE_DATA_LOAD
@@ -8904,17 +8959,7 @@ components:
           type: object
       required:
         - searchTerm
-    SanctionsSearchHistoryMetadata:
-      title: SanctionsSearchHistoryMetadata
-      type: object
-      properties:
-        entity:
-          $ref: '#/components/schemas/SanctionsSearchHistoryMetadataEntities'
-        ruleInstanceIds:
-          type: array
-          items:
-            type: string
-    SanctionsSearchHistoryMetadataEntities:
+    SanctionsScreeningEntity:
       type: string
       enum:
         - USER
@@ -8978,8 +9023,6 @@ components:
           type: number
         updatedAt:
           type: number
-        metadata:
-          $ref: '#/components/schemas/SanctionsSearchHistoryMetadata'
       required:
         - _id
         - request
@@ -8996,45 +9039,71 @@ components:
           type: string
       required:
         - enabled
+    SanctionsScreeningDetails:
+      type: object
+      title: SanctionsScreeningDetails
+      properties:
+        name:
+          type: string
+        entity:
+          $ref: '#/components/schemas/SanctionsScreeningEntity'
+        ruleInstanceIds:
+          type: array
+          items:
+            type: string
+        userIds:
+          type: array
+          items:
+            type: string
+        transactionIds:
+          type: array
+          items:
+            type: string
+        isOngoingScreening:
+          type: boolean
+        isHit:
+          type: boolean
+        isNew:
+          type: boolean
+        searchId:
+          type: string
+        lastScreenedAt:
+          type: number
+    SanctionsScreeningDetailsResponse:
+      type: object
+      title: SanctionsScreeningDetailsResponse
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsScreeningDetails'
+      required:
+        - total
+        - data
+    SanctionsScreeningEntityStats:
+      title: SanctionsScreeningEntityStats
+      type: object
+      properties:
+        entity:
+          $ref: '#/components/schemas/SanctionsScreeningEntity'
+        newCount:
+          type: number
+        screenedCount:
+          type: number
+        hitCount:
+          type: number
     SanctionsScreeningStats:
       title: SanctionsScreeningStats
       x-stoplight:
         id: ldj2zpwhzk8s7
       type: object
       properties:
-        user:
-          type: object
-          properties:
-            screenedCount:
-              type: number
-            hitCount:
-              type: number
-        bank:
-          type: object
-          properties:
-            screenedCount:
-              type: number
-            hitCount:
-              type: number
-        iban:
-          type: object
-          properties:
-            screenedCount:
-              type: number
-            hitCount:
-              type: number
-        counterPartyUser:
-          type: object
-          properties:
-            screenedCount:
-              type: number
-            hitCount:
-              type: number
-      required:
-        - user
-        - iban
-        - bank
-        - counterPartyUser
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsScreeningEntityStats'
     SanctionsWhitelistRequest:
       title: SanctionsWhitelistRequest
       type: object
@@ -11090,6 +11159,12 @@ components:
         - entityId
         - entityType
         - notificationData
+    BooleanString:
+      title: BooleanString
+      type: string
+      enum:
+        - 'true'
+        - 'false'
   securitySchemes:
     Authorization:
       type: http

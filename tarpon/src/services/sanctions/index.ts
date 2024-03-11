@@ -2,11 +2,15 @@ import { v4 as uuidv4 } from 'uuid'
 import { round, startCase } from 'lodash'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
+import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetSanctionsScreeningActivityDetailsRequest,
+  DefaultApiGetSanctionsSearchRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { getSecretByName } from '@/utils/secrets-manager'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
@@ -17,11 +21,13 @@ import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { apiFetch } from '@/utils/api-fetch'
-import { SanctionsSearchHistoryMetadata } from '@/@types/openapi-internal/SanctionsSearchHistoryMetadata'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import { envIs } from '@/utils/env'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { tenantSettings } from '@/core/utils/context'
+import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
+import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
+import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
 
 const DEFAULT_FUZZINESS = 0.5
 const COMPLYADVANTAGE_SEARCH_API_URI =
@@ -83,6 +89,7 @@ export class SanctionsService {
   complyAdvantageSearchProfileId: string | undefined
   sanctionsSearchRepository!: SanctionsSearchRepository
   sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
+  sanctionsScreeningDetailsRepository!: SanctionsScreeningDetailsRepository
   tenantId: string
 
   constructor(tenantId: string) {
@@ -100,6 +107,12 @@ export class SanctionsService {
     )
     this.sanctionsWhitelistEntityRepository =
       new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
+    this.sanctionsSearchRepository = new SanctionsSearchRepository(
+      this.tenantId,
+      mongoDb
+    )
+    this.sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(this.tenantId, mongoDb)
     this.apiKey = await this.getApiKey()
     const settings = await tenantSettings(this.tenantId)
     this.complyAdvantageSearchProfileId =
@@ -138,10 +151,13 @@ export class SanctionsService {
 
   public async search(
     request: SanctionsSearchRequest,
-    options?: {
-      searchIdToReplace?: string
+    context?: {
+      entity?: SanctionsScreeningEntity
       userId?: string
-      metadata?: SanctionsSearchHistoryMetadata
+      transactionId?: string
+      ruleInstanceId: string
+      isOngoingScreening?: boolean
+      iban?: string
     }
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
@@ -153,38 +169,65 @@ export class SanctionsService {
       ? request.types
       : SANCTIONS_SEARCH_TYPES
 
-    const result = options?.searchIdToReplace
-      ? null
-      : await this.sanctionsSearchRepository.getSearchResultByParams(request)
-
-    if (result?.response) {
-      return this.filterOutWhitelistEntites(result?.response, options?.userId)
-    }
-
-    const searchId = options?.searchIdToReplace ?? uuidv4()
-    const searchProfileId =
-      this.complyAdvantageSearchProfileId ||
-      this.pickSearchProfileId(request.types) ||
-      (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
-
-    const response = await this.complyAdvantageSearch(searchProfileId, {
-      ...request,
-    })
-
-    const responseWithId = getSanctionsSearchResponse(response, searchId)
-    const sanctionsResponse = await this.filterOutWhitelistEntites(
-      responseWithId,
-      options?.userId
+    const result = await this.sanctionsSearchRepository.getSearchResultByParams(
+      request
     )
-    await this.sanctionsSearchRepository.saveSearchResult({
-      request,
-      response: responseWithId,
-      metadata: options?.metadata,
-    })
-    if (request.monitoring) {
-      await this.updateSearch(searchId, request.monitoring)
+    let response = result?.response
+
+    if (!response) {
+      const searchId = uuidv4()
+      const searchProfileId =
+        this.complyAdvantageSearchProfileId ||
+        this.pickSearchProfileId(request.types) ||
+        (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
+
+      const rawResponse = await this.complyAdvantageSearch(searchProfileId, {
+        ...request,
+      })
+
+      const responseWithId = getSanctionsSearchResponse(rawResponse, searchId)
+      response = responseWithId
+      await this.sanctionsSearchRepository.saveSearchResult({
+        request,
+        response: responseWithId,
+      })
+      if (request.monitoring) {
+        await this.updateSearch(searchId, request.monitoring)
+      }
     }
-    return sanctionsResponse
+
+    const finalResponse = await this.filterOutWhitelistEntites(
+      response,
+      context?.userId
+    )
+    if (context) {
+      // Save the screening details check when running a rule
+      const details: SanctionsScreeningDetails = {
+        name: request.searchTerm,
+        entity: context.entity,
+        ruleInstanceIds: [context.ruleInstanceId],
+        userIds: context.userId ? [context.userId] : undefined,
+        transactionIds: context.transactionId
+          ? [context.transactionId]
+          : undefined,
+        isOngoingScreening: context.isOngoingScreening,
+        isHit: finalResponse.total > 0,
+        searchId: response.searchId,
+      }
+      await this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
+        details
+      )
+      if (context.iban) {
+        await this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
+          {
+            ...details,
+            name: context.iban,
+            entity: 'IBAN',
+          }
+        )
+      }
+    }
+    return finalResponse
   }
 
   private async filterOutWhitelistEntites(
@@ -342,8 +385,17 @@ export class SanctionsService {
     to: number
   }): Promise<SanctionsScreeningStats> {
     await this.initialize()
-    return await this.sanctionsSearchRepository.getSanctionsScreeningStats(
+    return await this.sanctionsScreeningDetailsRepository.getSanctionsScreeningStats(
       timeRange
+    )
+  }
+
+  public async getSanctionsScreeningDetails(
+    params: DefaultApiGetSanctionsScreeningActivityDetailsRequest
+  ): Promise<SanctionsScreeningDetailsResponse> {
+    await this.initialize()
+    return this.sanctionsScreeningDetailsRepository.getSanctionsScreeningDetails(
+      params
     )
   }
 

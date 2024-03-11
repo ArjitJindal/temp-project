@@ -35,7 +35,7 @@ export interface UserSearchParams extends CommonParams {
   tagValue?: string;
   createdTimestamp?: string[];
   userRegistrationStatus?: UserRegistrationStatus[];
-  riskLevelLocked?: 'YES' | 'NO';
+  riskLevelLocked?: 'true' | 'false';
 }
 
 function getRiskScoringColumns(): TableColumn<InternalUser>[] {

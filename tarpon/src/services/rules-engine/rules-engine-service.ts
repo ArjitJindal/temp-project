@@ -593,10 +593,10 @@ export class RulesEngineService {
     }
   }
 
-  private async verifyRuleIdempotent(options: {
+  public async verifyRuleIdempotent(options: {
     rule?: Rule
     ruleInstance: RuleInstance
-    senderUserRiskLevel: RiskLevel | undefined
+    senderUserRiskLevel?: RiskLevel
     transaction?: Transaction
     database: 'MONGODB' | 'DYNAMODB'
     senderUser?: User | Business
@@ -736,16 +736,10 @@ export class RulesEngineService {
         runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
       }
 
-      const periodicLog = setInterval(() => {
-        logger.warn(`Rule ${ruleInstance.ruleId} is taking too long to execute`)
-        runSegment?.flush()
-      }, 5000)
-
       ruleResult = shouldRunRule
         ? await ruleClassInstance.computeRule()
         : undefined
       runSegment?.close()
-      clearInterval(periodicLog)
     }
 
     const filteredRuleResult = ruleResult

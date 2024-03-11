@@ -110,11 +110,11 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 monitoring: { enabled: ongoingScreening },
               },
               {
+                entity: 'BANK',
                 userId: this.user.userId,
-                metadata: {
-                  entity: resolveIban ? 'IBAN' : 'BANK',
-                  ruleInstanceIds: [this.ruleInstance.id!],
-                },
+                ruleInstanceId: this.ruleInstance.id!,
+                iban: bankInfo.iban,
+                isOngoingScreening: this.ongoingScreeningMode,
               }
             )
             let sanctionsDetails: SanctionsDetails

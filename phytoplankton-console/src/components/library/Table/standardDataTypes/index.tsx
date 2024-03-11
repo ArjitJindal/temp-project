@@ -196,8 +196,8 @@ export const BOOLEAN: ColumnDataType<boolean> = {
   autoFilterDataType: {
     kind: 'select',
     options: [
-      { value: 'YES', label: 'Yes' },
-      { value: 'NO', label: 'No' },
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' },
     ],
     mode: 'SINGLE',
     displayMode: 'list',

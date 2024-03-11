@@ -2,12 +2,18 @@
 @import 'src/components/ui/animation.less';
 @import 'src/components/ui/z-indexes';
 
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
 .root {
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 32px;
-  margin-bottom: 16px;
 
   &.filtersVisible {
     .right {

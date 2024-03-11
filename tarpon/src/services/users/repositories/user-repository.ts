@@ -204,7 +204,7 @@ export class UserRepository {
       hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')
     console.log('FILTER_RISK_LEVEL_LOCKED', params.filterRiskLevelLocked)
     if (params.filterRiskLevelLocked != null) {
-      const isUpdatable = params.filterRiskLevelLocked === 'YES' ? false : true
+      const isUpdatable = params.filterRiskLevelLocked === 'true' ? false : true
       filterConditions.push({
         'drsScore.isUpdatable': isUpdatable,
       })

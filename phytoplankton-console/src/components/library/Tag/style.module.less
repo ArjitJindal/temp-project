@@ -10,11 +10,21 @@
   min-height: 24px;
   align-items: center;
   white-space: nowrap;
+  border: 1px solid;
 
-  &.kind-TAG_WITH_ACTIONS {
+  &.kind-ACTION {
     background: @fr-colors-v2-risk-level-bg-medium;
-    border: 1px solid @fr-colors-yellow;
+    border-color: @fr-colors-yellow;
     justify-content: space-between;
+  }
+
+  &.kind-SUCCESS {
+    background: @fr-colors-v2-alert-success-background;
+    border-color: @fr-colors-v2-alert-success;
+  }
+  &.kind-ERROR {
+    background: @fr-colors-v2-alert-critical-background;
+    border-color: @fr-colors-v2-alert-critical;
   }
 }
 

@@ -9,7 +9,11 @@ import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { envIs } from '@/utils/env'
 import { getFullTenantId } from '@/utils/tenant'
-import { tenantSettings } from '@/core/utils/context'
+import {
+  initializeTenantContext,
+  tenantSettings,
+  withContext,
+} from '@/core/utils/context'
 
 const config = getConfig()
 
@@ -55,7 +59,10 @@ export async function migrateAllTenants(
       console.info(
         `Migrating tenant ${tenantInfo.tenant.name} (ID: ${tenantInfo.tenant.id})`
       )
-      await migrationCallback(tenantInfo.tenant, tenantInfo.auth0Domain)
+      await withContext(async () => {
+        await initializeTenantContext(tenantInfo.tenant.id)
+        await migrationCallback(tenantInfo.tenant, tenantInfo.auth0Domain)
+      })
       console.info(
         `Migrated tenant ${tenantInfo.tenant.name} (ID: ${tenantInfo.tenant.id})`
       )

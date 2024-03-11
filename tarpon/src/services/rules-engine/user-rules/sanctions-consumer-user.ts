@@ -67,11 +67,10 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         monitoring: { enabled: ongoingScreening },
       },
       {
+        entity: 'USER',
         userId: this.user.userId,
-        metadata: {
-          entity: 'USER',
-          ruleInstanceIds: [this.ruleInstance.id!],
-        },
+        ruleInstanceId: this.ruleInstance.id!,
+        isOngoingScreening: this.ongoingScreeningMode,
       }
     )
     if (result.data && result.data.length > 0) {

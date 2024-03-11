@@ -195,14 +195,15 @@ export default function SuperAdminPanel() {
           <>
             <br />
             <Button
-              type="SECONDARY"
-              size="SMALL"
+              type="PRIMARY"
+              size="MEDIUM"
+              style={{ width: 200 }}
               onClick={() => {
                 setShowCreateTenantModal(true);
                 handleCancel();
               }}
             >
-              Create New Tenant
+              Create new tenant
             </Button>
             <Divider />
             <div className={s.field}>
@@ -280,13 +281,14 @@ export default function SuperAdminPanel() {
             <div className={s.field}>
               <Button
                 type="PRIMARY"
+                isDanger
                 onClick={() =>
                   mutateTenantSettings.mutate({
                     apiKeyViewData: [],
                   })
                 }
               >
-                Reset Current API Key View Count
+                Reset current API key view count
               </Button>
             </div>
             <div className={s.field}>
@@ -298,9 +300,8 @@ export default function SuperAdminPanel() {
               </Label>
             </div>
             <Divider />
-            <H4>Run Batch Jobs</H4>
             <div className={s.field}>
-              <Label label="Job Name">
+              <Label label="Run batch job">
                 <Select
                   options={BATCH_JOB_NAMESS.map((name) => ({
                     label: humanizeConstant(name),
@@ -316,13 +317,18 @@ export default function SuperAdminPanel() {
               title={`Run ${humanizeConstant(batchJobName)}?`}
               onConfirm={async () => {
                 batchJobMessage = message.loading(`Starting ${humanizeConstant(batchJobName)}...`);
-                await api.postTenantsTriggerBatchJob({
-                  TenantTriggerBatchJobRequest: {
-                    jobName: batchJobName,
-                  },
-                });
-                batchJobMessage();
-                window.location.reload();
+                try {
+                  await api.postTenantsTriggerBatchJob({
+                    TenantTriggerBatchJobRequest: {
+                      jobName: batchJobName,
+                    },
+                  });
+                  message.success(process.env.ENV_NAME === 'local' ? 'Done' : 'Submitted');
+                } catch (e) {
+                  message.error(e);
+                } finally {
+                  batchJobMessage();
+                }
               }}
               text={`Are you sure you want to run ${humanizeConstant(batchJobName)} batch job?`}
               onSuccess={() => {
@@ -332,7 +338,7 @@ export default function SuperAdminPanel() {
             >
               {(props) => (
                 <div className={s.field}>
-                  <Button isDisabled={!batchJobName} onClick={props.onClick}>
+                  <Button isDisabled={!batchJobName} isDanger onClick={props.onClick}>
                     Run
                   </Button>
                 </div>
@@ -422,7 +428,7 @@ export default function SuperAdminPanel() {
                 >
                   {(props) => (
                     <div className={s.field}>
-                      <Button isDisabled={!tenantIdToDelete} onClick={props.onClick}>
+                      <Button isDisabled={!tenantIdToDelete} isDanger onClick={props.onClick}>
                         Delete
                       </Button>
                     </div>

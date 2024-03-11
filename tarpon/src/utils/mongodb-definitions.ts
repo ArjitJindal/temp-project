@@ -171,6 +171,10 @@ export const SANCTIONS_WHITELIST_ENTITIES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-whitelist-entities`
 }
 
+export const SANCTIONS_SCREENING_DETAILS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-sanctions-screening-details`
+}
+
 export const IBAN_COM_COLLECTION = (tenantId: string) => {
   return `${tenantId}-iban-com`
 }
@@ -471,6 +475,22 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId)]: [
       { getIndexes: () => [{ 'caEntity.id': 1, userId: 1 }] },
     ],
+    [SANCTIONS_SCREENING_DETAILS_COLLECTION(tenantId)]: [
+      {
+        getIndexes: () => [
+          { lastScreenedAt: 1 },
+          { name: 1, lastScreenedAt: 1 },
+          { entity: 1, lastScreenedAt: 1 },
+          { ruleInstanceIds: 1, userId: 1 },
+          { ruleInstanceIds: 1, transactionId: 1 },
+        ],
+      },
+      {
+        getIndexes: () => [{ name: 1, entity: 1, lastScreenedAt: 1 }],
+        unique: true,
+      },
+    ],
+
     [NARRATIVE_TEMPLATE_COLLECTION(tenantId)]: [
       {
         getIndexes: () => [

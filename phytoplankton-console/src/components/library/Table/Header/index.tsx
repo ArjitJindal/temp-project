@@ -22,6 +22,7 @@ interface Props<Item extends object, Params extends object = CommonParams> {
   columns: TableColumn<Item>[];
   extraFilters?: ExtraFilterProps<Params>[];
   extraTools?: ToolRenderer[];
+  extraHeaderInfo?: React.ReactNode;
   toolsOptions?: ToolsOptions | false;
   hideFilters?: boolean;
   params: PaginatedParams<Params>;
@@ -48,6 +49,7 @@ export default function Header<Item extends object, Params extends object = Comm
     hideFilters = false,
     toolsOptions = {},
     externalHeader,
+    extraHeaderInfo,
     onReload,
     onPaginateData,
     cursorPagination,
@@ -78,38 +80,41 @@ export default function Header<Item extends object, Params extends object = Comm
   }
 
   return (
-    <div
-      className={cn(s.root, showFilters && s.filtersVisible, externalHeader && s.externalHeader)}
-    >
-      {showFilters ? (
-        <Filters<Params>
-          filters={allFilters}
-          params={params}
-          onChangeParams={(newParams) => {
-            onChangeParams({
-              ...pickPaginatedParams(params),
-              ...newParams,
-            });
-          }}
-        />
-      ) : (
-        <>{leftTools ? <div className={s.left}>{leftTools}</div> : <div />}</>
-      )}
-      <div className={s.right}>
-        {toolsOptions != false && (
-          <Tools
-            options={toolsOptions}
-            extraTools={extraTools}
-            columns={columns}
-            table={table}
+    <div className={s.container}>
+      <div
+        className={cn(s.root, showFilters && s.filtersVisible, externalHeader && s.externalHeader)}
+      >
+        {showFilters ? (
+          <Filters<Params>
+            filters={allFilters}
             params={params}
-            onReload={onReload}
-            onPaginateData={onPaginateData}
-            cursorPagination={cursorPagination}
-            totalPages={totalPages}
+            onChangeParams={(newParams) => {
+              onChangeParams({
+                ...pickPaginatedParams(params),
+                ...newParams,
+              });
+            }}
           />
+        ) : (
+          <>{leftTools ? <div className={s.left}>{leftTools}</div> : <div />}</>
         )}
+        <div className={s.right}>
+          {toolsOptions != false && (
+            <Tools
+              options={toolsOptions}
+              extraTools={extraTools}
+              columns={columns}
+              table={table}
+              params={params}
+              onReload={onReload}
+              onPaginateData={onPaginateData}
+              cursorPagination={cursorPagination}
+              totalPages={totalPages}
+            />
+          )}
+        </div>
       </div>
+      {extraHeaderInfo ? <div>{extraHeaderInfo}</div> : <></>}
     </div>
   );
 }
