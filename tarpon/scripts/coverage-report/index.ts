@@ -11,7 +11,7 @@ const { context } = github
 async function run(githubToken: string) {
   const baseSummaryFilename = path.resolve(
     __dirname,
-    '../../artifact/coverage-summary.json'
+    '../../../artifact/coverage-summary.json'
   )
   const coverageFilename = path.resolve(
     __dirname,

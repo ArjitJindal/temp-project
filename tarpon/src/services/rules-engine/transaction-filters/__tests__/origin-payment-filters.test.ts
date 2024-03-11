@@ -254,7 +254,7 @@ test('Payment Method Filter is Wallet and Wallet Provider is Apple Pay', async (
   ).toBe(true)
 })
 
-test('Card Issued Country Matches But walltype is not but still returns true', async () => {
+test('Card Issued Country Matches But walletType not but still returns true', async () => {
   expect(
     await new OriginPaymentFilterRuleFilter(
       getTestTenantId(),

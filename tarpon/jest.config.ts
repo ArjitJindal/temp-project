@@ -26,10 +26,12 @@ const config: Config = {
   },
   collectCoverage: true,
   collectCoverageFrom: [
-    '<rootDir>/src/**/*.ts',
+    '<rootDir>/src/lambdas/**/*.ts',
+    '<rootDir>/src/services/**/*.ts',
+    '<rootDir>/src/utils/**/*.ts',
+    '<rootDir>/src/fargate/**/*.ts',
+    '<rootDir>/src/core/**/*.ts',
     '!**/node_modules/**',
-    '!<rootDir>/src/@types/**',
-    '!<rootDir>/src/canaries/**',
   ],
   coverageReporters: ['json-summary'],
 }
