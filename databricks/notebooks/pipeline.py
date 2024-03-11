@@ -5,7 +5,10 @@
 
 import os
 import dlt
+import requests
+import sentry_sdk
 from pyspark.sql.functions import col, concat, expr, from_json, lit, regexp_extract, udf, lower
+import json
 
 from src.dlt.schema import kinesis_event_schema
 from src.dynamo.serde import deserialise_dynamo
@@ -18,6 +21,30 @@ aws_access_key = dbutils.secrets.get(
 aws_secret_key = dbutils.secrets.get(
     "kinesis", "aws-secret-key"
 )
+
+SENTRY_DSN = "https://2f1b7e0a135251afb6ab00dbeab9c423@o1295082.ingest.us.sentry.io/4506869105754112"
+
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    traces_sample_rate=1.0,
+)
+
+@dlt.on_event_hook
+def write_events_to_sentry(event):
+    eventType = event.get('event_type', '')
+    if eventType == 'update_progress':  
+        eventState = event.get('details', {}).get('update_progress', {}).get('state', '')
+
+        if 'FAIL' in eventState or 'STOP' in eventState:
+            with sentry_sdk.push_scope() as scope:
+                scope.set_tag("eventType", eventType)
+                scope.set_tag("eventState", eventState)
+                sentry_sdk.set_extra("event", event)
+                sentry_sdk.capture_event({
+                    "message": f"Delta live tables pipeline status: {eventState}"
+                    "level": "error",
+                    "logger": "dlt",
+                })
 
 def define_pipeline(spark):
     @dlt.table(

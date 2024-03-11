@@ -329,11 +329,48 @@ class DatabricksStack extends TerraformStack {
       stringValue: Fn.lookup(mongoSecretValue, 'password'),
       scope: mongoScope.id,
     })
+
     new databricks.secret.Secret(this, 'mongo-host', {
       provider: workspaceProvider,
       key: 'mongo-host',
       stringValue: Fn.lookup(mongoSecretValue, 'host'),
       scope: mongoScope.id,
+    })
+
+    const slackCreds =
+      new aws.dataAwsSecretsmanagerSecret.DataAwsSecretsmanagerSecret(
+        this,
+        'slackCreds',
+        {
+          name: 'slackCreds',
+        }
+      )
+
+    const slackCredsVersion =
+      new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
+        this,
+        'slackCredsVersion',
+        {
+          secretId: slackCreds.id,
+        }
+      )
+
+    const slackScope = new databricks.secretScope.SecretScope(
+      this,
+      'slack-scope',
+      {
+        provider: workspaceProvider,
+        name: 'slack',
+      }
+    )
+
+    const slackSecretValue = Fn.jsondecode(slackCredsVersion.secretString)
+
+    new databricks.secret.Secret(this, 'slack-token', {
+      provider: workspaceProvider,
+      key: 'slack-token',
+      stringValue: Fn.lookup(slackSecretValue, 'token'),
+      scope: slackScope.id,
     })
 
     const kinesisScope = new databricks.secretScope.SecretScope(
