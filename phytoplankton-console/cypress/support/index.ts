@@ -35,6 +35,7 @@ declare global {
         endpoint: string,
         requestBody: any,
       ): Chainable<Promise<Element>>;
+      closeDrawer(): Chainable<Promise<Element>>;
 
       /**
        * Looks for a popup message by a text

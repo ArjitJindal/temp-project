@@ -70,7 +70,7 @@ describe('Dashboard Integration Test', () => {
     });
 
     cy.get('button[data-cy="update-dashboard-button"]').click();
-    cy.get('svg[data-cy="drawer-close-button"]').click();
+    cy.closeDrawer();
 
     cy.get('button[data-cy="dashboard-configure-button"]').click();
 
@@ -88,7 +88,7 @@ describe('Dashboard Integration Test', () => {
 
     cy.get('button[data-cy="update-dashboard-button"]').click();
 
-    cy.get('svg[data-cy="drawer-close-button"]').click();
+    cy.closeDrawer();
 
     Cypress._.times(3, () => {
       cy.wait('@dashboard_stats_Alias', { timeout: 15000 })
@@ -119,14 +119,14 @@ describe('Dashboard Integration Test', () => {
       cy.get(`input[data-cy='${widget}-checkbox']`).click();
     });
     cy.get('button[data-cy="update-dashboard-button"]').click();
-    cy.get('svg[data-cy="drawer-close-button"]').click();
+    cy.closeDrawer();
 
     // One by one check existence of every widget
     Object.keys(WIDGETS).map((widget) => {
       cy.get('button[data-cy="dashboard-configure-button"]').click();
       cy.get(`input[data-cy='${widget}-checkbox']`).click();
       cy.get('button[data-cy="update-dashboard-button"]').click();
-      cy.get('svg[data-cy="drawer-close-button"]').click();
+      cy.closeDrawer();
       cy.get(`div[data-cy='${widget}']`).should('exist');
     });
   });

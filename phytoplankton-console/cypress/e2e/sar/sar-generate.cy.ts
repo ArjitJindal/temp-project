@@ -52,7 +52,6 @@ describe('SAR Generate', () => {
       cy.get(`div[title="${item.reportType}"]`).click();
       cy.get('button[data-cy="modal-ok"]').click();
       cy.get('div[data-cy="drawer-title-sar-report"]').should('contain', 'SAR report');
-      cy.get('svg[data-cy="drawer-close-button"]').click();
       cy.reload();
     });
   });

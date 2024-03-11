@@ -269,3 +269,7 @@ Cypress.Commands.add('publicApiHandler', (method, endpoint, requestBody) => {
     });
   });
 });
+
+Cypress.Commands.add('closeDrawer', () => {
+  cy.get('[data-cy="drawer-close-button"]').filter(':visible').first().click();
+});
