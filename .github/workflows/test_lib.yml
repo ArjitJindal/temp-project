@@ -53,7 +53,7 @@ jobs:
         working-directory: "lib"
       - name: Post to a Slack channel on failure
         id: slack
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v1.25.0
         if: ${{ failure() && github.ref_name == 'main' }}
         with:
           channel-id: "C03L5KRE2E8"

@@ -74,6 +74,7 @@ jobs:
           path: tarpon/coverage/coverage-summary.json
           overwrite: true
       - name: Get workflow run id
+        if: github.ref != 'refs/heads/main'
         id: get_workflow_run_id
         run: |
           response=$(curl -s -H "Authorization: token ${{secrets.FLAGRIGHT_ACTION_PAT}}" \
@@ -90,8 +91,6 @@ jobs:
           run-id: ${{ steps.get_workflow_run_id.outputs.workflow_run_id }}
           github-token: ${{ secrets.FLAGRIGHT_ACTION_PAT }}
           repository: flagright/orca
-      - name: Test downloaded artifact
-        run: cd artifact && ls -l
       - name: Generate coverage report and comment on PR
         if: github.ref != 'refs/heads/main'
         run: |
@@ -99,7 +98,7 @@ jobs:
         working-directory: "tarpon"
       - name: Post to a Slack channel on failure
         id: slack
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v1.25.0
         if: ${{ github.ref_name == 'main' }}
         with:
           channel-id: "C03L5KRE2E8"

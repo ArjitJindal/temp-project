@@ -41,7 +41,7 @@ jobs:
           NODE_OPTIONS: "--max-old-space-size=4096"
       - name: Post to a Slack channel on failure
         id: slack
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v1.25.0
         if: ${{ github.ref == 'refs/heads/main' && failure() }}
         with:
           channel-id: "C03L5KRE2E8"
