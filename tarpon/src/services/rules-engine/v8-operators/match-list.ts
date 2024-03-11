@@ -10,7 +10,7 @@ export const MATCH_LIST_OPERATOR: RuleOperator<string, string[]> = {
     valueTypes: ['text'],
     valueSources: ['value'],
   },
-  run: async (value, listIds, context) => {
+  run: async (value, listIds, _params, context) => {
     if (!context) {
       logger.error('No context provided')
       return false

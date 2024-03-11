@@ -1,11 +1,11 @@
-import { CONTAINS } from '../contains'
+import { CONTAINS_OPERATOR } from '../contains'
 
 describe('Includes in array', () => {
   test('should return true if the value is present in the array', async () => {
     const blacklist = ['a', 'b', 'c']
     const value = 'b'
 
-    const result = await CONTAINS.run(value, blacklist)
+    const result = await CONTAINS_OPERATOR.run(value, blacklist)
     expect(result).toBe(true)
   })
 
@@ -13,7 +13,7 @@ describe('Includes in array', () => {
     const blacklist = ['a', 'b', 'c']
     const value = 'd'
 
-    const result = await CONTAINS.run(value, blacklist)
+    const result = await CONTAINS_OPERATOR.run(value, blacklist)
 
     expect(result).toBe(false)
   })
@@ -22,7 +22,7 @@ describe('Includes in array', () => {
     const blacklist = ['Mobiwik', 'Paytm']
     const value = 'Paytm Wallet'
 
-    const result = await CONTAINS.run(value, blacklist)
+    const result = await CONTAINS_OPERATOR.run(value, blacklist)
 
     expect(result).toBe(true)
   })
@@ -31,7 +31,7 @@ describe('Includes in array', () => {
     const blacklist = ['a', 'b', 'c']
     const value = null
 
-    const result = await CONTAINS.run(value, blacklist)
+    const result = await CONTAINS_OPERATOR.run(value, blacklist)
 
     expect(result).toBe(false)
   })
@@ -40,7 +40,7 @@ describe('Includes in array', () => {
     const blacklist = ['a', 'b', 'c']
     const value = undefined
 
-    const result = await CONTAINS.run(value, blacklist)
+    const result = await CONTAINS_OPERATOR.run(value, blacklist)
 
     expect(result).toBe(false)
   })
@@ -49,7 +49,7 @@ describe('Includes in array', () => {
     const blacklist = []
     const value = 'a'
 
-    const result = await CONTAINS.run(value, blacklist)
+    const result = await CONTAINS_OPERATOR.run(value, blacklist)
 
     expect(result).toBe(false)
   })

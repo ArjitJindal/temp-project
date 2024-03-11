@@ -1,11 +1,4 @@
-import {
-  ImmutableTree,
-  Fields,
-  Types,
-  Operators,
-  Funcs,
-  ValueSource,
-} from '@react-awesome-query-builder/core';
+import { ImmutableTree, Fields, Types, Operators, Funcs } from '@react-awesome-query-builder/core';
 
 export type LogicBuilderConfig = {
   fields: Fields;
@@ -18,7 +11,6 @@ export type LogicBuilderConfig = {
   enableReorder?: boolean;
   hideLabels?: boolean;
   disableVariablesSource?: string[];
-  enabledValueSources?: ValueSource[];
 };
 
 export type LogicBuilderValue = ImmutableTree | undefined;

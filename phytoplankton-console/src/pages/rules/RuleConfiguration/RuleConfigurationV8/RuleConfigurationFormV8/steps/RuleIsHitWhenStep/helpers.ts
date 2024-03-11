@@ -14,6 +14,7 @@ import {
 } from '@/apis';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
+import { getOperatorWithParameter } from '@/components/ui/LogicBuilder/operators';
 
 const InitialConfig = BasicConfig;
 
@@ -102,11 +103,19 @@ export function useLogicBuilderConfig(
           }
         }
 
+        const operatorsWithParameters = operators
+          .filter((op) => op.uiDefinition)
+          .map(getOperatorWithParameter);
+        const operatorsWithoutParameters = operators.filter((op) => !op.parameters);
         const config = makeConfig({
           ...configParams,
           types,
           operators: {
-            ...Object.fromEntries(operators.map((v) => [v.key, v.uiDefinition])),
+            ...Object.fromEntries(
+              operatorsWithParameters
+                .concat(operatorsWithoutParameters)
+                .map((v) => [v.key, v.uiDefinition]),
+            ),
           },
           funcs: {
             ...Object.fromEntries(functions.map((v) => [v.key, v.uiDefinition])),

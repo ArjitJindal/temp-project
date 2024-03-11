@@ -46,23 +46,34 @@ describe('match list operator', () => {
   })
 
   test('match single list - true', async () => {
-    const result = await MATCH_LIST_OPERATOR.run('string_1', [testListId1], {
-      tenantId: TEST_TENANT_ID,
-      dynamoDb,
-    })
+    const result = await MATCH_LIST_OPERATOR.run(
+      'string_1',
+      [testListId1],
+      undefined,
+      {
+        tenantId: TEST_TENANT_ID,
+        dynamoDb,
+      }
+    )
     expect(result).toBe(true)
   })
   test('match single list - false', async () => {
-    const result = await MATCH_LIST_OPERATOR.run('string_x', [testListId1], {
-      tenantId: TEST_TENANT_ID,
-      dynamoDb,
-    })
+    const result = await MATCH_LIST_OPERATOR.run(
+      'string_x',
+      [testListId1],
+      undefined,
+      {
+        tenantId: TEST_TENANT_ID,
+        dynamoDb,
+      }
+    )
     expect(result).toBe(false)
   })
   test('match multiple lists - true', async () => {
     const result = await MATCH_LIST_OPERATOR.run(
       'string_4',
       [testListId1, testListId2, 'unkown-list-id'],
+      undefined,
       {
         tenantId: TEST_TENANT_ID,
         dynamoDb,
@@ -74,6 +85,7 @@ describe('match list operator', () => {
     const result = await MATCH_LIST_OPERATOR.run(
       'string_x',
       [testListId1, testListId2, 'unkown-list-id'],
+      undefined,
       {
         tenantId: TEST_TENANT_ID,
         dynamoDb,
@@ -85,6 +97,7 @@ describe('match list operator', () => {
     const result = await MATCH_LIST_OPERATOR.run(
       'string_1',
       [testInactiveListId],
+      undefined,
       {
         tenantId: TEST_TENANT_ID,
         dynamoDb,

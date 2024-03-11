@@ -5,7 +5,7 @@ import s from './index.module.less';
 import { JSON_LOGIC_FUNCTIONS } from './functions';
 import { JSON_LOGIC_OPERATORS } from './operators';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
-import { customWidgets } from '@/components/ui/LogicBuilder/widgets';
+import { customWidgets, isOperatorParameterField } from '@/components/ui/LogicBuilder/widgets';
 import Select, { Option } from '@/components/library/Select';
 import Label, { Props as LabelProps } from '@/components/library/Label';
 import Dropdown from '@/components/library/Dropdown';
@@ -25,7 +25,6 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
     hideLabels = false,
     addRuleLabel = 'Add condition',
     addGroupLabel = 'Add group',
-    enabledValueSources = undefined,
   } = params;
   const operators = {
     ...JSON_LOGIC_OPERATORS,
@@ -43,16 +42,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
       ...params.funcs,
       ...JSON_LOGIC_FUNCTIONS,
     },
-    operators: Object.entries(operators).reduce(
-      (acc, [key, value]) => ({
-        ...acc,
-        [key]: {
-          ...value,
-          valueSources: enabledValueSources ?? value.valueSources,
-        },
-      }),
-      JSON_LOGIC_OPERATORS,
-    ),
+    operators: operators,
     fields: fields,
     settings: {
       ...InitialConfig.settings,
@@ -80,6 +70,10 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
       canReorder: enableReorder,
       showErrorMessage: true,
       renderValueSources: (props) => {
+        if (isOperatorParameterField(props)) {
+          // Not applicable, hide it
+          return <></>;
+        }
         let options: Option<string>[];
         if (Array.isArray(props.valueSources)) {
           options = props.valueSources.map(([key, { label }]) => ({

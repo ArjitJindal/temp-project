@@ -2,7 +2,10 @@ import { RuleOperator } from './types'
 import { getNegatedOperator } from './utils'
 
 // Example walletname incoming is 'Mobiwik-1234' and the array is ['Mobiwik', 'Paytm']
-export const CONTAINS: RuleOperator<string | null | undefined, string[]> = {
+export const CONTAINS_OPERATOR: RuleOperator<
+  string | null | undefined,
+  string[]
+> = {
   key: 'op:contains',
   uiDefinition: {
     label: 'Contains',
@@ -16,4 +19,7 @@ export const CONTAINS: RuleOperator<string | null | undefined, string[]> = {
     })
   },
 }
-export const NOT_CONTAINS = getNegatedOperator(CONTAINS, 'Not Contains')
+export const NOT_CONTAINS_OPERATOR = getNegatedOperator(
+  CONTAINS_OPERATOR,
+  'Not Contains'
+)

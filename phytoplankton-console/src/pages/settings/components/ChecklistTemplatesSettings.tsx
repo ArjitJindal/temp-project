@@ -134,7 +134,7 @@ export function ChecklistTemplatesSettings() {
             p1Errors: {
               type: 'integer',
               title: 'P1 errors allowed',
-              subTitle: 'If the P1 errors will exceed the allowed limit, QA will fail',
+              description: 'If the P1 errors will exceed the allowed limit, QA will fail',
               nullable: true,
               minimum: 0,
               maximum: itemsCount.p1 ?? 0,
@@ -142,7 +142,7 @@ export function ChecklistTemplatesSettings() {
             p2Errors: {
               type: 'integer',
               title: 'P2 errors allowed',
-              subTitle: 'If the P2 errors will exceed the allowed limit, QA will fail',
+              description: 'If the P2 errors will exceed the allowed limit, QA will fail',
               nullable: true,
               minimum: 0,
               maximum: itemsCount.p2 ?? 0,

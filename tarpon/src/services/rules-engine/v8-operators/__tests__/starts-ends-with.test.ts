@@ -5,11 +5,11 @@ describe('starts with operator', () => {
     const result = await STARTS_WITH_OPERATOR.run('apple', ['pp', 'pl', 'le'])
     expect(result).toBe(false)
   })
-  test('stars with (1 match)', async () => {
+  test('starts with (1 match)', async () => {
     const result = await STARTS_WITH_OPERATOR.run('apple', ['pp', 'app', 'le'])
     expect(result).toBe(true)
   })
-  test('stars with (all match)', async () => {
+  test('starts with (all match)', async () => {
     const result = await STARTS_WITH_OPERATOR.run('apple', ['ap', 'app'])
     expect(result).toBe(true)
   })

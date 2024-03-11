@@ -79,10 +79,14 @@
       flex: 1;
     }
     .rule--operator {
-      min-width: 120px;
       flex: 1;
       margin-left: 24px;
       margin-right: 0;
+    }
+    .rule--operator-options {
+      .rule--operator {
+        margin-left: 0;
+      }
     }
     .rule--func {
       min-width: 120px;
@@ -251,5 +255,24 @@
 
   > svg {
     width: 16px;
+  }
+}
+
+.operatorParametersContainer {
+  min-width: 320px;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  margin-left: 15px;
+  margin-right: 15px;
+}
+
+.label {
+  display: flex;
+  gap: 5px;
+  white-space: pre-wrap;
+
+  svg {
+    width: 18px;
   }
 }

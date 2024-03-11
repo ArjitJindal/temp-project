@@ -4,5 +4,7 @@
   "op:contains",
   "op:!contains",
   "op:startswith",
-  "op:endswith"
+  "op:endswith",
+  "op:similarto",
+  "op:!similarto"
 ]

@@ -10,7 +10,6 @@ import { getUiSchema } from '@/components/library/JsonSchemaEditor/utils';
 import DatePicker from '@/components/ui/DatePicker';
 import { DATE_TIME_ISO_FORMAT, Dayjs, dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import Slider from '@/components/library/Slider';
-import { P } from '@/components/ui/Typography';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -100,8 +99,6 @@ export default function SimplePropertyInput(props: Props) {
       if (schema.maximum != null && schema.minimum != null) {
         return (
           <div className={s.header}>
-            {' '}
-            <P className={s.title}>{schema.subTitle}</P>
             <div className={s.inputGroup}>
               <NumberInput
                 {...inputProps}

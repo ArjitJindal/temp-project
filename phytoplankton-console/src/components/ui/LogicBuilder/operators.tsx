@@ -1,5 +1,6 @@
-import { BasicConfig, Config, CoreOperators } from '@react-awesome-query-builder/ui';
+import { BasicConfig, Config, CoreOperators, Operator } from '@react-awesome-query-builder/ui';
 import { omit } from 'lodash';
+import { RuleOperator } from '@/apis';
 
 const jsonLogicForBetween = (field, _op, values) => {
   const valFrom = values[0];
@@ -58,6 +59,7 @@ export const JSON_LOGIC_OPERATORS: CoreOperators<Config> = {
   },
   between: {
     ...BasicConfig.operators.between,
+    // TODO: jsonLogic needs to be a string
     jsonLogic: jsonLogicForBetween,
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -70,3 +72,17 @@ export const JSON_LOGIC_OPERATORS: CoreOperators<Config> = {
     validateValues: validateBetweenValues,
   },
 };
+
+export function getOperatorWithParameter(operator: RuleOperator): RuleOperator {
+  const { key, parameters } = operator;
+  const uiDefinition: Operator<Config> = {
+    ...operator.uiDefinition,
+    jsonLogic: key,
+    cardinality: (operator.uiDefinition.cardinality ?? 1) + (parameters ? 1 : 0),
+    parameters,
+  };
+  return {
+    ...operator,
+    uiDefinition,
+  };
+}

@@ -5749,6 +5749,10 @@ components:
           $ref: '#/components/schemas/RuleOperatorType'
         uiDefinition:
           type: object
+        parameters:
+          type: array
+          items:
+            type: object
       required:
         - key
         - uiDefinition
@@ -5762,6 +5766,7 @@ components:
         - op:!contains
         - op:startswith
         - op:endswith
+        - op:similarto
     RuleFunction:
       title: RuleFunction
       type: object

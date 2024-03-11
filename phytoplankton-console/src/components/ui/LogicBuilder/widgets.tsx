@@ -14,17 +14,20 @@ import {
   BasicConfig,
   BaseWidgetProps,
   DateTimeWidget,
+  Operator,
 } from '@react-awesome-query-builder/ui';
 import moment from 'moment';
 import { TimePicker } from 'antd';
 import { getSecondsFromTimestamp } from '@flagright/lib/utils/time';
 import DatePicker from '../DatePicker';
+import s from './index.module.less';
 import {
   deserializeCountries,
   omitCountryGroups,
   serializeCountries,
   getSecondsFromFormat,
 } from './widget-utils';
+import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -34,12 +37,75 @@ import Toggle from '@/components/library/Toggle';
 import Slider, { CommonProps as SliderCommonProps } from '@/components/library/Slider';
 import { dayjs } from '@/utils/dayjs';
 import { RuleOperatorType } from '@/apis';
+import PropertyInput from '@/components/library/JsonSchemaEditor/Property/PropertyInput';
+import { ExtendedSchema } from '@/components/library/JsonSchemaEditor/types';
+import Tooltip from '@/components/library/Tooltip';
+
+function getOperator(props: any) {
+  const operator = props.config.operators[props.operator];
+  if (operator) {
+    return operator as Operator<Config> & { parameters?: ExtendedSchema[] };
+  }
+  return null;
+}
+
+export function isOperatorParameterField(props: any): boolean {
+  const operator = getOperator(props);
+  if (!operator) {
+    return false;
+  }
+  return (
+    (props.delta ?? 0) + 1 === operator.cardinality &&
+    !!operator.parameters &&
+    operator.parameters.length > 0
+  );
+}
 
 function WidgetWrapper(props: {
   widgetFactoryProps: WidgetProps<BasicConfig>;
   children: React.ReactNode;
 }) {
-  const showLabel = props.widgetFactoryProps.config?.settings.showLabels !== false;
+  const { widgetFactoryProps } = props;
+  if (isOperatorParameterField(widgetFactoryProps)) {
+    const operator = getOperator(widgetFactoryProps);
+    if (!operator || !operator.parameters) {
+      return null;
+    }
+    const parameterValues = (widgetFactoryProps.value ?? []).slice(0, operator.parameters.length);
+    return (
+      <div className={s.operatorParametersContainer}>
+        {operator.parameters.map((schema, i) => {
+          return (
+            <Label
+              key={i}
+              label={
+                <div className={s.label}>
+                  {schema.title}
+                  {schema.description && (
+                    <Tooltip title={schema.description} placement="top">
+                      <InformationLineIcon />
+                    </Tooltip>
+                  )}
+                </div>
+              }
+            >
+              <PropertyInput
+                schema={schema}
+                onChange={(v) => {
+                  const newParameterValues = [...parameterValues];
+                  newParameterValues[i] = v;
+                  widgetFactoryProps.setValue(newParameterValues);
+                }}
+                value={parameterValues[i]}
+              />
+            </Label>
+          );
+        })}
+      </div>
+    );
+  }
+
+  const showLabel = widgetFactoryProps.config?.settings.showLabels !== false;
   if (!showLabel) {
     return <>{props.children}</>;
   }
@@ -71,6 +137,7 @@ const MULTI_SELECT_TEXT_OPERATORS: RuleOperatorType[] = [
   'op:endswith',
   'op:!contains',
   'op:contains',
+  'op:similarto',
 ];
 
 const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];

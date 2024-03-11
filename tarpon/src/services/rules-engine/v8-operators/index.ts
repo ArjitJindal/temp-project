@@ -1,15 +1,18 @@
-import { CONTAINS, NOT_CONTAINS } from './contains'
+import { CONTAINS_OPERATOR, NOT_CONTAINS_OPERATOR } from './contains'
 import { MATCH_LIST_OPERATOR, NOT_MATCHLIST_OPERATOR } from './match-list'
+import { NOT_SIMILAR_TO_OPERATOR, SIMILAR_TO_OPERATOR } from './similar-to'
 import { ENDS_WITH_OPERATOR, STARTS_WITH_OPERATOR } from './starts-ends-with'
 import { RuleOperator } from './types'
 
 const _RULE_OPERATORS: RuleOperator[] = [
   MATCH_LIST_OPERATOR,
   NOT_MATCHLIST_OPERATOR,
-  CONTAINS,
-  NOT_CONTAINS,
+  CONTAINS_OPERATOR,
+  NOT_CONTAINS_OPERATOR,
   STARTS_WITH_OPERATOR,
   ENDS_WITH_OPERATOR,
+  SIMILAR_TO_OPERATOR,
+  NOT_SIMILAR_TO_OPERATOR,
 ]
 
 export const RULE_OPERATORS: RuleOperator[] = _RULE_OPERATORS.map(
