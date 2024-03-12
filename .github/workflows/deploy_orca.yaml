@@ -8,8 +8,10 @@ on:
 jobs:
   test_tarpon:
     uses: "./.github/workflows/test_tarpon.yml"
+    secrets: inherit
   test_phytoplankton:
     uses: "./.github/workflows/test_phyto.yml"
+    secrets: inherit
   build:
     name: Deploy Orca
     runs-on: ubuntu-latest
