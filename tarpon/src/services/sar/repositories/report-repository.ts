@@ -161,10 +161,11 @@ export class ReportRepository {
       {
         $unwind: '$caseUser', // Convert 'user' array to a single document
       },
+      { $unset: ['revisions', 'schema'] },
     ]
     const [total, reports] = await Promise.all([
       collection.count(filter),
-      collection.aggregate<Report>(pipeline).toArray(),
+      collection.aggregate<Report>(pipeline, { allowDiskUse: true }).toArray(),
     ])
     return {
       total,

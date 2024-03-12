@@ -563,5 +563,14 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         ],
       },
     ],
+    [REPORT_COLLECTION(tenantId)]: [
+      {
+        getIndexes: () => [
+          {
+            createdAt: 1,
+          },
+        ],
+      },
+    ],
   }
 }

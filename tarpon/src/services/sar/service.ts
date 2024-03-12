@@ -130,11 +130,7 @@ export class ReportService {
   }
 
   async getReports(params: DefaultApiGetReportsRequest) {
-    const result = await this.reportRepository.getReports(params)
-    return {
-      ...result,
-      items: result.items.map(withSchema),
-    }
+    return await this.reportRepository.getReports(params)
   }
 
   async getReport(reportId: string): Promise<Report> {

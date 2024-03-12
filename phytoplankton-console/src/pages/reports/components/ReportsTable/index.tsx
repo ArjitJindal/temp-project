@@ -64,7 +64,6 @@ export default function ReportsTable() {
           );
         },
       },
-      sorting: true,
     }),
     helper.simple<'description'>({
       title: 'Description',
