@@ -446,7 +446,7 @@ export class TenantService {
     let throttleSettings: ThrottleSettings
 
     if (process.env.ENV?.startsWith('prod')) {
-      throttleSettings = { burstLimit: 200, rateLimit: 100 }
+      throttleSettings = { burstLimit: 75, rateLimit: 50 }
     } else {
       throttleSettings = { burstLimit: 6, rateLimit: 3 }
     }
