@@ -22,7 +22,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-cdk/asset-awscli-v1@npm:^2.2.201":
+"@aws-cdk/asset-awscli-v1@npm:^2.2.202":
   version: 2.2.202
   resolution: "@aws-cdk/asset-awscli-v1@npm:2.2.202"
   checksum: 3702ae0c6d57094a9f8f7fc86af2cf98d128c601ee2b8e14f72bf6b869e5b54df6448014f2d88c2fdff1258a182e28d735c9b0a807180e1eaa62367f93051bd4
@@ -1006,7 +1006,7 @@ __metadata:
     "@types/node": "npm:^20.11.16"
     "@typescript-eslint/eslint-plugin": "npm:^7.0.1"
     "@typescript-eslint/parser": "npm:^7.0.1"
-    aws-cdk-lib: "npm:~2.106.0"
+    aws-cdk-lib: "npm:~2.132.1"
     constructs: "npm:^10.3.0"
     dayjs: "npm:^1.11.10"
     eslint: "npm:^8.56.0"
@@ -2511,26 +2511,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.106.0":
-  version: 2.106.1
-  resolution: "aws-cdk-lib@npm:2.106.1"
+"aws-cdk-lib@npm:~2.132.1":
+  version: 2.132.1
+  resolution: "aws-cdk-lib@npm:2.132.1"
   dependencies:
-    "@aws-cdk/asset-awscli-v1": "npm:^2.2.201"
+    "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
     "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.0.1"
     "@balena/dockerignore": "npm:^1.0.2"
     case: "npm:1.6.3"
-    fs-extra: "npm:^11.1.1"
-    ignore: "npm:^5.2.4"
+    fs-extra: "npm:^11.2.0"
+    ignore: "npm:^5.3.1"
     jsonschema: "npm:^1.4.1"
+    mime-types: "npm:^2.1.35"
     minimatch: "npm:^3.1.2"
     punycode: "npm:^2.3.1"
-    semver: "npm:^7.5.4"
+    semver: "npm:^7.6.0"
     table: "npm:^6.8.1"
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: c7cc4682dde5badf9901ad3a6ff6d529b9a8aa11a7153245d3426f788bda86c76e32dee5a6d350126b1b0ba3e02fe2b6aa466a6955e9a3b648c08ac4f5143de4
+  checksum: e2da42d7fb72de40a4efed77b6d580d3b7e255f3129bcaf00724760e2717bdf17907f9317ee5316a2240b8b98bf37b502fd1a29aef522988ac0ddeee1e985626
   languageName: node
   linkType: hard
 
@@ -3638,7 +3639,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fs-extra@npm:^11.1.1":
+"fs-extra@npm:^11.2.0":
   version: 11.2.0
   resolution: "fs-extra@npm:11.2.0"
   dependencies:
@@ -3992,7 +3993,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ignore@npm:^5.2.0":
+"ignore@npm:^5.2.0, ignore@npm:^5.3.1":
   version: 5.3.1
   resolution: "ignore@npm:5.3.1"
   checksum: 703f7f45ffb2a27fb2c5a8db0c32e7dee66b33a225d28e8db4e1be6474795f606686a6e3bcc50e1aa12f2042db4c9d4a7d60af3250511de74620fbed052ea4cd
@@ -5101,6 +5102,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mime-db@npm:1.52.0":
+  version: 1.52.0
+  resolution: "mime-db@npm:1.52.0"
+  checksum: 0557a01deebf45ac5f5777fe7740b2a5c309c6d62d40ceab4e23da9f821899ce7a900b7ac8157d4548ddbb7beffe9abc621250e6d182b0397ec7f10c7b91a5aa
+  languageName: node
+  linkType: hard
+
+"mime-types@npm:^2.1.35":
+  version: 2.1.35
+  resolution: "mime-types@npm:2.1.35"
+  dependencies:
+    mime-db: "npm:1.52.0"
+  checksum: 82fb07ec56d8ff1fc999a84f2f217aa46cb6ed1033fefaabd5785b9a974ed225c90dc72fff460259e66b95b73648596dbcc50d51ed69cdf464af2d237d3149b2
+  languageName: node
+  linkType: hard
+
 "mimic-fn@npm:^2.1.0":
   version: 2.1.0
   resolution: "mimic-fn@npm:2.1.0"
@@ -5811,7 +5828,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^7.3.5, semver@npm:^7.5.3":
+"semver@npm:^7.3.5, semver@npm:^7.5.3, semver@npm:^7.6.0":
   version: 7.6.0
   resolution: "semver@npm:7.6.0"
   dependencies:

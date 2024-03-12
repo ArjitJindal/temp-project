@@ -40,7 +40,7 @@ export const createCanary = (
         ),
       },
     },
-    runtime: Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_0,
+    runtime: Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_2,
     test: Test.custom({
       code,
       handler: `index.handler`,

@@ -1,7 +1,7 @@
 {
   "name": "tarpon",
   "version": "1.0.0",
-  "description": "`phytoplankton` - Frontend code for the console `tarpon` - Our backend API `raptor` - Our ML stack",
+  "description": "`phytoplankton` - Frontend code for the console `tarpon` - Our backend API `databricks` - Our ML stack",
   "main": "index.js",
   "scripts": {
     "preinstall": "cd lib && corepack enable && yarn",
@@ -47,8 +47,8 @@
     "@notionhq/client": "^2.2.14",
     "@slack/web-api": "^7.0.2",
     "@types/lodash": "^4.14.200",
-    "aws-cdk": "~2.106.0",
-    "aws-cdk-lib": "~2.106.0",
+    "aws-cdk": "~2.132.1",
+    "aws-cdk-lib": "~2.132.1",
     "lodash": "^4.17.21",
     "octokit": "^3.1.2"
   },
