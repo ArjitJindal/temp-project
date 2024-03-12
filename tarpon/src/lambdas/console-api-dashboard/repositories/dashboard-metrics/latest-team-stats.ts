@@ -62,6 +62,9 @@ export class LatestTeamStatsDashboardMetric {
       await db
         .collection(caseAggregationCollection)
         .createIndex({ date: -1, accountId: 1 }, { unique: true })
+      await db.collection(caseAggregationCollection).createIndex({
+        updatedAt: 1,
+      })
 
       {
         const assignmentsPipeline = [
@@ -270,6 +273,9 @@ export class LatestTeamStatsDashboardMetric {
       await db
         .collection(alertAggregationCollection)
         .createIndex({ date: -1, accountId: 1 }, { unique: true })
+      await db.collection(alertAggregationCollection).createIndex({
+        updatedAt: 1,
+      })
 
       {
         const assignmentsPipeline = [

@@ -50,6 +50,9 @@ export class HitsByUserStatsDashboardMetric {
         unique: true,
       }
     )
+    await db.collection(aggregationCollection).createIndex({
+      updatedAt: 1,
+    })
 
     let timestampMatch: any = undefined
     if (timeRange) {
@@ -156,6 +159,9 @@ export class HitsByUserStatsDashboardMetric {
         unique: true,
       }
     )
+    await db.collection(aggregationCollection).createIndex({
+      updatedAt: 1,
+    })
     let tranasctionTimestampMatch: any = undefined
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
