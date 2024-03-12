@@ -192,7 +192,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
     columns.push(...getRiskScoringColumns());
   }
   columns.push(getLastUpdatedColumn());
-  const [params, setParams] = useState<UserSearchParams>({ sort: [], pageSize: 50 });
+  const [params, setParams] = useState<UserSearchParams>({ sort: [], pageSize: 20 });
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
 
   const pushParamsToNavigation = useCallback(
