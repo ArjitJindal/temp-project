@@ -13,7 +13,6 @@ import { ApiKeysSettings } from './components/ApiKeysSettings';
 import { ChecklistTemplatesSettings } from './components/ChecklistTemplatesSettings';
 import { EmailNotificationsSettings } from './components/EmailNotificationsSettings';
 import { SlackNotificationsSettings } from './components/SlackNotificationsSettings';
-import { ProfessionalServicesSettings } from './components/ProfessionalServicesSettings';
 import { SanctionsSettings } from './components/SanctionsSettings';
 import { ProductionAccessControl } from './components/ProductionAccessControl';
 import { AISources } from './components/AISources';
@@ -114,7 +113,6 @@ export default function SettingsPage() {
             children: (
               <>
                 <FlagrightAISettings />
-                <ProfessionalServicesSettings />
                 <SanctionsSettings />
               </>
             ),
