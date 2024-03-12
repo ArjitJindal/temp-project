@@ -1,4 +1,3 @@
-import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -6,10 +5,7 @@ import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
-  const tenantInfos = await TenantService.getAllTenants(
-    process.env.ENV as Stage,
-    process.env.REGION as FlagrightRegion
-  )
+  const tenantIds = await TenantService.getAllTenantIds()
 
   try {
     const now = dayjs()
@@ -20,10 +16,10 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
     }
 
     await Promise.all(
-      tenantInfos.map(async (t) => {
+      tenantIds.map(async (id) => {
         return sendBatchJobCommand({
           type: 'DASHBOARD_REFRESH',
-          tenantId: t.tenant.id,
+          tenantId: id,
           parameters: {
             checkTimeRange,
           },

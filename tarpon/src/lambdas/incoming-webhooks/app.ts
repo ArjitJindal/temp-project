@@ -49,10 +49,10 @@ export const webhooksHandler = lambdaApi()(
         logger.info(
           `Received ComplyAdvantage webhook event 'monitored_search_updated' (search ID: ${searchUpdated.searchId})`
         )
-        const allTenants = await TenantService.getAllTenants()
-        for (const t of allTenants) {
+        const allTenantIds = await TenantService.getAllTenantIds()
+        for (const id of allTenantIds) {
           const searchId = searchUpdated.searchId as number
-          const sanctionsService = new SanctionsService(t.tenant.id)
+          const sanctionsService = new SanctionsService(id)
           await sanctionsService.updateMonitoredSearch(searchId)
         }
       } else {

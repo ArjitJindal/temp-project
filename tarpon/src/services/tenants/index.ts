@@ -21,6 +21,7 @@ import {
   doesUsagePlanExist,
   getAllUsagePlans,
 } from '@flagright/lib/tenants/usage-plans'
+import { uniq } from 'lodash'
 import { createNewApiKeyForTenant } from '../api-key'
 import { TenantRepository } from './repositories/tenant-repository'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -517,5 +518,16 @@ export class TenantService {
     updateTenantSettings(mergedTenantSettings)
 
     return updatedResult
+  }
+  public static async getAllTenantIds() {
+    const mongoDb = (await getMongoDbClient()).db()
+    const allTenantIds = (await mongoDb.listCollections().toArray())
+      .filter(({ name }) => !name.startsWith('migration'))
+      .map((collection) => {
+        const collectionName = collection.name
+        const tenantId = collectionName.split('-')[0]
+        return tenantId
+      })
+    return uniq(allTenantIds)
   }
 }
