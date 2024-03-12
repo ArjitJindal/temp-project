@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import s from './style.module.less';
 import { Rule, RuleLabels, RuleNature } from '@/apis';
 import TextInput from '@/components/library/TextInput';
@@ -8,6 +8,7 @@ import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/Proper
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import * as Card from '@/components/ui/Card';
+import { useFieldState } from '@/components/library/Form/utils/hooks';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -32,11 +33,10 @@ export default function BasicDetailsStep(props: Props) {
   const [ruleNature, setRuleNature] = useState<RuleNature | undefined>(
     rule?.defaultNature ?? INITIAL_VALUES.ruleNature,
   );
-  const [ruleLabels, setRuleLabels] = useState<RuleLabels[] | undefined>(rule?.labels);
-
-  useEffect(() => {
-    setRuleLabels([]);
-  }, [ruleNature]);
+  const ruleLabelsValue = useFieldState<FormValues, 'ruleLabels'>('ruleLabels');
+  const [ruleLabels, setRuleLabels] = useState<RuleLabels[] | undefined>(
+    ruleLabelsValue?.value ?? rule?.labels ?? INITIAL_VALUES.ruleLabels,
+  );
 
   return (
     <Card.Root>
@@ -70,6 +70,7 @@ export default function BasicDetailsStep(props: Props) {
                   onChange={(value) => {
                     if (value) {
                       setRuleNature(value);
+                      setRuleLabels([]);
                     }
                     if (inputProps.onChange) {
                       inputProps.onChange(value);
@@ -88,7 +89,6 @@ export default function BasicDetailsStep(props: Props) {
                   options={ruleNature ? RULE_LABELS_OPTIONS[ruleNature] : []}
                   mode="MULTIPLE"
                   {...inputProps}
-                  isDisabled={inputProps.isDisabled || ruleNature == null}
                   onChange={(value) => {
                     if (value) {
                       setRuleLabels(value);
@@ -97,6 +97,9 @@ export default function BasicDetailsStep(props: Props) {
                       inputProps.onChange(value);
                     }
                   }}
+                  isDisabled={
+                    inputProps.isDisabled || (ruleNature == null && inputProps.value?.length === 0)
+                  }
                   value={ruleLabels}
                 />
               )}
