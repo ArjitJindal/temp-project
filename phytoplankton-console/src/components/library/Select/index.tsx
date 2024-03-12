@@ -202,8 +202,10 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         }}
         onBlur={() => {
           setIsFocused(false);
-          applySearchStringValue(searchValue, mode !== 'TAGS');
-          setSearchValue('');
+          if (searchValue != '') {
+            applySearchStringValue(searchValue, mode !== 'TAGS');
+            setSearchValue('');
+          }
         }}
         filterOption={() => true}
         showSearch={true}
