@@ -41,7 +41,7 @@ def write_events_to_sentry(event):
                 scope.set_tag("eventState", eventState)
                 sentry_sdk.set_extra("event", event)
                 sentry_sdk.capture_event({
-                    "message": f"Delta live tables pipeline status: {eventState}"
+                    "message": f"Delta live tables pipeline status: {eventState}",
                     "level": "error",
                     "logger": "dlt",
                 })
