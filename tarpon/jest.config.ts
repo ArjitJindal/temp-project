@@ -34,5 +34,6 @@ const config: Config = {
     '!**/node_modules/**',
   ],
   coverageReporters: ['json-summary'],
+  coverageProvider: 'v8',
 }
 module.exports = config
