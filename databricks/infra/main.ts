@@ -16,7 +16,7 @@ import * as path from 'path'
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
 // Change this to update the table schemas
-const schemaVersion = '7'
+const schemaVersion = '8'
 const adminEmails = [
   'tim+databricks@flagright.com',
   'nadig@flagright.com',
