@@ -3,17 +3,16 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Forbidden, BadRequest } from 'http-errors'
-import { StackConstants } from '@lib/constants'
-import { PulseAuditLogService } from './services/pulse-audit-log'
+import { RiskService } from '../../services/risk'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { hasFeature } from '@/core/utils/context'
+import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 
 export const riskClassificationHandler = lambdaApi({
   requiredFeatures: ['RISK_SCORING'],
@@ -26,51 +25,24 @@ export const riskClassificationHandler = lambdaApi({
     const { principalId: tenantId } = event.requestContext.authorizer
 
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-    const auditLogService = new PulseAuditLogService(tenantId)
+    const riskService = new RiskService(tenantId, { dynamoDb })
 
     const handlers = new Handlers()
 
     handlers.registerGetPulseRiskClassification(
-      async () => await riskRepository.getRiskClassificationValues()
+      async () => await riskService.getRiskClassificationValues()
     )
 
-    handlers.registerPostPulseRiskClassification(async (ctx, request) => {
-      validateClassificationRequest(request.RiskClassificationScore)
-      const oldClassificationValues =
-        await riskRepository.getRiskClassificationValues()
-      const result =
-        await riskRepository.createOrUpdateRiskClassificationConfig(
+    handlers.registerPostPulseRiskClassification(
+      async (ctx, request) =>
+        await riskService.createOrUpdateRiskClassificationConfig(
           request.RiskClassificationScore
         )
-      const newClassificationValues = result.classificationValues
-      const oldClassificationValuesAsRiskClassificationScore =
-        oldClassificationValues
-      await auditLogService.handleAuditLogForRiskClassificationsUpdated(
-        oldClassificationValuesAsRiskClassificationScore,
-        newClassificationValues
-      )
-      return newClassificationValues
-    })
+    )
 
     return await handlers.handle(event)
   }
 )
-
-export const validateClassificationRequest = (
-  classificationValues: Array<RiskClassificationScore>
-) => {
-  if (classificationValues.length != StackConstants.NUMBER_OF_RISK_LEVELS) {
-    throw new BadRequest('Invalid Request - Please provide 5 risk levels')
-  }
-  const unique = new Set()
-  const hasDuplicate = classificationValues.some(
-    (element) => unique.size === unique.add(element.riskLevel).size
-  )
-  if (hasDuplicate) {
-    throw new BadRequest('Invalid request - duplicate risk levels')
-  }
-}
 
 export const parameterRiskAssignmentHandler = lambdaApi({
   requiredFeatures: ['RISK_SCORING'],
@@ -81,41 +53,24 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const auditLogService = new PulseAuditLogService(tenantId)
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+    const riskService = new RiskService(tenantId, { dynamoDb })
     const handlers = new Handlers()
 
-    handlers.registerGetPulseRiskParameter(async (ctx, request) => {
-      const { parameter, entityType } = request
-      if (parameter == null || entityType == null) {
-        throw new BadRequest(
-          'Invalid request - please provide parameter and entityType'
+    handlers.registerGetPulseRiskParameter(
+      async (ctx, request) =>
+        await riskService.getRiskParameter(
+          request.parameter as ParameterAttributeRiskValuesParameterEnum,
+          request.entityType as RiskEntityType
         )
-      }
-      return await riskRepository.getParameterRiskItem(
-        parameter as ParameterAttributeRiskValuesParameterEnum,
-        entityType
-      )
-    })
+    )
 
-    handlers.registerPostPulseRiskParameter(async (ctx, request) => {
-      const { parameterAttributeRiskValues } = request.PostPulseRiskParameters
-      const oldParameterRiskItemValue =
-        await riskRepository.getParameterRiskItem(
-          parameterAttributeRiskValues.parameter,
-          parameterAttributeRiskValues.riskEntityType
+    handlers.registerPostPulseRiskParameter(
+      async (ctx, request) =>
+        await riskService.createOrUpdateRiskParameter(
+          request.PostPulseRiskParameters.parameterAttributeRiskValues
         )
-      const newParameterRiskItemValue =
-        await riskRepository.createOrUpdateParameterRiskItem(
-          parameterAttributeRiskValues
-        )
-      await auditLogService.handleParameterRiskItemUpdate(
-        oldParameterRiskItemValue,
-        newParameterRiskItemValue
-      )
-      return newParameterRiskItemValue
-    })
+    )
 
     return await handlers.handle(event)
   }
@@ -130,40 +85,28 @@ export const manualRiskAssignmentHandler = lambdaApi({
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const auditLogService = new PulseAuditLogService(tenantId)
     // todo: need to assert that user has this feature enabled
     const dynamoDb = getDynamoDbClientByEvent(event)
     const client = await getMongoDbClient()
-    const riskRepository = new RiskRepository(tenantId, {
+    const riskService = new RiskService(tenantId, {
       dynamoDb,
       mongoDb: client,
     })
     const handlers = new Handlers()
 
-    handlers.registerGetPulseRiskAssignment(async (ctx, request) =>
-      riskRepository.getDRSRiskItem(request.userId)
+    handlers.registerGetPulseRiskAssignment(
+      async (ctx, request) =>
+        await riskService.getRiskAssignment(request.userId)
     )
 
-    handlers.registerPulseManualRiskAssignment(async (ctx, request) => {
-      const { riskLevel, isUpdatable } = request.ManualRiskAssignmentPayload
-      const { userId } = request
-      if (!riskLevel) {
-        throw new BadRequest('Invalid request - please provide riskLevel')
-      }
-      const oldDrsRiskItem = await riskRepository.getDRSRiskItem(userId)
-      const newDrsRiskItem =
-        await riskRepository.createOrUpdateManualDRSRiskItem(
-          userId,
-          riskLevel,
-          isUpdatable
+    handlers.registerPulseManualRiskAssignment(
+      async (ctx, request) =>
+        await riskService.createOrUpdateRiskAssignment(
+          request.userId,
+          request.ManualRiskAssignmentPayload.riskLevel,
+          request.ManualRiskAssignmentPayload.isUpdatable
         )
-      await auditLogService.handleDrsUpdate(
-        oldDrsRiskItem,
-        newDrsRiskItem,
-        'MANUAL'
-      )
-      return newDrsRiskItem
-    })
+    )
 
     return await handlers.handle(event)
   }
