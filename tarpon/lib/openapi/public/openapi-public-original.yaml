@@ -4112,6 +4112,7 @@ components:
         - NEW
         - CANCELLED
         - MANUAL_REVIEW
+        - EDD_IN_PROGRESS
     EmploymentStatus:
       type: string
       title: EmploymentStatus

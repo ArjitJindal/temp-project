@@ -26,7 +26,7 @@ import {
   useTableData,
 } from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
-import { getUserLink, USER_STATES } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import UserStateTag from '@/components/ui/UserStateTag';
@@ -68,6 +68,7 @@ import {
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { denseArray } from '@/utils/lang';
+import { USER_STATES } from '@/apis/models-custom/UserState';
 
 interface Props {
   params: AllParams<TableSearchParams>;

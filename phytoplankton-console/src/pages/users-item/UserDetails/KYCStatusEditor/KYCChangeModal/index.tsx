@@ -13,7 +13,6 @@ import {
   UserUpdateRequest,
   KYCStatusDetailsInternal,
 } from '@/apis';
-import { KYC_STATUSES } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
@@ -26,6 +25,7 @@ import NarrativesSelectStatusChange from '@/pages/case-management/components/Nar
 import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
 import { USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
+import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
 
 interface Props {
   isVisible: boolean;
@@ -185,7 +185,7 @@ export default function KYCChangeModal(props: Props) {
             {(inputProps) => (
               <Select
                 {...inputProps}
-                options={KYC_STATUSES.map((kycStatus: KYCStatus) => ({
+                options={KYC_STATUSS.map((kycStatus: KYCStatus) => ({
                   label: humanizeConstant(kycStatus),
                   value: kycStatus,
                 }))}

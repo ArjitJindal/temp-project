@@ -59,8 +59,9 @@ const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   IN_PROGRESS: 3,
   EXPIRED: 4,
   SUCCESSFUL: 5,
-  NOT_STARTED: 6,
-  NEW: 7,
+  EDD_IN_PROGRESS: 6,
+  NOT_STARTED: 7,
+  NEW: 8,
 }
 
 const USER_STATE_DETAILS_PRIORITY: Record<UserState, number> = {

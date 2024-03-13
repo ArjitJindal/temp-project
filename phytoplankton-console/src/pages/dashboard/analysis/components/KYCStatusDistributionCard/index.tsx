@@ -13,8 +13,8 @@ import { useQuery } from '@/utils/queries/hooks';
 import { USERS_STATS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { DashboardStatsUsersStats, KYCStatus } from '@/apis';
-import { KYC_STATUSES } from '@/utils/api/users';
 import { dayjs } from '@/utils/dayjs';
+import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
 
 const KYC_STATUS_COLORS: Record<KYCStatus, string> = {
   SUCCESSFUL: COLORS_V2_ANALYTICS_CHARTS_07,
@@ -25,6 +25,7 @@ const KYC_STATUS_COLORS: Record<KYCStatus, string> = {
   CANCELLED: COLORS_V2_ANALYTICS_CHARTS_04,
   NEW: COLORS_V2_ANALYTICS_CHARTS_04,
   EXPIRED: COLORS_V2_ANALYTICS_CHARTS_03,
+  EDD_IN_PROGRESS: COLORS_V2_ANALYTICS_CHARTS_02,
 };
 
 interface Props extends WidgetProps {
@@ -53,7 +54,7 @@ export default function KYCStatusDistributionCard(props: Props) {
       ]}
       groupBy="VALUE"
       valueColors={KYC_STATUS_COLORS}
-      values={KYC_STATUSES}
+      values={KYC_STATUSS}
       queryResult={queryResult}
       timeRange={timeRange}
       onTimeRangeChange={setTimeRange}

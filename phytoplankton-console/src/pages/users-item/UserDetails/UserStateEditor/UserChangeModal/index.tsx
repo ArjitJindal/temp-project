@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef } from '@/components/library/Form';
-import { USER_STATES } from '@/utils/api/users';
 import {
   FileInfo,
   InternalConsumerUser,
@@ -26,6 +25,7 @@ import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndU
 import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectParamAPI';
 import { USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
+import { USER_STATES } from '@/apis/models-custom/UserState';
 
 interface Props {
   isVisible: boolean;

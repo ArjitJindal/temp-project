@@ -3,32 +3,12 @@ import {
   ConsumerName,
   InternalBusinessUser,
   InternalConsumerUser,
-  KYCStatus,
   LegalEntity,
   MissingUser,
   UserDetails,
 } from '@/apis';
-import { UserState } from '@/apis/models/UserState';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 import { makeUrl } from '@/utils/routing';
-
-export const USER_STATES: UserState[] = [
-  'ACTIVE',
-  'BLOCKED',
-  'CREATED',
-  'DORMANT',
-  'SUSPENDED',
-  'TERMINATED',
-  'UNACCEPTABLE',
-];
-
-export const KYC_STATUSES: KYCStatus[] = [
-  'SUCCESSFUL',
-  'FAILED',
-  'NOT_STARTED',
-  'IN_PROGRESS',
-  'MANUAL_REVIEW',
-];
 
 export function formatConsumerName(name: ConsumerName | undefined): string {
   const result = [name?.firstName, name?.middleName, name?.lastName].filter(Boolean).join(' ');
