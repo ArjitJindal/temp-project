@@ -27,7 +27,7 @@ jobs:
           node-version: 18
           cache: "yarn"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
-      - run: yarn add --frozen-lockfile
+      - run: yarn add
         working-directory: "phytoplankton-console"
       - name: Destroy
         run: |
