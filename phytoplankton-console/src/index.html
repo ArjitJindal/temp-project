@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="{{ csp }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="description" content="Console App" />
     <meta
@@ -11,7 +12,7 @@
     <title>Console</title>
     <link rel="stylesheet" href="/{{ bundleCss }}" />
     {{ preload }}
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ heapInitNonce }}">
       if ('{{HEAP_APP_ID}}') {
         // Install heap: https://developers.heap.io/docs/web#base-installation
         (window.heap = window.heap || []),
@@ -64,15 +65,7 @@
       </div>
     </noscript>
 
-    <div id="root">{{ inlineLoader }}</div>
-
-    <script type="text/javascript">
-      var stylesheet = document.createElement('link');
-      stylesheet.href = '/{{ bundleCss }}';
-      stylesheet.rel = 'stylesheet';
-      stylesheet.type = 'text/css';
-      document.getElementsByTagName('head')[0].appendChild(stylesheet);
-    </script>
+    <div id="root"></div>
     <script type="module" src="/{{ bundleJs }}"></script>
   </body>
 </html>

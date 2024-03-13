@@ -1,30 +1,15 @@
 import * as cdk from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import type { Construct } from 'constructs';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
-import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53';
 import { BucketProps } from 'aws-cdk-lib/aws-s3/lib/bucket';
 import { userAlias } from './configs/config-dev-user';
 import type { Config } from './configs/config';
-
-function contentSecurityPolicy(domain: string) {
-  return `default-src 'self';
-script-src 'self' https://cdn.heapanalytics.com https://heapanalytics.com 'sha256-12Sr3zsuj4S5dhD99YsMaB85Xqg6R/TGFur0VAPzLsM=';
-style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com;
-object-src 'none';
-base-uri 'self';
-connect-src 'self' *.amazonaws.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com;
-font-src 'self' https://fonts.gstatic.com https://heapanalytics.com;
-frame-src 'self' https://*.${domain};
-img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://heapanalytics.com;
-manifest-src 'self';
-media-src 'self';
-worker-src blob:;`.replace(/(\r\n|\n|\r)/gm, ' ');
-}
 
 export class CdkPhytoplanktonStack extends cdk.Stack {
   constructor(scope: Construct, id: string, config: Config) {
@@ -131,36 +116,6 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
         },
       ],
     });
-
-    // Hack taken from https://stackoverflow.com/questions/72306740/how-to-enable-managed-response-header-policy-of-securityheaders-with-cloudfrontw
-    const cfnDistribution = distribution.node.defaultChild as cloudfront.CfnDistribution;
-
-    if (process.env.ENV !== 'dev:user') {
-      const responseHeaderCfn = new cdk.CfnResource(this, 'ResponseHeadersPolicyCfn', {
-        type: 'AWS::CloudFront::ResponseHeadersPolicy',
-        properties: {
-          ResponseHeadersPolicyConfig: {
-            Name: `ContentSecurity${userAlias()}`,
-            SecurityHeadersConfig: {
-              ContentSecurityPolicy: {
-                ContentSecurityPolicy: contentSecurityPolicy(domainName),
-                Override: true,
-              },
-            },
-          },
-        },
-      });
-      cfnDistribution.addDependsOn(responseHeaderCfn);
-      cfnDistribution.addPropertyOverride(
-        'DistributionConfig.DefaultCacheBehavior.ResponseHeadersPolicyId',
-        responseHeaderCfn.ref,
-      );
-    } else {
-      cfnDistribution.addPropertyOverride(
-        'DistributionConfig.DefaultCacheBehavior.ResponseHeadersPolicyId',
-        'a9f5965f-4ffc-430c-9575-aa0dde714199', // ID for the dev response header policy
-      );
-    }
 
     // Deploy site contents to S3 bucket
     new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {

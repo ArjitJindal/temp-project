@@ -1,5 +1,6 @@
 /* eslint-disable */
 const path = require('path');
+const crypto = require('crypto');
 const { uniq } = require('lodash');
 const {
   log,
@@ -79,20 +80,36 @@ async function main() {
     watch: env.WATCH,
   });
   await fs.writeJson(path.resolve(env.PROJECT_DIR, 'esbuild.json'), buildResult.metafile);
+
+  const heapInitNonce = `${crypto.randomBytes(16).toString('hex')}`;
+  const csp = [
+    `default-src 'self'`,
+    `script-src 'self' https://cdn.heapanalytics.com https://heapanalytics.com 'nonce-${heapInitNonce}' blob:`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `connect-src 'self' http://localhost:3002 *.amazonaws.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com https://fonts.gstatic.com`,
+    `font-src 'self' https://fonts.gstatic.com https://heapanalytics.com`,
+    `frame-src 'self' https://*.flagright.com  https://*.flagright.dev`,
+    `img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://heapanalytics.com`,
+    `manifest-src 'self'`,
+    `media-src 'self'`,
+    `worker-src blob:`,
+  ].join(';');
+
   await buildHtml(env, {
     file: 'index.html',
     context: {
       bundleJs: bundleJs,
       bundleCss: bundleCss,
+      heapInitNonce: heapInitNonce,
+      csp: csp,
       preload: collectModulePreloads(
         `${env.OUTPUT_FOLDER}/${bundleJs}`,
         buildResult.metafile.outputs,
       )
         .map((x) => `<link rel="modulepreload" href="/${x}" as="script" />`)
         .join('\n'),
-      inlineLoader: await fs.readFile(
-        path.join(env.PROJECT_DIR, env.SRC_FOLDER, 'inline/loader.html'),
-      ),
       ...config.define,
     },
   });
