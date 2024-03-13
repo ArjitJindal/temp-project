@@ -1253,7 +1253,7 @@ export class RulesEngineService {
     data: TransactionAction,
     userId: string
   ): Promise<void> {
-    const { transactionIds, action, reason } = data
+    const { transactionIds, action, reason, comment } = data
     const txns = await Promise.all(
       transactionIds.map((txnId) => {
         return this.transactionRepository.getTransactionById(txnId)
@@ -1311,6 +1311,7 @@ export class RulesEngineService {
           transactionId: txn?.transactionId as string,
           status: action,
           reasons: reason,
+          comment,
         } as TransactionStatusDetails,
       }))
 

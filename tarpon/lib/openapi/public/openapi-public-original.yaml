@@ -4238,6 +4238,8 @@ components:
             type: string
         status:
           $ref: '#/components/schemas/RuleAction'
+        comment:
+          type: string
       required:
         - transactionId
         - status
