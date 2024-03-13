@@ -1,7 +1,6 @@
 import { StackConstants } from '@lib/constants'
 import {
   Collection,
-  CreateIndexesOptions,
   Db,
   Document,
   FindCursor,
@@ -268,17 +267,8 @@ export const createMongoDBCollections = async (
   const indexDefinitions = getMongoDbIndexDefinitions(tenantId)
   for (const collectionName in indexDefinitions) {
     const collection = await createCollectionIfNotExist(db, collectionName)
-    for (const definition of indexDefinitions[collectionName]) {
-      await syncIndexes(
-        collection,
-        definition.getIndexes(),
-        definition.unique
-          ? {
-              unique: definition.unique,
-            }
-          : undefined
-      )
-    }
+    const definition = indexDefinitions[collectionName]
+    await syncIndexes(collection, definition.getIndexes())
   }
 }
 
@@ -295,8 +285,7 @@ export async function allCollections(tenantId: string, db: Db) {
 
 export async function syncIndexes<T>(
   collection: Collection<T extends Document ? T : Document>,
-  indexes: Document[],
-  options?: CreateIndexesOptions
+  indexes: { index: Document; unique?: boolean }[]
 ) {
   const currentIndexes = await collection.indexes()
 
@@ -308,7 +297,7 @@ export async function syncIndexes<T>(
     }
 
     // If index is not desired, delete it
-    if (!indexes.find((desired) => isEqual(desired, index.key))) {
+    if (!indexes.find((desired) => isEqual(desired.index, index.key))) {
       await collection.dropIndex(index.name)
       logger.info(
         `Dropped index - ${index.name} (${collection.collectionName})`
@@ -318,7 +307,7 @@ export async function syncIndexes<T>(
 
   const indexesToCreate = indexes.filter(
     (desired) =>
-      !currentIndexes.find((current) => isEqual(desired, current.key))
+      !currentIndexes.find((current) => isEqual(desired.index, current.key))
   )
 
   if (indexesToCreate.length > 64) {
@@ -327,7 +316,9 @@ export async function syncIndexes<T>(
 
   if (indexesToCreate.length > 0) {
     for (const index of indexesToCreate) {
-      await collection.createIndex(index, options)
+      await collection.createIndex(index.index, {
+        unique: index.unique ?? false,
+      })
       logger.info(
         `Created index - ${JSON.stringify(index)} (${
           collection.collectionName

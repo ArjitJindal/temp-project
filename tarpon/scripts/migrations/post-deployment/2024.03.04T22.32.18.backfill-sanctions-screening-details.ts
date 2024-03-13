@@ -27,6 +27,10 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { logger } from '@/core/logger'
 
 async function migrateTenant(tenant: Tenant) {
+  if (tenant.id.includes('-test')) {
+    return
+  }
+
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
@@ -74,9 +78,11 @@ async function migrateTenant(tenant: Tenant) {
       })
       .sort({ createdTimestamp: 1 })
     // Run once for all users
+    let migrating = false
     await migrateEntities<InternalUser>(
       usersCursor,
       async (users) => {
+        migrating = true
         await Promise.all(
           users.map(async (user) => {
             const userRiskLevel = getRiskLevelFromScore(
@@ -112,38 +118,56 @@ async function migrateTenant(tenant: Tenant) {
     )
 
     // Backfill other days
-    for (const ruleInstance of userScreeningRuleInstances) {
-      const isOngoingScreening =
-        Boolean(
-          Object.values(ruleInstance.riskLevelParameters ?? {}).find(
-            (parameters) => parameters?.ongoingScreening
+    if (migrating) {
+      for (const ruleInstance of userScreeningRuleInstances) {
+        const isOngoingScreening =
+          Boolean(
+            Object.values(ruleInstance.riskLevelParameters ?? {}).find(
+              (parameters) => parameters?.ongoingScreening
+            )
+          ) || Boolean(ruleInstance.parameters?.ongoingScreening)
+        const initialScreeningAt = dayjs(ruleInstance.createdAt)
+          .startOf('hour')
+          .valueOf()
+        try {
+          await sanctionsScreeningDetailsCollection.updateMany(
+            {
+              lastScreenedAt: { $gte: migrationStartTime },
+              ruleInstanceIds: ruleInstance.id,
+            },
+            { $set: { lastScreenedAt: initialScreeningAt } }
           )
-        ) || Boolean(ruleInstance.parameters?.ongoingScreening)
-      const initialScreeningAt = dayjs(ruleInstance.createdAt)
-        .startOf('hour')
-        .valueOf()
-      await sanctionsScreeningDetailsCollection.updateMany(
-        { lastScreenedAt: { $gte: migrationStartTime } },
-        { $set: { lastScreenedAt: initialScreeningAt } }
-      )
-      const initialRecords = await sanctionsScreeningDetailsCollection
-        .find()
-        .toArray()
-      if (isOngoingScreening && initialRecords.length > 0) {
-        const daysToBackfill = dayjs().diff(dayjs(initialScreeningAt), 'day')
-        for (let i = 1; i <= daysToBackfill; i++) {
-          const lastScreenedAt = dayjs(initialScreeningAt)
-            .add(i, 'day')
-            .valueOf()
-          await sanctionsScreeningDetailsCollection.insertMany(
-            initialRecords.map((initialRecord) => ({
-              ...initialRecord,
-              lastScreenedAt,
-              isNew: false,
-              _id: undefined,
-            }))
-          )
-          logger.info(`Backfilled for day ${dayjs(lastScreenedAt).format()}`)
+        } catch (e) {
+          // ignore duplicate error
+        }
+        const initialRecords = await sanctionsScreeningDetailsCollection
+          .find({
+            lastScreenedAt: initialScreeningAt,
+            ruleInstanceIds: ruleInstance.id,
+          })
+          .toArray()
+        if (isOngoingScreening && initialRecords.length > 0) {
+          const daysToBackfill = dayjs().diff(dayjs(initialScreeningAt), 'day')
+          for (let i = 1; i <= daysToBackfill; i++) {
+            const lastScreenedAt = dayjs(initialScreeningAt)
+              .add(i, 'day')
+              .valueOf()
+            try {
+              await sanctionsScreeningDetailsCollection.insertMany(
+                initialRecords.map((initialRecord) => ({
+                  ...initialRecord,
+                  ruleInstanceIds: [ruleInstance.id!],
+                  lastScreenedAt,
+                  isNew: false,
+                  _id: undefined,
+                })),
+                { ordered: false }
+              )
+            } catch (e) {
+              // ignore duplicate error
+            }
+            logger.info(`Backfilled for day ${dayjs(lastScreenedAt).format()}`)
+          }
         }
       }
     }

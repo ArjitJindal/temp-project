@@ -1,6 +1,5 @@
-import { Document, Filter } from 'mongodb'
+import { Document } from 'mongodb'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
-import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
@@ -241,136 +240,128 @@ export const TENANT_DELETION_COLLECTION =
   FLAGRIGHT_TENANT_ID + '-tenant-deletion'
 
 export function getMongoDbIndexDefinitions(tenantId: string): {
-  [collectionName: string]: Array<{
-    getIndexes: () => Document[]
-    unique?: boolean
-  }>
+  [collectionName: string]: {
+    getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
+  }
 } {
   return {
-    [TRANSACTIONS_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => {
-          const txnIndexes: Document[] = [
-            'arsScore.arsScore',
-            'arsScore.riskLevel',
-            'caseStatus',
-            'createdAt',
-            'updatedAt',
-            'destinationAmountDetails.country',
-            'destinationAmountDetails.transactionAmount',
-            'destinationAmountDetails.transactionCurrency',
-            'destinationPaymentDetails.country',
-            'destinationPaymentDetails.method',
-            'originPaymentMethodId',
-            'destinationPaymentMethodId',
-            'destinationUserId',
-            'executedRules.ruleHit',
-            'executedRules.ruleId',
-            'executedRules.ruleInstanceId',
-            'hitRules.ruleAction',
-            'hitRules.ruleInstanceId',
-            'originAmountDetails.country',
-            'originAmountDetails.transactionAmount',
-            'originAmountDetails.transactionCurrency',
-            'originPaymentDetails.country',
-            'originPaymentDetails.method',
-            'originUserId',
-            'status',
-            'tags.key',
-            'timestamp',
-            'transactionId',
-            'transactionState',
-            'type',
-          ].flatMap((i) => {
-            return [{ [i]: 1, _id: 1 }]
-          })
+    [TRANSACTIONS_COLLECTION(tenantId)]: {
+      getIndexes: () => {
+        const txnIndexes: Document[] = [
+          'arsScore.arsScore',
+          'arsScore.riskLevel',
+          'caseStatus',
+          'createdAt',
+          'updatedAt',
+          'destinationAmountDetails.country',
+          'destinationAmountDetails.transactionAmount',
+          'destinationAmountDetails.transactionCurrency',
+          'destinationPaymentDetails.country',
+          'destinationPaymentDetails.method',
+          'originPaymentMethodId',
+          'destinationPaymentMethodId',
+          'destinationUserId',
+          'executedRules.ruleHit',
+          'executedRules.ruleId',
+          'executedRules.ruleInstanceId',
+          'hitRules.ruleAction',
+          'hitRules.ruleInstanceId',
+          'originAmountDetails.country',
+          'originAmountDetails.transactionAmount',
+          'originAmountDetails.transactionCurrency',
+          'originPaymentDetails.country',
+          'originPaymentDetails.method',
+          'originUserId',
+          'status',
+          'tags.key',
+          'timestamp',
+          'transactionId',
+          'transactionState',
+          'type',
+        ].flatMap((i) => {
+          return [{ [i]: 1, _id: 1 }]
+        })
 
-          txnIndexes.push(
-            {
-              destinationUserId: 1,
-              'executedRules.ruleInstanceId': 1,
-              timestamp: 1,
-              _id: 1,
-            },
-            {
-              originUserId: 1,
-              'executedRules.ruleInstanceId': 1,
-              timestamp: 1,
-              _id: 1,
-            },
-            { transactionId: 1, timestamp: 1 },
-            { originUserId: 1, timestamp: 1, _id: 1 },
-            { destinationUserId: 1, timestamp: 1, _id: 1 },
-            { originUserId: 1, timestamp: -1, _id: -1 },
-            { destinationUserId: 1, timestamp: -1, _id: -1 },
-            { arsScore: 1 }
-          )
+        txnIndexes.push(
+          {
+            destinationUserId: 1,
+            'executedRules.ruleInstanceId': 1,
+            timestamp: 1,
+            _id: 1,
+          },
+          {
+            originUserId: 1,
+            'executedRules.ruleInstanceId': 1,
+            timestamp: 1,
+            _id: 1,
+          },
+          { transactionId: 1, timestamp: 1 },
+          { originUserId: 1, timestamp: 1, _id: 1 },
+          { destinationUserId: 1, timestamp: 1, _id: 1 },
+          { originUserId: 1, timestamp: -1, _id: -1 },
+          { destinationUserId: 1, timestamp: -1, _id: -1 },
+          { arsScore: 1 }
+        )
 
-          // NOTE: These indexes are for running the rules in the Simulation mode
-          for (const fields of Object.values(
-            PAYMENT_METHOD_IDENTIFIER_FIELDS
-          )) {
-            txnIndexes.push({
-              'originPaymentDetails.method': 1,
-              ...Object.fromEntries(
-                fields.map((field) => [`originPaymentDetails.${field}`, 1])
-              ),
-            })
-            txnIndexes.push({
-              'destinationPaymentDetails.method': 1,
-              ...Object.fromEntries(
-                fields.map((field) => [`destinationPaymentDetails.${field}`, 1])
-              ),
-            })
-          }
-          return txnIndexes
-        },
-      },
-    ],
-    [USERS_COLLECTION(tenantId)]: [
-      {
-        getIndexes: (): Filter<InternalUser>[] => {
-          return [
-            { type: 1 },
-            { createdTimestamp: 1 },
-            { updatedAt: 1 },
-            { createdAt: 1 },
-            { userId: 1 },
-            { isMonitoringEnabled: 1 },
-            { 'userDetails.name.firstName': 1 },
-            { 'userDetails.name.middleName': 1 },
-            { 'userDetails.name.lastName': 1 },
-            { 'legalEntity.companyGeneralDetails.legalName': 1 },
-            { 'legalEntity.companyGeneralDetails.businessIndustry': 1 },
-            ...['', 'legalEntity.', 'directors.', 'shareHolders.'].flatMap(
-              (prefix) => [
-                { [`${prefix}contactDetails.emailIds`]: 1 },
-                { [`${prefix}contactDetails.contactNumbers`]: 1 },
-                {
-                  [`${prefix}contactDetails.addresses.postcode`]: 1,
-                  [`${prefix}contactDetails.addresses.addressLines`]: 1,
-                },
-              ]
+        // NOTE: These indexes are for running the rules in the Simulation mode
+        for (const fields of Object.values(PAYMENT_METHOD_IDENTIFIER_FIELDS)) {
+          txnIndexes.push({
+            'originPaymentDetails.method': 1,
+            ...Object.fromEntries(
+              fields.map((field) => [`originPaymentDetails.${field}`, 1])
             ),
-          ]
-        },
+          })
+          txnIndexes.push({
+            'destinationPaymentDetails.method': 1,
+            ...Object.fromEntries(
+              fields.map((field) => [`destinationPaymentDetails.${field}`, 1])
+            ),
+          })
+        }
+        return txnIndexes.map((index) => ({ index }))
       },
-    ],
-    [USER_EVENTS_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+    },
+    [USERS_COLLECTION(tenantId)]: {
+      getIndexes: () => {
+        return [
+          { type: 1 },
+          { createdTimestamp: 1 },
+          { updatedAt: 1 },
+          { createdAt: 1 },
+          { userId: 1 },
+          { isMonitoringEnabled: 1 },
+          { 'userDetails.name.firstName': 1 },
+          { 'userDetails.name.middleName': 1 },
+          { 'userDetails.name.lastName': 1 },
+          { 'legalEntity.companyGeneralDetails.legalName': 1 },
+          { 'legalEntity.companyGeneralDetails.businessIndustry': 1 },
+          ...['', 'legalEntity.', 'directors.', 'shareHolders.'].flatMap(
+            (prefix) => [
+              { [`${prefix}contactDetails.emailIds`]: 1 },
+              { [`${prefix}contactDetails.contactNumbers`]: 1 },
+              {
+                [`${prefix}contactDetails.addresses.postcode`]: 1,
+                [`${prefix}contactDetails.addresses.addressLines`]: 1,
+              },
+            ]
+          ),
+        ].map((index) => ({ index }))
+      },
+    },
+    [USER_EVENTS_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
           {
             eventId: 1,
           },
           {
             createdAt: 1,
           },
-        ],
-      },
-    ],
-    [TRANSACTION_EVENTS_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+        ].map((index) => ({ index })),
+    },
+    [TRANSACTION_EVENTS_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
           {
             transactionId: 1,
             transactionState: 1,
@@ -382,12 +373,11 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           {
             createdAt: 1,
           },
-        ],
-      },
-    ],
-    [CASES_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+        ].map((index) => ({ index })),
+    },
+    [CASES_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
           { availableAfterTimestamp: 1 },
           { caseId: 1 },
           { createdTimestamp: -1, _id: 1 },
@@ -423,113 +413,104 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { 'caseAggregates.originPaymentMethods': 1 },
           { 'caseAggregates.destinationPaymentMethods': 1 },
           { 'caseAggregates.tags.key': 1, 'caseAggregates.tags.value': 1 },
-        ],
-      },
-    ],
-    [AUDITLOG_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+        ].map((index) => ({ index })),
+    },
+    [AUDITLOG_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
           { auditlogId: 1 },
           { timestamp: -1 },
           { type: 1, action: 1 },
           { entityId: 1 },
-        ],
-      },
-    ],
-    [SIMULATION_TASK_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ type: 1, createdAt: -1 }] },
-    ],
-    [SIMULATION_RESULT_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ taskId: 1 }] },
-    ],
-    [ACCOUNTS_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ id: 1 }], unique: true },
-    ],
-    [KRS_SCORES_COLLECTION(tenantId)]: [{ getIndexes: () => [{ userId: 1 }] }],
-    [ARS_SCORES_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ transactionId: 1 }] },
-    ],
-    [DRS_SCORES_COLLECTION(tenantId)]: [{ getIndexes: () => [{ userId: 1 }] }],
-    [WEBHOOK_COLLECTION(tenantId)]: [{ getIndexes: () => [{ events: 1 }] }],
-    [WEBHOOK_DELIVERY_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+        ].map((index) => ({ index })),
+    },
+    [SIMULATION_TASK_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [{ type: 1, createdAt: -1 }].map((index) => ({ index })),
+    },
+    [SIMULATION_RESULT_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ taskId: 1 }].map((index) => ({ index })),
+    },
+    [ACCOUNTS_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ index: { id: 1 }, unique: true }],
+    },
+
+    [KRS_SCORES_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ userId: 1 }].map((index) => ({ index })),
+    },
+    [ARS_SCORES_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ transactionId: 1 }].map((index) => ({ index })),
+    },
+    [DRS_SCORES_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ userId: 1 }].map((index) => ({ index })),
+    },
+    [WEBHOOK_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ events: 1 }].map((index) => ({ index })),
+    },
+    [WEBHOOK_DELIVERY_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
           { webhookId: 1, requestStartedAt: -1 },
           { deliveryTaskId: 1, deliveredAt: 1 },
-        ],
-      },
-    ],
-    [SANCTIONS_SEARCHES_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+        ].map((index) => ({ index })),
+    },
+    [SANCTIONS_SEARCHES_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
           { createdAt: 1 },
           { 'response.rawComplyAdvantageResponse.content.data.id': 1 },
           { 'request.searchTerm': 1 },
           { 'response.data.doc.types': 1 },
-        ],
-      },
-    ],
-    [IBAN_COM_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ 'request.iban': 1, createdAt: 1 }] },
-    ],
-    [SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ 'caEntity.id': 1, userId: 1 }] },
-    ],
-    [SANCTIONS_SCREENING_DETAILS_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+        ].map((index) => ({ index })),
+    },
+    [IBAN_COM_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [{ 'request.iban': 1, createdAt: 1 }].map((index) => ({ index })),
+    },
+    [SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [{ 'caEntity.id': 1, userId: 1 }].map((index) => ({ index })),
+    },
+    [SANCTIONS_SCREENING_DETAILS_COLLECTION(tenantId)]: {
+      getIndexes: () => [
+        ...[
           { lastScreenedAt: 1 },
           { name: 1, lastScreenedAt: 1 },
           { entity: 1, lastScreenedAt: 1 },
           { ruleInstanceIds: 1, userId: 1 },
           { ruleInstanceIds: 1, transactionId: 1 },
-        ],
-      },
-      {
-        getIndexes: () => [{ name: 1, entity: 1, lastScreenedAt: 1 }],
-        unique: true,
-      },
-    ],
-
-    [NARRATIVE_TEMPLATE_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
-          { id: 1 },
-          { name: 1 },
-          { description: 1 },
-          { createdAt: 1 },
-        ],
-      },
-    ],
-    [DASHBOARD_TEAM_CASES_STATS_HOURLY(tenantId)]: [
-      {
-        getIndexes: () => [{ date: -1, accountId: 1, status: 1 }],
-        unique: true,
-      },
-    ],
-    [DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenantId)]: [
-      {
-        getIndexes: () => [{ date: -1, accountId: 1, status: 1 }],
-        unique: true,
-      },
-    ],
-    [METRICS_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ name: 1, date: 1 }] },
-    ],
-    [CRM_SUMMARY_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ account: 1 }] },
-    ],
-    [CRM_NOTES_COLLECTION(tenantId)]: [{ getIndexes: () => [{ account: 1 }] }],
-    [CRM_ENGAGEMENTS_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ account: 1 }] },
-    ],
-    [CRM_TASKS_COLLECTION(tenantId)]: [{ getIndexes: () => [{ account: 1 }] }],
-    [CHECKLIST_TEMPLATE_COLLECTION(tenantId)]: [
-      { getIndexes: () => [{ id: 1 }, { createdAt: 1 }] },
-    ],
-    [RULE_QUEUES_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+        ].map((index) => ({ index })),
+        ...[{ index: { name: 1, entity: 1, lastScreenedAt: 1 }, unique: true }],
+      ],
+    },
+    [NARRATIVE_TEMPLATE_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [{ id: 1 }, { name: 1 }, { description: 1 }, { createdAt: 1 }].map(
+          (index) => ({ index })
+        ),
+    },
+    [METRICS_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ name: 1, date: 1 }].map((index) => ({ index })),
+    },
+    [CRM_SUMMARY_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ account: 1 }].map((index) => ({ index })),
+    },
+    [CRM_NOTES_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ account: 1 }].map((index) => ({ index })),
+    },
+    [CRM_ENGAGEMENTS_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ account: 1 }].map((index) => ({ index })),
+    },
+    [CRM_TASKS_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ account: 1 }].map((index) => ({ index })),
+    },
+    [CHECKLIST_TEMPLATE_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [{ id: 1 }, { createdAt: 1 }].map((index) => ({ index })),
+    },
+    [RULE_QUEUES_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
           {
             id: 1,
             name: 1,
@@ -544,12 +525,11 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { typologies: 1 },
           { defaultNature: 1 },
           { types: 1 },
-        ],
-      },
-    ],
-    [API_REQUEST_LOGS_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+        ].map((index) => ({ index })),
+    },
+    [API_REQUEST_LOGS_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
           {
             path: 1,
             timestamp: 1,
@@ -560,17 +540,15 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           {
             traceId: 1,
           },
-        ],
-      },
-    ],
-    [REPORT_COLLECTION(tenantId)]: [
-      {
-        getIndexes: () => [
+        ].map((index) => ({ index })),
+    },
+    [REPORT_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
           {
             createdAt: 1,
           },
-        ],
-      },
-    ],
+        ].map((index) => ({ index })),
+    },
   }
 }
