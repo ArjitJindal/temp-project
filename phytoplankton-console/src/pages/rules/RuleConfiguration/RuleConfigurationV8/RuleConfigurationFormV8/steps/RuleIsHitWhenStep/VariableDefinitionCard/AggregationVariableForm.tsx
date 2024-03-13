@@ -29,6 +29,7 @@ import { dayjs } from '@/utils/dayjs';
 import Alert from '@/components/library/Alert';
 import VariableTimeWindow from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/VariableTimeWindow';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
+import { Hint } from '@/components/library/Form/InputField';
 
 export type FormRuleAggregationVariable = Partial<RuleAggregationVariable> & {
   timeWindow: RuleAggregationVariableTimeWindow;
@@ -249,6 +250,11 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               mode="SINGLE"
               options={aggregateFunctionOptions}
             />
+            {formValues.aggregationFunc === 'UNIQUE_VALUES' && (
+              <Hint isError={false}>
+                {'The current transaction entity value will not be included in the aggregate'}
+              </Hint>
+            )}
           </Label>
           <div className={s.timeWindow}>
             <Label

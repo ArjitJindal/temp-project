@@ -649,7 +649,10 @@ export class RuleJsonLogicEvaluator {
       return aggFunc.merge(acc, cur.value as any)
     }, aggFunc.init())
 
-    if (this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)) {
+    if (
+      aggregationVariable.aggregationFunc !== 'UNIQUE_VALUES' &&
+      this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
+    ) {
       const shouldIncludeNewData =
         await this.isDataIncludedInAggregationVariable(
           aggregationVariable,
