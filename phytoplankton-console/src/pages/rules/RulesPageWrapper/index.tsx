@@ -1,7 +1,7 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { useLocalStorageState } from 'ahooks';
 import Breadcrumbs, { BreadcrumbItem } from 'src/components/library/Breadcrumbs';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import s from './styles.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
@@ -38,6 +38,9 @@ export const RulesPageWrapper = forwardRef<SimulationPageWrapperRef, RulesPageWr
       'SIMULATION_RULES',
       false,
     );
+
+    const location = useLocation();
+
     return (
       <SimulationPageWrapper
         key={`${isSimulationEnabled}`}
@@ -47,7 +50,9 @@ export const RulesPageWrapper = forwardRef<SimulationPageWrapperRef, RulesPageWr
           <div style={{ padding: `12px ${PAGE_WRAPPER_PADDING}px` }} className={s.header}>
             <Breadcrumbs items={props.breadcrumbs} />
             <div className={s.right}>
-              {isSimulationEnabled && <Link to="/rules/simulation-history">View history</Link>}
+              {location.pathname !== '/rules/simulation-history' && isSimulationEnabled && (
+                <Link to="/rules/simulation-history">View history</Link>
+              )}
               {actionButton}
             </div>
           </div>
