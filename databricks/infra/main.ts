@@ -594,7 +594,7 @@ class DatabricksStack extends TerraformStack {
       new databricks.sqlTable.SqlTable(this, `backfill-${entity.table}`, {
         provider: workspaceProvider,
         catalogName: catalog.name,
-        clusterId: cluster.clusterId,
+        warehouseId: sqlWarehouse.id,
         name: `${entity.table}_backfill`,
         schemaName: defaultSchema.name,
         tableType: 'MANAGED',
@@ -655,7 +655,6 @@ class DatabricksStack extends TerraformStack {
             {
               provider: workspaceProvider,
               catalogName: catalog.name,
-              clusterId: cluster.clusterId,
               name: entity.table,
               schemaName: tenantSchema.name,
               tableType: 'VIEW',
