@@ -8,9 +8,8 @@ import {
 } from 'aws-cdk-lib/aws-ecs'
 import { IRole } from 'aws-cdk-lib/aws-iam'
 import { FunctionProps } from 'aws-cdk-lib/aws-lambda'
-import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs'
+import { LogGroup } from 'aws-cdk-lib/aws-logs'
 import { Construct } from 'constructs'
-import { envIs } from '@/utils/env'
 
 export const createFargateTaskDefinition = (
   scope: Construct,
@@ -65,9 +64,7 @@ export const addFargateContainer = (
           process.env.ENV === 'dev'
             ? RemovalPolicy.DESTROY
             : RemovalPolicy.RETAIN,
-        retention: envIs('prod')
-          ? RetentionDays.ONE_YEAR
-          : RetentionDays.TWO_WEEKS,
+        retention: scope.config.resource.CLOUD_WATCH.logRetention,
       }),
     }),
     environment: {
