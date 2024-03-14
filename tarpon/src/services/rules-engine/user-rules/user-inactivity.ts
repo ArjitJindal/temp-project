@@ -7,7 +7,7 @@ import dayjs from '@/utils/dayjs'
 
 export interface UserInactivityRuleParameters {
   inactivityDays: number
-  checkDirection: 'sending' | 'all'
+  checkDirection: 'sending' | 'receiving' | 'all'
 }
 
 export default class UserInactivity extends UserRule<UserInactivityRuleParameters> {
@@ -25,7 +25,7 @@ export default class UserInactivity extends UserRule<UserInactivityRuleParameter
           title: 'Transaction history scope options',
           description:
             "sending: only check the sender's past sending transactions; all: check the sender's past sending and receiving transactions",
-          enum: ['sending', 'all'],
+          enum: ['sending', 'receiving', 'all'],
           nullable: true,
         },
       },
@@ -45,14 +45,17 @@ export default class UserInactivity extends UserRule<UserInactivityRuleParameter
       this.dynamoDb
     )
 
-    const lastSendingTransaction = (
-      await transactionRepository.getLastNUserSendingTransactions(
-        this.user.userId,
-        1,
-        {},
-        ['timestamp']
-      )
-    )[0]
+    const lastSendingTransaction =
+      checkDirection !== 'receiving'
+        ? (
+            await transactionRepository.getLastNUserSendingTransactions(
+              this.user.userId,
+              1,
+              {},
+              ['timestamp']
+            )
+          )[0]
+        : undefined
 
     const lastReceivingTransaction =
       checkDirection !== 'sending'
