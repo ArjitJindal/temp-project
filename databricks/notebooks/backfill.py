@@ -82,7 +82,10 @@ def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn):
             .withColumn("event", lit("INSERT"))
         )
 
-        final_df = enrichment_fn(pre_enrichment_df, currency_df)
+        if enrichment_fn:
+            final_df = enrichment_fn(pre_enrichment_df, currency_df)
+        else:
+            final_df = pre_enrichment_df
         final_df.write.option("mergeSchema", "true").format("delta").mode(
             "append"
         ).saveAsTable(table_path)
