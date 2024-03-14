@@ -1253,7 +1253,7 @@ export class CdkTarponStack extends cdk.Stack {
       const canary = createCanary(
         this,
         StackConstants.PUBLIC_API_CANARY_TESTS_NAME,
-        5
+        10
       )
 
       canary.role?.attachInlinePolicy(
