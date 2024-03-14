@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { round, startCase } from 'lodash'
+import dayjs from '@flagright/lib/utils/dayjs'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
@@ -164,6 +165,14 @@ export class SanctionsService {
 
     // Normalize search term
     request.searchTerm = startCase(request.searchTerm.toLowerCase())
+    if (
+      !request.searchTerm ||
+      (request.yearOfBirth &&
+        (request.yearOfBirth < 1900 || request.yearOfBirth > dayjs().year()))
+    ) {
+      return { total: 0, data: [], searchId: 'invalid_search' }
+    }
+
     request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
     request.types = request.types?.length
       ? request.types

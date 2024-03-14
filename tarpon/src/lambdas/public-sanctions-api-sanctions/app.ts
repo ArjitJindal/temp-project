@@ -48,7 +48,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       if (!searchRequest.searchTerm) {
         throw new BadRequest(`Search term must be provided`)
       }
-      const searchTerm = searchRequest.searchTerm || ''
+      const searchTerm = searchRequest.searchTerm
       const countryCodes = searchRequest.countryCodes
 
       const searchResult = await sanctionsService.search({

@@ -57,10 +57,14 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
     const yearOfBirth = user.userDetails.dateOfBirth
       ? dayjs(user.userDetails.dateOfBirth).year()
       : undefined
-    const name = formatConsumerName(user.userDetails.name) || ''
+    const name = formatConsumerName(user.userDetails.name)
+    if (!name) {
+      return
+    }
+
     const result = await sanctionsService.search(
       {
-        searchTerm: name || '',
+        searchTerm: name,
         yearOfBirth,
         types: screeningTypes,
         fuzziness: fuzziness / 100,
