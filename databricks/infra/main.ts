@@ -393,7 +393,7 @@ class DatabricksStack extends TerraformStack {
       },
     ]
 
-    new databricks.cluster.Cluster(this, 'cluster', {
+    const cluster = new databricks.cluster.Cluster(this, 'cluster', {
       ...clusterConfig,
       provider: workspaceProvider,
       sparkVersion: '14.2.x-scala2.12',
@@ -442,7 +442,13 @@ class DatabricksStack extends TerraformStack {
       source: path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl'),
     })
 
-    const pl = new databricks.pipeline.Pipeline(this, `pipeline`, {
+    new databricks.dbfsFile.DbfsFile(this, `currency-rates-backfill`, {
+      provider: workspaceProvider,
+      path: `/data/currency_rates_backfill.json`,
+      source: path.resolve(__dirname, '../data/currency_rates_backfill.json'),
+    })
+
+    new databricks.pipeline.Pipeline(this, `pipeline`, {
       provider: workspaceProvider,
       name: 'main',
       continuous: true,
@@ -588,6 +594,7 @@ class DatabricksStack extends TerraformStack {
       new databricks.sqlTable.SqlTable(this, `backfill-${entity.table}`, {
         provider: workspaceProvider,
         catalogName: catalog.name,
+        clusterId: cluster.clusterId,
         name: `${entity.table}_backfill`,
         schemaName: defaultSchema.name,
         tableType: 'MANAGED',
@@ -648,6 +655,7 @@ class DatabricksStack extends TerraformStack {
             {
               provider: workspaceProvider,
               catalogName: catalog.name,
+              clusterId: cluster.clusterId,
               name: entity.table,
               schemaName: tenantSchema.name,
               tableType: 'VIEW',

@@ -1,4 +1,4 @@
-from pyspark.sql.types import StringType, StructField, StructType
+from pyspark.sql.types import FloatType, MapType, StringType, StructField, StructType
 
 from src.openapi.internal.models import ArsScore, DrsScore, KrsScore
 from src.openapi.public.models import (
@@ -15,6 +15,13 @@ def merge_schemas(*schemas):
 def sanitise_scoring_schema(schema):
     return StructType([field for field in schema if field.name != "components"])
 
+
+currency_schema = StructType(
+    [
+        StructField("date", StringType(), False),
+        StructField("rates", MapType(StringType(), FloatType(), False), False),
+    ]
+)
 
 entities = [
     {

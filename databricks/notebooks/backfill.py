@@ -10,7 +10,7 @@ import os
 
 from databricks.sdk.runtime import *
 
-from src.entities import entities
+from src.entities import entities, currency_schema
 
 dbutils.widgets.text("entities", ",".join(entity["table"] for entity in entities), "Entities to backfill")
 
@@ -25,15 +25,17 @@ MONGO_HOST = dbutils.secrets.get(
     "mongo", "mongo-host"
 )
 
+stage = os.environ["STAGE"]
+
+logger = logging.getLogger("backfill")
+
 def load_mongo(table, schema):
     mongo_table = table.replace("_", "-")
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("MongoDBToDelta")
     connection_uri = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}"
     client = pymongo.MongoClient(connection_uri, 27017, maxPoolSize=50)
     db_name = "tarpon"
     db = client[db_name]
-    stage = os.environ["STAGE"]
     table_path = f"{stage}.default.{table}_backfill"
 
     # Clear existing table
@@ -70,6 +72,14 @@ def load_mongo(table, schema):
 
 entity_names = dbutils.widgets.get("entities")
 
+logger.info("Backfilling currencies")
+
+# Path to your JSON file in Databricks File System (DBFS)
+json_file_path = "/data/currency_rates_backfill.json"
+df = spark.read.json(json_file_path, currency_schema)
+df.write.option("mergeSchema", "true").format("delta").mode("overwrite").saveAsTable(f"{stage}.default.currency_rates_backfill")
+
+logger.info("Backfilling entities")
 for entity in entities:
     is_present = entity["table"] in entity_names.split(',')
     if is_present:

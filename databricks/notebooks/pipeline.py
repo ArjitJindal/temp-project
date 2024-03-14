@@ -8,11 +8,10 @@ import dlt
 import requests
 import sentry_sdk
 from pyspark.sql.functions import col, concat, expr, from_json, lit, regexp_extract, udf, lower
-import json
 
 from src.dlt.schema import kinesis_event_schema
 from src.dynamo.serde import deserialise_dynamo
-from src.entities import entities
+from src.entities import entities, currency_schema
 
 aws_access_key = dbutils.secrets.get(
     "kinesis", "aws-access-key"
@@ -28,6 +27,8 @@ sentry_sdk.init(
     dsn=SENTRY_DSN,
     traces_sample_rate=1.0,
 )
+
+partition_key_id_path = "event.dynamodb.Keys.PartitionKeyID.S"
 
 @dlt.on_event_hook
 def write_events_to_sentry(event):
@@ -78,6 +79,38 @@ def define_pipeline(spark):
             .load()
         )
 
+    @dlt.table(
+        comment="Currency exchange table",
+    )
+    def currency_rates():
+        deserialisation_udf = udf(deserialise_dynamo, currency_schema)
+        filtered_df = (
+            dlt.readStream("kinesis_events")
+            .withColumn(
+                "event", from_json(col("data").cast("string"), kinesis_event_schema)
+            )
+            .filter(col(partition_key_id_path) == "flagright#currency-cache")
+        )
+        return filtered_df.withColumn("structured_data", deserialisation_udf(col("data"))).select(
+            col("structured_data.*"),
+            col("event.eventName").alias("event"),
+            col("approximateArrivalTimestamp"),
+        )
+
+    @dlt.append_flow(
+        name="currency_rates_backfill",
+        target="currency_rates",
+    )
+    def currency_rates_backfill():
+        stage = os.environ["STAGE"]
+        return (
+            spark.readStream.format("delta").table(f"{stage}.default.currency_rates_backfill")
+            .withColumn(
+                "approximateArrivalTimestamp",
+                lit("1970-01-01 00:00:00").cast("timestamp"),
+            )
+        )
+
     for entity in entities:
         create_entity_tables(
             entity["table"],
@@ -94,7 +127,6 @@ def create_entity_tables(entity, schema, dynamo_key, id_column, source):
 
     def cdc():
         deserialisation_udf = udf(deserialise_dynamo, schema)
-        partition_key_id_path = "event.dynamodb.Keys.PartitionKeyID.S"
         sort_key_id_path = "event.dynamodb.Keys.SortKeyID.S"
         df = (
             dlt.readStream(source)
