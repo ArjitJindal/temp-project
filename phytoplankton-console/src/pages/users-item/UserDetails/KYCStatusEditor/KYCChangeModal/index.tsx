@@ -25,6 +25,7 @@ import NarrativesSelectStatusChange from '@/pages/case-management/components/Nar
 import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
 import { USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
+import Label from '@/components/library/Label';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
 
 interface Props {
@@ -256,12 +257,14 @@ export default function KYCChangeModal(props: Props) {
               )}
             </InputField>
           </div>
-          <FilesDraggerInput
-            value={fileList}
-            onChange={(value) => {
-              setFileList(value ?? []);
-            }}
-          />
+          <Label label={'Upload attachments'}>
+            <FilesDraggerInput
+              value={fileList}
+              onChange={(value) => {
+                setFileList(value ?? []);
+              }}
+            />
+          </Label>
         </Form>
       </Modal>
     </>

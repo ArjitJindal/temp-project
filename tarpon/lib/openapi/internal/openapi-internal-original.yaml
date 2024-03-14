@@ -7343,6 +7343,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CaseReasons'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
       required:
         - comment
         - transactionIds

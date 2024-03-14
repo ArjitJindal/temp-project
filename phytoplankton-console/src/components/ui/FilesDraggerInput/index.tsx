@@ -11,16 +11,14 @@ import FilesList from '@/components/files/FilesList';
 import { usePrevious } from '@/utils/hooks';
 import { isEqual } from '@/utils/lang';
 import UploadIcon from '@/components/ui/icons/Remix/system/upload-2-line.react.svg';
-import Label from '@/components/library/Label';
 
 interface Props extends InputProps<FileInfo[]> {
   singleFile?: boolean;
   size?: 'SMALL' | 'LARGE';
-  hideLabel?: boolean;
 }
 
 export default function FilesDraggerInput(props: Props) {
-  const { value, onChange, singleFile, size = 'SMALL', hideLabel } = props;
+  const { value, onChange, singleFile, size = 'SMALL' } = props;
   const [uploadingCount, setUploadingCount] = useState(0);
   const api = useApi();
 
@@ -42,7 +40,6 @@ export default function FilesDraggerInput(props: Props) {
 
   return (
     <div className={s.root}>
-      {!hideLabel && <Label label={'Upload attachments'} />}
       <Upload.Dragger
         disabled={uploadingCount > 0}
         multiple={!singleFile}

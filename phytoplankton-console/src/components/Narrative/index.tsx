@@ -17,6 +17,7 @@ import TextArea from '@/components/library/TextArea';
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import Alert from '@/components/library/Alert';
+import Label from '@/components/library/Label';
 
 export const OTHER_REASON: CaseReasons = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
@@ -189,34 +190,36 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
           </GenericFormField>
         )}
       </div>
-      <FilesDraggerInput
-        onChange={(value) => {
-          if (value) {
-            onChange((state) => {
-              const fileAdded = value.filter(
-                (v) => !state.values.files.find((existingFile) => v.s3Key === existingFile.s3Key),
-              );
-              if (fileAdded.length > 0) {
+      <Label label={'Upload attachments'}>
+        <FilesDraggerInput
+          onChange={(value) => {
+            if (value) {
+              onChange((state) => {
+                const fileAdded = value.filter(
+                  (v) => !state.values.files.find((existingFile) => v.s3Key === existingFile.s3Key),
+                );
+                if (fileAdded.length > 0) {
+                  return {
+                    ...state,
+                    values: {
+                      ...state.values,
+                      files: uniqBy([...state.values.files, ...value], 's3Key'),
+                    },
+                  };
+                }
                 return {
                   ...state,
                   values: {
                     ...state.values,
-                    files: uniqBy([...state.values.files, ...value], 's3Key'),
+                    files: value,
                   },
                 };
-              }
-              return {
-                ...state,
-                values: {
-                  ...state.values,
-                  files: value,
-                },
-              };
-            });
-          }
-        }}
-        value={values.values.files}
-      />
+              });
+            }
+          }}
+          value={values.values.files}
+        />
+      </Label>
       {extraFields}
       {alertMessage && <Alert type="info">{alertMessage}</Alert>}
     </Form>

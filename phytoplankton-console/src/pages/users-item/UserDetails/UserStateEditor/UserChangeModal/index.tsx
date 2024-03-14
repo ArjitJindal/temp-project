@@ -26,6 +26,7 @@ import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectPar
 import { USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 import { USER_STATES } from '@/apis/models-custom/UserState';
+import Label from '@/components/library/Label';
 
 interface Props {
   isVisible: boolean;
@@ -241,12 +242,14 @@ export default function UserChangeModal(props: Props) {
               )}
             </InputField>
           </div>
-          <FilesDraggerInput
-            onChange={(value) => {
-              setFileList(value ?? []);
-            }}
-            value={fileList}
-          />
+          <Label label={'Upload attachments'}>
+            <FilesDraggerInput
+              onChange={(value) => {
+                setFileList(value ?? []);
+              }}
+              value={fileList}
+            />
+          </Label>
         </Form>
       </Modal>
     </>

@@ -17,7 +17,6 @@ export default function AttachmentsStep(props: Props) {
           onChange={props.onChange}
           singleFile={SINGLE_FILE_UPLOAD_SUPPORTED_SAR_IDS.includes(reportTypeId)}
           size="LARGE"
-          hideLabel
         />
       )}
     </GenericFormField>

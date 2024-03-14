@@ -17,6 +17,7 @@ import { getOr } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
+import Label from '@/components/library/Label';
 
 type Props = {
   isOpen: boolean;
@@ -300,12 +301,14 @@ export const MannualCaseCreationModal = (props: Props) => {
           )}
         </InputField>
 
-        <FilesDraggerInput
-          onChange={(value) => {
-            setFileList(value ?? []);
-          }}
-          value={fileList}
-        />
+        <Label label={'Upload attachments'}>
+          <FilesDraggerInput
+            onChange={(value) => {
+              setFileList(value ?? []);
+            }}
+            value={fileList}
+          />
+        </Label>
       </Form>
     </Modal>
   );

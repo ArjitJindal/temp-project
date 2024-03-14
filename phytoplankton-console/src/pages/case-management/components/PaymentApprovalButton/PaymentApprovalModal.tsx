@@ -7,13 +7,14 @@ import { and } from '@/components/library/Form/utils/validation/combinators';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import InputField from '@/components/library/Form/InputField';
 import Form, { FormRef, InputProps } from '@/components/library/Form';
-import { CaseReasons, RuleAction } from '@/apis';
+import { CaseReasons, FileInfo, RuleAction } from '@/apis';
 import { CASE_REASONSS } from '@/apis/models-custom/CaseReasons';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import TextArea from '@/components/library/TextArea';
 import Select from '@/components/library/Select';
 import { humanizeConstant } from '@/utils/humanize';
+import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 
 interface Props {
   visible: boolean;
@@ -26,6 +27,7 @@ interface Props {
 export interface FormValues {
   reasons: CaseReasons[];
   comment: string;
+  files: FileInfo[];
 }
 export default function PaymentApprovalModal({
   visible,
@@ -38,6 +40,7 @@ export default function PaymentApprovalModal({
   const initialValues: FormValues = {
     reasons: [],
     comment: '',
+    files: [],
   };
   const api = useApi();
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
@@ -49,6 +52,7 @@ export default function PaymentApprovalModal({
           transactionIds,
           comment: values.comment,
           reason: values.reasons,
+          files: values.files?.length > 0 ? values.files : [],
           action,
         },
       }),
@@ -135,6 +139,15 @@ export default function PaymentApprovalModal({
             )}
           </InputField>
         </div>
+        <InputField<FormValues, 'files'>
+          name={'files'}
+          label={'Files'}
+          labelProps={{
+            required: false,
+          }}
+        >
+          {(inputProps) => <FilesDraggerInput {...inputProps} />}
+        </InputField>
       </Form>
     </Modal>
   );

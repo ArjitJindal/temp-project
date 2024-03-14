@@ -276,6 +276,7 @@ export const transactionsViewHandler = lambdaApi()(
                 }. Reasons: ${req.TransactionAction.reason.join(
                   ', '
                 )}. Comment: ${req.TransactionAction.comment}`,
+                files: req.TransactionAction.files,
               })
             }
           })
