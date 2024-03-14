@@ -414,7 +414,7 @@ class DatabricksStack extends TerraformStack {
         provider: workspaceProvider,
         name: 'tarpon',
         clusterSize: '2X-Small',
-        autoStopMins: enableServerlessCompute ? 5 : 10,
+        autoStopMins: enableServerlessCompute ? 5 : 0,
         enableServerlessCompute,
       }
     )
