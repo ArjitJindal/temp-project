@@ -5,10 +5,8 @@
 
 import os
 import dlt
-import requests
 import sentry_sdk
-from pyspark.sql.functions import col, concat, expr, from_json, lit, regexp_extract, udf, lower
-
+from pyspark.sql.functions import col, expr, from_json, lit, regexp_extract, udf, lower, to_timestamp
 from src.dlt.schema import kinesis_event_schema
 from src.dynamo.serde import deserialise_dynamo
 from src.entities import entities, currency_schema
@@ -107,24 +105,33 @@ def define_pipeline(spark):
             spark.readStream.format("delta").table(f"{stage}.default.currency_rates_backfill")
             .withColumn(
                 "approximateArrivalTimestamp",
-                lit("1970-01-01 00:00:00").cast("timestamp"),
+                to_timestamp(col("date"), "yyyy-MM-dd"),
             )
         )
 
     for entity in entities:
         create_entity_tables(
-            entity["table"],
-            entity["schema"],
-            entity["partition_key"],
-            entity["id_column"],
-            entity["source"],
+            entity.get("table"),
+            entity.get("schema"),
+            entity.get("partition_key"),
+            entity.get("id_column"),
+            entity.get("source"),
+            entity.get("enrichment_fn"),
         )
 
-
-def create_entity_tables(entity, schema, dynamo_key, id_column, source):
+def create_entity_tables(entity, schema, dynamo_key, id_column, source, enrichment_fn):
     cdc_table_name = f"{entity}_cdc"
     backfill_table_name = f"{entity}_backfill"
 
+    dlt.create_streaming_table(
+        name=cdc_table_name,
+        partition_cols=["tenant"],
+    )
+
+    @dlt.append_flow(
+        name=cdc_table_name,
+        target=cdc_table_name,
+    )
     def cdc():
         deserialisation_udf = udf(deserialise_dynamo, schema)
         sort_key_id_path = "event.dynamodb.Keys.SortKeyID.S"
@@ -146,28 +153,29 @@ def create_entity_tables(entity, schema, dynamo_key, id_column, source):
                 lower(regexp_extract(col(partition_key_id_path), "^[^#]*", 0)).alias("tenant"),
             )
         )
-
         filtered_df = (
             df
             # ignore tiermoney on sandbox and they have schema breaking data.
             .filter(lower(col("tenant")) != lower(lit("1RRDYI5GQ4")))
             .filter(col(partition_key_id_path).contains(dynamo_key))
         )
-        with_structured_df = filtered_df.withColumn("structured_data", deserialisation_udf(col("data")))
-        return with_structured_df.select(
+        with_structured_df = filtered_df.withColumn("structured_data", deserialisation_udf(col("data"))).alias("entity")
+
+        pre_enrichment_df = with_structured_df.select(
             col("structured_data.*"),
             col("tenant"),
             col("PartitionKeyID"),
             col("SortKeyID"),
             col("approximateArrivalTimestamp"),
-            col("event.eventName").alias("event"),
+            col("entity.event.eventName").alias("event"),
         )
 
-    dlt.table(cdc,
-        name=cdc_table_name,
-        comment=f"{entity} CDC",
-        partition_cols=["tenant"]
-    )
+        if enrichment_fn:
+            currency_rates = (
+                dlt.readStream("currency_rates")
+            )
+            return enrichment_fn(pre_enrichment_df, currency_rates)
+        return pre_enrichment_df
 
     @dlt.append_flow(
         name=backfill_table_name,
@@ -175,17 +183,7 @@ def create_entity_tables(entity, schema, dynamo_key, id_column, source):
     )
     def backfill():
         stage = os.environ["STAGE"]
-        df = spark.readStream.format("delta").table(f"{stage}.default.{backfill_table_name}")
-        return (
-            df.withColumn("PartitionKeyID", concat(df["tenant"], lit(dynamo_key)))
-            .withColumn("SortKeyID", col(id_column))
-            # Timestamp of 0 to indicate the initial data load.
-            .withColumn(
-                "approximateArrivalTimestamp",
-                lit("1970-01-01 00:00:00").cast("timestamp"),
-            )
-            .withColumn("event", lit("INSERT"))
-        )
+        return spark.readStream.format("delta").table(f"{stage}.default.{backfill_table_name}")
 
     dlt.create_streaming_table(
         name=entity,

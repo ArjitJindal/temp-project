@@ -4,7 +4,7 @@
 # COMMAND ----------
 
 import pymongo
-from pyspark.sql.functions import lower, lit
+from pyspark.sql.functions import lit, concat, col, from_unixtime, to_timestamp
 import logging
 import os
 
@@ -29,7 +29,16 @@ stage = os.environ["STAGE"]
 
 logger = logging.getLogger("backfill")
 
-def load_mongo(table, schema):
+
+json_file_path = "/data/currency_rates_backfill.json"
+currency_df = spark.read.json(json_file_path, currency_schema)
+currency_df = currency_df.withColumn(
+    "approximateArrivalTimestamp",
+    to_timestamp(col("date"), "yyyy-MM-dd"),
+)
+
+
+def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn):
     mongo_table = table.replace("_", "-")
     logging.basicConfig(level=logging.INFO)
     connection_uri = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}"
@@ -50,39 +59,50 @@ def load_mongo(table, schema):
     for coll in db.list_collection_names():
         if not coll.endswith(suffix):
             continue
+
         tenant = coll.replace(suffix, "")
         logger.info("Processing collection: %s", coll)
-        try:
-            df = (
-                spark.read.format("mongo")
-                .option("database", db_name)
-                .option("uri", connection_uri)
-                .option("collection", coll)
-                .schema(schema)
-                .load()
-                .withColumn("tenant", lit(tenant.lower()))
+        df = (
+            spark.read.format("mongo")
+            .option("database", db_name)
+            .option("uri", connection_uri)
+            .option("collection", coll)
+            .schema(schema)
+            .load()
+            .withColumn("tenant", lit(tenant.lower()))
+        )
+
+        pre_enrichment_df = (
+            df.withColumn("PartitionKeyID", concat(df["tenant"], lit(dynamo_key)))
+            .withColumn("SortKeyID", col(id_column))
+            .withColumn(
+                "approximateArrivalTimestamp",
+                from_unixtime(col("timestamp") / 1000).cast("timestamp"),
             )
-            df.write.option("mergeSchema", "true").format("delta").mode(
-                "append"
-            ).saveAsTable(table_path)
-            logger.info("Collection processed: %s", coll)
-        except:
-            logger.info("Could not backfill from %s", coll)
+            .withColumn("event", lit("INSERT"))
+        )
+
+        final_df = enrichment_fn(pre_enrichment_df, currency_df)
+        final_df.write.option("mergeSchema", "true").format("delta").mode(
+            "append"
+        ).saveAsTable(table_path)
+
+        logger.info("Collection processed: %s", coll)
     logger.info("All collections processed successfully.")
 
 entity_names = dbutils.widgets.get("entities")
 
 logger.info("Backfilling currencies")
-
-# Path to your JSON file in Databricks File System (DBFS)
-json_file_path = "/data/currency_rates_backfill.json"
-df = spark.read.json(json_file_path, currency_schema)
-df.write.option("mergeSchema", "true").format("delta").mode("overwrite").saveAsTable(f"{stage}.default.currency_rates_backfill")
+currency_df.write.option("mergeSchema", "true").format("delta").mode("overwrite").saveAsTable(f"{stage}.default.currency_rates_backfill")
 
 logger.info("Backfilling entities")
 for entity in entities:
     is_present = entity["table"] in entity_names.split(',')
     if is_present:
         load_mongo(
-            entity["table"], entity["schema"]
+            entity.get("table"),
+            entity.get("schema"),
+            entity.get("partition_key"),
+            entity.get("id_column"),
+            entity.get("enrichment_fn")
         )
