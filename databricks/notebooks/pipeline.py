@@ -114,12 +114,11 @@ def define_pipeline(spark):
             entity.get("table"),
             entity.get("schema"),
             entity.get("partition_key"),
-            entity.get("id_column"),
             entity.get("source"),
             entity.get("enrichment_fn"),
         )
 
-def create_entity_tables(entity, schema, dynamo_key, id_column, source, enrichment_fn):
+def create_entity_tables(entity, schema, dynamo_key, source, enrichment_fn):
     cdc_table_name = f"{entity}_cdc"
     backfill_table_name = f"{entity}_backfill"
 

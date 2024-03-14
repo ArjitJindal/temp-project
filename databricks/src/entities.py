@@ -90,6 +90,7 @@ entities = [
         "id_column": "transactionId",
         "source": "kinesis_events",
         "enrichment_fn": enrich_transactions,
+        "timestamp_column": "timestamp",
     },
     {
         "table": "users",
@@ -97,6 +98,7 @@ entities = [
         "partition_key": "user#primary",
         "id_column": "userId",
         "source": "kinesis_events",
+        "timestamp_column": "createdTimestamp",
     },
     {
         "table": "kyc_risk_values",
@@ -104,6 +106,7 @@ entities = [
         "partition_key": "#krs-value",
         "id_column": "userId",
         "source": "hammerhead_kinesis_events",
+        "timestamp_column": "createdAt",
     },
     {
         "table": "action_risk_values",
@@ -111,6 +114,7 @@ entities = [
         "partition_key": "#ars-value",
         "id_column": "transactionId",
         "source": "hammerhead_kinesis_events",
+        "timestamp_column": "createdAt",
     },
     {
         "table": "dynamic_risk_values",
@@ -118,5 +122,6 @@ entities = [
         "partition_key": "#drs-value",
         "id_column": "userId",
         "source": "hammerhead_kinesis_events",
+        "timestamp_column": "createdAt",
     },
 ]

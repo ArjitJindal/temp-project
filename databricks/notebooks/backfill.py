@@ -38,7 +38,7 @@ currency_df = currency_df.withColumn(
 )
 
 
-def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn):
+def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn, timestamp_column):
     mongo_table = table.replace("_", "-")
     logging.basicConfig(level=logging.INFO)
     connection_uri = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}"
@@ -77,7 +77,7 @@ def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn):
             .withColumn("SortKeyID", col(id_column))
             .withColumn(
                 "approximateArrivalTimestamp",
-                from_unixtime(col("timestamp") / 1000).cast("timestamp"),
+                from_unixtime(col(timestamp_column) / 1000).cast("timestamp"),
             )
             .withColumn("event", lit("INSERT"))
         )
@@ -107,5 +107,6 @@ for entity in entities:
             entity.get("schema"),
             entity.get("partition_key"),
             entity.get("id_column"),
-            entity.get("enrichment_fn")
+            entity.get("enrichment_fn"),
+            entity.get("timestamp_column")
         )
