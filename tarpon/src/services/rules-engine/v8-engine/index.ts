@@ -95,7 +95,7 @@ const getDataLoader = memoizeOne(
             const user = isSenderUserVariable(variable)
               ? data.senderUser
               : data.receiverUser
-            return variable.load(user, context)
+            return user ? variable.load(user, context) : null
           }
           return null
         })
