@@ -16,7 +16,7 @@ import * as path from 'path'
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
 // Change this to update the table schemas
-const schemaVersion = '9'
+const schemaVersion = '13'
 const adminEmails = [
   'tim+databricks@flagright.com',
   'nadig@flagright.com',
@@ -1368,6 +1368,9 @@ getTenantInfoFromUsagePlans(awsRegion).then((tenants) => {
     .filter((elem, index, self) => {
       return index === self.indexOf(elem)
     })
+    .filter(
+      (t) => enabledTenantIds.indexOf(t) > -1 || t.indexOf('flagright') > -1
+    )
 
   // Add demo mode tenants.
   if (stage === 'sandbox') {
@@ -1376,3 +1379,8 @@ getTenantInfoFromUsagePlans(awsRegion).then((tenants) => {
   new DatabricksStack(app, `databricks-stack-${env}`, tenantIds)
   app.synth()
 })
+
+const enabledTenantIds = [
+  'ydtx15ustg', // Banked eu-2
+  'cypress-tenant',
+]
