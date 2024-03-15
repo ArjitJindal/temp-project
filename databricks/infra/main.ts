@@ -1364,13 +1364,15 @@ getTenantInfoFromUsagePlans(awsRegion).then((tenants) => {
   }
   const app = new App()
   const tenantIds = tenants
+    .filter(
+      (t) =>
+        enabledTenantIds.indexOf(t.id.toLowerCase()) > -1 ||
+        t.name.toLowerCase().includes('flagright')
+    )
     .map((t) => t.id.toLowerCase())
     .filter((elem, index, self) => {
       return index === self.indexOf(elem)
     })
-    .filter(
-      (t) => enabledTenantIds.indexOf(t) > -1 || t.indexOf('flagright') > -1
-    )
 
   // Add demo mode tenants.
   if (stage === 'sandbox') {
