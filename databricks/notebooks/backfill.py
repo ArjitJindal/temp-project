@@ -1,3 +1,4 @@
+dbutils.library.restartPython()
 from databricks.sdk import WorkspaceClient
 
 import pymongo
@@ -8,8 +9,6 @@ import os
 from databricks.sdk.runtime import *
 
 from src.entities import entities, currency_schema
-
-from databricks.sdk.service import pipelines
 
 w = WorkspaceClient()
 
