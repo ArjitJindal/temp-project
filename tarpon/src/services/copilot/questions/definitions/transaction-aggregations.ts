@@ -1,6 +1,8 @@
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
 import { TimeseriesQuestion } from '@/services/copilot/questions/types'
 import {
+  currencyDefault,
+  currencyVars,
   GRANULARITIES,
   humanReadablePeriod,
   Period,
@@ -11,20 +13,23 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { executeSql } from '@/utils/databricks'
 import dayjs from '@/utils/dayjs'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export const transactionAggregationQuestion = (
   questionId: QuestionId,
   title: string,
   aggregationExpression: (granularity: TimeGranularity) => string,
   joins: string = ''
-): TimeseriesQuestion<Period & { granularity: TimeGranularity }> => ({
+): TimeseriesQuestion<
+  Period & { granularity: TimeGranularity; currency: CurrencyCode }
+> => ({
   type: 'TIME_SERIES',
   questionId,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `${title} ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async (ctx, { granularity, ...period }) => {
+  aggregationPipeline: async (ctx, { granularity, currency, ...period }) => {
     const sqlExpression = timeXAxis(granularity)
     const rows = await executeSql<{
       timestamp: number
@@ -82,7 +87,7 @@ ORDER BY
           values: rows.map((row) => {
             return {
               time: row.timestamp,
-              value: row.agg,
+              value: ctx.convert(row.agg, currency),
             }
           }),
         },
@@ -92,6 +97,7 @@ ORDER BY
   },
   variableOptions: {
     ...periodVars,
+    ...currencyVars,
     granularity: {
       // TODO implement an "options" variable type
       type: 'AUTOCOMPLETE',
@@ -99,7 +105,11 @@ ORDER BY
     },
   },
   defaults: () => {
-    return { ...periodDefaults(), granularity: 'Daily' }
+    return {
+      ...periodDefaults(),
+      ...currencyDefault,
+      granularity: 'Daily',
+    }
   },
 })
 
@@ -119,37 +129,37 @@ export const TransactionCount = transactionAggregationQuestion(
 export const MaxTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MAX_TRANSACTION_AMOUNT,
   'Max transaction amount',
-  () => 'max(originAmountDetails.transactionAmount)'
+  () => 'max(transactionAmountUSD)'
 )
 
 export const MinTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MIN_TRANSACTION_AMOUNT,
   'Min transaction amount',
-  () => 'min(originAmountDetails.transactionAmount)'
+  () => 'min(transactionAmountUSD)'
 )
 export const AverageTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.AVERAGE_TRANSACTION_AMOUNT,
   'Average transaction amount',
-  () => 'avg(originAmountDetails.transactionAmount)'
+  () => 'avg(transactionAmountUSD)'
 )
 
 export const MedianTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MEDIAN_TRANSACTION_AMOUNT,
   'Median transaction amount',
-  () => 'percentile_approx(originAmountDetails.transactionAmount, 0.5)'
+  () => 'percentile_approx(transactionAmountUSD, 0.5)'
 )
 
 export const TotalTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TOTAL_TRANSACTION_AMOUNT,
   'Total transaction amount',
-  () => 'sum(originAmountDetails.transactionAmount)'
+  () => 'sum(transactionAmountUSD)'
 )
 
 export const TransactionLimit = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TRANSACTION_LIMIT,
   'Remaining transaction limit',
   (granularity) =>
-    `(select transactionLimits.maximum${granularity}TransactionLimit.amountValue from users where userId = :userId LIMIT 1) - COALESCE(SUM(originAmountDetails.transactionAmount), 0)`
+    `(select transactionLimits.maximum${granularity}TransactionLimit.amountValue from users where userId = :userId LIMIT 1) - COALESCE(SUM(transactionAmountUSD), 0)`
 )
 
 export const TransactionAggregations = [

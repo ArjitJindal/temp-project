@@ -1,16 +1,22 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import {
+  currencyDefault,
+  currencyVars,
   humanReadablePeriod,
   Period,
+  periodDefaults,
   periodVars,
   sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
-export const UniquePaymentIdentifierSent: TableQuestion<Period> = {
+export const UniquePaymentIdentifierSent: TableQuestion<
+  Period & { currency: CurrencyCode }
+> = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS_OF_SENDERS,
   categories: ['CONSUMER', 'BUSINESS'],
@@ -20,8 +26,8 @@ export const UniquePaymentIdentifierSent: TableQuestion<Period> = {
     )}`
   },
   aggregationPipeline: async (
-    { userId, username },
-    { page, pageSize, ...period }
+    { convert, userId, username },
+    { page, pageSize, currency, ...period }
   ) => {
     const { rows, total } = await paginatedSqlQuery<{
       method: string
@@ -33,7 +39,7 @@ export const UniquePaymentIdentifierSent: TableQuestion<Period> = {
     select
       first(t.destinationPaymentDetails.method) as method,
       count(*) as count,
-      sum(t.destinationAmountDetails.transactionAmount) as sum,
+      sum(t.transactionAmountUSD) as sum,
       t.destinationPaymentDetails as destinationPaymentDetails
     from
       transactions t
@@ -60,7 +66,7 @@ export const UniquePaymentIdentifierSent: TableQuestion<Period> = {
           getPaymentMethodId(r.destinationPaymentDetails),
           r.method,
           r.count,
-          r.sum,
+          convert(r.sum, currency),
         ]
       })
 
@@ -80,8 +86,14 @@ export const UniquePaymentIdentifierSent: TableQuestion<Period> = {
     { name: 'Transaction Count', columnType: 'NUMBER' },
     { name: 'Total Amount', columnType: 'MONEY_AMOUNT' },
   ],
-  variableOptions: periodVars,
+  variableOptions: {
+    ...periodVars,
+    ...currencyVars,
+  },
   defaults: () => {
-    return {}
+    return {
+      ...periodDefaults(),
+      ...currencyDefault,
+    }
   },
 }

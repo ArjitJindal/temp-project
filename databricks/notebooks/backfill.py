@@ -1,8 +1,3 @@
-# Databricks notebook source
-# MAGIC %pip install /Workspace/Shared/src-0.1.0-py3-none-any.whl
-
-# COMMAND ----------
-
 import pymongo
 from pyspark.sql.functions import lit, concat, col, from_unixtime, to_timestamp
 import logging
@@ -37,7 +32,6 @@ currency_df = currency_df.withColumn(
     to_timestamp(col("date"), "yyyy-MM-dd"),
 )
 
-
 def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn, timestamp_column):
     mongo_table = table.replace("_", "-")
     logging.basicConfig(level=logging.INFO)
@@ -46,12 +40,6 @@ def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn, timestamp_co
     db_name = "tarpon"
     db = client[db_name]
     table_path = f"{stage}.default.{table}_backfill"
-
-    # Clear existing table
-    empty_df = spark.createDataFrame([], schema)
-    empty_df.write.option("mergeSchema", "true").format("delta").mode(
-        "overwrite"
-    ).saveAsTable(table_path)
 
     suffix = f"-{mongo_table}"
 
@@ -100,6 +88,20 @@ entity_names = dbutils.widgets.get("entities")
 
 logger.info("Backfilling currencies")
 currency_df.write.option("mergeSchema", "true").format("delta").mode("overwrite").saveAsTable(f"{stage}.default.currency_rates_backfill")
+
+logger.info("Resetting backfill tables")
+for entity in entities:
+    is_present = entity["table"] in entity_names.split(',')
+    if is_present:
+        table = entity.get("table")
+        table_path = f"{stage}.default.{table}_backfill"
+        # Clear existing table
+        empty_df = spark.createDataFrame([], entity.get("schema"))
+        empty_df.write.option("mergeSchema", "true").format("delta").mode(
+            "overwrite"
+        ).saveAsTable(table_path)
+
+logger.info("Ready to start Delta Live Tables!")
 
 logger.info("Backfilling entities")
 for entity in entities:

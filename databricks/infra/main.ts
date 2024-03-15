@@ -1373,6 +1373,9 @@ getTenantInfoFromUsagePlans(awsRegion).then((tenants) => {
     .filter((elem, index, self) => {
       return index === self.indexOf(elem)
     })
+    .filter(
+      (t) => enabledTenantIds.indexOf(t) > -1 || t.indexOf('flagright') > -1
+    )
 
   // Add demo mode tenants.
   if (stage === 'sandbox') {

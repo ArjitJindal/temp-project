@@ -95,6 +95,7 @@ export const Transactions: TableQuestion<Period> = {
       }
     >(
       `select
+  t.transactionId,
   t.type,
   t.timestamp,
   t.transactionState,
@@ -121,6 +122,7 @@ from
       page,
       pageSize
     )
+
     const items = rows.map((t) => {
       return [
         t.transactionId,

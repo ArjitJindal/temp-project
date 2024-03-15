@@ -7,6 +7,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getUserName } from '@/utils/helpers'
+import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
 
 export const MONGO_DATE_FORMAT = '%Y-%m-%d'
 export const DATE_GRAPH_FORMAT = 'D/M/YYYY'
@@ -20,10 +21,21 @@ export const periodDefaults = (days = 90): Period => {
   }
 }
 
+export const currencyDefault = {
+  currency: 'USD',
+}
+
 export type Period = { from?: number; to?: number }
 export const periodVars: VariableOptions<Period> = {
   from: 'DATE',
   to: 'DATE',
+}
+
+export const currencyVars: VariableOptions<{ currency: string }> = {
+  currency: {
+    type: 'AUTOCOMPLETE',
+    options: () => CURRENCY_CODES,
+  },
 }
 
 export function humanReadablePeriod(period: Period): string {

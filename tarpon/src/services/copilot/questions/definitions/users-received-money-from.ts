@@ -1,14 +1,20 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import {
+  currencyDefault,
+  currencyVars,
   humanReadablePeriod,
   Period,
+  periodDefaults,
   periodVars,
   sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
 import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
-export const UsersReceivedMoneyFrom: TableQuestion<Period> = {
+export const UsersReceivedMoneyFrom: TableQuestion<
+  Period & { currency: CurrencyCode }
+> = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.USERS_MONEY_RECEIVED_FROM,
   categories: ['CONSUMER', 'BUSINESS'],
@@ -16,8 +22,8 @@ export const UsersReceivedMoneyFrom: TableQuestion<Period> = {
     return `Top users they have received money ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async (
-    { userId, username },
-    { page, pageSize, ...period }
+    { convert, userId, username },
+    { page, pageSize, currency, ...period }
   ) => {
     const { rows, total } = await paginatedSqlQuery<{
       userId: string
@@ -32,7 +38,7 @@ select
   FIRST(case when u.type = 'CONSUMER' THEN u.userDetails.name.firstName ELSE u.legalEntity.companyGeneralDetails.legalName END) as name,
   FIRST(u.type) as userType,
   count(*) as count,
-  sum(t.originAmountDetails.transactionAmount) as sum
+  sum(t.transactionAmountUSD) as sum
 from
   transactions t
   join users u on u.userId = t.originUserId
@@ -55,7 +61,7 @@ order by
       r.name,
       r.userType,
       r.count,
-      r.sum,
+      convert(r.sum, currency),
     ])
     return {
       data: {
@@ -76,8 +82,12 @@ order by
   ],
   variableOptions: {
     ...periodVars,
+    ...currencyVars,
   },
   defaults: () => {
-    return {}
+    return {
+      ...periodDefaults(),
+      ...currencyDefault,
+    }
   },
 }

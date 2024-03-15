@@ -9,6 +9,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { PropertiesProperties } from '@/@types/openapi-internal/PropertiesProperties'
 import { PageSize } from '@/utils/pagination'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export type Variables = {
   [key: string]: (typeof QuestionVariable.prototype)['value']
@@ -40,6 +41,7 @@ export type InvestigationContext = {
   user: InternalConsumerUser | InternalBusinessUser
   username: string
   accountService: AccountsService
+  convert: (amount: number, target: CurrencyCode) => number
 }
 
 export type QuestionCategory = 'BUSINESS' | 'CONSUMER'

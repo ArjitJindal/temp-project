@@ -32,6 +32,8 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { generateChecksum } from '@/utils/object'
 import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
+import { CurrencyService } from '@/services/currency'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 @traceable
 export class QuestionService {
@@ -191,6 +193,13 @@ export class QuestionService {
     if (!tenantId || !userId || !caseId || !alertId || !user) {
       throw new Error('Could not get context for question')
     }
+
+    // Preloading currency data so we don't have to make all the questions async.
+    const cs = new CurrencyService()
+    const exchangeData = await cs.getExchangeData()
+    const convert = (amount: number, target: CurrencyCode) =>
+      amount * exchangeData.rates[target]
+
     const ctx: InvestigationContext = {
       alert: a,
       _case: c,
@@ -201,6 +210,7 @@ export class QuestionService {
       alertId,
       username,
       accountService: this.accountsService,
+      convert,
     }
 
     const partitionKeyId = DynamoDbKeys.CACHE_QUESTION_RESULT(

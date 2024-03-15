@@ -56,6 +56,7 @@ export async function testQuestion<V extends Variables, D>(
     alert,
     user,
     accountService,
+    convert: (amount) => amount,
   }
 
   const result = await q.aggregationPipeline(ctx, { ...q.defaults(ctx), ...v })
