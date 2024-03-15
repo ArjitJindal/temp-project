@@ -1,10 +1,11 @@
 import pMap from 'p-map'
-
-import { chunk, isEqual } from 'lodash'
+import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { isEqual } from 'lodash'
 import { BatchJobRunner } from './batch-job-runner-base'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
-import { cleanUpDynamoDbResources, getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RulesEngineService } from '@/services/rules-engine'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -13,6 +14,8 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
 import { tenantHasFeature } from '@/core/utils/context'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { Rule } from '@/@types/openapi-internal/Rule'
 
 const CONCURRENT_BATCH_SIZE = 10
 
@@ -53,7 +56,7 @@ export async function getOngoingScreeningUserRuleInstances(
 @traceable
 export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
-    const { tenantId, userIds } = job
+    const { tenantId } = job
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const ruleRepository = new RuleRepository(tenantId, {
@@ -72,36 +75,58 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     const rules = await ruleRepository.getRulesByIds(
       ruleInstances.map((ruleInstance) => ruleInstance.ruleId!)
     )
-    const users = await userRepository.getMongoUsersByIds(userIds)
+
+    const usersCursor = await userRepository.getAllUsersCursor()
+
+    await processCursorInBatch<InternalUser>(
+      usersCursor,
+      async (usersChunk) => {
+        await this.runUsersBatch(
+          tenantId,
+          usersChunk,
+          { mongoDb, dynamoDb },
+          rules,
+          ruleInstances,
+          userRepository
+        )
+      },
+      { mongoBatchSize: 100, processBatchSize: 100 }
+    )
+  }
+
+  private async runUsersBatch(
+    tenantId: string,
+    usersChunk: InternalUser[],
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
+    rules: readonly Rule[],
+    ruleInstances: readonly RuleInstance[],
+    userRepository: UserRepository
+  ) {
+    const { mongoDb, dynamoDb } = connections
     const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
 
-    let processedUsers = 0
-    for (const usersChunk of chunk(users, CONCURRENT_BATCH_SIZE)) {
-      await pMap(
-        usersChunk,
-        async (user) => {
-          const result = await rulesEngine.verifyUserByRules(
-            user,
-            ruleInstances,
-            rules,
-            { ongoingScreeningMode: true }
+    await pMap(
+      usersChunk,
+      async (user) => {
+        const result = await rulesEngine.verifyUserByRules(
+          user,
+          ruleInstances,
+          rules,
+          { ongoingScreeningMode: true }
+        )
+
+        if (
+          result.hitRules?.length &&
+          !isEqual(user.hitRules ?? [], result.hitRules ?? [])
+        ) {
+          await userRepository.updateUserWithExecutedRules(
+            user.userId,
+            result.executedRules ?? [],
+            result.hitRules ?? []
           )
-          if (
-            !isEqual(user.executedRules ?? [], result.executedRules ?? []) ||
-            !isEqual(user.hitRules ?? [], result.hitRules ?? [])
-          ) {
-            await userRepository.updateUserWithExecutedRules(
-              user.userId,
-              result.executedRules ?? [],
-              result.hitRules ?? []
-            )
-          }
-        },
-        { concurrency: CONCURRENT_BATCH_SIZE }
-      )
-      processedUsers += usersChunk.length
-      await cleanUpDynamoDbResources()
-      logger.info(`Processed users ${processedUsers} / ${userIds.length}`)
-    }
+        }
+      },
+      { concurrency: CONCURRENT_BATCH_SIZE }
+    )
   }
 }

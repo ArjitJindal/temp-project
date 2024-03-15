@@ -665,14 +665,12 @@ export class UserRepository {
     }
   }
 
-  public async getAllUserIdsCursor(): Promise<FindCursor<{ userId: string }>> {
-    const db = await this.mongoDb.db()
+  public async getAllUsersCursor(): Promise<FindCursor<WithId<InternalUser>>> {
+    const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
-    return collection.find({}).project({ userId: 1 }) as FindCursor<{
-      userId: string
-    }>
+    return collection.find({})
   }
 
   public async getUsers(userIds: string[]): Promise<(User | Business)[]> {

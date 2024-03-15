@@ -4,7 +4,6 @@ import {
 } from 'aws-lambda'
 import { shortId } from '@flagright/lib/utils'
 import createHttpError from 'http-errors'
-import { chunk } from 'lodash'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -38,7 +37,6 @@ import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-re
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getFullTenantId } from '@/utils/tenant'
 import { tenantSettings } from '@/core/utils/context'
-import { UserRepository } from '@/services/users/repositories/user-repository'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
@@ -204,19 +202,11 @@ export const tenantsHandler = lambdaApi()(
       const batchJobType = request.TenantTriggerBatchJobRequest.jobName
       switch (batchJobType) {
         case 'ONGOING_SCREENING_USER_RULE': {
-          const userRepository = new UserRepository(tenantId, {
-            mongoDb,
+          await sendBatchJobCommand({
+            type: 'ONGOING_SCREENING_USER_RULE',
+            tenantId: tenantId,
           })
-          const allUserIds = (
-            await (await userRepository.getAllUserIdsCursor()).toArray()
-          ).map((v) => v.userId)
-          for (const userIds of chunk(allUserIds, 100)) {
-            await sendBatchJobCommand({
-              type: 'ONGOING_SCREENING_USER_RULE',
-              tenantId: tenantId,
-              userIds,
-            })
-          }
+
           break
         }
         case 'ONGOING_MERCHANT_MONITORING': {

@@ -1,7 +1,6 @@
 import { last } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { migrateAllTenants } from '../utils/tenant'
-import { migrateEntities } from '../utils/mongodb'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
@@ -9,7 +8,7 @@ import {
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   SANCTIONS_SCREENING_DETAILS_COLLECTION,
   SANCTIONS_SEARCHES_COLLECTION,
@@ -79,7 +78,7 @@ async function migrateTenant(tenant: Tenant) {
       .sort({ createdTimestamp: 1 })
     // Run once for all users
     let migrating = false
-    await migrateEntities<InternalUser>(
+    await processCursorInBatch<InternalUser>(
       usersCursor,
       async (users) => {
         migrating = true
@@ -211,7 +210,7 @@ async function migrateTenant(tenant: Tenant) {
         ],
       })
       .sort({ timestamp: 1 })
-    await migrateEntities<InternalTransaction>(
+    await processCursorInBatch<InternalTransaction>(
       transactionsCursor,
       async (transactions) => {
         await Promise.all(

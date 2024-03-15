@@ -50,7 +50,6 @@ export type DemoModeDataLoadBatchJob = {
 export type OngoingScreeningUserRuleBatchJob = {
   type: 'ONGOING_SCREENING_USER_RULE'
   tenantId: string
-  userIds: string[]
 }
 
 /* Pulse Backfill */

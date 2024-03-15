@@ -92,7 +92,6 @@ describe('Batch Job Sanctions Screening Rule', () => {
     const testJob: OngoingScreeningUserRuleBatchJob = {
       tenantId: TEST_TENANT_ID,
       type: 'ONGOING_SCREENING_USER_RULE',
-      userIds: [user1.userId, user2.userId],
     }
 
     await jobRunnerHandler(testJob)
@@ -211,19 +210,6 @@ describe('Batch Job Sanctions Screening Rule', () => {
           ],
         },
       ],
-      hitRules: [],
-      executedRules: [
-        {
-          ruleAction: 'SUSPEND',
-          nature: 'SCREENING',
-          ruleName: 'Screening consumer users',
-          ruleHit: false,
-          ruleId: 'R-16',
-          ruleDescription:
-            'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
-          labels: [],
-        },
-      ],
       contactDetails: {
         emailIds: ['baran@flagright.com'],
         websites: ['flagright.com'],
@@ -299,7 +285,6 @@ describe('Batch Job Sanctions Screening Rule Ongoing Screening is Off', () => {
     const testJob: OngoingScreeningUserRuleBatchJob = {
       tenantId: TEST_TENANT_ID,
       type: 'ONGOING_SCREENING_USER_RULE',
-      userIds: [user1.userId],
     }
 
     await jobRunnerHandler(testJob)

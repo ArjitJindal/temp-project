@@ -2,16 +2,11 @@ import { chunk, groupBy, mapValues } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantInfo, TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { UserRepository } from '@/services/users/repositories/user-repository'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
-import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { envIs } from '@/utils/env'
-
-const ONGOING_SCREENING_USERS_BATCH_SIZE = 100
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(
@@ -98,33 +93,12 @@ async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
 }
 
 async function createOngoingScreeningJobs(tenantInfos: TenantInfo[]) {
-  const mongoDb = await getMongoDbClient()
   for await (const tenant of tenantInfos) {
     const tenantId = tenant.tenant.id
-    if ((await getOngoingScreeningUserRuleInstances(tenantId)).length > 0) {
-      const userRepository = new UserRepository(tenantId, {
-        mongoDb,
-      })
-      let userIdsBatch: string[] = []
-      // One job only deals with a subset of users to avoid the job to run for over 15 minutes
-      for await (const item of await userRepository.getAllUserIdsCursor()) {
-        userIdsBatch.push(item.userId)
-        if (userIdsBatch.length === ONGOING_SCREENING_USERS_BATCH_SIZE) {
-          await sendBatchJobCommand({
-            type: 'ONGOING_SCREENING_USER_RULE',
-            tenantId,
-            userIds: userIdsBatch,
-          })
-          userIdsBatch = []
-        }
-      }
-      if (userIdsBatch.length > 0) {
-        await sendBatchJobCommand({
-          type: 'ONGOING_SCREENING_USER_RULE',
-          tenantId,
-          userIds: userIdsBatch,
-        })
-      }
-    }
+
+    await sendBatchJobCommand({
+      type: 'ONGOING_SCREENING_USER_RULE',
+      tenantId,
+    })
   }
 }

@@ -1,17 +1,15 @@
 import { StackConstants } from '@lib/constants'
 import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
-
 import { compact, flatten, last, uniq } from 'lodash'
 import { Collection } from 'mongodb'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
 } from './migration-progress'
-import { migrateEntities } from './mongodb'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
@@ -87,7 +85,7 @@ async function cleanupRuleHitsInternal(values: Props) {
     `Found ${await cursor.count()} transactions for tenant ${tenantId}`
   )
 
-  await migrateEntities<InternalTransaction>(
+  await processCursorInBatch<InternalTransaction>(
     cursor,
     async (transactions) => {
       await Promise.all(
