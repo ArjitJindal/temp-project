@@ -62,36 +62,39 @@ def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn, timestamp_co
 
         tenant = coll.replace(suffix, "")
         logger.info("Processing collection: %s", coll)
-        df = (
-            spark.read.format("mongo")
-            .option("database", db_name)
-            .option("uri", connection_uri)
-            .option("collection", coll)
-            .schema(schema)
-            .load()
-            .withColumn("tenant", lit(tenant.lower()))
-        )
-
-        pre_enrichment_df = (
-            df.withColumn("PartitionKeyID", concat(df["tenant"], lit(dynamo_key)))
-            .withColumn("SortKeyID", col(id_column))
-            .withColumn(
-                "approximateArrivalTimestamp",
-                from_unixtime(col(timestamp_column) / 1000).cast("timestamp"),
+        try:
+            df = (
+                spark.read.format("mongo")
+                .option("database", db_name)
+                .option("uri", connection_uri)
+                .option("collection", coll)
+                .schema(schema)
+                .load()
+                .withColumn("tenant", lit(tenant.lower()))
             )
-            .withColumn("event", lit("INSERT"))
-        )
 
-        if enrichment_fn:
-            final_df = enrichment_fn(pre_enrichment_df, currency_df)
-        else:
-            final_df = pre_enrichment_df
-        final_df.write.option("mergeSchema", "true").format("delta").mode(
-            "append"
-        ).saveAsTable(table_path)
+            pre_enrichment_df = (
+                df.withColumn("PartitionKeyID", concat(df["tenant"], lit(dynamo_key)))
+                .withColumn("SortKeyID", col(id_column))
+                .withColumn(
+                    "approximateArrivalTimestamp",
+                    from_unixtime(col(timestamp_column) / 1000).cast("timestamp"),
+                )
+                .withColumn("event", lit("INSERT"))
+            )
 
-        logger.info("Collection processed: %s", coll)
-    logger.info("All collections processed successfully.")
+            if enrichment_fn:
+                final_df = enrichment_fn(pre_enrichment_df, currency_df)
+            else:
+                final_df = pre_enrichment_df
+            final_df.write.option("mergeSchema", "true").format("delta").mode(
+                "append"
+            ).saveAsTable(table_path)
+            logger.info("Collection backfilled: %s", coll)
+        except Exception as e:
+            logging.error("Failed to backfill %s %s", coll, str(e))
+
+    logger.info("All collections processed.")
 
 entity_names = dbutils.widgets.get("entities")
 
