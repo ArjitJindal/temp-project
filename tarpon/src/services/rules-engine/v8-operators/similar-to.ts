@@ -1,4 +1,4 @@
-import * as levenshtein from 'fast-levenshtein'
+import { getEditDistancePercentage } from '@flagright/lib/utils'
 import { RuleOperator } from './types'
 import { getNegatedOperator } from './utils'
 import { logger } from '@/core/logger'
@@ -26,10 +26,9 @@ export const SIMILAR_TO_OPERATOR: RuleOperator<string, string[]> = {
       logger.error('Fuzziness parameter is required for similar to operator')
       return false
     }
-    return rhs.some((value) => {
-      const result = levenshtein.get(lhs, value) / lhs.length
-      return result <= percentageThreshold / 100
-    })
+    return rhs.some(
+      (value) => getEditDistancePercentage(lhs, value) <= percentageThreshold
+    )
   },
 }
 

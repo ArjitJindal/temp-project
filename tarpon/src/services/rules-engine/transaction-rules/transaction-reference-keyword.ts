@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import * as levenshtein from 'fast-levenshtein'
+import { getEditDistance } from '@flagright/lib/utils'
 import { RuleHitResult } from '../rule'
 import { LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
@@ -43,7 +43,7 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
       hitWord = referenceWords.find((refrenceWord) => {
         return keywords.find((keyword) => {
           return (
-            levenshtein.get(refrenceWord, keyword.toLowerCase()) <=
+            getEditDistance(refrenceWord, keyword.toLowerCase()) <=
             allowedDistance
           )
         })

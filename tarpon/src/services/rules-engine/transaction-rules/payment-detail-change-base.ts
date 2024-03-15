@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { mergeWith } from 'lodash'
-import * as levenshtein from 'fast-levenshtein'
+import { getEditDistancePercentage } from '@flagright/lib/utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { RuleHitResultItem } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
@@ -316,8 +316,8 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
       return str1 === str2
     }
     return (
-      levenshtein.get(str1, str2) / str1.length <=
-      this.parameters.allowedDistancePercentage / 100
+      getEditDistancePercentage(str1, str2) <=
+      this.parameters.allowedDistancePercentage
     )
   }
 }

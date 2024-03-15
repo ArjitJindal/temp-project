@@ -1,4 +1,4 @@
-import { Divider, Input, Select, Tag } from 'antd';
+import { Divider, Input, Tag } from 'antd';
 import { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
@@ -26,6 +26,7 @@ import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
 import { WHITELABEL_BRANDING } from '@/utils/branding';
+import Select from '@/components/library/Select';
 
 const featureDescriptions: Record<Feature, { title: string; description: string }> = {
   RISK_LEVELS: { title: 'Risk Levels', description: 'Enable risk levels' },
@@ -103,17 +104,20 @@ export default function SuperAdminPanel() {
   const tenantOptions =
     queryResult.data?.map((tenant) => ({
       value: tenant.id,
-      text: `${tenant.name} ${tenant.id} ${tenant.region}`,
+      labelText: `${tenant.name} ${tenant.id} ${tenant.region}`,
       label: (
-        <div data-cy={tenant.name}>
+        <>
           {tenant.name} <Tag color="blue">id: {tenant.id} </Tag>
           {tenant.region && <Tag color="orange">region: {tenant.region} </Tag>}
-        </div>
+        </>
       ),
       disabled: tenant.isProductionAccessDisabled ?? false,
     })) || [];
 
   const handleChangeTenant = async (newTenantId: string) => {
+    if (user.tenantId === newTenantId) {
+      return;
+    }
     const unsetDemoMode = api.accountChangeSettings({
       accountId: user.userId,
       AccountSettings: {
@@ -180,14 +184,10 @@ export default function SuperAdminPanel() {
       >
         <Label label="Tenant" testId="tenant-name">
           <Select
-            disabled={tenantOptions.length === 0}
+            isDisabled={tenantOptions.length === 0}
             options={tenantOptions}
-            onChange={handleChangeTenant}
+            onChange={(v) => v && handleChangeTenant(v)}
             value={user.tenantId}
-            filterOption={(input, option) =>
-              (option?.text?.toLowerCase() ?? '').includes(input.toLowerCase().trim())
-            }
-            showSearch={true}
           />
           <div>
             Current tenant ID: <b>{`${user.tenantId}`}</b>
@@ -227,18 +227,18 @@ export default function SuperAdminPanel() {
               description="Enabled features of the tenant"
               testId="features-select"
             >
-              <Select<Feature[]>
-                mode="multiple"
+              <Select<Feature>
+                mode="MULTIPLE"
                 options={Object.keys(featureDescriptions).map((featureKey) => {
                   return {
                     label: featureDescriptions[featureKey].title,
-                    value: featureKey,
+                    value: featureKey as Feature,
                     title: featureDescriptions[featureKey].description,
                   };
                 })}
-                onChange={setFeatures}
+                onChange={(v) => setFeatures(v ?? [])}
                 allowClear
-                disabled={!initialFeatures}
+                isDisabled={!initialFeatures}
                 value={features || initialFeatures}
               />
             </Label>
@@ -309,8 +309,7 @@ export default function SuperAdminPanel() {
                   value: name,
                 }))}
                 value={batchJobName}
-                onChange={setBatchJobName}
-                showSearch
+                onChange={(v) => v && setBatchJobName(v)}
               />
             </Label>
             <Confirm
@@ -356,10 +355,6 @@ export default function SuperAdminPanel() {
                       options={tenantOptions}
                       onChange={(value) => setTenantIdToDelete(value)}
                       value={tenantIdToDelete}
-                      filterOption={(input, option) =>
-                        (option?.text?.toLowerCase() ?? '').includes(input.toLowerCase().trim())
-                      }
-                      showSearch={true}
                       placeholder="Select tenant to delete"
                       style={{ width: '20rem' }}
                     />

@@ -1002,6 +1002,7 @@ __metadata:
     "@aws-sdk/client-api-gateway": "npm:^3.496.0"
     "@tsconfig/node18": "npm:^18.2.2"
     "@types/eslint": "npm:^8"
+    "@types/fast-levenshtein": "npm:^0.0.4"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^20.11.16"
     "@typescript-eslint/eslint-plugin": "npm:^7.0.1"
@@ -1013,6 +1014,7 @@ __metadata:
     eslint-config-prettier: "npm:^9.1.0"
     eslint-plugin-import: "npm:^2.29.1"
     eslint-plugin-prettier: "npm:^5.1.3"
+    fast-levenshtein: "npm:^3.0.0"
     jest: "npm:^29.7.0"
     nanoid: "npm:^3.3.4"
     prettier: "npm:^3.2.5"
@@ -1999,6 +2001,13 @@ __metadata:
   version: 1.0.5
   resolution: "@types/estree@npm:1.0.5"
   checksum: b3b0e334288ddb407c7b3357ca67dbee75ee22db242ca7c56fe27db4e1a31989cb8af48a84dd401deb787fe10cc6b2ab1ee82dc4783be87ededbe3d53c79c70d
+  languageName: node
+  linkType: hard
+
+"@types/fast-levenshtein@npm:^0.0.4":
+  version: 0.0.4
+  resolution: "@types/fast-levenshtein@npm:0.0.4"
+  checksum: d9a3c6b9e8181315ccd97c321ad11e6c791116488145c549db6f2e5463570476f735c5f8f07a89d727f6142ccdea53c62d8c5ec8b9fa7e8186358441ed985490
   languageName: node
   linkType: hard
 
@@ -3535,6 +3544,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-levenshtein@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "fast-levenshtein@npm:3.0.0"
+  dependencies:
+    fastest-levenshtein: "npm:^1.0.7"
+  checksum: 9e147c682bd0ca54474f1cbf906f6c45262fd2e7c051d2caf2cc92729dcf66949dc809f2392de6adbe1c8716fdf012f91ce38c9422aef63b5732fc688eee4046
+  languageName: node
+  linkType: hard
+
 "fast-xml-parser@npm:4.2.5":
   version: 4.2.5
   resolution: "fast-xml-parser@npm:4.2.5"
@@ -3543,6 +3561,13 @@ __metadata:
   bin:
     fxparser: src/cli/cli.js
   checksum: f422349189b70660238eff9e48c57a0b9e5142f4c442bd79f50049847006341fe8dbcaac899c54e219034f63249fdba4512542ec54ef4dec24fcf9f54ad20d42
+  languageName: node
+  linkType: hard
+
+"fastest-levenshtein@npm:^1.0.7":
+  version: 1.0.16
+  resolution: "fastest-levenshtein@npm:1.0.16"
+  checksum: 7e3d8ae812a7f4fdf8cad18e9cde436a39addf266a5986f653ea0d81e0de0900f50c0f27c6d5aff3f686bcb48acbd45be115ae2216f36a6a13a7dbbf5cad878b
   languageName: node
   linkType: hard
 

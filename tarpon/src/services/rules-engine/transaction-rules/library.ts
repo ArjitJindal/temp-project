@@ -1760,7 +1760,6 @@ const _RULES_LIBRARY: Array<
       defaultNature: RuleNature.SCREENING,
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
-      isOngoingScreening: true,
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:

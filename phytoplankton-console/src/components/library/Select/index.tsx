@@ -125,7 +125,15 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   );
 
   const filteredOptions = useMemo(
-    () => options.filter((option) => filterOption(searchValue, option)),
+    () =>
+      options
+        .filter((option) => filterOption(searchValue, option))
+        .sort((option1, option2) => {
+          // Shorter options are more relevant
+          return (
+            (option1.value?.toString() ?? '').length - (option2.value?.toString() ?? '').length
+          );
+        }),
     [searchValue, options],
   );
 

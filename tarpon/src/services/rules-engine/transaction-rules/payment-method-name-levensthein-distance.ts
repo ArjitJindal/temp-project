@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import * as levenshtein from 'fast-levenshtein'
+import { getEditDistance } from '@flagright/lib/utils'
 import { RuleHitResultItem } from '../rule'
 import { removePrefixFromName } from '../utils/transaction-rule-utils'
 import { TransactionRule } from './rule'
@@ -110,7 +110,7 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
     const minDistance = Math.min(
       ...[paymentMethodName, paymentMethodNameWithoutPrexiAndMiddleNames].map(
         (str) => {
-          return levenshtein.get(userName.toLowerCase(), str || '')
+          return getEditDistance(userName.toLowerCase(), str || '')
         }
       )
     )

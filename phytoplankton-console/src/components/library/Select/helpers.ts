@@ -1,3 +1,4 @@
+import { getEditDistancePercentage } from '@flagright/lib/utils';
 import { Option } from '.';
 import { Comparable } from '@/utils/comparable';
 import { notEmpty } from '@/utils/array';
@@ -25,6 +26,29 @@ export function parseSearchString<Value extends Comparable>(
     .filter(notEmpty);
 }
 
+// NOTE: We match the words in order to make the search result more relevant
+// (e.g. "John Doe" should match "John Doe" and not "Doe John")
+function matchesInOrder(
+  list1: string[],
+  list2: string[],
+  predicate: (a: string, b: string) => boolean,
+) {
+  if (list2.length === 0) {
+    return true;
+  }
+  let index = 0;
+  for (let i = 0; i < list1.length; i++) {
+    if (predicate(list1[i], list2[index])) {
+      index++;
+      if (index === list2.length) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+const EDIT_DISTANCE_PERCENTAGE_THRESHOLD = 30;
 export function filterOption(
   searchString: string,
   option?: Option<Comparable>,
@@ -33,15 +57,24 @@ export function filterOption(
   if (option == null) {
     return false;
   }
-  const { value, label, alternativeLabels = [] } = option;
-  const result = [value?.toString(), label?.toString(), ...alternativeLabels]
+  const { value, label, labelText, alternativeLabels = [] } = option;
+  const searchStringWords = searchString.toLocaleLowerCase().split(' ');
+  const result = [value?.toString(), label?.toString(), labelText?.toString(), ...alternativeLabels]
     .filter(notEmpty)
-    .map((x) => x?.toLocaleLowerCase())
-    .some((x) => {
+    .map((optionSearchValue) => optionSearchValue?.toLocaleLowerCase())
+    .some((optionSearchValue) => {
       if (fullMatch) {
-        return x === searchString.toLocaleLowerCase();
+        return optionSearchValue === searchString.toLocaleLowerCase();
       }
-      return x.includes(searchString.toLocaleLowerCase());
+      const optionSearchWords = optionSearchValue.split(' ');
+      return matchesInOrder(
+        optionSearchWords,
+        searchStringWords,
+        (optionSearchWord, searchStringWord) =>
+          optionSearchWord?.includes(searchStringWord) ||
+          getEditDistancePercentage(optionSearchWord, searchStringWord) <=
+            EDIT_DISTANCE_PERCENTAGE_THRESHOLD,
+      );
     });
   return result;
 }

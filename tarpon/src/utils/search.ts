@@ -1,11 +1,11 @@
-import * as levenshtein from 'fast-levenshtein'
+import { getEditDistance } from '@flagright/lib/utils'
 import { max } from 'lodash'
 
 export function calculateLevenshteinDistancePercentage(
   str1: string,
   str2: string
 ): number {
-  const distance = levenshtein.get(str1, str2, { useCollator: true })
+  const distance = getEditDistance(str1, str2)
   const maxLength = max<number>([str1.length, str2.length])
   if (maxLength == null) {
     return 0
