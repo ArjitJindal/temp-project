@@ -9,6 +9,7 @@ import { COLORS_V2_ALERT_CRITICAL } from '../../../../ui/colors';
 import Checkbox from '../../../../library/Checkbox';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
+import * as Card from '@/components/ui/Card';
 import Modal from '@/components/library/Modal';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
@@ -24,6 +25,7 @@ import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';
 import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
+import { WHITELABEL_BRANDING } from '@/utils/branding';
 
 const featureDescriptions: Record<Feature, { title: string; description: string }> = {
   RISK_LEVELS: { title: 'Risk Levels', description: 'Enable risk levels' },
@@ -192,12 +194,11 @@ export default function SuperAdminPanel() {
           </div>
         </Label>
         {role === 'root' && (
-          <>
+          <div className={s.rootSettingsContainer}>
             <br />
             <Button
               type="PRIMARY"
               size="MEDIUM"
-              style={{ width: 200 }}
               onClick={() => {
                 setShowCreateTenantModal(true);
                 handleCancel();
@@ -205,114 +206,113 @@ export default function SuperAdminPanel() {
             >
               Create new tenant
             </Button>
+            {['sandbox', 'prod'].includes(process.env.ENV_NAME as string) && (
+              <Card.Root
+                header={{ title: 'White-label tenants', titleSize: 'SMALL' }}
+                isCollapsable={true}
+                isCollapsedByDefault={true}
+              >
+                <Card.Section>
+                  {Object.entries(WHITELABEL_BRANDING)
+                    .filter((entry) => process.env.ENV_NAME === entry[1].env || !entry[1].env)
+                    .map(([url, config], i) => (
+                      <a key={i} href={`https://${url}`}>{`${config.companyName} (${url})`}</a>
+                    ))}
+                </Card.Section>
+              </Card.Root>
+            )}
             <Divider />
-            <div className={s.field}>
-              <Label
-                label="Features"
-                description="Enabled features of the tenant"
-                testId="features-select"
-              >
-                <Select<Feature[]>
-                  mode="multiple"
-                  options={Object.keys(featureDescriptions).map((featureKey) => {
-                    return {
-                      label: featureDescriptions[featureKey].title,
-                      value: featureKey,
-                      title: featureDescriptions[featureKey].description,
-                    };
-                  })}
-                  onChange={setFeatures}
-                  allowClear
-                  disabled={!initialFeatures}
-                  value={features || initialFeatures}
-                />
-              </Label>
-            </div>
-            <div className={s.field}>
-              <Label
-                label="Simulation limit"
-                description="The maximum number of simulations that can be run by a tenant."
-              >
-                <NumberInput
-                  value={limits?.simulations ?? 0}
-                  onChange={(value) => setLimits({ ...limits, simulations: value })}
-                  isDisabled={false}
-                />
-              </Label>
-            </div>
-            <div className={s.field}>
-              <Label
-                label="Max Seats"
-                description="The maximum number of seats allowed for this tenant"
-              >
-                <NumberInput
-                  value={limits?.seats ?? 0}
-                  onChange={(value) => setLimits({ ...limits, seats: value })}
-                  isDisabled={false}
-                />
-              </Label>
-            </div>
-            <div className={s.field}>
-              <Label
-                label="Max ongoing merchant monitoring users"
-                description="The maximum number of merchant monitoring users allowed for this tenant"
-              >
-                <NumberInput
-                  value={limits?.ongoingMerchantMonitoringUsers ?? DEFAULT_MERCHANT_MOITORING_LIMIT}
-                  onChange={(value) =>
-                    setLimits({ ...limits, ongoingMerchantMonitoringUsers: value })
-                  }
-                  isDisabled={false}
-                />
-              </Label>
-            </div>
-            <div className={s.field}>
-              <Label
-                label="Maximum times api key can be viewed"
-                description="The maximum number of times the api key can be viewed by a tenant"
-              >
-                <NumberInput
-                  value={limits?.apiKeyView ?? 0}
-                  onChange={(value) => setLimits({ ...limits, apiKeyView: value })}
-                  isDisabled={false}
-                />
-              </Label>
-            </div>
-            <div className={s.field}>
-              <Button
-                type="PRIMARY"
-                isDanger
-                onClick={() =>
-                  mutateTenantSettings.mutate({
-                    apiKeyViewData: [],
-                  })
+            <Label
+              label="Features"
+              description="Enabled features of the tenant"
+              testId="features-select"
+            >
+              <Select<Feature[]>
+                mode="multiple"
+                options={Object.keys(featureDescriptions).map((featureKey) => {
+                  return {
+                    label: featureDescriptions[featureKey].title,
+                    value: featureKey,
+                    title: featureDescriptions[featureKey].description,
+                  };
+                })}
+                onChange={setFeatures}
+                allowClear
+                disabled={!initialFeatures}
+                value={features || initialFeatures}
+              />
+            </Label>
+            <Label
+              label="Simulation limit"
+              description="The maximum number of simulations that can be run by a tenant."
+            >
+              <NumberInput
+                value={limits?.simulations ?? 0}
+                onChange={(value) => setLimits({ ...limits, simulations: value })}
+                isDisabled={false}
+              />
+            </Label>
+            <Label
+              label="Max Seats"
+              description="The maximum number of seats allowed for this tenant"
+            >
+              <NumberInput
+                value={limits?.seats ?? 0}
+                onChange={(value) => setLimits({ ...limits, seats: value })}
+                isDisabled={false}
+              />
+            </Label>
+            <Label
+              label="Max ongoing merchant monitoring users"
+              description="The maximum number of merchant monitoring users allowed for this tenant"
+            >
+              <NumberInput
+                value={limits?.ongoingMerchantMonitoringUsers ?? DEFAULT_MERCHANT_MOITORING_LIMIT}
+                onChange={(value) =>
+                  setLimits({ ...limits, ongoingMerchantMonitoringUsers: value })
                 }
-              >
-                Reset current API key view count
-              </Button>
-            </div>
-            <div className={s.field}>
-              <Label label="CA Search Profile ID">
-                <Input
-                  value={complyAdvantageSearchProfileId}
-                  onChange={handleChangeSearchProfileID}
-                />
-              </Label>
-            </div>
+                isDisabled={false}
+              />
+            </Label>
+            <Label
+              label="Maximum times api key can be viewed"
+              description="The maximum number of times the api key can be viewed by a tenant"
+            >
+              <NumberInput
+                value={limits?.apiKeyView ?? 0}
+                onChange={(value) => setLimits({ ...limits, apiKeyView: value })}
+                isDisabled={false}
+              />
+            </Label>
+            <Button
+              type="PRIMARY"
+              isDanger
+              onClick={() =>
+                mutateTenantSettings.mutate({
+                  apiKeyViewData: [],
+                })
+              }
+            >
+              Reset current API key view count
+            </Button>
+            <Label label="CA Search Profile ID">
+              <Input
+                value={complyAdvantageSearchProfileId}
+                onChange={handleChangeSearchProfileID}
+              />
+            </Label>
             <Divider />
-            <div className={s.field}>
-              <Label label="Run batch job">
-                <Select
-                  options={BATCH_JOB_NAMESS.map((name) => ({
-                    label: humanizeConstant(name),
-                    value: name,
-                  }))}
-                  value={batchJobName}
-                  onChange={setBatchJobName}
-                  showSearch
-                />
-              </Label>
-            </div>
+            <Label label="Run batch job">
+              <Select
+                options={BATCH_JOB_NAMESS.map((name) => ({
+                  label: humanizeConstant(name),
+                  value: name,
+                }))}
+                value={batchJobName}
+                onChange={setBatchJobName}
+                showSearch
+              />
+            </Label>
             <Confirm
               title={`Run ${humanizeConstant(batchJobName)}?`}
               onConfirm={async () => {
@@ -337,11 +337,9 @@ export default function SuperAdminPanel() {
               }}
             >
               {(props) => (
-                <div className={s.field}>
-                  <Button isDisabled={!batchJobName} isDanger onClick={props.onClick}>
-                    Run
-                  </Button>
-                </div>
+                <Button isDisabled={!batchJobName} isDanger onClick={props.onClick}>
+                  Run
+                </Button>
               )}
             </Confirm>
 
@@ -350,36 +348,32 @@ export default function SuperAdminPanel() {
               <>
                 <H4 style={{ color: COLORS_V2_ALERT_CRITICAL }}>Danger Zone</H4>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  <div className={s.field}>
-                    <Label
-                      label="Tenant to delete"
-                      description="Please go to the respective tenant region to delete the tenant (for example if tenant is in `us-1` region, go to `us-1` region you need to be in a different tenant then the tenant you want to delete)"
-                    >
-                      <Select
-                        options={tenantOptions}
-                        onChange={(value) => setTenantIdToDelete(value)}
-                        value={tenantIdToDelete}
-                        filterOption={(input, option) =>
-                          (option?.text?.toLowerCase() ?? '').includes(input.toLowerCase().trim())
+                  <Label
+                    label="Tenant to delete"
+                    description="Please go to the respective tenant region to delete the tenant (for example if tenant is in `us-1` region, go to `us-1` region you need to be in a different tenant then the tenant you want to delete)"
+                  >
+                    <Select
+                      options={tenantOptions}
+                      onChange={(value) => setTenantIdToDelete(value)}
+                      value={tenantIdToDelete}
+                      filterOption={(input, option) =>
+                        (option?.text?.toLowerCase() ?? '').includes(input.toLowerCase().trim())
+                      }
+                      showSearch={true}
+                      placeholder="Select tenant to delete"
+                      style={{ width: '20rem' }}
+                    />
+                  </Label>
+                  <Label label="Instant delete">
+                    <Checkbox
+                      value={instantDelete}
+                      onChange={(value) => {
+                        if (value != null) {
+                          setInstantDelete(value);
                         }
-                        showSearch={true}
-                        placeholder="Select tenant to delete"
-                        style={{ width: '20rem' }}
-                      />
-                    </Label>
-                  </div>
-                  <div className={s.field}>
-                    <Label label="Instant delete">
-                      <Checkbox
-                        value={instantDelete}
-                        onChange={(value) => {
-                          if (value != null) {
-                            setInstantDelete(value);
-                          }
-                        }}
-                      />
-                    </Label>
-                  </div>
+                      }}
+                    />
+                  </Label>
                 </div>
                 <Confirm
                   title="Delete tenant?"
@@ -427,16 +421,14 @@ export default function SuperAdminPanel() {
                   }}
                 >
                   {(props) => (
-                    <div className={s.field}>
-                      <Button isDisabled={!tenantIdToDelete} isDanger onClick={props.onClick}>
-                        Delete
-                      </Button>
-                    </div>
+                    <Button isDisabled={!tenantIdToDelete} isDanger onClick={props.onClick}>
+                      Delete
+                    </Button>
                   )}
                 </Confirm>
               </>
             )}
-          </>
+          </div>
         )}
       </Modal>
       <CreateTenantModal

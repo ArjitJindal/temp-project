@@ -31,6 +31,7 @@ interface BrandingSettings {
   redirectPath?: string;
   faviconUrl: string;
   systemAvatarUrl?: string;
+  env?: 'sandbox' | 'prod';
 }
 
 const FLAGRIGHT_BRANDING: BrandingSettings = {
@@ -107,41 +108,48 @@ const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0Client
   systemAvatarUrl: TraxionRightFavicon,
 };
 
-const WHITELABEL_BRANDING = {
-  'tm.bureau.id': {
-    ...BUREAU_BRANDING,
-    auth0Domain: 'login.tm.bureau.id',
-    auth0ClientId: 'XFllobU2SratClHKFrSfVSROlpRH8rUm',
-  },
+export const WHITELABEL_BRANDING: { [key: string]: BrandingSettings } = {
   'tm.sandbox.bureau.id': {
     ...BUREAU_BRANDING,
     auth0Domain: 'login.tm.sandbox.bureau.id',
     auth0ClientId: 'JJHmTg7oupG4tUZRDpvAlghJvvVnbyoc',
+    env: 'sandbox',
   },
-  'qc-staging.console.regtank.com': {
-    ...REGTANK_BRANDING,
-    auth0Domain: 'login.qc-staging.console.regtank.com',
-    auth0ClientId: 'Nz37vE2YAvMRPAIsqLVXcfACo216CMXE',
+  'tm.bureau.id': {
+    ...BUREAU_BRANDING,
+    auth0Domain: 'login.tm.bureau.id',
+    auth0ClientId: 'XFllobU2SratClHKFrSfVSROlpRH8rUm',
+    env: 'prod',
   },
   'sandboxconsole.transactcomply.com': {
     ...ZIGRAM_BRANDING,
     auth0Domain: 'login.sandboxconsole.transactcomply.com',
     auth0ClientId: 'qW5HsNLzyfKoKlG8orZza1EQBUqTxfj6',
+    env: 'sandbox',
+  },
+  'qc-staging.console.regtank.com': {
+    ...REGTANK_BRANDING,
+    auth0Domain: 'login.qc-staging.console.regtank.com',
+    auth0ClientId: 'Nz37vE2YAvMRPAIsqLVXcfACo216CMXE',
+    env: 'sandbox',
   },
   'transaction.console.regtank.com': {
     ...REGTANK_BRANDING,
     auth0Domain: 'login.transaction.console.regtank.com',
     auth0ClientId: 'nVwFjIjOIyrzQfLtkUXo7sdxODGuHfvc',
+    env: 'prod',
   },
   'sitapp.traxionright.com': {
     ...TRAXIONRIGHT_BRANDING,
     auth0Domain: 'login.sitapp.traxionright.com',
     auth0ClientId: 'wJuiiS6bbcGhSMnqC442RL8HKHfMUI4n',
+    env: 'sandbox',
   },
   'app.traxionright.com': {
     ...TRAXIONRIGHT_BRANDING,
     auth0Domain: 'login.app.traxionright.com',
     auth0ClientId: '6k9yUXtYFG9WTjsuEhe4LahCD8Q9W8x6',
+    env: 'prod',
   },
 };
 
