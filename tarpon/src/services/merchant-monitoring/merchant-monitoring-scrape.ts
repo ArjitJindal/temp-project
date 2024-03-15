@@ -8,22 +8,62 @@ import { MerchantRepository } from '@/lambdas/console-api-merchant/merchant-repo
 import { logger } from '@/core/logger'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { traceable } from '@/core/xray'
-import { ask } from '@/utils/openai'
+import { prompt } from '@/utils/openai'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { ensureHttps } from '@/utils/http'
 import { apiFetch } from '@/utils/api-fetch'
-import { checkIfWebsite } from '@/utils/regex'
 
-const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output all fields in different lines For example:
+const industries: string[] = [
+  'Agriculture and Forestry',
+  'Automotive',
+  'Banking and Financial Services',
+  'Biotechnology',
+  'Construction',
+  'Consumer Goods and Services',
+  'Education',
+  'Energy',
+  'Entertainment and Leisure',
+  'Food and Beverage',
+  'Healthcare',
+  'Information Technology',
+  'Manufacturing',
+  'Media and Communications',
+  'Mining and Natural Resources',
+  'Pharmaceuticals',
+  'Professional Services',
+  'Real Estate',
+  'Retail',
+  'Transportation and Logistics',
+  'Travel and Tourism',
+  'Utilities',
+  'Wholesale Trade',
+  'Others',
+]
 
-Industry: Textiles
-Products: Shoes
-Location: Delhi, India
-Employees: 54
-Revenue: $100000
-Summary: Acme is a textile company which sells shoes in Delhi, India and generates a revenue of $100000 with 54 employees 
-
-Here is the Input:`
+const productTypes: string[] = [
+  'Apparel',
+  'Appliances',
+  'Automobiles',
+  'Books',
+  'Chemicals',
+  'Computers and Electronics',
+  'Consumer Packaged Goods',
+  'Cosmetics and Personal Care',
+  'Food and Beverages',
+  'Furniture',
+  'Hardware and Building Materials',
+  'Health and Wellness Products',
+  'Housewares',
+  'Industrial Equipment',
+  'Jewelry',
+  'Medical Devices',
+  'Pharmaceuticals',
+  'Software and Applications',
+  'Sports and Recreation Equipment',
+  'Toys and Games',
+  'Transportation Equipment',
+  'Others',
+]
 
 const MAX_TOKEN_OUTPUT = 4096
 
@@ -197,27 +237,25 @@ export class MerchantMonitoringScrapeService {
         throw new Error('No scrapfly api key')
       }
 
-      if (!checkIfWebsite(website)) {
-        logger.warn(`Website is not valid or not provided: ${website}`)
-        return {}
-      }
-
-      const options: AxiosRequestConfig = {
-        method: 'GET',
-        url: `https://api.scrapfly.io/scrape?key=scp-live-${
+      const response = await apiFetch<{
+        result: { content: string }
+      }>(
+        `https://api.scrapfly.io/scrape?key=scp-live-${
           this.scrapflyApiKey
         }&url=${encodeURIComponent(
           ensureHttps(website)
         )}&render_js=true&rendering_wait=1000`,
-      }
-      const data = await this.axios.request(options)
+        {
+          retries: 3,
+        }
+      )
 
-      let text = convert(data.data.result.content, {
+      let text = convert(response.result.result.content, {
         wordwrap: 130,
       })
 
       if (!text) {
-        text = data.data.result.content
+        text = response.result.result.content
       }
 
       const summary = await this.summarise('SCRAPE', text)
@@ -326,18 +364,67 @@ export class MerchantMonitoringScrapeService {
   ): Promise<MerchantMonitoringSummary | undefined> {
     try {
       if (!content) {
-        return undefined // Sometimes the source doesn't return anything hence the undefined
+        throw new Error('Unable to extract information from the given site')
       }
-
-      const output = await ask(
-        `${SUMMARY_PROMPT} ${content}`.slice(0, MAX_TOKEN_OUTPUT)
-      )
+      const output = await prompt([
+        {
+          role: 'system',
+          content:
+            'You are a business intelligence API that will retrieve key values about a business from unstructured data. The key values are industry, products sold, location, number of employees, revenue and an overall summary.',
+        },
+        {
+          role: 'system',
+          content: `You will output your findings in the exact same format as this example:
+Industry: Healthcare
+Products: Medical Devices, Pharmaceuticals
+Location: Delhi, India
+Employees: 54
+Revenue: $100000
+Summary: Acme is a textile company which sells shoes in Delhi, India and generates a revenue of $100000 with 54 employees`,
+        },
+        {
+          role: 'system',
+          content: `Please choose the relevant industry from the following list: ${industries.join(
+            ', '
+          )}`,
+        },
+        {
+          role: 'system',
+          content: `Please choose the products sold from the following list: ${productTypes.join(
+            ', '
+          )}`,
+        },
+        {
+          role: 'system',
+          content: `Output the location one of the following formats "City, Country" or "Country"`,
+        },
+        {
+          role: 'system',
+          content: `Output the number of employees as a number range e.g. 1000-5000`,
+        },
+        {
+          role: 'system',
+          content: `Output the revenue as number range e.g. $1000-5000`,
+        },
+        {
+          role: 'system',
+          content: `If a value is unknown, please just say "Unspecified"`,
+        },
+        {
+          role: 'user',
+          content:
+            `Please analyse the following content for a business:\n ${content}`.substring(
+              0,
+              MAX_TOKEN_OUTPUT
+            ),
+        },
+      ])
       const re = new RegExp(OUTPUT_REGEX, 'm')
       const result: string[] = re.exec(output as string) as string[]
 
       if (!result || result.length < 2) {
         logger.error(`Unable to summarise ${source} content: ${content}`)
-        return undefined
+        throw new Error('Unable to extract information from the given site')
       }
 
       return {
