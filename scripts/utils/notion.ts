@@ -1,4 +1,5 @@
 import { Client } from '@notionhq/client'
+import { DatabaseObjectResponse } from '@notionhq/client/build/src/api-endpoints'
 
 const NOTION_DATABASE_ID = '16d55dfca8e2436c9c7786ab7c62e04e'
 const notionClient = new Client({ auth: process.env.NOTION_TOKEN })
@@ -13,7 +14,9 @@ export function getNotionTicketIDByGitRef(gitRef: string): string | undefined {
   return gitRef.match(NOTION_TICKET_ID_REGEX)?.[0]
 }
 
-export async function getNotionPageByTicketID(ticketID: string) {
+export async function getNotionPageByTicketID(
+  ticketID: string
+): Promise<DatabaseObjectResponse> {
   const ticketNumber = getNotionTicketNumber(ticketID)
   if (!ticketNumber) {
     throw new Error(`Invalid ticket ID ${ticketID}`)
@@ -30,7 +33,7 @@ export async function getNotionPageByTicketID(ticketID: string) {
       ],
     },
   })
-  return ticket.results[0]
+  return ticket.results[0] as DatabaseObjectResponse
 }
 
 export async function updateTicketStatusByID(

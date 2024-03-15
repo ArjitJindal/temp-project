@@ -2,6 +2,7 @@ import { Octokit } from 'octokit'
 import { execSync } from 'child_process'
 import { WebClient } from '@slack/web-api'
 import {
+  getNotionPageByTicketID,
   getNotionTicketIDByGitRef,
   updateTicketStatusByID,
 } from './utils/notion'
@@ -18,6 +19,27 @@ const CHANNELS = {
 
 const githubClient = new Octokit({ auth: process.env.GITHUB_TOKEN })
 const slackClient = new WebClient(process.env.SLACK_TOKEN)
+
+async function getTicketInfoByPrNumber(prNumber: string) {
+  const pr = await getPullRequest(prNumber)
+  const headRef = pr.data.head.ref
+  const notionTicketId = getNotionTicketIDByGitRef(headRef)
+  if (!notionTicketId) {
+    return null
+  }
+  return {
+    ticketId: notionTicketId,
+    url: (await getNotionPageByTicketID(notionTicketId)).url,
+  }
+}
+
+async function getPullRequest(prNumber: string | number) {
+  return githubClient.rest.pulls.get({
+    pull_number: Number(prNumber),
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+  })
+}
 
 async function createGitHubRelease(): Promise<{
   releaseUrl: string
@@ -69,10 +91,28 @@ const getFinalText = (
 }
 
 async function notifySlack(releaseUrl: string, rawReleaseNote: string) {
-  const releaseNote = rawReleaseNote.replace(
+  // Shorten GitHub links
+  let releaseNote = rawReleaseNote.replace(
     /(https:\/\/github\.com\/flagright\/orca\/pull\/)(\d+)/g,
     '[#$2]($1$2)'
   )
+  // Add Notion ticket links to release notes
+  releaseNote = (
+    await Promise.all(
+      releaseNote.split('\n').map(async (line) => {
+        const prNumber = line.match(/\[#(\d+)\]/)?.[1]
+        if (!prNumber) {
+          return line
+        }
+        const ticket = await getTicketInfoByPrNumber(prNumber)
+        if (!ticket) {
+          return line
+        }
+        const ticketLink = `[${ticket.ticketId}](${ticket.url})`
+        return `${line} (${ticketLink})`
+      })
+    )
+  ).join('\n')
 
   for (const channel of Object.keys(CHANNELS) as (keyof typeof CHANNELS)[]) {
     const finalText = getFinalText(releaseUrl, releaseNote, channel)
@@ -118,11 +158,7 @@ async function updateNotionTickets() {
 
   const headRefs = await Promise.all(
     prNumbers.map(async (prNumber) => {
-      const pr = await githubClient.rest.pulls.get({
-        pull_number: Number(prNumber),
-        owner: GITHUB_OWNER,
-        repo: GITHUB_REPO,
-      })
+      const pr = await getPullRequest(prNumber)
       return pr.data.head.ref
     })
   )
