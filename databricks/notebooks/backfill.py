@@ -1,3 +1,5 @@
+from databricks.sdk import WorkspaceClient
+
 import pymongo
 from pyspark.sql.functions import lit, concat, col, from_unixtime, to_timestamp
 import logging
@@ -6,6 +8,17 @@ import os
 from databricks.sdk.runtime import *
 
 from src.entities import entities, currency_schema
+
+from databricks.sdk.service import pipelines
+
+w = WorkspaceClient()
+
+for p in w.pipelines.list_pipelines():
+    if p.name == "main":
+        main_pipeline = p
+
+if main_pipeline is None:
+    raise Exception("No main pipeline found")
 
 dbutils.widgets.text("entities", ",".join(entity["table"] for entity in entities), "Entities to backfill")
 
@@ -101,7 +114,9 @@ for entity in entities:
             "overwrite"
         ).saveAsTable(table_path)
 
-logger.info("Ready to start Delta Live Tables!")
+logger.info("Refreshing Delta Live Tables!")
+w.pipelines.stop_and_wait(p.pipeline_id)
+w.pipelines.start_update(p.pipeline_id, full_refresh=True)
 
 logger.info("Backfilling entities")
 for entity in entities:
