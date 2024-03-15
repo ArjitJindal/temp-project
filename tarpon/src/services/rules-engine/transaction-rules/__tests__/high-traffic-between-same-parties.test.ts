@@ -11,7 +11,7 @@ import {
   ruleVariantsTest,
   testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 const DEFAULT_RULE_PARAMETERS: HighTrafficBetweenSamePartiesParameters = {
@@ -21,8 +21,6 @@ const DEFAULT_RULE_PARAMETERS: HighTrafficBetweenSamePartiesParameters = {
   },
   transactionsLimit: 1,
 }
-
-dynamoDbSetupHook()
 
 const CARD_DETAILS_1: CardDetails = {
   method: 'CARD',

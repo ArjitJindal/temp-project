@@ -10,10 +10,9 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 
-dynamoDbSetupHook()
 ruleVariantsTest({ aggregation: false, v8: true }, () => {
   describe('R-2 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()

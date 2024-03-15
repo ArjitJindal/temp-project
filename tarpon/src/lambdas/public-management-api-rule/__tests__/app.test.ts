@@ -1,5 +1,5 @@
 import { ruleHandler, ruleInstanceHandler } from '../app'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import {
   getApiGatewayDeleteEvent,
   getApiGatewayGetEvent,
@@ -11,8 +11,6 @@ import { RULES_LIBRARY } from '@/services/rules-engine/transaction-rules/library
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-
-dynamoDbSetupHook()
 
 describe('Public Management API - Rule', () => {
   const TEST_TENANT_ID = getTestTenantId()

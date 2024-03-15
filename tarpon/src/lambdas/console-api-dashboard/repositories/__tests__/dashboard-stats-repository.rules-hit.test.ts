@@ -5,13 +5,11 @@ import {
   hitRule,
 } from './helpers'
 import dayjs from '@/utils/dayjs'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
-
-dynamoDbSetupHook()
 
 describe('Verify case stats', () => {
   test(`Single case`, async () => {

@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb'
 import { nanoid } from 'nanoid'
 import { CaseService } from '../case-service'
 import { CASE_TRANSACTIONS } from './utils/case-transactions'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -100,8 +100,6 @@ const TEST_ALERT_3: Alert = {
   numberOfTransactionsHit: 1,
   priority: 'P1' as Priority,
 }
-
-dynamoDbSetupHook()
 
 withFeatureHook(['ADVANCED_WORKFLOWS'])
 

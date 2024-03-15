@@ -11,7 +11,6 @@ import {
   ruleVariantsTest,
   testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const DEFAULT_RULE_PARAMETERS: SenderLocationChangesFrequencyRuleParameters = {
   uniqueCitiesCountThreshold: 2,
@@ -20,8 +19,6 @@ const DEFAULT_RULE_PARAMETERS: SenderLocationChangesFrequencyRuleParameters = {
     granularity: 'day',
   },
 }
-
-dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: true }, () => {
   describe('Core logic', () => {

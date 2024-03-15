@@ -10,7 +10,7 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-daily-amount-exceeded'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -24,8 +24,6 @@ const TEST_TRANSACTION_AMOUNT_300: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 300,
 }
-
-dynamoDbSetupHook()
 
 function getDefaultParams(): TransactionsAverageAmountExceededParameters {
   return {

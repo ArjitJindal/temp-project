@@ -1,6 +1,6 @@
 import { HighRiskCountryRuleParameters } from '../high-risk-countries'
 import { getRuleByRuleId } from '../library'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import {
   TransactionRuleTestCase,
   createTransactionRuleTestCase,
@@ -9,8 +9,6 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
-
-dynamoDbSetupHook()
 
 describe('Core logic high-risk-countries', () => {
   const TEST_TENANT_ID = getTestTenantId()

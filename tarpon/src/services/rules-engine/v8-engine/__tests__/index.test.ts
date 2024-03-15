@@ -1,15 +1,13 @@
 import { STARTS_WITH_OPERATOR } from '../../v8-operators/starts-ends-with'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { LegalDocument } from '@/@types/openapi-public/LegalDocument'
 
 const operatorSpy = jest.spyOn(STARTS_WITH_OPERATOR, 'run')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const RuleJsonLogicEvaluator = require('..').RuleJsonLogicEvaluator
-
-dynamoDbSetupHook()
 
 describe('entity variable', () => {
   test('executes the json logic - hit', async () => {

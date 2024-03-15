@@ -1,5 +1,5 @@
 import { UserInactivityRuleParameters } from '../user-inactivity'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import {
   UserRuleTestCase,
   createUserRuleTestCase,
@@ -12,8 +12,6 @@ import {
 } from '@/test-utils/transaction-test-utils'
 import dayjs from '@/utils/dayjs'
 import { getTestUser } from '@/test-utils/user-test-utils'
-
-dynamoDbSetupHook()
 
 describe('Core logic', () => {
   const TEST_TENANT_ID = getTestTenantId()

@@ -11,7 +11,6 @@ import {
   ruleVariantsTest,
   testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const DEFAULT_RULE_PARAMETERS: TooManyTransactionsToHighRiskCountryRuleParameters =
   {
@@ -24,8 +23,6 @@ const DEFAULT_RULE_PARAMETERS: TooManyTransactionsToHighRiskCountryRuleParameter
     checkSender: 'all',
     checkReceiver: 'all',
   }
-
-dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('R-77 description formatting', () => {

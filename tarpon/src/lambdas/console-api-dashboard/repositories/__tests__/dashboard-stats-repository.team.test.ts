@@ -1,6 +1,6 @@
 import { getCaseRepo, getStatsRepo } from './helpers'
 import dayjs from '@/utils/dayjs'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -11,8 +11,6 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
-
-dynamoDbSetupHook()
 
 const TEST_ACCOUNT_ID_1 = 'TEST_ACCOUNT_ID_1'
 const TEST_ACCOUNT_ID_2 = 'TEST_ACCOUNT_ID_2'

@@ -9,9 +9,6 @@ import {
   testRuleDescriptionFormatting,
   ruleVariantsTest,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-
-dynamoDbSetupHook()
 
 ruleVariantsTest({ v8: true, aggregation: false }, () => {
   const TEST_TENANT_ID = getTestTenantId()

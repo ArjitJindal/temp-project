@@ -8,12 +8,11 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { MOCK_CA_SEARCH_RESPONSE } from '@/test-utils/resources/mock-ca-search-response'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 
 jest.mock('node-fetch')
 const mockFetch = mockComplyAdvantageSearch()
-dynamoDbSetupHook()
 
 describe('Public Sanctions API', () => {
   const TEST_TENANT_ID = getTestTenantId()

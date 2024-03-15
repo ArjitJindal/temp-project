@@ -1,7 +1,7 @@
 import { SanctionsCounterPartyRuleParameters } from '../sanctions-counterparty'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import {
   MOCK_CA_SEARCH_NO_HIT_RESPONSE,
@@ -18,8 +18,6 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 
 process.env.IBAN_API_KEY = 'fake'
-
-dynamoDbSetupHook()
 
 withFeatureHook(['SANCTIONS', 'IBAN_RESOLUTION'])
 

@@ -11,7 +11,7 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 const PAYMENT_DETAILS_1 = {
@@ -28,8 +28,6 @@ const PAYMENT_DETAILS_2 = {
   transactionReferenceField: 'DEPOSIT',
   '3dsDone': true,
 } as PaymentDetails
-
-dynamoDbSetupHook()
 
 function getDefaultParams(): SamePaymentDetailsParameters {
   return {

@@ -1,6 +1,6 @@
 import { BlacklistTransactionMatchedFieldRuleParameters } from '../blacklist-transaction-related-value'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ListRepository } from '@/services/list/repositories/list-repository'
 import {
@@ -9,8 +9,6 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
-
-dynamoDbSetupHook()
 
 const TEST_TENANT_ID = getTestTenantId()
 const dynamoDb = getDynamoDbClient()

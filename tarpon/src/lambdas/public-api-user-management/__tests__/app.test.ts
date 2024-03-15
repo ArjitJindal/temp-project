@@ -5,12 +5,11 @@ import {
 } from '@/test-utils/apigateway-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
-dynamoDbSetupHook()
 withFeatureHook(['RISK_SCORING', 'RISK_LEVELS'])
 
 const riskScoreDetails = {

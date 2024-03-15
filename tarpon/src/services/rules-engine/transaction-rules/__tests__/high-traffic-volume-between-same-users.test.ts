@@ -11,7 +11,7 @@ import {
   ruleVariantsTest,
   testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
@@ -40,8 +40,6 @@ const DEFAULT_RULE_PARAMETERS: HighTrafficVolumeBetweenSameUsersParameters = {
   },
   transactionVolumeThreshold: { EUR: 250 },
 }
-
-dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: true }, () => {
   describe('R-126 description formatting', () => {

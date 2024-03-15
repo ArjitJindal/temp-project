@@ -1,10 +1,8 @@
 import { getRuleVariableByKey } from '..'
 import { TransactionRuleVariable } from '../types'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 
-dynamoDbSetupHook()
+import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 
 test('transaction amount (w/ currency conversion)', async () => {
   const variable = getRuleVariableByKey(

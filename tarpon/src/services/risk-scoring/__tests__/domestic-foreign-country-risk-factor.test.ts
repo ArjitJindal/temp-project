@@ -1,5 +1,5 @@
 import { DEFAULT_RISK_LEVEL } from '../utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { createArsRiskFactorTestCases } from '@/test-utils/pulse-test-utils'
@@ -11,7 +11,6 @@ import {
 } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 withFeatureHook(['RISK_SCORING', 'RISK_LEVELS'])
-dynamoDbSetupHook()
 
 const CLASSFICATIONS: RiskClassificationScore[] = [
   {

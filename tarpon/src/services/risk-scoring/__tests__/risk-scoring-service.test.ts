@@ -3,7 +3,7 @@ import {
   DEFAULT_CLASSIFICATION_SETTINGS,
   RiskRepository,
 } from '../repositories/risk-repository'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -19,7 +19,7 @@ import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/Paramete
 
 const dynamoDb = getDynamoDbClient()
 withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
-dynamoDbSetupHook()
+
 const testUser1 = getTestUser({ userId: '1' })
 const testUser2 = getTestUser({ userId: '2' })
 const testTenantId = getTestTenantId()

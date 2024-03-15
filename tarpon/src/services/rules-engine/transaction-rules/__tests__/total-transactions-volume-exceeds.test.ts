@@ -1,6 +1,6 @@
 import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from '../total-transactions-volume-exceeds'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import {
   TransactionRuleTestCase,
   createTransactionRuleTestCase,
@@ -21,8 +21,6 @@ const TEST_TRANSACTION_AMOUNT_500: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 500,
 }
-
-dynamoDbSetupHook()
 
 function getDefaultParams(): TransactionVolumeExceedsTwoPeriodsRuleParameters {
   return {

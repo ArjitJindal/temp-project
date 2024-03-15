@@ -2,7 +2,7 @@ import { StackConstants } from '@lib/constants'
 import { chunk, range } from 'lodash'
 import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
 import { batchWrite, getDynamoDbClient, paginateQuery } from '../dynamodb'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 const MOCK_RECORDS_COUNT = 250
 const MOCK_ATTRIBUTES = {
   attribute1: new Array(1000).fill(0),
@@ -18,8 +18,6 @@ const MOCK_ITEMS = range(0, MOCK_RECORDS_COUNT)
   .sort((a, b) => a.SortKeyID.localeCompare(b.SortKeyID))
 
 const dynamoDb = getDynamoDbClient()
-
-dynamoDbSetupHook()
 
 describe('paginateQuery', () => {
   beforeAll(async () => {

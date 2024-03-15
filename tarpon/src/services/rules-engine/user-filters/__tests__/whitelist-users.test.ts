@@ -1,11 +1,9 @@
 import { WhitelistUsersRuleFilter } from '../whitelist-users'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { ListRepository } from '@/services/list/repositories/list-repository'
-
-dynamoDbSetupHook()
 
 const dynamodb = getDynamoDbClient()
 

@@ -6,10 +6,8 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-utils'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const mockFetch = mockComplyAdvantageSearch()
-dynamoDbSetupHook()
 
 describe('Sanctions Service', () => {
   const TEST_TENANT_ID = getTestTenantId()

@@ -2,7 +2,7 @@ import { jobRunnerHandler } from '../app'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-consumer-user'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import {
   MOCK_CA_SEARCH_NO_HIT_RESPONSE,
@@ -16,7 +16,6 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 
-dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS'])
 
 const TEST_SANCTIONS_HITS = ['Vladimir Putin']

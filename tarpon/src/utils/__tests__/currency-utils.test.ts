@@ -1,10 +1,8 @@
 import { mockedCurrencyExchangeRates as MOCKED_CURRENCY_EXCHANGE_RATES } from '../../../test-resources/mocked-currency-exchange-rates'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { CurrencyService } from '@/services/currency'
 import * as ApiFetch from '@/utils/api-fetch'
 import * as DynamoDb from '@/utils/dynamodb'
-
-dynamoDbSetupHook()
 
 describe('Test Currency Utils', () => {
   const currencyService = new CurrencyService()

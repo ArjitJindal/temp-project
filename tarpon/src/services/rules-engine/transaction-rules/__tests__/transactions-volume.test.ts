@@ -11,7 +11,7 @@ import {
   ruleVariantsTest,
   testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
@@ -47,8 +47,6 @@ const TEST_TRANSACTION_METHOD_IBAN_3 = {
   BIC: 'UCOPDKKX122',
   IBAN: 'DK5250510001322617',
 }
-
-dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: true }, () => {
   describe('Core logic', () => {

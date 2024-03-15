@@ -13,7 +13,7 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import dayjs from '@/utils/dayjs'
@@ -34,7 +34,6 @@ const DEFAULT_RULE_PARAMETERS: PaymentDetailChangeRuleParameters = {
 const getBankDetail = (paymentDetails?: PaymentDetails): string | undefined => {
   return getBankname(paymentDetails)
 }
-dynamoDbSetupHook()
 
 function getBankDetails(bankName: string): GenericBankAccountDetails {
   return {

@@ -3,13 +3,12 @@ import {
   TestApiEndpoint,
   TestApiEndpointOptions,
 } from '@/test-utils/apigateway-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const testApiEndPointsCases = new TestApiEndpoint(casesHandler)
 const testApiEndPointsAlerts = new TestApiEndpoint(casesHandler)
 
-dynamoDbSetupHook()
 withFeatureHook(['ADVANCED_WORKFLOWS'])
 
 process.env.MAXIMUM_ALLOWED_EXPORT_SIZE = '1000'

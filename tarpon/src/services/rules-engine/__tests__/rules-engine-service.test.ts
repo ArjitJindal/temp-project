@@ -7,7 +7,7 @@ import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
 import { RuleInstanceRepository } from '../repositories/rule-instance-repository'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { RuleJsonLogicEvaluator } from '../v8-engine'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -22,12 +22,12 @@ import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import dayjs from '@/utils/dayjs'
+import { recreateTables } from '@/test-utils/dynamodb-test-utils'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
 
 const dynamoDb = getDynamoDbClient()
 
-dynamoDbSetupHook()
 withLocalChangeHandler()
 describe('Verify Transaction', () => {
   test('Verify Transaction: returns empty executed rules if no rules are configured', async () => {
@@ -461,7 +461,9 @@ describe('Verify Transaction Event', () => {
 })
 
 describe('Verify Transaction for Simulation', () => {
-  dynamoDbSetupHook()
+  beforeAll(async () => {
+    await recreateTables()
+  })
 
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [

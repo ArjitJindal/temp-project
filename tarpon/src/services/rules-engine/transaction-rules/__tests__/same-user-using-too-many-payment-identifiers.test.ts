@@ -11,7 +11,6 @@ import {
   TransactionRuleTestCase,
   testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const TEST_TENANT_ID = getTestTenantId()
 const DEFAULT_RULE_PARAMETERS: SameUserUsingTooManyPaymentIdentifiersParameters =
@@ -22,8 +21,6 @@ const DEFAULT_RULE_PARAMETERS: SameUserUsingTooManyPaymentIdentifiersParameters 
       granularity: 'day',
     },
   }
-
-dynamoDbSetupHook()
 
 setUpRulesHooks(TEST_TENANT_ID, [
   {

@@ -10,7 +10,7 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 
@@ -51,8 +51,6 @@ const TEST_PAYMENT_DETAILS_3: IBANDetails = {
   method: 'IBAN',
   BIC: 'PTBANL2A',
 }
-
-dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: false }, () => {
   describe('R-130 description formatting', () => {

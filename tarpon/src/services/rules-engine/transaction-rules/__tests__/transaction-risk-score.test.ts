@@ -1,5 +1,5 @@
 import { TransactionRiskScoreRuleParameters } from '../transaction-risk-score'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import {
   TransactionRuleTestCase,
   createTransactionRuleTestCase,
@@ -10,7 +10,6 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
-dynamoDbSetupHook()
 withFeatureHook(['RISK_SCORING', 'SYNC_TRS_CALCULATION', 'RISK_LEVELS'])
 
 ruleVariantsTest({ aggregation: true }, () => {

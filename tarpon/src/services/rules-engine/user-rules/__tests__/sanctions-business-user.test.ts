@@ -6,7 +6,7 @@ import {
   createUserRuleTestCase,
   UserRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
 import {
   MOCK_CA_SEARCH_NO_HIT_RESPONSE,
   MOCK_CA_SEARCH_RESPONSE,
@@ -35,8 +35,6 @@ jest.mock('@/services/sanctions', () => {
     }),
   }
 })
-
-dynamoDbSetupHook()
 
 describe('Sanctions hit', () => {
   const TEST_TENANT_ID = getTestTenantId()

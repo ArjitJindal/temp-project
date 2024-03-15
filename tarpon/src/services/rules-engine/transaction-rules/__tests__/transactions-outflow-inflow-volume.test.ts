@@ -12,9 +12,6 @@ import {
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import dayjs from '@/utils/dayjs'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-
-dynamoDbSetupHook()
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'USD',
