@@ -106,6 +106,7 @@ def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn, timestamp_co
 
 entity_names = dbutils.widgets.get("entities")
 
+w.pipelines.stop_and_wait(p.pipeline_id)
 logger.info("Backfilling currencies")
 currency_df.write.option("mergeSchema", "true").format("delta").mode("overwrite").saveAsTable(f"{stage}.default.currency_rates_backfill")
 
@@ -122,7 +123,6 @@ for entity in entities:
         ).saveAsTable(table_path)
 
 logger.info("Refreshing Delta Live Tables!")
-w.pipelines.stop_and_wait(p.pipeline_id)
 w.pipelines.start_update(p.pipeline_id, full_refresh=True)
 
 logger.info("Backfilling entities")
