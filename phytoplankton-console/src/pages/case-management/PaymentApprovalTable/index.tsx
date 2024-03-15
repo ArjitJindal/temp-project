@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import TransactionsTable, {
   transactionParamsToRequest,
   TransactionsTableParams,
@@ -8,7 +9,7 @@ import { useCursorQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import PaymentApprovalButton from '@/pages/case-management/components/PaymentApprovalButton';
-import { RuleAction } from '@/apis';
+import { RuleAction, TransactionsResponse } from '@/apis';
 
 interface Props {
   filterStatus?: Array<RuleAction>;
@@ -22,16 +23,30 @@ export default function PaymentApprovalsTable(props: Props) {
   });
   const api = useApi();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const queryResult = useCursorQuery(
-    TRANSACTIONS_LIST({ ...params, filterStatus }),
-    async ({ from }) => {
-      return await api.getTransactionsList({
-        ...transactionParamsToRequest(params),
-        filterStatus,
-        start: from,
-      });
-    },
-  );
+  const queryClient = useQueryClient();
+  const queryKey = TRANSACTIONS_LIST({ ...params, filterStatus });
+  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
+    return await api.getTransactionsList({
+      ...transactionParamsToRequest(params),
+      filterStatus,
+      start: from,
+    });
+  });
+
+  const updateCacheData = useCallback(() => {
+    queryClient.setQueryData<TransactionsResponse>(
+      queryKey,
+      (data: TransactionsResponse | undefined): TransactionsResponse | undefined => {
+        if (data == null) {
+          return undefined;
+        }
+        return {
+          ...data,
+          items: data.items.filter((x) => !selectedIds.includes(x.transactionId)),
+        };
+      },
+    );
+  }, [queryKey, selectedIds, queryClient]);
 
   return (
     <TransactionsTable
@@ -58,7 +73,7 @@ export default function PaymentApprovalsTable(props: Props) {
             action={'BLOCK'}
             onSuccess={() => {
               onResetSelection();
-              queryResult.refetch();
+              updateCacheData();
             }}
           />
         ),
@@ -68,7 +83,7 @@ export default function PaymentApprovalsTable(props: Props) {
             action={'ALLOW'}
             onSuccess={() => {
               onResetSelection();
-              queryResult.refetch();
+              updateCacheData();
             }}
           />
         ),
