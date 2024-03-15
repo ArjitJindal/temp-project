@@ -3,6 +3,9 @@ import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import {
   currencyDefault,
   currencyVars,
+  Direction,
+  directionDefault,
+  directionVars,
   humanReadablePeriod,
   Period,
   periodDefaults,
@@ -11,19 +14,24 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { executeSql } from '@/utils/databricks'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-export const TransactionDestinationSummary: PropertiesQuestion<
-  Period & { currency: CurrencyCode }
+export const TransactionSummary: PropertiesQuestion<
+  Period & { currency: CurrencyCode; direction: Direction }
 > = {
   type: 'PROPERTIES',
-  questionId: COPILOT_QUESTIONS.TRANSACTION_INSIGHTS_FOR_DESTINATION,
+  questionId: COPILOT_QUESTIONS.TRANSACTION_INSIGHTS,
   categories: ['CONSUMER', 'BUSINESS'],
-  title: async ({ username }, { ...period }) => {
-    return `Transaction insights for ${username} ${humanReadablePeriod(
+  title: async ({ username }, { direction, ...period }) => {
+    return `Transaction insights for ${username} as ${direction.toLowerCase()} ${humanReadablePeriod(
       period
-    )} as destination`
+    )} as originator`
   },
-  aggregationPipeline: async ({ convert, userId }, { currency, ...period }) => {
-    const [result] = await executeSql<{
+  aggregationPipeline: async (
+    { convert, userId },
+    { direction, currency, ...period }
+  ) => {
+    const userIdKey =
+      direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
+    const raw = await executeSql<{
       count: number
       min: number
       max: number
@@ -39,11 +47,12 @@ export const TransactionDestinationSummary: PropertiesQuestion<
       coalesce(avg(t.transactionAmountUSD), 0) as avg
     from
       transactions t
-      where t.destinationUserId = :userId
+      where t.${userIdKey} = :userId
         and t.timestamp between :from and :to
     `,
       { userId, ...sqlPeriod(period) }
     )
+    const result = raw[0]
     return {
       data: [
         {
@@ -73,11 +82,13 @@ export const TransactionDestinationSummary: PropertiesQuestion<
   variableOptions: {
     ...periodVars,
     ...currencyVars,
+    ...directionVars,
   },
   defaults: () => {
     return {
       ...periodDefaults(),
       ...currencyDefault,
+      ...directionDefault,
     }
   },
 }

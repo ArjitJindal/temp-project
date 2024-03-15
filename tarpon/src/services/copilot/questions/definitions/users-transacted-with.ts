@@ -3,6 +3,9 @@ import { TableQuestion } from '@/services/copilot/questions/types'
 import {
   currencyDefault,
   currencyVars,
+  Direction,
+  directionDefault,
+  directionVars,
   humanReadablePeriod,
   Period,
   periodDefaults,
@@ -12,19 +15,25 @@ import {
 import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
-export const UsersSentMoneyTo: TableQuestion<
-  Period & { currency: CurrencyCode }
+export const UsersTransactedWith: TableQuestion<
+  Period & { currency: CurrencyCode; direction: Direction }
 > = {
   type: 'TABLE',
-  questionId: COPILOT_QUESTIONS.USERS_MONEY_SENT_TO,
+  questionId: COPILOT_QUESTIONS.USERS_TRANSACTED_WITH,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
-    return `Top users they have sent money to ${humanReadablePeriod(vars)}`
+    return `Top users they have transacted with as ${vars.direction.toLowerCase()} ${humanReadablePeriod(
+      vars
+    )}`
   },
   aggregationPipeline: async (
     { convert, userId, username },
-    { page, pageSize, currency, ...period }
+    { page, pageSize, direction, currency, ...period }
   ) => {
+    const userIdKey =
+      direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
+    const otherUserIdKey =
+      direction === 'ORIGIN' ? 'destinationUserId' : 'originUserId'
     const { rows, total } = await paginatedSqlQuery<{
       userId: string
       name: string
@@ -34,21 +43,20 @@ export const UsersSentMoneyTo: TableQuestion<
     }>(
       `
 select
-  t.destinationUserId as userId,
+  t.${otherUserIdKey} as userId,
   FIRST(case when u.type = 'CONSUMER' THEN u.userDetails.name.firstName ELSE u.legalEntity.companyGeneralDetails.legalName END) as name,
   FIRST(u.type) as userType,
   count(*) as count,
   sum(t.transactionAmountUSD) as sum
 from
   transactions t
-  join users u on u.userId = t.destinationUserId
-  and t.originUserId = :userId
+  join users u on u.userId = t.${otherUserIdKey}
+  and t.${userIdKey} = :userId
   and t.timestamp between :from and :to
 group by
-  t.destinationUserId
+  t.${otherUserIdKey}
 order by
-  count desc
-        `,
+  count desc`,
       {
         userId,
         ...sqlPeriod(period),
@@ -64,13 +72,12 @@ order by
       r.count,
       convert(r.sum, currency),
     ])
-
     return {
       data: {
         items,
         total,
       },
-      summary: `The top user that ${username} sent money to was ${
+      summary: `The top user that ${username} has transacted with as ${direction.toLowerCase()} was ${
         rows.at(0)?.name
       }.`,
     }
@@ -85,11 +92,13 @@ order by
   variableOptions: {
     ...periodVars,
     ...currencyVars,
+    ...directionVars,
   },
   defaults: () => {
     return {
       ...periodDefaults(),
       ...currencyDefault,
+      ...directionDefault,
     }
   },
 }

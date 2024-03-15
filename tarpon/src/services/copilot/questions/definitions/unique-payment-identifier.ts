@@ -3,6 +3,9 @@ import { TableQuestion } from '@/services/copilot/questions/types'
 import {
   currencyDefault,
   currencyVars,
+  Direction,
+  directionDefault,
+  directionVars,
   humanReadablePeriod,
   Period,
   periodDefaults,
@@ -14,40 +17,46 @@ import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
-export const UniquePaymentIdentifierReceived: TableQuestion<
-  Period & { currency: CurrencyCode }
+export const UniquePaymentIdentifier: TableQuestion<
+  Period & { currency: CurrencyCode; direction: Direction }
 > = {
   type: 'TABLE',
-  questionId: COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS_OF_RECEIVERS,
+  questionId: COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
-    return `Top payment identifiers they have received from ${humanReadablePeriod(
+    return `Top payment identifiers transacted with as ${vars.direction.toLowerCase()} from ${humanReadablePeriod(
       vars
     )}`
   },
   aggregationPipeline: async (
     { convert, userId, username },
-    { page, pageSize, currency, ...period }
+    { page, pageSize, direction, currency, ...period }
   ) => {
+    const paymentDetailsKey =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+    const userIdKey =
+      direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
     const { rows, total } = await paginatedSqlQuery<{
       method: string
       count: number
       sum: number
-      originPaymentDetails: PaymentDetails
+      paymentDetails: PaymentDetails
     }>(
       `
     select
-      first(t.originPaymentDetails.method) as method,
+      first(t.${paymentDetailsKey}.method) as method,
       count(*) as count,
       sum(t.transactionAmountUSD) as sum,
-      t.originPaymentDetails as originPaymentDetails
+      t.${paymentDetailsKey} as paymentDetails
     from
       transactions t
     where
-      t.destinationUserId = :userId
+      t.${userIdKey} = :userId
       and t.timestamp between :from and :to
     group by
-      t.originPaymentDetails
+      t.${paymentDetailsKey}
     order by
       sum desc
     `,
@@ -60,10 +69,10 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
     )
 
     const items = rows
-      .filter((r) => !!getPaymentMethodId(r.originPaymentDetails))
+      .filter((r) => !!getPaymentMethodId(r.paymentDetails))
       .map((r) => {
         return [
-          getPaymentMethodId(r.originPaymentDetails),
+          getPaymentMethodId(r.paymentDetails),
           r.method,
           r.count,
           convert(r.sum, currency),
@@ -75,13 +84,13 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
         items,
         total,
       },
-      summary: `The top payment identifier that ${username} received money from was ${getPaymentMethodId(
-        rows.at(0)?.originPaymentDetails
+      summary: `The top payment identifier used with ${username} as ${direction.toLowerCase()} was ${getPaymentMethodId(
+        rows.at(0)?.paymentDetails
       )} which was a ${rows.at(0)?.method} method.`,
     }
   },
   headers: [
-    { name: 'Destination payment identifier', columnType: 'ID' },
+    { name: `Payment identifier`, columnType: 'ID' },
     { name: 'Payment type', columnType: 'PAYMENT_METHOD' },
     { name: 'Transaction Count', columnType: 'NUMBER' },
     { name: 'Total Amount', columnType: 'MONEY_AMOUNT' },
@@ -89,11 +98,13 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
   variableOptions: {
     ...periodVars,
     ...currencyVars,
+    ...directionVars,
   },
   defaults: () => {
     return {
       ...periodDefaults(),
       ...currencyDefault,
+      ...directionDefault,
     }
   },
 }

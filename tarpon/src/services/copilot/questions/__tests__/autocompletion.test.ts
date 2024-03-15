@@ -36,6 +36,39 @@ describe.skip('Autocompletion interpretQuestion', () => {
     }[]
   }[] = [
     {
+      prompt: 'transactions',
+      questions: [
+        {
+          questionId: COPILOT_QUESTIONS.ALERTS_RELATED_TO_TRANSACTION,
+          variables: [],
+        },
+        {
+          questionId: COPILOT_QUESTIONS.CHECKED_TRANSACTIONS,
+          variables: [],
+        },
+        {
+          questionId: COPILOT_QUESTIONS.TRANSACTION_COUNT,
+          variables: [],
+        },
+        {
+          questionId: COPILOT_QUESTIONS.TRANSACTION_INSIGHTS,
+          variables: [],
+        },
+        {
+          questionId: COPILOT_QUESTIONS.TRANSACTIONS,
+          variables: [],
+        },
+        {
+          questionId: COPILOT_QUESTIONS.TRANSACTIONS_BY_RULE_ACTION,
+          variables: [],
+        },
+        {
+          questionId: COPILOT_QUESTIONS.TRANSACTIONS_BY_TYPE,
+          variables: [],
+        },
+      ],
+    },
+    {
       prompt: 'transactions for the last 10 days',
       questions: [
         {
@@ -97,11 +130,7 @@ describe.skip('Autocompletion interpretQuestion', () => {
       prompt: 'transactions insights',
       questions: [
         {
-          questionId: COPILOT_QUESTIONS.TRANSACTION_INSIGHTS_FOR_DESTINATION,
-          variables: [],
-        },
-        {
-          questionId: COPILOT_QUESTIONS.TRANSACTION_INSIGHTS_FOR_ORIGINATOR,
+          questionId: COPILOT_QUESTIONS.TRANSACTION_INSIGHTS,
           variables: [],
         },
       ],

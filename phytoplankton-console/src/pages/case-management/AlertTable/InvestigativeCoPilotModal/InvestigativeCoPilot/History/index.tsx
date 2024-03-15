@@ -20,9 +20,11 @@ export default function History(props: Props) {
           {'Start your investigation by searching for required data from below'}
         </div>
       )}
-      {items.map((item) => (
-        <HistoryItem key={item.questionId} alertId={alertId} item={item} />
-      ))}
+      {items
+        .filter((item) => Boolean(item))
+        .map((item) => (
+          <HistoryItem key={item.questionId} alertId={alertId} item={item} />
+        ))}
     </div>
   );
 }

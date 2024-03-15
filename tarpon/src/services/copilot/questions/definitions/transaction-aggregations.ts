@@ -19,7 +19,8 @@ export const transactionAggregationQuestion = (
   questionId: QuestionId,
   title: string,
   aggregationExpression: (granularity: TimeGranularity) => string,
-  joins: string = ''
+  showCurrency = false,
+  joins = ''
 ): TimeseriesQuestion<
   Period & { granularity: TimeGranularity; currency: CurrencyCode }
 > => ({
@@ -32,7 +33,7 @@ export const transactionAggregationQuestion = (
   aggregationPipeline: async (ctx, { granularity, currency, ...period }) => {
     const sqlExpression = timeXAxis(granularity)
     const rows = await executeSql<{
-      timestamp: number
+      timestamp: Date
       date: string
       agg: number
     }>(
@@ -86,7 +87,7 @@ ORDER BY
           label: '',
           values: rows.map((row) => {
             return {
-              time: row.timestamp,
+              time: row.timestamp.getTime(),
               value: ctx.convert(row.agg, currency),
             }
           }),
@@ -97,7 +98,7 @@ ORDER BY
   },
   variableOptions: {
     ...periodVars,
-    ...currencyVars,
+    ...(showCurrency ? currencyVars : {}),
     granularity: {
       // TODO implement an "options" variable type
       type: 'AUTOCOMPLETE',
@@ -117,6 +118,7 @@ export const TrsScore = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TRS_SCORE,
   'TRS score distribution',
   () => 'avg(ar.arsScore)',
+  false,
   'left join action_risk_values ar on ar.transactionId = t.transactionId'
 )
 
@@ -129,37 +131,43 @@ export const TransactionCount = transactionAggregationQuestion(
 export const MaxTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MAX_TRANSACTION_AMOUNT,
   'Max transaction amount',
-  () => 'max(transactionAmountUSD)'
+  () => 'max(transactionAmountUSD)',
+  true
 )
 
 export const MinTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MIN_TRANSACTION_AMOUNT,
   'Min transaction amount',
-  () => 'min(transactionAmountUSD)'
+  () => 'min(transactionAmountUSD)',
+  true
 )
 export const AverageTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.AVERAGE_TRANSACTION_AMOUNT,
   'Average transaction amount',
-  () => 'avg(transactionAmountUSD)'
+  () => 'avg(transactionAmountUSD)',
+  true
 )
 
 export const MedianTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MEDIAN_TRANSACTION_AMOUNT,
   'Median transaction amount',
-  () => 'percentile_approx(transactionAmountUSD, 0.5)'
+  () => 'percentile_approx(transactionAmountUSD, 0.5)',
+  true
 )
 
 export const TotalTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TOTAL_TRANSACTION_AMOUNT,
   'Total transaction amount',
-  () => 'sum(transactionAmountUSD)'
+  () => 'sum(transactionAmountUSD)',
+  true
 )
 
 export const TransactionLimit = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TRANSACTION_LIMIT,
   'Remaining transaction limit',
   (granularity) =>
-    `(select transactionLimits.maximum${granularity}TransactionLimit.amountValue from users where userId = :userId LIMIT 1) - COALESCE(SUM(transactionAmountUSD), 0)`
+    `(select transactionLimits.maximum${granularity}TransactionLimit.amountValue from users where userId = :userId LIMIT 1) - COALESCE(SUM(transactionAmountUSD), 0)`,
+  true
 )
 
 export const TransactionAggregations = [

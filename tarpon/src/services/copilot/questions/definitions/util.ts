@@ -38,6 +38,19 @@ export const currencyVars: VariableOptions<{ currency: string }> = {
   },
 }
 
+export type Direction = 'ORIGIN' | 'DESTINATION'
+
+export const directionDefault = {
+  direction: 'ORIGIN',
+}
+
+export const directionVars: VariableOptions<{ direction: Direction }> = {
+  direction: {
+    type: 'AUTOCOMPLETE',
+    options: () => ['ORIGIN', 'DESTINATION'],
+  },
+}
+
 export function humanReadablePeriod(period: Period): string {
   if (!period.to && !period.from) {
     return 'for all time'

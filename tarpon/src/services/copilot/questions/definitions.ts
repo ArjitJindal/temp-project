@@ -3,12 +3,10 @@ import { CaseHistory } from '@/services/copilot/questions/definitions/case-histo
 import { TransactionAggregations } from '@/services/copilot/questions/definitions/transaction-aggregations'
 import { TransactionType } from '@/services/copilot/questions/definitions/transaction-type'
 import { TransactionByRulesAction } from '@/services/copilot/questions/definitions/transaction-by-rules-action'
-import { UsersSentMoneyTo } from '@/services/copilot/questions/definitions/users-sent-money-to'
 import { AlertHistory } from '@/services/copilot/questions/definitions/alert-history'
 import { SarsFiled } from '@/services/copilot/questions/definitions/sars-filed'
-import { UsersReceivedMoneyFrom } from '@/services/copilot/questions/definitions/users-received-money-from'
-import { UniquePaymentIdentifierSent } from '@/services/copilot/questions/definitions/unique-payment-identifier-sent'
-import { UniquePaymentIdentifierReceived } from '@/services/copilot/questions/definitions/unique-payment-identifier-received'
+import { UsersTransactedWith } from '@/services/copilot/questions/definitions/users-transacted-with'
+import { UniquePaymentIdentifier } from '@/services/copilot/questions/definitions/unique-payment-identifier'
 import { AlertsRelatedToTransaction } from '@/services/copilot/questions/definitions/alerts-related-to-transaction'
 import { CheckedTransactions } from '@/services/copilot/questions/definitions/checked-transactions'
 import { Transactions } from '@/services/copilot/questions/definitions/transactions'
@@ -19,8 +17,7 @@ import { Directors } from '@/services/copilot/questions/definitions/directors'
 import { Website } from '@/services/copilot/questions/definitions/website'
 import { Linkedin } from '@/services/copilot/questions/definitions/linkedin'
 import { EntityLinking } from '@/services/copilot/questions/definitions/entity-linking'
-import { TransactionOriginSummary } from '@/services/copilot/questions/definitions/transaction-origin-summary'
-import { TransactionDestinationSummary } from '@/services/copilot/questions/definitions/transaction-destination-summary'
+import { TransactionSummary } from '@/services/copilot/questions/definitions/transaction-summary'
 import { CrmInsights } from '@/services/copilot/questions/definitions/crm-insights'
 import { KycScoring } from '@/services/copilot/questions/definitions/kyc-score'
 import { Recommendation } from '@/services/copilot/questions/definitions/recommendation'
@@ -48,13 +45,10 @@ export const getQuestions = (): Question<any>[] =>
     KycScoring,
     Shareholders,
     UserDetails,
-    UniquePaymentIdentifierSent,
-    UniquePaymentIdentifierReceived,
-    UsersSentMoneyTo,
-    UsersReceivedMoneyFrom,
-    TransactionOriginSummary,
+    UniquePaymentIdentifier,
+    UsersTransactedWith,
+    TransactionSummary,
     Transactions,
-    TransactionDestinationSummary,
     ReferenceWordCount,
     ...TransactionAggregations,
     ...(hasFeature('CRM') ? [CrmInsights] : []),

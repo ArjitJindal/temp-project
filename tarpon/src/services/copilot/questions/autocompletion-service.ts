@@ -101,7 +101,25 @@ export class AutocompleteService {
     return matrix[a.length][b.length]
   }
 
-  public async interpretQuestion(questionPrompt: string): Promise<
+  public async interpretQuestion(questionPrompt: string) {
+    const questions = await this.interpretQuestionWithGPT(questionPrompt)
+    if (questions.length > 0) {
+      return questions
+    }
+    return this.autocomplete(questionPrompt).map(
+      (
+        questionId
+      ): {
+        questionId: string
+        variables: QuestionVariable[]
+      } => ({
+        questionId,
+        variables: [],
+      })
+    )
+  }
+
+  private async interpretQuestionWithGPT(questionPrompt: string): Promise<
     {
       questionId: string
       variables: QuestionVariable[]
