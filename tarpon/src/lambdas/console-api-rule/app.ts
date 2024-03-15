@@ -110,6 +110,9 @@ export const ruleInstanceHandler = lambdaApi()(
       const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
         request.ruleInstanceId
       )
+      if (!ruleInstance) {
+        throw new NotFound('Rule instance not found')
+      }
       return ruleInstance
     })
 
@@ -117,6 +120,10 @@ export const ruleInstanceHandler = lambdaApi()(
       const oldRuleInstance = await ruleInstanceRepository.getRuleInstanceById(
         request.ruleInstanceId
       )
+      if (!oldRuleInstance) {
+        throw new NotFound('Rule instance not found')
+      }
+
       const newRuleInstance = await ruleService.createOrUpdateRuleInstance({
         id: request.ruleInstanceId,
         ...request.RuleInstance,
