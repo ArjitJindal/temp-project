@@ -25,9 +25,32 @@ import {
   TRANSACTION_HISTORICAL_FILTERS,
   USER_FILTERS,
 } from '@/services/rules-engine/filters'
+import { Feature } from '@/@types/openapi-internal/Feature'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 /**
- * Rule Stats
+ * Custom query
+ */
+async function runReadOnlyQueryForTenant(
+  _mongoDb: Db,
+  _dynamoDb: DynamoDBDocumentClient,
+  _tenantId: string
+): Promise<any> {
+  /**
+   * Put your READ-ONLY query below and return a printable object
+   * e.g
+   * const result = await mongoDb
+   *  .collection<InternalUser>(USERS_COLLECTION(tenantId))
+   *  .find({})
+   *  .limit(1)
+   * return await result.toArray()
+   */
+
+  return { Hello: 'World' }
+}
+
+/**
+ * Built-in query: rule Stats
  */
 type CountStats = { [key: string]: number }
 let globalRuleStats: CountStats = Object.fromEntries(
@@ -84,29 +107,20 @@ function printRuleStats(ruleStats: CountStats, filterStats: CountStats) {
 }
 
 /**
- * Custom query
+ * Built-in query: features
  */
-async function runReadOnlyQueryForTenant(
-  _mongoDb: Db,
-  _dynamoDb: DynamoDBDocumentClient,
-  _tenantId: string
-): Promise<any> {
-  /**
-   * Put your READ-ONLY query below and return a printable object
-   * e.g
-   * const result = await mongoDb
-   *  .collection<InternalUser>(USERS_COLLECTION(tenantId))
-   *  .find({})
-   *  .limit(1)
-   * return await result.toArray()
-   */
-
-  return { Hello: 'World' }
+async function tenantFeatures(
+  dynamoDb: DynamoDBDocumentClient,
+  tenantId: string
+): Promise<Feature[]> {
+  const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
+  const settings = await tenantRepository.getTenantSettings()
+  return settings.features ?? []
 }
 
 program
   .requiredOption('--env <string>', 'dev | sandbox | prod')
-  .option('--query <string>', 'rule-stats')
+  .option('--query <string>', 'rule-stats | features')
   .parse()
 
 const { env, query } = program.opts()
@@ -150,11 +164,16 @@ async function runReadOnlyQueryForEnv(env: Env) {
     }
   } else {
     for (const tenant of tenantInfos) {
-      const result = await runReadOnlyQueryForTenant(
-        mongoDb,
-        dynamoDb,
-        tenant.tenant.id
-      )
+      let result: any
+      if (query === 'features') {
+        result = await tenantFeatures(dynamoDb, tenant.tenant.id)
+      } else {
+        result = await runReadOnlyQueryForTenant(
+          mongoDb,
+          dynamoDb,
+          tenant.tenant.id
+        )
+      }
       if (!isEmpty(result)) {
         console.info(
           `\nTenant: ${tenant.tenant.name} (ID: ${tenant.tenant.id}) (region: ${tenant.tenant.region})`
