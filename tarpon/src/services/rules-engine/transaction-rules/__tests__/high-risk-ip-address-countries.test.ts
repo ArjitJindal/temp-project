@@ -1,5 +1,5 @@
 import { getRuleByRuleId } from '../library'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
   TransactionRuleTestCase,
   createTransactionRuleTestCase,
@@ -11,6 +11,8 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import dayjs from '@/utils/dayjs'
+
+dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: false }, () => {
   const TENANT_ID = getTestTenantId()

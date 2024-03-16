@@ -17,7 +17,7 @@ import { tenantHasFeature } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
-const CONCURRENT_BATCH_SIZE = 10
+const CONCURRENT_BATCH_SIZE = 100
 
 export async function getOngoingScreeningUserRuleInstances(
   tenantId: string
@@ -90,7 +90,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           userRepository
         )
       },
-      { mongoBatchSize: 100, processBatchSize: 100 }
+      { mongoBatchSize: 1000, processBatchSize: 1000 }
     )
   }
 

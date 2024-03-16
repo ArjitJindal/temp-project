@@ -1,6 +1,6 @@
 import { MOCKED_TENANT_ID, MOCKED_USER, permissionTest } from '../test-utils'
 import { ruleHandler } from '@/lambdas/console-api-rule/app'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
   getApiGatewayDeleteEvent,
   getApiGatewayGetEvent,
@@ -8,6 +8,7 @@ import {
 } from '@/test-utils/apigateway-test-utils'
 
 describe('testing permission for console rules endpoint', () => {
+  dynamoDbSetupHook()
   test('rules Get: Forbidden', async () => {
     const event = getApiGatewayGetEvent(MOCKED_TENANT_ID, '/rules', {
       user: {

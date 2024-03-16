@@ -12,7 +12,7 @@ import {
   ruleVariantsTest,
   testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
@@ -26,6 +26,8 @@ const DEFAULT_RULE_PARAMETERS: TooManyUsersForSamePaymentIdentifierParameters =
       granularity: 'day',
     },
   }
+
+dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: true }, () => {
   describe('R-53 description formatting', () => {

@@ -38,6 +38,8 @@ import { logger } from '@/core/logger'
 import { getContext, publishMetric } from '@/core/utils/context'
 import { envIs, envIsNot } from '@/utils/env'
 
+export const __dynamoDbClientsForTesting__: DynamoDBClient[] = []
+
 export type PutRequestInternal = Omit<PutRequest, 'Item'> & {
   Item: Record<string, NativeAttributeValue> | undefined
 }
@@ -183,6 +185,10 @@ export function getDynamoDbRawClient(
       context.dynamoDbClients = []
     }
     context.dynamoDbClients.push(rawClient)
+  }
+
+  if (envIs('test')) {
+    __dynamoDbClientsForTesting__.push(rawClient)
   }
 
   return rawClient

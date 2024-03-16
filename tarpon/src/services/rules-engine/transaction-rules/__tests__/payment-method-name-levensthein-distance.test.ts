@@ -11,8 +11,10 @@ import {
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
+
+dynamoDbSetupHook()
 
 const TEST_TENANT_ID = getTestTenantId()
 

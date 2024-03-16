@@ -10,6 +10,9 @@ import {
   testRuleDescriptionFormatting,
   ruleVariantsTest,
 } from '@/test-utils/rule-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
+dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: false }, () => {
   describe('R-123 description formatting', () => {

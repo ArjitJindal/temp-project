@@ -1,5 +1,5 @@
 import { UserTransactionStatsTimeGroup } from '../user-transaction-stats-by-time'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { bulkVerifyTransactions } from '@/test-utils/rule-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -10,6 +10,8 @@ import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 function toMap(obj: object) {
   return new Map(Object.entries(obj))
 }
+
+dynamoDbSetupHook()
 
 describe('UserTransactionStatsTimeGroup aggregator', () => {
   withLocalChangeHandler()

@@ -1,7 +1,7 @@
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../repositories/risk-repository'
 import { DEFAULT_RISK_LEVEL } from '../utils'
 import dayjs from '@/utils/dayjs'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import {
@@ -11,6 +11,7 @@ import {
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
 withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
+dynamoDbSetupHook()
 
 const CLASSFICATIONS: RiskClassificationScore[] = [
   {

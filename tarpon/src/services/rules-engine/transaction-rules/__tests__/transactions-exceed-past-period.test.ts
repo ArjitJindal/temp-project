@@ -11,6 +11,7 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const DEFAULT_RULE_PARAMETERS: TransactionsExceedPastPeriodRuleParameters = {
   multiplierThreshold: 2,
@@ -27,6 +28,7 @@ const DEFAULT_RULE_PARAMETERS: TransactionsExceedPastPeriodRuleParameters = {
   checkReceiver: 'none',
 }
 
+dynamoDbSetupHook()
 ruleVariantsTest({ aggregation: true }, () => {
   describe('R-131 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()

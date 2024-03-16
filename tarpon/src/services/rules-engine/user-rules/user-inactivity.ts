@@ -1,9 +1,10 @@
 import { JSONSchemaType } from 'ajv'
 import { max } from 'lodash'
-import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import { RuleHitResult } from '../rule'
+import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { UserRule } from './rule'
 import dayjs from '@/utils/dayjs'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export interface UserInactivityRuleParameters {
   inactivityDays: number
@@ -40,9 +41,9 @@ export default class UserInactivity extends UserRule<UserInactivityRuleParameter
       return
     }
 
-    const transactionRepository = new DynamoDbTransactionRepository(
+    const transactionRepository = new MongoDbTransactionRepository(
       this.tenantId,
-      this.dynamoDb
+      await getMongoDbClient()
     )
 
     const lastSendingTransaction =

@@ -11,7 +11,7 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 
@@ -41,6 +41,8 @@ const DEFAULT_RULE_PARAMETERS: TransactionsVelocityRuleParameters = {
   checkSender: 'all',
   checkReceiver: 'all',
 }
+
+dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Description formatting', () => {

@@ -38,7 +38,7 @@ export async function getSecret<T>(secretId: string): Promise<T> {
       )
     ).SecretString
   } catch (e) {
-    if (process.env.ENV === 'local') {
+    if (envIs('local')) {
       console.error(
         `❗❗Please run 'npm run aws-login dev' to refresh the aws credentials for the Dev account!`
       )

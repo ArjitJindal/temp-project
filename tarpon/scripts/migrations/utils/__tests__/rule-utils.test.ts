@@ -1,11 +1,12 @@
 import { renameV8KeyForTenant, replaceMagicKeywordInLogic } from '../rule'
 import { createRule } from '@/test-utils/rule-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 
 const TEST_TENANT_ID = getTestTenantId()
+dynamoDbSetupHook()
 
 describe('testing v8 key migration', () => {
   let cleanup: () => Promise<void>

@@ -1,7 +1,7 @@
 import MockDate from 'mockdate'
 import * as createError from 'http-errors'
 import { v4 as uuidv4 } from 'uuid'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -43,6 +43,8 @@ import { getAlertRepo } from '@/lambdas/console-api-dashboard/repositories/__tes
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
+
+dynamoDbSetupHook()
 
 async function getServices(tenantId: string) {
   const dynamoDb = getDynamoDbClient()

@@ -6,7 +6,7 @@ import {
   createUserRuleTestCase,
   UserRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import {
   MOCK_CA_SEARCH_NO_HIT_RESPONSE,
@@ -89,6 +89,7 @@ jest.mock('@/services/sanctions', () => {
   }
 })
 
+dynamoDbSetupHook()
 withFeatureHook(['IBAN_RESOLUTION'])
 
 describe('IBAN resolution enabled', () => {

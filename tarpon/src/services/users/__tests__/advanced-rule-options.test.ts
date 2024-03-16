@@ -1,7 +1,7 @@
 import { UserService } from '..'
 import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
   bulkVerifyTransactions,
   setUpRulesHooks,
@@ -22,6 +22,8 @@ import { getS3Client } from '@/utils/s3'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
+
+dynamoDbSetupHook()
 
 const getContextMocker = jest.spyOn(Context, 'getContext')
 

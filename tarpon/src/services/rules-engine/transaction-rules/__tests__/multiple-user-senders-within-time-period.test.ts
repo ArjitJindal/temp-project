@@ -11,7 +11,7 @@ import {
   ruleVariantsTest,
   testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { setUpUsersHooks, getTestUser } from '@/test-utils/user-test-utils'
 
 const DEFAULT_RULE_PARAMETERS: MultipleSendersWithinTimePeriodRuleParameters = {
@@ -21,6 +21,8 @@ const DEFAULT_RULE_PARAMETERS: MultipleSendersWithinTimePeriodRuleParameters = {
     granularity: 'day',
   },
 }
+
+dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Core logic', () => {

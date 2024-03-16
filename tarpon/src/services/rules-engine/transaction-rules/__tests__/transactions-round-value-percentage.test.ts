@@ -11,7 +11,7 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
@@ -32,6 +32,7 @@ const DEFAULT_RULE_PARAMETERS: TransactionsRoundValuePercentageRuleParameters =
     patternPercentageLimit: 50,
   }
 
+dynamoDbSetupHook()
 ruleVariantsTest({ aggregation: true }, () => {
   describe('R-124 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()

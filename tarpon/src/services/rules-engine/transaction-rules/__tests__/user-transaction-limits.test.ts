@@ -10,9 +10,11 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import dayjs from '@/utils/dayjs'
+
+dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: false }, () => {
   describe('R-99 description formatting', () => {

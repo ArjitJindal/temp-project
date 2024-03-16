@@ -4,7 +4,7 @@ import {
   transactionHandler,
   userEventsHandler,
 } from '../app'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
   getApiGatewayGetEvent,
   getApiGatewayPostEvent,
@@ -49,7 +49,7 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
 
 withFeatureHook(features)
-
+dynamoDbSetupHook()
 withLocalChangeHandler()
 
 describe('Public API - Verify a transaction', () => {

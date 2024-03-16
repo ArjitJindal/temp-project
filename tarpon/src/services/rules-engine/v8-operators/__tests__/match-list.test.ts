@@ -1,8 +1,10 @@
 import { MATCH_LIST_OPERATOR } from '../match-list'
 import { ListRepository } from '@/services/list/repositories/list-repository'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+
+dynamoDbSetupHook()
 
 const dynamoDb = getDynamoDbClient()
 const TEST_TENANT_ID = getTestTenantId()

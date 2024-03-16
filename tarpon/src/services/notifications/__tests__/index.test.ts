@@ -6,7 +6,7 @@ import {
   getApiGatewayPatchEvent,
   getApiGatewayPostEvent,
 } from '@/test-utils/apigateway-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import * as Context from '@/core/utils/context'
@@ -24,6 +24,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { allUsersViewHandler } from '@/lambdas/console-api-user/app'
 import { Notification } from '@/@types/openapi-internal/Notification'
 
+dynamoDbSetupHook()
 withFeatureHook(['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'])
 
 const getContextMocker = jest.spyOn(Context, 'getContext')

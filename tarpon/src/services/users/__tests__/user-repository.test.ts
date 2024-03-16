@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { UserRepository } from '../repositories/user-repository'
 import { UserManagementService } from '../../rules-engine/user-rules-engine-service'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -12,6 +12,7 @@ import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { UserOptional } from '@/@types/openapi-internal/UserOptional'
 import { BusinessOptional } from '@/@types/openapi-internal/BusinessOptional'
 
+dynamoDbSetupHook()
 withLocalChangeHandler()
 
 const dynamoDb = getDynamoDbClient()

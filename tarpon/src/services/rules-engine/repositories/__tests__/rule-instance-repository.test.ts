@@ -2,6 +2,9 @@ import { RuleInstanceRepository } from '../rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestRuleInstance } from '@/test-utils/rule-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
+dynamoDbSetupHook()
 
 const dynamoDb = getDynamoDbClient()
 

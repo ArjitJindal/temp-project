@@ -1,8 +1,11 @@
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { ListRepository } from '@/services/list/repositories/list-repository'
 import { ListExisted as List } from '@/@types/openapi-internal/ListExisted'
 import { CursorPaginatedResponse, getDynamoDbClient } from '@/utils/dynamodb'
 import { ListItem } from '@/@types/openapi-public/ListItem'
+
+dynamoDbSetupHook()
 
 const LIST_TYPE = 'WHITELIST'
 

@@ -11,7 +11,7 @@ import {
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -82,6 +82,8 @@ function getTestDifferentBankTransactions(
     ...transaction,
   }
 }
+
+dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: true }, () => {
   describe('Description formatting', () => {

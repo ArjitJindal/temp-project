@@ -9,13 +9,15 @@ import {
   RiskRepository,
 } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
+
+dynamoDbSetupHook()
 
 withFeatureHook(['SIMULATOR'])
 

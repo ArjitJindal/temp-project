@@ -5,12 +5,13 @@ import { IBANService } from '..'
 import { IBANApiRepository } from '../repositories/iban-api-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { mockIbanComValidation } from '@/test-utils/ibancom-test-utils'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { MOCK_IBAN_COM_VALIDATION_RESPONSE } from '@/test-utils/resources/mock-iban-com-validation-response'
 import * as apiFetchModule from '@/utils/api-fetch'
 
+dynamoDbSetupHook()
 withFeatureHook(['IBAN_RESOLUTION'])
 
 const TEST_VALID_IBAN = 'DE75512108001245126199'

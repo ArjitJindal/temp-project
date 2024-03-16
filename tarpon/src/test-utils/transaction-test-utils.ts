@@ -53,7 +53,10 @@ export async function createTransaction(
     testTenantId,
     getDynamoDbClient()
   )
-  await transactionRepository.saveTransaction(transaction)
+  await transactionRepository.saveTransaction(transaction, {
+    executedRules: [],
+    hitRules: [],
+  })
 
   return async () => {
     await transactionRepository.deleteTransaction(transaction)

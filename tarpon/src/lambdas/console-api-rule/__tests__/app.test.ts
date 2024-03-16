@@ -1,11 +1,13 @@
 import { ruleHandler, ruleInstanceHandler } from '../app'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
   TestApiEndpoint,
   TestApiEndpointOptions,
 } from '@/test-utils/apigateway-test-utils'
 
 const testApiEndPoints = new TestApiEndpoint(ruleHandler)
+
+dynamoDbSetupHook()
 
 describe.each<TestApiEndpointOptions>([
   { method: 'GET', path: '/rules' },

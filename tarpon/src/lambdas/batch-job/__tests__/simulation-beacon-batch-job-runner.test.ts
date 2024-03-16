@@ -1,6 +1,6 @@
 import { range } from 'lodash'
 import { jobRunnerHandler } from '../app'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
@@ -19,6 +19,8 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { SimulationBeaconParameters } from '@/@types/openapi-internal/SimulationBeaconParameters'
 import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+
+dynamoDbSetupHook()
 
 withFeatureHook(['SIMULATOR'])
 

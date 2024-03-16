@@ -1,11 +1,12 @@
 import { exec, execSync } from 'child_process'
+import { mockClient } from 'aws-sdk-client-mock'
 import {
-  TEST_DYNAMODB_TABLE_NAMES,
-  recreateTables,
-} from './src/test-utils/dynamodb-test-utils'
+  GetSecretValueCommand,
+  SecretsManagerClient,
+} from '@aws-sdk/client-secrets-manager'
+import { TEST_DYNAMODB_TABLE_NAMES } from './src/test-utils/dynamodb-test-utils'
 import { mockedCurrencyExchangeRates as MOCKED_CURRENCY_EXCHANGE_RATES } from './test-resources/mocked-currency-exchange-rates'
 import { CurrencyService } from '@/services/currency'
-
 process.env.ENV = 'local'
 process.env.DYNAMODB_URI = 'http://localhost:7999'
 if (!process.env.EXEC_SOURCE) {
@@ -29,6 +30,10 @@ jest
     )
   )
 
+mockClient(SecretsManagerClient)
+  .on(GetSecretValueCommand)
+  .resolves({ SecretString: 'fake' })
+
 module.exports = async function () {
   if (process.env.EXEC_SOURCE !== 'CI') {
     const localDynamoDbTestPsOutput = execSync(
@@ -49,5 +54,4 @@ module.exports = async function () {
       )
     }
   }
-  await recreateTables()
 }

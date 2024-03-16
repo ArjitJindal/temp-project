@@ -7,13 +7,15 @@ import {
   notHitRule,
 } from './helpers'
 import dayjs from '@/utils/dayjs'
-
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+
+dynamoDbSetupHook()
 
 describe('Verify hits-per-user statistics', () => {
   test('Single transaction with single hit', async () => {

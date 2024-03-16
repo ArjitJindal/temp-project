@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/serverless'
 
 import { isPlainObject, wrap } from 'lodash'
 import { getContext } from '../utils/context'
+import { envIs } from '@/utils/env'
 
 const isLocal = process.env.ENV === 'local'
 const logFormat = format.combine(
@@ -20,7 +21,8 @@ const localLogFormat = format.combine(
 )
 
 export const winstonLogger = createLogger({
-  level: isLocal ? 'debug' : process.env.NODE_ENV === 'test' ? 'error' : 'info',
+  silent: envIs('test'),
+  level: isLocal ? 'debug' : 'info',
   format: isLocal ? localLogFormat : logFormat,
   transports: [new transports.Console({})],
 })
