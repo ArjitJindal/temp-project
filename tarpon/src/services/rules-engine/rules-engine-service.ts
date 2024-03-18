@@ -23,6 +23,8 @@ import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { RiskScoringService } from '../risk-scoring'
+import { SanctionsService } from '../sanctions'
+import { IBANService } from '../iban.com'
 import { DynamoDbTransactionRepository } from './repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -174,6 +176,8 @@ export class RulesEngineService {
   tenantRepository: TenantRepository
   riskScoringService: RiskScoringService
   ruleLogicEvaluator: RuleJsonLogicEvaluator
+  sanctionsService: SanctionsService
+  ibanService: IBANService
 
   constructor(
     tenantId: string,
@@ -213,6 +217,8 @@ export class RulesEngineService {
       this.tenantId,
       this.dynamoDb
     )
+    this.sanctionsService = new SanctionsService(this.tenantId)
+    this.ibanService = new IBANService(this.tenantId)
   }
 
   public static async fromEvent(
@@ -708,6 +714,10 @@ export class RulesEngineService {
             },
             { parameters, filters: ruleFilters },
             { ruleInstance, rule: rule! },
+            {
+              sanctionsService: this.sanctionsService,
+              ibanService: this.ibanService,
+            },
             mode,
             this.dynamoDb,
             mode === 'MONGODB' ? await getMongoDbClient() : undefined
@@ -717,6 +727,10 @@ export class RulesEngineService {
             { user: senderUser!, ongoingScreeningMode },
             { parameters, filters: ruleFilters },
             { ruleInstance, rule: rule! },
+            {
+              sanctionsService: this.sanctionsService,
+              ibanService: this.ibanService,
+            },
             await getMongoDbClient(),
             this.dynamoDb
           )

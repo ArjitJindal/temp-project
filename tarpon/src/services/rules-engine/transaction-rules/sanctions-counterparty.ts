@@ -11,10 +11,9 @@ import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rul
 import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
-import { BankInfo, IBANService } from '@/services/iban.com'
+import { BankInfo } from '@/services/iban.com'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
-import { SanctionsService } from '@/services/sanctions'
 import { formatConsumerName } from '@/utils/helpers'
 import { notNullish } from '@/core/utils/array'
 import { traceable } from '@/core/xray'
@@ -129,10 +128,8 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
       }
     }
 
-    const ibanService = new IBANService(this.tenantId)
-
     if (this.parameters.resolveIban && bankInfo) {
-      bankInfo = (await ibanService.resolveBankNames([bankInfo]))[0]
+      bankInfo = (await this.ibanService.resolveBankNames([bankInfo]))[0]
       if (bankInfo?.bankName != null) {
         namesToSearch.push({
           name: bankInfo.bankName,
@@ -186,7 +183,6 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
     }
 
     const namesToSearchFiltered = uniqBy(namesToSearch, (item) => item.name)
-    const sanctionsService = new SanctionsService(this.tenantId)
     const fuzziness = this.parameters.fuzziness
 
     const data = await Promise.all(
@@ -196,7 +192,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
           iban,
           entityType,
         }): Promise<SanctionsDetails | undefined> => {
-          const result = await sanctionsService.search(
+          const result = await this.sanctionsService.search(
             {
               searchTerm: name,
               types: this.parameters.screeningTypes || [],

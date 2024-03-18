@@ -12,10 +12,8 @@ import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
-import { SanctionsService } from '@/services/sanctions'
 import { Business } from '@/@types/openapi-public/Business'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
-import { IBANService } from '@/services/iban.com'
 import { logger } from '@/core/logger'
 
 const caConcurrencyLimit = pLimit(10)
@@ -80,12 +78,9 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       })
       .filter(Boolean) as BankInfo[]
 
-    const ibanService = new IBANService(this.tenantId)
-
     if (resolveIban) {
       try {
-        await ibanService.initialize()
-        bankInfos = await ibanService.resolveBankNames(bankInfos)
+        bankInfos = await this.ibanService.resolveBankNames(bankInfos)
       } catch (e) {
         logger.error(e)
       }
@@ -95,14 +90,13 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       (bankInfo) => JSON.stringify(bankInfo)
     )
 
-    const sanctionsService = new SanctionsService(this.tenantId)
     const hitResult: RuleHitResult = []
     const sanctionsDetails: (SanctionsDetails | undefined)[] =
       await Promise.all(
         bankInfosToCheck.map((bankInfo) =>
           caConcurrencyLimit(async () => {
             const bankName = bankInfo.bankName!
-            const result = await sanctionsService.search(
+            const result = await this.sanctionsService.search(
               {
                 searchTerm: bankName,
                 types: screeningTypes,

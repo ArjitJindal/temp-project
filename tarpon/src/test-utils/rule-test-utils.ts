@@ -33,6 +33,8 @@ import { TransactionAggregationRule } from '@/services/rules-engine/transaction-
 import { hasFeature } from '@/core/utils/context'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { getMigratedV8Config } from '@/services/rules-engine/v8-migrations'
+import { SanctionsService } from '@/services/sanctions'
+import { IBANService } from '@/services/iban.com'
 
 const DEFAULT_DESCRIPTION = 'test rule description.'
 
@@ -484,6 +486,10 @@ export function testAggregationRebuild(
         },
         { parameters: rule.defaultParameters, filters: ruleInstance.filters },
         { ruleInstance, rule },
+        {
+          sanctionsService: new SanctionsService(tenantId),
+          ibanService: new IBANService(tenantId),
+        },
         'DYNAMODB',
         dynamoDb,
         undefined

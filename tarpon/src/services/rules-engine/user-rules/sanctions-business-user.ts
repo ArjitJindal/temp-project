@@ -12,7 +12,6 @@ import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
-import { SanctionsService } from '@/services/sanctions'
 import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
@@ -97,7 +96,6 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       })) ?? []),
     ].filter((entity) => entity.name)
 
-    const sanctionsService = new SanctionsService(this.tenantId)
     const hitResult: RuleHitResult = []
     const sanctionsDetails = (
       await Promise.all(
@@ -105,7 +103,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
           const yearOfBirth = entity.dateOfBirth
             ? dayjs(entity.dateOfBirth).year()
             : undefined
-          const result = await sanctionsService.search(
+          const result = await this.sanctionsService.search(
             {
               searchTerm: entity.name,
               yearOfBirth,

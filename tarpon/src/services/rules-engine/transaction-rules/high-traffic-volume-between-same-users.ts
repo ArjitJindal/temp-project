@@ -333,6 +333,10 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         ruleInstance: { ...this.ruleInstance, id: `_${this.ruleInstance}` },
         rule: this.rule,
       },
+      {
+        sanctionsService: this.sanctionsService,
+        ibanService: this.ibanService,
+      },
       this.mode,
       this.dynamoDb,
       this.mongoDb

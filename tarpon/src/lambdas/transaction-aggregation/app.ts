@@ -30,6 +30,8 @@ import { logger } from '@/core/logger'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
+import { SanctionsService } from '@/services/sanctions'
+import { IBANService } from '@/services/iban.com'
 
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask
@@ -150,6 +152,10 @@ export async function handleTransactionAggregationTask(
     },
     { parameters, filters: ruleInstance.filters },
     { ruleInstance, rule },
+    {
+      sanctionsService: new SanctionsService(task.tenantId),
+      ibanService: new IBANService(task.tenantId),
+    },
     mode,
     dynamoDb,
     undefined

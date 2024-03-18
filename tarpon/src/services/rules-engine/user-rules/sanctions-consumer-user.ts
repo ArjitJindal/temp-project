@@ -11,7 +11,6 @@ import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
-import { SanctionsService } from '@/services/sanctions'
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 
@@ -52,7 +51,6 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       return
     }
 
-    const sanctionsService = new SanctionsService(this.tenantId)
     const hitResult: RuleHitResult = []
     const yearOfBirth = user.userDetails.dateOfBirth
       ? dayjs(user.userDetails.dateOfBirth).year()
@@ -62,7 +60,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       return
     }
 
-    const result = await sanctionsService.search(
+    const result = await this.sanctionsService.search(
       {
         searchTerm: name,
         yearOfBirth,

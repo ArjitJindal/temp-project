@@ -14,6 +14,8 @@ import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule as RuleModel } from '@/@types/openapi-internal/Rule'
 import { traceable } from '@/core/xray'
+import { SanctionsService } from '@/services/sanctions'
+import { IBANService } from '@/services/iban.com'
 
 export interface PartyVars {
   type?: 'origin' | 'destination'
@@ -57,6 +59,8 @@ export abstract class TransactionRule<
   mongoDb?: MongoClient
   transactionRepository: RulesEngineTransactionRepositoryInterface
   aggregationRepository?: AggregationRepository
+  sanctionsService: SanctionsService
+  ibanService: IBANService
   mode: 'DYNAMODB' | 'MONGODB'
   transactionRiskScore?: number
 
@@ -76,6 +80,10 @@ export abstract class TransactionRule<
       ruleInstance: RuleInstance
       rule: RuleModel
     },
+    services: {
+      sanctionsService: SanctionsService
+      ibanService: IBANService
+    },
     mode: 'DYNAMODB' | 'MONGODB',
     dynamoDb: DynamoDBDocumentClient,
     mongoDb?: MongoClient
@@ -89,6 +97,8 @@ export abstract class TransactionRule<
     this.filters = params.filters || {}
     this.ruleInstance = context.ruleInstance
     this.rule = context.rule
+    this.sanctionsService = services.sanctionsService
+    this.ibanService = services.ibanService
     this.dynamoDb = dynamoDb
     this.mongoDb = mongoDb
     this.mode = mode
