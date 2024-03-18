@@ -1,4 +1,4 @@
-import { uuid4 } from '@sentry/utils'
+import { v4 as uuid4 } from 'uuid'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 
 export const businessSanctionsSearch = (

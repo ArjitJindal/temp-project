@@ -1,4 +1,5 @@
 import { get, isEmpty } from 'lodash'
+import { validate as uuidValidate } from 'uuid'
 import {
   Collection,
   Document,
@@ -105,7 +106,7 @@ export async function cursorPaginate<T extends Document>(
   const from = buff.toString('ascii')
 
   const [sortValue, id] = from.split(PAGINATION_CURSOR_KEY_SEPERATOR)
-
+  const isUUID = uuidValidate(id)
   let parsedSortValue: any = sortValue
   // Parse fields that are not string values
   const asNumber = parseFloat(sortValue)
@@ -128,7 +129,7 @@ export async function cursorPaginate<T extends Document>(
         fromOr,
         {
           [field]: { $eq: parsedSortValue },
-          _id: { [fromOperator]: new ObjectId(id) },
+          _id: { [fromOperator]: isUUID ? id : new ObjectId(id) },
         },
       ],
     })
@@ -142,7 +143,7 @@ export async function cursorPaginate<T extends Document>(
         prevOr,
         {
           [field]: { $eq: parsedSortValue },
-          _id: { [toOperator]: new ObjectId(id) },
+          _id: { [toOperator]: isUUID ? id : new ObjectId(id) },
         },
       ],
     })

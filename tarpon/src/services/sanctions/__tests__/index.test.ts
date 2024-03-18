@@ -177,7 +177,7 @@ describe('Sanctions Service', () => {
       const service = new SanctionsService(TEST_TENANT_ID)
       const result = await service.getSearchHistories({})
       expect(mockFetch).toBeCalledTimes(0)
-      expect(result.total).toBeGreaterThan(0)
+      expect(result.count).toBeGreaterThan(0)
       expect(result.items?.length).toBeGreaterThan(0)
     })
   })

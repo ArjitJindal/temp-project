@@ -1,13 +1,13 @@
-import { AggregationCursor, MongoClient, Document, Filter } from 'mongodb'
+import { MongoClient, Filter } from 'mongodb'
 import { isNil, omitBy } from 'lodash'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
+import { prefixRegexMatchFilter } from '@/utils/mongodb-utils'
 import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
-import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
+import { cursorPaginate } from '@/utils/pagination'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import dayjs from '@/utils/dayjs'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -128,54 +128,38 @@ export class SanctionsSearchRepository {
     return { $and: conditions }
   }
 
-  private getSanctionsSearchHistoryMongoPipeline(
+  private getSanctionsSearchHistoryCursorPaginate(
     params: DefaultApiGetSanctionsSearchRequest
-  ): Document[] {
-    const filter = this.getSanctionsSearchHistoryCondition(params)
-    const pipeline: Document[] = []
-
-    pipeline.push({ $match: filter })
-    pipeline.push({ $sort: { createdAt: -1 } })
-
-    return pipeline
-  }
-
-  private getSanctionsSearchHistoryCursor(
-    params: DefaultApiGetSanctionsSearchRequest
-  ): AggregationCursor<SanctionsSearchHistory> {
-    const pipeline = this.getSanctionsSearchHistoryMongoPipeline(params)
-    pipeline.push({ $project: { response: 0 } })
-    pipeline.push(...paginatePipeline(params))
-
+  ): Promise<SanctionsSearchHistoryResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
 
-    return collection.aggregate<SanctionsSearchHistory>(pipeline)
-  }
-
-  private async getSanctionsSearchCount(
-    params: DefaultApiGetSanctionsSearchRequest
-  ): Promise<number> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsSearchHistory>(
-      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    return cursorPaginate(
+      collection,
+      this.getSanctionsSearchHistoryCondition(params),
+      {
+        pageSize: params.pageSize ? (params.pageSize as number) : 20,
+        sortField: 'createdAt',
+        fromCursorKey: params.start,
+        sortOrder: 'descend',
+      }
     )
-
-    const conditions = this.getSanctionsSearchHistoryCondition(params)
-    const count = await collection.countDocuments(conditions, {
-      limit: COUNT_QUERY_LIMIT,
-    })
-    return count
   }
 
   public async getSearchHistory(
     params: DefaultApiGetSanctionsSearchRequest
   ): Promise<SanctionsSearchHistoryResponse> {
-    const cursor = this.getSanctionsSearchHistoryCursor(params)
-    const total = this.getSanctionsSearchCount(params)
-    return { total: await total, items: await cursor.toArray() }
+    const result = await this.getSanctionsSearchHistoryCursorPaginate(params)
+    const items = result.items.map((item) => ({
+      ...item,
+      response: undefined, //response has no use in front end, thus omited the extra payload from request's response
+    }))
+    return {
+      ...result,
+      items,
+    }
   }
 
   public async getSearchResult(

@@ -4439,9 +4439,9 @@ paths:
           in: query
           name: pageSize
         - schema:
-            $ref: '#/components/schemas/Page'
+            type: string
           in: query
-          name: page
+          name: start
         - schema:
             type: number
           in: query
@@ -9088,12 +9088,33 @@ components:
         id: ldj2zpwhzk8s6
       type: object
       properties:
-        total:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
           type: number
+        limit:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
         items:
           type: array
           items:
             $ref: '#/components/schemas/SanctionsSearchHistory'
+      required:
+        - hasPrev
+        - prev
+        - next
+        - hasNext
+        - items
+        - count
+        - limit
+        - last
     SanctionsSearchHistory:
       title: SanctionsSearchHistory
       x-stoplight:

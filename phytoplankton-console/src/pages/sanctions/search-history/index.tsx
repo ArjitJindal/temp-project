@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useCursorQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, CommonParams, TableColumn } from '@/components/library/Table/types';
@@ -29,9 +29,9 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
   const api = useApi();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
-  const queryResults = usePaginatedQuery<SanctionsSearchHistory>(
+  const queryResults = useCursorQuery<SanctionsSearchHistory>(
     SANCTIONS_SEARCH(params),
-    async (paginationParams) => {
+    async ({ from }) => {
       const { createdAt, searchTerm, types, ...rest } = params;
       const [start, end] = createdAt ?? [];
       const response = await api.getSanctionsSearch({
@@ -39,14 +39,11 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
         beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
         searchTerm,
         types,
+        start: from,
         ...rest,
-        ...paginationParams,
       });
 
-      return {
-        total: response?.total || 0,
-        items: response?.items || [],
-      };
+      return response;
     },
   );
 
