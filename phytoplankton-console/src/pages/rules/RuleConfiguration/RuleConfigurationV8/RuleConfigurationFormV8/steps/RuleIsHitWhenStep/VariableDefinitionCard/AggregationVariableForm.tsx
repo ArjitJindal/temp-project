@@ -109,6 +109,8 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       if (start.fiscalYear != null) {
         startTs = getFiscalYearStart(dayjs(), start.fiscalYear).subtract(start.units, 'year');
       }
+    } else if (start.granularity === 'all_time' || start.granularity === 'now') {
+      startTs = start.granularity === 'all_time' ? dayjs().subtract(5, 'year') : dayjs(); // start CANNOT be now
     } else {
       startTs = dayjs().subtract(start.units, start.granularity);
     }
@@ -117,6 +119,8 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       if (end.fiscalYear != null) {
         endTs = getFiscalYearStart(dayjs(), end.fiscalYear).subtract(end.units, 'year');
       }
+    } else if (end.granularity === 'now' || end.granularity === 'all_time') {
+      endTs = end.granularity === 'now' ? dayjs() : dayjs(); // end CANNOT be all_time
     } else {
       endTs = dayjs().subtract(end.units, end.granularity);
     }
@@ -275,7 +279,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
         </PropertyColumns>
         {!isValidTimeWindow && (
           <Alert type="error">
-            <b>Time from</b> should be earlier than <b>Time to</b>
+            <b>Time to</b> should be earlier than <b>Time from</b>
           </Alert>
         )}
         <div>

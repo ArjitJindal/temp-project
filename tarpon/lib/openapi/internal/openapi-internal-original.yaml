@@ -5861,6 +5861,8 @@ components:
       title: RuleAggregationTimeWindowGranularity
       type: string
       enum:
+        - all_time
+        - now
         - second
         - minute
         - hour

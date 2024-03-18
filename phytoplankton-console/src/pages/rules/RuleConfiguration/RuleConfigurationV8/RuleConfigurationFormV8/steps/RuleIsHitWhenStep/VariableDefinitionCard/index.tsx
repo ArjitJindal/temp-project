@@ -135,7 +135,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
             baseCurrency: settings.defaultValues?.currency,
             timeWindow: {
               start: { units: 1, granularity: 'day' },
-              end: { units: 0, granularity: 'day' },
+              end: { units: 0, granularity: 'now' },
             },
           },
         });

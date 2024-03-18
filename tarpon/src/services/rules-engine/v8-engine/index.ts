@@ -5,6 +5,7 @@ import { isEqual, memoize, mergeWith, uniq } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { getAllValuesByKey } from '@flagright/lib/utils'
+import dayjs from '@flagright/lib/utils/dayjs'
 import { RULE_FUNCTIONS } from '../v8-functions'
 import { RULE_OPERATORS } from '../v8-operators'
 import {
@@ -47,6 +48,7 @@ import { handleV8TransactionAggregationTask } from '@/lambdas/transaction-aggreg
 import { getSQSClient } from '@/utils/sns-sqs-client'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
+import { RuleAggregationTimeWindow } from '@/@types/openapi-internal/RuleAggregationTimeWindow'
 
 const sqs = getSQSClient()
 
@@ -722,6 +724,10 @@ export class RuleJsonLogicEvaluator {
   private getAggregationGranularity(
     aggregationVariable: RuleAggregationVariable
   ) {
+    if (aggregationVariable.timeWindow.end.granularity === 'all_time')
+      return 'year'
+    else if (aggregationVariable.timeWindow.start.granularity === 'now')
+      return aggregationVariable.timeWindow.end.granularity
     return aggregationVariable.timeWindow.start.rollingBasis ||
       aggregationVariable.timeWindow.end.rollingBasis
       ? 'hour'
@@ -730,17 +736,26 @@ export class RuleJsonLogicEvaluator {
 
   private getTimeRange(
     currentTimestamp: number,
-    timeWindowFrom: TimeWindow,
-    timeWindowTo: TimeWindow
+    timeWindowFrom: RuleAggregationTimeWindow,
+    timeWindowTo: RuleAggregationTimeWindow
   ) {
-    const { afterTimestamp } = getTimestampRange(
-      currentTimestamp,
-      timeWindowFrom
-    )
-    const { afterTimestamp: beforeTimestamp } = getTimestampRange(
-      currentTimestamp,
-      timeWindowTo
-    )
+    let afterTimestamp: number, beforeTimestamp: number
+    if (timeWindowTo.granularity === 'all_time') {
+      afterTimestamp = dayjs(currentTimestamp).subtract(5, 'year').valueOf()
+    } else {
+      afterTimestamp = getTimestampRange(
+        currentTimestamp,
+        timeWindowFrom as TimeWindow
+      ).afterTimestamp
+    }
+    if (timeWindowTo.granularity === 'now') {
+      beforeTimestamp = currentTimestamp
+    } else {
+      beforeTimestamp = getTimestampRange(
+        currentTimestamp,
+        timeWindowTo as TimeWindow
+      ).afterTimestamp
+    }
     return { afterTimestamp, beforeTimestamp }
   }
 }

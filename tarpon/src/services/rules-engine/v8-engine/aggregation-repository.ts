@@ -214,11 +214,16 @@ export class AggregationRepository {
   private getUpdatedTtlAttribute(
     aggregationVariable: RuleAggregationVariable
   ): number {
-    const units = aggregationVariable.timeWindow.start.units
-    let granularity = aggregationVariable.timeWindow.start.granularity
+    let units = aggregationVariable.timeWindow.end.units
+    let granularity = aggregationVariable.timeWindow.end.granularity
 
     if (granularity === 'fiscal_year') {
       granularity = 'year'
+    } else if (granularity === 'all_time') {
+      granularity = 'year'
+      units = 5
+    } else if (granularity === 'now') {
+      granularity = 'day'
     }
     return (
       Math.floor(Date.now() / 1000) +
