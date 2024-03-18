@@ -29,6 +29,11 @@ const env = {
   OUTPUT_FOLDER: 'dist',
 };
 
+// NOTE: should be synced with src/utils/branding.ts (WHITELABEL_BRANDING)
+const WHITE_LABEL_DOMAINS = ['transactcomply.com', 'regtank.com', 'traxionright.com']
+  .map((v) => `https://*.${v}`)
+  .join(' ');
+
 function serve() {
   const port = parseInt(process.env.SERVER_PORT || 8001);
   const folder = path.join(env.PROJECT_DIR, env.OUTPUT_FOLDER);
@@ -88,9 +93,9 @@ async function main() {
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com`,
     `object-src 'none'`,
     `base-uri 'self'`,
-    `connect-src 'self' http://localhost:3002 *.amazonaws.com https://*.flagright.dev https://*.flagright.com https://*.regtank.com https://*.traxionright.com https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com https://fonts.gstatic.com`,
+    `connect-src 'self' http://localhost:3002 *.amazonaws.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com https://fonts.gstatic.com ${WHITE_LABEL_DOMAINS}`,
     `font-src 'self' https://fonts.gstatic.com https://heapanalytics.com`,
-    `frame-src 'self' https://*.flagright.com  https://*.flagright.dev`,
+    `frame-src 'self' https://*.flagright.com https://*.flagright.dev ${WHITE_LABEL_DOMAINS}`,
     `img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://heapanalytics.com`,
     `manifest-src 'self'`,
     `media-src 'self'`,

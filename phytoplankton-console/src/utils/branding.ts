@@ -108,6 +108,7 @@ const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0Client
   systemAvatarUrl: TraxionRightFavicon,
 };
 
+// NOTE: should be synced with build/index.js (WHITE_LABEL_DOMAINS)
 export const WHITELABEL_BRANDING: { [key: string]: BrandingSettings } = {
   'tm.sandbox.bureau.id': {
     ...BUREAU_BRANDING,
