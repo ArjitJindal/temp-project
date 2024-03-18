@@ -280,7 +280,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             />
           </Label>
           {formValues.type === 'TRANSACTION' && (
-            <Label label="Transaction direction" required={{ value: true, showHint: true }}>
+            <Label label="Transaction direction">
               <SelectionGroup
                 value={formValues.transactionDirections}
                 onChange={(transactionDirections) => handleUpdateForm({ transactionDirections })}
