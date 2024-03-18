@@ -90,6 +90,9 @@ export type Config = {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
     }
+    COPILOT_LAMBDA?: {
+      MEMORY_SIZE?: number
+    }
     LAMBDA_VPC_ENABLED?: boolean
     INSPECTOR_ENABLED: boolean
     DATABRICKS_ENABLED?: boolean

@@ -206,6 +206,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     /* Copilot */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
+      memorySize: this.config.resource.COPILOT_LAMBDA?.MEMORY_SIZE ?? 1024,
     })
 
     /* Notifications */
