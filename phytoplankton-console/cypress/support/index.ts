@@ -50,6 +50,13 @@ declare global {
         body?: any;
       }): Chainable<Promise<Element>>;
       addSettings(settings: TenantSettings): Chainable<Promise<Element>>;
+      getInputByLabel(label: string, element: 'input' | 'textarea'): Chainable<Element>;
+      selectOptionsByLabel(label: string, options: string[]): Chainable<Element>;
+      selectRadioByLabel(label: string, value: string): Chainable<Element>;
+      selectCheckBoxByLabel(label: string, value: string[]): Chainable<Element>;
+      selectSegmentedControl(title: string): Chainable<Element>;
+      selectTab(title: string): Chainable<Element>;
+      asertInputDisabled(label: string): Chai.Assertion;
     }
   }
 }

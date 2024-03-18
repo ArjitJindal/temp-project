@@ -1,4 +1,5 @@
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import cn from 'clsx';
 import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
@@ -55,6 +56,7 @@ export default function Label(props: Props) {
     {
       className: cn(s.root, s[`position-${position}`], s[`level-${level}`]),
       ['data-cy']: testId,
+      id: uuidv4(),
     },
     position === 'TOP' ? (
       <>

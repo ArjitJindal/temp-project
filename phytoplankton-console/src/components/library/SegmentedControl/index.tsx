@@ -23,7 +23,7 @@ interface Props<Value extends Comparable> {
 export default function SegmentedControl<Value extends Comparable = string>(props: Props<Value>) {
   const { active, onChange, size = 'MEDIUM', items, style } = props;
   return (
-    <div className={cn(s.root, s[`size-${size}`])} style={style}>
+    <div className={cn(s.root, s[`size-${size}`])} style={style} data-cy={'segmented-control'}>
       {items.map((item) => (
         <button
           key={key(item.value)}

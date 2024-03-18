@@ -273,3 +273,60 @@ Cypress.Commands.add('publicApiHandler', (method, endpoint, requestBody) => {
 Cypress.Commands.add('closeDrawer', () => {
   cy.get('[data-cy="drawer-close-button"]').filter(':visible').first().click();
 });
+
+Cypress.Commands.add('getInputByLabel', (label, element) => {
+  cy.contains(label)
+    .parent('div')
+    .parent('div')
+    .invoke('attr', 'id')
+    .then((parentId) => {
+      return cy.get(`#${parentId} ${element}`).first().focus();
+    });
+});
+
+Cypress.Commands.add('selectOptionsByLabel', (label: string, option: string[]) => {
+  cy.getInputByLabel(label, 'input')
+    .focus()
+    .type(`${option.join('{enter}')}`)
+    .blur();
+});
+
+Cypress.Commands.add('selectRadioByLabel', (label, option) => {
+  cy.contains(label)
+    .parent('div')
+    .parent('div')
+    .within(() => {
+      cy.contains(option).click();
+    });
+});
+
+Cypress.Commands.add('selectCheckBoxByLabel', (label, option) => {
+  cy.contains(label)
+    .parent('div')
+    .parent('div')
+    .within(() => {
+      option.forEach((opt) => {
+        cy.contains(opt).click();
+      });
+    });
+});
+
+Cypress.Commands.add('selectSegmentedControl', (title) => {
+  cy.get('div[data-cy="segmented-control"]')
+    .first()
+    .within(() => {
+      cy.contains(title).click();
+    });
+});
+
+Cypress.Commands.add('selectTab', (title) => {
+  cy.get('div[role="tablist"]')
+    .first()
+    .within(() => {
+      cy.contains(title).click();
+    });
+});
+
+Cypress.Commands.add('asertInputDisabled', (label: string) => {
+  expect(cy.getInputByLabel(label, 'input')).to.be.disabled;
+});
