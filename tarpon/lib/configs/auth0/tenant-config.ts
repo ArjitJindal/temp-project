@@ -2,9 +2,7 @@ import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { Auth0DevTenantConfig } from './tenant-config-dev'
 import { Auth0ProdTenantConfig } from './tenant-config-prod'
-import { Auth0ProdBureauTenantConfig } from './tenant-config-prod-bureau'
 import { Auth0SandboxTenantConfig } from './tenant-config-sandbox'
-import { Auth0SandboxBureauTenantConfig } from './tenant-config-sandbox-bureau'
 import { Auth0SandboxRegtankTenantConfig } from './tenant-config-sandbox-regtank'
 import { Auth0SandboxZigramTenantConfig } from './tenant-config-sandbox-zigram'
 import { Auth0ProdRegtankTenantConfig } from './tenant-config-prod-regtank'
@@ -13,7 +11,6 @@ import { Auth0ProdTraxionRightTenantConfig } from './tenant-config-prod-traxionr
 
 const REGION_TENANT_CONFIGS: { [key: string]: Auth0TenantConfig[] } = {
   'asia-1': [Auth0ProdRegtankTenantConfig, Auth0ProdTraxionRightTenantConfig],
-  'asia-2': [Auth0ProdBureauTenantConfig],
 }
 
 export function getAuth0TenantConfigs(
@@ -30,7 +27,6 @@ export function getAuth0TenantConfigs(
     case 'sandbox': {
       return [
         Auth0SandboxTenantConfig,
-        Auth0SandboxBureauTenantConfig,
         Auth0SandboxRegtankTenantConfig,
         Auth0SandboxZigramTenantConfig,
         Auth0SandboxTraxionRightTenantConfig,

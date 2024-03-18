@@ -5,10 +5,6 @@ const sanitize = (url: string) => {
 }
 
 export const WHITE_LABEL_ORIGINS = {
-  bureau: {
-    sandbox: 'https://tm.sandbox.bureau.id',
-    prod: 'https://tm.bureau.id',
-  },
   regtank: {
     sandbox: 'https://qc-staging.console.regtank.com',
     prod: 'https://transaction.console.regtank.com',

@@ -1,14 +1,11 @@
 import FlagrightLightLogo from '@/branding/flagright-logo-light.svg';
 import FlagrightDarkLogo from '@/branding/flagright-logo-dark.svg';
-import BureauLightLogo from '@/branding/bureau-logo-light.svg';
-import BureauDarkLogo from '@/branding/bureau-logo-dark.svg';
 import RegtankLightLogo from '@/branding/regtank-logo-light.svg';
 import RegtankDarkLogo from '@/branding/regtank-logo-dark.svg';
 import ZigramLightLogo from '@/branding/zigram-logo-light.png';
 import ZigramDarkLogo from '@/branding/zigram-logo-dark.svg';
 import TraxionRightLightLogo from '@/branding/traxionright-logo-light.png';
 import TraxionRightDarkLogo from '@/branding/traxion-logo-dark.svg';
-import BureauFaviconSvg from '@/branding/bureau-favicon.svg';
 import FlagrightFavicon from '@/branding/flagright-favicon.png';
 import FlagrightNoTextLogo from '@/branding/flagright-no-text.svg';
 import RegtankFaviconSvg from '@/branding/regtank-favicon.svg';
@@ -53,21 +50,6 @@ const FLAGRIGHT_BRANDING: BrandingSettings = {
   systemAvatarUrl: FlagrightNoTextLogo,
 };
 
-const BUREAU_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
-  supportEmail: 'helpdesk@bureau.id',
-  logoLight: BureauLightLogo,
-  logoDark: BureauDarkLogo,
-  companyName: 'Bureau',
-  notProvisionedWarning: `User does not have a provisioned Bureau Account.`,
-  apiDocsLinks: {
-    webhooks: 'https://docs.flagright.com/guides/webhooks/introduction',
-  },
-  // TODO: We can remove `redirectPath` here after https://tm.sandbox.bureau.id is correctly redirectly to Console.
-  redirectPath: '/dashboard/analysis',
-  faviconUrl: BureauFaviconSvg,
-  systemAvatarUrl: BureauFaviconSvg,
-};
-
 const REGTANK_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
   // TBD
   supportEmail: 'support@regtank.com',
@@ -110,18 +92,6 @@ const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0Client
 
 // NOTE: should be synced with build/index.js (WHITE_LABEL_DOMAINS)
 export const WHITELABEL_BRANDING: { [key: string]: BrandingSettings } = {
-  'tm.sandbox.bureau.id': {
-    ...BUREAU_BRANDING,
-    auth0Domain: 'login.tm.sandbox.bureau.id',
-    auth0ClientId: 'JJHmTg7oupG4tUZRDpvAlghJvvVnbyoc',
-    env: 'sandbox',
-  },
-  'tm.bureau.id': {
-    ...BUREAU_BRANDING,
-    auth0Domain: 'login.tm.bureau.id',
-    auth0ClientId: 'XFllobU2SratClHKFrSfVSROlpRH8rUm',
-    env: 'prod',
-  },
   'sandboxconsole.transactcomply.com': {
     ...ZIGRAM_BRANDING,
     auth0Domain: 'login.sandboxconsole.transactcomply.com',
