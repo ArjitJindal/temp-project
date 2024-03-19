@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AsyncResource, success, loading, failed, isSuccess } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { getErrorMessage } from '@/utils/lang';
 
 export function makeAsyncComponent<Props>(
   load: () => Promise<{ default: React.FC<React.PropsWithChildren<Props>> }>,
@@ -32,8 +33,9 @@ export function makeAsyncComponent<Props>(
           .then((Component) => {
             setComponentRes(success(Component));
           })
-          .catch((e) => {
-            setComponentRes(failed(e));
+          .catch((e: unknown) => {
+            console.error(e);
+            setComponentRes(failed(getErrorMessage(e)));
           });
       }
     }, [componentRes]);
