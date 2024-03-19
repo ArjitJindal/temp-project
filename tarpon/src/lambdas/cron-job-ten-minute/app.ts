@@ -3,8 +3,11 @@ import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
+import { CurrencyService } from '@/services/currency'
 
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
+  // Hack to ensure we query the currency data for databricks.
+  await new CurrencyService().getCurrencyExchangeRate('USD', 'EUR')
   const tenantIds = await TenantService.getAllTenantIds()
 
   try {
