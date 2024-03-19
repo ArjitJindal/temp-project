@@ -5,7 +5,7 @@ import UserDetails from './UserDetails';
 import Header from './Header';
 import s from './index.module.less';
 import CRMMonitoring from './UserDetails/CRMMonitoring';
-import Linking from './UserDetails/Linking/entity_linking';
+import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
