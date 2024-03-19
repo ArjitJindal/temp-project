@@ -2,7 +2,7 @@ import React from 'react';
 import { QuestionResponseEmbedded } from '../../../types';
 import { Recommendation } from './Recommendation';
 import * as Card from '@/components/ui/Card';
-import Linking from '@/pages/users-item/UserDetails/Linking';
+import Linking from '@/pages/users-item/UserDetails/Linking/entity_linking';
 
 interface Props {
   item: QuestionResponseEmbedded;

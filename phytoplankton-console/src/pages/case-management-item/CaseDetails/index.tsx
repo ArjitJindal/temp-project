@@ -35,7 +35,7 @@ import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { useElementSize } from '@/utils/browser';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUserDetails/TransactionLimits';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
-import Linking from '@/pages/users-item/UserDetails/Linking';
+import Linking from '@/pages/users-item/UserDetails/Linking/entity_linking';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import CRMMonitoring from '@/pages/users-item/UserDetails/CRMMonitoring';
