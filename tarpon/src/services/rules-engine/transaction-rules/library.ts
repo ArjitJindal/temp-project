@@ -14,6 +14,7 @@ import { SanctionsConsumerUserRuleParameters } from '../user-rules/sanctions-con
 import { UserAddressChangeRuleParameters } from '../user-rules/user-address-change'
 import { getMigratedV8Config } from '../v8-migrations'
 import { UserInactivityRuleParameters } from '../user-rules/user-inactivity'
+import { UserOnboardedFromHighRiskCountryRuleParameters } from '../user-rules/user-onboarded-from-high-risk-country'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -539,6 +540,38 @@ const _RULES_LIBRARY: Array<
       ],
       sampleUseCases:
         'A user initiates transactions from four banks within a week, indicating unusual financial behaviour.',
+    }
+  },
+  () => {
+    const defaultParameters: UserOnboardedFromHighRiskCountryRuleParameters = {
+      checksFor: ['nationality', 'residence', 'registration'],
+      highRiskCountries: ['RU', 'SY', 'AF', 'KP', 'SO', 'VE'],
+    }
+
+    return {
+      id: 'R-20',
+      checksFor: [
+        RuleChecksForField.UserDetails,
+        RuleChecksForField.TransactionCountry,
+      ],
+      defaultNature: RuleNature.AML,
+      typologies: [
+        RuleTypology.HighRiskTransactions,
+        RuleTypology.TerroristFinancing,
+      ],
+      defaultAction: 'FLAG',
+      defaultCasePriority: 'P1',
+      description: 'User onboarded from high risk country',
+      descriptionTemplate:
+        'User onboarded from a high-risk country ({{ highRiskCountries }})',
+      labels: [],
+      name: 'User onboarded from high risk country',
+      ruleImplementationName: 'user-onboarded-from-high-risk-country',
+      defaultParameters,
+      sampleUseCases:
+        'A user’s country of residence is identified as a high-risk country, prompting a review of their account activity.',
+      types: [RuleTypeField.NewActivity, RuleTypeField.RiskExposure],
+      type: 'USER',
     }
   },
   () => {
