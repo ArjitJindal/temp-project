@@ -101,6 +101,7 @@ export class SanctionsService {
     if (this.apiKey) {
       return
     }
+
     const mongoDb = await getMongoDbClient()
     this.sanctionsSearchRepository = new SanctionsSearchRepository(
       this.tenantId,
@@ -114,6 +115,7 @@ export class SanctionsService {
     )
     this.sanctionsScreeningDetailsRepository =
       new SanctionsScreeningDetailsRepository(this.tenantId, mongoDb)
+
     this.apiKey = await this.getApiKey()
     const settings = await tenantSettings(this.tenantId)
     this.complyAdvantageSearchProfileId =

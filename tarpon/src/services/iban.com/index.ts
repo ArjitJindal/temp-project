@@ -194,6 +194,7 @@ export class IBANService {
     if (this.apiKey) {
       return
     }
+
     const mongoDb = await getMongoDbClient()
     this.ibanApiRepository = new IBANApiRepository(this.tenantId, mongoDb)
     this.apiKey = await getApiKey()

@@ -27,7 +27,13 @@ export async function getSecretByName<T extends SecretName>(
   return getSecret(secretId)
 }
 
+const secretCache = new Map<string, any>()
+
 export async function getSecret<T>(secretId: string): Promise<T> {
+  if (secretCache.has(secretId)) {
+    return secretCache.get(secretId) as T
+  }
+
   let secretString: string | undefined
   try {
     secretString = (
@@ -49,11 +55,15 @@ export async function getSecret<T>(secretId: string): Promise<T> {
     throw new Error(`No secret found for secret ${secretId}`)
   }
 
+  let secretValue: T
   try {
-    return JSON.parse(secretString as string) as T
+    secretValue = JSON.parse(secretString as string) as T
   } catch (e) {
-    return secretString as any as T
+    secretValue = secretString as any as T
   }
+
+  secretCache.set(secretId, secretValue)
+  return secretValue
 }
 
 export async function deleteSecret(secretId: string): Promise<void> {
