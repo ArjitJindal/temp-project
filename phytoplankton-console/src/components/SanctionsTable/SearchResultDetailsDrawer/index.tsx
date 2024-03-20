@@ -53,7 +53,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
   }, [isDownloading, pdfRef, pdfName]);
   const okText = isDownloading ? (
     <>
-      <LoadingOutlined className={s.spinner} spin /> Downloding
+      <LoadingOutlined className={s.spinner} spin /> Downloading
     </>
   ) : (
     <>
