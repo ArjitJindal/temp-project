@@ -6083,6 +6083,7 @@ components:
         - PEP
         - Sanctions hit
         - Risky profile
+        - High risk country
         - Other
     RuleType:
       title: RuleType
