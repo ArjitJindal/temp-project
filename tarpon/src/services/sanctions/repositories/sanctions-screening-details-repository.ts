@@ -231,12 +231,8 @@ export class SanctionsScreeningDetailsRepository {
       ...paginatePipeline(params),
     ])
     const countPipeline = sharedPipeline.concat([
-      {
-        $limit: COUNT_QUERY_LIMIT,
-      },
-      {
-        $count: 'count',
-      },
+      { $limit: COUNT_QUERY_LIMIT },
+      { $count: 'count' },
     ])
     const [data, totalResult] = await Promise.all([
       collection

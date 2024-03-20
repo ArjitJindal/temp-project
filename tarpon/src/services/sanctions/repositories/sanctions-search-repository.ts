@@ -125,6 +125,7 @@ export class SanctionsSearchRepository {
         })),
       })
     }
+
     return { $and: conditions }
   }
 
