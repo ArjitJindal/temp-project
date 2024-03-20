@@ -110,7 +110,7 @@ describe('hitDistance parameter', () => {
       ruleImplementationName: 'transaction-reference-keyword',
       defaultParameters: {
         keywords: ['keyword1', 'keyword2'],
-        allowedDistance: 2,
+        allowedDistancePercentage: 30,
       } as TransactionReferenceKeywordRuleParameters,
       defaultAction: 'FLAG',
     },
@@ -118,7 +118,7 @@ describe('hitDistance parameter', () => {
 
   describe.each<TransactionRuleTestCase>([
     {
-      name: 'reference contains a target keyword,less than allowedDistance - hit',
+      name: 'reference contains a target keyword,less than allowedDistancePercentage - hit',
       transactions: [
         getTestTransaction({
           reference: 'A reference with ttyword1',
@@ -130,7 +130,7 @@ describe('hitDistance parameter', () => {
       expectedHits: [true, true],
     },
     {
-      name: "reference doesn't contain a target keyword, more than allowedDistance - not hit",
+      name: "reference doesn't contain a target keyword, more than allowedDistancePercentage - not hit",
       transactions: [
         getTestTransaction({
           reference: 'A reference with tyoword1',

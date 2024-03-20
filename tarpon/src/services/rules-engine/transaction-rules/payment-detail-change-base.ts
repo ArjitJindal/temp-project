@@ -10,6 +10,7 @@ import {
 } from '../utils/transaction-rule-utils'
 import {
   INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
+  LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_OPTIONAL_SCHEMA,
   TIME_WINDOW_SCHEMA,
   TimeWindow,
 } from '../utils/rule-parameter-schemas'
@@ -60,15 +61,8 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
             'Rule is run when count of old name usages is greater or equal to threshold',
         },
         initialTransactions: INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA(),
-        allowedDistancePercentage: {
-          type: 'integer',
-          title: 'Fuzziness (Levenshtein distance)',
-          description:
-            'For example specifying 50% means that allowed Levenshtein distance will be half of the number of characters in the name.',
-          minimum: 0,
-          maximum: 100,
-          nullable: true,
-        },
+        allowedDistancePercentage:
+          LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_OPTIONAL_SCHEMA({}),
         ignoreEmptyName: {
           type: 'boolean',
           nullable: true,

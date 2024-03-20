@@ -716,24 +716,26 @@ export const INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
-export const LEVENSHTEIN_DISTANCE_THRESHOLD_SCHEMA = (
+export const LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_SCHEMA = (
   options?: SchemaOptions
 ) =>
   ({
-    type: 'number',
+    type: 'integer',
     ...uiSchema(options?.uiSchema, {
-      subtype: 'LEVENSHTEIN_DISTANCE_THRESHOLD',
+      subtype: 'LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE',
     }),
-    title: 'Maximum number of single-character edits (Levenshtein distance)',
+    minimum: 0,
+    maximum: 100,
+    title: 'Fuzziness percentage (Levenshtein distance)',
     description:
-      'rule is run if the number of single-character edits is greater than the threshold',
+      'For example specifying 50% means that allowed Levenshtein distance will be half of the number of characters in username.',
   } as const)
 
-export const LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA = (
+export const LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_OPTIONAL_SCHEMA = (
   options?: SchemaOptions
 ) =>
   ({
-    ...LEVENSHTEIN_DISTANCE_THRESHOLD_SCHEMA(options),
+    ...LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_SCHEMA(options),
     nullable: true,
   } as const)
 

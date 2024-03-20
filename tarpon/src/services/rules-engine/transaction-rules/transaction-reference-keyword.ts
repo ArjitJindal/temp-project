@@ -1,13 +1,13 @@
 import { JSONSchemaType } from 'ajv'
-import { getEditDistance } from '@flagright/lib/utils'
+import { getEditDistancePercentage } from '@flagright/lib/utils/string'
 import { RuleHitResult } from '../rule'
-import { LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import { traceable } from '@/core/xray'
 
 export type TransactionReferenceKeywordRuleParameters = {
   keywords: string[]
-  allowedDistance?: number
+  allowedDistancePercentage?: number
 }
 
 @traceable
@@ -21,7 +21,8 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
           title: 'Keywords',
           items: { type: 'string' },
         },
-        allowedDistance: LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA(),
+        allowedDistancePercentage:
+          LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_OPTIONAL_SCHEMA({}),
       },
       required: ['keywords'],
     }
@@ -32,19 +33,19 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
       return
     }
 
-    const { keywords, allowedDistance } = this.parameters
+    const { keywords, allowedDistancePercentage } = this.parameters
     const referenceWords = (this.transaction.reference as string)
       .toLowerCase()
       .trim()
       .split(/\s+/)
     const referenceWordsSet = new Set(referenceWords)
     let hitWord: string | undefined = undefined
-    if (allowedDistance != undefined) {
+    if (allowedDistancePercentage !== undefined) {
       hitWord = referenceWords.find((refrenceWord) => {
         return keywords.find((keyword) => {
           return (
-            getEditDistance(refrenceWord, keyword.toLowerCase()) <=
-            allowedDistance
+            getEditDistancePercentage(refrenceWord, keyword.toLowerCase()) <=
+            allowedDistancePercentage
           )
         })
       })

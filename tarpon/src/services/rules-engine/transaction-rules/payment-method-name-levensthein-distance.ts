@@ -2,6 +2,7 @@ import { JSONSchemaType } from 'ajv'
 import { getEditDistance } from '@flagright/lib/utils'
 import { RuleHitResultItem } from '../rule'
 import { removePrefixFromName } from '../utils/transaction-rule-utils'
+import { LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 import { formatConsumerName } from '@/utils/helpers'
@@ -21,14 +22,8 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
     return {
       type: 'object',
       properties: {
-        allowedDistancePercentage: {
-          type: 'integer',
-          title: 'Fuzziness (Levenshtein distance)',
-          description:
-            'For example specifying 50% means that allowed Levenshtein distance will be half of the number of characters in username.',
-          minimum: 0,
-          maximum: 100,
-        },
+        allowedDistancePercentage:
+          LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_SCHEMA({}),
         checkDirection: {
           type: 'string',
           title: 'Transaction history scope options',
