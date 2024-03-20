@@ -1,8 +1,8 @@
 import React from 'react';
 import { useUsers } from '@/utils/user-utils';
-import { getAccountUserName } from '@/utils/account';
+import { getNonSuperAdminUserName } from '@/utils/account';
 import { neverReturn } from '@/utils/lang';
-import { Notification } from '@/components/AppWrapper/Menu/NotificationsDrawer/NotificationsDrawerItem';
+import { Notification } from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/NotificationsDrawerItem';
 
 interface Props {
   notification: Notification;
@@ -131,7 +131,9 @@ function EntityId(props: Props) {
 
 function Author(props: Props) {
   const { notification } = props;
-  const [users] = useUsers();
+  const [users] = useUsers({
+    includeRootUsers: true,
+  });
   const user = users[notification.triggeredBy];
-  return <b>‘{getAccountUserName(user, notification.triggeredBy)}’</b>;
+  return <b>‘{getNonSuperAdminUserName(user)}’</b>;
 }

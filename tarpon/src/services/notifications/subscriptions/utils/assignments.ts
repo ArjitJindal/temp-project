@@ -1,3 +1,4 @@
+import { getEntityMetadata } from './commonUtils'
 import {
   AlertLogMetaDataType,
   AuditLogAssignmentsImage,
@@ -50,6 +51,7 @@ export const getAssignmentNotification = (
       type: 'ASSIGNMENT',
       assignments: newAssignments,
     },
+    metadata: getEntityMetadata(type, payload.logMetadata),
   }
 
   return notification
@@ -92,6 +94,7 @@ export const getUnassignmentNotification = (
       type: 'ASSIGNMENT',
       assignments: removedAssignments,
     },
+    metadata: getEntityMetadata(type, payload.logMetadata),
   }
 
   return notification

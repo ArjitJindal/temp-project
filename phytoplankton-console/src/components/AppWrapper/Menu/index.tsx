@@ -1,6 +1,5 @@
 import { ImportOutlined } from '@ant-design/icons';
 import React, { useContext, useEffect, useState } from 'react';
-import cn from 'clsx';
 import { useLocation } from 'react-router';
 import { SideBarContext } from '../Providers/SidebarProvider';
 import { useFeaturesEnabled, useFeatureEnabled } from '../Providers/SettingsProvider';
@@ -15,6 +14,7 @@ import AddUsersIcon from './icons/add-users.react.svg';
 import TransactionsIcon from './icons/transactions.react.svg';
 import Header from './Header';
 import Footer from './Footer';
+import { Notifications } from './Notifications';
 import Article from '@/components/ui/icons/Remix/document/article-line.react.svg';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import BarChartFillIcon from '@/components/ui/icons/Remix/business/bar-chart-fill.react.svg';
@@ -27,7 +27,6 @@ import { isLeaf, RouteItem, RouteWithPath } from '@/services/routing/types';
 import TopLevelLink from '@/components/AppWrapper/Menu/TopLevelLink';
 import { getBranding } from '@/utils/branding';
 import { CluesoContext } from '@/components/AppWrapper/Providers/CluesoTokenProvider';
-import NotificationsDrawer from '@/components/AppWrapper/Menu/NotificationsDrawer';
 
 const icons = {
   accounts: <AddUsersIcon />,
@@ -120,16 +119,10 @@ export default function Menu(props: Props) {
         </div>
       </div>
       <Footer isCollapsed={isCollapsed} />
-      <div className={cn(s.drawerContainer, isNotificationsDrawerVisible && s.isVisible)}>
-        <NotificationsDrawer
-          notifications={[]}
-          isVisible={isNotificationsDrawerVisible}
-          onReadNotification={(id) => {
-            throw new Error(`Not implemented: read notification ${id}`);
-          }}
-          onChangeVisibility={setIsNotificationsDrawerVisible}
-        />
-      </div>
+      <Notifications
+        isNotificationsDrawerVisible={isNotificationsDrawerVisible}
+        setIsNotificationsDrawerVisible={setIsNotificationsDrawerVisible}
+      />
     </div>
   );
 }

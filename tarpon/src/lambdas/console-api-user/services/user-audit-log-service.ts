@@ -5,6 +5,9 @@ import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum
 import { traceable } from '@/core/xray'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { Comment } from '@/@types/openapi-internal/Comment'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 @traceable
 export class UserAuditLogService {
@@ -38,6 +41,12 @@ export class UserAuditLogService {
     userId: string,
     comment: Comment
   ): Promise<void> {
+    const mongoDb = await getMongoDbClient()
+    const userRepository = new UserRepository(this.tenantId, {
+      mongoDb: mongoDb,
+      dynamoDb: getDynamoDbClient(),
+    })
+    const user = await userRepository.getUserById(userId)
     const auditLog: AuditLog = {
       type: 'USER',
       subtype: 'COMMENT',
@@ -45,6 +54,9 @@ export class UserAuditLogService {
       timestamp: Date.now(),
       newImage: comment,
       entityId: userId,
+      logMetadata: {
+        userType: user?.type,
+      },
     }
     await publishAuditLog(this.tenantId, auditLog)
   }
@@ -53,6 +65,12 @@ export class UserAuditLogService {
     userId: string,
     comment: Comment
   ): Promise<void> {
+    const mongoDb = await getMongoDbClient()
+    const userRepository = new UserRepository(this.tenantId, {
+      mongoDb: mongoDb,
+      dynamoDb: getDynamoDbClient(),
+    })
+    const user = await userRepository.getUserById(userId)
     const auditLog: AuditLog = {
       type: 'USER',
       subtype: 'COMMENT',
@@ -61,6 +79,9 @@ export class UserAuditLogService {
       oldImage: comment,
       newImage: {},
       entityId: userId,
+      logMetadata: {
+        userType: user?.type,
+      },
     }
     await publishAuditLog(this.tenantId, auditLog)
   }

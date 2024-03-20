@@ -3,6 +3,9 @@ import { ConsoleNotificationStatus } from '@/@types/openapi-internal/ConsoleNoti
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
 import { NOTIFICATIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { cursorPaginate } from '@/utils/pagination'
+import { NotificationListResponse } from '@/@types/openapi-internal/NotificationListResponse'
+import { DefaultApiGetNotificationsRequest } from '@/@types/openapi-internal/RequestParameters'
 
 @traceable
 export class NotificationRepository {
@@ -56,20 +59,9 @@ export class NotificationRepository {
 
   async getConsoleNotifications(
     accountId: string,
-    params: { page: number }
-  ): Promise<Notification[]> {
-    const db = this.mongoDb.db()
-    const notificationsCollectionName = NOTIFICATIONS_COLLECTION(this.tenantId)
-
-    const notificationsCollection = db.collection<Notification>(
-      notificationsCollectionName
-    )
-
-    return notificationsCollection
-      .find({ recievers: accountId, notificationChannel: 'CONSOLE' })
-      .skip((params.page - 1) * 50)
-      .limit(50)
-      .toArray()
+    params: DefaultApiGetNotificationsRequest
+  ): Promise<NotificationListResponse> {
+    return this.getConsoleNotificationsCursorPaginate(accountId, params)
   }
 
   async markAllAsRead(accountId: string): Promise<void> {
@@ -100,5 +92,53 @@ export class NotificationRepository {
       { $set: { 'consoleNotificationStatuses.$[user].status': 'READ' } },
       { arrayFilters: [{ 'user.recieverUserId': accountId }] }
     )
+  }
+
+  async getConsoleNotificationsCursorPaginate(
+    accountId: string,
+    params: DefaultApiGetNotificationsRequest
+  ): Promise<{
+    items: Notification[]
+    next: string
+    prev: string
+    hasPrev: boolean
+    hasNext: boolean
+    count: number
+    limit: number
+    last: string
+  }> {
+    const db = this.mongoDb.db()
+    const notificationsCollectionName = NOTIFICATIONS_COLLECTION(this.tenantId)
+
+    const notificationsCollection = db.collection<Notification>(
+      notificationsCollectionName
+    )
+
+    let notificationStatusQuery = {}
+    if (params.notificationStatus === 'UNREAD') {
+      notificationStatusQuery = {
+        consoleNotificationStatuses: {
+          $elemMatch: {
+            recieverUserId: accountId,
+            status: 'SENT',
+          },
+        },
+      }
+    }
+    const result = await cursorPaginate<Notification>(
+      notificationsCollection,
+      {
+        recievers: accountId,
+        notificationChannel: 'CONSOLE',
+        ...notificationStatusQuery,
+      },
+      {
+        pageSize: 50,
+        sortField: 'createdAt',
+        fromCursorKey: params.start,
+        sortOrder: 'descend',
+      }
+    )
+    return result
   }
 }

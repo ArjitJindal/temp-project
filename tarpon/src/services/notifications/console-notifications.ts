@@ -4,6 +4,8 @@ import { Notification } from '@/@types/openapi-internal/Notification'
 import { NotificationType } from '@/@types/openapi-internal/NotificationType'
 import { getContext } from '@/core/utils/context'
 import { ConsoleNotificationStatus } from '@/@types/openapi-internal/ConsoleNotificationStatus'
+import { NotificationListResponse } from '@/@types/openapi-internal/NotificationListResponse'
+import { DefaultApiGetNotificationsRequest } from '@/@types/openapi-internal/RequestParameters'
 
 export class ConsoleNotifications extends NotificationsChannels {
   channel = 'CONSOLE' as const
@@ -41,16 +43,16 @@ export class ConsoleNotifications extends NotificationsChannels {
 
   public async getConsoleNotifications(
     accountId: string,
-    params: { page: number }
-  ): Promise<Notification[]> {
+    params: DefaultApiGetNotificationsRequest
+  ): Promise<NotificationListResponse> {
     const notificationRepository = this.getNotificationRepository()
 
-    const notifications = await notificationRepository.getConsoleNotifications(
+    const data = await notificationRepository.getConsoleNotifications(
       accountId,
       params
     )
 
-    const filteredNotifications = notifications.map((notification) => {
+    const filteredNotifications = data.items.map((notification) => {
       const recievers = notification.recievers.filter(
         (reciever) => reciever === accountId
       )
@@ -67,7 +69,10 @@ export class ConsoleNotifications extends NotificationsChannels {
       }
     })
 
-    return filteredNotifications
+    return {
+      ...data,
+      items: filteredNotifications,
+    }
   }
 
   public async markAsRead(accountId: string, notificationId: string) {

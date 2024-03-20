@@ -1,3 +1,4 @@
+import { getEntityMetadata } from './utils/commonUtils'
 import { Subscriptions } from '.'
 import {
   NotificationRawPayload,
@@ -51,6 +52,7 @@ export class CaseEscalation extends Subscriptions {
         reason: payload.newImage?.reason ?? [],
         childCaseId: payload.newImage?.alertCaseId,
       },
+      metadata: getEntityMetadata('CASE', payload.logMetadata),
     }
 
     return notification

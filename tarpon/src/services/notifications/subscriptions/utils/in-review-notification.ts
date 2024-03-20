@@ -1,3 +1,4 @@
+import { getEntityMetadata } from './commonUtils'
 import {
   AlertLogMetaDataType,
   AlertUpdateAuditLogImage,
@@ -51,6 +52,7 @@ export const getUpdateNotification = (
     recievers,
     triggeredBy: payload.user?.id || 'FLAGRIGHT_SYSTEM_USER',
     notificationData: { type: 'UPDATE', status },
+    metadata: getEntityMetadata(type, payload.logMetadata),
   }
 
   return notification

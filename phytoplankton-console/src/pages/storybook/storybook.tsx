@@ -66,7 +66,7 @@ import Tag from '@/components/library/Tag/story';
 import AgeRangeInput from '@/components/library/AgeRangeInput/story';
 import Avatar from '@/components/library/Avatar/story';
 import MarkdownEditor from '@/components/markdown/story';
-import NotificationsDrawerList from '@/components/AppWrapper/Menu/NotificationsDrawer/story';
+import NotificationsDrawerList from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/story';
 
 const config: Config = [
   {

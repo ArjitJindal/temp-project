@@ -5,6 +5,7 @@ import { CaseStatus } from '../openapi-internal/CaseStatus'
 import { CaseStatusUpdate } from '../openapi-internal/CaseStatusUpdate'
 import { Comment } from '../openapi-internal/Comment'
 import { Priority } from '../openapi-internal/Priority'
+import { UserType } from '../user/user-type'
 
 export type AuditLogRecord = {
   tenantId: string
@@ -27,6 +28,11 @@ export type AlertLogMetaDataType = {
   alertPriority?: Priority
   alertStatus?: CaseStatus
   reviewAssignments?: Assignment[]
+  caseId?: string
+}
+
+export type UserLogMetaDataType = {
+  userType: UserType
 }
 
 export type AuditLogAssignmentsImage = {

@@ -316,3 +316,8 @@ export const RULE_ALERT_ASSIGNEES = (assigneeType: string): QueryKey => [
   'rule-alert-assignees',
   assigneeType,
 ];
+
+export const NOTIFICATIONS = (notificationStatus?: 'ALL' | 'UNREAD'): QueryKey => [
+  'notifications',
+  `tab-${notificationStatus}`,
+];

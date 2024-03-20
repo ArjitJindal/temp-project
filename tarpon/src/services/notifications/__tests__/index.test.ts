@@ -1045,10 +1045,10 @@ describe('Console Notifications Service Tests', () => {
 
     await notificationsService.markAllAsRead(accountId)
 
-    const notifications = await notificationsService.getConsoleNotifications(
-      accountId,
-      { page: 1 }
-    )
+    const { items: notifications } =
+      await notificationsService.getConsoleNotifications(accountId, {
+        notificationStatus: 'ALL',
+      })
 
     expect(notifications.length).toBe(1)
     expect(notifications?.[0]?.consoleNotificationStatuses?.[0]?.status).toBe(
@@ -1090,9 +1090,9 @@ describe('Console Notifications Service Tests', () => {
 
     await notificationsService.markAsRead(accountId, notification.id)
 
-    const notificationsAfterMarkAsRead =
+    const { items: notificationsAfterMarkAsRead } =
       await notificationsService.getConsoleNotifications(accountId, {
-        page: 1,
+        notificationStatus: 'ALL',
       })
 
     expect(notificationsAfterMarkAsRead.length).toBe(1)

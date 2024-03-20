@@ -448,6 +448,7 @@ export class CasesAlertsAuditLogService {
         alertCreationTimestamp: alertEntity?.createdTimestamp,
         alertPriority: alertEntity?.priority,
         alertStatus: alertEntity?.alertStatus,
+        caseId: alertEntity?.caseId,
       },
     }
     await publishAuditLog(this.tenantId, auditLog)

@@ -2,13 +2,14 @@ import React from 'react';
 import { UseCase } from '@/pages/storybook/components';
 import NotificationsDrawerItem, {
   Notification,
-} from '@/components/AppWrapper/Menu/NotificationsDrawer/NotificationsDrawerItem';
-import NotificationsDrawer from '@/components/AppWrapper/Menu/NotificationsDrawer';
+} from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/NotificationsDrawerItem';
+import NotificationsDrawer from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer';
 import Button from '@/components/library/Button';
 import { humanizeConstant } from '@/utils/humanize';
 import Select from '@/components/library/Select';
 import { useUsers } from '@/utils/user-utils';
 import { NotificationType, Account } from '@/apis';
+import { success } from '@/utils/asyncResource';
 
 export default function (): JSX.Element {
   const [users] = useUsers();
@@ -69,7 +70,28 @@ export default function (): JSX.Element {
               </Button>
             </div>
             {state.notifications.map((notification) => (
-              <NotificationsDrawerItem key={notification.id} notification={notification} />
+              <NotificationsDrawerItem
+                key={notification.id}
+                notification={notification}
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                markAsReadMutation={() => {
+                  setState((prevState) => ({
+                    ...prevState,
+                    notifications: prevState.notifications.map((x) => ({
+                      ...x,
+                      consoleNotificationStatuses: [
+                        ...(x.consoleNotificationStatuses ?? []),
+                        {
+                          status: 'READ',
+                          stausUpdatedAt: Date.now(),
+                          recieverUserId: '1',
+                        },
+                      ],
+                    })),
+                  }));
+                }}
+              />
             ))}
             <Button
               onClick={() => {
@@ -90,23 +112,23 @@ export default function (): JSX.Element {
               }}
             >
               <NotificationsDrawer
-                notifications={state.notifications}
-                onReadNotification={() => {
-                  setState((prevState) => ({
-                    ...prevState,
-                    notifications: prevState.notifications.map((x) => ({
-                      ...x,
-                      consoleNotificationStatuses: [
-                        ...(x.consoleNotificationStatuses ?? []),
-                        {
-                          status: 'READ',
-                          stausUpdatedAt: Date.now(),
-                          recieverUserId: '1',
-                        },
-                      ],
-                    })),
-                  }));
-                }}
+                data={success({
+                  pages: [
+                    {
+                      items: state.notifications ?? [],
+                      next: '',
+                      prev: '',
+                      hasNext: false,
+                      hasPrev: false,
+                      last: '',
+                      count: 0,
+                      limit: 1000,
+                    },
+                  ],
+                })}
+                refetch={() => {}}
+                setTab={() => {}}
+                tab="ALL"
                 isVisible={state.isVisible}
                 onChangeVisibility={(isShown) => {
                   setState((prevState) => ({ ...prevState, isVisible: isShown }));

@@ -1,3 +1,4 @@
+import { getEntityMetadata } from './utils/commonUtils'
 import { Subscriptions } from '.'
 import { NotificationType } from '@/@types/openapi-internal/NotificationType'
 import {
@@ -50,6 +51,7 @@ export class AlertEscalations extends Subscriptions {
         reason: payload.newImage?.reason ?? [],
         childCaseId: payload.newImage?.alertCaseId,
       },
+      metadata: getEntityMetadata('ALERT', payload.logMetadata),
     }
 
     return notification

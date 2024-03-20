@@ -5373,12 +5373,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationsResponse'
+                $ref: '#/components/schemas/NotificationListResponse'
       parameters:
         - schema:
-            type: number
+            type: string
           in: query
-          name: page
+          name: start
+        - schema:
+            type: string
+            enum:
+              - UNREAD
+              - ALL
+          in: query
+          name: notificationStatus
   /notifications/{notificationId}/read:
     parameters:
       - schema:
@@ -5407,16 +5414,6 @@ paths:
           description: OK
 components:
   schemas:
-    NotificationsResponse:
-      title: NotificationsResponse
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Notification'
-      required:
-        - data
     QuestionAutocompleteResponse:
       title: QuestionAutocompleteResponse
       type: object
@@ -6719,6 +6716,37 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/InternalUser'
+      required:
+        - hasPrev
+        - prev
+        - next
+        - hasNext
+        - items
+        - count
+        - limit
+        - last
+    NotificationListResponse:
+      title: NotificationListResponse
+      type: object
+      properties:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
+          type: number
+        limit:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
       required:
         - hasPrev
         - prev
@@ -11258,6 +11286,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ConsoleNotificationStatus'
+        metadata:
+          type: object
+          properties:
+            user:
+              type: object
+              properties:
+                userType:
+                  type: string
+                  enum:
+                    - BUSINESS
+                    - CONSUMER
+            alert:
+              type: object
+              properties:
+                caseId:
+                  type: string
       required:
         - id
         - notificationType

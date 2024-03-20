@@ -26,18 +26,17 @@ export const notificationsHandler = lambdaApi({
       })
 
       const accountId = ctx.userId
-      const page = request.page || 1
+      const { start, notificationStatus } = request
 
       const notifications = await notificationsService.getConsoleNotifications(
         accountId,
         {
-          page,
+          start,
+          notificationStatus,
         }
       )
 
-      return {
-        data: notifications,
-      }
+      return notifications
     })
 
     handlers.registerPostNotificationsMarkAllRead(async (ctx) => {

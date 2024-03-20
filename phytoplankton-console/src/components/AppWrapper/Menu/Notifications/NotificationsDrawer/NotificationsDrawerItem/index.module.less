@@ -10,6 +10,7 @@
   gap: 8px;
   border-radius: 4px;
   transition: background @default-animation-speed;
+  cursor: pointer;
 
   &.isUnread {
     background: @fr-colors-v2-card-background;
@@ -37,13 +38,17 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  color: @fr-colors-v2-gray-6;
+  color: @fr-colors-v2-gray-6 !important;
   font-size: 12px;
 
   .separator {
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: @fr-colors-v2-gray-6;
+    background: @fr-colors-v2-gray-6 !important;
   }
+}
+
+.message {
+  color: black;
 }

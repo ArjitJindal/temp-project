@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { QueryFunction, QueryKey } from '@tanstack/query-core';
-import { useQueries as useQueriesRQ, useQuery as useQueryRQ } from '@tanstack/react-query';
+import {
+  useQueries as useQueriesRQ,
+  useQuery as useQueryRQ,
+  useInfiniteQuery as useInfiniteQueryRQ,
+  UseInfiniteQueryResult,
+} from '@tanstack/react-query';
 import { UseQueryOptions, UseQueryResult } from '@tanstack/react-query/src/types';
 import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react-query/src/useQueries';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
@@ -125,6 +130,10 @@ export type CursorPaginatedQueryFunction<T = unknown> = (
 export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = QueryKey>(
   queryKey: TQueryKey,
   queryFn: CursorPaginatedQueryFunction<TData>,
+  options?: Omit<
+    UseQueryOptions<CursorPaginatedData<TData>, string, CursorPaginatedData<TData>, TQueryKey>,
+    'queryKey' | 'queryFn' | 'initialData'
+  > & { initialData?: () => undefined },
 ): QueryResult<CursorPaginatedData<TData>> {
   const [pageParams, setPageParams] = useState({
     next: '',
@@ -146,6 +155,7 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
       return result;
     },
     {
+      ...options,
       cacheTime: 0,
     },
   );
@@ -190,4 +200,49 @@ export function getPageCount(params: PaginationParams, data: PaginatedData<unkno
     return Math.ceil(total / params.pageSize);
   }
   return 0;
+}
+
+export function useInfiniteQuery(
+  queryKey,
+  queryFn,
+  options: {
+    initialPageParam?: any;
+    getNextPageParam?: (lastPage: any, allPages: any) => any;
+    refetchInterval?: number;
+  },
+) {
+  const result = useInfiniteQueryRQ({ queryKey, queryFn, ...options });
+  return convertInfiniteQueryResult(result);
+}
+
+function convertInfiniteQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
+  results: UseInfiniteQueryResult<TData, unknown>,
+) {
+  if (results.isLoading) {
+    return {
+      data: loading(results.data ?? null),
+      refetch: results.refetch,
+    };
+  }
+  if (results.isFetching) {
+    return {
+      data: loading(results.data),
+      refetch: results.refetch,
+    };
+  }
+  if (results.isSuccess) {
+    return {
+      data: success(results.data),
+      refetch: results.refetch,
+      fetchNextPage: results.fetchNextPage,
+      hasNext: results.hasNextPage,
+    };
+  }
+  if (results.isError) {
+    return {
+      data: failed(getErrorMessage(results.error)),
+      refetch: results.refetch,
+    };
+  }
+  throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);
 }

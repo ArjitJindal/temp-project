@@ -1,3 +1,4 @@
+import { getEntityMetadata } from './commonUtils'
 import {
   NotificationRawPayload,
   PartialNotification,
@@ -29,6 +30,7 @@ export const getCommentMentionNotification = (
       type: 'COMMENT_MENTION',
       mentions: mentions,
     },
+    metadata: getEntityMetadata(type, payload.logMetadata),
   }
 
   return notification

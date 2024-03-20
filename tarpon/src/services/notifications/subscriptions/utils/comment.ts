@@ -1,3 +1,4 @@
+import { getEntityMetadata } from './commonUtils'
 import {
   AlertLogMetaDataType,
   CaseLogMetaDataType,
@@ -74,6 +75,7 @@ export const getCommentNotification = (
       type: 'COMMENT',
       comment,
     },
+    metadata: getEntityMetadata(type, payload.logMetadata),
   }
   return notification
 }
