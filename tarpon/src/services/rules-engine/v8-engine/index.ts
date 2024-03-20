@@ -58,8 +58,8 @@ type RuleData = {
   receiverUser?: User | Business
 }
 
-const getJsonLogicEngine = memoizeOne(
-  (tenantId: string, dynamoDb: DynamoDBDocumentClient) => {
+export const getJsonLogicEngine = memoizeOne(
+  (context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient }) => {
     const jsonLogicEngine = new AsyncLogicEngine()
     RULE_FUNCTIONS.filter((v) => v.run).forEach((v) =>
       jsonLogicEngine.addMethod(v.key, v.run!)
@@ -68,14 +68,14 @@ const getJsonLogicEngine = memoizeOne(
       jsonLogicEngine.addMethod(
         v.key,
         memoize(
-          ([lhs, rhs, parameters]) =>
-            v.run(lhs, rhs, parameters, { tenantId, dynamoDb }),
+          ([lhs, rhs, parameters]) => v.run(lhs, rhs, parameters, context),
           (v) => generateChecksum(v)
         )
       )
     )
     return jsonLogicEngine
-  }
+  },
+  isEqual
 )
 
 const getDataLoader = memoizeOne(
@@ -228,7 +228,10 @@ export class RuleJsonLogicEvaluator {
         entityVarEntries.concat(aggVarEntries.map((v) => v.entry))
       )
       varDatas.push(varData)
-      const jsonLogicEngine = getJsonLogicEngine(this.tenantId, this.dynamoDb)
+      const jsonLogicEngine = getJsonLogicEngine({
+        tenantId: this.tenantId,
+        dynamoDb: this.dynamoDb,
+      })
       const resultHit = await jsonLogicEngine.run(jsonLogic, varData)
       if (resultHit) {
         hitDirections.push(...uniq(aggVarEntries.map((v) => v.direction)))

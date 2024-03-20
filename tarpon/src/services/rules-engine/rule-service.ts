@@ -2,19 +2,23 @@ import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
 import { removeStopwords, eng } from 'stopword'
 import { compact, concat, isEmpty, set, uniq } from 'lodash'
-import { replaceMagicKeyword } from '@flagright/lib/utils/object'
+import {
+  replaceMagicKeyword,
+  getAllValuesByKey,
+} from '@flagright/lib/utils/object'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { singular } from 'pluralize'
+import { AsyncLogicEngine } from 'json-logic-engine'
 import {
-  RULES_LIBRARY,
   RuleChecksForField,
   RuleNature,
+  RULES_LIBRARY,
   RuleTypeField,
   RuleTypology,
 } from './transaction-rules/library'
 import {
-  TRANSACTION_FILTERS,
   TRANSACTION_FILTER_DEFAULT_VALUES,
+  TRANSACTION_FILTERS,
   TRANSACTION_HISTORICAL_FILTERS,
   USER_FILTERS,
 } from './filters'
@@ -39,10 +43,15 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleSearchFilter } from '@/@types/rule/rule-actions'
 import { removePunctuation } from '@/utils/regex'
-import { ModelVersion, ask } from '@/utils/openai'
+import { ask, ModelVersion } from '@/utils/openai'
 import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchResponse'
 import { scoreObjects } from '@/utils/search'
 import { logger } from '@/core/logger'
+import { getErrorMessage } from '@/utils/lang'
+import { getJsonLogicEngine } from '@/services/rules-engine/v8-engine'
+import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { notNullish } from '@/utils/array'
+import { getRuleVariableByKey } from '@/services/rules-engine/v8-variables'
 
 type AIFilters = {
   ruleTypes?: string[]
@@ -362,6 +371,12 @@ export class RuleService {
         rule.defaultParameters,
         rule.defaultRiskLevelParameters
       )
+    } else {
+      await RuleService.validateRuleLogic(
+        rule.defaultLogic,
+        rule.defaultRiskLevelLogic,
+        rule.defaultLogicAggregationVariables
+      )
     }
     return this.ruleRepository.createOrUpdateRule(rule)
   }
@@ -476,6 +491,12 @@ You have to answer in below format as string. If you don't know any field, just 
         ruleInstance.parameters,
         ruleInstance.riskLevelParameters
       )
+    } else {
+      await RuleService.validateRuleLogic(
+        ruleInstance.logic,
+        ruleInstance.riskLevelLogic,
+        ruleInstance.logicAggregationVariables
+      )
     }
     // TODO (V8): FR-3985
     const type = rule ? rule.type : 'TRANSACTION'
@@ -543,5 +564,49 @@ You have to answer in below format as string. If you don't know any field, just 
         )
       }
     }
+  }
+
+  private static logicEngine: AsyncLogicEngine = getJsonLogicEngine()
+
+  public static async validateRuleLogic(
+    ruleLogic: unknown,
+    riskLevelRuleLogic?: unknown,
+    logicAggregationVariables?: Array<RuleAggregationVariable>
+  ) {
+    const logicToCheck = [
+      riskLevelRuleLogic != null ? riskLevelRuleLogic : ruleLogic,
+      ...(logicAggregationVariables ?? []).map((x) => x.filtersLogic),
+    ].filter(notNullish)
+
+    const aggVarNames = logicAggregationVariables?.map((x) => x.key) ?? []
+
+    await Promise.all(
+      logicToCheck.map(async (logic) => {
+        try {
+          // Check that logic is valid JSON logic
+          await this.logicEngine.build(logic)
+          // Check that all used variables are known variables
+          const allLogicVars = getAllValuesByKey<string>('var', logic)
+          for (const logicVar of allLogicVars) {
+            const isKnownVariable =
+              aggVarNames.includes(logicVar) ||
+              getRuleVariableByKey(logicVar) != null
+            if (!isKnownVariable) {
+              throw new Error(
+                `Variable "${logicVar}" used in logic is unknown variable`
+              )
+            }
+          }
+        } catch (e) {
+          throw new Error(
+            `Passed value is not a valid JsonLogic tree:
+
+        ${JSON.stringify(logic, null, 4)}".
+
+        Message: ${getErrorMessage(e)}`
+          )
+        }
+      })
+    )
   }
 }
