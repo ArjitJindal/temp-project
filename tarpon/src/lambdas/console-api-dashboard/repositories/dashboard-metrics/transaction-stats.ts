@@ -12,6 +12,7 @@ import {
   DAY_DATE_FORMAT_JS,
   HOUR_DATE_FORMAT_JS,
   MONTH_DATE_FORMAT_JS,
+  getMongoDbClient,
   getMongoDbClientDb,
 } from '@/utils/mongodb-utils'
 import {
@@ -24,6 +25,10 @@ import {
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 import { traceable } from '@/core/xray'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
+import { hasFeature } from '@/core/utils/context'
 
 async function createInexes(tenantId) {
   const db = await getMongoDbClientDb()
@@ -51,11 +56,17 @@ async function createInexes(tenantId) {
 export class TransactionStatsDashboardMetric {
   public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
     await createInexes(tenantId)
-    const db = await getMongoDbClientDb()
+    const mongoDb = await getMongoDbClient()
+    const db = mongoDb.db()
+    const dynamoDb = getDynamoDbClient()
+    const riskRepository = new RiskRepository(tenantId, { mongoDb, dynamoDb })
     const lastUpdatedAt = Date.now()
     const transactionsCollection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(tenantId)
     )
+    const riskClassifications =
+      await riskRepository.getRiskClassificationValues()
+
     const aggregatedHourlyCollectionName =
       DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
     const aggregatedDailyCollectionName =
@@ -77,9 +88,7 @@ export class TransactionStatsDashboardMetric {
           ),
           lastUpdatedAt
         ),
-        {
-          allowDiskUse: true,
-        }
+        { allowDiskUse: true }
       )
       .next()
     await transactionsCollection
@@ -118,24 +127,53 @@ export class TransactionStatsDashboardMetric {
         }
       )
       .next()
-    await transactionsCollection
-      .aggregate(
-        withUpdatedAt(
-          getAttributeCountStatsPipeline(
-            aggregatedHourlyCollectionName,
-            'HOUR',
-            'timestamp',
-            'arsRiskLevel',
-            ['arsScore.riskLevel'],
-            timeRange
-          ),
-          lastUpdatedAt
+
+    if (hasFeature('RISK_SCORING')) {
+      const pipeline = withUpdatedAt(
+        getAttributeCountStatsPipeline(
+          aggregatedHourlyCollectionName,
+          'HOUR',
+          'timestamp',
+          'arsRiskLevel',
+          ['arsScore.riskLevel'],
+          timeRange,
+          {
+            attributeFieldMapper: {
+              $switch: {
+                branches: riskClassifications.map((classification) => ({
+                  case: {
+                    $and: [
+                      {
+                        $gte: [
+                          '$arsScore.arsScore',
+                          classification.lowerBoundRiskScore,
+                        ],
+                      },
+                      {
+                        $lt: [
+                          '$arsScore.arsScore',
+                          classification.upperBoundRiskScore,
+                        ],
+                      },
+                    ],
+                  },
+                  then: classification.riskLevel,
+                })),
+                default: DEFAULT_RISK_LEVEL,
+              },
+            },
+          }
         ),
-        {
-          allowDiskUse: true,
-        }
+        lastUpdatedAt
       )
-      .next()
+
+      await transactionsCollection
+        .aggregate(pipeline, {
+          allowDiskUse: true,
+        })
+        .next()
+    }
+
     await cleanUpStaleData(
       aggregatedHourlyCollectionName,
       'time',

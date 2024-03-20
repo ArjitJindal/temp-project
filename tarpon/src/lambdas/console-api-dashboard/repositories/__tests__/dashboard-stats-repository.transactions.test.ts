@@ -9,7 +9,11 @@ import dayjs from '@/utils/dayjs'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/all'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { getRiskScoreFromLevel } from '@/services/risk-scoring/utils'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 
+withFeatureHook(['RISK_SCORING'])
 describe('Verify transactions counting statistics', () => {
   test('Single transaction with no hits should only count 1 total transaction', async () => {
     const TENANT_ID = getTestTenantId()
@@ -362,12 +366,16 @@ describe('Verify transactions counting ARS risk levels', () => {
     for (let i = 0; i < RISK_LEVELS.length; i += 1) {
       const risklevel = RISK_LEVELS[i]
       for (let j = 0; j <= i; j += 1) {
+        const arsScore = getRiskScoreFromLevel(
+          DEFAULT_CLASSIFICATION_SETTINGS,
+          risklevel
+        )
         await transactionRepository.addTransactionToMongo({
           ...getTestTransaction({
             timestamp: timestamp,
             arsScore: {
               createdAt: timestamp,
-              arsScore: 100,
+              arsScore,
               riskLevel: risklevel,
             },
           }),
