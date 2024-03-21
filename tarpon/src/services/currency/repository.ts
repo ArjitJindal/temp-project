@@ -10,7 +10,7 @@ import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
-const TableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+const TableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME
 
 @traceable
 export class CurrencyRepository {
