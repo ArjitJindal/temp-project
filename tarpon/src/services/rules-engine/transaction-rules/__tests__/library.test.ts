@@ -7,6 +7,8 @@ import { RULES_LIBRARY } from '../library'
 import { USER_RULES } from '../../user-rules'
 import { RuleService } from '@/services/rules-engine/rule-service'
 import { Rule } from '@/@types/openapi-internal/Rule'
+import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
+import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 
 const git = simpleGit()
 
@@ -33,7 +35,13 @@ describe.each(['simple', 'ruleLevels'])('Rule logic validation', (kind) => {
     if (kind === 'simple') {
       await RuleService.validateRuleLogic(value)
     } else {
-      await RuleService.validateRuleLogic(null, value)
+      await RuleService.validateRuleLogic(
+        null,
+        RISK_LEVELS.reduce((acc, riskLevel) => {
+          acc[riskLevel] = value
+          return acc
+        }, {} as Record<RiskLevel, unknown>)
+      )
     }
   }
   test(`[${kind}] Simple values are valid`, async () => {

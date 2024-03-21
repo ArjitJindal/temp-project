@@ -570,11 +570,29 @@ You have to answer in below format as string. If you don't know any field, just 
 
   public static async validateRuleLogic(
     ruleLogic: unknown,
-    riskLevelRuleLogic?: unknown,
+    riskLevelRuleLogic?: RuleInstance['riskLevelLogic'],
     logicAggregationVariables?: Array<RuleAggregationVariable>
   ) {
+    if (!isEmpty(riskLevelRuleLogic)) {
+      // all keys in riskLevelRuleLogic should be in RISK_LEVELS
+      const logic = riskLevelRuleLogic as RuleInstance['riskLevelLogic']
+      const riskLevelKeys = Object.keys(logic!).filter(
+        (key) => !RISK_LEVELS.includes(key as RiskLevel)
+      )
+
+      if (riskLevelKeys.length > 0) {
+        throw new Error(
+          `Invalid risk-level logic: unknown risk-levels: ${riskLevelKeys.join(
+            ', '
+          )}`
+        )
+      }
+    }
     const logicToCheck = [
-      riskLevelRuleLogic != null ? riskLevelRuleLogic : ruleLogic,
+      ...(!isEmpty(ruleLogic) ? [ruleLogic] : []),
+      ...(!isEmpty(riskLevelRuleLogic)
+        ? [...Object.values(riskLevelRuleLogic as Record<RiskLevel, unknown>)]
+        : []),
       ...(logicAggregationVariables ?? []).map((x) => x.filtersLogic),
     ].filter(notNullish)
 
