@@ -16,11 +16,14 @@ import { SanctionsSearchType } from '@/apis';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { humanizeCamelCase } from '@/utils/humanize';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
+import AccountTag from '@/components/AccountTag';
+import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
   types?: SanctionsSearchType[];
   createdAt?: RangeValue<Dayjs>;
+  searchedBy?: string[];
 };
 
 const sanctionsSearchLink = (searchId: string) => `/sanctions/search/${searchId}`;
@@ -32,7 +35,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
   const queryResults = useCursorQuery<SanctionsSearchHistory>(
     SANCTIONS_SEARCH(params),
     async ({ from }) => {
-      const { createdAt, searchTerm, types, ...rest } = params;
+      const { createdAt, searchTerm, types, searchedBy, ...rest } = params;
       const [start, end] = createdAt ?? [];
       const response = await api.getSanctionsSearch({
         afterTimestamp: start ? start.startOf('day').valueOf() : 0,
@@ -40,6 +43,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
         searchTerm,
         types,
         start: from,
+        filterSearchedBy: searchedBy,
         ...rest,
       });
 
@@ -54,6 +58,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
       title: 'Created',
       key: 'createdAt',
       type: DATE_TIME,
+      filtering: true,
     }),
     helper.simple<'request.searchTerm'>({
       title: 'Search term',
@@ -66,6 +71,19 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
           return item.request.searchTerm;
         },
         link: (value, item) => sanctionsSearchLink(item._id),
+      },
+    }),
+    helper.simple<'searchedBy'>({
+      title: 'Searched by',
+      key: 'searchedBy',
+      type: {
+        render: (userId) => {
+          return (
+            <div style={{ overflowWrap: 'anywhere' }}>
+              <AccountTag accountId={userId} />
+            </div>
+          );
+        },
       },
     }),
   ];
@@ -89,6 +107,22 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
         mode: 'MULTIPLE',
         displayMode: 'select',
       },
+    },
+    {
+      title: 'Searched by',
+      key: 'searchedBy',
+      renderer: ({ params, setParams }) => (
+        <ActionTakenByFilterButton
+          initialState={params.searchedBy ?? []}
+          onConfirm={(value) => {
+            setParams((prevState) => ({
+              ...prevState,
+              searchedBy: value,
+            }));
+          }}
+          title="Searched by"
+        />
+      ),
     },
   ];
 

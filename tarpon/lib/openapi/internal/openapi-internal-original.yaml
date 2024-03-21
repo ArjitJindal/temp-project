@@ -4460,6 +4460,12 @@ paths:
               $ref: '#/components/schemas/SanctionsSearchType'
           in: query
           name: types
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterSearchedBy
   /sanctions/activity/stats:
     get:
       summary: Get sanctions screening activity stats
@@ -9160,6 +9166,8 @@ components:
           type: number
         updatedAt:
           type: number
+        searchedBy:
+          type: string
       required:
         - _id
         - request

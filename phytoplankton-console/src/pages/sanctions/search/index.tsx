@@ -9,6 +9,7 @@ import { LoadingCard } from '@/components/ui/Card';
 import Button from '@/components/library/Button';
 import SanctionsTable from '@/components/SanctionsTable';
 import { SanctionsSearchType } from '@/apis';
+import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 
 function withKey<T>(array?: T[]): T[] {
   return array?.map((item, i) => ({ ...item, key: i })) || [];
@@ -29,6 +30,7 @@ interface Props {
 export function SanctionsSearchTable(props: Props) {
   const { searchId } = props;
   const api = useApi();
+  const currentUser = useAuth0User();
 
   const showSearchHistory = Boolean(searchId);
   const searchHistoryQueryResults = useQuery(
@@ -84,7 +86,7 @@ export function SanctionsSearchTable(props: Props) {
         extraTools={[
           () => (
             <Button
-              isDisabled={!params.searchTerm}
+              isDisabled={!params.searchTerm || isSuperAdmin(currentUser) === true}
               onClick={() => {
                 setSearchParams(params);
               }}

@@ -41,6 +41,7 @@ export class SanctionsSearchRepository {
     response: SanctionsSearchResponse
     createdAt?: number
     updatedAt?: number
+    searchedBy?: string
   }): Promise<void> {
     const { request, response, createdAt, updatedAt } = props
     const db = this.mongoDb.db()
@@ -59,6 +60,7 @@ export class SanctionsSearchRepository {
           ...(!request.monitoring?.enabled && {
             expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
           }),
+          ...(props.searchedBy && { searchedBy: props.searchedBy }),
         },
       },
       { upsert: true }
@@ -123,6 +125,12 @@ export class SanctionsSearchRepository {
             toComplyAdvantageType(type)
           ),
         })),
+      })
+    }
+
+    if (params.filterSearchedBy?.length) {
+      conditions.push({
+        searchedBy: { $in: params.filterSearchedBy },
       })
     }
 

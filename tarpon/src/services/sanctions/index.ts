@@ -25,7 +25,7 @@ import { apiFetch } from '@/utils/api-fetch'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import { envIs } from '@/utils/env'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
-import { tenantSettings } from '@/core/utils/context'
+import { getContext, tenantSettings } from '@/core/utils/context'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
@@ -201,6 +201,7 @@ export class SanctionsService {
       await this.sanctionsSearchRepository.saveSearchResult({
         request,
         response: responseWithId,
+        searchedBy: !context ? getContext()?.user?.id : undefined,
       })
       if (request.monitoring) {
         await this.updateSearch(searchId, request.monitoring)

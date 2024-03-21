@@ -7,6 +7,8 @@ import DefaultQuickFilter from '@/components/library/QuickFilter';
 interface Props {
   initialState: string[];
   onConfirm: (newState: string[]) => void;
+  title?: string;
+  hideIcon?: boolean;
 }
 
 export default function ActionTakenByFilterButton(props: Props) {
@@ -15,9 +17,9 @@ export default function ActionTakenByFilterButton(props: Props) {
 
   return (
     <DefaultQuickFilter
-      title={'Action taken by'}
+      title={props.title ?? 'Action taken by'}
       analyticsName="action-taken-by"
-      icon={<HighlightOutlined />}
+      icon={props.hideIcon ? undefined : <HighlightOutlined />}
       buttonText={
         (!loadingUsers && !initialState) || initialState.length === 0
           ? undefined
