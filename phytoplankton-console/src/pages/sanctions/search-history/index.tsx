@@ -120,6 +120,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
               searchedBy: value,
             }));
           }}
+          hideIcon
           title="Searched by"
         />
       ),
