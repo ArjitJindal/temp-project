@@ -6,5 +6,7 @@
   "op:startswith",
   "op:endswith",
   "op:similarto",
-  "op:!similarto"
+  "op:!similarto",
+  "op:between_time",
+  "op:!between_time"
 ]

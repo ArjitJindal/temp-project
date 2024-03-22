@@ -99,6 +99,10 @@ export function useLogicBuilderConfig(
                 'select_any_in',
                 'select_not_any_in',
               ];
+            } else if (key === 'time') {
+              types[key].widgets[key].operators = types[key].widgets[key].operators?.filter(
+                (op) => !['between', 'not_between'].includes(op),
+              );
             }
           }
         }

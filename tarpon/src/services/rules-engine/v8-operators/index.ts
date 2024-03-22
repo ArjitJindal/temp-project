@@ -2,6 +2,10 @@ import { CONTAINS_OPERATOR, NOT_CONTAINS_OPERATOR } from './contains'
 import { MATCH_LIST_OPERATOR, NOT_MATCHLIST_OPERATOR } from './match-list'
 import { NOT_SIMILAR_TO_OPERATOR, SIMILAR_TO_OPERATOR } from './similar-to'
 import { ENDS_WITH_OPERATOR, STARTS_WITH_OPERATOR } from './starts-ends-with'
+import {
+  BETWEEN_TIME_OPERATOR,
+  NOT_BETWEEN_TIME_OPERATOR,
+} from './between-time'
 import { RuleOperator } from './types'
 
 const _RULE_OPERATORS: RuleOperator[] = [
@@ -13,6 +17,8 @@ const _RULE_OPERATORS: RuleOperator[] = [
   ENDS_WITH_OPERATOR,
   SIMILAR_TO_OPERATOR,
   NOT_SIMILAR_TO_OPERATOR,
+  BETWEEN_TIME_OPERATOR,
+  NOT_BETWEEN_TIME_OPERATOR,
 ]
 
 export const RULE_OPERATORS: RuleOperator[] = _RULE_OPERATORS.map(

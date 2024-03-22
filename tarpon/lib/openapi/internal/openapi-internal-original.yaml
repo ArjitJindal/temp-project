@@ -5770,6 +5770,8 @@ components:
         - op:startswith
         - op:endswith
         - op:similarto
+        - op:between_time
+        - op:!between_time
     RuleFunction:
       title: RuleFunction
       type: object
