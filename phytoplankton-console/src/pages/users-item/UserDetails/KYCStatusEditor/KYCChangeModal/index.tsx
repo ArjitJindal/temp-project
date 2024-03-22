@@ -19,7 +19,6 @@ import { notEmpty } from '@/components/library/Form/utils/validation/basicValida
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
-import { humanizeConstant } from '@/utils/humanize';
 import TextArea from '@/components/library/TextArea';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
 import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
@@ -27,6 +26,7 @@ import { USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 import Label from '@/components/library/Label';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
+import { humanizeKYCStatus } from '@/components/utils/humanizeKYCStatus';
 
 interface Props {
   isVisible: boolean;
@@ -187,7 +187,7 @@ export default function KYCChangeModal(props: Props) {
               <Select
                 {...inputProps}
                 options={KYC_STATUSS.map((kycStatus: KYCStatus) => ({
-                  label: humanizeConstant(kycStatus),
+                  label: humanizeKYCStatus(kycStatus),
                   value: kycStatus,
                 }))}
                 mode="SINGLE"

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { humanizeKYCStatus } from '../utils/humanizeKYCStatus';
 import s from './style.module.less';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { USER_DIRECTIONSS } from '@/apis/models-custom/UserDirections';
@@ -111,7 +112,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
             {(inputProps) => (
               <Select<KYCStatus>
                 options={KYC_STATUSS.map((state) => ({
-                  label: humanizeConstant(state),
+                  label: state === humanizeKYCStatus(state),
                   value: state,
                 }))}
                 {...inputProps}
