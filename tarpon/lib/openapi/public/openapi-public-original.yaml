@@ -3522,6 +3522,8 @@ components:
           description:
             Unique identifier of the bank. In some countries, this can be the
             same as the bank's SWIFT code
+        country:
+          $ref: '#/components/schemas/CountryCode'
         name:
           type: string
           description: Name of the account holder
