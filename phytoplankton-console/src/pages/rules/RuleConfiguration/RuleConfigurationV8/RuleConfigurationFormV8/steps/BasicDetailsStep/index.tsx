@@ -90,9 +90,7 @@ export default function BasicDetailsStep(props: Props) {
                   mode="MULTIPLE"
                   {...inputProps}
                   onChange={(value) => {
-                    if (value) {
-                      setRuleLabels(value);
-                    }
+                    setRuleLabels(value);
                     if (inputProps.onChange) {
                       inputProps.onChange(value);
                     }
