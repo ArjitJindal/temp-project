@@ -122,7 +122,7 @@ export class SanctionsService {
       settings.complyAdvantageSearchProfileId
   }
 
-  private async getApiKey(): Promise<string> {
+  public async getApiKey(): Promise<string> {
     if (process.env.COMPLYADVANTAGE_API_KEY) {
       return process.env.COMPLYADVANTAGE_API_KEY
     }

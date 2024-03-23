@@ -1,3 +1,4 @@
+import { SanctionsService } from '../sanctions'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { OngoingMerchantMonitoringBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -21,6 +22,7 @@ export class OngoingMerchantMonitoringBatchJobRunner extends BatchJobRunner {
       dynamoDb,
       mongoDb,
     })
+    await new SanctionsService(tenantId).getApiKey() // Hack to ensure the API key is loaded into the cache
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
