@@ -6,7 +6,7 @@ export const COPILOT_QUESTIONS = {
   CHECKED_TRANSACTIONS: 'Checked transactions',
   CRM_INSIGHTS: 'CRM insights',
   DIRECTORS: 'Directors',
-  ENTITY_LINKING: 'Entity linking',
+  ONTOLOGY: 'Ontology',
   KYC_SCORING: 'KYC Scoring',
   LINKED_USERS: 'Linked users',
   LINKEDIN: 'Linkedin',

@@ -288,7 +288,7 @@ export function useTabs(
       user &&
       isEntityLinkingEnabled && {
         title: <div className={style.icon}>Ontology</div>,
-        key: 'entity-linking',
+        key: 'ontology',
         children: user.userId ? <Linking userId={user.userId} /> : undefined,
         isClosable: false,
         isDisabled: false,

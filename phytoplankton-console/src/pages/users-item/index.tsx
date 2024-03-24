@@ -145,7 +145,7 @@ export default function UserItem() {
                 ? [
                     {
                       title: <div className={s.icon}>Ontology</div>,
-                      key: 'entity-linking',
+                      key: 'ontology',
                       children: <Linking userId={user.userId} />,
                       isClosable: false,
                       isDisabled: false,
