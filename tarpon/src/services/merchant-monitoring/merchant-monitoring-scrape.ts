@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosInstance } from 'axios'
 import { convert } from 'html-to-text'
-import { NotFound, InternalServerError } from 'http-errors'
+import { InternalServerError } from 'http-errors'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { getSecretByName } from '@/utils/secrets-manager'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -208,11 +208,7 @@ export class MerchantMonitoringScrapeService {
       )
     }
 
-    const updatedSummaries = await merchantRepository.getSummaries(userId)
-    if (updatedSummaries && updatedSummaries.length) {
-      return updatedSummaries
-    }
-    throw new NotFound('No summaries found')
+    return (await merchantRepository.getSummaries(userId)) || []
   }
 
   async scrapeMerchantMonitoringSummary(
