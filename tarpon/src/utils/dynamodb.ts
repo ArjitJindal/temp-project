@@ -115,21 +115,17 @@ export function withMetrics(
 export function withRetry(
   client: DynamoDBDocumentClient
 ): DynamoDBDocumentClient {
-  // We only retry with the refreshed credentials when running migrations
-  if (!process.env.ASSUME_ROLE_ARN) {
-    return client
-  }
+  let retryClient: DynamoDBDocumentClient | null = null
 
-  client.send = wrap(
-    client.send.bind(client),
-    async (func: any, command: any, ...args) => {
-      try {
-        const result = await func(command, ...args)
-        return result
-      } catch (e) {
-        if ((e as any)?.name === 'ExpiredTokenException') {
-          logger.warn('Retry DynamoDB operation...')
-          const retryClient = getDynamoDbClient(
+  const sendWithRetry = async (func: any, command: any, ...args) => {
+    try {
+      const result = await func(command, ...args)
+      return result
+    } catch (e) {
+      if ((e as any)?.name === 'ExpiredTokenException') {
+        logger.warn('Retry DynamoDB operation...')
+        if (!retryClient) {
+          retryClient = getDynamoDbClient(
             {
               accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
               secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
@@ -137,15 +133,21 @@ export function withRetry(
             },
             { retry: false }
           )
-          return await retryClient.send(command, ...args)
         }
-        throw e
+        return await retryClient.send(command, ...args)
       }
+      throw e
     }
-  ) as any
+  }
+
+  // We only retry with the refreshed credentials when running migrations
+  if (!process.env.ASSUME_ROLE_ARN) {
+    return client
+  }
+
+  client.send = wrap(client.send.bind(client), sendWithRetry) as any
   return client
 }
-
 export function getDynamoDbClientByEvent(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<Credentials>
