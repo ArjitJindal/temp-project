@@ -138,6 +138,9 @@ const MULTI_SELECT_TEXT_OPERATORS: RuleOperatorType[] = [
   'op:!contains',
   'op:contains',
   'op:similarto',
+  'op:!similarto',
+  'op:similartowords',
+  'op:!similartowords',
 ];
 
 const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];

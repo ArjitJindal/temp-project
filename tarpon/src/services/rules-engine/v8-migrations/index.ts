@@ -10,6 +10,7 @@ import { BlacklistCardIssuedCountryRuleParameters } from '../transaction-rules/b
 import { HighRiskCurrencyRuleParameters } from '../transaction-rules/high-risk-currency'
 import { TransactionAmountRuleParameters } from '../transaction-rules/transaction-amount'
 import { TransactionMatchesPatternRuleParameters } from '../transaction-rules/transaction-amount-pattern'
+import { TransactionReferenceKeywordRuleParameters } from '../transaction-rules/transaction-reference-keyword'
 import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
@@ -389,6 +390,27 @@ const V8_CONVERSION: {
       },
       alertCreationDirection: 'ORIGIN',
       logicAggregationVariables: [],
+    }
+  },
+  'R-24': (parameters: TransactionReferenceKeywordRuleParameters) => {
+    const conditions: any[] = []
+
+    conditions.push({
+      'op:similartowords': [
+        { var: 'TRANSACTION:reference' },
+        parameters.keywords,
+        [
+          parameters?.allowedDistancePercentage != null
+            ? parameters.allowedDistancePercentage
+            : 0,
+        ],
+      ],
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables: [],
+      alertCreationDirection: 'ORIGIN',
     }
   },
 }
