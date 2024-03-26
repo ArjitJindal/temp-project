@@ -215,6 +215,7 @@ export default function QaTable(props: Props) {
         renderer: ({ params, setParams }) => (
           <AssignmentButton
             users={params.qaAssignment ?? []}
+            title="QA assigned to"
             onConfirm={(value) => {
               setParams((state) => ({
                 ...state,

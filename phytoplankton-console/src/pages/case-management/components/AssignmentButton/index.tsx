@@ -8,6 +8,7 @@ interface Props {
   onConfirm: (users: string[]) => void;
   users: string[];
   onUpdateFilterClose?: (status: boolean) => void;
+  title?: string;
 }
 
 export function AssignmentButton(props: Props) {
@@ -27,7 +28,7 @@ export function AssignmentButton(props: Props) {
     <QuickFilterBase
       icon={<UserOutlined />}
       analyticsName="assigned-to-filter"
-      title="Assigned to"
+      title={props.title ?? 'Assigned to'}
       buttonText={isEmpty ? undefined : finalUsers.join(', ')}
       onClear={
         isEmpty
