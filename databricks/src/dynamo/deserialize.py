@@ -1,10 +1,11 @@
 import json
 from decimal import Decimal
+from typing import Any
 
 from boto3.dynamodb.types import TypeDeserializer
 
 
-def replace_decimals(obj):
+def replace_decimals(obj: Any):
     if isinstance(obj, list):
         for i, value in enumerate(obj):
             obj[i] = replace_decimals(value)
@@ -28,13 +29,13 @@ class DeserializerException(Exception):
         return f"An error occurred deserializing: {self.json_string}"
 
 
-def deserialise_dynamo(column):
+def deserialise_dynamo(column: str):
     data = json.loads(column)
     if "dynamodb" in data:
         images = data["dynamodb"]
         if "NewImage" in data["dynamodb"]:
             to_des = images["NewImage"]
-        if "OldImage" in data["dynamodb"]:
+        else:
             to_des = images["OldImage"]
         return replace_decimals(TypeDeserializer().deserialize({"M": to_des}))
     raise DeserializerException(column)

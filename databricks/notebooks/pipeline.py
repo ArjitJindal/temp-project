@@ -6,10 +6,12 @@
 import os
 import dlt
 import sentry_sdk
-from pyspark.sql.functions import col, expr, from_json, lit, regexp_extract, udf, lower, to_timestamp
-from src.dlt.schema import kinesis_event_schema
-from src.dynamo.serde import deserialise_dynamo
-from src.entities import entities, currency_schema
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import col, expr, to_timestamp
+
+from src.dlt.cdc import cdc_transformation
+from src.dlt.currency_rates import currency_rates_transformation
+from src.entities import entities
 
 aws_access_key = dbutils.secrets.get(
     "kinesis", "aws-access-key"
@@ -81,19 +83,7 @@ def define_pipeline(spark):
         comment="Currency exchange table",
     )
     def currency_rates():
-        deserialisation_udf = udf(deserialise_dynamo, currency_schema)
-        filtered_df = (
-            dlt.readStream("kinesis_events")
-            .withColumn(
-                "event", from_json(col("data").cast("string"), kinesis_event_schema)
-            )
-            .filter(col(partition_key_id_path) == "flagright#currency-cache")
-        )
-        return filtered_df.withColumn("structured_data", deserialisation_udf(col("data"))).select(
-            col("structured_data.*"),
-            col("event.eventName").alias("event"),
-            col("approximateArrivalTimestamp"),
-        )
+        return currency_rates_transformation(dlt.readStream("kinesis_events"))
 
     @dlt.append_flow(
         name="currency_rates_backfill",
@@ -111,16 +101,14 @@ def define_pipeline(spark):
 
     for entity in entities:
         create_entity_tables(
-            entity.get("table"),
-            entity.get("schema"),
-            entity.get("partition_key"),
-            entity.get("source"),
-            entity.get("enrichment_fn"),
+            entity,
         )
 
-def create_entity_tables(entity, schema, dynamo_key, source, enrichment_fn):
-    cdc_table_name = f"{entity}_cdc"
-    backfill_table_name = f"{entity}_backfill"
+def create_entity_tables(entity):
+    table = entity.table
+    source = entity.source
+    cdc_table_name = f"{table}_cdc"
+    backfill_table_name = f"{table}_backfill"
 
     dlt.create_streaming_table(
         name=cdc_table_name,
@@ -132,49 +120,9 @@ def create_entity_tables(entity, schema, dynamo_key, source, enrichment_fn):
         target=cdc_table_name,
     )
     def cdc():
-        deserialisation_udf = udf(deserialise_dynamo, schema)
-        sort_key_id_path = "event.dynamodb.Keys.SortKeyID.S"
-        df = (
-            dlt.readStream(source)
-            .withColumn(
-                "event", from_json(col("data").cast("string"), kinesis_event_schema)
-            )
-            .withColumn(
-                "PartitionKeyID",
-                col(partition_key_id_path).alias("PartitionKeyID"),
-            )
-            .withColumn(
-                "SortKeyID",
-                col(sort_key_id_path).alias("SortKeyID"),
-            )
-            .withColumn(
-                "tenant",
-                lower(regexp_extract(col(partition_key_id_path), "^[^#]*", 0)).alias("tenant"),
-            )
-        )
-        filtered_df = (
-            df
-            # ignore tiermoney on sandbox and they have schema breaking data.
-            .filter(lower(col("tenant")) != lower(lit("1RRDYI5GQ4")))
-            .filter(col(partition_key_id_path).contains(dynamo_key))
-        )
-        with_structured_df = filtered_df.withColumn("structured_data", deserialisation_udf(col("data"))).alias("entity")
-
-        pre_enrichment_df = with_structured_df.select(
-            col("structured_data.*"),
-            col("tenant"),
-            col("PartitionKeyID"),
-            col("SortKeyID"),
-            col("approximateArrivalTimestamp"),
-            col("entity.event.eventName").alias("event"),
-        )
-
-        if enrichment_fn:
-            currency_rates = (
-                dlt.readStream("currency_rates")
-            )
-            return enrichment_fn(pre_enrichment_df, currency_rates)
-        return pre_enrichment_df
+        def stream_resolver(stream_name: str) -> DataFrame:
+            return dlt.readStream(stream_name)
+        return cdc_transformation(entity, dlt.readStream(source), stream_resolver)
 
     @dlt.append_flow(
         name=backfill_table_name,
@@ -185,11 +133,11 @@ def create_entity_tables(entity, schema, dynamo_key, source, enrichment_fn):
         return spark.readStream.format("delta").table(f"{stage}.default.{backfill_table_name}")
 
     dlt.create_streaming_table(
-        name=entity,
+        name=table,
         partition_cols=["tenant"],
     )
     dlt.apply_changes(
-        target=entity,
+        target=table,
         source=cdc_table_name,
         keys=["PartitionKeyID", "SortKeyID"],
         sequence_by=col("approximateArrivalTimestamp"),

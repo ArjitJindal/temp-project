@@ -393,13 +393,13 @@ class DatabricksStack extends TerraformStack {
       },
     ]
 
-    const cluster = new databricks.cluster.Cluster(this, 'cluster', {
+    new databricks.cluster.Cluster(this, 'cluster', {
       ...clusterConfig,
       provider: workspaceProvider,
       sparkVersion: '14.2.x-scala2.12',
       clusterName: 'Shared Autoscaling',
       library: clusterLibraries,
-      autoterminationMinutes: 15,
+      autoterminationMinutes: 60,
       dependsOn: [instanceProfile],
       lifecycle: {
         ignoreChanges: ['aws_attributes'],

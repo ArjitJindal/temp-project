@@ -1,22 +1,16 @@
-# Databricks notebook source
-# MAGIC %pip install databricks-sdk --upgrade
-# MAGIC %pip install /Workspace/Shared/src-0.1.0-py3-none-any.whl
-
-# COMMAND ----------
-dbutils.library.restartPython()
-
-# COMMAND ----------
-
 from databricks.sdk import WorkspaceClient
 
-import pymongo
-from pyspark.sql.functions import lit, concat, col, from_unixtime, to_timestamp
-import logging
 import os
+import pymongo
+from pyspark.sql.functions import lit, col, to_timestamp
+from pyspark.sql import DataFrame
+import logging
 
 from databricks.sdk.runtime import *
 
-from src.entities import entities, currency_schema
+from src.entities import entities
+from src.dlt.backfill import backfill_transformation
+from src.entities.currency_rates import currency_schema
 
 w = WorkspaceClient()
 
@@ -52,7 +46,8 @@ currency_df = currency_df.withColumn(
     to_timestamp(col("date"), "yyyy-MM-dd"),
 )
 
-def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn, timestamp_column):
+def load_mongo(entity):
+    table = entity.table
     mongo_table = table.replace("_", "-")
     logging.basicConfig(level=logging.INFO)
     connection_uri = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}"
@@ -76,25 +71,18 @@ def load_mongo(table, schema, dynamo_key, id_column, enrichment_fn, timestamp_co
                 .option("database", db_name)
                 .option("uri", connection_uri)
                 .option("collection", coll)
-                .schema(schema)
+                .schema(entity.schema)
                 .load()
                 .withColumn("tenant", lit(tenant.lower()))
             )
 
-            pre_enrichment_df = (
-                df.withColumn("PartitionKeyID", concat(df["tenant"], lit(dynamo_key)))
-                .withColumn("SortKeyID", col(id_column))
-                .withColumn(
-                    "approximateArrivalTimestamp",
-                    from_unixtime(col(timestamp_column) / 1000).cast("timestamp"),
-                )
-                .withColumn("event", lit("INSERT"))
-            )
+            def stream_resolver(stream_name: str) -> DataFrame:
+                if stream_name == "currency_rates":
+                    return currency_df
+                raise Exception(f"No stream with name {stream_name}")
 
-            if enrichment_fn:
-                final_df = enrichment_fn(pre_enrichment_df, currency_df)
-            else:
-                final_df = pre_enrichment_df
+            final_df = backfill_transformation(entity, df, stream_resolver)
+
             final_df.write.option("mergeSchema", "true").format("delta").mode(
                 "append"
             ).saveAsTable(table_path)
@@ -114,10 +102,10 @@ logger.info("Resetting backfill tables")
 for entity in entities:
     is_present = entity["table"] in entity_names.split(',')
     if is_present:
-        table = entity.get("table")
+        table = entity.table
         table_path = f"{stage}.default.{table}_backfill"
         # Clear existing table
-        empty_df = spark.createDataFrame([], entity.get("schema"))
+        empty_df = spark.createDataFrame([], entity.schema)
         empty_df.write.option("mergeSchema", "true").format("delta").mode(
             "overwrite"
         ).saveAsTable(table_path)
@@ -129,11 +117,4 @@ logger.info("Backfilling entities")
 for entity in entities:
     is_present = entity["table"] in entity_names.split(',')
     if is_present:
-        load_mongo(
-            entity.get("table"),
-            entity.get("schema"),
-            entity.get("partition_key"),
-            entity.get("id_column"),
-            entity.get("enrichment_fn"),
-            entity.get("timestamp_column")
-        )
+        load_mongo(entity)

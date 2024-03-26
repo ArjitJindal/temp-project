@@ -139,7 +139,7 @@ never-returning-functions=sys.exit,argparse.parse_error
 
 # List of additional names supposed to be defined in builtins. Remember that
 # you should avoid defining new builtins when possible.
-additional-builtins=
+additional-builtins=dlt
 
 # Tells whether unused global variables should be treated as a violation.
 allow-global-unused-variables=yes
@@ -188,7 +188,7 @@ ignore-comments=yes
 ignore-docstrings=yes
 
 # Imports are removed from the similarity computation
-ignore-imports=no
+ignore-imports=yes
 
 # Signatures are removed from the similarity computation
 ignore-signatures=no
