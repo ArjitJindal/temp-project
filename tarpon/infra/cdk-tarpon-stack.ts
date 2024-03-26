@@ -75,6 +75,7 @@ import {
   Chain,
   Choice,
   Condition,
+  IntegrationPattern,
   JitterType,
   JsonPath,
   StateMachine,
@@ -123,7 +124,7 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = isQaEnv()
-const enableFargateBatchJob = false
+const enableFargateBatchJob = true
 
 // TODO make this equal to !isQaEnv before merge
 const deployKinesisConsumer = !isQaEnv()
@@ -795,6 +796,7 @@ export class CdkTarponStack extends cdk.Stack {
             platformVersion: FargatePlatformVersion.LATEST,
           }),
           inputPath: `$.Payload.${BATCH_JOB_PAYLOAD_RESULT_KEY}`,
+          integrationPattern: IntegrationPattern.RUN_JOB,
           containerOverrides: [
             {
               containerDefinition: fargateBatchJobContainer,
