@@ -1387,4 +1387,5 @@ const enabledTenantIds = [
   'cypress-tenant',
   'f05d33ea95',
   'ft398yyjmd',
+  '5CIHDWCU3K',
 ]
