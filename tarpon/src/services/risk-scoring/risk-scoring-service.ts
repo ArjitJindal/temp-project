@@ -40,7 +40,8 @@ import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { RiskScoreDetails } from '@/@types/openapi-internal/RiskScoreDetails'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
-import { tenantHasFeature } from '@/core/utils/context'
+import { hasFeature, tenantHasFeature } from '@/core/utils/context'
+import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 
 function getDefaultRiskValue(
   riskClassificationValues: Array<RiskClassificationScore>
@@ -271,6 +272,52 @@ export class RiskScoringService {
     this
     this.mongoDb = connections.mongoDb as MongoClient
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
+  }
+
+  public async runRiskScoresForUser(
+    userPayload: User | Business
+  ): Promise<UserRiskScoreDetails> {
+    let krsScore: number | undefined
+    let krsRiskLevel: RiskLevel | undefined
+    let craScore: number | undefined
+    let craRiskLevel: RiskLevel | undefined
+
+    if (hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')) {
+      const riskClassificationValues =
+        await this.riskRepository.getRiskClassificationValues()
+
+      if (hasFeature('RISK_SCORING')) {
+        const score = await this.updateInitialRiskScores(
+          userPayload as User | Business
+        )
+
+        krsScore = craScore = score
+
+        const riskLevel = getRiskLevelFromScore(riskClassificationValues, score)
+
+        krsRiskLevel = craRiskLevel = riskLevel
+      }
+
+      const preDefinedRiskLevel = userPayload.riskLevel
+
+      if (preDefinedRiskLevel) {
+        await this.handleManualRiskLevel(userPayload as User | Business)
+
+        craScore = getRiskScoreFromLevel(
+          riskClassificationValues,
+          preDefinedRiskLevel
+        )
+
+        craRiskLevel = preDefinedRiskLevel
+      }
+    }
+
+    return {
+      craRiskLevel,
+      craRiskScore: craScore,
+      kycRiskLevel: krsRiskLevel,
+      kycRiskScore: krsScore,
+    }
   }
 
   public async calculateKrsScore(
@@ -713,7 +760,7 @@ export class RiskScoringService {
 
   public async calculateAndUpdateKRSAndDRS(
     user: User | Business
-  ): Promise<void> {
+  ): Promise<UserRiskScoreDetails> {
     const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
 
     const oldKrsScore = (await this.riskRepository.getKrsScore(user.userId))
@@ -724,24 +771,53 @@ export class RiskScoringService {
       riskClassificationValues,
       riskFactors || []
     )
+
+    const newRiskData: UserRiskScoreDetails = {
+      craRiskLevel: getRiskLevelFromScore(
+        riskClassificationValues,
+        oldDrs?.drsScore ?? newKrsScore
+      ),
+      craRiskScore: oldDrs?.drsScore ?? newKrsScore,
+      kycRiskLevel: getRiskLevelFromScore(
+        riskClassificationValues,
+        newKrsScore
+      ),
+      kycRiskScore: newKrsScore,
+    }
+
     if (newKrsScore === oldKrsScore) {
-      return
+      return newRiskData
     }
     await this.riskRepository.createOrUpdateKrsScore(
       user.userId,
       newKrsScore,
       components
     )
+
     if (!oldDrs?.isUpdatable) {
-      return
+      return newRiskData
     }
+
     const newDRSScore = mean([newKrsScore, oldDrs?.drsScore])
-    await this.riskRepository.createOrUpdateDrsScore(
+    const drsObj = await this.riskRepository.createOrUpdateDrsScore(
       user.userId,
       newDRSScore,
       'USER_UPDATED',
       components
     )
+
+    return {
+      craRiskLevel: getRiskLevelFromScore(
+        riskClassificationValues,
+        newDRSScore
+      ),
+      craRiskScore: drsObj.drsScore,
+      kycRiskLevel: getRiskLevelFromScore(
+        riskClassificationValues,
+        newKrsScore
+      ),
+      kycRiskScore: newKrsScore,
+    }
   }
 
   public async backfillUserRiskScores(): Promise<void> {

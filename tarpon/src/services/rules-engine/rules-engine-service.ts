@@ -307,11 +307,7 @@ export class RulesEngineService {
         transactionState: initialTransactionState,
         updatedTransactionAttributes: savedTransaction,
       },
-      {
-        executedRules,
-        hitRules,
-        riskScoreDetails,
-      }
+      { executedRules, hitRules, riskScoreDetails }
     )
 
     saveTransactionSegment?.close()
@@ -355,8 +351,20 @@ export class RulesEngineService {
       transactionEvent.updatedTransactionAttributes || {}
     ) as TransactionWithRulesResult
 
-    const { executedRules, hitRules, transactionAggregationTasks } =
-      await this.verifyTransactionInternal(updatedTransaction)
+    const {
+      executedRules,
+      hitRules,
+      transactionAggregationTasks,
+      transactionRiskScoreDetails,
+    } = await this.verifyTransactionInternal(updatedTransaction)
+
+    const riskScoreDetails: TransactionRiskScoringResult | undefined =
+      transactionRiskScoreDetails
+        ? {
+            trsRiskLevel: transactionRiskScoreDetails.riskLevel,
+            trsScore: transactionRiskScoreDetails.score,
+          }
+        : undefined
 
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
@@ -410,6 +418,7 @@ export class RulesEngineService {
       transaction: updatedTransactionWithoutRulesResult,
       executedRules,
       hitRules,
+      riskScoreDetails,
     }
   }
 

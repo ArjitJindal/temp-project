@@ -274,6 +274,7 @@ export const userEventsHandler = lambdaApi()(
         dynamoDb,
         await getMongoDbClient()
       )
+
       return await userManagementService.verifyConsumerUserEvent(
         userEvent,
         allowUserTypeConversion === 'true'

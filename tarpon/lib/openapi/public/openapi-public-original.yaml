@@ -642,7 +642,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                $ref: '#/components/schemas/UserWithRulesResult'
               examples:
                 example-1:
                   value:
@@ -798,7 +798,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BusinessResponse'
+                $ref: '#/components/schemas/BusinessWithRulesResult'
               examples:
                 example-2:
                   value:
@@ -2056,6 +2056,8 @@ components:
               type: string
             transaction:
               $ref: '#/components/schemas/Transaction'
+            riskScoreDetails:
+              $ref: '#/components/schemas/TransactionRiskScoringResult'
           required:
             - eventId
             - transaction
@@ -5323,6 +5325,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/HitRulesDetails'
+            riskScoreDetails:
+              $ref: '#/components/schemas/UserRiskScoreDetails'
     UserRiskScoreDetails:
       title: UserRiskScoreDetails
       type: object
@@ -5335,14 +5339,6 @@ components:
           $ref: '#/components/schemas/RiskLevel'
         craRiskLevel:
           $ref: '#/components/schemas/RiskLevel'
-    UserResponse:
-      title: UserResponse
-      allOf:
-        - $ref: '#/components/schemas/UserWithRulesResult'
-        - type: object
-          properties:
-            riskScoreDetails:
-              $ref: '#/components/schemas/UserRiskScoreDetails'
     BusinessWithRulesResult:
       title: BusinessWithRulesResult
       description: Model for business payload with rules result
@@ -5358,12 +5354,6 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/HitRulesDetails'
-    BusinessResponse:
-      title: BusinessResponse
-      allOf:
-        - $ref: '#/components/schemas/BusinessWithRulesResult'
-        - type: object
-          properties:
             riskScoreDetails:
               $ref: '#/components/schemas/UserRiskScoreDetails'
     BooleanString:

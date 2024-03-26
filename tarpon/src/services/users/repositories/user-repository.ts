@@ -55,10 +55,8 @@ import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { SortOrder } from '@/@types/openapi-internal/SortOrder'
-import { UserResponse } from '@/@types/openapi-public/UserResponse'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
-import { BusinessResponse } from '@/@types/openapi-public/BusinessResponse'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
@@ -621,7 +619,7 @@ export class UserRepository {
 
   public async getConsumerUserWithRiskScores(
     userId: string
-  ): Promise<UserResponse | undefined> {
+  ): Promise<UserWithRulesResult | undefined> {
     const user = await this.getConsumerUser(userId)
 
     if (user == null) {
@@ -644,7 +642,7 @@ export class UserRepository {
 
   public async getBusinessUserWithRiskScores(
     userId: string
-  ): Promise<BusinessResponse | undefined> {
+  ): Promise<BusinessWithRulesResult | undefined> {
     const user = await this.getBusinessUser(userId)
 
     if (user == null) {

@@ -20,6 +20,7 @@ import { BusinessBase } from '@/@types/openapi-public/BusinessBase'
 import { UserBase } from '@/@types/openapi-internal/UserBase'
 import { traceable } from '@/core/xray'
 import { hasFeature } from '@/core/utils/context'
+import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDetails'
 
 @traceable
 export class UserManagementService {
@@ -218,14 +219,20 @@ export class UserManagementService {
       user,
       updatedConsumerUserAttributes || {}
     ) as User
+
+    let riskScoreDetails: UserRiskScoreDetails | undefined
+
     if (hasFeature('RISK_SCORING')) {
-      await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
-        updatedConsumerUser
-      )
+      riskScoreDetails =
+        await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
+          updatedConsumerUser
+        )
     }
-    const updatedConsumerUserResult = {
+
+    const updatedConsumerUserResult: UserWithRulesResult = {
       ...updatedConsumerUser,
       ...(await this.rulesEngineService.verifyUser(updatedConsumerUser)),
+      riskScoreDetails,
     }
     await this.userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
     await this.userRepository.saveConsumerUser(updatedConsumerUserResult)
@@ -275,14 +282,19 @@ export class UserManagementService {
       userEvent.updatedBusinessUserAttributes || {},
       false
     )
+
+    let riskScoreDetails: UserRiskScoreDetails | undefined
     if (hasFeature('RISK_SCORING')) {
-      await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
-        updatedBusinessUser
-      )
+      riskScoreDetails =
+        await this.riskScoringService.calculateAndUpdateKRSAndDRS(
+          updatedBusinessUser
+        )
     }
+
     const updatedBusinessUserResult = {
       ...updatedBusinessUser,
       ...(await this.rulesEngineService.verifyUser(updatedBusinessUser)),
+      riskScoreDetails,
     }
 
     await this.userEventRepository.saveUserEvent(userEvent, 'BUSINESS')

@@ -8,19 +8,13 @@ import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { hasFeature, updateLogMetadata } from '@/core/utils/context'
+import { updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { pickKnownEntityFields } from '@/utils/object'
-import {
-  getRiskLevelFromScore,
-  getRiskScoreFromLevel,
-} from '@/services/risk-scoring/utils'
-import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
 
 export const userHandler = lambdaApi()(
@@ -79,54 +73,13 @@ export const userHandler = lambdaApi()(
         }
       }
 
-      let krsScore: number | undefined
-      let craScore: number | undefined
-      let krsRiskLevel: RiskLevel | undefined
-      let craRiskLevel: RiskLevel | undefined
+      const riskScoringService = new RiskScoringService(tenantId, {
+        dynamoDb,
+        mongoDb,
+      })
 
-      if (hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')) {
-        const riskScoringService = new RiskScoringService(tenantId, {
-          dynamoDb,
-          mongoDb,
-        })
-        const riskRepository = new RiskRepository(tenantId, {
-          dynamoDb,
-          mongoDb,
-        })
-
-        const riskClassificationValues =
-          await riskRepository.getRiskClassificationValues()
-
-        if (hasFeature('RISK_SCORING')) {
-          const score = await riskScoringService.updateInitialRiskScores(
-            userPayload as User | Business
-          )
-
-          krsScore = craScore = score
-
-          const riskLevel = getRiskLevelFromScore(
-            riskClassificationValues,
-            score
-          )
-
-          krsRiskLevel = craRiskLevel = riskLevel
-        }
-
-        const preDefinedRiskLevel = userPayload.riskLevel
-
-        if (preDefinedRiskLevel) {
-          await riskScoringService.handleManualRiskLevel(
-            userPayload as User | Business
-          )
-
-          craScore = getRiskScoreFromLevel(
-            riskClassificationValues,
-            preDefinedRiskLevel
-          )
-
-          craRiskLevel = preDefinedRiskLevel
-        }
-      }
+      const { craRiskScore, kycRiskLevel, kycRiskScore, craRiskLevel } =
+        await riskScoringService.runRiskScoresForUser(userPayload)
 
       const userManagementService = new UserManagementService(
         tenantId,
@@ -141,16 +94,10 @@ export const userHandler = lambdaApi()(
 
       return {
         userId: user.userId,
-        ...((krsScore || craScore) && {
+        ...((kycRiskLevel || craRiskLevel) && {
           riskScoreDetails: {
-            ...(krsRiskLevel && {
-              kycRiskLevel: krsRiskLevel,
-              kycRiskScore: krsScore,
-            }),
-            ...(craRiskLevel && {
-              craRiskLevel: craRiskLevel,
-              craRiskScore: craScore,
-            }),
+            ...(kycRiskLevel && { kycRiskLevel, kycRiskScore }),
+            ...(craRiskLevel && { craRiskLevel, craRiskScore }),
           },
         }),
         hitRules: user?.hitRules ?? [],

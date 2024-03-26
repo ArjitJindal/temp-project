@@ -449,6 +449,12 @@ describe('Public API - Create a Consumer User Event', () => {
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
     })
     const mongoUser = await userRepository.getUserById('foo')
     expect(mongoUser).toEqual({
@@ -456,6 +462,12 @@ describe('Public API - Create a Consumer User Event', () => {
       riskLevel: 'VERY_HIGH',
       updatedAt: expect.any(Number),
       tags: [{ key: 'key', value: 'value' }],
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
     })
   })
 
@@ -495,6 +507,12 @@ describe('Public API - Create a Consumer User Event', () => {
       executedRules: [],
       hitRules: [],
       status: 'ALLOW',
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
     })
   })
 
@@ -629,6 +647,12 @@ describe('Public API - Create a Business User Event', () => {
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
     }
     expect(JSON.parse(response?.body as string)).toEqual(toMatchObject)
     const userService = new UserService(
@@ -685,6 +709,12 @@ describe('Public API - Create a Business User Event', () => {
       executedRules: [],
       hitRules: [],
       status: 'ALLOW',
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
     })
   })
 
