@@ -3,11 +3,10 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Forbidden, BadRequest } from 'http-errors'
-import { RiskService } from '../../services/risk'
+import { RiskService } from '@/services/risk'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
@@ -121,13 +120,8 @@ export const riskLevelAndScoreHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
 
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const client = await getMongoDbClient()
-
-    const riskRepository = new RiskRepository(tenantId, {
-      dynamoDb,
-      mongoDb: client,
-    })
-
+    const mongoDb = await getMongoDbClient()
+    const riskService = new RiskService(tenantId, { dynamoDb, mongoDb })
     const handlers = new Handlers()
 
     handlers.registerGetKrsValue(async (ctx, request) => {
@@ -136,7 +130,7 @@ export const riskLevelAndScoreHandler = lambdaApi()(
           'Not allowed to access because of missing feature flags: RISK_SCORING'
         )
       }
-      return await riskRepository.getKrsValueFromMongo(request.userId)
+      return await riskService.getKrsValueFromMongo(request.userId)
     })
 
     handlers.registerGetArsValue(async (ctx, request) => {
@@ -145,7 +139,7 @@ export const riskLevelAndScoreHandler = lambdaApi()(
           'Not allowed to access because of missing feature flags: RISK_SCORING'
         )
       }
-      return await riskRepository.getArsValueFromMongo(request.transactionId)
+      return await riskService.getArsValueFromMongo(request.transactionId)
     })
 
     handlers.registerGetDrsValue(async (ctx, request) => {
@@ -154,7 +148,7 @@ export const riskLevelAndScoreHandler = lambdaApi()(
           'Not allowed to access because of missing feature flags: RISK_SCORING, RISK_LEVELS'
         )
       }
-      return await riskRepository.getDrsValueFromMongo(request.userId)
+      return await riskService.getDrsValueFromMongo(request.userId)
     })
 
     return await handlers.handle(event)

@@ -2,12 +2,12 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { ListRepository } from '../../services/list/repositories/list-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ListType } from '@/@types/openapi-internal/ListType'
+import { ListService } from '@/services/list'
 
 export const listsHandler = lambdaApi()(
   async (
@@ -18,18 +18,18 @@ export const listsHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
 
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const listRepository = new ListRepository(tenantId, dynamoDb)
+    const listService = new ListService(tenantId, { dynamoDb })
 
     const handlers = new Handlers()
 
     handlers.registerGetLists(
       async (ctx, request) =>
-        await listRepository.getListHeaders(request.listType as ListType)
+        await listService.getListHeaders(request.listType as ListType)
     )
 
     handlers.registerPostList(
       async (ctx, request) =>
-        await listRepository.createList(
+        await listService.createList(
           request.NewListPayload.listType,
           request.NewListPayload.subtype,
           request.NewListPayload.data
@@ -37,28 +37,28 @@ export const listsHandler = lambdaApi()(
     )
 
     handlers.registerGetList(
-      async (ctx, request) => await listRepository.getListHeader(request.listId)
+      async (ctx, request) => await listService.getListHeader(request.listId)
     )
 
     handlers.registerDeleteList(
-      async (ctx, request) => await listRepository.deleteList(request.listId)
+      async (ctx, request) => await listService.deleteList(request.listId)
     )
 
     handlers.registerPatchList(async (ctx, request) => {
       const listId = request.listId
       const body = request.ListData
-      const list = await listRepository.getListHeader(listId)
+      const list = await listService.getListHeader(listId)
       if (list == null) {
         return null
       }
       if (body.metadata != null) {
-        await listRepository.updateListHeader({
+        await listService.updateListHeader({
           ...list,
           metadata: body.metadata,
         })
       }
       if (body.items) {
-        await listRepository.updateListItems(listId, body.items)
+        await listService.updateListItems(listId, body.items)
       }
       return { listId, header: list, items: body.items ?? [] }
     })
@@ -67,7 +67,7 @@ export const listsHandler = lambdaApi()(
       const { listId, page = 1 } = request
       let response: any = undefined
       for (let i = 0; i < page; i += 1) {
-        response = await listRepository.getListItems(listId, {
+        response = await listService.getListItems(listId, {
           cursor: response?.cursor,
         })
         if (response == null) {
@@ -79,12 +79,12 @@ export const listsHandler = lambdaApi()(
 
     handlers.registerPostListItem(
       async (ctx, request) =>
-        await listRepository.setListItem(request.listId, request.ListItem)
+        await listService.setListItem(request.listId, request.ListItem)
     )
 
     handlers.registerDeleteListItem(
       async (ctx, request) =>
-        await listRepository.deleteListItem(request.listId, request.key)
+        await listService.deleteListItem(request.listId, request.key)
     )
 
     return await handlers.handle(event)

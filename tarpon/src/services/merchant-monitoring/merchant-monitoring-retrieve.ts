@@ -1,7 +1,7 @@
 import { Filter, MongoClient } from 'mongodb'
 import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
-import { MerchantRepository } from '@/lambdas/console-api-merchant/merchant-repository'
+import { MerchantRepository } from '@/services/merchant-monitoring/merchant-repository'
 import { traceable } from '@/core/xray'
 
 @traceable

@@ -13,7 +13,7 @@ import {
 } from '@aws-sdk/client-api-gateway'
 import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
-import { BadRequest } from 'http-errors'
+import createHttpError, { BadRequest } from 'http-errors'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import {
@@ -65,10 +65,7 @@ export class TenantService {
 
   constructor(
     tenantId: string,
-    connections: {
-      dynamoDb?: DynamoDBDocumentClient
-      mongoDb: MongoClient
-    }
+    connections: { dynamoDb?: DynamoDBDocumentClient; mongoDb: MongoClient }
   ) {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb
@@ -519,6 +516,7 @@ export class TenantService {
 
     return updatedResult
   }
+
   public static async getAllTenantIds() {
     const mongoDb = (await getMongoDbClient()).db()
     const allTenantIds = (await mongoDb.listCollections().toArray())
@@ -529,5 +527,66 @@ export class TenantService {
         return tenantId
       })
     return uniq(allTenantIds)
+  }
+
+  public async getTenantSettings(): Promise<TenantSettings> {
+    const tenantRepository = new TenantRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+    return tenantRepository.getTenantSettings()
+  }
+
+  public async deleteTenant(
+    tenantIdToDelete: string,
+    notRecoverable?: boolean
+  ) {
+    if (tenantIdToDelete === this.tenantId) {
+      throw new createHttpError.BadRequest(
+        'Cannot delete tenant: cannot delete self'
+      )
+    }
+
+    const accountsService = new AccountsService(
+      {
+        auth0Domain:
+          getContext()?.settings?.auth0Domain ??
+          (process.env.AUTH0_DOMAIN as string),
+      },
+      { mongoDb: this.mongoDb }
+    )
+
+    const tenant = await accountsService.getTenantById(tenantIdToDelete)
+
+    if (
+      tenantIdToDelete.toLowerCase().includes('flagright') ||
+      tenant?.name.toLowerCase().includes('flagright')
+    ) {
+      throw new createHttpError.BadRequest(
+        'Cannot delete tenant with flagright in the name'
+      )
+    }
+
+    const tenantRepository = new TenantRepository(tenantIdToDelete, {
+      mongoDb: this.mongoDb,
+    })
+
+    if (await tenantRepository.isDeletetionRecordExists(tenantIdToDelete)) {
+      throw new createHttpError.Forbidden(
+        `Tenant deletion record already exists for tenantId: ${tenantIdToDelete}`
+      )
+    }
+
+    await tenantRepository.createPendingRecordForTenantDeletion({
+      tenantId: tenantIdToDelete,
+      triggeredByEmail: getContext()?.user?.email ?? '',
+      triggeredById: getContext()?.user?.id ?? '',
+      notRecoverable: notRecoverable ?? false,
+    })
+
+    await sendBatchJobCommand({
+      type: 'TENANT_DELETION',
+      tenantId: tenantIdToDelete,
+      notRecoverable: notRecoverable ?? false,
+    })
   }
 }

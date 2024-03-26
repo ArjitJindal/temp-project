@@ -41,20 +41,20 @@ export const dashboardStatsHandler = lambdaApi()(
     >
   ) => {
     const handlers = new Handlers()
+    const mongoDb = await getMongoDbClient()
+    const tenantId = event.requestContext.authorizer.principalId
+
+    const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+      mongoDb,
+    })
 
     handlers.registerGetDashboardStatsTransactions(async (ctx, request) => {
-      const { tenantId } = ctx
       const { startTimestamp, endTimestamp, granularity } = request
-      const client = await getMongoDbClient()
-      if (!endTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
+      if (!endTimestamp || !startTimestamp) {
+        throw new BadRequest(
+          `Wrong timestamp format: start: ${startTimestamp}, end: ${endTimestamp}`
+        )
       }
-      if (!startTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-      }
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb: client,
-      })
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
@@ -63,28 +63,19 @@ export const dashboardStatsHandler = lambdaApi()(
         endTimestamp,
         granularity
       )
-      return {
-        data,
-      }
+      return { data }
     })
 
     handlers.registerGetDashboardStatsTransactionsTotal(
       async (ctx, request) => {
-        const { tenantId } = ctx
         const { startTimestamp, endTimestamp } = request
-        const client = await getMongoDbClient()
         if (!endTimestamp) {
           throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
         }
         if (!startTimestamp) {
           throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
         }
-        const dashboardStatsRepository = new DashboardStatsRepository(
-          tenantId,
-          {
-            mongoDb: client,
-          }
-        )
+
         if (shouldRefreshAll(event)) {
           await dashboardStatsRepository.refreshAllStats()
         }
@@ -103,18 +94,11 @@ export const dashboardStatsHandler = lambdaApi()(
             }
           }
         }
-        return {
-          data: {
-            time: 'TOTAL',
-            ...result,
-          },
-        }
+        return { data: { time: 'TOTAL', ...result } }
       }
     )
 
     handlers.registerGetDashboardStatsHitsPerUser(async (ctx, request) => {
-      const client = await getMongoDbClient()
-      const { tenantId } = ctx
       const { startTimestamp, endTimestamp, direction, userType } = request
       if (!endTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
@@ -122,9 +106,7 @@ export const dashboardStatsHandler = lambdaApi()(
       if (!startTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
       }
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb: client,
-      })
+
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
@@ -139,12 +121,8 @@ export const dashboardStatsHandler = lambdaApi()(
     })
 
     handlers.registerGetDashboardStatsRuleHit(async (ctx, request) => {
-      const client = await getMongoDbClient()
-      const { tenantId } = ctx
       const { startTimestamp, endTimestamp } = request
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb: client,
-      })
+
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
@@ -163,18 +141,14 @@ export const dashboardStatsHandler = lambdaApi()(
     })
 
     handlers.registerGetDashboardStatsUsersByTime(async (ctx, request) => {
-      const { tenantId } = ctx
       const { userType, startTimestamp, endTimestamp, granularity } = request
-      const mongoDb = await getMongoDbClient()
       if (!endTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
       }
       if (!startTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
       }
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb,
-      })
+
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
@@ -188,11 +162,9 @@ export const dashboardStatsHandler = lambdaApi()(
     })
 
     handlers.registerGetDashboardTeamStats(async (ctx, request) => {
-      const client = await getMongoDbClient()
       const { auth0Domain } = event.requestContext.authorizer
       const { scope, startTimestamp, endTimestamp, caseStatus } = request
-      const { tenantId, userId } = ctx
-      const mongoDb = await getMongoDbClient()
+      const { userId } = ctx
       const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
       const organization = await accountsService.getAccountTenant(userId)
       const accounts: Account[] = await accountsService.getTenantAccounts(
@@ -201,9 +173,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const accountIds = accounts
         .filter((account) => account.role !== 'root')
         .map((account) => account.id)
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb: client,
-      })
+
       return await dashboardStatsRepository.getTeamStatistics(
         scope,
         startTimestamp ? startTimestamp : 0,
@@ -214,14 +184,9 @@ export const dashboardStatsHandler = lambdaApi()(
     })
 
     handlers.registerGetDashboardStatsOverview(async (ctx) => {
-      const client = await getMongoDbClient()
-      const { tenantId } = ctx
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb: client,
-      })
       const accountsService = new AccountsService(
         { auth0Domain: event.requestContext.authorizer.auth0Domain },
-        { mongoDb: client }
+        { mongoDb }
       )
       const organization = await accountsService.getAccountTenant(ctx.userId)
       const accounts: Account[] = await accountsService.getTenantAccounts(
@@ -238,47 +203,31 @@ export const dashboardStatsHandler = lambdaApi()(
 
     handlers.registerGetDashboardStatsClosingReasonDistributionStats(
       async (ctx, request) => {
-        const client = await getMongoDbClient()
         const { entity, startTimestamp, endTimestamp } = request
-        const dashboardStatsRepository = new DashboardStatsRepository(
-          ctx.tenantId,
-          { mongoDb: client }
-        )
         if (shouldRefreshAll(event)) {
           await dashboardStatsRepository.refreshAllStats()
         }
         return await dashboardStatsRepository.getClosingReasonDistributionStatistics(
           entity,
-          {
-            startTimestamp,
-            endTimestamp,
-          }
+          { startTimestamp, endTimestamp }
         )
       }
     )
+
     handlers.registerGetDashboardStatsAlertPriorityDistributionStats(
       async (ctx, request) => {
-        const client = await getMongoDbClient()
         const { startTimestamp, endTimestamp } = request
-        const dashboardStatsRepository = new DashboardStatsRepository(
-          ctx.tenantId,
-          { mongoDb: client }
-        )
         if (shouldRefreshAll(event)) {
           await dashboardStatsRepository.refreshAllStats()
         }
         return await dashboardStatsRepository.getAlertPriorityDistributionStatistics(
-          {
-            startTimestamp,
-            endTimestamp,
-          }
+          { startTimestamp, endTimestamp }
         )
       }
     )
 
     handlers.registerGetDashboardStatsAlertAndCaseStatusDistributionStats(
       async (ctx, request) => {
-        const client = await getMongoDbClient()
         const { startTimestamp, endTimestamp, entity, granularity } = request
         if (!endTimestamp) {
           throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
@@ -286,10 +235,6 @@ export const dashboardStatsHandler = lambdaApi()(
         if (!startTimestamp) {
           throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
         }
-        const dashboardStatsRepository = new DashboardStatsRepository(
-          ctx.tenantId,
-          { mongoDb: client }
-        )
         return await dashboardStatsRepository.getAlertAndCaseStatusDistributionStatistics(
           startTimestamp,
           endTimestamp,
@@ -299,26 +244,10 @@ export const dashboardStatsHandler = lambdaApi()(
       }
     )
 
-    handlers.registerGetDashboardStatsTransactionTypeDistributionStats(
-      async (ctx) => {
-        const client = await getMongoDbClient()
-        const dashboardStatsRepository = new DashboardStatsRepository(
-          ctx.tenantId,
-          { mongoDb: client }
-        )
-        if (shouldRefreshAll(event)) {
-          await dashboardStatsRepository.refreshAllStats()
-        }
-        return null // TODO: to be re-enabled again by FR-3219
-      }
-    )
-
     handlers.registerGetDashboardLatestTeamStats(async (ctx, request) => {
-      const client = await getMongoDbClient()
       const { auth0Domain } = event.requestContext.authorizer
       const { scope } = request
-      const { tenantId, userId } = ctx
-      const mongoDb = await getMongoDbClient()
+      const { userId } = ctx
       const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
       const organization = await accountsService.getAccountTenant(userId)
       const accounts: Account[] = await accountsService.getTenantAccounts(
@@ -327,9 +256,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const accountIds = accounts
         .filter((account) => account.role !== 'root')
         .map((account) => account.id)
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb: client,
-      })
+
       return await dashboardStatsRepository.getLatestTeamStatistics(
         scope,
         accountIds

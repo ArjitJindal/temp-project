@@ -1,4 +1,6 @@
 import { PublishCommand } from '@aws-sdk/client-sns'
+import { MongoClient } from 'mongodb'
+import { AuditLogRepository } from './repositories/auditlog-repository'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AuditLogRecord } from '@/@types/audit-log'
 import { getContext } from '@/core/utils/context'
@@ -6,6 +8,8 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
 import { getSNSClient } from '@/utils/sns-sqs-client'
+import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
+import { traceable } from '@/core/xray'
 
 const snsClient = getSNSClient()
 
@@ -81,5 +85,37 @@ export async function publishAuditLog(
       }: ${JSON.stringify(e)}`,
       e
     )
+  }
+}
+
+@traceable
+export class AuditLogService {
+  mongoDb: MongoClient
+  tenantId: string
+  auditLogRepository: AuditLogRepository
+
+  constructor(tenantId: string, mongoDb: MongoClient) {
+    this.tenantId = tenantId
+    this.mongoDb = mongoDb
+    this.auditLogRepository = new AuditLogRepository(tenantId, this.mongoDb)
+  }
+
+  public async getAllAuditLogs(
+    params: DefaultApiGetAuditlogRequest
+  ): Promise<{ data: AuditLog[]; total: number }> {
+    return this.auditLogRepository.getAllAuditLogs(params)
+  }
+
+  public async saveAuditLog(auditlog: AuditLog): Promise<AuditLog> {
+    const savedAuditLog = await this.auditLogRepository.saveAuditLog(auditlog)
+    await publishAuditLog(this.tenantId, savedAuditLog)
+    logger.info(
+      `Saved audit log: ${savedAuditLog.action}, ${savedAuditLog.type}`,
+      {
+        tenantId: this.tenantId,
+        auditlogId: savedAuditLog.auditlogId,
+      }
+    )
+    return savedAuditLog
   }
 }
