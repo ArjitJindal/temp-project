@@ -1386,4 +1386,5 @@ const enabledTenantIds = [
   'ydtx15ustg', // Banked eu-2
   'cypress-tenant',
   'f05d33ea95',
+  'ft398yyjmd',
 ]
