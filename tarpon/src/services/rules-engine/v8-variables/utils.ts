@@ -4,6 +4,7 @@ import {
   COUNTRY_GROUP_LABELS,
   CURRENCIES,
 } from '@flagright/lib/constants'
+import { isValidAcronyms } from '@flagright/lib/constants/acronyms'
 import * as Models from '@/@types/openapi-public/all'
 import * as CustomModelData from '@/@types/openapi-public-custom/all'
 export abstract class EntityModel {
@@ -51,7 +52,7 @@ function getOptions(
   }
 
   return optionValues.map((value) => ({
-    title: startCase(lowerCase(value)),
+    title: isValidAcronyms(value) ? value : startCase(lowerCase(value)),
     value,
   }))
 }

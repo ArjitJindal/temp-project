@@ -1,7 +1,6 @@
 import { startCase, toLower } from 'lodash';
+import { ACRONYMS, isValidAcronyms } from '@flagright/lib/constants/acronyms';
 import { neverReturn } from '@/utils/lang';
-
-const ABBREVIATIONS = ['pep', 'aml', 'cft'];
 
 /*
   SOME_CONSTANT_NAME => Some constant name
@@ -17,7 +16,7 @@ export function humanizeSnakeCase(name: string): string {
   return firstLetterUpper(
     toLower(name)
       .split('_')
-      .map((x) => (ABBREVIATIONS.includes(x.toLocaleLowerCase()) ? x.toLocaleUpperCase() : x))
+      .map((x) => (ACRONYMS.includes(x.toUpperCase()) ? x.toLocaleUpperCase() : x))
       .join(' '),
   );
 }
@@ -29,7 +28,7 @@ export function humanizeKebabCase(value: string): string {
   return firstLetterUpper(
     value
       .split('-')
-      .map((x) => (ABBREVIATIONS.includes(x.toLocaleLowerCase()) ? x.toLocaleUpperCase() : x))
+      .map((x) => (ACRONYMS.includes(x.toUpperCase()) ? x.toLocaleUpperCase() : x))
       .join(' '),
   );
 }
@@ -47,6 +46,7 @@ export function humanizeCamelCase(name: string): string {
 }
 
 export function humanizeAuto(value: string): string {
+  if (isValidAcronyms(value)) return value;
   const caseType = recognizeCase(value);
   switch (caseType) {
     case 'CAMEL_CASE':
