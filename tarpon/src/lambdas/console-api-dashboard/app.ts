@@ -299,20 +299,6 @@ export const dashboardStatsHandler = lambdaApi()(
       }
     )
 
-    handlers.registerGetDashboardStatsTransactionTypeDistributionStats(
-      async (ctx) => {
-        const client = await getMongoDbClient()
-        const dashboardStatsRepository = new DashboardStatsRepository(
-          ctx.tenantId,
-          { mongoDb: client }
-        )
-        if (shouldRefreshAll(event)) {
-          await dashboardStatsRepository.refreshAllStats()
-        }
-        return null // TODO: to be re-enabled again by FR-3219
-      }
-    )
-
     handlers.registerGetDashboardLatestTeamStats(async (ctx, request) => {
       const client = await getMongoDbClient()
       const { auth0Domain } = event.requestContext.authorizer

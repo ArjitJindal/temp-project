@@ -137,8 +137,6 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/alert_priority_distribution':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
-  '/dashboard_stats/transaction_type_distribution':
-    StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/alert_and_case_status_distribution':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/slack/oauth_redirect': StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME,

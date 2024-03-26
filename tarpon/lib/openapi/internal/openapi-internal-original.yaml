@@ -2281,23 +2281,6 @@ paths:
             type: number
           in: query
           name: endTimestamp
-  /dashboard_stats/transaction_type_distribution:
-    get:
-      summary: DashboardStats -TransactionTypeDistributionStats
-      tags: []
-      x-flagright:
-        permissions:
-          - dashboard:download-data:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardStatsTransactionTypeDistributionStats'
-              examples: {}
-      operationId: get-dashboard-stats-transaction-type-distribution-stats
-      description: ''
   /tenants:
     get:
       summary: Tenant - List
@@ -7063,22 +7046,6 @@ components:
                 type: number
       required:
         - alertPriorityData
-    DashboardStatsTransactionTypeDistributionStats:
-      type: object
-      x-examples: {}
-      title: DashboardStatsTransactionTypeDistributionStats
-      properties:
-        transactionTypeData:
-          type: array
-          items:
-            type: object
-            properties:
-              type:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
-              value:
-                type: number
-      required:
-        - transactionTypeData
     UpdateMonitoringStatusRequest:
       type: object
       x-examples: {}
