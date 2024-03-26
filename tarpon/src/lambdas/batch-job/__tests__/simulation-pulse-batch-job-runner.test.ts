@@ -1,7 +1,7 @@
 import { jobRunnerHandler } from '../app'
 import { SimulationRiskLevelsBatchJob } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
+import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 import {
@@ -10,7 +10,7 @@ import {
 } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { SimulationResultRepository } from '@/services/simulation/repositories/simulation-result-repository'
+import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal/SimulationRiskLevelsParametersRequest'

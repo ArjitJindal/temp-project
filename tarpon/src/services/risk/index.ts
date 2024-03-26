@@ -132,16 +132,4 @@ export class RiskService {
     )
     return newDrsRiskItem
   }
-
-  async getDrsValueFromMongo(userId: string) {
-    return await this.riskRepository.getDrsValueFromMongo(userId)
-  }
-
-  async getKrsValueFromMongo(userId: string) {
-    return await this.riskRepository.getKrsValueFromMongo(userId)
-  }
-
-  async getArsValueFromMongo(transactionId: string) {
-    return await this.riskRepository.getArsValueFromMongo(transactionId)
-  }
 }

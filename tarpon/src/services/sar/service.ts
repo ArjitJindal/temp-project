@@ -6,8 +6,7 @@ import { Credentials } from '@aws-sdk/client-sts'
 import { Document, MongoClient } from 'mongodb'
 import { NotFound, BadRequest } from 'http-errors'
 import { Account } from '../accounts'
-import { CaseRepository } from '../rules-engine/repositories/case-repository'
-import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
+import { CaseWithoutCaseTransactions } from '../rules-engine/repositories/case-repository'
 import { ReportRepository } from './repositories/report-repository'
 import { ReportType } from '@/@types/openapi-internal/ReportType'
 import {
@@ -16,13 +15,13 @@ import {
 } from '@/services/sar/generators'
 import { Report } from '@/@types/openapi-internal/Report'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { formatCountry } from '@/utils/countries'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
 import { logger } from '@/core/logger'
-import { getContext } from '@/core/utils/context'
 
 function withSchema(report: Report): Report {
   const generator = REPORT_GENERATORS.get(report.reportTypeId)
@@ -36,7 +35,6 @@ function withSchema(report: Report): Report {
 export class ReportService {
   reportRepository!: ReportRepository
   tenantId: string
-  mongoDb: MongoClient
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -50,7 +48,6 @@ export class ReportService {
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.reportRepository = new ReportRepository(tenantId, mongoDb)
     this.tenantId = tenantId
-    this.mongoDb = mongoDb
   }
 
   public getTypes(): ReportType[] {
@@ -84,39 +81,10 @@ export class ReportService {
 
   public async getReportDraft(
     reportTypeId: string,
-    caseId: string,
-    alertIds: string[],
-    transactionIds: string[]
+    reporter: Account,
+    c: CaseWithoutCaseTransactions,
+    transactions: InternalTransaction[]
   ): Promise<Report> {
-    if (transactionIds?.length > 20) {
-      throw new NotFound(`Cant select more than 20 transactions`)
-    }
-    const caseRepository = new CaseRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-    })
-    const c = await caseRepository.getCaseById(caseId)
-    if (!c) {
-      throw new NotFound(`Cannot find case ${caseId}`)
-    }
-    if (
-      (!transactionIds || transactionIds.length === 0) &&
-      alertIds?.length > 0
-    ) {
-      transactionIds = c.caseTransactionsIds || []
-    }
-
-    const txpRepo = new MongoDbTransactionRepository(
-      this.tenantId,
-      this.mongoDb
-    )
-
-    const transactions = await txpRepo.getTransactions({
-      filterIdList: transactionIds,
-      includeUsers: true,
-      pageSize: 20,
-    })
-
-    const account = getContext()?.user as Account
     const generator = this.getReportGenerator(reportTypeId)
     if (!c.caseId) {
       throw new NotFound(`No case ID`)
@@ -130,10 +98,9 @@ export class ReportService {
 
     const populatedParameters = await generator.getPopulatedParameters(
       c,
-      transactions.data,
-      account
+      transactions,
+      reporter
     )
-
     const prefillReport = mergeObjects(
       lastGeneratedReport?.parameters.report,
       populatedParameters.report
@@ -147,7 +114,7 @@ export class ReportService {
       reportTypeId,
       createdAt: now,
       updatedAt: now,
-      createdById: account.id,
+      createdById: reporter.id,
       status: 'DRAFT',
       parameters: {
         ...populatedParameters,

@@ -8,7 +8,6 @@ import {
 } from '@flagright/lib/utils/object'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { singular } from 'pluralize'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AsyncLogicEngine } from 'json-logic-engine'
 import {
   RuleChecksForField,
@@ -76,22 +75,15 @@ ajv.addKeyword('enumNames')
 
 @traceable
 export class RuleService {
-  tenantId: string
-  dynamoDb: DynamoDBDocumentClient
   ruleRepository: RuleRepository
   ruleInstanceRepository: RuleInstanceRepository
 
   constructor(
-    tenantId: string,
-    connections: { dynamoDb: DynamoDBDocumentClient }
+    ruleRepository: RuleRepository,
+    ruleInstanceRepository: RuleInstanceRepository
   ) {
-    this.ruleRepository = new RuleRepository(tenantId, connections)
-    this.ruleInstanceRepository = new RuleInstanceRepository(
-      tenantId,
-      connections
-    )
-    this.tenantId = tenantId
-    this.dynamoDb = connections.dynamoDb
+    this.ruleRepository = ruleRepository
+    this.ruleInstanceRepository = ruleInstanceRepository
   }
 
   public static async syncRulesLibrary() {

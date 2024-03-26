@@ -9,8 +9,6 @@ import {
   getRiskLevelFromScore,
 } from '../risk-scoring/utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
-import { SimulationResultRepository } from '../simulation/repositories/simulation-result-repository'
-import { SimulationTaskRepository } from '../simulation/repositories/simulation-task-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationRiskFactorsBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -21,6 +19,8 @@ import { SimulationRiskFactorsResult } from '@/@types/openapi-internal/Simulatio
 import { getUserName } from '@/utils/helpers'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
+import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
+import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
 import { SimulationRiskFactorsStatisticsResult } from '@/@types/openapi-internal/SimulationRiskFactorsStatisticsResult'
 import { SimulationRiskFactorsStatistics } from '@/@types/openapi-internal/SimulationRiskFactorsStatistics'
 import { logger } from '@/core/logger'

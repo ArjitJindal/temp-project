@@ -1,4 +1,3 @@
-import { ImportService } from '../import'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { FileImportBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -8,6 +7,7 @@ import { assertPermissions } from '@/@types/jwt'
 import { assertUserError } from '@/utils/errors'
 import { traceable } from '@/core/xray'
 import { FileImportConfig } from '@/lambdas/console-api-file-import/app'
+import { ImportRepository } from '@/lambdas/console-api-file-import/import-repository'
 import { Importer } from '@/lambdas/console-api-file-import/importer'
 
 const { TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
@@ -20,7 +20,7 @@ export class FileImportBatchJobRunner extends BatchJobRunner {
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const s3 = getS3Client(awsCredentials)
     const mongoDb = await getMongoDbClient()
-    const importService = new ImportService(tenantId, {
+    const importRepository = new ImportRepository(tenantId, {
       mongoDb,
     })
 
@@ -33,7 +33,7 @@ export class FileImportBatchJobRunner extends BatchJobRunner {
     )
     let importedCount = 0
     const importId = importRequest.s3Key.replace(/\//g, '')
-    await importService.createFileImport({
+    await importRepository.createFileImport({
       _id: importId,
       type: importRequest.type,
       s3Key: importRequest.s3Key,
@@ -51,9 +51,9 @@ export class FileImportBatchJobRunner extends BatchJobRunner {
         assertPermissions(['users:import:write'])
         importedCount = await importer.importBusinessUsers(importRequest)
       }
-      await importService.completeFileImport(importId, importedCount)
+      await importRepository.completeFileImport(importId, importedCount)
     } catch (e) {
-      await importService.failFileImport(
+      await importRepository.failFileImport(
         importId,
         e instanceof Error ? e.message : 'Unknown'
       )

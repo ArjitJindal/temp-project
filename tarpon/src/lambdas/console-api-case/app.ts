@@ -5,8 +5,10 @@ import {
 import { NotFound, BadRequest, Forbidden } from 'http-errors'
 import { CaseService } from './services/case-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -26,11 +28,22 @@ export const casesHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
+    const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
     const dynamoDb = await getDynamoDbClientByEvent(event)
+    const dbs = {
+      mongoDb: client,
+      dynamoDb,
+    }
+    const caseRepository = new CaseRepository(tenantId, dbs)
+
     const alertsService = await AlertsService.fromEvent(event)
 
-    const caseService = await CaseService.fromEvent(event)
+    const caseService = new CaseService(caseRepository, s3, {
+      documentBucketName: DOCUMENT_BUCKET,
+      tmpBucketName: TMP_BUCKET,
+    })
 
     const caseCreationService = new CaseCreationService(tenantId, {
       mongoDb: client,

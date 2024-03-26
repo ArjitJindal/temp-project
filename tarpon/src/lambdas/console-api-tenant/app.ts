@@ -16,6 +16,7 @@ import { Tenant } from '@/@types/openapi-internal/Tenant'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -32,6 +33,8 @@ import {
   RuleQueueWithId,
   RuleQueuesService,
 } from '@/services/tenants/rule-queue-service'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getFullTenantId } from '@/utils/tenant'
 import { tenantSettings } from '@/core/utils/context'
 
@@ -89,9 +92,8 @@ export const tenantsHandler = lambdaApi()(
 
     handlers.registerGetTenantsSettings(
       async (ctx) =>
-        await new TenantService(ctx.tenantId, {
+        await new TenantRepository(ctx.tenantId, {
           dynamoDb: getDynamoDbClientByEvent(event),
-          mongoDb,
         }).getTenantSettings()
     )
 
@@ -279,11 +281,7 @@ export const tenantsHandler = lambdaApi()(
     })
 
     /** Rule Queue */
-    const ruleQueueService = new RuleQueuesService(tenantId, {
-      mongoDb,
-      dynamoDb: getDynamoDbClientByEvent(event),
-    })
-
+    const ruleQueueService = new RuleQueuesService(tenantId, mongoDb)
     handlers.registerGetRuleQueue(async (ctx, request) => {
       return ruleQueueService.getRuleQueue(request.ruleQueueId)
     })
@@ -304,24 +302,67 @@ export const tenantsHandler = lambdaApi()(
       assertCurrentUserRole('root')
       assertHasDangerousTenantDelete()
 
-      const tenantService = new TenantService(ctx.tenantId, {
-        mongoDb,
-        dynamoDb: getDynamoDbClientByEvent(event),
-      })
+      const { tenantId, notRecoverable } = request.DeleteTenant
 
-      if (!request.DeleteTenant.tenantId) {
-        throw createHttpError(400, 'tenantId is required')
+      if (!tenantId) {
+        throw new createHttpError.BadRequest(
+          'Cannot delete tenant: no tenantIdToDelete'
+        )
       }
 
-      await tenantService.deleteTenant(request.DeleteTenant.tenantId)
+      if (tenantId === ctx.tenantId) {
+        throw new createHttpError.BadRequest(
+          'Cannot delete tenant: cannot delete self'
+        )
+      }
+
+      const tenant = await accountsService.getTenantById(tenantId)
+
+      if (
+        tenantId.toLowerCase().includes('flagright') ||
+        tenant?.name.toLowerCase().includes('flagright')
+      ) {
+        throw new createHttpError.BadRequest(
+          'Cannot delete tenant with flagright in the name'
+        )
+      }
+
+      const tenantRepository = new TenantRepository(tenantId, { mongoDb })
+
+      if (await tenantRepository.isDeletetionRecordExists(tenantId)) {
+        throw new createHttpError.Forbidden(
+          `Tenant deletion record already exists for tenantId: ${tenantId}`
+        )
+      }
+
+      await tenantRepository.createPendingRecordForTenantDeletion({
+        tenantId,
+        triggeredByEmail: ctx.email,
+        triggeredById: ctx.userId,
+        notRecoverable: notRecoverable ?? false,
+      })
+
+      await sendBatchJobCommand({
+        type: 'TENANT_DELETION',
+        tenantId,
+        notRecoverable: request.DeleteTenant.notRecoverable ?? false,
+      })
 
       return
     })
 
-    handlers.registerDeleteRuleQueue(
-      async (ctx, request) =>
-        await ruleQueueService.deleteQueue(request.ruleQueueId)
-    )
+    handlers.registerDeleteRuleQueue(async (ctx, request) => {
+      const dynamoDb = getDynamoDbClient()
+      const alertsRepository = new AlertsRepository(tenantId, {
+        mongoDb,
+      })
+      const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+        dynamoDb,
+      })
+      await ruleQueueService.deleteRuleQueue(request.ruleQueueId)
+      await ruleInstanceRepository.deleteRuleQueue(request.ruleQueueId)
+      await alertsRepository.deleteRuleQueue(request.ruleQueueId)
+    })
 
     return await handlers.handle(event)
   }

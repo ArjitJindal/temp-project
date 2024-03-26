@@ -5,13 +5,13 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { ImportRepository } from './import-repository'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getCredentialsFromEvent } from '@/utils/credentials'
-import { ImportService } from '@/services/import'
 
 export type FileImportConfig = {
   IMPORT_BUCKET: string
@@ -27,7 +27,7 @@ export const fileImportHandler = lambdaApi()(
     const { principalId: tenantId, tenantName } =
       event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
-    const importService = new ImportService(tenantId, {
+    const importRepository = new ImportRepository(tenantId, {
       mongoDb,
     })
 
@@ -35,7 +35,7 @@ export const fileImportHandler = lambdaApi()(
 
     handlers.registerPostImportUsers(
       async (ctx, request) =>
-        await importService.postFileImport(
+        await importRepository.postFileImport(
           request.ImportRequest,
           tenantName,
           getCredentialsFromEvent(event)
@@ -44,7 +44,7 @@ export const fileImportHandler = lambdaApi()(
 
     handlers.registerPostImportTransactions(
       async (ctx, request) =>
-        await importService.postFileImport(
+        await importRepository.postFileImport(
           request.ImportRequest,
           tenantName,
           getCredentialsFromEvent(event)
@@ -53,7 +53,7 @@ export const fileImportHandler = lambdaApi()(
 
     handlers.registerGetImportImportId(
       async (ctx, request) =>
-        await importService.getFileImport(request.importId)
+        await importRepository.getFileImport(request.importId)
     )
 
     return await handlers.handle(event)

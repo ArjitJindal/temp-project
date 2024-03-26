@@ -5,8 +5,8 @@ import {
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { AuditLogRepository } from '@/services/audit-log/repositories/auditlog-repository'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { AuditLogService } from '@/services/audit-log'
 
 export const auditLogHandler = lambdaApi()(
   async (
@@ -19,8 +19,8 @@ export const auditLogHandler = lambdaApi()(
 
     handlers.registerGetAuditlog(async (ctx, request) => {
       const { tenantId } = ctx
-      const auditLogService = new AuditLogService(tenantId, mongoDb)
-      return await auditLogService.getAllAuditLogs(request)
+      const auditLogRepository = new AuditLogRepository(tenantId, mongoDb)
+      return await auditLogRepository.getAllAuditLogs(request)
     })
 
     return await handlers.handle(event)

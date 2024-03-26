@@ -16,7 +16,7 @@ import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
-import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
+import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
 
 const MAX_TRANSACTIONS = 10000
 const TIMEOUT = 14 * 60 * 1000

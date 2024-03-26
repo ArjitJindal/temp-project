@@ -216,7 +216,9 @@ export class ListRepository {
 
   public async getListItems(
     listId: string,
-    params?: { cursor?: string }
+    params?: {
+      cursor?: string
+    }
   ): Promise<CursorPaginatedResponse<ListItem>> {
     const { Items = [], LastEvaluatedKey } = await this.dynamoDb.send(
       new QueryCommand({

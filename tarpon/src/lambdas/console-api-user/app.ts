@@ -15,6 +15,7 @@ import { CrmService } from '@/services/crm'
 import { hasFeature } from '@/core/utils/context'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { LinkerService } from '@/services/linker'
+import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMentionsFromComments, getParsedCommentBody } from '@/utils/helpers'
@@ -126,16 +127,23 @@ export const allUsersViewHandler = lambdaApi()(
     const { principalId: tenantId, userId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
     const s3 = getS3ClientByEvent(event)
-    const mongoDb = await getMongoDbClient()
+    const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
     const userService = new UserService(
       tenantId,
-      { mongoDb, dynamoDb },
+      {
+        mongoDb: client,
+        dynamoDb,
+      },
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
 
+    const userEventsRepository = new UserEventRepository(tenantId, {
+      dynamoDb,
+      mongoDb: client,
+    })
     const linkerService = new LinkerService(tenantId)
     const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
@@ -184,9 +192,17 @@ export const allUsersViewHandler = lambdaApi()(
       }
     )
 
-    handlers.registerGetEventsList(
-      async (ctx, request) => await userService.getEventsList(request)
-    )
+    handlers.registerGetEventsList(async (ctx, request) => {
+      const userEvents = await userEventsRepository.getMongoUserEvents(request)
+      const count = await userEventsRepository.getUserEventsCount(
+        request.userId
+      )
+
+      return {
+        items: userEvents,
+        total: count,
+      }
+    })
 
     handlers.registerGetCrmAccount(async (ctx, request) => {
       if (!hasFeature('CRM')) {
@@ -214,14 +230,19 @@ export const allUsersViewHandler = lambdaApi()(
     handlers.registerGetUserScreeningStatus(async (_ctx, _request) => {
       const ongoingScreeningUserRules =
         await getOngoingScreeningUserRuleInstances(tenantId)
-
-      return { isOngoingScreening: ongoingScreeningUserRules.length > 0 }
+      return {
+        isOngoingScreening: ongoingScreeningUserRules.length > 0,
+      }
     })
 
     handlers.registerPostUsersCommentsReply(async (ctx, request) => {
       const { Comment: rawComment } = request
       const mentions = getMentionsFromComments(rawComment.body)
-      const comment: Comment = { ...rawComment, userId, mentions }
+      const comment: Comment = {
+        ...rawComment,
+        userId,
+        mentions,
+      }
 
       const createdComment = await userService.saveUserCommentReply(
         request.userId,
