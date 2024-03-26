@@ -8,8 +8,9 @@ import {
 } from '@tanstack/react-query';
 import { UseQueryOptions, UseQueryResult } from '@tanstack/react-query/src/types';
 import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react-query/src/useQueries';
+import { InfiniteData } from '@tanstack/query-core/src/types';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
-import { failed, loading, success } from '@/utils/asyncResource';
+import { failed, loading, success, AsyncResource } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 
 export function useQuery<
@@ -202,47 +203,45 @@ export function getPageCount(params: PaginationParams, data: PaginatedData<unkno
   return 0;
 }
 
-export function useInfiniteQuery(
-  queryKey,
-  queryFn,
+export function useInfiniteQuery<TData, TQueryKey extends QueryKey = QueryKey>(
+  queryKey: TQueryKey,
+  queryFn: QueryFunction<TData, TQueryKey>,
   options: {
     initialPageParam?: any;
     getNextPageParam?: (lastPage: any, allPages: any) => any;
     refetchInterval?: number;
   },
 ) {
-  const result = useInfiniteQueryRQ({ queryKey, queryFn, ...options });
+  const result = useInfiniteQueryRQ<TData, unknown, TData, TQueryKey>({
+    queryKey,
+    queryFn,
+    ...options,
+  });
   return convertInfiniteQueryResult(result);
 }
 
-function convertInfiniteQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
-  results: UseInfiniteQueryResult<TData, unknown>,
-) {
+function convertInfiniteQueryResult<TData>(results: UseInfiniteQueryResult<TData, unknown>): {
+  data: AsyncResource<InfiniteData<TData>>;
+  fetchNextPage: () => void;
+  refetch: () => void;
+  hasNext?: boolean;
+} {
+  let data: AsyncResource<InfiniteData<TData>>;
   if (results.isLoading) {
-    return {
-      data: loading(results.data ?? null),
-      refetch: results.refetch,
-    };
+    data = loading<InfiniteData<TData>>(results.data ?? null);
+  } else if (results.isFetching) {
+    data = loading<InfiniteData<TData>>(results.data ?? null);
+  } else if (results.isSuccess) {
+    data = success<InfiniteData<TData>>(results.data);
+  } else if (results.isError) {
+    data = failed<InfiniteData<TData>>(getErrorMessage(results.error));
+  } else {
+    throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);
   }
-  if (results.isFetching) {
-    return {
-      data: loading(results.data),
-      refetch: results.refetch,
-    };
-  }
-  if (results.isSuccess) {
-    return {
-      data: success(results.data),
-      refetch: results.refetch,
-      fetchNextPage: results.fetchNextPage,
-      hasNext: results.hasNextPage,
-    };
-  }
-  if (results.isError) {
-    return {
-      data: failed(getErrorMessage(results.error)),
-      refetch: results.refetch,
-    };
-  }
-  throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);
+  return {
+    data,
+    fetchNextPage: results.fetchNextPage,
+    refetch: results.refetch,
+    hasNext: results.hasNextPage,
+  };
 }

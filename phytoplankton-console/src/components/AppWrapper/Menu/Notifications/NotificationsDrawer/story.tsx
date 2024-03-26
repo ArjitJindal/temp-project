@@ -125,6 +125,7 @@ export default function (): JSX.Element {
                       limit: 1000,
                     },
                   ],
+                  pageParams: [],
                 })}
                 refetch={() => {}}
                 setTab={() => {}}

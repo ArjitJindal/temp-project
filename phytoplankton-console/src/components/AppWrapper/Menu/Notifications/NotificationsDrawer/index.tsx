@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useQueryClient } from '@tanstack/react-query';
+import { InfiniteData } from '@tanstack/query-core/src/types';
 import s from './index.module.less';
 import Drawer from '@/components/library/Drawer';
 import SegmentedControl from '@/components/library/SegmentedControl';
@@ -15,13 +16,13 @@ import { message } from '@/components/library/Message';
 import { useCurrentUser } from '@/utils/user-utils';
 import { AsyncResource, isLoading, isSuccess } from '@/utils/asyncResource';
 import Spinner from '@/components/library/Spinner';
-import { ConsoleNotificationStatusStatusEnum } from '@/apis';
+import { ConsoleNotificationStatusStatusEnum, NotificationListResponse } from '@/apis';
 import { CursorPaginatedData } from '@/utils/queries/hooks';
 
 interface Props {
   isVisible: boolean;
   onChangeVisibility: (isShown: boolean) => void;
-  data: AsyncResource<unknown>;
+  data: AsyncResource<InfiniteData<NotificationListResponse>>;
   tab: 'ALL' | 'UNREAD';
   setTab: (tab: 'ALL' | 'UNREAD') => void;
   refetch: () => void;
@@ -98,7 +99,7 @@ export default function NotificationsDrawer(props: Props) {
 
   useEffect(() => {
     if (isSuccess(data)) {
-      const allPages = (data.value as any).pages ?? [];
+      const allPages = data.value.pages ?? [];
       const responseNotifications: Notification[] =
         allPages.length > 0 ? allPages.flatMap((page) => page.items) : [];
       setNotifications(responseNotifications);

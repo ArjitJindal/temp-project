@@ -5,6 +5,7 @@ import s from './index.module.less';
 import { useApi } from '@/api';
 import { useInfiniteQuery } from '@/utils/queries/hooks';
 import { NOTIFICATIONS } from '@/utils/queries/keys';
+import { NotificationListResponse } from '@/apis';
 
 interface Props {
   isNotificationsDrawerVisible: boolean;
@@ -18,9 +19,9 @@ export const Notifications = (props: Props) => {
   const [tab, setTab] = useState<'ALL' | 'UNREAD'>('ALL');
   const api = useApi();
 
-  const queryResult = useInfiniteQuery(
+  const queryResult = useInfiniteQuery<NotificationListResponse>(
     NOTIFICATIONS(tab),
-    async ({ pageParam = '' }) => {
+    async ({ pageParam = '' }): Promise<NotificationListResponse> => {
       return await api.getNotifications({ start: pageParam, notificationStatus: tab });
     },
     {
