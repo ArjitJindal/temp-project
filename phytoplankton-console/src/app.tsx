@@ -48,6 +48,7 @@ Sentry.init({
       }
       event.extra = {
         ...error.request,
+        cause: error.cause,
       };
     }
     // Some requests are not made using generated API, so they are not wrapped in FetchCallError.
