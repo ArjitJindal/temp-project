@@ -1,4 +1,5 @@
 import React from 'react';
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils';
 import { QuestionResponseEmbedded } from '../../../types';
 import { Recommendation } from './Recommendation';
 import * as Card from '@/components/ui/Card';
@@ -14,12 +15,12 @@ export default function HistoryItemEmbedded({ item }: Props) {
 
   return (
     <Card.Section key={JSON.stringify(item.variables)}>
-      {item.questionId === 'Entity linking' && typeof userId === 'string' && (
+      {item.questionId === COPILOT_QUESTIONS.ONTOLOGY && typeof userId === 'string' && (
         <div style={{ height: '400px' }}>
           <Linking userId={userId} />
         </div>
       )}
-      {item.questionId === 'Recommendation' && typeof alertId === 'string' && (
+      {item.questionId === COPILOT_QUESTIONS.RECOMMENDATION && typeof alertId === 'string' && (
         <Recommendation alertId={alertId} />
       )}
     </Card.Section>

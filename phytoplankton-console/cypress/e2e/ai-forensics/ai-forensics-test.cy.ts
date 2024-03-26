@@ -53,12 +53,10 @@ describe('Investigative Copilot', () => {
     cy.wait('@query', { timeout: 15000 }).its('response.statusCode').should('be.oneOf', [200, 304]);
 
     // Go through each question type
-    ['TRS score', 'Entity linking', 'User details', 'Transactions by rule action'].forEach(
-      (text) => {
-        cy.get('[data-cy="investigation-input"]').type(text);
-        cy.get('[data-cy="investigation-suggestion-button"]').contains(text).click();
-      },
-    );
+    ['TRS score', 'Ontology', 'User details', 'Transactions by rule action'].forEach((text) => {
+      cy.get('[data-cy="investigation-input"]').type(text);
+      cy.get('[data-cy="investigation-suggestion-button"]').contains(text).click();
+    });
 
     cy.wait('@query', { timeout: 15000 }).its('response.statusCode').should('be.oneOf', [200, 304]);
     cy.get('.ant-modal-title').parents('.ant-modal-header').find('button').click();
