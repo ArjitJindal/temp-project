@@ -1,7 +1,9 @@
 import { Credentials } from 'aws-lambda'
-import { SimulationPulseParameters } from '../openapi-internal/SimulationPulseParameters'
+import { SimulationRiskLevelsParameters } from '../openapi-internal/SimulationRiskLevelsParameters'
 import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeaconParameters'
 import { RuleInstance } from '../openapi-internal/RuleInstance'
+import { SimulationRiskFactorsParameters } from '../openapi-internal/SimulationRiskFactorsParameters'
+import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRiskFactorsSampling'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
@@ -20,10 +22,22 @@ export type FileImportBatchJob = {
 }
 
 /* Simulation (Pulse) */
-export type SimulationPulseBatchJob = {
+export type SimulationRiskLevelsBatchJob = {
   type: 'SIMULATION_PULSE'
   tenantId: string
-  parameters: SimulationPulseParameters & { taskId: string; jobId: string }
+  parameters: SimulationRiskLevelsParameters & { taskId: string; jobId: string }
+  awsCredentials?: Credentials
+}
+
+/* Simulation (Risk Scoring) */
+export type SimulationRiskFactorsBatchJob = {
+  type: 'SIMULATION_RISK_FACTORS'
+  tenantId: string
+  parameters: SimulationRiskFactorsParameters & {
+    taskId: string
+    jobId: string
+  }
+  sampling: SimulationRiskFactorsSampling
   awsCredentials?: Credentials
 }
 
@@ -119,9 +133,10 @@ export type TenantDeletionBatchJob = {
 
 export type BatchJob =
   | FileImportBatchJob
-  | SimulationPulseBatchJob
-  | DemoModeDataLoadBatchJob
+  | SimulationRiskLevelsBatchJob
+  | SimulationRiskFactorsBatchJob
   | SimulationBeaconBatchJob
+  | DemoModeDataLoadBatchJob
   | OngoingScreeningUserRuleBatchJob
   | PulseDataLoadBatchJob
   | ApiUsageMetricsBatchJob

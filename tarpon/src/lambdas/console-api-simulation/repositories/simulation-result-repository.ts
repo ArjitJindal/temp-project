@@ -3,9 +3,10 @@ import { MongoClient } from 'mongodb'
 import { omit } from 'lodash'
 import { paginateFindOptions } from '@/utils/mongodb-utils'
 import { SIMULATION_RESULT_COLLECTION } from '@/utils/mongodb-definitions'
-import { SimulationPulseResult } from '@/@types/openapi-internal/SimulationPulseResult'
+import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/SimulationRiskLevelsResult'
 import { DefaultApiGetSimulationTaskIdResultRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
+import { SimulationRiskFactorsResult } from '@/@types/openapi-internal/SimulationRiskFactorsResult'
 
 @traceable
 export class SimulationResultRepository {
@@ -18,20 +19,21 @@ export class SimulationResultRepository {
   }
 
   public async saveSimulationResults(
-    results: SimulationPulseResult[]
+    results: SimulationRiskLevelsResult[] | SimulationRiskFactorsResult[]
   ): Promise<void> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseResult>(
-      SIMULATION_RESULT_COLLECTION(this.tenantId)
-    )
+    const collection = db.collection<
+      SimulationRiskLevelsResult | SimulationRiskFactorsResult
+    >(SIMULATION_RESULT_COLLECTION(this.tenantId))
+
     await collection.insertMany(results)
   }
 
   public async getSimulationResults(
     params: DefaultApiGetSimulationTaskIdResultRequest
-  ): Promise<{ items: SimulationPulseResult[]; total: number }> {
+  ): Promise<{ items: SimulationRiskLevelsResult[]; total: number }> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseResult>(
+    const collection = db.collection<SimulationRiskLevelsResult>(
       SIMULATION_RESULT_COLLECTION(this.tenantId)
     )
 

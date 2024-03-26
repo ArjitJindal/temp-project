@@ -1,4 +1,11 @@
-import { Filter, MongoClient, Document, FindCursor, WithId } from 'mongodb'
+import {
+  Filter,
+  MongoClient,
+  Document,
+  FindCursor,
+  WithId,
+  AggregationCursor,
+} from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { v4 as uuidv4 } from 'uuid'
 import {
@@ -663,11 +670,12 @@ export class UserRepository {
     }
   }
 
-  public async getAllUsersCursor(): Promise<FindCursor<WithId<InternalUser>>> {
+  public getAllUsersCursor(): FindCursor<WithId<InternalUser>> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
+
     return collection.find({})
   }
 
@@ -1082,5 +1090,18 @@ export class UserRepository {
     )
     const count = await collection.estimatedDocumentCount()
     return count
+  }
+
+  public sampleUsersCursor(count: number): AggregationCursor<InternalUser> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    const users = collection.aggregate<InternalUser>([
+      { $sample: { size: count } },
+    ])
+
+    return users
   }
 }

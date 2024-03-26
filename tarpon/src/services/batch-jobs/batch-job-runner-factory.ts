@@ -1,4 +1,5 @@
 import { TenantDeletionBatchJobRunner } from './tenant-deletion-batch-job-runner'
+import { SimulationRiskFactorsBatchJobRunner } from './simulation-risk-scoring-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -10,7 +11,7 @@ import { OngoingMerchantMonitoringBatchJobRunner } from '@/services/batch-jobs/o
 import { OngoingScreeningUserRuleBatchJobRunner } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { PulseDataLoadJobRunner } from '@/services/batch-jobs/pulse-data-load-job-runner'
 import { SimulationBeaconBatchJobRunner } from '@/services/batch-jobs/simulation-beacon-batch-job-runner'
-import { SimulationPulseBatchJobRunner } from '@/services/batch-jobs/simulation-pulse-batch-job-runner'
+import { SimulationRiskLevelsBatchJobRunner } from '@/services/batch-jobs/simulation-pulse-batch-job-runner'
 import { SyncMongoDbIndexesBatchJobRunner } from '@/services/batch-jobs/sync-mongo-indexes-job-runner'
 import { TestFargateBatchJobRunner } from '@/services/batch-jobs/test-fargate-batch-job'
 
@@ -27,11 +28,12 @@ export function getBatchJobRunner(type: BatchJobType) {
     ONGOING_SCREENING_USER_RULE: new OngoingScreeningUserRuleBatchJobRunner(),
     PULSE_USERS_BACKFILL_RISK_SCORE: new PulseDataLoadJobRunner(),
     SIMULATION_BEACON: new SimulationBeaconBatchJobRunner(),
-    SIMULATION_PULSE: new SimulationPulseBatchJobRunner(),
+    SIMULATION_PULSE: new SimulationRiskLevelsBatchJobRunner(),
     ONGOING_MERCHANT_MONITORING: new OngoingMerchantMonitoringBatchJobRunner(),
     SYNC_INDEXES: new SyncMongoDbIndexesBatchJobRunner(),
     TEST_FARGATE: new TestFargateBatchJobRunner(),
     TENANT_DELETION: new TenantDeletionBatchJobRunner(),
+    SIMULATION_RISK_FACTORS: new SimulationRiskFactorsBatchJobRunner(),
   }
   return jobRunnerMap[type]
 }

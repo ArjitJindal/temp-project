@@ -15,8 +15,8 @@ import {
   SimulationPostResponse,
   SimulationStats,
   RiskClassificationScore,
-  SimulationPulseParameters,
-  SimulationPulseParametersRequest,
+  SimulationRiskLevelsParameters,
+  SimulationRiskLevelsParametersRequest,
 } from '@/apis';
 import Tooltip from '@/components/library/Tooltip';
 import * as Card from '@/components/ui/Card';
@@ -111,24 +111,25 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
   >(
     async ({ values, defaultRiskClassification }) =>
       api.postSimulation({
-        SimulationPulseParametersRequest___SimulationBeaconParametersRequest: {
-          type: 'PULSE',
-          defaultRiskClassifications: defaultRiskClassification,
-          parameters: values.map(
-            (item) =>
-              ({
-                type: 'PULSE',
-                classificationValues: prepareApiState(item.state),
-                name: item.name,
-                description: item.description,
-                sampling: {
-                  usersCount: DEFAULT_USERS_SAMPLING,
-                  userLatestTransactionsCount: DEFAULT_TRANSACTIONS_SAMPLING,
-                },
-                parameterAttributeRiskValues: [],
-              } as SimulationPulseParameters),
-          ),
-        } as SimulationPulseParametersRequest,
+        SimulationRiskLevelsParametersRequest___SimulationBeaconParametersRequest___SimulationRiskFactorsParametersRequest:
+          {
+            type: 'PULSE',
+            defaultRiskClassifications: defaultRiskClassification,
+            parameters: values.map(
+              (item) =>
+                ({
+                  type: 'PULSE',
+                  classificationValues: prepareApiState(item.state),
+                  name: item.name,
+                  description: item.description,
+                  sampling: {
+                    usersCount: DEFAULT_USERS_SAMPLING,
+                    userLatestTransactionsCount: DEFAULT_TRANSACTIONS_SAMPLING,
+                  },
+                  parameterAttributeRiskValues: [],
+                } as SimulationRiskLevelsParameters),
+            ),
+          } as SimulationRiskLevelsParametersRequest,
       }),
     {
       onSuccess: (data) => {

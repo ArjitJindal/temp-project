@@ -1,5 +1,6 @@
 import { StackConstants } from '@lib/constants'
 import {
+  AggregationCursor,
   Collection,
   Db,
   Document,
@@ -345,17 +346,17 @@ export const withTransaction = async (callback: () => Promise<void>) => {
 }
 
 export async function processCursorInBatch<T>(
-  entityCursor: FindCursor<WithId<T>>,
-  processBatch: (batch: WithId<T>[]) => Promise<void>,
+  entityCursor: FindCursor<WithId<T>> | AggregationCursor<T>,
+  processBatch: (batch: (WithId<T> | T)[]) => Promise<void>,
   options?: {
     mongoBatchSize?: number
     processBatchSize?: number
   }
-) {
+): Promise<void> {
   const mongoBatchSize = options?.mongoBatchSize ?? 1000
   const processBatchSize = options?.processBatchSize ?? 1000
   const cursor = entityCursor.batchSize(mongoBatchSize)
-  let pendingEntities: WithId<T>[] = []
+  let pendingEntities: (T | WithId<T>)[] = []
   for await (const entity of cursor) {
     pendingEntities.push(entity)
     if (pendingEntities.length === processBatchSize) {

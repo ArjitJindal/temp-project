@@ -1,20 +1,19 @@
 import { Filter, MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
-
 import { omit, random } from 'lodash'
 import { demoRuleSimulation } from '../utils/demo-rule-simulation'
 import { paginatePipeline } from '@/utils/mongodb-utils'
 import { SIMULATION_TASK_COLLECTION } from '@/utils/mongodb-definitions'
-import { SimulationPulseJob } from '@/@types/openapi-internal/SimulationPulseJob'
+import { SimulationRiskLevelsJob } from '@/@types/openapi-internal/SimulationRiskLevelsJob'
 import {
   TaskStatusChange,
   TaskStatusChangeStatusEnum,
 } from '@/@types/openapi-internal/TaskStatusChange'
 import { DefaultApiGetSimulationsRequest } from '@/@types/openapi-internal/RequestParameters'
-import { SimulationPulseStatisticsResult } from '@/@types/openapi-internal/SimulationPulseStatisticsResult'
+import { SimulationRiskLevelsStatisticsResult } from '@/@types/openapi-internal/SimulationRiskLevelsStatisticsResult'
 import { SimulationBeaconStatisticsResult } from '@/@types/openapi-internal/SimulationBeaconStatisticsResult'
-import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
-import { SimulationPulseIteration } from '@/@types/openapi-internal/SimulationPulseIteration'
+import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal/SimulationRiskLevelsParametersRequest'
+import { SimulationRiskLevelsIteration } from '@/@types/openapi-internal/SimulationRiskLevelsIteration'
 import { getContext } from '@/core/utils/context'
 import { Account } from '@/@types/openapi-internal/Account'
 import { SimulationGetResponse } from '@/@types/openapi-internal/SimulationGetResponse'
@@ -27,6 +26,30 @@ import { isCurrentUserAtLeastRole } from '@/@types/jwt'
 import { traceable } from '@/core/xray'
 import { isDemoTenant } from '@/utils/tenant'
 import { TXN_COUNT } from '@/core/seed/data/transactions'
+import { SimulationRiskFactorsStatisticsResult } from '@/@types/openapi-internal/SimulationRiskFactorsStatisticsResult'
+import { SimulationRiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationRiskFactorsParametersRequest'
+import { SimulationRiskFactorsJob } from '@/@types/openapi-internal/SimulationRiskFactorsJob'
+import { SimulationRiskFactorsIteration } from '@/@types/openapi-internal/SimulationRiskFactorsIteration'
+
+type SimulationRequest =
+  | SimulationRiskLevelsParametersRequest
+  | SimulationBeaconParametersRequest
+  | SimulationRiskFactorsParametersRequest
+
+type SimulationIteration =
+  | SimulationRiskLevelsIteration
+  | SimulationBeaconIteration
+  | SimulationRiskFactorsIteration
+
+type SimulationAllJobs =
+  | SimulationRiskLevelsJob
+  | SimulationBeaconJob
+  | SimulationRiskFactorsJob
+
+type SimulationStatisticsResult =
+  | SimulationRiskLevelsStatisticsResult
+  | SimulationBeaconStatisticsResult
+  | SimulationRiskFactorsStatisticsResult
 
 @traceable
 export class SimulationTaskRepository {
@@ -39,11 +62,9 @@ export class SimulationTaskRepository {
   }
 
   private generateIterationsObject(
-    simulationRequest:
-      | SimulationPulseParametersRequest
-      | SimulationBeaconParametersRequest,
+    simulationRequest: SimulationRequest,
     taskIds: string[]
-  ): Array<SimulationPulseIteration> | Array<SimulationBeaconIteration> {
+  ): SimulationIteration[] {
     const now = Date.now()
     const status: TaskStatusChange = {
       status: 'PENDING',
@@ -54,10 +75,7 @@ export class SimulationTaskRepository {
       const taskId = uuidv4()
       taskIds.push(taskId)
 
-      let statistics:
-        | SimulationPulseStatisticsResult
-        | SimulationBeaconStatisticsResult
-        | undefined = undefined
+      let statistics: SimulationStatisticsResult | undefined = undefined
 
       if (simulationRequest.type === 'PULSE') {
         statistics = {
@@ -65,6 +83,11 @@ export class SimulationTaskRepository {
           simulated: [],
         }
       } else if (simulationRequest.type === 'BEACON') {
+        statistics = {
+          current: {},
+          simulated: {},
+        }
+      } else if (simulationRequest.type === 'RISK_FACTORS') {
         statistics = {
           current: {},
           simulated: {},
@@ -90,19 +113,20 @@ export class SimulationTaskRepository {
     })
 
     return simulationRequest.type === 'PULSE'
-      ? (result as SimulationPulseIteration[])
-      : (result as SimulationBeaconIteration[])
+      ? (result as SimulationRiskLevelsIteration[])
+      : simulationRequest.type === 'BEACON'
+      ? (result as SimulationBeaconIteration[])
+      : (result as SimulationRiskFactorsIteration[])
   }
 
   public async createSimulationJob(
-    simulationRequest:
-      | SimulationPulseParametersRequest
-      | SimulationBeaconParametersRequest
+    simulationRequest: SimulationRequest
   ): Promise<SimulationPostResponse> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
+    const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
+
     const taskIds: string[] = []
     const now = Date.now()
     const jobId = simulationRequest.jobId ?? uuidv4()
@@ -111,26 +135,16 @@ export class SimulationTaskRepository {
       const existsingJob = await collection.findOne({
         _id: simulationRequest.jobId as any,
       })
-      const newIterations =
-        simulationRequest.type === 'PULSE'
-          ? (existsingJob?.iterations as SimulationPulseIteration[]).concat(
-              this.generateIterationsObject(
-                simulationRequest,
-                taskIds
-              ) as SimulationPulseIteration[]
-            )
-          : (existsingJob?.iterations as SimulationBeaconIteration[]).concat(
-              this.generateIterationsObject(
-                simulationRequest,
-                taskIds
-              ) as SimulationBeaconIteration[]
-            )
+
+      const newIterations: SimulationIteration[] = (
+        existsingJob?.iterations ?? []
+      ).concat(this.generateIterationsObject(simulationRequest, taskIds))
 
       await collection.updateOne(
         { _id: simulationRequest.jobId as any },
         {
           $set: {
-            iterations: newIterations as SimulationPulseIteration[],
+            iterations: newIterations as SimulationRiskLevelsIteration[],
           },
         }
       )
@@ -142,28 +156,29 @@ export class SimulationTaskRepository {
         createdBy: process.env.NODE_ENV === 'test' ? 'test' : createdByUser?.id,
         internal: isCurrentUserAtLeastRole('root'),
       }
-      let job: SimulationPulseJob | SimulationBeaconJob | null = null
+      let job: SimulationAllJobs | null = null
+
       if (simulationRequest.type === 'PULSE') {
         job = {
           ...baseJob,
           type: 'PULSE',
           defaultRiskClassifications:
             simulationRequest.defaultRiskClassifications,
-          iterations: this.generateIterationsObject(
-            simulationRequest,
-            taskIds
-          ) as SimulationPulseIteration[],
-        } as SimulationPulseJob
-      } else {
+          iterations: this.generateIterationsObject(simulationRequest, taskIds),
+        } as SimulationRiskLevelsJob
+      } else if (simulationRequest.type === 'BEACON') {
         job = {
           ...baseJob,
           type: 'BEACON',
           defaultRuleInstance: simulationRequest.defaultRuleInstance,
-          iterations: this.generateIterationsObject(
-            simulationRequest,
-            taskIds
-          ) as SimulationBeaconIteration[],
+          iterations: this.generateIterationsObject(simulationRequest, taskIds),
         } as SimulationBeaconJob
+      } else {
+        job = {
+          ...baseJob,
+          type: 'RISK_FACTORS',
+          iterations: this.generateIterationsObject(simulationRequest, taskIds),
+        } as SimulationRiskFactorsJob
       }
 
       if (isDemoTenant(this.tenantId) && simulationRequest.type === 'BEACON') {
@@ -227,14 +242,12 @@ export class SimulationTaskRepository {
     return { jobId, taskIds }
   }
 
-  public async updateStatistics(
+  public async updateStatistics<T extends SimulationStatisticsResult>(
     taskId: string,
-    statistics:
-      | SimulationPulseStatisticsResult
-      | SimulationBeaconStatisticsResult
+    statistics: T
   ) {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
+    const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
 
@@ -251,7 +264,8 @@ export class SimulationTaskRepository {
         { _id: job.jobId as any },
         {
           $set: {
-            iterations: (updatedIteration as SimulationPulseIteration[]) ?? [],
+            iterations:
+              (updatedIteration as SimulationRiskLevelsIteration[]) ?? [],
           },
         }
       )
@@ -264,7 +278,7 @@ export class SimulationTaskRepository {
     progress?: number
   ) {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob>(
+    const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const newStatus: TaskStatusChange = {
@@ -300,9 +314,9 @@ export class SimulationTaskRepository {
 
   public async getSimulationJob(
     jobId: string
-  ): Promise<SimulationPulseJob | null> {
+  ): Promise<SimulationRiskLevelsJob | null> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob>(
+    const collection = db.collection<SimulationRiskLevelsJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const task = await collection.findOne({ _id: jobId as any })
@@ -313,10 +327,10 @@ export class SimulationTaskRepository {
     params: DefaultApiGetSimulationsRequest
   ): Promise<SimulationGetResponse> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
+    const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
-    const query: Filter<Partial<SimulationPulseJob | SimulationBeaconJob>> = {
+    const query: Filter<Partial<SimulationAllJobs>> = {
       type: params.type,
     }
     if (!params.includeInternal) {
@@ -325,7 +339,7 @@ export class SimulationTaskRepository {
       }
     }
     const simulationTasks = await collection
-      .aggregate<SimulationPulseJob | SimulationBeaconJob>([
+      .aggregate<SimulationAllJobs>([
         { $match: query },
         ...(params.sortField === 'iterations_count'
           ? [
@@ -359,7 +373,7 @@ export class SimulationTaskRepository {
         params.type === 'PULSE'
           ? (simulationTasks.map((task) =>
               omit(task, '_id')
-            ) as SimulationPulseJob[])
+            ) as SimulationRiskLevelsJob[])
           : (simulationTasks.map((task) =>
               omit(task, '_id')
             ) as SimulationBeaconJob[]),
@@ -368,7 +382,7 @@ export class SimulationTaskRepository {
 
   public async getSimulationJobsCount(): Promise<number> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
+    const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     return collection.countDocuments({ internal: { $ne: true } })

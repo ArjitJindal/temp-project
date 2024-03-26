@@ -68,16 +68,16 @@ function replaceSimulationGetResponse(paths) {
       .readFileSync(path)
       .toString()
       .replace(
-        "import { SimulationPulseJob | SimulationBeaconJob } from './SimulationPulseJob | SimulationBeaconJob';",
+        "import { SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob } from './SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob';",
         '',
       )
       .replace(
-        "import { SimulationPulseJob | SimulationBeaconJob } from '../models/SimulationPulseJob | SimulationBeaconJob';",
+        "import { SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob } from '../models/SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob';",
         '',
       )
       .replace(
-        "import { SimulationPulseType | SimulationBeaconType } from '../models/SimulationPulseType | SimulationBeaconType';",
-        'import { SimulationPulseType } from "../models/SimulationPulseType"; import { SimulationBeaconType } from "../models/SimulationBeaconType";',
+        "import { SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType } from './SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType';",
+        'import { SimulationRiskLevelsType } from "../models/SimulationRiskLevelsType"; import { SimulationBeaconType } from "../models/SimulationBeaconType"; import { SimulationRiskFactorsType } from "../models/SimulationRiskFactorsType";',
       );
 
     fs.writeFileSync(path, newText);

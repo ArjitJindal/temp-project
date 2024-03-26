@@ -91,7 +91,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
           parameters.defaultRuleInstance
         )
 
-      await simulationRepository.updateStatistics(
+      await simulationRepository.updateStatistics<SimulationBeaconStatisticsResult>(
         parameters.taskId,
         simulationBeaconStatistics
       )

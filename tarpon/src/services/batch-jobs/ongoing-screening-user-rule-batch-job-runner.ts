@@ -76,7 +76,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       ruleInstances.map((ruleInstance) => ruleInstance.ruleId!)
     )
 
-    const usersCursor = await userRepository.getAllUsersCursor()
+    const usersCursor = userRepository.getAllUsersCursor()
 
     await processCursorInBatch<InternalUser>(
       usersCursor,

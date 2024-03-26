@@ -42,7 +42,7 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
 
     handlers.registerPostSimulation(async (ctx, request) => {
       const simulationParameters =
-        request.SimulationPulseParametersRequest___SimulationBeaconParametersRequest
+        request.SimulationRiskLevelsParametersRequest___SimulationBeaconParametersRequest___SimulationRiskFactorsParametersRequest
 
       const settings = await tenantSettings(tenantId)
       const simulationsLimit = settings.limits?.simulations ?? 0
@@ -91,6 +91,22 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
                 taskId: taskIds[i],
                 jobId,
                 ...simulationParameters.parameters[i],
+              },
+              awsCredentials: getCredentialsFromEvent(event),
+            })
+          }
+
+          if (simulationParameters.type === 'RISK_FACTORS') {
+            await sendBatchJobCommand({
+              type: 'SIMULATION_RISK_FACTORS',
+              tenantId,
+              parameters: {
+                taskId: taskIds[i],
+                jobId,
+                ...simulationParameters.parameters[i],
+              },
+              sampling: simulationParameters.sampling ?? {
+                usersCount: 'RANDOM',
               },
               awsCredentials: getCredentialsFromEvent(event),
             })

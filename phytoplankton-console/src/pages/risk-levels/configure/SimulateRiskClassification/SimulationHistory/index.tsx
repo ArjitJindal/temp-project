@@ -1,6 +1,6 @@
 import { useContext, useMemo, useRef, useState } from 'react';
 import { useApi } from '@/api';
-import { RiskClassificationScore, SimulationPostResponse, SimulationPulseJob } from '@/apis';
+import { RiskClassificationScore, SimulationPostResponse, SimulationRiskLevelsJob } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -60,17 +60,17 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
       });
 
       return {
-        items: simulations.data as SimulationPulseJob[],
+        items: simulations.data as SimulationRiskLevelsJob[],
         total: simulations.total,
       };
     },
   );
   const actionRef = useRef<TableRefType>(null);
 
-  const helper = new ColumnHelper<SimulationPulseJob>();
+  const helper = new ColumnHelper<SimulationRiskLevelsJob>();
   return (
     <PageWrapperContentContainer>
-      <QueryResultsTable<SimulationPulseJob, typeof params>
+      <QueryResultsTable<SimulationRiskLevelsJob, typeof params>
         rowKey="jobId"
         innerRef={actionRef}
         queryResults={allSimulationsQueryResult}

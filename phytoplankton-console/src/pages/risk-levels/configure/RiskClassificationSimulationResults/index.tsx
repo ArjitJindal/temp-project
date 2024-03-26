@@ -11,10 +11,10 @@ import Tabs, { TabItem } from '@/components/library/Tabs';
 import {
   RiskLevel,
   SimulationPostResponse,
-  SimulationPulseIteration,
-  SimulationPulseJob,
-  SimulationPulseResult,
-  SimulationPulseStatisticsRiskTypeEnum,
+  SimulationRiskLevelsIteration,
+  SimulationRiskLevelsJob,
+  SimulationRiskLevelsResult,
+  SimulationRiskLevelsStatisticsRiskTypeEnum,
 } from '@/apis';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -43,11 +43,11 @@ type Props = {
 };
 
 type IterationProps = {
-  iteration: SimulationPulseIteration;
+  iteration: SimulationRiskLevelsIteration;
 };
 
-const helper = new ColumnHelper<SimulationPulseResult>();
-const columns: TableColumn<SimulationPulseResult>[] = helper.list([
+const helper = new ColumnHelper<SimulationRiskLevelsResult>();
+const columns: TableColumn<SimulationRiskLevelsResult>[] = helper.list([
   helper.simple<'userName'>({
     title: 'User name',
     key: 'userName',
@@ -157,7 +157,7 @@ const IterationComponent = (props: IterationProps) => {
   const getCount = useCallback(
     (
       label: 'Before' | 'After',
-      scoreType: SimulationPulseStatisticsRiskTypeEnum,
+      scoreType: SimulationRiskLevelsStatisticsRiskTypeEnum,
       riskLevel: RiskLevel,
     ) => {
       return (
@@ -234,7 +234,7 @@ const IterationComponent = (props: IterationProps) => {
         </div>
       </div>
       <div style={{ marginTop: 8 }}>
-        <QueryResultsTable<SimulationPulseResult>
+        <QueryResultsTable<SimulationRiskLevelsResult>
           columns={columns}
           queryResults={iterationQueryResults}
           rowKey="userId"
@@ -275,7 +275,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
     () =>
       api.getSimulationTestId({
         jobId: result.jobId,
-      }) as Promise<SimulationPulseJob>,
+      }) as Promise<SimulationRiskLevelsJob>,
   );
 
   const [activeTab, setActiveTab] = useState<string>(result.taskIds[0]);
@@ -407,7 +407,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
               title: iteration.name,
             }));
 
-            return (iterations as SimulationPulseIteration[]).find(
+            return (iterations as SimulationRiskLevelsIteration[]).find(
               (item) => item.taskId === activeTab,
             )?.latestStatus?.status === 'SUCCESS' ? (
               <Tabs

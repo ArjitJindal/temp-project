@@ -363,9 +363,15 @@ export class RiskScoringService {
   }
 
   public async calculateArsScore(
-    transaction: Transaction
+    transaction: Transaction,
+    riskClassificationValues?: RiskClassificationScore[],
+    riskFactors?: ParameterAttributeRiskValues[]
   ): Promise<RiskScoreDetails & { riskLevel: RiskLevel }> {
-    const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
+    if (!riskClassificationValues) {
+      const riskConfig = await this.getRiskConfig()
+      riskClassificationValues = riskConfig.riskClassificationValues
+      riskFactors = riskConfig.riskFactors || []
+    }
 
     const ars = await this.calculateArsScoreInternal(
       transaction,

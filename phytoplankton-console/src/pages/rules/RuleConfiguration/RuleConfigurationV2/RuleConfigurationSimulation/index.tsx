@@ -143,11 +143,12 @@ export function RuleConfigurationSimulation(props: Props) {
   >(
     async (iterations) => {
       return api.postSimulation({
-        SimulationPulseParametersRequest___SimulationBeaconParametersRequest: {
-          type: 'BEACON',
-          parameters: iterations,
-          defaultRuleInstance: ruleInstance,
-        } as SimulationBeaconParametersRequest,
+        SimulationRiskLevelsParametersRequest___SimulationBeaconParametersRequest___SimulationRiskFactorsParametersRequest:
+          {
+            type: 'BEACON',
+            parameters: iterations,
+            defaultRuleInstance: ruleInstance,
+          } as SimulationBeaconParametersRequest,
       });
     },
     {

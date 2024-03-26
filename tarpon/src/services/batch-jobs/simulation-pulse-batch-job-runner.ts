@@ -1,16 +1,16 @@
 import { countBy, isEmpty } from 'lodash'
 import { BatchJobRunner } from './batch-job-runner-base'
-import { SimulationPulseBatchJob } from '@/@types/batch-job'
+import { SimulationRiskLevelsBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import { SimulationPulseSampling } from '@/@types/openapi-internal/SimulationPulseSampling'
-import { SimulationPulseResult } from '@/@types/openapi-internal/SimulationPulseResult'
+import { SimulationRiskLevelsSampling } from '@/@types/openapi-internal/SimulationRiskLevelsSampling'
+import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/SimulationRiskLevelsResult'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
-import { SimulationPulseStatisticsResult } from '@/@types/openapi-internal/SimulationPulseStatisticsResult'
+import { SimulationRiskLevelsStatisticsResult } from '@/@types/openapi-internal/SimulationRiskLevelsStatisticsResult'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
@@ -20,7 +20,7 @@ import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repos
 import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
 
 type SimulationResult = {
-  userResults: Array<Omit<SimulationPulseResult, 'taskId' | 'type'>>
+  userResults: Array<Omit<SimulationRiskLevelsResult, 'taskId' | 'type'>>
   transactionResults: {
     current: RiskLevel[]
     simulated: RiskLevel[]
@@ -28,13 +28,13 @@ type SimulationResult = {
 }
 
 @traceable
-export class SimulationPulseBatchJobRunner extends BatchJobRunner {
+export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
   usersRepository?: UserRepository
   riskRepository?: RiskRepository
   transactionRepository?: MongoDbTransactionRepository
   riskScoringService?: RiskScoringService
 
-  protected async run(job: SimulationPulseBatchJob): Promise<void> {
+  protected async run(job: SimulationRiskLevelsBatchJob): Promise<void> {
     const { tenantId, parameters, awsCredentials } = job
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()
@@ -56,6 +56,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
       tenantId,
       mongoDb
     )
+
     await simulationTaskRepository.updateTaskStatus(
       parameters.taskId,
       'IN_PROGRESS'
@@ -90,7 +91,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
             ...userResult,
           }))
         )
-        await simulationTaskRepository.updateStatistics(
+        await simulationTaskRepository.updateStatistics<SimulationRiskLevelsStatisticsResult>(
           parameters.taskId,
           this.getStatistics(results)
         )
@@ -122,7 +123,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
 
   private getStatistics(
     results: SimulationResult
-  ): SimulationPulseStatisticsResult {
+  ): SimulationRiskLevelsStatisticsResult {
     const currentKrsCount = this.getRiskTypeStatistics(
       'KRS',
       results.userResults
@@ -165,15 +166,16 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
 
   private async mapNewRiskLevels(
     newClassificationValues: RiskClassificationScore[],
-    sampling?: SimulationPulseSampling
+    sampling?: SimulationRiskLevelsSampling
   ): Promise<SimulationResult> {
     const currentClassificationValues =
       await this.riskRepository!.getRiskClassificationValues()
     const users = await this.usersRepository!.getMongoAllUsers({
       pageSize: sampling?.usersCount ?? Number.MAX_SAFE_INTEGER,
     })
-    const userResults: Array<Omit<SimulationPulseResult, 'taskId' | 'type'>> =
-      []
+    const userResults: Array<
+      Omit<SimulationRiskLevelsResult, 'taskId' | 'type'>
+    > = []
     const transactionResults = {
       current: [] as RiskLevel[],
       simulated: [] as RiskLevel[],
@@ -253,7 +255,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
   private async recalculateRiskScores(
     classificationValues: RiskClassificationScore[] | undefined,
     parameterAttributeRiskValues: ParameterAttributeRiskValues[],
-    sampling?: SimulationPulseSampling
+    sampling?: SimulationRiskLevelsSampling
   ): Promise<SimulationResult> {
     const currentClassificationValues =
       await this.riskRepository!.getRiskClassificationValues()
@@ -264,8 +266,9 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
       pageSize: sampling?.usersCount ?? Number.MAX_SAFE_INTEGER,
     })
 
-    const userResults: Array<Omit<SimulationPulseResult, 'taskId' | 'type'>> =
-      []
+    const userResults: Array<
+      Omit<SimulationRiskLevelsResult, 'taskId' | 'type'>
+    > = []
     const transactionResults = {
       current: [] as RiskLevel[],
       simulated: [] as RiskLevel[],
@@ -353,7 +356,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
 
   private async getUserTransactions(
     userId: string,
-    sampling?: SimulationPulseSampling
+    sampling?: SimulationRiskLevelsSampling
   ) {
     const userTransactions = (
       await this.transactionRepository!.getTransactions({

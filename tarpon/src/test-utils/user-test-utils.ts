@@ -8,6 +8,7 @@ import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 
 export function getTestUser(
   user: Partial<User | InternalUser> = {}
@@ -70,7 +71,9 @@ export function getTestUser(
   }
 }
 
-export function getTestBusiness(business: Partial<Business> = {}): Business {
+export function getTestBusiness(
+  business: Partial<Business | InternalBusinessUser> = {}
+): Business | InternalBusinessUser {
   return {
     createdTimestamp: 1641654664,
     userId: 'test-business-id',

@@ -1,5 +1,5 @@
 import { jobRunnerHandler } from '../app'
-import { SimulationPulseBatchJob } from '@/@types/batch-job'
+import { SimulationRiskLevelsBatchJob } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -13,7 +13,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
-import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
+import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal/SimulationRiskLevelsParametersRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 
@@ -59,7 +59,7 @@ describe('Simulation (Pulse) batch job runner', () => {
         upperBoundRiskScore: 100,
       },
     ])
-    const parameters: SimulationPulseParametersRequest = {
+    const parameters: SimulationRiskLevelsParametersRequest = {
       parameters: [
         {
           type: 'PULSE',
@@ -98,7 +98,7 @@ describe('Simulation (Pulse) batch job runner', () => {
     const { taskIds, jobId } =
       await simulationTaskRepository.createSimulationJob(parameters)
 
-    const testJob: SimulationPulseBatchJob = {
+    const testJob: SimulationRiskLevelsBatchJob = {
       type: 'SIMULATION_PULSE',
       tenantId: tenantId,
       parameters: {
@@ -288,7 +288,7 @@ describe('Simulation (Pulse) batch job runner', () => {
         upperBoundRiskScore: 100,
       },
     ])
-    const parameters: SimulationPulseParametersRequest = {
+    const parameters: SimulationRiskLevelsParametersRequest = {
       type: 'PULSE',
       parameters: [
         {
@@ -393,7 +393,7 @@ describe('Simulation (Pulse) batch job runner', () => {
     const { taskIds, jobId } =
       await simulationTaskRepository.createSimulationJob(parameters)
 
-    const testJob: SimulationPulseBatchJob = {
+    const testJob: SimulationRiskLevelsBatchJob = {
       type: 'SIMULATION_PULSE',
       tenantId: tenantId,
       parameters: {

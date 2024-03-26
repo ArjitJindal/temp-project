@@ -4618,8 +4618,9 @@ paths:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/SimulationPulseParametersRequest'
+                - $ref: '#/components/schemas/SimulationRiskLevelsParametersRequest'
                 - $ref: '#/components/schemas/SimulationBeaconParametersRequest'
+                - $ref: '#/components/schemas/SimulationRiskFactorsParametersRequest'
         required: true
     get:
       summary: Get simulation tasks
@@ -4678,8 +4679,9 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/SimulationPulseJob'
+                  - $ref: '#/components/schemas/SimulationRiskLevelsJob'
                   - $ref: '#/components/schemas/SimulationBeaconJob'
+                  - $ref: '#/components/schemas/SimulationRiskFactorsJob'
       parameters: []
     parameters:
       - schema:
@@ -4700,7 +4702,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimulationPulseResultResponse'
+                $ref: '#/components/schemas/SimulationRiskLevelsResultResponse'
       parameters: []
     parameters:
       - schema:
@@ -9799,14 +9801,14 @@ components:
         - listType
         - subtype
         - data
-    SimulationPulseParameters:
-      title: SimulationPulseParameters
+    SimulationRiskLevelsParameters:
+      title: SimulationRiskLevelsParameters
       type: object
       x-stoplight:
         id: 9d4bfe04d1868
       properties:
         type:
-          $ref: '#/components/schemas/SimulationPulseType'
+          $ref: '#/components/schemas/SimulationRiskLevelsType'
         classificationValues:
           type: array
           items:
@@ -9816,7 +9818,7 @@ components:
           items:
             $ref: '#/components/schemas/ParameterAttributeRiskValues'
         sampling:
-          $ref: '#/components/schemas/SimulationPulseSampling'
+          $ref: '#/components/schemas/SimulationRiskLevelsSampling'
         name:
           type: string
         description:
@@ -9824,6 +9826,26 @@ components:
       required:
         - type
         - name
+    SimulationRiskFactorsParameters:
+      title: SimulationRiskFactorsParameters
+      type: object
+      x-stoplight:
+        id: 9d4bfe04d1868
+      properties:
+        type:
+          $ref: '#/components/schemas/SimulationRiskFactorsType'
+        parameterAttributeRiskValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterAttributeRiskValues'
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - type
+        - name
+        - parameterAttributeRiskValues
     SimulationBeaconSampling:
       title: SimulationBeaconSampling
       type: object
@@ -9944,8 +9966,8 @@ components:
             - type
             - parameters
             - statistics
-    SimulationPulseParametersRequest:
-      title: SimulationPulseParametersRequest
+    SimulationRiskLevelsParametersRequest:
+      title: SimulationRiskLevelsParametersRequest
       type: object
       x-stoplight:
         id: 9d4bfe04d1868
@@ -9955,9 +9977,9 @@ components:
         parameters:
           type: array
           items:
-            $ref: '#/components/schemas/SimulationPulseParameters'
+            $ref: '#/components/schemas/SimulationRiskLevelsParameters'
         type:
-          $ref: '#/components/schemas/SimulationPulseType'
+          $ref: '#/components/schemas/SimulationRiskLevelsType'
         defaultRiskClassifications:
           type: array
           items:
@@ -9966,8 +9988,35 @@ components:
         - parameters
         - type
         - defaultRiskClassifications
-    SimulationPulseSampling:
-      title: SimulationPulseSampling
+    SimulationRiskFactorsParametersRequest:
+      title: SimulationRiskFactorsParametersRequest
+      type: object
+      x-stoplight:
+        id: 9d4bfe04d1868
+      properties:
+        jobId:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationRiskFactorsParameters'
+        type:
+          $ref: '#/components/schemas/SimulationRiskFactorsType'
+        sampling:
+          $ref: '#/components/schemas/SimulationRiskFactorsSampling'
+      required:
+        - parameters
+        - type
+        - sampling
+    SimulationRiskFactorsType:
+      title: SimulationRiskFactorsType
+      x-stoplight:
+        id: n6wn9hbaar1cs
+      type: string
+      enum:
+        - RISK_FACTORS
+    SimulationRiskLevelsSampling:
+      title: SimulationRiskLevelsSampling
       type: object
       properties:
         usersCount:
@@ -9976,8 +10025,17 @@ components:
           type: integer
       x-stoplight:
         id: yl7w6xm5dlwif
+    SimulationRiskFactorsSampling:
+      title: SimulationRiskFactorsSampling
+      type: object
+      properties:
+        usersCount:
+          type: string
+          enum:
+            - ALL
+            - RANDOM
     SimulationJob:
-      title: SimulationPulseJob
+      title: SimulationRiskLevelsJob
       x-stoplight:
         id: 5e85cbff0f7fd
       type: object
@@ -10029,18 +10087,18 @@ components:
       required:
         - bestSearches
         - otherSearches
-    SimulationPulseJob:
-      title: SimulationPulseJob
+    SimulationRiskLevelsJob:
+      title: SimulationRiskLevelsJob
       allOf:
         - $ref: '#/components/schemas/SimulationJob'
         - type: object
           properties:
             type:
-              $ref: '#/components/schemas/SimulationPulseType'
+              $ref: '#/components/schemas/SimulationRiskLevelsType'
             iterations:
               type: array
               items:
-                $ref: '#/components/schemas/SimulationPulseIteration'
+                $ref: '#/components/schemas/SimulationRiskLevelsIteration'
             defaultRiskClassifications:
               type: array
               items:
@@ -10049,6 +10107,26 @@ components:
             - type
             - iterations
             - defaultRiskClassifications
+    SimulationRiskFactorsJob:
+      title: SimulationRiskFactorsJob
+      allOf:
+        - $ref: '#/components/schemas/SimulationJob'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/SimulationRiskFactorsType'
+            iterations:
+              type: array
+              items:
+                $ref: '#/components/schemas/SimulationRiskFactorsIteration'
+            defaultParameterRiskValues:
+              type: array
+              items:
+                $ref: '#/components/schemas/ParameterAttributeRiskValues'
+          required:
+            - type
+            - iterations
+            - defaultParameterRiskValues
     SimulationBeaconJob:
       title: SimulationBeaconJob
       allOf:
@@ -10067,8 +10145,8 @@ components:
             - type
             - iterations
             - defaultRuleInstance
-    SimulationPulseIteration:
-      title: SimulationPulseIteration
+    SimulationRiskLevelsIteration:
+      title: SimulationRiskLevelsIteration
       x-stoplight:
         id: 5e85cc0b0ddfd
       allOf:
@@ -10076,11 +10154,29 @@ components:
         - type: object
           properties:
             type:
-              $ref: '#/components/schemas/SimulationPulseType'
+              $ref: '#/components/schemas/SimulationRiskLevelsType'
             parameters:
-              $ref: '#/components/schemas/SimulationPulseParameters'
+              $ref: '#/components/schemas/SimulationRiskLevelsParameters'
             statistics:
-              $ref: '#/components/schemas/SimulationPulseStatisticsResult'
+              $ref: '#/components/schemas/SimulationRiskLevelsStatisticsResult'
+          required:
+            - type
+            - parameters
+            - statistics
+    SimulationRiskFactorsIteration:
+      title: SimulationRiskFactorsIteration
+      x-stoplight:
+        id: 5e85cc0b0ddfd
+      allOf:
+        - $ref: '#/components/schemas/SimulationIteration'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/SimulationRiskFactorsType'
+            parameters:
+              $ref: '#/components/schemas/SimulationRiskFactorsParameters'
+            statistics:
+              $ref: '#/components/schemas/SimulationRiskFactorsStatisticsResult'
           required:
             - type
             - parameters
@@ -10118,9 +10214,9 @@ components:
         - auth0DisplayName
         - adminEmails
         - features
-    SimulationPulseStatistics:
+    SimulationRiskLevelsStatistics:
       type: object
-      title: SimulationPulseStatistics
+      title: SimulationRiskLevelsStatistics
       properties:
         count:
           type: number
@@ -10132,22 +10228,49 @@ components:
             - ARS
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
-    SimulationPulseStatisticsResult:
+    SimulationRiskFactorsStatistics:
       type: object
-      title: SimulationPulseStatisticsResult
+      title: SimulationRiskLevelsStatistics
+      properties:
+        count:
+          type: number
+        riskType:
+          type: string
+          enum:
+            - KRS
+            - ARS
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+    SimulationRiskLevelsStatisticsResult:
+      type: object
+      title: SimulationRiskLevelsStatisticsResult
       x-stoplight:
         id: 7f7f5d4cde104
       properties:
         current:
           type: array
           items:
-            $ref: '#/components/schemas/SimulationPulseStatistics'
+            $ref: '#/components/schemas/SimulationRiskLevelsStatistics'
         simulated:
           type: array
           items:
-            $ref: '#/components/schemas/SimulationPulseStatistics'
-    SimulationPulseType:
-      title: SimulationPulseType
+            $ref: '#/components/schemas/SimulationRiskLevelsStatistics'
+    SimulationRiskFactorsStatisticsResult:
+      type: object
+      title: SimulationRiskLevelsStatisticsResult
+      x-stoplight:
+        id: 7f7f5d4cde104
+      properties:
+        current:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationRiskFactorsStatistics'
+        simulated:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationRiskFactorsStatistics'
+    SimulationRiskLevelsType:
+      title: SimulationRiskLevelsType
       x-stoplight:
         id: n6wn9hbaar1cs
       type: string
@@ -10160,8 +10283,19 @@ components:
       type: string
       enum:
         - BEACON
-    SimulationPulseRiskScoreResult:
-      title: SimulationPulseResult
+    SimulationRiskFactorsRiskScoreResult:
+      title: SimulationRiskFactorsRiskScoreResult
+      type: object
+      properties:
+        krs:
+          type: object
+          properties:
+            riskScore:
+              type: number
+            riskLevel:
+              $ref: '#/components/schemas/RiskLevel'
+    SimulationRiskLevelsRiskScoreResult:
+      title: SimulationRiskLevelsResult
       type: object
       properties:
         krs:
@@ -10178,8 +10312,8 @@ components:
               type: number
             riskLevel:
               $ref: '#/components/schemas/RiskLevel'
-    SimulationPulseResult:
-      title: SimulationPulseResult
+    SimulationRiskLevelsResult:
+      title: SimulationRiskLevelsResult
       type: object
       properties:
         taskId:
@@ -10193,9 +10327,9 @@ components:
         userType:
           type: string
         current:
-          $ref: '#/components/schemas/SimulationPulseRiskScoreResult'
+          $ref: '#/components/schemas/SimulationRiskLevelsRiskScoreResult'
         simulated:
-          $ref: '#/components/schemas/SimulationPulseRiskScoreResult'
+          $ref: '#/components/schemas/SimulationRiskLevelsRiskScoreResult'
         userName:
           type: string
       required:
@@ -10205,14 +10339,54 @@ components:
         - old
         - new
         - userName
-    SimulationPulseResultResponse:
-      title: SimulationPulseResultResponse
+    SimulationRiskFactorsResult:
+      title: SimulationRiskFactorsResult
+      type: object
+      properties:
+        taskId:
+          type: string
+        type:
+          type: string
+          enum:
+            - RISK_FACTORS
+        userId:
+          type: string
+        userType:
+          type: string
+        current:
+          $ref: '#/components/schemas/SimulationRiskFactorsRiskScoreResult'
+        simulated:
+          $ref: '#/components/schemas/SimulationRiskFactorsRiskScoreResult'
+        userName:
+          type: string
+      required:
+        - taskId
+        - type
+        - userId
+        - old
+        - new
+        - userName
+    SimulationRiskLevelsResultResponse:
+      title: SimulationRiskLevelsResultResponse
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SimulationPulseResult'
+            $ref: '#/components/schemas/SimulationRiskLevelsResult'
+        total:
+          type: number
+      required:
+        - items
+        - total
+    SimulationRiskFactorsResultResponse:
+      title: SimulationRiskFactorsResultResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationRiskFactorsResult'
         total:
           type: number
       required:
@@ -10252,8 +10426,9 @@ components:
           type: array
           items:
             oneOf:
-              - $ref: '#/components/schemas/SimulationPulseJob'
+              - $ref: '#/components/schemas/SimulationRiskLevelsJob'
               - $ref: '#/components/schemas/SimulationBeaconJob'
+              - $ref: '#/components/schemas/SimulationRiskFactorsJob'
       required:
         - total
         - data

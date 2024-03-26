@@ -1532,4 +1532,16 @@ export class MongoDbTransactionRepository
 
     await collection.updateOne({ transactionId }, { $set: { arsScore } })
   }
+
+  public sampleTransactionsCursor(
+    count: number
+  ): AggregationCursor<InternalTransaction> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+
+    return collection.aggregate<InternalTransaction>([
+      { $sample: { size: count } },
+    ])
+  }
 }
