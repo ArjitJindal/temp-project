@@ -10,7 +10,6 @@ import {
   RiskLevelBreakdownCard,
 } from './components/RiskLevelDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
-import LatestTeamOverview from './components/LatestTeamOverview';
 import OverviewCard from './components/OverviewCard';
 import RulePrioritySplitCard from './components/RulePrioritySplitCard';
 import CaseClosingReasonCard from './components/CaseManagement/CaseClosingReasonCard';
@@ -292,12 +291,6 @@ const WIDGETS: Widgets = {
       id: 'TEAM_OVERVIEW',
       title: 'Team overview',
       component: TeamPerformanceCard,
-    },
-    {
-      groupTitle: 'Team management',
-      id: 'LATEST_TEAM_OVERVIEW',
-      title: 'Latest team overview',
-      component: LatestTeamOverview,
     },
   ],
 };

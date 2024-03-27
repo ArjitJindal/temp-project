@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import { flatMap } from 'lodash';
+import { useLocalStorageState } from 'ahooks';
 import s from './index.module.less';
 import AccountsStatisticsTable from './AccountsStatisticsTable';
+import LatestOverviewTable from './LatestTeamOverview';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
@@ -11,39 +12,29 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TEAM_STATS } from '@/utils/queries/keys';
-import { AlertStatus, CaseStatus, DashboardTeamStatsItem } from '@/apis';
-import { AutoFilter } from '@/components/library/Filter/AutoFilter';
-import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
+import {
+  AlertStatus,
+  CaseStatus,
+  DashboardLatestTeamStatsItem,
+  DashboardTeamStatsItem,
+} from '@/apis';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
+import Select from '@/components/library/Select';
 
 interface Params extends TableCommonParams {
   scope: 'CASES' | 'ALERTS';
   dateRange?: RangeValue<Dayjs>;
   caseStatus?: (CaseStatus | AlertStatus)[];
 }
-const transformStatus = (
-  caseStatus: (CaseStatus | AlertStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD')[] | undefined,
-) => {
-  return flatMap(caseStatus, (val) => {
-    switch (val) {
-      case 'IN_REVIEW': {
-        return ['IN_REVIEW_OPEN', 'IN_REVIEW_CLOSED', 'IN_REVIEW_REOPENED', 'IN_REVIEW_ESCALATED'];
-      }
-      case 'IN_PROGRESS': {
-        return ['ESCALATED_IN_PROGRESS', 'OPEN_IN_PROGRESS'];
-      }
-      case 'ON_HOLD': {
-        return ['OPEN_ON_HOLD', 'ESCALATED_ON_HOLD'];
-      }
-      default:
-        return val;
-    }
-  });
-};
+
 export default function TeamPerformanceCard(props: WidgetProps) {
   const startTime = dayjs().subtract(1, 'day').startOf('day');
   const endTime = dayjs().endOf('day');
+  const [type, setType] = useLocalStorageState<'current' | 'daterange'>(
+    'team-performance-card-type',
+    'current',
+  );
 
   const [params, setParams] = useState<AllParams<Params>>({
     ...DEFAULT_PARAMS_STATE,
@@ -58,7 +49,7 @@ export default function TeamPerformanceCard(props: WidgetProps) {
   };
   const api = useApi();
 
-  const queryResult = useQuery(
+  const dateRangeQueryResult = useQuery(
     DASHBOARD_TEAM_STATS(params),
     async (): Promise<DashboardTeamStatsItem[]> => {
       const [start, end] = params.dateRange ?? [];
@@ -86,20 +77,31 @@ export default function TeamPerformanceCard(props: WidgetProps) {
     },
   );
 
+  const latestQueryResut = useQuery(
+    DASHBOARD_TEAM_STATS({ ...params, type }),
+    async (): Promise<DashboardLatestTeamStatsItem[]> => {
+      return await api.getDashboardLatestTeamStats({
+        scope: params.scope,
+      });
+    },
+  );
+
   return (
     <Widget
       extraControls={[
-        <DatePicker.RangePicker
-          value={getDateRangeToShow(params.dateRange)}
+        <Select<'current' | 'daterange'>
+          key="select"
+          value={type}
           onChange={(value) => {
-            setParams((prevState) => ({
-              ...prevState,
-              dateRange: value,
-            }));
+            if (value) {
+              setType(value);
+            }
           }}
-          onOpenChange={(state) => {
-            setIsDatePickerOpen(state);
-          }}
+          options={[
+            { value: 'current', label: 'Current' },
+            { value: 'daterange', label: 'Date range' },
+          ]}
+          style={{ width: 120 }}
         />,
       ]}
       {...props}
@@ -108,58 +110,33 @@ export default function TeamPerformanceCard(props: WidgetProps) {
         <SegmentedControl<Params['scope']>
           active={params.scope}
           items={[
-            {
-              value: 'CASES',
-              label: 'Cases',
-            },
-            {
-              value: 'ALERTS',
-              label: 'Alerts',
-            },
+            { value: 'CASES', label: 'Cases' },
+            { value: 'ALERTS', label: 'Alerts' },
           ]}
           onChange={(newActive) => {
             setParams((prevState) => ({ ...prevState, scope: newActive }));
           }}
         />
-        <AutoFilter
-          filter={{
-            key: 'caseStatus',
-            kind: 'AUTO',
-            title: params.scope === 'CASES' ? 'Case status' : 'Alert status',
-            dataType: {
-              kind: 'select',
-              options: (
-                [
-                  'OPEN',
-                  'CLOSED',
-                  'REOPENED',
-                  'ESCALATED',
-                  'IN_REVIEW',
-                  'IN_PROGRESS',
-                  'ON_HOLD',
-                ] as const
-              ).map((caseStatus: CaseStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD') => ({
-                value: caseStatus,
-                label: statusToOperationName(caseStatus, true),
-              })),
-              mode: 'MULTIPLE',
-              displayMode: 'select',
-            },
-          }}
-          value={params.caseStatus}
-          onChange={(value: unknown) => {
-            const caseStatus = value as
-              | (CaseStatus | AlertStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD')[]
-              | undefined;
-            const transformedStatus = transformStatus(caseStatus);
-            setParams((prevState) => ({
-              ...prevState,
-              transformedStatus,
-            }));
-          }}
-        />
+        {type === 'daterange' && (
+          <DatePicker.RangePicker
+            value={getDateRangeToShow(params.dateRange)}
+            onChange={(value) => {
+              setParams((prevState) => ({
+                ...prevState,
+                dateRange: value,
+              }));
+            }}
+            onOpenChange={(state) => {
+              setIsDatePickerOpen(state);
+            }}
+          />
+        )}
       </div>
-      <AccountsStatisticsTable queryResult={queryResult} scope={params.scope} />
+      {type === 'daterange' ? (
+        <AccountsStatisticsTable queryResult={dateRangeQueryResult} scope={params.scope} />
+      ) : (
+        <LatestOverviewTable queryResult={latestQueryResut} />
+      )}
     </Widget>
   );
 }
