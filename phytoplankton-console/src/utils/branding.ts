@@ -23,7 +23,7 @@ interface BrandingSettings {
   knowledgeBaseUrl?: string;
   notProvisionedWarning: string;
   apiDocsLinks: {
-    webhooks: string;
+    webhooks?: string;
   };
   redirectPath?: string;
   faviconUrl: string;
@@ -58,7 +58,7 @@ const REGTANK_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> 
   companyName: 'Regtank',
   notProvisionedWarning: `User does not have a provisioned Regtank Account.`,
   apiDocsLinks: {
-    webhooks: 'https://docs.flagright.com/guides/webhooks/introduction',
+    webhooks: undefined,
   },
   faviconUrl: RegtankFaviconSvg,
   systemAvatarUrl: RegtankFaviconSvg,
@@ -71,7 +71,7 @@ const ZIGRAM_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> =
   companyName: 'Transact Comply',
   notProvisionedWarning: `User does not have a provisioned Transact Comply Account.`,
   apiDocsLinks: {
-    webhooks: 'https://docs.flagright.com/guides/webhooks/introduction',
+    webhooks: undefined,
   },
   faviconUrl: ZigramFaivcon,
   systemAvatarUrl: ZigramFaivcon,
@@ -84,7 +84,7 @@ const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0Client
   companyName: 'Traxion right',
   notProvisionedWarning: `User does not have a provisioned Traxion right Account.`,
   apiDocsLinks: {
-    webhooks: 'https://docs.flagright.com/guides/webhooks/introduction',
+    webhooks: undefined,
   },
   faviconUrl: TraxionRightFavicon,
   systemAvatarUrl: TraxionRightFavicon,

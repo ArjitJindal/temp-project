@@ -184,10 +184,14 @@ export const WebhookSettings: React.FC = () => {
             jsonSchema: templateDetailsSchema,
           },
         ]}
-        extraInfo={{
-          label: 'Learn more about webhooks',
-          redirectUrl: branding.apiDocsLinks.webhooks,
-        }}
+        extraInfo={
+          branding.apiDocsLinks.webhooks
+            ? {
+                label: 'Learn more about webhooks',
+                redirectUrl: branding.apiDocsLinks.webhooks,
+              }
+            : undefined
+        }
       />
     </SettingsCard>
   );
