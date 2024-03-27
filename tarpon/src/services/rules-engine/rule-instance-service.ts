@@ -72,6 +72,7 @@ export class RuleInstanceService {
       oldRuleInstance,
       newRuleInstance
     )
+    return newRuleInstance
   }
 
   public async deleteRuleInstance(ruleInstanceId: string) {

@@ -96,13 +96,12 @@ export const ruleInstanceHandler = lambdaApi()(
         await ruleInstanceService.getRuleInstanceById(request.ruleInstanceId)
     )
 
-    handlers.registerPutRuleInstancesRuleInstanceId(
-      async (ctx, request) =>
-        await ruleInstanceService.putRuleInstance(
-          request.ruleInstanceId,
-          request.RuleInstance
-        )
-    )
+    handlers.registerPutRuleInstancesRuleInstanceId(async (ctx, request) => {
+      return await ruleInstanceService.putRuleInstance(
+        request.ruleInstanceId,
+        request.RuleInstance
+      )
+    })
 
     handlers.registerDeleteRuleInstancesRuleInstanceId(
       async (ctx, request) =>
