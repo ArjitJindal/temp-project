@@ -2,14 +2,8 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { NotFound } from 'http-errors'
 import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
-import { getContext } from '@/core/utils/context'
-import { Account } from '@/@types/openapi-internal/Account'
-import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { ReportService } from '@/services/sar/service'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ask } from '@/utils/openai'
@@ -21,7 +15,6 @@ export const sarHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const mongoDb = await getMongoDbClient()
     const reportService = await ReportService.fromEvent(event)
     const handlers = new Handlers()
 
@@ -30,41 +23,15 @@ export const sarHandler = lambdaApi()(
       total: reportService.getTypes().length,
     }))
 
-    handlers.registerGetReportsDraft(async (ctx, request) => {
-      const { tenantId } = ctx
-      const { reportTypeId, caseId, alertIds } = request
-      let { transactionIds } = request
-      if (transactionIds?.length > 20) {
-        throw new NotFound(`Cant select more than 20 transactions`)
-      }
-
-      const caseRepository = new CaseRepository(tenantId, { mongoDb })
-      const c = await caseRepository.getCaseById(caseId)
-      if (!c) {
-        throw new NotFound(`Cannot find case ${caseId}`)
-      }
-      if (
-        (!transactionIds || transactionIds.length === 0) &&
-        alertIds?.length > 0
-      ) {
-        transactionIds = c.caseTransactionsIds || []
-      }
-
-      const txpRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
-      const transactions = await txpRepo.getTransactions({
-        filterIdList: transactionIds,
-        includeUsers: true,
-        pageSize: 20,
-      })
-
-      const account = getContext()?.user as Account
-      return await reportService.getReportDraft(
-        reportTypeId,
-        account,
-        c,
-        transactions.data
-      )
-    })
+    handlers.registerGetReportsDraft(
+      async (ctx, request) =>
+        await reportService.getReportDraft(
+          request.reportTypeId,
+          request.caseId,
+          request.alertIds,
+          request.transactionIds
+        )
+    )
 
     handlers.registerGetReports(
       async (ctx, request) => await reportService.getReports(request)

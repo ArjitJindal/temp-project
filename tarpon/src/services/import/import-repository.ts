@@ -11,12 +11,7 @@ export class ImportRepository {
   mongoDb: MongoClient
   tenantId: string
 
-  constructor(
-    tenantId: string,
-    connections: {
-      mongoDb?: MongoClient
-    }
-  ) {
+  constructor(tenantId: string, connections: { mongoDb?: MongoClient }) {
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
@@ -24,13 +19,9 @@ export class ImportRepository {
   public async createFileImport(fileImport: FileImport) {
     const db = this.mongoDb.db()
     const collection = db.collection(IMPORT_COLLECTION(this.tenantId))
-    await collection.replaceOne(
-      {
-        _id: fileImport._id as any,
-      },
-      fileImport,
-      { upsert: true }
-    )
+    await collection.replaceOne({ _id: fileImport._id as any }, fileImport, {
+      upsert: true,
+    })
   }
 
   public async completeFileImport(importId: string, importedRecords: number) {

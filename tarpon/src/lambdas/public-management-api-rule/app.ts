@@ -3,14 +3,11 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
-
 import { Credentials } from '@aws-sdk/client-sts'
 import { toPublicRule } from './utils'
 import { RuleService } from '@/services/rules-engine/rule-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
-import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleInstanceUpdatable } from '@/@types/openapi-public-management/RuleInstanceUpdatable'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleInstance as PublicRuleInstance } from '@/@types/openapi-public-management/RuleInstance'
@@ -20,6 +17,8 @@ import {
   USER_FILTERS,
 } from '@/services/rules-engine/filters'
 import { mergeObjects } from '@/utils/object'
+import { RuleInstanceService } from '@/services/rules-engine/rule-instance-service'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -30,11 +29,7 @@ export const ruleHandler = lambdaApi()(
     const tenantId = (event.requestContext.authorizer?.principalId ||
       event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
-    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
-      dynamoDb,
-    })
-    const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
+    const ruleService = new RuleService(tenantId, { dynamoDb })
 
     if (event.httpMethod === 'GET' && event.resource === '/rules') {
       return (await ruleService.getAllRules()).map((rule) => toPublicRule(rule))
@@ -57,7 +52,7 @@ export const ruleHandler = lambdaApi()(
       event.pathParameters?.ruleId
     ) {
       const ruleId = event.pathParameters.ruleId
-      const rule = await ruleRepository.getRuleById(ruleId)
+      const rule = await ruleService.getRuleById(ruleId)
       if (!rule) {
         throw new NotFound(`Rule ${ruleId} not found`)
       }
@@ -69,10 +64,10 @@ export const ruleHandler = lambdaApi()(
 )
 
 async function getRuleInstanceOrThrow(
-  ruleInstanceRepository: RuleInstanceRepository,
+  ruleInstanceService: RuleInstanceService,
   ruleInstanceId: string
 ): Promise<RuleInstance> {
-  const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
+  const ruleInstance = await ruleInstanceService.getRuleInstanceById(
     ruleInstanceId
   )
   if (!ruleInstance) {
@@ -90,11 +85,12 @@ export const ruleInstanceHandler = lambdaApi()(
     const tenantId = (event.requestContext.authorizer?.principalId ||
       event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
-    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    const mongoDb = await getMongoDbClient()
+    const ruleInstanceService = new RuleInstanceService(tenantId, {
       dynamoDb,
+      mongoDb,
     })
-    const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
+    const ruleService = new RuleService(tenantId, { dynamoDb })
 
     if (
       event.httpMethod === 'POST' &&
@@ -103,7 +99,7 @@ export const ruleInstanceHandler = lambdaApi()(
       event.body
     ) {
       const ruleInstance = await getRuleInstanceOrThrow(
-        ruleInstanceRepository,
+        ruleInstanceService,
         event.pathParameters.ruleInstanceId
       )
       const ruleInstanceUpdatable = JSON.parse(
@@ -120,13 +116,8 @@ export const ruleInstanceHandler = lambdaApi()(
       event.pathParameters?.ruleInstanceId
     ) {
       const ruleInstanceId = event.pathParameters?.ruleInstanceId
-      const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
-        ruleInstanceId
-      )
-      if (!ruleInstance) {
-        throw new NotFound(`Rule instance ${ruleInstanceId} not found`)
-      }
-      await ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
+
+      await ruleInstanceService.deleteRuleInstance(ruleInstanceId)
       return 'OK'
     } else if (
       event.httpMethod === 'POST' &&

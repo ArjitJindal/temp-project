@@ -1,20 +1,14 @@
-import { BadRequest, NotFound } from 'http-errors'
+import { NotFound } from 'http-errors'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-
 import { isEmpty } from 'lodash'
-import { SimulationTaskRepository } from './repositories/simulation-task-repository'
-import { SimulationResultRepository } from './repositories/simulation-result-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getCredentialsFromEvent } from '@/utils/credentials'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { isDemoTenant } from '@/utils/tenant'
-import { tenantSettings } from '@/core/utils/context'
+import { SimulationService } from '@/services/simulation'
 
 export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
   async (
@@ -24,102 +18,23 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
-    const simulationTaskRepository = new SimulationTaskRepository(
-      tenantId,
-      mongoDb
-    )
-    const simulationResultRepository = new SimulationResultRepository(
-      tenantId,
-      mongoDb
-    )
-
+    const simulationService = new SimulationService(tenantId, { mongoDb })
     const handlers = new Handlers()
 
     handlers.registerGetSimulations(
-      async (ctx, request) =>
-        await simulationTaskRepository.getSimulationJobs(request)
+      async (ctx, request) => await simulationService.getSimulationJobs(request)
     )
 
     handlers.registerPostSimulation(async (ctx, request) => {
       const simulationParameters =
         request.SimulationRiskLevelsParametersRequest___SimulationBeaconParametersRequest___SimulationRiskFactorsParametersRequest
 
-      const settings = await tenantSettings(tenantId)
-      const simulationsLimit = settings.limits?.simulations ?? 0
-      const usedSimulations =
-        await simulationTaskRepository.getSimulationJobsCount()
-      if (
-        usedSimulations >= simulationsLimit &&
-        process.env.NODE_ENV !== 'test'
-      ) {
-        throw new BadRequest('Simulations Limit Reached')
-      }
-      const { taskIds, jobId } =
-        await simulationTaskRepository.createSimulationJob(simulationParameters)
-      if (simulationParameters.type === 'BEACON') {
-        const defaultRuleInstance = simulationParameters.defaultRuleInstance
-        if (defaultRuleInstance.type === 'USER') {
-          throw new BadRequest(
-            'User rule is not supported for beacon simulation'
-          )
-        }
-      }
-      for (let i = 0; i < taskIds.length; i++) {
-        if (taskIds[i] && simulationParameters.parameters[i]) {
-          if (
-            simulationParameters.type === 'BEACON' &&
-            !isDemoTenant(tenantId)
-          ) {
-            await sendBatchJobCommand({
-              type: 'SIMULATION_BEACON',
-              tenantId,
-              parameters: {
-                taskId: taskIds[i],
-                jobId,
-                defaultRuleInstance: simulationParameters.defaultRuleInstance,
-                ...simulationParameters.parameters[i],
-              },
-              awsCredentials: getCredentialsFromEvent(event),
-            })
-          }
-
-          if (simulationParameters.type === 'PULSE') {
-            await sendBatchJobCommand({
-              type: 'SIMULATION_PULSE',
-              tenantId,
-              parameters: {
-                taskId: taskIds[i],
-                jobId,
-                ...simulationParameters.parameters[i],
-              },
-              awsCredentials: getCredentialsFromEvent(event),
-            })
-          }
-
-          if (simulationParameters.type === 'RISK_FACTORS') {
-            await sendBatchJobCommand({
-              type: 'SIMULATION_RISK_FACTORS',
-              tenantId,
-              parameters: {
-                taskId: taskIds[i],
-                jobId,
-                ...simulationParameters.parameters[i],
-              },
-              sampling: simulationParameters.sampling ?? {
-                usersCount: 'RANDOM',
-              },
-              awsCredentials: getCredentialsFromEvent(event),
-            })
-          }
-        }
-      }
-      return { taskIds, jobId }
+      return await simulationService.createSimulation(simulationParameters)
     })
 
     handlers.registerGetSimulationTestId(async (ctx, request) => {
-      const data = await simulationTaskRepository.getSimulationJob(
-        request.jobId
-      )
+      const data = await simulationService.getSimulationJob(request.jobId)
+
       if (isEmpty(data)) {
         throw new NotFound(`Simulation job ${request.jobId} not found`)
       }
@@ -129,12 +44,12 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
 
     handlers.registerGetSimulationTaskIdResult(
       async (ctx, request) =>
-        await simulationResultRepository.getSimulationResults(request)
+        await simulationService.getSimulationResults(request)
     )
 
-    handlers.registerGetSimulationJobsCount(async () => ({
-      runJobsCount: await simulationTaskRepository.getSimulationJobsCount(),
-    }))
+    handlers.registerGetSimulationJobsCount(
+      async () => await simulationService.getSimulationJobsCount()
+    )
 
     return await handlers.handle(event)
   }

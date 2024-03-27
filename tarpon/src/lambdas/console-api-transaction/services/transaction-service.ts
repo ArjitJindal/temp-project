@@ -1,4 +1,6 @@
 import { S3 } from '@aws-sdk/client-s3'
+import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -10,33 +12,90 @@ import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
 import { OptionalPagination } from '@/utils/pagination'
 import { Currency } from '@/services/currency'
+import { TransactionsResponse } from '@/@types/openapi-internal/TransactionsResponse'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 
 @traceable
 export class TransactionService {
-  transactionRepository: MongoDbTransactionRepository
+  tenantId: string
+  mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
   s3: S3
   documentBucketName: string
   tmpBucketName: string
   riskRepository: RiskRepository
+  transactionRepository: MongoDbTransactionRepository
+  transactionEventsRepository: TransactionEventRepository
+  userRepository: UserRepository
 
   constructor(
-    transactionRepository: MongoDbTransactionRepository,
-    riskRepository: RiskRepository,
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
     s3: S3,
     tmpBucketName: string,
     documentBucketName: string
   ) {
-    this.transactionRepository = transactionRepository
+    this.transactionRepository = new MongoDbTransactionRepository(
+      tenantId,
+      connections.mongoDb
+    )
     this.s3 = s3
     this.tmpBucketName = tmpBucketName
     this.documentBucketName = documentBucketName
-    this.riskRepository = riskRepository
+    this.riskRepository = new RiskRepository(tenantId, connections)
+    this.tenantId = tenantId
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
+    this.transactionEventsRepository = new TransactionEventRepository(
+      tenantId,
+      connections
+    )
+    this.userRepository = new UserRepository(tenantId, connections)
   }
 
   public async getTransactionsCount(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<number> {
     return await this.transactionRepository.getTransactionsCount(params)
+  }
+
+  public async getTransactionsList(
+    params: DefaultApiGetTransactionsListRequest,
+    options: { includeEvents?: boolean; includeUsers?: boolean }
+  ): Promise<TransactionsResponse> {
+    const { includeEvents, includeUsers } = options
+    const response = await this.getTransactions(params)
+
+    if (includeUsers) {
+      const userIds = Array.from(
+        new Set<string>(
+          response.items.flatMap(
+            (t) =>
+              [t.originUserId, t.destinationUserId].filter(Boolean) as string[]
+          )
+        )
+      )
+      const users = await this.userRepository.getMongoUsersByIds(userIds)
+      const userMap = new Map()
+      users.forEach((u) => userMap.set(u.userId, u))
+      response.items.map((t) => {
+        t.originUser = userMap.get(t.originUserId)
+        t.destinationUser = userMap.get(t.destinationUserId)
+        return t
+      })
+    }
+    if (includeEvents) {
+      const events =
+        await this.transactionEventsRepository.getMongoTransactionEvents(
+          response.items.map((t) => t.transactionId)
+        )
+      response.items.map((t) => {
+        t.events = events.get(t.transactionId)
+        return t
+      })
+    }
+    return response
   }
 
   public async getTransactions(params: DefaultApiGetTransactionsListRequest) {
@@ -57,6 +116,10 @@ export class TransactionService {
     })
 
     return result
+  }
+
+  public getTransactionCursor(params: DefaultApiGetTransactionsListRequest) {
+    return this.transactionRepository.getTransactionsCursor(params)
   }
 
   public async getStatsByType(

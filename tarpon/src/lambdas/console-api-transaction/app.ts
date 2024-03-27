@@ -9,13 +9,9 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { CsvHeaderSettings, ExportService } from '@/services/export'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { UserRepository } from '@/services/users/repositories/user-repository'
-import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
 import { AlertsService } from '@/services/alerts'
@@ -94,28 +90,14 @@ export const transactionsViewHandler = lambdaApi()(
     const { DOCUMENT_BUCKET, TMP_BUCKET, MAXIMUM_ALLOWED_EXPORT_SIZE } =
       process.env as TransactionViewConfig
     const s3 = getS3ClientByEvent(event)
-    const client = await getMongoDbClient()
+    const mongoDb = await getMongoDbClient()
     const dynamoDb = await getDynamoDbClient()
-    const transactionRepository = new MongoDbTransactionRepository(
-      tenantId,
-      client
-    )
     const rulesEngineService = await RulesEngineService.fromEvent(event)
     const alertService = await AlertsService.fromEvent(event)
     const caseService = await CaseService.fromEvent(event)
-    const userRepository = new UserRepository(tenantId, { mongoDb: client })
-    const transactionEventsRepository = new TransactionEventRepository(
-      tenantId,
-      { mongoDb: client }
-    )
-    const riskRepository = new RiskRepository(tenantId, {
-      dynamoDb,
-      mongoDb: client,
-    })
-
     const transactionService = new TransactionService(
-      transactionRepository,
-      riskRepository,
+      tenantId,
+      { mongoDb, dynamoDb },
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET
@@ -123,41 +105,13 @@ export const transactionsViewHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
-    handlers.registerGetTransactionsList(async (context, request) => {
-      const { includeUsers, includeEvents } = request
-      const response = await transactionService.getTransactions(request)
-      if (includeUsers) {
-        const userIds = Array.from(
-          new Set<string>(
-            response.items.flatMap(
-              (t) =>
-                [t.originUserId, t.destinationUserId].filter(
-                  Boolean
-                ) as string[]
-            )
-          )
-        )
-        const users = await userRepository.getMongoUsersByIds(userIds)
-        const userMap = new Map()
-        users.forEach((u) => userMap.set(u.userId, u))
-        response.items.map((t) => {
-          t.originUser = userMap.get(t.originUserId)
-          t.destinationUser = userMap.get(t.destinationUserId)
-          return t
+    handlers.registerGetTransactionsList(
+      async (context, request) =>
+        await transactionService.getTransactionsList(request, {
+          includeEvents: request.includeEvents,
+          includeUsers: request.includeUsers,
         })
-      }
-      if (includeEvents) {
-        const events =
-          await transactionEventsRepository.getMongoTransactionEvents(
-            response.items.map((t) => t.transactionId)
-          )
-        response.items.map((t) => {
-          t.events = events.get(t.transactionId)
-          return t
-        })
-      }
-      return response
-    })
+    )
 
     handlers.registerGetTransactionsStatsByType(async (context, request) => ({
       data: await transactionService.getStatsByType(
@@ -193,17 +147,17 @@ export const transactionsViewHandler = lambdaApi()(
           `File size is too large, it should not have more than ${maxAllowedExportSize} rows! Please add more filters to make it smaller`
         )
       }
-      let transactionsCursor =
-        await transactionRepository.getTransactionsCursor(request)
 
-      transactionsCursor = transactionsCursor.map((transaction) => {
-        return {
-          ...transaction,
-          executedRules: transaction.executedRules.filter(
-            ({ ruleHit }) => ruleHit
-          ),
-        }
-      })
+      const transactionsCursor = transactionService
+        .getTransactionCursor(request)
+        .map((transaction) => {
+          return {
+            ...transaction,
+            executedRules: transaction.executedRules.filter(
+              ({ ruleHit }) => ruleHit
+            ),
+          }
+        })
 
       return await exportService.export(
         transactionsCursor,

@@ -16,8 +16,8 @@ import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/Paramete
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getUserName } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
-import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
-import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
+import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
+import { SimulationResultRepository } from '@/services/simulation/repositories/simulation-result-repository'
 
 type SimulationResult = {
   userResults: Array<Omit<SimulationRiskLevelsResult, 'taskId' | 'type'>>

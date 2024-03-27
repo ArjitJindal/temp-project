@@ -13,7 +13,7 @@ import {
   setUpRulesHooks,
 } from '@/test-utils/rule-test-utils'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
-import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
+import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { SimulationBeaconBatchJob } from '@/@types/batch-job'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { SimulationBeaconParameters } from '@/@types/openapi-internal/SimulationBeaconParameters'

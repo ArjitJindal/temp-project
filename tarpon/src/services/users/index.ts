@@ -23,6 +23,7 @@ import {
   DefaultApiGetAllUsersListRequest,
   DefaultApiGetBusinessUsersListRequest,
   DefaultApiGetConsumerUsersListRequest,
+  DefaultApiGetEventsListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { BusinessUsersListResponse } from '@/@types/openapi-internal/BusinessUsersListResponse'
 import { ConsumerUsersListResponse } from '@/@types/openapi-internal/ConsumerUsersListResponse'
@@ -81,6 +82,8 @@ export class UserService {
   s3: S3
   documentBucketName: string
   tmpBucketName: string
+  mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
@@ -103,6 +106,8 @@ export class UserService {
     this.s3 = s3 as S3
     this.tmpBucketName = tmpBucketName as string
     this.documentBucketName = documentBucketName as string
+    this.mongoDb = connections.mongoDb as MongoClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
   }
 
   public static async fromEvent(
@@ -805,5 +810,19 @@ export class UserService {
       })
     }
     await this.userRepository.deleteUserComment(userId, commentId)
+  }
+
+  public async getEventsList(params: DefaultApiGetEventsListRequest) {
+    const userEventsRepository = new UserEventRepository(
+      this.userRepository.tenantId,
+      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
+    )
+    const userEvents = await userEventsRepository.getMongoUserEvents(params)
+    const count = await userEventsRepository.getUserEventsCount(params.userId)
+
+    return {
+      items: userEvents,
+      total: count,
+    }
   }
 }
