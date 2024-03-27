@@ -8,7 +8,7 @@ import logging
 
 from databricks.sdk.runtime import *
 
-from src.entities import entities
+from src.entities.entities import entities
 from src.dlt.backfill import backfill_transformation
 from src.entities.currency_rates import currency_schema
 

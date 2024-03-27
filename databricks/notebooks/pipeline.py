@@ -11,7 +11,7 @@ from pyspark.sql.functions import col, expr, to_timestamp
 
 from src.dlt.cdc import cdc_transformation
 from src.dlt.currency_rates import currency_rates_transformation
-from src.entities import entities
+from src.entities.entities import entities
 
 aws_access_key = dbutils.secrets.get(
     "kinesis", "aws-access-key"
@@ -27,8 +27,6 @@ sentry_sdk.init(
     dsn=SENTRY_DSN,
     traces_sample_rate=1.0,
 )
-
-partition_key_id_path = "event.dynamodb.Keys.PartitionKeyID.S"
 
 @dlt.on_event_hook
 def write_events_to_sentry(event):
