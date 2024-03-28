@@ -193,6 +193,15 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     }
   }, [entityVariablesFiltered, formValues.variableKey, isVarAvailable, isVarAvailableChanges]);
 
+  // If search key changed - reset nested selects
+  const isSearchKeyChanged = useIsChanged(searchKey);
+  useEffect(() => {
+    const variableKey = formValues.variableKey;
+    if (variableKey != null && isSearchKeyChanged) {
+      nestedSelectsRef.current?.reset(variableKey);
+    }
+  }, [formValues.variableKey, isSearchKeyChanged]);
+
   const variableOptions = useMemo((): NestedSelectsOption[] => {
     type Tree = {
       children: { [key: string]: Tree };
