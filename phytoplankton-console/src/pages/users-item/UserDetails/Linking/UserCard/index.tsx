@@ -1,4 +1,3 @@
-import { Tag } from 'antd';
 import React from 'react';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
@@ -8,7 +7,8 @@ import User3Line from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import GovernmentLineIcon from '@/components/ui/icons/Remix/buildings/government-line.react.svg';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
-import { humanizeConstant } from '@/utils/humanize';
+import Tag from '@/components/library/Tag';
+import UserTypeTag from '@/components/library/Tag/UserTypeTag';
 
 type UserProps = {
   user: InternalBusinessUser | InternalConsumerUser;
@@ -21,14 +21,7 @@ export const UserCard = (props: UserProps) => {
       <Form.Layout.Label title={'Name'}>{getUserName(user)}</Form.Layout.Label>
       <Form.Layout.Label icon={<User3Line />} title={'User type'}>
         <div>
-          <Tag
-            style={{
-              backgroundColor: '#E6F8FF',
-              borderColor: '#78CBEB',
-            }}
-          >
-            {humanizeConstant(user.type)}
-          </Tag>
+          <UserTypeTag type={user.type} />
         </div>
       </Form.Layout.Label>
       {user.type === 'BUSINESS' && (

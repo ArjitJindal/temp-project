@@ -1,5 +1,4 @@
 import React from 'react';
-import { Tag } from 'antd';
 import s from './index.module.less';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { InternalBusinessUser } from '@/apis';
@@ -15,11 +14,13 @@ import GlobalLineIcon from '@/components/ui/icons/Remix/business/global-line.rea
 import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import { Tag as ApiTag } from '@/apis/models/Tag';
 import * as Form from '@/components/ui/Form';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
+import Tag from '@/components/library/Tag';
+import UserTypeTag from '@/components/library/Tag/UserTypeTag';
 
 interface Props {
   user: InternalBusinessUser;
@@ -39,14 +40,7 @@ export default function UsersInfoCard(props: Props) {
     <PropertyColumns>
       <Form.Layout.Label icon={<User3Line />} title={'User type'}>
         <div>
-          <Tag
-            style={{
-              backgroundColor: '#E6F8FF',
-              borderColor: '#78CBEB',
-            }}
-          >
-            Business
-          </Tag>
+          <UserTypeTag type="BUSINESS" />
         </div>
       </Form.Layout.Label>
       <Form.Layout.Label icon={<GovernmentLineIcon />} title={'Business industry'}>

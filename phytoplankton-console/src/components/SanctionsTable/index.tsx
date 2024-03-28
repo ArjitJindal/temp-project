@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Tag } from 'antd';
 import { startCase } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
@@ -13,6 +12,7 @@ import { QueryResult } from '@/utils/queries/types';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { humanizeSnakeCase } from '@/utils/humanize';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
+import Tag from '@/components/library/Tag';
 
 interface TableSearchParams {
   searchTerm?: string;

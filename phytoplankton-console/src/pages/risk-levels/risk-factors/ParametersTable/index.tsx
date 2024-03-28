@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Button, Tag } from 'antd';
+import { Button } from 'antd';
 import {
   Entity,
   ParameterName,
@@ -23,6 +23,8 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { LONG_TEXT } from '@/components/library/Table/standardDataTypes';
 import { RiskLevel } from '@/utils/risk-levels';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Tag, { TagColor } from '@/components/library/Tag';
+import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   parameters: RiskLevelTable;
@@ -67,22 +69,32 @@ export default function ParametersTable(props: Props) {
                   return <Tag>{dataType}</Tag>;
                 }
                 const type = DATA_TYPE_TO_VALUE_TYPE[dataType];
+                const tagText = humanizeConstant(type);
+                let color: TagColor | undefined;
                 switch (type) {
                   case 'LITERAL':
-                    return <Tag color="green">{type}</Tag>;
+                    color = 'green';
+                    break;
                   case 'RANGE':
-                    return <Tag color="blue">{type}</Tag>;
+                    color = 'blue';
+                    break;
                   case 'MULTIPLE':
-                    return <Tag color="cyan">{type}</Tag>;
+                    color = 'cyan';
+                    break;
                   case 'TIME_RANGE':
-                    return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
+                    color = 'purple';
+                    break;
                   case 'DAY_RANGE':
-                    return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
+                    color = 'purple';
+                    break;
                   case 'AMOUNT_RANGE':
-                    return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
+                    color = 'purple';
+                    break;
+                  default:
+                    color = neverReturn(type, undefined);
                 }
 
-                return neverReturn(type, <Tag>{type}</Tag>);
+                return <Tag color={color}>{tagText}</Tag>;
               },
             },
           }),

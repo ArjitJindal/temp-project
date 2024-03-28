@@ -212,7 +212,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
               return (
                 <Tag
                   key={entityVar.key}
-                  kind="ACTION"
+                  color="action"
                   actions={[
                     {
                       key: 'edit',
@@ -235,7 +235,6 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
               return (
                 <Tag
                   key={aggVar.key}
-                  kind="ACTION"
                   actions={[
                     {
                       key: 'edit',

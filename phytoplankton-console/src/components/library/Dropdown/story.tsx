@@ -1,7 +1,7 @@
 import React from 'react';
 import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
-import CaseStatusTag from '@/components/library/CaseStatusTag';
+import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 
 export default function (): JSX.Element {
   return (

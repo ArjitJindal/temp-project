@@ -1,5 +1,4 @@
 import React from 'react';
-import { Tag } from 'antd';
 import { uniqBy } from 'lodash';
 import s from './index.module.less';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
@@ -16,6 +15,9 @@ import StoreLineIcon from '@/components/ui/icons/Remix/buildings/store-3-line.re
 import * as Form from '@/components/ui/Form';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { Tag as ApiTag } from '@/apis/models/Tag';
+import UserTypeTag from '@/components/library/Tag/UserTypeTag';
+import Tag from '@/components/library/Tag';
+import TagList from '@/components/library/Tag/TagList';
 
 interface Props {
   user: InternalConsumerUser;
@@ -33,14 +35,7 @@ export default function UsersInfoCard(props: Props) {
         </Form.Layout.Label>
         <Form.Layout.Label icon={<User3LineIcon />} title={'User type'}>
           <div>
-            <Tag
-              style={{
-                backgroundColor: '#FFF4E5',
-                borderColor: '#F6A429',
-              }}
-            >
-              Consumer
-            </Tag>
+            <UserTypeTag type="CONSUMER" />
           </div>
         </Form.Layout.Label>
         <Form.Layout.Label icon={<EarthLineIcon />} title={'Nationality'}>
@@ -71,11 +66,11 @@ export default function UsersInfoCard(props: Props) {
       {user.reasonForAccountOpening?.length ? (
         <div className={s.inner}>
           <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
-            <div>
-              {user.reasonForAccountOpening.map((reason) => {
-                return <Tag>{reason}</Tag>;
-              })}
-            </div>
+            <TagList>
+              {user.reasonForAccountOpening.map((reason) => (
+                <Tag key={reason}>{reason}</Tag>
+              ))}
+            </TagList>
           </Form.Layout.Label>
         </div>
       ) : (
@@ -84,11 +79,11 @@ export default function UsersInfoCard(props: Props) {
       {user.sourceOfFunds?.length ? (
         <div className={s.inner}>
           <Form.Layout.Label icon={<EarthLineIcon />} title={'Source of funds'}>
-            <div>
-              {user.sourceOfFunds.map((source) => {
-                return <Tag>{source}</Tag>;
-              })}
-            </div>
+            <TagList>
+              {user.sourceOfFunds.map((source) => (
+                <Tag key={source}>{source}</Tag>
+              ))}
+            </TagList>
           </Form.Layout.Label>
         </div>
       ) : (

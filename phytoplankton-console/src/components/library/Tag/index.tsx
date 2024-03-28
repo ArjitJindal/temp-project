@@ -1,62 +1,85 @@
 import React from 'react';
 import cn from 'clsx';
-import s from './style.module.less';
+import s from './index.module.less';
 import Confirm, { Props as ConfirmProps } from '@/components/utils/Confirm';
 
-export const styles = s;
-
-interface TagAction {
+export interface TagAction {
   key: string;
   icon: React.ReactNode;
   confirm?: Omit<ConfirmProps, 'onConfirm' | 'children'>;
   action: () => void;
 }
 
-export interface TagWithActionsProps {
-  kind: 'ACTION' | 'SUCCESS' | 'ERROR';
+export type TagColor =
+  | 'orange'
+  | 'blue'
+  | 'green'
+  | 'cyan'
+  | 'gold'
+  | 'pink'
+  | 'purple'
+  | 'magenta'
+  | 'volcano'
+  | 'red'
+  | 'processing'
+  | 'success'
+  | 'error'
+  | 'warning'
+  | 'action';
+
+interface Props {
+  color?: TagColor;
   className?: string;
-  children: string;
-  actions?: TagAction[];
+  icon?: React.ReactNode;
+  children: React.ReactNode;
   maxWidth?: number;
+  actions?: TagAction[];
+  onClick?: () => void;
 }
 
-export type Props = TagWithActionsProps;
+export default function Tag(props: Props) {
+  const { onClick, color, icon, children, className, maxWidth, actions = [] } = props;
 
-export default function Tag(props: Props): JSX.Element {
   return (
-    <div className={cn(s.root, s[`kind-${props.kind}`], props.className)}>
-      <div className={s.text} style={{ maxWidth: props.maxWidth }}>
-        {props.children}
-      </div>
-      {props.actions && (
-        <div className={s.actions}>
-          {props.actions?.map(({ icon, action, key, confirm }) => {
-            if (confirm == null) {
-              return (
-                <button
-                  className={s.action}
-                  key={key}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    action();
-                  }}
-                >
-                  {icon}
-                </button>
-              );
-            }
-            return (
-              <Confirm {...confirm} key={key} onConfirm={action}>
-                {({ onClick }) => (
-                  <button className={s.action} onClick={onClick}>
+    <div className={cn(s.root)}>
+      <div
+        className={cn(s.body, s[`color-${color}`], onClick != null && s.isClickable, className)}
+        onClick={onClick}
+      >
+        {icon && <div className={s.icon}>{icon}</div>}
+        <div className={s.text} style={{ maxWidth }}>
+          {children}
+        </div>
+        {actions.length > 0 && (
+          <div className={s.actions}>
+            {props.actions?.map(({ icon, action, key, confirm }) => {
+              if (confirm == null) {
+                return (
+                  <button
+                    className={s.action}
+                    key={key}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      action();
+                    }}
+                  >
                     {icon}
                   </button>
-                )}
-              </Confirm>
-            );
-          })}
-        </div>
-      )}
+                );
+              }
+              return (
+                <Confirm {...confirm} key={key} onConfirm={action}>
+                  {({ onClick }) => (
+                    <button className={s.action} onClick={onClick}>
+                      {icon}
+                    </button>
+                  )}
+                </Confirm>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

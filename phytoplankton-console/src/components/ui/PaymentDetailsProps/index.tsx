@@ -2,7 +2,7 @@ import React from 'react';
 import s from './index.module.less';
 import * as Form from '@/components/ui/Form';
 import { humanizeCamelCase, humanizeConstant } from '@/utils/humanize';
-import KeyValueTag from '@/components/ui/KeyValueTag';
+import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import Address from '@/components/ui/Address';
 import {
   Address as ApiAddress,

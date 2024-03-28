@@ -3,10 +3,10 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
-import { FalsePositiveTag } from '../components/FalsePositiveTag';
 import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QaTable';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
+import { FalsePositiveTag } from './FalsePositiveTag';
 import { useApi } from '@/api';
 import {
   AlertsAssignmentsUpdateRequest,
@@ -68,7 +68,7 @@ import { useQaEnabled, useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
 import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal';
 import { getOr } from '@/utils/asyncResource';
-import { RuleQueueTag } from '@/components/rules/RuleQueueTag';
+import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { denseArray } from '@/utils/lang';
 import { useRuleQueues } from '@/components/rules/util';
 import { notEmpty } from '@/utils/array';

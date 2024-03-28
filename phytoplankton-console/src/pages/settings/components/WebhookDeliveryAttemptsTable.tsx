@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { Tag } from 'antd';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { WebhookDeliveryAttempt } from '@/apis';
 import { useApi } from '@/api';
@@ -12,6 +11,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import Modal from '@/components/library/Modal';
+import Tag from '@/components/library/Tag';
 
 interface Props {
   webhookId: string;

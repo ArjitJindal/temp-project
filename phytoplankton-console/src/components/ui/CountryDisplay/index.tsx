@@ -1,16 +1,15 @@
-import { Space } from 'antd';
 import ReactCountryFlag from 'react-country-flag';
 import { COUNTRIES, COUNTRY_NAME_TO_CODE, CountryCode } from '@flagright/lib/constants';
+import s from './index.module.less';
 
 interface Props {
   // Alpha-2 code
   isoCode?: string;
   countryName?: string;
-  flagStyle?: React.CSSProperties;
 }
 
 export default function CountryDisplay(props: Props): JSX.Element {
-  const { isoCode, countryName, flagStyle = {} } = props;
+  const { isoCode, countryName } = props;
   if (!isoCode && !countryName) {
     return <>-</>;
   }
@@ -22,14 +21,14 @@ export default function CountryDisplay(props: Props): JSX.Element {
   }
 
   return (
-    <Space align="start">
-      {name && <CountryFlag code={code} flagStyle={flagStyle} />}
+    <div className={s.root}>
+      {name && <CountryFlag code={code} />}
       <span>{name || code}</span>
-    </Space>
+    </div>
   );
 }
 
-export function CountryFlag(props: { code: CountryCode; flagStyle?: React.CSSProperties }) {
-  const { code, flagStyle } = props;
-  return <ReactCountryFlag countryCode={code} svg style={flagStyle} />;
+export function CountryFlag(props: { code: CountryCode }) {
+  const { code } = props;
+  return <ReactCountryFlag countryCode={code} svg />;
 }

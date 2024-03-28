@@ -1,10 +1,10 @@
-import { Tag } from 'antd';
 import { startCase } from 'lodash';
 import React from 'react';
 import * as Card from '@/components/ui/Card';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 import * as Form from '@/components/ui/Form';
 import Button from '@/components/library/Button';
+import UserTypeTag from '@/components/library/Tag/UserTypeTag';
 
 type AttributePanelProps = {
   attributeId: string;
@@ -22,14 +22,7 @@ export const AttributePanel = (props: AttributePanelProps) => {
         <PropertyColumns>
           <Form.Layout.Label title={'Link type'}>
             <div>
-              <Tag
-                style={{
-                  backgroundColor: '#E6F8FF',
-                  borderColor: '#78CBEB',
-                }}
-              >
-                {startCase(type)}
-              </Tag>
+              <UserTypeTag>{startCase(type)}</UserTypeTag>
             </div>
           </Form.Layout.Label>
           <Form.Layout.Label title={'Link Value'}>{value}</Form.Layout.Label>

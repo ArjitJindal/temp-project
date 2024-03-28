@@ -7,9 +7,9 @@ import {
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import { RiskEntityType, TransactionType } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { PaymentMethod } from '@/utils/payments';
-import TransactionTypeTag from '@/components/library/TransactionTypeTag';
+import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 import { humanizeConstant } from '@/utils/humanize';
 import {
   ALL_RISK_PARAMETERS,
@@ -49,7 +49,7 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
   }) as ParameterRenderer<PaymentMethod>,
   BUSINESS_INDUSTRY: CONSTANT_RENDERER,
   TRANSACTION_TYPES: ((value) => {
-    return <TransactionTypeTag transactionType={value} />;
+    return <TransactionTypeDisplay transactionType={value} />;
   }) as ParameterRenderer<TransactionType>,
   RESIDENCE_TYPES: CONSTANT_RENDERER,
   CONSUMER_USER_TYPE: CONSTANT_RENDERER,

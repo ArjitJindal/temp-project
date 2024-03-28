@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Switch, Tag as AntTag } from 'antd';
+import { Switch } from 'antd';
 import { capitalize, uniqBy } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import { COUNTRIES, CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
@@ -7,7 +7,11 @@ import { ColumnDataType, FullColumnDataType } from '../types';
 import { CloseMessage, message } from '../../Message';
 import PriorityTag from '../../PriorityTag';
 import s from './index.module.less';
-import RiskLevelTag from '@/components/library/RiskLevelTag';
+import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
+import KeyValueTag from '@/components/library/Tag/KeyValueTag';
+import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
+import UserKycStatusTag from '@/components/library/Tag/UserKycStatusTag';
+import UserStateTag from '@/components/library/Tag/UserStateTag';
 import { RiskLevel } from '@/utils/risk-levels';
 import {
   Address,
@@ -21,7 +25,7 @@ import {
   KYCStatusDetails,
   RuleAction,
   RuleNature,
-  Tag,
+  Tag as ApiTag,
   TransactionState as ApiTransactionState,
   TransactionType,
   UserState,
@@ -30,20 +34,16 @@ import {
   Alert,
 } from '@/apis';
 import { getUserLink, getUserName } from '@/utils/api/users';
-import TransactionTypeTag from '@/components/library/TransactionTypeTag';
+import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
-import TransactionStateTag from '@/components/ui/TransactionStateTag';
+import TransactionStateDisplay from '@/components/ui/TransactionStateDisplay';
 import CurrencySymbol from '@/components/ui/Currency';
 import CountryDisplay from '@/components/ui/CountryDisplay';
-import KeyValueTag from '@/components/ui/KeyValueTag';
 import { PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserLink from '@/components/UserLink';
-import { RuleActionTag } from '@/components/rules/RuleActionTag';
+import { RuleActionTag } from '@/components/library/Tag/RuleActionTag';
 import Money from '@/components/ui/Money';
-import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
-import UserStateTag from '@/components/ui/UserStateTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { RULE_NATURE_LABELS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
 import TextInput from '@/components/library/TextInput';
@@ -65,6 +65,7 @@ import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import { Option } from '@/components/library/Select';
 import { formatNumber } from '@/utils/number';
+import Tag from '@/components/library/Tag';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -209,7 +210,7 @@ export const RULE_NATURE: ColumnDataType<RuleNature> = {
     if (value == null) {
       return <></>;
     }
-    return <AntTag>{RULE_NATURE_LABELS[value]}</AntTag>;
+    return <Tag>{RULE_NATURE_LABELS[value]}</Tag>;
   },
   defaultWrapMode: 'WRAP',
   autoFilterDataType: {
@@ -281,7 +282,7 @@ export const USER_TYPE: ColumnDataType<
 };
 
 export const TRANSACTION_TYPE: ColumnDataType<TransactionType> = {
-  render: (type) => <TransactionTypeTag transactionType={type as TransactionType} />,
+  render: (type) => <TransactionTypeDisplay transactionType={type as TransactionType} />,
   stringify: (value) => `${value}`,
   autoFilterDataType: {
     kind: 'select',
@@ -295,7 +296,7 @@ export const TRANSACTION_TYPE: ColumnDataType<TransactionType> = {
 };
 
 export const TRANSACTION_STATE: ColumnDataType<ApiTransactionState> = {
-  render: (value) => <TransactionStateTag transactionState={value} />,
+  render: (value) => <TransactionStateDisplay transactionState={value} />,
   stringify: (value) => `${value}`,
   autoFilterDataType: {
     kind: 'select',
@@ -413,7 +414,7 @@ export const COUNTRY: ColumnDataType<ApiCountryCode> = {
   },
 };
 
-export const TAGS: ColumnDataType<Tag[]> = {
+export const TAGS: ColumnDataType<ApiTag[]> = {
   render: (value) => {
     return (
       <>
@@ -592,7 +593,7 @@ export const USER_STATE_TAG: ColumnDataType<UserState> = {
 
 export const TAG: ColumnDataType<string> = {
   render: (value: string | undefined) => {
-    return value ? <AntTag>{capitalize(value)}</AntTag> : <></>;
+    return value ? <Tag>{capitalize(value)}</Tag> : <></>;
   },
   stringify: (userState) => userState ?? '',
 };

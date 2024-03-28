@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Space, Tag } from 'antd';
+import { Space } from 'antd';
 import cn from 'clsx';
 import { COUNTRIES } from '@flagright/lib/constants';
 import s from './index.module.less';
@@ -26,6 +26,7 @@ import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { getAccountUserName } from '@/utils/account';
 import { humanizeConstant } from '@/utils/humanize';
+import Tag from '@/components/library/Tag';
 
 type TableParams = AllParams<DefaultApiGetReportsRequest>;
 

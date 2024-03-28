@@ -1,4 +1,4 @@
-import { Space, Switch, Tag } from 'antd';
+import { Space, Switch } from 'antd';
 import { useCallback, useRef, useState } from 'react';
 import { JSONSchemaType } from 'ajv';
 import SettingsCard from '@/components/library/SettingsCard';
@@ -12,6 +12,7 @@ import { CrudEntitiesTable } from '@/components/library/CrudEntitiesTable';
 import { DefaultApiGetWebhooksRequest } from '@/apis/types/ObjectParamAPI';
 import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
 import { getBranding } from '@/utils/branding';
+import Tag from '@/components/library/Tag';
 
 export const WebhookSettings: React.FC = () => {
   const api = useApi();

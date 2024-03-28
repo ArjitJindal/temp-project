@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { Tag } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -29,6 +28,7 @@ import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
 import { getAlertUrl } from '@/utils/routing';
+import Tag from '@/components/library/Tag';
 
 interface Props {
   params: AllParams<TableSearchParams>;

@@ -103,7 +103,7 @@ export const SanctionsScreeningActivity = () => {
         filtering: true,
         type: {
           render: (isHit) => {
-            return <Tag kind={isHit ? 'ERROR' : 'SUCCESS'}>{isHit ? 'Hit' : 'No hit'}</Tag>;
+            return <Tag color={isHit ? 'error' : 'success'}>{isHit ? 'Hit' : 'No hit'}</Tag>;
           },
           stringify: (isHit) => (isHit ? 'Hit' : 'No hit'),
           autoFilterDataType: {

@@ -22,7 +22,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
-import CaseStatusTag from '@/components/library/CaseStatusTag';
+import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 
 export const queryAdapter: Adapter<TableSearchParams> = {

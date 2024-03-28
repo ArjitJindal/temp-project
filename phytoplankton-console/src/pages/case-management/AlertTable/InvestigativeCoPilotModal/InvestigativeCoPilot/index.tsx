@@ -15,7 +15,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
 import { isSuccess, map, useFinishedSuccessfully } from '@/utils/asyncResource';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
-import CaseStatusTag from '@/components/library/CaseStatusTag';
+import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';

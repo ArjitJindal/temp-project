@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Assignment, CaseStatus, CaseStatusChange } from '@/apis';
-import CaseStatusTag from '@/components/library/CaseStatusTag';
+import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import Dropdown from '@/components/library/Dropdown';
 import { useAuth0User } from '@/utils/user-utils';
 import { statusEscalated } from '@/utils/case-utils';

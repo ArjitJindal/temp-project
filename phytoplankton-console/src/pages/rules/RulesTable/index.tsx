@@ -6,7 +6,7 @@ import { Rule } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { CommonParams, SortingParamsItem, TableColumn } from '@/components/library/Table/types';
-import { RecommendedTag } from '@/components/ui/RecommendedTag';
+import RecommendedTag from '@/components/library/Tag/RecommendedTag';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';

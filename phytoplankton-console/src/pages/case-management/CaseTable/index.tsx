@@ -27,11 +27,11 @@ import {
 } from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
 import { getUserLink } from '@/utils/api/users';
-import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
+import UserKycStatusTag from '@/components/library/Tag/UserKycStatusTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
-import UserStateTag from '@/components/ui/UserStateTag';
+import UserStateTag from '@/components/library/Tag/UserStateTag';
 import { PaginatedData } from '@/utils/queries/hooks';
-import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
+import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { humanizeConstant } from '@/utils/humanize';
@@ -355,10 +355,17 @@ export default function CaseTable(props: Props) {
             type: {
               render: (lastStatusChangeReasons) => {
                 return lastStatusChangeReasons ? (
-                  <ClosingReasonTag
-                    closingReasons={lastStatusChangeReasons.reasons}
-                    otherReason={lastStatusChangeReasons.otherReason}
-                  />
+                  <>
+                    {lastStatusChangeReasons.reasons.map((closingReason, index) => (
+                      <ClosingReasonTag key={index}>{closingReason}</ClosingReasonTag>
+                    ))}
+                    {lastStatusChangeReasons.otherReason && (
+                      <div>
+                        <span>Other Reasons: </span>
+                        {lastStatusChangeReasons.otherReason}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <>-</>
                 );

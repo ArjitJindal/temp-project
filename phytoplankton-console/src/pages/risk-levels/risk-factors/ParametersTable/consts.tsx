@@ -1,4 +1,3 @@
-import { Tag } from 'antd';
 import React, { useEffect } from 'react';
 import { keyBy } from 'lodash';
 import {
@@ -40,8 +39,8 @@ import {
   RiskParameterValueTimeRange,
 } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
-import TransactionTypeTag from '@/components/library/TransactionTypeTag';
+import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
+import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 import { isTransactionType } from '@/utils/api/transactions';
 import { RESIDENCE_TYPES } from '@/utils/residence-types';
 import { useApi } from '@/api';
@@ -56,6 +55,10 @@ import { BOOLEAN_OPTIONS } from '@/utils/booleanOptions';
 import { SOURCE_OF_FUNDSS } from '@/apis/models-custom/SourceOfFunds';
 import { capitalizeWords } from '@/utils/humanize';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
+import Tag from '@/components/library/Tag';
+import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
+import TagList from '@/components/library/Tag/TagList';
+
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
   value?: RiskValueContentByType<T> | null;
@@ -1188,26 +1191,26 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
       return null;
     }
     return (
-      <span>
+      <TagList>
         {value.values.map((item) => (
           <Tag
-            onClose={() => {
-              const content = item.content;
-              if (handleRemoveValue && typeof content === 'string') {
-                handleRemoveValue(content);
-              }
-            }}
-            style={{ marginBottom: '4px' }}
-            closable
+            actions={[
+              {
+                key: 'delete',
+                icon: <CloseLineIcon />,
+                action: () => {
+                  const content = item.content;
+                  if (handleRemoveValue && typeof content === 'string') {
+                    handleRemoveValue(content);
+                  }
+                },
+              },
+            ]}
           >
-            <CountryDisplay
-              key={`${item.content}`}
-              isoCode={`${item.content}`}
-              flagStyle={{ marginRight: '4px' }}
-            />
+            <CountryDisplay key={`${item.content}`} isoCode={`${item.content}`} />
           </Tag>
         ))}
-      </span>
+      </TagList>
     );
   }) as ValueRenderer<'MULTIPLE'>,
   PAYMENT_METHOD: (({ value }) => {
@@ -1239,7 +1242,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
           if (!isTransactionType(itemValue)) {
             return <span key={itemValue}>{itemValue}</span>;
           }
-          return <TransactionTypeTag key={itemValue} transactionType={itemValue} />;
+          return <TransactionTypeDisplay key={itemValue} transactionType={itemValue} />;
         })}
       </>
     );

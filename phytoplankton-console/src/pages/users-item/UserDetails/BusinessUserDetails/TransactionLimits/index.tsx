@@ -19,7 +19,7 @@ import Money from '@/components/ui/Money';
 import Table from '@/components/library/Table';
 import { TransactionLimit } from '@/apis/models/TransactionLimit';
 import { PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { TransactionLimitsPaymentMethodLimits } from '@/apis/models/TransactionLimitsPaymentMethodLimits';
 import Button from '@/components/library/Button';
 import { TransactionCountLimit } from '@/apis/models/TransactionCountLimit';

@@ -8,9 +8,9 @@ import ActionRiskDisplay from '@/components/ui/ActionRiskDisplay';
 import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import * as Form from '@/components/ui/Form';
-import TransactionState from '@/components/ui/TransactionStateTag';
+import TransactionState from '@/components/ui/TransactionStateDisplay';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import TransactionTypeTag from '@/components/library/TransactionTypeTag';
+import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 
 //types
 import { InternalTransaction } from '@/apis';
@@ -36,7 +36,7 @@ export default function SubHeader(props: Props) {
           {transaction.status && <RuleActionStatus ruleAction={transaction.status} />}
         </Form.Layout.Label>
         <Form.Layout.Label title="Type" className={s.attribute}>
-          <TransactionTypeTag transactionType={transaction.type} />
+          <TransactionTypeDisplay transactionType={transaction.type} />
         </Form.Layout.Label>
         <Form.Layout.Label title="Product Type" className={s.attribute}>
           {transaction.productType ?? '-'}

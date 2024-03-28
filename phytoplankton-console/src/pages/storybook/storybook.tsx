@@ -33,11 +33,8 @@ import Slider from '@/components/library/Slider/story';
 import Table from '@/components/library/Table/story';
 import CrudEntitiesTable from '@/components/library/CrudEntitiesTable/story';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay/story';
-import RiskLevelTag from '@/components/library/RiskLevelTag/story';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch/story';
 import Modal from '@/components/library/Modal/story';
-import TransactionTypeTag from '@/components/library/TransactionTypeTag/story';
-import CaseStatusTag from '@/components/library/CaseStatusTag/story';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput/story';
 import FilesList from '@/components/files/FilesList/story';
 import EmptyDataInfo from '@/components/library/EmptyDataInfo/story';
@@ -273,14 +270,7 @@ const config: Config = [
         key: 'Age range input',
         story: AgeRangeInput,
       },
-      {
-        key: 'Transaction type tag',
-        story: TransactionTypeTag,
-      },
-      {
-        key: 'Case status tag',
-        story: CaseStatusTag,
-      },
+
       {
         key: 'Case generation method tag',
         story: CaseGenerationMethodTag,
@@ -300,10 +290,6 @@ const config: Config = [
       {
         key: 'QuickFilter',
         story: QuickFilter,
-      },
-      {
-        key: 'RiskLevelTag',
-        story: RiskLevelTag,
       },
       {
         key: 'Widget',

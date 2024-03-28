@@ -28,9 +28,9 @@ import { message } from '@/components/library/Message';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useScrollToFocus } from '@/utils/hooks';
 import { parseQueryString, makeUrl } from '@/utils/routing';
-import { RuleHitInsightsTag } from '@/components/ui/RuleHitInsightsTag';
+import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
-import { RuleQueueTag } from '@/components/rules/RuleQueueTag';
+import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];

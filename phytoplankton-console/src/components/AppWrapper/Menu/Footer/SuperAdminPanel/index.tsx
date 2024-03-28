@@ -1,5 +1,5 @@
-import { Divider, Input, Tag } from 'antd';
-import { ChangeEvent, useState } from 'react';
+import { Divider, Input } from 'antd';
+import React, { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
 import NumberInput from '../../../../library/NumberInput';
@@ -27,6 +27,7 @@ import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
 import { WHITELABEL_BRANDING } from '@/utils/branding';
 import Select from '@/components/library/Select';
+import Tag from '@/components/library/Tag';
 
 const featureDescriptions: Record<Feature, { title: string; description: string }> = {
   RISK_LEVELS: { title: 'Risk Levels', description: 'Enable risk levels' },

@@ -1,7 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { some } from 'lodash';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Tag } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import s from './index.module.less';
 import {
@@ -20,15 +19,13 @@ import { Account, AccountDeletePayload } from '@/apis';
 import {
   COLORS_V2_ALERT_CRITICAL,
   COLORS_V2_ALERT_SUCCESS,
-  COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
-  COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
   COLORS_V2_STATE_DISABLED,
 } from '@/components/ui/colors';
 import AccountForm from '@/pages/accounts/components/AccountForm';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
-import RoleTag, { getRoleTitle } from '@/components/ui/RoleTag';
+import RoleTag, { getRoleTitle } from '@/components/library/Tag/RoleTag';
 import Modal from '@/components/library/Modal';
 import Select from '@/components/library/Select';
 import { P } from '@/components/ui/Typography';
@@ -39,6 +36,7 @@ import MinusCircleOutlined from '@/components/ui/icons/Remix/system/indeterminat
 import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-2-line.react.svg';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Confirm from '@/components/utils/Confirm';
+import Tag from '@/components/library/Tag';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
@@ -104,15 +102,6 @@ export default function Team() {
   const [reassignTo, setReassignTo] = useState<string | null>(null);
   const [users, loadingUsers] = useUsers();
 
-  const tagStyle = useMemo(
-    () => ({
-      background: COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
-      borderColor: COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
-      color: 'black',
-    }),
-    [],
-  );
-
   const columnHelper = new ColumnHelper<Account>();
   const columns: TableColumn<Account>[] = columnHelper.list([
     columnHelper.simple<'email'>({
@@ -128,10 +117,10 @@ export default function Team() {
           return (
             <div>
               {role != null && <RoleTag role={role} />}
-              {context.item.isEscalationContact && <Tag style={tagStyle}>Escalation reviewer</Tag>}
-              {context.item.reviewerId && <Tag style={tagStyle}>Requires review</Tag>}
+              {context.item.isEscalationContact && <Tag className={s.tag}>Escalation reviewer</Tag>}
+              {context.item.reviewerId && <Tag className={s.tag}>Requires review</Tag>}
               {!loadingUsers && some(users, (u) => u.reviewerId === context.item.id) && (
-                <Tag style={tagStyle}>Reviewer</Tag>
+                <Tag className={s.tag}>Reviewer</Tag>
               )}
             </div>
           );

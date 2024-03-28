@@ -1,5 +1,4 @@
 import React from 'react';
-import { Tag } from 'antd';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { InternalBusinessUser } from '@/apis';
 import * as Card from '@/components/ui/Card';
@@ -15,6 +14,7 @@ import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-l
 import { Tag as ApiTag } from '@/apis/models/Tag';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
+import Tag from '@/components/library/Tag';
 
 interface Props {
   user: InternalBusinessUser;

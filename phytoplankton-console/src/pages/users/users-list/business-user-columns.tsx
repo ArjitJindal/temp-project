@@ -1,4 +1,3 @@
-import { Tag } from 'antd';
 import React from 'react';
 import { InternalBusinessUser } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
@@ -7,6 +6,7 @@ import { DATE, MONEY, TAGS } from '@/components/library/Table/standardDataTypes'
 import Id from '@/components/ui/Id';
 import { getUserLink } from '@/utils/api/users';
 import { capitalizeWords } from '@/utils/humanize';
+import Tag from '@/components/library/Tag';
 
 export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
   const helper = new ColumnHelper<InternalBusinessUser>();

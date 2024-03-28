@@ -4,7 +4,7 @@ import { ValueItem } from '../types';
 import s from './index.module.less';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { RISK_LEVEL_COLORS, RiskLevel, useRiskLevel } from '@/utils/risk-levels';
-import RiskLevelTag from '@/components/library/RiskLevelTag';
+import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
 import { useId } from '@/utils/hooks';
 import Tooltip from '@/components/library/Tooltip';
 

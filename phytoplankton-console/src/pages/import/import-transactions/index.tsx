@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Tag } from 'antd';
 import { files } from './service';
 import { TableListItem } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
@@ -13,8 +12,9 @@ import { TRANSACTION_FILES } from '@/utils/queries/keys';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import Tag, { TagColor } from '@/components/library/Tag';
 
-function getStatusColor(status: string): string {
+function getStatusColor(status: string): TagColor {
   switch (status) {
     case 'IN_PROGRESS':
       return 'processing';

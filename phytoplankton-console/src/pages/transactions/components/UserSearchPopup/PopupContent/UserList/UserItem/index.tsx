@@ -5,7 +5,7 @@ import pluralize from 'pluralize';
 import { User } from '../../../types';
 import s from './style.module.less';
 import { getUserName } from '@/utils/api/users';
-import RiskLevelTag from '@/components/library/RiskLevelTag';
+import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
 
 interface Props {
   isActive: boolean;

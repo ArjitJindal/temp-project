@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Tag } from 'antd';
 import DetailsViewButton from '../DetailsViewButton';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
@@ -30,7 +29,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   COUNTRY,
@@ -58,6 +57,7 @@ import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
 import { PaymentDetails } from '@/utils/api/payment-details';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRuleOptions } from '@/utils/rules';
+import Tag from '@/components/library/Tag';
 
 const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<PaymentDetails> => ({
   stringify: (value) => {
