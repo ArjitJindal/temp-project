@@ -1363,16 +1363,7 @@ getTenantInfoFromUsagePlans(awsRegion).then((tenants) => {
     throw new Error('no tenants found')
   }
   const app = new App()
-  const tenantIds = tenants
-    .filter(
-      (t) =>
-        enabledTenantIds.indexOf(t.id.toLowerCase()) > -1 ||
-        t.name.toLowerCase().includes('flagright')
-    )
-    .map((t) => t.id.toLowerCase())
-    .filter((elem, index, self) => {
-      return index === self.indexOf(elem)
-    })
+  const tenantIds = tenants.map((t) => t.id.toLowerCase())
 
   // Add demo mode tenants.
   if (stage === 'sandbox') {
