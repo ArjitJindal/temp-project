@@ -30,7 +30,7 @@ for p in w.pipelines.list_pipelines():
 if main_pipeline is None:
     raise Exception("No main pipeline found")
 
-dbutils.widgets.text("entities", ",".join(entity["table"] for entity in entities), "Entities to backfill")
+dbutils.widgets.text("entities", ",".join(entity.table for entity in entities), "Entities to backfill")
 
 # MongoDB Connection Setup
 MONGO_USERNAME = dbutils.secrets.get(
