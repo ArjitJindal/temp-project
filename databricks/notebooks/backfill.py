@@ -47,13 +47,13 @@ stage = os.environ["STAGE"]
 
 logger = logging.getLogger("backfill")
 
-
 json_file_path = "/data/currency_rates_backfill.json"
 currency_df = spark.read.json(json_file_path, currency_schema)
 currency_df = currency_df.withColumn(
     "approximateArrivalTimestamp",
     to_timestamp(col("date"), "yyyy-MM-dd"),
 )
+
 
 def load_mongo(entity):
     table = entity.table
@@ -101,15 +101,17 @@ def load_mongo(entity):
 
     logger.info("All collections processed.")
 
+
 entity_names = dbutils.widgets.get("entities")
 
 w.pipelines.stop_and_wait(p.pipeline_id)
 logger.info("Backfilling currencies")
-currency_df.write.option("mergeSchema", "true").format("delta").mode("overwrite").saveAsTable(f"{stage}.default.currency_rates_backfill")
+currency_df.write.option("mergeSchema", "true").format("delta").mode("overwrite").saveAsTable(
+    f"{stage}.default.currency_rates_backfill")
 
 logger.info("Resetting backfill tables")
 for entity in entities:
-    is_present = entity["table"] in entity_names.split(',')
+    is_present = entity.table in entity_names.split(',')
     if is_present:
         table = entity.table
         table_path = f"{stage}.default.{table}_backfill"
@@ -124,6 +126,6 @@ w.pipelines.start_update(p.pipeline_id, full_refresh=True)
 
 logger.info("Backfilling entities")
 for entity in entities:
-    is_present = entity["table"] in entity_names.split(',')
+    is_present = entity.table in entity_names.split(',')
     if is_present:
         load_mongo(entity)
