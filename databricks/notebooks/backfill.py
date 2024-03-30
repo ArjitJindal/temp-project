@@ -1,3 +1,12 @@
+# Databricks notebook source
+# MAGIC %pip install databricks-sdk --upgrade
+# MAGIC %pip install /Workspace/Shared/src-0.1.0-py3-none-any.whl
+
+# COMMAND ----------
+dbutils.library.restartPython()
+
+# COMMAND ----------
+
 from databricks.sdk import WorkspaceClient
 
 import os
