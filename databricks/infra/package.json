@@ -27,7 +27,7 @@
     "@flagright/lib": "file:../../lib",
     "aws-cdk-lib": "~2.132.1",
     "cdktf": "^0.20.4",
-    "cdktf-cli": "^0.20.2",
+    "cdktf-cli": "^0.20.4",
     "constructs": "^10.3.0",
     "prettier": "^3.1.1"
   },
