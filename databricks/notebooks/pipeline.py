@@ -80,20 +80,21 @@ def define_pipeline(spark):
     def cdc_function():
         return currency_rates_transformation(dlt.readStream("kinesis_events"))
 
-    create_entity_tables("currency_rates", cdc_function, partition_cols=[], keys=["date"])
+    create_tables("currency_rates", cdc_function, partition_cols=[], keys=["date"])
 
     for entity in entities:
-        def cdc_function():
-            def stream_resolver(stream_name: str) -> DataFrame:
-                return dlt.readStream(stream_name)
-            return cdc_transformation(entity, dlt.readStream(entity.source), stream_resolver)
-
         create_entity_tables(
-            entity.table,
-            cdc_function,
+            entity,
         )
 
-def create_entity_tables(table, cdc_function, partition_cols=["tenant"], keys=["PartitionKeyID", "SortKeyID"]):
+def create_entity_tables(entity):
+    def cdc_function():
+        def stream_resolver(stream_name: str) -> DataFrame:
+            return dlt.readStream(stream_name)
+        return cdc_transformation(entity, dlt.readStream(entity.source), stream_resolver)
+    return create_tables(entity.table, cdc_function)
+
+def create_tables(table, cdc_function, partition_cols=["tenant"], keys=["PartitionKeyID", "SortKeyID"]):
     cdc_table_name = f"{table}_cdc"
     backfill_table_name = f"{table}_backfill"
 
