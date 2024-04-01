@@ -52,8 +52,7 @@ currency_df = spark.read.json(json_file_path, currency_schema)
 currency_df = currency_df.withColumn(
     "approximateArrivalTimestamp",
     to_timestamp(col("date"), "yyyy-MM-dd"),
-)
-
+).withColumn("event", lit("INSERT")
 
 def load_mongo(entity):
     table = entity.table

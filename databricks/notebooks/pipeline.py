@@ -77,40 +77,29 @@ def define_pipeline(spark):
             .load()
         )
 
-    @dlt.table(
-        comment="Currency exchange table",
-    )
-    def currency_rates():
+    def cdc_function():
         return currency_rates_transformation(dlt.readStream("kinesis_events"))
 
-    @dlt.append_flow(
-        name="currency_rates_backfill",
-        target="currency_rates",
-    )
-    def currency_rates_backfill():
-        stage = os.environ["STAGE"]
-        return (
-            spark.readStream.format("delta").table(f"{stage}.default.currency_rates_backfill")
-            .withColumn(
-                "approximateArrivalTimestamp",
-                to_timestamp(col("date"), "yyyy-MM-dd"),
-            )
-        )
+    create_entity_tables("currency_rates", cdc_function, partition_cols=[], keys=["date"])
 
     for entity in entities:
+        def cdc_function():
+            def stream_resolver(stream_name: str) -> DataFrame:
+                return dlt.readStream(stream_name)
+            return cdc_transformation(entity, dlt.readStream(entity.source), stream_resolver)
+
         create_entity_tables(
-            entity,
+            entity.table,
+            cdc_function,
         )
 
-def create_entity_tables(entity):
-    table = entity.table
-    source = entity.source
+def create_entity_tables(table, cdc_function, partition_cols=["tenant"], keys=["PartitionKeyID", "SortKeyID"]):
     cdc_table_name = f"{table}_cdc"
     backfill_table_name = f"{table}_backfill"
 
     dlt.create_streaming_table(
         name=cdc_table_name,
-        partition_cols=["tenant"],
+        partition_cols=partition_cols,
     )
 
     @dlt.append_flow(
@@ -118,9 +107,7 @@ def create_entity_tables(entity):
         target=cdc_table_name,
     )
     def cdc():
-        def stream_resolver(stream_name: str) -> DataFrame:
-            return dlt.readStream(stream_name)
-        return cdc_transformation(entity, dlt.readStream(source), stream_resolver)
+        return cdc_function()
 
     @dlt.append_flow(
         name=backfill_table_name,
@@ -132,12 +119,12 @@ def create_entity_tables(entity):
 
     dlt.create_streaming_table(
         name=table,
-        partition_cols=["tenant"],
+        partition_cols=partition_cols,
     )
     dlt.apply_changes(
         target=table,
         source=cdc_table_name,
-        keys=["PartitionKeyID", "SortKeyID"],
+        keys=keys,
         sequence_by=col("approximateArrivalTimestamp"),
         apply_as_deletes=expr("event = 'REMOVE'"),
     )
