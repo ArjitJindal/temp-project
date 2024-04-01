@@ -1379,4 +1379,5 @@ const enabledTenantIds = [
   'f05d33ea95',
   'ft398yyjmd',
   '5CIHDWCU3K',
+  'c4c4eca1f5',
 ].map((tenantId) => tenantId.toLowerCase())
