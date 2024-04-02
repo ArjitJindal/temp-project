@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ConfigProvider } from 'antd';
 import cn from 'clsx';
 import { getAllEntityVariables } from '../../../utils';
@@ -28,6 +28,8 @@ import { FieldValidators, isResultValid } from '@/components/library/Form/utils/
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { RISK_LEVELS } from '@/utils/risk-levels';
 import NestedForm from '@/components/library/Form/NestedForm';
+import NameAndDescription from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/NameAndDescription';
+import ExpandContainer from '@/components/utils/ExpandContainer';
 
 const BASIC_DETAILS_STEP = 'basicDetailsStep';
 const RULE_IS_HIT_WHEN_STEP = 'ruleIsHitWhenStep';
@@ -160,6 +162,19 @@ function RuleConfigurationFormV8(
     }
   };
 
+  const { ruleName, ruleDescription } = formState.basicDetailsStep;
+  const [showTopCard, setShowTopCard] = useState(false);
+  const isRuleNameDefined = !!ruleName && !!ruleDescription;
+  const isInitialNameDescriptionDefined =
+    !!initialValues.basicDetailsStep.ruleName && !!initialValues.basicDetailsStep.ruleDescription;
+  useEffect(() => {
+    setShowTopCard(
+      showTopCard ||
+        (activeStepKey !== BASIC_DETAILS_STEP && isRuleNameDefined) ||
+        isInitialNameDescriptionDefined,
+    );
+  }, [showTopCard, activeStepKey, isRuleNameDefined, isInitialNameDescriptionDefined]);
+
   return (
     <ConfigProvider getPopupContainer={(trigger: any) => trigger.parentElement}>
       <Form<RuleConfigurationFormV8Values>
@@ -176,6 +191,11 @@ function RuleConfigurationFormV8(
           setIsValuesSame?.(JSON.stringify(values) === JSON.stringify(initialValues)); // Is Equal was not working
         }}
       >
+        <ExpandContainer isCollapsed={!showTopCard}>
+          {isRuleNameDefined && (
+            <NameAndDescription ruleName={ruleName} ruleDescription={ruleDescription} />
+          )}
+        </ExpandContainer>
         <div className={s.stepper}>
           <Card.Root className={s.steps}>
             <Card.Section>
