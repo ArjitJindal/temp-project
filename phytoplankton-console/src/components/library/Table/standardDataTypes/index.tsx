@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Switch } from 'antd';
 import { capitalize, uniqBy } from 'lodash';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { COUNTRIES, CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { ColumnDataType, FullColumnDataType } from '../types';
 import { CloseMessage, message } from '../../Message';
@@ -65,6 +65,7 @@ import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import { Option } from '@/components/library/Select';
 import { formatNumber } from '@/utils/number';
+import { ALERT_ITEM } from '@/utils/queries/keys';
 import Tag from '@/components/library/Tag';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
@@ -452,6 +453,7 @@ const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
   let messageState: CloseMessage | undefined;
   const alertId = 'alertId' in entity ? entity?.alertId : undefined;
   const caseId = entity?.caseId;
+  const queryClient = useQueryClient();
 
   const updateMutation = useMutation(
     async (status: CaseStatus) => {
@@ -468,7 +470,7 @@ const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
         });
       } else if (alertId) {
         messageState = message.loading('Updating alert status...');
-        return await api.alertsStatusChange({
+        await api.alertsStatusChange({
           AlertsStatusUpdateRequest: {
             alertIds: [alertId],
             updates: {
@@ -477,11 +479,15 @@ const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
             },
           },
         });
+        return alertId;
       }
     },
     {
-      onSuccess: () => {
+      onSuccess: (alertId) => {
         message.success('Status updated');
+        if (alertId) {
+          queryClient.refetchQueries({ queryKey: ALERT_ITEM(alertId) });
+        }
         messageState?.();
         reload();
       },

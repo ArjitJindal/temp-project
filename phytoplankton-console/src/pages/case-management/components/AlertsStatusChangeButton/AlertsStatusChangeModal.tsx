@@ -10,7 +10,7 @@ import { AlertStatusUpdateRequest, CaseStatusUpdate } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useCurrentUser, useUsers } from '@/utils/user-utils';
-import { ALERT_CHECKLIST, CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_CHECKLIST, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
 import { OTHER_REASON } from '@/components/Narrative';
 import { statusEscalated } from '@/utils/case-utils';
 
@@ -86,6 +86,9 @@ export default function AlertsStatusChangeModal(props: Props) {
               alertIds: props.entityIds,
               updates,
             },
+          });
+          props.entityIds.forEach((alertId) => {
+            queryClient.refetchQueries({ queryKey: ALERT_ITEM(alertId) });
           });
           if (!currentUser?.reviewerId) {
             message.success('Saved');
