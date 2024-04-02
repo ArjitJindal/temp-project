@@ -1,10 +1,14 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useLayoutEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import pluralize from 'pluralize';
+import cn from 'clsx';
+import { uniq } from 'lodash';
 import RequestForm, { FormValues } from './RequestForm';
 import History from './History';
 import { parseQuestionResponse, QuestionResponse } from './types';
 import s from './index.module.less';
+import ScrollButton from './ScrollButton';
+import { useScrollState } from './helpers';
 import dayjs, { TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
@@ -20,6 +24,9 @@ import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import Spinner from '@/components/library/Spinner';
+import { useElementSize, useElementSizeChangeEffect } from '@/utils/browser';
+import { useIsChanged } from '@/utils/hooks';
 
 interface Props {
   alertId: string;
@@ -31,7 +38,8 @@ export default function InvestigativeCoPilot(props: Props) {
   const api = useApi();
   const [history, setHistory] = useState<QuestionResponse[]>([]);
 
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [rootRef, setRootRef] = useState<HTMLDivElement | null>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
 
   const historyQuery = useQuery(COPILOT_ALERT_QUESTIONS(alertId), async () => {
     return await api.getQuestions({
@@ -47,7 +55,20 @@ export default function InvestigativeCoPilot(props: Props) {
     }
   }, [historyRes, isHistoryLoaded]);
 
-  const mutation = useMutation<QuestionResponse[], unknown, FormValues>(
+  const [scrollState, scrollHandlers] = useScrollState(rootRef);
+  const { isBottom, isScrollEventDisabled, isScrollVisible, scrollPosition } = scrollState;
+  const { scroll, refresh } = scrollHandlers;
+
+  // When user is at the bottom and history size changes - scroll to the bottom again
+  const historySize = useElementSize(historyRef.current);
+  const isHeightChanged = useIsChanged(historySize?.height);
+  useLayoutEffect(() => {
+    if (isBottom && isHeightChanged) {
+      scroll('BOTTOM', false);
+    }
+  }, [isBottom, scroll, isHeightChanged]);
+
+  const postQuestionMutation = useMutation<QuestionResponse[], unknown, FormValues>(
     async ({ searchString }) => {
       const response = await api.postQuestion({
         QuestionRequest: {
@@ -63,6 +84,9 @@ export default function InvestigativeCoPilot(props: Props) {
     {
       onSuccess: (data) => {
         setHistory((prevState) => [...prevState, ...data]);
+        if (isBottom) {
+          scroll('BOTTOM', false);
+        }
       },
       onError: (error) => {
         message.error(getErrorMessage(error));
@@ -70,22 +94,34 @@ export default function InvestigativeCoPilot(props: Props) {
     },
   );
 
-  useLayoutEffect(() => {
-    setTimeout(() => {
-      rootRef.current?.scrollTo({ top: rootRef.current?.scrollHeight ?? 0, behavior: 'smooth' });
-    }, 0);
-  }, [history.length]);
-
   const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () =>
     api.getAlert({
       alertId,
     }),
   );
 
+  const [visibleIds, setVisibleIds] = useState<string[]>([]);
+  const handleShowItems = useCallback((newVisibleIds: string[]) => {
+    setVisibleIds((prevState) => uniq([...prevState, ...newVisibleIds]));
+  }, []);
+  const unreadResponses = history.length - visibleIds.length;
+
+  useEffect(() => {
+    if (isScrollEventDisabled) {
+      return () => {};
+    }
+    if (rootRef) {
+      rootRef.addEventListener('scroll', refresh, { passive: true });
+      return () => rootRef.removeEventListener('scroll', refresh);
+    }
+  }, [rootRef, isScrollEventDisabled, refresh]);
+
+  useElementSizeChangeEffect(rootRef, refresh);
+
   return (
     <AsyncResourceRenderer resource={historyRes}>
       {() => (
-        <div className={s.root} ref={rootRef}>
+        <div className={s.root} ref={setRootRef}>
           <div className={s.alertInfo}>
             <AsyncResourceRenderer resource={alertQueryResult.data}>
               {(alert) => (
@@ -140,12 +176,26 @@ export default function InvestigativeCoPilot(props: Props) {
               )}
             </AsyncResourceRenderer>
           </div>
-          <div className={s.history}>
-            <History alertId={alertId} items={history} />
+          <div className={s.history} ref={historyRef}>
+            <History
+              alertId={alertId}
+              items={history}
+              scrollPosition={scrollPosition}
+              visibleItems={visibleIds}
+              onShowItems={handleShowItems}
+            />
+            {postQuestionMutation.isLoading && <Spinner />}
           </div>
           <div className={s.form}>
+            <div className={cn(s.scrollToBottom, !isScrollVisible && s.isHidden)}>
+              <ScrollButton
+                isBottom={isBottom}
+                onScroll={scroll}
+                unreadResponses={unreadResponses}
+              />
+            </div>
             <RequestForm
-              mutation={mutation}
+              mutation={postQuestionMutation}
               history={history}
               alertId={alertId}
               setHistory={setHistory}

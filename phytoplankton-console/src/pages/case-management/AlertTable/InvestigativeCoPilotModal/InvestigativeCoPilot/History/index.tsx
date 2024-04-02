@@ -1,21 +1,58 @@
-import React from 'react';
+import React, { useRef, useCallback, useMemo, useLayoutEffect, useState } from 'react';
 import { QuestionResponse } from '../types';
 import s from './index.module.less';
 import EmptyIcon from './empty.react.svg';
-import HistoryItem from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem';
+import HistoryItem from './HistoryItem';
+import { calcVisibleElements, GAP, DATA_KEY } from './helpers';
 
 interface Props {
+  scrollPosition: number;
   alertId: string;
   items: QuestionResponse[];
+  visibleItems: string[];
+  onShowItems: (ids: string[]) => void;
 }
 
 export default function History(props: Props) {
-  const { alertId, items } = props;
+  const { alertId, items, scrollPosition, visibleItems, onShowItems } = props;
+
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const [sizes, setSizes] = useState<{ [key: string]: number }>({});
+  const itemIds = useMemo(() => {
+    return items.map((x) => x.createdAt.toString());
+  }, [items]);
+
+  const observer = useMemo(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      const patch = {};
+      for (const entry of entries) {
+        const key = entry.target.getAttribute(DATA_KEY)?.toString() ?? 'null';
+        patch[key] = entry.borderBoxSize[0].blockSize;
+      }
+      setSizes((prevState) => ({ ...prevState, ...patch }));
+    });
+    return resizeObserver;
+  }, [setSizes]);
+
+  const observe = useCallback(
+    (el: Element) => {
+      const key = el.getAttribute(DATA_KEY)?.toString() ?? 'null';
+      setSizes((prevState) => ({ ...prevState, [key]: el.getBoundingClientRect().height }));
+      observer.observe(el);
+      return () => observer.unobserve(el);
+    },
+    [observer, setSizes],
+  );
+
+  useLayoutEffect(() => {
+    onShowItems(calcVisibleElements(itemIds, sizes, scrollPosition));
+  }, [itemIds, sizes, scrollPosition, onShowItems]);
+
   return (
-    <div className={s.root}>
+    <div className={s.root} style={{ gap: GAP }} ref={rootRef}>
       {items.length === 0 && (
         <div className={s.empty}>
-          {/* <img src={EmptyImg} role="presentation" alt="Empty history image" /> */}
           <EmptyIcon height={120} width={120} />
           {'Start your investigation by searching for required data from below'}
         </div>
@@ -23,7 +60,13 @@ export default function History(props: Props) {
       {items
         .filter((item) => Boolean(item))
         .map((item) => (
-          <HistoryItem key={item.questionId} alertId={alertId} item={item} />
+          <HistoryItem
+            isVisible={visibleItems.includes(item.createdAt.toString())}
+            key={item.createdAt}
+            alertId={alertId}
+            item={item}
+            observe={observe}
+          />
         ))}
     </div>
   );

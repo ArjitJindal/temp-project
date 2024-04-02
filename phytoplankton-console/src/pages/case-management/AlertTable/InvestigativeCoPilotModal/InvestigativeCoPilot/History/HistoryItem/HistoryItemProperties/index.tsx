@@ -18,10 +18,10 @@ export default function HistoryItemProperties({ item }: Props) {
       {item.properties && item.properties?.length > 0 && (
         <div className={s.table}>
           {item.properties?.map((property) => (
-            <>
+            <React.Fragment key={property.key}>
               <Form.Layout.Label title={humanizeAuto(property.key || '')} />
               <div>{property.value || '-'}</div>
-            </>
+            </React.Fragment>
           ))}
         </div>
       )}

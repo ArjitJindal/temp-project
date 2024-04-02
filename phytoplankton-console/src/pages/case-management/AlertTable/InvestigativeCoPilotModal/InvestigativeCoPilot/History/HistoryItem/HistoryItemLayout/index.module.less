@@ -11,11 +11,18 @@
   z-index: 1;
   transition-timing-function: @default-animation-function;
   transition-duration: @default-animation-speed;
-  transition-property: opacity;
+  transition-property: opacity, transform, border-color;
+  transform-origin: bottom;
+  transition-delay: @default-animation-speed;
+  border: 2px solid transparent;
 
   &.isLoading {
     opacity: 0.5;
-    transition-delay: @default-animation-speed;
+  }
+
+  &.isHidden {
+    transform: scaleY(0) scaleX(0.75);
+    opacity: 0.5;
   }
 }
 

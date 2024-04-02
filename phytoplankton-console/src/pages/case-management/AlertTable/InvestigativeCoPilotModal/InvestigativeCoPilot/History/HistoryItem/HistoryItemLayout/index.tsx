@@ -7,14 +7,15 @@ import s from './index.module.less';
 import Variables, { VariablesValues } from './Variables';
 import MetaInfo from './MetaInfo';
 import { formatData } from './exportUtil';
+import CommentPopover from './CommentPopover';
 import { dayjs } from '@/utils/dayjs';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
-import CommentPopover from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemLayout/CommentPopover';
 import { DownloadButton } from '@/components/library/Widget';
 import { QuestionResponse } from '@/apis';
 
 interface Props {
   questionId: string;
+  isVisible: boolean;
   commentSubmitMutation: UseMutationResult<unknown, unknown, CommentEditorFormValues>;
   item: QuestionResponse;
   children: React.ReactNode;
@@ -22,8 +23,9 @@ interface Props {
   onRefresh: (vars: VariablesValues) => void;
 }
 
-export default function HistoryItemLayout(props: Props) {
-  const { commentSubmitMutation, item, children, isLoading, onRefresh, questionId } = props;
+function HistoryItemLayout(props: Props, ref?: React.ForwardedRef<HTMLDivElement | null>) {
+  const { commentSubmitMutation, item, children, isLoading, isVisible, onRefresh, questionId } =
+    props;
   const { variableOptions, title } = item;
 
   const [initialVariablesState, setInitialVarsValues] = useState(
@@ -31,7 +33,11 @@ export default function HistoryItemLayout(props: Props) {
   );
 
   return (
-    <div className={cn(s.root, isLoading && s.isLoading)}>
+    <div
+      data-key={item.createdAt.toString()}
+      className={cn(s.root, isLoading && s.isLoading, !isVisible && s.isHidden)}
+      ref={ref}
+    >
       <div className={s.header}>
         <div className={s.title}>{title}</div>
         <div className={s.tools}>
@@ -71,3 +77,5 @@ export default function HistoryItemLayout(props: Props) {
     </div>
   );
 }
+
+export default React.forwardRef(HistoryItemLayout);

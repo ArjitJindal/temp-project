@@ -128,7 +128,9 @@ async function buildCode(env, options) {
         },
       ),
       cssModulesPlugin(),
-      svgrPlugin(),
+      svgrPlugin({
+        ref: true,
+      }),
       resolveVirtuals(),
     ],
     outdir: path.join(PROJECT_DIR, OUTPUT_FOLDER),

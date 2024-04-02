@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { parseQuestionResponse, QuestionResponse } from '../../types';
 import HistoryItemTable from './HistoryItemTable';
@@ -20,14 +20,24 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 
 interface Props {
+  isVisible: boolean;
   alertId: string;
   item: QuestionResponse;
+  observe: (el: Element) => () => void;
 }
 
 export default function HistoryItem(props: Props) {
-  const { item, alertId } = props;
+  const { isVisible, item, alertId, observe } = props;
   const [itemState, setItemState] = useState<QuestionResponse>(item);
   const questionId = itemState.questionId;
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    if (el) {
+      return observe(el);
+    }
+  }, [observe]);
 
   const api = useApi();
   const updateVarsMutation = useMutation<
@@ -90,8 +100,10 @@ export default function HistoryItem(props: Props) {
 
   return (
     <HistoryItemLayout
+      ref={rootRef}
       questionId={questionId}
       commentSubmitMutation={commentSubmitMutation}
+      isVisible={isVisible}
       isLoading={isLoading(getMutationAsyncResource(updateVarsMutation))}
       item={itemState}
       onRefresh={(vars) => {

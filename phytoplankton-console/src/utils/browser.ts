@@ -59,6 +59,21 @@ export function useElementSize(el: HTMLElement | null): { width: number; height:
   return rect;
 }
 
+export function useElementSizeChangeEffect(
+  el: HTMLElement | null,
+  cb: ResizeObserverCallback,
+): void {
+  useEffect(() => {
+    if (el != null) {
+      const resizeObserver = new ResizeObserver(cb);
+      resizeObserver.observe(el);
+      return () => {
+        resizeObserver.unobserve(el);
+      };
+    }
+  }, [el, cb]);
+}
+
 export function escapeHtml(unsafe: unknown): string {
   return `${unsafe}`
     .replaceAll('&', '&amp;')
@@ -66,4 +81,32 @@ export function escapeHtml(unsafe: unknown): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+export function scrollTo(
+  el: HTMLElement,
+  params: {
+    top: number;
+    smooth: boolean;
+  },
+  cb: () => void,
+) {
+  const { top, smooth } = params;
+  if (el) {
+    el.scrollTo({
+      top,
+      behavior: smooth ? 'smooth' : 'instant',
+    });
+    if (smooth) {
+      const interval = setInterval(() => {
+        const dif = Math.abs(el.scrollTop - top);
+        if (dif < 10) {
+          cb();
+          clearInterval(interval);
+        }
+      }, 100);
+    } else {
+      cb();
+    }
+  }
 }
