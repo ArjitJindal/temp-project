@@ -46,7 +46,7 @@ describe('Investigative Copilot', () => {
     cy.get('[data-cy="investigation-suggestion-button"]')
       .eq(0)
       .should((button) => {
-        expect(button).to.contain('Alerts');
+        expect(button).to.contain('Alert transactions');
       })
       .click();
 
