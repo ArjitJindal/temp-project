@@ -2,7 +2,7 @@ from pyspark.sql.types import FloatType, MapType, StringType, StructField, Struc
 
 currency_schema = StructType(
     [
-        StructField("date", StringType(), False),
+        StructField("date", StringType(), True),
         StructField("rates", MapType(StringType(), FloatType(), False), False),
     ]
 )
