@@ -76,6 +76,12 @@ export function SanctionsSearchTable(props: Props) {
     },
     { enabled: searchEnabled },
   );
+  const searchDisabled =
+    !params.searchTerm ||
+    // NOTE: In prod, only customer users can manually search for sanctions
+    (process.env.ENV_NAME === 'prod' &&
+      isSuperAdmin(currentUser) &&
+      !currentUser.tenantName.toLowerCase().includes('flagright'));
   return showSearchHistory && isLoading(searchHistoryQueryResponse) ? (
     <LoadingCard />
   ) : (
@@ -86,7 +92,7 @@ export function SanctionsSearchTable(props: Props) {
         extraTools={[
           () => (
             <Button
-              isDisabled={!params.searchTerm || isSuperAdmin(currentUser) === true}
+              isDisabled={searchDisabled}
               onClick={() => {
                 setSearchParams(params);
               }}
