@@ -174,7 +174,7 @@ export default function RequestForm(props: Props) {
               }
             }}
           >
-            Ask AI <BrainIcon />
+            Ask AI &nbsp; <BrainIcon className={s.brainIcon} />
           </Button>
           {history.length === 0 && (
             <Button
@@ -191,7 +191,7 @@ export default function RequestForm(props: Props) {
               }}
               className={s.askAi}
             >
-              Auto-pilot &nbsp; <BrainIcon />
+              Auto-pilot &nbsp; <BrainIcon className={s.brainIcon} />
             </Button>
           )}
         </Form>
