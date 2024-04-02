@@ -29,7 +29,8 @@ export const ruleHandler = lambdaApi()(
     const tenantId = (event.requestContext.authorizer?.principalId ||
       event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const ruleService = new RuleService(tenantId, { dynamoDb })
+    const mongoDb = await getMongoDbClient()
+    const ruleService = new RuleService(tenantId, { dynamoDb, mongoDb })
 
     if (event.httpMethod === 'GET' && event.resource === '/rules') {
       return (await ruleService.getAllRules()).map((rule) => toPublicRule(rule))
@@ -90,7 +91,7 @@ export const ruleInstanceHandler = lambdaApi()(
       dynamoDb,
       mongoDb,
     })
-    const ruleService = new RuleService(tenantId, { dynamoDb })
+    const ruleService = new RuleService(tenantId, { dynamoDb, mongoDb })
 
     if (
       event.httpMethod === 'POST' &&

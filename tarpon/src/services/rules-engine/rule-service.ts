@@ -10,6 +10,7 @@ import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { singular } from 'pluralize'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AsyncLogicEngine } from 'json-logic-engine'
+import { MongoClient } from 'mongodb'
 import {
   RuleChecksForField,
   RuleNature,
@@ -83,7 +84,7 @@ export class RuleService {
 
   constructor(
     tenantId: string,
-    connections: { dynamoDb: DynamoDBDocumentClient }
+    connections: { dynamoDb: DynamoDBDocumentClient; mongoDb: MongoClient }
   ) {
     this.ruleRepository = new RuleRepository(tenantId, connections)
     this.ruleInstanceRepository = new RuleInstanceRepository(
