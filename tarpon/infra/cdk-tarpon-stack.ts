@@ -767,6 +767,8 @@ export class CdkTarponStack extends cdk.Stack {
         StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
         fargateBatchJobTaskDefinition,
         {
+          memoryLimitMiB:
+            config.resource.FARGATE_BATCH_JOB_CONTAINER.MEMORY_LIMIT,
           image: ContainerImage.fromDockerImageAsset(
             createDockerImage(
               this,

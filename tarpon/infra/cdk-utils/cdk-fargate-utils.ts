@@ -45,7 +45,7 @@ export const addFargateContainer = (
   },
   name: string,
   taskDefinition: FargateTaskDefinition,
-  props: { image: ContainerImage }
+  props: { image: ContainerImage; memoryLimitMiB?: number }
 ) => {
   const { image } = props
 
@@ -79,6 +79,7 @@ export const addFargateContainer = (
       ENV: scope.config.stage,
       REGION: scope.config.region as string,
       RELEASE_VERSION: process.env.RELEASE_VERSION as string,
+      NODE_OPTIONS: `--max_old_space_size=${props.memoryLimitMiB ?? 512}`,
     },
   })
 
