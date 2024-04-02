@@ -1,5 +1,10 @@
-import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
-import { TableQuestion } from '@/services/copilot/questions/types'
+import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
+import { uniq } from 'lodash'
+import {
+  InvestigationContext,
+  TableQuestion,
+  Variables,
+} from '@/services/copilot/questions/types'
 import {
   calculatePercentageBreakdown,
   humanReadablePeriod,
@@ -13,13 +18,15 @@ import { Transaction } from '@/@types/openapi-internal/Transaction'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { formatConsumerName } from '@/utils/helpers'
 
-export const Transactions: TableQuestion<Period> = {
+export const transactionQuestion = (
+  questionId: QuestionId,
+  title: (ctx: InvestigationContext, vars: Variables) => Promise<string>,
+  where: (ctx: InvestigationContext) => string = () => ``
+): TableQuestion<Period> => ({
   type: 'TABLE',
-  questionId: COPILOT_QUESTIONS.TRANSACTIONS,
+  questionId,
   categories: ['CONSUMER', 'BUSINESS'],
-  title: async (ctx, vars) => {
-    return `Transactions ${humanReadablePeriod(vars)}`
-  },
+  title,
   headers: [
     {
       name: 'Transaction ID',
@@ -82,10 +89,7 @@ export const Transactions: TableQuestion<Period> = {
       columnType: 'STRING',
     },
   ],
-  aggregationPipeline: async (
-    { userId, username },
-    { page, pageSize, ...period }
-  ) => {
+  aggregationPipeline: async (ctx, { page, pageSize, ...period }) => {
     const { rows, total } = await paginatedSqlQuery<
       Transaction & {
         originBusinessName?: string
@@ -95,15 +99,15 @@ export const Transactions: TableQuestion<Period> = {
       }
     >(
       `select
-  t.transactionId,
-  t.type,
-  t.timestamp,
-  t.transactionState,
-  t.originUserId,
-  t.originAmountDetails,
-  t.destinationUserId,
-  t.destinationAmountDetails,
-  t.reference,
+  t.transactionId as transactionId,
+  t.type as type,
+  t.timestamp as timestamp,
+  t.transactionState as transactionState,
+  t.originUserId as originUserId,
+  t.originAmountDetails as originAmountDetails,
+  t.destinationUserId as destinationUserId,
+  t.destinationAmountDetails as destinationAmountDetails,
+  t.reference as reference,
   origin.userDetails.name as originConsumerName,
   origin.legalEntity.companyGeneralDetails.legalName as originBusinessName,
   destination.userDetails.name as destinationConsumerName,
@@ -112,11 +116,10 @@ from
   transactions t
   join users origin on t.originUserId = origin.userId
   join users destination on t.destinationUserId = destination.userId
-        where t.timestamp between :from and :to
-        and (t.originUserId = :userId or t.destinationUserId = :userId)
+        ${where(ctx)} and t.timestamp between :from and :to
       `,
       {
-        userId,
+        userId: ctx.userId,
         ...sqlPeriod(period),
       },
       page,
@@ -151,7 +154,9 @@ from
         items,
         total,
       },
-      summary: `There have been ${total} transactions for ${username} ${humanReadablePeriod(
+      summary: `There have been ${total} transactions for ${
+        ctx.username
+      } ${humanReadablePeriod(
         period
       )}.  For the transactions, ${calculatePercentageBreakdown(
         rows.map((t) => t.transactionState || '')
@@ -164,4 +169,32 @@ from
   defaults: () => {
     return periodDefaults()
   },
-}
+})
+
+const UserTransactions = transactionQuestion(
+  COPILOT_QUESTIONS.USER_TRANSACTIONS,
+  async (ctx) => `Transactions for user ${ctx.userId}`,
+  (_) => `WHERE (t.originUserId = :userId or t.destinationUserId = :userId)`
+)
+
+const AlertTransactions = transactionQuestion(
+  COPILOT_QUESTIONS.ALERT_TRANSACTIONS,
+  async (ctx) => `Transactions for alert ${ctx.alertId}`,
+  (ctx) =>
+    `WHERE t.transactionId in ('${ctx.alert.transactionIds?.join("','")}')`
+)
+
+const CaseTransactions = transactionQuestion(
+  COPILOT_QUESTIONS.CASE_TRANSACTIONS,
+  async (ctx) => `Transactions for case ${ctx.caseId}`,
+  (ctx) =>
+    `WHERE t.transactionId in ('${uniq(
+      ctx._case.alerts?.flatMap((a) => a.transactionIds)
+    )?.join("','")}')`
+)
+
+export const TransactionQuestions = [
+  UserTransactions,
+  AlertTransactions,
+  CaseTransactions,
+]

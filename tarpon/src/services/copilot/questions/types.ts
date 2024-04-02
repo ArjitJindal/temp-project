@@ -63,7 +63,7 @@ export type Question<T extends Variables> =
   | PropertiesQuestion<T>
   | EmbeddedQuestion<T>
 
-export type AggregationQuestion<V extends Variables, D> = QuestionBase<any> & {
+export type AggregationQuestion<V extends Variables, D> = QuestionBase<V> & {
   aggregationPipeline: (
     context: InvestigationContext,
     variables: V

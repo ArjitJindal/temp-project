@@ -8,6 +8,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getUserName } from '@/utils/helpers'
 import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export const MONGO_DATE_FORMAT = '%Y-%m-%d'
 export const DATE_GRAPH_FORMAT = 'D/M/YYYY'
@@ -21,7 +22,7 @@ export const periodDefaults = (days = 90): Period => {
   }
 }
 
-export const currencyDefault = {
+export const currencyDefault: { currency: CurrencyCode } = {
   currency: 'USD',
 }
 
@@ -40,7 +41,7 @@ export const currencyVars: VariableOptions<{ currency: string }> = {
 
 export type Direction = 'ORIGIN' | 'DESTINATION'
 
-export const directionDefault = {
+export const directionDefault: { direction: Direction } = {
   direction: 'ORIGIN',
 }
 

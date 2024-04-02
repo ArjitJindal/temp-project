@@ -9,7 +9,7 @@ import { UsersTransactedWith } from '@/services/copilot/questions/definitions/us
 import { UniquePaymentIdentifier } from '@/services/copilot/questions/definitions/unique-payment-identifier'
 import { AlertsRelatedToTransaction } from '@/services/copilot/questions/definitions/alerts-related-to-transaction'
 import { CheckedTransactions } from '@/services/copilot/questions/definitions/checked-transactions'
-import { Transactions } from '@/services/copilot/questions/definitions/transactions'
+import { TransactionQuestions } from '@/services/copilot/questions/definitions/transactions'
 import { LinkedUsers } from '@/services/copilot/questions/definitions/linked-users'
 import { UserDetails } from '@/services/copilot/questions/definitions/user-details'
 import { Shareholders } from '@/services/copilot/questions/definitions/shareholders'
@@ -48,9 +48,9 @@ export const getQuestions = (): Question<any>[] =>
     UniquePaymentIdentifier,
     UsersTransactedWith,
     TransactionSummary,
-    Transactions,
     ReferenceWordCount,
     ...TransactionAggregations,
+    ...TransactionQuestions,
     ...(hasFeature('CRM') ? [CrmInsights] : []),
     ...(hasFeature('SAR') ? [SarsFiled] : []),
     ...(hasFeature('MERCHANT_MONITORING')
