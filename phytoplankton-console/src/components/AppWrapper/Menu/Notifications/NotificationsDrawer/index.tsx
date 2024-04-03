@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { useQueryClient } from '@tanstack/react-query';
 import { InfiniteData } from '@tanstack/query-core/src/types';
 import s from './index.module.less';
 import Drawer from '@/components/library/Drawer';
@@ -10,14 +9,11 @@ import NotificationsDrawerItem, {
   Notification,
 } from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/NotificationsDrawerItem';
 import { useApi } from '@/api';
-import { NOTIFICATIONS } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
-import { useCurrentUser } from '@/utils/user-utils';
-import { AsyncResource, isLoading, isSuccess } from '@/utils/asyncResource';
+import { AsyncResource, isSuccess } from '@/utils/asyncResource';
 import Spinner from '@/components/library/Spinner';
-import { ConsoleNotificationStatusStatusEnum, NotificationListResponse } from '@/apis';
-import { CursorPaginatedData } from '@/utils/queries/hooks';
+import { NotificationListResponse } from '@/apis';
 
 interface Props {
   isVisible: boolean;
@@ -28,45 +24,33 @@ interface Props {
   refetch: () => void;
   fetchNextPage?: () => void;
   hasNext?: boolean;
+  invalidateAll: () => Promise<void>;
+  setHasUnreadNotifications: (value: boolean) => void;
 }
 
 export default function NotificationsDrawer(props: Props) {
   const { ref, inView } = useInView();
-  const { isVisible, onChangeVisibility, data, tab, setTab, refetch, hasNext, fetchNextPage } =
-    props;
+  const {
+    isVisible,
+    onChangeVisibility,
+    data,
+    tab,
+    setTab,
+    refetch,
+    hasNext,
+    fetchNextPage,
+    invalidateAll,
+    setHasUnreadNotifications,
+  } = props;
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const queryClient = useQueryClient();
-  const currentUser = useCurrentUser();
   const api = useApi();
   const handleReadAll = () => {
     markAsReadMutation.mutate({});
   };
 
-  const changeNotificationStatusToRead = (notificationId?: string) => {
-    return notifications.map((notification) => {
-      if (!notificationId || notification.id === notificationId) {
-        return {
-          ...notification,
-          consoleNotificationStatuses: notification.consoleNotificationStatuses?.map((status) => {
-            if (status.recieverUserId === currentUser?.id) {
-              return {
-                ...status,
-                status: 'READ' as ConsoleNotificationStatusStatusEnum,
-              };
-            }
-            return status;
-          }),
-        };
-      }
-      return notification;
-    });
-  };
-
-  const markAsRead = (notificationId?: string) => {
-    const newNotifications: Notification[] = changeNotificationStatusToRead(notificationId);
-    setNotifications(
-      tab === 'UNREAD' ? getUnreadNotifications(newNotifications) : newNotifications,
-    );
+  const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
+  const markAsRead = () => {
+    refetch();
   };
 
   const getUnreadNotifications = (notifications: Notification[]) => {
@@ -75,26 +59,10 @@ export default function NotificationsDrawer(props: Props) {
     );
   };
 
-  const invalidateAll = () => {
-    queryClient.invalidateQueries(NOTIFICATIONS('ALL'));
-    queryClient.invalidateQueries(NOTIFICATIONS('UNREAD'));
-    queryClient.setQueryData(
-      NOTIFICATIONS(tab),
-      (data?: {
-        pages: CursorPaginatedData<Notification>[];
-        pageParams: (string | undefined)[];
-      }) => {
-        return {
-          pages: data?.pages.slice(0, 1) ?? [],
-          pageParams: data?.pageParams.slice(0, 1) ?? [],
-        };
-      },
-    );
-  };
-
   useEffect(() => {
     setNotifications([]);
     refetch();
+    setIsNotificationsLoading(true);
   }, [tab, refetch]);
 
   useEffect(() => {
@@ -103,11 +71,14 @@ export default function NotificationsDrawer(props: Props) {
       const responseNotifications: Notification[] =
         allPages.length > 0 ? allPages.flatMap((page) => page.items) : [];
       setNotifications(responseNotifications);
+      setHasUnreadNotifications(getUnreadNotifications(responseNotifications).length > 0);
+      setIsNotificationsLoading(false);
     }
-  }, [data]);
+  }, [data, setHasUnreadNotifications]);
 
   useEffect(() => {
     if (inView && fetchNextPage && hasNext && isSuccess(data)) {
+      setIsNotificationsLoading(true);
       fetchNextPage();
     }
   }, [inView, data, hasNext, fetchNextPage]);
@@ -124,20 +95,22 @@ export default function NotificationsDrawer(props: Props) {
       }
     },
     {
-      onSuccess: (data, variables) => {
+      onSuccess: async (data, variables) => {
         const { notificationId } = variables;
         if (!notificationId) {
           message.success('All notifications marked as read');
         }
-        markAsRead(notificationId);
+        await invalidateAll();
+        markAsRead();
       },
     },
   );
 
-  function changeTab(newTab) {
-    invalidateAll();
+  async function changeTab(newTab) {
+    await invalidateAll();
     setTab(newTab);
   }
+
   return (
     <Drawer
       isVisible={isVisible}
@@ -168,7 +141,7 @@ export default function NotificationsDrawer(props: Props) {
         </div>
         <div className={s.scrollContainer}>
           <div className={s.items}>
-            {notifications.length === 0 && !isLoading(data) && (
+            {notifications.length === 0 && !isNotificationsLoading && (
               <div className={s.empty}>
                 {tab === 'UNREAD'
                   ? `You don't have any unread notifications`
@@ -193,7 +166,7 @@ export default function NotificationsDrawer(props: Props) {
                 />
               );
             })}
-            {isLoading(data) && <Spinner />}
+            {isNotificationsLoading && <Spinner />}
           </div>
         </div>
       </div>

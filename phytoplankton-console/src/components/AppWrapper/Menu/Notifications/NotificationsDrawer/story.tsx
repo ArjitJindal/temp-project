@@ -134,6 +134,8 @@ export default function (): JSX.Element {
                 onChangeVisibility={(isShown) => {
                   setState((prevState) => ({ ...prevState, isVisible: isShown }));
                 }}
+                setHasUnreadNotifications={(_trueOrFalse) => {}}
+                invalidateAll={async () => {}}
               />
             </div>
           </>

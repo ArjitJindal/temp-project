@@ -35,8 +35,10 @@ export default class MarkdownEditor extends React.Component<Props> {
 
     node.addEventListener('mousedown', (e) => {
       const target = e.target as HTMLDivElement;
-      const id =
-        this.props.mentionsList?.find((mentionItem) => mentionItem.label === target.id)?.id ?? '';
+      const id = this.props.mentionsList?.find(
+        (mentionItem) => mentionItem.label === target.id,
+      )?.id;
+      if (!id) return;
       this.insertMention({ id: id, label: target.id }, searchPhrase);
       node.remove();
     });

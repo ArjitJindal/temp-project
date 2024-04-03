@@ -17,6 +17,7 @@ interface Props {
   submenu?: SubMenuItem[];
   disabledByFeature?: boolean;
   onClick?: () => void;
+  isActiveHighlightingEnabled?: boolean;
 }
 
 export default function TopLevelLink(props: Props) {
@@ -31,6 +32,7 @@ export default function TopLevelLink(props: Props) {
     isDisabled,
     disabledByFeature,
     onClick,
+    isActiveHighlightingEnabled = false,
   } = props;
   const branding = getBranding();
   const disabledMessage = disabledByFeature ? (
@@ -47,7 +49,7 @@ export default function TopLevelLink(props: Props) {
     title: isCollapsed ? children : undefined,
     className: cn(s.root, {
       [s.isDisabled]: isDisabled,
-      [s.isActive]: isActive,
+      [s.isActive]: isActive && !isActiveHighlightingEnabled,
       [s.isCollapsed]: isCollapsed,
     }),
   };
@@ -82,7 +84,9 @@ export default function TopLevelLink(props: Props) {
     resultEl = (
       <ReactRouterNavLink
         {...sharedProps}
-        className={({ isActive }) => cn(sharedProps.className, isActive && s.isActive)}
+        className={({ isActive }) =>
+          cn(sharedProps.className, isActive && !isActiveHighlightingEnabled && s.isActive)
+        }
         to={to}
       >
         {newChildren}

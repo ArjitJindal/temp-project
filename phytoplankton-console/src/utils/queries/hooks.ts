@@ -209,7 +209,7 @@ export function useInfiniteQuery<TData, TQueryKey extends QueryKey = QueryKey>(
   options: {
     initialPageParam?: any;
     getNextPageParam?: (lastPage: any, allPages: any) => any;
-    refetchInterval?: number;
+    refetchInterval?: number | false | ((data, query) => number | false);
   },
 ) {
   const result = useInfiniteQueryRQ<TData, unknown, TData, TQueryKey>({

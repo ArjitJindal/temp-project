@@ -19,7 +19,8 @@ import Article from '@/components/ui/icons/Remix/document/article-line.react.svg
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import BarChartFillIcon from '@/components/ui/icons/Remix/business/bar-chart-fill.react.svg';
 import AlarmWarningLineIcon from '@/components/ui/icons/Remix/system/alarm-warning-line.react.svg';
-import NotificationLineIcon from '@/components/ui/icons/Remix/media/notification-line.react.svg';
+import NotificationIcon from '@/components/ui/icons/bell.react.svg';
+import NotificationUnreadIcon from '@/components/ui/icons/unread-bell.react.svg';
 import QuestionLineIcon from '@/components/ui/icons/Remix/system/question-line.react.svg';
 import { I18n, TranslationId, useI18n } from '@/locales';
 import { useRoutes } from '@/services/routing';
@@ -74,6 +75,8 @@ export default function Menu(props: Props) {
     }
   }, [sideBarCollapseContext.collapseSideBar, onChangeCollapsed]);
 
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
   return (
     <div className={s.root}>
       <Header isCollapsed={isCollapsed} onChangeCollapsed={onChangeCollapsed} />
@@ -84,28 +87,15 @@ export default function Menu(props: Props) {
             routes.filter((route) => route.position === 'top'),
             i18n,
             isCollapsed,
+            isNotificationsDrawerVisible,
           )}
         </div>
         <div className={s.menuGroup}>
-          {renderItems(
-            'menu',
-            routes.filter((route) => route.position === 'bottom'),
-            i18n,
-            isCollapsed,
-          ).concat([
-            <TopLevelLink
-              key="help"
-              to={`${branding.knowledgeBaseUrl}?token=${cluesoToken}`}
-              isExternal={true}
-              icon={<QuestionLineIcon />}
-              isCollapsed={isCollapsed}
-            >
-              {i18n('menu.support')}
-            </TopLevelLink>,
+          {[
             notificationsFeatureEnabled && (
               <TopLevelLink
                 key="notifications"
-                icon={<NotificationLineIcon />}
+                icon={hasUnreadNotifications ? <NotificationUnreadIcon /> : <NotificationIcon />}
                 isActive={isNotificationsDrawerVisible}
                 isCollapsed={isCollapsed}
                 onClick={() => {
@@ -115,13 +105,31 @@ export default function Menu(props: Props) {
                 Notifications
               </TopLevelLink>
             ),
-          ])}
+            ...renderItems(
+              'menu',
+              routes.filter((route) => route.position === 'bottom'),
+              i18n,
+              isCollapsed,
+              isNotificationsDrawerVisible,
+            ),
+            <TopLevelLink
+              key="help"
+              to={`${branding.knowledgeBaseUrl}?token=${cluesoToken}`}
+              isExternal={true}
+              icon={<QuestionLineIcon />}
+              isCollapsed={isCollapsed}
+              isActiveHighlightingEnabled={isNotificationsDrawerVisible}
+            >
+              {i18n('menu.support')}
+            </TopLevelLink>,
+          ]}
         </div>
       </div>
       <Footer isCollapsed={isCollapsed} />
       <Notifications
         isNotificationsDrawerVisible={isNotificationsDrawerVisible}
         setIsNotificationsDrawerVisible={setIsNotificationsDrawerVisible}
+        setHasUnreadNotifications={setHasUnreadNotifications}
       />
     </div>
   );
@@ -132,8 +140,9 @@ function RenderItem(props: {
   item: RouteWithPath;
   i18n: I18n;
   isCollapsed: boolean;
+  isNotificationsDrawerVisible: boolean;
 }) {
-  const { i18n, isCollapsed, item, parentTranslationKey } = props;
+  const { i18n, isCollapsed, item, parentTranslationKey, isNotificationsDrawerVisible } = props;
   const disabledByFeature = !useFeaturesEnabled(item.associatedFeatures ?? []);
   const fullKey = `${parentTranslationKey}.${item.name}`;
   const icon = item.icon ? icons[item.icon] : undefined;
@@ -157,6 +166,7 @@ function RenderItem(props: {
       icon={icon}
       submenu={submenu}
       disabledByFeature={disabledByFeature}
+      isActiveHighlightingEnabled={isNotificationsDrawerVisible}
     >
       {i18n(fullKey as TranslationId)}
     </TopLevelLink>
@@ -168,6 +178,7 @@ function renderItems(
   items: RouteItem[],
   i18n: I18n,
   isCollapsed: boolean,
+  isNotificationsDrawerVisible: boolean,
 ): React.ReactNode[] {
   return items
     .filter((route) => ('redirect' in route ? false : !route.hideInMenu))
@@ -181,6 +192,7 @@ function renderItems(
           item={item}
           i18n={i18n}
           isCollapsed={isCollapsed}
+          isNotificationsDrawerVisible={isNotificationsDrawerVisible}
         />
       );
     });
