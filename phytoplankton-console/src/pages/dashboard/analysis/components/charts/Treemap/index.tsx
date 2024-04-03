@@ -1,7 +1,11 @@
 import { Datum, Treemap as AntTreemap } from '@ant-design/charts';
 import { Tooltip } from '@ant-design/plots';
 import { useMemo } from 'react';
-import { ALL_CHART_COLORS, COLORS_V2_ANALYTICS_CHARTS_11 } from '@/components/ui/colors';
+import {
+  ALL_CHART_COLORS,
+  COLORS_V2_ANALYTICS_CHARTS_11,
+  COLORS_V2_GRAY_11,
+} from '@/components/ui/colors';
 
 export interface TreemapItem<Name extends string = string> {
   name: Name | null;
@@ -81,8 +85,9 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
         },
         style: {
           fontWeight: 600,
-          fontSize: 10,
+          fontSize: 12,
           fontFamily: 'Noto Sans',
+          fill: COLORS_V2_GRAY_11,
         },
       }}
     />

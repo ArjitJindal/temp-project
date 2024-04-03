@@ -2,6 +2,7 @@ import { Pie as AntPie } from '@ant-design/plots';
 import { PieConfig } from '@ant-design/plots/es/components/pie';
 import { escapeHtml } from '@/utils/browser';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
+import { COLORS_V2_GRAY_11 } from '@/components/ui/colors';
 
 const ANGLE_FIELD: keyof DonutDataItem<unknown> = 'value';
 const COLOR_FIELD: keyof DonutDataItem<unknown> = 'series';
@@ -49,8 +50,9 @@ function Donut<Series extends string>(props: Props<Series>) {
       style: {
         textAlign: 'center',
         fontWeight: 600,
-        fontSize: 10,
+        fontSize: 12,
         fontFamily: 'Noto Sans',
+        fill: COLORS_V2_GRAY_11,
       },
     },
     interactions: [
