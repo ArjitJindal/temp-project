@@ -41,6 +41,7 @@ export function migrateCheckDirectionParameters(
       type: parameters.originMatchPaymentMethodDetails
         ? 'PAYMENT_DETAILS_TRANSACTIONS'
         : 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
       transactionDirection: 'SENDING',
       aggregationFieldKey,
       aggregationFunc,
@@ -60,6 +61,7 @@ export function migrateCheckDirectionParameters(
       type: parameters.destinationMatchPaymentMethodDetails
         ? 'PAYMENT_DETAILS_TRANSACTIONS'
         : 'USER_TRANSACTIONS',
+      userDirection: 'RECEIVER',
       transactionDirection: 'RECEIVING',
       aggregationFieldKey: 'TRANSACTION:transactionId',
       aggregationFunc: 'COUNT',
@@ -85,6 +87,7 @@ export function migrateCheckDirectionParameters(
         parameters.destinationMatchPaymentMethodDetails
           ? 'PAYMENT_DETAILS_TRANSACTIONS'
           : 'USER_TRANSACTIONS',
+      userDirection: 'SENDER_OR_RECEIVER',
       transactionDirection: 'SENDING_RECEIVING',
       aggregationFieldKey,
       aggregationFunc,

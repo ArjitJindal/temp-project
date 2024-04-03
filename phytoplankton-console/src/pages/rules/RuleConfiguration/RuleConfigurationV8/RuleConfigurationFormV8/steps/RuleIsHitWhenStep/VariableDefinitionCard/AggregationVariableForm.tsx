@@ -193,7 +193,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
           </Label>
           <Label label={`Check for sender / receiver`} required={{ value: true, showHint: true }}>
             <SelectionGroup
-              value={formValues.userDirection}
+              value={formValues.userDirection ?? 'SENDER_OR_RECEIVER'}
               onChange={(userDirection) => handleUpdateForm({ userDirection })}
               mode={'SINGLE'}
               options={USER_DIRECTION_OPTIONS}
@@ -207,7 +207,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             required={{ value: true, showHint: true }}
           >
             <SelectionGroup
-              value={formValues.transactionDirection}
+              value={formValues.transactionDirection ?? 'SENDING_RECEIVING'}
               onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
               mode={'SINGLE'}
               options={TX_DIRECTION_OPTIONS}
