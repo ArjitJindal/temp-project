@@ -1,10 +1,8 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
-import { flatten, isEmpty, pick, omit } from 'lodash'
+import { isEmpty, pick, omit } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
-import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   TRANSACTION_EVENTS_COLLECTION,
@@ -13,8 +11,6 @@ import {
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
-import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
@@ -29,7 +25,6 @@ import { RiskScoringService } from '@/services/risk-scoring'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { Case } from '@/@types/openapi-internal/Case'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
@@ -42,99 +37,6 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { UserService } from '@/services/users'
 import { isDemoTenant } from '@/utils/tenant'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
-
-const sqs = new SQS({
-  region: process.env.AWS_REGION,
-})
-
-async function handleNewCases(
-  tenantId: string,
-  timestampBeforeCasesCreation: number,
-  cases: Case[]
-) {
-  const mongoDb = await getMongoDbClient()
-
-  const tenantRepository = new TenantRepository(tenantId, {
-    mongoDb,
-  })
-
-  const newAlerts = flatten(cases.map((c) => c.alerts)).filter(
-    (alert) =>
-      alert &&
-      alert.createdTimestamp &&
-      alert.createdTimestamp >= timestampBeforeCasesCreation
-  )
-  const newCases = cases.filter(
-    (c) =>
-      c.createdTimestamp && c.createdTimestamp >= timestampBeforeCasesCreation
-  )
-
-  if (await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
-    for (const caseItem of newCases) {
-      logger.info(`Sending slack alert SQS message for case ${caseItem.caseId}`)
-      const payload: NewCaseAlertPayload = {
-        kind: 'NEW_CASE',
-        tenantId,
-        caseId: caseItem.caseId as string,
-      }
-      const sqsSendMessageCommand = new SendMessageCommand({
-        MessageBody: JSON.stringify(payload),
-        QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
-      })
-
-      await sqs.send(sqsSendMessageCommand)
-    }
-  }
-  const dynamoDb = getDynamoDbClient()
-  const casesAlertsAuditLogService = new CasesAlertsAuditLogService(tenantId, {
-    mongoDb,
-    dynamoDb,
-  })
-
-  const propertiesToPickForCase = [
-    'caseId',
-    'caseType',
-    'createdBy',
-    'createdTimestamp',
-    'availableAfterTimestamp',
-  ]
-
-  const propertiesToPickForAlert = [
-    'alertId',
-    'parentAlertId',
-    'createdTimestamp',
-    'availableAfterTimestamp',
-    'latestTransactionArrivalTimestamp',
-    'caseId',
-    'alertStatus',
-    'ruleInstanceId',
-    'ruleName',
-    'ruleDescription',
-    'ruleId',
-    'ruleAction',
-    'ruleNature',
-    'numberOfTransactionsHit',
-    'priority',
-    'statusChanges',
-    'lastStatusChange',
-    'updatedAt',
-  ]
-
-  await Promise.all([
-    ...newCases.map(
-      async (caseItem) =>
-        await casesAlertsAuditLogService.handleAuditLogForNewCase(
-          pick(caseItem, propertiesToPickForCase)
-        )
-    ),
-    ...newAlerts.map(
-      async (alert) =>
-        await casesAlertsAuditLogService.handleAuditLogForNewAlert(
-          pick(alert, propertiesToPickForAlert)
-        )
-    ),
-  ])
-}
 
 async function transactionHandler(
   tenantId: string,
@@ -243,7 +145,11 @@ async function transactionHandler(
     logger.info(`DRS Updated in Cases`)
   }
 
-  await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
+  await caseCreationService.handleNewCases(
+    tenantId,
+    timestampBeforeCasesCreation,
+    cases
+  )
 }
 
 async function userHandler(
@@ -315,12 +221,23 @@ async function userHandler(
   })
 
   const timestampBeforeCasesCreation = Date.now()
-  const cases = await caseCreationService.handleUser(savedUser)
 
-  await Promise.all([
-    handleNewCases(tenantId, timestampBeforeCasesCreation, cases),
-    casesRepo.updateUsersInCases(internalUser),
-  ])
+  const anyOngoingHitRule = savedUser.hitRules?.find(
+    (rule) => rule.ruleHitMeta?.isOngoingScreeningHit
+  )
+
+  if (savedUser.hitRules?.length && !anyOngoingHitRule) {
+    const cases = await caseCreationService.handleUser(savedUser)
+
+    await Promise.all([
+      caseCreationService.handleNewCases(
+        tenantId,
+        timestampBeforeCasesCreation,
+        cases
+      ),
+      casesRepo.updateUsersInCases(internalUser),
+    ])
+  }
 
   if (!krsScore && isRiskScoringEnabled && !isDemoTenant(tenantId)) {
     // Will backfill KRS score for all users without KRS score

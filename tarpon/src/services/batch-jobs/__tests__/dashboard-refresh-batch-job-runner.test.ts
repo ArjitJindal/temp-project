@@ -1,4 +1,4 @@
-import { jobRunnerHandler } from '../app'
+import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { DashboardRefreshBatchJob } from '@/@types/batch-job'

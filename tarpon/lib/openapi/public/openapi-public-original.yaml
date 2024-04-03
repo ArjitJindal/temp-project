@@ -3703,6 +3703,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SanctionsDetails'
+        isOngoingScreeningHit:
+          type: boolean
     RuleHitDirection:
       type: string
       title: RuleHitDirection

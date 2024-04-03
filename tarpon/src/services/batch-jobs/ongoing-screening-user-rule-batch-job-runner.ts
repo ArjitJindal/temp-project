@@ -16,6 +16,7 @@ import { traceable } from '@/core/xray'
 import { tenantHasFeature } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
+import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
 
 const CONCURRENT_BATCH_SIZE = 100
 
@@ -86,8 +87,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           usersChunk,
           { mongoDb, dynamoDb },
           rules,
-          ruleInstances,
-          userRepository
+          ruleInstances
         )
       },
       { mongoBatchSize: 1000, processBatchSize: 1000 }
@@ -99,11 +99,12 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     usersChunk: InternalUser[],
     connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
     rules: readonly Rule[],
-    ruleInstances: readonly RuleInstance[],
-    userRepository: UserRepository
+    ruleInstances: readonly RuleInstance[]
   ) {
     const { mongoDb, dynamoDb } = connections
     const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
+
+    const caseCreationService = new CaseCreationService(tenantId, connections)
 
     await pMap(
       usersChunk,
@@ -119,10 +120,18 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           result.hitRules?.length &&
           !isEqual(user.hitRules ?? [], result.hitRules ?? [])
         ) {
-          await userRepository.updateUserWithExecutedRules(
-            user.userId,
-            result.executedRules ?? [],
-            result.hitRules ?? []
+          const timestampBeforeCasesCreation = Date.now()
+
+          const cases = await caseCreationService.handleUser({
+            ...user,
+            hitRules: result.hitRules,
+            executedRules: result.executedRules,
+          })
+
+          await caseCreationService.handleNewCases(
+            tenantId,
+            timestampBeforeCasesCreation,
+            cases
           )
         }
       },

@@ -49,9 +49,7 @@ describe('Core logic', () => {
         name: 'User has no transactions',
         users: [getTestUser({ userId: 'U-1' })],
         expectetRuleHitMetadata: [
-          {
-            hitDirections: ['ORIGIN'],
-          },
+          { hitDirections: ['ORIGIN'], isOngoingScreeningHit: true },
         ],
       },
     ])('User inactivity rule', ({ name, users, expectetRuleHitMetadata }) => {

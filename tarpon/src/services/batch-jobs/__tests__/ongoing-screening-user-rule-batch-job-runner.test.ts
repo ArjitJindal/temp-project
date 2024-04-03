@@ -1,4 +1,4 @@
-import { jobRunnerHandler } from '../app'
+import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-consumer-user'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -15,6 +15,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
 
 dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS'])
@@ -94,11 +95,15 @@ describe('Batch Job Sanctions Screening Rule', () => {
       type: 'ONGOING_SCREENING_USER_RULE',
     }
 
+    const spy = jest.spyOn(CaseCreationService.prototype, 'handleUser')
+
     await jobRunnerHandler(testJob)
 
     const user1After = await userRepository.getUser<UserWithRulesResult>(
       user1.userId
     )
+
+    expect(spy).toBeCalledTimes(1)
 
     expect(user1After).toMatchObject({
       legalDocuments: [
@@ -114,47 +119,6 @@ describe('Batch Job Sanctions Screening Rule', () => {
               key: 'customerType',
             },
           ],
-        },
-      ],
-      hitRules: [
-        {
-          ruleAction: 'SUSPEND',
-          nature: 'SCREENING',
-          ruleName: 'Screening consumer users',
-          ruleId: 'R-16',
-          ruleDescription:
-            'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
-          ruleHitMeta: {
-            hitDirections: ['ORIGIN'],
-            sanctionsDetails: [
-              {
-                name: 'Vladimir Putin',
-                searchId: 'test-search-id',
-              },
-            ],
-          },
-          labels: [],
-        },
-      ],
-      executedRules: [
-        {
-          ruleAction: 'SUSPEND',
-          nature: 'SCREENING',
-          ruleName: 'Screening consumer users',
-          ruleHit: true,
-          ruleId: 'R-16',
-          ruleDescription:
-            'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media.',
-          ruleHitMeta: {
-            hitDirections: ['ORIGIN'],
-            sanctionsDetails: [
-              {
-                name: 'Vladimir Putin',
-                searchId: 'test-search-id',
-              },
-            ],
-          },
-          labels: [],
         },
       ],
       contactDetails: {

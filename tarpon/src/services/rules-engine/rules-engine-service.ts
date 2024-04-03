@@ -841,6 +841,7 @@ export class RulesEngineService {
               sanctionsDetails: sanctionsDetails.length
                 ? sanctionsDetails
                 : undefined,
+              isOngoingScreeningHit: ongoingScreeningMode,
             }
           : undefined,
       },

@@ -92,9 +92,8 @@ describe.each<UserRuleTestCase>([
     ],
     expectetRuleHitMetadata: [
       {
-        falsePositiveDetails: undefined,
         hitDirections: ['ORIGIN'],
-        sanctionsDetails: undefined,
+        isOngoingScreeningHit: true,
       },
     ],
     expectedRuleDescriptions: [

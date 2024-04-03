@@ -1,10 +1,12 @@
 import {
   compact,
+  flatten,
   groupBy,
   isEqual,
   last,
   memoize,
   minBy,
+  pick,
   sample,
   uniq,
 } from 'lodash'
@@ -12,6 +14,7 @@ import pluralize from 'pluralize'
 import createHttpError from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
+import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import {
   CaseRepository,
@@ -67,6 +70,8 @@ import {
 } from '@/services/webhook/utils'
 import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
 import { CaseOpenedDetails } from '@/@types/openapi-public/CaseOpenedDetails'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
 
 type CaseSubject =
   | {
@@ -88,6 +93,7 @@ export class CaseCreationService {
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
+  tenantRepository: TenantRepository
 
   constructor(
     tenantID: string,
@@ -107,6 +113,7 @@ export class CaseCreationService {
     this.tenantId = tenantID
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
+    this.tenantRepository = new TenantRepository(tenantID, connections)
   }
 
   private tenantSettings = memoize(async () => {
@@ -1131,6 +1138,89 @@ export class CaseCreationService {
     })
 
     return this.updateRelatedCases(savedCases)
+  }
+
+  async handleNewCases(
+    tenantId: string,
+    timestampBeforeCasesCreation: number,
+    cases: Case[]
+  ) {
+    const newAlerts = flatten(cases.map((c) => c.alerts)).filter(
+      (alert) =>
+        alert &&
+        alert.createdTimestamp &&
+        alert.createdTimestamp >= timestampBeforeCasesCreation
+    )
+    const newCases = cases.filter(
+      (c) =>
+        c.createdTimestamp && c.createdTimestamp >= timestampBeforeCasesCreation
+    )
+
+    if (await this.tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
+      for (const caseItem of newCases) {
+        logger.info(
+          `Sending slack alert SQS message for case ${caseItem.caseId}`
+        )
+        const payload: NewCaseAlertPayload = {
+          kind: 'NEW_CASE',
+          tenantId,
+          caseId: caseItem.caseId as string,
+        }
+        const sqs = new SQS({
+          region: process.env.AWS_REGION,
+        })
+        const sqsSendMessageCommand = new SendMessageCommand({
+          MessageBody: JSON.stringify(payload),
+          QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
+        })
+
+        await sqs.send(sqsSendMessageCommand)
+      }
+    }
+
+    const propertiesToPickForCase = [
+      'caseId',
+      'caseType',
+      'createdBy',
+      'createdTimestamp',
+      'availableAfterTimestamp',
+    ]
+
+    const propertiesToPickForAlert = [
+      'alertId',
+      'parentAlertId',
+      'createdTimestamp',
+      'availableAfterTimestamp',
+      'latestTransactionArrivalTimestamp',
+      'caseId',
+      'alertStatus',
+      'ruleInstanceId',
+      'ruleName',
+      'ruleDescription',
+      'ruleId',
+      'ruleAction',
+      'ruleNature',
+      'numberOfTransactionsHit',
+      'priority',
+      'statusChanges',
+      'lastStatusChange',
+      'updatedAt',
+    ]
+
+    await Promise.all([
+      ...newCases.map(
+        async (caseItem) =>
+          await this.auditLogService.handleAuditLogForNewCase(
+            pick(caseItem, propertiesToPickForCase)
+          )
+      ),
+      ...newAlerts.map(
+        async (alert) =>
+          await this.auditLogService.handleAuditLogForNewAlert(
+            pick(alert, propertiesToPickForAlert)
+          )
+      ),
+    ])
   }
 
   async handleUser(user: InternalUser): Promise<Case[]> {

@@ -1,4 +1,3 @@
-import { jobRunnerHandler } from '../app'
 import { SimulationRiskFactorsBatchJob } from '@/@types/batch-job'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { SimulationRiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationRiskFactorsParametersRequest'
@@ -18,6 +17,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { SimulationResultRepository } from '@/services/simulation/repositories/simulation-result-repository'
+import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 
 withFeatureHook(['SIMULATOR', 'RISK_LEVELS', 'RISK_SCORING'])
 dynamoDbSetupHook()
