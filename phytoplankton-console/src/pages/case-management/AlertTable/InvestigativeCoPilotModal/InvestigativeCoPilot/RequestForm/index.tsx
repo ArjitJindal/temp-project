@@ -16,6 +16,7 @@ import { useApi } from '@/api';
 import { COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
 import Form from '@/components/library/Form';
 import Button from '@/components/library/Button';
+import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 
 export type FormValues = {
   searchString: string;
@@ -44,6 +45,7 @@ interface Props {
 
 export default function RequestForm(props: Props) {
   const { mutation, history, setHistory, alertId } = props;
+  const [demoMode] = useDemoMode();
   const mutationRes = getMutationAsyncResource(mutation);
 
   const [showMore, setShowMore] = useState<boolean>(false);
@@ -176,7 +178,7 @@ export default function RequestForm(props: Props) {
           >
             Ask AI &nbsp; <BrainIcon className={s.brainIcon} />
           </Button>
-          {history.length === 0 && (
+          {demoMode && history.length === 0 && (
             <Button
               key={'Auto-pilot'}
               htmlType="button"

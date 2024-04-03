@@ -23,6 +23,7 @@ import { KycScoring } from '@/services/copilot/questions/definitions/kyc-score'
 import { Recommendation } from '@/services/copilot/questions/definitions/recommendation'
 import { hasFeature } from '@/core/utils/context'
 import { envIsNot } from '@/utils/env'
+import { isDemoMode } from '@/utils/demo'
 import { ReferenceWordCount } from '@/services/copilot/questions/definitions/reference-word-count'
 
 export const isValidQuestion = (questionId: string) =>
@@ -57,14 +58,10 @@ export const getQuestions = (): Question<any>[] =>
       ? [CrmInsights, Linkedin, Website]
       : []),
     ...(hasFeature('ENTITY_LINKING') ? [LinkedUsers, EntityLinking] : []),
-    ...(envIsNot('prod')
-      ? [
-          CheckedTransactions,
-          Recommendation,
-          TransactionByRulesAction,
-          TransactionType,
-        ]
+    ...(envIsNot('prod') && isDemoMode()
+      ? [CheckedTransactions, Recommendation]
       : []),
+    ...(envIsNot('prod') ? [TransactionByRulesAction, TransactionType] : []),
   ].sort((a, b) => a.questionId.localeCompare(b.questionId))
 
 export const getQueries = () =>
