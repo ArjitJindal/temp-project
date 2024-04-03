@@ -206,7 +206,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     return chain(executionDetails)
       .flatMap(({ executedRules, transaction }) => {
         const ruleHitDirection = executedRules.ruleHitMeta?.hitDirections
-        if (ruleHitDirection?.length == 0) {
+        if (!ruleHitDirection?.length && executedRules.ruleHit) {
           return [transaction.originUserId, transaction.destinationUserId]
         }
         return [
