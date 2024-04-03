@@ -60,7 +60,7 @@ export const transactionAggregationQuestion = (
 SELECT
   any_value(ds.period_start) as timestamp,
   date_format(ds.period_start, 'yyyy-MM-dd') as date,
-  ${aggregationExpression(granularity)} as agg
+  round(${aggregationExpression(granularity)}, 2) as agg
 FROM
   DateSeries ds
   LEFT JOIN transactions t ON date_trunc('${sqlExpression}', CAST(DATE(FROM_UNIXTIME(CAST(t.timestamp / 1000 AS BIGINT))) AS DATE)) = ds.period_start
