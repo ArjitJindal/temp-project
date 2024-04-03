@@ -88,6 +88,23 @@ export function useLogicBuilderConfig(
             types[key].widgets[key].operators = initialOperators.concat(
               getSupportedOperatorsKeys(operators, key),
             );
+            if (key === 'number') {
+              types[key].widgets = {
+                ...types[key].widgets,
+                slider: {
+                  operators: [
+                    'equal',
+                    'not_equal',
+                    'greater',
+                    'greater_or_equal',
+                    'less',
+                    'less_or_equal',
+                    'between',
+                    'not_between',
+                  ],
+                },
+              };
+            }
             if (key === 'select') {
               types[key].widgets['multiselect'].operators = [
                 ...(types[key].widgets['multiselect'].operators ?? []),
