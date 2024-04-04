@@ -28,8 +28,11 @@ function customHTMLSanitizer(htmlString: string): string {
   tempDiv.innerHTML = htmlString;
   const anchorTags = tempDiv.querySelectorAll('a');
   anchorTags.forEach((tag) => {
-    tag.classList.add(s.anchorTagStyle);
-    tag.href = '#';
+    const mention = tag.href.split('/').at(-1);
+    if (mention?.startsWith('auth0') && tag.innerHTML.startsWith('@')) {
+      tag.classList.add(s.anchorTagStyle);
+      tag.href = '#';
+    }
   });
   return tempDiv.innerHTML;
 }
