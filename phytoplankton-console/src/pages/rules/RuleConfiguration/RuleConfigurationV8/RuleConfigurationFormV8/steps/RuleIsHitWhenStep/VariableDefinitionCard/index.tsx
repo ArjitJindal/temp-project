@@ -10,7 +10,7 @@ import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import { RuleAggregationVariable, RuleEntityVariableInUse } from '@/apis';
-import { isSuccess } from '@/utils/asyncResource';
+import { isLoading, isSuccess } from '@/utils/asyncResource';
 import Tag from '@/components/library/Tag';
 import Button from '@/components/library/Button';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -199,7 +199,9 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
               placement="bottomLeft"
             >
               {/* TODO: Update e2e test */}
-              <Button testName="add-variable-v8">Add variable</Button>
+              <Button testName="add-variable-v8" isLoading={isLoading(ruleLogicConfig.data)}>
+                Add variable
+              </Button>
             </Dropdown>
           )}
         </div>

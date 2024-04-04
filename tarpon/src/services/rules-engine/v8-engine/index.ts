@@ -68,7 +68,18 @@ export const getJsonLogicEngine = memoizeOne(
       jsonLogicEngine.addMethod(
         v.key,
         memoize(
-          ([lhs, rhs, parameters]) => v.run(lhs, rhs, parameters, context),
+          (values) => {
+            const cardinality = v.uiDefinition.cardinality ?? 1
+            const lhs = values[0]
+            const rhs = values.slice(1, cardinality + 1)
+            const parameters = values[cardinality + 1]
+            return v.run(
+              lhs,
+              rhs.length === 1 ? rhs[0] : rhs,
+              parameters,
+              context
+            )
+          },
           (v) => generateChecksum(v)
         )
       )

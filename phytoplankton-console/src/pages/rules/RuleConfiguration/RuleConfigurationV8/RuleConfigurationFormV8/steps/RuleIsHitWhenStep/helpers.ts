@@ -15,6 +15,7 @@ import {
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import { getOperatorWithParameter } from '@/components/ui/LogicBuilder/operators';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const InitialConfig = BasicConfig;
 
@@ -23,11 +24,12 @@ function getSupportedOperatorsKeys(operators: RuleOperator[], valueType: string)
 }
 
 export function useRuleLogicConfig() {
+  const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const api = useApi();
   return useQuery<RuleLogicConfig>(
     RULE_LOGIC_CONFIG(),
     (): Promise<RuleLogicConfig> => api.getRuleLogicConfig(),
-    { refetchOnMount: false },
+    { refetchOnMount: false, enabled: v8Enabled },
   );
 }
 

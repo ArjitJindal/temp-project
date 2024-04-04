@@ -47,7 +47,7 @@ export function migrateCheckDirectionParameters(
       aggregationFunc,
       timeWindow: {
         start: parameters.timeWindow,
-        end: { units: 0, granularity: 'day' },
+        end: { units: 0, granularity: 'now' },
       },
     })
   }
@@ -67,7 +67,7 @@ export function migrateCheckDirectionParameters(
       aggregationFunc: 'COUNT',
       timeWindow: {
         start: parameters.timeWindow,
-        end: { units: 0, granularity: 'day' },
+        end: { units: 0, granularity: 'now' },
       },
     })
   }
@@ -93,7 +93,7 @@ export function migrateCheckDirectionParameters(
       aggregationFunc,
       timeWindow: {
         start: parameters.timeWindow,
-        end: { units: 0, granularity: 'day' },
+        end: { units: 0, granularity: 'now' },
       },
     })
   }

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import { RulesPageWrapper } from 'src/pages/rules/RulesPageWrapper';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
+import { useRuleLogicConfig } from './RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
 import { Authorized } from '@/components/utils/Authorized';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
@@ -44,6 +45,8 @@ function Content(props: { tab: string }) {
   const navigate = useNavigate();
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
+  // NOTE: Rule logic config data size is big, so we prefetch it here
+  useRuleLogicConfig();
   return (
     <PageTabs
       activeKey={props.tab}

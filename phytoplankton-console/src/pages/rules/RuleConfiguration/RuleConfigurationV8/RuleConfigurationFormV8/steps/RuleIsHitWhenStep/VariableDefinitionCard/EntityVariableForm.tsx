@@ -127,7 +127,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   const [searchKey, setSearchKey] = useState<string | undefined>();
   const handleUpdateForm = useCallback((newValues: Partial<FormRuleEntityVariable>) => {
     setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
-    setSearchKey(undefined);
+    if (!newValues.name || Object.keys(newValues).length > 1) {
+      setSearchKey(undefined);
+    }
   }, []);
   const allVariableOptions = useMemo(
     () =>

@@ -19,16 +19,10 @@ const calculateAge = (
 const getUiDefinition = (unit: AgeUnit): FieldOrGroup => ({
   label: `age on platform (${unit})`,
   type: 'number',
-  preferWidgets: ['slider', 'rangeslider'],
   valueSources: ['value', 'field', 'func'],
   fieldSettings: {
     min: 0,
-    max: 120,
     step: 1,
-    marks: {
-      0: '0',
-      120: '120',
-    },
   } as NumberFieldSettings,
 })
 

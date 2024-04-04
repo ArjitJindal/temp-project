@@ -35,19 +35,20 @@ const calculateBusinessUserAge = (
   }
 }
 
+const MAX_AGE = 120
 const getUiDefinition = (unit: AgeUnit): FieldOrGroup => ({
   label: `age (${unit})`,
   type: 'number',
-  preferWidgets: ['slider', 'rangeslider'],
   valueSources: ['value', 'field', 'func'],
   fieldSettings: {
     min: 0,
-    max: 120,
+    max:
+      unit === 'years'
+        ? MAX_AGE
+        : unit === 'months'
+        ? 12 * MAX_AGE
+        : 365 * MAX_AGE,
     step: 1,
-    marks: {
-      0: '0',
-      120: '120',
-    },
   } as NumberFieldSettings,
 })
 

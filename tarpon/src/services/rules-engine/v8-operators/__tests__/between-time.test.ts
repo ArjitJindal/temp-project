@@ -1,6 +1,9 @@
-import { getSecondsFromTimestamp } from '@flagright/lib/utils/time'
 import { BETWEEN_TIME_OPERATOR } from '../between-time'
 import dayjs from '@/utils/dayjs'
+
+function getSecondsFromTimestamp(timestamp: number): number {
+  return dayjs(timestamp).diff(dayjs(timestamp).startOf('day'), 'seconds')
+}
 
 describe('Between Time', () => {
   test('should return true if the value is between the range - correct order', async () => {

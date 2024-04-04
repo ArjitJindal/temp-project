@@ -18,15 +18,9 @@ import {
 } from '@react-awesome-query-builder/ui';
 import moment from 'moment';
 import { TimePicker } from 'antd';
-import { getSecondsFromTimestamp } from '@flagright/lib/utils/time';
 import DatePicker from '../DatePicker';
 import s from './index.module.less';
-import {
-  deserializeCountries,
-  omitCountryGroups,
-  serializeCountries,
-  getSecondsFromFormat,
-} from './widget-utils';
+import { deserializeCountries, omitCountryGroups, serializeCountries } from './widget-utils';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
@@ -34,7 +28,6 @@ import TextInput from '@/components/library/TextInput';
 import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
 import Toggle from '@/components/library/Toggle';
-import Slider, { CommonProps as SliderCommonProps } from '@/components/library/Slider';
 import { dayjs } from '@/utils/dayjs';
 import { RuleOperatorType } from '@/apis';
 import PropertyInput from '@/components/library/JsonSchemaEditor/Property/PropertyInput';
@@ -177,39 +170,6 @@ const customTextWidget: TextWidget<BasicConfig> = {
   },
 };
 
-const customSliderWidget: NumberWidget<BasicConfig> = {
-  type: `text`,
-  factory: (props) => {
-    const commonProps: SliderCommonProps = {
-      min: props.min,
-      max: props.max,
-      step: props.step,
-    };
-    if (Array.isArray(props.value)) {
-      return (
-        <WidgetWrapper widgetFactoryProps={props}>
-          <Slider
-            {...commonProps}
-            mode={'RANGE'}
-            value={[props.value?.[0] ?? 0, props.value?.[1] ?? 100]}
-            onChange={props.setValue}
-          />
-        </WidgetWrapper>
-      );
-    }
-    return (
-      <WidgetWrapper widgetFactoryProps={props}>
-        <Slider
-          {...commonProps}
-          mode={'SINGLE'}
-          value={props.value ?? undefined}
-          onChange={props.setValue}
-        />
-      </WidgetWrapper>
-    );
-  },
-};
-
 const customBooleanWidget: BooleanWidget<BasicConfig> = {
   type: `boolean`,
   factory: (props) => {
@@ -324,22 +284,36 @@ const customTimeWidget: DateTimeWidget<BasicConfig> = {
       return val;
     }
     if (typeof val === 'string') {
-      return getSecondsFromFormat(val);
+      const [hour, minute, second] = val.split(':');
+      return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
     }
     return val;
   },
   factory: (props) => {
     const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const { value, setValue } = props;
-    const totalSeconds = value?.includes(':') ? getSecondsFromFormat(value as string) : undefined;
+    const [hour, minute, second] = ((value ?? '') as string).split(':');
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <TimePicker
-          value={totalSeconds ? moment.unix(totalSeconds) : undefined}
+          value={
+            value
+              ? moment.unix(
+                  dayjs()
+                    .utc()
+                    .hour(Number(hour))
+                    .minute(Number(minute))
+                    .second(Number(second))
+                    .unix(),
+                )
+              : undefined
+          }
           onChange={(v) => {
-            const time = v?.valueOf();
-            const seconds = time ? getSecondsFromTimestamp(time) : undefined;
-            const newValue = seconds ? moment.utc(seconds * 1000).format('HH:mm:ss') : undefined;
+            if (!v) {
+              setValue(undefined);
+              return;
+            }
+            const newValue = dayjs(v.valueOf()).utc().format('HH:mm:ss');
             setValue(newValue);
           }}
           placeholder=""
@@ -357,7 +331,7 @@ export const customWidgets: CoreWidgets<Config> = {
   text: customTextWidget,
   number: customNumberWidget,
   // textarea: customTextareaWidget,
-  slider: customSliderWidget,
+  // slider: customSliderWidget,
   // rangeslider: customRangesliderWidget,
   select: customSelectWidget,
   multiselect: customMultiselectWidget,

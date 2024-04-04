@@ -22,11 +22,3 @@ export function getFiscalYearStart(
 
   return fiscalYearStart
 }
-
-export function getSecondsFromTimestamp(timestamp?: number) {
-  if (!timestamp) return undefined
-  const date = new Date(timestamp)
-  const utcHours = date.getUTCHours()
-  const utcMinutes = date.getUTCMinutes()
-  return (utcHours * 60 + utcMinutes) * 60
-}

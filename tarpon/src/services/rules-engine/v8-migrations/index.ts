@@ -41,6 +41,22 @@ export function getMigratedV8Config(
       and: [{ and: filterConditions }, result.logic],
     }
   }
+  if (result.logicAggregationVariables.length > 0) {
+    result.logicAggregationVariables = result.logicAggregationVariables.map(
+      (v) => {
+        if (v.timeWindow.end.units === 0) {
+          return {
+            ...v,
+            timeWindow: {
+              ...v.timeWindow,
+              end: { units: 0, granularity: 'now' },
+            },
+          }
+        }
+        return v
+      }
+    )
+  }
   return result
 }
 
@@ -110,7 +126,7 @@ const V8_CONVERSION: {
       aggregationFunc: 'UNIQUE_COUNT',
       timeWindow: {
         start: parameters.timeWindow,
-        end: { units: 0, granularity: 'day' },
+        end: { units: 0, granularity: 'now' },
       },
       filtersLogic: {
         '!': { var: 'TRANSACTION:originUserId' },
@@ -310,7 +326,7 @@ const V8_CONVERSION: {
       aggregationFunc: 'UNIQUE_COUNT',
       timeWindow: {
         start: parameters.timeWindow,
-        end: { units: 0, granularity: 'day' },
+        end: { units: 0, granularity: 'now' },
       },
       filtersLogic: {
         '!=': { var: 'TRANSACTION:originUserId' },
