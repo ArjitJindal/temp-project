@@ -139,12 +139,40 @@ export function all<T1, T2, T3>(ars: [AR<T1>, AR<T2>, AR<T3>]): AR<[T1, T2, T3]>
 export function all<T1, T2>(ars: [AR<T1>, AR<T2>]): AR<[T1, T2]>;
 export function all<T1>(ars: AR<T1>[]): AR<T1[]>;
 export function all<T>(asyncResourceList: AR<T>[]): AR<T[]> {
-  return asyncResourceList.reduce((acc: AR<T[]>, x: AR<T>) => {
-    if (!isSuccess(acc)) {
-      return acc;
+  const result: T[] = [];
+  const errors: string[] = [];
+  let hasInit = false;
+  let hasErrors = false;
+  let hasLoading = false;
+  let hasMissingResults = false;
+  for (const ar of asyncResourceList) {
+    if (isFailed(ar)) {
+      errors.push(ar.message);
+      hasErrors = true;
+    } else if (isInit(ar)) {
+      hasInit = true;
+    } else if (isLoading(ar)) {
+      const value = getOr(ar, null);
+      if (value == null) {
+        hasMissingResults = true;
+      } else {
+        result.push(value);
+      }
+      hasLoading = true;
+    } else {
+      result.push(ar.value);
     }
-    return map(x, (value: T) => [...acc.value, value]);
-  }, success([]));
+  }
+  if (hasErrors) {
+    return failed(errors.join('; '));
+  }
+  if (hasInit) {
+    return init();
+  }
+  if (hasLoading) {
+    return loading(hasMissingResults ? null : result);
+  }
+  return success(result);
 }
 
 export function getOr<T>(asyncResource: AsyncResource<T>, defaultValue: T): T {
