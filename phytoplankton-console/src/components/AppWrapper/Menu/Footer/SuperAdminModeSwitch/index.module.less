@@ -1,7 +1,13 @@
 @import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+@button-bg: @fr-base-blue-shade-02;
 
 .root {
   overflow: hidden;
+  &:not(.isCollapsed) {
+    background-color: @button-bg;
+  }
 }
 
 .button {
@@ -13,6 +19,11 @@
   padding: 6px 20px;
   border-radius: 4px;
   min-height: 46px;
+  transition-duration: @default-animation-speed;
+  transition-property: background-color;
+  &:not(.isCollapsed) {
+    background-color: @button-bg;
+  }
 
   .switch {
     display: flex;

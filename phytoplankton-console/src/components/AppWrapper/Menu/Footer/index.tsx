@@ -19,7 +19,7 @@ export default function Footer(props: Props) {
 
   return (
     <div className={cn(s.root, isCollapsed && s.isCollapsed)}>
-      {isSuperAdmin(user) && <SuperAdminModeSwitch />}
+      {isSuperAdmin(user) && <SuperAdminModeSwitch isCollapsed={isCollapsed} />}
       {isDemoModeAvailable && <DemoModeSwitch isCollapsed={isCollapsed} />}
       <UserPanel isCollapsed={isCollapsed} />
       <Roles roles={['root', 'whitelabel-root']}>
