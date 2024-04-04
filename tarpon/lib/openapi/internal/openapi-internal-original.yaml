@@ -5499,6 +5499,7 @@ components:
             - STRING
             - INTEGER
             - FLOAT
+            - BOOLEAN
             - AUTOCOMPLETE
             - SEARCH
     TableHeaders:

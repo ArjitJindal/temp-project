@@ -319,9 +319,12 @@ export const DynamoDbKeys = {
     tenantId: string,
     questionId: string,
     alertId: string,
-    variableHash: string
+    variableHash: string,
+    questionVersion?: number
   ) => ({
-    PartitionKeyID: `${tenantId}#${QUESTION_ID_PREFIX}${questionId}-${alertId}`,
+    PartitionKeyID: `${tenantId}#${QUESTION_ID_PREFIX}${questionId}-${alertId}${
+      questionVersion ? `:v${questionVersion}` : ''
+    }`,
     SortKeyID: variableHash,
   }),
   DRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({

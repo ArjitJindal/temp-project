@@ -14,6 +14,7 @@ import {
 import { executeSql } from '@/utils/databricks'
 import dayjs from '@/utils/dayjs'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { notEmpty } from '@/utils/array'
 
 export const transactionAggregationQuestion = (
   questionId: QuestionId,
@@ -22,15 +23,23 @@ export const transactionAggregationQuestion = (
   showCurrency = false,
   joins = ''
 ): TimeseriesQuestion<
-  Period & { granularity: TimeGranularity; currency?: CurrencyCode }
+  Period & {
+    granularity: TimeGranularity
+    currency?: CurrencyCode
+    showUserLimit: boolean
+  }
 > => ({
   type: 'TIME_SERIES',
-  questionId,
+  questionId: questionId,
+  version: 2,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `${title} ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async (ctx, { granularity, currency, ...period }) => {
+  aggregationPipeline: async (
+    ctx,
+    { granularity, currency, showUserLimit, ...period }
+  ) => {
     const sqlExpression = timeXAxis(granularity)
     const rows = await executeSql<{
       timestamp: Date
@@ -81,18 +90,52 @@ ORDER BY
       }
     )
 
+    const values = rows.map((row) => {
+      return {
+        time: row.timestamp.getTime(),
+        value: currency ? ctx.convert(row.agg, currency) : row.agg,
+      }
+    })
+
+    let userLimitValues: { value: number; time: number }[] = []
+    if (showUserLimit) {
+      let limit
+      switch (granularity) {
+        case 'Daily':
+          limit = ctx.user.transactionLimits?.maximumDailyTransactionLimit
+          break
+        case 'Weekly':
+          limit = ctx.user.transactionLimits?.maximumWeeklyTransactionLimit
+          break
+        case 'Monthly':
+          limit = ctx.user.transactionLimits?.maximumMonthlyTransactionLimit
+          break
+        case 'Quarterly':
+          limit = ctx.user.transactionLimits?.maximumQuarterlyTransactionLimit
+          break
+        case 'Yearly':
+          limit = ctx.user.transactionLimits?.maximumYearlyTransactionLimit
+          break
+      }
+      if (limit && values.length > 0) {
+        const currencyLimit = currency
+          ? ctx.convert(limit.amountValue, currency)
+          : limit.amountValue
+        userLimitValues = values.map((x) => ({ ...x, value: currencyLimit }))
+      }
+    }
+
     return {
       data: [
         {
           label: '',
-          values: rows.map((row) => {
-            return {
-              time: row.timestamp.getTime(),
-              value: currency ? ctx.convert(row.agg, currency) : row.agg,
-            }
-          }),
+          values: values,
         },
-      ],
+        userLimitValues && {
+          label: 'User’s transactions limits',
+          values: userLimitValues,
+        },
+      ].filter(notEmpty),
       summary: ``,
     }
   },
@@ -104,12 +147,14 @@ ORDER BY
       type: 'AUTOCOMPLETE',
       options: () => GRANULARITIES,
     },
+    showUserLimit: 'BOOLEAN',
   },
   defaults: () => {
     return {
       ...periodDefaults(),
       ...currencyDefault,
       granularity: 'Daily',
+      showUserLimit: false,
     }
   },
 })
@@ -162,14 +207,6 @@ const TotalTransactionAmount = transactionAggregationQuestion(
   true
 )
 
-const TransactionLimit = transactionAggregationQuestion(
-  COPILOT_QUESTIONS.TRANSACTION_LIMIT,
-  'Remaining transaction limit',
-  (granularity) =>
-    `(select transactionLimits.maximum${granularity}TransactionLimit.amountValue from users where userId = :userId LIMIT 1) - COALESCE(SUM(transactionAmountUSD), 0)`,
-  true
-)
-
 export const TransactionAggregations = [
   TrsScore,
   TransactionCount,
@@ -177,6 +214,5 @@ export const TransactionAggregations = [
   MaxTransactionAmount,
   MinTransactionAmount,
   MedianTransactionAmount,
-  TransactionLimit,
   TotalTransactionAmount,
 ]

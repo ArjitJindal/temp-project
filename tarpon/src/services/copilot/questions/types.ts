@@ -48,6 +48,7 @@ export type QuestionCategory = 'BUSINESS' | 'CONSUMER'
 
 export type QuestionBase<V extends Variables> = {
   questionId: QuestionId
+  version?: number
   title?: (ctx: InvestigationContext, variables: V) => Promise<string>
   explainer?: string
   variableOptions: VariableOptions<V>

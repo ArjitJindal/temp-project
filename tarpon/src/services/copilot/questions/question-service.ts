@@ -217,7 +217,8 @@ export class QuestionService {
       tenantId,
       alertId,
       question.questionId,
-      generateChecksum(varObject)
+      generateChecksum(varObject),
+      question.version
     )
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,

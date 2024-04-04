@@ -15,6 +15,7 @@ import Button from '@/components/library/Button';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { applyUpdater, StatePair, Updater } from '@/utils/state';
 import { useApi } from '@/api';
+import Checkbox from '@/components/library/Checkbox';
 
 export type VariablesValues = Record<string, any>;
 
@@ -118,9 +119,14 @@ export function VariablesPopoverContent(
         if (varName == null) {
           return null;
         }
+        const variableLabelPosition = variable.variableType === 'BOOLEAN' ? 'RIGHT' : labelPosition;
         return (
-          <Label key={varName} label={humanizeAuto(varName ?? 'N/A')} position={labelPosition}>
-            <div className={s.input}>
+          <Label
+            key={varName}
+            label={humanizeAuto(varName ?? 'N/A')}
+            position={variableLabelPosition}
+          >
+            <div className={cn(s.input, s[`labelPosition-${variableLabelPosition}`])}>
               {renderInput(questionId, variable, {
                 value: varsValues[varName],
                 onBlur: () => props.onConfirm(varsValues),
@@ -146,6 +152,9 @@ function renderInput(
 ) {
   if (variable.variableType === 'INTEGER' || variable.variableType === 'FLOAT') {
     return <NumberInput {...inputProps} />;
+  }
+  if (variable.variableType === 'BOOLEAN') {
+    return <Checkbox {...inputProps} />;
   }
 
   if (variable.variableType === 'DATE' || variable.variableType === 'DATETIME') {
