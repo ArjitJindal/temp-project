@@ -12,11 +12,14 @@ import { Stage, FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { AWS_ACCOUNTS } from '@flagright/lib/constants'
 import * as path from 'path'
+import { createHash } from 'crypto'
+import { readdirSync, readFileSync } from 'fs'
+import { join, resolve } from 'path'
 
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
-// Change this to update the table schemas
-const schemaVersion = '13'
+// We use the checksum of the openAPI specifications to determine whether views need updating.
+const schemaVersion = checksumFolder('../src/openapi')
 const adminEmails = [
   'tim+databricks@flagright.com',
   'nadig@flagright.com',
@@ -44,6 +47,29 @@ const serverlessRegions = [
   'us-east-1',
   'us-east-2',
 ]
+
+function hashFile(filePath: string): string {
+  const content = readFileSync(filePath)
+  return createHash('sha256').update(content).digest('hex')
+}
+
+function checksumFolder(folderPath: string): string {
+  const files = readdirSync(folderPath, { withFileTypes: true })
+  let combinedHash = createHash('sha256')
+
+  for (const file of files) {
+    const fullPath = join(folderPath, file.name)
+    if (file.isDirectory()) {
+      const dirHash = checksumFolder(fullPath)
+      combinedHash.update(dirHash)
+    } else {
+      const fileHash = hashFile(fullPath)
+      combinedHash.update(fileHash)
+    }
+  }
+
+  return combinedHash.digest('hex')
+}
 
 class DatabricksStack extends TerraformStack {
   config: Config
