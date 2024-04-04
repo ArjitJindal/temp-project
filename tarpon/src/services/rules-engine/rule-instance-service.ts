@@ -84,6 +84,10 @@ export class RuleInstanceService {
     )
   }
 
+  async getAllRuleInstances(): Promise<RuleInstance[]> {
+    return this.ruleInstanceRepository.getAllRuleInstances()
+  }
+
   public async createRuleInstance(ruleInstance: RuleInstance) {
     const newRuleInstance = await this.ruleService.createOrUpdateRuleInstance(
       ruleInstance

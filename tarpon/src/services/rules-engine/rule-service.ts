@@ -520,10 +520,6 @@ You have to answer in below format as string. If you don't know any field, just 
     await this.ruleRepository.deleteRule(ruleId)
   }
 
-  async getAllRuleInstances(): Promise<RuleInstance[]> {
-    return this.ruleInstanceRepository.getAllRuleInstances()
-  }
-
   async getActiveRuleInstances(
     type: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {

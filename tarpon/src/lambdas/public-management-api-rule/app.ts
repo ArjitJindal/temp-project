@@ -91,7 +91,6 @@ export const ruleInstanceHandler = lambdaApi()(
       dynamoDb,
       mongoDb,
     })
-    const ruleService = new RuleService(tenantId, { dynamoDb, mongoDb })
 
     if (
       event.httpMethod === 'POST' &&
@@ -110,7 +109,7 @@ export const ruleInstanceHandler = lambdaApi()(
         ...ruleInstance,
         ...ruleInstanceUpdatable,
       }
-      return ruleService.createOrUpdateRuleInstance(newRuleInstance)
+      return ruleInstanceService.createRuleInstance(newRuleInstance)
     } else if (
       event.httpMethod === 'DELETE' &&
       event.resource === '/rule-instances/{ruleInstanceId}' &&
@@ -126,7 +125,7 @@ export const ruleInstanceHandler = lambdaApi()(
       event.body
     ) {
       const ruleInstance = JSON.parse(event.body) as PublicRuleInstance
-      const newRuleInstance = await ruleService.createOrUpdateRuleInstance(
+      const newRuleInstance = await ruleInstanceService.createRuleInstance(
         ruleInstance as RuleInstance
       )
       return newRuleInstance
@@ -134,7 +133,7 @@ export const ruleInstanceHandler = lambdaApi()(
       event.httpMethod === 'GET' &&
       event.resource === '/rule-instances'
     ) {
-      return (await ruleService.getAllRuleInstances()) as ReadonlyArray<PublicRuleInstance>
+      return (await ruleInstanceService.getAllRuleInstances()) as ReadonlyArray<PublicRuleInstance>
     }
 
     throw new Error('Unhandled request')

@@ -81,7 +81,6 @@ export const ruleInstanceHandler = lambdaApi()(
       event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClientByEvent(event)
     const mongoDb = await getMongoDbClient()
-    const ruleService = new RuleService(tenantId, { dynamoDb, mongoDb })
     const ruleInstanceService = new RuleInstanceService(tenantId, {
       dynamoDb,
       mongoDb,
@@ -89,7 +88,7 @@ export const ruleInstanceHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetRuleInstances(
-      async () => await ruleService.getAllRuleInstances()
+      async () => await ruleInstanceService.getAllRuleInstances()
     )
 
     handlers.registerGetRuleInstancesItem(
@@ -111,7 +110,7 @@ export const ruleInstanceHandler = lambdaApi()(
 
     handlers.registerPostRuleInstances(
       async (ctx, request) =>
-        await ruleService.createOrUpdateRuleInstance(request.RuleInstance)
+        await ruleInstanceService.createRuleInstance(request.RuleInstance)
     )
 
     return await handlers.handle(event)
