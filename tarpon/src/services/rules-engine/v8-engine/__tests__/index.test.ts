@@ -669,6 +669,53 @@ describe('Testing dataLoader Cache', () => {
   })
 })
 
+describe('Different aggregate fields for receiving and sending', () => {
+  test('testing different aggregationFieldKey based on direction', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'agg:123' }, 100] }] },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER_OR_RECEIVER',
+          transactionDirection: 'SENDING_RECEIVING',
+          aggregationFieldKey:
+            'TRANSACTION:originAmountDetails-transactionAmount',
+          secondaryAggregationFieldKey:
+            'TRANSACTION:destinationAmountDetails-transactionAmount',
+          aggregationFunc: 'SUM',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+          baseCurrency: 'EUR',
+        },
+      ],
+      { baseCurrency: 'EUR', tenantId },
+      {
+        transaction: getTestTransaction({
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+        }),
+      }
+    )
+    expect(result).toEqual({
+      hit: true,
+      varData: [{ 'agg:123': 100 }, { 'agg:123': 100 }],
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    })
+  })
+})
+
 describe('operators', () => {
   beforeEach(() => {
     operatorSpy.mockRestore()

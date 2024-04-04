@@ -5827,6 +5827,8 @@ components:
           $ref: '#/components/schemas/RuleAggregationTransactionDirection'
         aggregationFieldKey:
           type: string
+        secondaryAggregationFieldKey:
+          type: string
         aggregationFunc:
           $ref: '#/components/schemas/RuleAggregationFunc'
         baseCurrency:

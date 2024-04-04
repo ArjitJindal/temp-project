@@ -415,10 +415,9 @@ export class RuleJsonLogicEvaluator {
           targetTransactions.push(transaction as Transaction)
         }
       }
-
       // Update aggregation result
       const txEntityVariable = getRuleVariableByKey(
-        aggregationVariable.aggregationFieldKey
+        this.getAggregationVarFieldKey(aggregationVariable, direction)
       )!
       const partialTimeAggregatedResult = await groupTransactionsByGranularity(
         targetTransactions,
@@ -538,7 +537,7 @@ export class RuleJsonLogicEvaluator {
       dynamoDb: this.dynamoDb,
     })
     const newDataValue = await entityVarDataloader.load(
-      aggregationVariable.aggregationFieldKey
+      this.getAggregationVarFieldKey(aggregationVariable, direction)
     )
     if (!isNewDataFiltered || !newDataValue) {
       return
@@ -617,6 +616,9 @@ export class RuleJsonLogicEvaluator {
     if (aggregationVariable.aggregationFieldKey) {
       addFieldToFetch(aggregationVariable.aggregationFieldKey)
     }
+    if (aggregationVariable.secondaryAggregationFieldKey) {
+      addFieldToFetch(aggregationVariable.secondaryAggregationFieldKey)
+    }
     return uniq([
       ...Array.from(fieldsToFetch),
       'senderKeyId',
@@ -676,7 +678,7 @@ export class RuleJsonLogicEvaluator {
         )
       if (shouldIncludeNewData) {
         const newDataValue = await entityVarDataloader.load(
-          aggregationVariable.aggregationFieldKey
+          this.getAggregationVarFieldKey(aggregationVariable, direction)
         )
         if (newDataValue) {
           // NOTE: Merge the incoming transaction/user into the aggregation result
@@ -733,6 +735,19 @@ export class RuleJsonLogicEvaluator {
       data.transaction.timestamp! >= afterTimestamp &&
       data.transaction.timestamp! <= beforeTimestamp
     )
+  }
+
+  private getAggregationVarFieldKey(
+    aggregationVariable: RuleAggregationVariable,
+    direction: 'origin' | 'destination'
+  ) {
+    if (aggregationVariable.transactionDirection === 'SENDING_RECEIVING') {
+      return direction === 'origin'
+        ? aggregationVariable.aggregationFieldKey
+        : aggregationVariable.secondaryAggregationFieldKey ??
+            aggregationVariable.aggregationFieldKey
+    }
+    return aggregationVariable.aggregationFieldKey
   }
 
   private getAggregationGranularity(

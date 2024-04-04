@@ -57,6 +57,13 @@ const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; 
   { value: 'SENDING_RECEIVING', label: 'Both' },
 ];
 
+function swapOriginAndDestination(text?: string): string {
+  if (!text) return '';
+  return text.replace(/(origin|destination)/g, (match) => {
+    return match === 'origin' ? 'destination' : 'origin';
+  });
+}
+
 export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = ({
   variable,
   entityVariables,
@@ -66,17 +73,42 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [formValues, setFormValues] = useState<FormRuleAggregationVariable>(variable);
-  const aggregateFieldOptions = useMemo(
-    () =>
-      entityVariables
-        .filter((v) => v.entity === 'TRANSACTION')
-        .map((v) => ({
-          value: v.key,
-          // NOTE: Remove redundant namespace prefix as we only show transaction variables
-          label: v.uiDefinition.label.replace(/^Transaction\s*\/\s*/, ''),
-        })),
-    [entityVariables],
-  );
+  const aggregateFieldOptions = useMemo(() => {
+    return entityVariables
+      .filter((v) => v.entity === 'TRANSACTION')
+      .map((v) => ({
+        value: v.key,
+        // NOTE: Remove redundant namespace prefix as we only show transaction variables
+        label: v.uiDefinition.label.replace(/^Transaction\s*\/\s*/, ''),
+      }));
+  }, [entityVariables]);
+  const secondaryAggregationKeyOptions = useMemo(() => {
+    if (!formValues.aggregationFieldKey) return [];
+    const entityVariable = entityVariables.find((v) => v.key === formValues.aggregationFieldKey);
+    const label = entityVariable?.uiDefinition.label.replace(/^Transaction\s*\/\s*/, '');
+    const originRegex = /origin/i;
+    const destinationRegex = /destination/i;
+    if (!entityVariable) return [];
+    if (!originRegex.test(entityVariable.key) && !destinationRegex.test(entityVariable.key)) {
+      return [
+        {
+          value: entityVariable.key,
+          label: label,
+        },
+      ];
+    } else {
+      return [
+        {
+          value: entityVariable.key,
+          label: label,
+        },
+        {
+          value: swapOriginAndDestination(entityVariable.key),
+          label: swapOriginAndDestination(label),
+        },
+      ];
+    }
+  }, [formValues.aggregationFieldKey, entityVariables]);
   const aggregateFunctionOptions: Array<{
     value: RuleAggregationFunc;
     label: string;
@@ -214,35 +246,46 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               testName="variable-tx-direction-v8"
             />
           </Label>
-          <Label
-            label="Aggregate field"
-            required={{ value: true, showHint: true }}
-            testId="variable-aggregate-field-v8"
-          >
-            <Select<string>
-              value={formValues.aggregationFieldKey}
-              onChange={(aggregationFieldKey) =>
-                handleUpdateForm({ aggregationFieldKey, aggregationFunc: undefined })
+          <>
+            <Label
+              label={
+                formValues.transactionDirection === 'SENDING_RECEIVING'
+                  ? 'Sending aggregate Field'
+                  : 'Aggregate field'
               }
-              mode="SINGLE"
-              options={aggregateFieldOptions}
-            />
-            {/* TODO (v8): Base currency design TBD */}
-            {formValues.aggregationFieldKey &&
-              isTransactionAmountVariable(formValues.aggregationFieldKey) && (
-                <Label label="Base currency" required={{ value: true, showHint: true }}>
-                  <Select<string>
-                    value={formValues.baseCurrency}
-                    onChange={(baseCurrency) =>
-                      handleUpdateForm({ baseCurrency: baseCurrency as CurrencyCode })
-                    }
-                    mode="SINGLE"
-                    placeholder="Select base currency"
-                    options={CURRENCIES_SELECT_OPTIONS}
-                  />
-                </Label>
-              )}
-          </Label>
+              required={{ value: true, showHint: true }}
+              testId="variable-aggregate-field-v8"
+            >
+              <Select<string>
+                value={formValues.aggregationFieldKey}
+                onChange={(aggregationFieldKey) =>
+                  handleUpdateForm({ aggregationFieldKey, aggregationFunc: undefined })
+                }
+                mode="SINGLE"
+                options={aggregateFieldOptions}
+              />
+            </Label>
+            {formValues.transactionDirection === 'SENDING_RECEIVING' && (
+              <Label
+                label="Receiving aggregate Field"
+                required={{ value: true, showHint: true }}
+                testId="variable-aggregate-field-v8"
+              >
+                <Select<string>
+                  isDisabled={!formValues.aggregationFieldKey}
+                  value={formValues.secondaryAggregationFieldKey ?? formValues.aggregationFieldKey}
+                  onChange={(secondaryAggregationFieldKey) =>
+                    handleUpdateForm({ secondaryAggregationFieldKey, aggregationFunc: undefined })
+                  }
+                  mode="SINGLE"
+                  options={secondaryAggregationKeyOptions}
+                />
+                {!formValues.aggregationFieldKey && (
+                  <Hint isError={false}>Select sending key first</Hint>
+                )}
+              </Label>
+            )}
+          </>
           <Label
             label="Aggregate function"
             required={{ value: true, showHint: true }}
@@ -260,6 +303,21 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               </Hint>
             )}
           </Label>
+          {/* TODO (v8): Base currency design TBD */}
+          {formValues.aggregationFieldKey &&
+            isTransactionAmountVariable(formValues.aggregationFieldKey) && (
+              <Label label="Base currency" required={{ value: true, showHint: true }}>
+                <Select<string>
+                  value={formValues.baseCurrency}
+                  onChange={(baseCurrency) =>
+                    handleUpdateForm({ baseCurrency: baseCurrency as CurrencyCode })
+                  }
+                  mode="SINGLE"
+                  placeholder="Select base currency"
+                  options={CURRENCIES_SELECT_OPTIONS}
+                />
+              </Label>
+            )}
           <div className={s.timeWindow}>
             <Label
               label="Time window"
