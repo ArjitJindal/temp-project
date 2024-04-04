@@ -196,7 +196,11 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const notificationQueue = this.createQueue(
       SQSQueues.NOTIFICATIONS_QUEUE_NAME.name,
-      { maxReceiveCount: 10 }
+      {
+        maxReceiveCount: 10,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+      }
     )
     auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
     auditLogTopic.addSubscription(new SqsSubscription(notificationQueue))
