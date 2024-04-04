@@ -124,7 +124,7 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = isQaEnv()
-const enableFargateBatchJob = true
+const enableFargateBatchJob = false
 
 // TODO make this equal to !isQaEnv before merge
 const deployKinesisConsumer = !isQaEnv()
@@ -192,8 +192,13 @@ export class CdkTarponStack extends cdk.Stack {
     })
     const auditLogQueue = this.createQueue(
       SQSQueues.AUDIT_LOG_QUEUE_NAME.name,
-      { maxReceiveCount: 3 }
+      {
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+      }
     )
+
     const notificationQueue = this.createQueue(
       SQSQueues.NOTIFICATIONS_QUEUE_NAME.name,
       {
@@ -202,10 +207,17 @@ export class CdkTarponStack extends cdk.Stack {
         retentionPeriod: Duration.days(7),
       }
     )
+
     auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
     auditLogTopic.addSubscription(new SqsSubscription(notificationQueue))
 
-    const batchJobQueue = this.createQueue(SQSQueues.BATCH_JOB_QUEUE_NAME.name)
+    const batchJobQueue = this.createQueue(
+      SQSQueues.BATCH_JOB_QUEUE_NAME.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+      }
+    )
 
     // Kinesis consumer retry queues
     const tarponChangeCaptureRetryQueue = this.createQueue(
