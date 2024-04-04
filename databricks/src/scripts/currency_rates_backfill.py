@@ -10,7 +10,7 @@ def fetch_currency_data(start_date, end_date, access_key, base="USD"):
     end = datetime.strptime(end_date, "%Y-%m-%d")
 
     # Open the file to write the JSON objects
-    with open("data/currency_rates_backfill.json", "w") as file:
+    with open("data/currency_rates_backfill.json", "a") as file:
         # Loop over the date range
         current_date = start
         while current_date <= end:
@@ -47,4 +47,4 @@ def fetch_currency_data(start_date, end_date, access_key, base="USD"):
 
 # Example usage
 API_KEY = "some-api-key"
-fetch_currency_data("2021-01-01", "2024-03-13", API_KEY)
+fetch_currency_data("2024-03-12", "2024-04-04", API_KEY)

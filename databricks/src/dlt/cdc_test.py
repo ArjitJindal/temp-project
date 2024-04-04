@@ -28,4 +28,19 @@ def test_cdc_transformation():
         == 58016.0
     ), "Transaction amount is correct"
 
+    not_txn = read_file("fixtures/dynamic_risk_value.json")
+    transaction_data = [(not_txn,)]
+
+    transactions_df = spark.createDataFrame(
+        transaction_data, StructType([StructField("data", StringType())])
+    ).withColumn(
+        "approximateArrivalTimestamp", lit("1970-01-01 00:00:00").cast("timestamp")
+    )
+
+    stream_resolver = mock_stream_resolver(spark, [("2021-01-01", {"GBP": 0.15})])
+    transformed_df = cdc_transformation(
+        transaction_entity, transactions_df, stream_resolver
+    )
+    assert transformed_df.first() is None, "Wrong kinesis event not selected"
+
     spark.stop()

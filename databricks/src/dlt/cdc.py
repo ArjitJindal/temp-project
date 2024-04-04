@@ -37,7 +37,10 @@ def cdc_transformation(
             ),
         )
     )
-    with_structured_df = df.withColumn(
+
+    filtered_df = df.filter(col(PARTITION_KEY_ID_PATH).contains(entity.partition_key))
+
+    with_structured_df = filtered_df.withColumn(
         "structured_data", deserialisation_udf(col("data"))
     ).alias("entity")
 
