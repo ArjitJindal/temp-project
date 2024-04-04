@@ -23,6 +23,7 @@ export interface Failed<V> {
 }
 
 export type AsyncResource<T = unknown> = Init | Loading<T> | Success<T> | Failed<T>;
+type AR<T> = AsyncResource<T>;
 
 export function init<T>(): AsyncResource<T> {
   return {
@@ -133,8 +134,12 @@ export function map<T, R>(
   return asyncResource;
 }
 
-export function all<T>(asyncResourceList: AsyncResource<T>[]): AsyncResource<T[]> {
-  return asyncResourceList.reduce((acc: AsyncResource<T[]>, x: AsyncResource<T>) => {
+export function all<T1, T2, T3, T4>(ars: [AR<T1>, AR<T2>, AR<T3>, AR<T4>]): AR<[T1, T2, T3, T4]>;
+export function all<T1, T2, T3>(ars: [AR<T1>, AR<T2>, AR<T3>]): AR<[T1, T2, T3]>;
+export function all<T1, T2>(ars: [AR<T1>, AR<T2>]): AR<[T1, T2]>;
+export function all<T1>(ars: AR<T1>[]): AR<T1[]>;
+export function all<T>(asyncResourceList: AR<T>[]): AR<T[]> {
+  return asyncResourceList.reduce((acc: AR<T[]>, x: AR<T>) => {
     if (!isSuccess(acc)) {
       return acc;
     }

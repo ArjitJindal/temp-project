@@ -132,24 +132,6 @@ export default function AlertTable(props: Props) {
   const parsedParams = queryAdapter.deserializer({
     ...parseQueryString(location.search),
   });
-  const forensicsFor = parsedParams.forensicsFor;
-  const [investigativeAlert, setInvestigativeAlert] = useState<
-    | {
-        alertId: string;
-        caseUserName: string;
-      }
-    | undefined
-  >(forensicsFor);
-
-  //for handing back and forth button in browser
-  useEffect(() => {
-    if (!forensicsFor?.alertId && !forensicsFor?.caseUserName) setInvestigativeAlert(undefined);
-    else
-      setInvestigativeAlert({
-        alertId: forensicsFor?.alertId,
-        caseUserName: forensicsFor?.caseUserName,
-      });
-  }, [forensicsFor?.alertId, forensicsFor?.caseUserName]);
 
   const assignmentsToMutationAlerts = useMutation<unknown, Error, AlertsAssignmentsUpdateRequest>(
     async ({ alertIds, assignments }) => {
@@ -242,7 +224,7 @@ export default function AlertTable(props: Props) {
       handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
       handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
       handleInvestigateAlert:
-        | ((alertInfo: { alertId: string; caseUserName: string }) => void)
+        | ((alertInfo: { alertId: string; caseId: string }) => void)
         | undefined,
       userId: string,
       reload: () => void,
@@ -573,7 +555,7 @@ export default function AlertTable(props: Props) {
                         ...params,
                         forensicsFor: {
                           alertId: entity.alertId,
-                          caseUserName: entity.caseUserName || '',
+                          caseId: entity.caseId,
                         },
                         expandedAlertId: entity.alertId,
                       }),
@@ -583,10 +565,10 @@ export default function AlertTable(props: Props) {
                       testName={'investigate-button'}
                       type="TETRIARY"
                       onClick={() => {
-                        if (entity.alertId != null) {
+                        if (entity.alertId != null && entity.caseId != null) {
                           handleInvestigateAlert({
                             alertId: entity.alertId,
-                            caseUserName: entity.caseUserName || '',
+                            caseId: entity.caseId,
                           });
                         }
                       }}
@@ -614,7 +596,22 @@ export default function AlertTable(props: Props) {
       showUserFilters,
       handleAlertAssignments,
       handleAlertsReviewAssignments,
-      icpEnabled ? setInvestigativeAlert : undefined,
+      icpEnabled
+        ? (alertInfo) => {
+            navigate(
+              makeUrl(location.pathname, undefined, {
+                ...queryAdapter.serializer({
+                  ...params,
+                  forensicsFor: {
+                    alertId: alertInfo.alertId,
+                    caseId: alertInfo.caseId,
+                  },
+                }),
+                expandedAlertId,
+              }),
+            );
+          }
+        : undefined,
       user.userId,
       reloadTable,
       isFalsePositiveEnabled,
@@ -638,6 +635,8 @@ export default function AlertTable(props: Props) {
     qaMode,
     qaAssigneesUpdateMutation,
     params,
+    navigate,
+    expandedAlertId,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
@@ -997,11 +996,18 @@ export default function AlertTable(props: Props) {
         }}
       />
       <InvestigativeCoPilotModal
-        alertId={investigativeAlert?.alertId}
-        caseUserName={investigativeAlert?.caseUserName}
+        alertId={parsedParams.forensicsFor?.alertId}
+        caseId={parsedParams.forensicsFor?.caseId}
         onClose={() => {
-          navigate(-1);
-          setInvestigativeAlert(undefined);
+          navigate(
+            makeUrl(location.pathname, undefined, {
+              ...queryAdapter.serializer({
+                ...params,
+                forensicsFor: undefined,
+              }),
+              expandedAlertId,
+            }),
+          );
         }}
       />
     </>

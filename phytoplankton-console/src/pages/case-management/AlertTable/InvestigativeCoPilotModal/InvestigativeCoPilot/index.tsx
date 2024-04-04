@@ -14,32 +14,44 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM, COPILOT_ALERT_QUESTIONS } from '@/utils/queries/keys';
+import { ALERT_ITEM, COPILOT_ALERT_QUESTIONS, CASES_ITEM } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
-import { isSuccess, map, useFinishedSuccessfully } from '@/utils/asyncResource';
+import { isSuccess, map, useFinishedSuccessfully, all } from '@/utils/asyncResource';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { Case } from '@/apis';
+import { TableUser } from '@/pages/case-management/CaseTable/types';
+import { getUserName } from '@/utils/api/users';
+import UserLink from '@/components/UserLink';
 import Spinner from '@/components/library/Spinner';
 import { useElementSize, useElementSizeChangeEffect } from '@/utils/browser';
 import { useIsChanged } from '@/utils/hooks';
 
 interface Props {
   alertId: string;
-  caseUserName: string;
+  caseId: string;
 }
 
 export default function InvestigativeCoPilot(props: Props) {
-  const { alertId, caseUserName } = props;
+  const { alertId, caseId } = props;
   const api = useApi();
   const [history, setHistory] = useState<QuestionResponse[]>([]);
 
   const [rootRef, setRootRef] = useState<HTMLDivElement | null>(null);
   const historyRef = useRef<HTMLDivElement>(null);
+
+  const caseQueryResults = useQuery(
+    CASES_ITEM(caseId),
+    (): Promise<Case> =>
+      api.getCase({
+        caseId,
+      }),
+  );
 
   const historyQuery = useQuery(COPILOT_ALERT_QUESTIONS(alertId), async () => {
     return await api.getQuestions({
@@ -122,11 +134,27 @@ export default function InvestigativeCoPilot(props: Props) {
     <AsyncResourceRenderer resource={historyRes}>
       {() => (
         <div className={s.root} ref={setRootRef}>
-          <div className={s.alertInfo}>
-            <AsyncResourceRenderer resource={alertQueryResult.data}>
-              {(alert) => (
-                <>
+          <AsyncResourceRenderer resource={all([caseQueryResults.data, alertQueryResult.data])}>
+            {([caseItem, alert]) => {
+              const caseUsers = caseItem.caseUsers ?? {};
+
+              const user = caseUsers?.origin?.userId
+                ? caseUsers?.origin
+                : caseUsers?.destination?.userId
+                ? caseUsers?.destination
+                : undefined;
+
+              const caseUserName = getUserName(user as TableUser | undefined);
+              const caseUserId = caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '';
+
+              return (
+                <div className={s.alertInfo}>
                   <Form.Layout.Label title={'User'}>{caseUserName}</Form.Layout.Label>
+                  {user && 'type' in user && (
+                    <Form.Layout.Label title={'User ID'}>
+                      <UserLink user={user}>{caseUserId}</UserLink>
+                    </Form.Layout.Label>
+                  )}
                   <Form.Layout.Label title={'Alert ID'}>
                     <Id
                       to={addBackUrlToRoute(
@@ -172,10 +200,10 @@ export default function InvestigativeCoPilot(props: Props) {
                   <Form.Layout.Label title={'Alert status'}>
                     {alert.alertStatus ? <CaseStatusTag caseStatus={alert.alertStatus} /> : 'N/A'}
                   </Form.Layout.Label>
-                </>
-              )}
-            </AsyncResourceRenderer>
-          </div>
+                </div>
+              );
+            }}
+          </AsyncResourceRenderer>
           <div className={s.history} ref={historyRef}>
             <History
               alertId={alertId}

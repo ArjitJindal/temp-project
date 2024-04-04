@@ -134,7 +134,12 @@ export function useUsers(
   const api = useApi();
 
   const usersQueryResult = useQuery(ACCOUNT_LIST(), async () => {
-    return await api.getAccounts();
+    try {
+      return await api.getAccounts();
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
   });
 
   const users = getOr(usersQueryResult.data, []);

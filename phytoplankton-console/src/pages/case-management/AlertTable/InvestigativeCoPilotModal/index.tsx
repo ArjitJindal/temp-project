@@ -4,25 +4,23 @@ import Modal from '@/components/library/Modal';
 
 interface Props {
   alertId: string | undefined;
-  caseUserName: string | undefined;
+  caseId: string | undefined;
   onClose: () => void;
 }
 
 export default function InvestigativeCoPilotModal(props: Props) {
-  const { alertId, caseUserName, onClose } = props;
+  const { alertId, caseId, onClose } = props;
   return (
     <Modal
       title={'AI Forensics'}
-      isOpen={alertId != null}
+      isOpen={alertId != null && caseId != null}
       onCancel={onClose}
       hideFooter={true}
       disablePadding={true}
       width="XL"
       height="FULL"
     >
-      {alertId && caseUserName && (
-        <InvestigativeCoPilot alertId={alertId} caseUserName={caseUserName} />
-      )}
+      {alertId && caseId && <InvestigativeCoPilot alertId={alertId} caseId={caseId} />}
     </Modal>
   );
 }

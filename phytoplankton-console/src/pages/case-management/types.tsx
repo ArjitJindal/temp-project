@@ -49,7 +49,7 @@ export type CommonCaseParams = {
   ruleNature?: string[];
   forensicsFor?: {
     alertId: string;
-    caseUserName: string;
+    caseId: string;
   };
   expandedAlertId?: string;
 };
