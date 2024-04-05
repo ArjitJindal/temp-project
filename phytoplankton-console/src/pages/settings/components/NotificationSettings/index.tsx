@@ -8,6 +8,7 @@ import Checkbox from '@/components/library/Checkbox';
 import { humanizeAuto } from '@/utils/humanize';
 import Button from '@/components/library/Button';
 import {
+  Feature,
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -38,55 +39,57 @@ export const NotificationsSettings = () => {
     return every(value, (item) => includes(array, item));
   }
   return (
-    <Card.Root noBorder className={s.root}>
-      <div className={s.container}>
-        <div className={s.row}>
-          <div>
-            <H4 className={s.heading}>Notification settings</H4>
-          </div>
-          <div>
-            <H5 className={s.heading}>Console</H5>
-          </div>
-        </div>
-        {types.map((type) => {
-          const notificationTypes = NOTIFICATION_TYPES[type];
-
-          return (
-            <div className={s.section}>
-              <H4 className={s.heading}>{humanizeAuto(type)}</H4>
-              {notificationTypes.map((notificationType) => {
-                const value = notificationType.value;
-                const isChecked = isSubset(consoleNotificationSettings, value);
-                return (
-                  <div className={s.row}>
-                    <div>
-                      <span>{notificationType.label}</span>
-                    </div>
-                    <div>
-                      <Checkbox
-                        value={isChecked}
-                        onChange={() => {
-                          handleCheckboxChange(value);
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+    <Feature name="NOTIFICATIONS">
+      <Card.Root noBorder className={s.root}>
+        <div className={s.container}>
+          <div className={s.row}>
+            <div>
+              <H4 className={s.heading}>Notification settings</H4>
             </div>
-          );
-        })}
-        <div>
-          <Button
-            type="PRIMARY"
-            onClick={() => {
-              handleSaveNotificationSettings();
-            }}
-          >
-            Save
-          </Button>
+            <div>
+              <H5 className={s.heading}>Console</H5>
+            </div>
+          </div>
+          {types.map((type) => {
+            const notificationTypes = NOTIFICATION_TYPES[type];
+
+            return (
+              <div className={s.section}>
+                <H4 className={s.heading}>{humanizeAuto(type)}</H4>
+                {notificationTypes.map((notificationType) => {
+                  const value = notificationType.value;
+                  const isChecked = isSubset(consoleNotificationSettings, value);
+                  return (
+                    <div className={s.row}>
+                      <div>
+                        <span>{notificationType.label}</span>
+                      </div>
+                      <div>
+                        <Checkbox
+                          value={isChecked}
+                          onChange={() => {
+                            handleCheckboxChange(value);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+          <div>
+            <Button
+              type="PRIMARY"
+              onClick={() => {
+                handleSaveNotificationSettings();
+              }}
+            >
+              Save
+            </Button>
+          </div>
         </div>
-      </div>
-    </Card.Root>
+      </Card.Root>
+    </Feature>
   );
 };
