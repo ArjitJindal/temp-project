@@ -377,6 +377,7 @@ export async function tenantSettings(
 
 export async function tenantTimezone(tenantId: string): Promise<Timezone> {
   return (
-    (await tenantSettings(tenantId))?.tenantTimezone ?? getDefaultTimezone()
+    (await tenantSettings(tenantId))?.defaultValues?.tenantTimezone ??
+    getDefaultTimezone()
   )
 }

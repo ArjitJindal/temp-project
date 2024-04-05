@@ -7583,6 +7583,8 @@ components:
           properties:
             currency:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+            tenantTimezone:
+              $ref: '#/components/schemas/Timezone'
         aiSourcesDisabled:
           type: array
           items:
@@ -7617,8 +7619,6 @@ components:
               type: number
             ongoingMerchantMonitoringUsers:
               type: number
-        tenantTimezone:
-          $ref: '#/components/schemas/Timezone'
         auth0Domain:
           type: string
         notificationsSubscriptions:

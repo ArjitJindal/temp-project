@@ -489,7 +489,7 @@ export class CaseCreationService {
             ? calculateCaseAvailableDate(
                 now,
                 ruleInstanceMatch?.alertConfig?.alertCreationInterval,
-                (await this.tenantSettings()).tenantTimezone ??
+                (await this.tenantSettings())?.defaultValues?.tenantTimezone ??
                   getDefaultTimezone()
               )
             : undefined
