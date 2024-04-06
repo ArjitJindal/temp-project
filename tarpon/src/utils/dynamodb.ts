@@ -4,7 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import { chunk, isNil, omitBy, wrap } from 'lodash'
+import { chunk, isNil, omitBy, wrap, omit } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
   BatchGetCommand,
@@ -397,7 +397,7 @@ export function getUpdateAttributesUpdateItemInput(attributes: {
 } {
   const updateExpressions: string[] = []
   const expresssionValues: { [key: string]: any } = {}
-  for (const key in attributes) {
+  for (const key in omit(attributes, ['PartitionKeyID', 'SortKeyID'])) {
     updateExpressions.push(`${key} = :${key}`)
     expresssionValues[`:${key}`] = attributes[key]
   }
