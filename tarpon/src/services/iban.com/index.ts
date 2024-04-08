@@ -79,6 +79,7 @@ export class IBANService {
   apiKey!: string
   ibanApiRepository!: IBANApiRepository
   tenantId: string
+  initializationPromise: Promise<void> | null = null
 
   constructor(tenantId: string) {
     this.tenantId = tenantId
@@ -190,14 +191,16 @@ export class IBANService {
     return result
   }
 
-  public async initialize() {
-    if (this.apiKey) {
-      return
-    }
-
+  public async initializeInternal() {
     const mongoDb = await getMongoDbClient()
     this.ibanApiRepository = new IBANApiRepository(this.tenantId, mongoDb)
     this.apiKey = await getApiKey()
+  }
+
+  public async initialize() {
+    this.initializationPromise =
+      this.initializationPromise ?? this.initializeInternal()
+    await this.initializationPromise
   }
 
   private getRequestBody(request: { [key: string]: string }): URLSearchParams {

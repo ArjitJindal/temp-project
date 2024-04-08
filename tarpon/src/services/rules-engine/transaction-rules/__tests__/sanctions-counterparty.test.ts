@@ -84,6 +84,8 @@ jest.mock('@/services/iban.com', () => {
       return {
         resolveBankNames: originalModule.IBANService.prototype.resolveBankNames,
         initialize: originalModule.IBANService.prototype.initialize,
+        initializeInternal:
+          originalModule.IBANService.prototype.initializeInternal,
         tenantId: TEST_TENANT_ID,
         queryIban: jest.fn().mockImplementation((iban: string) => {
           return new Promise((resolve) =>

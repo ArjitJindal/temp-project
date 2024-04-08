@@ -92,16 +92,13 @@ export class SanctionsService {
   sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
   sanctionsScreeningDetailsRepository!: SanctionsScreeningDetailsRepository
   tenantId: string
+  initializationPromise: Promise<void> | null = null
 
   constructor(tenantId: string) {
     this.tenantId = tenantId
   }
 
-  private async initialize() {
-    if (this.apiKey) {
-      return
-    }
-
+  private async initializeInternal() {
     const mongoDb = await getMongoDbClient()
     this.sanctionsSearchRepository = new SanctionsSearchRepository(
       this.tenantId,
@@ -122,7 +119,13 @@ export class SanctionsService {
       settings.complyAdvantageSearchProfileId
   }
 
-  public async getApiKey(): Promise<string> {
+  private async initialize() {
+    this.initializationPromise =
+      this.initializationPromise ?? this.initializeInternal()
+    await this.initializationPromise
+  }
+
+  private async getApiKey(): Promise<string> {
     if (process.env.COMPLYADVANTAGE_API_KEY) {
       return process.env.COMPLYADVANTAGE_API_KEY
     }
