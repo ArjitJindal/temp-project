@@ -19,13 +19,18 @@ def enrich_transactions(
 ):
     currency_rates_df = resolve_stream("currency_rates")
 
-    currencies_usd = currency_rates_df.select(
-        col("date"),
-        explode(col("rates")).alias("currency", "rate"),
-        col("approximateArrivalTimestamp"),
-    ).withWatermark("approximateArrivalTimestamp", "1 second")
+    currencies_usd = (
+        currency_rates_df.filter(currency_rates_df.date.isNotNull())
+        .select(
+            col("date"),
+            explode(col("rates")).alias("currency", "rate"),
+            col("approximateArrivalTimestamp"),
+        )
+        .withWatermark("approximateArrivalTimestamp", "1 second")
+    )
 
-    broadcast_currencies = broadcast(currencies_usd).alias("cr")
+    filtered_currencies_usd = currencies_usd.filter(currencies_usd.date.isNotNull())
+    broadcast_currencies = broadcast(filtered_currencies_usd).alias("cr")
 
     joined_df = (
         transactions_df.alias("t")

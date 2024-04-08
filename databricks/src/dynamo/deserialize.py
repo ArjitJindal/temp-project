@@ -1,22 +1,4 @@
 import json
-from decimal import Decimal
-from typing import Any
-
-from boto3.dynamodb.types import TypeDeserializer
-
-
-def replace_decimals(obj: Any):
-    if isinstance(obj, list):
-        for i, value in enumerate(obj):
-            obj[i] = replace_decimals(value)
-        return obj
-    if isinstance(obj, dict):
-        for k in obj:
-            obj[k] = replace_decimals(obj[k])
-        return obj
-    if isinstance(obj, Decimal):
-        return float(obj)
-    return obj
 
 
 class DeserializerException(Exception):
@@ -29,13 +11,33 @@ class DeserializerException(Exception):
         return f"An error occurred deserializing: {self.json_string}"
 
 
-def deserialise_dynamo(column: str):
-    data = json.loads(column)
+def deserialise_dynamo(dynamodb_json: str):
+    data = json.loads(dynamodb_json)
+    to_des = None
     if "dynamodb" in data:
         images = data["dynamodb"]
         if "NewImage" in data["dynamodb"]:
             to_des = images["NewImage"]
         else:
             to_des = images["OldImage"]
-        return replace_decimals(TypeDeserializer().deserialize({"M": to_des}))
-    raise DeserializerException(column)
+    if to_des is None:
+        raise DeserializerException(dynamodb_json)
+
+    def parse_item(item):
+        # Recursively parse the DynamoDB item to handle nested structures
+        if isinstance(item, dict):
+            if "M" in item:
+                return {k: parse_item(v) for k, v in item["M"].items()}
+            if "S" in item:
+                return item["S"]
+            if "N" in item:
+                return float(item["N"])
+            if "L" in item:
+                return [parse_item(i) for i in item["L"]]
+            if "BOOL" in item:
+                return item["BOOL"]
+            return {k: parse_item(v) for k, v in item.items()}
+        return item
+
+    item = parse_item(to_des)
+    return item

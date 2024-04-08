@@ -1,14 +1,8 @@
-from decimal import Decimal
-
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StringType, StructField, StructType
 
-from src.dynamo.deserialize import (
-    DeserializerException,
-    deserialise_dynamo,
-    replace_decimals,
-)
+from src.dynamo.deserialize import DeserializerException, deserialise_dynamo
 from src.openapi.internal.models import DrsScore
 from src.openapi.internal.models.transaction import Transaction as InternalTransaction
 from src.openapi.public.models.transaction import Transaction
@@ -60,16 +54,3 @@ def test_deserialise_dynamo():
     txn = read_file("fixtures/transaction.json")
 
     deserialise_dynamo(txn)
-
-
-def test_replace_decimals():
-    replaced = replace_decimals(
-        {
-            "some_decimal_value": Decimal(1.0),
-            "a_string": "here",
-            "an_object": {"an_inner_string": "string", "a_list_of_strings": ["thing"]},
-        }
-    )
-
-    assert not isinstance(replaced["some_decimal_value"], Decimal)
-    assert isinstance(replaced["a_string"], str)
