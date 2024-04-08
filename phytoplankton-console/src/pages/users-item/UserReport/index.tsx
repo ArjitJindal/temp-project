@@ -1,20 +1,35 @@
 import { COUNTRIES } from '@flagright/lib/constants';
 import { RiskScores } from '../Header/HeaderMenu';
-import { InternalBusinessUser, InternalConsumerUser, LegalEntity, Person } from '@/apis';
+import {
+  InternalBusinessUser,
+  InternalConsumerUser,
+  LegalEntity,
+  Person,
+  TenantSettings,
+} from '@/apis';
 import { TableOptions } from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { ReportItem, getTable, getWidgetTable } from '@/components/DownloadAsPdf/report-utils';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { humanizeAuto } from '@/utils/humanize';
+import { getRiskLevelLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const getUserWidgetsProps = (
   user: InternalBusinessUser | InternalConsumerUser,
   riskScores: RiskScores,
+  tenantSettings: TenantSettings,
 ): ReportItem[] => {
   const drsRiskScore = riskScores?.drsRiskScore;
   const kycRiskScore = riskScores?.kycRiskScore;
+  const craRiskLevel = drsRiskScore?.riskLevel ?? drsRiskScore?.manualRiskLevel;
   const userType = user.type;
   const companyDetails =
     user.type === 'BUSINESS' ? user.legalEntity.companyGeneralDetails : undefined;
+  const krsRiskLevel = user.krsScore?.riskLevel;
+  const krsRiskScore = user.krsScore?.krsScore;
+
+  const krsLabel = krsRiskLevel ? getRiskLevelLabel(krsRiskLevel, tenantSettings) : '-';
+  const drsLabel = craRiskLevel ? `${getRiskLevelLabel(craRiskLevel, tenantSettings)} ` : '-';
+
   const userDetails: ReportItem[] = [
     {
       title: 'User ID',
@@ -58,9 +73,7 @@ const getUserWidgetsProps = (
       ? [
           {
             title: 'KYC risk score (KRS)',
-            value: `${humanizeAuto(user.krsScore?.riskLevel ?? '-')} (${
-              user.krsScore?.krsScore ?? '-'
-            })`,
+            value: `${krsLabel} (${krsRiskScore ?? '-'})`,
           },
         ]
       : []),
@@ -68,9 +81,7 @@ const getUserWidgetsProps = (
       ? [
           {
             title: 'CRA risk score',
-            value: `${humanizeAuto(
-              drsRiskScore?.riskLevel ?? drsRiskScore?.manualRiskLevel ?? '-',
-            )} ${drsRiskScore?.components ? `(${drsRiskScore?.score ?? '-'})` : ``}`,
+            value: `${drsLabel} ${drsRiskScore?.score ?? '-'}`,
           },
         ]
       : []),
@@ -192,14 +203,16 @@ function getPersonDetails(shareHolders: Array<Person>): ReportItem[] {
 const getUserWidgetTable = (
   user: InternalBusinessUser | InternalConsumerUser,
   riskScores: RiskScores,
+  tenantSettings: TenantSettings,
 ): TableOptions => {
-  const props = getUserWidgetsProps(user, riskScores);
+  const props = getUserWidgetsProps(user, riskScores, tenantSettings);
   return getWidgetTable(props);
 };
 
 const getUserSupportTables = (
   user: InternalBusinessUser | InternalConsumerUser,
   riskScores: RiskScores,
+  tenantSettings: TenantSettings,
 ): TableOptions[] => {
   const head = ['Risk factor', 'Value', 'Risk score', 'Risk level'];
   const tableValues = ['KRS details', 'CRA details'].map((title) => {
@@ -216,7 +229,12 @@ const getUserSupportTables = (
           } else {
             parsedValue = humanizeAuto(parsedValue);
           }
-          return [riskFactor, parsedValue, component.score, humanizeAuto(component.riskLevel)];
+          return [
+            riskFactor,
+            parsedValue,
+            component.score,
+            getRiskLevelLabel(component.riskLevel, tenantSettings),
+          ];
         }) ?? [],
     };
   });
@@ -230,6 +248,10 @@ const getUserSupportTables = (
 export const getUserReportTables = (
   user: InternalBusinessUser | InternalConsumerUser,
   riskScores: RiskScores,
+  tenantSettings: TenantSettings,
 ): TableOptions[] => {
-  return [getUserWidgetTable(user, riskScores), ...getUserSupportTables(user, riskScores)];
+  return [
+    getUserWidgetTable(user, riskScores, tenantSettings),
+    ...getUserSupportTables(user, riskScores, tenantSettings),
+  ];
 };

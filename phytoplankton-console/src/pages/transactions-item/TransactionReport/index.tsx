@@ -1,10 +1,15 @@
-import { InternalTransaction } from '@/apis';
+import { RuleAlertMap } from '..';
+import { InternalTransaction, TenantSettings } from '@/apis';
+import { getRiskLevelLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableOptions } from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { ReportItem, getTable, getWidgetTable } from '@/components/DownloadAsPdf/report-utils';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { humanizeAuto } from '@/utils/humanize';
 
-const getTransactionWidgetsProps = (transaction: InternalTransaction): ReportItem[] => {
+const getTransactionWidgetsProps = (
+  transaction: InternalTransaction,
+  tenantSettings: TenantSettings,
+): ReportItem[] => {
   const riskScore = transaction.riskScoreDetails?.trsScore ?? transaction.arsScore?.arsScore ?? 0;
   const riskLevel =
     transaction.riskScoreDetails?.trsRiskLevel ?? transaction.arsScore?.riskLevel ?? 'LOW';
@@ -23,7 +28,7 @@ const getTransactionWidgetsProps = (transaction: InternalTransaction): ReportIte
     },
     {
       title: 'Transaction risk score (TRS)',
-      value: `${humanizeAuto(riskLevel)} (${riskScore})`,
+      value: `${getRiskLevelLabel(riskLevel, tenantSettings)} (${riskScore})`,
     },
     {
       title: 'Created on',
@@ -57,14 +62,17 @@ const getTransactionWidgetsProps = (transaction: InternalTransaction): ReportIte
   ];
 };
 
-const getTransactionWidgetTable = (data: InternalTransaction): TableOptions => {
-  const props = getTransactionWidgetsProps(data);
+const getTransactionWidgetTable = (
+  data: InternalTransaction,
+  tenantSettings: TenantSettings,
+): TableOptions => {
+  const props = getTransactionWidgetsProps(data, tenantSettings);
   return getWidgetTable(props);
 };
 
 const getTransactionSupportTables = (
   transaction: InternalTransaction,
-  ruleAlertMap,
+  ruleAlertMap: RuleAlertMap,
 ): TableOptions => {
   const head = ['Rule ID', 'Rule name', 'Is rule hit?', 'Alert ID', 'Case ID'];
   const rows = transaction.executedRules.map((rule) => {
@@ -82,10 +90,11 @@ const getTransactionSupportTables = (
 
 export const getTransactionReportTables = (
   transaction: InternalTransaction,
-  ruleAlertMap,
+  ruleAlertMap: RuleAlertMap,
+  tenantSettings: TenantSettings,
 ): TableOptions[] => {
   return [
-    getTransactionWidgetTable(transaction),
+    getTransactionWidgetTable(transaction, tenantSettings),
     getTransactionSupportTables(transaction, ruleAlertMap),
   ];
 };

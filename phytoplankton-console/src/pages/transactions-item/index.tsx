@@ -24,6 +24,9 @@ import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.r
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { message } from '@/components/library/Message';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+
+export type RuleAlertMap = Map<string, { alertId: string; caseId: string }>;
 
 export default function TransactionsItem() {
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalTransaction>>(init());
@@ -33,6 +36,7 @@ export default function TransactionsItem() {
   const { id: transactionId } = useParams<'id'>();
   const api = useApi();
   const navigate = useNavigate();
+  const tenantSettings = useSettings();
 
   useEffect(() => {
     if (transactionId == null || transactionId === 'all') {
@@ -91,17 +95,17 @@ export default function TransactionsItem() {
     }
   }, [currentTransactionId, api]);
 
-  const ruleAlertMap = useMemo(() => {
-    const alertDetails = new Map();
-    if (transactionAlertsQueryResult) {
-      transactionAlertsQueryResult.forEach((alert) => {
-        alertDetails.set(alert.ruleInstanceId, {
-          alertId: alert.alertId,
-          caseId: alert.caseId,
-        });
+  const ruleAlertMap: RuleAlertMap = useMemo(() => {
+    const alertDetails = new Map<string, { alertId: string; caseId: string }>();
+
+    return (transactionAlertsQueryResult ?? []).reduce((alertDetails, alert) => {
+      alertDetails.set(alert.ruleInstanceId, {
+        alertId: alert.alertId as string,
+        caseId: alert.caseId as string,
       });
-    }
-    return alertDetails;
+
+      return alertDetails;
+    }, alertDetails);
   }, [transactionAlertsQueryResult]);
 
   const [isLoading, setLoading] = useState(false);
@@ -113,7 +117,7 @@ export default function TransactionsItem() {
     try {
       await DownloadAsPDF({
         fileName: `transaction-${transaction.transactionId}-report.pdf`,
-        tableOptions: getTransactionReportTables(transaction, ruleAlertMap),
+        tableOptions: getTransactionReportTables(transaction, ruleAlertMap, tenantSettings),
         reportTitle: 'Transaction report',
       });
     } catch (err) {

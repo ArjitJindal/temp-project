@@ -9,7 +9,7 @@ import Downloadicon from '@/components/ui/icons/Remix/system/download-line.react
 import { InternalBusinessUser, InternalConsumerUser, RiskLevel, RiskScoreComponent } from '@/apis';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { message } from '@/components/library/Message';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { USERS_ITEM_RISKS_DRS, USERS_ITEM_RISKS_KRS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -80,7 +80,7 @@ export const HeaderMenu = (props: Props) => {
   );
 
   const riskScoresDetails = all([drsRiskScore, kycRiskScore]);
-
+  const tenantSettings = useSettings();
   const [loading, setLoading] = useState(false);
   const handleReportDownload = async (
     user: InternalBusinessUser | InternalConsumerUser,
@@ -92,7 +92,7 @@ export const HeaderMenu = (props: Props) => {
     try {
       await DownloadAsPDF({
         fileName: `user-${user.userId}-report.pdf`,
-        tableOptions: getUserReportTables(user, riskScores),
+        tableOptions: getUserReportTables(user, riskScores, tenantSettings),
         reportTitle: 'User report',
       });
     } catch (err) {
