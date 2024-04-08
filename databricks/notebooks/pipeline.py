@@ -11,6 +11,7 @@ from pyspark.sql.functions import col, expr, to_timestamp
 
 from src.dlt.cdc import cdc_transformation
 from src.dlt.currency_rates import currency_rates_transformation
+from src.dlt.kinesis_events import kinesis_events_transformation
 from src.entities.entities import entities
 
 aws_access_key = dbutils.secrets.get(
@@ -53,7 +54,7 @@ def define_pipeline(spark):
         },
     )
     def hammerhead_kinesis_events():
-        return (
+        return kinesis_events_transformation(
             spark.readStream.format("kinesis")
             .option("streamName", os.environ["HAMMERHEAD_KINESIS_STREAM"])
             .option("region", os.environ["AWS_REGION"])
@@ -68,7 +69,7 @@ def define_pipeline(spark):
         },
     )
     def kinesis_events():
-        return (
+        return kinesis_events_transformation(
             spark.readStream.format("kinesis")
             .option("streamName", os.environ["KINESIS_STREAM"])
             .option("region", os.environ["AWS_REGION"])
