@@ -117,10 +117,12 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
   );
   const handleSave = useCallback(async () => {
     if (paymentMethod == null) {
-      throw new Error(`paymentMethod can not be null`);
+      message.warn('Payment method is required');
+      return;
     }
     if (currency == null) {
-      throw new Error(`currency can not be null`);
+      message.warn('Currency is required');
+      return;
     }
     onSave(paymentMethod, {
       transactionCountLimit,
