@@ -24,18 +24,16 @@ import {
   TRANSACTION_HISTORICAL_FILTERS,
   USER_FILTERS,
 } from './filters'
-import { isV8Rule, isV8RuleInstance } from './utils'
+import { assertValidRiskLevelParameters, isV8Rule } from './utils'
+import { TRANSACTION_RULES } from './transaction-rules'
+import { USER_RULES } from './user-rules'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
-import { RuleType } from '@/@types/openapi-internal/RuleType'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { TRANSACTION_RULES } from '@/services/rules-engine/transaction-rules'
-import { USER_RULES } from '@/services/rules-engine/user-rules'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
-import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
 import { mergeObjects } from '@/utils/object'
 import { hasFeatures, tenantSettings } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
@@ -62,14 +60,14 @@ type AIFilters = {
   nature?: string[]
 }
 
-const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
-  (attribute) => attribute.name
-) as Array<RiskLevel>
-
 const ALL_RULES = {
   ...TRANSACTION_RULES,
   ...USER_RULES,
 }
+
+const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
+  (attribute) => attribute.name
+) as Array<RiskLevel>
 
 const ajv = new Ajv()
 ajv.addKeyword('ui:schema')
@@ -154,10 +152,6 @@ export class RuleService {
         defaultCurrency ?? 'USD'
       ),
     } as RuleFilters
-  }
-
-  public async deleteRuleInstance(ruleInstanceId: string): Promise<void> {
-    await this.ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
   }
 
   private async replaceDefaultCurrency(rule: Rule): Promise<Rule> {
@@ -371,7 +365,7 @@ export class RuleService {
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
     if (!isV8Rule(rule)) {
-      this.assertValidRiskLevelParameters(
+      assertValidRiskLevelParameters(
         rule.defaultRiskLevelActions,
         rule.defaultRiskLevelParameters
       )
@@ -478,66 +472,9 @@ You have to answer in below format as string. If you don't know any field, just 
     return { ruleTypes, checksFor, typologies, nature }
   }
 
-  async createOrUpdateRuleInstance(
-    ruleInstance: RuleInstance
-  ): Promise<RuleInstance> {
-    const rule = ruleInstance.ruleId
-      ? await this.ruleRepository.getRuleById(ruleInstance.ruleId)
-      : null
-    if (!isV8RuleInstance(ruleInstance) && !rule) {
-      throw new createHttpError.BadRequest(
-        `Rule ID ${ruleInstance.ruleId} not found`
-      )
-    }
-
-    if (!isV8RuleInstance(ruleInstance)) {
-      this.assertValidRiskLevelParameters(
-        ruleInstance.riskLevelActions,
-        ruleInstance.riskLevelParameters
-      )
-      RuleService.validateRuleParametersSchema(
-        ALL_RULES[rule!.ruleImplementationName!].getSchema(),
-        ruleInstance.parameters,
-        ruleInstance.riskLevelParameters
-      )
-    } else {
-      await RuleService.validateRuleLogic(
-        ruleInstance.logic,
-        ruleInstance.riskLevelLogic,
-        ruleInstance.logicAggregationVariables
-      )
-    }
-    // TODO (V8): FR-3985
-    const type = rule ? rule.type : 'TRANSACTION'
-    return this.ruleInstanceRepository.createOrUpdateRuleInstance({
-      ...ruleInstance,
-      type,
-    })
-  }
-
   async deleteRule(ruleId: string): Promise<void> {
     // TODO: Forbid deleting a rule if there're rule instances associating with it
     await this.ruleRepository.deleteRule(ruleId)
-  }
-
-  async getActiveRuleInstances(
-    type: RuleType
-  ): Promise<ReadonlyArray<RuleInstance>> {
-    return this.ruleInstanceRepository.getActiveRuleInstances(type)
-  }
-
-  private assertValidRiskLevelParameters(
-    riskLevelRuleActions?: RiskLevelRuleActions,
-    riskLevelRuleParameters?: RiskLevelRuleParameters
-  ) {
-    if (
-      (!riskLevelRuleActions && riskLevelRuleParameters) ||
-      (riskLevelRuleActions && !riskLevelRuleParameters)
-    ) {
-      throw new createHttpError.BadRequest(
-        'Risk-level rule actions and risk-level rule parameters should coexist'
-      )
-    }
   }
 
   public static validateRuleParametersSchema(

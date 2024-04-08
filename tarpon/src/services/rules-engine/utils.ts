@@ -1,9 +1,12 @@
+import createHttpError from 'http-errors'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
+import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
+import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 
 export function getSenderKeys(
   tenantId: string,
@@ -187,4 +190,18 @@ export function isV8RuleInstance(ruleInstance: RuleInstance): boolean {
 
 export function isV8Rule(rule: Rule): boolean {
   return !!rule.defaultLogic
+}
+
+export function assertValidRiskLevelParameters(
+  riskLevelRuleActions?: RiskLevelRuleActions,
+  riskLevelRuleParameters?: RiskLevelRuleParameters
+) {
+  if (
+    (!riskLevelRuleActions && riskLevelRuleParameters) ||
+    (riskLevelRuleActions && !riskLevelRuleParameters)
+  ) {
+    throw new createHttpError.BadRequest(
+      'Risk-level rule actions and risk-level rule parameters should coexist'
+    )
+  }
 }
