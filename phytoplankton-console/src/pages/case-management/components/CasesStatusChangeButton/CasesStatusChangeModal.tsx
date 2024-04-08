@@ -15,7 +15,9 @@ import { statusEscalated } from '@/utils/case-utils';
 import { UserStatusTriggersAdvancedOptionsForm } from '@/components/UserStatusTriggersAdvancedOptionsForm';
 import { ALERT_CHECKLIST, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
-interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {}
+interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
+  onSaved: () => void;
+}
 
 export default function CasesStatusChangeModal(props: Props) {
   const api = useApi();
@@ -119,6 +121,7 @@ export default function CasesStatusChangeModal(props: Props) {
             }. Once approved your case action will be performed successfully.`,
           );
         }
+        props.onSaved();
       },
     },
   );

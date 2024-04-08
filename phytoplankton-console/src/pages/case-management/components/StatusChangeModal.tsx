@@ -39,7 +39,6 @@ export interface Props {
   newStatusActionLabel?: 'Send back' | 'Escalate' | 'Approve' | 'Decline' | 'Close';
   defaultReasons?: CaseReasons[];
   initialValues?: Partial<FormValues>;
-  onSaved: () => void;
   onClose: () => void;
   updateMutation: UseMutationResult<unknown, unknown, FormValues>;
   displayCloseRelatedCases?: boolean;
@@ -63,7 +62,6 @@ export default function StatusChangeModal(props: Props) {
     newStatus,
     isVisible,
     defaultReasons,
-    onSaved,
     onClose,
     updateMutation,
     newStatusActionLabel,
@@ -91,9 +89,8 @@ export default function StatusChangeModal(props: Props) {
   useEffect(() => {
     if (isFinishedSuccessfully) {
       onClose();
-      onSaved();
     }
-  }, [isFinishedSuccessfully, initialValues, onSaved, onClose]);
+  }, [isFinishedSuccessfully, initialValues, onClose]);
 
   const modalTitle = useMemo(() => {
     return `${newStatusActionLabel ?? statusToOperationName(newStatus)} ${pluralize(

@@ -17,6 +17,7 @@ import { statusEscalated } from '@/utils/case-utils';
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   caseId?: string;
   transactionIds?: { [alertId: string]: string[] };
+  onSaved: () => void;
 }
 
 export default function AlertsStatusChangeModal(props: Props) {
@@ -120,6 +121,7 @@ export default function AlertsStatusChangeModal(props: Props) {
             queryClient.invalidateQueries({ queryKey: ALERT_CHECKLIST(alertId) });
           }),
         );
+        props.onSaved();
       },
     },
   );
