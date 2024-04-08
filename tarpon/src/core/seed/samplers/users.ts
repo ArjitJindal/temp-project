@@ -57,6 +57,7 @@ import { USER_REGISTRATION_STATUSS } from '@/@types/openapi-internal-custom/User
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
+import { SanctionsDetails } from '@/@types/openapi-public/SanctionsDetails'
 
 export function sampleUserState(): UserState {
   return pickRandom(USER_STATES)
@@ -193,13 +194,13 @@ export function getUserRules(username: string, type: 'CONSUMER' | 'BUSINESS') {
         : businessSanctionsSearch(username)
     getSanctions().push(sanctionsSearchResult)
 
-    r.ruleHitMeta.sanctionsDetails = [
-      {
-        name: username,
-        searchId: sanctionsSearchResult._id,
-        entityType: type === 'CONSUMER' ? 'CONSUMER_NAME' : 'LEGAL_NAME',
-      },
-    ]
+    const sanctionsDetails: SanctionsDetails = {
+      name: username,
+      searchId: sanctionsSearchResult._id,
+      entityType: type === 'CONSUMER' ? 'CONSUMER_NAME' : 'LEGAL_NAME',
+    }
+
+    r.ruleHitMeta.sanctionsDetails = [sanctionsDetails]
     return r
   })
 }
