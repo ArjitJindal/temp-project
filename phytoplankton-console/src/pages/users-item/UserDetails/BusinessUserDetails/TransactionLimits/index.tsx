@@ -482,6 +482,11 @@ export default function ExpectedTransactionLimits(props: Props) {
               <Money amount={user.transactionLimits?.maximumYearlyTransactionLimit} />
             </Label>
           </Card.Column>
+          <Card.Column>
+            <Label title={'Maximum'}>
+              <Money amount={user.transactionLimits?.maximumTransactionLimit} />
+            </Label>
+          </Card.Column>
         </Card.Row>
         {/* </Card.Row> */}
       </Card.Section>
