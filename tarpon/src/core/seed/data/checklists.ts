@@ -6,8 +6,8 @@ export const getChecklistTemplates = memoize(() => {
   return [
     {
       id: uuid4(),
-      name: 'First checklist template',
-      description: 'First checklist template',
+      name: 'Velocity alert checklist',
+      description: 'Velocity alert checklist',
       status: 'ACTIVE',
       categories: [
         {
