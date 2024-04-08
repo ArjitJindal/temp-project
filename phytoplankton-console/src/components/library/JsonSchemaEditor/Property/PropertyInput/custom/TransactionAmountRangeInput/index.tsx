@@ -8,6 +8,7 @@ import Button from '@/components/library/Button';
 import Money from '@/components/ui/Money';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import { UiSchemaTransactionAmountRange } from '@/components/library/JsonSchemaEditor/types';
+import { message } from '@/components/library/Message';
 
 type ValueType = Record<Currency, { min?: number; max?: number }>;
 
@@ -23,6 +24,11 @@ export default function TransactionAmountRangeInput(props: Props) {
   >({});
   const isAddDisabled = newItem?.currency == null || (newItem?.min == null && newItem?.min == null);
   const handleAdd = () => {
+    if (newItem.min == null && newItem.max == null) return;
+    if (newItem.min != null && newItem.max != null && newItem.min > newItem.max) {
+      message.warn('Min. amount should be less than max. amount');
+      return;
+    }
     if (!isAddDisabled && newItem.currency) {
       onChange?.({
         ...(value ?? ({} as ValueType)),
@@ -58,7 +64,6 @@ export default function TransactionAmountRangeInput(props: Props) {
           }))
         }
         min={0}
-        max={newItem?.max}
         {...rest}
       />
       <NumberInput
@@ -70,7 +75,7 @@ export default function TransactionAmountRangeInput(props: Props) {
             max,
           }))
         }
-        min={newItem?.min ?? 0}
+        min={0}
         {...rest}
       />
       <Button type="PRIMARY" onClick={handleAdd} isDisabled={isAddDisabled}>
