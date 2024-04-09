@@ -1,8 +1,10 @@
+import { AggregationCursor } from 'mongodb'
 import { FalsePositiveDetails } from '@/@types/openapi-internal/FalsePositiveDetails'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
 import { traceable } from '@/core/xray'
 import { Vars } from '@/services/rules-engine/utils/format-description'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export type RuleHitResultItem = {
   direction: RuleHitDirection
@@ -12,6 +14,10 @@ export type RuleHitResultItem = {
 }
 export type RuleHitResult = Array<RuleHitResultItem | undefined>
 
+export type UserOngoingHitResult = RuleHitResultItem & {
+  hitUsersCursors: AggregationCursor<InternalUser>[]
+}
+
 export type RuleFilter = () => Promise<boolean> | boolean
 
 @traceable
@@ -20,5 +26,7 @@ export abstract class Rule {
     throw new Error('Not implemented')
   }
 
-  public abstract computeRule(): Promise<RuleHitResult | undefined>
+  public abstract computeRule(): Promise<
+    RuleHitResult | UserOngoingHitResult | undefined
+  >
 }

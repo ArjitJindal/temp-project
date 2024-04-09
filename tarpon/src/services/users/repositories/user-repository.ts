@@ -22,6 +22,7 @@ import {
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { get, isEmpty, set } from 'lodash'
+import { getUsersFilterByRiskLevel } from '../utils/user-utils'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -41,10 +42,7 @@ import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
-import {
-  getRiskLevelFromScore,
-  getRiskScoreBoundsFromLevel,
-} from '@/services/risk-scoring/utils'
+import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { neverThrow } from '@/utils/lang'
@@ -374,28 +372,11 @@ export class UserRepository {
         },
         ...(userType ? { type: userType } : {}),
         ...(params.filterRiskLevel?.length &&
-          isPulseEnabled && {
-            $or: [
-              {
-                'drsScore.manualRiskLevel': { $in: params.filterRiskLevel },
-              },
-              {
-                $or: params.filterRiskLevel.map((riskLevel) => {
-                  const { lowerBoundRiskScore, upperBoundRiskScore } =
-                    getRiskScoreBoundsFromLevel(
-                      riskClassificationValues,
-                      riskLevel
-                    )
-                  return {
-                    'drsScore.drsScore': {
-                      $gte: lowerBoundRiskScore,
-                      $lt: upperBoundRiskScore,
-                    },
-                  }
-                }),
-              },
-            ],
-          }),
+          isPulseEnabled &&
+          getUsersFilterByRiskLevel(
+            params.filterRiskLevel,
+            riskClassificationValues
+          )),
       },
     ]
 

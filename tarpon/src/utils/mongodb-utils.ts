@@ -347,11 +347,8 @@ export const withTransaction = async (callback: () => Promise<void>) => {
 
 export async function processCursorInBatch<T>(
   entityCursor: FindCursor<WithId<T>> | AggregationCursor<T>,
-  processBatch: (batch: (WithId<T> | T)[]) => Promise<void>,
-  options?: {
-    mongoBatchSize?: number
-    processBatchSize?: number
-  }
+  processBatch: (batch: (T | WithId<T>)[]) => Promise<void>,
+  options?: { mongoBatchSize?: number; processBatchSize?: number }
 ): Promise<void> {
   const mongoBatchSize = options?.mongoBatchSize ?? 1000
   const processBatchSize = options?.processBatchSize ?? 1000

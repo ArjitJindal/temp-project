@@ -1,11 +1,12 @@
-import { RuleHitResult } from '../rule'
-import { UserRule } from './rule'
+import { Document } from 'mongodb'
+import { RuleHitResult, UserOngoingHitResult } from '../rule'
+import UserInactivity from '../user-ongoing-rules/user-inactivity'
+import { UserOngoingRule, UserRule } from './rule'
 import SanctionsBankUserRule from './sanctions-bank-name'
 import SanctionsBusinessUserRule from './sanctions-business-user'
 import SanctionsConsumerUserRule from './sanctions-consumer-user'
 import TestAlwaysHitRule from './tests/test-always-hit-rule'
 import UserAddressChange from './user-address-change'
-import UserInactivity from './user-inactivity'
 import UserOnboardedFromHighRiskCountry from './user-onboarded-from-high-risk-country'
 import { traceable } from '@/core/xray'
 import MerchantMonitoringIndustryUserRule from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
@@ -18,13 +19,24 @@ export class UserRuleBase extends UserRule<unknown> {
   }
 }
 
+export class UserOngoingRuleBase extends UserOngoingRule<unknown> {
+  public async computeRule(): Promise<UserOngoingHitResult | undefined> {
+    // skip
+    return
+  }
+
+  public getHitRulePipline(_params: unknown): Document[] {
+    // skip
+    return []
+  }
+}
+
 export const _USER_RULES = {
   'merchant-monitoring-industry': MerchantMonitoringIndustryUserRule,
   'sanctions-business-user': SanctionsBusinessUserRule,
   'sanctions-bank-name': SanctionsBankUserRule,
   'sanctions-consumer-user': SanctionsConsumerUserRule,
   'user-address-change': UserAddressChange,
-  'user-inactivity': UserInactivity,
   'user-onboarded-from-high-risk-country': UserOnboardedFromHighRiskCountry,
   // TESTING-ONLY RULES
   'tests/test-always-hit-rule': TestAlwaysHitRule,
@@ -35,3 +47,15 @@ export type UserRuleImplementationName = keyof typeof _USER_RULES
 export const USER_RULES = _USER_RULES as unknown as {
   [key: string]: typeof UserRuleBase
 }
+
+export const _USER_ONGOING_SCREENING_RULES = {
+  'user-inactivity': UserInactivity,
+}
+
+export type UserOngoingScreeningRuleImplementationName =
+  keyof typeof _USER_ONGOING_SCREENING_RULES
+
+export const USER_ONGOING_SCREENING_RULES =
+  _USER_ONGOING_SCREENING_RULES as unknown as {
+    [key: string]: typeof UserOngoingRuleBase
+  }

@@ -4,7 +4,7 @@ import { simpleGit } from 'simple-git'
 import { keyBy } from 'lodash'
 import { TRANSACTION_RULES } from '..'
 import { RULES_LIBRARY } from '../library'
-import { USER_RULES } from '../../user-rules'
+import { USER_ONGOING_SCREENING_RULES, USER_RULES } from '../../user-rules'
 import { RuleService } from '@/services/rules-engine/rule-service'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
@@ -17,7 +17,10 @@ describe.each(RULES_LIBRARY)('Rule library integrity', (rule) => {
     const ruleImplementation =
       rule.type === 'TRANSACTION'
         ? TRANSACTION_RULES[rule.ruleImplementationName!]
-        : USER_RULES[rule.ruleImplementationName!]
+        : rule.type === 'USER'
+        ? USER_RULES[rule.ruleImplementationName!]
+        : USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName!]
+
     expect(ruleImplementation).not.toBeUndefined()
     const schema = ruleImplementation.getSchema()
     expect(() =>
@@ -108,7 +111,10 @@ describe.each(RULES_LIBRARY)('Rule library logic integrity', (rule) => {
     const ruleImplementation =
       rule.type === 'TRANSACTION'
         ? TRANSACTION_RULES[rule.ruleImplementationName!]
-        : USER_RULES[rule.ruleImplementationName!]
+        : rule.type === 'USER'
+        ? USER_RULES[rule.ruleImplementationName!]
+        : USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName!]
+
     expect(ruleImplementation).not.toBeUndefined()
     await expect(
       RuleService.validateRuleLogic(
@@ -155,7 +161,10 @@ describe('', () => {
         const ruleImplementation =
           rule.type === 'TRANSACTION'
             ? TRANSACTION_RULES[rule.ruleImplementationName!]
-            : USER_RULES[rule.ruleImplementationName!]
+            : rule.type === 'USER'
+            ? USER_RULES[rule.ruleImplementationName!]
+            : USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName!]
+
         const schema = ruleImplementation.getSchema()
         expect(() =>
           RuleService.validateRuleParametersSchema(

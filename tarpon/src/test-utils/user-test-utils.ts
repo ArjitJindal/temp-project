@@ -91,14 +91,28 @@ export async function createConsumerUsers(
   }
 }
 
+export const createUserIfNotExists = async (
+  tenantId: string,
+  user: User | InternalUser
+): Promise<() => Promise<void>> => {
+  const dynamoDb = getDynamoDbClient()
+
+  const userRepository = new UserRepository(tenantId, { dynamoDb })
+  const existingUser = await userRepository.getUser(user.userId)
+  if (!existingUser) {
+    return await createConsumerUser(tenantId, user)
+  }
+  return async () => {
+    await userRepository.deleteUser(user.userId)
+  }
+}
+
 export async function createUsersForTransactions(
   tenantId: string,
   transactions: Transaction[]
 ): Promise<Array<() => Promise<void>>> {
   const cleanUps: Array<() => Promise<void>> = []
 
-  const dynamoDb = getDynamoDbClient()
-  const userRepository = new UserRepository(tenantId, { dynamoDb })
   const userIds = uniq(
     transactions
       .flatMap((t) => [t.originUserId, t.destinationUserId])
@@ -108,13 +122,7 @@ export async function createUsersForTransactions(
   cleanUps.concat(
     await Promise.all(
       userIds.map(async (userId) => {
-        const user = await userRepository.getUser(userId)
-        if (!user) {
-          return await createConsumerUser(tenantId, getTestUser({ userId }))
-        }
-        return async () => {
-          return
-        }
+        return await createUserIfNotExists(tenantId, getTestUser({ userId }))
       })
     )
   )

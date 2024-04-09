@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
 import {
   compact,
+  Dictionary,
   isEmpty,
   isNil,
   isObject,
@@ -17,6 +18,7 @@ import {
 } from 'aws-lambda'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { Subsegment } from 'aws-xray-sdk-core'
+import pMap from 'p-map'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -44,7 +46,11 @@ import {
   UserFilters,
   UserRuleFilterBase,
 } from './filters'
-import { USER_RULES, UserRuleBase } from './user-rules'
+import {
+  USER_ONGOING_SCREENING_RULES,
+  USER_RULES,
+  UserRuleBase,
+} from './user-rules'
 import { RuleJsonLogicEvaluator } from './v8-engine'
 import { getAggVarHash } from './v8-engine/aggregation-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -71,7 +77,7 @@ import { TransactionEventMonitoringResult } from '@/@types/openapi-public/Transa
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 import { addNewSubsegment, traceable } from '@/core/xray'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { generateChecksum, mergeEntities } from '@/utils/object'
@@ -93,6 +99,7 @@ import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { getSQSClient } from '@/utils/sns-sqs-client'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 const sqs = getSQSClient()
 
@@ -229,6 +236,127 @@ export class RulesEngineService {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
     return new RulesEngineService(tenantId, dynamoDb)
+  }
+
+  public async verifyAllUsersRules(): Promise<
+    Record<string, ConsumerUsersResponse | BusinessUsersResponse>
+  > {
+    const ruleInstances =
+      await this.ruleInstanceRepository.getActiveRuleInstances(
+        'USER_ONGOING_SCREENING'
+      )
+
+    const rulesByIds = await this.getRulesById(ruleInstances)
+
+    const results = await Promise.all(
+      ruleInstances.map(async (ruleInstance) =>
+        this.verifyAllUsersRule({
+          ruleInstance,
+          rule: rulesByIds[ruleInstance.ruleId!],
+        })
+      )
+    )
+
+    const groupedResults: Record<
+      string,
+      ConsumerUsersResponse | BusinessUsersResponse
+    > = results.flat().reduce((acc, result) => {
+      const userDetail = acc[result.userId]
+      if (userDetail) {
+        userDetail.executedRules?.push(...(result?.executedRules ?? []))
+        userDetail.hitRules?.push(...(result?.hitRules ?? []))
+      } else {
+        acc[result.userId] = {
+          ...result,
+          executedRules: result.executedRules,
+          hitRules: result.hitRules,
+        }
+      }
+      return acc
+    }, {})
+
+    return groupedResults
+  }
+
+  public async verifyAllUsersRule(data: {
+    ruleInstance: RuleInstance
+    rule: Rule
+  }) {
+    const { ruleInstance, rule } = data
+    const ruleClass = USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName!]
+
+    const hitResults: (ConsumerUsersResponse | BusinessUsersResponse)[] = []
+
+    if (ruleClass) {
+      const ruleClassInstance = new ruleClass(
+        this.tenantId,
+        {
+          parameters: ruleInstance.parameters,
+          riskLevelParameters: ruleInstance.riskLevelParameters as Record<
+            RiskLevel,
+            any
+          >,
+        },
+        { ruleInstance, rule },
+        { riskRepository: this.riskRepository },
+        await getMongoDbClient(),
+        this.dynamoDb
+      )
+
+      const result = await ruleClassInstance.computeRule()
+
+      if (result) {
+        const cursors = result.hitUsersCursors
+
+        for (const cursor of cursors) {
+          await processCursorInBatch<InternalUser>(
+            cursor,
+            async (usersChunk) => {
+              await pMap(usersChunk, async (user) => {
+                const isUserFilter = await this.computeRuleFilters(
+                  ruleInstance.filters as UserFilters,
+                  { senderUser: user }
+                )
+
+                const { action } = this.getUserSpecificParameters(
+                  await this.getUserRiskLevel(user),
+                  ruleInstance
+                )
+
+                if (isUserFilter) {
+                  const hitRuleResult: HitRulesDetails = {
+                    ruleId: rule.id,
+                    ruleInstanceId: ruleInstance.id!,
+                    ruleName: rule.name,
+                    ruleDescription: await generateRuleDescription(
+                      rule,
+                      ruleClassInstance.getUserOngoingVars()
+                    ),
+                    ruleAction: action,
+                    labels: rule.labels,
+                    nature: ruleInstance.nature,
+                    ruleHitMeta: {
+                      hitDirections: ['ORIGIN'],
+                    },
+                  }
+
+                  const result: ConsumerUsersResponse | BusinessUsersResponse =
+                    {
+                      userId: user.userId,
+                      executedRules: [{ ...hitRuleResult, ruleHit: true }],
+                      hitRules: [hitRuleResult],
+                    }
+
+                  hitResults.push(result)
+                }
+              })
+            }
+          )
+        }
+      }
+    }
+
+    return hitResults
   }
 
   public async verifyTransaction(
@@ -453,29 +581,16 @@ export class RulesEngineService {
     user: UserWithRulesResult | BusinessWithRulesResult,
     options?: { ongoingScreeningMode?: boolean }
   ): Promise<ConsumerUsersResponse | BusinessUsersResponse> {
-    const allRuleInstances: RuleInstance[] = []
-
     const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
 
-    allRuleInstances.push(...ruleInstances)
-
-    if (options?.ongoingScreeningMode) {
-      const ongoingScreeningRuleInstances =
-        await this.ruleInstanceRepository.getActiveRuleInstances(
-          'USER_ONGOING_SCREENING'
-        )
-
-      allRuleInstances.push(...ongoingScreeningRuleInstances)
-    }
-
     const rules = await this.ruleRepository.getRulesByIds(
-      allRuleInstances
+      ruleInstances
         .map((ruleInstance) => ruleInstance.ruleId)
         .filter(Boolean) as string[]
     )
 
-    return this.verifyUserByRules(user, allRuleInstances, rules, options)
+    return this.verifyUserByRules(user, ruleInstances, rules, options)
   }
 
   public async verifyUserByRules(
@@ -520,6 +635,17 @@ export class RulesEngineService {
     }
   }
 
+  private async getRulesById(
+    ruleInstances: readonly RuleInstance[]
+  ): Promise<Dictionary<Rule>> {
+    const ruleIds = compact(
+      ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
+    )
+
+    const rules = await this.ruleRepository.getRulesByIds(ruleIds)
+    return keyBy(rules, 'id')
+  }
+
   private async verifyTransactionInternal(transaction: Transaction): Promise<{
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
@@ -548,14 +674,8 @@ export class RulesEngineService {
       transactionRiskDetails,
     ])
 
-    const rulesById = keyBy(
-      await this.ruleRepository.getRulesByIds(
-        ruleInstances
-          .map((ruleInstance) => ruleInstance.ruleId)
-          .filter(Boolean) as string[]
-      ),
-      'id'
-    )
+    const rulesById = await this.getRulesById(ruleInstances)
+
     getInitialDataSegment?.close()
 
     const runRulesSegment = await addNewSubsegment('Rules Engine', 'Run Rules')
@@ -1146,9 +1266,7 @@ export class RulesEngineService {
     const isDestinationUserFiltered = this.ruleFilters(
       ruleFilters,
       USER_FILTERS,
-      {
-        user: data.receiverUser,
-      }
+      { user: data.receiverUser }
     )
     return {
       isTransactionFiltered: await isTransactionFiltered,

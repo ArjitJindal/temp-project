@@ -1,6 +1,9 @@
-import { last, omit } from 'lodash'
+import { last, omit, zipObject } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
-import { createUsersForTransactions } from './user-test-utils'
+import {
+  createUserIfNotExists,
+  createUsersForTransactions,
+} from './user-test-utils'
 import { withFeatureHook } from './feature-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -335,6 +338,49 @@ export function createUserRuleTestCase(
   })
 }
 
+export function createAllUserRuleTestCases(
+  tenantId: string,
+  testCase: AllUserRuleTestCase
+) {
+  const cleanups: Array<() => void> = []
+  test(testCase.name, async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
+    const userIds = testCase.users.map((user) => user.userId)
+    const hits = testCase.expectedHits
+
+    const cleanUpsResult = (
+      await Promise.all(
+        testCase.users.map((user) => {
+          return createUserIfNotExists(tenantId, user)
+        })
+      )
+    ).flat()
+
+    cleanups.push(...cleanUpsResult)
+
+    const mapUserIdWithHit = zipObject(userIds, hits)
+    const results = await rulesEngine.verifyAllUsersRules()
+
+    Object.entries(mapUserIdWithHit).forEach(([userId, hit]) => {
+      if (!hit) {
+        if (results?.[userId]) {
+          expect(getRuleHits([results[userId]])).toEqual([false])
+        } else {
+          expect(results?.[userId]).toBeUndefined()
+        }
+      } else {
+        expect(getRuleHits([results[userId]])).toEqual([true])
+      }
+    })
+  })
+
+  afterAll(async () => {
+    await Promise.all(cleanups.map((cleanup) => cleanup()))
+  })
+}
+
 export function testRuleDescriptionFormatting(
   testName: string,
   tenantId: string,
@@ -385,6 +431,12 @@ export interface UserRuleTestCase {
   users: Array<Business | User>
   expectetRuleHitMetadata: Array<RuleHitMeta | undefined>
   expectedRuleDescriptions?: Array<string | undefined>
+}
+
+export interface AllUserRuleTestCase {
+  name: string
+  users: Array<Business | User>
+  expectedHits: boolean[]
 }
 
 // For making sure a rule works the same w/ or w/o RULES_ENGINE_RULE_BASED_AGGREGATION feature flag

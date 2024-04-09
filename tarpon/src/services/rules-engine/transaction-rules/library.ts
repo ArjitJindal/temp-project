@@ -7,14 +7,18 @@
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { OriginPaymentRuleFiltersParameters } from '../transaction-filters/payment-filters-base'
 import { TransactionFilters, UserFilters } from '../filters'
-import { USER_RULES, UserRuleImplementationName } from '../user-rules'
+import {
+  USER_RULES,
+  UserOngoingScreeningRuleImplementationName,
+  UserRuleImplementationName,
+} from '../user-rules'
 import { SanctionsBusinessUserRuleParameters } from '../user-rules/sanctions-business-user'
 import { SanctionsBankUserRuleParameters } from '../user-rules/sanctions-bank-name'
 import { SanctionsConsumerUserRuleParameters } from '../user-rules/sanctions-consumer-user'
 import { UserAddressChangeRuleParameters } from '../user-rules/user-address-change'
 import { getMigratedV8Config } from '../v8-migrations'
-import { UserInactivityRuleParameters } from '../user-rules/user-inactivity'
 import { UserOnboardedFromHighRiskCountryRuleParameters } from '../user-rules/user-onboarded-from-high-risk-country'
+import { UserInactivityRuleParameters } from '../user-ongoing-rules/user-inactivity'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -146,6 +150,7 @@ const _RULES_LIBRARY: Array<
     ruleImplementationName:
       | TransactionRuleImplementationName
       | UserRuleImplementationName
+      | UserOngoingScreeningRuleImplementationName
     checksFor: RuleChecksForField[]
     types: RuleTypeField[]
     defaultNature: RuleNature

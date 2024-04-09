@@ -20,27 +20,16 @@ import { CaseCreationService } from '@/lambdas/console-api-case/services/case-cr
 
 const CONCURRENT_BATCH_SIZE = 100
 
-export async function getOngoingScreeningUserRuleInstances(
-  tenantId: string
-): Promise<RuleInstance[]> {
-  const dynamoDb = getDynamoDbClient()
+export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
   const isRiskLevelsEnabled = await tenantHasFeature(tenantId, 'RISK_LEVELS')
+  const dynamoDb = getDynamoDbClient()
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
 
-  const allRuleInstancess = (
-    await Promise.all([
-      ruleInstanceRepository.getActiveRuleInstances('USER'),
-      ruleInstanceRepository.getActiveRuleInstances('USER_ONGOING_SCREENING'),
-    ])
-  ).flat()
-
-  const ruleInstances = allRuleInstancess.filter((ruleInstance) => {
-    if (ruleInstance.type === 'USER_ONGOING_SCREENING') {
-      return true
-    }
-
+  const ruleInstances = (
+    await ruleInstanceRepository.getActiveRuleInstances('USER')
+  ).filter((ruleInstance) => {
     if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {
       return Boolean(
         Object.values(ruleInstance.riskLevelParameters).find(
@@ -48,18 +37,43 @@ export async function getOngoingScreeningUserRuleInstances(
         )
       )
     }
+
     return Boolean(ruleInstance.parameters?.ongoingScreening)
   })
 
   return ruleInstances
 }
-
 @traceable
 export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
+  mongoDb?: MongoClient
+  tenantId?: string
+  dynamoDb?: DynamoDBDocumentClient
+  ruleInstanceRepository?: RuleInstanceRepository
+  rulesEngineService?: RulesEngineService
+  userRepository?: UserRepository
+  caseCreationService?: CaseCreationService
+
   protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
     const { tenantId } = job
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
+
+    this.mongoDb = mongoDb
+    this.dynamoDb = dynamoDb
+    this.tenantId = tenantId
+    this.ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+      dynamoDb,
+    })
+    this.rulesEngineService = new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      mongoDb
+    )
+    this.caseCreationService = new CaseCreationService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+
     const ruleRepository = new RuleRepository(tenantId, {
       dynamoDb,
     })
@@ -69,6 +83,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     })
 
     const ruleInstances = await getOngoingScreeningUserRuleInstances(tenantId)
+
     if (ruleInstances.length === 0) {
       logger.info('No active ongoing screening user rule found. Abort.')
       return
@@ -82,34 +97,61 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     await processCursorInBatch<InternalUser>(
       usersCursor,
       async (usersChunk) => {
-        await this.runUsersBatch(
-          tenantId,
-          usersChunk,
-          { mongoDb, dynamoDb },
-          rules,
-          ruleInstances
-        )
+        await this.runUsersBatch(usersChunk, rules, ruleInstances)
       },
       { mongoBatchSize: 1000, processBatchSize: 1000 }
+    )
+
+    await this.verifyAllUserRules()
+  }
+
+  private async verifyAllUserRules() {
+    const ruleInstances = await this.getUserOngoingScreeningRuleInstances()
+    if (!ruleInstances.length) {
+      return
+    }
+
+    const data = await this.rulesEngineService!.verifyAllUsersRules()
+
+    await pMap(
+      Object.keys(data),
+      async (userId) => {
+        const user = await this.userRepository!.getUserById(userId)
+
+        if (!user) {
+          return
+        }
+
+        const hitResults = data[userId].executedRules
+        const existingHitResults = user.hitRules ?? []
+
+        if (!isEqual(hitResults, existingHitResults)) {
+          await this.userRepository!.updateUserWithExecutedRules(
+            userId,
+            data[userId].executedRules ?? [],
+            data[userId].hitRules ?? []
+          )
+        }
+      },
+      { concurrency: CONCURRENT_BATCH_SIZE }
+    )
+  }
+
+  private async getUserOngoingScreeningRuleInstances() {
+    return await this.ruleInstanceRepository!.getActiveRuleInstances(
+      'USER_ONGOING_SCREENING'
     )
   }
 
   private async runUsersBatch(
-    tenantId: string,
     usersChunk: InternalUser[],
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
     rules: readonly Rule[],
     ruleInstances: readonly RuleInstance[]
   ) {
-    const { mongoDb, dynamoDb } = connections
-    const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
-
-    const caseCreationService = new CaseCreationService(tenantId, connections)
-
     await pMap(
       usersChunk,
       async (user) => {
-        const result = await rulesEngine.verifyUserByRules(
+        const result = await this.rulesEngineService!.verifyUserByRules(
           user,
           ruleInstances,
           rules,
@@ -122,14 +164,14 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         ) {
           const timestampBeforeCasesCreation = Date.now()
 
-          const cases = await caseCreationService.handleUser({
+          const cases = await this.caseCreationService!.handleUser({
             ...user,
             hitRules: result.hitRules,
             executedRules: result.executedRules,
           })
 
-          await caseCreationService.handleNewCases(
-            tenantId,
+          await this.caseCreationService!.handleNewCases(
+            this.tenantId!,
             timestampBeforeCasesCreation,
             cases
           )
