@@ -28,6 +28,9 @@ def test_backfill_transformation():
         == 16211
     ), "Transaction amount is correct"
     assert (
+        round(transformed_df.select("transactionAmountUSD").first()[0]) == 108073
+    ), "Transaction amount is correct"
+    assert (
         transformed_df.select("PartitionKeyID").first()[0]
         == "some_tenanttransaction#primary"
     ), "Transaction partition key is correct"

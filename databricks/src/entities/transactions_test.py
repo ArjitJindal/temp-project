@@ -46,7 +46,7 @@ def test_transaction_enrichment():
     )
 
     enriched_df = enrich_transactions(
-        pre_enrichment_df, mock_stream_resolver(spark, test_case.rates)
+        pre_enrichment_df, mock_stream_resolver(spark, test_case.rates), True
     )
     count = enriched_df.select("transactionAmountUSD").count()
     assert count == 1

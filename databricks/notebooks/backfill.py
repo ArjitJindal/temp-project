@@ -55,7 +55,6 @@ currency_df = (
         "approximateArrivalTimestamp",
         to_timestamp(col("date"), "yyyy-MM-dd")
     )
-    .withColumn("event", lit("INSERT"))
 )
 
 def load_mongo(entity):

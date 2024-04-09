@@ -22,5 +22,5 @@ def backfill_transformation(
     )
 
     if entity.enrichment_fn:
-        return entity.enrichment_fn(pre_enrichment_df, stream_resolver)
+        return entity.enrichment_fn(pre_enrichment_df, stream_resolver, True)
     return pre_enrichment_df

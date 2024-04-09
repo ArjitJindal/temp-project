@@ -50,5 +50,5 @@ def cdc_transformation(
     )
 
     if enrichment_fn:
-        return enrichment_fn(pre_enrichment_df, stream_resolver)
+        return enrichment_fn(pre_enrichment_df, stream_resolver, False)
     return pre_enrichment_df

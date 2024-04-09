@@ -16,5 +16,5 @@ class Entity:
     source: str
     timestamp_column: str
     enrichment_fn: Optional[
-        Callable[[DataFrame, Callable[[str], DataFrame]], DataFrame]
+        Callable[[DataFrame, Callable[[str], DataFrame], bool], DataFrame]
     ] = None
