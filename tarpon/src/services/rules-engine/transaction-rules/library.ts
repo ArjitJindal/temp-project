@@ -8,6 +8,7 @@ import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { OriginPaymentRuleFiltersParameters } from '../transaction-filters/payment-filters-base'
 import { TransactionFilters, UserFilters } from '../filters'
 import {
+  USER_ONGOING_SCREENING_RULES,
   USER_RULES,
   UserOngoingScreeningRuleImplementationName,
   UserRuleImplementationName,
@@ -1938,7 +1939,11 @@ export const RULES_LIBRARY: Array<Rule> = _RULES_LIBRARY.map((getRule) => {
     parametersSchema:
       rule.type === 'TRANSACTION'
         ? TRANSACTION_RULES[rule.ruleImplementationName]?.getSchema()
-        : USER_RULES[rule.ruleImplementationName]?.getSchema(),
+        : rule.type === 'USER'
+        ? USER_RULES[rule.ruleImplementationName]?.getSchema()
+        : USER_ONGOING_SCREENING_RULES[
+            rule.ruleImplementationName
+          ]?.getSchema(),
     defaultLogic: v8Config?.logic,
     defaultLogicAggregationVariables: v8Config?.logicAggregationVariables,
     defaultBaseCurrency: v8Config?.baseCurrency,
