@@ -165,5 +165,24 @@ export function useLogicBuilderConfig(
 }
 
 export function isTransactionAmountVariable(variableKey: string): boolean {
-  return variableKey?.endsWith('transactionAmount');
+  return variableKey?.includes('transactionAmount');
+}
+
+export function isTransactionOriginVariable(variableKey: string) {
+  return variableKey.startsWith('TRANSACTION:origin');
+}
+export function isTransactionDestinationVariable(variableKey: string) {
+  return variableKey.startsWith('TRANSACTION:destination');
+}
+export function isTransactionOriginOrDestinationVariable(variableKey: string) {
+  return variableKey.endsWith('__BOTH');
+}
+export function isUserSenderVariable(variableKey: string) {
+  return variableKey.endsWith('__SENDER');
+}
+export function isUserReceiverVariable(variableKey: string) {
+  return variableKey.endsWith('__RECEIVER');
+}
+export function isUserSenderOrReceiverVariable(variableKey: string) {
+  return variableKey.endsWith('__BOTH');
 }

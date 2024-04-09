@@ -122,7 +122,7 @@ const V8_CONVERSION: {
       type: 'USER_TRANSACTIONS',
       userDirection: 'RECEIVER',
       transactionDirection: 'RECEIVING',
-      aggregationFieldKey: 'TRANSACTION:paymentDetailsIdentifier__SENDER',
+      aggregationFieldKey: 'TRANSACTION:originPaymentDetailsIdentifier',
       aggregationFunc: 'UNIQUE_COUNT',
       timeWindow: {
         start: parameters.timeWindow,

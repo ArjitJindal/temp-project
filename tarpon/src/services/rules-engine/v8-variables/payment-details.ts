@@ -30,9 +30,9 @@ const createPaymentDetailsIdentifier = (
   direction: 'ORIGIN' | 'DESTINATION'
 ): TransactionRuleVariable => {
   return {
-    key: `paymentDetailsIdentifier__${
-      direction === 'ORIGIN' ? 'SENDER' : 'RECEIVER'
-    }`,
+    key: `${
+      direction === 'ORIGIN' ? 'origin' : 'destination'
+    }PaymentDetailsIdentifier`,
     entity: 'TRANSACTION',
     uiDefinition: getUiDefinition(direction),
     valueType: 'string',
@@ -53,7 +53,7 @@ const createPaymentDetailsIdentifier = (
   }
 }
 
-export const TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER =
+export const TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER =
   createPaymentDetailsIdentifier('ORIGIN')
-export const TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER =
+export const TRANSACTION_DESTINATION_PAYMENT_DETAILS_IDENTIFIER =
   createPaymentDetailsIdentifier('DESTINATION')
