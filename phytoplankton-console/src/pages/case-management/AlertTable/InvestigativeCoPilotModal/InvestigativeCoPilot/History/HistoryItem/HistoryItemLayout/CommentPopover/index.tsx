@@ -32,7 +32,7 @@ export default function CommentPopover(props: Props) {
       files: [],
     });
   }, [summary]);
-  const [isPopoverVisible, setTooltipVisible] = useState(false);
+  const [isPopoverVisible, setPopoverVisible] = useState(false);
 
   const commentEditorRef = useRef<CommentEditorRef>(null);
 
@@ -41,11 +41,9 @@ export default function CommentPopover(props: Props) {
   useEffect(() => {
     if (isCommentSubmitted) {
       commentEditorRef?.current?.reset();
-      setTooltipVisible(false);
+      setPopoverVisible(false);
     }
   }, [isCommentSubmitted]);
-
-  const popoverTargetRef = useRef(null);
 
   return (
     <Popover
@@ -53,13 +51,7 @@ export default function CommentPopover(props: Props) {
       placement="bottomRight"
       autoAdjustOverflow={false}
       visible={isPopoverVisible}
-      onVisibleChange={setTooltipVisible}
-      getPopupContainer={() => {
-        if (popoverTargetRef.current) {
-          return popoverTargetRef.current;
-        }
-        return document.body;
-      }}
+      onVisibleChange={setPopoverVisible}
       content={
         <div className={s.commentPopover}>
           <CommentEditor
@@ -77,7 +69,7 @@ export default function CommentPopover(props: Props) {
         </div>
       }
     >
-      <BrainIcon ref={popoverTargetRef} className={s.brainIcon} />
+      <BrainIcon className={s.brainIcon} />
     </Popover>
   );
 }
