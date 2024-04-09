@@ -2,7 +2,7 @@ import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { isEmpty, pick, omit } from 'lodash'
 import { StackConstants } from '@lib/constants'
-import { CaseCreationService } from '../console-api-case/services/case-creation-service'
+import { CaseCreationService } from '../../services/cases/case-creation-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   TRANSACTION_EVENTS_COLLECTION,

@@ -39,7 +39,7 @@ import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import {
   calculateCaseAvailableDate,
   getDerivedStatus,
-} from '@/lambdas/console-api-case/services/utils'
+} from '@/services/cases/utils'
 import { notNullish } from '@/core/utils/array'
 import { getDefaultTimezone } from '@/utils/dayjs'
 import { traceable } from '@/core/xray'

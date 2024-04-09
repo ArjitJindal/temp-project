@@ -16,7 +16,7 @@ import { traceable } from '@/core/xray'
 import { tenantHasFeature } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
-import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
+import { CaseCreationService } from '@/services/cases/case-creation-service'
 
 const CONCURRENT_BATCH_SIZE = 100
 

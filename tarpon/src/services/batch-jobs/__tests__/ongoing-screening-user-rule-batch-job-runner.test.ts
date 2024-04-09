@@ -15,7 +15,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
-import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
+import { CaseCreationService } from '@/services/cases/case-creation-service'
 
 dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS'])

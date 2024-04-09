@@ -41,7 +41,7 @@ import { CaseEscalationsUpdateRequest } from '@/@types/openapi-internal/CaseEsca
 import { AccountsService } from '@/services/accounts'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { isCaseAvailable } from '@/lambdas/console-api-case/services/utils'
+import { isCaseAvailable } from '@/services/cases/utils'
 import {
   AlertsRepository,
   FLAGRIGHT_SYSTEM_USER,

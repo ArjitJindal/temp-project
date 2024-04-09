@@ -15,7 +15,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
 import { AlertsService } from '@/services/alerts'
-import { CaseService } from '@/lambdas/console-api-case/services/case-service'
+import { CaseService } from '@/services/cases'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
