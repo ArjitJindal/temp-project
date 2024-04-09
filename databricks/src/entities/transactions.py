@@ -27,7 +27,7 @@ def enrich_transactions(
             col("approximateArrivalTimestamp"),
         )
         .withWatermark("approximateArrivalTimestamp", "1 second")
-    )
+    ).dropDuplicates(["date"])
 
     filtered_currencies_usd = currencies_usd.filter(currencies_usd.date.isNotNull())
     broadcast_currencies = broadcast(filtered_currencies_usd).alias("cr")

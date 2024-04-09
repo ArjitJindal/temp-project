@@ -81,7 +81,7 @@ def define_pipeline(spark):
     def cdc_function():
         return currency_rates_transformation(dlt.readStream("kinesis_events"))
 
-    create_tables("currency_rates", cdc_function, partition_cols=[], keys=["date"])
+    create_tables(cdc_function, "currency_rates", "currency_rates_backfill", [])
 
     for entity in entities:
         create_entity_tables(
@@ -89,16 +89,29 @@ def define_pipeline(spark):
         )
 
 def create_entity_tables(entity):
+    table = entity.table
+    cdc_table_name = f"{table}_cdc"
+    backfill_table_name = f"{table}_backfill"
+    partition_cols = ["tenant"]
     def cdc_function():
         def stream_resolver(stream_name: str) -> DataFrame:
             return dlt.readStream(stream_name)
         return cdc_transformation(entity, dlt.readStream(entity.source), stream_resolver)
-    return create_tables(entity.table, cdc_function)
+    create_tables(cdc_function, cdc_table_name, backfill_table_name, partition_cols)
 
-def create_tables(table, cdc_function, partition_cols=["tenant"], keys=["PartitionKeyID", "SortKeyID"]):
-    cdc_table_name = f"{table}_cdc"
-    backfill_table_name = f"{table}_backfill"
+    dlt.create_streaming_table(
+        name=table,
+        partition_cols=partition_cols,
+    )
+    dlt.apply_changes(
+        target=table,
+        source=cdc_table_name,
+        keys=["PartitionKeyID", "SortKeyID"],
+        sequence_by=col("approximateArrivalTimestamp"),
+        apply_as_deletes=expr("event = 'REMOVE'"),
+    )
 
+def create_tables(cdc_function, cdc_table_name, backfill_table_name, partition_cols):
     dlt.create_streaming_table(
         name=cdc_table_name,
         partition_cols=partition_cols,
@@ -118,17 +131,5 @@ def create_tables(table, cdc_function, partition_cols=["tenant"], keys=["Partiti
     def backfill():
         stage = os.environ["STAGE"]
         return spark.readStream.format("delta").table(f"{stage}.default.{backfill_table_name}")
-
-    dlt.create_streaming_table(
-        name=table,
-        partition_cols=partition_cols,
-    )
-    dlt.apply_changes(
-        target=table,
-        source=cdc_table_name,
-        keys=keys,
-        sequence_by=col("approximateArrivalTimestamp"),
-        apply_as_deletes=expr("event = 'REMOVE'"),
-    )
 
 define_pipeline(spark)
