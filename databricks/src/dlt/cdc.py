@@ -1,22 +1,18 @@
 from typing import Callable
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, from_json, lower, regexp_extract, udf
+from pyspark.sql.functions import col, from_json, lower, regexp_extract
 
-from src.dlt.schema import kinesis_event_schema
+from src.dlt.schema import PARTITION_KEY_ID_PATH, kinesis_event_schema
 from src.dynamo.deserialize import deserialise_dynamo
 from src.entities.entity import Entity
-
-PARTITION_KEY_ID_PATH = "event.dynamodb.Keys.PartitionKeyID.S"
 
 
 def cdc_transformation(
     entity: Entity, read_stream: DataFrame, stream_resolver: Callable[[str], DataFrame]
 ) -> DataFrame:
-    schema = entity.schema
     enrichment_fn = entity.enrichment_fn
 
-    deserialisation_udf = udf(deserialise_dynamo, schema)
     sort_key_id_path = "event.dynamodb.Keys.SortKeyID.S"
     df = (
         read_stream.withColumn(
@@ -41,7 +37,7 @@ def cdc_transformation(
     filtered_df = df.filter(col(PARTITION_KEY_ID_PATH).contains(entity.partition_key))
 
     with_structured_df = filtered_df.withColumn(
-        "structured_data", deserialisation_udf(col("data"))
+        "structured_data", deserialise_dynamo(col("data"), entity.schema)
     ).alias("entity")
 
     pre_enrichment_df = with_structured_df.select(

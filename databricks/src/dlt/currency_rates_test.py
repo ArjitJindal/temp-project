@@ -14,7 +14,7 @@ def test_currency_rates_transformation():
     currency_df = spark.createDataFrame(
         [(currency_data,)], StructType([StructField("data", StringType())])
     ).withColumn(
-        "approximateArrivalTimestamp", lit("1970-01-01 00:00:00").cast("timestamp")
+        "approximateArrivalTimestamp", lit("2024-01-27 00:00:00").cast("timestamp")
     )
     transformed_currencies = currency_rates_transformation(currency_df)
     assert (

@@ -1,5 +1,7 @@
 from pyspark.sql.types import StringType, StructField, StructType
 
+PARTITION_KEY_ID_PATH = "event.dynamodb.Keys.PartitionKeyID.S"
+
 kinesis_event_schema = StructType(
     [
         StructField("eventName", StringType(), False),

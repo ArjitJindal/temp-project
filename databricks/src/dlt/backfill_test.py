@@ -16,7 +16,7 @@ def test_backfill_transformation():
         f"{CUR_DIR}/../../fixtures/transaction_processed.json"
     )
 
-    stream_resolver = mock_stream_resolver(spark, [("2021-01-01", {"GBP": 0.15})])
+    stream_resolver = mock_stream_resolver(spark, [("2024-01-27", {"EUR": 0.15})])
 
     df_with_column = df.withColumn("tenant", lit("some_tenant"))
 

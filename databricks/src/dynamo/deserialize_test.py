@@ -1,8 +1,11 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import udf
 from pyspark.sql.types import StringType, StructField, StructType
 
-from src.dynamo.deserialize import DeserializerException, deserialise_dynamo
+from src.dynamo.deserialize import (
+    DeserializerException,
+    deserialise_dynamo,
+    legacy_deserialise_dynamo,
+)
 from src.openapi.internal.models import DrsScore
 from src.openapi.internal.models.transaction import Transaction as InternalTransaction
 from src.openapi.public.models.transaction import Transaction
@@ -14,20 +17,20 @@ def test_deserialise_dynamo_udf():
         ["transaction.json", [Transaction, InternalTransaction]],
         ["dynamic_risk_value.json", [DrsScore]],
     ]
-    spark = SparkSession.builder.appName("UDF Test").getOrCreate()
+    spark = SparkSession.builder.appName("Deserialise dynamo test").getOrCreate()
     for test_case in test_cases:
         [fixture, schemas] = test_case
         entity = read_file(f"fixtures/{fixture}")
 
         for entity_schema in schemas:
-            my_udf = udf(deserialise_dynamo, entity_schema)
-
             data = [(entity,)]
 
             schema = StructType([StructField("data", StringType())])
             df = spark.createDataFrame(data, schema)
 
-            df_transformed = df.withColumn("deserialized_data", my_udf(df["data"]))
+            df_transformed = df.withColumn(
+                "deserialized_data", deserialise_dynamo(df["data"], entity_schema)
+            )
             expected_schema = StructType(
                 [
                     StructField("data", StringType()),
@@ -45,7 +48,7 @@ def test_deserialise_dynamo_udf():
 def test_deserialise_dynamo():
     exception_thrown = False
     try:
-        deserialise_dynamo("{}")
+        legacy_deserialise_dynamo("{}")
     except DeserializerException:
         exception_thrown = True
 
@@ -53,4 +56,4 @@ def test_deserialise_dynamo():
 
     txn = read_file("fixtures/transaction.json")
 
-    deserialise_dynamo(txn)
+    legacy_deserialise_dynamo(txn)

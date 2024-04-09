@@ -16,13 +16,13 @@ def test_cdc_transformation():
     transactions_df = spark.createDataFrame(
         transaction_data, StructType([StructField("data", StringType())])
     ).withColumn(
-        "approximateArrivalTimestamp", lit("1970-01-01 00:00:00").cast("timestamp")
+        "approximateArrivalTimestamp", lit("2024-01-27 12:00:00").cast("timestamp")
     )
 
     stream_resolver = mock_stream_resolver(
         spark,
         [
-            ("2021-01-01", {"GBP": 0.15}),
+            ("2024-01-27", {"EUR": 0.15}),
         ],
     )
     transformed_df = cdc_transformation(

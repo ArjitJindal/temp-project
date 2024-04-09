@@ -26,7 +26,7 @@ def enrich_transactions(
             explode(col("rates")).alias("currency", "rate"),
             col("approximateArrivalTimestamp"),
         )
-        .withWatermark("approximateArrivalTimestamp", "1 second")
+        .withWatermark("approximateArrivalTimestamp", "60 minutes")
     ).dropDuplicates(["date"])
 
     filtered_currencies_usd = currencies_usd.filter(currencies_usd.date.isNotNull())
@@ -46,7 +46,6 @@ def enrich_transactions(
             t.approximateArrivalTimestamp <= cr.approximateArrivalTimestamp + interval 1 day
         """
             ),
-            "leftOuter",
         )
     )
 
