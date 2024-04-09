@@ -17,6 +17,7 @@ const fs = require('fs-extra');
 const { notify } = require('./helpers.js');
 const https = require('node:https');
 const { Metafile } = require('esbuild');
+const brandingJson = require('@flagright/lib/config/config-branding-json.json');
 
 const SCRIPT_DIR = __dirname;
 
@@ -29,9 +30,14 @@ const env = {
   OUTPUT_FOLDER: 'dist',
 };
 
-// NOTE: should be synced with src/utils/branding.ts (WHITELABEL_BRANDING)
-const WHITE_LABEL_DOMAINS = ['transactcomply.com', 'regtank.com', 'traxionright.com']
-  .map((v) => `https://*.${v}`)
+const WHITE_LABEL_DOMAINS = Object.values(brandingJson)
+  .flatMap(
+    (brandSettings) =>
+      Object.values(brandSettings.consoleSettings).flatMap(
+        (envSettings) => envSettings.allowedDomains ?? [],
+      ) ?? [],
+  )
+  .map((v) => `https://${v}`)
   .join(' ');
 
 function serve() {

@@ -1,3 +1,8 @@
+import {
+  BRANDING_CONFIG,
+  BrandId,
+  BrandingConfigItem,
+} from '@flagright/lib/config/config-branding';
 import FlagrightLightLogo from '@/branding/flagright-logo-light.svg';
 import FlagrightDarkLogo from '@/branding/flagright-logo-dark.svg';
 import RegtankLightLogo from '@/branding/regtank-logo-light.svg';
@@ -11,6 +16,7 @@ import FlagrightNoTextLogo from '@/branding/flagright-no-text.svg';
 import RegtankFaviconSvg from '@/branding/regtank-favicon.svg';
 import ZigramFaivcon from '@/branding/zigram-favicon.png';
 import TraxionRightFavicon from '@/branding/traxion-favicon.svg';
+import { neverThrow } from '@/utils/lang';
 
 interface BrandingSettings {
   apiBasePath?: string;
@@ -28,7 +34,6 @@ interface BrandingSettings {
   redirectPath?: string;
   faviconUrl: string;
   systemAvatarUrl?: string;
-  env?: 'sandbox' | 'prod';
 }
 
 const FLAGRIGHT_BRANDING: BrandingSettings = {
@@ -90,42 +95,45 @@ const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0Client
   systemAvatarUrl: TraxionRightFavicon,
 };
 
-// NOTE: should be synced with build/index.js (WHITE_LABEL_DOMAINS)
-export const WHITELABEL_BRANDING: { [key: string]: BrandingSettings } = {
-  'sandboxconsole.transactcomply.com': {
-    ...ZIGRAM_BRANDING,
-    auth0Domain: 'login.sandboxconsole.transactcomply.com',
-    auth0ClientId: 'qW5HsNLzyfKoKlG8orZza1EQBUqTxfj6',
-    env: 'sandbox',
-  },
-  'qc-staging.console.regtank.com': {
-    ...REGTANK_BRANDING,
-    auth0Domain: 'login.qc-staging.console.regtank.com',
-    auth0ClientId: 'Nz37vE2YAvMRPAIsqLVXcfACo216CMXE',
-    env: 'sandbox',
-  },
-  'transaction.console.regtank.com': {
-    ...REGTANK_BRANDING,
-    auth0Domain: 'login.transaction.console.regtank.com',
-    auth0ClientId: 'nVwFjIjOIyrzQfLtkUXo7sdxODGuHfvc',
-    env: 'prod',
-  },
-  'sitapp.traxionright.com': {
-    ...TRAXIONRIGHT_BRANDING,
-    auth0Domain: 'login.sitapp.traxionright.com',
-    auth0ClientId: 'wJuiiS6bbcGhSMnqC442RL8HKHfMUI4n',
-    env: 'sandbox',
-  },
-  'app.traxionright.com': {
-    ...TRAXIONRIGHT_BRANDING,
-    auth0Domain: 'login.app.traxionright.com',
-    auth0ClientId: '6k9yUXtYFG9WTjsuEhe4LahCD8Q9W8x6',
-    env: 'prod',
-  },
-};
+function getBrandingSettings(
+  brandId: BrandId,
+): Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> {
+  if (brandId === 'REGTANK') {
+    return REGTANK_BRANDING;
+  }
+  if (brandId === 'ZIGRAM') {
+    return ZIGRAM_BRANDING;
+  }
+  if (brandId === 'TRAXIONRIGHT') {
+    return TRAXIONRIGHT_BRANDING;
+  }
+  throw neverThrow(brandId);
+}
+
+export const DOMAIN_BRANDING: { [host: string]: BrandingSettings } = Object.entries(
+  BRANDING_CONFIG,
+).reduce((acc, x): { [url: string]: BrandingSettings } => {
+  const [key, settings] = x as [BrandId, BrandingConfigItem];
+  return {
+    ...acc,
+    ...Object.entries(settings.consoleSettings ?? {}).reduce((acc, [env, consoleSettings]) => {
+      if (env !== process.env.ENV_NAME) {
+        return acc;
+      }
+      return {
+        ...acc,
+        [consoleSettings.host]: {
+          ...consoleSettings,
+          ...getBrandingSettings(key),
+          env,
+        },
+      };
+    }, {}),
+  };
+}, {});
 
 export function getBranding(): BrandingSettings {
-  const whitelabelBranding = WHITELABEL_BRANDING[window.location.hostname];
+  const whitelabelBranding = DOMAIN_BRANDING[window.location.hostname];
   return whitelabelBranding ?? FLAGRIGHT_BRANDING;
 }
 

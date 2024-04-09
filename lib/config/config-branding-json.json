@@ -1,0 +1,50 @@
+{
+  "REGTANK": {
+    "consoleSettings": {
+      "sandbox": {
+        "allowedDomains": ["*.regtank.com"],
+        "host": "qc-staging.console.regtank.com",
+        "auth0Domain": "login.qc-staging.console.regtank.com",
+        "auth0ClientId": "Nz37vE2YAvMRPAIsqLVXcfACo216CMXE"
+      },
+      "prod": {
+        "allowedDomains": ["*.regtank.com"],
+        "host": "transaction.console.regtank.com",
+        "auth0Domain": "login.transaction.console.regtank.com",
+        "auth0ClientId": "nVwFjIjOIyrzQfLtkUXo7sdxODGuHfvc"
+      }
+    }
+  },
+  "ZIGRAM": {
+    "consoleSettings": {
+      "sandbox": {
+        "allowedDomains": ["*.transactcomply.com"],
+        "host": "sandboxconsole.transactcomply.com",
+        "auth0Domain": "login.sandboxconsole.transactcomply.com",
+        "auth0ClientId": "qW5HsNLzyfKoKlG8orZza1EQBUqTxfj6"
+      },
+      "prod": {
+        "allowedDomains": ["*.transactcomply.com"],
+        "host": "console.transactcomply.com/",
+        "auth0Domain": "login.sandboxconsole.transactcomply.com",
+        "auth0ClientId": "qW5HsNLzyfKoKlG8orZza1EQBUqTxfj6"
+      }
+    }
+  },
+  "TRAXIONRIGHT": {
+    "consoleSettings": {
+      "sandbox": {
+        "allowedDomains": ["*.traxionright.com"],
+        "host": "sitapp.traxionright.com",
+        "auth0Domain": "login.sitapp.traxionright.com",
+        "auth0ClientId": "wJuiiS6bbcGhSMnqC442RL8HKHfMUI4n"
+      },
+      "prod": {
+        "allowedDomains": ["*.traxionright.com"],
+        "host": "app.traxionright.com",
+        "auth0Domain": "login.app.traxionright.com",
+        "auth0ClientId": "6k9yUXtYFG9WTjsuEhe4LahCD8Q9W8x6"
+      }
+    }
+  }
+}

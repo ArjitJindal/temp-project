@@ -25,7 +25,7 @@ import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';
 import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
-import { WHITELABEL_BRANDING } from '@/utils/branding';
+import { DOMAIN_BRANDING } from '@/utils/branding';
 import Select from '@/components/library/Select';
 import Tag from '@/components/library/Tag';
 
@@ -214,11 +214,9 @@ export default function SuperAdminPanel() {
                 isCollapsedByDefault={true}
               >
                 <Card.Section>
-                  {Object.entries(WHITELABEL_BRANDING)
-                    .filter((entry) => process.env.ENV_NAME === entry[1].env || !entry[1].env)
-                    .map(([url, config], i) => (
-                      <a key={i} href={`https://${url}`}>{`${config.companyName} (${url})`}</a>
-                    ))}
+                  {Object.entries(DOMAIN_BRANDING).map(([url, config], i) => (
+                    <a key={i} href={`https://${url}`}>{`${config.companyName} (${url})`}</a>
+                  ))}
                 </Card.Section>
               </Card.Root>
             )}
