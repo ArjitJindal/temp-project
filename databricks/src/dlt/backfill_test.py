@@ -32,7 +32,7 @@ def test_backfill_transformation():
     ), "Transaction amount is correct"
     assert (
         transformed_df.select("PartitionKeyID").first()[0]
-        == "some_tenanttransaction#primary"
+        == "some_tenant#transaction#primary"
     ), "Transaction partition key is correct"
 
     spark.stop()

@@ -12,7 +12,9 @@ def backfill_transformation(
     entity: Entity, df: DataFrame, stream_resolver: Callable[[str], DataFrame]
 ) -> DataFrame:
     pre_enrichment_df = (
-        df.withColumn("PartitionKeyID", concat(df["tenant"], lit(entity.partition_key)))
+        df.withColumn(
+            "PartitionKeyID", concat(df["tenant"], lit("#"), lit(entity.partition_key))
+        )
         .withColumn("SortKeyID", col(entity.id_column))
         .withColumn(
             "approximateArrivalTimestamp",

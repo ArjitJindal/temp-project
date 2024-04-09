@@ -27,14 +27,14 @@ def enrich_transactions(
             col("approximateArrivalTimestamp"),
         )
         .withWatermark("approximateArrivalTimestamp", "60 minutes")
-    ).dropDuplicates(["date"])
+    ).dropDuplicates(["date", "currency"])
 
     filtered_currencies_usd = currencies_usd.filter(currencies_usd.date.isNotNull())
     broadcast_currencies = broadcast(filtered_currencies_usd).alias("cr")
 
     join_expr = """
             t.transactionAmountUSD is null AND
-            cr.currency = t.originAmountDetails.transactionCurrency AND
+            cr.currency == t.originAmountDetails.transactionCurrency AND
             to_date(from_unixtime(t.timestamp / 1000)) == cr.date AND
             t.approximateArrivalTimestamp >= cr.approximateArrivalTimestamp AND
             t.approximateArrivalTimestamp <= cr.approximateArrivalTimestamp + interval 1 day
