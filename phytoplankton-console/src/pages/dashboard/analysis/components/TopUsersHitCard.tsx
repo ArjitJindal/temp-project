@@ -72,7 +72,7 @@ const TopUsersHitCard = (props: Props) => {
         return {
           userId: `${item.userId} (${getCurrentDomain()}${getUserLink(item.user)})`,
           userName: getUserName(item.user) ?? '',
-          ruleHit: `${item.rulesHit} hits`,
+          ruleHit: `${item.rulesHitCount} hits`,
           openCases: `${item.openCasesCount} open cases ${caseLink ? `(${caseLink})` : ''}`,
         };
       });

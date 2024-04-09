@@ -85,10 +85,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHitCount: 1,
+          rulesHitCount: 1,
           casesCount: 1,
           openCasesCount: 1,
-          transactionsCount: 1,
+          rulesRunCount: 1,
         }),
       ])
     }
@@ -102,10 +102,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHitCount: 1,
+          rulesHitCount: 1,
           casesCount: 1,
           openCasesCount: 1,
-          transactionsCount: 1,
+          rulesRunCount: 1,
         }),
       ])
     }
@@ -182,10 +182,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHitCount: 1,
+          rulesHitCount: 3,
           casesCount: 1,
           openCasesCount: 1,
-          transactionsCount: 1,
+          rulesRunCount: 5,
         }),
       ])
     }
@@ -199,8 +199,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHitCount: 1,
-          transactionsCount: 1,
+          rulesHitCount: 3,
+          rulesRunCount: 5,
           casesCount: 1,
           openCasesCount: 1,
         }),
@@ -220,8 +220,8 @@ describe('Verify hits-per-user statistics', () => {
 
     const originUserId = 'test-user-id'
     const destinationUserId = 'test-user-id-2'
-    const hitRulesCount = 3
-    const transactionsCount = 10
+    const hitRulesCount = 1
+    const transactionsCount = 3
 
     const transactionRepository = await getTransactionsRepo(TENANT_ID)
     for (let i = 0; i < transactionsCount; i += 1) {
@@ -284,10 +284,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHitCount: transactionsCount,
-          transactionsCount: transactionsCount,
-          casesCount: transactionsCount,
-          openCasesCount: transactionsCount,
+          rulesHitCount: 3,
+          rulesRunCount: 3,
+          casesCount: 3,
+          openCasesCount: 3,
         }),
       ])
     }
@@ -301,10 +301,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHitCount: transactionsCount,
-          transactionsCount: transactionsCount,
-          casesCount: transactionsCount,
-          openCasesCount: transactionsCount,
+          rulesHitCount: 3,
+          rulesRunCount: 3,
+          casesCount: 3,
+          openCasesCount: 3,
         }),
       ])
     }
@@ -385,8 +385,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHitCount: casesCount,
-          transactionsCount: casesCount,
+          rulesHitCount: casesCount,
+          rulesRunCount: 2 * casesCount,
           casesCount: casesCount,
           openCasesCount: casesCount,
         }),
@@ -402,8 +402,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHitCount: casesCount,
-          transactionsCount: casesCount,
+          rulesHitCount: casesCount,
+          rulesRunCount: 2 * casesCount,
           casesCount: casesCount,
           openCasesCount: casesCount,
         }),
@@ -549,8 +549,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHitCount: 1,
-          transactionsCount: 1,
+          rulesHitCount: 1,
+          rulesRunCount: 1,
           casesCount: 1,
           openCasesCount: 1,
         }),
@@ -566,8 +566,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHitCount: 1,
-          transactionsCount: 1,
+          rulesHitCount: 1,
+          rulesRunCount: 1,
           casesCount: 1,
           openCasesCount: 1,
         }),
@@ -689,8 +689,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHitCount: 4,
-          transactionsCount: 5,
+          rulesHitCount: 4,
+          rulesRunCount: 5,
           casesCount: 1,
           openCasesCount: 1,
         }),
@@ -706,8 +706,8 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHitCount: 3,
-          transactionsCount: 4,
+          rulesHitCount: 3,
+          rulesRunCount: 4,
           casesCount: 1,
           openCasesCount: 1,
         }),

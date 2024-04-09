@@ -7126,24 +7126,22 @@ components:
             properties:
               userId:
                 type: string
-              transactionsHitCount:
+              rulesHitCount:
                 type: number
               user:
                 oneOf:
                   - $ref: '#/components/schemas/InternalConsumerUser'
                   - $ref: '#/components/schemas/InternalBusinessUser'
-              rulesHit:
-                type: number
               casesCount:
                 type: number
               openCasesCount:
                 type: number
-              transactionsCount:
+              rulesRunCount:
                 type: number
             required:
               - originUserId
-              - transactionsHitCount
-              - transactionsCount
+              - rulesHitCount
+              - rulesRunCount
       required:
         - data
     DashboardTeamStatsItem:

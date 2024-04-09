@@ -49,14 +49,14 @@ export default function HitsPerUserCard(props: Props) {
       title: 'Username',
       value: (entity: TableItem): string => getUserName(entity.user) ?? '',
     }),
-    helper.simple<'transactionsHitCount'>({
-      title: 'Transactions hit',
-      key: 'transactionsHitCount',
+    helper.simple<'rulesHitCount'>({
+      title: 'Rules hit',
+      key: 'rulesHitCount',
       type: {
-        render: (transactionsHitCount, { item }) => {
+        render: (rulesHitCount, { item }) => {
           return (
-            <>{`${transactionsHitCount} ${pluralize('hit', transactionsHitCount)} (${round(
-              (item.transactionsHitCount / item.transactionsCount) * 100,
+            <>{`${rulesHitCount} ${pluralize('hit', rulesHitCount)} (${round(
+              (item.rulesHitCount / item.rulesRunCount) * 100,
               2,
             )}%)`}</>
           );

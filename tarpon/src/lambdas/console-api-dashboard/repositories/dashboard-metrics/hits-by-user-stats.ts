@@ -206,18 +206,16 @@ export class HitsByUserStatsDashboardMetric {
             },
             userId: `$${direction.toLowerCase()}UserId`,
           },
-          transactionsHitCount: {
+          rulesHitCount: {
             $sum: {
-              $cond: {
-                if: {
-                  $gt: [{ $size: { $ifNull: ['$hitRules', []] } }, 0],
-                },
-                then: 1,
-                else: 0,
-              },
+              $size: { $ifNull: ['$hitRules', []] },
             },
           },
-          transactionsCount: { $sum: 1 },
+          rulesRunCount: {
+            $sum: {
+              $size: { $ifNull: ['$executedRules', []] },
+            },
+          },
         },
       },
       {
@@ -226,8 +224,8 @@ export class HitsByUserStatsDashboardMetric {
           date: '$_id.date',
           userId: '$_id.userId',
           direction,
-          transactionsHitCount: '$transactionsHitCount',
-          transactionsCount: '$transactionsCount',
+          rulesHitCount: '$rulesHitCount',
+          rulesRunCount: '$rulesRunCount',
         },
       },
       ...mergePipeline,
@@ -288,14 +286,14 @@ export class HitsByUserStatsDashboardMetric {
         user: InternalConsumerUser | InternalBusinessUser | null
         casesCount: number
         openCasesCount: number
-        transactionsCount: number
-        transactionsHitCount: number
+        rulesRunCount: number
+        rulesHitCount: number
       }>(
         [
           {
             $match: {
               ...condition.$match,
-              transactionsCount: { $gt: 0 },
+              rulesRunCount: { $gt: 0 },
             },
           },
           {
@@ -303,17 +301,17 @@ export class HitsByUserStatsDashboardMetric {
               _id: `$userId`,
               casesCount: { $sum: '$casesCount' },
               openCasesCount: { $sum: '$openCasesCount' },
-              transactionsCount: { $sum: '$transactionsCount' },
-              transactionsHitCount: { $sum: '$transactionsHitCount' },
+              rulesRunCount: { $sum: '$rulesRunCount' },
+              rulesHitCount: { $sum: '$rulesHitCount' },
             },
           },
           {
             $match: {
-              transactionsHitCount: { $gt: 0 },
+              rulesHitCount: { $gt: 0 },
             },
           },
           {
-            $sort: { transactionsHitCount: -1 },
+            $sort: { rulesHitCount: -1 },
           },
           {
             $limit: 10,
@@ -342,10 +340,10 @@ export class HitsByUserStatsDashboardMetric {
       return {
         userId: x._id,
         user: x.user ?? undefined,
-        transactionsHitCount: x.transactionsHitCount,
+        rulesHitCount: x.rulesHitCount,
         casesCount: x.casesCount,
         openCasesCount: x.openCasesCount,
-        transactionsCount: x.transactionsCount,
+        rulesRunCount: x.rulesRunCount,
       }
     })
   }
