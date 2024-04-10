@@ -15,7 +15,9 @@ def cdc_transformation(
 
     sort_key_id_path = "event.dynamodb.Keys.SortKeyID.S"
     df = (
-        read_stream.withColumn(
+        read_stream.filter(col("data").cast("string").contains(entity.partition_key))
+        .select("data", "approximateArrivalTimestamp")
+        .withColumn(
             "event", from_json(col("data").cast("string"), kinesis_event_schema)
         )
         .withColumn(
