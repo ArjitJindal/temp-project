@@ -4,7 +4,7 @@ import AccountTag from '@/components/AccountTag';
 import { DashboardLatestTeamStatsItem } from '@/apis';
 import { map, QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { DURATION } from '@/components/library/Table/standardDataTypes';
+import { NUMBER } from '@/components/library/Table/standardDataTypes';
 
 interface Props {
   queryResult: QueryResult<DashboardLatestTeamStatsItem[]>;
@@ -27,38 +27,31 @@ export default function LatestOverviewTable(props: Props) {
         key: 'open',
         title: 'Open',
         defaultWidth: 100,
+        type: NUMBER,
       }),
-      helper.simple({
-        key: 'closed',
-        title: 'Closed',
-        defaultWidth: 100,
-      }),
-
       helper.simple({
         key: 'onHold',
         title: 'On Hold',
         defaultWidth: 100,
+        type: NUMBER,
       }),
       helper.simple({
         key: 'escalated',
-        title: 'Escalated',
+        title: 'Escalated to',
         defaultWidth: 100,
+        type: NUMBER,
       }),
       helper.simple({
         key: 'inProgress',
         title: 'In progress',
         defaultWidth: 100,
+        type: NUMBER,
       }),
       helper.simple({
         key: 'inReview',
         title: 'In Review',
         defaultWidth: 100,
-      }),
-      helper.simple({
-        key: 'avgInvestigationTime',
-        title: 'Average investigation time',
-        defaultWidth: 100,
-        type: DURATION,
+        type: NUMBER,
       }),
     ]);
   }, []);

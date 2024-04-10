@@ -7178,10 +7178,6 @@ components:
           type: string
         open:
           type: number
-        closed:
-          type: number
-        avgInvestigationTime:
-          type: number
         onHold:
           type: number
         escalated:

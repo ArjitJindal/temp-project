@@ -108,7 +108,7 @@ export const dashboardStatsHandler = lambdaApi()(
       }
 
       if (shouldRefreshAll(event)) {
-        await dashboardStatsRepository.refreshAllStats()
+        await dashboardStatsRepository.refreshUserStats()
       }
       return {
         data: await dashboardStatsRepository.getHitsByUserStats(
@@ -124,7 +124,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const { startTimestamp, endTimestamp } = request
 
       if (shouldRefreshAll(event)) {
-        await dashboardStatsRepository.refreshAllStats()
+        await dashboardStatsRepository.refreshCaseStats()
       }
       if (!endTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
@@ -150,7 +150,7 @@ export const dashboardStatsHandler = lambdaApi()(
       }
 
       if (shouldRefreshAll(event)) {
-        await dashboardStatsRepository.refreshAllStats()
+        await dashboardStatsRepository.refreshUserStats()
       }
       const data = await dashboardStatsRepository.getUserTimewindowStats(
         userType,
@@ -195,8 +195,9 @@ export const dashboardStatsHandler = lambdaApi()(
       const accountIds = accounts
         .filter((account) => account.role !== 'root')
         .map((account) => account.id)
+
       if (shouldRefreshAll(event)) {
-        await dashboardStatsRepository.refreshAllStats()
+        await dashboardStatsRepository.refreshTeamStats()
       }
       return await dashboardStatsRepository.getOverviewStatistics(accountIds)
     })
@@ -253,6 +254,9 @@ export const dashboardStatsHandler = lambdaApi()(
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization
       )
+      if (shouldRefreshAll(event)) {
+        await dashboardStatsRepository.refreshLatestTeamStats()
+      }
       const accountIds = accounts
         .filter((account) => account.role !== 'root')
         .map((account) => account.id)

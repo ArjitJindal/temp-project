@@ -1,19 +1,10 @@
 import { difference } from 'lodash'
-import { TimeRange } from '../types'
-import { getAffectedInterval } from '../../utils'
-import { cleanUpStaleData, withUpdatedAt } from './utils'
-import dayjs from '@/utils/dayjs'
-import {
-  HOUR_DATE_FORMAT,
-  HOUR_DATE_FORMAT_JS,
-  getMongoDbClientDb,
-} from '@/utils/mongodb-utils'
+import { withUpdatedAt } from './utils'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   DASHBOARD_LATEST_TEAM_ALERTS_STATS_HOURLY,
   DASHBOARD_LATEST_TEAM_CASES_STATS_HOURLY,
-  DASHBOARD_TEAM_ALERTS_STATS_HOURLY,
-  DASHBOARD_TEAM_CASES_STATS_HOURLY,
 } from '@/utils/mongodb-definitions'
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
@@ -35,10 +26,7 @@ export class LatestTeamStatsDashboardMetric {
       ? reviewAssignmentsStatus
       : assignmentsStatus
   }
-  public static async refresh(
-    tenantId,
-    caseCreatedAtTimeRange?: TimeRange
-  ): Promise<void> {
+  public static async refresh(tenantId: string): Promise<void> {
     const db = await getMongoDbClientDb()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     const alertAggregationCollection =
@@ -47,21 +35,13 @@ export class LatestTeamStatsDashboardMetric {
       DASHBOARD_LATEST_TEAM_CASES_STATS_HOURLY(tenantId)
 
     const lastUpdatedAt = Date.now()
-    let timestampMatch: any = null
-    if (caseCreatedAtTimeRange) {
-      const { start, end } = getAffectedInterval(caseCreatedAtTimeRange, 'HOUR')
-      timestampMatch = {
-        createdTimestamp: {
-          $gte: start,
-          $lt: end,
-        },
-      }
-    }
+
     // Cases
     {
       await db
         .collection(caseAggregationCollection)
-        .createIndex({ date: -1, accountId: 1 }, { unique: true })
+        .createIndex({ accountId: 1 }, { unique: true })
+
       await db.collection(caseAggregationCollection).createIndex({
         updatedAt: 1,
       })
@@ -70,7 +50,6 @@ export class LatestTeamStatsDashboardMetric {
         const assignmentsPipeline = [
           {
             $match: {
-              ...timestampMatch,
               caseStatus: {
                 $in: this.getStatusAccordingToAssignment('assignemnts'),
               },
@@ -91,25 +70,10 @@ export class LatestTeamStatsDashboardMetric {
             $group: {
               _id: {
                 accountId: '$assignments.assigneeUserId',
-                date: {
-                  $dateToString: {
-                    format: HOUR_DATE_FORMAT,
-                    date: {
-                      $toDate: {
-                        $toLong: '$createdTimestamp',
-                      },
-                    },
-                  },
-                },
               },
               open: {
                 $sum: {
                   $cond: [{ $in: ['$caseStatus', ['OPEN', 'REOPENED']] }, 1, 0],
-                },
-              },
-              closed: {
-                $sum: {
-                  $cond: [{ $eq: ['$caseStatus', 'CLOSED'] }, 1, 0],
                 },
               },
               inProgress: {
@@ -140,9 +104,7 @@ export class LatestTeamStatsDashboardMetric {
             $project: {
               _id: false,
               accountId: '$_id.accountId',
-              date: '$_id.date',
               inProgress: 1,
-              closed: 1,
               onHold: 1,
               open: 1,
             },
@@ -150,7 +112,7 @@ export class LatestTeamStatsDashboardMetric {
           {
             $merge: {
               into: caseAggregationCollection,
-              on: ['accountId', 'date'],
+              on: ['accountId'],
               whenMatched: 'merge',
             },
           },
@@ -159,7 +121,6 @@ export class LatestTeamStatsDashboardMetric {
         const reviewAssignmentspipeline = [
           {
             $match: {
-              ...timestampMatch,
               caseStatus: {
                 $in: this.getStatusAccordingToAssignment('reviewAssignments'),
               },
@@ -180,23 +141,13 @@ export class LatestTeamStatsDashboardMetric {
             $group: {
               _id: {
                 accountId: '$reviewAssignments.assigneeUserId',
-                date: {
-                  $dateToString: {
-                    format: HOUR_DATE_FORMAT,
-                    date: {
-                      $toDate: {
-                        $toLong: '$createdTimestamp',
-                      },
-                    },
-                  },
-                },
               },
               escalated: {
                 $sum: {
                   $cond: [{ $eq: ['$caseStatus', 'ESCALATED'] }, 1, 0],
                 },
               },
-              inProgress: {
+              reviewInProgress: {
                 $sum: {
                   $cond: [
                     {
@@ -207,7 +158,7 @@ export class LatestTeamStatsDashboardMetric {
                   ],
                 },
               },
-              onHold: {
+              reviewOnHold: {
                 $sum: {
                   $cond: [
                     {
@@ -243,17 +194,16 @@ export class LatestTeamStatsDashboardMetric {
             $project: {
               _id: false,
               accountId: '$_id.accountId',
-              date: '$_id.date',
-              inProgress: 1,
+              reviewInProgress: 1,
               escalated: 1,
-              onHold: 1,
+              reviewOnHold: 1,
               inReview: 1,
             },
           },
           {
             $merge: {
               into: caseAggregationCollection,
-              on: ['accountId', 'date'],
+              on: ['accountId'],
               whenMatched: 'merge',
             },
           },
@@ -272,7 +222,8 @@ export class LatestTeamStatsDashboardMetric {
     {
       await db
         .collection(alertAggregationCollection)
-        .createIndex({ date: -1, accountId: 1 }, { unique: true })
+        .createIndex({ accountId: 1 }, { unique: true })
+
       await db.collection(alertAggregationCollection).createIndex({
         updatedAt: 1,
       })
@@ -281,7 +232,6 @@ export class LatestTeamStatsDashboardMetric {
         const assignmentsPipeline = [
           {
             $match: {
-              ...timestampMatch,
               'alerts.alertStatus': {
                 $in: this.getStatusAccordingToAssignment('assignemnts'),
               },
@@ -305,16 +255,6 @@ export class LatestTeamStatsDashboardMetric {
             $group: {
               _id: {
                 accountId: '$alerts.assignments.assigneeUserId',
-                date: {
-                  $dateToString: {
-                    format: HOUR_DATE_FORMAT,
-                    date: {
-                      $toDate: {
-                        $toLong: '$createdTimestamp',
-                      },
-                    },
-                  },
-                },
               },
               open: {
                 $sum: {
@@ -323,11 +263,6 @@ export class LatestTeamStatsDashboardMetric {
                     1,
                     0,
                   ],
-                },
-              },
-              closed: {
-                $sum: {
-                  $cond: [{ $eq: ['$alerts.alertStatus', 'CLOSED'] }, 1, 0],
                 },
               },
               inProgress: {
@@ -358,9 +293,7 @@ export class LatestTeamStatsDashboardMetric {
             $project: {
               _id: false,
               accountId: '$_id.accountId',
-              date: '$_id.date',
               inProgress: 1,
-              closed: 1,
               onHold: 1,
               open: 1,
             },
@@ -368,7 +301,7 @@ export class LatestTeamStatsDashboardMetric {
           {
             $merge: {
               into: alertAggregationCollection,
-              on: ['accountId', 'date'],
+              on: ['accountId'],
               whenMatched: 'merge',
             },
           },
@@ -377,7 +310,6 @@ export class LatestTeamStatsDashboardMetric {
         const reviewAssignmentspipeline = [
           {
             $match: {
-              ...timestampMatch,
               'alerts.reviewAssignments': {
                 $exists: true,
                 $ne: null,
@@ -405,23 +337,13 @@ export class LatestTeamStatsDashboardMetric {
             $group: {
               _id: {
                 accountId: '$alerts.reviewAssignments.assigneeUserId',
-                date: {
-                  $dateToString: {
-                    format: HOUR_DATE_FORMAT,
-                    date: {
-                      $toDate: {
-                        $toLong: '$createdTimestamp',
-                      },
-                    },
-                  },
-                },
               },
               escalated: {
                 $sum: {
                   $cond: [{ $eq: ['$alerts.alertStatus', 'ESCALATED'] }, 1, 0],
                 },
               },
-              inProgress: {
+              reviewInProgress: {
                 $sum: {
                   $cond: [
                     {
@@ -432,7 +354,7 @@ export class LatestTeamStatsDashboardMetric {
                   ],
                 },
               },
-              onHold: {
+              reviewOnHold: {
                 $sum: {
                   $cond: [
                     {
@@ -468,17 +390,16 @@ export class LatestTeamStatsDashboardMetric {
             $project: {
               _id: false,
               accountId: '$_id.accountId',
-              date: '$_id.date',
-              inProgress: 1,
+              reviewInProgress: 1,
               escalated: 1,
-              onHold: 1,
+              reviewOnHold: 1,
               inReview: 1,
             },
           },
           {
             $merge: {
               into: alertAggregationCollection,
-              on: ['accountId', 'date'],
+              on: ['accountId'],
               whenMatched: 'merge',
             },
           },
@@ -492,23 +413,6 @@ export class LatestTeamStatsDashboardMetric {
           .next()
       }
     }
-
-    await Promise.all([
-      cleanUpStaleData(
-        caseAggregationCollection,
-        'date',
-        lastUpdatedAt,
-        caseCreatedAtTimeRange,
-        'HOUR'
-      ),
-      cleanUpStaleData(
-        alertAggregationCollection,
-        'date',
-        lastUpdatedAt,
-        caseCreatedAtTimeRange,
-        'HOUR'
-      ),
-    ])
   }
 
   public static async get(
@@ -523,17 +427,9 @@ export class LatestTeamStatsDashboardMetric {
         : DASHBOARD_LATEST_TEAM_CASES_STATS_HOURLY(tenantId)
     const collection =
       db.collection<DashboardLatestTeamStatsItem>(collectionName)
-    const startTimestamp = 0
-    const endTimestamp = Date.now()
-    const dateCondition: Record<string, unknown> = {
-      $gte: dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS),
-      $lte: dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS),
-    }
 
     const matchConditions: Record<string, unknown>[] = []
-    if (dateCondition != null) {
-      matchConditions.push({ date: dateCondition })
-    }
+
     if (accountIds != null && accountIds.length > 0) {
       matchConditions.push({ accountId: { $in: accountIds } })
     }
@@ -543,113 +439,24 @@ export class LatestTeamStatsDashboardMetric {
         ? [{ $match: { $and: matchConditions } }]
         : []),
       {
-        $group: {
-          _id: '$accountId',
-          closed: {
-            $sum: '$closed',
-          },
-          open: {
-            $sum: '$open',
-          },
-          caseIds: {
-            $push: '$caseIds',
-          },
-          onHold: {
-            $sum: '$onHold',
-          },
-          inProgress: {
-            $sum: '$inProgress',
-          },
-          escalated: {
-            $sum: '$escalated',
-          },
-          inReview: {
-            $sum: '$inReview',
-          },
-        },
-      },
-      {
-        $addFields: {
-          caseIds: {
-            $reduce: {
-              input: '$caseIds',
-              initialValue: [],
-              in: { $setUnion: ['$$value', '$$this'] },
-            },
-          },
-        },
-      },
-      {
         $project: {
-          _id: false,
-          accountId: '$_id',
-          closed: true,
+          accountId: true,
           open: true,
-          caseIds: true,
           inReview: true,
-          inProgress: true,
+          inProgress: {
+            $add: ['$reviewInProgress', '$inProgress'],
+          },
           escalated: true,
-          onHold: true,
+          onHold: {
+            $add: ['$reviewOnHold', '$onHold'],
+          },
         },
       },
     ]
 
-    const investigationTimeCollectionName =
-      scope === 'ALERTS'
-        ? DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenantId)
-        : DASHBOARD_TEAM_CASES_STATS_HOURLY(tenantId)
-
-    const investigationTimeCollection = db.collection(
-      investigationTimeCollectionName
-    )
-    const investigationTimePipeline = [
-      ...(matchConditions.length > 0
-        ? [{ $match: { $and: matchConditions } }]
-        : []),
-      {
-        $group: {
-          _id: '$accountId',
-          investigationTime: {
-            $sum: '$investigationTime',
-          },
-          caseIds: {
-            $push: '$caseIds',
-          },
-        },
-      },
-      {
-        $addFields: {
-          caseIds: {
-            $reduce: {
-              input: '$caseIds',
-              initialValue: [],
-              in: { $setUnion: ['$$value', '$$this'] },
-            },
-          },
-        },
-      },
-      {
-        $project: {
-          _id: false,
-          accountId: '$_id',
-          investigationTime: true,
-          caseIds: true,
-        },
-      },
-    ]
-
-    const investigationTimeResultPromise = investigationTimeCollection
+    const result = await collection
       .aggregate<{
         accountId: string
-        investigationTime: number
-        caseIds: string[]
-      }>(investigationTimePipeline, { allowDiskUse: true })
-      .toArray()
-
-    const resultPromise = collection
-      .aggregate<{
-        accountId: string
-        closed: number
         open: number
         inReview: number
         inProgress: number
@@ -658,27 +465,6 @@ export class LatestTeamStatsDashboardMetric {
       }>(pipeline, { allowDiskUse: true })
       .toArray()
 
-    const [investigationTimeResult, result] = await Promise.all([
-      investigationTimeResultPromise,
-      resultPromise,
-    ])
-    const investigationTimeMap = new Map()
-    investigationTimeResult.forEach((item) => {
-      investigationTimeMap.set(item.accountId, {
-        investigationTime: item.investigationTime,
-        caseIdsCount: item.caseIds.length,
-      })
-    })
-    return result.map((item) => {
-      const investigationTimeData = investigationTimeMap.get(item.accountId)
-      if (!investigationTimeData) {
-        return item
-      }
-      const { investigationTime, caseIdsCount } = investigationTimeData
-      return {
-        ...item,
-        avgInvestigationTime: investigationTime / caseIdsCount,
-      }
-    })
+    return result
   }
 }

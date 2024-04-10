@@ -43,7 +43,7 @@ export class DashboardStatsRepository {
       this.refreshCaseStats(timeRange),
       this.refreshUserStats(timeRange),
       this.refreshTeamStats(timeRange),
-      this.refreshLatestTeamStats(timeRange),
+      this.refreshLatestTeamStats(),
     ])
   }
 
@@ -169,11 +169,8 @@ export class DashboardStatsRepository {
     )
   }
 
-  public async refreshLatestTeamStats(caseCreatedAtTimeRange?: TimeRange) {
-    await LatestTeamStatsDashboardMetric.refresh(
-      this.tenantId,
-      caseCreatedAtTimeRange
-    )
+  public async refreshLatestTeamStats() {
+    await LatestTeamStatsDashboardMetric.refresh(this.tenantId)
   }
 
   async getOverviewStatistics(

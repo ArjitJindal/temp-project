@@ -64,8 +64,8 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
         const casesCollection = db.collection<Case>(
           CASES_COLLECTION(job.tenantId)
         )
-        const cases = await (
-          await casesCollection.find(
+        const cases = await casesCollection
+          .find(
             {
               updatedAt: {
                 $gte: checkTimeRange?.startTimestamp ?? 0,
@@ -74,14 +74,15 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
             },
             { projection: { createdTimestamp: 1 } }
           )
-        ).toArray()
+          .toArray()
+
         const targetTimeRanges = getTargetTimeRanges(
           cases.map((c) => c.createdTimestamp!)
         )
 
         for (const timeRange of targetTimeRanges) {
           await dashboardStatsRepository.refreshCaseStats(timeRange)
-          await dashboardStatsRepository.refreshLatestTeamStats(timeRange)
+          await dashboardStatsRepository.refreshLatestTeamStats()
           logger.info(`Refreshed case stats - ${JSON.stringify(timeRange)}`)
         }
       })(),
