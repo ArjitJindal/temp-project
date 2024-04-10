@@ -17,8 +17,17 @@ async function migrateTenant(tenant: Tenant) {
   const db = mongoDb.db()
 
   // drop all indexes
-  await db.collection(dashboardLatestTeamStatsAlertsCollection).dropIndexes()
-  await db.collection(dashboardLatestTeamStatsCasesCollection).dropIndexes()
+
+  try {
+    await db.collection(dashboardLatestTeamStatsAlertsCollection).dropIndexes()
+  } catch {
+    // ignore
+  }
+  try {
+    await db.collection(dashboardLatestTeamStatsCasesCollection).dropIndexes()
+  } catch {
+    // ignore
+  }
 
   // clear everything from the collections
   await db.collection(dashboardLatestTeamStatsAlertsCollection).deleteMany({})
