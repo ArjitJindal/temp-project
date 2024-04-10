@@ -1,7 +1,9 @@
+import { omit } from 'lodash'
 import { publishAuditLog } from '../audit-log'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { hasFeature } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 
 type AuditLogCreateRequest = {
@@ -48,14 +50,11 @@ export class RuleAuditLogService {
     oldInstance: RuleInstance | null,
     newInstance: RuleInstance | null
   ): Promise<void> {
-    const oldImage = oldInstance ?? {}
-    const newImage = newInstance ?? {}
-
     await this.createAuditLog({
       ruleInstanceId: newInstance?.id,
       logAction: 'UPDATE',
-      oldImage,
-      newImage,
+      oldImage: oldInstance,
+      newImage: newInstance,
       ruleDetails: newInstance ?? null,
     })
   }
@@ -64,12 +63,21 @@ export class RuleAuditLogService {
     const { ruleInstanceId, logAction, oldImage, newImage, ruleDetails } =
       auditLogCreateRequest
 
+    const parametersToOmit: (keyof RuleInstance)[] = hasFeature('RISK_LEVELS')
+      ? ['parameters', 'action', 'triggersOnHit', 'logic']
+      : [
+          'riskLevelParameters',
+          'riskLevelsTriggersOnHit',
+          'riskLevelActions',
+          'riskLevelLogic',
+        ]
+
     const auditLog: AuditLog = {
       type: 'RULE',
       entityId: ruleInstanceId,
       action: logAction,
-      oldImage,
-      newImage,
+      oldImage: omit(oldImage, parametersToOmit),
+      newImage: omit(newImage, parametersToOmit),
       logMetadata: {
         ruleId: ruleDetails?.ruleId,
         id: ruleDetails?.id,
