@@ -20,12 +20,12 @@ import { getBranding } from '@/utils/branding';
 import { useAuth0User, useInvalidateUsers } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import COLORS from '@/components/ui/colors';
-import Radio from '@/components/library/Radio';
 import Label from '@/components/library/Label';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import Select from '@/components/library/Select';
 import Drawer from '@/components/library/Drawer';
 import TextInput from '@/components/library/TextInput';
+import Checkbox from '@/components/library/Checkbox';
 
 interface Props {
   editAccount: Account | null;
@@ -282,27 +282,21 @@ export default function AccountForm(props: Props) {
             </P>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
               <Label position="RIGHT" label="Escalation reviewer" level={2}>
-                <Radio
+                <Checkbox
                   value={values.isEscalationContact}
                   onChange={(value) => {
-                    setIsReviewRequired(false);
                     setValues({
                       ...values,
                       isEscalationContact: value,
-                      reviewerId: value ? undefined : values.reviewerId,
                     });
                   }}
                 />
               </Label>
-              <Label position="RIGHT" label="Requires review" level={2}>
-                <Radio
+              <Label position="RIGHT" label="Maker" level={2}>
+                <Checkbox
                   value={isReviewRequired}
-                  onChange={(value) => {
-                    setIsReviewRequired(true);
-                    setValues({
-                      ...values,
-                      isEscalationContact: value ? false : values.isEscalationContact,
-                    });
+                  onChange={() => {
+                    setIsReviewRequired(!isReviewRequired);
                   }}
                 />
               </Label>
@@ -311,7 +305,7 @@ export default function AccountForm(props: Props) {
         </Feature>
         {isReviewRequired && isEscalationsEnabled && (
           <div style={{ marginTop: '1rem' }}>
-            <Label label="Select a reviewer">
+            <Label label="Select a checker">
               <AssigneesDropdown
                 maxAssignees={1}
                 editing={true}

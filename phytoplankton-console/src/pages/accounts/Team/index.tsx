@@ -118,9 +118,9 @@ export default function Team() {
             <div>
               {role != null && <RoleTag role={role} />}
               {context.item.isEscalationContact && <Tag className={s.tag}>Escalation reviewer</Tag>}
-              {context.item.reviewerId && <Tag className={s.tag}>Requires review</Tag>}
+              {context.item.reviewerId && <Tag className={s.tag}>Maker</Tag>}
               {!loadingUsers && some(users, (u) => u.reviewerId === context.item.id) && (
-                <Tag className={s.tag}>Reviewer</Tag>
+                <Tag className={s.tag}>Checker</Tag>
               )}
             </div>
           );
