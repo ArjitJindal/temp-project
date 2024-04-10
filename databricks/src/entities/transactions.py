@@ -15,7 +15,7 @@ transaction_schema = merge_schemas(
 
 
 def enrich_transactions(
-    transactions_df: DataFrame, resolve_stream: Callable[[str], DataFrame], batch=False
+    transactions_df: DataFrame, resolve_stream: Callable[[str], DataFrame]
 ):
     currency_rates_df = resolve_stream("currency_rates")
 
@@ -32,25 +32,20 @@ def enrich_transactions(
     filtered_currencies_usd = currencies_usd.filter(currencies_usd.date.isNotNull())
     broadcast_currencies = broadcast(filtered_currencies_usd).alias("cr")
 
-    join_expr = """
-            t.transactionAmountUSD is null AND
-            cr.currency == t.originAmountDetails.transactionCurrency AND
-            to_date(from_unixtime(t.timestamp / 1000)) == cr.date AND
-            t.approximateArrivalTimestamp >= cr.approximateArrivalTimestamp AND
-            t.approximateArrivalTimestamp <= cr.approximateArrivalTimestamp + interval 1 day
-        """
-    if batch:
-        join_expr = """
-            t.transactionAmountUSD is null AND
-            cr.currency = t.originAmountDetails.transactionCurrency AND
-            to_date(from_unixtime(t.timestamp / 1000)) == cr.date
-        """
     joined_df = (
         transactions_df.alias("t")
         .withWatermark("approximateArrivalTimestamp", "1 second")
         .join(
             broadcast_currencies,
-            expr(join_expr),
+            expr(
+                """
+            cr.currency = t.originAmountDetails.transactionCurrency AND
+            to_date(from_unixtime(t.timestamp / 1000)) = cr.date AND
+            t.approximateArrivalTimestamp >= cr.approximateArrivalTimestamp AND
+            t.approximateArrivalTimestamp <= cr.approximateArrivalTimestamp + interval 1 day
+        """
+            ),
+            "leftouter",
         )
     )
 

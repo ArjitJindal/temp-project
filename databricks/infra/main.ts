@@ -480,7 +480,7 @@ class DatabricksStack extends TerraformStack {
       continuous: true,
       edition: 'PRO',
       development: stage === 'dev',
-      channel: 'CURRENT',
+      channel: 'PREVIEW',
       catalog: catalog.name,
       cluster: [
         {
