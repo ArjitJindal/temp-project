@@ -614,9 +614,15 @@ export class AccountsService {
       )
     }
 
+    const userRoles = await userManager.getRoles({ id: accountId })
+
     await Promise.all([
       userManager.update({ id: accountId }, { blocked: true }),
       this.updateAuth0UserInMongo(tenantId, accountId, { blocked: true }),
+      userManager.deleteRoles(
+        { id: accountId },
+        { roles: userRoles.data.map((role) => role.id) }
+      ),
     ])
   }
 
