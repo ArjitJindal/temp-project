@@ -63,12 +63,15 @@ function createServer(serverInfo: ServerInfo) {
   const app = express()
   const { openapiPath } = serverInfo
   const apiDefinition = yaml.load(fs.readFileSync(openapiPath, 'utf8')) as any
+  apiDefinition.servers.forEach((server) => {
+    server.url = new URL(server.url).origin
+  })
 
   app.use(express.text({ type: () => true }))
   app.use(serverLogMiddleware)
   app.use(
     OpenApiValidator.middleware({
-      apiSpec: openapiPath,
+      apiSpec: apiDefinition,
       validateRequests: false,
       validateResponses: false,
     })
