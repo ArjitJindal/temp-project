@@ -15,6 +15,7 @@ import { TransactionMonitoringResult } from '@/@types/openapi-public/Transaction
 import { Undefined } from '@/utils/lang'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
+import { pickKnownEntityFields } from '@/utils/object'
 
 @traceable
 export class TransactionEventRepository {
@@ -111,5 +112,21 @@ export class TransactionEventRepository {
       )
     })
     return events
+  }
+
+  public async getMongoTransactionEvent(
+    eventId: string
+  ): Promise<TransactionEvent | null> {
+    const db = this.mongoDb.db()
+    const result = await db
+      .collection<TransactionEvent>(
+        TRANSACTION_EVENTS_COLLECTION(this.tenantId)
+      )
+      .findOne({ eventId })
+
+    if (!result) {
+      return null
+    }
+    return pickKnownEntityFields(result, TransactionEvent)
   }
 }

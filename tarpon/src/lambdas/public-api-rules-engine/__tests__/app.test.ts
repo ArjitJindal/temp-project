@@ -45,6 +45,8 @@ import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { RulesEngineService } from '@/services/rules-engine'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 
 const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
 
@@ -267,6 +269,28 @@ describe('Public API - Retrieve a Transaction', () => {
   })
 })
 
+async function createTransactionEvent(
+  tenantId: string,
+  transaction: Transaction,
+  transactionEvent: TransactionEvent
+) {
+  await transactionHandler(
+    getApiGatewayPostEvent(tenantId, '/transactions', transaction, {
+      queryStringParameters: {
+        validateOriginUserId: 'false',
+        validateDestinationUserId: 'false',
+      },
+    }),
+    null as any,
+    null as any
+  )
+  return transactionEventHandler(
+    getApiGatewayPostEvent(tenantId, '/events/transaction', transactionEvent),
+    null as any,
+    null as any
+  )
+}
+
 describe('Public API - Create a Transaction Event', () => {
   const TEST_TENANT_ID = getTestTenantId()
 
@@ -299,16 +323,6 @@ describe('Public API - Create a Transaction Event', () => {
       transactionState: 'CREATED',
       timestamp: 100,
     })
-    await transactionHandler(
-      getApiGatewayPostEvent(TEST_TENANT_ID, '/transactions', transaction, {
-        queryStringParameters: {
-          validateOriginUserId: 'false',
-          validateDestinationUserId: 'false',
-        },
-      }),
-      null as any,
-      null as any
-    )
     const transactionEvent = getTestTransactionEvent({
       eventId: 'event1',
       transactionId: 'foo',
@@ -319,14 +333,10 @@ describe('Public API - Create a Transaction Event', () => {
         },
       },
     })
-    const response = await transactionEventHandler(
-      getApiGatewayPostEvent(
-        TEST_TENANT_ID,
-        '/events/transaction',
-        transactionEvent
-      ),
-      null as any,
-      null as any
+    const response = await createTransactionEvent(
+      TEST_TENANT_ID,
+      transaction,
+      transactionEvent
     )
     expect(response?.statusCode).toBe(200)
     expect(JSON.parse(response?.body as string)).toMatchObject({
@@ -383,6 +393,50 @@ describe('Public API - Create a Transaction Event', () => {
     expect(savedEvent?.updatedTransactionAttributes).not.toMatchObject({
       foo: 'bar',
     })
+  })
+})
+
+describe('Public API - Retrieve a Transaction Event', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  test('throws if transaction event not found', async () => {
+    const response = await transactionEventHandler(
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/events/transaction/{eventId}', {
+        pathParameters: { eventId: 'foo' },
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(404)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      error: 'NotFoundError',
+      message: `Transaction event foo not found`,
+    })
+  })
+  test('returns the transaction event', async () => {
+    const transaction = getTestTransaction({
+      transactionId: 'bar',
+      timestamp: 100,
+    })
+    const transactionEvent = getTestTransactionEvent({
+      eventId: 'foo',
+      transactionId: 'bar',
+      transactionState: 'DECLINED',
+      updatedTransactionAttributes: {
+        originPaymentDetails: {
+          method: 'CARD',
+        },
+      },
+    })
+    await createTransactionEvent(TEST_TENANT_ID, transaction, transactionEvent)
+    const response = await transactionEventHandler(
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/events/transaction/{eventId}', {
+        pathParameters: { eventId: 'foo' },
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual(transactionEvent)
   })
 })
 
@@ -581,6 +635,58 @@ describe('Public API - Create a Consumer User Event', () => {
     ).not.toMatchObject({
       foo: 'bar',
     })
+  })
+})
+
+describe('Public API - Retrieve a Consumer User Event', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  test('throws if user event not found', async () => {
+    const response = await userEventsHandler(
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/events/consumer/user/{eventId}', {
+        pathParameters: { eventId: 'foo' },
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(404)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      error: 'NotFoundError',
+      message: `User event foo not found`,
+    })
+  })
+  test('returns the user event', async () => {
+    const consumerUser = getTestUser({ userId: 'bar' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser),
+      null as any,
+      null as any
+    )
+    const userEvent = getTestUserEvent({
+      eventId: 'foo',
+      userId: 'bar',
+      updatedConsumerUserAttributes: {
+        tags: [{ key: 'key', value: 'value' }],
+      },
+    })
+    await userEventsHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/events/consumer/user',
+        userEvent
+      ),
+      null as any,
+      null as any
+    )
+
+    const response = await userEventsHandler(
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/events/consumer/user/{eventId}', {
+        pathParameters: { eventId: 'foo' },
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual(userEvent)
   })
 })
 
@@ -783,6 +889,58 @@ describe('Public API - Create a Business User Event', () => {
     ).not.toMatchObject({
       foo: 'bar',
     })
+  })
+})
+
+describe('Public API - Retrieve a Business User Event', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  test('throws if user event not found', async () => {
+    const response = await userEventsHandler(
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/events/business/user/{eventId}', {
+        pathParameters: { eventId: 'foo' },
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(404)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      error: 'NotFoundError',
+      message: `User event foo not found`,
+    })
+  })
+  test('returns the user event', async () => {
+    const user = getTestBusiness({ userId: 'bar' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/business/users', user),
+      null as any,
+      null as any
+    )
+    const userEvent = getTestBusinessEvent({
+      eventId: 'foo',
+      userId: 'bar',
+      updatedBusinessUserAttributes: {
+        tags: [{ key: 'key', value: 'value' }],
+      },
+    })
+    await userEventsHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/events/business/user',
+        userEvent
+      ),
+      null as any,
+      null as any
+    )
+
+    const response = await userEventsHandler(
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/events/business/user/{eventId}', {
+        pathParameters: { eventId: 'foo' },
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual(userEvent)
   })
 })
 

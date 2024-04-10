@@ -466,7 +466,7 @@ paths:
         `/events/transaction` endpoint allows you to operate on the [Transaction Events entity.](/guides/overview/entities#transaction-event). 
 
 
-        You can retrieve any transaction event you create using the [POST Transaction Events](/api-reference/api-reference/transaction-events/create) call.
+        You can retrieve any transaction event you created using the [POST Transaction Events](/api-reference/api-reference/transaction-events/create) call.
       operationId: get-transaction-event
       parameters:
         - name: eventId
@@ -1003,6 +1003,45 @@ paths:
       deprecated: false
       tags: []
       x-internal: false
+  /events/consumer/user/{eventId}:
+    get:
+      x-fern-sdk-group-name: consumer_user_events
+      x-fern-sdk-method-name: get
+      security:
+        - x-api-key: []
+      summary: Retrieve a Consumer User Event
+      description: >
+        ### GET a Consumer User Event
+
+        You can retrieve any consumer user event you created using the [POST Consumer User Events](/api-reference/api-reference/consumer-user-events/create) call.
+      operationId: get-consumer-user-event
+      parameters:
+        - name: eventId
+          in: path
+          description: Unique Consumer User Event Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerUserEvent'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
+      x-internal: true
   /events/business/user:
     post:
       x-fern-sdk-group-name: business_user_events
@@ -1078,6 +1117,45 @@ paths:
       deprecated: false
       tags: []
       x-internal: false
+  /events/business/user/{eventId}:
+    get:
+      x-fern-sdk-group-name: business_user_events
+      x-fern-sdk-method-name: get
+      security:
+        - x-api-key: []
+      summary: Retrieve a Business User Event
+      description: >
+        ### GET a Business User Event
+
+        You can retrieve any business user event you created using the [POST Business User Events](/api-reference/api-reference/business-user-events/create) call.
+      operationId: get-business-user-event
+      parameters:
+        - name: eventId
+          in: path
+          description: Unique Business User Event Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessUserEvent'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
+      x-internal: true
 components:
   schemas:
     Address:

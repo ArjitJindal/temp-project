@@ -22,11 +22,16 @@ export const PublicApiPathToLambda: any = {
   '/consumer/users/{userId}': StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
   '/business/users': StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
   '/business/users/{userId}': StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
-  '/events/transaction/{eventId}': StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
+  '/events/transaction/{eventId}':
+    StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
   '/events/transaction':
     StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
   '/events/consumer/user': StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
+  '/events/consumer/user/{eventId}':
+    StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
   '/events/business/user': StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
+  '/events/business/user/{eventId}':
+    StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

@@ -30,6 +30,8 @@ import { pickKnownEntityFields } from '@/utils/object'
 import { UserOptional } from '@/@types/openapi-public/UserOptional'
 import { BusinessOptional } from '@/@types/openapi-public/BusinessOptional'
 import { TransactionUpdatable } from '@/@types/openapi-public/TransactionUpdatable'
+import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 
 type MissingUserIdMap = { field: string; userId: string }
 
@@ -208,7 +210,12 @@ export const transactionEventHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
+    const eventId = event.pathParameters?.eventId
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const transactionEventRepository = new TransactionEventRepository(
+      tenantId,
+      { mongoDb: await getMongoDbClient() }
+    )
 
     if (event.httpMethod === 'POST' && event.body) {
       const transactionEvent = pickKnownEntityFields(
@@ -230,6 +237,15 @@ export const transactionEventHandler = lambdaApi()(
       const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
       return rulesEngine.verifyTransactionEvent(transactionEvent)
     }
+    if (event.httpMethod === 'GET' && eventId) {
+      const result = await transactionEventRepository.getMongoTransactionEvent(
+        eventId
+      )
+      if (!result) {
+        throw new NotFound(`Transaction event ${eventId} not found`)
+      }
+      return result
+    }
     throw new Error('Unhandled request')
   }
 )
@@ -241,7 +257,11 @@ export const userEventsHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
+    const eventId = event.pathParameters?.eventId
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const userEventRepository = new UserEventRepository(tenantId, {
+      mongoDb: await getMongoDbClient(),
+    })
     const { allowUserTypeConversion } =
       (event.queryStringParameters as Omit<
         DefaultApiPostBusinessUserEventRequest,
@@ -317,6 +337,13 @@ export const userEventsHandler = lambdaApi()(
         userEvent,
         allowUserTypeConversion === 'true'
       )
+    }
+    if (event.httpMethod === 'GET' && eventId) {
+      const result = await userEventRepository.getMongoUserEvent(eventId)
+      if (!result) {
+        throw new NotFound(`User event ${eventId} not found`)
+      }
+      return result
     }
     throw new Error('Unhandled request')
   }

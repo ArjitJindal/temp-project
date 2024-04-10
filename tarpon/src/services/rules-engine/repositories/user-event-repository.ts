@@ -17,6 +17,7 @@ import { InternalUserEvent } from '@/@types/openapi-internal/InternalUserEvent'
 import { DefaultApiGetEventsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { USER_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { pickKnownEntityFields } from '@/utils/object'
 
 @traceable
 export class UserEventRepository {
@@ -104,6 +105,23 @@ export class UserEventRepository {
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .toArray()
+  }
+
+  public async getMongoUserEvent(
+    eventId: string
+  ): Promise<ConsumerUserEvent | BusinessUserEvent | null> {
+    const db = this.mongoDb.db()
+    const result = await db
+      .collection<InternalUserEvent>(USER_EVENTS_COLLECTION(this.tenantId))
+      .findOne({ eventId })
+
+    if (!result) {
+      return null
+    }
+    const model = result.updatedConsumerUserAttributes
+      ? ConsumerUserEvent
+      : BusinessUserEvent
+    return pickKnownEntityFields(result, model)
   }
 
   public async getUserEventsCount(userId: string): Promise<number> {
