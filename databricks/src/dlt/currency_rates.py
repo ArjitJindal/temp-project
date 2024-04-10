@@ -1,12 +1,12 @@
 from pyspark.sql.functions import col, from_json, udf
 
 from src.dlt.schema import PARTITION_KEY_ID_PATH, kinesis_event_schema
-from src.dynamo.deserialize import legacy_deserialise_dynamo
+from src.dynamo.deserialize import deserialise_dynamo
 from src.entities.currency_rates import currency_schema
 
 
 def currency_rates_transformation(df):
-    dynamo_udf = udf(legacy_deserialise_dynamo, currency_schema)
+    dynamo_udf = udf(deserialise_dynamo, currency_schema)
     filtered_df = df.withColumn(
         "event", from_json(col("data").cast("string"), kinesis_event_schema)
     ).filter(col(PARTITION_KEY_ID_PATH) == "flagright#currency-cache")

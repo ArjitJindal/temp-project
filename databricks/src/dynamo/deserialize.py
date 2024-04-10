@@ -1,85 +1,14 @@
 import json
 from typing import Any
 
+from boto3.dynamodb.types import Binary
 from pyspark.sql import Column
-from pyspark.sql.functions import from_json, udf
-from pyspark.sql.types import ArrayType, Row, StringType, StructField, StructType
+from pyspark.sql.functions import udf
+from pyspark.sql.types import Row, StructType
 
 
-def deserialise_dynamo(column: Column, schema: StructType, root_column="root"):
-    return udf(parse_dynamo, schema)(
-        from_json(column.cast("string"), dynamo_schema(schema))
-        .getItem("dynamodb")
-        .getItem("NewImage"),
-    ).alias(root_column)
-
-
-def dynamo_schema(schema):
-    return StructType(
-        [
-            StructField(
-                "dynamodb",
-                StructType([StructField("NewImage", convert_to_dynamo_schema(schema))]),
-            )
-        ]
-    )
-
-
-def convert_to_dynamo_schema(field):
-    if isinstance(field, StructField):
-        return convert_struct_field_to_dynamo(field)
-    if isinstance(field, StructType):
-        return StructType(
-            [
-                StructField(f.name, convert_struct_field_to_dynamo(f))
-                for f in field.fields
-            ]
-        )
-    raise TypeError("Unsupported field type")
-
-
-def convert_struct_field_to_dynamo(field):
-    # Process a StructField based on its data type
-    if isinstance(field.dataType, StructType):
-        # Convert nested StructType
-        return StructType(
-            [
-                StructField(
-                    "M",
-                    StructType(
-                        [
-                            StructField(f.name, convert_struct_field_to_dynamo(f))
-                            for f in field.dataType.fields
-                        ]
-                    ),
-                )
-            ]
-        )
-    if isinstance(field.dataType, ArrayType):
-        # Convert ArrayType, checking for element type
-        element_type = field.dataType.elementType
-        if isinstance(element_type, StructType):
-            return StructType(
-                [StructField("L", ArrayType(convert_to_dynamo_schema(element_type)))]
-            )
-        return StructType([StructField("L", field.dataType)])
-    # Convert basic data types using a mapping
-    return convert_basic_types_to_dynamo(field.dataType)
-
-
-def convert_basic_types_to_dynamo(data_type):
-    # Map Spark data types to DynamoDB types
-    type_mapping = {
-        "STRING": "S",
-        "INT": "N",
-        "FLOAT": "N",
-        "DOUBLE": "N",
-        "BOOLEAN": "B",
-    }
-    dynamodb_type = type_mapping.get(data_type.simpleString().upper(), "")
-    if not dynamodb_type:
-        raise ValueError(f"Unsupported data type: {data_type.simpleString()}")
-    return StructType([StructField(dynamodb_type, StringType())])
+def deserialise_dynamo_udf(column: Column, schema: StructType):
+    return udf(deserialise_dynamo, schema)(column)
 
 
 def parse_dynamo(item):
@@ -114,7 +43,7 @@ class DeserializerException(Exception):
         return f"An error occurred deserializing: {self.json_string}"
 
 
-def legacy_deserialise_dynamo(dynamodb_json: str) -> Any:
+def deserialise_dynamo(dynamodb_json: str) -> Any:
     try:
         data = json.loads(dynamodb_json)
     except json.JSONDecodeError as err:
@@ -131,4 +60,75 @@ def legacy_deserialise_dynamo(dynamodb_json: str) -> Any:
             f"Missing 'NewImage' or 'OldImage' in the provided data: {dynamodb_json}"
         )
 
-    return parse_dynamo(image_to_deserialize)
+    return TypeDeserializer().deserialize({"M": image_to_deserialize})
+
+
+class TypeDeserializer:
+    """This class deserializes DynamoDB types to Python types.
+    The code below was copied and modified from
+    https://github.com/boto/boto3/blob/develop/boto3/dynamodb/table.py under Apache License 2.0
+    """
+
+    def deserialize(self, value):
+        """The method to deserialize the DynamoDB data types.
+
+        :param value: A DynamoDB value to be deserialized to a pythonic value.
+            Here are the various conversions:
+
+            DynamoDB                                Python
+            --------                                ------
+            {'NULL': True}                          None
+            {'BOOL': True/False}                    True/False
+            {'N': str(value)}                       Decimal(str(value))
+            {'S': string}                           string
+            {'B': bytes}                            Binary(bytes)
+            {'NS': [str(value)]}                    set([Decimal(str(value))])
+            {'SS': [string]}                        set([string])
+            {'BS': [bytes]}                         set([bytes])
+            {'L': list}                             list
+            {'M': dict}                             dict
+
+        :returns: The pythonic value of the DynamoDB type.
+        """
+
+        if not value:
+            raise TypeError(
+                "Value must be a nonempty dictionary whose key "
+                "is a valid dynamodb type."
+            )
+        dynamodb_type = list(value.keys())[0]
+        try:
+            deserializer = getattr(self, f"_deserialize_{dynamodb_type}".lower())
+        except AttributeError as exc:
+            raise TypeError(f"Dynamodb type {dynamodb_type} is not supported") from exc
+        return deserializer(value[dynamodb_type])
+
+    def _deserialize_null(self, _value):
+        return None
+
+    def _deserialize_bool(self, value):
+        return value
+
+    def _deserialize_n(self, value):
+        return float(value)
+
+    def _deserialize_s(self, value):
+        return value
+
+    def _deserialize_b(self, value):
+        return Binary(value)
+
+    def _deserialize_ns(self, value):
+        return set(map(self._deserialize_n, value))
+
+    def _deserialize_ss(self, value):
+        return set(map(self._deserialize_s, value))
+
+    def _deserialize_bs(self, value):
+        return set(map(self._deserialize_b, value))
+
+    def _deserialize_l(self, value):
+        return [self.deserialize(v) for v in value]
+
+    def _deserialize_m(self, value):
+        return {k: self.deserialize(v) for k, v in value.items()}

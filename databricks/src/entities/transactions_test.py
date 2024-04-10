@@ -5,7 +5,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, from_unixtime
 from pyspark.sql.types import StringType, StructField, StructType
 
-from src.dynamo.deserialize import deserialise_dynamo
+from src.dynamo.deserialize import deserialise_dynamo_udf
 from src.entities.mock import mock_stream_resolver
 from src.entities.transactions import enrich_transactions, transaction_schema
 from src.testing.file import read_file
@@ -38,7 +38,7 @@ def test_transaction_enrichment():
         transaction_data, StructType([StructField("data", StringType())])
     )
     with_structured_df = df.withColumn(
-        "structured_data", deserialise_dynamo(df["data"], transaction_schema)
+        "structured_data", deserialise_dynamo_udf(df["data"], transaction_schema)
     )
     pre_enrichment_df = with_structured_df.select("structured_data.*").withColumn(
         "approximateArrivalTimestamp",

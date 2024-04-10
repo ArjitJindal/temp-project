@@ -4,7 +4,7 @@ from pyspark.sql.types import StringType, StructField, StructType
 from src.dynamo.deserialize import (
     DeserializerException,
     deserialise_dynamo,
-    legacy_deserialise_dynamo,
+    deserialise_dynamo_udf,
 )
 from src.openapi.internal.models import DrsScore
 from src.openapi.internal.models.transaction import Transaction as InternalTransaction
@@ -29,7 +29,7 @@ def test_deserialise_dynamo_udf():
             df = spark.createDataFrame(data, schema)
 
             df_transformed = df.withColumn(
-                "deserialized_data", deserialise_dynamo(df["data"], entity_schema)
+                "deserialized_data", deserialise_dynamo_udf(df["data"], entity_schema)
             )
             expected_schema = StructType(
                 [
@@ -48,7 +48,7 @@ def test_deserialise_dynamo_udf():
 def test_deserialise_dynamo():
     exception_thrown = False
     try:
-        legacy_deserialise_dynamo("{}")
+        deserialise_dynamo("{}")
     except DeserializerException:
         exception_thrown = True
 
@@ -56,4 +56,4 @@ def test_deserialise_dynamo():
 
     txn = read_file("fixtures/transaction.json")
 
-    legacy_deserialise_dynamo(txn)
+    deserialise_dynamo(txn)

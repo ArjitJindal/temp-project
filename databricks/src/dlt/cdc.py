@@ -4,7 +4,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql.functions import col, from_json, lower, regexp_extract
 
 from src.dlt.schema import PARTITION_KEY_ID_PATH, kinesis_event_schema
-from src.dynamo.deserialize import deserialise_dynamo
+from src.dynamo.deserialize import deserialise_dynamo_udf
 from src.entities.entity import Entity
 
 
@@ -37,7 +37,7 @@ def cdc_transformation(
     filtered_df = df.filter(col(PARTITION_KEY_ID_PATH).contains(entity.partition_key))
 
     with_structured_df = filtered_df.withColumn(
-        "structured_data", deserialise_dynamo(col("data"), entity.schema)
+        "structured_data", deserialise_dynamo_udf(col("data"), entity.schema)
     ).alias("entity")
 
     pre_enrichment_df = with_structured_df.select(
