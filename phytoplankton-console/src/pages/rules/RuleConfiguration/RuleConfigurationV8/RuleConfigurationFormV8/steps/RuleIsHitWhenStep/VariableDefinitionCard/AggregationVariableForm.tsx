@@ -4,7 +4,7 @@ import { getFiscalYearStart } from '@flagright/lib/utils/time';
 import { isEqual } from 'lodash';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { RuleLogicBuilder } from '../RuleLogicBuilder';
-import { isTransactionAmountVariable, isTransactionOriginOrDestinationVariable } from '../helpers';
+import { isTransactionAmountVariable } from '../helpers';
 import s from './style.module.less';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
@@ -75,7 +75,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
   const [formValues, setFormValues] = useState<FormRuleAggregationVariable>(variable);
   const aggregateFieldOptions = useMemo(() => {
     return entityVariables
-      .filter((v) => v.entity === 'TRANSACTION' && !isTransactionOriginOrDestinationVariable(v.key))
+      .filter((v) => v.entity === 'TRANSACTION')
       .map((v) => ({
         value: v.key,
         // NOTE: Remove redundant namespace prefix as we only show transaction variables

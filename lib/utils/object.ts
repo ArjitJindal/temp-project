@@ -10,31 +10,22 @@ export const replaceMagicKeyword = <T>(
     )
   ) as T
 
-export function traverse(
-  obj: any,
-  visitor: (key: string, value: any, path: string[]) => void,
-  path: string[] = []
-) {
-  if (obj == null || typeof obj !== 'object') {
-    return
-  }
-  if (Array.isArray(obj)) {
-    obj.forEach((v, i) => traverse(v, visitor, [...path, i.toString()]))
-    return
-  }
-  Object.entries(obj).forEach(([key, value]) => {
-    const currentPath = [...path, key]
-    visitor(key, value, currentPath)
-    traverse(value, visitor, currentPath)
-  })
-}
-
 export function getAllValuesByKey<V>(key: string, obj: object): V[] {
   const values: V[] = []
-  traverse(obj, (k, v) => {
-    if (k === key) {
-      values.push(v)
+  const traverse = (o: any) => {
+    if (o == null || typeof o !== 'object') {
+      return
     }
-  })
+    if (Array.isArray(o)) {
+      o.forEach(traverse)
+      return
+    }
+    if (o[key]) {
+      values.push(o[key])
+      return
+    }
+    Object.values(o).forEach(traverse)
+  }
+  traverse(obj)
   return values
 }

@@ -1,6 +1,6 @@
 import {
-  TRANSACTION_DESTINATION_PAYMENT_DETAILS_IDENTIFIER,
-  TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER,
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER,
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER,
 } from '../payment-details'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -27,7 +27,7 @@ const TEST_CARD_DETAILS = {
 const dynamoDb = getDynamoDbClient()
 
 test('Transaction non-user sender key', async () => {
-  const value = await TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER.load(
+  const value = await TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER.load(
     getTestTransaction({
       originPaymentDetails: TEST_BANK_DETAILS as PaymentDetails,
     }),
@@ -36,7 +36,7 @@ test('Transaction non-user sender key', async () => {
 
   expect(value).toBe('accountNumber:1234567890#accountType:checking')
 
-  const value2 = await TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER.load(
+  const value2 = await TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER.load(
     getTestTransaction({
       originPaymentDetails: TEST_CARD_DETAILS as PaymentDetails,
     }),
@@ -45,7 +45,7 @@ test('Transaction non-user sender key', async () => {
   )
   expect(value2).toBe('cardFingerprint:1234567890')
 
-  const value3 = await TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER.load(
+  const value3 = await TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER.load(
     getTestTransaction({
       originPaymentDetails: undefined,
     }),
@@ -55,7 +55,7 @@ test('Transaction non-user sender key', async () => {
   expect(value3).toBe('')
 })
 test('Transaction non-user receiver key', async () => {
-  const value = await TRANSACTION_DESTINATION_PAYMENT_DETAILS_IDENTIFIER.load(
+  const value = await TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER.load(
     getTestTransaction({
       destinationPaymentDetails: TEST_BANK_DETAILS as PaymentDetails,
     }),
@@ -64,7 +64,7 @@ test('Transaction non-user receiver key', async () => {
 
   expect(value).toBe('accountNumber:1234567890#accountType:checking')
 
-  const value2 = await TRANSACTION_DESTINATION_PAYMENT_DETAILS_IDENTIFIER.load(
+  const value2 = await TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER.load(
     getTestTransaction({
       destinationPaymentDetails: TEST_CARD_DETAILS as PaymentDetails,
     }),
@@ -72,7 +72,7 @@ test('Transaction non-user receiver key', async () => {
   )
   expect(value2).toBe('cardFingerprint:1234567890')
 
-  const value3 = await TRANSACTION_DESTINATION_PAYMENT_DETAILS_IDENTIFIER.load(
+  const value3 = await TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER.load(
     getTestTransaction({
       destinationPaymentDetails: undefined,
     }),

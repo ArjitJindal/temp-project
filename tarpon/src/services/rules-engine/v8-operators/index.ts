@@ -36,18 +36,3 @@ export const RULE_OPERATORS: RuleOperator[] = _RULE_OPERATORS.map(
     },
   })
 )
-
-export const JSON_LOGIC_BUILT_IN_OPERATORS = [
-  '==',
-  '!=',
-  '<',
-  '<=',
-  '>',
-  '>=',
-  'in',
-  '!',
-  '!!',
-  'some',
-  'all',
-  'none',
-]

@@ -34,8 +34,8 @@ import {
 import { USER_TYPE } from './user-type'
 import { TRANSACTION_TIME } from './transaction-time'
 import {
-  TRANSACTION_DESTINATION_PAYMENT_DETAILS_IDENTIFIER,
-  TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER,
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER,
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER,
 } from './payment-details'
 import {
   SENDING_TRANSACTIONS_COUNT,
@@ -72,69 +72,20 @@ function withNamespace(variable: RuleVariable) {
 
 const SENDER_VARIABLE_KEY_SUFFIX = '__SENDER'
 const RECEIVER_VARIABLE_KEY_SUFFIX = '__RECEIVER'
-const BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX = '__BOTH'
 export function isSenderUserVariable(variable: RuleVariable) {
   return variable.key.endsWith(SENDER_VARIABLE_KEY_SUFFIX)
 }
 export function isReceiverUserVariable(variable: RuleVariable) {
   return variable.key.endsWith(RECEIVER_VARIABLE_KEY_SUFFIX)
 }
-export function isDirectionLessVariable(variableKey: string) {
-  return variableKey.endsWith(BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX)
-}
-export function getDirectionalVariableKeys(directionLessVariableKey: string) {
-  const key = directionLessVariableKey.replace(
-    BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX,
-    ''
-  )
-  if (directionLessVariableKey.startsWith('TRANSACTION')) {
-    const parts = key.split(VARIABLE_NAMESPACE_SEPARATOR)
-    const entity = parts[0]
-    const part = `${parts[1].charAt(0).toUpperCase()}${parts[1].slice(1)}`
-    return [
-      `${entity}${VARIABLE_NAMESPACE_SEPARATOR}origin${part}`,
-      `${entity}${VARIABLE_NAMESPACE_SEPARATOR}destination${part}`,
-    ]
-  } else {
-    return [
-      `${key}${SENDER_VARIABLE_KEY_SUFFIX}`,
-      `${key}${RECEIVER_VARIABLE_KEY_SUFFIX}`,
-    ]
-  }
-}
-
-function txEntityVariableWithoutDirection(variables: RuleVariable[]) {
-  return variables.flatMap((variable) => {
-    if (!variable.key.startsWith('origin')) {
-      return [variable]
-    }
-    // Add one more direction-less variable for variables with direction
-    let updatedKey = variable.key.replace(/^origin/, '')
-    updatedKey = updatedKey.charAt(0).toLowerCase() + updatedKey.slice(1)
-    const updatedLabel = variable.uiDefinition.label!.replace(/^origin\s+/, '')
-    return [
-      variable,
-      {
-        ...variable,
-        key: `${updatedKey}${BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX}`,
-        uiDefinition: {
-          ...variable.uiDefinition,
-          label: `${updatedLabel} (origin or destination)`,
-        },
-        load: async () => null,
-      },
-    ]
-  })
-}
-
-function userEntityVariableWithDirection(variables: RuleVariable[]) {
+function withDirection(variables: RuleVariable[]) {
   return variables.flatMap((variable) => [
     {
       ...variable,
       key: `${variable.key}${SENDER_VARIABLE_KEY_SUFFIX}`,
       uiDefinition: {
         ...variable.uiDefinition,
-        label: `${variable.uiDefinition.label} (sender)`,
+        label: `${variable.uiDefinition.label} (Sender)`,
       },
     },
     {
@@ -142,25 +93,16 @@ function userEntityVariableWithDirection(variables: RuleVariable[]) {
       key: `${variable.key}${RECEIVER_VARIABLE_KEY_SUFFIX}`,
       uiDefinition: {
         ...variable.uiDefinition,
-        label: `${variable.uiDefinition.label} (receiver)`,
+        label: `${variable.uiDefinition.label} (Receiver)`,
       },
-    },
-    {
-      ...variable,
-      key: `${variable.key}${BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX}`,
-      uiDefinition: {
-        ...variable.uiDefinition,
-        label: `${variable.uiDefinition.label} (sender or receiver)`,
-      },
-      load: async () => null,
     },
   ])
 }
 
 const TRANSACTION_DERIVED_VARIABLES = [
   TRANSACTION_TIME,
-  TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER,
-  TRANSACTION_DESTINATION_PAYMENT_DETAILS_IDENTIFIER,
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_SENDER,
+  TRANSACTION_PAYMENT_DETAILS_IDENTIFIER_RECEIVER,
 ]
 
 const USER_DERIVED_VARIABLES: Array<
@@ -222,7 +164,7 @@ function updatedTransactionEntityVariables(
     context: TransactionRuleVariableContext
   ): Promise<number | undefined> => {
     if (!amountDetails) {
-      return NaN
+      return
     }
     if (!context.baseCurrency) {
       logger.error('Missing base currency for transaction amount variable!')
@@ -231,7 +173,7 @@ function updatedTransactionEntityVariables(
       amountDetails,
       context.baseCurrency ?? 'USD'
     )
-    return amount.transactionAmount ?? NaN
+    return amount.transactionAmount
   }
   originAmountVariable.load = async (transaction, context) => {
     return await loadTransactionAmount(transaction.originAmountDetails, context)
@@ -281,16 +223,14 @@ export const getTransactionRuleEntityVariables = memoize(
       'BUSINESS_USER',
       Business
     )
+    const userEntityVariables = withDirection(
+      consumerUserEntityVariables.concat(
+        businessUserEntityVariables,
+        USER_DERIVED_VARIABLES
+      )
+    )
     return Object.fromEntries(
-      [
-        ...txEntityVariableWithoutDirection(transactionEntityVariables),
-        ...userEntityVariableWithDirection(
-          consumerUserEntityVariables.concat(
-            businessUserEntityVariables,
-            USER_DERIVED_VARIABLES
-          )
-        ),
-      ]
+      [...transactionEntityVariables, ...userEntityVariables]
         .map(withNamespace)
         .map((v) => [v.key, v])
     )
@@ -346,10 +286,7 @@ function getAutoRuleEntityVariables(
         entity: entityType,
         valueType: info.type,
         uiDefinition: getUiDefinition(info),
-        load: async (entity: any) => {
-          const value = get(entity, info.path)
-          return info.type === 'number' ? value ?? NaN : value
-        },
+        load: async (entity: any) => get(entity, info.path),
       }
     })
   const arrayLeafValueInfos = leafValueInfos

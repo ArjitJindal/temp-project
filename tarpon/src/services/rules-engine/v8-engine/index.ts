@@ -1,32 +1,17 @@
 import { AsyncLogicEngine } from 'json-logic-engine'
 import memoizeOne from 'memoize-one'
 import DataLoader from 'dataloader'
-import {
-  cloneDeep,
-  get,
-  isEqual,
-  memoize,
-  mergeWith,
-  set,
-  uniq,
-  unset,
-} from 'lodash'
+import { isEqual, memoize, mergeWith, uniq } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
-import {
-  getAllValuesByKey,
-  replaceMagicKeyword,
-  traverse,
-} from '@flagright/lib/utils'
+import { getAllValuesByKey } from '@flagright/lib/utils'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { RULE_FUNCTIONS } from '../v8-functions'
-import { JSON_LOGIC_BUILT_IN_OPERATORS, RULE_OPERATORS } from '../v8-operators'
+import { RULE_OPERATORS } from '../v8-operators'
 import {
   VARIABLE_NAMESPACE_SEPARATOR,
-  getDirectionalVariableKeys,
   getRuleVariableByKey,
   getTransactionEntityVariables,
-  isDirectionLessVariable,
   isSenderUserVariable,
 } from '../v8-variables'
 import { getTimestampRange } from '../utils/time-utils'
@@ -138,69 +123,6 @@ function isAggregationVariable(key: string): boolean {
   return key.startsWith('agg:')
 }
 
-function getVariableKeysFromLogic(jsonLogic: object): {
-  entityVariableKeys: string[]
-  aggVariableKeys: string[]
-} {
-  const variableKeys = uniq(
-    getAllValuesByKey<string>('var', jsonLogic).filter((v) =>
-      // NOTE: We don't need to load the subfields of an array-type variable
-      v.includes(VARIABLE_NAMESPACE_SEPARATOR)
-    )
-  )
-  const entityVariableKeys = variableKeys.filter(
-    (k) => !isAggregationVariable(k)
-  )
-  const aggVariableKeys = variableKeys.filter(isAggregationVariable)
-  return { entityVariableKeys, aggVariableKeys }
-}
-
-const OPERATOR_KEYS = new Set(
-  JSON_LOGIC_BUILT_IN_OPERATORS.concat(RULE_OPERATORS.map((v) => v.key))
-)
-export function transformJsonLogic(rawJsonLogic: object) {
-  const { entityVariableKeys } = getVariableKeysFromLogic(rawJsonLogic)
-  const hasDirectionLessEntityVariables = entityVariableKeys.some(
-    isDirectionLessVariable
-  )
-  if (!hasDirectionLessEntityVariables) {
-    return rawJsonLogic
-  }
-  const updatedLogic = cloneDeep(rawJsonLogic)
-  traverse(rawJsonLogic, (key, value, path) => {
-    if (key === 'var' && isDirectionLessVariable(value)) {
-      const nearestOperatorIndex =
-        path.length -
-        path
-          .slice()
-          .reverse()
-          .findIndex((v) => OPERATOR_KEYS.has(v)) -
-        1
-      const leafLogic = cloneDeep(
-        get(rawJsonLogic, path.slice(0, nearestOperatorIndex))
-      )
-      unset(updatedLogic, path.slice(0, nearestOperatorIndex + 1))
-
-      set(
-        updatedLogic,
-        [...path.slice(0, nearestOperatorIndex), 'or'],
-        getDirectionalVariableKeys(value).map((directionVarKey) =>
-          replaceMagicKeyword(leafLogic, value, directionVarKey)
-        )
-      )
-    }
-  })
-  const { entityVariableKeys: newEntityVariableKeys } =
-    getVariableKeysFromLogic(updatedLogic)
-  const stillHasDirectionLessEntityVariables = newEntityVariableKeys.some(
-    isDirectionLessVariable
-  )
-  // NOTE: Transform one more time if both LHS and RHS are direction-less variables
-  return stillHasDirectionLessEntityVariables
-    ? transformJsonLogic(updatedLogic)
-    : updatedLogic
-}
-
 export class RuleJsonLogicEvaluator {
   private tenantId: string
   private dynamoDb: DynamoDBDocumentClient
@@ -216,7 +138,7 @@ export class RuleJsonLogicEvaluator {
   }
 
   public async evaluate(
-    rawJsonLogic: object,
+    jsonLogic: object,
     aggregationVariables: RuleAggregationVariable[],
     context: Omit<TransactionRuleVariableContext, 'dynamoDb'>,
     data: RuleData
@@ -231,9 +153,8 @@ export class RuleJsonLogicEvaluator {
       ...context,
       dynamoDb: this.dynamoDb,
     })
-    const jsonLogic = transformJsonLogic(rawJsonLogic)
     const { entityVariableKeys, aggVariableKeys } =
-      getVariableKeysFromLogic(jsonLogic)
+      this.getVariableKeysFromLogic(jsonLogic)
     const entityVarEntries = await Promise.all(
       entityVariableKeys.map(async (key) => [
         key,
@@ -686,7 +607,7 @@ export class RuleJsonLogicEvaluator {
       }
     }
     if (aggregationVariable.filtersLogic) {
-      getVariableKeysFromLogic(
+      this.getVariableKeysFromLogic(
         aggregationVariable.filtersLogic
       ).entityVariableKeys.forEach((variable) => {
         addFieldToFetch(variable)
@@ -786,6 +707,23 @@ export class RuleJsonLogicEvaluator {
         )
       ).hit
     )
+  }
+
+  private getVariableKeysFromLogic(jsonLogic: object): {
+    entityVariableKeys: string[]
+    aggVariableKeys: string[]
+  } {
+    const variableKeys = uniq(
+      getAllValuesByKey<string>('var', jsonLogic).filter((v) =>
+        // NOTE: We don't need to load the subfields of an array-type variable
+        v.includes(VARIABLE_NAMESPACE_SEPARATOR)
+      )
+    )
+    const entityVariableKeys = variableKeys.filter(
+      (k) => !isAggregationVariable(k)
+    )
+    const aggVariableKeys = variableKeys.filter(isAggregationVariable)
+    return { entityVariableKeys, aggVariableKeys }
   }
 
   private isNewDataWithinTimeWindow(
