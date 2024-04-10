@@ -16,7 +16,7 @@ import { shouldUseReviewAssignments } from '@/utils/helpers'
 @traceable
 export class LatestTeamStatsDashboardMetric {
   private static getStatusAccordingToAssignment(
-    key: 'assignemnts' | 'reviewAssignments'
+    key: 'assignments' | 'reviewAssignments'
   ): CaseStatus[] {
     const reviewAssignmentsStatus = CASE_STATUSS.filter((status) =>
       shouldUseReviewAssignments(status)
@@ -51,7 +51,9 @@ export class LatestTeamStatsDashboardMetric {
           {
             $match: {
               caseStatus: {
-                $in: this.getStatusAccordingToAssignment('assignemnts'),
+                $in: this.getStatusAccordingToAssignment('assignments').filter(
+                  (status) => status !== 'CLOSED'
+                ),
               },
             },
           },
@@ -233,7 +235,9 @@ export class LatestTeamStatsDashboardMetric {
           {
             $match: {
               'alerts.alertStatus': {
-                $in: this.getStatusAccordingToAssignment('assignemnts'),
+                $in: this.getStatusAccordingToAssignment('assignments').filter(
+                  (status) => status !== 'CLOSED'
+                ),
               },
             },
           },
@@ -248,6 +252,11 @@ export class LatestTeamStatsDashboardMetric {
               'alerts.assignments.assigneeUserId': {
                 $exists: true,
                 $ne: null,
+              },
+              'alerts.alertStatus': {
+                $in: this.getStatusAccordingToAssignment('assignments').filter(
+                  (status) => status !== 'CLOSED'
+                ),
               },
             },
           },

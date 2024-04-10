@@ -909,7 +909,7 @@ export class AlertsRepository {
     )
   }
 
-  public async updateInReviewAssignemnts(
+  public async updateInReviewAssignments(
     alertIds: string[],
     assignments: Assignment[],
     reviewAssignments: Assignment[]

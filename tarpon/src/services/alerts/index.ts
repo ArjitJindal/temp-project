@@ -850,7 +850,7 @@ export class AlertsService extends CaseAlertsCommonService {
         }),
         ...(isReview && userAccount.reviewerId && !skipReview
           ? [
-              this.alertsRepository.updateInReviewAssignemnts(
+              this.alertsRepository.updateInReviewAssignments(
                 alertIds,
                 [
                   {
