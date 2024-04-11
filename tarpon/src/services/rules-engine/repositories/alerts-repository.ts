@@ -190,6 +190,12 @@ export class AlertsRepository {
 
     const alertConditions: Filter<AlertListResponseItem>[] = []
 
+    if (params.filterTransactionIds != null) {
+      alertConditions.push({
+        'alerts.transactionIds': { $in: params.filterTransactionIds },
+      })
+    }
+
     if (params.filterCaseId != null) {
       alertConditions.push({
         'alerts.caseId': params.filterCaseId,
