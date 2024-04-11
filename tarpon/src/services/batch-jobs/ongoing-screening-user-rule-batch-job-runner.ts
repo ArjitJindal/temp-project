@@ -48,6 +48,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   mongoDb?: MongoClient
   tenantId?: string
   dynamoDb?: DynamoDBDocumentClient
+  ruleRepository?: RuleRepository
   ruleInstanceRepository?: RuleInstanceRepository
   rulesEngineService?: RulesEngineService
   userRepository?: UserRepository
@@ -61,6 +62,9 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
+    this.ruleRepository = new RuleRepository(tenantId, {
+      dynamoDb,
+    })
     this.ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
@@ -73,26 +77,30 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       dynamoDb,
       mongoDb,
     })
-
-    const ruleRepository = new RuleRepository(tenantId, {
-      dynamoDb,
-    })
-    const userRepository = new UserRepository(tenantId, {
+    this.userRepository = new UserRepository(tenantId, {
       dynamoDb,
       mongoDb,
     })
+    await Promise.all([
+      this.verifyUserRulesOneByOne(),
+      this.verifyAllUserRules(),
+    ])
+  }
 
-    const ruleInstances = await getOngoingScreeningUserRuleInstances(tenantId)
+  private async verifyUserRulesOneByOne() {
+    const ruleInstances = await getOngoingScreeningUserRuleInstances(
+      this.tenantId!
+    )
 
     if (ruleInstances.length === 0) {
       logger.info('No active ongoing screening user rule found. Abort.')
       return
     }
-    const rules = await ruleRepository.getRulesByIds(
+    const rules = await this.ruleRepository!.getRulesByIds(
       ruleInstances.map((ruleInstance) => ruleInstance.ruleId!)
     )
 
-    const usersCursor = userRepository.getAllUsersCursor()
+    const usersCursor = this.userRepository!.getAllUsersCursor()
 
     await processCursorInBatch<InternalUser>(
       usersCursor,
@@ -101,8 +109,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       },
       { mongoBatchSize: 1000, processBatchSize: 1000 }
     )
-
-    await this.verifyAllUserRules()
   }
 
   private async verifyAllUserRules() {
