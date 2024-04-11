@@ -63,8 +63,8 @@ export function migrateCheckDirectionParameters(
         : 'USER_TRANSACTIONS',
       userDirection: 'RECEIVER',
       transactionDirection: 'RECEIVING',
-      aggregationFieldKey: 'TRANSACTION:transactionId',
-      aggregationFunc: 'COUNT',
+      aggregationFieldKey,
+      aggregationFunc,
       timeWindow: {
         start: parameters.timeWindow,
         end: { units: 0, granularity: 'now' },
@@ -77,8 +77,19 @@ export function migrateCheckDirectionParameters(
     !parameters.checkReceiver ||
     parameters.checkReceiver === 'all'
   ) {
+    let secondaryAggregationFieldKey = 'TRANSACTION:transactionId'
     if (type === 'AMOUNT') {
-      aggregationFieldKey = 'TRANSACTION:originAmountDetails-transactionAmount'
+      if (parameters.checkSender) {
+        aggregationFieldKey =
+          'TRANSACTION:originAmountDetails-transactionAmount'
+        secondaryAggregationFieldKey =
+          'TRANSACTION:destinationAmountDetails-transactionAmount'
+      } else {
+        aggregationFieldKey =
+          'TRANSACTION:destinationAmountDetails-transactionAmount'
+        secondaryAggregationFieldKey =
+          'TRANSACTION:originAmountDetails-transactionAmount'
+      }
     }
     logicAggregationVariables.push({
       key: 'agg:sending-receiving',
@@ -90,6 +101,7 @@ export function migrateCheckDirectionParameters(
       userDirection: 'SENDER_OR_RECEIVER',
       transactionDirection: 'SENDING_RECEIVING',
       aggregationFieldKey,
+      secondaryAggregationFieldKey,
       aggregationFunc,
       timeWindow: {
         start: parameters.timeWindow,

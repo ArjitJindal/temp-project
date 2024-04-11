@@ -10,6 +10,7 @@ import { BlacklistCardIssuedCountryRuleParameters } from '../transaction-rules/b
 import { HighRiskCurrencyRuleParameters } from '../transaction-rules/high-risk-currency'
 import { TransactionAmountRuleParameters } from '../transaction-rules/transaction-amount'
 import { TransactionMatchesPatternRuleParameters } from '../transaction-rules/transaction-amount-pattern'
+import { TransactionsVolumeRuleParameters } from '../transaction-rules/transactions-volume'
 import { TransactionReferenceKeywordRuleParameters } from '../transaction-rules/transaction-reference-keyword'
 import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
@@ -406,6 +407,104 @@ const V8_CONVERSION: {
       },
       alertCreationDirection: 'ORIGIN',
       logicAggregationVariables: [],
+    }
+  },
+  'R-69': (parameters: TransactionsVolumeRuleParameters, filters) => {
+    const {
+      logicAggregationVariables: amountLogicAggregationVariables,
+      alertCreationDirection,
+    } = migrateCheckDirectionParameters('AMOUNT', parameters, filters)
+
+    const [currency, lowerThreshold] = Object.entries(
+      parameters.transactionVolumeThreshold
+    )[0]
+    let logicAggregationVariables = amountLogicAggregationVariables.map(
+      (v) => ({
+        ...v,
+        baseCurrency: currency as CurrencyCode,
+      })
+    ) as RuleAggregationVariable[]
+    const conditions: any[] = []
+    if (
+      parameters.transactionsCounterPartiesThreshold
+        ?.transactionsCounterPartiesCount
+    ) {
+      const checkPaymentMethodDetails =
+        parameters.transactionsCounterPartiesThreshold.checkPaymentMethodDetails
+      const counterPartyAggVariable: RuleAggregationVariable = {
+        key: 'agg:counterparty',
+        type: checkPaymentMethodDetails
+          ? 'PAYMENT_DETAILS_TRANSACTIONS'
+          : 'USER_TRANSACTIONS',
+        userDirection: 'SENDER_OR_RECEIVER',
+        transactionDirection: 'SENDING_RECEIVING',
+        aggregationFieldKey: checkPaymentMethodDetails
+          ? 'TRANSACTION:paymentDetailsIdentifier__RECEIVER'
+          : 'TRANSACTION:destinationUserId',
+        secondaryAggregationFieldKey: checkPaymentMethodDetails
+          ? 'TRANSACTION:paymentDetailsIdentifier__SENDER'
+          : 'TRANSACTION:originUserId',
+        timeWindow: {
+          start: parameters.timeWindow,
+          end: { units: 0, granularity: 'now' },
+        },
+        aggregationFunc: 'UNIQUE_COUNT',
+        baseCurrency: currency as CurrencyCode,
+      }
+      logicAggregationVariables.push(counterPartyAggVariable)
+      conditions.push({
+        '>=': [
+          { var: counterPartyAggVariable.key },
+          parameters.transactionsCounterPartiesThreshold
+            .transactionsCounterPartiesCount,
+        ],
+      })
+    }
+    if (parameters.initialTransactions) {
+      const { logicAggregationVariables: countLogicAggregationVariables } =
+        migrateCheckDirectionParameters('COUNT', parameters, filters)
+      countLogicAggregationVariables[0].key = 'agg:count'
+      logicAggregationVariables = logicAggregationVariables.concat(
+        countLogicAggregationVariables
+      )
+      conditions.push({
+        '>': [{ var: 'agg:count' }, parameters.initialTransactions],
+      })
+    }
+    if (amountLogicAggregationVariables.length === 1) {
+      conditions.push({
+        '>=': [{ var: amountLogicAggregationVariables[0].key }, lowerThreshold],
+      })
+    } else if (amountLogicAggregationVariables.length > 1) {
+      conditions.push({
+        or: amountLogicAggregationVariables.map((v) => ({
+          '>=': [{ var: v.key }, lowerThreshold],
+        })),
+      })
+    }
+    if (parameters.transactionVolumeUpperThreshold) {
+      const [_, upperThreshold] = Object.entries(
+        parameters.transactionVolumeUpperThreshold
+      )[0]
+      if (amountLogicAggregationVariables.length === 1) {
+        conditions.push({
+          '<': [
+            { var: amountLogicAggregationVariables[0].key },
+            upperThreshold,
+          ],
+        })
+      } else if (amountLogicAggregationVariables.length > 1) {
+        conditions.push({
+          or: amountLogicAggregationVariables.map((v) => ({
+            '<': [{ var: v.key }, upperThreshold],
+          })),
+        })
+      }
+    }
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables: logicAggregationVariables,
+      alertCreationDirection,
     }
   },
   'R-24': (parameters: TransactionReferenceKeywordRuleParameters) => {

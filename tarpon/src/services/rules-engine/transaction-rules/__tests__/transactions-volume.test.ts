@@ -50,7 +50,7 @@ const TEST_TRANSACTION_METHOD_IBAN_3 = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Core logic', () => {
     const TEST_HIT_TRANSACTIONS = [
       getTestTransaction({
@@ -923,6 +923,195 @@ ruleVariantsTest({ aggregation: true }, () => {
     })
   })
 
+  describe('Fiscal year type 2 test in user sending money to multiple senders and exceeding the threshold of amount and unique users', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        defaultParameters: {
+          timeWindow: {
+            units: 1,
+            granularity: 'fiscal_year',
+            rollingBasis: false,
+            fiscalYear: {
+              startMonth: 4,
+              startDay: 1,
+            },
+          },
+          checkSender: 'all',
+          checkReceiver: 'none',
+          transactionVolumeThreshold: {
+            EUR: 100,
+          },
+          transactionsCounterPartiesThreshold: {
+            transactionsCounterPartiesCount: 2,
+            checkPaymentMethodDetails: false,
+          },
+        } as TransactionsVolumeRuleParameters,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'rule is hit when the number of unique users is more than transactionsCounterPartiesThreshold',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-04-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-05-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-06-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-07-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2023-03-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2023-04-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2023-05-01T00:00:02.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true, true, true, false, false],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('Fiscal year type 1 test in user sending money to multiple senders and exceeding the threshold of amount and unique users', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        defaultParameters: {
+          timeWindow: {
+            units: 1,
+            granularity: 'fiscal_year',
+            rollingBasis: false,
+            fiscalYear: {
+              startMonth: 1,
+              startDay: 1,
+            },
+          },
+          checkSender: 'all',
+          checkReceiver: 'none',
+          transactionVolumeThreshold: {
+            EUR: 100,
+          },
+          transactionsCounterPartiesThreshold: {
+            transactionsCounterPartiesCount: 2,
+            checkPaymentMethodDetails: false,
+          },
+        } as TransactionsVolumeRuleParameters,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'rule is hit when the number of unique users is more than transactionsCounterPartiesThreshold',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-04-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-05-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-06-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-07-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2023-03-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2023-05-01T00:00:02.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true, true, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+})
+
+// Run filter tests only for V2, To revert this after FR-4603
+
+ruleVariantsTest({ aggregation: true }, () => {
   /**
    * Transaction rule filters
    */
@@ -1440,191 +1629,6 @@ ruleVariantsTest({ aggregation: true }, () => {
           }),
         ],
         expectedHits: [false, false, false, false, true],
-      },
-    ])('', ({ name, transactions, expectedHits }) => {
-      createTransactionRuleTestCase(
-        name,
-        TEST_TENANT_ID,
-        transactions,
-        expectedHits
-      )
-    })
-  })
-
-  describe('Fiscal year type 2 test in user sending money to multiple senders and exceeding the threshold of amount and unique users', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        type: 'TRANSACTION',
-        ruleImplementationName: 'transactions-volume',
-        defaultParameters: {
-          timeWindow: {
-            units: 1,
-            granularity: 'fiscal_year',
-            rollingBasis: false,
-            fiscalYear: {
-              startMonth: 4,
-              startDay: 1,
-            },
-          },
-          checkSender: 'all',
-          checkReceiver: 'none',
-          transactionVolumeThreshold: {
-            EUR: 100,
-          },
-          transactionsCounterPartiesThreshold: {
-            transactionsCounterPartiesCount: 2,
-            checkPaymentMethodDetails: false,
-          },
-        } as TransactionsVolumeRuleParameters,
-      },
-    ])
-
-    describe.each<TransactionRuleTestCase>([
-      {
-        name: 'rule is hit when the number of unique users is more than transactionsCounterPartiesThreshold',
-        transactions: [
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-2',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2022-04-01T00:00:01.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-2',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2022-05-01T00:00:01.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-3',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2022-06-01T00:00:02.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-3',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2022-07-01T00:00:02.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-3',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2023-03-01T00:00:02.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-4',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2023-04-01T00:00:01.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-4',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2023-05-01T00:00:02.000Z').valueOf(),
-          }),
-        ],
-        expectedHits: [false, false, true, true, true, false, false],
-      },
-    ])('', ({ name, transactions, expectedHits }) => {
-      createTransactionRuleTestCase(
-        name,
-        TEST_TENANT_ID,
-        transactions,
-        expectedHits
-      )
-    })
-  })
-
-  describe('Fiscal year type 1 test in user sending money to multiple senders and exceeding the threshold of amount and unique users', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        type: 'TRANSACTION',
-        ruleImplementationName: 'transactions-volume',
-        defaultParameters: {
-          timeWindow: {
-            units: 1,
-            granularity: 'fiscal_year',
-            rollingBasis: false,
-            fiscalYear: {
-              startMonth: 1,
-              startDay: 1,
-            },
-          },
-          checkSender: 'all',
-          checkReceiver: 'none',
-          transactionVolumeThreshold: {
-            EUR: 100,
-          },
-          transactionsCounterPartiesThreshold: {
-            transactionsCounterPartiesCount: 2,
-            checkPaymentMethodDetails: false,
-          },
-        } as TransactionsVolumeRuleParameters,
-      },
-    ])
-
-    describe.each<TransactionRuleTestCase>([
-      {
-        name: 'rule is hit when the number of unique users is more than transactionsCounterPartiesThreshold',
-        transactions: [
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-2',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2022-04-01T00:00:01.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-2',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2022-05-01T00:00:01.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-3',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2022-06-01T00:00:02.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-3',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2022-07-01T00:00:02.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-3',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2023-03-01T00:00:02.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-4',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            timestamp: dayjs('2023-05-01T00:00:02.000Z').valueOf(),
-          }),
-        ],
-        expectedHits: [false, false, true, true, false, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(
