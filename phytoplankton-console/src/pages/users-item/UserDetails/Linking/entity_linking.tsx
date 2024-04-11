@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import s from './index.module.less';
 import UserGraph from './UserGraph';
 import * as Card from '@/components/ui/Card';
@@ -16,6 +16,20 @@ const Linking = (props: Props) => {
   const [scope, setScope] = useState<ScopeSelectorValue>('ENTITY');
   const api = useApi();
 
+  const getUser = useCallback(
+    (userId) => {
+      return api.getUserEntity({ userId });
+    },
+    [api],
+  );
+
+  const getTxn = useCallback(
+    (userId) => {
+      return api.getTxnLinking({ userId });
+    },
+    [api],
+  );
+
   return (
     <Card.Root className={s.root}>
       <div className={s.scopeSelector}>
@@ -29,7 +43,7 @@ const Linking = (props: Props) => {
       {scope === 'ENTITY' && (
         <UserGraph
           userId={props.userId}
-          getGraph={(userId) => api.getUserEntity({ userId })}
+          getGraph={getUser}
           edgeInterpolation={'linear'}
           edgeArrowPosition={'none'}
           isFollowEnabled={(id: string) => id.startsWith('user:')}
@@ -38,7 +52,7 @@ const Linking = (props: Props) => {
       {scope === 'TXN' && (
         <UserGraph
           userId={props.userId}
-          getGraph={(userId) => api.getTxnLinking({ userId })}
+          getGraph={getTxn}
           edgeInterpolation={'curved'}
           edgeArrowPosition={'end'}
           isFollowEnabled={(id: string) => id.startsWith('payment:') || id.startsWith('user:')}
