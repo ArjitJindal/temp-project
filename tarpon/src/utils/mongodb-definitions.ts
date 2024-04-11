@@ -345,7 +345,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
               },
             ]
           ),
-        ].map((index) => ({ index }))
+        ].map((index) => ({ index: { ...index, _id: 1 } }))
       },
     },
     [USER_EVENTS_COLLECTION(tenantId)]: {
@@ -356,6 +356,10 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           },
           {
             createdAt: 1,
+          },
+          {
+            userId: 1,
+            timestamp: -1,
           },
         ].map((index) => ({ index })),
     },
@@ -413,6 +417,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { 'caseAggregates.originPaymentMethods': 1 },
           { 'caseAggregates.destinationPaymentMethods': 1 },
           { 'caseAggregates.tags.key': 1, 'caseAggregates.tags.value': 1 },
+          { caseTransactionsIds: 1 },
         ].map((index) => ({ index })),
     },
     [AUDITLOG_COLLECTION(tenantId)]: {
@@ -457,7 +462,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [SANCTIONS_SEARCHES_COLLECTION(tenantId)]: {
       getIndexes: () =>
         [
-          { createdAt: 1 },
+          { createdAt: 1, _id: 1 },
           { 'response.rawComplyAdvantageResponse.content.data.id': 1 },
           { 'request.searchTerm': 1 },
           { 'response.data.doc.types': 1 },

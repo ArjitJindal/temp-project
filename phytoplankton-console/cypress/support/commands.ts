@@ -98,11 +98,14 @@ Cypress.Commands.add('checkAndSwitchToCypressTenant', () => {
       cy.wait('@tenants', { timeout: 15000 }).then((tenantsInterception) => {
         expect(tenantsInterception.response?.statusCode).to.be.oneOf([200, 304]);
         cy.get("button[data-cy='superadmin-panel-button']").click({ force: true });
-        cy.get('.ant-modal .ant-select').first().click();
-        cy.get(`div[data-cy='Cypress Tenant']`).last().click();
+        cy.get('.ant-modal .ant-select').first().type('Cypress Tenant{enter}');
         cy.wait('@changeTenant', { timeout: 15000 }).then((changeTenantInterception) => {
           expect(changeTenantInterception.response?.statusCode).to.eq(200);
         });
+        cy.get("button[data-cy='superadmin-panel-button']").should(
+          'contain.text',
+          'Cypress Tenant',
+        );
       });
     }
   });

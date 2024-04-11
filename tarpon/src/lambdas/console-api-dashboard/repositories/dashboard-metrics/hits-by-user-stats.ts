@@ -40,19 +40,7 @@ export class HitsByUserStatsDashboardMetric {
     const aggregationCollection =
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenantId)
 
-    await db.collection(aggregationCollection).createIndex(
-      {
-        direction: 1,
-        date: -1,
-        userId: 1,
-      },
-      {
-        unique: true,
-      }
-    )
-    await db.collection(aggregationCollection).createIndex({
-      updatedAt: 1,
-    })
+    await this.createIndexes(tenantId)
 
     let timestampMatch: any = undefined
     if (timeRange) {
@@ -149,19 +137,8 @@ export class HitsByUserStatsDashboardMetric {
     const aggregationCollection =
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenantId)
 
-    await db.collection(aggregationCollection).createIndex(
-      {
-        direction: 1,
-        date: -1,
-        userId: 1,
-      },
-      {
-        unique: true,
-      }
-    )
-    await db.collection(aggregationCollection).createIndex({
-      updatedAt: 1,
-    })
+    await this.createIndexes(tenantId)
+
     let tranasctionTimestampMatch: any = undefined
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
@@ -248,6 +225,28 @@ export class HitsByUserStatsDashboardMetric {
       'HOUR',
       { direction }
     )
+  }
+
+  private static async createIndexes(tenantId: string) {
+    const db = await getMongoDbClientDb()
+    const aggregationCollection =
+      DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenantId)
+
+    await db.collection(aggregationCollection).createIndex(
+      {
+        direction: 1,
+        date: -1,
+        userId: 1,
+      },
+      {
+        unique: true,
+      }
+    )
+    await db.collection(aggregationCollection).createIndex({
+      direction: 1,
+      updatedAt: 1,
+      date: 1,
+    })
   }
 
   public static async get(
