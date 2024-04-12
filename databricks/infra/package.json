@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@cdktf/provider-aws": "^19.9.0",
+    "@cdktf/provider-null": "^10.0.0",
     "@cdktf/provider-time": "^10.1.0",
     "@flagright/lib": "file:../../lib",
     "aws-cdk-lib": "~2.132.1",

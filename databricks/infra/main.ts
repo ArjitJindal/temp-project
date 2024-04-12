@@ -14,7 +14,11 @@ import { AWS_ACCOUNTS } from '@flagright/lib/constants'
 import * as path from 'path'
 import { createHash } from 'crypto'
 import { readdirSync, readFileSync } from 'fs'
-import { join, resolve } from 'path'
+import { join } from 'path'
+import {
+  resource as nullResource,
+  provider as nullProvider,
+} from '@cdktf/provider-null'
 
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
@@ -91,6 +95,8 @@ class DatabricksStack extends TerraformStack {
     new aws.provider.AwsProvider(this, 'aws', {
       region: awsRegion,
     })
+
+    new nullProvider.NullProvider(this, 'null', {})
 
     const databricksSecret =
       new aws.dataAwsSecretsmanagerSecret.DataAwsSecretsmanagerSecret(
@@ -640,6 +646,15 @@ class DatabricksStack extends TerraformStack {
         },
       })
     })
+    const schemaVersionResource = new nullResource.Resource(
+      this,
+      'schema-version',
+      {
+        triggers: {
+          alwaysRun: schemaVersion,
+        },
+      }
+    )
     servicePrincipals.forEach((sp, i) => {
       const tenant = this.tenantIds[i]
       const tenantSchema = new databricks.schema.Schema(
@@ -675,7 +690,7 @@ class DatabricksStack extends TerraformStack {
 
       entities.forEach((entity) => {
         if (Fn.contains(tables.ids, `${stage}.default.${entity.table}`)) {
-          new databricks.sqlTable.SqlTable(
+          const view = new databricks.sqlTable.SqlTable(
             this,
             `view-${entity.table}-${tenant}`,
             {
@@ -686,7 +701,7 @@ class DatabricksStack extends TerraformStack {
               tableType: 'VIEW',
               warehouseId: sqlWarehouse.id,
               viewDefinition: Fn.format(
-                `SELECT * from %s.default.%s WHERE tenant = '%s' AND '${schemaVersion}' = '${schemaVersion}'`, // This is required for manually updating views
+                `SELECT * from %s.default.%s WHERE tenant = '%s'`,
                 [catalog.name, entity.table, sp.displayName]
               ),
               lifecycle: {
@@ -694,6 +709,13 @@ class DatabricksStack extends TerraformStack {
               },
             }
           )
+
+          // Necessary due to this bug report: https://github.com/hashicorp/terraform-cdk/issues/3532
+          view.addOverride('lifecycle.replace_triggered_by', [
+            schemaVersionResource.terraformResourceType +
+              '.' +
+              schemaVersionResource.friendlyUniqueId,
+          ])
         }
       })
 
