@@ -1,4 +1,12 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
+import {
+  isTransactionDestinationVariable,
+  isTransactionOriginOrDestinationVariable,
+  isTransactionOriginVariable,
+  isUserReceiverVariable,
+  isUserSenderOrReceiverVariable,
+  isUserSenderVariable,
+} from '../helpers';
 import NestedSelects, { RefType, Option as NestedSelectsOption } from './NestedSelects';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import * as Card from '@/components/ui/Card';
@@ -14,11 +22,14 @@ import Select from '@/components/library/Select';
 import { firstLetterUpper } from '@/utils/humanize';
 import { useIsChanged } from '@/utils/hooks';
 
+type UserType = 'SENDER' | 'RECEIVER' | 'BOTH';
+type TransactionDirection = 'ORIGIN' | 'DESTINATION' | 'BOTH';
+
 type FormRuleEntityVariable = {
   type?: 'TRANSACTION' | 'USER';
   name?: string;
-  transactionDirections?: Array<'ORIGIN' | 'DESTINATION'>;
-  userType?: 'SENDER' | 'RECEIVER';
+  transactionDirection?: TransactionDirection;
+  userType?: UserType;
   userNatures?: Array<'CONSUMER_USER' | 'BUSINESS_USER'>;
   variableKey?: string;
 };
@@ -36,13 +47,15 @@ const TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
   { value: 'TRANSACTION', label: 'Transaction' },
   { value: 'USER', label: 'User' },
 ];
-const TX_DIRECTION_OPTIONS: Array<{ value: 'ORIGIN' | 'DESTINATION'; label: string }> = [
+const TX_DIRECTION_OPTIONS: Array<{ value: TransactionDirection; label: string }> = [
   { value: 'ORIGIN', label: 'Origin' },
   { value: 'DESTINATION', label: 'Destination' },
+  { value: 'BOTH', label: 'Both' },
 ];
-const USER_TYPE_OPTIONS: Array<{ value: 'SENDER' | 'RECEIVER'; label: string }> = [
+const USER_TYPE_OPTIONS: Array<{ value: UserType; label: string }> = [
   { value: 'SENDER', label: 'Sender' },
   { value: 'RECEIVER', label: 'Receiver' },
+  { value: 'BOTH', label: 'Both' },
 ];
 const USER_NATURE_OPTIONS: Array<{ value: 'CONSUMER_USER' | 'BUSINESS_USER'; label: string }> = [
   { value: 'CONSUMER_USER', label: 'Consumer' },
@@ -63,10 +76,10 @@ function getInitialFormValues(
   };
   if (entityVariable.entity === 'TRANSACTION') {
     result.type = 'TRANSACTION';
-    result.transactionDirections = entityVariable.key.startsWith('TRANSACTION:origin')
-      ? ['ORIGIN']
+    result.transactionDirection = entityVariable.key.startsWith('TRANSACTION:origin')
+      ? 'ORIGIN'
       : entityVariable.key.startsWith('TRANSACTION:destination')
-      ? ['DESTINATION']
+      ? 'DESTINATION'
       : undefined;
   } else {
     result.type = 'USER';
@@ -74,6 +87,8 @@ function getInitialFormValues(
       ? 'SENDER'
       : isUserReceiverVariable(entityVariable.key)
       ? 'RECEIVER'
+      : isUserSenderOrReceiverVariable(entityVariable.key)
+      ? 'BOTH'
       : undefined;
     result.userNatures =
       entityVariable.entity === 'CONSUMER_USER'
@@ -85,18 +100,6 @@ function getInitialFormValues(
   return result;
 }
 
-function isTransactionOriginVariable(variableKey: string) {
-  return variableKey.startsWith('TRANSACTION:origin');
-}
-function isTransactionDestinationVariable(variableKey: string) {
-  return variableKey.startsWith('TRANSACTION:destination');
-}
-function isUserSenderVariable(variableKey: string) {
-  return variableKey.endsWith('__SENDER');
-}
-function isUserReceiverVariable(variableKey: string) {
-  return variableKey.endsWith('__RECEIVER');
-}
 function oppositeVariableKey(variableKey: string): string | undefined {
   if (isTransactionOriginVariable(variableKey)) {
     return variableKey.replace('TRANSACTION:origin', 'TRANSACTION:destination');
@@ -146,23 +149,28 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
         return false;
       }
       if (formValues.type === 'TRANSACTION') {
-        const isOriginEnabled = formValues.transactionDirections?.includes('ORIGIN');
-        const isDestinationEnabled = formValues.transactionDirections?.includes('DESTINATION');
+        const isOriginEnabled = formValues.transactionDirection === 'ORIGIN';
+        const isDestinationEnabled = formValues.transactionDirection === 'DESTINATION';
+        const isBothEnabled = formValues.transactionDirection === 'BOTH';
         const isOriginVar = isTransactionOriginVariable(v.key);
         const isDestinationVar = isTransactionDestinationVariable(v.key);
+        const isBothVar = isTransactionOriginOrDestinationVariable(v.key);
         return (
           (isOriginEnabled && isOriginVar) ||
           (isDestinationEnabled && isDestinationVar) ||
+          (isBothEnabled && isBothVar) ||
           (!(isOriginVar || isDestinationVar) && v.entity === 'TRANSACTION')
         );
       } else if (formValues.type === 'USER') {
         const isSenderEnabled = formValues.userType === 'SENDER';
         const isReceiverEnabled = formValues.userType === 'RECEIVER';
+        const isBothEnabled = formValues.userType === 'BOTH';
         const isConsumerEnabled = formValues.userNatures?.includes('CONSUMER_USER');
         const isBusinessEnabled = formValues.userNatures?.includes('BUSINESS_USER');
         return (
           ((isSenderEnabled && isUserSenderVariable(v.key)) ||
-            (isReceiverEnabled && isUserReceiverVariable(v.key))) &&
+            (isReceiverEnabled && isUserReceiverVariable(v.key)) ||
+            (isBothEnabled && isUserSenderOrReceiverVariable(v.key))) &&
           ((isConsumerEnabled && v.entity === 'CONSUMER_USER') ||
             (isBusinessEnabled && v.entity === 'BUSINESS_USER') ||
             ((formValues.userNatures ?? []).length === 0 && v.entity === 'USER'))
@@ -172,7 +180,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   }, [
     entityVariables,
     entityVariablesInUse,
-    formValues.transactionDirections,
+    formValues.transactionDirection,
     formValues.type,
     formValues.userNatures,
     formValues.userType,
@@ -293,9 +301,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
           {formValues.type === 'TRANSACTION' && (
             <Label label="Transaction direction">
               <SelectionGroup
-                value={formValues.transactionDirections}
-                onChange={(transactionDirections) => handleUpdateForm({ transactionDirections })}
-                mode={'MULTIPLE'}
+                value={formValues.transactionDirection}
+                onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
+                mode={'SINGLE'}
                 options={TX_DIRECTION_OPTIONS}
                 testName="variable-tx-direction-v8"
               />

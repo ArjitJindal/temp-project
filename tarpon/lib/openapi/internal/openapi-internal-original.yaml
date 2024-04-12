@@ -35,7 +35,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RuleLogicConfig'
+                $ref: '#/components/schemas/RuleLogicConfigResponse'
       operationId: get-rule-logic-config
       description: ''
     parameters: []
@@ -5737,6 +5737,16 @@ components:
         - createdAt
         - drsScore
         - isUpdatable
+    RuleLogicConfigResponse:
+      title: RuleLogicConfigResponse
+      type: object
+      properties:
+        s3Url:
+          type: string
+        ruleLogicConfig:
+          $ref: '#/components/schemas/RuleLogicConfig'
+      required:
+        - s3Url
     RuleLogicConfig:
       title: RuleLogicConfig
       type: object

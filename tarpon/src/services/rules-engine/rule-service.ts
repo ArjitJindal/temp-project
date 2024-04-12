@@ -1,11 +1,8 @@
 import Ajv, { ValidateFunction } from 'ajv'
-import createHttpError from 'http-errors'
+import createHttpError, { BadRequest } from 'http-errors'
 import { removeStopwords, eng } from 'stopword'
 import { compact, concat, isEmpty, set, uniq } from 'lodash'
-import {
-  replaceMagicKeyword,
-  getAllValuesByKey,
-} from '@flagright/lib/utils/object'
+import { replaceMagicKeyword } from '@flagright/lib/utils/object'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { singular } from 'pluralize'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -27,6 +24,8 @@ import {
 import { assertValidRiskLevelParameters, isV8Rule } from './utils'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_RULES } from './user-rules'
+import { RULE_OPERATORS } from './v8-operators'
+import { RULE_FUNCTIONS } from './v8-functions'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -48,10 +47,27 @@ import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchRespon
 import { scoreObjects } from '@/utils/search'
 import { logger } from '@/core/logger'
 import { getErrorMessage } from '@/utils/lang'
-import { getJsonLogicEngine } from '@/services/rules-engine/v8-engine'
+import {
+  getJsonLogicEngine,
+  getVariableKeysFromLogic,
+} from '@/services/rules-engine/v8-engine'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { notNullish } from '@/utils/array'
-import { getRuleVariableByKey } from '@/services/rules-engine/v8-variables'
+import {
+  getRuleVariableByKey,
+  getTransactionRuleEntityVariables,
+} from '@/services/rules-engine/v8-variables'
+import { getS3Client } from '@/utils/s3'
+
+export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
+
+export function getRuleLogicConfig() {
+  return {
+    variables: Object.values(getTransactionRuleEntityVariables()),
+    operators: RULE_OPERATORS,
+    functions: RULE_FUNCTIONS,
+  }
+}
 
 type AIFilters = {
   ruleTypes?: string[]
@@ -112,6 +128,14 @@ export class RuleService {
       await ruleRepository.createOrUpdateRule(rule)
       console.info(`Synced rule ${rule.id} (${rule.name})`)
     }
+
+    const s3Client = getS3Client()
+    // Upload v8Config in JSON format to S3 using s3Client
+    await s3Client.putObject({
+      Bucket: process.env.SHARED_ASSETS_BUCKET,
+      Key: RULE_LOGIC_CONFIG_S3_KEY,
+      Body: JSON.stringify(getRuleLogicConfig()),
+    })
   }
 
   async getAllRuleFilters(): Promise<RuleFilters> {
@@ -523,7 +547,7 @@ You have to answer in below format as string. If you don't know any field, just 
       )
 
       if (riskLevelKeys.length > 0) {
-        throw new Error(
+        throw new BadRequest(
           `Invalid risk-level logic: unknown risk-levels: ${riskLevelKeys.join(
             ', '
           )}`
@@ -545,7 +569,7 @@ You have to answer in below format as string. If you don't know any field, just 
         !v.key.endsWith('$1') &&
         !v.key.endsWith('$2')
       ) {
-        throw new Error(
+        throw new BadRequest(
           `Invalid aggregation variable (UNIQUE_VALUES): ${v.key}`
         )
       }
@@ -557,19 +581,20 @@ You have to answer in below format as string. If you don't know any field, just 
           // Check that logic is valid JSON logic
           await this.logicEngine.build(logic)
           // Check that all used variables are known variables
-          const allLogicVars = getAllValuesByKey<string>('var', logic)
-          for (const logicVar of allLogicVars) {
-            const isKnownVariable =
-              aggVarKeys.includes(logicVar) ||
-              getRuleVariableByKey(logicVar) != null
-            if (!isKnownVariable) {
-              throw new Error(
-                `Variable "${logicVar}" used in logic is unknown variable`
-              )
+          const { entityVariableKeys, aggVariableKeys } =
+            getVariableKeysFromLogic(logic)
+          entityVariableKeys.forEach((entityVar) => {
+            if (!getRuleVariableByKey(entityVar)) {
+              throw new BadRequest(`Unknown entity variable '${entityVar}'`)
             }
-          }
+          })
+          aggVariableKeys.forEach((aggVar) => {
+            if (!aggVarKeys.includes(aggVar)) {
+              throw new BadRequest(`Unknown aggregate variable '${aggVar}'`)
+            }
+          })
         } catch (e) {
-          throw new Error(
+          throw new BadRequest(
             `Passed value is not a valid JsonLogic tree:
 
         ${JSON.stringify(logic, null, 4)}".

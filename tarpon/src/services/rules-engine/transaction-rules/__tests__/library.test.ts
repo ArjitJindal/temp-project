@@ -110,7 +110,7 @@ describe.each(['simple', 'ruleLevels'])('Rule logic validation', (kind) => {
   test(`[${kind}] Logic using unknown var is not valid`, async () => {
     await expect(
       validate({
-        and: [{ '!=': [{ var: 'SOME_NAME_OF_NON_EXISTED_VAR' }, null] }],
+        and: [{ '!=': [{ var: 'var:SOME_NAME_OF_NON_EXISTED_VAR' }, null] }],
       })
     ).rejects.toThrow()
   })

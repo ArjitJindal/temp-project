@@ -58,6 +58,11 @@ export const StackConstants = {
   S3_IMPORT_BUCKET_PREFIX: getResourceNameForTarpon('import', true, true),
   S3_DOCUMENT_BUCKET_PREFIX: getResourceNameForTarpon('document', true, true),
   S3_TMP_BUCKET_PREFIX: getResourceNameForTarpon('tmp', true, true),
+  S3_SHARED_ASSETS_PREFIX: getResourceNameForTarpon(
+    'shared-assets',
+    true,
+    true
+  ),
 
   // Lambda names
   CONSOLE_API_ACCOUNT_FUNCTION_NAME: getResourceNameForTarpon(

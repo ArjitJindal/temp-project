@@ -55,6 +55,7 @@ export default class PolicyBuilder {
         `arn:aws:s3:::${StackConstants.S3_IMPORT_BUCKET_PREFIX}*/${this.tenantId}/*`,
         `arn:aws:s3:::${StackConstants.S3_DOCUMENT_BUCKET_PREFIX}*/${this.tenantId}/*`,
         `arn:aws:s3:::${StackConstants.S3_TMP_BUCKET_PREFIX}*/${this.tenantId}/*`,
+        `arn:aws:s3:::${StackConstants.S3_SHARED_ASSETS_PREFIX}*/*`,
       ],
     })
     return this

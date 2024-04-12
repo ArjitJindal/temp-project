@@ -1,11 +1,15 @@
 process.env.AWS_XRAY_CONTEXT_MISSING = 'IGNORE_ERROR'
 import path from 'path'
 import { exit } from 'process'
-import { SQSQueues, StackConstants } from '@lib/constants'
+import {
+  SQSQueues,
+  StackConstants,
+  getNameForGlobalResource,
+} from '@lib/constants'
 import { Umzug, MongoDBStorage } from 'umzug'
 import { STS, AssumeRoleCommand } from '@aws-sdk/client-sts'
 import { syncMongoDbIndexes } from './always-run/sync-mongodb-indexes'
-import { loadConfigEnv } from './utils/config'
+import { getConfig, loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
 import { syncFeatureFlags } from './utils/tenant'
 import { envIs } from '@/utils/env'
@@ -72,6 +76,10 @@ function initializeEnvVars() {
   const auditLogTopicName: string = StackConstants.AUDIT_LOG_TOPIC_NAME
   process.env.BATCH_JOB_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchJobQueueName}`
   process.env.AUDITLOG_TOPIC_ARN = `arn:aws:sns:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT}:${auditLogTopicName}`
+  process.env.SHARED_ASSETS_BUCKET = getNameForGlobalResource(
+    StackConstants.S3_SHARED_ASSETS_PREFIX,
+    getConfig()
+  )
 }
 
 async function main() {

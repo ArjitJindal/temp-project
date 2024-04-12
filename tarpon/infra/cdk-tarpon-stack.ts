@@ -307,6 +307,7 @@ export class CdkTarponStack extends cdk.Stack {
     let s3DocumentBucket
     let s3TmpBucket
     let s3demoModeBucket
+    let s3SharedAssetsBucket
 
     const s3BucketCors = [
       {
@@ -329,6 +330,10 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const s3demoModeBucketName = getNameForGlobalResource(
       StackConstants.S3_DEMO_MODE_BUCKET_NAME,
+      config
+    )
+    const sharedAssetsBucketName = getNameForGlobalResource(
+      StackConstants.S3_SHARED_ASSETS_PREFIX,
       config
     )
 
@@ -406,6 +411,17 @@ export class CdkTarponStack extends cdk.Stack {
         serverAccessLogsBucket: serverAccessLogBucket,
         serverAccessLogsPrefix: `tarpon/${s3demoModeBucketName}`,
       })
+
+      s3SharedAssetsBucket = new Bucket(this, sharedAssetsBucketName, {
+        bucketName: sharedAssetsBucketName,
+        cors: s3BucketCors,
+        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+        encryption: BucketEncryption.S3_MANAGED,
+        serverAccessLogsBucket: serverAccessLogBucket,
+        serverAccessLogsPrefix: `tarpon/${sharedAssetsBucketName}`,
+      })
     } else {
       s3ImportBucket = Bucket.fromBucketName(
         this,
@@ -422,6 +438,11 @@ export class CdkTarponStack extends cdk.Stack {
         this,
         s3demoModeBucketName,
         s3demoModeBucketName
+      )
+      s3SharedAssetsBucket = Bucket.fromBucketName(
+        this,
+        sharedAssetsBucketName,
+        sharedAssetsBucketName
       )
     }
 
@@ -455,6 +476,7 @@ export class CdkTarponStack extends cdk.Stack {
         DOCUMENT_BUCKET: documentBucketName,
         IMPORT_BUCKET: importBucketName,
         TMP_BUCKET: tmpBucketName,
+        SHARED_ASSETS_BUCKET: sharedAssetsBucketName,
         WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
         TRANSACTION_AGGREGATION_QUEUE_URL: transactionAggregationQueue.queueUrl,
         WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
@@ -560,6 +582,7 @@ export class CdkTarponStack extends cdk.Stack {
             s3ImportBucket.bucketArn,
             s3DocumentBucket.bucketArn,
             s3demoModeBucket.bucketArn,
+            s3SharedAssetsBucket.bucketArn,
           ],
         }),
         new PolicyStatement({

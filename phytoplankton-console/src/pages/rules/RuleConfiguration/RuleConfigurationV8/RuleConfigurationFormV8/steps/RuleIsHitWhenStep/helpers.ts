@@ -28,7 +28,17 @@ export function useRuleLogicConfig() {
   const api = useApi();
   return useQuery<RuleLogicConfig>(
     RULE_LOGIC_CONFIG(),
-    (): Promise<RuleLogicConfig> => api.getRuleLogicConfig(),
+    async (): Promise<RuleLogicConfig> => {
+      const response = await api.getRuleLogicConfig();
+      if (response.ruleLogicConfig) {
+        return response.ruleLogicConfig;
+      }
+
+      const ruleLogicConfig = (await fetch(response.s3Url).then((res) =>
+        res.json(),
+      )) as RuleLogicConfig;
+      return ruleLogicConfig;
+    },
     { refetchOnMount: false, enabled: v8Enabled },
   );
 }
@@ -170,5 +180,24 @@ export function useLogicBuilderConfig(
 }
 
 export function isTransactionAmountVariable(variableKey: string): boolean {
-  return variableKey?.endsWith('transactionAmount');
+  return variableKey?.includes('transactionAmount');
+}
+
+export function isTransactionOriginVariable(variableKey: string) {
+  return variableKey.startsWith('TRANSACTION:origin');
+}
+export function isTransactionDestinationVariable(variableKey: string) {
+  return variableKey.startsWith('TRANSACTION:destination');
+}
+export function isTransactionOriginOrDestinationVariable(variableKey: string) {
+  return variableKey.endsWith('__BOTH');
+}
+export function isUserSenderVariable(variableKey: string) {
+  return variableKey.endsWith('__SENDER');
+}
+export function isUserReceiverVariable(variableKey: string) {
+  return variableKey.endsWith('__RECEIVER');
+}
+export function isUserSenderOrReceiverVariable(variableKey: string) {
+  return variableKey.endsWith('__BOTH');
 }

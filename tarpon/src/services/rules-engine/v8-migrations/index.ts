@@ -123,7 +123,7 @@ const V8_CONVERSION: {
       type: 'USER_TRANSACTIONS',
       userDirection: 'RECEIVER',
       transactionDirection: 'RECEIVING',
-      aggregationFieldKey: 'TRANSACTION:paymentDetailsIdentifier__SENDER',
+      aggregationFieldKey: 'TRANSACTION:originPaymentDetailsIdentifier',
       aggregationFunc: 'UNIQUE_COUNT',
       timeWindow: {
         start: parameters.timeWindow,
@@ -439,10 +439,10 @@ const V8_CONVERSION: {
         userDirection: 'SENDER_OR_RECEIVER',
         transactionDirection: 'SENDING_RECEIVING',
         aggregationFieldKey: checkPaymentMethodDetails
-          ? 'TRANSACTION:paymentDetailsIdentifier__RECEIVER'
+          ? 'TRANSACTION:destinationPaymentDetailsIdentifier'
           : 'TRANSACTION:destinationUserId',
         secondaryAggregationFieldKey: checkPaymentMethodDetails
-          ? 'TRANSACTION:paymentDetailsIdentifier__SENDER'
+          ? 'TRANSACTION:originPaymentDetailsIdentifier'
           : 'TRANSACTION:originUserId',
         timeWindow: {
           start: parameters.timeWindow,

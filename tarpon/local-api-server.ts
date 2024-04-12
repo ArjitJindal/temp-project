@@ -21,6 +21,7 @@ function loadConfigToEnvs() {
   process.env.TMP_BUCKET = 'tarpon-tmp-dev-eu-central-1'
   process.env.IMPORT_BUCKET = 'tarpon-import-dev-eu-central-1'
   process.env.DOCUMENT_BUCKET = 'tarpon-document-dev-eu-central-1'
+  process.env.SHARED_ASSETS_BUCKET = 'tarpon-shared-assets-dev-eu-central-1'
 }
 
 function getAllOperationIds(apiDefinition: any) {
