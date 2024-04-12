@@ -3,6 +3,7 @@ import { chunk, cloneDeep } from 'lodash'
 import { logger } from '../logger'
 import { data as krsAndDrsScoreData } from './data/risk-scores'
 import { getCases } from './data/cases'
+import { getNotifications } from './data/notifications'
 import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
@@ -22,6 +23,7 @@ import {
   SIMULATION_TASK_COLLECTION,
   CHECKLIST_TEMPLATE_COLLECTION,
   COUNTER_COLLECTION,
+  NOTIFICATIONS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { getTransactions } from '@/core/seed/data/transactions'
 import { getUsers, getMerchantMonitoring } from '@/core/seed/data/users'
@@ -61,6 +63,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [CRM_SUMMARY_COLLECTION, () => getSummaries()],
   [SIMULATION_TASK_COLLECTION, () => getSimulations()],
   [CHECKLIST_TEMPLATE_COLLECTION, () => getChecklistTemplates()],
+  [NOTIFICATIONS_COLLECTION, () => getNotifications()],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
