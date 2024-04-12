@@ -18,9 +18,11 @@ import {
 } from '@react-awesome-query-builder/ui';
 import moment from 'moment';
 import { TimePicker } from 'antd';
+import React from 'react';
 import DatePicker from '../DatePicker';
 import s from './index.module.less';
 import { deserializeCountries, omitCountryGroups, serializeCountries } from './widget-utils';
+import ListSelect from './ListSelect';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
@@ -136,6 +138,8 @@ const MULTI_SELECT_TEXT_OPERATORS: RuleOperatorType[] = [
   'op:!similartowords',
 ];
 
+const MULTI_SELECT_LIST_OPERATORS: RuleOperatorType[] = ['op:inlist', 'op:!inlist'];
+
 const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
 
 const customTextWidget: TextWidget<BasicConfig> = {
@@ -146,7 +150,19 @@ const customTextWidget: TextWidget<BasicConfig> = {
       MULTI_SELECT_TEXT_OPERATORS.includes(operator) ||
       MULTI_SELECT_BUILTIN_OPERATORS.includes(operator)
     ) {
-      // TODO (V8): Create a ListSelect component which loads whitelist/blacklist from server
+      if (MULTI_SELECT_LIST_OPERATORS.includes(operator)) {
+        return (
+          <WidgetWrapper widgetFactoryProps={props}>
+            <ListSelect
+              value={(props.value as any) ?? undefined}
+              onChange={(newValue) => {
+                props.setValue(newValue as any);
+              }}
+            />
+          </WidgetWrapper>
+        );
+      }
+
       return (
         <WidgetWrapper widgetFactoryProps={props}>
           <Select<string>

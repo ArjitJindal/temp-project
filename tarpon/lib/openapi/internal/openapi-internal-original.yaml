@@ -396,7 +396,6 @@ paths:
             type: string
           name: listType
           in: query
-          required: true
       responses:
         '200':
           description: OK

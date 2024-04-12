@@ -50,7 +50,9 @@ export interface MultipleProps<Value extends Comparable>
   mode: 'MULTIPLE';
 }
 
-interface TagsProps<Value extends Comparable> extends CommonProps<Value>, InputProps<Value[]> {
+export interface TagsProps<Value extends Comparable>
+  extends CommonProps<Value>,
+    InputProps<Value[]> {
   mode: 'TAGS';
 }
 

@@ -24,7 +24,9 @@ export const listsHandler = lambdaApi()(
 
     handlers.registerGetLists(
       async (ctx, request) =>
-        await listService.getListHeaders(request.listType as ListType)
+        await listService.getListHeaders(
+          (request.listType as ListType | null) ?? null
+        )
     )
 
     handlers.registerPostList(
