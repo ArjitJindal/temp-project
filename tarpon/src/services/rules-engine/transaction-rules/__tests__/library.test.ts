@@ -30,6 +30,16 @@ describe.each(RULES_LIBRARY)('Rule library integrity', (rule) => {
         rule.defaultRiskLevelParameters
       )
     ).not.toThrow()
+
+    if (rule.defaultLogic) {
+      expect(() =>
+        RuleService.validateRuleLogic(
+          rule.defaultLogic,
+          rule.defaultRiskLevelLogic,
+          rule.defaultLogicAggregationVariables
+        )
+      ).not.toThrow()
+    }
   })
 })
 

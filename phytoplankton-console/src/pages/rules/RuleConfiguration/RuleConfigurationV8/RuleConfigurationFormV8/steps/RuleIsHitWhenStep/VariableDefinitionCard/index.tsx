@@ -16,9 +16,47 @@ import Button from '@/components/library/Button';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import Dropdown from '@/components/library/Dropdown';
+import { LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from '@/components/ui/LogicBuilder/helpers';
 
 function getNewAggregationVariableKey() {
   return `agg:${uuid()}`;
+}
+
+function augmentAggregationVariables(
+  aggregationVariables: RuleAggregationVariable[],
+): RuleAggregationVariable[] {
+  return aggregationVariables.flatMap((v) => {
+    if (v.aggregationFunc === 'UNIQUE_VALUES') {
+      if (!v.key.endsWith(LHS_ONLY_SYMBOL) && !v.key.endsWith(RHS_ONLY_SYMBOL)) {
+        return [
+          {
+            ...v,
+            key: `${v.key}${LHS_ONLY_SYMBOL}`,
+          },
+          {
+            ...v,
+            key: `${v.key}${RHS_ONLY_SYMBOL}`,
+          },
+        ];
+        // Variables with key ending with RHS_ONLY_SYMBOL are hidden from the user and the definition
+        // is the same as the variable with the same key ending with LHS_ONLY_SYMBOL
+      } else if (v.key.endsWith(RHS_ONLY_SYMBOL)) {
+        const lhsVarKey = v.key.replace(RHS_ONLY_SYMBOL, LHS_ONLY_SYMBOL);
+        const syncAggVariable = aggregationVariables.find((v) => v.key === lhsVarKey);
+        if (syncAggVariable) {
+          return [
+            {
+              ...syncAggVariable,
+              key: v.key,
+            },
+          ];
+        } else {
+          return [];
+        }
+      }
+    }
+    return [v];
+  });
 }
 
 type VariableType = 'entity' | 'aggregation';
@@ -84,7 +122,9 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     (varKey: string) => {
       onChange({
         entityVariables: entityVariables?.filter((v) => v.key !== varKey) ?? [],
-        aggregationVariables: aggregationVariables?.filter((v) => v.key !== varKey) ?? [],
+        aggregationVariables: augmentAggregationVariables(
+          aggregationVariables?.filter((v) => v.key !== varKey) ?? [],
+        ),
       });
     },
     [aggregationVariables, entityVariables, onChange],
@@ -115,7 +155,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
       newAggVar.name = `${newAggVar.name || aggVarDefinition.uiDefinition.label} (copy)`;
       const newAggregationVariables = [...(aggregationVariables ?? [])];
       newAggregationVariables.splice(index + 1, 0, newAggVar);
-      onChange({ aggregationVariables: newAggregationVariables });
+      onChange({ aggregationVariables: augmentAggregationVariables(newAggregationVariables) });
     },
     [aggregationVariables, entityVariableDefinitions, onChange],
   );
@@ -173,7 +213,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
       } else {
         newAggregationVariables.push(newAggregationVariable);
       }
-      onChange({ aggregationVariables: newAggregationVariables });
+      onChange({ aggregationVariables: augmentAggregationVariables(newAggregationVariables) });
       handleCancelEditVariable();
     },
     [aggregationVariables, handleCancelEditVariable, onChange],
@@ -232,33 +272,35 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
                 </Tag>
               );
             })}
-            {aggregationVariables?.map((aggVar, index) => {
-              const aggVarDefinition = getAggVarDefinition(aggVar, entityVariableDefinitions);
-              return (
-                <Tag
-                  key={aggVar.key}
-                  actions={[
-                    {
-                      key: 'edit',
-                      icon: <PencilLineIcon />,
-                      action: () => handleEdit(aggVar.key),
-                    },
-                    {
-                      key: 'copy',
-                      icon: <FileCopyLineIcon />,
-                      action: () => handleDuplicate(aggVar.key, index),
-                    },
-                    {
-                      key: 'delete',
-                      icon: <DeleteBinLineIcon />,
-                      action: () => handleDelete(aggVar.key),
-                    },
-                  ]}
-                >
-                  {aggVar.name || aggVarDefinition.uiDefinition.label || 'Unknown'}
-                </Tag>
-              );
-            })}
+            {aggregationVariables
+              ?.filter((v) => !v.key.endsWith(RHS_ONLY_SYMBOL))
+              .map((aggVar, index) => {
+                const aggVarDefinition = getAggVarDefinition(aggVar, entityVariableDefinitions);
+                return (
+                  <Tag
+                    key={aggVar.key}
+                    actions={[
+                      {
+                        key: 'edit',
+                        icon: <PencilLineIcon />,
+                        action: () => handleEdit(aggVar.key),
+                      },
+                      {
+                        key: 'copy',
+                        icon: <FileCopyLineIcon />,
+                        action: () => handleDuplicate(aggVar.key, index),
+                      },
+                      {
+                        key: 'delete',
+                        icon: <DeleteBinLineIcon />,
+                        action: () => handleDelete(aggVar.key),
+                      },
+                    ]}
+                  >
+                    {aggVar.name || aggVarDefinition.uiDefinition.label || 'Unknown'}
+                  </Tag>
+                );
+              })}
           </div>
         )}
       </Card.Section>

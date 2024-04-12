@@ -538,7 +538,18 @@ You have to answer in below format as string. If you don't know any field, just 
       ...(logicAggregationVariables ?? []).map((x) => x.filtersLogic),
     ].filter(notNullish)
 
-    const aggVarNames = logicAggregationVariables?.map((x) => x.key) ?? []
+    const aggVarKeys = logicAggregationVariables?.map((x) => x.key) ?? []
+    logicAggregationVariables?.forEach((v) => {
+      if (
+        v.aggregationFunc === 'UNIQUE_VALUES' &&
+        !v.key.endsWith('$1') &&
+        !v.key.endsWith('$2')
+      ) {
+        throw new Error(
+          `Invalid aggregation variable (UNIQUE_VALUES): ${v.key}`
+        )
+      }
+    })
 
     await Promise.all(
       logicToCheck.map(async (logic) => {
@@ -549,7 +560,7 @@ You have to answer in below format as string. If you don't know any field, just 
           const allLogicVars = getAllValuesByKey<string>('var', logic)
           for (const logicVar of allLogicVars) {
             const isKnownVariable =
-              aggVarNames.includes(logicVar) ||
+              aggVarKeys.includes(logicVar) ||
               getRuleVariableByKey(logicVar) != null
             if (!isKnownVariable) {
               throw new Error(

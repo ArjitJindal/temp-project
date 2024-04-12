@@ -15,6 +15,9 @@ import Button from '@/components/library/Button';
 
 const InitialConfig = BasicConfig;
 
+export const LHS_ONLY_SYMBOL = '$1';
+export const RHS_ONLY_SYMBOL = '$2';
+
 export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'> & {
   operators: Omit<CoreOperators<Config>, 'multiselect_not_contains' | 'multiselect_contains'>;
 } {
@@ -122,6 +125,15 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
         );
       },
       renderField: (props) => {
+        const filteredItems = props.items.filter((item) => {
+          const lhsOnly = item.key.endsWith(LHS_ONLY_SYMBOL);
+          const rhsOnly = item.key.endsWith(RHS_ONLY_SYMBOL);
+          if (!lhsOnly && !rhsOnly) {
+            return true;
+          }
+          const isValueField = (props as any).isValueField;
+          return isValueField ? rhsOnly : lhsOnly;
+        });
         return (
           <OptionalLabel
             label={'Variable'}
@@ -133,7 +145,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
               dropdownMatchWidth={false}
               portaled={true}
               allowClear={false}
-              options={props.items.map((x) => ({ label: x.label, value: x.path }))}
+              options={filteredItems.map((x) => ({ label: x.label, value: x.path }))}
               value={props.selectedKey}
               onChange={(path) => {
                 const item = props.items.find((x) => x.path === path);

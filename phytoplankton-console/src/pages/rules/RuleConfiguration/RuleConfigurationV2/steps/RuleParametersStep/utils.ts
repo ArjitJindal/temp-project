@@ -3,6 +3,7 @@ import pluralize from 'pluralize';
 import { FieldOrGroup, FieldSettings } from '@react-awesome-query-builder/ui';
 import { RuleAggregationFunc, RuleAggregationVariable, RuleEntityVariable } from '@/apis';
 import { humanizeAuto } from '@/utils/humanize';
+import { RHS_ONLY_SYMBOL } from '@/components/ui/LogicBuilder/helpers';
 
 // TODO (V8): Move this to backend
 const AGG_FUNC_TO_TYPE: Record<RuleAggregationFunc, string> = {
@@ -31,13 +32,17 @@ export function getAggVarDefinition(
   const label = `${humanizeAuto(aggVar.aggregationFunc)} of ${
     entityVariableLabel ?? aggVar.aggregationFieldKey
   } (${timeWindowLabel})`;
-  const type = AGG_FUNC_TO_TYPE[aggVar.aggregationFunc];
+  let type = AGG_FUNC_TO_TYPE[aggVar.aggregationFunc];
   let fieldSettings: FieldSettings | undefined = undefined;
   if (type === 'multiselect') {
-    fieldSettings = {
-      ...entityVariable?.uiDefinition?.fieldSettings,
-      allowCustomValues: true,
-    };
+    if (aggVar.key.endsWith(RHS_ONLY_SYMBOL)) {
+      type = 'text';
+    } else {
+      fieldSettings = {
+        ...entityVariable?.uiDefinition?.fieldSettings,
+        allowCustomValues: true,
+      };
+    }
   }
   return {
     key: aggVar.key,

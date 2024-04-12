@@ -118,6 +118,11 @@ export function useLogicBuilderConfig(
                 'select_any_in',
                 'select_not_any_in',
               ];
+              types[key].widgets['field'].operators = [
+                ...(types[key].widgets['field'].operators ?? []),
+                'select_any_in',
+                'select_not_any_in',
+              ];
             } else if (key === 'time') {
               types[key].widgets[key].operators = types[key].widgets[key].operators?.filter(
                 (op) => !['between', 'not_between'].includes(op),
