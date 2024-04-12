@@ -4,7 +4,9 @@ import {
   InternalBusinessUser,
   InternalConsumerUser,
   LegalEntity,
+  ParameterAttributeRiskValuesParameterEnum,
   Person,
+  RiskScoreComponent,
   TenantSettings,
 } from '@/apis';
 import { TableOptions } from '@/components/DownloadAsPdf/DownloadAsPDF';
@@ -12,6 +14,11 @@ import { ReportItem, getTable, getWidgetTable } from '@/components/DownloadAsPdf
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { humanizeAuto } from '@/utils/humanize';
 import { getRiskLevelLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  DEFAULT_RENDERER,
+  PARAMETER_RENDERERS,
+  findParameter,
+} from '@/components/ui/RiskScoreDisplay/DetailsModal/helpers';
 
 const getUserWidgetsProps = (
   user: InternalBusinessUser | InternalConsumerUser,
@@ -209,6 +216,22 @@ const getUserWidgetTable = (
   return getWidgetTable(props);
 };
 
+const getValue = (entity: RiskScoreComponent) => {
+  const { entityType, parameter, value } = entity;
+  if (value == null) {
+    return '-';
+  }
+  const parameterDescription = findParameter(
+    entityType,
+    parameter as ParameterAttributeRiskValuesParameterEnum,
+  );
+  if (parameterDescription == null) {
+    return JSON.stringify(value);
+  }
+  const valueRenderer = PARAMETER_RENDERERS[parameterDescription.dataType] ?? DEFAULT_RENDERER;
+  return valueRenderer(value).stringify;
+};
+
 const getUserSupportTables = (
   user: InternalBusinessUser | InternalConsumerUser,
   riskScores: RiskScores,
@@ -220,18 +243,15 @@ const getUserSupportTables = (
       title,
       rows:
         riskScores.kycRiskScore?.components?.map((component) => {
-          const riskFactor = humanizeAuto(component.parameter.split('.').pop() ?? '');
-          let parsedValue = component.value;
-          if (riskFactor.toLowerCase().includes('country')) {
-            parsedValue = COUNTRIES[component.value] ?? component.value;
-          } else if (riskFactor.toLowerCase().includes('age')) {
-            parsedValue = dayjs(parsedValue).format(DATE_TIME_FORMAT_WITHOUT_SECONDS);
-          } else {
-            parsedValue = humanizeAuto(parsedValue);
-          }
+          const parameterName =
+            findParameter(
+              component.entityType,
+              component.parameter as ParameterAttributeRiskValuesParameterEnum,
+            )?.title ?? component.parameter;
+          const parameterValue = getValue(component);
           return [
-            riskFactor,
-            parsedValue,
+            parameterName,
+            parameterValue,
             component.score,
             getRiskLevelLabel(component.riskLevel, tenantSettings),
           ];

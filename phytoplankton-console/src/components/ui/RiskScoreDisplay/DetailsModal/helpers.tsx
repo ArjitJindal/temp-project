@@ -1,5 +1,5 @@
 import React from 'react';
-import { CURRENCIES } from '@flagright/lib/constants';
+import { COUNTRIES, CURRENCIES } from '@flagright/lib/constants';
 import {
   DataType,
   ParameterName,
@@ -8,7 +8,7 @@ import {
 import { RiskEntityType, TransactionType } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
-import { PaymentMethod } from '@/utils/payments';
+import { PaymentMethod, getPaymentMethodTitle } from '@/utils/payments';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 import { humanizeConstant } from '@/utils/humanize';
 import {
@@ -18,38 +18,67 @@ import {
   CONSUMER_USER_SEGMENT_OPTIONS,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 
-export type ParameterRenderer<V> = (value: V) => React.ReactNode;
+export type ParameterRenderer<V> = (value: V) => {
+  renderer: React.ReactNode;
+  stringify: string;
+};
 
-export const DEFAULT_RENDERER: ParameterRenderer<unknown> = (value) => {
+export const DEFAULT_RENDERER: ParameterRenderer<string> = (value) => {
   if (typeof value === 'string' || typeof value === 'number') {
-    return <>{`${value}`}</>;
+    return {
+      renderer: <>{value}</>,
+      stringify: `${value}`,
+    };
   }
 
   if (typeof value === 'boolean') {
-    return <>{value ? 'Yes' : 'No'}</>;
+    return {
+      renderer: <>{value ? 'Yes' : 'No'}</>,
+      stringify: `${value}`,
+    };
   }
-  return <>{JSON.stringify(value)}</>;
+  return {
+    stringify: JSON.stringify(value),
+    renderer: <>{JSON.stringify(value)}</>,
+  };
 };
 
 export const CONSTANT_RENDERER: ParameterRenderer<string> = (value) => {
-  return humanizeConstant(value);
+  return {
+    stringify: humanizeConstant(value),
+    renderer: <>{humanizeConstant(value)}</>,
+  };
 };
 
 export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } = {
   STRING: DEFAULT_RENDERER,
   CURRENCY: ((value) => {
-    return CURRENCIES.find((x) => x.value === value)?.label ?? value;
+    const valueLabel = CURRENCIES.find((x) => x.value === value)?.label ?? value;
+    return {
+      stringify: value,
+      renderer: <>{valueLabel}</>,
+    };
   }) as ParameterRenderer<string>,
   COUNTRY: ((value) => {
-    return <CountryDisplay isoCode={value} />;
+    return {
+      renderer: <CountryDisplay isoCode={value} />,
+      stringify: COUNTRIES[value] ?? value,
+    };
   }) as ParameterRenderer<string>,
   PAYMENT_METHOD: ((value) => {
-    return <PaymentMethodTag paymentMethod={value} />;
+    return {
+      renderer: <PaymentMethodTag paymentMethod={value} />,
+      stringify: value ? getPaymentMethodTitle(value) : '-',
+    };
   }) as ParameterRenderer<PaymentMethod>,
   BUSINESS_INDUSTRY: CONSTANT_RENDERER,
   TRANSACTION_TYPES: ((value) => {
-    return <TransactionTypeDisplay transactionType={value} />;
+    return {
+      renderer: <TransactionTypeDisplay transactionType={value} />,
+      stringify: humanizeConstant(value),
+    };
   }) as ParameterRenderer<TransactionType>,
   RESIDENCE_TYPES: CONSTANT_RENDERER,
   CONSUMER_USER_TYPE: CONSTANT_RENDERER,
@@ -68,7 +97,10 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
   RANGE: DEFAULT_RENDERER,
   DAY_RANGE: DEFAULT_RENDERER,
   TIME_RANGE: (value) => {
-    return <TimestampDisplay timestamp={value} />;
+    return {
+      renderer: <TimestampDisplay timestamp={value} />,
+      stringify: dayjs(value).format(DATE_TIME_FORMAT_WITHOUT_SECONDS),
+    };
   },
   BOOLEAN: DEFAULT_RENDERER,
   _3DS_STATUS: DEFAULT_RENDERER,

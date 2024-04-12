@@ -38,7 +38,7 @@ export const columns = helper.list([
         return JSON.stringify(value);
       }
       const valueRenderer = PARAMETER_RENDERERS[parameterDescription.dataType] ?? DEFAULT_RENDERER;
-      return valueRenderer(value);
+      return valueRenderer(value).renderer;
     },
   }),
   helper.simple({
