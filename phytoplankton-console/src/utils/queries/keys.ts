@@ -288,6 +288,12 @@ export const ALERT_PRIORITY_DISTRIBUTION = (params: AnyParameters): QueryKey => 
 
 export const TRANSACTION_TYPE_DISTRIBUTION = (): QueryKey => ['dashboard', 'transactions'];
 
+export const DASHBOARD_STATS_QA_ALERTS_BY_RULE_HIT = (dateRange: RangeValue<Dayjs>): QueryKey =>
+  ['qa-alerts-by-rule-hits', dateRange].filter(Boolean);
+
+export const DASHBOARD_STATS_QA_OVERVIEW = (dateRange: RangeValue<Dayjs>): QueryKey =>
+  ['qa-overview', dateRange].filter(Boolean);
+
 export const SETTINGS = (): QueryKey => ['settings'];
 
 export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];

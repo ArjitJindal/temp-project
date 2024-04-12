@@ -2281,6 +2281,60 @@ paths:
             type: number
           in: query
           name: endTimestamp
+  /dashboard_stats/qa/alerts-by-rule-hit:
+    get:
+      summary: DashboardStats - Alerts by rule hit
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsQaAlertsCountByRule'
+              examples: {}
+      operationId: get-dashboard-stats-qa-alerts-by-rule-hit
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+    parameters: []
+  /dashboard_stats/qa/overview:
+    get:
+      summary: DashboardStats - QA overview
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsQaOverview'
+              examples: {}
+      operationId: get-dashboard-stats-qa-overview
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+    parameters: []
   /tenants:
     get:
       summary: Tenant - List
@@ -7049,6 +7103,43 @@ components:
                 type: number
       required:
         - alertPriorityData
+    DashboardStatsQaAlertsCountByRule:
+      type: object
+      x-examples: {}
+      title: DashboardStatsQaAlertsCountByRule
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              ruleId:
+                type: string
+              ruleInstanceId:
+                type: string
+              alertsCount:
+                type: number
+            required:
+              - ruleId
+              - ruleInstanceId
+              - alertsCount
+      required:
+        - data
+    DashboardStatsQaOverview:
+      type: object
+      x-examples: {}
+      title: DashboardStatsQaOverview
+      properties:
+        totalAlertsForQa:
+          type: number
+        totalQaPassedAlerts:
+          type: number
+        totalQaFailedAlerts:
+          type: number
+      required:
+        - totalQaFailedAlerts
+        - totalAlertsForQa
+        - totalQaPassedAlerts
     UpdateMonitoringStatusRequest:
       type: object
       x-examples: {}

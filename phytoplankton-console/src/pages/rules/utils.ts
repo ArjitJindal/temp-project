@@ -569,3 +569,11 @@ export function getAllEntityVariables(logic: object): RuleEntityVariableInUse[] 
     .filter((v) => !v.startsWith('agg:'))
     .map((v) => ({ key: v }));
 }
+
+export const getRuleInstanceDescription = (
+  ruleId: string,
+  ruleInstances: RuleInstanceMap,
+  rules: RulesMap,
+) => {
+  return ruleInstances[ruleId]?.ruleDescriptionAlias ?? rules[ruleId]?.description;
+};

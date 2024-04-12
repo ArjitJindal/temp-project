@@ -7,6 +7,8 @@ import { TeamStatsDashboardMetric } from './dashboard-metrics/team-stats'
 import { OverviewStatsDashboardMetric } from './dashboard-metrics/overview-stats'
 import { CaseStatsDashboardMetric } from './dashboard-metrics/case-stats'
 import { LatestTeamStatsDashboardMetric } from './dashboard-metrics/latest-team-stats'
+import { QaAlertsByRuleStatsDashboardMetric } from './dashboard-metrics/qa-alerts-by-rule-stats'
+import { QaOverviewStatsDashboardMetric } from './dashboard-metrics/qa-overview'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
@@ -21,6 +23,9 @@ import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/open
 import { UserStats } from '@/lambdas/console-api-dashboard/repositories/dashboard-metrics/user-stats'
 import { DashboardLatestTeamStatsItem } from '@/@types/openapi-internal/DashboardLatestTeamStatsItem'
 import { DashboardStatsUsersStats } from '@/@types/openapi-internal/DashboardStatsUsersStats'
+import { DashboardStatsQaAlertsCountByRuleData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByRuleData'
+import { DashboardStatsQaOverview } from '@/@types/openapi-internal/DashboardStatsQaOverview'
+import { tenantHasFeature } from '@/core/utils/context'
 
 @traceable
 export class DashboardStatsRepository {
@@ -43,6 +48,7 @@ export class DashboardStatsRepository {
       this.refreshCaseStats(timeRange),
       this.refreshUserStats(timeRange),
       this.refreshTeamStats(timeRange),
+      this.refreshQaStats(timeRange),
       this.refreshLatestTeamStats(),
     ])
   }
@@ -173,6 +179,20 @@ export class DashboardStatsRepository {
     await LatestTeamStatsDashboardMetric.refresh(this.tenantId)
   }
 
+  public async refreshQaStats(caseUpdatedAtTimeRange?: TimeRange) {
+    if (!(await tenantHasFeature(this.tenantId, 'QA'))) return
+    await Promise.all([
+      this.recalculateQaAlertsByRuleStats(caseUpdatedAtTimeRange),
+      this.recalculateQaOverviewStats(caseUpdatedAtTimeRange),
+    ])
+  }
+  public async recalculateQaAlertsByRuleStats(timeRange?: TimeRange) {
+    await QaAlertsByRuleStatsDashboardMetric.refresh(this.tenantId, timeRange)
+  }
+  public async recalculateQaOverviewStats(timeRange?: TimeRange) {
+    await QaOverviewStatsDashboardMetric.refresh(this.tenantId, timeRange)
+  }
+
   async getOverviewStatistics(
     accountIds: string[]
   ): Promise<DashboardStatsOverview> {
@@ -222,5 +242,27 @@ export class DashboardStatsRepository {
     accountIds?: Array<string>
   ): Promise<DashboardLatestTeamStatsItem[]> {
     return LatestTeamStatsDashboardMetric.get(this.tenantId, scope, accountIds)
+  }
+
+  public async getQaAlertsByRuleHitStats(
+    startTimestamp: number,
+    endTimestamp: number
+  ): Promise<DashboardStatsQaAlertsCountByRuleData[]> {
+    return QaAlertsByRuleStatsDashboardMetric.get(
+      this.tenantId,
+      startTimestamp,
+      endTimestamp
+    )
+  }
+
+  public async getQaOverviewStats(
+    startTimestamp: number,
+    endTimestamp: number
+  ): Promise<DashboardStatsQaOverview> {
+    return QaOverviewStatsDashboardMetric.get(
+      this.tenantId,
+      startTimestamp,
+      endTimestamp
+    )
   }
 }

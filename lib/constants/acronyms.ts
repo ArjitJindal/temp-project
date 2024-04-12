@@ -14,6 +14,7 @@ export const ACRONYMS: ReadonlyArray<string> = [
   'AML',
   'KYC',
   'PEP',
+  'QA',
 ]
 
 export function isValidAcronyms(input: string): input is string {

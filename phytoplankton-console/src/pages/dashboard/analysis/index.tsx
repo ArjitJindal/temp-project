@@ -10,7 +10,6 @@ import {
   RiskLevelBreakdownCard,
 } from './components/RiskLevelDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
-import OverviewCard from './components/OverviewCard';
 import RulePrioritySplitCard from './components/RulePrioritySplitCard';
 import CaseClosingReasonCard from './components/CaseManagement/CaseClosingReasonCard';
 import DistributionByAlertPriority from './components/CaseManagement/DistributionByAlertPriority';
@@ -21,8 +20,11 @@ import RuleActionSplitCard from './components/RuleActionSplitCard';
 import KYCStatusDistributionCard from './components/KYCStatusDistributionCard';
 import DistributionByStatus from './components/CaseManagement/DistributionByStatus';
 import UserStatusDistributionCard from './components/UserStatusDistributionCard';
+import QaAlertsByRuleHits from './components/Qa/QaAlertsByRuleHits';
+import QaOverview from './components/Qa/QaOverview';
+import Overview from './components/Overview';
 import PageWrapper from '@/components/PageWrapper';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
 import Button from '@/components/library/Button';
 import IconSetting from '@/components/ui/icons/Remix/system/settings-2-line.react.svg';
@@ -34,6 +36,7 @@ import Widget from '@/components/library/Widget';
 import Label from '@/components/library/Label';
 import { notEmpty } from '@/utils/array';
 import { WidgetProps } from '@/components/library/Widget/types';
+import { Feature } from '@/apis';
 
 type KeyValues =
   | 'OVERVIEW'
@@ -85,6 +88,8 @@ const DEFAULT_VALUES = {
   CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: true,
   BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: true,
   LATEST_TEAM_OVERVIEW: true,
+  QA_ALERTS_BY_RULE_HITS: true,
+  QA_OVERVIEW: true,
 };
 
 type WidgetType = {
@@ -109,6 +114,7 @@ interface Widgets {
   RULES: WidgetGroup;
   CASE_MANAGEMENT: WidgetGroup;
   TEAM_MANAGEMENT: WidgetGroup;
+  QA: WidgetGroup;
 }
 
 const WIDGETS: Widgets = {
@@ -117,7 +123,7 @@ const WIDGETS: Widgets = {
       groupTitle: 'Overview',
       id: 'OVERVIEW',
       title: 'Overview',
-      component: OverviewCard,
+      component: Overview,
     },
   ],
   CONSUMER_USERS: [
@@ -293,11 +299,27 @@ const WIDGETS: Widgets = {
       component: TeamPerformanceCard,
     },
   ],
+  QA: [
+    {
+      groupTitle: 'QA',
+      id: 'QA_OVERVIEW',
+      title: 'Overview',
+      component: QaOverview,
+      requiredFeatures: ['QA'],
+    },
+    {
+      groupTitle: 'QA',
+      id: 'QA_ALERTS_BY_RULE_HITS',
+      title: 'QA’d alerts overview by rule hit',
+      component: QaAlertsByRuleHits,
+      requiredFeatures: ['QA'],
+    },
+  ],
 };
 type DashboardSettings = Record<KeyValues, boolean>;
 
 function Analysis() {
-  const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
+  const features = useFeatures();
   const i18n = useI18n();
 
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -318,12 +340,12 @@ function Analysis() {
     };
   }, [dashboardSettings]);
 
-  const renderWidgets = (widgets: WidgetGroup, featureFlags: Record<string, boolean>) => {
+  const renderWidgets = (widgets: WidgetGroup) => {
     return widgets
       .filter(
         (widget) =>
           (!widget.requiredFeatures ||
-            widget.requiredFeatures.every((feature) => featureFlags[feature])) &&
+            widget.requiredFeatures.every((feature) => features.includes(feature as Feature))) &&
           settingsToDisplay[widget.id],
       )
       .map((widget) => {
@@ -340,9 +362,9 @@ function Analysis() {
       .filter(notEmpty);
   };
 
-  const isWidgetVisible = (widget: WidgetType, featureFlags: Record<string, boolean>) => {
+  const isWidgetVisible = (widget: WidgetType) => {
     if (widget.requiredFeatures) {
-      return widget.requiredFeatures.every((feature) => featureFlags[feature]);
+      return widget.requiredFeatures.every((feature) => features.includes(feature as Feature));
     }
 
     return true;
@@ -365,7 +387,7 @@ function Analysis() {
       <WidgetGrid
         groups={Object.keys(WIDGETS).map((groupKey) => ({
           groupTitle: humanizeConstant(groupKey),
-          items: renderWidgets(WIDGETS[groupKey], { RISK_SCORING: isRiskScoringEnabled }),
+          items: renderWidgets(WIDGETS[groupKey]),
         }))}
       />
 
@@ -405,7 +427,7 @@ function Analysis() {
             <div className={s.settingsDrawerGroup} key={group}>
               <div className={s.groupTitle}>{humanizeConstant(group)}</div>
               {WIDGETS[group].map((widget: WidgetType) => {
-                if (!isWidgetVisible(widget, { RISK_SCORING: isRiskScoringEnabled })) return null;
+                if (!isWidgetVisible(widget)) return null;
 
                 return (
                   <Label key={widget.id} label={widget.title} position="RIGHT" level={2}>

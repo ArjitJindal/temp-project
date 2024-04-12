@@ -21,6 +21,8 @@ const WIDGETS = {
   DISTRIBUTION_BY_ALERT_PRIORITY: 'dashboard_stats/alert_priority_distribution**',
   DISTRIBUTION_BY_CASE_AND_ALERT_STATUS: 'dashboard_stats/alert_and_case_status_distribution**',
   TEAM_OVERVIEW: 'dashboard_stats/team**',
+  QA_ALERTS_BY_RULE_HITS: 'dashboard_stats/qa/alerts-by-rule-hit**',
+  QA_OVERVIEW: 'dashboard_stats/qa/overview**',
 };
 
 describe('Dashboard Integration Test', () => {
