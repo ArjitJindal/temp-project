@@ -11,7 +11,7 @@ import { prompt } from '@/utils/openai'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
-import { getContext } from '@/core/utils/context'
+import { getContext, updateLogMetadata } from '@/core/utils/context'
 
 const MAX_DISTANCE = 2
 const LIMIT = 30
@@ -179,11 +179,13 @@ export class AutocompleteService {
         variables: QuestionVariable[]
       }[] = JSON.parse(response.replace('```json', '').replace('```', ''))
       if (!Array.isArray(results) || results.length === 0) {
-        logger.error('AI could not determine a relevant question', results)
+        updateLogMetadata({ questionPrompt, response, results })
+        logger.error('AI could not determine a relevant question')
         return []
       }
       return results
     } catch (e) {
+      updateLogMetadata({ questionPrompt, error: e })
       logger.error('Failed to parse JSON in reseponse from GPT', e)
       return []
     }
