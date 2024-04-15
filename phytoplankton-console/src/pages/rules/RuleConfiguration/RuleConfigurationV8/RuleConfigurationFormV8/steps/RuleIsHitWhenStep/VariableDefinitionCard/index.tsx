@@ -16,6 +16,7 @@ import Button from '@/components/library/Button';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import Dropdown from '@/components/library/Dropdown';
+import Tooltip from '@/components/library/Tooltip';
 import { LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from '@/components/ui/LogicBuilder/helpers';
 
 function getNewAggregationVariableKey() {
@@ -251,54 +252,67 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
               const entityVarDefinition = entityVariableDefinitions.find(
                 (v) => v.key === entityVar.key,
               );
+
+              const name = entityVar.name || entityVarDefinition?.uiDefinition.label || 'Unknown';
+
               return (
-                <Tag
-                  key={entityVar.key}
-                  color="action"
-                  actions={[
-                    {
-                      key: 'edit',
-                      icon: <PencilLineIcon />,
-                      action: () => handleEdit(entityVar.key, index),
-                    },
-                    {
-                      key: 'delete',
-                      icon: <DeleteBinLineIcon />,
-                      action: () => handleDelete(entityVar.key),
-                    },
-                  ]}
-                >
-                  {entityVar.name || entityVarDefinition?.uiDefinition.label || 'Unknown'}
-                </Tag>
+                <Tooltip key={entityVar.key} title={name}>
+                  <div>
+                    <Tag
+                      key={entityVar.key}
+                      color="action"
+                      actions={[
+                        {
+                          key: 'edit',
+                          icon: <PencilLineIcon />,
+                          action: () => handleEdit(entityVar.key, index),
+                        },
+                        {
+                          key: 'delete',
+                          icon: <DeleteBinLineIcon />,
+                          action: () => handleDelete(entityVar.key),
+                        },
+                      ]}
+                    >
+                      {name}
+                    </Tag>
+                  </div>
+                </Tooltip>
               );
             })}
             {aggregationVariables
               ?.filter((v) => !v.key.endsWith(RHS_ONLY_SYMBOL))
               .map((aggVar, index) => {
                 const aggVarDefinition = getAggVarDefinition(aggVar, entityVariableDefinitions);
+                const name = aggVar.name || aggVarDefinition.uiDefinition.label || 'Unknown';
+
                 return (
-                  <Tag
-                    key={aggVar.key}
-                    actions={[
-                      {
-                        key: 'edit',
-                        icon: <PencilLineIcon />,
-                        action: () => handleEdit(aggVar.key),
-                      },
-                      {
-                        key: 'copy',
-                        icon: <FileCopyLineIcon />,
-                        action: () => handleDuplicate(aggVar.key, index),
-                      },
-                      {
-                        key: 'delete',
-                        icon: <DeleteBinLineIcon />,
-                        action: () => handleDelete(aggVar.key),
-                      },
-                    ]}
-                  >
-                    {aggVar.name || aggVarDefinition.uiDefinition.label || 'Unknown'}
-                  </Tag>
+                  <Tooltip key={aggVar.key} title={name}>
+                    <div className={s.tagsTooltipContainer}>
+                      <Tag
+                        key={aggVar.key}
+                        actions={[
+                          {
+                            key: 'edit',
+                            icon: <PencilLineIcon />,
+                            action: () => handleEdit(aggVar.key),
+                          },
+                          {
+                            key: 'copy',
+                            icon: <FileCopyLineIcon />,
+                            action: () => handleDuplicate(aggVar.key, index),
+                          },
+                          {
+                            key: 'delete',
+                            icon: <DeleteBinLineIcon />,
+                            action: () => handleDelete(aggVar.key),
+                          },
+                        ]}
+                      >
+                        {name}
+                      </Tag>
+                    </div>
+                  </Tooltip>
                 );
               })}
           </div>
