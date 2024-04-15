@@ -8,7 +8,7 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
+  group: ${{ github.ref }}-${{ github.workflow }}-phytoplankton
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 on:
