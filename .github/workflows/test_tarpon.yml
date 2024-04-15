@@ -53,14 +53,6 @@ jobs:
         working-directory: "tarpon"
       - run: yarn run build:local
         working-directory: "tarpon"
-      - name: Run LLM Tests
-        if: ${{ inputs.llm }}
-        run: |
-          echo "Create default AWS profile"
-          mkdir ~/.aws
-          printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\naws_secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
-          yarn run test:llm
-        working-directory: "tarpon"
       - run: yarn run tsc:ci
         working-directory: "tarpon"
       - run: yarn run lint:ci
@@ -79,6 +71,14 @@ jobs:
           mongodb-port: 27018
       - name: Run Tests
         run: yarn run test:ci
+        working-directory: "tarpon"
+      - name: Run LLM Tests
+        if: ${{ inputs.llm }}
+        run: |
+          echo "Create default AWS profile"
+          mkdir ~/.aws
+          printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\naws_secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
+          yarn run test:llm
         working-directory: "tarpon"
       - name: Upload Coverage
         if: github.ref == 'refs/heads/main'
