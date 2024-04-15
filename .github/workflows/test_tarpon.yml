@@ -56,6 +56,8 @@ jobs:
       - name: Run LLM Tests
         if: ${{ inputs.llm }}
         run: |
+          echo "Create default AWS profile"
+          mkdir ~/.aws
           printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\naws_secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
           yarn run test:llm
         working-directory: "tarpon"
