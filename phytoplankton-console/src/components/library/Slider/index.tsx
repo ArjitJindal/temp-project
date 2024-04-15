@@ -2,8 +2,11 @@ import { Slider as AntSlider } from 'antd';
 import React from 'react';
 import cn from 'clsx';
 import { SliderBaseProps as AntSliderBaseProps } from 'antd/lib/slider';
+import { isEmpty, omit } from 'lodash';
+import NumberInput, { Props as NumberProps } from '../NumberInput';
 import s from './index.module.less';
 import { InputProps } from '@/components/library/Form';
+import { P } from '@/components/ui/Typography';
 
 export interface CommonProps {
   min?: number;
@@ -15,6 +18,7 @@ export interface CommonProps {
 interface SingleModeProps extends CommonProps, InputProps<number> {
   mode: 'SINGLE';
   defaultValue?: number;
+  textInput?: NumberProps;
 }
 
 interface RangeModeProps extends CommonProps, InputProps<[number, number]> {
@@ -34,37 +38,52 @@ export default function Slider(props: Props) {
     max: props.max,
     marks: props.marks,
   };
-  if (props.mode === 'RANGE') {
-    return (
-      <div className={cn(s.root)} data-cy="age-range-slider">
-        <AntSlider
-          range={true}
-          className={cn(s.slider, {
-            [s.disabled]: props.isDisabled,
-            [s.startExclusive]: props.startExclusive,
-            [s.endExclusive]: props.endExclusive,
-          })}
-          value={props.value}
-          defaultValue={props.defaultValue}
-          onChange={props.onChange}
-          {...commonProps}
-        />
-      </div>
-    );
-  }
+
   return (
-    <div className={cn(s.root)} data-cy="age-range-slider">
-      <AntSlider
-        range={false}
-        className={cn(s.slider, s.single, {
-          [s.disabled]: props.isDisabled,
-        })}
-        disabled={props.isDisabled}
-        value={props.value}
-        defaultValue={props.defaultValue}
-        onChange={props.onChange}
-        {...commonProps}
-      />
+    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+      {props.marks && (
+        <P variant="m" fontWeight="normal">
+          {props.marks[props.min ?? 0]}{' '}
+        </P>
+      )}
+      <div className={cn(s.root)} data-cy="age-range-slider">
+        {props.mode === 'RANGE' ? (
+          <AntSlider
+            range={true}
+            className={cn(s.slider, {
+              [s.disabled]: props.isDisabled,
+              [s.startExclusive]: props.startExclusive,
+              [s.endExclusive]: props.endExclusive,
+            })}
+            value={props.value}
+            defaultValue={props.defaultValue}
+            onChange={props.onChange}
+            {...omit(commonProps, ['marks'])}
+          />
+        ) : (
+          <AntSlider
+            range={false}
+            className={cn(s.slider, s.single, {
+              [s.disabled]: props.isDisabled,
+            })}
+            disabled={props.isDisabled}
+            value={props.value}
+            defaultValue={props.defaultValue}
+            onChange={props.onChange}
+            {...omit(commonProps, ['marks'])}
+          />
+        )}
+      </div>
+      {props.marks && (
+        <P variant="m" fontWeight="normal" style={{ marginLeft: '0.25rem' }}>
+          {props.marks[props.max ?? 0]}
+        </P>
+      )}
+      {props.mode === 'SINGLE' && props.textInput && !isEmpty(props.textInput) && (
+        <div style={{ marginLeft: '0.5rem' }}>
+          <NumberInput {...props} htmlAttrs={props.textInput.htmlAttrs} />
+        </div>
+      )}
     </div>
   );
 }

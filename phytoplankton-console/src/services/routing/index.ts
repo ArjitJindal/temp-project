@@ -36,6 +36,8 @@ import { Permission } from '@/apis';
 import ForbiddenPage from '@/pages/403';
 import ReportsList from '@/pages/reports';
 import Clueso from '@/pages/auth/clueso';
+import { QASamplesTable } from '@/pages/qa-samples';
+import { QASamplePage } from '@/pages/qa-sample-item';
 import { SimulationHistoryResultPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
 import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage';
 
@@ -117,6 +119,18 @@ export function useRoutes(): RouteItem[] {
               'case-management:qa:read',
               'transactions:overview:read',
             ],
+          },
+          {
+            path: '/case-management/qa-sampling',
+            component: QASamplesTable,
+            name: 'qa-sampling',
+            permissions: ['case-management:qa:read'],
+          },
+          {
+            path: '/case-management/qa-sampling/:samplingId',
+            component: QASamplePage,
+            name: 'qa-sampling-item',
+            permissions: ['case-management:qa:read'],
           },
         ],
       },

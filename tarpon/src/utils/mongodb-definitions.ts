@@ -26,6 +26,10 @@ export const COUNTER_COLLECTION = (tenantId: string) => {
   return `${tenantId}-counter`
 }
 
+export const ALERTS_QA_SAMPLING_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-alerts-qa-sampling`
+}
+
 export const CRM_ENGAGEMENTS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-crm-engagements`
 }
@@ -562,6 +566,17 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [REPORT_COLLECTION(tenantId)]: {
       getIndexes: () =>
         [
+          {
+            createdAt: 1,
+          },
+        ].map((index) => ({ index })),
+    },
+    [ALERTS_QA_SAMPLING_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
+          {
+            samplingId: 1,
+          },
           {
             createdAt: 1,
           },

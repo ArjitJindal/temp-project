@@ -76,10 +76,34 @@ export const casesHandler = lambdaApi()(
       )
     })
 
+    handlers.registerCreateAlertsQaSampling(
+      async (ctx, request) =>
+        await alertsService.createAlertsQaSampling(
+          request.AlertsQaSamplingRequest
+        )
+    )
+
+    handlers.registerGetAlertsQaSampling(
+      async (ctx, request) => await alertsService.getSamplingData(request)
+    )
+
+    handlers.registerGetAlertsQaSample(
+      async (ctx, request) =>
+        await alertsService.getSamplingById(request.sampleId)
+    )
+
     handlers.registerAlertsValidateQaStatuses(
       async (ctx, request) =>
         await alertsService.validateAlertsQAStatus(
           request.ValidateAlertsQAStatusRequest.alertIds
+        )
+    )
+
+    handlers.registerPatchAlertsQaSample(
+      async (ctx, request) =>
+        await alertsService.patchSamplingById(
+          request.sampleId,
+          request.AlertsQaSamplingUpdateRequest
         )
     )
 

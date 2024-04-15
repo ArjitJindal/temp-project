@@ -63,6 +63,7 @@ export default class MarkdownEditor extends React.Component<Props> {
       //   })),
       // ],
       ['bold', 'italic', 'strike'],
+      ['link'],
       ['ul', 'ol'],
       ['code', 'codeblock'],
       this.props.onAttachFiles != null

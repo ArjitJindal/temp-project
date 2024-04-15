@@ -14,7 +14,9 @@ import {
 } from '@/utils/mongodb-utils'
 import {
   ACCOUNTS_COLLECTION,
+  ALERTS_QA_SAMPLING_COLLECTION,
   CASES_COLLECTION,
+  COUNTER_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import {
   COUNT_QUERY_LIMIT,
@@ -23,6 +25,7 @@ import {
 } from '@/utils/pagination'
 import {
   DefaultApiGetAlertListRequest,
+  DefaultApiGetAlertsQaSamplingRequest,
   DefaultApiGetAlertTransactionListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -41,8 +44,18 @@ import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { ALERT_STATUSS } from '@/@types/openapi-internal-custom/AlertStatus'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { Account } from '@/@types/openapi-internal/Account'
+import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
+import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
+import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
+
+export interface AlertParams
+  extends OptionalPagination<
+    Omit<DefaultApiGetAlertListRequest, 'filterQaStatus'>
+  > {
+  filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd">
+}
 
 @traceable
 export class AlertsRepository {
@@ -60,7 +73,7 @@ export class AlertsRepository {
   }
 
   public async getAlerts(
-    params: OptionalPagination<DefaultApiGetAlertListRequest>,
+    params: AlertParams,
     options?: { hideTransactionIds?: boolean }
   ): Promise<AlertListResponse> {
     const db = this.mongoDb.db()
@@ -147,9 +160,13 @@ export class AlertsRepository {
     return key === 'assignments' ? assignmentsStatus : reviewAssignmentsStatus
   }
 
-  private async getAlertsPipeline(
-    params: OptionalPagination<DefaultApiGetAlertListRequest>,
-    options?: { hideTransactionIds?: boolean; countOnly?: boolean }
+  public async getAlertsPipeline(
+    params: AlertParams,
+    options?: {
+      hideTransactionIds?: boolean
+      countOnly?: boolean
+      excludeProject?: boolean
+    }
   ): Promise<Document[]> {
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -297,6 +314,12 @@ export class AlertsRepository {
       })
     }
 
+    if (params.filterAlertIds != null) {
+      alertConditions.push({
+        'alerts.alertId': { $in: params.filterAlertIds },
+      })
+    }
+
     if (params.filterQaAssignmentsIds?.length) {
       alertConditions.push({
         'alerts.qaAssignment': {
@@ -422,20 +445,22 @@ export class AlertsRepository {
         ]
       )
 
-      pipeline.push({
-        $project: {
-          alert: 1,
-          caseCreatedTimestamp: 1,
-          'caseUsers.origin.userId': 1,
-          'caseUsers.destination.userId': 1,
-          'caseUsers.origin.userDetails.name': 1,
-          'caseUsers.destination.userDetails.name': 1,
-          'caseUsers.origin.legalEntity.companyGeneralDetails.legalName': 1,
-          'caseUsers.destination.legalEntity.companyGeneralDetails.legalName': 1,
-          'caseUsers.origin.type': 1,
-          'caseUsers.destination.type': 1,
-        },
-      })
+      if (!options?.excludeProject) {
+        pipeline.push({
+          $project: {
+            alert: 1,
+            caseCreatedTimestamp: 1,
+            'caseUsers.origin.userId': 1,
+            'caseUsers.destination.userId': 1,
+            'caseUsers.origin.userDetails.name': 1,
+            'caseUsers.destination.userDetails.name': 1,
+            'caseUsers.origin.legalEntity.companyGeneralDetails.legalName': 1,
+            'caseUsers.destination.legalEntity.companyGeneralDetails.legalName': 1,
+            'caseUsers.origin.type': 1,
+            'caseUsers.destination.type': 1,
+          },
+        })
+      }
 
       if (options?.hideTransactionIds) {
         pipeline.push({
@@ -587,22 +612,21 @@ export class AlertsRepository {
     alert.updatedAt = now
 
     await collection.findOneAndUpdate(
-      {
-        caseId,
-      },
-      {
-        $set: {
-          'alerts.$[alert]': alert,
-          updatedAt: now,
-        },
-      },
-      {
-        arrayFilters: [
-          {
-            'alert.alertId': alert.alertId,
-          },
-        ],
-      }
+      { caseId },
+      { $set: { 'alerts.$[alert]': alert, updatedAt: now } },
+      { arrayFilters: [{ 'alert.alertId': alert.alertId }] }
+    )
+  }
+
+  public async updateAlertQACountInSampling(alertId: string): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<AlertsQaSampling>(
+      ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
+    )
+
+    await collection.updateOne(
+      { alertIds: alertId },
+      { $inc: { numberOfAlertsQaDone: 1 } }
     )
   }
 
@@ -1108,5 +1132,173 @@ export class AlertsRepository {
         ],
       }
     )
+  }
+
+  public async getAlertsCount(query: Document[]): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const pipeline = [...query, { $count: 'count' }]
+
+    const result = await collection
+      .aggregate<{ count: number }>(pipeline)
+      .next()
+
+    return result?.count ?? 0
+  }
+
+  public async getAlertsForQA(query: Document[], sampleSize: number) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const pipeline = [
+      ...query,
+      { $sample: { size: sampleSize } },
+      { $project: { 'alerts.alertId': 1 } },
+    ]
+
+    return collection.aggregate(pipeline).toArray()
+  }
+
+  public async getSampleIdForQA(): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<EntityCounter>(
+      COUNTER_COLLECTION(this.tenantId)
+    )
+    const alertQASampleCounter = (
+      await collection.findOneAndUpdate(
+        { entity: 'AlertQASample' },
+        { $inc: { count: 1 } },
+        { upsert: true, returnDocument: 'after' }
+      )
+    ).value
+
+    return alertQASampleCounter?.count ?? 1
+  }
+
+  public async saveQASampleData(data: AlertsQaSampling) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<AlertsQaSampling>(
+      ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
+    )
+
+    await collection.insertOne(data)
+
+    return data
+  }
+
+  public async updateQASampleData(data: AlertsQaSampling) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<AlertsQaSampling>(
+      ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
+    )
+
+    await collection.updateOne({ samplingId: data.samplingId }, { $set: data })
+
+    return data
+  }
+
+  public async getSamplingData(
+    params: DefaultApiGetAlertsQaSamplingRequest
+  ): Promise<{
+    data: AlertsQaSampling[]
+    total: number
+  }> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<AlertsQaSampling>(
+      ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
+    )
+
+    const pipeline: Document[] = []
+
+    if (params.filterSampleId) {
+      pipeline.push({
+        $match: {
+          sampleId: prefixRegexMatchFilter(params.filterSampleId),
+        },
+      })
+    }
+
+    if (params.filterSampleName) {
+      pipeline.push({
+        $match: {
+          samplingName: prefixRegexMatchFilter(params.filterSampleName),
+        },
+      })
+    }
+
+    if (params.filterCreatedById) {
+      pipeline.push({
+        $match: {
+          createdBy: params.filterCreatedById,
+        },
+      })
+    }
+
+    if (params.filterPriority?.length) {
+      pipeline.push({
+        $match: {
+          priority: {
+            $in: params.filterPriority,
+          },
+        },
+      })
+    }
+
+    if (
+      params.filterCreatedAfterTimestamp != null &&
+      params.filterCreatedBeforeTimestamp != null
+    ) {
+      pipeline.push({
+        $match: {
+          createdAt: {
+            $gte: params.filterCreatedAfterTimestamp,
+            $lte: params.filterCreatedBeforeTimestamp,
+          },
+        },
+      })
+    }
+
+    if (params.filterDescription) {
+      pipeline.push({
+        $match: {
+          samplingDescription: prefixRegexMatchFilter(params.filterDescription),
+        },
+      })
+    }
+
+    pipeline.push({
+      $sort: {
+        [params?.sortField ?? 'createdAt']:
+          params?.sortOrder === 'ascend' ? 1 : -1,
+      },
+    })
+
+    pipeline.push(...paginatePipeline(params))
+
+    const [data, total] = await Promise.all([
+      collection.aggregate<AlertsQaSampling>(pipeline).toArray(),
+      collection.aggregate<{ count: number }>([{ $count: 'count' }]).next(),
+    ])
+
+    return {
+      data: data,
+      total: total?.count ?? 0,
+    }
+  }
+
+  public async getSamplingDataById(
+    sampleId: string
+  ): Promise<AlertsQaSampling | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<AlertsQaSampling>(
+      ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
+    )
+
+    const result = await collection.findOne({
+      samplingId: sampleId,
+    })
+
+    return result
   }
 }

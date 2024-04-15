@@ -18,6 +18,7 @@ import {
 } from 'aws-lambda'
 import { uuid4 } from '@sentry/utils'
 import {
+  AlertParams,
   AlertsRepository,
   FLAGRIGHT_SYSTEM_USER,
 } from '../rules-engine/repositories/alerts-repository'
@@ -32,6 +33,7 @@ import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   DefaultApiGetAlertListRequest,
+  DefaultApiGetAlertsQaSamplingRequest,
   DefaultApiGetAlertTransactionListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { addNewSubsegment, traceable } from '@/core/xray'
@@ -69,6 +71,11 @@ import {
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
 import { ChecklistDoneStatus } from '@/@types/openapi-internal/ChecklistDoneStatus'
+import { AlertsQaSamplingRequest } from '@/@types/openapi-internal/AlertsQaSamplingRequest'
+import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
+import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
+import { AlertQASamplingListResponse } from '@/@types/openapi-internal/AlertQASamplingListResponse'
+import { AlertsQaSamplingUpdateRequest } from '@/@types/openapi-internal/AlertsQaSamplingUpdateRequest'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -1065,7 +1072,9 @@ export class AlertsService extends CaseAlertsCommonService {
       return // No changes made to the checklist
     }
     alert.ruleChecklist = updatedChecklist
+
     await this.alertsRepository.saveAlert(alert.caseId!, alert)
+
     await this.auditLogService.handleAuditLogForChecklistUpdate(
       alertId,
       originalChecklist,
@@ -1108,6 +1117,7 @@ export class AlertsService extends CaseAlertsCommonService {
         originalChecklist,
         updatedChecklist
       ),
+      this.alertsRepository.updateAlertQACountInSampling(alert.alertId!),
     ])
   }
 
@@ -1232,5 +1242,103 @@ export class AlertsService extends CaseAlertsCommonService {
 
     alert.qaAssignment = assignments
     await this.alertsRepository.saveAlert(alert.caseId!, alert)
+  }
+
+  async createAlertsQaSampling(
+    data: AlertsQaSamplingRequest
+  ): Promise<AlertsQaSampling> {
+    const { filters, samplingPercentage } = data
+
+    const queryParams: AlertParams = {
+      filterAlertStatus: ['CLOSED'],
+      filterQaStatus: ["NOT_QA'd"],
+      ...(filters?.alertClosedAt && {
+        filterAlertsByLastUpdatedStartTimestamp: filters.alertClosedAt.start,
+        filterAlertsByLastUpdatedEndTimestamp: filters.alertClosedAt.end,
+      }),
+      filterAlertId: filters?.alertId,
+      filterAlertPriority: filters?.alertPriority,
+      filterAssignmentsIds: filters?.assignedTo,
+      filterQaAssignmentsIds: filters?.qaAssignedTo,
+      filterRuleQueueIds: filters?.queueIds,
+      filterRulesExecuted: filters?.ruleInstances,
+      filterCaseType: filters?.caseTypes,
+      filterClosingReason: filters?.alertClosingReasons as CaseReasons[],
+      filterUserId: filters?.userId,
+    }
+
+    const query = await this.alertsRepository.getAlertsPipeline(queryParams, {
+      excludeProject: true,
+      hideTransactionIds: true,
+      countOnly: true,
+    })
+
+    const count = await this.alertsRepository.getAlertsCount(query)
+    const totalAlertsRequired = Math.ceil(
+      Math.max(count * (samplingPercentage / 100), 1)
+    )
+
+    const [sampleId, sampleAlerts] = await Promise.all([
+      this.alertsRepository.getSampleIdForQA(),
+      this.alertsRepository.getAlertsForQA(query, totalAlertsRequired),
+    ])
+
+    const sample: AlertsQaSampling = {
+      createdAt: Date.now(),
+      priority: data.priority,
+      samplingDescription: data.samplingDescription,
+      samplingName: data.samplingName,
+      samplingPercentage,
+      updatedAt: Date.now(),
+      alertIds: sampleAlerts.map((a) => a.alerts.alertId),
+      createdBy: getContext()?.user?.id || FLAGRIGHT_SYSTEM_USER,
+      filters,
+      samplingId: `S-${sampleId.toString().padStart(3, '0')}`,
+    }
+
+    return this.alertsRepository.saveQASampleData(sample)
+  }
+
+  public async getSamplingData(
+    params: DefaultApiGetAlertsQaSamplingRequest
+  ): Promise<AlertQASamplingListResponse> {
+    const data = await this.alertsRepository.getSamplingData(params)
+
+    return {
+      ...data,
+      data: data.data.map((d) => {
+        return omit(
+          { ...d, numberOfAlerts: d?.alertIds?.length ?? 0 },
+          'alertIds'
+        )
+      }),
+    }
+  }
+
+  public async getSamplingById(samplingId: string): Promise<AlertsQaSampling> {
+    const data = await this.alertsRepository.getSamplingDataById(samplingId)
+
+    if (!data) {
+      throw new NotFound('Sampling not found')
+    }
+
+    return { ...data, numberOfAlerts: data?.alertIds?.length ?? 0 }
+  }
+
+  public async patchSamplingById(
+    samplingId: string,
+    data: AlertsQaSamplingUpdateRequest
+  ): Promise<AlertsQaSampling> {
+    const sampling = await this.getSamplingById(samplingId)
+
+    const updatedSampling = {
+      ...sampling,
+      ...data,
+      updatedAt: Date.now(),
+    }
+
+    await this.alertsRepository.updateQASampleData(updatedSampling)
+
+    return updatedSampling
   }
 }

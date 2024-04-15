@@ -91,6 +91,7 @@ export const ConsoleApiPathToLambda: any = {
   '/copilot/sources': StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/alert/{alertId}/questions':
     StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
+
   '/questions/autocomplete': StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/questions/{questionId}/{variableKey}/autocomplete':
     StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
@@ -185,6 +186,9 @@ export const ConsoleApiPathToLambda: any = {
   '/alerts/{alertId}': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/{alertId}/comments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/{alertId}/comments/{commentId}':
+    StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/alerts/qaSampling': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/alerts/qa/{sampleId}/sampling':
     StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}/comments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,

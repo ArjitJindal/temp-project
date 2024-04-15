@@ -7,7 +7,7 @@ import { getBranding } from '@/utils/branding';
 
 interface Props {
   user: Account | null;
-  size?: 'small' | 'large' | 'medium';
+  size?: 'small' | 'large' | 'medium' | 'xs';
   isLoading?: boolean;
 }
 
@@ -24,7 +24,7 @@ const Avatar = (props: Props) => {
   const role = user?.role;
   const systemDisplay =
     role === 'root' || brandingName === user?.name ? branding.systemAvatarUrl : null;
-  const imgHeight = size === 'small' ? 16 : size === 'medium' ? 20 : 24;
+  const imgHeight = size === 'small' ? 16 : size === 'medium' ? 20 : size === 'xs' ? 14 : 24;
 
   return isLoading ? (
     <div className={cn(s.avatar, s[`size-${size}`])}>

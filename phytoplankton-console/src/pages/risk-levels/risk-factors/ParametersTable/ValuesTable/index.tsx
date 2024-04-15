@@ -31,7 +31,6 @@ import { SETTINGS } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import Alert from '@/components/library/Alert';
 import Slider from '@/components/library/Slider';
-import NumberInput from '@/components/library/NumberInput';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -199,45 +198,27 @@ export default function ValuesTable(props: Props) {
           </P>
         </div>
         <div className={style.weight}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <P variant="m" fontWeight="normal">
-              0
-            </P>
-            <Slider
-              isDisabled={loading || !hasWritePermissions}
-              mode="SINGLE"
-              min={0.01}
-              max={1}
-              step={0.01}
-              value={weight}
-              onChange={(value) => {
-                if (value != null) {
-                  setWeight(value);
-                }
-              }}
-            />
-            <P variant="m" fontWeight="normal" style={{ marginLeft: '0.25rem' }}>
-              1
-            </P>
-            <div style={{ marginLeft: '0.5rem' }}>
-              <NumberInput
-                value={weight}
-                onChange={(value) => {
-                  if (value != null) {
-                    const valueUptoTwoDecimal = parseFloat(value.toFixed(2));
-                    setWeight(valueUptoTwoDecimal);
-                  }
-                }}
-                max={1}
-                min={0.01}
-                htmlAttrs={{
-                  style: { width: '3rem', textAlign: 'center' },
-                  step: 0.01,
-                }}
-                step={0.01}
-              />
-            </div>
-          </div>
+          <Slider
+            mode="SINGLE"
+            min={0.01}
+            max={1}
+            step={0.01}
+            value={weight}
+            onChange={(value) => {
+              if (value != null) {
+                setWeight(value);
+              }
+            }}
+            marks={{ 0: '0', 1: '1' }}
+            textInput={{
+              min: 0.01,
+              max: 1,
+              step: 0.01,
+              htmlAttrs: { style: { width: '3rem', textAlign: 'center' } },
+              isDisabled: loading || !hasWritePermissions,
+            }}
+            isDisabled={loading || !hasWritePermissions}
+          />
         </div>
         <div /> {/* Empty div to align with the rest of the table */}
         <div className={style.topHeader}>

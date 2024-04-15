@@ -58,6 +58,7 @@ export default function (): JSX.Element {
             'error',
             'warning',
             'action',
+            'grey',
           ]}
         >
           {(color) => <Tag color={color}>{color}</Tag>}

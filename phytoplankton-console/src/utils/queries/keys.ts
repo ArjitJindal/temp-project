@@ -219,6 +219,12 @@ export const ALERT_CHECKLIST = (alertId: string | undefined): QueryKey => [
   'checklist',
   alertId,
 ];
+export const ALERT_QA_SAMPLING = (params: AnyParameters): QueryKey => [
+  'alerts',
+  'qa-sampling',
+  params,
+];
+export const ALERT_QA_SAMPLE = (sampleId: string): QueryKey => ['alerts', 'qa-sample', sampleId];
 export const SIMULATION_COUNT = (): QueryKey => ['simulation', 'count'];
 export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
   'alerts',

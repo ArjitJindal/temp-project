@@ -49,6 +49,23 @@ export default function (): JSX.Element {
           )}
         </PropertyMatrix>
       </UseCase>
+      <UseCase title={'Single with text input'}>
+        <Component
+          mode="SINGLE"
+          value={single}
+          min={0}
+          max={200}
+          onChange={(newValue) => {
+            setSingle(newValue);
+          }}
+          textInput={{
+            value: single,
+            onChange: (newValue) => {
+              setSingle(newValue);
+            },
+          }}
+        />
+      </UseCase>
     </>
   );
 }

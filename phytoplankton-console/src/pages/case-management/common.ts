@@ -45,6 +45,7 @@ export function useAlertQuery(
       filterClosingReason,
       ruleQueueIds,
       ruleNature,
+      filterAlertIds,
     } = params;
     const [sortField, sortOrder] = sort[0] ?? [];
     const preparedParams: DefaultApiGetAlertListRequest = {
@@ -54,6 +55,7 @@ export function useAlertQuery(
       filterQaStatus: filterQaStatus as ChecklistStatus[],
       filterOutQaStatus,
       filterAlertId: alertId,
+      filterAlertIds,
       filterCaseId: caseId,
       filterAlertStatus: getStatuses(alertStatus),
       filterAssignmentsIds:

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import CaseTableWrapper from './CaseTableWrapper';
 import AlertTable from './AlertTable';
 import s from './index.module.less';
+import { QAButton } from './QAModal';
 import { Authorized } from '@/components/utils/Authorized';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -159,6 +160,7 @@ export default function CaseManagementPage() {
           {!qaMode && params.showCases === 'PAYMENT_APPROVALS' && (
             <StatusButtons params={params} onChangeParams={handleChangeParams} />
           )}
+          {qaMode && params.showCases === 'QA_UNCHECKED_ALERTS' && <QAButton params={params} />}
         </div>
         {getTable(params, handleChangeParams)}
       </PageWrapperContentContainer>

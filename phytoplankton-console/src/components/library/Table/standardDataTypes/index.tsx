@@ -32,6 +32,7 @@ import {
   Case,
   Priority,
   Alert,
+  AlertsQaSampling,
 } from '@/apis';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
@@ -355,6 +356,36 @@ export const CASEID: ColumnDataType<string, Pick<Case, 'caseId'>> = {
   link(value) {
     return value ? getCaseUrl(value) : '';
   },
+};
+
+export const QA_SAMPLE_ID: ColumnDataType<string, Pick<AlertsQaSampling, 'samplingId'>> = {
+  render: (value, { item: entity }) => {
+    return (
+      <>
+        {entity?.samplingId && (
+          <Id
+            to={addBackUrlToRoute(`/case-management/qa-sampling/${entity.samplingId}`)}
+            testName="sampling-id"
+          >
+            {entity.samplingId}
+          </Id>
+        )}
+      </>
+    );
+  },
+  stringify(value, item) {
+    return `${item?.samplingId ?? ''}`;
+  },
+  link(value, item) {
+    return item?.samplingId ? `/case-management/qa-samples/${item.samplingId}` : '';
+  },
+};
+
+export const PERCENT: ColumnDataType<number> = {
+  render: (value) => {
+    return <>{Number(value ?? 0).toFixed(2)}%</>;
+  },
+  stringify: (value) => `${Number(value ?? 0).toFixed(2)}%`,
 };
 
 export const ALERT_ID: ColumnDataType<string, Pick<Alert, 'caseId'>> = {
