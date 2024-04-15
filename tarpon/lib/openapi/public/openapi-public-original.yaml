@@ -1296,8 +1296,8 @@ components:
           description: Unique user ID
         createdTimestamp:
           type: number
-          minimum: 1262300400000
           description: Timestamp when userId is created
+          minimum: 1262300400000
           maximum: 4133890801000
       required:
         - userId
@@ -1612,11 +1612,15 @@ components:
           type: number
           description: User's identity document issuance date (UNIX timestamp in
             milliseconds)
+          minimum: 1262300400000
+          maximum: 4133890801000
         documentExpirationDate:
           type: number
           description:
             User's identity document expiration date (UNIX timestamp in
             milliseconds)
+          minimum: 1262300400000
+          maximum: 4133890801000
         documentIssuedCountry:
           $ref: '#/components/schemas/CountryCode'
         tags:
@@ -1868,8 +1872,8 @@ components:
           description: Unique transaction identifier
         timestamp:
           type: number
-          minimum: 1262300400000
           description: Timestamp of when transaction took place
+          minimum: 1262300400000
           maximum: 4133890801000
         originUserId:
           type: string
@@ -2927,8 +2931,8 @@ components:
           description: Unique user ID for the user
         createdTimestamp:
           type: number
-          minimum: 1262300400000
           description: Timestamp when the user was created
+          minimum: 1262300400000
           maximum: 4133890801000
         legalEntity:
           $ref: '#/components/schemas/LegalEntity'
@@ -3835,8 +3839,8 @@ components:
           $ref: '#/components/schemas/TransactionState'
         timestamp:
           type: number
-          minimum: 1262300400000
           description: Timestamp of the event
+          minimum: 1262300400000
           maximum: 4133890801000
         transactionId:
           type: string
@@ -3917,8 +3921,8 @@ components:
       properties:
         timestamp:
           type: number
-          minimum: 1262300400000
           description: Timestamp of the event
+          minimum: 1262300400000
           maximum: 4133890801000
         userId:
           type: string
@@ -3996,8 +4000,8 @@ components:
       properties:
         timestamp:
           type: number
-          minimum: 1262300400000
           description: Timestamp of the event
+          minimum: 1262300400000
           maximum: 4133890801000
         userId:
           type: string
@@ -4038,8 +4042,9 @@ components:
           description: Status of a case. E.g. Open, Closed etc.
         timestamp:
           type: number
-          minimum: 1262300400000
           description: Timestamp of the event
+          minimum: 1262300400000
+          maximum: 4133890801000
         caseStatusReason:
           type: string
           enum:
@@ -4378,6 +4383,7 @@ components:
             Time at which the event was created. Measured in ms since the Unix
             epoch.
           minimum: 1262300400000
+          maximum: 4133890801000
       required:
         - id
         - triggeredBy
@@ -4572,6 +4578,7 @@ components:
         etaTimestamp:
           type: number
           minimum: 1262300400000
+          maximum: 4133890801000
         shippingAddress:
           $ref: '#/components/schemas/Address'
         tags:
