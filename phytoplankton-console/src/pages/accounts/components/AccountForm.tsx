@@ -113,7 +113,7 @@ export default function AccountForm(props: Props) {
   const inviteMutation = useMutation<unknown, unknown, AccountInvitePayload>(
     async (payload) => {
       if (isReviewRequired && !payload.reviewerId) {
-        message.error('Reviewer is required');
+        message.error('Checker is required');
         return;
       }
 
@@ -122,7 +122,10 @@ export default function AccountForm(props: Props) {
       });
     },
     {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        if (!data) {
+          return;
+        }
         message.success('User invited!');
         onSuccess();
         hide?.();
@@ -145,7 +148,7 @@ export default function AccountForm(props: Props) {
   >(
     async (payload) => {
       if (isReviewRequired && !payload.AccountPatchPayload.reviewerId) {
-        message.error('Reviewer is required');
+        message.error('Checker is required');
         return;
       }
       return await api.accountsEdit(payload);
@@ -296,7 +299,13 @@ export default function AccountForm(props: Props) {
                 <Checkbox
                   value={isReviewRequired}
                   onChange={() => {
-                    setIsReviewRequired(!isReviewRequired);
+                    setIsReviewRequired((prev) => {
+                      setValues({
+                        ...values,
+                        reviewerId: prev ? undefined : values.reviewerId,
+                      });
+                      return !prev;
+                    });
                   }}
                 />
               </Label>

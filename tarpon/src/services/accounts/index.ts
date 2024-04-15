@@ -212,7 +212,7 @@ export class AccountsService {
     organization: Tenant,
     values: AccountInvitePayload
   ): Promise<ApiAccount> {
-    const { role, email, isEscalationContact } = values
+    const { role, email, isEscalationContact, reviewerId } = values
     const inviteRole = role ?? 'analyst'
     if (inviteRole === 'root') {
       throw new Forbidden(`It's not possible to create a root user`)
@@ -236,6 +236,7 @@ export class AccountsService {
       email,
       role: inviteRole,
       isEscalationContact,
+      reviewerId,
     })
 
     return user
@@ -249,6 +250,7 @@ export class AccountsService {
       isEscalationContact?: boolean
       isReviewer?: boolean
       isReviewRequired?: boolean
+      reviewerId?: string
     }
   ): Promise<Account> {
     let user: GetUsers200ResponseOneOfInner | null = null
@@ -299,6 +301,7 @@ export class AccountsService {
               isEscalationContact: params.isEscalationContact,
               isReviewer: params.isReviewer,
               isReviewRequired: params.isReviewRequired,
+              reviewerId: params.reviewerId,
             } as AppMetadata,
             verify_email: false,
           })
