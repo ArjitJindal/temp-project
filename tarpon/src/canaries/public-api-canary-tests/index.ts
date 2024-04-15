@@ -1456,8 +1456,8 @@ const getTestCustomerUserSuccess = async () => {
       {
         documentType: 'passport',
         documentNumber: 'CB33GME6',
-        documentIssuedDate: 1639939034,
-        documentExpirationDate: 1839939034,
+        documentIssuedDate: 1713192476788,
+        documentExpirationDate: 1713192476788,
         documentIssuedCountry: 'US',
       },
     ],
