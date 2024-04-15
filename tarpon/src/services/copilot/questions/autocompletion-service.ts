@@ -1,4 +1,6 @@
 import { uniq } from 'lodash'
+import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
+import { ChatCompletionRequestMessage } from 'openai/api'
 import {
   getQueries,
   getQuestions,
@@ -102,10 +104,15 @@ export class AutocompleteService {
   }
 
   public async interpretQuestion(questionPrompt: string) {
-    const questions = await this.interpretQuestionWithGPT(questionPrompt)
-    if (questions.length > 0) {
-      return questions
+    try {
+      const questions = await this.interpretQuestionWithGPT(questionPrompt)
+      if (questions.length > 0) {
+        return questions
+      }
+    } catch (e) {
+      logger.error('Failed to parse JSON in response from GPT', e)
     }
+
     return this.autocomplete(questionPrompt).map(
       (
         questionId
@@ -119,76 +126,165 @@ export class AutocompleteService {
     )
   }
 
-  private async interpretQuestionWithGPT(questionPrompt: string): Promise<
+  public async interpretQuestionWithGPT(questionPrompt: string): Promise<
     {
       questionId: string
       variables: QuestionVariable[]
     }[]
   > {
-    try {
-      const response = await prompt(
-        [
+    const examples: {
+      prompt: string
+      response: {
+        questionId: QuestionId
+        variables: QuestionVariable[]
+      }[]
+    }[] = [
+      {
+        prompt: 'transactions',
+        response: [
           {
-            role: 'system',
-            content: `You are a machine with the following available "questions" with their corresponding "variables": ${JSON.stringify(
-              getQueries().map((q) => {
-                const preparedVariables = Object.entries(
-                  q.variableOptions
-                ).flatMap(([name, definition]) => {
-                  if (typeof definition !== 'string') {
-                    return [{ name, definition: 'STRING' }]
-                  }
-                  return [{ name, definition }]
-                })
-                return {
-                  questionId: q.questionId,
-                  variables: preparedVariables,
-                }
-              })
-            )}
-            You will be asked a to provide an array of questionId's and their corresponding "variables" based on user input. If no time range is specified, don't include "from" and "to" variables. If you aren't able to determine any other variable, don't include it in the response either.`,
-          },
-          {
-            role: 'system',
-            content: `Today's date is ${dayjs().format(
-              'YYYY-MM-DD'
-            )}. You will communicate dates in the same format.`,
-          },
-          {
-            role: 'system',
-            content: `You must reply with valid, iterable RFC8259 compliant JSON in your responses with the following structure as defined in typescript:
-{
-  questionId: string,
-  variables: { name: string, value: any }[]
-}[]`,
-          },
-          {
-            role: 'assistant',
-            content: `Please parse "${questionPrompt}" to give the best matching questionId and variables.`,
+            questionId: COPILOT_QUESTIONS.USER_TRANSACTIONS,
+            variables: [],
           },
         ],
+      },
+      {
+        prompt: 'transaction insights for all time',
+        response: [
+          {
+            questionId: COPILOT_QUESTIONS.TRANSACTION_INSIGHTS,
+            variables: [],
+          },
+        ],
+      },
+      {
+        prompt: "user's transactions for the last 5 days",
+        response: [
+          {
+            questionId: COPILOT_QUESTIONS.USER_TRANSACTIONS,
+            variables: [
+              {
+                name: 'from',
+                value: dayjs().subtract(5, 'd').format('YYYY-MM-DD'),
+              },
+              { name: 'to', value: dayjs().format('YYYY-MM-DD') },
+            ],
+          },
+        ],
+      },
+      {
+        prompt: 'give me some insights about the transaction references',
+        response: [
+          {
+            questionId: COPILOT_QUESTIONS.REFERENCES_WORD_COUNT,
+            variables: [],
+          },
+        ],
+      },
+      {
+        prompt:
+          'I also wanna seee their directors and any other details about the user',
+        response: [
+          {
+            questionId: COPILOT_QUESTIONS.DIRECTORS,
+            variables: [],
+          },
+          {
+            questionId: COPILOT_QUESTIONS.USER_DETAILS,
+            variables: [],
+          },
+        ],
+      },
+      {
+        prompt: 'cases and allerts for the last two months',
+        response: [
+          {
+            questionId: COPILOT_QUESTIONS.CASES,
+            variables: [
+              {
+                name: 'from',
+                value: dayjs().subtract(2, 'M').format('YYYY-MM-DD'),
+              },
+              { name: 'to', value: dayjs().format('YYYY-MM-DD') },
+            ],
+          },
+          {
+            questionId: COPILOT_QUESTIONS.ALERTS,
+            variables: [
+              {
+                name: 'from',
+                value: dayjs().subtract(2, 'M').format('YYYY-MM-DD'),
+              },
+              { name: 'to', value: dayjs().format('YYYY-MM-DD') },
+            ],
+          },
+        ],
+      },
+    ]
+
+    const response = await prompt(
+      [
         {
-          temperature: 0.6,
-          frequency_penalty: 0.15,
-          presence_penalty: 0.15,
-          top_p: 0.95,
-        }
-      )
-      const results: {
-        questionId: string
-        variables: QuestionVariable[]
-      }[] = JSON.parse(response.replace('```json', '').replace('```', ''))
-      if (!Array.isArray(results) || results.length === 0) {
-        updateLogMetadata({ questionPrompt, response, results })
-        logger.error('AI could not determine a relevant question')
-        return []
+          role: 'system',
+          content: `You are a machine with the following available "questions" with their corresponding "variables": ${JSON.stringify(
+            getQueries().map((q) => {
+              const preparedVariables = Object.entries(
+                q.variableOptions
+              ).flatMap(([name, definition]) => {
+                if (typeof definition !== 'string') {
+                  return [{ name, definition: 'STRING' }]
+                }
+                return [{ name, definition }]
+              })
+              return {
+                questionId: q.questionId,
+                variables: preparedVariables,
+              }
+            })
+          )}
+            You will be asked a to provide an array of questionId's and their corresponding "variables" based on user input. You must always return a question.`,
+        },
+        {
+          role: 'system',
+          content: `Today's date is ${dayjs().format('YYYY-MM-DD')}.`,
+        },
+        {
+          role: 'system',
+          content: `If no time range is specified, don't include "from" and "to" variables.`,
+        },
+        {
+          role: 'system',
+          content: `Unless specified, any questions for transactions will be for the question with ID "Transactions".`,
+        },
+        ...examples.map(
+          (example): ChatCompletionRequestMessage => ({
+            role: 'system',
+            content: `For the input "${
+              example.prompt
+            }", the following response is expected:\n ${JSON.stringify(
+              example.response
+            )}`,
+          })
+        ),
+        {
+          role: 'assistant',
+          content: `Please parse "${questionPrompt}" to give the best matching questionId and variables.`,
+        },
+      ],
+      {
+        model: 'gpt-4-0125-preview',
       }
-      return results
-    } catch (e) {
-      updateLogMetadata({ questionPrompt, error: e })
-      logger.error('Failed to parse JSON in reseponse from GPT', e)
+    )
+    const results: {
+      questionId: string
+      variables: QuestionVariable[]
+    }[] = JSON.parse(response.replace('```json', '').replace('```', ''))
+    if (!Array.isArray(results) || results.length === 0) {
+      updateLogMetadata({ questionPrompt, response, results })
+      logger.error('AI could not determine a relevant question', results)
       return []
     }
+    return results
   }
 
   async autocompleteVariable(

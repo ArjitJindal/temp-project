@@ -11,7 +11,7 @@ export const COPILOT_QUESTIONS = {
   LINKED_USERS: 'Linked users',
   LINKEDIN: 'Linkedin',
   PAYMENT_IDENTIFIERS: 'Payment identifiers transacted with',
-  REFERENCES_WORD_COUNT: 'References word count',
+  REFERENCES_WORD_COUNT: 'Transaction references word count',
   RECOMMENDATION: 'Recommendation',
   SHAREHOLDERS: 'Shareholders',
   TRANSACTION_INSIGHTS: 'Transaction insights',
@@ -30,7 +30,7 @@ export const COPILOT_QUESTIONS = {
   USERS_TRANSACTED_WITH: 'Users transacted with',
   ALERT_TRANSACTIONS: 'Alert transactions',
   CASE_TRANSACTIONS: 'Case transactions',
-  USER_TRANSACTIONS: 'User transactions',
+  USER_TRANSACTIONS: 'Transactions',
   WEBSITE: 'Website',
 } as const
 

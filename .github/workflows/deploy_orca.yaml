@@ -9,6 +9,8 @@ jobs:
   test_tarpon:
     uses: "./.github/workflows/test_tarpon.yml"
     secrets: inherit
+    with:
+      llm: 'true'
   test_phytoplankton:
     uses: "./.github/workflows/test_phyto.yml"
     secrets: inherit

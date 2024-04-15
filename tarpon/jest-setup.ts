@@ -30,9 +30,11 @@ jest
     )
   )
 
-mockClient(SecretsManagerClient)
-  .on(GetSecretValueCommand)
-  .resolves({ SecretString: 'fake' })
+if (process.env.ENABLE_SECRETS_MANAGER !== 'true') {
+  mockClient(SecretsManagerClient)
+    .on(GetSecretValueCommand)
+    .resolves({ SecretString: 'fake' })
+}
 
 module.exports = async function () {
   if (process.env.EXEC_SOURCE !== 'CI') {
