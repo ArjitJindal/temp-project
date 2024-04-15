@@ -84,6 +84,20 @@ export class SimulationService {
             },
           })
         }
+        if (parameters.type === 'RISK_FACTORS') {
+          await sendBatchJobCommand({
+            type: 'SIMULATION_RISK_FACTORS',
+            tenantId: this.tenantId,
+            parameters: {
+              taskId: taskIds[i],
+              jobId,
+              ...parameters.parameters[i],
+            },
+            sampling: parameters.sampling ?? {
+              usersCount: 'RANDOM',
+            },
+          })
+        }
       }
     }
     return { taskIds, jobId }

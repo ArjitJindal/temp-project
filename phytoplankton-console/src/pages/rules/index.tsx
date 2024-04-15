@@ -1,7 +1,6 @@
 import { useLocalStorageState } from 'ahooks';
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { RulesPageWrapper } from 'src/pages/rules/RulesPageWrapper';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
 import { useRuleLogicConfig } from './RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
@@ -11,6 +10,7 @@ import PageTabs from '@/components/ui/PageTabs';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
+import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 
 const TableList = () => {
   const { tab = 'tab' } = useParams<'tab'>();
@@ -20,7 +20,8 @@ const TableList = () => {
   }, [setLocalStorageActiveTab, tab]);
 
   return (
-    <RulesPageWrapper
+    <BreadcrumbsSimulationPageWrapper
+      storageKey={'SIMULATION_RULES'}
       breadcrumbs={[
         {
           title: 'Rules',
@@ -35,9 +36,10 @@ const TableList = () => {
           to: '/rules/rules-library',
         },
       ].filter(notEmpty)}
+      simulationHistoryUrl="/rules/simulation-history"
     >
       <Content tab={tab} />
-    </RulesPageWrapper>
+    </BreadcrumbsSimulationPageWrapper>
   );
 };
 

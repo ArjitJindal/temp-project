@@ -1,0 +1,33 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer {
+  padding: 8px 0;
+  position: sticky;
+  bottom: 0;
+  background: @fr-global-bg-color;
+  z-index: @sticky-z-index;
+}
+
+.footerButtons {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 8px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.duplicateButton {
+  display: flex;
+  gap: 4px;
+}

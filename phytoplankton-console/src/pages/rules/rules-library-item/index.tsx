@@ -1,6 +1,5 @@
 import React from 'react';
 import { useParams } from 'react-router';
-import { RulesPageWrapper } from 'src/pages/rules/RulesPageWrapper';
 import { useNavigate } from 'react-router-dom';
 import RuleConfiguration from 'src/pages/rules/RuleConfiguration';
 import { useLocalStorageState } from 'ahooks';
@@ -11,6 +10,7 @@ import { useApi } from '@/api';
 import { Rule } from '@/apis';
 import { Mode } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 
 export default function RulesLibraryItemPage() {
   const { id: ruleId } = useParams<'id'>();
@@ -42,7 +42,8 @@ function Content(props: { ruleId?: string; rule: Rule | null; mode: Mode }) {
   const navigate = useNavigate();
   const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
   return (
-    <RulesPageWrapper
+    <BreadcrumbsSimulationPageWrapper
+      storageKey={'SIMULATION_RULES'}
       breadcrumbs={[
         {
           title: 'Rules',
@@ -57,6 +58,7 @@ function Content(props: { ruleId?: string; rule: Rule | null; mode: Mode }) {
           to: makeUrl(`/rules/rules-library/:id`, { id: ruleId }),
         },
       ]}
+      simulationHistoryUrl="/rules/simulation-history"
     >
       <RuleConfiguration
         rule={rule ?? undefined}
@@ -69,6 +71,6 @@ function Content(props: { ruleId?: string; rule: Rule | null; mode: Mode }) {
           navigate(makeUrl(`/rules/rules-library`));
         }}
       />
-    </RulesPageWrapper>
+    </BreadcrumbsSimulationPageWrapper>
   );
 }

@@ -3068,6 +3068,35 @@ paths:
           in: query
           name: entityType
           description: Entity type you want to filter on
+  /pulse/risk-parameters:
+    parameters: []
+    post:
+      summary: Parameters Risk Level - POST
+      operationId: post-pulse-risk-parameters
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              title: PostPulseRiskParametersBulk
+              properties:
+                parameterAttributeRiskValues:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ParameterAttributeRiskValues'
+              required:
+                - parameterAttributeRiskValues
+        required: true
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
+      parameters: []
+      description: ''
   /slack/oauth_redirect:
     get:
       summary: Slack OAuth Redirect
@@ -4694,6 +4723,7 @@ paths:
             enum:
               - PULSE
               - BEACON
+              - RISK_FACTORS
           in: query
           name: type
           required: true
@@ -4738,7 +4768,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimulationRiskLevelsResultResponse'
+                $ref: '#/components/schemas/SimulationRiskLevelsAndRiskFactorsResultResponse'
       parameters: []
     parameters:
       - schema:
@@ -10433,14 +10463,42 @@ components:
         - old
         - new
         - userName
-    SimulationRiskLevelsResultResponse:
-      title: SimulationRiskLevelsResultResponse
+    SimulationRiskLevelsAndRiskFactorsResult:
+      title: SimulationRiskLevelsAndRiskFactorsResult
+      type: object
+      properties:
+        taskId:
+          type: string
+        type:
+          type: string
+          enum:
+            - PULSE
+            - RISK_FACTORS
+        userId:
+          type: string
+        userType:
+          type: string
+        current:
+          $ref: '#/components/schemas/SimulationRiskLevelsRiskScoreResult'
+        simulated:
+          $ref: '#/components/schemas/SimulationRiskLevelsRiskScoreResult'
+        userName:
+          type: string
+      required:
+        - taskId
+        - type
+        - userId
+        - old
+        - new
+        - userName
+    SimulationRiskLevelsAndRiskFactorsResultResponse:
+      title: SimulationRiskLevelsAndRiskFactorsResultResponse
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SimulationRiskLevelsResult'
+            $ref: '#/components/schemas/SimulationRiskLevelsAndRiskFactorsResult'
         total:
           type: number
       required:

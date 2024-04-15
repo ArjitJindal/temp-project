@@ -11,9 +11,9 @@ import Tabs, { TabItem } from '@/components/library/Tabs';
 import {
   RiskLevel,
   SimulationPostResponse,
+  SimulationRiskLevelsAndRiskFactorsResult,
   SimulationRiskLevelsIteration,
   SimulationRiskLevelsJob,
-  SimulationRiskLevelsResult,
   SimulationRiskLevelsStatisticsRiskTypeEnum,
 } from '@/apis';
 import { useApi } from '@/api';
@@ -46,8 +46,8 @@ type IterationProps = {
   iteration: SimulationRiskLevelsIteration;
 };
 
-const helper = new ColumnHelper<SimulationRiskLevelsResult>();
-const columns: TableColumn<SimulationRiskLevelsResult>[] = helper.list([
+const helper = new ColumnHelper<SimulationRiskLevelsAndRiskFactorsResult>();
+const columns: TableColumn<SimulationRiskLevelsAndRiskFactorsResult>[] = helper.list([
   helper.simple<'userName'>({
     title: 'User name',
     key: 'userName',
@@ -234,7 +234,7 @@ const IterationComponent = (props: IterationProps) => {
         </div>
       </div>
       <div style={{ marginTop: 8 }}>
-        <QueryResultsTable<SimulationRiskLevelsResult>
+        <QueryResultsTable<SimulationRiskLevelsAndRiskFactorsResult>
           columns={columns}
           queryResults={iterationQueryResults}
           rowKey="userId"

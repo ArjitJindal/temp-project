@@ -36,6 +36,8 @@ import { Permission } from '@/apis';
 import ForbiddenPage from '@/pages/403';
 import ReportsList from '@/pages/reports';
 import Clueso from '@/pages/auth/clueso';
+import { SimulationHistoryResultPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
+import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -293,6 +295,20 @@ export function useRoutes(): RouteItem[] {
             name: 'risk-factors',
             path: '/risk-levels/risk-factors/:type',
             component: RiskLevelPage,
+            hideInMenu: true,
+            permissions: ['risk-scoring:risk-factors:read'],
+          },
+          {
+            name: 'risk-factors',
+            path: '/risk-levels/risk-factors/simulation-history',
+            component: RiskFactorsSimulationHistoryPage,
+            hideInMenu: true,
+            permissions: ['risk-scoring:risk-factors:read'],
+          },
+          {
+            name: 'risk-factors',
+            path: '/risk-levels/risk-factors/simulation-history/:jobId',
+            component: SimulationHistoryResultPage,
             hideInMenu: true,
             permissions: ['risk-scoring:risk-factors:read'],
           },

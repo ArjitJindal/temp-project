@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import cn from 'clsx';
 import { Button } from 'antd';
 import {
   Entity,
@@ -40,11 +41,21 @@ interface Props {
     weight: number,
   ) => void;
   onActivate: (entityType: Entity, parameter: ParameterName, isActive: boolean) => void;
+  canEditParameters?: boolean;
+  disablePaddings?: boolean;
 }
 
 export default function ParametersTable(props: Props) {
-  const { parameters, parameterSettings, onRefresh, onSaveValues, onActivate } = props;
-  const canEdit = useHasPermissions(['risk-scoring:risk-levels:write']);
+  const {
+    parameters,
+    parameterSettings,
+    onRefresh,
+    onSaveValues,
+    onActivate,
+    disablePaddings = false,
+    canEditParameters = true,
+  } = props;
+  const canEdit = useHasPermissions(['risk-scoring:risk-levels:write']) && canEditParameters;
   const settings = useSettings();
   useEffect(() => {
     for (const parameter of parameters) {
@@ -55,7 +66,7 @@ export default function ParametersTable(props: Props) {
   const columnHelper = new ColumnHelper<RiskLevelTableItem>();
   // todo: i18n
   return (
-    <div className={style.root}>
+    <div className={cn(style.root, disablePaddings && style.zeroPadding)}>
       <Table<RiskLevelTableItem>
         rowKey="parameter"
         columns={columnHelper.list([
@@ -161,6 +172,7 @@ export default function ParametersTable(props: Props) {
         }}
         renderExpanded={(item) => (
           <ValuesTable
+            canEditParameters={canEditParameters}
             item={item}
             currentValuesRes={map(
               (parameterSettings && parameterSettings[item.parameter]) ?? init<ParameterSettings>(),

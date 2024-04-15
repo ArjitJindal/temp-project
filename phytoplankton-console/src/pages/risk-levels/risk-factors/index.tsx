@@ -1,5 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { useLocalStorageState } from 'ahooks';
 import ParametersTable from './ParametersTable';
 import {
   ALL_RISK_PARAMETERS,
@@ -9,8 +10,8 @@ import {
   USER_RISK_PARAMETERS,
 } from './ParametersTable/consts';
 import { RiskLevelTableItem } from './ParametersTable/types';
-import PageWrapper from '@/components/PageWrapper';
-import { useI18n } from '@/locales';
+import { RiskFactorsSimulation } from './RiskFactorsSimulation';
+import { SimulationHistory } from './RiskFactorsSimulation/SimulationHistoryPage/SimulationHistory';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import {
@@ -26,16 +27,61 @@ import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 import { message } from '@/components/library/Message';
 import { RiskLevel } from '@/utils/risk-levels';
+import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { notEmpty } from '@/utils/array';
 
 export default function () {
-  const i18n = useI18n();
+  const { type = 'consumer' } = useParams();
+  const [isSimulationMode] = useLocalStorageState('SIMULATION_RISK_FACTORS', false);
+  return (
+    <Feature name="RISK_SCORING" fallback={'Not enabled'}>
+      <BreadcrumbsSimulationPageWrapper
+        storageKey={'SIMULATION_RISK_FACTORS'}
+        breadcrumbs={[
+          {
+            title: 'Risk factors',
+            to: `/risk-levels/risk-factors/${isSimulationMode ? 'simulation' : ''}`,
+          },
+          type === 'consumer' &&
+            !isSimulationMode && {
+              title: 'Consumer',
+              to: '/risk-levels/risk-factors/consumer',
+            },
+          type === 'business' &&
+            !isSimulationMode && {
+              title: 'Business',
+              to: '/risk-levels/risk-factors/business',
+            },
+          type === 'transaction' &&
+            !isSimulationMode && {
+              title: 'Transaction',
+              to: '/risk-levels/risk-factors/transaction',
+            },
+          (type === 'simulation' || type === 'simulation-history') && {
+            title: 'Simulation',
+            to: '/risk-levels/risk-factors/simulation',
+          },
+          type === 'simulation-history' && {
+            title: 'Simulation history',
+            to: '/risk-levels/risk-factors/simulation-history',
+          },
+        ].filter(notEmpty)}
+        simulationHistoryUrl="/risk-levels/risk-factors/simulation-history"
+      >
+        <RiskFactors type={type} />
+      </BreadcrumbsSimulationPageWrapper>
+    </Feature>
+  );
+}
+
+export function RiskFactors(props: { type: string }) {
+  const { type } = props;
   const api = useApi();
   const [valuesResources, setValuesResources] = useState<{
     [key in Entity]?: {
       [key in ParameterName]?: AsyncResource<ParameterSettings>;
     };
   }>({});
-  const { type = 'consumer' } = useParams<'type'>();
   const navigate = useNavigate();
 
   const updateValuesResources = useCallback(
@@ -186,12 +232,24 @@ export default function () {
     [api, updateValuesResources],
   );
 
+  const [isSimulationMode] = useLocalStorageState('SIMULATION_RISK_FACTORS', false);
+  useEffect(() => {
+    if (isSimulationMode) {
+      navigate(makeUrl(`/risk-levels/risk-factors/simulation`), { replace: true });
+    } else {
+      navigate(makeUrl(`/risk-levels/risk-factors/consumer`), { replace: true });
+    }
+  }, [isSimulationMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <PageWrapper
-        title={i18n('menu.risk-levels.risk-factors')}
-        description={i18n('menu.risk-levels.risk-factors.description')}
-      >
+    <div>
+      {isSimulationMode ? (
+        type !== 'simulation-history' ? (
+          <RiskFactorsSimulation />
+        ) : (
+          <SimulationHistory />
+        )
+      ) : (
         <PageTabs
           activeKey={type}
           onChange={(key) => {
@@ -239,7 +297,7 @@ export default function () {
             },
           ]}
         />
-      </PageWrapper>
-    </Feature>
+      )}
+    </div>
   );
 }

@@ -327,3 +327,9 @@ export const NOTIFICATIONS = (notificationStatus?: 'ALL' | 'UNREAD'): QueryKey =
   'notifications',
   `tab-${notificationStatus}`,
 ];
+
+export const SIMULATION_RISK_FACTOR = (jobId: string): QueryKey => [
+  'risk-factor',
+  'simulation',
+  jobId,
+];

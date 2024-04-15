@@ -7,6 +7,7 @@ import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/Simulation
 import { DefaultApiGetSimulationTaskIdResultRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
 import { SimulationRiskFactorsResult } from '@/@types/openapi-internal/SimulationRiskFactorsResult'
+import { SimulationRiskLevelsAndRiskFactorsResultResponse } from '@/@types/openapi-internal/SimulationRiskLevelsAndRiskFactorsResultResponse'
 
 @traceable
 export class SimulationResultRepository {
@@ -31,11 +32,11 @@ export class SimulationResultRepository {
 
   public async getSimulationResults(
     params: DefaultApiGetSimulationTaskIdResultRequest
-  ): Promise<{ items: SimulationRiskLevelsResult[]; total: number }> {
+  ): Promise<SimulationRiskLevelsAndRiskFactorsResultResponse> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationRiskLevelsResult>(
-      SIMULATION_RESULT_COLLECTION(this.tenantId)
-    )
+    const collection = db.collection<
+      SimulationRiskLevelsResult | SimulationRiskFactorsResult
+    >(SIMULATION_RESULT_COLLECTION(this.tenantId))
 
     const items = await collection
       .find(

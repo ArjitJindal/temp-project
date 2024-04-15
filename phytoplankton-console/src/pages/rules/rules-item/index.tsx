@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { RulesPageWrapper } from 'src/pages/rules/RulesPageWrapper';
 import RuleConfiguration from 'src/pages/rules/RuleConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { useLocalStorageState } from 'ahooks';
@@ -13,6 +12,7 @@ import { Mode } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8';
 import { makeUrl } from '@/utils/routing';
 import { getRuleInstanceTitle } from '@/utils/api/rules';
 import { map, getOr } from '@/utils/asyncResource';
+import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 
 export default function RulesItemPage() {
   const { id: ruleInstanceId = 'rules-library', mode = 'read' } = useParams<
@@ -83,7 +83,8 @@ function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: s
     return 'READ';
   }, [mode]);
   return (
-    <RulesPageWrapper
+    <BreadcrumbsSimulationPageWrapper
+      storageKey={'SIMULATION_RULES'}
       breadcrumbs={[
         {
           title: 'Rules',
@@ -98,6 +99,7 @@ function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: s
           to: makeUrl(`/rules/my-rules/:id/:mode`, { id: ruleInstance.id, mode: mode }),
         },
       ]}
+      simulationHistoryUrl="/rules/simulation-history"
     >
       <RuleConfiguration
         isSimulation={isSimulationEnabled}
@@ -114,6 +116,6 @@ function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: s
           navigate(makeUrl(`/rules/my-rules/:id/:mode`, { id: ruleInstance.id, mode: 'edit' }));
         }}
       />
-    </RulesPageWrapper>
+    </BreadcrumbsSimulationPageWrapper>
   );
 }

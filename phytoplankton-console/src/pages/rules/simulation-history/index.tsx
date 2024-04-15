@@ -1,11 +1,12 @@
 import React from 'react';
 import { SimulationHistoryTable } from 'src/pages/rules/simulation-history/SimulationHistoryTable';
 import { Authorized } from '@/components/utils/Authorized';
-import { RulesPageWrapper } from '@/pages/rules/RulesPageWrapper';
+import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 
 export default function SimulationHistoryPage() {
   return (
-    <RulesPageWrapper
+    <BreadcrumbsSimulationPageWrapper
+      storageKey="SIMULATION_RULES"
       breadcrumbs={[
         {
           title: 'Rules',
@@ -16,10 +17,11 @@ export default function SimulationHistoryPage() {
           to: '/rules/simulation-history',
         },
       ]}
+      simulationHistoryUrl="/rules/simulation-history"
     >
       <Authorized required={['simulator:simulations:read']} showForbiddenPage>
         <SimulationHistoryTable />
       </Authorized>
-    </RulesPageWrapper>
+    </BreadcrumbsSimulationPageWrapper>
   );
 }

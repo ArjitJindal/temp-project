@@ -71,6 +71,15 @@ export const parameterRiskAssignmentHandler = lambdaApi({
         )
     )
 
+    handlers.registerPostPulseRiskParameters(async (ctx, request) => {
+      await Promise.all(
+        request.PostPulseRiskParametersBulk.parameterAttributeRiskValues.map(
+          (riskParameter) =>
+            riskService.createOrUpdateRiskParameter(riskParameter)
+        )
+      )
+    })
+
     return await handlers.handle(event)
   }
 )

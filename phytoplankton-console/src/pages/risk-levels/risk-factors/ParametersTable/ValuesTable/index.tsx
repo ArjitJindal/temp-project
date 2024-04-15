@@ -45,6 +45,7 @@ interface Props {
   ) => void;
   currentDefaultRiskLevel: AsyncResource<RiskLevel>;
   currentWeight: AsyncResource<number>;
+  canEditParameters?: boolean;
 }
 
 const labelsExist: { [key in DataType]?: { input: boolean; value: boolean } } = {
@@ -61,7 +62,14 @@ const labelExistsStyle = (dataType: DataType, type: 'input' | 'value'): React.CS
 };
 
 export default function ValuesTable(props: Props) {
-  const { currentValuesRes, item, onSave, currentDefaultRiskLevel, currentWeight } = props;
+  const {
+    currentValuesRes,
+    item,
+    onSave,
+    currentDefaultRiskLevel,
+    currentWeight,
+    canEditParameters = true,
+  } = props;
 
   const { parameter, dataType, entity } = item;
   const lastValues = useLastSuccessValue(currentValuesRes, []);
@@ -73,7 +81,8 @@ export default function ValuesTable(props: Props) {
   const api = useApi();
   const queryData = useQuery(SETTINGS(), () => api.getTenantsSettings());
   const defaultCurrency = getOr(queryData.data, {}).defaultValues?.currency ?? 'USD';
-  const hasWritePermissions = useHasPermissions(['risk-scoring:risk-factors:write']);
+  const hasWritePermissions =
+    useHasPermissions(['risk-scoring:risk-factors:write']) && canEditParameters;
 
   useEffect(() => {
     setValues(lastValues);
@@ -195,6 +204,7 @@ export default function ValuesTable(props: Props) {
               0
             </P>
             <Slider
+              isDisabled={loading || !hasWritePermissions}
               mode="SINGLE"
               min={0.01}
               max={1}
@@ -317,7 +327,7 @@ export default function ValuesTable(props: Props) {
         <>
           <div>
             {INPUT_RENDERERS[dataType]({
-              disabled: loading,
+              disabled: loading || !hasWritePermissions,
               value: newValue,
               existedValues: values.map((x) => x.parameterValue.content),
               onChange: setNewValue,
