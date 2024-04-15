@@ -93,7 +93,6 @@ const DEFAULT_VALUES = {
 };
 
 type WidgetType = {
-  groupTitle: string;
   id: string;
   title: string;
   component: (props) => JSX.Element;
@@ -104,7 +103,10 @@ type WidgetType = {
   children?: React.ReactNode;
 };
 
-type WidgetGroup = WidgetType[];
+type WidgetGroup = {
+  groupTitle: string;
+  items: WidgetType[];
+};
 
 interface Widgets {
   OVERVIEW: WidgetGroup;
@@ -118,203 +120,204 @@ interface Widgets {
 }
 
 const WIDGETS: Widgets = {
-  OVERVIEW: [
-    {
-      groupTitle: 'Overview',
-      id: 'OVERVIEW',
-      title: 'Overview',
-      component: Overview,
-    },
-  ],
-  CONSUMER_USERS: [
-    {
-      groupTitle: 'Consumer users',
-      id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-      title: 'Users distribution by risk levels',
-      component: RiskLevelBreakdownCard,
-      width: 'FULL' as const,
-      userType: 'CONSUMER',
-      requiredFeatures: ['RISK_SCORING'],
-    },
-    {
-      groupTitle: 'Consumer users',
-      id: 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
-      title: 'Users breakdown by risk levels',
-      component: RiskLevelDistributionCard,
-      width: 'HALF' as const,
-      userType: 'CONSUMER',
-      requiredFeatures: ['RISK_SCORING'],
-    },
+  OVERVIEW: {
+    groupTitle: 'Overview',
+    items: [
+      {
+        id: 'OVERVIEW',
+        title: 'Overview',
+        component: Overview,
+      },
+    ],
+  },
+  CONSUMER_USERS: {
+    groupTitle: 'Consumer users',
+    items: [
+      {
+        id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+        title: 'Users distribution by risk levels',
+        component: RiskLevelBreakdownCard,
+        width: 'FULL',
+        userType: 'CONSUMER',
+        requiredFeatures: ['RISK_SCORING'],
+      },
+      {
+        id: 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
+        title: 'Users breakdown by risk levels',
+        component: RiskLevelDistributionCard,
+        width: 'HALF',
+        userType: 'CONSUMER',
+        requiredFeatures: ['RISK_SCORING'],
+      },
 
-    {
-      groupTitle: 'Consumer users',
-      id: 'TOP_CONSUMER_USERS_BY_RULE_HITS',
-      title: 'Top users by rule hits',
-      component: TopUsersHitCard,
-      width: 'HALF' as const,
-      userType: 'CONSUMER',
-    },
-    {
-      groupTitle: 'Consumer users',
-      id: 'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS',
-      title: 'Users distribution by KYC status',
-      component: KYCStatusDistributionCard,
-      width: 'HALF' as const,
-      userType: 'CONSUMER',
-    },
-    {
-      groupTitle: 'Consumer users',
-      id: 'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
-      title: 'Users distribution by user status',
-      component: UserStatusDistributionCard,
-      width: 'HALF' as const,
-      userType: 'CONSUMER',
-    },
-  ],
-  BUSINESS_USERS: [
-    {
-      groupTitle: 'Business users',
-      id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-      title: 'Users distribution by risk levels',
-      component: RiskLevelBreakdownCard,
-      width: 'FULL' as const,
-      userType: 'BUSINESS' as const,
-      requiredFeatures: ['RISK_SCORING'],
-    },
-    {
-      groupTitle: 'Business users',
-      id: 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
-      title: 'Users breakdown by risk levels',
-      component: RiskLevelDistributionCard,
-      width: 'HALF' as const,
-      userType: 'BUSINESS',
-      requiredFeatures: ['RISK_SCORING'],
-    },
-    {
-      groupTitle: 'Business users',
-      id: 'TOP_BUSINESS_USERS_BY_RULE_HITS',
-      title: 'Top users by rule hits',
-      component: TopUsersHitCard,
-      width: 'HALF' as const,
-      userType: 'BUSINESS',
-    },
-    {
-      groupTitle: 'Business users',
-      id: 'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS',
-      title: 'Users distribution by KYC status',
-      component: KYCStatusDistributionCard,
-      width: 'HALF' as const,
-      userType: 'BUSINESS',
-    },
-    {
-      groupTitle: 'Business users',
-      id: 'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS',
-      title: 'Users distribution by user status',
-      component: UserStatusDistributionCard,
-      width: 'HALF' as const,
-      userType: 'BUSINESS',
-    },
-  ],
+      {
+        id: 'TOP_CONSUMER_USERS_BY_RULE_HITS',
+        title: 'Top users by rule hits',
+        component: TopUsersHitCard,
+        width: 'HALF',
+        userType: 'CONSUMER',
+      },
+      {
+        id: 'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS',
+        title: 'Users distribution by KYC status',
+        component: KYCStatusDistributionCard,
+        width: 'HALF',
+        userType: 'CONSUMER',
+      },
+      {
+        id: 'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
+        title: 'Users distribution by user status',
+        component: UserStatusDistributionCard,
+        width: 'HALF',
+        userType: 'CONSUMER',
+      },
+    ],
+  },
+  BUSINESS_USERS: {
+    groupTitle: 'Business users',
+    items: [
+      {
+        id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+        title: 'Users distribution by risk levels',
+        component: RiskLevelBreakdownCard,
+        width: 'FULL',
+        userType: 'BUSINESS',
+        requiredFeatures: ['RISK_SCORING'],
+      },
+      {
+        id: 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
+        title: 'Users breakdown by risk levels',
+        component: RiskLevelDistributionCard,
+        width: 'HALF',
+        userType: 'BUSINESS',
+        requiredFeatures: ['RISK_SCORING'],
+      },
+      {
+        id: 'TOP_BUSINESS_USERS_BY_RULE_HITS',
+        title: 'Top users by rule hits',
+        component: TopUsersHitCard,
+        width: 'HALF',
+        userType: 'BUSINESS',
+      },
+      {
+        id: 'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS',
+        title: 'Users distribution by KYC status',
+        component: KYCStatusDistributionCard,
+        width: 'HALF',
+        userType: 'BUSINESS',
+      },
+      {
+        id: 'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS',
+        title: 'Users distribution by user status',
+        component: UserStatusDistributionCard,
+        width: 'HALF',
+        userType: 'BUSINESS',
+      },
+    ],
+  },
+  TRANSACTIONS: {
+    groupTitle: 'Transactions',
+    items: [
+      {
+        id: 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
+        title: 'Transactions breakdown by rule action',
+        component: TransactionsChartWidget,
+        width: 'FULL',
+      },
+      {
+        id: 'DISTRIBUTION_BY_PAYMENT_METHOD',
+        title: 'Distribution by payment method',
+        component: PaymentMethodDistributionWidget,
+        width: 'HALF',
+      },
+      {
+        id: 'DISTRIBUTION_BY_TRANSACTION_TYPE',
+        title: 'Distribution by transaction type',
+        component: DistributionByTransactionTypeWidget,
+        width: 'HALF',
+      },
+      {
+        id: 'TRANSACTIONS_BREAKDOWN_BY_TRS',
+        title: 'Transactions breakdown by TRS',
+        component: TransactionTRSChartCard,
+        requiredFeatures: ['RISK_SCORING'],
+      },
+    ],
+  },
+  RULES: {
+    groupTitle: 'Rules',
+    items: [
+      {
+        id: 'TOP_RULE_HITS_BY_COUNT',
+        title: 'Top rule hits by count',
+        component: Widget as (props) => JSX.Element,
+        children: <RuleHitCard />,
+        resizing: 'AUTO',
+      },
+      {
+        id: 'DISTRIBUTION_BY_RULE_PRIORITY',
+        title: 'Distribution by rule priority',
+        component: RulePrioritySplitCard,
+        width: 'HALF',
+      },
+      {
+        id: 'DISTRIBUTION_BY_RULE_ACTION',
+        title: 'Distribution by rule action',
+        component: RuleActionSplitCard,
+        width: 'HALF',
+      },
+    ],
+  },
 
-  TRANSACTIONS: [
-    {
-      groupTitle: 'Transactions',
-      id: 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
-      title: 'Transactions breakdown by rule action',
-      component: TransactionsChartWidget,
-      width: 'FULL',
-    },
-    {
-      groupTitle: 'Transactions',
-      id: 'DISTRIBUTION_BY_PAYMENT_METHOD',
-      title: 'Distribution by payment method',
-      component: PaymentMethodDistributionWidget,
-      width: 'HALF',
-    },
-    {
-      groupTitle: 'Transactions',
-      id: 'DISTRIBUTION_BY_TRANSACTION_TYPE',
-      title: 'Distribution by transaction type',
-      component: DistributionByTransactionTypeWidget,
-      width: 'HALF',
-    },
-    {
-      groupTitle: 'Transactions',
-      id: 'TRANSACTIONS_BREAKDOWN_BY_TRS',
-      title: 'Transactions breakdown by TRS',
-      component: TransactionTRSChartCard,
-      requiredFeatures: ['RISK_SCORING'],
-    },
-  ],
-  RULES: [
-    {
-      groupTitle: 'Rules',
-      id: 'TOP_RULE_HITS_BY_COUNT',
-      title: 'Top rule hits by count',
-      component: Widget as (props) => JSX.Element,
-      children: <RuleHitCard />,
-      resizing: 'AUTO' as const,
-    },
-    {
-      groupTitle: 'Rules',
-      id: 'DISTRIBUTION_BY_RULE_PRIORITY',
-      title: 'Distribution by rule priority',
-      component: RulePrioritySplitCard,
-      width: 'HALF' as const,
-    },
-    {
-      groupTitle: 'Rules',
-      id: 'DISTRIBUTION_BY_RULE_ACTION',
-      title: 'Distribution by rule action',
-      component: RuleActionSplitCard,
-      width: 'HALF' as const,
-    },
-  ],
-  CASE_MANAGEMENT: [
-    {
-      groupTitle: 'Case management',
-      id: 'DISTRIBUTION_BY_CLOSING_REASON',
-      title: 'Distribution by closing reason',
-      component: CaseClosingReasonCard,
-      width: 'HALF',
-    },
-    {
-      groupTitle: 'Case management',
-      id: 'DISTRIBUTION_BY_ALERT_PRIORITY',
-      title: 'Distribution by open alert priority',
-      component: DistributionByAlertPriority,
-    },
-    {
-      groupTitle: 'Case management',
-      id: 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS',
-      title: 'Distribution by status',
-      component: DistributionByStatus,
-    },
-  ],
-  TEAM_MANAGEMENT: [
-    {
-      groupTitle: 'Team management',
-      id: 'TEAM_OVERVIEW',
-      title: 'Team overview',
-      component: TeamPerformanceCard,
-    },
-  ],
-  QA: [
-    {
-      groupTitle: 'QA',
-      id: 'QA_OVERVIEW',
-      title: 'Overview',
-      component: QaOverview,
-      requiredFeatures: ['QA'],
-    },
-    {
-      groupTitle: 'QA',
-      id: 'QA_ALERTS_BY_RULE_HITS',
-      title: 'QA’d alerts overview by rule hit',
-      component: QaAlertsByRuleHits,
-      requiredFeatures: ['QA'],
-    },
-  ],
+  CASE_MANAGEMENT: {
+    groupTitle: 'Case management',
+    items: [
+      {
+        id: 'DISTRIBUTION_BY_CLOSING_REASON',
+        title: 'Distribution by closing reason',
+        component: CaseClosingReasonCard,
+        width: 'HALF',
+      },
+      {
+        id: 'DISTRIBUTION_BY_ALERT_PRIORITY',
+        title: 'Distribution by open alert priority',
+        component: DistributionByAlertPriority,
+      },
+      {
+        id: 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS',
+        title: 'Distribution by status',
+        component: DistributionByStatus,
+      },
+    ],
+  },
+
+  TEAM_MANAGEMENT: {
+    groupTitle: 'Team performance',
+    items: [
+      {
+        id: 'TEAM_OVERVIEW',
+        title: 'Team overview',
+        component: TeamPerformanceCard,
+      },
+    ],
+  },
+  QA: {
+    groupTitle: 'QA',
+    items: [
+      {
+        id: 'QA_OVERVIEW',
+        title: 'Overview',
+        component: QaOverview,
+        requiredFeatures: ['QA'],
+      },
+      {
+        id: 'QA_ALERTS_BY_RULE_HITS',
+        title: 'QA’d alerts overview by rule hit',
+        component: QaAlertsByRuleHits,
+        requiredFeatures: ['QA'],
+      },
+    ],
+  },
 };
 type DashboardSettings = Record<KeyValues, boolean>;
 
@@ -341,7 +344,7 @@ function Analysis() {
   }, [dashboardSettings]);
 
   const renderWidgets = (widgets: WidgetGroup) => {
-    return widgets
+    return widgets.items
       .filter(
         (widget) =>
           (!widget.requiredFeatures ||
@@ -408,7 +411,7 @@ function Analysis() {
               onClick={() => {
                 setDashboardSettings(() =>
                   Object.keys(WIDGETS).reduce((acc, group) => {
-                    WIDGETS[group].forEach((widget: WidgetType) => {
+                    WIDGETS[group].items.forEach((widget: WidgetType) => {
                       acc[widget.id] = updatedState[widget.id];
                     });
                     return acc;
@@ -426,7 +429,7 @@ function Analysis() {
           {Object.keys(WIDGETS).map((group) => (
             <div className={s.settingsDrawerGroup} key={group}>
               <div className={s.groupTitle}>{humanizeConstant(group)}</div>
-              {WIDGETS[group].map((widget: WidgetType) => {
+              {WIDGETS[group].items.map((widget: WidgetType) => {
                 if (!isWidgetVisible(widget)) return null;
 
                 return (
