@@ -666,6 +666,16 @@ export class CdkTarponStack extends cdk.Stack {
       name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
     })
 
+    /* Case (Public) */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME,
+    })
+
+    /* Alert (Public) */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
+    })
+
     /* Device Data (Public) */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME,

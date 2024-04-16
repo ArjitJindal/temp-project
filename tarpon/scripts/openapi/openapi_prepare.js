@@ -72,6 +72,7 @@ async function prepareSchemas(OUTPUT_DIR) {
     const publicManagementSchemaText = (
       await fs.readFile(publicManagementSchemaFile)
     ).toString()
+    const publicManagementSchemaYaml = parse(publicManagementSchemaText)
     const publicSchemaYaml = parse(publicSchemaText)
     const publicDeviceSchemaText = (
       await fs.readFile(publicDeviceSchemaFile)
@@ -108,6 +109,9 @@ async function prepareSchemas(OUTPUT_DIR) {
         ...internalSchemaYaml.components.schemas,
         ...publicSchemaYaml.components.schemas,
         ...publicDeviceSchemaYaml.components.schemas,
+        ..._.pick(publicManagementSchemaYaml.components.schemas, [
+          'ActionReason',
+        ]),
       }
       await fs.copy(internalDir, internalDirOutput)
       await fs.writeFile(
@@ -129,10 +133,7 @@ async function prepareSchemas(OUTPUT_DIR) {
       )
       publicManagementSchemaYaml.components.schemas = {
         ...publicManagementSchemaYaml.components.schemas,
-        ..._.pick(publicSchemaYaml.components.schemas, [
-          'RuleNature',
-          'RuleLabels',
-        ]),
+        ...publicSchemaYaml.components.schemas,
       }
       await fs.writeFile(
         path.resolve(
