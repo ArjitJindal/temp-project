@@ -4,7 +4,7 @@ import {
 } from 'src/pages/rules/RuleConfiguration/RuleConfigurationV2/RuleConfigurationSimulation';
 import RuleConfigurationV2, { Props as V2Props } from './RuleConfigurationV2';
 import RuleConfigurationV8, { Props as V8Props } from './RuleConfigurationV8';
-import { isV8RuleInstance, isV8Rule } from '@/pages/rules/utils';
+import { isV8RuleInstance } from '@/pages/rules/utils';
 import { useHasPermissions } from '@/utils/user-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -27,14 +27,8 @@ export default function RuleConfiguration(props: Props) {
   }
 
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
-  const isV8LibraryEnabled = useFeatureEnabled('RULES_ENGINE_V8_LIBRARY');
 
-  if (
-    isV8Enabled &&
-    (props.rule == null ||
-      isV8RuleInstance(isV8Enabled, props.ruleInstance) ||
-      (isV8LibraryEnabled && !props.ruleInstance && isV8Rule(isV8Enabled, props.rule)))
-  ) {
+  if (isV8Enabled && (props.rule == null || isV8RuleInstance(isV8Enabled, props.ruleInstance))) {
     return <RuleConfigurationV8 {...props} ruleInstance={ruleInstance} readOnly={readOnly} />;
   }
   if (props.rule && props.isSimulation) {

@@ -70,10 +70,6 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Rules Engine V8',
     description: 'Enables new rules Engine V8 (Experimental)',
   },
-  RULES_ENGINE_V8_LIBRARY: {
-    title: 'Rules Engine V8 (library)',
-    description: 'Enables using V8 for supported rules from library (Experimental)',
-  },
   SYNC_TRS_CALCULATION: {
     title: 'Sync TRS Calculation',
     description: 'Allows to sync TRS calculation along with API call',

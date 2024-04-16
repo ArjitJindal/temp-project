@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { isV8Rule } from '../utils';
 import style from './style.module.less';
 import { RulesSearchBar } from './RulesSearchBar';
 import { Rule } from '@/apis';
@@ -49,9 +48,8 @@ const DEFAULT_SORTING: SortingParamsItem = ['id', 'ascend'];
 
 const branding = getBranding();
 
-// TODO: Enalbe simulation for v8 rule (FR-4064)
-function canSimulate(isV8Enabled: boolean, rule: Rule) {
-  return rule.type === 'TRANSACTION' && !isV8Rule(isV8Enabled, rule);
+function canSimulate(rule: Rule) {
+  return rule.type === 'TRANSACTION';
 }
 
 export const RulesTable: React.FC<Props> = (props) => {
@@ -59,7 +57,6 @@ export const RulesTable: React.FC<Props> = (props) => {
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
-  const isV8LibraryEnabled = useFeatureEnabled('RULES_ENGINE_V8_LIBRARY');
 
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const helper = new ColumnHelper<Rule>();
@@ -76,7 +73,7 @@ export const RulesTable: React.FC<Props> = (props) => {
               <>
                 <a
                   onClick={() => {
-                    if (simulationMode && !canSimulate(isV8Enabled && isV8LibraryEnabled, entity)) {
+                    if (simulationMode && !canSimulate(entity)) {
                       return;
                     }
                     onViewRule(entity);
@@ -201,10 +198,7 @@ export const RulesTable: React.FC<Props> = (props) => {
                 size="MEDIUM"
                 type="PRIMARY"
                 onClick={() => onEditRule(entity)}
-                isDisabled={
-                  !canWriteRules ||
-                  (simulationMode && !canSimulate(isV8Enabled && isV8LibraryEnabled, entity))
-                }
+                isDisabled={!canWriteRules || (simulationMode && !canSimulate(entity))}
                 requiredPermissions={
                   simulationMode ? ['simulator:simulations:write'] : ['rules:my-rules:write']
                 }
@@ -217,7 +211,7 @@ export const RulesTable: React.FC<Props> = (props) => {
         },
       }),
     ]);
-  }, [simulationMode, isV8Enabled, isV8LibraryEnabled, onViewRule, canWriteRules, onEditRule]);
+  }, [simulationMode, onViewRule, canWriteRules, onEditRule]);
 
   const [params, setParams] = useState<RulesTableParams>({
     ...DEFAULT_PARAMS_STATE,
