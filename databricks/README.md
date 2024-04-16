@@ -24,6 +24,8 @@ npm run aws-login dev
 
 2. Deploy stack
 
+Go to `/infra` folder and run:
+
 ```
 npm run deploy [stage] [region]
 ```
