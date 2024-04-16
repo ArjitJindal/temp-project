@@ -33,7 +33,7 @@ export class UserCountryOfRegistrationRuleFilter extends UserRuleFilter<UserCoun
       return false
     }
     const userRegistrationCountries = expandCountryGroup(
-      this.parameters.userRegistrationCountries!
+      this.parameters.userRegistrationCountries ?? []
     )
     return userRegistrationCountries.some(
       (x) =>

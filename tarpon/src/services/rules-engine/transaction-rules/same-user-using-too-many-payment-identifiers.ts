@@ -90,7 +90,7 @@ export default class SameUserUsingTooManyPaymentIdentifiersRule extends Transact
 
   private async getData(): Promise<Set<string>> {
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       this.parameters.timeWindow
     )
 

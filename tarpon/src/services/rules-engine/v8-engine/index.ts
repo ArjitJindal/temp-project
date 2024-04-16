@@ -42,7 +42,6 @@ import {
 } from '../utils/transaction-rule-utils'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import {
-  RuleVariableBase,
   TransactionRuleVariable,
   TransactionRuleVariableContext,
 } from '../v8-variables/types'
@@ -77,7 +76,7 @@ export const getJsonLogicEngine = memoizeOne(
   (context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient }) => {
     const jsonLogicEngine = new AsyncLogicEngine()
     RULE_FUNCTIONS.filter((v) => v.run).forEach((v) =>
-      jsonLogicEngine.addMethod(v.key, v.run!)
+      jsonLogicEngine.addMethod(v.key, v.run)
     )
     RULE_OPERATORS.forEach((v) =>
       jsonLogicEngine.addMethod(
@@ -443,7 +442,7 @@ export class RuleJsonLogicEvaluator {
       this.dynamoDb
     )
     const { afterTimestamp, beforeTimestamp } = this.getTimeRange(
-      ruleData.transaction.timestamp!,
+      ruleData.transaction.timestamp,
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
@@ -497,14 +496,14 @@ export class RuleJsonLogicEvaluator {
       // Update aggregation result
       const txEntityVariable = getRuleVariableByKey(
         this.getAggregationVarFieldKey(aggregationVariable, direction)
-      )!
+      )
       const partialTimeAggregatedResult = await groupTransactionsByGranularity(
         targetTransactions,
         async (groupTransactions) => {
           const aggregateValues = await Promise.all(
             groupTransactions.map((transaction) => {
-              const entityVariable: RuleVariableBase = txEntityVariable
-              return entityVariable.load(
+              const entityVariable = txEntityVariable
+              return entityVariable?.load(
                 transaction,
                 aggregationVariable.baseCurrency,
                 this.dynamoDb
@@ -580,7 +579,7 @@ export class RuleJsonLogicEvaluator {
 
       const command = new SendMessageCommand({
         MessageBody: JSON.stringify(task.payload),
-        QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL!,
+        QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL,
         MessageGroupId: generateChecksum(task.userKeyId),
         MessageDeduplicationId: generateChecksum(
           `${task.userKeyId}:${getAggVarHash(aggregationVariable)}:${
@@ -643,8 +642,8 @@ export class RuleJsonLogicEvaluator {
       (await this.aggregationRepository.getUserRuleTimeAggregations(
         userKeyId,
         aggregationVariable,
-        data.transaction.timestamp!,
-        data.transaction.timestamp! + 1,
+        data.transaction.timestamp,
+        data.transaction.timestamp + 1,
         aggregationGranularity
       )) ?? []
     if ((targetAggregations?.length ?? 0) > 1) {
@@ -724,7 +723,7 @@ export class RuleJsonLogicEvaluator {
     }
 
     const { afterTimestamp, beforeTimestamp } = this.getTimeRange(
-      data.transaction.timestamp!,
+      data.transaction.timestamp,
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
@@ -794,8 +793,9 @@ export class RuleJsonLogicEvaluator {
     beforeTimestamp: number
   ): boolean {
     return (
-      data.transaction.timestamp! >= afterTimestamp &&
-      data.transaction.timestamp! <= beforeTimestamp
+      data.transaction.timestamp !== undefined &&
+      data.transaction.timestamp >= afterTimestamp &&
+      data.transaction.timestamp <= beforeTimestamp
     )
   }
 

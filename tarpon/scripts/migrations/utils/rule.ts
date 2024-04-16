@@ -77,13 +77,13 @@ async function renameRuleParameterPrivate(
       ? (rule as Rule).id
       : (rule as RuleInstance).ruleId
     if (
-      !rulesById[ruleId!] ||
+      !rulesById[ruleId ?? ''] ||
       (ruleImplementationNames &&
         !ruleImplementationNames.includes(
-          rulesById[ruleId!].ruleImplementationName!
+          rulesById[ruleId ?? '']?.ruleImplementationName ?? ''
         )) ||
       excludedRuleImplementationNames.includes(
-        rulesById[ruleId!].ruleImplementationName!
+        rulesById[ruleId ?? '']?.ruleImplementationName ?? ''
       )
     ) {
       continue
@@ -174,13 +174,13 @@ async function deleteUnusedRuleParameterPrivate(
       ? (rule as Rule).id
       : (rule as RuleInstance).ruleId
     if (
-      !rulesById[ruleId!] ||
+      !rulesById[ruleId ?? ''] ||
       (ruleImplementationNames &&
         !ruleImplementationNames.includes(
-          rulesById[ruleId!].ruleImplementationName!
+          rulesById[ruleId ?? '']?.ruleImplementationName ?? ''
         )) ||
       excludedRuleImplementationNames.includes(
-        rulesById[ruleId!].ruleImplementationName!
+        rulesById[ruleId ?? '']?.ruleImplementationName ?? ''
       )
     ) {
       continue
@@ -254,7 +254,7 @@ async function addRuleFiltersPrivate(
     const ruleId = isRule(rule)
       ? (rule as Rule).id
       : (rule as RuleInstance).ruleId
-    if (ruleIds && !ruleIds.includes(ruleId!)) {
+    if (ruleIds && !ruleIds.includes(ruleId ?? '')) {
       continue
     }
 

@@ -59,7 +59,7 @@ const REVIEWEE: Account = {
 
 const CASE_TRANSACTION_IDS = ['T-1', 'T-2', 'T-3', 'T-4']
 
-const TEST_ALERT_1: Alert = {
+const TEST_ALERT_1: Alert & { alertId: string } = {
   alertId: 'A-1',
   alertStatus: 'OPEN',
   createdTimestamp: 0,
@@ -73,7 +73,7 @@ const TEST_ALERT_1: Alert = {
   priority: 'P1' as Priority,
 }
 
-const TEST_ALERT_2: Alert = {
+const TEST_ALERT_2: Alert & { alertId: string } = {
   alertId: 'A-2',
   alertStatus: 'CLOSED',
   createdTimestamp: 0,
@@ -331,7 +331,7 @@ describe('Case service', () => {
       const alertsService = await getAlertsService(TEST_TENANT_ID)
       await alertsService.escalateAlerts('C-2', {
         alertEscalations: [
-          { alertId: TEST_ALERT_1.alertId!, transactionIds: [] },
+          { alertId: TEST_ALERT_1.alertId ?? '', transactionIds: [] },
         ],
         caseUpdateRequest: {
           reason: ['Fraud'],
@@ -422,7 +422,7 @@ describe('Case service', () => {
       const caseService = await getCaseService(TEST_TENANT_ID)
 
       const caseEscalationRequest: CaseEscalationRequest = {
-        alertEscalations: [{ alertId: TEST_ALERT_1.alertId! }],
+        alertEscalations: [{ alertId: TEST_ALERT_1.alertId }],
         caseUpdateRequest: { reason: [] },
       }
       const alertsService = await getAlertsService(TEST_TENANT_ID)
@@ -470,7 +470,7 @@ describe('Case service', () => {
       })
 
       await alertsService.escalateAlerts('C-2', {
-        alertEscalations: [{ alertId: TEST_ALERT_1.alertId! }],
+        alertEscalations: [{ alertId: TEST_ALERT_1.alertId }],
         caseUpdateRequest: {
           comment: 'New comment',
           reason: ['Other'],
@@ -550,7 +550,7 @@ describe('Post APIs Alerts Tests', () => {
       body: 'some-comment-2',
     }
 
-    await alertsService.saveComment(TEST_ALERT_1.alertId!, comment)
+    await alertsService.saveComment(TEST_ALERT_1.alertId, comment)
 
     const c = await caseService.getCase('C-1')
 
@@ -583,8 +583,8 @@ describe('Post APIs Alerts Tests', () => {
         },
       ],
     })
-    await alertsService.saveComment(TEST_ALERT_2.alertId!, comment2)
-    await alertsService.deleteComment(TEST_ALERT_1.alertId!, COMMENT_ID_1)
+    await alertsService.saveComment(TEST_ALERT_2.alertId, comment2)
+    await alertsService.deleteComment(TEST_ALERT_1.alertId, COMMENT_ID_1)
 
     const caseAfterDeletion = await caseService.getCase('C-1')
 
@@ -645,8 +645,8 @@ describe('Post APIs Alerts Tests', () => {
       body: 'some-comment-2',
     }
 
-    await alertsService.saveComment(TEST_ALERT_1.alertId!, comment)
-    await alertsService.saveComment(TEST_ALERT_1.alertId!, comment2)
+    await alertsService.saveComment(TEST_ALERT_1.alertId, comment)
+    await alertsService.saveComment(TEST_ALERT_1.alertId, comment2)
 
     const c = await caseService.getCase('C-1')
 
@@ -682,7 +682,7 @@ describe('Post APIs Alerts Tests', () => {
       ],
     })
 
-    await alertsService.deleteComment(TEST_ALERT_1.alertId!, COMMENT_ID_1)
+    await alertsService.deleteComment(TEST_ALERT_1.alertId, COMMENT_ID_1)
 
     const caseAfterDeletion = await caseService.getCase('C-1')
 

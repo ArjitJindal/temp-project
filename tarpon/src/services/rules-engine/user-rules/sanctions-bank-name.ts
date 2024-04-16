@@ -95,7 +95,8 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       await Promise.all(
         bankInfosToCheck.map((bankInfo) =>
           caConcurrencyLimit(async () => {
-            const bankName = bankInfo.bankName!
+            const bankName = bankInfo.bankName
+            if (!bankName) return
             const result = await this.sanctionsService.search(
               {
                 searchTerm: bankName,
@@ -106,7 +107,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
               {
                 entity: 'BANK',
                 userId: this.user.userId,
-                ruleInstanceId: this.ruleInstance.id!,
+                ruleInstanceId: this.ruleInstance.id ?? '',
                 iban: bankInfo.iban,
                 isOngoingScreening: this.ongoingScreeningMode,
               }

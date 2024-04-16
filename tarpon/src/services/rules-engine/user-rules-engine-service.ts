@@ -68,10 +68,12 @@ export class UserManagementService {
 
     if (!isConsumerUser && (userPayload as Business)?.linkedEntities) {
       try {
-        await this.validateLinkedEntitiesAndEmitEvent(
-          (userPayload as Business).linkedEntities!,
-          userPayload.userId
-        )
+        if ((userPayload as Business).linkedEntities) {
+          await this.validateLinkedEntitiesAndEmitEvent(
+            (userPayload as Business).linkedEntities ?? {},
+            userPayload.userId
+          )
+        }
       } catch (e: any) {
         logger.info(typeof e)
         throw new BadRequest(e.message)
@@ -224,7 +226,7 @@ export class UserManagementService {
 
     if (hasFeature('RISK_SCORING')) {
       riskScoreDetails =
-        await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
+        await this.riskScoringService?.calculateAndUpdateKRSAndDRS(
           updatedConsumerUser
         )
     }

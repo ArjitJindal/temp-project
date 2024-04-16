@@ -61,8 +61,8 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
     })
 
     this.transactionRepo = new MongoDbTransactionRepository(
-      this.tenantId!,
-      this.mongoDb!
+      this.tenantId,
+      this.mongoDb
     )
 
     const simulationTaskRepository = new SimulationTaskRepository(
@@ -136,7 +136,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
 
       await simulationResultRepository.saveSimulationResults(usersResultArray)
       await simulationTaskRepository.updateStatistics<SimulationRiskFactorsStatisticsResult>(
-        this.job!.parameters.taskId,
+        this.job?.parameters.taskId,
         this.getStatistics(
           this.extrapolateStats(usersCount, allUsersCount, usersResult),
           this.extrapolateStats(
@@ -233,14 +233,14 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
   private async processAllUsers(
     riskClassificationValues: RiskClassificationScore[]
   ): Promise<SimulationRiskFactorsResult[]> {
-    const sampling = this.job!.sampling.usersCount || 'RANDOM'
+    const sampling = this.job?.sampling.usersCount || 'RANDOM'
     const usersCursor =
       sampling === 'ALL'
-        ? this.userRepository!.getAllUsersCursor()
-        : this.userRepository!.sampleUsersCursor(SAMPLE_USERS_COUNT)
+        ? this.userRepository?.getAllUsersCursor()
+        : this.userRepository?.sampleUsersCursor(SAMPLE_USERS_COUNT)
 
     const usersResultArray: SimulationRiskFactorsResult[] = []
-
+    if (!usersCursor) throw new Error('usersCursor is undefined')
     await processCursorInBatch<InternalUser>(
       usersCursor,
       async (usersChunk) => {
@@ -260,12 +260,12 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
   private async processAllTransactions(
     riskClassificationValues: RiskClassificationScore[]
   ): Promise<void> {
-    const transactionsCursor = this.transactionRepo!.sampleTransactionsCursor(
+    const transactionsCursor = this.transactionRepo?.sampleTransactionsCursor(
       SAMPLE_TRANSACTIONS_COUNT
     )
 
     let transactions: InternalTransaction[] = []
-
+    if (!transactionsCursor) throw new Error('transactionsCursor is undefined')
     await processCursorInBatch<InternalTransaction>(
       transactionsCursor,
       async (transactionsChunk) => {
@@ -298,23 +298,25 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       transactions,
       async (transaction) => {
         const recaluclatedData =
-          await this.riskScoringService!.calculateArsScore(
+          await this.riskScoringService?.calculateArsScore(
             transaction,
             riskClassificationValues,
-            this.job!.parameters.parameterAttributeRiskValues
+            this.job?.parameters.parameterAttributeRiskValues
           )
 
         const riskLevel = getRiskLevelFromScore(
           riskClassificationValues,
-          recaluclatedData.score
+          recaluclatedData?.score ?? 0
         )
 
         const currentRiskLevel =
           transaction.arsScore?.riskLevel || DEFAULT_RISK_LEVEL
         const simulatedRiskLevel = riskLevel
 
-        this.transactionsResult![currentRiskLevel].current++
-        this.transactionsResult![simulatedRiskLevel].simulated++
+        if (this.transactionsResult?.[currentRiskLevel])
+          this.transactionsResult[currentRiskLevel].current++
+        if (this.transactionsResult?.[simulatedRiskLevel])
+          this.transactionsResult[simulatedRiskLevel].simulated++
         this.progress++
       },
       { concurrency: CONCURRENCY }
@@ -347,24 +349,25 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
     user: InternalUser,
     riskClassificationValues: RiskClassificationScore[]
   ): Promise<SimulationRiskFactorsResult> {
-    const recaluclatedData = await this.riskScoringService!.calculateKrsScore(
+    const recaluclatedData = await this.riskScoringService?.calculateKrsScore(
       user,
       riskClassificationValues,
-      this.job!.parameters.parameterAttributeRiskValues
+      this.job?.parameters?.parameterAttributeRiskValues ?? []
     )
 
     const simulatedRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      recaluclatedData.score
+      recaluclatedData?.score ?? 0
     )
 
     const currentRiskLevel = user.krsScore?.riskLevel || DEFAULT_RISK_LEVEL
-
-    this.usersResult![currentRiskLevel].current++
-    this.usersResult![simulatedRiskLevel].simulated++
+    if (this.usersResult?.[currentRiskLevel])
+      this.usersResult[currentRiskLevel].current++
+    if (this.usersResult?.[simulatedRiskLevel])
+      this.usersResult[simulatedRiskLevel].simulated++
 
     return {
-      taskId: this.job!.parameters.taskId,
+      taskId: this.job?.parameters.taskId ?? '',
       type: 'RISK_FACTORS',
       userId: user.userId,
       userName: getUserName(user),
@@ -377,7 +380,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       },
       simulated: {
         krs: {
-          riskScore: recaluclatedData.score,
+          riskScore: recaluclatedData?.score,
           riskLevel: simulatedRiskLevel,
         },
       },

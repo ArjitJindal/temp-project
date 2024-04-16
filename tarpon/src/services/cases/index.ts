@@ -358,7 +358,10 @@ export class CaseService extends CaseAlertsCommonService {
     cases.forEach((c) => {
       const user = c?.caseUsers?.origin ?? c?.caseUsers?.destination
       if (user && user.userId) {
-        usersData.push({ caseId: c.caseId!, user: user as User | Business })
+        usersData.push({
+          caseId: c.caseId ?? '',
+          user: user as User | Business,
+        })
       }
     })
 
@@ -499,7 +502,7 @@ export class CaseService extends CaseAlertsCommonService {
                 caseIds,
                 [
                   {
-                    assigneeUserId: userId!,
+                    assigneeUserId: userId ?? '',
                     assignedByUserId: FLAGRIGHT_SYSTEM_USER,
                     timestamp: Date.now(),
                   },
@@ -507,7 +510,7 @@ export class CaseService extends CaseAlertsCommonService {
                 [
                   {
                     assigneeUserId: accountUser.reviewerId,
-                    assignedByUserId: userId!,
+                    assignedByUserId: userId ?? '',
                     timestamp: Date.now(),
                   },
                 ]
@@ -519,7 +522,7 @@ export class CaseService extends CaseAlertsCommonService {
         updates?.caseStatus === 'CLOSED'
           ? [
               this.caseRepository.updateReviewAssignmentsToAssignments(
-                casesWithPreviousEscalations.map((c) => c.caseId!)
+                casesWithPreviousEscalations.map((c) => c.caseId ?? '')
               ),
             ]
           : []),
@@ -554,7 +557,7 @@ export class CaseService extends CaseAlertsCommonService {
 
         if (updates.caseStatus === 'ESCALATED' && options?.reviewAssignments) {
           await this.alertsService.updateReviewAssignments(
-            alerts.map((a) => a.alertId!),
+            alerts.map((a) => a.alertId ?? ''),
             options.reviewAssignments
           )
         }
@@ -575,7 +578,7 @@ export class CaseService extends CaseAlertsCommonService {
           files: updates.files,
         }
 
-        const alertIds = alerts.map((a) => a.alertId!)
+        const alertIds = alerts.map((a) => a.alertId ?? '')
 
         await this.alertsService.updateStatus(alertIds, alertsStatusChange, {
           bySystem: true,

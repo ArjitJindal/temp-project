@@ -482,8 +482,8 @@ const getTestTransactionSuccess = async () => {
           updatedTransactionAttributes: {
             ...transactionEventPayload.updatedTransactionAttributes,
             originPaymentDetails: {
-              ...transactionEventPayload.updatedTransactionAttributes!
-                .originPaymentDetails,
+              ...transactionEventPayload?.updatedTransactionAttributes
+                ?.originPaymentDetails,
               cardIssuedCountry: 'AB' as any,
             } as any,
           },

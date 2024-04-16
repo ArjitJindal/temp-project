@@ -143,9 +143,9 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     const {
       afterTimestamp: afterTimestamp1,
       beforeTimestamp: beforeTimestamp1,
-    } = getTimestampRange(this.transaction.timestamp!, timeWindow1)
+    } = getTimestampRange(this.transaction.timestamp, timeWindow1)
     const { afterTimestamp: afterTimestamp2 } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       timeWindow2
     )
     const [

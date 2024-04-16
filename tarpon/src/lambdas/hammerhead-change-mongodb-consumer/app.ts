@@ -99,7 +99,7 @@ async function krsScoreEventHandler(
 
 const hammerheadBuilder = new StreamConsumerBuilder(
   path.basename(__dirname) + '-hammerhead',
-  process.env.HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL!,
+  process.env.HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL ?? '',
   StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
 )
   .setArsScoreEventHandler((tenantId, oldArsScore, newArsScore) =>

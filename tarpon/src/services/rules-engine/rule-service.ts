@@ -400,7 +400,7 @@ export class RuleService {
         rule.defaultRiskLevelParameters
       )
       RuleService.validateRuleParametersSchema(
-        ALL_RULES[rule.ruleImplementationName!].getSchema(),
+        ALL_RULES[rule.ruleImplementationName ?? ''].getSchema(),
         rule.defaultParameters,
         rule.defaultRiskLevelParameters
       )
@@ -548,7 +548,7 @@ You have to answer in below format as string. If you don't know any field, just 
     if (!isEmpty(riskLevelRuleLogic)) {
       // all keys in riskLevelRuleLogic should be in RISK_LEVELS
       const logic = riskLevelRuleLogic as RuleInstance['riskLevelLogic']
-      const riskLevelKeys = Object.keys(logic!).filter(
+      const riskLevelKeys = Object.keys(logic ?? {}).filter(
         (key) => !RISK_LEVELS.includes(key as RiskLevel)
       )
 
@@ -558,6 +558,14 @@ You have to answer in below format as string. If you don't know any field, just 
             ', '
           )}`
         )
+
+        if (riskLevelKeys.length > 0) {
+          throw new Error(
+            `Invalid risk-level logic: unknown risk-levels: ${riskLevelKeys.join(
+              ', '
+            )}`
+          )
+        }
       }
     }
     const logicToCheck = [

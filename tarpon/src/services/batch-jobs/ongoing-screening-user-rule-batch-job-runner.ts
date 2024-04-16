@@ -89,41 +89,46 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
 
   private async verifyUserRulesOneByOne() {
     const ruleInstances = await getOngoingScreeningUserRuleInstances(
-      this.tenantId!
+      this.tenantId ?? ''
     )
 
     if (ruleInstances.length === 0) {
       logger.info('No active ongoing screening user rule found. Abort.')
       return
     }
-    const rules = await this.ruleRepository!.getRulesByIds(
-      ruleInstances.map((ruleInstance) => ruleInstance.ruleId!)
-    )
+    const rules =
+      (await this.ruleRepository?.getRulesByIds(
+        ruleInstances.map((ruleInstance) => ruleInstance.ruleId ?? '')
+      )) ?? []
 
-    const usersCursor = this.userRepository!.getAllUsersCursor()
-
-    await processCursorInBatch<InternalUser>(
-      usersCursor,
-      async (usersChunk) => {
-        await this.runUsersBatch(usersChunk, rules, ruleInstances)
-      },
-      { mongoBatchSize: 1000, processBatchSize: 1000 }
-    )
+    const usersCursor = this.userRepository?.getAllUsersCursor()
+    if (usersCursor) {
+      await processCursorInBatch<InternalUser>(
+        usersCursor,
+        async (usersChunk) => {
+          await this.runUsersBatch(usersChunk, rules, ruleInstances)
+        },
+        { mongoBatchSize: 1000, processBatchSize: 1000 }
+      )
+    }
   }
 
   private async verifyAllUserRules() {
     const ruleInstances = await this.getUserOngoingScreeningRuleInstances()
-    if (!ruleInstances.length) {
+    if (!ruleInstances?.length) {
       return
     }
-
-    const data = await this.rulesEngineService!.verifyAllUsersRules()
-
+    if (!this.rulesEngineService) {
+      throw new Error('Rules Engine Service is not initialized')
+    }
+    const data = await this.rulesEngineService.verifyAllUsersRules()
+    if (!this.userRepository) {
+      throw new Error('User Repository is not initialized')
+    }
     await pMap(
       Object.keys(data),
       async (userId) => {
-        const user = await this.userRepository!.getUserById(userId)
-
+        const user = await this.userRepository?.getUserById(userId)
         if (!user) {
           return
         }
@@ -132,7 +137,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         const existingHitResults = user.hitRules ?? []
 
         if (!isEqual(hitResults, existingHitResults)) {
-          await this.userRepository!.updateUserWithExecutedRules(
+          await this.userRepository?.updateUserWithExecutedRules(
             userId,
             data[userId].executedRules ?? [],
             data[userId].hitRules ?? []
@@ -144,7 +149,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   }
 
   private async getUserOngoingScreeningRuleInstances() {
-    return await this.ruleInstanceRepository!.getActiveRuleInstances(
+    return await this.ruleInstanceRepository?.getActiveRuleInstances(
       'USER_ONGOING_SCREENING'
     )
   }
@@ -157,7 +162,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     await pMap(
       usersChunk,
       async (user) => {
-        const result = await this.rulesEngineService!.verifyUserByRules(
+        const result = await this.rulesEngineService?.verifyUserByRules(
           user,
           ruleInstances,
           rules,
@@ -165,21 +170,21 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         )
 
         if (
-          result.hitRules?.length &&
+          result?.hitRules?.length &&
           !isEqual(user.hitRules ?? [], result.hitRules ?? [])
         ) {
           const timestampBeforeCasesCreation = Date.now()
 
-          const cases = await this.caseCreationService!.handleUser({
+          const cases = await this.caseCreationService?.handleUser({
             ...user,
             hitRules: result.hitRules,
             executedRules: result.executedRules,
           })
 
-          await this.caseCreationService!.handleNewCases(
-            this.tenantId!,
+          await this.caseCreationService?.handleNewCases(
+            this.tenantId ?? '',
             timestampBeforeCasesCreation,
-            cases
+            cases ?? []
           )
         }
       },

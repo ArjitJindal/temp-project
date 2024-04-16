@@ -90,7 +90,7 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     for (const group in groupCounts) {
       if (
         (!this.parameters.initialTransactions ||
-          groupCounts[group] > this.parameters.initialTransactions!) &&
+          groupCounts[group] > this.parameters.initialTransactions) &&
         groupCounts[group] > this.parameters.transactionsLimit
       ) {
         return {
@@ -138,7 +138,7 @@ export default abstract class TransactionsPatternVelocityBaseRule<
       checkReceiver = 'all',
     } = this.parameters
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       timeWindow
     )
     const userAggregationData = await this.getRuleAggregations<AggregationData>(

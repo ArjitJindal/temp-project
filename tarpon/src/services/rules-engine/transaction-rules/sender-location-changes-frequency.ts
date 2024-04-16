@@ -104,7 +104,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     transactionsCount: number
   }> {
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       this.parameters.timeWindow
     )
     const userAggregationData = await this.getRuleAggregations<AggregationData>(

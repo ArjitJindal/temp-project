@@ -274,7 +274,7 @@ export async function* getTransactionUserPastTransactionsGenerator(
     filters,
   } = options
   const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-    transaction.timestamp!,
+    transaction.timestamp,
     timeWindow
   )
   const senderTransactionsGenerator =
@@ -338,7 +338,10 @@ export async function groupTransactionsByGranularity<T>(
   return groupTransactions(
     transactions,
     (transaction) =>
-      getTransactionStatsTimeGroupLabel(transaction.timestamp!, granularity),
+      getTransactionStatsTimeGroupLabel(
+        transaction.timestamp ?? 0,
+        granularity
+      ),
     aggregator
   )
 }
@@ -395,7 +398,7 @@ export function removePrefixFromName(
   toLowerCase: boolean = false
 ): string {
   prefixes.forEach((prefix) => {
-    name = name!.replace(new RegExp(`^${prefix}\\.? `, 'gi'), '')
+    name = name?.replace(new RegExp(`^${prefix}\\.? `, 'gi'), '')
   })
   if (toLowerCase) {
     name = name.toLowerCase()

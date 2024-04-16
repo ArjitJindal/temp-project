@@ -25,6 +25,8 @@ export class UserIdRuleFilter extends UserRuleFilter<UserIdRuleFilterParameter> 
     }
   }
   public async predicate(): Promise<boolean> {
-    return this.parameters.userIds!.includes(this.user.userId)
+    return this.parameters.userIds === undefined
+      ? false
+      : this.parameters.userIds.includes(this.user.userId)
   }
 }

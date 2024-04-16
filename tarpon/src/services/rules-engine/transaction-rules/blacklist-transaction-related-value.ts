@@ -53,7 +53,7 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
     for (const field of transactionFieldsToMatch) {
       const match = await listRepo.match(
         listHeader.listId,
-        field.value! as string,
+        field.value as string,
         'EXACT'
       )
 

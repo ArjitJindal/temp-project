@@ -147,7 +147,7 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
     userIds: Set<string>
   }> {
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       this.parameters.timeWindow
     )
     const userAggregationData = await this.getRuleAggregations<AggregationData>(
@@ -213,7 +213,7 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
       userIds: Array.from(
         new Set(
           (targetAggregationData?.userIds ?? []).concat(
-            this.transaction.originUserId!
+            this.transaction.originUserId ?? ''
           )
         )
       ),

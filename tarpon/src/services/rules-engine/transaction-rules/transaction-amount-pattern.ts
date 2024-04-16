@@ -40,8 +40,8 @@ export default class TransactionMatchesPatternRule extends TransactionRule<Trans
 
     const originTransactionAmountString = String(
       checkDecimal
-        ? originTransactionAmount!
-        : Math.trunc(originTransactionAmount!)
+        ? originTransactionAmount
+        : Math.trunc(originTransactionAmount)
     )
     const matchPattern = patterns.find((patterns) =>
       originTransactionAmountString.endsWith(patterns)

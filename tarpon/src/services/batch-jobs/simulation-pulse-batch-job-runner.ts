@@ -169,8 +169,8 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
     sampling?: SimulationRiskLevelsSampling
   ): Promise<SimulationResult> {
     const currentClassificationValues =
-      await this.riskRepository!.getRiskClassificationValues()
-    const users = await this.usersRepository!.getMongoAllUsers({
+      (await this.riskRepository?.getRiskClassificationValues()) ?? []
+    const users = await this.usersRepository?.getMongoAllUsers({
       pageSize: sampling?.usersCount ?? Number.MAX_SAFE_INTEGER,
     })
     const userResults: Array<
@@ -180,13 +180,13 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
       current: [] as RiskLevel[],
       simulated: [] as RiskLevel[],
     }
-    for (const user of users.data) {
+    for (const user of users?.data ?? []) {
       const userTransactions = await this.getUserTransactions(
         user.userId,
         sampling
       )
       const currentTransactionRiskLevels = userTransactions
-        .map(
+        ?.map(
           (transaction) =>
             transaction.arsScore?.arsScore &&
             getRiskLevelFromScore(
@@ -196,7 +196,7 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
         )
         .filter(Boolean) as RiskLevel[]
       const simulatedTransactionRiskLevels = userTransactions
-        .map(
+        ?.map(
           (transaction) =>
             transaction.arsScore?.arsScore &&
             getRiskLevelFromScore(
@@ -258,11 +258,11 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
     sampling?: SimulationRiskLevelsSampling
   ): Promise<SimulationResult> {
     const currentClassificationValues =
-      await this.riskRepository!.getRiskClassificationValues()
+      (await this.riskRepository?.getRiskClassificationValues()) ?? []
     const newClassificationValues = isEmpty(classificationValues)
       ? currentClassificationValues
       : (classificationValues as RiskClassificationScore[])
-    const users = await this.usersRepository!.getMongoAllUsers({
+    const users = await this.usersRepository?.getMongoAllUsers({
       pageSize: sampling?.usersCount ?? Number.MAX_SAFE_INTEGER,
     })
 
@@ -273,30 +273,31 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
       current: [] as RiskLevel[],
       simulated: [] as RiskLevel[],
     }
-    for (const user of users.data) {
+    for (const user of users?.data ?? []) {
       const { score: userKrsScore } =
-        await this.riskScoringService!.calculateKrsScore(
+        (await this.riskScoringService?.calculateKrsScore(
           user,
           newClassificationValues,
           parameterAttributeRiskValues
-        )
+        )) ?? { score: 0 }
       const userTransactions = await this.getUserTransactions(
         user.userId,
         sampling
       )
       let userCurrentDrsScore = userKrsScore
 
-      for (const transaction of userTransactions) {
+      for (const transaction of userTransactions ?? []) {
         const { score: arsScore } =
-          await this.riskScoringService!.simulateArsScore(
+          (await this.riskScoringService?.simulateArsScore(
             transaction,
             newClassificationValues,
             parameterAttributeRiskValues
-          )
-        userCurrentDrsScore = this.riskScoringService!.calculateDrsScore(
-          userCurrentDrsScore,
-          arsScore
-        )
+          )) ?? { score: 0 }
+        userCurrentDrsScore =
+          this.riskScoringService?.calculateDrsScore(
+            userCurrentDrsScore,
+            arsScore
+          ) ?? 0
         if (transaction.arsScore?.arsScore) {
           transactionResults.current.push(
             getRiskLevelFromScore(
@@ -359,14 +360,14 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
     sampling?: SimulationRiskLevelsSampling
   ) {
     const userTransactions = (
-      await this.transactionRepository!.getTransactions({
+      await this.transactionRepository?.getTransactions({
         pageSize:
           sampling?.userLatestTransactionsCount || Number.MAX_SAFE_INTEGER,
         filterUserId: userId,
         sortField: 'timestamp',
         sortOrder: 'descend',
       })
-    ).data
+    )?.data
     return userTransactions
   }
 }

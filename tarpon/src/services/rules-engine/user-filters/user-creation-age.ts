@@ -42,7 +42,7 @@ export class UserCreationAgeRuleFilter extends UserRuleFilter<UserCreationAgeRul
   }
 
   private isUserBetweenAge(user: User | Business): boolean {
-    const { minAge, maxAge } = this.parameters.userCreationAgeRange!
+    const { minAge, maxAge } = this.parameters.userCreationAgeRange ?? {}
     const creationAgeInMs = dayjs().diff(dayjs(user.createdTimestamp), 'ms')
     return inRange(
       creationAgeInMs,

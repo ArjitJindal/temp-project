@@ -215,7 +215,7 @@ export function sampleTransactionUserCases(params: {
         tags: uniqObjects(caseTransactions.flatMap((t) => t.tags ?? [])),
       },
 
-      caseTransactionsIds: caseTransactions.map((t) => t.transactionId!),
+      caseTransactionsIds: caseTransactions.map((t) => t.transactionId),
       alerts: ruleHits
         .filter((rh) => rh.nature === nature)
         .map((ruleHit) =>
@@ -264,8 +264,8 @@ export function sampleAlert(params: {
   const isFirstPaymentRule = params.ruleHit.ruleId === 'R-1'
   const transactions = params.transactions
   const transactionIds = isFirstPaymentRule
-    ? [transactions[0].transactionId!]
-    : transactions.map((t) => t.transactionId!)
+    ? [transactions[0].transactionId]
+    : transactions.map((t) => t.transactionId)
 
   return {
     ...params.ruleHit,

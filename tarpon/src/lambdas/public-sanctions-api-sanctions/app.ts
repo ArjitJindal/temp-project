@@ -60,9 +60,11 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         apiSearchRequest: searchRequest,
         monitoring: searchRequest.monitoring,
       })
-      return internalToPublicSearchResult(
-        (await sanctionsService.getSearchHistory(searchResult.searchId))!
+      const searchHistory = await sanctionsService.getSearchHistory(
+        searchResult.searchId
       )
+      if (!searchHistory) throw Error('No search history found')
+      return internalToPublicSearchResult(searchHistory)
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/searches/{searchId}' &&

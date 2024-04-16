@@ -184,7 +184,7 @@ export class AlertsService extends CaseAlertsCommonService {
   ): Promise<{ valid: boolean }> {
     const alerts = await this.alertsRepository.validateAlertsQAStatus(alertIds)
     const requiredAlerts = alerts.filter((alert) =>
-      alertIds.includes(alert.alertId!)
+      alertIds.includes(alert.alertId ?? '')
     )
     const valid = requiredAlerts.every((alert) =>
       alert.ruleChecklist?.every((item) => item.status)
@@ -265,14 +265,14 @@ export class AlertsService extends CaseAlertsCommonService {
     const reviewAssignments = this.getEscalationAssignments(accounts)
 
     const escalatedAlerts = c.alerts?.filter((alert) =>
-      alertEscalations!.some(
+      alertEscalations?.some(
         (alertEscalation) => alertEscalation.alertId === alert.alertId
       )
     )
 
     const remainingAlerts = c.alerts?.filter(
       (alert) =>
-        !alertEscalations!.some(
+        !alertEscalations?.some(
           (alertEscalation) =>
             alertEscalation.alertId === alert.alertId &&
             // Keep the original alert if only some transactions were escalated
@@ -331,7 +331,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const escalatedAlertsDetails = escalatedAlerts?.map(
       (escalatedAlert: Alert): Alert => {
         const lastStatusChange: CaseStatusChange = {
-          userId: currentUserId!,
+          userId: currentUserId ?? '',
           caseStatus:
             isTransactionsEscalation && isReviewRequired
               ? 'IN_REVIEW_ESCALATED'
@@ -342,7 +342,7 @@ export class AlertsService extends CaseAlertsCommonService {
           },
         }
 
-        const escalationAlertReq = alertEscalations!.find(
+        const escalationAlertReq = alertEscalations?.find(
           (alertEscalation) =>
             alertEscalation.alertId === escalatedAlert.alertId
         )
@@ -368,7 +368,7 @@ export class AlertsService extends CaseAlertsCommonService {
             isReviewRequired && currentUserAccount.reviewerId
               ? [
                   {
-                    assignedByUserId: currentUserId!,
+                    assignedByUserId: currentUserId ?? '',
                     assigneeUserId: currentUserAccount.reviewerId,
                     timestamp: currentTimestamp,
                   },
@@ -498,7 +498,7 @@ export class AlertsService extends CaseAlertsCommonService {
     await caseRepository.addCaseMongo(omit(newCase, '_id'))
     await caseRepository.addCaseMongo(updatedExistingCase)
 
-    await caseService.updateStatus([newCase.caseId!], {
+    await caseService.updateStatus([newCase.caseId ?? ''], {
       ...caseUpdateRequest,
       caseStatus: newCase.caseStatus,
     })
@@ -551,7 +551,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const userId = getContext()?.user?.id
 
     const savedComment = await this.alertsRepository.saveComment(
-      alert.caseId!,
+      alert.caseId ?? '',
       alertId,
       { ...comment, files, userId }
     )
@@ -758,7 +758,7 @@ export class AlertsService extends CaseAlertsCommonService {
       account,
       updateChecklistStatus = true,
     } = options ?? {}
-    const userId = getContext()?.user?.id
+    const userId = getContext()?.user?.id ?? ''
     const statusChange: CaseStatusChange = {
       userId: bySystem
         ? FLAGRIGHT_SYSTEM_USER
@@ -785,7 +785,7 @@ export class AlertsService extends CaseAlertsCommonService {
       { mongoDb: this.mongoDb }
     )
 
-    const userAccount = account ?? (await accountsService.getAccount(userId!))
+    const userAccount = account ?? (await accountsService.getAccount(userId))
 
     if (userAccount == null) {
       throw new Error(`User account not found`)
@@ -833,7 +833,7 @@ export class AlertsService extends CaseAlertsCommonService {
       isReview = true
     }
 
-    const caseIds = cases.map((c) => c.caseId!)
+    const caseIds = cases.map((c) => c.caseId ?? '')
     const commentBody = this.getAlertStatusChangeCommentBody(
       statusUpdateRequest,
       alerts[0]?.alertStatus
@@ -861,7 +861,7 @@ export class AlertsService extends CaseAlertsCommonService {
                 alertIds,
                 [
                   {
-                    assigneeUserId: userId!,
+                    assigneeUserId: userId,
                     assignedByUserId: FLAGRIGHT_SYSTEM_USER,
                     timestamp: Date.now(),
                   },
@@ -869,7 +869,7 @@ export class AlertsService extends CaseAlertsCommonService {
                 [
                   {
                     assigneeUserId: userAccount.reviewerId,
-                    assignedByUserId: userId!,
+                    assignedByUserId: userId,
                     timestamp: Date.now(),
                   },
                 ]
@@ -881,7 +881,9 @@ export class AlertsService extends CaseAlertsCommonService {
         statusUpdateRequest?.alertStatus === 'CLOSED'
           ? [
               this.alertsRepository.updateReviewAssignmentsToAssignments(
-                alertsWithPreviousEscalations.map((alert) => alert.alertId!)
+                alertsWithPreviousEscalations?.map(
+                  (alert) => alert.alertId ?? ''
+                )
               ),
             ]
           : []),
@@ -1072,9 +1074,7 @@ export class AlertsService extends CaseAlertsCommonService {
       return // No changes made to the checklist
     }
     alert.ruleChecklist = updatedChecklist
-
-    await this.alertsRepository.saveAlert(alert.caseId!, alert)
-
+    await this.alertsRepository.saveAlert(alert.caseId ?? '', alert)
     await this.auditLogService.handleAuditLogForChecklistUpdate(
       alertId,
       originalChecklist,
@@ -1111,13 +1111,13 @@ export class AlertsService extends CaseAlertsCommonService {
     alert.ruleChecklist = updatedChecklist
 
     await Promise.all([
-      this.alertsRepository.saveAlert(alert.caseId!, alert),
+      this.alertsRepository.saveAlert(alert.caseId ?? '', alert),
       this.auditLogService.handleAuditLogForChecklistUpdate(
         alertId,
         originalChecklist,
         updatedChecklist
       ),
-      this.alertsRepository.updateAlertQACountInSampling(alert.alertId!),
+      this.alertsRepository.updateAlertQACountInSampling(alert.alertId ?? ''),
     ])
   }
 
@@ -1221,7 +1221,7 @@ export class AlertsService extends CaseAlertsCommonService {
         }
 
         await Promise.all([
-          this.alertsRepository.saveAlert(alert.caseId!, alert),
+          this.alertsRepository.saveAlert(alert.caseId ?? '', alert),
           this.auditLogService.handleAuditLogForAlertQaUpdate(
             alert.alertId as string,
             update
@@ -1241,7 +1241,7 @@ export class AlertsService extends CaseAlertsCommonService {
     }
 
     alert.qaAssignment = assignments
-    await this.alertsRepository.saveAlert(alert.caseId!, alert)
+    await this.alertsRepository.saveAlert(alert.caseId ?? '', alert)
   }
 
   async createAlertsQaSampling(

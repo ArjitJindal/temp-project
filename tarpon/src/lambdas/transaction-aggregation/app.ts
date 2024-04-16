@@ -114,7 +114,9 @@ export async function handleTransactionAggregationTask(
       transaction.destinationUserId
         ? userRepository.getUser<User | Business>(transaction.destinationUserId)
         : undefined,
-      ruleRepository.getRuleById(ruleInstance.ruleId!),
+      ruleInstance.ruleId
+        ? ruleRepository.getRuleById(ruleInstance.ruleId)
+        : undefined,
       transaction.originUserId
         ? riskRepository.getDRSRiskItem(transaction.originUserId)
         : undefined,
@@ -128,13 +130,13 @@ export async function handleTransactionAggregationTask(
     return
   }
 
-  const ruleImplementationName = rule.ruleImplementationName
+  const ruleImplementationName = rule.ruleImplementationName ?? ''
   const senderUserRiskLevel =
     senderUserRisk?.manualRiskLevel ??
     senderUserRisk?.derivedRiskLevel ??
     DEFAULT_RISK_LEVEL
 
-  const RuleClass = TRANSACTION_RULES[ruleImplementationName!]
+  const RuleClass = TRANSACTION_RULES[ruleImplementationName]
 
   const mode = 'DYNAMODB'
 

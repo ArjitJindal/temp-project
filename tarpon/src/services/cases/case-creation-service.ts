@@ -245,16 +245,16 @@ export class CaseCreationService {
         tags: compact(uniqObjects(transactions.flatMap((t) => t.tags ?? []))),
       },
     })
-
+    if (!case_.caseId) throw Error('Cannot find CaseId')
     const comment = this.getManualCaseComment(
       manualCaseData,
-      case_.caseId!,
+      case_.caseId,
       files,
       transactions.map((t) => t.transactionId)
     )
 
     await this.auditLogService.createAuditLog({
-      caseId: case_?.caseId ?? '',
+      caseId: case_?.caseId,
       logAction: 'CREATE',
       caseDetails: case_, // Removed case transactions to prevent sqs message size limit
       newImage: case_,
@@ -262,7 +262,7 @@ export class CaseCreationService {
       subtype: 'MANUAL_CASE_CREATION',
     })
 
-    await this.caseRepository.saveComment(case_.caseId!, comment)
+    await this.caseRepository.saveComment(case_.caseId, comment)
 
     return case_
   }

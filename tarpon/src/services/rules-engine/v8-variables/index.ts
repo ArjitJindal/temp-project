@@ -111,7 +111,7 @@ function txEntityVariableWithoutDirection(variables: RuleVariable[]) {
     // Add one more direction-less variable for variables with direction
     let updatedKey = variable.key.replace(/^origin/, '')
     updatedKey = updatedKey.charAt(0).toLowerCase() + updatedKey.slice(1)
-    const updatedLabel = variable.uiDefinition.label!.replace(/^origin\s+/, '')
+    const updatedLabel = variable.uiDefinition.label?.replace(/^origin\s+/, '')
     return [
       variable,
       {
@@ -213,10 +213,10 @@ function updatedTransactionEntityVariables(
 ) {
   const originAmountVariable = variables.find(
     (v) => v.key === ORIGIN_TRANSACTION_AMOUNT_KEY
-  )!
+  )
   const destinationAmountVariable = variables.find(
     (v) => v.key === DESTINATION_TRANSACTION_AMOUNT_KEY
-  )!
+  )
   const loadTransactionAmount = async (
     amountDetails: TransactionAmountDetails | undefined,
     context: TransactionRuleVariableContext
@@ -233,14 +233,25 @@ function updatedTransactionEntityVariables(
     )
     return amount.transactionAmount ?? NaN
   }
-  originAmountVariable.load = async (transaction, context) => {
-    return await loadTransactionAmount(transaction.originAmountDetails, context)
+  if (originAmountVariable) {
+    originAmountVariable.load = async (transaction, context) => {
+      return await loadTransactionAmount(
+        transaction.originAmountDetails,
+        context
+      )
+    }
+  } else {
+    logger.error('Cannot find origin amount variable')
   }
-  destinationAmountVariable.load = async (transaction, context) => {
-    return await loadTransactionAmount(
-      transaction.destinationAmountDetails,
-      context
-    )
+  if (destinationAmountVariable)
+    destinationAmountVariable.load = async (transaction, context) => {
+      return await loadTransactionAmount(
+        transaction.destinationAmountDetails,
+        context
+      )
+    }
+  else {
+    logger.error('Cannot find destination amount variable')
   }
 }
 

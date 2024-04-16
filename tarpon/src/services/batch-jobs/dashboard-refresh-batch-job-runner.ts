@@ -77,7 +77,7 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
           .toArray()
 
         const targetTimeRanges = getTargetTimeRanges(
-          cases.map((c) => c.createdTimestamp!)
+          cases.map((c) => c.createdTimestamp ?? 0)
         )
 
         for (const timeRange of targetTimeRanges) {
@@ -137,7 +137,7 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
           )
         ).toArray()
         const targetTimeRanges = getTargetTimeRanges(
-          users.map((c) => c.createdTimestamp!)
+          users.map((c) => c.createdTimestamp ?? 0)
         )
 
         for (const timeRange of targetTimeRanges) {

@@ -76,8 +76,9 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
 
   public async computeRule() {
     if (
+      this.transaction.transactionState &&
       !this.parameters.transactionStates.includes(
-        this.transaction.transactionState!
+        this.transaction.transactionState
       )
     ) {
       return
@@ -217,7 +218,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     let checkSender = this.parameters.checkSender
     let checkReceiver = this.parameters.checkReceiver
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp ?? 0,
       this.parameters.timeWindow
     )
     const [originAggregationData, destinationAggregationData] =

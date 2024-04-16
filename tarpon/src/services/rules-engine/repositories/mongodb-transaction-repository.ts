@@ -1478,7 +1478,7 @@ export class MongoDbTransactionRepository
       const tx = transaction as InternalTransaction
       const isValid = transactionTimeRange
         ? transactionTimeRangeRuleFilterPredicate(
-            tx.timestamp!,
+            tx.timestamp,
             transactionTimeRange
           )
         : true
