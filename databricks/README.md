@@ -22,7 +22,13 @@ make all_checks
 npm run aws-login dev
 ```
 
-2. Deploy stack
+2. Generate `openapi` folder:
+
+```
+make generate
+```
+
+3. Deploy stack
 
 Go to `/infra` folder and run:
 
