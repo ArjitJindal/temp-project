@@ -53,7 +53,7 @@ import TextArea from '@/components/library/TextArea';
 import { humanizeConstant } from '@/utils/humanize';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import { getAlertUrl, getCaseUrl } from '@/utils/routing';
+import { getAlertUrl, getCaseUrl, makeUrl } from '@/utils/routing';
 import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { useApi } from '@/api';
@@ -712,5 +712,69 @@ export const PRIORITY: ColumnDataType<Priority> = {
       return <></>;
     }
     return <PriorityTag priority={priority} />;
+  },
+};
+
+export const FORENSICS_ENTITY_ID: ColumnDataType<string> = {
+  render: (value, { item }) => {
+    const entity = item as object;
+    const key = Object.keys(entity).find((key) => entity?.[key] === value);
+    switch (key) {
+      case 'User ID':
+        return (
+          <Id
+            to={addBackUrlToRoute(
+              makeUrl(`/users/list/:list/:id`, {
+                list: entity?.['User type'] === 'CONSUMER' ? 'consumer' : 'business',
+                id: value,
+              }),
+            )}
+            toNewTab
+          >
+            {value}
+          </Id>
+        );
+      case 'Alert ID':
+        return (
+          <Id to={addBackUrlToRoute(getAlertUrl(entity?.['Case ID'], value ?? '#'))} toNewTab>
+            {value}
+          </Id>
+        );
+      case 'Case ID':
+      case 'Related case':
+        return (
+          <Id to={addBackUrlToRoute(getCaseUrl(value ?? '#'))} toNewTab>
+            {value}
+          </Id>
+        );
+      case 'Transaction ID':
+        return (
+          <Id
+            to={addBackUrlToRoute(
+              makeUrl(`/transactions/item/:id`, {
+                id: value,
+              }),
+            )}
+            toNewTab
+          >
+            {value}
+          </Id>
+        );
+      case 'SAR ID':
+        return (
+          <Id
+            to={addBackUrlToRoute(
+              makeUrl(`/reports/:id`, {
+                id: value,
+              }),
+            )}
+            toNewTab
+          >
+            {value}
+          </Id>
+        );
+      default:
+        return <Id>{value}</Id>;
+    }
   },
 };
