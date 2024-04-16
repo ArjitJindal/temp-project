@@ -23,7 +23,7 @@ import {
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
 // We use the checksum of the openAPI specifications to determine whether views need updating.
-const schemaVersion = checksumFolder('../src/openapi')
+const schemaVersion = checksumFolder('../openapi')
 const adminEmails = [
   'tim+databricks@flagright.com',
   'nadig@flagright.com',
