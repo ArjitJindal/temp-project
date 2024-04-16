@@ -8,7 +8,6 @@ import {
   FLOAT,
   LONG_TEXT,
   BOOLEAN,
-  ID,
   TRANSACTION_TYPE,
   DATE_TIME,
   PAYMENT_METHOD,
@@ -17,6 +16,7 @@ import {
   MONEY_AMOUNT,
   MONEY_CURRENCY,
   COUNTRY,
+  FORENSICS_ENTITY_ID,
 } from '@/components/library/Table/standardDataTypes';
 import { ColumnDataType, CommonParams } from '@/components/library/Table/types';
 
@@ -53,7 +53,7 @@ export const typeAssigner = (columnType: string | undefined) => {
       break;
     }
     case 'ID': {
-      type = ID;
+      type = FORENSICS_ENTITY_ID;
       break;
     }
     case 'TRANSACTION_TYPE': {

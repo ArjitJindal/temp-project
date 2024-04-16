@@ -14,6 +14,7 @@ import {
 export const AlertHistory: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.ALERTS,
+  version: 2,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }, vars) => {
     return `Alerts for ${username} ${humanReadablePeriod(vars)}`
@@ -37,6 +38,7 @@ export const AlertHistory: TableQuestion<Period> = {
       return (
         r.alerts?.map((a) => [
           a.alertId,
+          a.caseId,
           r.createdTimestamp,
           a.numberOfTransactionsHit,
           a.ruleId,
@@ -67,6 +69,7 @@ export const AlertHistory: TableQuestion<Period> = {
   },
   headers: [
     { name: 'Alert ID', columnType: 'ID' },
+    { name: 'Case ID', columnType: 'ID' },
     { name: 'Created on', columnType: 'DATE_TIME' },
     { name: '#TX', columnType: 'NUMBER' },
     { name: 'Rule ID', columnType: 'ID' },

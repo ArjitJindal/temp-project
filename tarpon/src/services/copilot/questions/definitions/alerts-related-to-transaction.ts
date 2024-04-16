@@ -23,6 +23,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
 > = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.ALERTS_RELATED_TO_TRANSACTION,
+  version: 2,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
     return `Alerts related to transaction ${
@@ -66,6 +67,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
       return r.alerts.map((a) => {
         return [
           a.alertId,
+          a.caseId,
           a.ruleId,
           a.ruleDescription,
           a.alertStatus,
@@ -93,6 +95,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
   },
   headers: [
     { name: 'Alert ID', columnType: 'ID' },
+    { name: 'Case ID', columnType: 'ID' },
     { name: 'Rule ID', columnType: 'ID' },
     { name: 'Rule description', columnType: 'STRING' },
     { name: 'Status', columnType: 'STRING' },
