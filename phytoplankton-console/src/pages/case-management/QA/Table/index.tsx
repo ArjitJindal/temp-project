@@ -1,6 +1,11 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import pluralize from 'pluralize';
+import { useAlertsSamplingCreateMutation, useAlertsSamplingUpdateMutation } from '../utils';
+import { QAModal } from '../Modal';
+import { AddToSampleModal } from '../AddToSampleModal';
+import { QAFormValues } from '../types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableData, TableRefType } from '@/components/library/Table/types';
 import { QueryResult } from '@/utils/queries/types';
@@ -10,7 +15,6 @@ import { useCaseAlertFilters } from '@/pages/case-management/helpers';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import {
-  ALERT_ID,
   ASSIGNMENTS,
   DATE,
   PRIORITY,
@@ -29,19 +33,24 @@ import { useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
 import { getAlertUrl } from '@/utils/routing';
 import Tag from '@/components/library/Tag';
+import { addBackUrlToRoute } from '@/utils/backUrl';
+import Id from '@/components/ui/Id';
 
 interface Props {
   params: AllParams<TableSearchParams>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
+  isSelectionEnabled: boolean;
+  manuallyAddedAlerts?: string[];
 }
 
 export default function QaTable(props: Props) {
-  const { params, onChangeParams } = props;
+  const { params, onChangeParams, isSelectionEnabled, manuallyAddedAlerts } = props;
   const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
   const user = useAuth0User();
   const [qaMode] = useQaMode();
   const tableRef = useRef<TableRefType>(null);
   const qaAssigneesUpdateMutation = useAlertQaAssignmentUpdateMutation(tableRef);
+  const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
 
   const helper = new ColumnHelper<TableAlertItem>();
   const columns = helper.list([
@@ -61,7 +70,28 @@ export default function QaTable(props: Props) {
       icon: <StackLineIcon />,
       showFilterByDefault: true,
       filtering: true,
-      type: ALERT_ID,
+      type: {
+        render: (alertId, { item: entity }) => {
+          return (
+            <>
+              {entity?.caseId && alertId && (
+                <Id to={addBackUrlToRoute(getAlertUrl(entity.caseId, alertId))} testName="alert-id">
+                  {alertId}
+                </Id>
+              )}
+              {alertId && manuallyAddedAlerts?.includes(alertId) && (
+                <Tag color="gray">Manually added</Tag>
+              )}
+            </>
+          );
+        },
+        stringify(value, item) {
+          return `${item?.caseId ?? ''}`;
+        },
+        link(value, item) {
+          return item?.caseId && value ? getAlertUrl(item.caseId, value) : '';
+        },
+      },
     }),
     helper.simple<'ruleQaStatus'>({
       title: 'QA status',
@@ -238,11 +268,42 @@ export default function QaTable(props: Props) {
       },
     ]);
   }, [filters]);
+
   const handleChangeParams = useCallback(
     (params: AllParams<TableSearchParams>) => {
       onChangeParams(params);
     },
     [onChangeParams],
+  );
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const mutation = useAlertsSamplingCreateMutation(setIsModalOpen);
+
+  const onSubmit = useCallback(
+    (values: QAFormValues) => {
+      mutation.mutate({
+        ...values,
+        samplingData: {
+          samplingType: 'MANUAL',
+          alertIds: selectedAlerts,
+        },
+      });
+    },
+    [mutation, selectedAlerts],
+  );
+
+  const [isAddToSampleModalOpen, setIsAddToSampleModalOpen] = useState(false);
+
+  const editMutation = useAlertsSamplingUpdateMutation(
+    setIsAddToSampleModalOpen,
+    {
+      success: `${selectedAlerts.length} ${pluralize(
+        'alert',
+        selectedAlerts.length,
+      )} added to sample`,
+      error: 'Failed to add alerts to sample',
+    },
+    queryResults,
   );
 
   return (
@@ -259,6 +320,56 @@ export default function QaTable(props: Props) {
         onChangeParams={handleChangeParams}
         extraFilters={extraFilters}
         pagination={true}
+        selection={isSelectionEnabled}
+        onSelect={(selectedRowKeys) => {
+          setSelectedAlerts(selectedRowKeys);
+        }}
+        selectedIds={selectedAlerts}
+        selectionActions={
+          isSelectionEnabled
+            ? [
+                () => (
+                  <Button
+                    type="TETRIARY"
+                    onClick={() => setIsModalOpen(true)}
+                    testName="create-sample-button"
+                  >
+                    Create sample
+                  </Button>
+                ),
+                () => (
+                  <Button
+                    type="TETRIARY"
+                    onClick={() => setIsAddToSampleModalOpen(true)}
+                    testName="add-to-sample-button"
+                  >
+                    Add to sample
+                  </Button>
+                ),
+              ]
+            : []
+        }
+        selectionInfo={{
+          entityCount: selectedAlerts.length,
+          entityName: 'alert',
+        }}
+      />
+      <QAModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        type="CREATE"
+        onSubmit={onSubmit}
+        sampleType="MANUAL"
+      />
+      <AddToSampleModal
+        isModalOpen={isAddToSampleModalOpen}
+        setIsModalOpen={setIsAddToSampleModalOpen}
+        onAddToSample={(sampleId) => {
+          editMutation.mutate({
+            sampleId,
+            body: { alertIds: selectedAlerts },
+          });
+        }}
       />
     </>
   );

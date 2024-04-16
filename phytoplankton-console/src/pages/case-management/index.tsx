@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import CaseTableWrapper from './CaseTableWrapper';
 import AlertTable from './AlertTable';
 import s from './index.module.less';
-import { QAButton } from './QAModal';
+import { QAButton } from './QA/Dropdown';
 import { Authorized } from '@/components/utils/Authorized';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -22,7 +22,7 @@ import PaymentApprovalsTable from '@/pages/case-management/PaymentApprovalTable'
 import Toggle from '@/components/library/Toggle';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Item } from '@/components/library/SegmentedControl';
-import QaTable from '@/pages/case-management/QaTable';
+import QaTable from '@/pages/case-management/QA/Table';
 import { useQaMode } from '@/utils/qa-mode';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
@@ -219,6 +219,7 @@ function getTable(
           <QaTable
             params={{ ...params, alertStatus: ['CLOSED'], filterQaStatus: ["NOT_QA'd"] }}
             onChangeParams={handleChangeParams}
+            isSelectionEnabled={true}
           />
         </Authorized>
       );
@@ -228,6 +229,7 @@ function getTable(
           <QaTable
             params={{ ...params, filterQaStatus: ['PASSED'], alertStatus: ['CLOSED'] }}
             onChangeParams={handleChangeParams}
+            isSelectionEnabled={false}
           />
         </Authorized>
       );
@@ -237,6 +239,7 @@ function getTable(
           <QaTable
             params={{ ...params, filterQaStatus: ['FAILED'], alertStatus: ['CLOSED'] }}
             onChangeParams={handleChangeParams}
+            isSelectionEnabled={false}
           />
         </Authorized>
       );

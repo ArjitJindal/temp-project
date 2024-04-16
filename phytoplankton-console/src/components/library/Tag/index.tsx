@@ -15,7 +15,7 @@ export type TagColor =
   | 'blue'
   | 'green'
   | 'cyan'
-  | 'grey'
+  | 'gray'
   | 'gold'
   | 'pink'
   | 'purple'

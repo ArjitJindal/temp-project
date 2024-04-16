@@ -192,6 +192,7 @@ export const ConsoleApiPathToLambda: any = {
   '/alerts/qaSampling': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/qa/{sampleId}/sampling':
     StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/alerts/qa-sample-ids': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}/comments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}/comments/{commentId}':

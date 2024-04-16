@@ -36,6 +36,7 @@ interface CommonProps<Value extends Comparable> {
   dropdownMatchWidth?: boolean;
   autoTrim?: boolean;
   testId?: string;
+  optionLabelProp?: string;
 }
 
 export interface SingleProps<Value extends Comparable>
@@ -79,6 +80,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     dropdownMatchWidth = true,
     autoTrim = false,
     testId,
+    optionLabelProp,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
@@ -207,6 +209,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         ref={innerRef}
         placeholder={placeholder}
         allowClear={allowClear}
+        optionLabelProp={optionLabelProp}
         onFocus={() => {
           setIsFocused(true);
         }}
@@ -256,6 +259,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             key={key(option.value)}
             value={option.value}
             disabled={option.isDisabled}
+            {...(option.labelText && { [optionLabelProp ?? 'labelText']: option.labelText })}
           >
             {option.label}
           </AntSelect.Option>

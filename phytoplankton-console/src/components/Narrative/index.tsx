@@ -63,6 +63,7 @@ type NarrativeProps<R> = {
   otherReason?: R;
   advancedOptions?: React.ReactNode;
   isCopilotEnabled?: boolean;
+  infoText?: string;
 };
 
 export default function Narrative<R extends string>(props: NarrativeProps<R>) {
@@ -80,6 +81,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
     otherReason,
     advancedOptions,
     isCopilotEnabled = true,
+    infoText,
   } = props;
 
   const showCopilot = useFeatureEnabled('NARRATIVE_COPILOT') && isCopilotEnabled;
@@ -174,6 +176,11 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
             </>
           )}
         </InputField>
+        {infoText && (
+          <div className={s.infoDiv}>
+            <Alert type="info">{infoText}</Alert>
+          </div>
+        )}
         {showCopilot && (
           <GenericFormField<FormValues<R>, 'comment'> name="comment">
             {(props) => (

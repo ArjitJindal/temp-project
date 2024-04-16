@@ -11,6 +11,7 @@ import {
   uniq,
   isEqual,
   cloneDeep,
+  difference,
 } from 'lodash'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -76,6 +77,8 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { AlertQASamplingListResponse } from '@/@types/openapi-internal/AlertQASamplingListResponse'
 import { AlertsQaSamplingUpdateRequest } from '@/@types/openapi-internal/AlertsQaSamplingUpdateRequest'
+import { AlertQASamplingFilters } from '@/@types/openapi-internal/AlertQASamplingFilters'
+import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -1244,59 +1247,88 @@ export class AlertsService extends CaseAlertsCommonService {
     await this.alertsRepository.saveAlert(alert.caseId ?? '', alert)
   }
 
-  async createAlertsQaSampling(
-    data: AlertsQaSamplingRequest
-  ): Promise<AlertsQaSampling> {
-    const { filters, samplingPercentage } = data
-
-    const queryParams: AlertParams = {
+  private getQaSamplingFilters(filters: AlertQASamplingFilters): AlertParams {
+    return {
       filterAlertStatus: ['CLOSED'],
       filterQaStatus: ["NOT_QA'd"],
-      ...(filters?.alertClosedAt && {
+      ...(filters.alertClosedAt && {
         filterAlertsByLastUpdatedStartTimestamp: filters.alertClosedAt.start,
         filterAlertsByLastUpdatedEndTimestamp: filters.alertClosedAt.end,
       }),
-      filterAlertId: filters?.alertId,
-      filterAlertPriority: filters?.alertPriority,
-      filterAssignmentsIds: filters?.assignedTo,
-      filterQaAssignmentsIds: filters?.qaAssignedTo,
-      filterRuleQueueIds: filters?.queueIds,
-      filterRulesExecuted: filters?.ruleInstances,
-      filterCaseType: filters?.caseTypes,
-      filterClosingReason: filters?.alertClosingReasons as CaseReasons[],
-      filterUserId: filters?.userId,
+      filterAlertId: filters.alertId,
+      filterAlertPriority: filters.alertPriority,
+      filterAssignmentsIds: filters.assignedTo,
+      filterQaAssignmentsIds: filters.qaAssignedTo,
+      filterRuleQueueIds: filters.queueIds,
+      filterRulesExecuted: filters.ruleInstances,
+      filterCaseType: filters.caseTypes,
+      filterClosingReason: filters.alertClosingReasons as CaseReasons[],
+      filterUserId: filters.userId,
+    }
+  }
+
+  private caluclateAlertsForQaSamplingPercentage(
+    totalAlerts: number,
+    percentage: number
+  ): number {
+    return Math.floor(Math.max(totalAlerts * (percentage / 100), 1))
+  }
+
+  async createAlertsQaSampling(
+    data: AlertsQaSamplingRequest
+  ): Promise<AlertsQaSampling> {
+    let sample: Pick<
+      AlertsQaSampling,
+      'alertIds' | 'samplingPercentage' | 'samplingType' | 'filters'
+    > | null = null
+
+    const sampleId = await this.alertsRepository.getSampleIdForQA()
+    if (data.samplingData.samplingType === 'MANUAL') {
+      sample = {
+        filters: {},
+        samplingPercentage: 0,
+        samplingType: 'MANUAL',
+        alertIds: data.samplingData.alertIds,
+      }
+    } else {
+      const filters = data.samplingData.filters
+      const queryParams: AlertParams = this.getQaSamplingFilters(filters)
+
+      const query = await this.alertsRepository.getAlertsPipeline(queryParams, {
+        excludeProject: true,
+        hideTransactionIds: true,
+        countOnly: true,
+      })
+
+      const count = await this.alertsRepository.getAlertsCount(query)
+      const totalAlertsRequired = this.caluclateAlertsForQaSamplingPercentage(
+        count,
+        data.samplingData.samplingPercentage
+      )
+
+      const sampleAlerts = await this.alertsRepository.getAlertsForQA(
+        query,
+        totalAlertsRequired
+      )
+
+      sample = {
+        filters: data.samplingData.filters,
+        samplingPercentage: data.samplingData.samplingPercentage,
+        alertIds: sampleAlerts.map((a) => a.alerts.alertId),
+        samplingType: 'AUTOMATIC',
+      }
     }
 
-    const query = await this.alertsRepository.getAlertsPipeline(queryParams, {
-      excludeProject: true,
-      hideTransactionIds: true,
-      countOnly: true,
-    })
-
-    const count = await this.alertsRepository.getAlertsCount(query)
-    const totalAlertsRequired = Math.ceil(
-      Math.max(count * (samplingPercentage / 100), 1)
-    )
-
-    const [sampleId, sampleAlerts] = await Promise.all([
-      this.alertsRepository.getSampleIdForQA(),
-      this.alertsRepository.getAlertsForQA(query, totalAlertsRequired),
-    ])
-
-    const sample: AlertsQaSampling = {
+    return this.alertsRepository.saveQASampleData({
+      ...sample,
+      samplingId: `S-${sampleId.toString().padStart(3, '0')}`,
       createdAt: Date.now(),
       priority: data.priority,
+      createdBy: getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER,
       samplingDescription: data.samplingDescription,
       samplingName: data.samplingName,
-      samplingPercentage,
       updatedAt: Date.now(),
-      alertIds: sampleAlerts.map((a) => a.alerts.alertId),
-      createdBy: getContext()?.user?.id || FLAGRIGHT_SYSTEM_USER,
-      filters,
-      samplingId: `S-${sampleId.toString().padStart(3, '0')}`,
-    }
-
-    return this.alertsRepository.saveQASampleData(sample)
+    })
   }
 
   public async getSamplingData(
@@ -1325,16 +1357,93 @@ export class AlertsService extends CaseAlertsCommonService {
     return { ...data, numberOfAlerts: data?.alertIds?.length ?? 0 }
   }
 
+  public async getSamplingIds(): Promise<AlertsQASampleIds[]> {
+    return this.alertsRepository.getSamplingIds()
+  }
+
+  public async deleteSamplingById(samplingId: string): Promise<void> {
+    await this.alertsRepository.deleteSample(samplingId)
+  }
+
   public async patchSamplingById(
     samplingId: string,
     data: AlertsQaSamplingUpdateRequest
   ): Promise<AlertsQaSampling> {
     const sampling = await this.getSamplingById(samplingId)
 
-    const updatedSampling = {
+    let allAlertIds: string[] = []
+
+    if (
+      sampling.samplingType === 'AUTOMATIC' &&
+      data?.samplingPercentage &&
+      data.samplingPercentage > sampling.samplingPercentage
+    ) {
+      const currentAlertsCount =
+        (sampling.alertIds ?? []).length - (sampling.manuallyAdded ?? []).length
+
+      const newPercentage = data.samplingPercentage
+
+      const filters = this.getQaSamplingFilters(
+        sampling.filters as AlertQASamplingFilters
+      )
+
+      const query = await this.alertsRepository.getAlertsPipeline(filters, {
+        excludeProject: true,
+        hideTransactionIds: true,
+        countOnly: true,
+      })
+
+      const newAlertsCount = await this.alertsRepository.getAlertsCount(query)
+
+      const totalAlertsRequired = this.caluclateAlertsForQaSamplingPercentage(
+        newAlertsCount,
+        newPercentage
+      )
+
+      const countOfNewAlerts = totalAlertsRequired - currentAlertsCount
+
+      const queryWithExcludedAlerts =
+        await this.alertsRepository.getAlertsPipeline(
+          { ...filters, excludeAlertIds: sampling.alertIds },
+          {
+            excludeProject: true,
+            hideTransactionIds: true,
+            countOnly: true,
+          }
+        )
+
+      const newAlerts = await this.alertsRepository.getAlertsForQA(
+        queryWithExcludedAlerts,
+        countOfNewAlerts
+      )
+
+      allAlertIds = uniq([
+        ...(sampling?.alertIds ?? []),
+        ...(newAlerts.map((a) => a.alerts.alertId) ?? []),
+      ])
+    }
+
+    if (data.alertIds?.length) {
+      allAlertIds = uniq([
+        ...allAlertIds,
+        ...(sampling?.alertIds ?? []),
+        ...data.alertIds,
+      ])
+    }
+
+    const updatedSampling: AlertsQaSampling = {
       ...sampling,
       ...data,
+      manuallyAdded: data.alertIds?.length
+        ? uniq([
+            ...(sampling?.manuallyAdded ?? []),
+            ...(sampling.samplingType === 'AUTOMATIC'
+              ? difference(allAlertIds, sampling?.alertIds ?? [])
+              : []),
+          ])
+        : sampling.manuallyAdded,
       updatedAt: Date.now(),
+      alertIds: allAlertIds,
     }
 
     await this.alertsRepository.updateQASampleData(updatedSampling)

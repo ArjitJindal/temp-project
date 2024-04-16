@@ -47,6 +47,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
+import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 
@@ -55,6 +56,7 @@ export interface AlertParams
     Omit<DefaultApiGetAlertListRequest, 'filterQaStatus'>
   > {
   filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd">
+  excludeAlertIds?: string[]
 }
 
 @traceable
@@ -206,6 +208,12 @@ export class AlertsRepository {
     ]
 
     const alertConditions: Filter<AlertListResponseItem>[] = []
+
+    if (params.excludeAlertIds != null) {
+      alertConditions.push({
+        'alerts.alertId': { $nin: params.excludeAlertIds },
+      })
+    }
 
     if (params.filterTransactionIds != null) {
       alertConditions.push({
@@ -1300,5 +1308,32 @@ export class AlertsRepository {
     })
 
     return result
+  }
+
+  public async getSamplingIds(): Promise<AlertsQASampleIds[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<AlertsQaSampling>(
+      ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
+    )
+
+    const result: AlertsQaSampling[] = await collection
+      .find({}, { projection: { samplingId: 1, samplingName: 1 } })
+      .toArray()
+
+    return compact(
+      result.map((item) => ({
+        samplingId: item.samplingId,
+        samplingName: item.samplingName,
+      }))
+    )
+  }
+
+  public async deleteSample(sampleId: string): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<AlertsQaSampling>(
+      ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
+    )
+
+    await collection.deleteOne({ samplingId: sampleId })
   }
 }

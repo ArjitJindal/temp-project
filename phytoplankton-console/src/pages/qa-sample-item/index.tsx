@@ -1,8 +1,13 @@
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { TableSearchParams } from '../case-management/types';
-import { QAModal } from '../case-management/QAModal';
+import { QAModal } from '../case-management/QA/Modal';
+import {
+  useAlertsSamplingUpdateMutation,
+  useDeleteAlertsSamplingMutation,
+} from '../case-management/QA/utils';
+import { QAFormValues } from '../case-management/QA/types';
 import s from './index.module.less';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
@@ -15,15 +20,15 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Tag from '@/components/library/Tag';
 import Button from '@/components/library/Button';
 import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
+import DeleteLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import { P } from '@/components/ui/Typography';
 import Avatar from '@/components/library/Avatar';
 import { useUsers } from '@/utils/user-utils';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import QaTable from '@/pages/case-management/QaTable';
+import QaTable from '@/pages/case-management/QA/Table';
 import { Authorized } from '@/components/utils/Authorized';
-import { useMutation } from '@/utils/queries/mutations/hooks';
-import { AlertsQaSampling, AlertsQaSamplingUpdateRequest } from '@/apis';
 import { message } from '@/components/library/Message';
+import Confirm from '@/components/utils/Confirm';
 
 export const QASamplePage = () => {
   const { samplingId } = useParams<{ samplingId: string }>() as { samplingId: string };
@@ -39,23 +44,26 @@ export const QASamplePage = () => {
     { enabled: !!samplingId },
   );
 
-  const mutation = useMutation<AlertsQaSampling, unknown, AlertsQaSamplingUpdateRequest>(
-    async (data) =>
-      await api.patchAlertsQaSample({ sampleId: samplingId, AlertsQaSamplingUpdateRequest: data }),
-    {
-      onSuccess: () => {
-        message.success('Sampling updated successfully');
-        sampleQueryResult.refetch();
-        setIsModalOpen(false);
-      },
-      onError: (error) => {
-        message.fatal('Failed to update sampling', error);
-      },
-    },
-  );
-
   const [users] = useUsers();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const mutation = useAlertsSamplingUpdateMutation(
+    setIsModalOpen,
+    {
+      success: 'Sample updated successfully',
+      error: 'Failed to update sample',
+    },
+    sampleQueryResult,
+  );
+
+  const deleteMutation = useDeleteAlertsSamplingMutation(
+    () => {
+      navigate('/case-management/qa-sampling');
+    },
+    { success: 'Sample deleted successfully', error: 'Failed to delete sample' },
+    sampleQueryResult,
+  );
 
   return (
     <Authorized required={['case-management:qa:read']} showForbiddenPage>
@@ -81,34 +89,71 @@ export const QASamplePage = () => {
                   <div className={s.cardHeader}>
                     <div className={s.cardSection}>
                       <PriorityTag priority={sample.priority} />
-                      <Tag color="grey">{`Sampling - ${sample.samplingPercentage}%`}</Tag>
+                      <Tag color="gray">{`Sampling - ${
+                        sample.samplingPercentage ? `${sample.samplingPercentage}%` : 'Manual'
+                      }`}</Tag>
                       <Link style={{ fontWeight: 600 }} to="#">
                         {sample.samplingId}
                       </Link>
                     </div>
                     <div className={s.cardSection}>
                       <Authorized required={['case-management:qa:write']}>
-                        <Button
-                          type="TETRIARY"
-                          size="SMALL"
-                          icon={<EditLineIcon />}
-                          onClick={() => setIsModalOpen(true)}
-                        >
-                          Edit
-                        </Button>
+                        <div className={s.actions}>
+                          <Button
+                            type="TETRIARY"
+                            size="SMALL"
+                            icon={<EditLineIcon />}
+                            onClick={() => setIsModalOpen(true)}
+                            testName="edit-sampling"
+                          >
+                            Edit
+                          </Button>
+                          <Confirm
+                            text="Are you sure you want to delete this sample? This action cannot be undone."
+                            title="Delete sample"
+                            onConfirm={() => deleteMutation.mutate(samplingId)}
+                          >
+                            {({ onClick }) => (
+                              <Button
+                                type="TETRIARY"
+                                size="SMALL"
+                                onClick={onClick}
+                                testName="delete-sampling"
+                                icon={<DeleteLineIcon />}
+                              >
+                                Delete
+                              </Button>
+                            )}
+                          </Confirm>
+                        </div>
                       </Authorized>
                       <QAModal
                         isModalOpen={isModalOpen}
                         setIsModalOpen={setIsModalOpen}
                         type="EDIT"
-                        onSubmit={(values) => {
-                          mutation.mutate(values);
+                        onSubmit={(values: QAFormValues) => {
+                          if (values.samplingPercentage < sample.samplingPercentage) {
+                            return message.error(
+                              'Sampling % must be greater than the current value',
+                            );
+                          }
+
+                          mutation.mutate({
+                            sampleId: samplingId,
+                            body: {
+                              priority: values.priority,
+                              samplingName: values.samplingName,
+                              samplingDescription: values.samplingDescription,
+                              samplingPercentage: values.samplingPercentage,
+                            },
+                          });
                         }}
                         initialValues={sample}
+                        sampleType={sample.samplingType}
                       />
                     </div>
                   </div>
-                  <div>
+                  <div data-cy="samplingName">
                     <P bold variant="m">
                       {sample.samplingName}
                     </P>
@@ -138,6 +183,8 @@ export const QASamplePage = () => {
                 <QaTable
                   params={{ ...params, filterAlertIds: sample.alertIds }}
                   onChangeParams={onChangeParams}
+                  isSelectionEnabled={false}
+                  manuallyAddedAlerts={sample.manuallyAdded}
                 />
               </PageWrapperContentContainer>
             </div>
