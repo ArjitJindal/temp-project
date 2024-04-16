@@ -22,7 +22,6 @@ import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithR
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { isDemoTenant } from '@/utils/tenant'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
-import { RuleService } from '@/services/rules-engine'
 import { getArsScores } from '@/core/seed/data/ars_scores'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
@@ -41,9 +40,6 @@ export async function seedDynamo(
   const tenantRepo = new TenantRepository(tenantId, { dynamoDb })
   const txnRepo = new DynamoDbTransactionRepository(tenantId, dynamoDb)
   const ruleRepo = new RuleInstanceRepository(tenantId, { dynamoDb })
-
-  logger.info('Creating rules...')
-  await RuleService.syncRulesLibrary()
 
   logger.info('Clear rule instances')
   const existingRuleInstances = await ruleRepo.getAllRuleInstances()

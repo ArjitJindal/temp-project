@@ -17,7 +17,7 @@ function getSecretManager() {
             profile: 'AWSAdministratorAccess-911899431626',
           }),
         }
-      : {}
+      : { maxAttempts: 10 }
   )
 }
 

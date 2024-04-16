@@ -85,6 +85,7 @@ function initializeEnvVars() {
 async function main() {
   refreshCredentialsPeriodically()
   initializeEnvVars()
+  const isMigrationFileCreation = process.argv.includes('create')
 
   if (process.argv.includes('sync')) {
     await syncData()
@@ -98,11 +99,11 @@ async function main() {
     throw new Error(`Unknown migration type: ${migrationType}`)
   }
 
-  console.info(`Running ${migrationType} migrations`)
-  if (migrationType === 'POST_DEPLOYMENT') {
+  if (!isMigrationFileCreation && migrationType === 'POST_DEPLOYMENT') {
     console.info(`Sync data before POST_DEPLOYMENT step`)
     await syncData()
   }
+
   const directory =
     migrationType === 'PRE_DEPLOYMENT' ? 'pre-deployment' : 'post-deployment'
   const migrationCollection =
@@ -130,11 +131,7 @@ async function main() {
     exit(1)
   }
 
-  if (process.argv.includes('create')) {
-    return
-  }
-
-  if (migrationType === 'POST_DEPLOYMENT') {
+  if (!isMigrationFileCreation && migrationType === 'POST_DEPLOYMENT') {
     // Seed cypress tenant on dev
     if (envIs('dev')) {
       const tenant = 'cypress-tenant'

@@ -4,6 +4,7 @@ import { MongoClient } from 'mongodb'
 import { seedMongo } from '@/core/seed/mongo'
 import { seedDynamo } from '@/core/seed/dynamodb'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RuleService } from '@/services/rules-engine'
 
 process.env.ENV = process.env.ENV || 'local'
 const DB_NAME = `tarpon`
@@ -24,6 +25,7 @@ async function main() {
   }
   console.info('Seeding DynamoDB...')
   const dynamoClient = getDynamoDbClient()
+  await RuleService.syncRulesLibrary()
   await seedDynamo(dynamoClient, TENANT)
 
   console.info('Seeding MongoDB...')

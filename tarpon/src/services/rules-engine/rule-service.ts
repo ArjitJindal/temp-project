@@ -8,6 +8,7 @@ import { singular } from 'pluralize'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AsyncLogicEngine } from 'json-logic-engine'
 import { MongoClient } from 'mongodb'
+import { PutObjectCommand } from '@aws-sdk/client-s3'
 import {
   RuleChecksForField,
   RuleNature,
@@ -58,6 +59,7 @@ import {
   getTransactionRuleEntityVariables,
 } from '@/services/rules-engine/v8-variables'
 import { getS3Client } from '@/utils/s3'
+import { envIs } from '@/utils/env'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
@@ -129,13 +131,17 @@ export class RuleService {
       console.info(`Synced rule ${rule.id} (${rule.name})`)
     }
 
-    const s3Client = getS3Client()
-    // Upload v8Config in JSON format to S3 using s3Client
-    await s3Client.putObject({
-      Bucket: process.env.SHARED_ASSETS_BUCKET,
-      Key: RULE_LOGIC_CONFIG_S3_KEY,
-      Body: JSON.stringify(getRuleLogicConfig()),
-    })
+    if (!envIs('local')) {
+      const s3Client = getS3Client()
+      // Upload v8Config in JSON format to S3 using s3Client
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: process.env.SHARED_ASSETS_BUCKET,
+          Key: RULE_LOGIC_CONFIG_S3_KEY,
+          Body: JSON.stringify(getRuleLogicConfig()),
+        })
+      )
+    }
   }
 
   async getAllRuleFilters(): Promise<RuleFilters> {
