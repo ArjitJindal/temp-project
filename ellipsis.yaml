@@ -1,0 +1,12 @@
+version: 1.3
+
+pr_review:
+  confidence_threshold: 0.7
+  rules:
+    - 'Code should be DRY (Dont Repeat Yourself)'
+    - 'There should no secrets or credentials in the code'
+    - 'Extremely Complicated Code Needs Comments'
+    - 'Use Descriptive Variable and Constant Names'
+    - 'API routes must have error handling, they should not intentionally return a HTTP 500'
+    - 'Use retries when calling external API services'
+    - 'Do not log sensitive data'
