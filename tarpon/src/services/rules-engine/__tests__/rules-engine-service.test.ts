@@ -23,7 +23,7 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import dayjs from '@/utils/dayjs'
 
-const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
+const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^[A-Z0-9.-]+$/)
 
 const dynamoDb = getDynamoDbClient()
 

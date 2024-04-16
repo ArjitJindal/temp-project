@@ -54,6 +54,7 @@ interface RuleConfigurationFormProps {
   onSubmit: (formValues: RuleConfigurationFormV8Values) => void;
   setIsValuesSame?: (isSame: boolean) => void;
   renderButtonsFooter?: () => React.ReactNode;
+  newRuleId?: string;
 }
 
 function RuleConfigurationFormV8(
@@ -69,6 +70,7 @@ function RuleConfigurationFormV8(
     activeStepKey = BASIC_DETAILS_STEP,
     onActiveStepKeyChange,
     setIsValuesSame,
+    newRuleId,
   } = props;
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const defaultInitialValues = useDefaultInitialValues(rule);
@@ -210,7 +212,11 @@ function RuleConfigurationFormV8(
           <div className={cn(s.stepperContent)}>
             <div className={cn(props.readOnly ? s.readOnlyFormContent : '')}>
               <NestedForm<RuleConfigurationFormV8Values> name={activeStepKey}>
-                <StepSubform activeStepKey={activeStepKey} readOnly={readOnly} />
+                <StepSubform
+                  activeStepKey={activeStepKey}
+                  readOnly={readOnly}
+                  newRuleId={newRuleId}
+                />
               </NestedForm>
             </div>
           </div>
@@ -220,10 +226,10 @@ function RuleConfigurationFormV8(
   );
 }
 
-function StepSubform(props: { activeStepKey: string; readOnly: boolean }) {
-  const { activeStepKey } = props;
+function StepSubform(props: { activeStepKey: string; readOnly: boolean; newRuleId?: string }) {
+  const { activeStepKey, newRuleId } = props;
   if (activeStepKey === BASIC_DETAILS_STEP) {
-    return <BasicDetailsStep />;
+    return <BasicDetailsStep newRuleId={newRuleId} />;
   }
   if (activeStepKey === RULE_IS_HIT_WHEN_STEP) {
     return <RuleIsHitWhenStep />;

@@ -45,7 +45,9 @@ export function getRuleInstanceDisplayId(
   ruleId: string | undefined,
   ruleInstanceId: string | undefined,
 ): string {
-  return ruleId ? `${ruleId} (${ruleInstanceId || 'N/A'})` : ruleInstanceId ?? 'N/A';
+  return ruleId && !ruleInstanceId?.startsWith(ruleId)
+    ? `${ruleId} (${ruleInstanceId || 'N/A'})`
+    : ruleInstanceId ?? 'N/A';
 }
 
 export function ruleHeaderKeyToDescription(key: string) {
@@ -501,13 +503,7 @@ export function useUpdateRuleInstance(
           onRuleInstanceUpdated(updatedRuleInstance);
         }
         await queryClient.invalidateQueries(GET_RULES_INSTANCE(updatedRuleInstance.id));
-        const ruleInfo = [
-          updatedRuleInstance.id,
-          updatedRuleInstance.ruleId && `(${updatedRuleInstance.ruleId})`,
-        ]
-          .filter(Boolean)
-          .join(' ');
-        message.success(`Rule updated - ${ruleInfo}`);
+        message.success(`Rule updated - ${updatedRuleInstance.id}`);
       },
       onError: async (err) => {
         message.fatal(`Unable to update the rule - ${getErrorMessage(err)}`, err);
@@ -531,13 +527,7 @@ export function useCreateRuleInstance(
         if (onRuleInstanceCreated) {
           onRuleInstanceCreated(newRuleInstance);
         }
-        const ruleInfo = [
-          newRuleInstance.id,
-          newRuleInstance.ruleId && `(${newRuleInstance.ruleId})`,
-        ]
-          .filter(Boolean)
-          .join(' ');
-        message.success(`Rule created - ${ruleInfo}`);
+        message.success(`Rule created - ${newRuleInstance.id}`);
       },
       onError: async (err) => {
         message.fatal(`Unable to create the rule - Some parameters are missing`, err);

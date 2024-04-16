@@ -334,6 +334,8 @@ export const NOTIFICATIONS = (notificationStatus?: 'ALL' | 'UNREAD'): QueryKey =
   `tab-${notificationStatus}`,
 ];
 
+export const NEW_RULE_ID = (ruleId?: string): QueryKey => ['new-rule-id', ruleId];
+
 export const SIMULATION_RISK_FACTOR = (jobId: string): QueryKey => [
   'risk-factor',
   'simulation',

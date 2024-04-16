@@ -11,7 +11,6 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { shortId } from '@flagright/lib/utils'
 import { isEqual } from 'lodash'
 import { getAggVarHash } from '../v8-engine/aggregation-repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -24,6 +23,8 @@ import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
 
 function toRuleInstance(item: any): RuleInstance {
   return {
@@ -77,25 +78,38 @@ export class RuleInstanceRepository {
     this.tenantId = tenantId
   }
 
-  public async getNewRuleInstanceId(): Promise<string> {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const newRuleInstanceId = shortId()
-      const existingRuleInstance = await this.getRuleInstanceById(
-        newRuleInstanceId
-      )
-      if (!existingRuleInstance) {
-        return newRuleInstanceId
-      }
+  public async getNewRuleInstanceId(id?: string): Promise<string> {
+    let ruleId = id
+    if (!ruleId) ruleId = await this.getRuleIdForCustomRuleV8()
+    const db = await getMongoDbClientDb()
+    const counterCollection = db.collection(COUNTER_COLLECTION(this.tenantId))
+    const result = await counterCollection.findOne({ entity: ruleId })
+    if (!result) {
+      if (ruleId.startsWith('RC')) return ruleId
+      return `${ruleId}.1`
     }
+    return `${ruleId}.${result.count + 1}`
+  }
+
+  private async getRuleIdForCustomRuleV8(): Promise<string> {
+    const db = await getMongoDbClientDb()
+    const counterCollection = db.collection(COUNTER_COLLECTION(this.tenantId))
+    const result = await counterCollection.findOne({ entity: 'RC' })
+    if (!result) {
+      return 'RC-1'
+    }
+    return `RC-${result.count + 1}`
   }
 
   public async createOrUpdateRuleInstance(
     ruleInstance: RuleInstance,
-    updatedAt?: number
+    updatedAt?: number,
+    isCreateAction?: boolean
   ): Promise<RuleInstance> {
+    const ruleId =
+      ruleInstance.ruleId ?? (await this.getRuleIdForCustomRuleV8())
     const ruleInstanceId =
-      ruleInstance.id || (await this.getNewRuleInstanceId())
+      ruleInstance.id || (await this.getNewRuleInstanceId(ruleId))
     const now = Date.now()
     const newRuleInstance: RuleInstance = {
       ...ruleInstance,
@@ -119,6 +133,7 @@ export class RuleInstanceRepository {
       runCount: ruleInstance.runCount || 0,
       hitCount: ruleInstance.hitCount || 0,
       alertConfig: ruleInstance.alertConfig,
+      ruleId,
     }
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
@@ -128,6 +143,29 @@ export class RuleInstanceRepository {
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
+    if (isCreateAction) {
+      const db = await getMongoDbClientDb()
+      const counterCollection = db.collection(COUNTER_COLLECTION(this.tenantId))
+      if (!ruleInstance.ruleId) {
+        await Promise.all([
+          counterCollection.updateOne(
+            { entity: 'RC' },
+            { $inc: { count: 1 } },
+            { upsert: true }
+          ),
+          counterCollection.updateOne(
+            { entity: ruleId },
+            { $inc: { count: 0 } },
+            { upsert: true }
+          ),
+        ])
+      } else
+        await counterCollection.updateOne(
+          { entity: ruleId },
+          { $inc: { count: 1 } },
+          { upsert: true }
+        )
+    }
     return newRuleInstance
   }
 

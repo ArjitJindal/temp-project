@@ -207,4 +207,114 @@ describe('createOrUpdateRuleInstance', () => {
       )
     })
   })
+  test('save a new rule instance and check instance id for template rules', async () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
+      dynamoDb,
+    })
+    const ruleInstance = getTestRuleInstance({
+      id: undefined,
+      ruleId: 'R-1',
+    })
+    await ruleInstanceRepository.createOrUpdateRuleInstance(
+      ruleInstance,
+      undefined,
+      true
+    )
+    const savedRuleInstance1 = await ruleInstanceRepository.getRuleInstanceById(
+      'R-1.1'
+    )
+    expect(savedRuleInstance1).toMatchObject({ ...ruleInstance, id: 'R-1.1' })
+
+    await ruleInstanceRepository.createOrUpdateRuleInstance(
+      ruleInstance,
+      undefined,
+      true
+    )
+    const savedRuleInstance2 = await ruleInstanceRepository.getRuleInstanceById(
+      'R-1.2'
+    )
+    expect(savedRuleInstance2).toMatchObject({ ...ruleInstance, id: 'R-1.2' })
+  })
+
+  test('save a new rule instance and check instance id for custom rules', async () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
+      dynamoDb,
+    })
+    const ruleInstance = getTestRuleInstance({
+      id: undefined,
+      ruleId: undefined,
+    })
+    await ruleInstanceRepository.createOrUpdateRuleInstance(
+      ruleInstance,
+      undefined,
+      true
+    )
+    const savedRuleInstance1 = await ruleInstanceRepository.getRuleInstanceById(
+      'RC-1'
+    )
+    expect(savedRuleInstance1).toMatchObject({
+      ...ruleInstance,
+      id: 'RC-1',
+      ruleId: 'RC-1',
+    })
+
+    await ruleInstanceRepository.createOrUpdateRuleInstance(
+      { ...ruleInstance, id: undefined, ruleId: 'RC-1' },
+      undefined,
+      true
+    )
+    const savedRuleInstance2 = await ruleInstanceRepository.getRuleInstanceById(
+      'RC-1.1'
+    )
+    expect(savedRuleInstance2).toMatchObject({
+      ...ruleInstance,
+      id: 'RC-1.1',
+      ruleId: 'RC-1',
+    })
+    await ruleInstanceRepository.createOrUpdateRuleInstance(
+      ruleInstance,
+      undefined,
+      true
+    )
+    const savedRuleInstance3 = await ruleInstanceRepository.getRuleInstanceById(
+      'RC-2'
+    )
+    expect(savedRuleInstance3).toMatchObject({
+      ...ruleInstance,
+      id: 'RC-2',
+      ruleId: 'RC-2',
+    })
+  })
+
+  test('save a new rule instance and check instance id after edit rule', async () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
+      dynamoDb,
+    })
+    const ruleInstance = getTestRuleInstance({
+      id: undefined,
+      ruleId: 'R-1',
+    })
+    await ruleInstanceRepository.createOrUpdateRuleInstance(
+      ruleInstance,
+      undefined,
+      true
+    )
+    const savedRuleInstance1 = await ruleInstanceRepository.getRuleInstanceById(
+      'R-1.1'
+    )
+    expect(savedRuleInstance1).toMatchObject({ ...ruleInstance, id: 'R-1.1' })
+    const editedRuleInstance = {
+      ...ruleInstance,
+      id: 'R-1.1',
+      ruleNameAlias: 'updated name',
+    }
+    await ruleInstanceRepository.createOrUpdateRuleInstance(editedRuleInstance)
+    const savedRuleInstance2 = await ruleInstanceRepository.getRuleInstanceById(
+      'R-1.1'
+    )
+    expect(savedRuleInstance2).toMatchObject(editedRuleInstance)
+  })
 })

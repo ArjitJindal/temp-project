@@ -19,6 +19,10 @@ import Button from '@/components/library/Button';
 import { Rule, RuleInstance } from '@/apis';
 import { FormRef } from '@/components/library/Form';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { NEW_RULE_ID } from '@/utils/queries/keys';
 
 export type Mode = 'EDIT' | 'CREATE' | 'DUPLICATE' | 'READ';
 
@@ -43,6 +47,12 @@ export default function RuleConfigurationV8(props: Props) {
   const [isValuesSame, setIsValuesSame] = useState(
     isEqual(formInitialValues, formRef.current?.getValues()),
   );
+  const api = useApi();
+  const queryResult = useQuery(NEW_RULE_ID(ruleInstance?.ruleId), async () => {
+    return await api.getRuleInstancesNewRuleId({
+      ruleId: ruleInstance?.ruleId,
+    });
+  });
   const updateRuleInstanceMutation = useUpdateRuleInstance(onRuleInstanceUpdated);
   const createRuleInstanceMutation = useCreateRuleInstance(onRuleInstanceUpdated);
   const handleSubmit = useCallback(
@@ -54,7 +64,10 @@ export default function RuleConfigurationV8(props: Props) {
       } else if (type === 'CREATE' || type === 'DUPLICATE') {
         createRuleInstanceMutation.mutate(
           formValuesToRuleInstanceV8(
-            { ruleId: rule?.id, type: rule?.type ?? 'TRANSACTION' } as RuleInstance,
+            {
+              ruleId: rule?.id ?? ruleInstance?.ruleId,
+              type: rule?.type ?? 'TRANSACTION',
+            } as RuleInstance,
             formValues,
             isRiskLevelsEnabled,
           ),
@@ -76,98 +89,103 @@ export default function RuleConfigurationV8(props: Props) {
   }, [type, readOnly]);
 
   return (
-    <div className={s.root}>
-      <RuleConfigurationFormV8
-        ref={formRef}
-        rule={rule}
-        formInitialValues={formInitialValues}
-        readOnly={readOnly || type === 'READ'}
-        activeStepKey={activeStepKey}
-        onSubmit={handleSubmit}
-        onActiveStepKeyChange={setActiveStepKey}
-        setIsValuesSame={setIsValuesSame}
-      />
-      <div className={s.footerButtons}>
-        {readOnly && type === 'EDIT' && (
-          <Button type="TETRIARY" onClick={onCancel}>
-            Cancel
-          </Button>
-        )}
-        {isMutableOnly && (
-          <Button
-            type="TETRIARY"
-            onClick={() => {
-              const prevStep = STEPS[activeStepIndex - 1];
-              setActiveStepKey(prevStep);
-            }}
-            icon={<ArrowLeftSLineIcon />}
-            isDisabled={activeStepIndex === 0}
-          >
-            Previous
-          </Button>
-        )}
-        {isMutableOnly && activeStepIndex !== STEPS.length - 1 && (
-          <Button
-            type="SECONDARY"
-            onClick={() => {
-              const nextStep = STEPS[activeStepIndex + 1];
-              setActiveStepKey(nextStep);
-            }}
-            isDisabled={activeStepIndex === STEPS.length - 1}
-            iconRight={<ArrowRightSLineIcon />}
-            testName="drawer-next-button-v8"
-          >
-            Next
-          </Button>
-        )}
-        {type !== 'READ' &&
-          (!readOnly || ['CREATE', 'DUPLICATE'].includes(type)) &&
-          activeStepIndex === STEPS.length - 1 && (
-            <>
-              {isValuesSame && ['DUPLICATE'].includes(type) ? (
-                <Tooltip
-                  placement="topRight"
-                  title="Rule parameters have not changed. To save the rule, please modify some rule parameters."
-                >
-                  <div>
-                    <Button isDisabled={true} requiredPermissions={['rules:my-rules:write']}>
+    <AsyncResourceRenderer resource={queryResult.data}>
+      {({ ruleInstanceId }) => (
+        <div className={s.root}>
+          <RuleConfigurationFormV8
+            ref={formRef}
+            rule={rule}
+            formInitialValues={formInitialValues}
+            readOnly={readOnly || type === 'READ'}
+            activeStepKey={activeStepKey}
+            onSubmit={handleSubmit}
+            onActiveStepKeyChange={setActiveStepKey}
+            setIsValuesSame={setIsValuesSame}
+            newRuleId={type === 'EDIT' || type === 'READ' ? ruleInstance?.id : ruleInstanceId}
+          />
+          <div className={s.footerButtons}>
+            {readOnly && type === 'EDIT' && (
+              <Button type="TETRIARY" onClick={onCancel}>
+                Cancel
+              </Button>
+            )}
+            {isMutableOnly && (
+              <Button
+                type="TETRIARY"
+                onClick={() => {
+                  const prevStep = STEPS[activeStepIndex - 1];
+                  setActiveStepKey(prevStep);
+                }}
+                icon={<ArrowLeftSLineIcon />}
+                isDisabled={activeStepIndex === 0}
+              >
+                Previous
+              </Button>
+            )}
+            {isMutableOnly && activeStepIndex !== STEPS.length - 1 && (
+              <Button
+                type="SECONDARY"
+                onClick={() => {
+                  const nextStep = STEPS[activeStepIndex + 1];
+                  setActiveStepKey(nextStep);
+                }}
+                isDisabled={activeStepIndex === STEPS.length - 1}
+                iconRight={<ArrowRightSLineIcon />}
+                testName="drawer-next-button-v8"
+              >
+                Next
+              </Button>
+            )}
+            {type !== 'READ' &&
+              (!readOnly || ['CREATE', 'DUPLICATE'].includes(type)) &&
+              activeStepIndex === STEPS.length - 1 && (
+                <>
+                  {isValuesSame && ['DUPLICATE'].includes(type) ? (
+                    <Tooltip
+                      placement="topRight"
+                      title="Rule parameters have not changed. To save the rule, please modify some rule parameters."
+                    >
+                      <div>
+                        <Button isDisabled={true} requiredPermissions={['rules:my-rules:write']}>
+                          {props.type === 'CREATE' ? 'Done' : 'Save'}
+                        </Button>
+                      </div>
+                    </Tooltip>
+                  ) : (
+                    <Button
+                      htmlType="submit"
+                      isLoading={
+                        updateRuleInstanceMutation.isLoading || createRuleInstanceMutation.isLoading
+                      }
+                      isDisabled={readOnly}
+                      onClick={() => {
+                        formRef?.current?.submit();
+                      }}
+                      requiredPermissions={['rules:my-rules:write']}
+                      testName="drawer-create-save-button"
+                    >
                       {props.type === 'CREATE' ? 'Done' : 'Save'}
                     </Button>
-                  </div>
-                </Tooltip>
-              ) : (
-                <Button
-                  htmlType="submit"
-                  isLoading={
-                    updateRuleInstanceMutation.isLoading || createRuleInstanceMutation.isLoading
-                  }
-                  isDisabled={readOnly}
-                  onClick={() => {
-                    formRef?.current?.submit();
-                  }}
-                  requiredPermissions={['rules:my-rules:write']}
-                  testName="drawer-create-save-button"
-                >
-                  {props.type === 'CREATE' ? 'Done' : 'Save'}
-                </Button>
+                  )}
+                </>
               )}
-            </>
-          )}
-        {type === 'READ' && (
-          <Button
-            type="SECONDARY"
-            onClick={() => {
-              if (props.onChangeToEditMode) {
-                props.onChangeToEditMode();
-              }
-            }}
-            icon={<EditOutlined />}
-            requiredPermissions={['rules:my-rules:write']}
-          >
-            Edit
-          </Button>
-        )}
-      </div>
-    </div>
+            {type === 'READ' && (
+              <Button
+                type="SECONDARY"
+                onClick={() => {
+                  if (props.onChangeToEditMode) {
+                    props.onChangeToEditMode();
+                  }
+                }}
+                icon={<EditOutlined />}
+                requiredPermissions={['rules:my-rules:write']}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </AsyncResourceRenderer>
   );
 }

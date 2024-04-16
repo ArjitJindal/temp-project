@@ -304,6 +304,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RuleInstance'
+  /rule-instances/new-rule-id:
+    parameters: []
+    get:
+      summary: Rule instances - New rule ID
+      operationId: get-rule-instances-new-rule-id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewRuleInstanceIdResponse'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: ruleId
+          description: Rule ID
+      description: Get a new rule instance ID
   /import/users:
     parameters: []
     post:
@@ -6424,6 +6443,12 @@ components:
         - labels
         - checksFor
         - type
+    NewRuleInstanceIdResponse:
+      title: NewRuleInstanceIdResponse
+      type: object
+      properties:
+        ruleInstanceId:
+          type: string
     AlertCreationDirection:
       type: string
       title: AlertCreationDirection

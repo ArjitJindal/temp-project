@@ -11,6 +11,7 @@ import * as Card from '@/components/ui/Card';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 
 export interface FormValues {
+  ruleId: string | undefined;
   ruleName: string | undefined;
   ruleDescription: string | undefined;
   ruleNature: RuleNature;
@@ -26,10 +27,11 @@ export const INITIAL_VALUES: Partial<FormValues> = {
 
 interface Props {
   rule?: Rule;
+  newRuleId?: string;
 }
 
 export default function BasicDetailsStep(props: Props) {
-  const { rule } = props;
+  const { rule, newRuleId } = props;
   const [ruleNature, setRuleNature] = useState<RuleNature | undefined>(
     rule?.defaultNature ?? INITIAL_VALUES.ruleNature,
   );
@@ -43,6 +45,13 @@ export default function BasicDetailsStep(props: Props) {
       <Card.Section>
         <div className={s.root}>
           <PropertyListLayout>
+            <InputField<FormValues, 'ruleId'>
+              name={'ruleId'}
+              label={'Rule ID'}
+              labelProps={{ required: true }}
+            >
+              {(inputProps) => <TextInput {...inputProps} value={newRuleId} isDisabled />}
+            </InputField>
             <InputField<FormValues, 'ruleName'>
               name={'ruleName'}
               label={'Rule name'}
