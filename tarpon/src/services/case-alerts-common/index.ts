@@ -29,7 +29,7 @@ export class CaseAlertsCommonService {
     if (!escalationAssineeCandidates?.length) {
       return []
     }
-    const assignee = sample(escalationAssineeCandidates)!
+    const assignee = sample(escalationAssineeCandidates) ?? accounts[0]
     return [
       {
         assigneeUserId: assignee.id,

@@ -126,7 +126,7 @@ export class RuleInstanceService {
         ruleInstance.riskLevelParameters
       )
       RuleService.validateRuleParametersSchema(
-        ALL_RULES[rule!.ruleImplementationName!].getSchema(),
+        ALL_RULES[rule?.ruleImplementationName ?? ''].getSchema(),
         ruleInstance.parameters,
         ruleInstance.riskLevelParameters
       )

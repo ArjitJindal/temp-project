@@ -241,17 +241,17 @@ describe('List of entity variables', () => {
 
 describe('Auto-created entity variables', () => {
   test('TRANSACTION:type', async () => {
-    const variable = getRuleVariableByKey('TRANSACTION:type')!
-    expect(await variable.load(getTestTransaction({ type: 'REFUND' }))).toBe(
+    const variable = getRuleVariableByKey('TRANSACTION:type')
+    expect(await variable?.load(getTestTransaction({ type: 'REFUND' }))).toBe(
       'REFUND'
     )
   })
   test('TRANSACTION:originAmountDetails-transactionCurrency', async () => {
     const variable = getRuleVariableByKey(
       'TRANSACTION:originAmountDetails-transactionCurrency'
-    )!
+    )
     expect(
-      await variable.load(
+      await variable?.load(
         getTestTransaction({
           originAmountDetails: {
             transactionCurrency: 'JPY',
@@ -262,11 +262,11 @@ describe('Auto-created entity variables', () => {
     ).toBe('JPY')
   })
   test('CONSUMER_USER:userDetails-dateOfBirth__SENDER', async () => {
-    const variable = (await getRuleVariableByKey(
+    const variable = await getRuleVariableByKey(
       'CONSUMER_USER:userDetails-dateOfBirth__SENDER'
-    ))!
+    )
     expect(
-      await variable.load(
+      await variable?.load(
         getTestUser({
           userDetails: {
             dateOfBirth: '1990-01-01',
@@ -277,11 +277,11 @@ describe('Auto-created entity variables', () => {
     ).toBe('1990-01-01')
   })
   test('BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__SENDER', async () => {
-    const variable = (await getRuleVariableByKey(
+    const variable = await getRuleVariableByKey(
       'BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__SENDER'
-    ))!
+    )
     expect(
-      await variable.load(
+      await variable?.load(
         getTestBusiness({
           legalEntity: {
             companyGeneralDetails: { legalName: 'foo', userSegment: 'LIMITED' },
@@ -291,8 +291,8 @@ describe('Auto-created entity variables', () => {
     ).toBe('LIMITED')
   })
   test('TRANSACTION:tags', async () => {
-    const variable = getRuleVariableByKey('TRANSACTION:tags')!
-    const data = await variable.load(
+    const variable = getRuleVariableByKey('TRANSACTION:tags')
+    const data = await variable?.load(
       getTestTransaction({
         tags: [
           { key: 'k1', value: 'v1' },

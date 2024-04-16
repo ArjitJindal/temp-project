@@ -55,8 +55,8 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
       await this.getUserPastTransactionCountries()
 
     const expectedCountries = [
-      consumerUser.userDetails!.countryOfResidence,
-      consumerUser.userDetails!.countryOfNationality,
+      consumerUser.userDetails?.countryOfResidence,
+      consumerUser.userDetails?.countryOfNationality,
       ...pastTransactionCountries,
     ].filter(Boolean)
 

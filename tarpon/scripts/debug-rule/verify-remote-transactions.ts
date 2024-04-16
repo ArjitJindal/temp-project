@@ -45,7 +45,10 @@ async function getRemoteRuleInstances(
   ).result
 
   return allRuleInstances
-    .filter((ruleInstance) => ruleInstanceIds.includes(ruleInstance.id!))
+    .filter(
+      (ruleInstance) =>
+        ruleInstance.id && ruleInstanceIds.includes(ruleInstance.id)
+    )
     .map((ruleInstance) => ({
       ...ruleInstance,
       status: 'ACTIVE',

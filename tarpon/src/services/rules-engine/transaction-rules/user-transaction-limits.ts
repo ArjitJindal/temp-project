@@ -222,12 +222,12 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           ? this.transaction.originPaymentDetails?.method
           : this.transaction.destinationPaymentDetails?.method
       // Check for payment method transaction limits by time granularity
-      if (paymentMethod && paymentMethodLimits?.[paymentMethod]) {
+      if (paymentMethod && paymentMethodLimits?.[paymentMethod] !== undefined) {
         transactionLimitResults.push(
           ...(await this.checkPaymentMethodTransactionLimits(
             direction,
             paymentMethod,
-            paymentMethodLimits[paymentMethod]!
+            paymentMethodLimits?.[paymentMethod] ?? {}
           ))
         )
       }
@@ -254,12 +254,11 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       direction: 'origin' | 'destination',
       granularity: 'day' | 'week' | 'month' | 'year'
     ): Promise<UserTimeAggregationAttributes> => {
-      const user =
-        direction === 'origin' ? this.senderUser! : this.receiverUser!
+      const user = direction === 'origin' ? this.senderUser : this.receiverUser
       if (this.aggregationRepository) {
         const data =
           await this.aggregationRepository.getUserTransactionStatsTimeGroup(
-            user.userId,
+            user?.userId ?? '',
             this.transaction.timestamp,
             granularity
           )
@@ -270,13 +269,13 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         .valueOf()
       const [sendingTransactions, receivingTransactions] = await Promise.all([
         this.transactionRepository.getUserSendingTransactions(
-          user.userId,
+          user?.userId ?? '',
           { afterTimestamp, beforeTimestamp: this.transaction.timestamp },
           { transactionStates: ['SUCCESSFUL'] },
           ['originAmountDetails']
         ),
         this.transactionRepository.getUserReceivingTransactions(
-          user.userId,
+          user?.userId ?? '',
           { afterTimestamp, beforeTimestamp: this.transaction.timestamp },
           { transactionStates: ['SUCCESSFUL'] },
           ['destinationAmountDetails']
@@ -394,7 +393,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         hitDescription: `${party} ${
           direction === 'origin' ? 'sent' : 'received'
         } a transaction amount of ${formatMoney(
-          amountDetails!
+          amountDetails
         )} more than the limit (${formatMoney(maximumTransactionLimit)}).`,
       }
     }
@@ -420,7 +419,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         stats.receivingTransactionsAmount.get('ALL')
       const totalAmount = await getTransactionsTotalAmount(
         [currentSendingTotalAmount, currentReceivingTotalAmount, amountDetails],
-        amountDetails!.transactionCurrency
+        amountDetails?.transactionCurrency ?? 'USD'
       )
       const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
         [limit.amountCurrency]: this.getLimit(limit.amountValue),
@@ -461,7 +460,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
             stats.receivingTransactionsAmount.get(paymentMethod)
           const totalAmount = await getTransactionsTotalAmount(
             [currentSendingAmount, currentReceivingAmount, amountDetails],
-            amountDetails!.transactionCurrency
+            amountDetails?.transactionCurrency ?? 'USD'
           )
           const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
             [limit.amountCurrency]: this.getLimit(limit.amountValue),
@@ -496,7 +495,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
             stats.receivingTransactionsAmount.get(paymentMethod)
           const totalAmount = await getTransactionsTotalAmount(
             [currentSendingAmount, currentReceivingAmount, amountDetails],
-            amountDetails!.transactionCurrency
+            amountDetails?.transactionCurrency ?? 'USD'
           )
           const currentSendingCount =
             stats.sendingTransactionsCount.get(paymentMethod) ?? 0

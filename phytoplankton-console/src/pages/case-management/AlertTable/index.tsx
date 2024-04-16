@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
-import { useAlertQaAssignmentUpdateMutation } from '../QaTable';
+import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
 import { useApi } from '@/api';

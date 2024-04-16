@@ -29,7 +29,7 @@ export class OngoingMerchantMonitoringBatchJobRunner extends BatchJobRunner {
       'USER'
     )
     const merchantMonitoringRuleIds = allActiveRules.filter((rule) =>
-      ONGOING_MERCHANT_MONITORING_RULE_IDS.includes(rule.ruleId!)
+      ONGOING_MERCHANT_MONITORING_RULE_IDS.includes(rule.ruleId ?? '')
     )
 
     if (!merchantMonitoringRuleIds.length) {

@@ -274,7 +274,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     const { checkSender, checkReceiver, timeWindow } = this.parameters
 
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       timeWindow
     )
     const userAggregationData = await this.getRuleAggregations<AggregationData>(

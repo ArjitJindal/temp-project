@@ -113,6 +113,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
           showErrors={showError}
           otherReason={OTHER_REASON}
           isCopilotEnabled={false}
+          infoText="Note that the QA status of this alert is updated across all samples that contain this alert. "
         />
       </Modal>
     </>

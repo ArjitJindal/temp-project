@@ -40,7 +40,7 @@ export class ChecklistTemplateRepository {
     const collection = db.collection<ChecklistTemplate>(
       CHECKLIST_TEMPLATE_COLLECTION(this.tenantId)
     )
-    return await collection.findOne({ id: templateId! })
+    return await collection.findOne({ id: templateId })
   }
 
   public async getChecklistTemplateByIds(
@@ -86,7 +86,7 @@ export class ChecklistTemplateRepository {
     const collection = db.collection<ChecklistTemplate>(
       CHECKLIST_TEMPLATE_COLLECTION(this.tenantId)
     )
-    await collection.deleteOne({ id: templateId! })
+    await collection.deleteOne({ id: templateId })
   }
 
   private getChecklistTemplatesCount(): Promise<number> {

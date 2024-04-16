@@ -29,7 +29,9 @@ export class UserTypeRuleFilter extends UserRuleFilter<UserTypeRuleFilterParamet
   }
 
   public async predicate(): Promise<boolean> {
-    return this.isUserType(this.user, this.parameters.userType!)
+    return this.parameters.userType
+      ? this.isUserType(this.user, this.parameters.userType)
+      : false
   }
 
   private isUserType(user: User | Business, userType: UserType) {

@@ -186,7 +186,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       matchPaymentDetails: this.parameters.destinationMatchPaymentMethodDetails,
     }) as string
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp ?? 0,
       this.parameters.timeWindow
     )
     const userAggregationData = await this.getRuleAggregations<AggregationData>(
@@ -196,10 +196,15 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     )
     const currencyService = new CurrencyService()
     if (userAggregationData) {
-      const amount = await currencyService.getTargetCurrencyAmount(
-        this.transaction.originAmountDetails!,
-        this.getTargetCurrency()
-      )
+      const amount = this.transaction.originAmountDetails
+        ? await currencyService.getTargetCurrencyAmount(
+            this.transaction.originAmountDetails,
+            this.getTargetCurrency()
+          )
+        : {
+            transactionAmount: 0,
+            transactionCurrency: this.getTargetCurrency(),
+          }
       const amountValue =
         sumBy(userAggregationData, (data) => data[receiverKeyId] || 0) +
         amount.transactionAmount
@@ -360,10 +365,15 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     if (!receiverKeyId) {
       return targetAggregationData ?? {}
     }
-    const amount = await currencyService.getTargetCurrencyAmount(
-      this.transaction.originAmountDetails!,
-      this.getTargetCurrency()
-    )
+    const amount = this.transaction.originAmountDetails
+      ? await currencyService.getTargetCurrencyAmount(
+          this.transaction.originAmountDetails,
+          this.getTargetCurrency()
+        )
+      : {
+          transactionAmount: 0,
+          transactionCurrency: this.getTargetCurrency(),
+        }
     return {
       ...targetAggregationData,
       [receiverKeyId]:

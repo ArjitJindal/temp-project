@@ -133,7 +133,7 @@ export async function getInitialContext(
         ? {
             id: userId,
             email: verifiedEmail,
-            role: role!,
+            role: role ?? '',
             allowTenantDeletion: Boolean(allowTenantDeletion),
             allowedRegions,
           }

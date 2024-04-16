@@ -16,10 +16,10 @@ describe.each(RULES_LIBRARY)('Rule library integrity', (rule) => {
   test(`${rule.id}: ${rule.name}`, () => {
     const ruleImplementation =
       rule.type === 'TRANSACTION'
-        ? TRANSACTION_RULES[rule.ruleImplementationName!]
+        ? TRANSACTION_RULES[rule.ruleImplementationName ?? '']
         : rule.type === 'USER'
-        ? USER_RULES[rule.ruleImplementationName!]
-        : USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName!]
+        ? USER_RULES[rule.ruleImplementationName ?? '']
+        : USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName ?? '']
 
     expect(ruleImplementation).not.toBeUndefined()
     const schema = ruleImplementation.getSchema()
@@ -120,10 +120,10 @@ describe.each(RULES_LIBRARY)('Rule library logic integrity', (rule) => {
   test(`${rule.id}: ${rule.name}`, async () => {
     const ruleImplementation =
       rule.type === 'TRANSACTION'
-        ? TRANSACTION_RULES[rule.ruleImplementationName!]
+        ? TRANSACTION_RULES[rule.ruleImplementationName ?? '']
         : rule.type === 'USER'
-        ? USER_RULES[rule.ruleImplementationName!]
-        : USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName!]
+        ? USER_RULES[rule.ruleImplementationName ?? '']
+        : USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName ?? '']
 
     expect(ruleImplementation).not.toBeUndefined()
     await expect(
@@ -170,10 +170,10 @@ describe('', () => {
         }
         const ruleImplementation =
           rule.type === 'TRANSACTION'
-            ? TRANSACTION_RULES[rule.ruleImplementationName!]
+            ? TRANSACTION_RULES[rule.ruleImplementationName ?? '']
             : rule.type === 'USER'
-            ? USER_RULES[rule.ruleImplementationName!]
-            : USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName!]
+            ? USER_RULES[rule.ruleImplementationName ?? '']
+            : USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName ?? '']
 
         const schema = ruleImplementation.getSchema()
         expect(() =>

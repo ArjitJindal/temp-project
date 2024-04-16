@@ -122,7 +122,7 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     }) as string
 
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp ?? 0,
       this.parameters.timeWindow
     )
 

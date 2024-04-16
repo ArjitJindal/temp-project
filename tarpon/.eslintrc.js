@@ -32,6 +32,7 @@ module.exports = {
     'import/no-cycle': 'warn',
     '@typescript-eslint/no-floating-promises': ['error', { ignoreIIFE: true }],
     "@typescript-eslint/switch-exhaustiveness-check": "error",
+    "@typescript-eslint/no-non-null-assertion": "error",
     'import/no-restricted-paths': [
       'error',
       {

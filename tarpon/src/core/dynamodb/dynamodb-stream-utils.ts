@@ -48,7 +48,7 @@ export type DynamoDbEntityUpdate = {
   NewImage?: { [key: string]: any }
   OldImage?: { [key: string]: any }
   rawRecord?: KinesisStreamRecord
-  partitionKeyId?: string
+  partitionKeyId: string
 }
 
 function unMarshallDynamoDBStream(dataString: string) {

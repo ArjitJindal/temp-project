@@ -47,7 +47,7 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
       return
     }
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp ?? 0,
       timeWindow
     )
     const transactionsFromIpAddress =

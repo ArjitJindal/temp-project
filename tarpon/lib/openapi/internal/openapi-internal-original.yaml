@@ -3911,6 +3911,28 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertsQaSamplingUpdateRequest'
         required: true
+    delete:
+      summary: Alerts - QA Sample
+      operationId: delete-alerts-qa-sample
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:qa:write
+  /alerts/qa-sample-ids:
+    get:
+      summary: Alerts - QA Sample IDs
+      operationId: get-alerts-qa-sample-ids
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlertsQASampleIds'
   /alerts/new-case:
     post:
       summary: Alerts - New Case
@@ -8320,7 +8342,6 @@ components:
         - QA
         - AI_RISK_SCORE
         - RULES_ENGINE_V8
-        - RULES_ENGINE_V8_LIBRARY
         - SYNC_TRS_CALCULATION
         - NOTIFICATIONS
       description: ''
@@ -8693,6 +8714,20 @@ components:
           type: array
           items:
             type: string
+        creationReason:
+          $ref: ../public-management/openapi-public-management-original.yaml#/components/schemas/ActionReason
+        deletionReason:
+          $ref: ../public-management/openapi-public-management-original.yaml#/components/schemas/ActionReason
+        isDeleted:
+          type: boolean
+        createdTimestampInternal:
+          type: number
+        deletedAt:
+          type: number
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
         alerts:
           type: array
           items:
@@ -8821,25 +8856,56 @@ components:
               type: number
             end:
               type: number
+    AlertsQAAutomaticSamplingData:
+      title: AlertsQAAutomaticSamplingData
+      type: object
+      properties:
+        samplingType:
+          type: string
+          enum:
+            - AUTOMATIC
+        filters:
+          $ref: '#/components/schemas/AlertQASamplingFilters'
+        samplingPercentage:
+          type: number
+      required:
+        - filters
+        - samplingPercentage
+        - samplingType
+    AlertsQASamplingManualData:
+      title: AlertsQASamplingManualData
+      type: object
+      properties:
+        samplingType:
+          type: string
+          enum:
+            - MANUAL
+        alertIds:
+          type: array
+          items:
+            type: string
+      required:
+        - alertIds
+        - samplingType
     AlertsQaSamplingRequest:
       title: AlertsQASamplingRequest
       type: object
       properties:
-        samplingPercentage:
-          type: number
         samplingName:
           type: string
         samplingDescription:
           type: string
         priority:
           $ref: '#/components/schemas/Priority'
-        filters:
-          $ref: '#/components/schemas/AlertQASamplingFilters'
+        samplingData:
+          oneOf:
+            - $ref: '#/components/schemas/AlertsQAAutomaticSamplingData'
+            - $ref: '#/components/schemas/AlertsQASamplingManualData'
       required:
-        - samplingPercentage
         - samplingName
         - samplingDescription
         - priority
+        - samplingData
     AlertsQaSamplingUpdateRequest:
       title: AlertsQASamplingUpdateRequest
       type: object
@@ -8850,10 +8916,23 @@ components:
           type: string
         priority:
           $ref: '#/components/schemas/Priority'
+        alertIds:
+          type: array
+          items:
+            type: string
+        samplingPercentage:
+          type: number
+    AlertsQASampleIds:
+      title: AlertsQASampleIds
+      type: object
+      properties:
+        samplingId:
+          type: string
+        samplingName:
+          type: string
       required:
+        - samplingId
         - samplingName
-        - samplingDescription
-        - priority
     AlertsQaSampling:
       title: AlertsQASampling
       type: object
@@ -8884,6 +8963,15 @@ components:
           type: number
         numberOfAlertsQaDone:
           type: number
+        samplingType:
+          type: string
+          enum:
+            - MANUAL
+            - AUTOMATIC
+        manuallyAdded:
+          type: array
+          items:
+            type: string
       required:
         - samplingPercentage
         - samplingName
@@ -8891,6 +8979,9 @@ components:
         - priority
         - createdAt
         - updatedAt
+        - samplingType
+        - samplingId
+        - createdBy
     AlertQASamplingListResponse:
       title: AlertQASamplingListResponse
       type: object
@@ -8934,6 +9025,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Assignment'
+        creationReason:
+          $ref: ../public-management/openapi-public-management-original.yaml#/components/schemas/ActionReason
+        deletionReason:
+          $ref: ../public-management/openapi-public-management-original.yaml#/components/schemas/ActionReason
+        isDeleted:
+          type: boolean
+        createdTimestampInternal:
+          type: number
+        deletedAt:
+          type: number
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
         ruleInstanceId:
           type: string
         ruleName:

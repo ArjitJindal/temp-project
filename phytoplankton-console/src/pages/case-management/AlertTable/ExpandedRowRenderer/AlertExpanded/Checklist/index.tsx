@@ -190,17 +190,17 @@ export default function Checklist(props: Props) {
             let label = !alert.ruleQaStatus ? 'Select status' : '-';
             switch (status?.qaStatus) {
               case 'PASSED':
-                label = 'QA passed';
+                label = 'Pass';
                 break;
               case 'FAILED':
-                label = 'QA failed';
+                label = 'Fail';
                 break;
               default:
             }
             return !alert.ruleQaStatus ? (
               <Dropdown<ChecklistStatus>
                 options={CHECKLIST_STATUSS.map((s) => ({
-                  label: `QA ${humanizeConstant(s)}`,
+                  label: s === 'PASSED' ? 'Pass' : s === 'FAILED' ? 'Fail' : 'Select status',
                   value: s,
                 }))}
                 arrow={'LINE'}

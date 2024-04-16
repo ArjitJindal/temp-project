@@ -15,7 +15,6 @@ import { notNullish } from '@/utils/array';
 import { getPaymentMethodTitle, PaymentMethod } from '@/utils/payments';
 import { formatConsumerName } from '@/utils/api/users';
 import CountryDisplay from '@/components/ui/CountryDisplay';
-import { neverReturn } from '@/utils/lang';
 import { PaymentDetails, PaymentDetailsKey } from '@/utils/api/payment-details';
 
 interface Props {
@@ -88,43 +87,8 @@ function renderValue(key: PaymentDetailsKey, value: unknown): React.ReactNode {
   if (key === 'bankAddress' || key === 'shippingAddress') {
     const address = value as ApiAddress;
     return <Address address={address} />;
-  } else if (
-    key === 'cardFingerprint' ||
-    key === 'transactionReferenceField' ||
-    key === '_3dsDone' ||
-    key === 'cardLast4Digits' ||
-    key === 'cardBrand' ||
-    key === 'cardAuthenticated' ||
-    key === 'paymentChannel' ||
-    key === 'accountNumber' ||
-    key === 'bankName' ||
-    key === 'bankCode' ||
-    key === 'name' ||
-    key === 'specialInstructions' ||
-    key === 'BIC' ||
-    key === 'IBAN' ||
-    key === 'bankBranchCode' ||
-    key === 'routingNumber' ||
-    key === 'beneficiaryName' ||
-    key === 'upiID' ||
-    key === 'bankProvider' ||
-    key === 'interfaceProvider' ||
-    key === 'walletType' ||
-    key === 'walletId' ||
-    key === 'walletPhoneNumber' ||
-    key === 'walletBalance' ||
-    key === 'swiftCode' ||
-    key === 'businessShortCode' ||
-    key === 'transactionType' ||
-    key === 'phoneNumber' ||
-    key === 'checkNumber' ||
-    key === 'checkIdentifier' ||
-    key === 'etaTimestamp' ||
-    key === 'emailId'
-  ) {
-    return stringifyValue(value);
   }
-  return neverReturn(key, stringifyValue(value));
+  return stringifyValue(value);
 }
 
 function stringifyValue(value: unknown): string {

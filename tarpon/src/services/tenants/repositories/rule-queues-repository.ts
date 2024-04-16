@@ -35,7 +35,7 @@ export class RuleQueuesRepository {
     const collection = db.collection<RuleQueue>(
       RULE_QUEUES_COLLECTION(this.tenantId)
     )
-    return await collection.findOne({ id: ruleQueueId! })
+    return await collection.findOne({ id: ruleQueueId })
   }
 
   public async createOrUpdateRuleQueue(queue: RuleQueue): Promise<RuleQueue> {
@@ -60,7 +60,7 @@ export class RuleQueuesRepository {
     const collection = db.collection<RuleQueue>(
       RULE_QUEUES_COLLECTION(this.tenantId)
     )
-    await collection.deleteOne({ id: queueId! })
+    await collection.deleteOne({ id: queueId })
   }
 
   private getRuleQueuesCount(): Promise<number> {

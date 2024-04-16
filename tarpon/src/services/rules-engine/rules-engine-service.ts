@@ -252,7 +252,7 @@ export class RulesEngineService {
       ruleInstances.map(async (ruleInstance) =>
         this.verifyAllUsersRule({
           ruleInstance,
-          rule: rulesByIds[ruleInstance.ruleId!],
+          rule: rulesByIds[ruleInstance.ruleId ?? ''],
         })
       )
     )
@@ -283,7 +283,8 @@ export class RulesEngineService {
     rule: Rule
   }) {
     const { ruleInstance, rule } = data
-    const ruleClass = USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName!]
+    const ruleClass =
+      USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName ?? '']
 
     const hitResults: (ConsumerUsersResponse | BusinessUsersResponse)[] = []
 
@@ -326,7 +327,7 @@ export class RulesEngineService {
                 if (isUserFilter) {
                   const hitRuleResult: HitRulesDetails = {
                     ruleId: rule.id,
-                    ruleInstanceId: ruleInstance.id!,
+                    ruleInstanceId: ruleInstance.id ?? '',
                     ruleName: rule.name,
                     ruleDescription: await generateRuleDescription(
                       rule,
@@ -823,7 +824,7 @@ export class RulesEngineService {
         }
       }
     } else {
-      const ruleImplementationName = rule!.ruleImplementationName!
+      const ruleImplementationName = rule?.ruleImplementationName ?? ''
       const RuleClass = transaction
         ? TRANSACTION_RULES[ruleImplementationName]
         : USER_RULES[ruleImplementationName]
@@ -832,6 +833,7 @@ export class RulesEngineService {
           `${ruleImplementationName} rule implementation not found!`
         )
       }
+      if (!rule) throw new Error('Rule not found')
       ruleClassInstance = transactionWithValidUserId
         ? new (RuleClass as typeof TransactionRuleBase)(
             this.tenantId,
@@ -842,7 +844,7 @@ export class RulesEngineService {
               transactionRiskScore,
             },
             { parameters, filters: ruleFilters },
-            { ruleInstance, rule: rule! },
+            { ruleInstance, rule: rule },
             {
               sanctionsService: this.sanctionsService,
               ibanService: this.ibanService,
@@ -853,9 +855,9 @@ export class RulesEngineService {
           )
         : new (RuleClass as typeof UserRuleBase)(
             this.tenantId,
-            { user: senderUser!, ongoingScreeningMode },
+            { user: senderUser ?? ({} as User), ongoingScreeningMode },
             { parameters, filters: ruleFilters },
-            { ruleInstance, rule: rule! },
+            { ruleInstance, rule: rule },
             {
               sanctionsService: this.sanctionsService,
               ibanService: this.ibanService,
@@ -926,11 +928,11 @@ export class RulesEngineService {
       const ruleDescriptions = (
         ruleHit
           ? await Promise.all(
-              filteredRuleResult!.map((result) =>
+              filteredRuleResult?.map((result) =>
                 generateRuleDescription(rule, parameters as Vars, result.vars)
               )
             )
-          : [rule!.description]
+          : [rule.description]
       ).map((description) =>
         last(description) !== '.' ? `${description}.` : description
       )
@@ -945,7 +947,7 @@ export class RulesEngineService {
       isTransactionHistoricalFiltered,
       result: {
         ruleId: ruleInstance.ruleId,
-        ruleInstanceId: ruleInstance.id!,
+        ruleInstanceId: ruleInstance.id ?? '',
         ruleName: (ruleInstance.ruleNameAlias || rule?.name) ?? '',
         ruleDescription,
         ruleAction: action,
@@ -1041,7 +1043,7 @@ export class RulesEngineService {
                   ruleClassInstance,
                   isTransactionHistoricalFiltered,
                   options.transaction,
-                  ruleInstance.id!
+                  ruleInstance.id ?? ''
                 )
               : []
 
@@ -1134,7 +1136,7 @@ export class RulesEngineService {
 
     const command = new SendMessageCommand({
       MessageBody: JSON.stringify(task.payload),
-      QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL!,
+      QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL,
       MessageGroupId: generateChecksum(task.userKeyId),
       MessageDeduplicationId: generateChecksum(
         `${task.userKeyId}:${payload.ruleInstanceId}:${payload.transactionId}`

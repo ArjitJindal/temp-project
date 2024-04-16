@@ -346,7 +346,7 @@ export class RiskScoringService {
   public async handleManualRiskLevel(userPayload: User | Business) {
     await this.riskRepository.createOrUpdateManualDRSRiskItem(
       userPayload.userId,
-      userPayload.riskLevel!
+      userPayload.riskLevel ?? 'VERY_HIGH'
     )
   }
 
@@ -603,7 +603,7 @@ export class RiskScoringService {
         ? this.calculateAndUpdateDRS(
             transaction.destinationUserId,
             arsScore,
-            transaction.transactionId!,
+            transaction.transactionId,
             components
           )
         : null,

@@ -664,6 +664,7 @@ export class CaseRepository {
           'caseUsers.destination.drsScore': 0,
           'caseUsers.origin.krsScore': 0,
           'caseUsers.destination.krsScore': 0,
+          caseAggregates: 0,
         },
       })
     }
@@ -1035,7 +1036,14 @@ export class CaseRepository {
   ): Promise<CaseWithoutCaseTransactions | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return await collection.findOne<Case>({ caseId })
+    return await collection.findOne<Case>(
+      { caseId },
+      {
+        projection: {
+          caseAggregates: 0,
+        },
+      }
+    )
   }
 
   public async getCaseByAlertId(

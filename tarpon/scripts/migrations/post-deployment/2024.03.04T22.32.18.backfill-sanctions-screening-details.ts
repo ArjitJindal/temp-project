@@ -61,8 +61,10 @@ async function migrateTenant(tenant: Tenant) {
 
   // Migrate user screening rules
   const migrationStartTime = dayjs().startOf('hour').valueOf()
-  const userScreeningRuleInstances = ruleInstances.filter((ruleInstance) =>
-    ['R-16', 'R-32', 'R-128'].includes(ruleInstance.ruleId!)
+  const userScreeningRuleInstances = ruleInstances.filter(
+    (ruleInstance) =>
+      ruleInstance.ruleId &&
+      ['R-16', 'R-32', 'R-128'].includes(ruleInstance.ruleId)
   )
   if (userScreeningRuleInstances.length > 0) {
     const userMigrationKey = `backfill-sanctions-screening-details-user__${tenant.id}`
@@ -96,7 +98,10 @@ async function migrateTenant(tenant: Tenant) {
                   )
                 ) || Boolean(ruleInstance.parameters?.ongoingScreening)
               await rulesEngine.verifyRuleIdempotent({
-                rule: rules.find((rule) => rule.id === ruleInstance.ruleId)!,
+                rule: rules.find(
+                  (rule) =>
+                    ruleInstance.ruleId && rule.id === ruleInstance.ruleId
+                ),
                 ruleInstance,
                 senderUser: user,
                 senderUserRiskLevel: userRiskLevel,
@@ -110,7 +115,7 @@ async function migrateTenant(tenant: Tenant) {
 
         await updateMigrationLastCompletedTimestamp(
           userMigrationKey,
-          last(users)!.createdTimestamp
+          last(users)?.createdTimestamp ?? 0
         )
       },
       { mongoBatchSize: 100, processBatchSize: 50 }
@@ -155,7 +160,7 @@ async function migrateTenant(tenant: Tenant) {
               await sanctionsScreeningDetailsCollection.insertMany(
                 initialRecords.map((initialRecord) => ({
                   ...initialRecord,
-                  ruleInstanceIds: [ruleInstance.id!],
+                  ruleInstanceIds: [ruleInstance.id ?? ''],
                   lastScreenedAt,
                   isNew: false,
                   _id: undefined,
@@ -198,7 +203,8 @@ async function migrateTenant(tenant: Tenant) {
             timestamp: {
               $gt:
                 txMigrationLastCompletedTimestamp ??
-                transactionScreeningRuleInstance.createdAt!,
+                transactionScreeningRuleInstance.createdAt ??
+                0,
             },
           },
           {
@@ -244,7 +250,7 @@ async function migrateTenant(tenant: Tenant) {
         logger.info(`Migrated ${transactions.length} transactions`)
         await updateMigrationLastCompletedTimestamp(
           txMigrationKey,
-          last(transactions)!.timestamp
+          last(transactions)?.timestamp ?? 0
         )
       },
       { mongoBatchSize: 100, processBatchSize: 50 }

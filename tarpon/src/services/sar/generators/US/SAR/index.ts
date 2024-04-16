@@ -669,7 +669,7 @@ export class UsSarReportGenerator implements ReportGenerator {
           'YYYYMMDDhhmmss'
         )}.${creds.username}.xml`
         const localFilePath = `${path.join('/tmp', `${report.id}.xml`)}`
-        fs.writeFileSync(localFilePath, last(report.revisions)!.output)
+        fs.writeFileSync(localFilePath, last(report.revisions)?.output ?? '')
 
         logger.info(
           await sftp.fastPut(
@@ -720,7 +720,7 @@ export class UsSarReportGenerator implements ReportGenerator {
 
     Sentry.withScope((scope) => {
       scope.setTags({ reportId: report.id })
-      scope.setFingerprint([this.tenantId, report.id!])
+      scope.setFingerprint([this.tenantId, report.id ?? ''])
       Sentry.captureMessage(`[${report.id}] New FinCEN SAR report submitted`)
     })
     return ''

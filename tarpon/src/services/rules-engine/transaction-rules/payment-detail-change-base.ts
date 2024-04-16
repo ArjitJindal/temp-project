@@ -146,7 +146,7 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
   ): Promise<AggregationData> {
     const { paymentUsage, previousPaymentDetail } = keys(direction)
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp ?? 0,
       this.parameters.timeWindow
     )
     const userAggregationData = await this.getRuleAggregations<AggregationData>(

@@ -916,7 +916,7 @@ export class DynamoDbTransactionRepository
     return transactionTimeRange
       ? transactions.filter((transaction) =>
           transactionTimeRangeRuleFilterPredicate(
-            transaction.timestamp!,
+            transaction.timestamp ?? 0,
             transactionTimeRange
           )
         )
@@ -944,11 +944,13 @@ export class DynamoDbTransactionRepository
       ) || []) as Array<AuxiliaryIndexTransaction>
       const transactionTimeRange = filterOptions.transactionTimeRange24hr
       yield transactionTimeRange
-        ? transactions.filter((transaction) =>
-            transactionTimeRangeRuleFilterPredicate(
-              transaction.timestamp!,
-              transactionTimeRange
-            )
+        ? transactions.filter(
+            (transaction) =>
+              transaction.timestamp &&
+              transactionTimeRangeRuleFilterPredicate(
+                transaction.timestamp,
+                transactionTimeRange
+              )
           )
         : transactions
     }

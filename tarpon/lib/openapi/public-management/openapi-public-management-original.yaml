@@ -304,6 +304,263 @@ paths:
         If you need an update to a rule filter or a new rule filter, you can always contact the Flagright team.
       parameters: []
     parameters: []
+  /cases:
+    post:
+      security:
+        - x-api-key: []
+      summary: Case - Create
+      operationId: post-cases
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+              examples:
+                example-1:
+                  value:
+                    caseId: string
+                    entityDetails:
+                      userId: string
+                      type: USER
+                    caseStatus: OPEN
+                    priority: P1
+                    createdTimestamp: 0
+                    updatedAt: 0
+                    relatedCases:
+                      - string
+                    tags:
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+                    assignments:
+                      - $ref: '#/components/schemas/Assignment'
+                    creationReason:
+                      reasons:
+                        - string
+                      comment: string
+                      timestamp: 0
+                    deletionReason:
+                      reasons:
+                        - string
+                      comment: string
+                      timestamp: 0
+                    isDeleted: false
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseCreationRequest'
+  /cases/{caseId}/delete:
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+    post:
+      security:
+        - x-api-key: []
+      summary: Case - Delete
+      operationId: post-cases-caseId-delete
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionReason'
+      description: '### Delete Case'
+  /cases/{caseId}:
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+    get:
+      security:
+        - x-api-key: []
+      summary: Case - Get
+      operationId: get-cases-caseId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      description: '### Retrieve a Case'
+    patch:
+      security:
+        - x-api-key: []
+      summary: Case - Update
+      operationId: patch-cases-caseId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseUpdateable'
+      description: '### Update Case'
+  /alerts:
+    post:
+      security:
+        - x-api-key: []
+      summary: Alert - Create
+      operationId: post-alerts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+              examples:
+                example-1:
+                  value:
+                    alertId: string
+                    entityDetails:
+                      type: TRANSACTION
+                      transactionIds:
+                        - string
+                    alertStatus: OPEN
+                    priority: P1
+                    createdTimestamp: 0
+                    updatedAt: 0
+                    tags:
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+                    assignments:
+                      - $ref: '#/components/schemas/Assignment'
+                    creationReason:
+                      reasons:
+                        - string
+                      comment: string
+                      timestamp: 0
+                    deletionReason:
+                      reasons:
+                        - string
+                      comment: string
+                      timestamp: 0
+                    isDeleted: false
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertCreationRequest'
+  /alerts/{alertId}:
+    parameters:
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+    get:
+      security:
+        - x-api-key: []
+      summary: Alert - Get
+      operationId: get-alerts-alertId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      description: '### Retrieve an Alert'
+    patch:
+      security:
+        - x-api-key: []
+      summary: Alert - Update
+      operationId: patch-alerts-alertId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertUpdatable'
+      description: '### Update Alert'
+  /alerts/{alertId}/delete:
+    parameters:
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+    post:
+      security:
+        - x-api-key: []
+      summary: Alert - Delete
+      operationId: post-alerts-alertId-delete
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionReason'
+      description: '### Delete Alert'
 components:
   schemas:
     RuleInstance:
@@ -601,6 +858,301 @@ components:
         - types
         - typologies
         - sampleUseCases
+    CaseCreationRequest:
+      title: CaseCreationRequest
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - $ref: '#/components/schemas/CaseUpdateable'
+      required:
+        - caseId
+        - entityDetails
+        - priority
+    AlertCreationRequest:
+      title: AlertCreationRequest
+      allOf:
+        - $ref: '#/components/schemas/AlertBase'
+        - $ref: '#/components/schemas/AlertUpdatable'
+      required:
+        - alertId
+        - entityDetails
+        - priority
+        - caseId
+    CaseDelete:
+      title: CaseDelete
+      type: object
+      description: ''
+      properties:
+        deletionReason:
+          $ref: '#/components/schemas/ActionReason'
+    CaseBase:
+      title: CaseBase
+      type: object
+      description: ''
+      properties:
+        caseId:
+          type: string
+        createdTimestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+      required:
+        - caseId
+        - createdTimestamp
+    AlertBase:
+      title: AlertBase
+      type: object
+      description: ''
+      properties:
+        alertId:
+          type: string
+        createdTimestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+        caseId:
+          type: string
+      required:
+        - alertId
+        - createdTimestamp
+        - caseId
+    TransactionHitDetails:
+      title: TransactionHitDetails
+      type: object
+      description: ''
+      properties:
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+        transactionIds:
+          type: array
+          items:
+            type: string
+      required:
+        - type
+        - transactionIds
+    SanctionsHitDetails:
+      title: SanctionsHitDetails
+      type: object
+      description: ''
+      properties:
+        type:
+          type: string
+          enum:
+            - SANCTIONS
+      required:
+        - type
+        - sanctionIds
+    AlertUpdatable:
+      title: AlertUpdateable
+      type: object
+      description: ''
+      properties:
+        priority:
+          $ref: '#/components/schemas/Priority'
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+        creationReason:
+          $ref: '#/components/schemas/ActionReason'
+        entityDetails:
+          oneOf:
+            - $ref: '#/components/schemas/TransactionHitDetails'
+            - $ref: '#/components/schemas/SanctionsHitDetails'
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+    AlertDerived:
+      title: AlertDerived
+      type: object
+      description: ''
+      properties:
+        alertStatus:
+          $ref: '#/components/schemas/Status'
+        updatedAt:
+          type: number
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+    AlertDeletion:
+      title: AlertDeletion
+      type: object
+      description: ''
+      properties:
+        deletionReason:
+          $ref: '#/components/schemas/ActionReason'
+    Alert:
+      title: Alert
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/AlertBase'
+        - $ref: '#/components/schemas/AlertUpdatable'
+        - $ref: '#/components/schemas/AlertDerived'
+        - $ref: '#/components/schemas/AlertDeletion'
+      required:
+        - alertId
+        - entityDetails
+        - alertStatus
+        - priority
+        - createdTimestamp
+        - updatedAt
+        - caseId
+    RuleDetails:
+      title: RuleDetails
+      type: object
+      description: ''
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        instanceId:
+          type: string
+        nature:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
+        action:
+          $ref: '#/components/schemas/RuleAction'
+      required:
+        - id
+        - name
+        - description
+    CaseUpdateable:
+      title: CasePatchRequest
+      type: object
+      description: ''
+      properties:
+        priority:
+          $ref: '#/components/schemas/Priority'
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+        creationReason:
+          $ref: '#/components/schemas/ActionReason'
+        entityDetails:
+          oneOf:
+            - $ref: '#/components/schemas/UserDetails'
+            - $ref: '#/components/schemas/PaymentDetails'
+        relatedCases:
+          type: array
+          items:
+            type: string
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+    CaseDerived:
+      title: CaseDerived
+      type: object
+      description: ''
+      properties:
+        caseStatus:
+          $ref: '#/components/schemas/Status'
+        updatedAt:
+          type: number
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+    Status:
+      title: Status
+      type: string
+      enum:
+        - OPEN
+        - CLOSED
+        - REOPENED
+        - IN_REVIEW
+        - ESCALATED
+        - IN_PROGRESS
+        - ON_HOLD
+    Case:
+      title: Case
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - $ref: '#/components/schemas/CaseDerived'
+        - $ref: '#/components/schemas/CaseDelete'
+        - $ref: '#/components/schemas/CaseUpdateable'
+      required:
+        - caseId
+        - entityDetails
+        - caseStatus
+        - priority
+        - createdTimestamp
+        - updatedAt
+    UserDetails:
+      title: UserDetails
+      type: object
+      description: ''
+      properties:
+        userId:
+          type: string
+        type:
+          type: string
+          enum:
+            - USER
+      required:
+        - userId
+        - type
+    PaymentDetails:
+      title: PaymentDetails
+      type: object
+      description: ''
+      properties:
+        type:
+          type: string
+          enum:
+            - PAYMENT
+        paymentDetails:
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CardDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/GenericBankAccountDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/IBANDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/ACHDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/SWIFTDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/MpesaDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+      required:
+        - type
+        - paymentDetails
+    ActionReason:
+      title: ActionReason
+      type: object
+      properties:
+        reasons:
+          type: array
+          items:
+            type: string
+        comment:
+          type: string
+        timestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+      required:
+        - reasons
+        - comment
+    Assignment:
+      title: Assignment
+      type: object
+      properties:
+        assigneeEmail:
+          type: string
+        assignedByEmail:
+          type: string
+        timestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+      required:
+        - assigneeEmail
     ErrorMessage:
       title: ErrorMessage
       x-stoplight:

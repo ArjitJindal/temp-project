@@ -71,7 +71,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       {
         entity: 'USER',
         userId: this.user.userId,
-        ruleInstanceId: this.ruleInstance.id!,
+        ruleInstanceId: this.ruleInstance.id ?? '',
         isOngoingScreening: this.ongoingScreeningMode,
       }
     )

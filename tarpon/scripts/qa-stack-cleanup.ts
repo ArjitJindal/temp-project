@@ -56,7 +56,7 @@ const cleanUp = async () => {
           (StackName?.startsWith('dev-phytoplankton-qa') ||
             StackName?.startsWith('dev-tarpon-qa')) &&
           !liveQaEnvs.some((qaEnv) => StackName.indexOf(qaEnv) > -1)
-      ).map(({ StackName }) => StackName!) ?? [])
+      ).map(({ StackName }) => StackName ?? '') ?? [])
     )
     next = stacksResponse.NextToken
   } while (next)

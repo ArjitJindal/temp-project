@@ -143,7 +143,9 @@ export default class MerchantMonitoringIndustryUserRule extends UserRule<Merchan
         await merchantMonitoringService.getMerchantMonitoringHistory(
           source,
           this.user.userId,
-          this.getTimestampCondition(merchantMonitoringSummary[0].updatedAt!)
+          this.getTimestampCondition(
+            merchantMonitoringSummary[0].updatedAt ?? 0
+          )
         )
 
       if (

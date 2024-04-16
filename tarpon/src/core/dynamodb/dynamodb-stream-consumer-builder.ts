@@ -224,9 +224,10 @@ export class StreamConsumerBuilder {
   }
 
   private async sendToRetryQueue(update: DynamoDbEntityUpdate) {
+    if (!update.rawRecord) return
     await sqsClient.send(
       new SendMessageCommand({
-        MessageBody: JSON.stringify(update.rawRecord!),
+        MessageBody: JSON.stringify(update.rawRecord),
         QueueUrl: this.retrySqsQueue,
         MessageGroupId: `${update.tenantId}#${update.entityId}`,
         MessageDeduplicationId: `${update.entityId}-${update.sequenceNumber}`,
@@ -300,7 +301,7 @@ export class StreamConsumerBuilder {
         if (update.NewImage) {
           await savePartitionKey(
             update.tenantId,
-            update.partitionKeyId!,
+            update.partitionKeyId,
             this.tableName
           )
         }

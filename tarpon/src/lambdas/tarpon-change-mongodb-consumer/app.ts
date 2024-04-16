@@ -331,7 +331,7 @@ async function transactionEventHandler(
 
 const tarponBuilder = new StreamConsumerBuilder(
   path.basename(__dirname) + '-tarpon',
-  process.env.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL!,
+  process.env.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL ?? '',
   StackConstants.TARPON_DYNAMODB_TABLE_NAME
 )
   .setTransactionHandler((tenantId, oldTransaction, newTransaction) =>

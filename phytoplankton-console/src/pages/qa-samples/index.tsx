@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
+import {
+  useAlertsSamplingUpdateMutation,
+  useDeleteAlertsSamplingMutation,
+} from '../case-management/QA/utils';
+import { QAModal } from '../case-management/QA/Modal';
+import s from './index.module.less';
 import { useApi } from '@/api';
 import { AlertsQaSampling, Priority } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import {
-  DATE_TIME,
-  PERCENT,
-  PRIORITY,
-  QA_SAMPLE_ID,
-} from '@/components/library/Table/standardDataTypes';
+import { DATE_TIME, PRIORITY, QA_SAMPLE_ID } from '@/components/library/Table/standardDataTypes';
 import { AllParams, TableColumn } from '@/components/library/Table/types';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -19,8 +20,13 @@ import AccountTag from '@/components/AccountTag';
 import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
+import Button from '@/components/library/Button';
+import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
+import DeleteLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
+import Confirm from '@/components/utils/Confirm';
 
 interface TableItem extends AlertsQaSampling {}
+
 interface TableParams {
   samplingName?: string;
   samplingPercentage?: number;
@@ -37,6 +43,7 @@ const QASamplesTable = () => {
     pageSize: 20,
     sort: [['createdAt', 'descend']],
   });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const queryResults = usePaginatedQuery(
     ALERT_QA_SAMPLING({ ...params }),
@@ -56,6 +63,20 @@ const QASamplesTable = () => {
       };
     },
   );
+
+  const deleteMutation = useDeleteAlertsSamplingMutation(
+    () => {},
+    { success: 'Sample deleted successfully', error: 'Failed to delete sample' },
+    queryResults,
+  );
+
+  const editMutation = useAlertsSamplingUpdateMutation(
+    setIsEditModalOpen,
+    { success: 'Sample updated successfully', error: 'Failed to update sample' },
+    queryResults,
+  );
+
+  const [selectedIdForEdit, setSelectedIdForEdit] = useState<string | null>(null);
 
   const columns: TableColumn<TableItem>[] = useMemo(() => {
     const helper = new ColumnHelper<TableItem>();
@@ -89,7 +110,20 @@ const QASamplesTable = () => {
       helper.simple<'samplingPercentage'>({
         title: 'Sampling %',
         key: 'samplingPercentage',
-        type: PERCENT,
+        type: {
+          render: (value, item) => {
+            return (
+              <>
+                {item.item.samplingType === 'MANUAL'
+                  ? 'Manual'
+                  : `${Number(value ?? 0).toFixed(2)}%`}
+              </>
+            );
+          },
+          stringify: (value, item) => {
+            return item.samplingType === 'MANUAL' ? 'Manual' : `${Number(value ?? 0).toFixed(2)}%`;
+          },
+        },
         filtering: true,
       }),
       helper.derived<string>({
@@ -113,8 +147,56 @@ const QASamplesTable = () => {
           render: (value) => <AccountTag accountId={value} />,
         },
       }),
+      helper.display({
+        title: 'Actions',
+        defaultWidth: 200,
+        render: (value, { item }) => {
+          return (
+            <div className={s.actions} key={item.samplingId}>
+              <Button
+                onClick={() => {
+                  setIsEditModalOpen(true);
+                  setSelectedIdForEdit(item.samplingId);
+                }}
+                type="TETRIARY"
+                icon={<EditLineIcon />}
+              >
+                Edit
+              </Button>
+              <QAModal
+                isModalOpen={selectedIdForEdit === item.samplingId && isEditModalOpen}
+                setIsModalOpen={setIsEditModalOpen}
+                onSubmit={(values) => {
+                  editMutation.mutate({
+                    sampleId: item.samplingId,
+                    body: {
+                      samplingName: values.samplingName,
+                      samplingDescription: values.samplingDescription,
+                      samplingPercentage: values.samplingPercentage,
+                      priority: values.priority,
+                    },
+                  });
+                }}
+                sampleType={item.samplingType}
+                type="EDIT"
+              />
+              <Confirm
+                onConfirm={() => deleteMutation.mutate(item.samplingId)}
+                text="Are you sure you want to delete this sample? This action cannot be undone."
+                title="Delete sample"
+              >
+                {({ onClick }) => (
+                  <Button onClick={onClick} icon={<DeleteLineIcon />} type="TETRIARY">
+                    Delete
+                  </Button>
+                )}
+              </Confirm>
+            </div>
+          );
+        },
+      }),
     ]);
-  }, [users]);
+  }, [users, deleteMutation, editMutation, isEditModalOpen, selectedIdForEdit]);
 
   return (
     <Authorized required={['case-management:qa:read']} showForbiddenPage>
@@ -138,7 +220,6 @@ const QASamplesTable = () => {
             rowKey="samplingId"
             onChangeParams={onChangeParams}
             params={params}
-            selection
             extraFilters={[
               {
                 title: 'Priority',
@@ -153,7 +234,7 @@ const QASamplesTable = () => {
               },
               {
                 key: 'createdBy',
-                title: 'Action taken by',
+                title: 'Created by',
                 renderer: ({ params, setParams }) => (
                   <ActionTakenByFilterButton
                     initialState={params.createdBy ?? []}

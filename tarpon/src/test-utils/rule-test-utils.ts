@@ -242,7 +242,7 @@ export function setUpRulesHooks(
       if (hasFeature('RULES_ENGINE_V8') && (rule as Rule).defaultParameters) {
         const libraryRuleV8 =
           libraryRule ??
-          getRuleByImplementation((rule as Rule).ruleImplementationName!)
+          getRuleByImplementation((rule as Rule).ruleImplementationName ?? '')
         if (!libraryRuleV8?.defaultLogic) {
           throw new Error(`Rule ${rule.id} is not V8 compatible!`)
         }
@@ -255,7 +255,11 @@ export function setUpRulesHooks(
           logic,
           logicAggregationVariables,
           alertCreationDirection: alertDirection,
-        } = getMigratedV8Config(libraryRuleV8.id, r.defaultParameters, filters)!
+        } = getMigratedV8Config(
+          libraryRuleV8.id,
+          r.defaultParameters,
+          filters
+        ) ?? {}
 
         v8Rule.defaultLogic = logic
         v8Rule.defaultLogicAggregationVariables = logicAggregationVariables
@@ -516,53 +520,56 @@ export function testAggregationRebuild(
         TEST_RULE_INSTANCE_ID
       )) as RuleInstance
       const rule = (await ruleRepository.getRuleById(
-        ruleInstance!.ruleId!
+        ruleInstance?.ruleId ?? ''
       )) as Rule
       await ruleInstanceRepository.createOrUpdateRuleInstance({
-        ...ruleInstance!,
+        ...ruleInstance,
         updatedAt: Date.now(),
       })
 
       // Rebuild for the Nth transaction
-      const lastTransaction = last(transactions)!
-      await bulkVerifyTransactions(tenantId, [lastTransaction], {
-        autoCreateUser: true,
-      })
+      const lastTransaction = last(transactions)
+      if (lastTransaction) {
+        await bulkVerifyTransactions(tenantId, [lastTransaction], {
+          autoCreateUser: true,
+        })
 
-      // Validate rebuilt aggregation
-      const RuleClass = TRANSACTION_RULES[rule.ruleImplementationName!]
-      const ruleClassInstance = new (RuleClass as typeof TransactionRuleBase)(
-        tenantId,
-        {
-          transaction: lastTransaction,
-        },
-        { parameters: rule.defaultParameters, filters: ruleInstance.filters },
-        { ruleInstance, rule },
-        {
-          sanctionsService: new SanctionsService(tenantId),
-          ibanService: new IBANService(tenantId),
-        },
-        'DYNAMODB',
-        dynamoDb,
-        undefined
-      ) as TransactionAggregationRule<any>
-      const originAggregation = await ruleClassInstance.getRuleAggregations(
-        'origin',
-        0,
-        Number.MAX_SAFE_INTEGER
-      )
-      const destinationAggregation =
-        await ruleClassInstance.getRuleAggregations(
-          'destination',
+        // Validate rebuilt aggregation
+        const RuleClass = TRANSACTION_RULES[rule.ruleImplementationName ?? '']
+        const ruleClassInstance = new (RuleClass as typeof TransactionRuleBase)(
+          tenantId,
+          {
+            transaction: lastTransaction,
+          },
+          { parameters: rule.defaultParameters, filters: ruleInstance.filters },
+          { ruleInstance, rule },
+          {
+            sanctionsService: new SanctionsService(tenantId),
+            ibanService: new IBANService(tenantId),
+          },
+          'DYNAMODB',
+          dynamoDb,
+          undefined
+        ) as TransactionAggregationRule<any>
+
+        const originAggregation = await ruleClassInstance.getRuleAggregations(
+          'origin',
           0,
           Number.MAX_SAFE_INTEGER
         )
-      expect(expectedRebuiltAggregation.origin).toEqual(
-        originAggregation?.map((v) => omit(v, 'ttl'))
-      )
-      expect(expectedRebuiltAggregation.destination).toEqual(
-        destinationAggregation?.map((v) => omit(v, 'ttl'))
-      )
+        const destinationAggregation =
+          await ruleClassInstance.getRuleAggregations(
+            'destination',
+            0,
+            Number.MAX_SAFE_INTEGER
+          )
+        expect(expectedRebuiltAggregation.origin).toEqual(
+          originAggregation?.map((v) => omit(v, 'ttl'))
+        )
+        expect(expectedRebuiltAggregation.destination).toEqual(
+          destinationAggregation?.map((v) => omit(v, 'ttl'))
+        )
+      }
     })
   })
 }

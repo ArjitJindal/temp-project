@@ -163,7 +163,7 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
   ): Promise<number | undefined> {
     const { timeWindow, checkSender, checkReceiver } = this.parameters
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       timeWindow
     )
     const checkDirection = direction === 'origin' ? checkSender : checkReceiver
@@ -175,7 +175,7 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
 
     if (userAggregationData) {
       const uniqueBanks = new Set(
-        userAggregationData.flatMap((v) => v.uniqueBanks!)
+        userAggregationData.flatMap((v) => v.uniqueBanks ?? [])
       )
       const paymentDetails = this.getPaymentDetails(this.transaction, direction)
       const updatedUniqueBanks = this.addBankNameIfValid(

@@ -178,15 +178,15 @@ export default abstract class TransactionsDeviationBaseRule<
     let value = 0
     if (aggregationMethod === 'AVG') {
       if (aggregationType === 'AMOUNT') {
-        value = period1.totalAmount! / period1.totalCount
+        value = (period1.totalAmount ?? 0) / period1.totalCount
       } else if (aggregationType === 'DAILY_AMOUNT') {
-        value = period1.totalAmount! / units1
+        value = (period1.totalAmount ?? 0) / units1
       } else {
         value = period1.totalCount / units1
       }
     } else if (aggregationMethod === 'SUM') {
       if (aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT') {
-        value = period1.totalAmount!
+        value = period1.totalAmount ?? 0
       } else {
         value = period1.totalCount
       }
@@ -218,31 +218,31 @@ export default abstract class TransactionsDeviationBaseRule<
     // Check against the real threshold
     const avgPeriod1 =
       aggregationType === 'AMOUNT'
-        ? period1.totalAmount! / period1.totalCount
+        ? (period1.totalAmount ?? 0) / period1.totalCount
         : aggregationType === 'NUMBER'
         ? period1.totalCount / units1
-        : period1.totalAmount! / units1
+        : (period1.totalAmount ?? 0) / units1
 
     const avgPeriod2 =
       aggregationType === 'AMOUNT'
-        ? period2.totalAmount! / period2.totalCount
+        ? (period2.totalAmount ?? 0) / period2.totalCount
         : aggregationType === 'NUMBER'
         ? period2.totalCount / units2
-        : period2.totalAmount! / units2
+        : (period2.totalAmount ?? 0) / units2
 
     const sumPeriod1 =
       aggregationType === 'AMOUNT'
-        ? period1.totalAmount!
+        ? period1.totalAmount ?? 0
         : aggregationType === 'NUMBER'
         ? period1.totalCount
-        : period1.totalAmount!
+        : period1.totalAmount ?? 0
 
     const sumPeriod2 =
       aggregationType === 'AMOUNT'
-        ? period2.totalAmount!
+        ? period2.totalAmount ?? 0
         : aggregationType === 'NUMBER'
         ? period2.totalCount
-        : period2.totalAmount!
+        : period2.totalAmount ?? 0
 
     const multiplier =
       aggregationMethod === 'AVG'
@@ -311,7 +311,7 @@ export default abstract class TransactionsDeviationBaseRule<
     const {
       afterTimestamp: afterTimestampP1,
       beforeTimestamp: beforeTimestampP1,
-    } = getTimestampRange(this.transaction.timestamp!, this.parameters.period1)
+    } = getTimestampRange(this.transaction.timestamp, this.parameters.period1)
     const {
       afterTimestamp: afterTimestampP2,
       beforeTimestamp: beforeTimestampP2,
@@ -379,8 +379,8 @@ export default abstract class TransactionsDeviationBaseRule<
       if (aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT') {
         const amountDetails =
           direction === 'origin'
-            ? this.transaction.originAmountDetails!
-            : this.transaction.destinationAmountDetails!
+            ? this.transaction.originAmountDetails
+            : this.transaction.destinationAmountDetails
 
         const currentAmount = amountDetails
           ? (
@@ -565,13 +565,14 @@ export default abstract class TransactionsDeviationBaseRule<
     transactions: AuxiliaryIndexTransaction[]
   ): AuxiliaryIndexTransaction[] {
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       this.parameters.period1
     )
     return transactions.filter(
       (transaction) =>
-        transaction.timestamp! >= afterTimestamp &&
-        transaction.timestamp! <= beforeTimestamp
+        transaction.timestamp &&
+        transaction.timestamp >= afterTimestamp &&
+        transaction.timestamp <= beforeTimestamp
     )
   }
 
@@ -581,8 +582,9 @@ export default abstract class TransactionsDeviationBaseRule<
     const { afterTimestamp, beforeTimestamp } = this.getPeriod2TimeRange()
     return transactions.filter(
       (transaction) =>
-        transaction.timestamp! >= afterTimestamp &&
-        transaction.timestamp! <= beforeTimestamp
+        transaction.timestamp &&
+        transaction.timestamp >= afterTimestamp &&
+        transaction.timestamp <= beforeTimestamp
     )
   }
 
@@ -593,9 +595,9 @@ export default abstract class TransactionsDeviationBaseRule<
     const {
       afterTimestamp: afterTimestampP1,
       beforeTimestamp: beforeTimestampP1,
-    } = getTimestampRange(this.transaction.timestamp!, this.parameters.period1)
+    } = getTimestampRange(this.transaction.timestamp, this.parameters.period1)
     const { afterTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       this.parameters.period2
     )
     const beforeTimestamp = this.parameters.excludePeriod1

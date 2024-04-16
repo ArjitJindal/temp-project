@@ -34,7 +34,7 @@ export class UserCountryOfNationalityRuleFilter extends UserRuleFilter<UserCount
     const businessUser = user as Business // For typescript
 
     const userNationalityCountries = expandCountryGroup(
-      this.parameters.userNationalityCountries!
+      this.parameters.userNationalityCountries ?? []
     )
     return (
       (userNationalityCountries.some(

@@ -92,6 +92,15 @@ export const casesHandler = lambdaApi()(
         await alertsService.getSamplingById(request.sampleId)
     )
 
+    handlers.registerGetAlertsQaSampleIds(
+      async () => await alertsService.getSamplingIds()
+    )
+
+    handlers.registerDeleteAlertsQaSample(
+      async (ctx, request) =>
+        await alertsService.deleteSamplingById(request.sampleId)
+    )
+
     handlers.registerAlertsValidateQaStatuses(
       async (ctx, request) =>
         await alertsService.validateAlertsQAStatus(

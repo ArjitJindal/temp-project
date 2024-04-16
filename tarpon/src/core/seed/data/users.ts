@@ -24,7 +24,7 @@ export const getMerchantMonitoring: () => MerchantMonitoringSummary[] = memoize(
         b.userId,
         companies.find(
           (c) => c.name === b.legalEntity.companyGeneralDetails.legalName
-        )!
+        ) ?? companies[0]
       )
     )
   }

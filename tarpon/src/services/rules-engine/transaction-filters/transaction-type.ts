@@ -8,7 +8,9 @@ export function transactionTypeRuleFilterPredicate(
   transaction: Transaction,
   transactionTypes?: TransactionType[]
 ) {
-  return transactionTypes!.includes(transaction.type as TransactionType)
+  return (
+    transactionTypes?.includes(transaction.type as TransactionType) ?? false
+  )
 }
 
 export type TransactionTypeRuleFilterParameter = {

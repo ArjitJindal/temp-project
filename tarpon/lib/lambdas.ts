@@ -95,6 +95,18 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME]: {
+    codePath: 'public-management-api-case',
+    handlerName: 'caseHandler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
+  [StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME]: {
+    codePath: 'public-management-api-alert',
+    handlerName: 'alertHandler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME]: {
     codePath: 'console-api-transaction',
     handlerName: 'transactionsViewHandler',

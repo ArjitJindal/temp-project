@@ -381,13 +381,6 @@ export const QA_SAMPLE_ID: ColumnDataType<string, Pick<AlertsQaSampling, 'sampli
   },
 };
 
-export const PERCENT: ColumnDataType<number> = {
-  render: (value) => {
-    return <>{Number(value ?? 0).toFixed(2)}%</>;
-  },
-  stringify: (value) => `${Number(value ?? 0).toFixed(2)}%`,
-};
-
 export const ALERT_ID: ColumnDataType<string, Pick<Alert, 'caseId'>> = {
   render: (alertId, { item: entity }) => {
     return (

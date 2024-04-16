@@ -90,7 +90,7 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
   private async getData(direction: 'origin' | 'destination'): Promise<number> {
     const { timeWindow, checkReceiver, checkSender } = this.parameters
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
+      this.transaction.timestamp,
       timeWindow
     )
     const checkDirection = direction === 'origin' ? checkSender : checkReceiver

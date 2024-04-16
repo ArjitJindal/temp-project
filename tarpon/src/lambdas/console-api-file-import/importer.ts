@@ -143,7 +143,7 @@ export class Importer {
     const getObj = await this.connections.s3.getObject(params)
 
     const body = await getObj.Body?.transformToString()
-    const stream = parseString(body!, converter.getCsvParserOptions())
+    const stream = parseString(body ?? '', converter.getCsvParserOptions())
 
     for await (const rawItem of stream) {
       const validationResult = converter.validate(rawItem)

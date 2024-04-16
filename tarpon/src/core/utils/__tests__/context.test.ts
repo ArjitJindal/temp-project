@@ -11,7 +11,7 @@ describe('Publish metric', () => {
         }
       )
       expect(getContext()?.metrics).toHaveProperty('Flagright')
-      expect(getContext()?.metrics!['Flagright']).toHaveLength(1)
+      expect(getContext()?.metrics?.['Flagright']).toHaveLength(1)
     })
   })
 
@@ -32,7 +32,7 @@ describe('Publish metric', () => {
             table: 'TopSecret',
           }
         )
-        expect(getContext()?.metrics!['Flagright']).toHaveLength(2)
+        expect(getContext()?.metrics?.['Flagright']).toHaveLength(2)
       },
       {
         metrics: { Flagright: [] },

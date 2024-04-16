@@ -87,7 +87,7 @@ export abstract class TransactionAggregationRule<
     const version = this.getLatestAggregationVersion()
     const shouldSkipUpdateAggregation =
       await this.aggregationRepository.isTransactionApplied(
-        this.ruleInstance.id!,
+        this.ruleInstance.id ?? '',
         direction,
         version,
         this.transaction.transactionId
@@ -99,8 +99,8 @@ export abstract class TransactionAggregationRule<
 
     const targetAggregations = await this.getRuleAggregations<A>(
       direction,
-      this.transaction.timestamp!,
-      this.transaction.timestamp! + 1
+      this.transaction.timestamp ?? 0,
+      (this.transaction.timestamp ?? 0) + 1
     )
     if ((targetAggregations?.length || 0) > 1) {
       throw new Error('Should only get one target aggregation')
@@ -130,7 +130,7 @@ export abstract class TransactionAggregationRule<
       version
     )
     await this.aggregationRepository.markTransactionApplied(
-      this.ruleInstance.id!,
+      this.ruleInstance.id ?? '',
       direction,
       version,
       this.transaction.transactionId,
@@ -218,7 +218,7 @@ export abstract class TransactionAggregationRule<
   }
 
   private getLatestAggregationVersion(): string {
-    const ruleInstanceVersion = this.ruleInstance.updatedAt!
+    const ruleInstanceVersion = this.ruleInstance.updatedAt ?? 0
     return `${AGGREGATION_VERSION}_${this.getRuleAggregationVersion()}_${ruleInstanceVersion}`
   }
 

@@ -71,7 +71,7 @@ async function getApiKey(): Promise<string> {
   if (process.env.IBAN_API_KEY) {
     return process.env.IBAN_API_KEY
   }
-  return (await getSecretByName('ibanComCreds'))!.apiKey
+  return (await getSecretByName('ibanComCreds'))?.apiKey
 }
 
 @traceable

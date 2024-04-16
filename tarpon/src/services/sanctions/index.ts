@@ -129,7 +129,7 @@ export class SanctionsService {
     if (process.env.COMPLYADVANTAGE_API_KEY) {
       return process.env.COMPLYADVANTAGE_API_KEY
     }
-    return (await getSecretByName('complyAdvantageCreds'))!.apiKey
+    return (await getSecretByName('complyAdvantageCreds')).apiKey
   }
 
   public async updateMonitoredSearch(caSearchId: number) {

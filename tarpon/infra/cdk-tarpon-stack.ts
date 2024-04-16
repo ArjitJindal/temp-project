@@ -666,6 +666,16 @@ export class CdkTarponStack extends cdk.Stack {
       name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
     })
 
+    /* Case (Public) */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME,
+    })
+
+    /* Alert (Public) */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
+    })
+
     /* Device Data (Public) */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME,
@@ -1083,10 +1093,13 @@ export class CdkTarponStack extends cdk.Stack {
 
     let domainName: DomainName | undefined
     if (this.config.stage === 'dev') {
+      if (config.application.DEV_CERTIFICATE_ARN === undefined) {
+        throw Error('DEV_CERTIFICATE_ARN is not defined in the config file')
+      }
       const apiCert = Certificate.fromCertificateArn(
         this,
         `api-certificate`,
-        config.application.DEV_CERTIFICATE_ARN!
+        config.application.DEV_CERTIFICATE_ARN
       )
       domainName = new DomainName(this, getApiDomain(config), {
         certificate: apiCert,

@@ -59,7 +59,7 @@ export class UserAgeRuleFilter extends UserRuleFilter<UserAgeRuleFilterParameter
         'ms'
       )
     }
-    const { minAge, maxAge } = this.parameters.userAgeRange!
+    const { minAge, maxAge } = this.parameters.userAgeRange ?? {}
     return inRange(
       ageInMs,
       minAge?.granularity && minAge?.units ? this.getAgeInMs(minAge) : 0,
