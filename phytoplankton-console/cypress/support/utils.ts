@@ -94,8 +94,8 @@ export function generateUserRequestBody(userId: string): any {
       {
         documentType: 'passport',
         documentNumber: 'CB33GME6',
-        documentIssuedDate: 1639939034,
-        documentExpirationDate: 1839939034,
+        documentIssuedDate: 1639939034000,
+        documentExpirationDate: 1839939034000,
         documentIssuedCountry: 'DE',
       },
     ],
