@@ -17,7 +17,6 @@ import { dayjs } from '@/utils/dayjs';
 import { CurrencyCode, TransactionType } from '@/apis';
 import { message } from '@/components/library/Message';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useQaEnabled } from '@/utils/qa-mode';
 
 enum AlertExpandedTabs {
   TRANSACTIONS = 'transactions',
@@ -36,7 +35,6 @@ export default function AlertExpanded(props: Props) {
   const { selectedTransactionIds, alert, onTransactionSelect, escalatedTransactionIds } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const alertId = alert.alertId;
-  const qaEnabled = useQaEnabled();
   const api = useApi();
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
@@ -188,11 +186,5 @@ export default function AlertExpanded(props: Props) {
     sarEnabled,
   ]);
 
-  return (
-    <Tabs
-      items={items}
-      type="line"
-      defaultActiveKey={qaEnabled ? AlertExpandedTabs.CHECKLIST : AlertExpandedTabs.TRANSACTIONS}
-    />
-  );
+  return <Tabs items={items} type="line" defaultActiveKey={AlertExpandedTabs.TRANSACTIONS} />;
 }
