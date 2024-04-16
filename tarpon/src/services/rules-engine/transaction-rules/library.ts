@@ -1599,9 +1599,10 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-132',
-      name: 'Blacklisted User ID',
+      name: 'Blacklist transaction related value',
       type: 'TRANSACTION',
-      description: 'User ID’s that are in the blacklist',
+      description:
+        'Blacklist specific values for a variable type such as card fingerprint, bank account number etc.',
       descriptionTemplate:
         '{{ value }} is blacklisted in Blacklist ID {{ blackListId }} for {{ variableType }} field',
       defaultParameters,

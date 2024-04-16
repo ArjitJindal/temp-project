@@ -105,6 +105,10 @@ export class ListRepository {
   }
 
   public async getListHeader(listId: string): Promise<ListHeader | null> {
+    if (listId.length > 1024) {
+      // Bad list ID. 1024 is the maximum length of a DynamoDB sort key bytes
+      return null
+    }
     const { Item } = await this.dynamoDb.send(
       new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
