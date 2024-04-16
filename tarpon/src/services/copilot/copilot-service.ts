@@ -5,7 +5,6 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { difference } from 'lodash'
 import {
   AttributeGenerator,
   AttributeSet,
@@ -27,7 +26,6 @@ import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { ask } from '@/utils/openai'
-import { AI_ATTRIBUTES } from '@/@types/openapi-internal-custom/AIAttribute'
 import { tenantSettings } from '@/core/utils/context'
 
 type GenerateNarrative = {
@@ -134,18 +132,12 @@ export class CopilotService {
   private async getEnabledAttributes(): Promise<AIAttribute[]> {
     const settings = await tenantSettings(this.tenantId)
 
-    const compulsoryHidden = AI_SOURCES.filter((s) => s.isPii).map(
-      (s) => s.sourceName
-    )
-
-    const aiSourcesEnabled = difference(
-      AI_ATTRIBUTES,
-      (settings.aiSourcesDisabled ?? []).concat(
-        compulsoryHidden as AIAttribute[]
-      )
-    )
-
-    return aiSourcesEnabled
+    return AI_SOURCES.filter(
+      (s) =>
+        !s.isPii &&
+        (settings.aiSourcesDisabled == undefined ||
+          settings.aiSourcesDisabled.indexOf(s.sourceName) < 0)
+    ).map((a) => a.sourceName)
   }
 
   async getCaseNarrative(
@@ -205,25 +197,23 @@ export class CopilotService {
 
     // For disabled attributes that we can obfuscate, obfuscate.
     originalAttributes.forEach(([attributeName, value]) => {
-      if (!enabledAttributes.includes(attributeName)) {
-        const placeholder = ObfuscatableAttributePlaceholders[attributeName]
-        if (placeholder !== undefined) {
-          if (Array.isArray(value)) {
-            value.forEach((v) => {
-              if (v) {
-                serialisedAttributes = serialisedAttributes.replace(
-                  new RegExp(v.toString(), 'g'),
-                  placeholder
-                )
-              }
-            })
-          } else {
-            if (value) {
+      const placeholder = ObfuscatableAttributePlaceholders[attributeName]
+      if (placeholder !== undefined) {
+        if (Array.isArray(value)) {
+          value.forEach((v) => {
+            if (v) {
               serialisedAttributes = serialisedAttributes.replace(
-                new RegExp(value.toString(), 'g'),
+                new RegExp(v.toString(), 'g'),
                 placeholder
               )
             }
+          })
+        } else {
+          if (value) {
+            serialisedAttributes = serialisedAttributes.replace(
+              new RegExp(value.toString(), 'g'),
+              placeholder
+            )
           }
         }
       }
