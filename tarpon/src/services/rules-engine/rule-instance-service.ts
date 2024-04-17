@@ -8,7 +8,7 @@ import { AlertsRepository } from './repositories/alerts-repository'
 import { assertValidRiskLevelParameters, isV8RuleInstance } from './utils'
 import { RuleRepository } from './repositories/rule-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
-import { USER_RULES } from './user-rules'
+import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
@@ -16,6 +16,7 @@ import { RuleType } from '@/@types/openapi-internal/RuleType'
 const ALL_RULES = {
   ...TRANSACTION_RULES,
   ...USER_RULES,
+  ...USER_ONGOING_SCREENING_RULES,
 }
 
 @traceable

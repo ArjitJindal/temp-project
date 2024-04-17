@@ -24,7 +24,7 @@ import {
 } from './filters'
 import { assertValidRiskLevelParameters, isV8Rule } from './utils'
 import { TRANSACTION_RULES } from './transaction-rules'
-import { USER_RULES } from './user-rules'
+import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { RULE_OPERATORS } from './v8-operators'
 import { RULE_FUNCTIONS } from './v8-functions'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -81,6 +81,7 @@ type AIFilters = {
 const ALL_RULES = {
   ...TRANSACTION_RULES,
   ...USER_RULES,
+  ...USER_ONGOING_SCREENING_RULES,
 }
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
