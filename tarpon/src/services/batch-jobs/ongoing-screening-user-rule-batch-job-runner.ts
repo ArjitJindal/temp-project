@@ -93,7 +93,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     )
 
     if (ruleInstances.length === 0) {
-      logger.info('No active ongoing screening user rule found. Abort.')
+      logger.info('No active ongoing screening user rule found. Skip.')
       return
     }
     const rules =
@@ -116,6 +116,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   private async verifyAllUserRules() {
     const ruleInstances = await this.getUserOngoingScreeningRuleInstances()
     if (!ruleInstances?.length) {
+      logger.info('No active ongoing screening user rule (all) found. Skip.')
       return
     }
     if (!this.rulesEngineService) {

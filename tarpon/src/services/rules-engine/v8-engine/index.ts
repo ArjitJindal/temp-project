@@ -2,35 +2,28 @@ import { AsyncLogicEngine } from 'json-logic-engine'
 import memoizeOne from 'memoize-one'
 import DataLoader from 'dataloader'
 import {
-  cloneDeep,
-  get,
+  groupBy,
   isEqual,
+  isNil,
+  mapValues,
   memoize,
   mergeWith,
-  set,
+  omit,
   uniq,
-  unset,
 } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
-import {
-  getAllValuesByKey,
-  replaceMagicKeyword,
-  traverse,
-} from '@flagright/lib/utils'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { RULE_FUNCTIONS } from '../v8-functions'
-import { JSON_LOGIC_BUILT_IN_OPERATORS, RULE_OPERATORS } from '../v8-operators'
-import {
-  VARIABLE_NAMESPACE_SEPARATOR,
-  getDirectionalVariableKeys,
-  getRuleVariableByKey,
-  isDirectionLessVariable,
-  isSenderUserVariable,
-} from '../v8-variables'
+import { RULE_OPERATORS } from '../v8-operators'
+import { getRuleVariableByKey, isSenderUserVariable } from '../v8-variables'
 import { getTimestampRange } from '../utils/time-utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
-import { getRuleVariableAggregator } from '../v8-variable-aggregators'
+import {
+  getRuleVariableAggregator,
+  mergeGroups,
+  mergeValues,
+} from '../v8-variable-aggregators'
 import {
   TransactionAggregationTaskEntry,
   V8TransactionAggregationTask,
@@ -51,6 +44,7 @@ import {
   AggregationRepository,
   getAggVarHash,
 } from './aggregation-repository'
+import { getVariableKeysFromLogic, transformJsonLogic } from './utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { generateChecksum } from '@/utils/object'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
@@ -132,73 +126,6 @@ const getDataLoader = memoizeOne(
   // Don't take dynamoDb into account
   (a, b) => isEqual(a.slice(0, 2), b.slice(0, 2))
 )
-
-function isAggregationVariable(key: string): boolean {
-  return key.startsWith('agg:')
-}
-
-export function getVariableKeysFromLogic(jsonLogic: object): {
-  entityVariableKeys: string[]
-  aggVariableKeys: string[]
-} {
-  const variableKeys = uniq(
-    getAllValuesByKey<string>('var', jsonLogic).filter((v) =>
-      // NOTE: We don't need to load the subfields of an array-type variable
-      v.includes(VARIABLE_NAMESPACE_SEPARATOR)
-    )
-  )
-  const entityVariableKeys = variableKeys.filter(
-    (k) => !isAggregationVariable(k)
-  )
-  const aggVariableKeys = variableKeys.filter(isAggregationVariable)
-  return { entityVariableKeys, aggVariableKeys }
-}
-
-const OPERATOR_KEYS = new Set(
-  JSON_LOGIC_BUILT_IN_OPERATORS.concat(RULE_OPERATORS.map((v) => v.key))
-)
-export function transformJsonLogic(rawJsonLogic: object) {
-  const { entityVariableKeys } = getVariableKeysFromLogic(rawJsonLogic)
-  const hasDirectionLessEntityVariables = entityVariableKeys.some(
-    isDirectionLessVariable
-  )
-  if (!hasDirectionLessEntityVariables) {
-    return rawJsonLogic
-  }
-  const updatedLogic = cloneDeep(rawJsonLogic)
-  traverse(rawJsonLogic, (key, value, path) => {
-    if (key === 'var' && isDirectionLessVariable(value)) {
-      const nearestOperatorIndex =
-        path.length -
-        path
-          .slice()
-          .reverse()
-          .findIndex((v) => OPERATOR_KEYS.has(v)) -
-        1
-      const leafLogic = cloneDeep(
-        get(rawJsonLogic, path.slice(0, nearestOperatorIndex))
-      )
-      unset(updatedLogic, path.slice(0, nearestOperatorIndex + 1))
-
-      set(
-        updatedLogic,
-        [...path.slice(0, nearestOperatorIndex), 'or'],
-        getDirectionalVariableKeys(value).map((directionVarKey) =>
-          replaceMagicKeyword(leafLogic, value, directionVarKey)
-        )
-      )
-    }
-  })
-  const { entityVariableKeys: newEntityVariableKeys } =
-    getVariableKeysFromLogic(updatedLogic)
-  const stillHasDirectionLessEntityVariables = newEntityVariableKeys.some(
-    isDirectionLessVariable
-  )
-  // NOTE: Transform one more time if both LHS and RHS are direction-less variables
-  return stillHasDirectionLessEntityVariables
-    ? transformJsonLogic(updatedLogic)
-    : updatedLogic
-}
 
 export class RuleJsonLogicEvaluator {
   private tenantId: string
@@ -434,7 +361,7 @@ export class RuleJsonLogicEvaluator {
     userKeyId: string
   ) {
     logger.info('Rebuilding aggregation...')
-    const aggFunc = getRuleVariableAggregator(
+    const aggregator = getRuleVariableAggregator(
       aggregationVariable.aggregationFunc
     )
     const transactionRepository = new DynamoDbTransactionRepository(
@@ -497,21 +424,47 @@ export class RuleJsonLogicEvaluator {
       const txEntityVariable = getRuleVariableByKey(
         this.getAggregationVarFieldKey(aggregationVariable, direction)
       )
+      const txGroupByEntityVariable =
+        aggregationVariable.aggregationGroupByFieldKey
+          ? getRuleVariableByKey(aggregationVariable.aggregationGroupByFieldKey)
+          : undefined
+      const hasGroups = Boolean(txGroupByEntityVariable)
       const partialTimeAggregatedResult = await groupTransactionsByGranularity(
         targetTransactions,
         async (groupTransactions) => {
           const aggregateValues = await Promise.all(
-            groupTransactions.map((transaction) => {
+            groupTransactions.map(async (transaction) => {
               const entityVariable = txEntityVariable
-              return entityVariable?.load(
+              const value = await entityVariable?.load(
                 transaction,
                 aggregationVariable.baseCurrency,
                 this.dynamoDb
               )
+              const groupValue =
+                hasGroups && txGroupByEntityVariable
+                  ? await txGroupByEntityVariable.load(
+                      transaction,
+                      aggregationVariable.baseCurrency,
+                      this.dynamoDb
+                    )
+                  : undefined
+              return {
+                value,
+                groupValue,
+              }
             })
           )
+          const filteredAggregateValues = aggregateValues.filter((v) => {
+            return !isNil(v.value) && (!hasGroups || !isNil(v.groupValue))
+          })
+          const values = filteredAggregateValues.map((v) => v.value)
           return {
-            value: aggFunc.aggregate(aggregateValues),
+            value: hasGroups
+              ? mapValues(
+                  groupBy(filteredAggregateValues, (v) => v.groupValue),
+                  (v) => aggregator.aggregate(v.map((v) => v.value))
+                )
+              : aggregator.aggregate(values),
           }
         },
         aggregationGranularity
@@ -521,10 +474,13 @@ export class RuleJsonLogicEvaluator {
         partialTimeAggregatedResult,
         (a: AggregationData | undefined, b: AggregationData | undefined) => {
           return {
-            value: aggFunc.merge(
-              a?.value ?? aggFunc.init(),
-              b?.value ?? aggFunc.init()
-            ),
+            value: hasGroups
+              ? mergeGroups(
+                  aggregator,
+                  a?.value as { [key: string]: unknown },
+                  b?.value as { [key: string]: unknown }
+                )
+              : mergeValues(aggregator, a?.value, b?.value),
           }
         }
       )
@@ -617,7 +573,13 @@ export class RuleJsonLogicEvaluator {
     const newDataValue = await entityVarDataloader.load(
       this.getAggregationVarFieldKey(aggregationVariable, direction)
     )
-    if (!isNewDataFiltered || !newDataValue) {
+    const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
+    const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
+      ? await entityVarDataloader.load(
+          aggregationVariable.aggregationGroupByFieldKey
+        )
+      : undefined
+    if (!isNewDataFiltered || !newDataValue || (hasGroups && !newGroupValue)) {
       return
     }
     const shouldSkipUpdateAggregation =
@@ -631,7 +593,7 @@ export class RuleJsonLogicEvaluator {
       return
     }
 
-    const aggFunc = getRuleVariableAggregator(
+    const aggregator = getRuleVariableAggregator(
       aggregationVariable.aggregationFunc
     )
 
@@ -654,17 +616,31 @@ export class RuleJsonLogicEvaluator {
         data.transaction.timestamp,
         aggregationGranularity
       ),
-      value: aggFunc.init(),
+      value: hasGroups ? {} : aggregator.init(),
     }
-    const updatedTargetAggregation = aggFunc.reduce(
-      targetAggregation.value,
-      newDataValue
-    )
-    await this.aggregationRepository.rebuildUserTimeAggregations(
-      userKeyId,
-      aggregationVariable,
-      { [targetAggregation.time]: { value: updatedTargetAggregation } }
-    )
+    const newTargetAggregation: AggregationData = {
+      value: hasGroups
+        ? mergeGroups(
+            aggregator,
+            targetAggregation.value as { [key: string]: unknown },
+            {
+              [newGroupValue]: aggregator.reduce(
+                aggregator.init(),
+                newDataValue
+              ),
+            }
+          )
+        : aggregator.reduce(targetAggregation.value, newDataValue),
+    }
+    if (!isEqual(newTargetAggregation, omit(targetAggregation, 'time'))) {
+      await this.aggregationRepository.rebuildUserTimeAggregations(
+        userKeyId,
+        aggregationVariable,
+        {
+          [targetAggregation.time]: newTargetAggregation,
+        }
+      )
+    }
     await this.aggregationRepository.setTransactionApplied(
       aggregationVariable,
       direction,
@@ -693,6 +669,9 @@ export class RuleJsonLogicEvaluator {
     }
     if (aggregationVariable.aggregationFieldKey) {
       addFieldToFetch(aggregationVariable.aggregationFieldKey)
+    }
+    if (aggregationVariable.aggregationGroupByFieldKey) {
+      addFieldToFetch(aggregationVariable.aggregationGroupByFieldKey)
     }
     if (aggregationVariable.secondaryAggregationFieldKey) {
       addFieldToFetch(aggregationVariable.secondaryAggregationFieldKey)
@@ -740,10 +719,22 @@ export class RuleJsonLogicEvaluator {
         aggregationGranularity
       )) ?? []
 
-    const aggFunc = getRuleVariableAggregator(aggregationFunc)
-    const result = aggData.reduce((acc, cur) => {
-      return aggFunc.merge(acc, cur.value as any)
-    }, aggFunc.init())
+    const aggregator = getRuleVariableAggregator(aggregationFunc)
+    const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
+    const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
+      ? ((await entityVarDataloader.load(
+          aggregationVariable.aggregationGroupByFieldKey
+        )) as string)
+      : undefined
+    let result = aggData.reduce((acc: unknown, cur: AggregationData) => {
+      const curValue = cur.value
+      return mergeValues(
+        aggregator,
+        acc,
+        (hasGroups ? curValue?.[newGroupValue as string] : cur.value) ??
+          aggregator.init()
+      )
+    }, aggregator.init())
 
     if (
       aggregationVariable.aggregationFunc !== 'UNIQUE_VALUES' &&
@@ -758,13 +749,13 @@ export class RuleJsonLogicEvaluator {
         const newDataValue = await entityVarDataloader.load(
           this.getAggregationVarFieldKey(aggregationVariable, direction)
         )
+        // NOTE: Merge the incoming transaction/user into the aggregation result
         if (newDataValue) {
-          // NOTE: Merge the incoming transaction/user into the aggregation result
-          return aggFunc.compute(aggFunc.reduce(result, newDataValue))
+          result = aggregator.reduce(result, newDataValue)
         }
       }
     }
-    return aggFunc.compute(result)
+    return aggregator.compute(result)
   }
 
   private async isDataIncludedInAggregationVariable(

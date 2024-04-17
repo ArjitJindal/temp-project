@@ -249,12 +249,21 @@ export class RulesEngineService {
     const rulesByIds = await this.getRulesById(ruleInstances)
 
     const results = await Promise.all(
-      ruleInstances.map(async (ruleInstance) =>
-        this.verifyAllUsersRule({
-          ruleInstance,
-          rule: rulesByIds[ruleInstance.ruleId ?? ''],
+      ruleInstances.map(async (ruleInstance) => {
+        return await withContext(async () => {
+          updateLogMetadata({
+            ruleId: ruleInstance.ruleId,
+            ruleInstanceId: ruleInstance.id,
+          })
+          logger.info(`Running rule`)
+          const result = await this.verifyAllUsersRule({
+            ruleInstance,
+            rule: rulesByIds[ruleInstance.ruleId ?? ''],
+          })
+          logger.info(`Completed rule`)
+          return result
         })
-      )
+      })
     )
 
     const groupedResults: Record<

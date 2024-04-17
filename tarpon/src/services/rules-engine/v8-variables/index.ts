@@ -70,6 +70,10 @@ function withNamespace(variable: RuleVariable) {
   }
 }
 
+export function isAggregationVariable(key: string): boolean {
+  return key.startsWith('agg:')
+}
+
 const SENDER_VARIABLE_KEY_SUFFIX = '__SENDER'
 const RECEIVER_VARIABLE_KEY_SUFFIX = '__RECEIVER'
 const BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX = '__BOTH'

@@ -40,9 +40,8 @@ export const ruleHandler = lambdaApi()(
         Bucket: process.env.SHARED_ASSETS_BUCKET,
         Key: RULE_LOGIC_CONFIG_S3_KEY,
       })
-      const url = await getSignedUrl(s3, getObjectCommand)
       return {
-        s3Url: url,
+        s3Url: envIs('local') ? '' : await getSignedUrl(s3, getObjectCommand),
         ruleLogicConfig: envIs('local') ? getRuleLogicConfig() : undefined,
       }
     })

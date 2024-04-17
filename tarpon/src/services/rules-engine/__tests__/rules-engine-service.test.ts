@@ -9,7 +9,10 @@ import { MongoDbTransactionRepository } from '../repositories/mongodb-transactio
 import { RuleJsonLogicEvaluator } from '../v8-engine'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
+import {
+  bulkVerifyTransactions,
+  setUpRulesHooks,
+} from '@/test-utils/rule-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { getTestTransactionEvent } from '@/test-utils/transaction-event-test-utils'
@@ -667,6 +670,61 @@ describe('Verify Transaction: V8 engine', () => {
           },
         ],
       } as TransactionMonitoringResult)
+    })
+  })
+
+  describe('with aggregation group by field', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'V8-R-1',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:test',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationGroupByFieldKey: 'TRANSACTION:type',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('aggregation values are grouped', async () => {
+      const results = await bulkVerifyTransactions(
+        TEST_TENANT_ID,
+        [
+          getTestTransaction({
+            type: 'TRANSFER',
+            originUserId: 'U-1',
+            timestamp: 1713172716112,
+          }),
+          getTestTransaction({
+            type: 'DEPOSIT',
+            originUserId: 'U-1',
+            timestamp: 1713172716113,
+          }),
+          getTestTransaction({
+            type: 'TRANSFER',
+            originUserId: 'U-1',
+            timestamp: 1713172716114,
+          }),
+        ],
+        { autoCreateUser: true }
+      )
+      expect(results.map((v) => v.status !== 'ALLOW')).toEqual([
+        false,
+        false,
+        true,
+      ])
     })
   })
 })

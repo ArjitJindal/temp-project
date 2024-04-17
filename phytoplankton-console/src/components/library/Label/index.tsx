@@ -1,11 +1,14 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import cn from 'clsx';
+import Tooltip from '../Tooltip';
 import s from './style.module.less';
+import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { InputProps } from '@/components/library/Form';
 
 export interface Props extends InputProps<string> {
   label: React.ReactNode;
+  hint?: React.ReactNode;
   children?: React.ReactNode;
   position?: 'TOP' | 'RIGHT' | 'LEFT';
   level?: 1 | 2 | 3 | 4;
@@ -23,6 +26,7 @@ export interface Props extends InputProps<string> {
 export default function Label(props: Props) {
   const {
     label,
+    hint,
     position = 'TOP',
     level = 1,
     children,
@@ -39,6 +43,11 @@ export default function Label(props: Props) {
   const labelEl = (
     <div className={cn(s.label, s[`level-${level}`])}>
       {label}
+      {hint && (
+        <Tooltip title={hint} placement="top">
+          <InformationLineIcon className={s.icon} />
+        </Tooltip>
+      )}
       {showHint &&
         (isRequired ? (
           <span className={s.required}> *</span>

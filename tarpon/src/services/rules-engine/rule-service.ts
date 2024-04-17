@@ -27,6 +27,7 @@ import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { RULE_OPERATORS } from './v8-operators'
 import { RULE_FUNCTIONS } from './v8-functions'
+import { getVariableKeysFromLogic } from './v8-engine/utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -48,10 +49,7 @@ import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchRespon
 import { scoreObjects } from '@/utils/search'
 import { logger } from '@/core/logger'
 import { getErrorMessage } from '@/utils/lang'
-import {
-  getJsonLogicEngine,
-  getVariableKeysFromLogic,
-} from '@/services/rules-engine/v8-engine'
+import { getJsonLogicEngine } from '@/services/rules-engine/v8-engine'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { notNullish } from '@/utils/array'
 import {
@@ -588,6 +586,19 @@ You have to answer in below format as string. If you don't know any field, just 
           `Invalid aggregation variable (UNIQUE_VALUES): ${v.key}`
         )
       }
+      if (!getRuleVariableByKey(v.aggregationFieldKey)) {
+        throw new BadRequest(
+          `Unknown aggregate field: '${v.aggregationFieldKey}'`
+        )
+      }
+      if (
+        v.aggregationGroupByFieldKey &&
+        !getRuleVariableByKey(v.aggregationGroupByFieldKey)
+      ) {
+        throw new BadRequest(
+          `Unknown aggregate group by field: '${v.aggregationGroupByFieldKey}'`
+        )
+      }
     })
 
     await Promise.all(
@@ -600,7 +611,7 @@ You have to answer in below format as string. If you don't know any field, just 
             getVariableKeysFromLogic(logic)
           entityVariableKeys.forEach((entityVar) => {
             if (!getRuleVariableByKey(entityVar)) {
-              throw new BadRequest(`Unknown entity variable '${entityVar}'`)
+              throw new BadRequest(`Unknown entity variable: '${entityVar}'`)
             }
           })
           aggVariableKeys.forEach((aggVar) => {

@@ -20,10 +20,15 @@ export function getAggVarDefinition(
 ): { key: string; uiDefinition: FieldOrGroup } {
   const entityVariable = entityVariables.find((v) => v.key === aggVar.aggregationFieldKey);
   const { start, end } = aggVar.timeWindow;
-  const startLabel = `${start.units} ${pluralize(lowerCase(start.granularity), start.units)} ago`;
+  const startLabel =
+    start.granularity === 'all_time'
+      ? 'All time'
+      : `${start.units} ${pluralize(lowerCase(start.granularity), start.units)} ago`;
   const endLabel =
-    end.units === 0 ? '' : `${end.units} ${pluralize(lowerCase(end.granularity), end.units)} ago`;
-  const timeWindowLabel = `${startLabel}${endLabel ? ` - ${endLabel}` : ''}`;
+    end.units === 0 || end.granularity === 'now'
+      ? 'now'
+      : `${end.units} ${pluralize(lowerCase(end.granularity), end.units)} ago`;
+  const timeWindowLabel = `${startLabel} to ${endLabel}`;
   const entityVariableLabel =
     entityVariable &&
     (aggVar.aggregationFunc === 'COUNT'

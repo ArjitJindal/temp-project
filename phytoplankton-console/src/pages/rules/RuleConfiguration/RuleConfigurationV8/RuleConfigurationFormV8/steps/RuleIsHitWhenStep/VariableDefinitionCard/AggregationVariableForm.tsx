@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getFiscalYearStart } from '@flagright/lib/utils/time';
-import { isEqual } from 'lodash';
+import { isEqual, lowerCase } from 'lodash';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
+import pluralize from 'pluralize';
 import { RuleLogicBuilder } from '../RuleLogicBuilder';
 import { isTransactionAmountVariable, isTransactionOriginOrDestinationVariable } from '../helpers';
 import s from './style.module.less';
@@ -11,6 +12,7 @@ import Label from '@/components/library/Label';
 import {
   CurrencyCode,
   RuleAggregationFunc,
+  RuleAggregationTimeWindow,
   RuleAggregationTransactionDirection,
   RuleAggregationType,
   RuleAggregationUserDirection,
@@ -30,6 +32,14 @@ import Alert from '@/components/library/Alert';
 import VariableTimeWindow from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/VariableTimeWindow';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import { Hint } from '@/components/library/Form/InputField';
+import { humanizeAuto } from '@/utils/humanize';
+
+function varLabelWithoutNamespace(label: string): string {
+  return label.replace(/^.+\s*\/\s*/, '');
+}
+function varLabelWithoutDirection(label: string): string {
+  return label.replace(/^(origin|destination)\s*/, '');
+}
 
 export type FormRuleAggregationVariable = Partial<RuleAggregationVariable> & {
   timeWindow: RuleAggregationVariableTimeWindow;
@@ -79,13 +89,29 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       .map((v) => ({
         value: v.key,
         // NOTE: Remove redundant namespace prefix as we only show transaction variables
-        label: v.uiDefinition.label.replace(/^Transaction\s*\/\s*/, ''),
+        label: varLabelWithoutNamespace(v.uiDefinition.label),
       }));
   }, [entityVariables]);
+  const aggregateGroupByFieldOptions = useMemo(() => {
+    return entityVariables
+      .filter(
+        (v) =>
+          v.entity === 'TRANSACTION' &&
+          !isTransactionOriginOrDestinationVariable(v.key) &&
+          v.valueType === 'string' &&
+          v.key !== formValues.aggregationFieldKey &&
+          v.key !== 'TRANSACTION:transactionId',
+      )
+      .map((v) => ({
+        value: v.key,
+        // NOTE: Remove redundant namespace prefix as we only show transaction variables
+        label: varLabelWithoutNamespace(v.uiDefinition.label),
+      }));
+  }, [entityVariables, formValues.aggregationFieldKey]);
   const secondaryAggregationKeyOptions = useMemo(() => {
     if (!formValues.aggregationFieldKey) return [];
     const entityVariable = entityVariables.find((v) => v.key === formValues.aggregationFieldKey);
-    const label = entityVariable?.uiDefinition.label.replace(/^Transaction\s*\/\s*/, '');
+    const label = varLabelWithoutNamespace(entityVariable?.uiDefinition.label);
     const originRegex = /origin/i;
     const destinationRegex = /destination/i;
     if (!entityVariable) return [];
@@ -303,6 +329,21 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               </Hint>
             )}
           </Label>
+          <Label
+            label="Group by"
+            hint="Group by a field to get the aggregate value for each unique value of this field. For example, If you group by 'transaction type' with 'Count' as the aggregate function, you will get the count of transactions for each unique transaction type."
+            testId="variable-aggregate-groupby-field-v8"
+            required={{ value: false, showHint: true }}
+          >
+            <Select<string>
+              value={formValues.aggregationGroupByFieldKey}
+              onChange={(aggregationGroupByFieldKey) =>
+                handleUpdateForm({ aggregationGroupByFieldKey })
+              }
+              mode="SINGLE"
+              options={aggregateGroupByFieldOptions}
+            />
+          </Label>
           {/* TODO (v8): Base currency design TBD */}
           {formValues.aggregationFieldKey &&
             isTransactionAmountVariable(formValues.aggregationFieldKey) && (
@@ -319,20 +360,14 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               </Label>
             )}
           <div className={s.timeWindow}>
-            <Label
-              label="Time window"
-              required={{ value: true, showHint: true }}
-              testId="time-from-to"
-            >
-              <VariableTimeWindow
-                value={formValues.timeWindow}
-                onChange={(newValue) => {
-                  handleUpdateForm({
-                    timeWindow: newValue,
-                  });
-                }}
-              />
-            </Label>
+            <VariableTimeWindow
+              value={formValues.timeWindow}
+              onChange={(newValue) => {
+                handleUpdateForm({
+                  timeWindow: newValue,
+                });
+              }}
+            />
           </div>
         </PropertyColumns>
         {!isValidTimeWindow && (
@@ -361,6 +396,10 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             </Label>
           )}
         </div>
+        <AggregationVariableSummary
+          variableFormValues={formValues}
+          entityVariables={entityVariables}
+        />
       </Card.Section>
       <Card.Section direction="horizontal">
         <Button
@@ -376,5 +415,121 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
         </Button>
       </Card.Section>
     </>
+  );
+};
+
+interface AggregationVariableSummaryProps {
+  variableFormValues: FormRuleAggregationVariable;
+  entityVariables: RuleEntityVariable[];
+}
+
+function formatTimeWindow(timeWindow: RuleAggregationTimeWindow): string {
+  if (timeWindow.granularity === 'all_time') {
+    return 'the beginning of time';
+  }
+  if (timeWindow.granularity === 'now' || timeWindow.units === 0) {
+    return 'now';
+  }
+  return `${timeWindow.units} ${pluralize(
+    lowerCase(humanizeAuto(timeWindow.granularity)),
+    timeWindow.units,
+  )} ago`;
+}
+
+const AggregationVariableSummary: React.FC<AggregationVariableSummaryProps> = ({
+  variableFormValues,
+  entityVariables,
+}) => {
+  const {
+    type,
+    userDirection,
+    transactionDirection,
+    aggregationFieldKey,
+    aggregationGroupByFieldKey,
+    aggregationFunc,
+    timeWindow,
+    filtersLogic,
+  } = variableFormValues;
+
+  if (
+    !type ||
+    !userDirection ||
+    !transactionDirection ||
+    !aggregationFieldKey ||
+    !aggregationFunc ||
+    !timeWindow
+  ) {
+    return (
+      <Alert type="info" size="m">
+        Variable summary
+        <br />
+        N/A
+      </Alert>
+    );
+  }
+  const aggFuncLabel = humanizeAuto(aggregationFunc);
+  const aggregationFieldVariable = entityVariables.find((v) => v.key === aggregationFieldKey);
+  const aggregationGroupByFieldVariable = aggregationGroupByFieldKey
+    ? entityVariables.find((v) => v.key === aggregationGroupByFieldKey)
+    : undefined;
+  let aggFieldLabel =
+    aggregationFunc === 'COUNT'
+      ? undefined
+      : pluralize(
+          lowerCase(varLabelWithoutNamespace(aggregationFieldVariable?.uiDefinition.label)),
+        );
+  if (aggFieldLabel && transactionDirection === 'SENDING_RECEIVING') {
+    aggFieldLabel = varLabelWithoutDirection(aggFieldLabel);
+  }
+  const aggGroupByFieldLabel =
+    aggregationGroupByFieldVariable &&
+    lowerCase(varLabelWithoutNamespace(aggregationGroupByFieldVariable.uiDefinition.label));
+  const txDirectionLabel =
+    transactionDirection === 'SENDING'
+      ? 'sending'
+      : transactionDirection === 'RECEIVING'
+      ? 'receiving'
+      : 'sending or receiving';
+  const userDirectionLabel =
+    userDirection === 'SENDER'
+      ? 'sender'
+      : userDirection === 'RECEIVER'
+      ? 'receiver'
+      : 'sender or receiver';
+  const userLabel = type === 'USER_TRANSACTIONS' ? 'user' : 'payment ID';
+  const filtersCount = filtersLogic?.and?.length ?? filtersLogic?.or?.length ?? 0;
+
+  const textComponents = [
+    <b>{aggFuncLabel}</b>,
+    'of',
+    aggFieldLabel ? <b>{aggFieldLabel}</b> : undefined,
+    aggFieldLabel ? 'in' : undefined,
+    <b>{txDirectionLabel} transactions</b>,
+    aggGroupByFieldLabel ? (
+      <span>
+        (with the same <b>{aggGroupByFieldLabel}</b>)
+      </span>
+    ) : undefined,
+    'by a',
+    <b>
+      {userDirectionLabel} {userLabel}
+    </b>,
+    'from',
+    <b>{formatTimeWindow(timeWindow.end)}</b>,
+    'to',
+    <b>{formatTimeWindow(timeWindow.start)}</b>,
+    filtersLogic
+      ? `(with ${filtersCount} ${pluralize('filter', filtersCount)} applied)`
+      : undefined,
+  ].filter(Boolean);
+
+  return (
+    <Alert type="info" size="m">
+      Variable summary
+      <br />
+      {textComponents.map((v, i) => (
+        <span key={i}>{v} </span>
+      ))}
+    </Alert>
   );
 };

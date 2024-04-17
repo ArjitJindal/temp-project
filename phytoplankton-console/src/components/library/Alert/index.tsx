@@ -9,14 +9,18 @@ import CheckboxCircleFillIcon from '@/components/ui/icons/Remix/system/checkbox-
 
 interface Props {
   type: 'error' | 'warning' | 'info' | 'success';
+  size?: 's' | 'm' | 'l';
   children: React.ReactNode;
 }
 
 export default function Alert(props: Props) {
-  const { type, children } = props;
+  const { type, children, size } = props;
   return (
-    <div className={cn(s.root, s[`type-${type}`])} data-cy={`alert-${type}`}>
-      <Row style={{ flexFlow: 'row' }}>
+    <div
+      className={cn(s.root, s[`type-${type}`], s[`size-${size ?? 's'}`])}
+      data-cy={`alert-${type}`}
+    >
+      <Row style={{ flexFlow: 'row', alignItems: 'flex-start' }}>
         <Col style={{ paddingTop: 2 }}>
           {type === 'error' && <AlertFillIcon className={s.icon} data-cy={`icon-${type}`} />}
           {type === 'warning' && (

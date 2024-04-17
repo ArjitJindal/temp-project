@@ -22,7 +22,9 @@ import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregati
 import { generateChecksum } from '@/utils/object'
 import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
 
-export type AggregationData<T = unknown> = { value: T }
+export type AggregationData<T = unknown> = {
+  value: T | { [key: string]: T }
+}
 
 // Increment this version when we need to invalidate all existing aggregations.
 const GLOBAL_AGG_VERSION = 'v1'
@@ -30,6 +32,7 @@ const RULE_AGG_VAR_CHECKSUM_FIELDS: Array<keyof RuleAggregationVariable> = [
   'type',
   'transactionDirection',
   'aggregationFieldKey',
+  'aggregationGroupByFieldKey',
   'aggregationFunc',
   'timeWindow',
   'filtersLogic',

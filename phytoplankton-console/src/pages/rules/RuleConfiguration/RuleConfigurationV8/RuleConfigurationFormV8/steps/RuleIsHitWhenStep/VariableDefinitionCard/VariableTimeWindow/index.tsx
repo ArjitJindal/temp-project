@@ -1,4 +1,3 @@
-import React from 'react';
 import s from './index.module.less';
 import {
   RuleAggregationVariableTimeWindow,
@@ -31,7 +30,10 @@ const FISCAL_YEAR_OPTIONS = [
   { value: 'indian', label: '1st April - 31st March' },
 ];
 
-const granularityOptions = RULE_AGGREGATION_TIME_WINDOW_GRANULARITYS.map((granularity) => ({
+const granularityOptions = RULE_AGGREGATION_TIME_WINDOW_GRANULARITYS.filter(
+  // TODO: second/minute granularity to be re-enabled by FR-4669
+  (v) => !['second', 'minute'].includes(v),
+).map((granularity) => ({
   label: `${granularity === 'now' ? 'now' : humanizeAuto(granularity)} ${
     granularity === 'now' || granularity === 'all_time' ? '' : 'ago'
   }`,
@@ -63,7 +65,7 @@ export default function VariableTimeWindow(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.timeInputs}>
-        <Label label={'Time from'} level={2}>
+        <Label label={'Time from'} required={{ value: true, showHint: true }}>
           <UnitGranularityInputs
             fiscalYearSelectValue={fiscalYearSelectValue}
             value={end}
@@ -78,7 +80,7 @@ export default function VariableTimeWindow(props: Props) {
             }}
           />
         </Label>
-        <Label label={'Time to'} level={2}>
+        <Label label={'Time to'} required={{ value: true, showHint: true }}>
           <UnitGranularityInputs
             fiscalYearSelectValue={fiscalYearSelectValue}
             value={start}
@@ -180,7 +182,7 @@ function UnitGranularityInputs(
                 ? {
                     ...DEFAULT_TIME_WINDOW_VALUE,
                     ...value,
-                    units: newUnits,
+                    units: Math.round(newUnits),
                   }
                 : undefined,
             );
@@ -202,6 +204,7 @@ function UnitGranularityInputs(
               ? {
                   ...DEFAULT_TIME_WINDOW_VALUE,
                   ...value,
+                  units: (newValue === 'all_time' || newValue === 'now' ? 0 : value?.units) ?? 0,
                   granularity: newValue,
                   fiscalYear: fiscalYear,
                 }

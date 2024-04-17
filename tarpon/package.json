@@ -48,6 +48,7 @@
     "deploy:prod:us-1:clean": "yarn clear && yarn && yarn build && yarn synth:prod:us-1 && yarn deploy:prod:us-1",
     "deploy:test:canary": "ENV=dev && TYPE=canary && yarn clear && yarn && yarn build && cdk synth --quiet dev-tarpon-test-canary && cdk deploy --quiet dev-tarpon-test-canary --auto-approve --require-approval=never",
     "delete:test:canary": "ENV=dev && TYPE=canary && cdk destroy --quiet dev-tarpon-test-canary --force",
+    "test:local": "jest --forceExit --config jest.config.ts --runInBand",
     "test": "jest --forceExit --config jest.config.ts",
     "test:coverage:comment": " ts-node scripts/coverage-report/index.ts",
     "test:ci": "EXEC_SOURCE=CI NODE_OPTIONS='--max-old-space-size=12288' npm run test -- --silent --ci --coverage --cacheDirectory ~/.jest-cache",

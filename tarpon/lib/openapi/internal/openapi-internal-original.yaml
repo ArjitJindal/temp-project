@@ -6129,6 +6129,8 @@ components:
           type: string
         aggregationFunc:
           $ref: '#/components/schemas/RuleAggregationFunc'
+        aggregationGroupByFieldKey:
+          type: string
         baseCurrency:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
         timeWindow:
