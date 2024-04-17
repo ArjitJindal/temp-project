@@ -22,7 +22,7 @@ declare global {
       loginByRequest(username: string, password: string): Chainable<Element>;
       multiSelect(preSelector: string, text: string): Chainable<Element>;
       caseAlertAction(action: string): Chainable<Element>;
-      checkAndSwitchToCypressTenant(): Chainable<Promise<Element>>;
+      checkAndSwitchToTenant(tenantDisplayName: string): Chainable<Promise<Element>>;
       clickTableRowLink(
         rowIndex: number,
         linkDataCy: string,

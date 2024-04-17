@@ -33,7 +33,7 @@ Cypress.Commands.add('loginByRole', (role, sessionSuffix = '') => {
   cy.intercept('GET', '**/tenants/settings').as('tenantSettings');
   cy.wait('@tenantSettings');
   if (role === 'super_admin') {
-    cy.checkAndSwitchToCypressTenant();
+    cy.checkAndSwitchToTenant('Cypress Tenant');
   }
 });
 
@@ -88,23 +88,23 @@ Cypress.Commands.add('logout', () => {
   Cypress.session.clearAllSavedSessions();
 });
 
-Cypress.Commands.add('checkAndSwitchToCypressTenant', () => {
+Cypress.Commands.add('checkAndSwitchToTenant', (tenantDisplayName: string) => {
   cy.intercept('GET', '**/tenants').as('tenants');
   cy.intercept('POST', '**/change_tenant').as('changeTenant');
   cy.visit('/');
   cy.get("button[data-cy='superadmin-panel-button']").should('be.visible').as('superadminButton');
+  cy.get('@superadminButton').click();
   cy.get('@superadminButton').then((button) => {
-    if (button.text() !== 'Cypress Tenant') {
+    if (button.text() !== tenantDisplayName) {
       cy.wait('@tenants', { timeout: 15000 }).then((tenantsInterception) => {
         expect(tenantsInterception.response?.statusCode).to.be.oneOf([200, 304]);
-        cy.get("button[data-cy='superadmin-panel-button']").click({ force: true });
-        cy.get('.ant-modal .ant-select').first().type('Cypress Tenant{enter}');
+        cy.get('.ant-modal .ant-select').first().type(`${tenantDisplayName}{enter}`);
         cy.wait('@changeTenant', { timeout: 15000 }).then((changeTenantInterception) => {
           expect(changeTenantInterception.response?.statusCode).to.eq(200);
         });
         cy.get("button[data-cy='superadmin-panel-button']").should(
           'contain.text',
-          'Cypress Tenant',
+          tenantDisplayName,
         );
       });
     }
