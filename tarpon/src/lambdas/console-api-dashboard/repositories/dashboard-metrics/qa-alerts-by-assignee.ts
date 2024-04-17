@@ -28,7 +28,7 @@ export class QaAlertsByAssigneeStatsDashboardMetric {
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampMatch = {
-        updatedAt: {
+        'alerts.updatedAt': {
           $gte: start,
           $lt: end,
         },
@@ -37,7 +37,6 @@ export class QaAlertsByAssigneeStatsDashboardMetric {
     const pipeline = [
       {
         $match: {
-          ...timestampMatch,
           'alerts.alertStatus': 'CLOSED',
         },
       },
@@ -60,6 +59,7 @@ export class QaAlertsByAssigneeStatsDashboardMetric {
             $exists: true,
             $ne: null,
           },
+          ...timestampMatch,
         },
       },
       {
@@ -165,11 +165,6 @@ export class QaAlertsByAssigneeStatsDashboardMetric {
               alertsQaedByAssignee: {
                 $sum: '$alertsStats.alertsQaedByAssignee',
               },
-            },
-          },
-          {
-            $match: {
-              alertsQaedByAssignee: { $gt: 0 },
             },
           },
         ],

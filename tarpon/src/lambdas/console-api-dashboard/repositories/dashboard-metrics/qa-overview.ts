@@ -28,14 +28,13 @@ export class QaOverviewStatsDashboardMetric {
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampMatch = {
-        updatedAt: {
+        'alerts.updatedAt': {
           $gte: start,
           $lt: end,
         },
       }
     }
     const pipeline = [
-      { $match: { ...timestampMatch } },
       {
         $unwind: {
           path: '$alerts',
@@ -46,6 +45,7 @@ export class QaOverviewStatsDashboardMetric {
         $match: {
           'alerts.alertStatus': 'CLOSED',
           'alerts.qaAssignment': { $exists: true, $ne: [] },
+          ...timestampMatch,
         },
       },
       {

@@ -121,7 +121,9 @@ const QaAlertsByAssignee = (props: Props) => {
                   <span>Assignee</span>
                   <span>QA'd alerts</span>
                 </div>
-                <BarChart data={data} />
+                <div className={s.chart}>
+                  <BarChart data={data} />
+                </div>
               </div>
             )}
           </Widget>
