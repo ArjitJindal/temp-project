@@ -26,9 +26,9 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
           LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_SCHEMA({}),
         checkDirection: {
           type: 'string',
-          title: 'Transaction history scope options',
+          title: 'Check direction',
           description:
-            "sending: only check the sender's past sending transactions; all: check the sender's past sending and receiving transactions",
+            "sending: check the sender and the origin payment details; receiving: check the receiver and the destination payment details; all: check both sender and receiver with their respective payment details. Default is 'all'",
           enum: ['sending', 'receiving', 'all'],
           nullable: true,
         },
