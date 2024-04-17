@@ -1332,15 +1332,8 @@ type Validation<T extends RiskValueType> = (params: {
 }) => null | string;
 
 export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
-  ({ newParameterName, newValue, previousValues }) => {
-    if (
-      newParameterName === 'userDetails.dateOfBirth' ||
-      newParameterName === 'legalEntity.companyRegistrationDetails.dateOfRegistration' ||
-      newParameterName === 'createdTimestamp' ||
-      newParameterName === 'timestamp' ||
-      newParameterName === 'originAmountDetails.transactionAmount' ||
-      newParameterName === 'destinationAmountDetails.transactionAmount'
-    ) {
+  ({ newValue, previousValues }) => {
+    if (newValue.kind.includes('RANGE')) {
       if (newValue.kind === 'RANGE') {
         const { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
         const hasOverlaps = previousValues.some(({ parameterValue }) => {
