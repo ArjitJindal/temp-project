@@ -1,5 +1,5 @@
-import { Divider, Input } from 'antd';
-import React, { ChangeEvent, useState } from 'react';
+import { Divider, Input, Space } from 'antd';
+import React, { ChangeEvent, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
 import NumberInput from '../../../../library/NumberInput';
@@ -9,12 +9,11 @@ import { COLORS_V2_ALERT_CRITICAL } from '../../../../ui/colors';
 import Checkbox from '../../../../library/Checkbox';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
-import * as Card from '@/components/ui/Card';
 import Modal from '@/components/library/Modal';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
-import { BatchJobNames, Feature, TenantSettings } from '@/apis';
+import { BatchJobNames, Feature, Tenant, TenantSettings } from '@/apis';
 import { clearAuth0LocalStorage, useAccountRole, useAuth0User } from '@/utils/user-utils';
 import {
   useFeatures,
@@ -25,7 +24,7 @@ import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';
 import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
-import { DOMAIN_BRANDING } from '@/utils/branding';
+import { getWhiteLabelBrandingByHost, isWhiteLabeled } from '@/utils/branding';
 import Select from '@/components/library/Select';
 import Tag from '@/components/library/Tag';
 
@@ -97,24 +96,65 @@ export default function SuperAdminPanel() {
   const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
   const user = useAuth0User();
   const api = useApi();
-  const queryResult = useQuery(['tenants'], () => api.getTenantsList());
-  const tenantOptions =
-    queryResult.data?.map((tenant) => ({
-      value: tenant.id,
-      labelText: `${tenant.name} ${tenant.id} ${tenant.region}`,
-      label: (
-        <>
-          {tenant.name} <Tag color="blue">id: {tenant.id} </Tag>
-          {tenant.region && <Tag color="orange">region: {tenant.region} </Tag>}
-        </>
-      ),
-      disabled: tenant.isProductionAccessDisabled ?? false,
-    })) || [];
+  const queryResult = useQuery(['tenants'], () => api.getTenantsList(), {
+    enabled: isModalVisible,
+  });
+  const tenants: Array<Tenant & { whitelabel?: { host: string; name: string } }> = useMemo(() => {
+    return (
+      queryResult.data?.map((tenant) => {
+        const whitelabelBranding =
+          !isWhiteLabeled() && tenant.host ? getWhiteLabelBrandingByHost(tenant.host) : undefined;
+        return {
+          ...tenant,
+          whitelabel: whitelabelBranding
+            ? { host: tenant.host as string, name: whitelabelBranding.companyName }
+            : undefined,
+        };
+      }) ?? []
+    );
+  }, [queryResult.data]);
+  const tenantOptions = useMemo(
+    () =>
+      tenants.map((tenant) => {
+        const tags = [
+          <Tag key="id" color="blue">
+            id: {tenant.id}
+          </Tag>,
+          tenant.region && (
+            <Tag key="region" color="orange">
+              region: {tenant.region}
+            </Tag>
+          ),
+          !isWhiteLabeled() && tenant.whitelabel && (
+            <Tag key="whitelabel" color="cyan">
+              white-label: {tenant.whitelabel.name}
+            </Tag>
+          ),
+        ];
+        return {
+          value: tenant.id,
+          labelText: `${tenant.name} ${tenant.id} ${tenant.region} ${tenant.whitelabel?.name}`,
+          label: (
+            <Space>
+              {tenant.name} {tags}
+            </Space>
+          ),
+          disabled: tenant.isProductionAccessDisabled ?? false,
+        };
+      }),
+    [tenants],
+  );
 
   const handleChangeTenant = async (newTenantId: string) => {
     if (user.tenantId === newTenantId) {
       return;
     }
+    const tenant = tenants.find((t) => t.id === newTenantId);
+    if (tenant?.whitelabel) {
+      window.open(`https://${tenant.whitelabel.host}`, '_blank');
+      return;
+    }
+
     const unsetDemoMode = api.accountChangeSettings({
       accountId: user.userId,
       AccountSettings: {
@@ -203,19 +243,6 @@ export default function SuperAdminPanel() {
             >
               Create new tenant
             </Button>
-            {['sandbox', 'prod'].includes(process.env.ENV_NAME as string) && (
-              <Card.Root
-                header={{ title: 'White-label tenants', titleSize: 'SMALL' }}
-                isCollapsable={true}
-                isCollapsedByDefault={true}
-              >
-                <Card.Section>
-                  {Object.entries(DOMAIN_BRANDING).map(([url, config], i) => (
-                    <a key={i} href={`https://${url}`}>{`${config.companyName} (${url})`}</a>
-                  ))}
-                </Card.Section>
-              </Card.Root>
-            )}
             <Divider />
             <Label
               label="Features"

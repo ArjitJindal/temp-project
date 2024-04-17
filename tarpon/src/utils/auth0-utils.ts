@@ -26,6 +26,14 @@ export function getAuth0Domain(tenantName: string, region: string) {
   return `${tenantName}.${region}.auth0.com`
 }
 
+export function isWhitelabelAuth0Domain(auth0Domain: string): boolean {
+  return ![
+    'dev-flagright.eu.auth0.com',
+    'sandbox-flagright.eu.auth0.com',
+    'flagright.eu.auth0.com',
+  ].includes(auth0Domain)
+}
+
 export interface AppMetadata {
   role: string
   isEscalationContact?: boolean

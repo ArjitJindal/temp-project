@@ -7882,6 +7882,8 @@ components:
           type: string
         isProductionAccessDisabled:
           type: boolean
+        host:
+          type: string
       required:
         - id
         - name

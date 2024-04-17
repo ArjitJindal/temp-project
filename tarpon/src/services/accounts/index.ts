@@ -459,9 +459,9 @@ export class AccountsService {
     return users.map(AccountsService.userToAccount)
   }
 
-  async getTenants(): Promise<Tenant[]> {
+  async getTenants(auth0Domain?: string): Promise<Tenant[]> {
     const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
+      auth0Domain ?? this.config.auth0Domain
     )
     const user = getContext()?.user
     const organizationManager = managementClient.organizations

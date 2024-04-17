@@ -132,6 +132,10 @@ export const DOMAIN_BRANDING: { [host: string]: BrandingSettings } = Object.entr
   };
 }, {});
 
+export function getWhiteLabelBrandingByHost(host: string): BrandingSettings | undefined {
+  return DOMAIN_BRANDING[host];
+}
+
 export function getBranding(): BrandingSettings {
   const whitelabelBranding = DOMAIN_BRANDING[window.location.hostname];
   return whitelabelBranding ?? FLAGRIGHT_BRANDING;

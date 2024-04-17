@@ -2,8 +2,11 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { Stage } from '@flagright/lib/constants/deploy'
 import { shortId } from '@flagright/lib/utils'
 import createHttpError from 'http-errors'
+import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
+import { flatten } from 'lodash'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -34,6 +37,7 @@ import {
 } from '@/services/tenants/rule-queue-service'
 import { getFullTenantId } from '@/utils/tenant'
 import { tenantSettings } from '@/core/utils/context'
+import { getAuth0Domain, isWhitelabelAuth0Domain } from '@/utils/auth0-utils'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
@@ -47,22 +51,35 @@ export const tenantsHandler = lambdaApi()(
       event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
-
     const handlers = new Handlers()
 
     handlers.registerGetTenantsList(async () => {
       assertCurrentUserRoleAboveAdmin()
-      const tenants = await accountsService.getTenants()
-      const data = tenants.map(
-        (tenant): Tenant => ({
-          id: tenant.id,
-          name: tenant.name,
-          isProductionAccessDisabled:
-            tenant.isProductionAccessDisabled ?? false,
-          region: tenant.region,
-        })
-      )
-      return data
+      let tenants: Tenant[] = []
+
+      if (isWhitelabelAuth0Domain(auth0Domain)) {
+        tenants = await accountsService.getTenants()
+      } else {
+        assertCurrentUserRole('root')
+        tenants = flatten(
+          await Promise.all(
+            getAuth0TenantConfigs(process.env.ENV as Stage).map(
+              async (config) => {
+                const host = new URL(config.consoleUrl).host
+                const auth0Domain = getAuth0Domain(
+                  config.tenantName,
+                  config.region
+                )
+                const partialTenants = await accountsService.getTenants(
+                  auth0Domain
+                )
+                return partialTenants.map((v) => ({ ...v, host }))
+              }
+            )
+          )
+        )
+      }
+      return tenants
     })
 
     handlers.registerPostCreateTenant(async (ctx, request) => {
