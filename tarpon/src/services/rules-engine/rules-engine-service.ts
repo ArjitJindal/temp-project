@@ -323,7 +323,7 @@ export class RulesEngineService {
             cursor,
             async (usersChunk) => {
               await pMap(usersChunk, async (user) => {
-                const isUserFilter = await this.computeRuleFilters(
+                const { isOriginUserFiltered } = await this.computeRuleFilters(
                   ruleInstance.filters as UserFilters,
                   { senderUser: user }
                 )
@@ -333,7 +333,7 @@ export class RulesEngineService {
                   ruleInstance
                 )
 
-                if (isUserFilter) {
+                if (isOriginUserFiltered) {
                   const hitRuleResult: HitRulesDetails = {
                     ruleId: rule.id,
                     ruleInstanceId: ruleInstance.id ?? '',

@@ -11,7 +11,11 @@ import {
   setUpTransactionsHooks,
 } from '@/test-utils/transaction-test-utils'
 import dayjs from '@/utils/dayjs'
-import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
+import {
+  getTestBusiness,
+  getTestUser,
+  setUpUsersHooks,
+} from '@/test-utils/user-test-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
@@ -75,6 +79,62 @@ describe('Core logic', () => {
         name: 'User has a transaction within the inactivity period',
         users: [getTestUser({ userId: 'U-1' })],
         expectedHits: [false],
+      },
+    ])('User inactivity rule', (testCase) => {
+      createAllUserRuleTestCases(TEST_TENANT_ID, testCase)
+    })
+  })
+})
+
+describe('User inactivity with filters', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'R-33',
+      defaultParameters: {
+        checkDirection: 'all',
+        inactivityDays: 30,
+      } as UserInactivityRuleParameters,
+      type: 'USER_ONGOING_SCREENING',
+      filters: {
+        userType: 'BUSINESS',
+        businessUserSegments: ['SMALL'],
+      },
+    },
+  ])
+
+  describe('User inactivity rule: Hit', () => {
+    const userId1 = 'U-1'
+    const userId2 = 'U-2'
+
+    setUpTransactionsHooks(TEST_TENANT_ID, [
+      getTestTransaction({
+        timestamp: dayjs().subtract(31, 'days').valueOf(),
+        originUserId: userId1,
+        destinationUserId: userId2,
+      }),
+    ])
+
+    describe.each<AllUserRuleTestCase>([
+      {
+        name: 'User has no transactions',
+        users: [getTestUser({ userId: userId1 })],
+        expectedHits: [false],
+      },
+      {
+        name: 'User has no transactions and is a business user',
+        users: [
+          getTestBusiness({
+            userId: userId1,
+            legalEntity: {
+              companyGeneralDetails: {
+                userSegment: 'SMALL',
+                legalName: 'Test',
+              },
+            },
+          }),
+        ],
+        expectedHits: [true],
       },
     ])('User inactivity rule', (testCase) => {
       createAllUserRuleTestCases(TEST_TENANT_ID, testCase)
