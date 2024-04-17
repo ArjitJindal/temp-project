@@ -16,7 +16,7 @@
     "upgrade": "npm i cdktf@latest cdktf-cli@latest",
     "upgrade:next": "npm i cdktf@next cdktf-cli@next",
     "aws-login": "npx ts-node ../../lib/scripts/aws-login.ts",
-    "deploy": "tsc && sh deploy.sh"
+    "deploy": "sh deploy.sh"
   },
   "engines": {
     "node": ">=16.0"
