@@ -87,29 +87,29 @@ jobs:
           name: tarpon-coverage.json
           path: tarpon/coverage/coverage-summary.json
           overwrite: true
-      - name: Get workflow run id
-        if: github.ref != 'refs/heads/main'
-        id: get_workflow_run_id
-        run: |
-          response=$(curl -s -H "Authorization: token ${{secrets.FLAGRIGHT_ACTION_PAT}}" \
-            "https://api.github.com/repos/flagright/orca/actions/workflows/deploy_orca.yaml/runs?status=success&per_page=1")
-            # Extract workflow_run_if from the response
-          workflow_run_id=$(jq -r '.workflow_runs[0].id' <<<"$response")
-          echo "::set-output name=workflow_run_id::$workflow_run_id"
-      - name: Download coverage report from artifact
-        if: github.ref != 'refs/heads/main'
-        uses: actions/download-artifact@v4
-        with:
-          name: tarpon-coverage.json
-          path: artifact
-          run-id: ${{ steps.get_workflow_run_id.outputs.workflow_run_id }}
-          github-token: ${{ secrets.FLAGRIGHT_ACTION_PAT }}
-          repository: flagright/orca
-      - name: Generate coverage report and comment on PR
-        if: github.ref != 'refs/heads/main'
-        run: |
-          npm run test:coverage:comment "${{ github.token }}"
-        working-directory: "tarpon"
+      # - name: Get workflow run id
+      #   if: github.ref != 'refs/heads/main'
+      #   id: get_workflow_run_id
+      #   run: |
+      #     response=$(curl -s -H "Authorization: token ${{secrets.FLAGRIGHT_ACTION_PAT}}" \
+      #       "https://api.github.com/repos/flagright/orca/actions/workflows/deploy_orca.yaml/runs?status=success&per_page=1")
+      #       # Extract workflow_run_if from the response
+      #     workflow_run_id=$(jq -r '.workflow_runs[0].id' <<<"$response")
+      #     echo "::set-output name=workflow_run_id::$workflow_run_id"
+      # - name: Download coverage report from artifact
+      #   if: github.ref != 'refs/heads/main'
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: tarpon-coverage.json
+      #     path: artifact
+      #     run-id: ${{ steps.get_workflow_run_id.outputs.workflow_run_id }}
+      #     github-token: ${{ secrets.FLAGRIGHT_ACTION_PAT }}
+      #     repository: flagright/orca
+      # - name: Generate coverage report and comment on PR
+      #   if: github.ref != 'refs/heads/main'
+      #   run: |
+      #     npm run test:coverage:comment "${{ github.token }}"
+      #   working-directory: "tarpon"
       - name: Post to a Slack channel on failure
         id: slack
         uses: slackapi/slack-github-action@v1.25.0
