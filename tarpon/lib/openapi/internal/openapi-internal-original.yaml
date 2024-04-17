@@ -2353,6 +2353,33 @@ paths:
           in: query
           name: endTimestamp
     parameters: []
+  /dashboard_stats/qa/alerts-by-assignee:
+    get:
+      summary: DashboardStats - Alerts by assignee
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsQaAlertsCountByAssignee'
+              examples: {}
+      operationId: get-dashboard-stats-qa-alerts-by-assignee
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+    parameters: []
   /tenants:
     get:
       summary: Tenant - List
@@ -7346,6 +7373,28 @@ components:
               - ruleId
               - ruleInstanceId
               - alertsCount
+      required:
+        - data
+    DashboardStatsQaAlertsCountByAssignee:
+      type: object
+      x-examples: {}
+      title: DashboardStatsQaAlertsCountByAssignee
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: string
+              alertsAssignedForQa:
+                type: number
+              alertsQaedByAssignee:
+                type: number
+            required:
+              - accountId
+              - alertsAssignedForQa
+              - alertsQaedByAssignee
       required:
         - data
     DashboardStatsQaOverview:

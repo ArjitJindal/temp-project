@@ -9,6 +9,7 @@ import { CaseStatsDashboardMetric } from './dashboard-metrics/case-stats'
 import { LatestTeamStatsDashboardMetric } from './dashboard-metrics/latest-team-stats'
 import { QaAlertsByRuleStatsDashboardMetric } from './dashboard-metrics/qa-alerts-by-rule-stats'
 import { QaOverviewStatsDashboardMetric } from './dashboard-metrics/qa-overview'
+import { QaAlertsByAssigneeStatsDashboardMetric } from './dashboard-metrics/qa-alerts-by-assignee'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
@@ -26,6 +27,7 @@ import { DashboardStatsUsersStats } from '@/@types/openapi-internal/DashboardSta
 import { DashboardStatsQaAlertsCountByRuleData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByRuleData'
 import { DashboardStatsQaOverview } from '@/@types/openapi-internal/DashboardStatsQaOverview'
 import { tenantHasFeature } from '@/core/utils/context'
+import { DashboardStatsQaAlertsCountByAssigneeData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByAssigneeData'
 
 @traceable
 export class DashboardStatsRepository {
@@ -184,6 +186,7 @@ export class DashboardStatsRepository {
     await Promise.all([
       this.recalculateQaAlertsByRuleStats(caseUpdatedAtTimeRange),
       this.recalculateQaOverviewStats(caseUpdatedAtTimeRange),
+      this.recalculateQaAlertsByAssigneeStats(caseUpdatedAtTimeRange),
     ])
   }
   public async recalculateQaAlertsByRuleStats(timeRange?: TimeRange) {
@@ -191,6 +194,13 @@ export class DashboardStatsRepository {
   }
   public async recalculateQaOverviewStats(timeRange?: TimeRange) {
     await QaOverviewStatsDashboardMetric.refresh(this.tenantId, timeRange)
+  }
+
+  public async recalculateQaAlertsByAssigneeStats(timeRange?: TimeRange) {
+    await QaAlertsByAssigneeStatsDashboardMetric.refresh(
+      this.tenantId,
+      timeRange
+    )
   }
 
   async getOverviewStatistics(
@@ -260,6 +270,17 @@ export class DashboardStatsRepository {
     endTimestamp: number
   ): Promise<DashboardStatsQaOverview> {
     return QaOverviewStatsDashboardMetric.get(
+      this.tenantId,
+      startTimestamp,
+      endTimestamp
+    )
+  }
+
+  public async getQaAlertsByAssigneeStats(
+    startTimestamp: number,
+    endTimestamp: number
+  ): Promise<DashboardStatsQaAlertsCountByAssigneeData[]> {
+    return QaAlertsByAssigneeStatsDashboardMetric.get(
       this.tenantId,
       startTimestamp,
       endTimestamp

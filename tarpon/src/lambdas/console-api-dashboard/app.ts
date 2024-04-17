@@ -304,6 +304,27 @@ export const dashboardStatsHandler = lambdaApi()(
       )
       return data
     })
+
+    handlers.registerGetDashboardStatsQaAlertsByAssignee(
+      async (ctx, request) => {
+        const { startTimestamp, endTimestamp } = request
+        if (shouldRefreshAll(event)) {
+          await dashboardStatsRepository.refreshQaStats()
+        }
+        if (!endTimestamp) {
+          throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
+        }
+        if (!startTimestamp) {
+          throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
+        }
+        const data = await dashboardStatsRepository.getQaAlertsByAssigneeStats(
+          startTimestamp,
+          endTimestamp
+        )
+        return { data }
+      }
+    )
+
     return await handlers.handle(event)
   }
 )

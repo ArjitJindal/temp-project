@@ -141,6 +141,12 @@ export const DASHBOARD_QA_ALERTS_BY_RULE_STATS_COLLECTION_HOURLY = (
   return `${tenantId}-dashboard-qa-alerts-by-rule-stats-hourly`
 }
 
+export const DASHBOARD_QA_ALERTS_BY_ASSIGNEE_STATS_COLLECTION_HOURLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-qa-alerts-by-assignee-stats-hourly`
+}
+
 export const DASHBOARD_QA_OVERVIEW_STATS_COLLECTION_HOURLY = (
   tenantId: string
 ) => {

@@ -23,6 +23,7 @@ import UserStatusDistributionCard from './components/UserStatusDistributionCard'
 import QaAlertsByRuleHits from './components/Qa/QaAlertsByRuleHits';
 import QaOverview from './components/Qa/QaOverview';
 import Overview from './components/Overview';
+import QaAlertsByAssignee from './components/Qa/QaAlertsByAssignee';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
@@ -62,7 +63,10 @@ type KeyValues =
   | 'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS'
   | 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS'
   | 'TRANSACTIONS_BREAKDOWN_BY_TRS'
-  | 'LATEST_TEAM_OVERVIEW';
+  | 'LATEST_TEAM_OVERVIEW'
+  | 'QA_ALERTS_BY_RULE_HITS'
+  | 'QA_OVERVIEW'
+  | 'QA_ALERTS_BY_ASSIGNEE';
 
 const DEFAULT_VALUES = {
   OVERVIEW: true,
@@ -90,6 +94,7 @@ const DEFAULT_VALUES = {
   LATEST_TEAM_OVERVIEW: true,
   QA_ALERTS_BY_RULE_HITS: true,
   QA_OVERVIEW: true,
+  QA_ALERTS_BY_ASSIGNEE: true,
 };
 
 type WidgetType = {
@@ -308,6 +313,12 @@ const WIDGETS: Widgets = {
         id: 'QA_OVERVIEW',
         title: 'Overview',
         component: QaOverview,
+        requiredFeatures: ['QA'],
+      },
+      {
+        id: 'QA_ALERTS_BY_ASSIGNEE',
+        title: 'QA’d alerts overview by assignee',
+        component: QaAlertsByAssignee,
         requiredFeatures: ['QA'],
       },
       {

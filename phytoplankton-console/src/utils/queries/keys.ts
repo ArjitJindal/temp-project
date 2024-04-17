@@ -301,6 +301,9 @@ export const DASHBOARD_STATS_QA_ALERTS_BY_RULE_HIT = (dateRange: RangeValue<Dayj
 export const DASHBOARD_STATS_QA_OVERVIEW = (dateRange: RangeValue<Dayjs>): QueryKey =>
   ['qa-overview', dateRange].filter(Boolean);
 
+export const DASHBOARD_STATS_QA_ALERTS_BY_ASSIGNEE = (dateRange: RangeValue<Dayjs>): QueryKey =>
+  ['qa-alerts-by-assignee', dateRange].filter(Boolean);
+
 export const SETTINGS = (): QueryKey => ['settings'];
 
 export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];

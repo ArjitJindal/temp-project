@@ -23,6 +23,7 @@ const WIDGETS = {
   TEAM_OVERVIEW: 'dashboard_stats/team**',
   QA_ALERTS_BY_RULE_HITS: 'dashboard_stats/qa/alerts-by-rule-hit**',
   QA_OVERVIEW: 'dashboard_stats/qa/overview**',
+  QA_ALERTS_BY_ASSIGNEE: 'dashboard_stats/qa/alerts-by-assignee**',
 };
 
 describe('Dashboard Integration Test', () => {
