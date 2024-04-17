@@ -13,7 +13,6 @@ import { traceable } from '@/core/xray'
 export type PaymentMethodNameRuleParameter = {
   allowedDistancePercentage: number
   ignoreEmptyName?: boolean
-  checkDirection?: 'sending' | 'receiving' | 'all'
 }
 
 @traceable
@@ -24,14 +23,6 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
       properties: {
         allowedDistancePercentage:
           LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_SCHEMA({}),
-        checkDirection: {
-          type: 'string',
-          title: 'Check direction',
-          description:
-            "sending: check the sender and the origin payment details; receiving: check the receiver and the destination payment details; all: check both sender and receiver with their respective payment details. Default is 'all'",
-          enum: ['sending', 'receiving', 'all'],
-          nullable: true,
-        },
         ignoreEmptyName: {
           type: 'boolean',
           nullable: true,
@@ -122,31 +113,18 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
   }
 
   public async computeRule() {
-    const tasks: Promise<RuleHitResultItem | undefined>[] = []
-
-    const checkAll =
-      this.parameters.checkDirection === 'all' ||
-      !this.parameters.checkDirection
-    if (this.parameters.checkDirection === 'sending' || checkAll) {
-      tasks.push(
-        this.computeUserRule(
-          'origin',
-          this.senderUser as User,
-          this.transaction.originPaymentDetails
-        )
-      )
-    }
-    if (this.parameters.checkDirection === 'receiving' || checkAll) {
-      tasks.push(
-        this.computeUserRule(
-          'destination',
-          this.receiverUser as User,
-          this.transaction.destinationPaymentDetails
-        )
-      )
-    }
-
-    return await Promise.all(tasks)
+    return await Promise.all([
+      this.computeUserRule(
+        'origin',
+        this.senderUser as User,
+        this.transaction.originPaymentDetails
+      ),
+      this.computeUserRule(
+        'destination',
+        this.receiverUser as User,
+        this.transaction.destinationPaymentDetails
+      ),
+    ])
   }
 }
 

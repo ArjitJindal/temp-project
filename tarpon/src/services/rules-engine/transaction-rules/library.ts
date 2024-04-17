@@ -1035,7 +1035,6 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: PaymentMethodNameRuleParameter = {
       allowedDistancePercentage: 30,
-      checkDirection: 'all',
       ignoreEmptyName: false,
     }
     const defaultFilters: TransactionFilters | UserFilters = {

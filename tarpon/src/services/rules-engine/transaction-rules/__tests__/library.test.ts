@@ -164,10 +164,6 @@ describe('', () => {
         if (!originLibrary?.[rule.id]) {
           return
         }
-        if (rule.id === 'R-155') {
-          // TODO: remove this in another PR later
-          return
-        }
         const ruleImplementation =
           rule.type === 'TRANSACTION'
             ? TRANSACTION_RULES[rule.ruleImplementationName ?? '']
