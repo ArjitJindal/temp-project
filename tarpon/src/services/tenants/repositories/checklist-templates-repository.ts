@@ -51,7 +51,7 @@ export class ChecklistTemplateRepository {
       CHECKLIST_TEMPLATE_COLLECTION(this.tenantId)
     )
     return await collection
-      .find({ id: { $in: checklistTemplateIds } })
+      .find({ id: { $in: checklistTemplateIds }, isDeleted: { $ne: true } })
       .toArray()
   }
 
@@ -86,7 +86,10 @@ export class ChecklistTemplateRepository {
     const collection = db.collection<ChecklistTemplate>(
       CHECKLIST_TEMPLATE_COLLECTION(this.tenantId)
     )
-    await collection.deleteOne({ id: templateId })
+    await collection.updateOne(
+      { id: templateId },
+      { $set: { isDeleted: true, deletedAt: Date.now() } }
+    )
   }
 
   private getChecklistTemplatesCount(): Promise<number> {
@@ -94,7 +97,8 @@ export class ChecklistTemplateRepository {
     const collection = db.collection<ChecklistTemplate>(
       CHECKLIST_TEMPLATE_COLLECTION(this.tenantId)
     )
-    return collection.countDocuments()
+
+    return collection.countDocuments({ isDeleted: { $ne: true } })
   }
 
   public getChecklistTemplatesCursor(
@@ -115,6 +119,7 @@ export class ChecklistTemplateRepository {
               id: params.filterId
                 ? prefixRegexMatchFilter(params.filterId)
                 : undefined,
+              isDeleted: { $ne: true },
             },
             isNil
           ),

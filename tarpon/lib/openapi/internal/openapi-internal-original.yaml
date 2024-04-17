@@ -11720,14 +11720,18 @@ components:
           items:
             $ref: '#/components/schemas/ChecklistCategory'
         createdAt:
-          type: integer
+          type: number
         updatedAt:
-          type: integer
+          type: number
         status:
           type: string
           enum:
             - ACTIVE
             - DRAFT
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
         qaPassCriteria:
           type: object
           properties:
