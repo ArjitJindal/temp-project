@@ -223,11 +223,13 @@ export class MongoDbTransactionRepository
     }
 
     const executedRulesFilters: Document[] = []
+
     if (params.filterRulesExecuted != null) {
       executedRulesFilters.push({
         $elemMatch: { ruleId: { $in: params.filterRulesExecuted } },
       })
     }
+
     if (params.filterRuleInstancesExecuted != null) {
       conditions.push({
         'executedRules.ruleInstanceId': {
@@ -235,14 +237,15 @@ export class MongoDbTransactionRepository
         },
       })
     }
+
     if (params.filterRulesHit != null) {
-      executedRulesFilters.push({
-        $elemMatch: {
-          ruleHit: true,
-          ruleId: { $in: params.filterRulesHit },
+      conditions.push({
+        'hitRules.ruleInstanceId': {
+          $in: params.filterRulesHit,
         },
       })
     }
+
     if (params.filterRuleInstancesHit) {
       executedRulesFilters.push({
         $elemMatch: {
