@@ -200,7 +200,7 @@
     "@aws-sdk/client-sns": "^3.202.0",
     "@aws-sdk/client-sqs": "^3.145.0",
     "@aws-sdk/client-sts": "^3.382.0",
-    "@aws-sdk/lib-dynamodb": "^3.183.0",
+    "@aws-sdk/lib-dynamodb": "^3.540.0",
     "@aws-sdk/lib-storage": "^3.382.0",
     "@aws-sdk/middleware-retry": "^3.374.0",
     "@aws-sdk/s3-request-presigner": "^3.382.0",
