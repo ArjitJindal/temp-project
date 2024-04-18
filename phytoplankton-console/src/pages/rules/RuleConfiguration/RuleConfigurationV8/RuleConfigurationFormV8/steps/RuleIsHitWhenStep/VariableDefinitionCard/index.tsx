@@ -81,29 +81,6 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
   const [editingVariable, setEditingVariable] = useState<
     EditingAggVariable | EditingEntityVariable | undefined
   >(undefined);
-  const cardTitleInfo = useMemo(() => {
-    if (!editingVariable) {
-      return {
-        title: 'Variable definition',
-        description:
-          'Add all entity and aggregate variables that are required for the rule to check',
-      };
-    }
-
-    if (editingVariable?.type === 'entity') {
-      return {
-        title: 'Entity variable',
-        description:
-          'Entity variable is used to reference specific fields from an entity or instrument (e.g registration period, status, or type)',
-      };
-    } else if (editingVariable?.type === 'aggregation') {
-      return {
-        title: 'Aggregate variable',
-        description:
-          'An aggregate variable summarizes multiple values from a dataset using operations like sum, average, count, maximum, or minimum. ',
-      };
-    }
-  }, [editingVariable]);
   const isNewVariable = useMemo(
     () =>
       [...(aggregationVariables ?? []), ...(entityVariables ?? [])].find(
@@ -226,27 +203,26 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
       <Card.Section>
         <div className={s.header}>
           <Label
-            label={cardTitleInfo?.title}
+            label="Variable definition"
+            description="Add all entity and aggregate variables that are required for the rule to check"
             required={true}
-            description={cardTitleInfo?.description}
           />
-          {!editingVariable && (
-            <Dropdown<VariableType>
-              options={[
-                { value: 'entity', label: 'Entity variable' },
-                { value: 'aggregation', label: 'Aggregate variable' },
-              ]}
-              onSelect={(option) => handleAddVariable(option.value)}
-              placement="bottomLeft"
-            >
-              {/* TODO: Update e2e test */}
-              <Button testName="add-variable-v8" isLoading={isLoading(ruleLogicConfig.data)}>
-                Add variable
-              </Button>
-            </Dropdown>
-          )}
+
+          <Dropdown<VariableType>
+            options={[
+              { value: 'entity', label: 'Entity variable' },
+              { value: 'aggregation', label: 'Aggregate variable' },
+            ]}
+            onSelect={(option) => handleAddVariable(option.value)}
+            placement="bottomLeft"
+          >
+            {/* TODO: Update e2e test */}
+            <Button testName="add-variable-v8" isLoading={isLoading(ruleLogicConfig.data)}>
+              Add variable
+            </Button>
+          </Dropdown>
         </div>
-        {!editingVariable && hasVariables && (
+        {hasVariables && (
           <div className={s.tagsContainer}>
             {entityVariables?.map((entityVar, index) => {
               const entityVarDefinition = entityVariableDefinitions.find(

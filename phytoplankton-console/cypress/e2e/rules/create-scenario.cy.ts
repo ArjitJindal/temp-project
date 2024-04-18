@@ -104,7 +104,7 @@ describe('Create scenario', () => {
     cy.get('[role="menuitem"]').contains('Entity variable').click();
     cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
     cy.get('[data-cy="variable-entity-v8"]').click().type(`${entityText}`).type(`{enter}`);
-    cy.get('button[data-cy="add-variable-v8"]').first().click();
+    cy.get('button[data-cy="modal-ok"]').first().click();
   }
 
   function createAggregationVariable(variableName, variableAggregateField) {
@@ -120,7 +120,7 @@ describe('Create scenario', () => {
         .type(`${variableAggregateField}`)
         .type(`{enter}`);
       cy.get('[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
-      cy.get('button[data-cy="add-variable-v8"]').first().click();
+      cy.get('button[data-cy="modal-ok"]').first().click();
     });
   }
 

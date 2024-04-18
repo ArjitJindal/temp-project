@@ -25,13 +25,14 @@ import SelectionGroup from '@/components/library/SelectionGroup';
 
 // TODO: Move PropertyColumns to library
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
-import Button from '@/components/library/Button';
+
 import TextInput from '@/components/library/TextInput';
 import { dayjs } from '@/utils/dayjs';
 import Alert from '@/components/library/Alert';
 import VariableTimeWindow from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/VariableTimeWindow';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import { Hint } from '@/components/library/Form/InputField';
+import Modal from '@/components/library/Modal';
 import { humanizeAuto } from '@/utils/humanize';
 
 function varLabelWithoutNamespace(label: string): string {
@@ -140,7 +141,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     label: string;
   }> = useMemo(() => {
     const options: Array<{ value: RuleAggregationFunc; label: string }> = [];
-    const entityVariable = entityVariables.find((v) => v.key === formValues.aggregationFieldKey);
+    const entityVariable = entityVariables.find((v) => v.key === formValues?.aggregationFieldKey);
 
     if (entityVariable?.valueType === 'number') {
       const numberValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
@@ -220,8 +221,27 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
   const handleUpdateForm = useCallback((newValues: Partial<FormRuleAggregationVariable>) => {
     setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
   }, []);
+  const [isOpen, setIsOpen] = useState(true);
   return (
-    <>
+    <Modal
+      title="Aggregation variable"
+      isOpen={isOpen}
+      onCancel={() => {
+        setIsOpen(false);
+        onCancel();
+      }}
+      width="L"
+      onOk={() => {
+        onUpdate(formValues as RuleAggregationVariable);
+        setIsOpen(false);
+      }}
+      okText={isNew ? 'Add' : 'Update'}
+      okProps={{ isDisabled: !isValidFormValues }}
+      disablePadding
+      subTitle="
+      An aggregate variable summarizes multiple values from a dataset using operations like sum,
+      average, count, maximum, or minimum"
+    >
       <Card.Section direction="vertical">
         <Label label="Variable name" required={{ value: false, showHint: true }}>
           <TextInput
@@ -401,20 +421,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
           entityVariables={entityVariables}
         />
       </Card.Section>
-      <Card.Section direction="horizontal">
-        <Button
-          type="PRIMARY"
-          onClick={() => onUpdate(formValues as RuleAggregationVariable)}
-          isDisabled={!isValidFormValues}
-          testName={`${isNew ? 'add' : 'update'}-variable-v8`}
-        >
-          {isNew ? 'Add' : 'Update'}
-        </Button>
-        <Button type="SECONDARY" onClick={onCancel}>
-          Cancel
-        </Button>
-      </Card.Section>
-    </>
+    </Modal>
   );
 };
 

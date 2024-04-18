@@ -12,15 +12,14 @@ import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import { RuleEntityVariable, RuleEntityVariableInUse } from '@/apis';
-
 // TODO: Move PropertyColumns to library
-import Button from '@/components/library/Button';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 import Select from '@/components/library/Select';
 import { firstLetterUpper } from '@/utils/humanize';
 import { useIsChanged } from '@/utils/hooks';
+import Modal from '@/components/library/Modal';
 
 type UserType = 'SENDER' | 'RECEIVER' | 'BOTH';
 type TransactionDirection = 'ORIGIN' | 'DESTINATION' | 'BOTH';
@@ -256,110 +255,114 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   }, [entityVariablesFiltered]);
 
   const entityVariable = entityVariables.find((v) => v.key === formValues.variableKey);
-
+  const [isOpen, setIsOpen] = useState(true);
   return (
-    <>
-      <Card.Section direction="vertical">
-        <Select<string | null>
-          value={null}
-          onChange={(variableKey) => {
-            setSearchKey(variableKey ?? undefined);
-            if (variableKey) {
-              setFormValues(getInitialFormValues({ key: variableKey }, entityVariables));
-            }
-          }}
-          placeholder={
-            <span>
-              <SearchIcon style={{ width: 12, height: 12 }} />
-              {'  '}Search for entity variable here or configure below
-            </span>
+    <div>
+      <Modal
+        width="L"
+        title="Entity variable"
+        isOpen={isOpen}
+        onCancel={() => {
+          setIsOpen(false);
+          onCancel();
+        }}
+        onOk={() => {
+          if (formValues.variableKey) {
+            onUpdate({ key: formValues.variableKey, name: formValues.name });
           }
-          portaled={true}
-          mode="SINGLE"
-          options={allVariableOptions}
-          testId="variable-search-v8"
-        />
-        <Label label="Variable name" required={{ value: false, showHint: true }}>
-          <TextInput
-            value={formValues.name}
-            onChange={(name) => handleUpdateForm({ name })}
-            placeholder={entityVariable?.uiDefinition.label || 'Custom variable name'}
-            allowClear
-            testName="variable-name-v8"
+        }}
+        okText={isNew ? 'Add' : 'Update'}
+        okProps={{ isDisabled: !formValues.variableKey }}
+        disablePadding
+        subTitle="
+        Entity variable is used to reference specific fields from an entity or instrument (e.g
+        registration period, status, or type)"
+      >
+        <Card.Section direction="vertical">
+          <Select<string | null>
+            value={null}
+            onChange={(variableKey) => {
+              setSearchKey(variableKey ?? undefined);
+              if (variableKey) {
+                setFormValues(getInitialFormValues({ key: variableKey }, entityVariables));
+              }
+            }}
+            placeholder={
+              <span>
+                <SearchIcon style={{ width: 12, height: 12 }} />
+                {'  '}Search for entity variable here or configure below
+              </span>
+            }
+            portaled={true}
+            mode="SINGLE"
+            options={allVariableOptions}
+            testId="variable-search-v8"
           />
-        </Label>
-        <PropertyColumns>
-          <Label label="Variable type" required={{ value: true, showHint: true }}>
-            <SelectionGroup
-              value={formValues.type}
-              onChange={(type) => handleUpdateForm({ type })}
-              mode={'SINGLE'}
-              options={TYPE_OPTIONS}
-              testName="variable-type-v8"
+          <Label label="Variable name" required={{ value: false, showHint: true }}>
+            <TextInput
+              value={formValues.name}
+              onChange={(name) => handleUpdateForm({ name })}
+              placeholder={entityVariable?.uiDefinition.label || 'Custom variable name'}
+              allowClear
+              testName="variable-name-v8"
             />
           </Label>
-          {formValues.type === 'TRANSACTION' && (
-            <Label label="Transaction direction">
+          <PropertyColumns>
+            <Label label="Variable type" required={{ value: true, showHint: true }}>
               <SelectionGroup
-                value={formValues.transactionDirection}
-                onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
+                value={formValues.type}
+                onChange={(type) => handleUpdateForm({ type })}
                 mode={'SINGLE'}
-                options={TX_DIRECTION_OPTIONS}
-                testName="variable-tx-direction-v8"
+                options={TYPE_OPTIONS}
+                testName="variable-type-v8"
               />
             </Label>
-          )}
-          {formValues.type === 'USER' && (
-            <>
-              <Label label="User type" required={{ value: true, showHint: true }}>
+            {formValues.type === 'TRANSACTION' && (
+              <Label label="Transaction direction">
                 <SelectionGroup
-                  value={formValues.userType}
-                  onChange={(userType) => handleUpdateForm({ userType })}
+                  value={formValues.transactionDirection}
+                  onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
                   mode={'SINGLE'}
-                  options={USER_TYPE_OPTIONS}
-                  testName="variable-user-type-v8"
+                  options={TX_DIRECTION_OPTIONS}
+                  testName="variable-tx-direction-v8"
                 />
               </Label>
-              <Label label="User nature" required={{ value: false, showHint: true }}>
-                <SelectionGroup
-                  value={formValues.userNatures}
-                  onChange={(userNatures) => handleUpdateForm({ userNatures })}
-                  mode={'MULTIPLE'}
-                  options={USER_NATURE_OPTIONS}
-                  testName="variable-user-nature-v8"
-                />
-              </Label>
-            </>
-          )}
-          {variableOptions.length > 0 && (
-            <NestedSelects
-              testId="variable-entity-v8"
-              ref={nestedSelectsRef}
-              label="Entity"
-              options={variableOptions}
-              value={formValues.variableKey}
-              onChange={(variableKey) => handleUpdateForm({ variableKey })}
-            />
-          )}
-        </PropertyColumns>
-      </Card.Section>
-      <Card.Section direction="horizontal">
-        <Button
-          type="PRIMARY"
-          onClick={() => {
-            if (formValues.variableKey) {
-              onUpdate({ key: formValues.variableKey, name: formValues.name });
-            }
-          }}
-          isDisabled={!formValues.variableKey}
-          testName={`${isNew ? 'add' : 'update'}-variable-v8`}
-        >
-          {isNew ? 'Add' : 'Update'}
-        </Button>
-        <Button type="SECONDARY" onClick={onCancel}>
-          Cancel
-        </Button>
-      </Card.Section>
-    </>
+            )}
+            {formValues.type === 'USER' && (
+              <>
+                <Label label="User type" required={{ value: true, showHint: true }}>
+                  <SelectionGroup
+                    value={formValues.userType}
+                    onChange={(userType) => handleUpdateForm({ userType })}
+                    mode={'SINGLE'}
+                    options={USER_TYPE_OPTIONS}
+                    testName="variable-user-type-v8"
+                  />
+                </Label>
+                <Label label="User nature" required={{ value: false, showHint: true }}>
+                  <SelectionGroup
+                    value={formValues.userNatures}
+                    onChange={(userNatures) => handleUpdateForm({ userNatures })}
+                    mode={'MULTIPLE'}
+                    options={USER_NATURE_OPTIONS}
+                    testName="variable-user-nature-v8"
+                  />
+                </Label>
+              </>
+            )}
+            {variableOptions.length > 0 && (
+              <NestedSelects
+                testId="variable-entity-v8"
+                ref={nestedSelectsRef}
+                label="Entity"
+                options={variableOptions}
+                value={formValues.variableKey}
+                onChange={(variableKey) => handleUpdateForm({ variableKey })}
+              />
+            )}
+          </PropertyColumns>
+        </Card.Section>
+      </Modal>
+    </div>
   );
 };

@@ -178,7 +178,11 @@ function RuleConfigurationFormV8(
   }, [showTopCard, activeStepKey, isRuleNameDefined, isInitialNameDescriptionDefined]);
 
   return (
-    <ConfigProvider getPopupContainer={(trigger: any) => trigger.parentElement}>
+    <ConfigProvider
+      getPopupContainer={(trigger: any) =>
+        trigger === undefined ? document.body : trigger.parentElement
+      }
+    >
       <Form<RuleConfigurationFormV8Values>
         key={formId}
         id={formId}

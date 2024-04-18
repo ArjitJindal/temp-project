@@ -6,6 +6,7 @@ import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-fill.r
 import Button, { ButtonProps } from '@/components/library/Button';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { Permission } from '@/apis';
+import { P } from '@/components/ui/Typography';
 
 export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
@@ -13,6 +14,7 @@ export type ModalHeight = 'AUTO' | 'FULL';
 
 interface Props {
   title?: string;
+  subTitle?: string;
   icon?: React.ReactNode;
   hideFooter?: boolean;
   hideHeader?: boolean;
@@ -44,6 +46,7 @@ export default function Modal(props: Props) {
   const {
     icon,
     title,
+    subTitle,
     isOpen,
     onOk,
     okText,
@@ -88,6 +91,11 @@ export default function Modal(props: Props) {
                 <CloseCircleLineIcon />
               </button>
             </div>
+            {subTitle && (
+              <P grey variant="m" fontWeight="normal">
+                {subTitle}{' '}
+              </P>
+            )}
             {withTabs && (
               <Tabs
                 type="card"
