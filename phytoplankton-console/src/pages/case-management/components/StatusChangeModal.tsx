@@ -163,7 +163,9 @@ export default function StatusChangeModal(props: Props) {
             )
           }
           entityIds={entityIds || []}
-          placeholder={`Write a narrative explaining the ${entityName.toLowerCase()} closure reason and findings, if any.`}
+          placeholder={`Write a narrative explaining the ${entityName.toLowerCase()} ${
+            statusEscalated(newStatus) ? 'escalation' : 'closure'
+          } reason and findings, if any.`}
           possibleReasons={possibleReasons}
           onSubmit={() => {
             setAwaitingConfirmation(true);
