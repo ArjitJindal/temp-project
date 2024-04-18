@@ -47,7 +47,7 @@
     "@notionhq/client": "^2.2.14",
     "@slack/web-api": "^7.0.2",
     "@types/lodash": "^4.17.0",
-    "aws-cdk": "~2.132.1",
+    "aws-cdk": "~2.134.0",
     "aws-cdk-lib": "~2.134.0",
     "lodash": "^4.17.21",
     "octokit": "^3.1.2"
