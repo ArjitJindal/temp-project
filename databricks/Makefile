@@ -37,6 +37,5 @@ generate-api:
 
 patch: generate
 	poetry build
-	databricks workspace import-dir --overwrite notebooks /Shared/
 	databricks workspace import-dir --overwrite dist /Shared/
 	databricks fs cp ./data/currency_rates_backfill.json dbfs:/data/currency_rates_backfill.json --overwrite

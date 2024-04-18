@@ -38,7 +38,7 @@ def test_transaction_enrichment():
         transaction_data, StructType([StructField("data", StringType())])
     )
     with_structured_df = df.withColumn(
-        "structured_data", deserialise_dynamo_udf(df["data"], transaction_schema)
+        "structured_data", deserialise_dynamo_udf("data", transaction_schema)
     )
     pre_enrichment_df = with_structured_df.select("structured_data.*").withColumn(
         "approximateArrivalTimestamp",

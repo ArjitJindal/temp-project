@@ -2,35 +2,12 @@ import json
 from typing import Any
 
 from boto3.dynamodb.types import Binary
-from pyspark.sql import Column
-from pyspark.sql.functions import udf
-from pyspark.sql.types import Row, StructType
+from pyspark.sql.functions import col, udf
+from pyspark.sql.types import StructType
 
 
-def deserialise_dynamo_udf(column: Column, schema: StructType):
-    return udf(deserialise_dynamo, schema)(column)
-
-
-def parse_dynamo(item):
-    if isinstance(item, Row):
-        item = item.asDict()
-    # Recursively parse the DynamoDB item to handle nested structures
-    if isinstance(item, dict):
-        if "M" in item:
-            inner_m = item["M"]
-            if isinstance(inner_m, Row):
-                inner_m = inner_m.asDict()
-            return {k: parse_dynamo(v) for k, v in inner_m.items()}
-        if "S" in item:
-            return item["S"]
-        if "N" in item:
-            return float(item["N"])
-        if "B" in item:
-            return item["B"] == "true"
-        if "L" in item:
-            return [parse_dynamo(i) for i in item["L"]]
-        return {k: parse_dynamo(v) for k, v in item.items()}
-    return item
+def deserialise_dynamo_udf(column: str, schema: StructType):
+    return udf(deserialise_dynamo, schema)(col(column))
 
 
 class DeserializerException(Exception):

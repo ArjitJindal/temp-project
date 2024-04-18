@@ -29,7 +29,7 @@ def test_deserialise_dynamo_udf():
             df = spark.createDataFrame(data, schema)
 
             df_transformed = df.withColumn(
-                "deserialized_data", deserialise_dynamo_udf(df["data"], entity_schema)
+                "deserialized_data", deserialise_dynamo_udf("data", entity_schema)
             )
             expected_schema = StructType(
                 [

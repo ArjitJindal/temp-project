@@ -1,17 +1,12 @@
 from typing import Callable
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import broadcast, coalesce, col, explode, expr
-from pyspark.sql.types import DoubleType, StructField, StructType
+from pyspark.sql.functions import broadcast, col, explode, expr
 
 from src.entities.entity import Entity
-from src.entities.schema import merge_schemas
 from src.openapi.public.models import TransactionWithRulesResult
 
-transaction_schema = merge_schemas(
-    TransactionWithRulesResult,
-    StructType([StructField("transactionAmountUSD", DoubleType(), True)]),
-)
+transaction_schema = TransactionWithRulesResult
 
 
 def enrich_transactions(
@@ -53,10 +48,7 @@ def enrich_transactions(
         joined_df.drop("transactionDate")
         .withColumn(
             "transactionAmountUSD",
-            coalesce(
-                col("t.transactionAmountUSD"),
-                (col("t.originAmountDetails.transactionAmount") / col("cr.rate")),
-            ),
+            col("t.originAmountDetails.transactionAmount") / col("cr.rate"),
         )
         .select(col("t.*"), col("transactionAmountUSD"))
     )

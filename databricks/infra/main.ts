@@ -36,8 +36,6 @@ const config = getTarponConfig(stage, region)
 const awsRegion = config.env.region || ''
 const regionalAdminGroupName = `admins-${awsRegion}`
 const stateBucket = `flagright-terraform-state-databricks-${env}`
-const kinesisStreamName = 'tarponDynamoChangeCaptureStream'
-const hammerheadKinesisStreamName = 'hammerheadDynamoChangeCaptureStream'
 const prefix = `flagright-databricks-${stage}-${region}`
 const cidrBlock = '10.4.0.0/16'
 const databricksClientId = 'cb9efcf2-ffd5-484a-badc-6317ba4aef91'
@@ -51,6 +49,21 @@ const serverlessRegions = [
   'us-east-1',
   'us-east-2',
 ]
+
+const notebookHeader = `
+%pip install sentry-sdk
+%pip install --no-dependencies /Workspace/Shared/src-0.1.0-py3-none-any.whl
+
+import sentry_sdk
+import os
+from src.jobs.jobs import Jobs
+SENTRY_DSN = "https://2f1b7e0a135251afb6ab00dbeab9c423@o1295082.ingest.us.sentry.io/4506869105754112"
+
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    traces_sample_rate=1.0,
+    environment=os.environ["STAGE"],
+)`
 
 function hashFile(filePath: string): string {
   const content = readFileSync(filePath)
@@ -249,6 +262,10 @@ class DatabricksStack extends TerraformStack {
           matchType: 'PREFIX_MATCH',
           artifact: 'org.mongodb.spark:mongo-spark-connector_2.12',
         },
+        {
+          matchType: 'PREFIX_MATCH',
+          artifact: 'com.typesafe.play:play-json_2.12',
+        },
       ],
     })
 
@@ -402,8 +419,6 @@ class DatabricksStack extends TerraformStack {
       },
       sparkEnvVars: {
         AWS_REGION: awsRegion,
-        KINESIS_STREAM: kinesisStreamName,
-        HAMMERHEAD_KINESIS_STREAM: hammerheadKinesisStreamName,
         STAGE: stage,
       },
       awsAttributes: {
@@ -419,16 +434,21 @@ class DatabricksStack extends TerraformStack {
         },
       },
       {
+        maven: {
+          coordinates: 'com.typesafe.play:play-json_2.12:2.10.4',
+        },
+      },
+      {
         pypi: {
           package: 'pymongo',
         },
       },
     ]
 
-    new databricks.cluster.Cluster(this, 'cluster', {
+    const cluster = new databricks.cluster.Cluster(this, 'cluster', {
       ...clusterConfig,
       provider: workspaceProvider,
-      sparkVersion: '14.2.x-scala2.12',
+      sparkVersion: '14.3.x-scala2.12',
       clusterName: 'Shared Autoscaling',
       library: clusterLibraries,
       autoterminationMinutes: 60,
@@ -451,16 +471,60 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
-    new databricks.notebook.Notebook(this, `dlt-file`, {
-      provider: workspaceProvider,
-      source: path.resolve(__dirname, '../notebooks/pipeline.py'),
-      path: '/Shared/pipeline',
-    })
+    const jobs = [
+      {
+        name: 'refresh',
+        description: 'Rebuild derived tables from kinesis and mongo data.',
+        continuous: false,
+      },
+      {
+        name: 'backfill',
+        description:
+          'Reset everything by clearing all tables and backfilling from mongo.',
+        continuous: false,
+      },
+      {
+        name: 'stream',
+        description: 'Stream live from kinesis and transform',
+        continuous: true,
+      },
+    ]
 
-    new databricks.notebook.Notebook(this, `backfill-file`, {
-      provider: workspaceProvider,
-      source: path.resolve(__dirname, '../notebooks/backfill.py'),
-      path: '/Shared/backfill',
+    jobs.map((job) => {
+      new databricks.notebook.Notebook(this, `${job.name}-file`, {
+        provider: workspaceProvider,
+        contentBase64: this.templateJobNotebook(job.name),
+        language: 'PYTHON',
+        path: `/Shared/${job.name}`,
+      })
+      new databricks.job.Job(this, `${job.name}-job`, {
+        provider: workspaceProvider,
+        name: job.name,
+        description: job.description,
+        parameter: [
+          {
+            name: 'force',
+            default: 'false',
+          },
+        ],
+        emailNotifications: {
+          onFailure: ['tim@flagright.com'],
+        },
+        continuous: job.continuous
+          ? {
+              pauseStatus: 'UNPAUSED',
+            }
+          : undefined,
+        task: [
+          {
+            taskKey: 'main',
+            notebookTask: {
+              notebookPath: `/Shared/${job.name}`,
+            },
+            existingClusterId: cluster.clusterId,
+          },
+        ],
+      })
     })
 
     const catalog = new databricks.catalog.Catalog(this, 'main-catalog', {
@@ -526,30 +590,6 @@ class DatabricksStack extends TerraformStack {
       { table: 'dynamic_risk_values', idColumn: 'userId' },
     ]
 
-    new databricks.job.Job(this, `backfill-job`, {
-      provider: workspaceProvider,
-      name: 'One-time backfill from Mongo',
-      parameter: [
-        {
-          name: 'entities',
-          default: entities.map((entity) => entity.table).join(','),
-        },
-      ],
-      task: [
-        {
-          taskKey: 'backfill',
-          notebookTask: {
-            notebookPath: '/Shared/backfill',
-          },
-          newCluster: {
-            ...clusterConfig,
-            sparkVersion: '14.2.x-scala2.12',
-          },
-          library: clusterLibraries,
-        },
-      ],
-    })
-
     new databricks.grant.Grant(this, `grants-admin`, {
       provider: workspaceProvider,
       catalog: catalog.id,
@@ -561,6 +601,12 @@ class DatabricksStack extends TerraformStack {
       provider: workspaceProvider,
       catalogName: catalog.name,
       name: 'default',
+    })
+
+    new databricks.schema.Schema(this, 'main-schema', {
+      provider: workspaceProvider,
+      catalogName: catalog.name,
+      name: 'main',
     })
 
     const tables = new databricks.dataDatabricksTables.DataDatabricksTables(
@@ -618,6 +664,21 @@ class DatabricksStack extends TerraformStack {
         ...servicePrincipals.map((sp) => ({
           servicePrincipalName: sp.applicationId,
           permissionLevel: 'CAN_USE',
+        })),
+      ],
+    })
+
+    new databricks.permissions.Permissions(this, 'job-compute-permission', {
+      provider: workspaceProvider,
+      clusterId: cluster.id,
+      accessControl: [
+        {
+          groupName: 'users',
+          permissionLevel: 'CAN_ATTACH_TO',
+        },
+        ...servicePrincipals.map((sp) => ({
+          servicePrincipalName: sp.applicationId,
+          permissionLevel: 'CAN_ATTACH_TO',
         })),
       ],
     })
@@ -1403,6 +1464,11 @@ class DatabricksStack extends TerraformStack {
         }
       )
     return Fn.lookup(metastores.ids, `primary-${region}`)
+  }
+
+  private templateJobNotebook(job: string) {
+    return btoa(`${notebookHeader}
+Jobs(spark).${job}()`)
   }
 }
 

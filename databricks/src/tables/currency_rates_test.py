@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import lit
 from pyspark.sql.types import StringType, StructField, StructType
 
-from src.dlt.currency_rates import currency_rates_transformation
+from src.tables.currency_rates import currency_rates_transformation
 from src.testing.file import read_file
 
 

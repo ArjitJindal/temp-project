@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StringType, StructField, StructType
 
-from src.dlt.kinesis_events import kinesis_events_transformation
+from src.kinesis.kinesis_reader import kinesis_events_transformation
 from src.testing.file import read_file
 
 
