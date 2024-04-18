@@ -2,6 +2,7 @@ import { Select as AntSelect } from 'antd';
 import cn from 'clsx';
 import { uniq } from 'lodash';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import Tooltip from '../Tooltip';
 import s from './style.module.less';
 import { parseSearchString, filterOption, SEPARATOR } from './helpers';
 import { InputProps } from '@/components/library/Form';
@@ -37,6 +38,7 @@ interface CommonProps<Value extends Comparable> {
   autoTrim?: boolean;
   testId?: string;
   optionLabelProp?: string;
+  tooltip?: boolean;
 }
 
 export interface SingleProps<Value extends Comparable>
@@ -81,6 +83,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     autoTrim = false,
     testId,
     optionLabelProp,
+    tooltip,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
@@ -183,7 +186,39 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       : true;
   }
 
-  return (
+  const toolTipText = useMemo(() => {
+    let text = '';
+
+    if (!tooltip) {
+      return text;
+    }
+
+    if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
+      const filteredOptions = options.filter((option) => props.value?.includes(option.value));
+      text = filteredOptions
+        .map(
+          (option) =>
+            option.labelText ??
+            (['string', 'number', 'boolean'].includes(typeof option.label)
+              ? option.label?.toString()
+              : option.value?.toString()) ??
+            '',
+        )
+        .join(', ');
+    } else if (props.mode === 'SINGLE' || props.mode == null) {
+      const option = options.find((option) => option.value === props.value);
+      text =
+        option?.labelText ??
+        (['string', 'number', 'boolean'].includes(typeof option?.label)
+          ? option?.label?.toString()
+          : props.value?.toString()) ??
+        '';
+    }
+
+    return text;
+  }, [options, props.mode, props.value, tooltip]);
+
+  const antSelect: JSX.Element = (
     <div
       className={cn(
         s.root,
@@ -260,11 +295,20 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             value={option.value}
             disabled={option.isDisabled}
             {...(option.labelText && { [optionLabelProp ?? 'labelText']: option.labelText })}
+            {...(tooltip && { title: '' })}
           >
             {option.label}
           </AntSelect.Option>
         ))}
       </AntSelect>
     </div>
+  );
+
+  return tooltip ? (
+    <Tooltip title={toolTipText} placement="top">
+      {antSelect}
+    </Tooltip>
+  ) : (
+    antSelect
   );
 }

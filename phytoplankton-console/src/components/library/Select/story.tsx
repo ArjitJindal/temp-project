@@ -19,6 +19,7 @@ export default function (): JSX.Element {
               onChange={(newValue) => {
                 setState((prevState) => ({ ...prevState, value1: newValue }));
               }}
+              tooltip
             />
             <Component
               mode="MULTIPLE"
@@ -199,6 +200,7 @@ export default function (): JSX.Element {
               onChange={(newValue) => {
                 setState((prevState) => ({ ...prevState, value2: newValue }));
               }}
+              tooltip
             />
             <Component
               isCopyable={true}

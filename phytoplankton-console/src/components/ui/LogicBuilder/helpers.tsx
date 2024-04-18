@@ -153,6 +153,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
                   props.setField(item.path);
                 }
               }}
+              tooltip
             />
           </OptionalLabel>
         );
@@ -177,6 +178,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
                   props.setField(item.path);
                 }
               }}
+              tooltip
             />
           </OptionalLabel>
         );
@@ -197,6 +199,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
                   props.setField(item.path);
                 }
               }}
+              tooltip
             />
           </Label>
         );
