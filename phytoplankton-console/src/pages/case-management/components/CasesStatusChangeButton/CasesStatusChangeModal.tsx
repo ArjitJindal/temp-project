@@ -133,7 +133,7 @@ export default function CasesStatusChangeModal(props: Props) {
       entityName="CASE"
       updateMutation={updateMutation}
       advancedOptions={
-        props.newStatus === 'CLOSED' ? (
+        statusEscalated(props.newStatus) || props.newStatus === 'CLOSED' ? (
           <UserStatusTriggersAdvancedOptionsForm type="CASE" />
         ) : undefined
       }

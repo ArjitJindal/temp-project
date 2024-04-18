@@ -783,6 +783,8 @@ export class CaseService extends CaseAlertsCommonService {
       otherReason: caseUpdateRequest.otherReason,
       comment: caseUpdateRequest.comment,
       files: caseUpdateRequest.files,
+      kycStatusDetails: caseUpdateRequest.kycStatusDetails,
+      userStateDetails: caseUpdateRequest.userStateDetails,
     }
 
     await Promise.all([
