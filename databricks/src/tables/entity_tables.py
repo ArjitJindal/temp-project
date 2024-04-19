@@ -166,6 +166,8 @@ class EntityTables:
             if not coll.endswith(suffix):
                 continue
 
+            print(f"Backfilling for: {coll}")
+
             tenant = coll.replace(suffix, "")
             df = (
                 self.spark.read.format("mongo")
@@ -182,7 +184,7 @@ class EntityTables:
             final_df.write.option("mergeSchema", "true").format("delta").mode(
                 "append"
             ).saveAsTable(table_path)
-            print(f"Collection backfilled: {coll}", coll)
+            print(f"Collection backfilled: {coll}")
 
 
 def backfill_transformation(entity: Entity, df: DataFrame) -> DataFrame:
