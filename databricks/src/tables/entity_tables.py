@@ -45,9 +45,14 @@ class EntityTables:
 
         kinesis_df = cdc_transformation(
             entity,
-            self.table_service.read_table(entity.source),
+            self.table_service.read_table(entity.source, schema="sandbox.main"),
         )
-        backfill_df = self.table_service.read_table(f"{entity.table}_backfill")
+        backfill_df = self.table_service.read_table(
+            f"{entity.table}_backfill", "sandbox.main"
+        )
+
+        if entity.table == "transactions":
+            backfill_df = backfill_df.drop("transactionAmountUSD")
 
         print("Refresh from kinesis and the backfill tables")
         tenants = self.table_service.tenant_schemas()
@@ -188,7 +193,6 @@ class EntityTables:
                 print(f"Collection backfilled: {coll}")
             except:  # pylint: disable=bare-except
                 print(f"Failed to backfill: {coll}")
-
 
 
 def backfill_transformation(entity: Entity, df: DataFrame) -> DataFrame:

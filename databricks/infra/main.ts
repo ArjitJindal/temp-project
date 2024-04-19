@@ -44,17 +44,8 @@ const serverlessRegions = [
 
 const notebookHeader = `
 %pip install --no-dependencies /Workspace/Shared/src-0.1.0-py3-none-any.whl
-
-import sentry_sdk
-import os
 from src.jobs.jobs import Jobs
-SENTRY_DSN = "https://2f1b7e0a135251afb6ab00dbeab9c423@o1295082.ingest.us.sentry.io/4506869105754112"
-
-sentry_sdk.init(
-    dsn=SENTRY_DSN,
-    traces_sample_rate=1.0,
-    environment=os.environ["STAGE"],
-)`
+`
 
 class DatabricksStack extends TerraformStack {
   config: Config
@@ -389,6 +380,8 @@ class DatabricksStack extends TerraformStack {
       sparkEnvVars: {
         AWS_REGION: awsRegion,
         STAGE: stage,
+        SENTRY_DSN:
+          'https://2f1b7e0a135251afb6ab00dbeab9c423@o1295082.ingest.us.sentry.io/4506869105754112',
       },
       awsAttributes: {
         instanceProfileArn: instanceProfile.id,

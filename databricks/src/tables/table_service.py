@@ -26,7 +26,10 @@ class TableService:
         self.batches: Dict[str, DataFrame] = {}
 
     def table_exists(self, name: str):
-        tables: List[str] = [row["tableName"] for row in self.spark.sql(f"show tables  in {self.schema}").collect()]
+        tables: List[str] = [
+            row["tableName"]
+            for row in self.spark.sql(f"show tables  in {self.schema}").collect()
+        ]
         return name in tables
 
     def read_table_stream(self, table_name: str):
@@ -49,8 +52,10 @@ class TableService:
         self.streams[table] = stream
         return stream
 
-    def read_table(self, table_name: str):
-        table = f"{self.schema}.{table_name}"
+    def read_table(self, table_name: str, schema=None):
+        if schema is None:
+            schema = self.schema
+        table = f"{schema}.{table_name}"
         print(f"Batching table {table}")
         if table in self.batches:
             print(f"Reusing existing stream for table {table}")
@@ -107,6 +112,6 @@ class TableService:
         return [
             row["databaseName"]
             for row in df.filter(
-                col("databaseName").isin("default", "main", "information_schema")
+                 ~col("databaseName").isin("default", "main", "information_schema")
             ).collect()
         ]
