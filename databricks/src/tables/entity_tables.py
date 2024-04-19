@@ -168,23 +168,27 @@ class EntityTables:
 
             print(f"Backfilling for: {coll}")
 
-            tenant = coll.replace(suffix, "")
-            df = (
-                self.spark.read.format("mongo")
-                .option("database", db_name)
-                .option("uri", self.mongo_uri)
-                .option("collection", coll)
-                .schema(entity.schema)
-                .load()
-                .withColumn("tenant", lit(tenant.lower()))
-            )
+            try:
+                tenant = coll.replace(suffix, "")
+                df = (
+                    self.spark.read.format("mongo")
+                    .option("database", db_name)
+                    .option("uri", self.mongo_uri)
+                    .option("collection", coll)
+                    .schema(entity.schema)
+                    .load()
+                    .withColumn("tenant", lit(tenant.lower()))
+                )
 
-            final_df = backfill_transformation(entity, df)
+                final_df = backfill_transformation(entity, df)
 
-            final_df.write.option("mergeSchema", "true").format("delta").mode(
-                "append"
-            ).saveAsTable(table_path)
-            print(f"Collection backfilled: {coll}")
+                final_df.write.option("mergeSchema", "true").format("delta").mode(
+                    "append"
+                ).saveAsTable(table_path)
+                print(f"Collection backfilled: {coll}")
+            except:  # pylint: disable=bare-except
+                print(f"Failed to backfill: {coll}")
+
 
 
 def backfill_transformation(entity: Entity, df: DataFrame) -> DataFrame:
