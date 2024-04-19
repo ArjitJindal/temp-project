@@ -3455,36 +3455,38 @@ components:
         walletBalance:
           $ref: '#/components/schemas/Amount'
         network:
-          type: string
-          description: Network of the wallet
-          enum:
-            - BITCOIN
-            - ETHEREUM
-            - POLYGON
-            - BNB_SMART_CHAIN
-            - BNB_BEACON_CHAIN
-            - ARBITRUM_L2
-            - SOLANA
-            - AVALANCHE_C_CHAIN
-            - LITECOIN
-            - BITCOIN_CASH
-            - RIPPLE
-            - STELLAR
-            - EOS_PUBLIC
-            - TRON
-            - CARDANO
-            - POLKADOT
-            - NEAR_PROTOCOL
-            - COSMOS
-            - DOGECOIN
-            - OPTIMISM_MAINNET
-            - FANTOM
-            - HEDERA
-            - ALGORAND
-            - CELESTIA
+          $ref: '#/components/schemas/WalletNetwork'
       required:
         - method
         - walletType
+    WalletNetwork:
+      type: string
+      description: Network of the wallet
+      enum:
+        - BITCOIN
+        - ETHEREUM
+        - POLYGON
+        - BNB_SMART_CHAIN
+        - BNB_BEACON_CHAIN
+        - ARBITRUM_L2
+        - SOLANA
+        - AVALANCHE_C_CHAIN
+        - LITECOIN
+        - BITCOIN_CASH
+        - RIPPLE
+        - STELLAR
+        - EOS_PUBLIC
+        - TRON
+        - CARDANO
+        - POLKADOT
+        - NEAR_PROTOCOL
+        - COSMOS
+        - DOGECOIN
+        - OPTIMISM_MAINNET
+        - FANTOM
+        - HEDERA
+        - ALGORAND
+        - CELESTIA
     ACHDetails:
       description: Model for ACH payment method
       type: object
