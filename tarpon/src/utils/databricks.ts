@@ -24,7 +24,7 @@ export async function executeSql<T>(
 
   const connectedClient = await client.connect(connectOptions)
   const session = await connectedClient.openSession({
-    initialCatalog: process.env.ENV,
+    initialCatalog: process.env.ENV == 'local' ? 'dev' : process.env.ENV,
     initialSchema: tenantId,
   })
   const statement = await session.executeStatement(sql, {
