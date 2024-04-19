@@ -1,5 +1,8 @@
 import * as Sentry from '@sentry/serverless'
-import { RewriteFrames, Debug } from '@sentry/integrations'
+import {
+  rewriteFramesIntegration,
+  debugIntegration,
+} from '@sentry/integrations'
 import { isQaEnv } from '@lib/qa'
 import { getContext } from '../utils/context'
 import { SENTRY_INIT_CONFIG } from '@/utils/sentry'
@@ -18,10 +21,10 @@ export const initSentryLambda =
     Sentry.AWSLambda.init({
       ...SENTRY_INIT_CONFIG,
       integrations: [
-        new RewriteFrames({
+        rewriteFramesIntegration({
           prefix: `app:///lambdas/${process.env.LAMBDA_CODE_PATH}/`,
-        }) as any,
-        new Debug(),
+        }),
+        debugIntegration(),
       ],
     })
 
