@@ -23,6 +23,9 @@ class VersionService:
     def reset_pipeline_checkpoint_id(self):
         return self.reset_version("pipeline")
 
+    def clear_pipeline_checkpoint_id(self):
+        return self.clear_version("pipeline")
+
     def get_kinesis_checkpoint_id(self):
         return self.get_existing_version("kinesis")
 
@@ -34,7 +37,10 @@ class VersionService:
 
     def get_existing_version(self, name):
         try:
-            return self.dbutils.fs.head(f"{BASE_PATH}{name}")
+            version = self.dbutils.fs.head(f"{BASE_PATH}{name}")
+            if version == "":
+                return None
+            return version
         except:  # pylint: disable=bare-except
             return None
 
@@ -42,3 +48,6 @@ class VersionService:
         version = self.get_new_version()
         self.dbutils.fs.put(f"{BASE_PATH}{name}", self.get_new_version(), True)
         return version
+
+    def clear_version(self, name):
+        self.dbutils.fs.put(f"{BASE_PATH}{name}", "", True)

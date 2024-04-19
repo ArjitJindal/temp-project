@@ -68,6 +68,8 @@ class Jobs:
                 "Backfill has already been run, please run with force parameter as true to override"
             )
 
+        self.version_service.clear_pipeline_checkpoint_id()
+
         self.table_service.clear_table("kinesis_events")
         self.table_service.clear_table("hammerhead_kinesis_events")
         self.table_service.clear_table("currency_rates")
