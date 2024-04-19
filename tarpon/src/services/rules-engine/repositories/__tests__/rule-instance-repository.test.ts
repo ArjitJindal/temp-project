@@ -230,8 +230,7 @@ describe('createOrUpdateRuleInstance', () => {
     })
     await ruleInstanceRepository.createOrUpdateRuleInstance(
       ruleInstance,
-      undefined,
-      true
+      undefined
     )
     const savedRuleInstance1 = await ruleInstanceRepository.getRuleInstanceById(
       'R-1.1'
@@ -240,8 +239,7 @@ describe('createOrUpdateRuleInstance', () => {
 
     await ruleInstanceRepository.createOrUpdateRuleInstance(
       ruleInstance,
-      undefined,
-      true
+      undefined
     )
     const savedRuleInstance2 = await ruleInstanceRepository.getRuleInstanceById(
       'R-1.2'
@@ -260,8 +258,7 @@ describe('createOrUpdateRuleInstance', () => {
     })
     await ruleInstanceRepository.createOrUpdateRuleInstance(
       ruleInstance,
-      undefined,
-      true
+      undefined
     )
     const savedRuleInstance1 = await ruleInstanceRepository.getRuleInstanceById(
       'RC-1'
@@ -274,8 +271,7 @@ describe('createOrUpdateRuleInstance', () => {
 
     await ruleInstanceRepository.createOrUpdateRuleInstance(
       { ...ruleInstance, id: undefined, ruleId: 'RC-1' },
-      undefined,
-      true
+      undefined
     )
     const savedRuleInstance2 = await ruleInstanceRepository.getRuleInstanceById(
       'RC-1.1'
@@ -287,8 +283,7 @@ describe('createOrUpdateRuleInstance', () => {
     })
     await ruleInstanceRepository.createOrUpdateRuleInstance(
       ruleInstance,
-      undefined,
-      true
+      undefined
     )
     const savedRuleInstance3 = await ruleInstanceRepository.getRuleInstanceById(
       'RC-2'
@@ -311,8 +306,7 @@ describe('createOrUpdateRuleInstance', () => {
     })
     await ruleInstanceRepository.createOrUpdateRuleInstance(
       ruleInstance,
-      undefined,
-      true
+      undefined
     )
     const savedRuleInstance1 = await ruleInstanceRepository.getRuleInstanceById(
       'R-1.1'

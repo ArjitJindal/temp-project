@@ -16,7 +16,6 @@ import {
   ACCOUNTS_COLLECTION,
   ALERTS_QA_SAMPLING_COLLECTION,
   CASES_COLLECTION,
-  COUNTER_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import {
   COUNT_QUERY_LIMIT,
@@ -45,9 +44,9 @@ import { ALERT_STATUSS } from '@/@types/openapi-internal-custom/AlertStatus'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { Account } from '@/@types/openapi-internal/Account'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
-import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
+import { CounterRepository } from '@/services/counter/repository'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 
@@ -1169,19 +1168,10 @@ export class AlertsRepository {
   }
 
   public async getSampleIdForQA(): Promise<number> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<EntityCounter>(
-      COUNTER_COLLECTION(this.tenantId)
-    )
-    const alertQASampleCounter = (
-      await collection.findOneAndUpdate(
-        { entity: 'AlertQASample' },
-        { $inc: { count: 1 } },
-        { upsert: true, returnDocument: 'after' }
-      )
-    ).value
-
-    return alertQASampleCounter?.count ?? 1
+    return new CounterRepository(
+      this.tenantId,
+      this.mongoDb
+    ).getNextCounterAndUpdate('AlertQASample')
   }
 
   public async saveQASampleData(data: AlertsQaSampling) {

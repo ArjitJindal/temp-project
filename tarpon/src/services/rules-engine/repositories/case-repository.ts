@@ -16,11 +16,9 @@ import {
 import {
   ACCOUNTS_COLLECTION,
   CASES_COLLECTION,
-  COUNTER_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
-import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
@@ -45,6 +43,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { Account } from '@/@types/openapi-internal/Account'
+import { CounterRepository } from '@/services/counter/repository'
 
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
@@ -172,23 +171,19 @@ export class CaseRepository {
   async addCaseMongo(caseEntity: Case): Promise<Case> {
     const db = this.mongoDb.db()
     const session = this.mongoDb.startSession()
+    const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
     try {
       await session.withTransaction(async () => {
         const casesCollection = db.collection<Case>(
           CASES_COLLECTION(this.tenantId)
         )
+
         if (!caseEntity.caseId) {
-          const counterCollection = db.collection<EntityCounter>(
-            COUNTER_COLLECTION(this.tenantId)
+          const caseCount = await counterRepository.getNextCounterAndUpdate(
+            'Case'
           )
-          const caseCount = (
-            await counterCollection.findOneAndUpdate(
-              { entity: 'Case' },
-              { $inc: { count: 1 } },
-              { upsert: true, returnDocument: 'after' }
-            )
-          ).value
-          caseEntity.caseId = `C-${caseCount?.count}`
+
+          caseEntity.caseId = `C-${caseCount}`
         }
         if (caseEntity.alerts) {
           caseEntity.alerts = await Promise.all(
@@ -199,21 +194,14 @@ export class CaseRepository {
                   caseId: caseEntity.caseId,
                 }
               }
-              const counterCollection = db.collection<EntityCounter>(
-                COUNTER_COLLECTION(this.tenantId)
-              )
-              const alertCount = (
-                await counterCollection.findOneAndUpdate(
-                  { entity: 'Alert' },
-                  { $inc: { count: 1 } },
-                  { upsert: true, returnDocument: 'after' }
-                )
-              ).value
+
+              const alertCount =
+                await counterRepository.getNextCounterAndUpdate('Alert')
 
               return {
                 ...alert,
-                _id: alert._id ?? alertCount?.count,
-                alertId: alert.alertId ?? `A-${alertCount?.count}`,
+                _id: alert._id ?? alertCount,
+                alertId: alert.alertId ?? `A-${alertCount}`,
                 caseId: caseEntity.caseId,
               }
             })

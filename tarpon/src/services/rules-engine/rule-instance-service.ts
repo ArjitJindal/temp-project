@@ -61,16 +61,13 @@ export class RuleInstanceService {
   ) {
     const oldRuleInstance = await this.getRuleInstanceById(ruleInstanceId)
 
-    const newRuleInstance = await this.createOrUpdateRuleInstance(
-      {
-        id: ruleInstanceId,
-        ...ruleInstance,
-        // NOTE: We don't allow updating rule stats from Console
-        hitCount: oldRuleInstance?.hitCount,
-        runCount: oldRuleInstance?.runCount,
-      },
-      'UPDATE'
-    )
+    const newRuleInstance = await this.createOrUpdateRuleInstance({
+      id: ruleInstanceId,
+      ...ruleInstance,
+      // NOTE: We don't allow updating rule stats from Console
+      hitCount: oldRuleInstance?.hitCount,
+      runCount: oldRuleInstance?.runCount,
+    })
 
     const alertsRepository = new AlertsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -109,8 +106,7 @@ export class RuleInstanceService {
   }
 
   async createOrUpdateRuleInstance(
-    ruleInstance: RuleInstance,
-    action?: 'CREATE' | 'UPDATE'
+    ruleInstance: RuleInstance
   ): Promise<RuleInstance> {
     const rule = ruleInstance.ruleId
       ? await this.ruleRepository.getRuleById(ruleInstance.ruleId)
@@ -141,20 +137,13 @@ export class RuleInstanceService {
     // TODO (V8): FR-3985
     const type = rule ? rule.type : 'TRANSACTION'
     return this.ruleInstanceRepository.createOrUpdateRuleInstance(
-      {
-        ...ruleInstance,
-        type,
-      },
-      undefined,
-      action === 'CREATE'
+      { ...ruleInstance, type },
+      undefined
     )
   }
 
   public async createRuleInstance(ruleInstance: RuleInstance) {
-    const newRuleInstance = await this.createOrUpdateRuleInstance(
-      ruleInstance,
-      'CREATE'
-    )
+    const newRuleInstance = await this.createOrUpdateRuleInstance(ruleInstance)
     await this.ruleAuditLogService.handleAuditLogForRuleInstanceCreated(
       newRuleInstance
     )
@@ -162,6 +151,8 @@ export class RuleInstanceService {
   }
 
   public async getNewRuleInstanceId(ruleId?: string): Promise<string> {
-    return this.ruleInstanceRepository.getNewRuleInstanceId(ruleId)
+    return ruleId
+      ? await this.ruleInstanceRepository.getNewRuleInstanceId(ruleId)
+      : await this.ruleInstanceRepository.getNewCustomRuleId()
   }
 }

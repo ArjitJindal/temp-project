@@ -588,5 +588,13 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           },
         ].map((index) => ({ index })),
     },
+    [COUNTER_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
+          {
+            entity: 1,
+          },
+        ].map((index) => ({ index })),
+    },
   }
 }

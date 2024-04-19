@@ -23,8 +23,8 @@ import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
-import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { CounterRepository } from '@/services/counter/repository'
 
 function toRuleInstance(item: any): RuleInstance {
   return {
@@ -78,38 +78,46 @@ export class RuleInstanceRepository {
     this.tenantId = tenantId
   }
 
-  public async getNewRuleInstanceId(id?: string): Promise<string> {
-    let ruleId = id
-    if (!ruleId) ruleId = await this.getRuleIdForCustomRuleV8()
-    const db = await getMongoDbClientDb()
-    const counterCollection = db.collection(COUNTER_COLLECTION(this.tenantId))
-    const result = await counterCollection.findOne({ entity: ruleId })
-    if (!result) {
-      if (ruleId.startsWith('RC')) return ruleId
-      return `${ruleId}.1`
+  public async getNewRuleInstanceId(
+    ruleId: string,
+    update = false
+  ): Promise<string> {
+    const mongoDb = await getMongoDbClient()
+
+    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
+
+    const nextCount = await counterRepository[
+      update ? 'getNextCounterAndUpdate' : 'getNextCounter'
+    ](ruleId)
+
+    if (ruleId.startsWith('RC')) {
+      // When we create a new custom rule the rule instance id is `RC-<count>`
+      // When we duplicate a custom rule the rule instance id is `RC-<N>.1`
+      return nextCount === 1 ? ruleId : `${ruleId}.${nextCount - 1}`
+    } else {
+      return `${ruleId}.${nextCount}`
     }
-    return `${ruleId}.${result.count + 1}`
   }
 
-  private async getRuleIdForCustomRuleV8(): Promise<string> {
-    const db = await getMongoDbClientDb()
-    const counterCollection = db.collection(COUNTER_COLLECTION(this.tenantId))
-    const result = await counterCollection.findOne({ entity: 'RC' })
-    if (!result) {
-      return 'RC-1'
-    }
-    return `RC-${result.count + 1}`
+  public async getNewCustomRuleId(update = false): Promise<string> {
+    const mongoDb = await getMongoDbClient()
+    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    const count = await counterRepository[
+      update ? 'getNextCounterAndUpdate' : 'getNextCounter'
+    ]('RC')
+
+    return `RC-${count}`
   }
 
   public async createOrUpdateRuleInstance(
     ruleInstance: RuleInstance,
-    updatedAt?: number,
-    isCreateAction?: boolean
+    updatedAt?: number
   ): Promise<RuleInstance> {
-    const ruleId =
-      ruleInstance.ruleId ?? (await this.getRuleIdForCustomRuleV8())
+    const ruleId = ruleInstance.ruleId ?? (await this.getNewCustomRuleId(true))
+
     const ruleInstanceId =
-      ruleInstance.id || (await this.getNewRuleInstanceId(ruleId))
+      ruleInstance.id || (await this.getNewRuleInstanceId(ruleId, true))
+
     const now = Date.now()
     const newRuleInstance: RuleInstance = {
       ...ruleInstance,
@@ -143,29 +151,7 @@ export class RuleInstanceRepository {
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
-    if (isCreateAction) {
-      const db = await getMongoDbClientDb()
-      const counterCollection = db.collection(COUNTER_COLLECTION(this.tenantId))
-      if (!ruleInstance.ruleId) {
-        await Promise.all([
-          counterCollection.updateOne(
-            { entity: 'RC' },
-            { $inc: { count: 1 } },
-            { upsert: true }
-          ),
-          counterCollection.updateOne(
-            { entity: ruleId },
-            { $inc: { count: 0 } },
-            { upsert: true }
-          ),
-        ])
-      } else
-        await counterCollection.updateOne(
-          { entity: ruleId },
-          { $inc: { count: 1 } },
-          { upsert: true }
-        )
-    }
+
     return newRuleInstance
   }
 

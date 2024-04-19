@@ -4,16 +4,15 @@ import { isUndefined, omit, omitBy } from 'lodash'
 import { Report } from '@/@types/openapi-internal/Report'
 import { paginatePipeline } from '@/utils/mongodb-utils'
 import {
-  COUNTER_COLLECTION,
   REPORT_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
-import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { Account } from '@/@types/openapi-internal/Account'
 import { getContext } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
+import { CounterRepository } from '@/services/counter/repository'
 
 @traceable
 export class ReportRepository {
@@ -26,18 +25,10 @@ export class ReportRepository {
   }
 
   public async getId(): Promise<string> {
-    const db = this.mongoDb.db()
-    const counterCollection = db.collection<EntityCounter>(
-      COUNTER_COLLECTION(this.tenantId)
-    )
-    const reportCount = (
-      await counterCollection.findOneAndUpdate(
-        { entity: 'Report' },
-        { $inc: { count: 1 } },
-        { upsert: true, returnDocument: 'after' }
-      )
-    ).value
-    return `RP-${reportCount?.count}`
+    const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
+    const count = await counterRepository.getNextCounterAndUpdate('Report')
+
+    return `RP-${count}`
   }
 
   public async reportsFiledForUser(
