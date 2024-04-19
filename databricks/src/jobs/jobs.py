@@ -95,6 +95,7 @@ class Jobs:
 
         if self.version_service.get_pipeline_checkpoint_id() is None:
             print("Please run backfill first.")
+            return
         self.kinesis_tables.create_stream(
             "tarponDynamoChangeCaptureStream", "kinesis_events"
         )
