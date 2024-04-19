@@ -22,8 +22,6 @@ import {
 
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
-// We use the checksum of the openAPI specifications to determine whether views need updating.
-const schemaVersion = checksumFolder('../src/openapi')
 const adminEmails = [
   'tim+databricks@flagright.com',
   'nadig@flagright.com',
@@ -51,7 +49,6 @@ const serverlessRegions = [
 ]
 
 const notebookHeader = `
-%pip install sentry-sdk
 %pip install --no-dependencies /Workspace/Shared/src-0.1.0-py3-none-any.whl
 
 import sentry_sdk
@@ -64,29 +61,6 @@ sentry_sdk.init(
     traces_sample_rate=1.0,
     environment=os.environ["STAGE"],
 )`
-
-function hashFile(filePath: string): string {
-  const content = readFileSync(filePath)
-  return createHash('sha256').update(content).digest('hex')
-}
-
-function checksumFolder(folderPath: string): string {
-  const files = readdirSync(folderPath, { withFileTypes: true })
-  let combinedHash = createHash('sha256')
-
-  for (const file of files) {
-    const fullPath = join(folderPath, file.name)
-    if (file.isDirectory()) {
-      const dirHash = checksumFolder(fullPath)
-      combinedHash.update(dirHash)
-    } else {
-      const fileHash = hashFile(fullPath)
-      combinedHash.update(fileHash)
-    }
-  }
-
-  return combinedHash.digest('hex')
-}
 
 class DatabricksStack extends TerraformStack {
   config: Config
@@ -443,12 +417,17 @@ class DatabricksStack extends TerraformStack {
           package: 'pymongo',
         },
       },
+      {
+        pypi: {
+          package: 'sentry-sdk',
+        },
+      },
     ]
 
     const cluster = new databricks.cluster.Cluster(this, 'cluster', {
       ...clusterConfig,
       provider: workspaceProvider,
-      sparkVersion: '14.3.x-scala2.12',
+      sparkVersion: '13.3.x-scala2.12',
       clusterName: 'Shared Autoscaling',
       library: clusterLibraries,
       autoterminationMinutes: 60,
@@ -542,44 +521,6 @@ class DatabricksStack extends TerraformStack {
       provider: workspaceProvider,
       path: `/data/currency_rates_backfill.json`,
       source: path.resolve(__dirname, '../data/currency_rates_backfill.json'),
-    })
-
-    new databricks.pipeline.Pipeline(this, `pipeline`, {
-      provider: workspaceProvider,
-      name: 'main',
-      continuous: true,
-      edition: 'PRO',
-      development: stage === 'dev',
-      channel: 'PREVIEW',
-      catalog: catalog.name,
-      cluster: [
-        {
-          ...clusterConfig,
-          nodeTypeId: 'm5d.large',
-          autoscale: {
-            minWorkers: 1,
-            maxWorkers: 1,
-          },
-        },
-      ],
-      library: [
-        {
-          notebook: {
-            path: `/Shared/pipeline`,
-          },
-        },
-      ],
-      target: 'default',
-      notification: [
-        {
-          emailRecipients: adminEmails,
-          alerts: [
-            'on-update-failure',
-            'on-update-fatal-failure',
-            'on-flow-failure',
-          ],
-        },
-      ],
     })
 
     const entities = [
@@ -707,15 +648,7 @@ class DatabricksStack extends TerraformStack {
         },
       })
     })
-    const schemaVersionResource = new nullResource.Resource(
-      this,
-      'schema-version',
-      {
-        triggers: {
-          alwaysRun: schemaVersion,
-        },
-      }
-    )
+
     servicePrincipals.forEach((sp, i) => {
       const tenant = this.tenantIds[i]
       const tenantSchema = new databricks.schema.Schema(
@@ -747,37 +680,6 @@ class DatabricksStack extends TerraformStack {
         lifecycle: {
           preventDestroy: preventTenantDestruction,
         },
-      })
-
-      entities.forEach((entity) => {
-        if (Fn.contains(tables.ids, `${stage}.default.${entity.table}`)) {
-          const view = new databricks.sqlTable.SqlTable(
-            this,
-            `view-${entity.table}-${tenant}`,
-            {
-              provider: workspaceProvider,
-              catalogName: catalog.name,
-              name: entity.table,
-              schemaName: tenantSchema.name,
-              tableType: 'VIEW',
-              warehouseId: sqlWarehouse.id,
-              viewDefinition: Fn.format(
-                `SELECT * from %s.default.%s WHERE tenant = '%s'`,
-                [catalog.name, entity.table, sp.displayName]
-              ),
-              lifecycle: {
-                preventDestroy: preventTenantDestruction,
-              },
-            }
-          )
-
-          // Necessary due to this bug report: https://github.com/hashicorp/terraform-cdk/issues/3532
-          view.addOverride('lifecycle.replace_triggered_by', [
-            schemaVersionResource.terraformResourceType +
-              '.' +
-              schemaVersionResource.friendlyUniqueId,
-          ])
-        }
       })
 
       const spToken = new databricks.oboToken.OboToken(

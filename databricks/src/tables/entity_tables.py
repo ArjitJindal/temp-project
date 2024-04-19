@@ -1,3 +1,5 @@
+import os
+
 import pymongo
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
@@ -40,8 +42,6 @@ class EntityTables:
         self.kinesis_tables = kinesis_tables
 
     def refresh(self, entity: Entity):
-        self.table_service.clear_table(entity.table)
-        self.table_service.clear_table(f"{entity.table}_cdc")
 
         kinesis_df = cdc_transformation(
             entity,
@@ -50,15 +50,22 @@ class EntityTables:
         backfill_df = self.table_service.read_table(f"{entity.table}_backfill")
 
         print("Refresh from kinesis and the backfill tables")
-        for stream in [kinesis_df, backfill_df]:
-            if entity.enrichment_fn is not None:
-                stream = entity.enrichment_fn(stream, self.table_service.read_table)
+        tenants = self.table_service.tenant_schemas()
+        self.table_service.clear_table(f"{entity.table}_cdc")
+        stage = os.environ["STAGE"]
+        for tenant in tenants:
+            self.table_service.clear_table(entity.table, schema=tenant)
+            schema = f"{stage}.{tenant}"
 
-            self.table_service.write_table(
-                entity.table,
-                stream,
-                True,
-            )
+            for stream in [kinesis_df, backfill_df]:
+                if entity.enrichment_fn is not None:
+                    stream = entity.enrichment_fn(stream, self.table_service.read_table)
+                self.table_service.write_table(
+                    entity.table,
+                    stream.filter(stream["tenant"] == tenant),
+                    True,
+                    schema=schema,
+                )
 
     def start_streams(self, entity: Entity):
         df = cdc_transformation(
@@ -86,12 +93,15 @@ class EntityTables:
 
         matcher_condition = f"s.{entity.id_column} = t.{entity.id_column}"
         id_column = entity.id_column
-        table = f"{self.schema}.{entity.table}"
         timestamp_column = entity.timestamp_column
         incoming_updates = f"{entity.table}_incoming_updates"
         latest_updates = f"{entity.table}_latest_updates"
 
         def upsert_to_delta(micro_batch_output_df, _batch_id):
+            tenants = [
+                row.tenant
+                for row in micro_batch_output_df.select("tenant").distinct().collect()
+            ]
 
             micro_batch_output_df.createOrReplaceTempView(incoming_updates)
 
@@ -109,16 +119,19 @@ class EntityTables:
                 WHERE rn = 1
             """
             )
+            table = entity.table
+            stage = os.environ["STAGE"]
 
-            spark.sql(
-                f"""
-                MERGE INTO {table} t
-                USING {latest_updates} s
-                ON {matcher_condition}
-                WHEN MATCHED THEN UPDATE SET *
-                WHEN NOT MATCHED THEN INSERT *
-            """
-            )
+            for tenant in tenants:
+                spark.sql(
+                    f"""
+                    MERGE INTO {stage}.{tenant}.{table} t
+                    USING {latest_updates} s
+                    ON {matcher_condition} and s.tenant = "{tenant}"
+                    WHEN MATCHED THEN UPDATE SET *
+                    WHEN NOT MATCHED THEN INSERT *
+                """
+                )
 
         return (
             df.writeStream.format("delta")

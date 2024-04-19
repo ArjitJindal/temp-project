@@ -1,6 +1,8 @@
-from typing import Dict
+import os
+from typing import Dict, List
 
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import col
 
 from src.version_service import VersionService
 
@@ -24,9 +26,8 @@ class TableService:
         self.batches: Dict[str, DataFrame] = {}
 
     def table_exists(self, name: str):
-        return self.spark.catalog.tableExists(  # type: ignore[attr-defined]
-            f"{self.schema}.{name}"
-        )
+        tables: List[str] = [row["tableName"] for row in self.spark.sql(f"show tables  in {self.schema}").collect()]
+        return name in tables
 
     def read_table_stream(self, table_name: str):
         checkpoint_id = self.version_service.get_pipeline_checkpoint_id()
@@ -78,15 +79,34 @@ class TableService:
         )
 
     def write_table(
-        self, name: str, df: DataFrame, tenant_partition=True, mode="append"
+        self,
+        name: str,
+        df: DataFrame,
+        tenant_partition=True,
+        mode="append",
+        schema=None,
     ):
+        if schema is None:
+            schema = self.schema
         table_name = name
         write_stream = df.write.format("delta").option("mergeSchema", "true")
         if tenant_partition:
             write_stream = write_stream.partitionBy("tenant")
-        print(f"Batching to table {name}")
-        return write_stream.mode(mode).saveAsTable(f"{self.schema}.{table_name}")
+        print(f"Batching to table {schema}.{table_name}")
+        return write_stream.mode(mode).saveAsTable(f"{schema}.{table_name}")
 
-    def clear_table(self, table_name: str):
-        print(f"Clearing {table_name}")
-        self.spark.sql(f"DROP TABLE IF EXISTS {self.schema}.{table_name}")
+    def clear_table(self, table_name: str, schema=None):
+        if schema is None:
+            schema = self.schema
+        print(f"Clearing {schema}.{table_name}")
+        self.spark.sql(f"DROP TABLE IF EXISTS {schema}.{table_name}")
+
+    def tenant_schemas(self):
+        stage = os.environ["STAGE"]
+        df = self.spark.sql(f"show schemas in {stage}")
+        return [
+            row["databaseName"]
+            for row in df.filter(
+                col("databaseName").isin("default", "main", "information_schema")
+            ).collect()
+        ]
