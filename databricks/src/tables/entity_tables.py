@@ -1,6 +1,5 @@
 import os
 
-import pymongo
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
     col,
@@ -153,20 +152,18 @@ class EntityTables:
     def backfill(self, entity):
         table = entity.table
         mongo_table = table.replace("_", "-")
-        client = pymongo.MongoClient(self.mongo_uri, 27017, maxPoolSize=50)
         db_name = "tarpon"
-        db = client[db_name]
         table_path = f"{self.schema}.{table}_backfill"
-
         suffix = f"-{mongo_table}"
 
         # List the collections and process each
-        for coll in db.list_collection_names():
-            if not coll.endswith(suffix):
-                continue
+        tenants = self.table_service.tenant_schemas()
+        tenants_upper_lower = [s.upper() for s in tenants] + [s.lower() for s in tenants]
+
+        for tenant in tenants_upper_lower:
+            coll = f"{tenant}{suffix}"
 
             print(f"Backfilling for: {coll}")
-
             try:
                 tenant = coll.replace(suffix, "")
                 df = (
