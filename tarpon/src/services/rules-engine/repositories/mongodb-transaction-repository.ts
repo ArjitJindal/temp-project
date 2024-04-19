@@ -240,17 +240,16 @@ export class MongoDbTransactionRepository
 
     if (params.filterRulesHit != null) {
       conditions.push({
-        'hitRules.ruleInstanceId': {
+        'hitRules.ruleId': {
           $in: params.filterRulesHit,
         },
       })
     }
 
-    if (params.filterRuleInstancesHit) {
-      executedRulesFilters.push({
-        $elemMatch: {
-          ruleHit: true,
-          ruleInstanceId: { $eq: params.filterRuleInstancesHit },
+    if (params.filterRuleInstancesHit != null) {
+      conditions.push({
+        'hitRules.ruleInstanceId': {
+          $in: params.filterRuleInstancesHit,
         },
       })
     }
