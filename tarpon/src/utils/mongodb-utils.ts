@@ -44,7 +44,7 @@ export async function getMongoDbClient(useCache = true) {
       `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}`
     )
   } else {
-    const credentials = await getSecretByName('mongoAtlasCreds')
+    const credentials = await getSecretByName('mongoAtlasCreds', useCache)
     const DB_USERNAME = credentials['username']
     const DB_PASSWORD = encodeURIComponent(credentials['password'])
     const DB_HOST = credentials['host']

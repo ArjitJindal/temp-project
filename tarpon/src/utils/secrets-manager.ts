@@ -22,15 +22,19 @@ function getSecretManager() {
 }
 
 export async function getSecretByName<T extends SecretName>(
-  secretId: T
+  secretId: T,
+  useCache = true
 ): Promise<Secrets[T]> {
-  return getSecret(secretId)
+  return getSecret(secretId, useCache)
 }
 
 const secretCache = new Map<string, any>()
 
-export async function getSecret<T>(secretId: string): Promise<T> {
-  if (secretCache.has(secretId)) {
+export async function getSecret<T>(
+  secretId: string,
+  useCache = true
+): Promise<T> {
+  if (useCache && secretCache.has(secretId)) {
     return secretCache.get(secretId) as T
   }
 
