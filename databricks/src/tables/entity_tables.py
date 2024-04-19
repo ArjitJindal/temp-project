@@ -158,10 +158,19 @@ class EntityTables:
 
         # List the collections and process each
         tenants = self.table_service.tenant_schemas()
-        total = len(tenants)
+        tenants_upper_lower = [
+            (
+                s.upper()
+                if "-test" not in s
+                else s.replace("-test", "-TEST").upper().replace("-TEST", "-test")
+            )
+            for s in tenants
+        ] + [s.lower() for s in tenants]
+
+        total = len(tenants_upper_lower)
         print(f"Processing {total} tenants")
         count = 0
-        for tenant in tenants:
+        for tenant in tenants_upper_lower:
             coll = f"{tenant}{suffix}"
 
             print(f"Backfilling for: {coll}")
@@ -174,7 +183,7 @@ class EntityTables:
                     .option("collection", coll)
                     .schema(entity.schema)
                     .load()
-                    .withColumn("tenant", lit(tenant))
+                    .withColumn("tenant", lit(tenant.lower()))
                 )
 
                 final_df = backfill_transformation(entity, df)
@@ -220,9 +229,9 @@ def cdc_transformation(entity: Entity, read_stream: DataFrame) -> DataFrame:
         )
         .withColumn(
             "tenant",
-            regexp_extract(col(PARTITION_KEY_ID_PATH), "^[^#]*", 0)).alias(
+            lower(regexp_extract(col(PARTITION_KEY_ID_PATH), "^[^#]*", 0)).alias(
                 "tenant"
-            ,
+            ),
         )
     )
 
