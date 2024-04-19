@@ -114,8 +114,8 @@ export const transactionQuestion = (
   destination.legalEntity.companyGeneralDetails.legalName as destinationBusinessName
 from
   transactions t
-  join users origin on t.originUserId = origin.userId
-  join users destination on t.destinationUserId = destination.userId
+  left join users origin on t.originUserId = origin.userId
+  left join users destination on t.destinationUserId = destination.userId
         ${where(ctx)} and t.timestamp between :from and :to
       `,
       {
