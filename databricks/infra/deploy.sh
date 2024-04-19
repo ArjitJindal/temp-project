@@ -17,5 +17,4 @@ echo "Building python assets"
 poetry build
 
 echo "Deploying to stage: $STAGE, region: $REGION"
-
-STAGE=$STAGE REGION=$REGION cdktf deploy
+STAGE=$STAGE REGION=$REGION cdktf deploy "$@"
