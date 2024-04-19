@@ -158,7 +158,14 @@ class EntityTables:
 
         # List the collections and process each
         tenants = self.table_service.tenant_schemas()
-        tenants_upper_lower = [s.upper() for s in tenants] + [s.lower() for s in tenants]
+        tenants_upper_lower = [
+            (
+                s.upper()
+                if "-test" not in s
+                else s.replace("-test", "-TEST").upper().replace("-TEST", "-test")
+            )
+            for s in tenants
+        ] + [s.lower() for s in tenants]
 
         for tenant in tenants_upper_lower:
             coll = f"{tenant}{suffix}"
