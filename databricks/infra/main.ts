@@ -1380,12 +1380,3 @@ getTenantInfoFromUsagePlans(awsRegion).then((tenants) => {
   new DatabricksStack(app, `databricks-stack-${env}`, tenantIds)
   app.synth()
 })
-
-const enabledTenantIds = [
-  'ydtx15ustg', // Banked eu-2
-  'cypress-tenant',
-  'f05d33ea95',
-  'ft398yyjmd',
-  '5CIHDWCU3K',
-  'c4c4eca1f5',
-].map((tenantId) => tenantId.toLowerCase())
