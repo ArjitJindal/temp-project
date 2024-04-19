@@ -36,8 +36,3 @@ export async function executeSql<T>(
   await session.close()
   return result as T[]
 }
-
-export async function startSqlWarehouse() {
-  // Execute arbitrary SQL that will boot the serverless SQL warehouse that will live for 15 mins.
-  await executeSql(`select 1`)
-}
