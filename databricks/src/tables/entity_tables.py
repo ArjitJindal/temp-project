@@ -53,8 +53,8 @@ class EntityTables:
         self.table_service.clear_table(f"{entity.table}_cdc")
         stage = os.environ["STAGE"]
         for tenant in tenants:
-            self.table_service.clear_table(entity.table, schema=tenant)
-            schema = f"{stage}.{tenant}"
+            schema = f"`{stage}`.`{tenant}`"
+            self.table_service.clear_table(entity.table, schema=schema)
 
             for stream in [kinesis_df, backfill_df]:
                 if entity.enrichment_fn is not None:
@@ -95,6 +95,7 @@ class EntityTables:
         timestamp_column = entity.timestamp_column
         incoming_updates = f"{entity.table}_incoming_updates"
         latest_updates = f"{entity.table}_latest_updates"
+        stage = os.environ["STAGE"]
 
         def upsert_to_delta(micro_batch_output_df, _batch_id):
             tenants = [
@@ -119,12 +120,11 @@ class EntityTables:
             """
             )
             table = entity.table
-            stage = os.environ["STAGE"]
 
             for tenant in tenants:
                 spark.sql(
                     f"""
-                    MERGE INTO {stage}.{tenant}.{table} t
+                    MERGE INTO `{stage}`.`{tenant}`.`{table}` t
                     USING {latest_updates} s
                     ON {matcher_condition} and s.tenant = "{tenant}"
                     WHEN MATCHED THEN UPDATE SET *

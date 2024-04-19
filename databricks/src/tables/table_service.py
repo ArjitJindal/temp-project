@@ -80,7 +80,7 @@ class TableService:
             .outputMode("append")
             .option("mergeSchema", "true")
             .queryName(name)
-            .toTable(f"`{self.schema}`.`{table_name}`")
+            .toTable(f"{self.schema}.{table_name}")
         )
 
     def write_table(
@@ -98,13 +98,13 @@ class TableService:
         if tenant_partition:
             write_stream = write_stream.partitionBy("tenant")
         print(f"Batching to table {schema}.{table_name}")
-        return write_stream.mode(mode).saveAsTable(f"`{schema}`.`{table_name}`")
+        return write_stream.mode(mode).saveAsTable(f"{schema}.{table_name}")
 
     def clear_table(self, table_name: str, schema=None):
         if schema is None:
             schema = self.schema
         print(f"Clearing {schema}.{table_name}")
-        self.spark.sql(f"DROP TABLE IF EXISTS `{schema}`.`{table_name}`")
+        self.spark.sql(f"DROP TABLE IF EXISTS {schema}.{table_name}")
 
     def tenant_schemas(self):
         stage = os.environ["STAGE"]
