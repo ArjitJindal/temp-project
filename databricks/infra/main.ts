@@ -191,6 +191,7 @@ class DatabricksStack extends TerraformStack {
   private workspace({
     profileRoleName,
     workspaceProvider,
+    workspace,
   }: {
     workspaceProvider: databricks.provider.DatabricksProvider
     profileRoleName: string
@@ -439,7 +440,7 @@ class DatabricksStack extends TerraformStack {
         provider: workspaceProvider,
         name: 'tarpon',
         clusterSize: '2X-Small',
-        autoStopMins: enableServerlessCompute ? 5 : 0,
+        autoStopMins: 15,
         enableServerlessCompute,
       }
     )
@@ -702,8 +703,12 @@ class DatabricksStack extends TerraformStack {
       )
 
       // TODO: Not sure why things aren't working on sandbox. Will figure this out.
-      const host = sqlWarehouse.odbcParams.get(0).hostname
-      const path = sqlWarehouse.odbcParams.get(0).path
+      const host = enableServerlessCompute
+        ? sqlWarehouse.odbcParams.get(0).hostname
+        : Fn.replace(workspaceProvider.host || '', 'https://', '')
+      const path = enableServerlessCompute
+        ? sqlWarehouse.odbcParams.get(0).path
+        : `sql/protocolv1/o/${Fn.tostring(workspace.workspaceId)}/${cluster.clusterId}`
 
       new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
         this,
