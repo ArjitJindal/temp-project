@@ -112,6 +112,6 @@ class TableService:
         return [
             row["databaseName"]
             for row in df.filter(
-                 ~col("databaseName").isin("default", "main", "information_schema")
+                ~col("databaseName").isin("default", "main", "information_schema")
             ).collect()
         ]

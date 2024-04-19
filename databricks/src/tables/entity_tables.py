@@ -42,17 +42,11 @@ class EntityTables:
         self.kinesis_tables = kinesis_tables
 
     def refresh(self, entity: Entity):
-
         kinesis_df = cdc_transformation(
             entity,
-            self.table_service.read_table(entity.source, schema="sandbox.main"),
+            self.table_service.read_table(entity.source),
         )
-        backfill_df = self.table_service.read_table(
-            f"{entity.table}_backfill", "sandbox.main"
-        )
-
-        if entity.table == "transactions":
-            backfill_df = backfill_df.drop("transactionAmountUSD")
+        backfill_df = self.table_service.read_table(f"{entity.table}_backfill")
 
         print("Refresh from kinesis and the backfill tables")
         tenants = self.table_service.tenant_schemas()
