@@ -17,4 +17,11 @@ echo "Building python assets"
 poetry build
 
 echo "Deploying to stage: $STAGE, region: $REGION"
-STAGE=$STAGE REGION=$REGION cdktf deploy "$@"
+
+export STAGE=$STAGE
+export REGION=$REGION
+if [ "$QUIET_MODE" -eq 1 ]; then
+  cdktf deploy --quiet
+else
+  cdktf deploy
+fi

@@ -41,7 +41,7 @@ export const databricksDeployStage = (
               'make generate',
               'cd infra',
               'pip install poetry',
-              `npm run deploy -- ${config.stage} ${
+              `QUIET_MODE=1 npm run deploy -- ${config.stage} ${
                 config.region || 'eu-1'
               } --auto-approve`,
             ],
