@@ -115,3 +115,8 @@ class TableService:
                 ~col("databaseName").isin("default", "main", "information_schema")
             ).collect()
         ]
+
+    def optimize(self, table: str):
+        stage = os.environ["STAGE"]
+        print(f"Optimizing {table}")
+        self.spark.sql(f"optimize {stage}.{table}")

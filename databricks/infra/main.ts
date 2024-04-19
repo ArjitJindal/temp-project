@@ -455,6 +455,11 @@ class DatabricksStack extends TerraformStack {
         description: 'Stream live from kinesis and transform',
         continuous: true,
       },
+      {
+        name: 'optimize',
+        description: 'Optimize all tables nightly',
+        schedule: '0 0 0 * * ?',
+      },
     ]
 
     jobs.map((job) => {
@@ -474,6 +479,12 @@ class DatabricksStack extends TerraformStack {
             default: 'false',
           },
         ],
+        schedule: job.schedule
+          ? {
+              timezoneId: 'UTC',
+              quartzCronExpression: job.schedule,
+            }
+          : undefined,
         emailNotifications: {
           onFailure: ['tim@flagright.com'],
         },
