@@ -419,6 +419,7 @@ class DatabricksStack extends TerraformStack {
       clusterName: 'Shared Autoscaling',
       library: clusterLibraries,
       autoterminationMinutes: 60,
+      runtimeEngine: 'PHOTON',
       dependsOn: [instanceProfile],
       lifecycle: {
         ignoreChanges: ['aws_attributes'],
