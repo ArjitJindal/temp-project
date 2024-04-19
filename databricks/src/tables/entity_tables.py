@@ -167,6 +167,9 @@ class EntityTables:
             for s in tenants
         ] + [s.lower() for s in tenants]
 
+        total = len(tenants_upper_lower)
+        print(f"Processing {total} tenants")
+        count = 0
         for tenant in tenants_upper_lower:
             coll = f"{tenant}{suffix}"
 
@@ -191,7 +194,8 @@ class EntityTables:
                 print(f"Collection backfilled: {coll}")
             except:  # pylint: disable=bare-except
                 print(f"Failed to backfill: {coll}")
-
+            count += 1
+            print(f"Completed {count}/{total}")
 
 def backfill_transformation(entity: Entity, df: DataFrame) -> DataFrame:
     return (
