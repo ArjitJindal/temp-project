@@ -617,6 +617,15 @@ export class AlertsService extends CaseAlertsCommonService {
     const timestamp = Date.now()
     const existingAlerts = await this.getAlertsByIds(alertIds)
 
+    if (existingAlerts.length !== alertIds.length) {
+      throw new NotFound(
+        `Alerts not found: ${difference(
+          alertIds,
+          existingAlerts.map((a) => a.alertId)
+        ).join(', ')}`
+      )
+    }
+
     assignments.forEach((a) => {
       a.timestamp = timestamp
     })

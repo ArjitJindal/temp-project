@@ -6,7 +6,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
-import { capitalize, isEqual, isEmpty, compact } from 'lodash'
+import { capitalize, isEqual, isEmpty, compact, difference } from 'lodash'
 import { MongoClient } from 'mongodb'
 import pluralize from 'pluralize'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
@@ -818,6 +818,14 @@ export class CaseService extends CaseAlertsCommonService {
     })
 
     const oldCases = await this.caseRepository.getCasesByIds(caseIds)
+    if (oldCases.length !== caseIds.length) {
+      throw new NotFound(
+        `Cases not found: ${difference(
+          caseIds,
+          oldCases.map((c) => c.caseId)
+        ).join(', ')}`
+      )
+    }
 
     await Promise.all([
       this.caseRepository.updateAssignments(caseIds, assignments),
