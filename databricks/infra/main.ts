@@ -375,7 +375,7 @@ class DatabricksStack extends TerraformStack {
       nodeTypeId: 'm5d.large',
       autoscale: {
         minWorkers: 1,
-        maxWorkers: 2,
+        maxWorkers: 1,
       },
       sparkEnvVars: {
         AWS_REGION: awsRegion,
