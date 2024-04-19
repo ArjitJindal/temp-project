@@ -36,7 +36,7 @@ class VersionService:
         try:
             return self.dbutils.fs.head(f"{BASE_PATH}{name}")
         except:  # pylint: disable=bare-except
-            return self.reset_version(name)
+            return None
 
     def reset_version(self, name):
         version = self.get_new_version()

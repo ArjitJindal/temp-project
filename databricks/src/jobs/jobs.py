@@ -93,17 +93,8 @@ class Jobs:
     def stream(self):
         print("Checking all tables exist first, in case backfill is still running")
 
-        all_tables = [entity.table for entity in entities] + [
-            "currency_rates",
-            "kinesis_events",
-            "hammerhead_kinesis_events",
-        ]
-        for table in all_tables:
-            if not self.table_service.table_exists(table):
-                raise Exception(  # pylint: disable=broad-exception-raised
-                    f"{table} has not been created yet, please run backfill"
-                )
-
+        if self.version_service.get_pipeline_checkpoint_id() is None:
+            print("Please run backfill first.")
         self.kinesis_tables.create_stream(
             "tarponDynamoChangeCaptureStream", "kinesis_events"
         )
