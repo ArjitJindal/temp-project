@@ -420,6 +420,9 @@ class DatabricksStack extends TerraformStack {
       library: clusterLibraries,
       autoterminationMinutes: 60,
       dependsOn: [instanceProfile],
+      awsAttributes: {
+        firstOnDemand: 1,
+      },
       lifecycle: {
         ignoreChanges: ['aws_attributes'],
       },
@@ -510,7 +513,7 @@ class DatabricksStack extends TerraformStack {
       name: stage,
     })
 
-    new databricks.workspaceFile.WorkspaceFile(this, `whl`, {
+    new databricks.dbfsFile.DbfsFile(this, `whl`, {
       provider: workspaceProvider,
       path: `/Shared/src-0.1.0-py3-none-any.whl`,
       source: path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl'),
