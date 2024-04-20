@@ -1030,18 +1030,10 @@ const _RULES_LIBRARY: Array<
         'Recurring user transactions end in .999 (e.g., 150.999, 250.999, 350.999), hinting at a pattern warranting investigation.',
     }
   },
-
-  // TODO: Change Rule description once rule is splitted into two
   () => {
     const defaultParameters: PaymentMethodNameRuleParameter = {
       allowedDistancePercentage: 30,
       ignoreEmptyName: false,
-    }
-    const defaultFilters: TransactionFilters | UserFilters = {
-      originPaymentFilters: {
-        paymentMethods: ['CARD'],
-      },
-      userType: 'CONSUMER',
     }
     return {
       id: 'R-118',
@@ -1053,7 +1045,6 @@ const _RULES_LIBRARY: Array<
         "{{ if-sender 'Sender’s' 'Receiver’s' }} name does not match name on {{ if-sender 'sender’s' 'receiver’s' }} payment method ({{ paymentMethodIdentifier }})",
       defaultParameters,
       defaultAction: 'FLAG',
-      defaultFilters,
       ruleImplementationName: 'payment-method-name-levensthein-distance',
       labels: [],
       checksFor: [RuleChecksForField.Username],
