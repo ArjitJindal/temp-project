@@ -489,7 +489,7 @@ class DatabricksStack extends TerraformStack {
             }
           : undefined,
         emailNotifications: {
-          onFailure: ['tim@flagright.com'],
+          onFailure: adminEmails,
         },
         continuous: job.continuous
           ? {
