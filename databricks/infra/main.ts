@@ -513,7 +513,7 @@ class DatabricksStack extends TerraformStack {
       name: stage,
     })
 
-    new databricks.dbfsFile.DbfsFile(this, `whl`, {
+    new databricks.workspaceFile.WorkspaceFile(this, `whl`, {
       provider: workspaceProvider,
       path: `/Shared/src-0.1.0-py3-none-any.whl`,
       source: path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl'),
