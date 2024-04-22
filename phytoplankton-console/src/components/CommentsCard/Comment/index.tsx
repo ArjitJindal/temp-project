@@ -89,7 +89,7 @@ export default function Comment(props: Props) {
             <Spinner size="SMALL" />
           ) : (
             <div className={styles.name} data-cy="comment-created-by">
-              {user ? getNonSuperAdminUserName(user) : 'Unknown'}
+              {getNonSuperAdminUserName(user)}
             </div>
           )}
           <div className={styles.date} data-cy="comment-created-on">

@@ -4,6 +4,7 @@ import Spinner from '../Spinner';
 import s from './index.module.less';
 import { Account } from '@/apis';
 import { getBranding } from '@/utils/branding';
+import { getNonSuperAdminUserName } from '@/utils/account';
 
 interface Props {
   user: Account | null;
@@ -19,11 +20,8 @@ const DEFAULT_AVATAR_STYLE = {
 const Avatar = (props: Props) => {
   const { user, size = 'small', isLoading = false } = props;
   const branding = getBranding();
-  const { companyName } = branding;
-  const brandingName = `${companyName} System`;
-  const role = user?.role;
-  const systemDisplay =
-    role === 'root' || brandingName === user?.name ? branding.systemAvatarUrl : null;
+  const userName = getNonSuperAdminUserName(user);
+  const systemDisplay = userName === 'System' ? branding.systemAvatarUrl : null;
   const imgHeight = size === 'small' ? 16 : size === 'medium' ? 20 : size === 'xs' ? 14 : 24;
 
   return isLoading ? (
@@ -42,7 +40,7 @@ const Avatar = (props: Props) => {
           ? {}
           : DEFAULT_AVATAR_STYLE
       }
-      title={`${user?.name || user?.email} avatar`}
+      title={`${userName} avatar`}
     >
       {systemDisplay && <img className={s.image} src={systemDisplay} height={imgHeight} />}
     </div>
