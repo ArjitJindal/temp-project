@@ -10,7 +10,7 @@ interface Props {
 export default function KeyValueTag(props: Props) {
   const { tag } = props;
   return (
-    <Tag className={s.root}>
+    <Tag className={s.root} wrapText={false}>
       <span>
         {tag.key}: <span style={{ fontWeight: 700 }}>{tag.value}</span>
       </span>

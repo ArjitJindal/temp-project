@@ -36,10 +36,20 @@ interface Props {
   maxWidth?: number;
   actions?: TagAction[];
   onClick?: () => void;
+  wrapText?: boolean;
 }
 
 export default function Tag(props: Props) {
-  const { onClick, color, icon, children, className, maxWidth, actions = [] } = props;
+  const {
+    onClick,
+    color,
+    icon,
+    children,
+    className,
+    maxWidth,
+    actions = [],
+    wrapText = true,
+  } = props;
 
   return (
     <div className={cn(s.root)}>
@@ -48,7 +58,7 @@ export default function Tag(props: Props) {
         onClick={onClick}
       >
         {icon && <div className={s.icon}>{icon}</div>}
-        <div className={s.text} style={{ maxWidth }}>
+        <div className={cn(s.text, wrapText && s.wrapText)} style={{ maxWidth }}>
           {children}
         </div>
         {actions.length > 0 && (
