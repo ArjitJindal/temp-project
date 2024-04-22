@@ -214,7 +214,7 @@
     "@flagright/lib": "link:../lib",
     "@mergeapi/merge-sdk-typescript": "^3.0.10",
     "@react-awesome-query-builder/core": "^6.4.2",
-    "@sentry/esbuild-plugin": "^2.10.2",
+    "@sentry/esbuild-plugin": "^2.16.0",
     "@sentry/integrations": "^7.109.0",
     "@sentry/node": "^7.109.0",
     "@sentry/serverless": "^7.109.0",
