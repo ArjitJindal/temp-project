@@ -13,7 +13,10 @@ import {
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { omit } from 'lodash'
-import { getRiskLevelFromScore, getRiskScoreFromLevel } from '../utils'
+import {
+  getRiskLevelFromScore,
+  getRiskScoreFromLevel,
+} from '@flagright/lib/utils/risk'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'

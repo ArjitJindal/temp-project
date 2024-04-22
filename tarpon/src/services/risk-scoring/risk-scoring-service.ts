@@ -2,6 +2,10 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 
 import { FindCursor, MongoClient } from 'mongodb'
 import { get, mean, memoize } from 'lodash'
+import {
+  getRiskLevelFromScore,
+  getRiskScoreFromLevel,
+} from '@flagright/lib/utils/risk'
 import { UserRepository } from '../users/repositories/user-repository'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -10,8 +14,7 @@ import { CurrencyService } from '../currency'
 import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
-  getRiskLevelFromScore,
-  getRiskScoreFromLevel,
+  DEFAULT_RISK_VALUE,
   riskLevelPrecendence,
   weightedRiskScoreCalculation,
 } from './utils'
@@ -42,6 +45,8 @@ import { RiskScoreDetails } from '@/@types/openapi-internal/RiskScoreDetails'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { hasFeature, tenantHasFeature } from '@/core/utils/context'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
+import { RiskScoreValueLevel } from '@/@types/openapi-internal/RiskScoreValueLevel'
+import { RiskScoreValueScore } from '@/@types/openapi-internal/RiskScoreValueScore'
 
 function getDefaultRiskValue(
   riskClassificationValues: Array<RiskClassificationScore>
@@ -136,53 +141,72 @@ async function getIterableAttributeRiskLevel(
   entity: User | Business | Transaction
 ): Promise<{
   value: unknown
-  riskLevel: RiskLevel
+  riskValue: RiskScoreValueLevel | RiskScoreValueScore
 }> {
   const { parameter, targetIterableParameter, riskLevelAssignmentValues } =
     parameterAttributeDetails
   const iterableValue = get(entity, parameter) as unknown as any[]
-  let individualRiskLevel
+  let individualRiskValue: {
+    value: unknown
+    riskValue: RiskScoreValueLevel | RiskScoreValueScore
+  } | null = null
+
   let iterableMaxRiskLevel: {
     value: unknown
-    riskLevel: RiskLevel
+    riskValue: RiskScoreValueLevel | RiskScoreValueScore
   } = {
     value: null,
-    riskLevel: 'VERY_LOW' as RiskLevel,
+    riskValue: {
+      type: 'RISK_LEVEL',
+      value: 'VERY_LOW' as RiskLevel,
+    },
   }
   if (iterableValue && targetIterableParameter) {
     for (const value of iterableValue) {
-      individualRiskLevel = await getSchemaAttributeRiskLevel(
+      individualRiskValue = await getSchemaAttributeRiskLevel(
         targetIterableParameter,
         value,
         riskLevelAssignmentValues,
-        parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL
+        parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE
       )
-      if (
-        riskLevelPrecendence[individualRiskLevel.riskLevel] >=
-        riskLevelPrecendence[iterableMaxRiskLevel.riskLevel]
-      ) {
-        iterableMaxRiskLevel = individualRiskLevel
+
+      if (individualRiskValue.riskValue.type === 'RISK_LEVEL') {
+        if (
+          riskLevelPrecendence[individualRiskValue.riskValue.value] >=
+          riskLevelPrecendence[iterableMaxRiskLevel.riskValue.value]
+        ) {
+          iterableMaxRiskLevel = individualRiskValue
+        }
       }
     }
+
     return iterableMaxRiskLevel
   } else if (iterableValue && !targetIterableParameter) {
     let hasRiskValueMatch = false
     for (const value of iterableValue) {
       const { riskLevelAssignmentValues } = parameterAttributeDetails
       for (const riskLevelAssignmentValue of riskLevelAssignmentValues) {
-        if (
-          await matchParameterValue(
-            value,
-            riskLevelAssignmentValue.parameterValue
-          )
-        ) {
-          if (
-            riskLevelPrecendence[riskLevelAssignmentValue.riskLevel] >=
-            riskLevelPrecendence[iterableMaxRiskLevel.riskLevel]
-          ) {
+        const isMatch = await matchParameterValue(
+          value,
+          riskLevelAssignmentValue.parameterValue
+        )
+
+        if (isMatch) {
+          if (riskLevelAssignmentValue.riskValue.type === 'RISK_LEVEL') {
+            if (
+              riskLevelPrecendence[riskLevelAssignmentValue.riskValue.value] >=
+              riskLevelPrecendence[iterableMaxRiskLevel.riskValue.value]
+            ) {
+              iterableMaxRiskLevel = {
+                value,
+                riskValue: riskLevelAssignmentValue.riskValue,
+              }
+              hasRiskValueMatch = true
+            }
+          } else {
             iterableMaxRiskLevel = {
               value,
-              riskLevel: riskLevelAssignmentValue.riskLevel,
+              riskValue: riskLevelAssignmentValue.riskValue,
             }
             hasRiskValueMatch = true
           }
@@ -193,13 +217,13 @@ async function getIterableAttributeRiskLevel(
       ? iterableMaxRiskLevel
       : {
           value: null,
-          riskLevel:
-            parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
+          riskValue:
+            parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE,
         }
   }
   return {
     value: null,
-    riskLevel: parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
+    riskValue: parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE,
   }
 }
 
@@ -207,16 +231,18 @@ async function getDerivedAttributeRiskLevel(
   derivedValue: any,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>,
   isNullableAllowed: boolean | undefined,
-  defaultRiskLevel: RiskLevel = DEFAULT_RISK_LEVEL
-): Promise<RiskLevel> {
+  defaultValue: RiskScoreValueLevel | RiskScoreValueScore = DEFAULT_RISK_VALUE
+): Promise<RiskScoreValueLevel | RiskScoreValueScore> {
   if (derivedValue || isNullableAllowed) {
-    for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
-      if (await matchParameterValue(derivedValue, parameterValue)) {
-        return riskLevel
+    for (const { parameterValue, riskValue } of riskLevelAssignmentValues) {
+      const isMatch = await matchParameterValue(derivedValue, parameterValue)
+      if (isMatch) {
+        return riskValue
       }
     }
   }
-  return defaultRiskLevel
+
+  return defaultValue
 }
 
 async function getSchemaAttributeRiskLevel(
@@ -225,24 +251,27 @@ async function getSchemaAttributeRiskLevel(
     | ParameterAttributeRiskValuesTargetIterableParameterEnum,
   entity: User | Business | Transaction,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>,
-  defaultRiskLevel: RiskLevel
+  defaultValue: RiskScoreValueLevel | RiskScoreValueScore
 ): Promise<{
   value: unknown
-  riskLevel: RiskLevel
+  riskValue: RiskScoreValueLevel | RiskScoreValueScore
 }> {
   let resultValue = null
-  let resultRiskLevel: RiskLevel = defaultRiskLevel
+  let resultRiskValue: RiskScoreValueLevel | RiskScoreValueScore = defaultValue
   const endValue = get(entity, paramName)
+
   if (endValue) {
     resultValue = endValue
-    for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
-      if (await matchParameterValue(endValue, parameterValue)) {
-        resultRiskLevel = riskLevel
+    for (const { parameterValue, riskValue } of riskLevelAssignmentValues) {
+      const isMatch = await matchParameterValue(endValue, parameterValue)
+
+      if (isMatch) {
+        resultRiskValue = riskValue
         break
       }
     }
   }
-  return { value: resultValue, riskLevel: resultRiskLevel }
+  return { value: resultValue, riskValue: resultRiskValue }
 }
 
 @traceable
@@ -630,8 +659,9 @@ export class RiskScoringService {
     for (const parameterAttributeDetails of relevantRiskFactors) {
       let matchedRiskLevels: {
         value: unknown
-        riskLevel: RiskLevel
+        riskValue: RiskScoreValueLevel | RiskScoreValueScore
       }[] = []
+
       if (parameterAttributeDetails.isDerived) {
         let derivedValues: any[] = []
         if (
@@ -673,11 +703,11 @@ export class RiskScoringService {
         matchedRiskLevels = await Promise.all(
           derivedValues.map(async (derivedValue) => ({
             value: derivedValue,
-            riskLevel: await getDerivedAttributeRiskLevel(
+            riskValue: await getDerivedAttributeRiskLevel(
               derivedValue,
               parameterAttributeDetails.riskLevelAssignmentValues,
               parameterAttributeDetails.isNullableAllowed,
-              parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL
+              parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE
             ),
           }))
         )
@@ -687,7 +717,7 @@ export class RiskScoringService {
             parameterAttributeDetails.parameter,
             entity,
             parameterAttributeDetails.riskLevelAssignmentValues,
-            parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL
+            parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE
           ),
         ]
       } else if (parameterAttributeDetails.parameterType == 'ITERABLE') {
@@ -699,13 +729,22 @@ export class RiskScoringService {
         ]
       }
 
-      matchedRiskLevels.forEach(({ riskLevel, value }) =>
+      matchedRiskLevels.forEach(({ riskValue, value }) =>
         result.push({
           entityType: parameterAttributeDetails.riskEntityType,
           parameter: parameterAttributeDetails.parameter,
-          riskLevel,
           value: value,
-          score: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
+          score:
+            riskValue.type === 'RISK_LEVEL'
+              ? getRiskScoreFromLevel(riskClassificationValues, riskValue.value)
+              : riskValue.value,
+          riskLevel:
+            riskValue.type === 'RISK_LEVEL'
+              ? riskValue.value
+              : getRiskLevelFromScore(
+                  riskClassificationValues,
+                  riskValue.value
+                ),
           weight: parameterAttributeDetails.weight,
         })
       )

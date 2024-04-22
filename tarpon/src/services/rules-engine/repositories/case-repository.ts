@@ -8,6 +8,7 @@ import {
 } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { difference, isEmpty, isNil, omitBy } from 'lodash'
+import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import {
   lookupPipelineStage,
   paginatePipeline,
@@ -27,10 +28,7 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import {
-  getRiskLevelFromScore,
-  getRiskScoreBoundsFromLevel,
-} from '@/services/risk-scoring/utils'
+import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
 import { getContext, hasFeature } from '@/core/utils/context'
 import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'

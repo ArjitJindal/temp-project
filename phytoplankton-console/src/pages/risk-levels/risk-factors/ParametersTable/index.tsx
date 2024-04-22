@@ -22,10 +22,10 @@ import {
 import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { LONG_TEXT } from '@/components/library/Table/standardDataTypes';
-import { RiskLevel } from '@/utils/risk-levels';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Tag, { TagColor } from '@/components/library/Tag';
 import { humanizeConstant } from '@/utils/humanize';
+import { RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
 
 interface Props {
   parameters: RiskLevelTable;
@@ -37,7 +37,7 @@ interface Props {
     parameter: ParameterName,
     newValues: ParameterValues,
     entityType: Entity,
-    defaultRiskLevel: RiskLevel,
+    defaultRiskLevel: RiskScoreValueLevel | RiskScoreValueScore,
     weight: number,
   ) => void;
   onActivate: (entityType: Entity, parameter: ParameterName, isActive: boolean) => void;
@@ -190,12 +190,12 @@ export default function ParametersTable(props: Props) {
                 },
               ) ?? 1
             }
-            currentDefaultRiskLevel={
+            currentDefaultValue={
               map(
                 (parameterSettings && parameterSettings[item.parameter]) ??
                   init<ParameterSettings>(),
                 (x) => {
-                  return x.defaultRiskLevel;
+                  return x.defaultValue;
                 },
               ) ?? DEFAULT_RISK_LEVEL
             }

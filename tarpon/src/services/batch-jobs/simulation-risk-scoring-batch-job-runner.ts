@@ -1,13 +1,11 @@
 import pMap from 'p-map'
 import { cloneDeep } from 'lodash'
 import { MongoClient } from 'mongodb'
+import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { RiskScoringService } from '../risk-scoring'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
-import {
-  DEFAULT_RISK_LEVEL,
-  getRiskLevelFromScore,
-} from '../risk-scoring/utils'
+import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { SimulationResultRepository } from '../simulation/repositories/simulation-result-repository'
 import { SimulationTaskRepository } from '../simulation/repositories/simulation-task-repository'

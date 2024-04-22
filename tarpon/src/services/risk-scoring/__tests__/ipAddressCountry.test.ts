@@ -1,5 +1,5 @@
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../repositories/risk-repository'
-import { DEFAULT_RISK_LEVEL } from '../utils'
+import { DEFAULT_RISK_VALUE } from '../utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -31,7 +31,10 @@ const RISK_FACTOR: (
           ],
         },
       },
-      riskLevel: 'MEDIUM',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'MEDIUM',
+      },
     },
     {
       parameterValue: {
@@ -43,11 +46,14 @@ const RISK_FACTOR: (
           ],
         },
       },
-      riskLevel: 'VERY_LOW',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'VERY_LOW',
+      },
     },
   ],
   parameterType: 'VARIABLE',
-  defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  defaultValue: DEFAULT_RISK_VALUE,
   weight: 1,
 })
 

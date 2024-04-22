@@ -12,7 +12,7 @@ import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassific
 import { RiskScoringService } from '@/services/risk-scoring'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
+import { DEFAULT_RISK_VALUE } from '@/services/risk-scoring/utils'
 
 export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'originAmountDetails.country',
@@ -20,7 +20,7 @@ export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   isActive: true,
   isDerived: false,
   riskEntityType: 'TRANSACTION',
-  defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  defaultValue: DEFAULT_RISK_VALUE,
   riskLevelAssignmentValues: [
     {
       parameterValue: {
@@ -34,7 +34,10 @@ export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
           ],
         },
       },
-      riskLevel: 'MEDIUM',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'MEDIUM',
+      },
     },
   ],
   parameterType: 'VARIABLE',
@@ -46,7 +49,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isActive: true,
       isDerived: false,
       riskEntityType: 'TRANSACTION',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
       weight: 1,
       riskLevelAssignmentValues: [
         {
@@ -61,7 +64,10 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               ],
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       parameterType: 'VARIABLE',
@@ -72,7 +78,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isDerived: false,
       weight: 1,
       riskEntityType: 'TRANSACTION',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
       riskLevelAssignmentValues: [
         {
           parameterValue: {
@@ -86,7 +92,10 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               ],
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       parameterType: 'VARIABLE',
@@ -97,7 +106,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isDerived: false,
       weight: 1,
       riskEntityType: 'TRANSACTION',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
       riskLevelAssignmentValues: [
         {
           parameterValue: {
@@ -111,7 +120,10 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               ],
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       parameterType: 'VARIABLE',
@@ -122,7 +134,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isDerived: false,
       weight: 1,
       riskEntityType: 'TRANSACTION',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
       riskLevelAssignmentValues: [
         {
           parameterValue: {
@@ -136,7 +148,10 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               ],
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       parameterType: 'VARIABLE',
@@ -147,7 +162,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isDerived: false,
       weight: 1,
       riskEntityType: 'TRANSACTION',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
       riskLevelAssignmentValues: [
         {
           parameterValue: {
@@ -161,7 +176,10 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               ],
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       parameterType: 'VARIABLE',
@@ -172,7 +190,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isDerived: false,
       weight: 1,
       riskEntityType: 'TRANSACTION',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
       riskLevelAssignmentValues: [
         {
           parameterValue: {
@@ -186,7 +204,10 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               ],
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       parameterType: 'VARIABLE',
@@ -197,7 +218,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isDerived: true,
       weight: 1,
       riskEntityType: 'TRANSACTION',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
       riskLevelAssignmentValues: [
         {
           parameterValue: {
@@ -211,7 +232,10 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               ],
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       parameterType: 'VARIABLE',
@@ -222,7 +246,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isDerived: true,
       riskEntityType: 'TRANSACTION',
       weight: 1,
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
       riskLevelAssignmentValues: [
         {
           parameterValue: {
@@ -231,7 +255,10 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               content: true,
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       isNullableAllowed: true,
@@ -253,11 +280,14 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               currency: 'USD',
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       parameterType: 'VARIABLE',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
     },
     {
       parameter: 'destinationAmountDetails.transactionAmount',
@@ -275,11 +305,14 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
               currency: 'USD',
             },
           },
-          riskLevel: 'MEDIUM',
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'MEDIUM',
+          },
         },
       ],
       parameterType: 'VARIABLE',
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultValue: DEFAULT_RISK_VALUE,
     },
   ]
 export const TEST_ITERABLE_RISK_ITEM: ParameterAttributeRiskValues = {
@@ -289,7 +322,7 @@ export const TEST_ITERABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   weight: 1,
   isDerived: false,
   riskEntityType: 'TRANSACTION',
-  defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  defaultValue: DEFAULT_RISK_VALUE,
   riskLevelAssignmentValues: [
     {
       parameterValue: {
@@ -303,7 +336,10 @@ export const TEST_ITERABLE_RISK_ITEM: ParameterAttributeRiskValues = {
           ],
         },
       },
-      riskLevel: 'MEDIUM',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'MEDIUM',
+      },
     },
   ],
   parameterType: 'ITERABLE',

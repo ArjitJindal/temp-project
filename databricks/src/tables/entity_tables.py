@@ -197,6 +197,7 @@ class EntityTables:
             count += 1
             print(f"Completed {count}/{total}")
 
+
 def backfill_transformation(entity: Entity, df: DataFrame) -> DataFrame:
     return (
         df.withColumn(

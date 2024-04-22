@@ -25,7 +25,10 @@ createKrsRiskFactorTestCases(
   'type',
   CLASSFICATIONS,
   {
-    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    defaultValue: {
+      type: 'RISK_LEVEL',
+      value: DEFAULT_RISK_LEVEL,
+    },
     weight: 1,
     parameter: 'type',
     isActive: true,
@@ -39,7 +42,10 @@ createKrsRiskFactorTestCases(
             content: 'CONSUMER',
           },
         },
-        riskLevel: 'LOW',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'LOW',
+        },
       },
     ],
     parameterType: 'VARIABLE',
@@ -66,7 +72,10 @@ createKrsRiskFactorTestCases(
   'type',
   CLASSFICATIONS,
   {
-    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    defaultValue: {
+      type: 'RISK_LEVEL',
+      value: DEFAULT_RISK_LEVEL,
+    },
     weight: 1,
     parameter: 'type',
     isActive: true,
@@ -80,7 +89,10 @@ createKrsRiskFactorTestCases(
             content: 'BUSINESS',
           },
         },
-        riskLevel: 'LOW',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'LOW',
+        },
       },
     ],
     parameterType: 'VARIABLE',

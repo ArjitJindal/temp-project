@@ -20,7 +20,10 @@ export const DEFAULT_COUNTRY_RISK_VALUES: ParameterValues = [
         ],
       },
     },
-    riskLevel: 'VERY_HIGH',
+    riskValue: {
+      type: 'RISK_LEVEL',
+      value: 'VERY_HIGH',
+    },
   },
   {
     parameterValue: {
@@ -81,7 +84,10 @@ export const DEFAULT_COUNTRY_RISK_VALUES: ParameterValues = [
         ],
       },
     },
-    riskLevel: 'HIGH',
+    riskValue: {
+      type: 'RISK_LEVEL',
+      value: 'HIGH',
+    },
   },
   {
     parameterValue: {
@@ -175,7 +181,10 @@ export const DEFAULT_COUNTRY_RISK_VALUES: ParameterValues = [
         ],
       },
     },
-    riskLevel: 'LOW',
+    riskValue: {
+      type: 'RISK_LEVEL',
+      value: 'LOW',
+    },
   },
   {
     parameterValue: {
@@ -280,7 +289,10 @@ export const DEFAULT_COUNTRY_RISK_VALUES: ParameterValues = [
         ],
       },
     },
-    riskLevel: 'MEDIUM',
+    riskValue: {
+      type: 'RISK_LEVEL',
+      value: 'MEDIUM',
+    },
   },
   {
     parameterValue: {
@@ -297,6 +309,9 @@ export const DEFAULT_COUNTRY_RISK_VALUES: ParameterValues = [
         ],
       },
     },
-    riskLevel: 'VERY_LOW',
+    riskValue: {
+      type: 'RISK_LEVEL',
+      value: 'VERY_LOW',
+    },
   },
 ];

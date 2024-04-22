@@ -8156,11 +8156,13 @@ components:
       properties:
         parameterValue:
           $ref: '#/components/schemas/RiskParameterValue'
-        riskLevel:
-          $ref: '#/components/schemas/RiskLevel'
+        riskValue:
+          oneOf:
+            - $ref: '#/components/schemas/RiskScoreValueLevel'
+            - $ref: '#/components/schemas/RiskScoreValueScore'
       required:
         - parameterValue
-        - riskLevel
+        - riskValue
     RiskParameterValue:
       type: object
       properties:
@@ -8358,16 +8360,46 @@ components:
           maximum: 1
         isNullableAllowed:
           type: boolean
-        defaultRiskLevel:
-          $ref: '#/components/schemas/RiskLevel'
+        value:
+          type: object
+        defaultValue:
+          oneOf:
+            - $ref: '#/components/schemas/RiskScoreValueLevel'
+            - $ref: '#/components/schemas/RiskScoreValueScore'
       required:
         - parameter
         - isActive
         - isDerived
         - riskEntityType
         - riskLevelAssignmentValues
-        - defaultRiskLevel
+        - defaultValue
         - weight
+    RiskScoreValueLevel:
+      title: RiskScoreValueLevel
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - RISK_LEVEL
+        value:
+          $ref: '#/components/schemas/RiskLevel'
+      required:
+        - type
+        - value
+    RiskScoreValueScore:
+      title: RiskValueScore
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - RISK_SCORE
+        value:
+          type: number
+      required:
+        - type
+        - value
     Feature:
       type: string
       title: Feature

@@ -109,6 +109,7 @@ class Jobs:
         for entity in entities:
             print(f"\n\n===== Setting up {entity.table} ======")
             self.entity_tables.start_streams(entity)
+
     def optimize(self):
         for entity in entities:
             tenants = self.table_service.tenant_schemas()

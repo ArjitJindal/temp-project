@@ -1,3 +1,4 @@
+import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { sampleCurrency } from './currencies'
 import { sampleCountry } from './countries'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -5,7 +6,6 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
-import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { pickRandom, randomFloat } from '@/core/seed/samplers/prng'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'

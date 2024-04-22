@@ -1,9 +1,9 @@
 import React from 'react';
 import { DEFAULT_RENDERER, findParameter, PARAMETER_RENDERERS } from './helpers';
-import { RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { Entity, ParameterName } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
-import { RiskLevel } from '@/utils/risk-levels';
+import { RiskLevel } from '@/apis';
+import { RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
 
 export interface TableRow {
   entityType: Entity;
@@ -55,8 +55,8 @@ export const columns = helper.list([
       render: (value) => <>{Number(value ?? 1)}</>,
     },
   }),
-  helper.simple({
-    title: 'Risk level',
+  helper.simple<'riskLevel'>({
+    title: 'Risk value',
     key: 'riskLevel',
     type: RISK_LEVEL,
   }),

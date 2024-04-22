@@ -312,7 +312,10 @@ describe('Simulation (Pulse) batch job runner', () => {
                       ],
                     },
                   },
-                  riskLevel: 'LOW',
+                  riskValue: {
+                    type: 'RISK_LEVEL',
+                    value: 'LOW',
+                  },
                 },
                 {
                   parameterValue: {
@@ -326,11 +329,17 @@ describe('Simulation (Pulse) batch job runner', () => {
                       ],
                     },
                   },
-                  riskLevel: 'MEDIUM',
+                  riskValue: {
+                    type: 'RISK_LEVEL',
+                    value: 'MEDIUM',
+                  },
                 },
               ],
               parameterType: 'VARIABLE',
-              defaultRiskLevel: DEFAULT_RISK_LEVEL,
+              defaultValue: {
+                type: 'RISK_LEVEL',
+                value: DEFAULT_RISK_LEVEL,
+              },
               weight: 1,
             },
             {
@@ -351,7 +360,10 @@ describe('Simulation (Pulse) batch job runner', () => {
                       ],
                     },
                   },
-                  riskLevel: 'LOW',
+                  riskValue: {
+                    type: 'RISK_LEVEL',
+                    value: 'LOW',
+                  },
                 },
                 {
                   parameterValue: {
@@ -365,11 +377,17 @@ describe('Simulation (Pulse) batch job runner', () => {
                       ],
                     },
                   },
-                  riskLevel: 'MEDIUM',
+                  riskValue: {
+                    type: 'RISK_LEVEL',
+                    value: 'MEDIUM',
+                  },
                 },
               ],
               parameterType: 'VARIABLE',
-              defaultRiskLevel: DEFAULT_RISK_LEVEL,
+              defaultValue: {
+                type: 'RISK_LEVEL',
+                value: DEFAULT_RISK_LEVEL,
+              },
               weight: 1,
             },
           ],

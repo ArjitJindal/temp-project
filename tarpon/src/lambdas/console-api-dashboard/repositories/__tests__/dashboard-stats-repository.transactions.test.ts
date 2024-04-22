@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
+import { getRiskScoreFromLevel } from '@flagright/lib/utils/risk'
 import {
   getStatsRepo,
   getTransactionsRepo,
@@ -10,7 +11,6 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/all'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
-import { getRiskScoreFromLevel } from '@/services/risk-scoring/utils'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 
 withFeatureHook(['RISK_SCORING'])

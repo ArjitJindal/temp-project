@@ -306,12 +306,12 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       const entity = parameterAttributeRiskValue.riskEntityType;
       const parameter = parameterAttributeRiskValue.parameter;
       const isActive = parameterAttributeRiskValue.isActive;
-      const defaultRiskLevel = parameterAttributeRiskValue.defaultRiskLevel;
+      const defaultValue = parameterAttributeRiskValue.defaultValue;
       const weight = parameterAttributeRiskValue.weight;
       const values = parameterAttributeRiskValue.riskLevelAssignmentValues;
       const settings: ParameterSettings = {
         isActive,
-        defaultRiskLevel,
+        defaultValue,
         weight,
         values,
       };

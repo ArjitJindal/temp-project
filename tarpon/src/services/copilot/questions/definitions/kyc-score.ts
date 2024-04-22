@@ -37,7 +37,7 @@ export const KycScoring: TableQuestion<{ userId: string }> = {
         displayNames[c.parameter],
         c.value,
         c.score.toFixed(0),
-        c.riskLevel,
+        c.value,
       ]) || []
     items.push([
       'KYC risk score (KRS)',

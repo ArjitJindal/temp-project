@@ -1,5 +1,5 @@
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../repositories/risk-repository'
-import { DEFAULT_RISK_LEVEL } from '../utils'
+import { DEFAULT_RISK_VALUE } from '../utils'
 import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
@@ -30,7 +30,7 @@ createKrsRiskFactorTestCases(
   'legalEntity.companyRegistrationDetails.dateOfRegistration',
   CLASSFICATIONS,
   {
-    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    defaultValue: DEFAULT_RISK_VALUE,
     parameter: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
     isActive: true,
     isDerived: true,
@@ -44,7 +44,10 @@ createKrsRiskFactorTestCases(
             end: 5,
           },
         },
-        riskLevel: 'LOW',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'LOW',
+        },
       },
       {
         parameterValue: {
@@ -54,7 +57,10 @@ createKrsRiskFactorTestCases(
             end: 10,
           },
         },
-        riskLevel: 'HIGH',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'HIGH',
+        },
       },
     ],
     parameterType: 'VARIABLE',
@@ -111,7 +117,10 @@ createKrsRiskFactorTestCases(
             end: 5,
           },
         },
-        riskLevel: 'LOW',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'LOW',
+        },
       },
       {
         parameterValue: {
@@ -121,11 +130,14 @@ createKrsRiskFactorTestCases(
             end: 10,
           },
         },
-        riskLevel: 'HIGH',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'HIGH',
+        },
       },
     ],
     parameterType: 'VARIABLE',
-    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    defaultValue: DEFAULT_RISK_VALUE,
     weight: 1,
   },
   [
@@ -173,7 +185,10 @@ createArsRiskFactorTestCases(
             endGranularity: 'MONTHS',
           },
         },
-        riskLevel: 'LOW',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'LOW',
+        },
       },
       {
         parameterValue: {
@@ -185,7 +200,10 @@ createArsRiskFactorTestCases(
             endGranularity: 'MONTHS',
           },
         },
-        riskLevel: 'HIGH',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'HIGH',
+        },
       },
       {
         parameterValue: {
@@ -197,11 +215,14 @@ createArsRiskFactorTestCases(
             endGranularity: 'INFINITE',
           },
         },
-        riskLevel: 'VERY_HIGH',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'VERY_HIGH',
+        },
       },
     ],
     parameterType: 'VARIABLE',
-    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    defaultValue: DEFAULT_RISK_VALUE,
     weight: 1,
   },
   [
@@ -275,7 +296,10 @@ createArsRiskFactorTestCases(
             endGranularity: 'MONTHS',
           },
         },
-        riskLevel: 'LOW',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'LOW',
+        },
       },
       {
         parameterValue: {
@@ -287,7 +311,10 @@ createArsRiskFactorTestCases(
             endGranularity: 'MONTHS',
           },
         },
-        riskLevel: 'HIGH',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'HIGH',
+        },
       },
       {
         parameterValue: {
@@ -299,11 +326,14 @@ createArsRiskFactorTestCases(
             endGranularity: 'INFINITE',
           },
         },
-        riskLevel: 'VERY_HIGH',
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'VERY_HIGH',
+        },
       },
     ],
     parameterType: 'VARIABLE',
-    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+    defaultValue: DEFAULT_RISK_VALUE,
     weight: 1,
   },
   [

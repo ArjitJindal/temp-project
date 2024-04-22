@@ -1,5 +1,6 @@
 import { last } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
+import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { migrateAllTenants } from '../utils/tenant'
 import {
   getMigrationLastCompletedTimestamp,
@@ -17,7 +18,6 @@ import {
 } from '@/utils/mongodb-definitions'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { RulesEngineService } from '@/services/rules-engine'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'

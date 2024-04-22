@@ -1,4 +1,3 @@
-import { DEFAULT_RISK_LEVEL } from '../utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
@@ -41,7 +40,10 @@ const RISK_FACTOR: (
           values: [{ kind: 'LITERAL', content: 'DOMESTIC' }],
         },
       },
-      riskLevel: 'LOW',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'LOW',
+      },
     },
     {
       parameterValue: {
@@ -50,11 +52,17 @@ const RISK_FACTOR: (
           values: [{ kind: 'LITERAL', content: 'FOREIGN' }],
         },
       },
-      riskLevel: 'HIGH',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'HIGH',
+      },
     },
   ],
   parameterType: 'VARIABLE',
-  defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  defaultValue: {
+    type: 'RISK_LEVEL',
+    value: 'LOW',
+  },
   weight: 1,
 })
 

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-
 import { ValueItem } from '../RiskScoreDisplay/types';
 import AiLogoIcon from './ai-logo.react.svg';
 import { BUSINESS_DATA, CONSUMER_DATA, TRANSACTION_DATA, getRandomTimestamp } from './utils';

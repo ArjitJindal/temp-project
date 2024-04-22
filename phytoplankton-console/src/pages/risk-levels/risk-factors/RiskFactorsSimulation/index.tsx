@@ -32,7 +32,8 @@ import {
   ParameterAttributeRiskValues,
   ParameterAttributeRiskValuesParameterEnum,
   RiskEntityType,
-  RiskLevel,
+  RiskScoreValueLevel,
+  RiskScoreValueScore,
   SimulationPostResponse,
   SimulationRiskFactorsParametersRequest,
 } from '@/apis';
@@ -104,7 +105,7 @@ export function RiskFactorsSimulation() {
             ),
             riskLevelAssignmentValues: value.values,
             weight: value.weight,
-            defaultRiskLevel: value.defaultRiskLevel,
+            defaultValue: value.defaultValue,
           };
         });
       }) as ParameterAttributeRiskValues[];
@@ -177,7 +178,7 @@ export function RiskFactorsSimulation() {
     parameter: ParameterAttributeRiskValuesParameterEnum,
     newValues: ParameterValues,
     entityType: RiskEntityType,
-    defaultRiskLevel: RiskLevel,
+    defaultValue: RiskScoreValueScore | RiskScoreValueLevel,
     weight: number,
   ) => {
     setValuesResources((prevValuesResources) => {
@@ -190,7 +191,7 @@ export function RiskFactorsSimulation() {
               [parameter]: success({
                 isActive: true,
                 values: newValues,
-                defaultRiskLevel,
+                defaultValue,
                 weight,
               }),
             },

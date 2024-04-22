@@ -8,12 +8,13 @@ import {
   RiskParameterValueLiteral,
   RiskParameterValueMultiple,
   RiskParameterValueRange,
-  RiskLevel,
   RiskParameterValueTimeRange,
   RiskParameterValueDayRange,
   RiskParameterValueAmountRange,
   CurrencyCode,
   Feature,
+  RiskScoreValueLevel,
+  RiskScoreValueScore,
 } from '@/apis';
 
 export type RiskValueContent = RiskParameterValue['content'];
@@ -96,7 +97,7 @@ export type ParameterValues = RiskParameterLevelKeyValue[];
 export type ParameterSettings = {
   isActive: boolean;
   values: ParameterValues;
-  defaultRiskLevel: RiskLevel;
+  defaultValue: RiskScoreValueLevel | RiskScoreValueScore;
   weight: number;
 };
 
@@ -109,9 +110,9 @@ export interface RiskLevelTableItem {
   dataType: DataType;
   parameterType: ParameterAttributeRiskValuesParameterTypeEnum;
   targetIterableParameter?: ParameterAttributeRiskValuesTargetIterableParameterEnum;
-  risklevel?: RiskLevel;
+  riskValue?: RiskScoreValueLevel | RiskScoreValueScore;
   isNullableAllowed?: boolean;
-  defaultRiskLevel: RiskLevel;
+  defaultValue: RiskScoreValueLevel | RiskScoreValueScore;
   requiredFeatures?: Feature[];
   weight: number;
 }

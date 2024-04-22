@@ -8,14 +8,14 @@ import {
 import { Entity, ParameterName, ParameterValues } from '../../ParametersTable/types';
 import { RiskFactorsSettings } from '../SimulationResult';
 import PageTabs from '@/components/ui/PageTabs';
-import { RiskLevel } from '@/utils/risk-levels';
+import { RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
 
 interface Props {
   onSaveValues?: (
     parameter: ParameterName,
     newValues: ParameterValues,
     entityType: Entity,
-    defaultRiskLevel: RiskLevel,
+    defaultRiskLevel: RiskScoreValueScore | RiskScoreValueLevel,
     weight: number,
   ) => void;
   onActivate?: (entityType: Entity, parameter: ParameterName, isActive: boolean) => void;

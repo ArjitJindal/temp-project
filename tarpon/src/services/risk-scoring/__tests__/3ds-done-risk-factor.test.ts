@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { DEFAULT_RISK_LEVEL } from '../utils'
+import { DEFAULT_RISK_VALUE } from '../utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -58,7 +58,10 @@ const RISK_FACTOR: (
           content: undefined,
         },
       },
-      riskLevel: 'MEDIUM',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'MEDIUM',
+      },
     },
     {
       parameterValue: {
@@ -67,7 +70,10 @@ const RISK_FACTOR: (
           content: true,
         },
       },
-      riskLevel: 'VERY_LOW',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'VERY_LOW',
+      },
     },
     {
       parameterValue: {
@@ -76,12 +82,15 @@ const RISK_FACTOR: (
           content: false,
         },
       },
-      riskLevel: 'VERY_HIGH',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'VERY_HIGH',
+      },
     },
   ],
   parameterType: 'VARIABLE',
   isNullableAllowed: true,
-  defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  defaultValue: DEFAULT_RISK_VALUE,
   weight: 1,
 })
 

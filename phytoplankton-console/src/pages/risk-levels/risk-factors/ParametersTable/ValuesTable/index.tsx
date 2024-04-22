@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
 import { isEqual as equal } from 'lodash';
+import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import {
   DataType,
   Entity,
@@ -11,26 +12,27 @@ import {
   RiskValueContent,
 } from '../types';
 import {
-  DEFAULT_RISK_LEVEL,
+  DEFAULT_RISK_VALUE,
   INPUT_RENDERERS,
   NEW_VALUE_INFOS,
   NEW_VALUE_VALIDATIONS,
   VALUE_RENDERERS,
 } from '../consts';
 import style from './style.module.less';
-import { RiskLevel } from '@/apis';
+import { RiskLevel, RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { AsyncResource, getOr, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
 import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
 import { useHasPermissions } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { levelToAlias } from '@/utils/risk-levels';
+import { levelToAlias, useRiskClassificationScores } from '@/utils/risk-levels';
 import { useApi } from '@/api';
 import { SETTINGS } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import Alert from '@/components/library/Alert';
 import Slider from '@/components/library/Slider';
+import NumberInput from '@/components/library/NumberInput';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -39,10 +41,10 @@ interface Props {
     parameter: ParameterName,
     newValues: ParameterValues,
     entity: Entity,
-    defaultRiskLevel: RiskLevel,
+    defaultRiskLevel: RiskScoreValueLevel | RiskScoreValueScore,
     weight: number,
   ) => void;
-  currentDefaultRiskLevel: AsyncResource<RiskLevel>;
+  currentDefaultValue: AsyncResource<RiskScoreValueLevel | RiskScoreValueScore>;
   currentWeight: AsyncResource<number>;
   canEditParameters?: boolean;
 }
@@ -65,17 +67,19 @@ export default function ValuesTable(props: Props) {
     currentValuesRes,
     item,
     onSave,
-    currentDefaultRiskLevel,
+    currentDefaultValue,
     currentWeight,
     canEditParameters = true,
   } = props;
 
   const { parameter, dataType, entity } = item;
   const lastValues = useLastSuccessValue(currentValuesRes, []);
-  const lastDefaultRiskLevel = useLastSuccessValue(currentDefaultRiskLevel, DEFAULT_RISK_LEVEL);
+  const lastDefaultRiskValue = useLastSuccessValue(currentDefaultValue, DEFAULT_RISK_VALUE);
+  const riskClassificationQuery = useRiskClassificationScores();
+  const riskClassificationValues = getOr(riskClassificationQuery, []);
   const lastWeight = useLastSuccessValue(currentWeight, 1);
   const [values, setValues] = useState(lastValues);
-  const [defaultRiskLevel, setDefaultRiskLevel] = useState(lastDefaultRiskLevel);
+  const [defaultRiskValue, setDefaultRiskValue] = useState(lastDefaultRiskValue);
   const [weight, setWeight] = useState(lastWeight);
   const api = useApi();
   const queryData = useQuery(SETTINGS(), () => api.getTenantsSettings());
@@ -88,14 +92,14 @@ export default function ValuesTable(props: Props) {
   }, [lastValues]);
 
   const isEqual = equal(
-    { values, defaultRiskLevel, weight },
-    { values: lastValues, defaultRiskLevel: lastDefaultRiskLevel, weight: lastWeight },
+    { values, defaultRiskValue, weight },
+    { values: lastValues, defaultRiskValue: lastDefaultRiskValue, weight: lastWeight },
   );
 
   const loading = isLoading(currentValuesRes);
 
   const [newValue, setNewValue] = useState<RiskValueContent | null>(null);
-  const [newRiskLevel, setNewRiskLevel] = useState<RiskLevel>();
+  const [newRiskValue, setNewRiskValue] = useState<RiskScoreValueLevel | RiskScoreValueScore>();
   const [shouldShowNewValueInput, setShouldShowNewValueInput] = useState(true);
   const [onlyDeleteLast, setOnlyDeleteLast] = useState(false);
   const handleUpdateValues = useCallback((cb: (oldValues: ParameterValues) => ParameterValues) => {
@@ -103,28 +107,28 @@ export default function ValuesTable(props: Props) {
   }, []);
 
   const handleAdd = () => {
-    if (newValue && newRiskLevel != null) {
+    if (newValue && newRiskValue != null) {
       handleUpdateValues((oldValues) => [
         ...oldValues,
         {
           parameterValue: {
             content: newValue,
           },
-          riskLevel: newRiskLevel,
+          riskValue: newRiskValue,
         },
       ]);
       setNewValue(null);
-      setNewRiskLevel(undefined);
+      setNewRiskValue(undefined);
     }
   };
 
   const handleSave = () => {
-    onSave(parameter, values, entity, defaultRiskLevel, weight);
+    onSave(parameter, values, entity, defaultRiskValue, weight);
   };
 
   const handleCancel = () => {
     setValues(lastValues);
-    setDefaultRiskLevel(lastDefaultRiskLevel);
+    setDefaultRiskValue(lastDefaultRiskValue);
     setWeight(lastWeight);
   };
 
@@ -135,7 +139,7 @@ export default function ValuesTable(props: Props) {
       }
       return validation({
         newValue: newValue,
-        newRiskLevel: newRiskLevel ?? null,
+        newRiskValue: newRiskValue ?? null,
         newParameterName: parameter,
         previousValues: values,
       });
@@ -148,7 +152,7 @@ export default function ValuesTable(props: Props) {
       if (newValue == null || acc != null) return acc;
       return information({
         newValue: newValue,
-        newRiskLevel: newRiskLevel ?? null,
+        newRiskValue: newRiskValue ?? null,
         newParameterName: parameter,
         previousValues: values,
         defaultCurrency: defaultCurrency,
@@ -169,11 +173,12 @@ export default function ValuesTable(props: Props) {
 
   const handleRemoveValue = useCallback(
     (value: string) => {
-      const newValues = values.map(({ parameterValue: { content }, riskLevel }) => {
-        if (content.kind !== 'MULTIPLE') return { parameterValue: { content }, riskLevel };
+      const newValues = values.map(({ parameterValue: { content }, riskValue }) => {
+        if (content.kind !== 'MULTIPLE') return { parameterValue: { content }, riskValue };
         content.values = content.values.filter(({ content: val }) => val !== value);
-        return { parameterValue: { content }, riskLevel };
+        return { parameterValue: { content }, riskValue };
       });
+
       handleUpdateValues(() =>
         newValues.filter(({ parameterValue: { content } }) =>
           content.kind === 'MULTIPLE' ? content.values.length > 0 : true,
@@ -221,6 +226,7 @@ export default function ValuesTable(props: Props) {
           />
         </div>
         <div /> {/* Empty div to align with the rest of the table */}
+        <div /> {/* Empty div to align with the rest of the table */}
         <div className={style.topHeader}>
           <div className={style.header}>Default risk level</div>
           <P grey variant="m" fontWeight="normal" className={style.description}>
@@ -230,19 +236,43 @@ export default function ValuesTable(props: Props) {
           </P>
         </div>
         <div className={style.risk}>
+          <div className={style.header}>Risk level</div>
           <RiskLevelSwitch
             isDisabled={loading || !hasWritePermissions}
-            value={defaultRiskLevel}
+            value={
+              defaultRiskValue.type === 'RISK_LEVEL'
+                ? defaultRiskValue.value
+                : getRiskLevelFromScore(riskClassificationValues, defaultRiskValue.value)
+            }
             onChange={(newRiskLevel) => {
               if (newRiskLevel != null) {
-                setDefaultRiskLevel(newRiskLevel);
+                setDefaultRiskValue({ type: 'RISK_LEVEL', value: newRiskLevel });
               }
             }}
+          />
+        </div>
+        <div>
+          <div className={style.header}>Risk score (0-100)</div>
+          <NumberInput
+            onChange={(value) => {
+              if (value != null) {
+                setDefaultRiskValue({ type: 'RISK_SCORE', value });
+              }
+            }}
+            value={
+              defaultRiskValue.type === 'RISK_SCORE'
+                ? defaultRiskValue.value
+                : getRiskScoreFromLevel(riskClassificationValues, defaultRiskValue.value)
+            }
+            min={0}
+            max={100}
+            step={0.01}
           />
         </div>
         <div /> {/* Empty div to align with the rest of the table */}
         <div className={style.header}>Value</div>
         <div className={style.header}>Risk level</div>
+        <div className={style.header}>Risk score (0-100)</div>
         <div className={style.header}>
           {item.dataType === 'COUNTRY' && (
             <Button onClick={() => handleSetDefaultValues()} size="small" type="primary" block>
@@ -250,7 +280,7 @@ export default function ValuesTable(props: Props) {
             </Button>
           )}
         </div>
-        {values.map(({ parameterValue, riskLevel }, index) => {
+        {values.map(({ parameterValue, riskValue }, index) => {
           const handleChangeRiskLevel = (newRiskLevel: RiskLevel | undefined) => {
             if (newRiskLevel != null) {
               handleUpdateValues((values) =>
@@ -258,7 +288,28 @@ export default function ValuesTable(props: Props) {
                   x.parameterValue === parameterValue
                     ? {
                         ...x,
-                        riskLevel: newRiskLevel,
+                        riskValue: {
+                          type: 'RISK_LEVEL',
+                          value: newRiskLevel,
+                        },
+                      }
+                    : x,
+                ),
+              );
+            }
+          };
+
+          const handleChangeRiskScore = (newRiskScore: number | undefined) => {
+            if (newRiskScore != null) {
+              handleUpdateValues((values) =>
+                values.map((x) =>
+                  x.parameterValue === parameterValue
+                    ? {
+                        ...x,
+                        riskValue: {
+                          type: 'RISK_SCORE',
+                          value: newRiskScore,
+                        },
                       }
                     : x,
                 ),
@@ -283,8 +334,26 @@ export default function ValuesTable(props: Props) {
               <div style={labelExistsStyle(dataType, 'value')}>
                 <RiskLevelSwitch
                   isDisabled={loading || !hasWritePermissions}
-                  value={riskLevel}
+                  value={
+                    riskValue.type === 'RISK_LEVEL'
+                      ? riskValue.value
+                      : getRiskLevelFromScore(riskClassificationValues, riskValue.value)
+                  }
                   onChange={handleChangeRiskLevel}
+                />
+              </div>
+              <div style={labelExistsStyle(dataType, 'value')}>
+                <NumberInput
+                  value={
+                    riskValue.type === 'RISK_SCORE'
+                      ? riskValue.value
+                      : getRiskScoreFromLevel(riskClassificationValues, riskValue.value)
+                  }
+                  onChange={handleChangeRiskScore}
+                  isDisabled={loading || !hasWritePermissions}
+                  min={0}
+                  max={100}
+                  step={0.01}
                 />
               </div>
               <div style={labelExistsStyle(dataType, 'value')}>
@@ -322,8 +391,38 @@ export default function ValuesTable(props: Props) {
               <div style={labelExistsStyle(dataType, 'input')}>
                 <RiskLevelSwitch
                   isDisabled={loading || !hasWritePermissions}
-                  value={newRiskLevel}
-                  onChange={setNewRiskLevel}
+                  value={
+                    newRiskValue?.type === 'RISK_LEVEL'
+                      ? newRiskValue.value
+                      : newRiskValue?.value != null
+                      ? getRiskLevelFromScore(riskClassificationValues, newRiskValue.value)
+                      : undefined
+                  }
+                  onChange={(newRiskLevel) => {
+                    if (newRiskLevel != null) {
+                      setNewRiskValue({ type: 'RISK_LEVEL', value: newRiskLevel });
+                    }
+                  }}
+                />
+              </div>
+              <div style={labelExistsStyle(dataType, 'input')}>
+                <NumberInput
+                  isDisabled={loading || !hasWritePermissions}
+                  value={
+                    newRiskValue?.type === 'RISK_SCORE'
+                      ? newRiskValue.value
+                      : newRiskValue?.value != null
+                      ? getRiskScoreFromLevel(riskClassificationValues, newRiskValue.value)
+                      : undefined
+                  }
+                  onChange={(value) => {
+                    if (value != null) {
+                      setNewRiskValue({ type: 'RISK_SCORE', value });
+                    }
+                  }}
+                  min={0}
+                  max={100}
+                  step={0.01}
                 />
               </div>
               <div style={labelExistsStyle(dataType, 'input')}>
@@ -332,7 +431,7 @@ export default function ValuesTable(props: Props) {
                   disabled={
                     loading ||
                     !newValue ||
-                    newRiskLevel == null ||
+                    newRiskValue == null ||
                     newValueValidationMessage != null ||
                     !hasWritePermissions
                   }
@@ -353,6 +452,10 @@ export default function ValuesTable(props: Props) {
           )}
         </div>
       </div>
+      <Alert
+        type="info"
+        children="Please note the risk level will automatically convert to risk score. You can also manually update the risk score and it will be considered in risk algorithm calculation."
+      />
       <div className={style.footer}>
         <Button disabled={loading || isEqual || !hasWritePermissions} onClick={handleCancel}>
           Cancel

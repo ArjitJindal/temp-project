@@ -73,7 +73,10 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
       {
         parameter: 'type',
         riskEntityType: 'CONSUMER_USER',
-        defaultRiskLevel: 'VERY_HIGH',
+        defaultValue: {
+          type: 'RISK_LEVEL',
+          value: 'VERY_HIGH',
+        },
         isActive: true,
         parameterType: 'VARIABLE',
         isDerived: true,
@@ -85,7 +88,10 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
                 values: [{ kind: 'LITERAL', content: 'CONSUMER' }],
               },
             },
-            riskLevel: 'LOW',
+            riskValue: {
+              type: 'RISK_LEVEL',
+              value: 'LOW',
+            },
           },
         ],
         weight: 0.16,
@@ -103,7 +109,10 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
                 values: [{ kind: 'LITERAL', content: 'IN' }],
               },
             },
-            riskLevel: 'HIGH',
+            riskValue: {
+              type: 'RISK_LEVEL',
+              value: 'HIGH',
+            },
           },
           {
             parameterValue: {
@@ -112,12 +121,18 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
                 values: [{ kind: 'LITERAL', content: 'US' }],
               },
             },
-            riskLevel: 'VERY_LOW',
+            riskValue: {
+              type: 'RISK_LEVEL',
+              value: 'VERY_LOW',
+            },
           },
         ],
         parameterType: 'VARIABLE',
         weight: 1,
-        defaultRiskLevel: 'VERY_HIGH',
+        defaultValue: {
+          type: 'RISK_LEVEL',
+          value: 'VERY_HIGH',
+        },
       },
     ]
 

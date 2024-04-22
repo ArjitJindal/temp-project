@@ -31,7 +31,10 @@ const RISK_FACTOR: (
           ],
         },
       },
-      riskLevel: 'MEDIUM',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'MEDIUM',
+      },
     },
     {
       parameterValue: {
@@ -43,11 +46,17 @@ const RISK_FACTOR: (
           ],
         },
       },
-      riskLevel: 'VERY_LOW',
+      riskValue: {
+        type: 'RISK_LEVEL',
+        value: 'VERY_LOW',
+      },
     },
   ],
   parameterType: 'VARIABLE',
-  defaultRiskLevel: 'LOW',
+  defaultValue: {
+    type: 'RISK_LEVEL',
+    value: 'LOW',
+  },
   weight: 1,
 })
 

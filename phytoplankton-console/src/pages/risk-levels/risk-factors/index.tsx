@@ -5,7 +5,7 @@ import ParametersTable from './ParametersTable';
 import {
   ALL_RISK_PARAMETERS,
   BUSINESS_RISK_PARAMETERS,
-  DEFAULT_RISK_LEVEL,
+  DEFAULT_RISK_VALUE,
   TRANSACTION_RISK_PARAMETERS,
   USER_RISK_PARAMETERS,
 } from './ParametersTable/consts';
@@ -20,13 +20,12 @@ import {
   ParameterSettings,
   ParameterValues,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
-import { ParameterAttributeRiskValues } from '@/apis';
+import { ParameterAttributeRiskValues, RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 import { message } from '@/components/library/Message';
-import { RiskLevel } from '@/utils/risk-levels';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 import { notEmpty } from '@/utils/array';
 
@@ -127,7 +126,7 @@ export function RiskFactors(props: { type: string }) {
               targetIterableParameter: riskLevelTableItem.targetIterableParameter,
               riskEntityType: riskLevelTableItem.entity,
               riskLevelAssignmentValues: settings.values,
-              defaultRiskLevel: settings.defaultRiskLevel,
+              defaultValue: settings.defaultValue,
               weight: settings.weight,
             },
           },
@@ -138,7 +137,7 @@ export function RiskFactors(props: { type: string }) {
           success<ParameterSettings>({
             isActive: response.isActive,
             values: response.riskLevelAssignmentValues,
-            defaultRiskLevel: response.defaultRiskLevel,
+            defaultValue: response.defaultValue,
             weight: response.weight,
           }),
         );
@@ -162,7 +161,7 @@ export function RiskFactors(props: { type: string }) {
       parameter: ParameterName,
       newValues: ParameterValues,
       entityType: Entity,
-      defaultRiskLevel: RiskLevel,
+      defaultValue: RiskScoreValueLevel | RiskScoreValueScore,
       weight: number,
     ) => {
       const currentParams = getOr<ParameterSettings | null>(
@@ -173,7 +172,7 @@ export function RiskFactors(props: { type: string }) {
         onUpdateParameter(entityType, parameter, {
           ...currentParams,
           values: newValues,
-          defaultRiskLevel: defaultRiskLevel,
+          defaultValue,
           weight,
         });
       }
@@ -211,7 +210,7 @@ export function RiskFactors(props: { type: string }) {
           success<ParameterSettings>({
             isActive: response?.isActive ?? false,
             values: response?.riskLevelAssignmentValues ?? [],
-            defaultRiskLevel: response?.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
+            defaultValue: response?.defaultValue ?? DEFAULT_RISK_VALUE,
             weight: response?.weight ?? 1,
           }),
         );
@@ -223,7 +222,7 @@ export function RiskFactors(props: { type: string }) {
           success<ParameterSettings>({
             isActive: false,
             values: [],
-            defaultRiskLevel: DEFAULT_RISK_LEVEL,
+            defaultValue: DEFAULT_RISK_VALUE,
             weight: 1,
           }),
         );
