@@ -19,6 +19,7 @@ import { WebhookDeliveryTask } from '@/@types/webhook'
 import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
 import { createSqsEvent } from '@/test-utils/sqs-test-utils'
 import dayjs from '@/utils/dayjs'
+import * as TenantUtils from '@/utils/tenant'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const getPort = require('get-port')
@@ -44,13 +45,18 @@ async function startTestWebhookServer(
   return `http://localhost:${port}`
 }
 
-function getExpectedRequestHeaders(payload: any) {
+function getExpectedRequestHeaders(
+  payload: any,
+  isWhitelabelAuth0Domain: boolean = false
+) {
   const hmac = createHmac('sha256', MOCK_SECRET_KEY)
   hmac.update(JSON.stringify(payload))
   const receiverCalculatedSignature = hmac.digest('hex')
+
   return {
     'content-type': 'application/json',
-    'x-flagright-signature': receiverCalculatedSignature,
+    [isWhitelabelAuth0Domain ? 'x-webhook-signature' : 'x-flagright-signature']:
+      receiverCalculatedSignature,
   }
 }
 
@@ -81,82 +87,91 @@ describe('Webhook delivery', () => {
   })
 
   describe('Enabled webhook', () => {
-    test('POST to external webhook server with correct payload and headers', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookDeliveryRepository = new WebhookDeliveryRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      let receivedPayload = undefined
-      let receivedHeaders = undefined
-      const webhookUrl = await startTestWebhookServer(
-        {
-          status: 200,
-          headers: {
-            foo: 'bar',
+    for (const isWhitelabelAuth0Domain of [true, false]) {
+      test(`POST to external webhook server with correct payload and headers (isWhitelabelAuth0Domain=${isWhitelabelAuth0Domain})`, async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookDeliveryRepository = new WebhookDeliveryRepository(
+          TEST_TENANT_ID,
+          await getMongoDbClient()
+        )
+
+        jest
+          .spyOn(TenantUtils, 'isTenantWhitelabeled')
+          .mockResolvedValue(isWhitelabelAuth0Domain)
+
+        let receivedPayload = undefined
+        let receivedHeaders = undefined
+        const webhookUrl = await startTestWebhookServer(
+          {
+            status: 200,
+            headers: {
+              foo: 'bar',
+            },
+            body: 'OK',
           },
-          body: 'OK',
-        },
-        async (headers, payload) => {
-          receivedHeaders = headers
-          receivedPayload = payload
+          async (headers, payload) => {
+            receivedHeaders = headers
+            receivedPayload = payload
+          }
+        )
+        const webhookRepository = new WebhookRepository(
+          TEST_TENANT_ID,
+          await getMongoDbClient()
+        )
+        await webhookRepository.saveWebhook({
+          _id: ACTIVE_WEBHOOK_ID,
+          webhookUrl: webhookUrl,
+          events: ['USER_STATE_UPDATED'],
+          enabled: true,
+        })
+
+        const deliveryTask: WebhookDeliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: { statusReason: 'reason', status: 'DELETED' },
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: ACTIVE_WEBHOOK_ID,
+          createdAt: Date.now(),
+          triggeredBy: 'SYSTEM',
         }
-      )
-      const webhookRepository = new WebhookRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl: webhookUrl,
-        events: ['USER_STATE_UPDATED'],
-        enabled: true,
+        const expectedPayload = getExpectedPayload(deliveryTask)
+        await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+
+        const command = smMock.commandCalls(GetSecretValueCommand)[0].firstArg
+        expect(command.input.SecretId).toEqual(
+          `${TEST_TENANT_ID}/webhooks/${deliveryTask.webhookId}`
+        )
+
+        // Check headers
+        const expectedReceivedHeaders = getExpectedRequestHeaders(
+          receivedPayload,
+          isWhitelabelAuth0Domain
+        )
+        expect(receivedHeaders).toMatchObject(expectedReceivedHeaders)
+
+        // Check payload
+        expect(receivedPayload).toEqual(expectedPayload)
+
+        // Check webhook delivery history
+        const attempt =
+          (await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
+            deliveryTask._id
+          )) as WebhookDeliveryAttempt
+        expect(attempt).toMatchObject({
+          deliveryTaskId: deliveryTask._id,
+          event: deliveryTask.event,
+          eventCreatedAt: deliveryTask.createdAt,
+          requestStartedAt: expect.any(Number),
+          requestFinishedAt: expect.any(Number),
+          request: {
+            headers: expectedReceivedHeaders,
+            body: JSON.stringify(receivedPayload),
+          },
+        })
+        expect(attempt.response?.status).toEqual(200)
+        expect(attempt.response?.body).toEqual('OK')
       })
-
-      const deliveryTask: WebhookDeliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: { statusReason: 'reason', status: 'DELETED' },
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        createdAt: Date.now(),
-        triggeredBy: 'SYSTEM',
-      }
-      const expectedPayload = getExpectedPayload(deliveryTask)
-      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-
-      const command = smMock.commandCalls(GetSecretValueCommand)[0].firstArg
-      expect(command.input.SecretId).toEqual(
-        `${TEST_TENANT_ID}/webhooks/${deliveryTask.webhookId}`
-      )
-
-      // Check headers
-      const expectedReceivedHeaders = getExpectedRequestHeaders(receivedPayload)
-      expect(receivedHeaders).toMatchObject(expectedReceivedHeaders)
-
-      // Check payload
-      expect(receivedPayload).toEqual(expectedPayload)
-
-      // Check webhook delivery history
-      const attempt =
-        (await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
-          deliveryTask._id
-        )) as WebhookDeliveryAttempt
-      expect(attempt).toMatchObject({
-        deliveryTaskId: deliveryTask._id,
-        event: deliveryTask.event,
-        eventCreatedAt: deliveryTask.createdAt,
-        requestStartedAt: expect.any(Number),
-        requestFinishedAt: expect.any(Number),
-        request: {
-          headers: expectedReceivedHeaders,
-          body: JSON.stringify(receivedPayload),
-        },
-      })
-      expect(attempt.response?.status).toEqual(200)
-      expect(attempt.response?.body).toEqual('OK')
-    })
-
+    }
     test('POST to invalid webhook server should throw error', async () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookDeliveryRepository = new WebhookDeliveryRepository(

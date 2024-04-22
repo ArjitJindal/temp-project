@@ -1,3 +1,8 @@
+import { memoize } from 'lodash'
+import { getDynamoDbClient } from './dynamodb'
+import { isWhitelabelAuth0Domain } from './auth0-utils'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+
 export const getFullTenantId = (tenantId: string, demoMode: boolean) => {
   if (tenantId.endsWith('-test')) {
     return tenantId
@@ -8,3 +13,20 @@ export const getFullTenantId = (tenantId: string, demoMode: boolean) => {
 export const isDemoTenant = (tenantId: string) => {
   return tenantId.endsWith('-test')
 }
+
+export const isTenantWhitelabeled = memoize(
+  async (tenantId) => {
+    const dynamoDb = getDynamoDbClient()
+    const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
+
+    const tenantSettings = await tenantRepository.getTenantSettings([
+      'auth0Domain',
+    ])
+
+    return (
+      !!tenantSettings.auth0Domain &&
+      isWhitelabelAuth0Domain(tenantSettings.auth0Domain)
+    )
+  },
+  (tenantId) => tenantId
+)

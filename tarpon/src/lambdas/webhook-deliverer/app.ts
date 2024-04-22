@@ -24,6 +24,7 @@ import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 import { updateLogMetadata, withContext } from '@/core/utils/context'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
+import { isTenantWhitelabeled } from '@/utils/tenant'
 
 export class ClientServerError extends Error {}
 
@@ -71,10 +72,18 @@ async function deliverWebhookEvent(
     ? Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC)
     : 10
 
+  const isWhitelabeledTenant = await isTenantWhitelabeled(
+    webhookDeliveryTask.tenantId
+  )
+
+  const header = isWhitelabeledTenant
+    ? 'x-webhook-signature'
+    : 'x-flagright-signature'
+
   const fetchOptions = {
     method: 'POST',
     headers: {
-      'x-flagright-signature': hmacSignatures,
+      [header]: hmacSignatures,
       'content-type': 'application/json',
     },
     body: postPayloadString,
