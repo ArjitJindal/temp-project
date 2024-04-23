@@ -51,7 +51,7 @@ jobs:
         working-directory: "lib"
       - run: yarn install --immutable
         working-directory: "tarpon"
-      - run: yarn run openapi:prepare
+      - run: yarn run openapi:format && yarn run openapi:prepare
         working-directory: "tarpon"
       - run: yarn run build:local
         working-directory: "tarpon"

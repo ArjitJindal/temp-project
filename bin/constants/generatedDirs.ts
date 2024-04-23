@@ -7,10 +7,6 @@ const GENERATED_DIRS = [
   'src/@types/openapi-public-custom',
   'src/@types/openapi-public-management',
   'src/@types/openapi-public-management-custom',
-  'src/@types/openapi-public-device-data',
-  'src/@types/openapi-public-device-data-custom',
-  'src/@types/openapi-public-sanctions',
-  'src/@types/openapi-public-sanctions-custom',
   '.gen',
 ]
 

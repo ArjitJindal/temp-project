@@ -66,7 +66,7 @@
     "lint-staged": "lint-staged",
     "openapi:build": "scripts/openapi/openapi_generate_sdk.ts",
     "openapi:format": "scripts/openapi/openapi_format.js && prettier --write lib/openapi/**/*.yaml",
-    "openapi:prepare": "yarn openapi:format && scripts/openapi/openapi_prepare.js",
+    "openapi:prepare": "scripts/openapi/openapi_prepare.js",
     "openapi:augment": "yarn openapi:prepare && lib/openapi/openapi-public-augmentor.ts && lib/openapi/openapi-public-management-augmentor.ts && lib/openapi/openapi-internal-augmentor.ts",
     "start-local-api": "yarn openapi:build && yarn openapi:augment && ENV=local ts-node-dev --transpile-only --inspect=4321 -r tsconfig-paths/register local-api-server.ts --exit-child",
     "recreate-local-ddb": "npm run delete-local-ddb --table=$npm_config_table; npm run create-local-ddb --table=$npm_config_table",

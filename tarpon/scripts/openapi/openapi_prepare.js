@@ -3,7 +3,6 @@ const fs = require('fs-extra')
 const path = require('path')
 const mkdirp = require('mkdirp')
 const _ = require('lodash')
-require('dotenv').config()
 
 const {
   PROJECT_DIR,

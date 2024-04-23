@@ -158,7 +158,6 @@
     "cypress": "^12.17.1",
     "detect-installer": "^1.0.1",
     "detect-port": "^1.5.1",
-    "dotenv": "^16.0.1",
     "esbuild": "^0.15.5",
     "esbuild-jest": "^0.5.0",
     "eslint": "8.22.0",
