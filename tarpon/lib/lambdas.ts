@@ -83,12 +83,6 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME]: {
-    codePath: 'public-device-data',
-    handlerName: 'deviceDataHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
-  },
   [StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME]: {
     codePath: 'public-management-api-rule',
     handlerName: 'ruleInstanceHandler',
@@ -251,12 +245,6 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME]: {
-    codePath: 'console-api-device-data',
-    handlerName: 'deviceDataHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
-  },
   [StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]: {
     codePath: 'tarpon-change-mongodb-consumer',
     handlerName: 'tarponChangeMongoDbHandler',
@@ -291,12 +279,6 @@ export const LAMBDAS: {
   [StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME]: {
     codePath: 'incoming-webhooks',
     handlerName: 'webhooksHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
-  },
-  [StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME]: {
-    codePath: 'public-sanctions-api-sanctions',
-    handlerName: 'sanctionsHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },

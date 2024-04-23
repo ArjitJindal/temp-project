@@ -98,9 +98,6 @@ export const StackConstants = {
   PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiRuleFunction'
   ),
-  PUBLIC_DEVICE_DATA_API_FUNCTION_NAME: getResourceNameForTarpon(
-    'PublicDeviceDataApiMetricFunction'
-  ),
   PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiRuleInstanceFunction'
   ),
@@ -109,9 +106,6 @@ export const StackConstants = {
   ),
   PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiAlertFunction'
-  ),
-  PUBLIC_SANCTIONS_API_FUNCTION_NAME: getResourceNameForTarpon(
-    'PublicSanctionsApiMetricFunction'
   ),
   CONSOLE_API_RULE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRuleTemplateFunction'
@@ -193,22 +187,11 @@ export const StackConstants = {
     'TarponApiThrottlingCount'
   ),
   TARPON_MANAGEMENT_API_NAME: getResourceName('TarponManagementAPI'),
-  TARPON_DEVICE_DATA_API_NAME: getResourceName('TarponDeviceDataAPI'),
-  TARPON_SANCTIONS_API_NAME: getResourceName('TarponSanctionsAPI'),
   TARPON_MANAGEMENT_API_GATEWAY_ALARM_NAME: getResourceName(
     'TarponManagementApiErrorPercentage'
   ),
   TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
     'TarponManagementApiThrottlingCount'
-  ),
-  TARPON_DEVICE_DATA_API_GATEWAY_ALARM_NAME: getResourceName(
-    'TarponDeviceDataApiErrorPercentage'
-  ),
-  TARPON_DEVICE_DATA_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
-    'TarponDeviceDataApiThrottlingCount'
-  ),
-  TARPON_SANCTIONS_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
-    'TarponSanctionsApiThrottlingCount'
   ),
   CONSOLE_API_NAME: getResourceName('TarponAPI-console'),
   CONSOLE_API_GATEWAY_ALARM_NAME: getResourceName(
@@ -235,9 +218,6 @@ export const StackConstants = {
   ),
   CONSOLE_API_SIMULATION_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSimulationFunction'
-  ),
-  CONSOLE_API_DEVICE_DATA_FUNCTION_NAME: getResourceNameForTarpon(
-    'ConsoleApiDeviceDataFunction'
   ),
   CONSOLE_API_AUDIT_LOG_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiAuditLogFunction'

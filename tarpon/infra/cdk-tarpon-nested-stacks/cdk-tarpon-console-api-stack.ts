@@ -262,11 +262,6 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       name: StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
     })
 
-    /* Device Data */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
-    })
-
     /* Sanctions */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,

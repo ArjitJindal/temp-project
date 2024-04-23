@@ -233,8 +233,6 @@ export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
   alertId,
   'comments',
 ];
-export const DEVICE_DATA_USER = (userId?: string): QueryKey =>
-  ['device-data', 'user', userId].filter(Boolean);
 export const RISK_CLASSIFICATION_VALUES = (): QueryKey => ['risk-classification-values'];
 export const NARRATIVE_TEMPLATE_LIST = (params?: AnyParameters): QueryKey => [
   'narrative-templates',

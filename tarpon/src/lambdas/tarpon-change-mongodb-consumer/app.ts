@@ -22,8 +22,6 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
-import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -279,27 +277,6 @@ async function userEventHandler(
   )
 }
 
-async function deviceDataMetricsHandler(
-  tenantId: string,
-  deviceMetrics: DeviceMetric | undefined
-) {
-  if (!deviceMetrics || !deviceMetrics.userId) {
-    return
-  }
-  updateLogMetadata({
-    userId: deviceMetrics.userId,
-  })
-  logger.info(`Processing Device Metric`)
-
-  const mongoDb = await getMongoDbClient()
-  const metricsRepository = new MetricsRepository(tenantId, {
-    mongoDb: mongoDb,
-  })
-  await metricsRepository.saveMetricMongo(
-    omit(deviceMetrics, DYNAMO_KEYS) as DeviceMetric
-  )
-}
-
 async function transactionEventHandler(
   tenantId: string,
   transactionEvent: TransactionEvent | undefined
@@ -342,9 +319,6 @@ const tarponBuilder = new StreamConsumerBuilder(
   )
   .setUserEventHandler((tenantId, oldUserEvent, newUserEvent) =>
     userEventHandler(tenantId, newUserEvent)
-  )
-  .setDeviceDataMetricsHandler((tenantId, oldUserEvent, newUserEvent) =>
-    deviceDataMetricsHandler(tenantId, newUserEvent)
   )
   .setTransactionEventHandler(
     (tenantId, oldTransactionEvent, newTransactionEvent) =>

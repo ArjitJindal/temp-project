@@ -676,11 +676,6 @@ export class CdkTarponStack extends cdk.Stack {
       name: StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
     })
 
-    /* Device Data (Public) */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME,
-    })
-
     /* User */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
@@ -1081,11 +1076,6 @@ export class CdkTarponStack extends cdk.Stack {
       )
     }
 
-    // Public Sanctions handler
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME,
-    })
-
     /**
      * API Gateway
      * Open Issue: CDK+OpenAPI proper integration - https://github.com/aws/aws-cdk/issues/1461
@@ -1163,40 +1153,6 @@ export class CdkTarponStack extends cdk.Stack {
       publicConsoleApi.restApiName
     )
 
-    // Public Device Data API
-    const { api: publicDeviceDataApi, logGroup: publicDeviceDataApiLogGroup } =
-      createApiGateway(this, StackConstants.TARPON_DEVICE_DATA_API_NAME)
-
-    if (domainName) {
-      domainName.addBasePathMapping(publicDeviceDataApi, {
-        basePath: 'device',
-      })
-    }
-
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      publicDeviceDataApiLogGroup,
-      StackConstants.TARPON_DEVICE_DATA_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicDeviceDataApi.restApiName
-    )
-
-    // Public Sanctions API
-    const { api: publicSanctionsApi, logGroup: publicSanctionsApiLogGroup } =
-      createApiGateway(this, StackConstants.TARPON_SANCTIONS_API_NAME)
-    if (domainName) {
-      domainName.addBasePathMapping(publicSanctionsApi, {
-        basePath: 'sanctions',
-      })
-    }
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      publicSanctionsApiLogGroup,
-      StackConstants.TARPON_SANCTIONS_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicSanctionsApi.restApiName
-    )
-
     if (isDevUserStack) {
       const apiKey = ApiKey.fromApiKeyId(this, `api-key`, getQaApiKeyId())
       const postManTenantApiKey = ApiKey.fromApiKeyId(
@@ -1213,20 +1169,12 @@ export class CdkTarponStack extends cdk.Stack {
         },
         apiStages: [
           {
-            api: publicDeviceDataApi,
-            stage: publicDeviceDataApi.deploymentStage,
-          },
-          {
             api: publicConsoleApi,
             stage: publicConsoleApi.deploymentStage,
           },
           {
             api: publicApi,
             stage: publicApi.deploymentStage,
-          },
-          {
-            api: publicSanctionsApi,
-            stage: publicSanctionsApi.deploymentStage,
           },
         ],
       })
@@ -1339,9 +1287,6 @@ export class CdkTarponStack extends cdk.Stack {
     })
     new CfnOutput(this, 'API Gateway endpoint URL - Public Management API', {
       value: publicConsoleApi.urlForPath('/'),
-    })
-    new CfnOutput(this, 'API Gateway endpoint URL - Public Device Data API', {
-      value: publicDeviceDataApi.urlForPath('/'),
     })
     if (this.config.resource.LAMBDA_VPC_ENABLED) {
       new CfnOutput(this, 'Lambda VPC ID', {

@@ -230,11 +230,6 @@ export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
 
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 
-/** Device DATA Metrics collection */
-export const DEVICE_DATA_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-device-data-metrics`
-}
-
 /** Collection to log Requests and Responses to GPT */
 export const GPT_REQUESTS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-gpt-request-logs`

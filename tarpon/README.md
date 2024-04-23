@@ -85,7 +85,6 @@ Finally, you can start local api:
 npm run dev:api                     # starts all APIs
 npm run dev:api:public              # only starts public API
 npm run dev:api:public-management   # only starts public management API
-npm run dev:api:public-device-data   # only starts public Device Data API
 npm run dev:api:console             # only starts console API
 ```
 

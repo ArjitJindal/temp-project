@@ -46,9 +46,5 @@ export const UI_SETTINGS = {
       title: 'CRM',
       key: 'user-case-details-crm',
     },
-    DEVICE_DATA: {
-      title: 'Device data',
-      key: 'user-case-details-device-data',
-    },
   },
 };

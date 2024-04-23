@@ -5015,51 +5015,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimulationStats'
-  /device-data/transactions:
-    get:
-      summary: Get Device Data Transactions
-      operationId: get-device-data-transactions
-      x-flagright:
-        permissions:
-          - case-management:case-details:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ../public-device-data/openapi-public-device-data-original.yaml#/components/schemas/DeviceMetric
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: transactionId
-          required: true
-        - schema:
-            type: string
-          in: query
-          name: userId
-          required: true
-  /device-data/users:
-    get:
-      summary: Get Device Data Users
-      operationId: get-device-data-users
-      x-flagright:
-        permissions:
-          - users:user-details:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ../public-device-data/openapi-public-device-data-original.yaml#/components/schemas/DeviceMetric
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: userId
-          required: true
   /tenants/settings/narrative-templates:
     get:
       summary: Get narratives
@@ -8056,8 +8011,6 @@ components:
         - VERY_LOW
     RiskLevelRuleParameters:
       title: RiskLevelRuleParameters
-      x-stoplight:
-        id: xpbk3cprby4j6
       type: object
       properties:
         VERY_HIGH:
@@ -8079,8 +8032,6 @@ components:
     RiskLevel:
       type: string
       title: RiskLevel
-      x-stoplight:
-        id: lrybcomxmbf4h
       enum:
         - VERY_HIGH
         - HIGH
@@ -8113,8 +8064,6 @@ components:
     RiskClassificationConfig:
       type: object
       title: RiskClassificationConfig
-      x-stoplight:
-        id: lrybcomxmbf4h
       enum:
         - VERY_HIGH
         - HIGH
@@ -8135,8 +8084,6 @@ components:
         - classificationValues
     RiskLevelRuleActions:
       title: RiskLevelRuleActions
-      x-stoplight:
-        id: 9sj5fz98k6tlb
       type: object
       properties:
         VERY_HIGH:
@@ -8409,8 +8356,6 @@ components:
     Feature:
       type: string
       title: Feature
-      x-stoplight:
-        id: xc9jmvdpmvtof
       enum:
         - RISK_LEVELS
         - RISK_SCORING
@@ -8439,8 +8384,6 @@ components:
     ManagedRoleName:
       type: string
       title: ManagedRoleName
-      x-stoplight:
-        id: byu0hqffp9h2
       enum:
         - root
         - whitelabel-root
@@ -8453,8 +8396,6 @@ components:
     CreateAccountRole:
       type: object
       title: CreateAccountRole
-      x-stoplight:
-        id: byu0hqffp9h3
       properties:
         name:
           type: string
@@ -8471,8 +8412,6 @@ components:
     AccountRole:
       type: object
       title: AccountRole
-      x-stoplight:
-        id: byu0hqffp9hxw
       properties:
         id:
           type: string
@@ -8492,8 +8431,6 @@ components:
     Permission:
       type: string
       title: Permission
-      x-stoplight:
-        id: kwammtv515uc4
       enum:
         - case-management:case-overview:read
         - case-management:case-overview:write
@@ -8543,8 +8480,6 @@ components:
     CaseStatus:
       type: string
       title: CaseStatus
-      x-stoplight:
-        id: kwammtv515uc3
       enum:
         - OPEN
         - CLOSED
@@ -8561,8 +8496,6 @@ components:
     AlertStatus:
       type: string
       title: AlertStatus
-      x-stoplight:
-        id: kwbmmtv515uc4
       enum:
         - OPEN
         - CLOSED
@@ -8595,8 +8528,6 @@ components:
         - OR
     WebhookConfiguration:
       title: WebhookConfiguration
-      x-stoplight:
-        id: f9ohatgtpmm2v
       type: object
       description: ''
       properties:
@@ -8628,8 +8559,6 @@ components:
         - enabled
     WebhookSecrets:
       title: WebhookSecrets
-      x-stoplight:
-        id: 0urp7qvcfbf2u
       type: object
       properties:
         secret:
@@ -8640,8 +8569,6 @@ components:
         - secret
     WebhookDeliveryAttempt:
       title: WebhookDeliveryAttempt
-      x-stoplight:
-        id: 24pu9dmforx4u
       type: object
       properties:
         _id:
@@ -8679,8 +8606,6 @@ components:
     CaseReasons:
       type: string
       title: CaseReasons
-      x-stoplight:
-        id: 54xyfgwxvubyx
       enum:
         - Other
         - False positive
@@ -9089,8 +9014,6 @@ components:
     Alert:
       title: Alert
       type: object
-      x-stoplight:
-        id: l0vs685p5ftya
       properties:
         _id:
           type: integer
@@ -9277,8 +9200,6 @@ components:
       title: CaseRuleTransactionListResponse
       type: object
       x-examples: {}
-      x-stoplight:
-        id: 89245f65deba8
       properties:
         total:
           type: number
@@ -9555,8 +9476,6 @@ components:
     AlertEscalation:
       title: AlertEscalation
       type: object
-      x-stoplight:
-        id: 71a07fea65043
       properties:
         alertId:
           type: string
@@ -9569,8 +9488,6 @@ components:
     CaseEscalationRequest:
       title: CaseEscalationRequest
       type: object
-      x-stoplight:
-        id: b20285c502568
       properties:
         caseUpdateRequest:
           $ref: '#/components/schemas/CaseEscalationsUpdateRequest'
@@ -9585,8 +9502,6 @@ components:
     CaseEscalationResponse:
       title: CaseEscalationResponse
       type: object
-      x-stoplight:
-        id: 7fe28ee5d8da5
       properties:
         childCaseId:
           type: string
@@ -9634,8 +9549,6 @@ components:
           type: number
     SanctionsSearchRequest:
       title: SanctionsSearchRequest
-      x-stoplight:
-        id: ldj2zpwhzk8s5
       type: object
       properties:
         _id:
@@ -9676,16 +9589,12 @@ components:
     SanctionsSearchType:
       title: SanctionsSearchType
       type: string
-      x-stoplight:
-        id: bf77ede355863
       enum:
         - SANCTIONS
         - PEP
         - ADVERSE_MEDIA
     SanctionsSearchResponse:
       title: SanctionsSearchResponse
-      x-stoplight:
-        id: ldj2zpwhzk8s5
       type: object
       properties:
         total:
@@ -9704,8 +9613,6 @@ components:
         - searchId
     SanctionsSearchHistoryResponse:
       title: SanctionsSearchHistoryResponse
-      x-stoplight:
-        id: ldj2zpwhzk8s6
       type: object
       properties:
         hasPrev:
@@ -9737,8 +9644,6 @@ components:
         - last
     SanctionsSearchHistory:
       title: SanctionsSearchHistory
-      x-stoplight:
-        id: ldj2zpwhzk8s5
       type: object
       properties:
         _id:
@@ -9760,8 +9665,6 @@ components:
     SanctionsSearchMonitoring:
       title: SanctionsSearchMonitoring
       type: object
-      x-stoplight:
-        id: d2c131bfd47c9
       properties:
         enabled:
           type: boolean
@@ -9826,8 +9729,6 @@ components:
           type: number
     SanctionsScreeningStats:
       title: SanctionsScreeningStats
-      x-stoplight:
-        id: ldj2zpwhzk8s7
       type: object
       properties:
         data:
@@ -10170,8 +10071,6 @@ components:
             - whitelisted
     ComplyAdvantageWebhookEvent:
       title: ComplyAdvantageWebhookEvent
-      x-stoplight:
-        id: ldj2zpghak8s5
       type: object
       properties:
         event:
@@ -10183,8 +10082,6 @@ components:
             - $ref: '#/components/schemas/ComplyAdvantageMonitoredSearchUpdated'
     ComplyAdvantageMonitoredSearchUpdated:
       title: ComplyAdvantageMonitoredSearchUpdated
-      x-stoplight:
-        id: ldj2zpwhak8s5
       type: object
       properties:
         searchId:
@@ -10323,8 +10220,6 @@ components:
       maximum: 1000
     AuditLog:
       title: AuditLog
-      x-stoplight:
-        id: 9g0tn4wlwv7rs
       type: object
       properties:
         auditlogId:
@@ -10385,8 +10280,6 @@ components:
     SimulationRiskLevelsParameters:
       title: SimulationRiskLevelsParameters
       type: object
-      x-stoplight:
-        id: 9d4bfe04d1868
       properties:
         type:
           $ref: '#/components/schemas/SimulationRiskLevelsType'
@@ -10410,8 +10303,6 @@ components:
     SimulationRiskFactorsParameters:
       title: SimulationRiskFactorsParameters
       type: object
-      x-stoplight:
-        id: 9d4bfe04d1868
       properties:
         type:
           $ref: '#/components/schemas/SimulationRiskFactorsType'
@@ -10430,8 +10321,6 @@ components:
     SimulationBeaconSampling:
       title: SimulationBeaconSampling
       type: object
-      x-stoplight:
-        id: 9d4bf14d1868
       properties:
         transactionsCount:
           type: number
@@ -10440,8 +10329,6 @@ components:
     SimulationBeaconParameters:
       title: SimulationBeaconParameters
       type: object
-      x-stoplight:
-        id: 9d4bf14d1868
       properties:
         type:
           $ref: '#/components/schemas/SimulationBeaconType'
@@ -10460,8 +10347,6 @@ components:
     SimulationBeaconParametersRequest:
       title: SimulationBeaconParametersRequest
       type: object
-      x-stoplight:
-        id: 9d4bf14d1868
       properties:
         jobId:
           type: string
@@ -10480,8 +10365,6 @@ components:
     SimulationBeaconStatistics:
       title: SimulationBeaconStatistics
       type: object
-      x-stoplight:
-        id: 9d4bf14d1868
       properties:
         totalCases:
           type: number
@@ -10494,8 +10377,6 @@ components:
     SimulationBeaconStatisticsResult:
       title: SimulationBeaconStatisticsResult
       type: object
-      x-stoplight:
-        id: 9d4bf14d1868
       properties:
         current:
           $ref: '#/components/schemas/SimulationBeaconStatistics'
@@ -10504,8 +10385,6 @@ components:
     SimulationIteration:
       title: SimulationBeaconIteration
       type: object
-      x-stoplight:
-        id: 9d4bf14d1868
       properties:
         taskId:
           type: string
@@ -10550,8 +10429,6 @@ components:
     SimulationRiskLevelsParametersRequest:
       title: SimulationRiskLevelsParametersRequest
       type: object
-      x-stoplight:
-        id: 9d4bfe04d1868
       properties:
         jobId:
           type: string
@@ -10572,8 +10449,6 @@ components:
     SimulationRiskFactorsParametersRequest:
       title: SimulationRiskFactorsParametersRequest
       type: object
-      x-stoplight:
-        id: 9d4bfe04d1868
       properties:
         jobId:
           type: string
@@ -10591,8 +10466,6 @@ components:
         - sampling
     SimulationRiskFactorsType:
       title: SimulationRiskFactorsType
-      x-stoplight:
-        id: n6wn9hbaar1cs
       type: string
       enum:
         - RISK_FACTORS
@@ -10604,8 +10477,6 @@ components:
           type: integer
         userLatestTransactionsCount:
           type: integer
-      x-stoplight:
-        id: yl7w6xm5dlwif
     SimulationRiskFactorsSampling:
       title: SimulationRiskFactorsSampling
       type: object
@@ -10617,8 +10488,6 @@ components:
             - RANDOM
     SimulationJob:
       title: SimulationRiskLevelsJob
-      x-stoplight:
-        id: 5e85cbff0f7fd
       type: object
       properties:
         jobId:
@@ -10728,8 +10597,6 @@ components:
             - defaultRuleInstance
     SimulationRiskLevelsIteration:
       title: SimulationRiskLevelsIteration
-      x-stoplight:
-        id: 5e85cc0b0ddfd
       allOf:
         - $ref: '#/components/schemas/SimulationIteration'
         - type: object
@@ -10746,8 +10613,6 @@ components:
             - statistics
     SimulationRiskFactorsIteration:
       title: SimulationRiskFactorsIteration
-      x-stoplight:
-        id: 5e85cc0b0ddfd
       allOf:
         - $ref: '#/components/schemas/SimulationIteration'
         - type: object
@@ -10765,8 +10630,6 @@ components:
     TenantCreationRequest:
       title: TenantCreationRequest
       type: object
-      x-stoplight:
-        id: 9d4bfe04d1868
       properties:
         tenantName:
           type: string
@@ -10825,8 +10688,6 @@ components:
     SimulationRiskLevelsStatisticsResult:
       type: object
       title: SimulationRiskLevelsStatisticsResult
-      x-stoplight:
-        id: 7f7f5d4cde104
       properties:
         current:
           type: array
@@ -10839,8 +10700,6 @@ components:
     SimulationRiskFactorsStatisticsResult:
       type: object
       title: SimulationRiskLevelsStatisticsResult
-      x-stoplight:
-        id: 7f7f5d4cde104
       properties:
         current:
           type: array
@@ -10852,15 +10711,11 @@ components:
             $ref: '#/components/schemas/SimulationRiskFactorsStatistics'
     SimulationRiskLevelsType:
       title: SimulationRiskLevelsType
-      x-stoplight:
-        id: n6wn9hbaar1cs
       type: string
       enum:
         - PULSE
     SimulationBeaconType:
       title: SimulationBeaconType
-      x-stoplight:
-        id: n6wn9hbaar1cs
       type: string
       enum:
         - BEACON
@@ -11050,8 +10905,6 @@ components:
         - runJobsCount
     CaseHierarchyDetails:
       title: CaseHierarchyDetails
-      x-stoplight:
-        id: p9vaxm70fwiaf
       type: object
       properties:
         parentCaseId:
@@ -11122,8 +10975,6 @@ components:
         - total
     ReportSchema:
       title: ReportSchema
-      x-stoplight:
-        id: mqa9mvj3lig5w
       type: object
       properties:
         settings:
@@ -11155,8 +11006,6 @@ components:
                 type: string
     ReportType:
       title: ReportType
-      x-stoplight:
-        id: mqa9mvj3lig5w
       type: object
       required:
         - id
@@ -11180,8 +11029,6 @@ components:
     ReportRevision:
       title: ReportRevision
       type: object
-      x-stoplight:
-        id: 4ac3be9ec6581
       required:
         - output
         - createdAt
@@ -11203,8 +11050,6 @@ components:
     Report:
       title: Report
       type: object
-      x-stoplight:
-        id: 4ac3be9ec658a
       required:
         - name
         - description
@@ -11291,8 +11136,6 @@ components:
                 type: object
     ReportTypesResponse:
       title: ReportTypesResponse
-      x-stoplight:
-        id: h1kn4gtshio13
       type: object
       properties:
         total:
@@ -11307,8 +11150,6 @@ components:
     ReportsResponse:
       title: ReportsResponse
       type: object
-      x-stoplight:
-        id: 4152831a87596
       properties:
         total:
           type: integer
@@ -11322,8 +11163,6 @@ components:
     ReportStatusUpdateRequest:
       title: ReportStatusUpdateRequest
       type: object
-      x-stoplight:
-        id: 4ac3be9ec658b
       required:
         - status
         - statusInfo
@@ -11770,8 +11609,6 @@ components:
     ChecklistItem:
       title: ChecklistItem
       type: object
-      x-stoplight:
-        id: ebe1334bfcf1d
       properties:
         id:
           type: string
@@ -11785,8 +11622,6 @@ components:
     ChecklistCategory:
       title: ChecklistCategory
       type: object
-      x-stoplight:
-        id: ca9cefbb8996c
       properties:
         name:
           type: string
@@ -11834,13 +11669,9 @@ components:
         - name
         - categories
       title: ChecklistTemplate
-      x-stoplight:
-        id: ca9cefbb8996c
     ChecklistTemplatesResponse:
       type: object
       title: ChecklistTemplatesResponse
-      x-stoplight:
-        id: 7ff7dc9430407
       properties:
         total:
           type: number
@@ -11869,13 +11700,9 @@ components:
       required:
         - name
       title: RuleQueue
-      x-stoplight:
-        id: ca9cefbb8996d
     RuleQueuesResponse:
       type: object
       title: RuleQueuesResponse
-      x-stoplight:
-        id: 7ff7dc9430408
       properties:
         total:
           type: number

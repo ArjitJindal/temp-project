@@ -51,6 +51,8 @@ jobs:
         working-directory: "lib"
       - run: yarn install --immutable
         working-directory: "tarpon"
+      - run: yarn run openapi:prepare
+        working-directory: "tarpon"
       - run: yarn run build:local
         working-directory: "tarpon"
       - run: yarn run tsc:ci
@@ -110,6 +112,13 @@ jobs:
       #   run: |
       #     npm run test:coverage:comment "${{ github.token }}"
       #   working-directory: "tarpon"
+      - name: Sync OpenAPI schemas
+        if: github.ref == 'refs/heads/main'
+        uses: BetaHuhn/repo-file-sync-action@v1
+        with:
+          GH_PAT: ${{ secrets.FLAGRIGHT_API_SYNC_PAT }}
+          ORIGINAL_MESSAGE: true
+          COMMIT_BODY: patch
       - name: Post to a Slack channel on failure
         id: slack
         uses: slackapi/slack-github-action@v1.25.0

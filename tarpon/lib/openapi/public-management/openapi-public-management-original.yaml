@@ -58,13 +58,13 @@ paths:
         ### Rules List
 
 
-        `GET /rules` endpoint returns a lot of all rule templates supported by flagright. You can use [GET /rules/{ruleId}](https://flagright-console.stoplight.io/docs/flagright-management-api-1/a29012dabded6-rule-get) endpoint to fetch the details of any particular rule. 
+        `GET /rules` endpoint returns a lot of all rule templates supported by flagright. You can use [GET /rules/{ruleId}](/management/api-reference/api-reference/get-rules-rule-id) endpoint to fetch the details of any particular rule. 
 
 
         Each rule is identified by the unique `id` which is of the form `R-{X}` where `X` is an integer. 
 
 
-        Rules have a `parametersSchema` which is a [JSON Schema](https://json-schema.org/) that contains the schema of the parameters supported by the rule. When you create a [ruleInstance](https://flagright-console.stoplight.io/docs/flagright-management-api-1/f112abcc9788b-rule-instance-create), you need to provide the values in accordance with the `parametersSchema`. 
+        Rules have a `parametersSchema` which is a [JSON Schema](https://json-schema.org/) that contains the schema of the parameters supported by the rule. When you create a [ruleInstance](/management/api-reference/api-reference/post-rule-instances), you need to provide the values in accordance with the `parametersSchema`. 
 
 
         All the rules come with default values for all required attributes. 
@@ -76,7 +76,7 @@ paths:
         Rules also come with a `defaultAction` and `defaultRiskLevelActions` for rule actions for the rule. 
 
 
-        All of the above should be configured at the [ruleInstance](https://flagright-console.stoplight.io/docs/flagright-management-api-1/f227b99b51274-rule-instance) level when creating a rule instance. Rules are read only and provided by flagright. You can only manipulate rules instances, not rule templates themselves. 
+        All of the above should be configured at the [rule instance](/management/api-reference/api-reference/post-rule-instances) level when creating a rule instance. Rules are read only and provided by flagright. You can only manipulate rules instances, not rule templates themselves. 
 
 
         If you need an update to a rule or a new rule, you can always contact the Flagright team.
@@ -218,7 +218,7 @@ paths:
         /rule-instances/{ruleInstanceId}` endpoint. If you want to deactive a
         rule instance, you can update the status on the rule instance using the
         [POST
-        /rule-instances/{ruleInstanceId}](https://flagright-console.stoplight.io/docs/flagright-management-api-1/b6dd1fca0dcfc-rule-instance-update)
+        /rule-instances/{ruleInstanceId}](/management/api-reference/api-reference/post-rule-instances-rule-instance-id)
         endpoint
     post:
       security:
@@ -253,7 +253,7 @@ paths:
         ### Update Rule Instance
 
 
-        Created rule instances can be idempotently updated with the `POST /rule-instances/{ruleInstanceId}`. All the fields in the [RuleInstanceUpdatable](https://flagright-console.stoplight.io/docs/flagright-management-api-1/1ee6d64e6acf0-rule-instance-updatable) schema can be updated for a rule.
+        Created rule instances can be idempotently updated with the `POST /rule-instances/{ruleInstanceId}`.
   /rule-filters-schema:
     get:
       security:
@@ -298,7 +298,7 @@ paths:
         `GET /rule-filteres-schema` endpoint returns the rule filters supported by flagright as [JSON Schema](https://json-schema.org/). 
 
 
-        When you create a [ruleInstance](https://flagright-console.stoplight.io/docs/flagright-management-api-1/f112abcc9788b-rule-instance-create), you can use the schema returned by this endpoint to construct `filters` field for a rule instance.
+        When you create a [rule instance](/management/api-reference/api-reference/post-rule-instances), you can use the schema returned by this endpoint to construct `filters` field for a rule instance.
 
 
         If you need an update to a rule filter or a new rule filter, you can always contact the Flagright team.
@@ -740,8 +740,6 @@ components:
         - SANCTIONS_PEP_ADVERSE_MEDIA
     RiskLevelRuleActions:
       title: RiskLevelRuleActions
-      x-stoplight:
-        id: 9sj5fz98k6tlb
       type: object
       properties:
         VERY_HIGH:
@@ -762,8 +760,6 @@ components:
         - VERY_LOW
     RiskLevelRuleParameters:
       title: RiskLevelRuleParameters
-      x-stoplight:
-        id: xpbk3cprby4j6
       type: object
       properties:
         VERY_HIGH:
@@ -1155,8 +1151,6 @@ components:
         - assigneeEmail
     ErrorMessage:
       title: ErrorMessage
-      x-stoplight:
-        id: 7yqtvk7p9atkc
       type: object
       properties:
         error:

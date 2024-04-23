@@ -22,39 +22,16 @@ async function prepareSchemas(OUTPUT_DIR) {
       'openapi',
       'public-management'
     )
-    const publicDeviceDataDir = path.resolve(
-      PROJECT_DIR,
-      'lib',
-      'openapi',
-      'public-device-data'
-    )
-    const publicSanctionsDir = path.resolve(
-      PROJECT_DIR,
-      'lib',
-      'openapi',
-      'public-sanctions'
-    )
-
     const internalDirOutput = path.resolve(OUTPUT_DIR, 'internal')
     const publicDirOutput = path.resolve(OUTPUT_DIR, 'public')
     const publicManagementDirOutput = path.resolve(
       OUTPUT_DIR,
       'public-management'
     )
-    const publicDeviceDataDirOutput = path.resolve(
-      OUTPUT_DIR,
-      'public-device-data'
-    )
-    const publicSanctionsDirOutput = path.resolve(
-      OUTPUT_DIR,
-      'public-sanctions'
-    )
 
     await fs.ensureDir(internalDirOutput)
     await fs.ensureDir(publicDirOutput)
     await fs.ensureDir(publicManagementDirOutput)
-    await fs.ensureDir(publicDeviceDataDirOutput)
-    await fs.ensureDir(publicSanctionsDirOutput)
 
     const publicSchemaFile = path.resolve(
       publicDir,
@@ -64,28 +41,12 @@ async function prepareSchemas(OUTPUT_DIR) {
       publicManagementDir,
       'openapi-public-management-original.yaml'
     )
-    const publicDeviceSchemaFile = path.resolve(
-      publicDeviceDataDir,
-      'openapi-public-device-data-original.yaml'
-    )
     const publicSchemaText = (await fs.readFile(publicSchemaFile)).toString()
     const publicManagementSchemaText = (
       await fs.readFile(publicManagementSchemaFile)
     ).toString()
     const publicManagementSchemaYaml = parse(publicManagementSchemaText)
     const publicSchemaYaml = parse(publicSchemaText)
-    const publicDeviceSchemaText = (
-      await fs.readFile(publicDeviceSchemaFile)
-    ).toString()
-    const publicDeviceSchemaYaml = parse(publicDeviceSchemaText)
-    const publicSantionsSchemaFile = path.resolve(
-      publicSanctionsDir,
-      'openapi-public-sanctions-original.yaml'
-    )
-    const publicSanctionsSchemaText = (
-      await fs.readFile(publicSantionsSchemaFile)
-    ).toString()
-
     const internalSchemaFile = path.resolve(
       internalDir,
       'openapi-internal-original.yaml'
@@ -108,7 +69,6 @@ async function prepareSchemas(OUTPUT_DIR) {
       internalSchemaYaml.components.schemas = {
         ...internalSchemaYaml.components.schemas,
         ...publicSchemaYaml.components.schemas,
-        ...publicDeviceSchemaYaml.components.schemas,
         ..._.pick(publicManagementSchemaYaml.components.schemas, [
           'ActionReason',
         ]),
@@ -141,27 +101,6 @@ async function prepareSchemas(OUTPUT_DIR) {
           'openapi-public-management-original.yaml'
         ),
         stringify(publicManagementSchemaYaml)
-      )
-    }
-    {
-      await fs.copy(publicDeviceDataDir, publicDeviceDataDirOutput)
-    }
-    {
-      await fs.copy(publicSanctionsDir, publicSanctionsDirOutput)
-      const publicSanctionsSchemaYaml = await localizeRefs(
-        parse(publicSanctionsSchemaText)
-      )
-      publicSanctionsSchemaYaml.components.schemas = {
-        ...publicSanctionsSchemaYaml.components.schemas,
-        ..._.pick(publicSchemaYaml.components.schemas, ['CountryCode']),
-      }
-      await fs.copy(publicSanctionsDir, publicSanctionsDirOutput)
-      await fs.writeFile(
-        path.resolve(
-          publicSanctionsDirOutput,
-          'openapi-public-sanctions-original.yaml'
-        ),
-        stringify(publicSanctionsSchemaYaml)
       )
     }
   } catch (err) {

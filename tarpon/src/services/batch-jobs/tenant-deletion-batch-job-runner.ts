@@ -72,7 +72,6 @@ type ExcludedDynamoDbKey = Exclude<
   | 'LIST_ITEM'
   | 'CURRENCY_CACHE'
   | 'RULE'
-  | 'DEVICE_DATA_METRICS'
   | 'RULE_USER_TIME_AGGREGATION'
   | 'USER_TIME_AGGREGATION'
   | 'USER_AGGREGATION'
@@ -567,12 +566,6 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     await this.deletePartitionKey(
       DynamoDbKeys.KRS_VALUE_ITEM(tenantId, user.userId, '1'),
       StackConstants.TARPON_DYNAMODB_TABLE_NAME
-    )
-    await this.deletePartition(
-      tenantId,
-      DynamoDbKeys.DEVICE_DATA_METRICS(tenantId, user.userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-      'device data metrics'
     )
     await this.deletePartitionKey(
       DynamoDbKeys.USER(tenantId, user.userId) as DynamoDbKey,

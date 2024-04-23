@@ -27,14 +27,6 @@
     },
     {
       "type": "node-terminal",
-      "name": "Run Public Sanctions API",
-      "request": "launch",
-      "command": "yarn dev:api:public-sanctions",
-      "cwd": "${workspaceFolder}",
-      "outFiles": []
-    },
-    {
-      "type": "node-terminal",
       "name": "Run all APIs",
       "request": "launch",
       "command": "yarn dev:api",

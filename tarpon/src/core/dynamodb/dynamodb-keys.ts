@@ -33,7 +33,6 @@ export type TenantSettingName = keyof TenantSettings
 export const TRANSACTION_PRIMARY_KEY_IDENTIFIER = 'transaction#primary'
 export const USER_PRIMARY_KEY_IDENTIFIER = 'user#primary'
 export const CONSUMER_USER_EVENT_KEY_IDENTIFIER = 'consumer-user-event#'
-export const DEVICE_DATA_METRICS_KEY_IDENTIFIER = 'device-metrics-data#'
 export const BUSINESS_USER_EVENT_KEY_IDENTIFIER = 'business-user-event#'
 export const TRANSACTION_EVENT_KEY_IDENTIFIER = 'transaction-event#'
 export const KRS_KEY_IDENTIFIER = '#krs-value'
@@ -338,17 +337,6 @@ export const DynamoDbKeys = {
   ) => ({
     PartitionKeyID: `${tenantId}#${TRANSACTION_ID_PREFIX}${transactionId}${ARS_KEY_IDENTIFIER}`,
     SortKeyID: version,
-  }),
-
-  /** Device Metrics Keys */
-  DEVICE_DATA_METRICS: (
-    tenantId: string,
-    userId: string,
-    type?: string,
-    timestamp?: number
-  ) => ({
-    PartitionKeyID: `${tenantId}#device-metrics-data#${userId}`,
-    SortKeyID: `${type}#${timestamp}`,
   }),
 }
 

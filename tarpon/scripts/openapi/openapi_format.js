@@ -31,24 +31,6 @@ async function main() {
         'openapi-public-management-original.yaml'
       )
     )
-    await reformatFile(
-      path.resolve(
-        PROJECT_DIR,
-        'lib',
-        'openapi',
-        'public-device-data',
-        'openapi-public-device-data-original.yaml'
-      )
-    )
-    await reformatFile(
-      path.resolve(
-        PROJECT_DIR,
-        'lib',
-        'openapi',
-        'public-sanctions',
-        'openapi-public-sanctions-original.yaml'
-      )
-    )
   } catch (err) {
     console.error(err)
   }

@@ -19,9 +19,7 @@ export class FlagrightConverter<T> implements ConverterInterface<T> {
 
   async initialize(): Promise<void> {
     const openapiYaml = (
-      await apiFetch<string>(
-        'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/openapi-public-original.yaml'
-      )
+      await apiFetch<string>('fix me if this class is being used again')
     ).result
     const openapi = yaml.load(openapiYaml) as any
     const schemas = openapi['components']['schemas']
@@ -34,7 +32,7 @@ export class FlagrightConverter<T> implements ConverterInterface<T> {
       schemas[key]['$id'] = `#/components/schemas/${key}`
     }
     const ajv = new Ajv({
-      keywords: ['example', 'x-examples', 'x-stoplight'],
+      keywords: ['example', 'x-examples'],
       coerceTypes: true,
       schemas: Object.values(schemas).map((schema) =>
         JSON.parse(JSON.stringify(schema))

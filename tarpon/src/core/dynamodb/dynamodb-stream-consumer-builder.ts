@@ -21,7 +21,6 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
-import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import { getSQSClient } from '@/utils/sns-sqs-client'
 
@@ -46,11 +45,6 @@ type UserEventHandler = (
   tenantId: string,
   oldUserEvent: ConsumerUserEvent | undefined,
   newUserEvent: ConsumerUserEvent | undefined
-) => Promise<void>
-type DeviceDataMetricsHandler = (
-  tenantId: string,
-  oldUserEvent: DeviceMetric | undefined,
-  newUserEvent: DeviceMetric | undefined
 ) => Promise<void>
 type ArsScoreEventHandler = (
   tenantId: string,
@@ -82,7 +76,6 @@ export class StreamConsumerBuilder {
   transactionEventHandler?: TransactionEventHandler
   userHandler?: UserHandler
   userEventHandler?: UserEventHandler
-  deviceDataMetricsHandler?: DeviceDataMetricsHandler
   arsScoreEventHandler?: ArsScoreEventHandler
   drsScoreEventHandler?: DrsScoreEventHandler
   krsScoreEventHandler?: KrsScoreEventHandler
@@ -115,12 +108,6 @@ export class StreamConsumerBuilder {
     userEventHandler: UserEventHandler
   ): StreamConsumerBuilder {
     this.userEventHandler = userEventHandler
-    return this
-  }
-  public setDeviceDataMetricsHandler(
-    deviceDataMetricsHandler: DeviceDataMetricsHandler
-  ): StreamConsumerBuilder {
-    this.deviceDataMetricsHandler = deviceDataMetricsHandler
     return this
   }
   public setArsScoreEventHandler(
@@ -178,15 +165,6 @@ export class StreamConsumerBuilder {
         update.tenantId,
         update.OldImage as ConsumerUserEvent | BusinessUserEvent,
         update.NewImage as ConsumerUserEvent | BusinessUserEvent
-      )
-    } else if (
-      update.type === 'DEVICE_DATA_METRICS' &&
-      this.deviceDataMetricsHandler
-    ) {
-      await this.deviceDataMetricsHandler(
-        update.tenantId,
-        update.OldImage as DeviceMetric,
-        update.NewImage as DeviceMetric
       )
     } else if (update.type === 'ARS_VALUE' && this.arsScoreEventHandler) {
       await this.arsScoreEventHandler(

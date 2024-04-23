@@ -34,9 +34,7 @@ yarn clear
 
 ### SDK Generation
 
-1. `yarn openapi:build` - generates API SDK and models under `src/apis/` using the schema from tarpon origin/main
-2. `ENV=local yarn openapi:build` - using the schema from your local tarpon (run `npm run openapi:prepare` in tarpon first)
-3. `BRANCH=<tarpon-branch-name> yarn openapi:build` - using the schema from the branch of your tarpon PR (automatically published after a PR is created)
+`yarn openapi:build` - generates API SDK and models under `src/apis/` using the schema from tarpon
 
 ### API Usage
 

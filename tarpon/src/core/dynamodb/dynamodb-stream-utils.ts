@@ -15,7 +15,6 @@ import {
   KRS_KEY_IDENTIFIER,
   ARS_KEY_IDENTIFIER,
   DRS_KEY_IDENTIFIER,
-  DEVICE_DATA_METRICS_KEY_IDENTIFIER,
   RULE_INSTANCE_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -23,7 +22,6 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { User } from '@/@types/openapi-public/User'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DYNAMODB_PARTITIONKEYS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -38,7 +36,6 @@ type DynamoDbEntityType =
   | 'KRS_VALUE'
   | 'ARS_VALUE'
   | 'DRS_VALUE'
-  | 'DEVICE_DATA_METRICS'
 
 export type DynamoDbEntityUpdate = {
   tenantId: string
@@ -91,15 +88,6 @@ function getDynamoDbEntityMetadata(
     return {
       type: 'CONSUMER_USER_EVENT',
       entityId: `USER:${entityId}`,
-    }
-  } else if (partitionKeyId.includes(DEVICE_DATA_METRICS_KEY_IDENTIFIER)) {
-    const entityId = (entity as DeviceMetric).userId
-    if (!entityId) {
-      return null
-    }
-    return {
-      type: 'DEVICE_DATA_METRICS',
-      entityId: `DEVICE_DATA_METRICS:${entityId}`,
     }
   } else if (partitionKeyId.includes(BUSINESS_USER_EVENT_KEY_IDENTIFIER)) {
     const entityId = (entity as BusinessUserEvent).userId

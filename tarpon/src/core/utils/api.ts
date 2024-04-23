@@ -1,7 +1,7 @@
 import { LAMBDAS } from '@lib/lambdas'
 import { logger } from '@/core/logger'
 
-type Api = 'CONSOLE' | 'PUBLIC' | 'PUBLIC_DEVICE_DATA' | 'PUBLIC_MANAGEMENT'
+type Api = 'CONSOLE' | 'PUBLIC' | 'PUBLIC_MANAGEMENT'
 export function determineApi(context: {
   functionName?: string
 }): Api | undefined {
@@ -19,12 +19,9 @@ export function determineApi(context: {
     logger.error('Could not determine lambda from ', context?.functionName)
     return
   }
-  const prefix = [
-    'console',
-    'public-api',
-    'public-device-data',
-    'public-management',
-  ].find((prefix) => codePath.startsWith(prefix))
+  const prefix = ['console', 'public-api', 'public-management'].find((prefix) =>
+    codePath.startsWith(prefix)
+  )
   if (!prefix) {
     return
   }
@@ -33,8 +30,6 @@ export function determineApi(context: {
       return 'CONSOLE'
     case 'public-api':
       return 'PUBLIC'
-    case 'public-device-data':
-      return 'PUBLIC_DEVICE_DATA'
     case 'public-management':
       return 'PUBLIC_MANAGEMENT'
   }

@@ -17,7 +17,7 @@ import {
 } from '@/core/seed/samplers/prng'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
-import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
+import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/TransactionState'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -103,7 +103,7 @@ const generator = function* (): Generator<InternalTransaction> {
         createdAt: timestamp,
         originUserId,
         destinationUserId,
-        riskLevel: pickRandom(RISK_LEVEL1S),
+        riskLevel: pickRandom(RISK_LEVELS),
         arsScore: Number(randomFloat(100).toFixed(2)),
         components: sampleTransactionRiskScoreComponents(transaction),
       },

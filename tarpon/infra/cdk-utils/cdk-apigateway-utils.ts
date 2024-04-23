@@ -55,24 +55,13 @@ export function createApiGateway(
 } {
   // Log group ID cannot be changed
   let logGroupId: string
-  let openapiName:
-    | 'public'
-    | 'public-management'
-    | 'public-device-data'
-    | 'public-sanctions'
-    | 'internal'
+  let openapiName: 'public' | 'public-management' | 'internal'
   if (apiName === StackConstants.TARPON_API_NAME) {
     openapiName = 'public'
     logGroupId = 'LogGroupPublicApi'
   } else if (apiName === StackConstants.TARPON_MANAGEMENT_API_NAME) {
     openapiName = 'public-management'
     logGroupId = 'LogGroupPublicManagementApi'
-  } else if (apiName === StackConstants.TARPON_DEVICE_DATA_API_NAME) {
-    openapiName = 'public-device-data'
-    logGroupId = 'LogGroupPublicDeviceDataApi'
-  } else if (apiName === StackConstants.TARPON_SANCTIONS_API_NAME) {
-    openapiName = 'public-sanctions'
-    logGroupId = 'LogGroupPublicSanctionsApi'
   } else if (apiName === StackConstants.CONSOLE_API_NAME) {
     openapiName = 'internal'
 

@@ -51,7 +51,7 @@ import {
   consumerSanctionsSearch,
 } from '@/core/seed/raw-data/sanctions-search'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
-import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
+import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { USER_REGISTRATION_STATUSS } from '@/@types/openapi-internal-custom/UserRegistrationStatus'
@@ -211,7 +211,7 @@ export function sampleConsumerUser() {
   const userId = `U-${userCounter}`
   userCounter++
   const name = randomConsumerName()
-  const riskLevel = pickRandom(RISK_LEVEL1S)
+  const riskLevel = pickRandom(RISK_LEVELS)
   const countryOfResidence = pickRandom(COUNTRY_CODES)
   const countryOfNationality = pickRandom(COUNTRY_CODES)
 

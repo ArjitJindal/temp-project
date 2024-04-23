@@ -5,7 +5,7 @@ import os from 'os'
 import * as Sentry from '@sentry/serverless'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder, XMLParser } from 'fast-xml-parser'
-import { chunk, cloneDeep, compact, isEqual, last, omit, pick } from 'lodash'
+import { chunk, cloneDeep, isEqual, last, omit, pick } from 'lodash'
 import SftpClient from 'ssh2-sftp-client'
 import { backOff } from 'exponential-backoff'
 import { InternalReportType, ReportGenerator } from '../..'
@@ -42,8 +42,6 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import dayjs from '@/utils/dayjs'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import {
   Party,
   SuspiciousActivityType,
@@ -231,7 +229,7 @@ export class UsSarReportGenerator implements ReportGenerator {
       userIds.push(c.caseUsers.destination.userId)
     }
 
-    const uniqueIPAddresses = await this.getIPAddresses(userIds, transactions)
+    const uniqueIPAddresses = await this.getIPAddresses(transactions)
 
     const ActivityIPAddress = uniqueIPAddresses.map((ipAddress) => {
       return {
@@ -617,25 +615,7 @@ export class UsSarReportGenerator implements ReportGenerator {
     }
   }
 
-  public async getIPAddresses(
-    userIds: string[],
-    transactions: InternalTransaction[]
-  ) {
-    const mongoDb = await getMongoDbClient()
-    const metricsRepository = new MetricsRepository(this.tenantId, { mongoDb })
-
-    const transactionIds = transactions.map(
-      (transaction) => transaction.transactionId
-    )
-
-    const deviceData = await metricsRepository.getMetricsById(
-      userIds,
-      transactionIds
-    )
-    const IPAddressesByUser = deviceData
-      ? compact(deviceData.map((data) => data.ipAddress))
-      : []
-
+  public async getIPAddresses(transactions: InternalTransaction[]) {
     const IPAddressesByTransactions = transactions
       .filter(
         (transaction) =>
@@ -645,10 +625,7 @@ export class UsSarReportGenerator implements ReportGenerator {
       .map((transaction) => getAllIpAddresses(transaction))
       .flat()
 
-    const uniqueIPAddresses = new Set([
-      ...IPAddressesByUser,
-      ...IPAddressesByTransactions,
-    ])
+    const uniqueIPAddresses = new Set([...IPAddressesByTransactions])
     return [...uniqueIPAddresses]
   }
 
