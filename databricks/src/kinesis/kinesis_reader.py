@@ -4,6 +4,7 @@ from typing import Dict
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, from_json, lower, regexp_extract
 
+from src.dbutils.dbutils import get_dbutils
 from src.tables.schema import kinesis_event_schema
 from src.version_service import VersionService
 
@@ -25,6 +26,15 @@ class KinesisReader:
         self.aws_secret_key = aws_secret_key
         self.version_service = version_service
         self.streams: Dict[str, DataFrame] = {}
+
+    @staticmethod
+    def new(spark: SparkSession):
+        dbutils = get_dbutils(spark)
+        aws_access_key = dbutils.secrets.get("kinesis", "aws-access-key")
+        aws_secret_key = dbutils.secrets.get("kinesis", "aws-secret-key")
+        return KinesisReader(
+            spark, aws_access_key, aws_secret_key, VersionService(spark)
+        )
 
     def read_kinesis(self, kinesis_stream_name: str):
         if kinesis_stream_name in self.streams:

@@ -22,6 +22,10 @@ class KinesisTables:
         self.kinesis_reader = kinesis_reader
         self.streams: Dict[str, DataFrame] = {}
 
+    @staticmethod
+    def new(spark: SparkSession):
+        return KinesisTables(spark, KinesisReader.new(spark), TableService.new(spark))
+
     def create_stream(self, kinesis_stream: str, table: str):
         read_stream = self.kinesis_reader.read_kinesis(kinesis_stream)
         if table not in self.streams:

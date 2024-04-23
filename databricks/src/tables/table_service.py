@@ -25,6 +25,12 @@ class TableService:
         self.streams: Dict[str, DataFrame] = {}
         self.batches: Dict[str, DataFrame] = {}
 
+    @staticmethod
+    def new(spark: SparkSession):
+        stage = os.environ["STAGE"]
+        schema = f"{stage}.main"
+        return TableService(spark, VersionService(spark), schema)
+
     def table_exists(self, name: str):
         tables: List[str] = [
             row["tableName"]

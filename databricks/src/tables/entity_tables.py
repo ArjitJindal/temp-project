@@ -11,6 +11,7 @@ from pyspark.sql.functions import (
     regexp_extract,
 )
 
+from src.dbutils.dbutils import get_dbutils
 from src.dynamo.deserialize import deserialise_dynamo_udf
 from src.entities.entity import Entity
 from src.tables.kinesis_tables import KinesisTables
@@ -39,6 +40,19 @@ class EntityTables:
         self.table_service = table_service
         self.mongo_uri = mongo_uri
         self.kinesis_tables = kinesis_tables
+
+    @staticmethod
+    def new(spark: SparkSession):
+        dbutils = get_dbutils(spark)
+        mongo_username = dbutils.secrets.get("mongo", "mongo-username")
+        mongo_password = dbutils.secrets.get("mongo", "mongo-password")
+        mongo_host = dbutils.secrets.get("mongo", "mongo-host")
+        mongo_uri = f"mongodb+srv://{mongo_username}:{mongo_password}@{mongo_host}"
+        table_service = TableService.new(spark)
+        kinesis_tables = KinesisTables.new(spark)
+        stage = os.environ["STAGE"]
+        schema = f"{stage}.main"
+        return EntityTables(spark, schema, mongo_uri, table_service, kinesis_tables)
 
     def refresh(self, entity: Entity):
         kinesis_df = cdc_transformation(

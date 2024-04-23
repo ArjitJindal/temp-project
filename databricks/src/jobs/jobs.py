@@ -1,5 +1,3 @@
-import os
-
 from pyspark.sql import SparkSession
 
 from src.dbutils.dbutils import get_dbutils
@@ -16,33 +14,12 @@ class Jobs:
     """This is the entry point for all jobs that run on databricks"""
 
     def __init__(self, spark: SparkSession):
-        dbutils = get_dbutils(spark)
-        stage = os.environ["STAGE"]
-
-        schema = f"{stage}.main"
-
-        aws_access_key = dbutils.secrets.get("kinesis", "aws-access-key")
-        aws_secret_key = dbutils.secrets.get("kinesis", "aws-secret-key")
-        mongo_username = dbutils.secrets.get("mongo", "mongo-username")
-        mongo_password = dbutils.secrets.get("mongo", "mongo-password")
-        mongo_host = dbutils.secrets.get("mongo", "mongo-host")
-        mongo_uri = f"mongodb+srv://{mongo_username}:{mongo_password}@{mongo_host}"
-
         self.spark = spark
         self.version_service = VersionService(spark)
-        self.table_service = TableService(spark, self.version_service, schema)
-        self.kinesis_reader = KinesisReader(
-            spark,
-            aws_access_key,
-            aws_secret_key,
-            self.version_service,
-        )
-        self.kinesis_tables = KinesisTables(
-            spark, self.kinesis_reader, self.table_service
-        )
-        self.entity_tables = EntityTables(
-            spark, schema, mongo_uri, self.table_service, self.kinesis_tables
-        )
+        self.table_service = TableService.new(spark)
+        self.kinesis_reader = KinesisReader.new(spark)
+        self.kinesis_tables = KinesisTables.new(spark)
+        self.entity_tables = EntityTables.new(spark)
         self.currency_table = CurrencyTable(spark, self.table_service)
 
     def refresh(self):
