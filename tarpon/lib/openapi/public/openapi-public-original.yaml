@@ -166,17 +166,24 @@ paths:
         '400':
           description: Bad Request
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
-        '403':
-          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
   /transactions/{transactionId}:
@@ -283,14 +290,27 @@ paths:
                           If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
   /events/transaction:
@@ -440,15 +460,24 @@ paths:
         '400':
           description: Bad Request
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
       x-internal: false
@@ -494,14 +523,27 @@ paths:
                     metaData:
                       ipAddress: 144.13.22.19
                       vpnUsed: true
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
       x-internal: true
@@ -601,14 +643,25 @@ paths:
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
         '400':
           description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
   /consumer/users/{userId}:
@@ -690,14 +743,27 @@ paths:
                     tags:
                       - key: customKey
                         value: customValue
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
   /business/users:
@@ -757,14 +823,25 @@ paths:
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
         '400':
           description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
   /business/users/{userId}:
@@ -918,14 +995,27 @@ paths:
                       craRiskScore: 41.72
                       kycRiskLevel: MEDIUM
                       craRiskLevel: HIGH
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
   /events/consumer/user:
@@ -992,14 +1082,25 @@ paths:
                 $ref: '#/components/schemas/UserWithRulesResult'
         '400':
           description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
       x-internal: false
@@ -1031,14 +1132,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConsumerUserEvent'
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
       x-internal: true
@@ -1106,14 +1220,25 @@ paths:
                 $ref: '#/components/schemas/BusinessWithRulesResult'
         '400':
           description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
       x-internal: false
@@ -1145,14 +1270,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BusinessUserEvent'
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
       x-internal: true
@@ -5534,6 +5672,16 @@ components:
         - CANCELED
         - REFUND
         - DECLINED
+    ApiErrorResponse:
+      title: ApiErrorResponse
+      type: object
+      properties:
+        message:
+          type: string
+        validationErrors:
+          type: string
+      required:
+        - message
   securitySchemes:
     x-api-key:
       name: x-api-key
