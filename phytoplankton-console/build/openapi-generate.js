@@ -74,9 +74,7 @@ function exec(command, cwd) {
 }
 
 async function prepare() {
-  // Install the required dependencies for running openapi:prepare
-  exec('npm install -g js-yaml prettier', TARPON_PATH);
-  exec('npm run openapi:prepare', TARPON_PATH);
+  exec('yarn && yarn openapi:prepare', TARPON_PATH);
   fs.copyFileSync(SOURCE_OPENAPI_INTERNAL_PATH, OUTPUT_OPENAPI_INTERNAL_PATH);
 }
 
