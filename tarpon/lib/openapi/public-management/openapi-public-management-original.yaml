@@ -1036,8 +1036,8 @@ components:
           $ref: '#/components/schemas/ActionReason'
         entityDetails:
           oneOf:
-            - $ref: '#/components/schemas/UserDetails'
-            - $ref: '#/components/schemas/PaymentDetails'
+            - $ref: '#/components/schemas/UserEntityDetails'
+            - $ref: '#/components/schemas/PaymentEntityDetails'
         relatedCases:
           type: array
           items:
@@ -1085,8 +1085,8 @@ components:
         - priority
         - createdTimestamp
         - updatedAt
-    UserDetails:
-      title: UserDetails
+    UserEntityDetails:
+      title: UserEntityDetails
       type: object
       description: ''
       properties:
@@ -1099,8 +1099,8 @@ components:
       required:
         - userId
         - type
-    PaymentDetails:
-      title: PaymentDetails
+    PaymentEntityDetails:
+      title: PaymentEntityDetails
       type: object
       description: ''
       properties:
