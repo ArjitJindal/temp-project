@@ -36,7 +36,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
 // TODO: Enalbe simulation for v8 rule (FR-4064)
-function canSimulate(isV8Enabled: boolean, ruleInstance: RuleInstance) {
+export function canSimulate(isV8Enabled: boolean, ruleInstance: RuleInstance) {
   return ruleInstance.type === 'TRANSACTION' && !isV8RuleInstance(isV8Enabled, ruleInstance);
 }
 
@@ -58,9 +58,8 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   const onViewRule = useCallback(
     (entity) => {
       navigate(
-        makeUrl('/rules/my-rules/:id/:mode', {
+        makeUrl('/rules/my-rules/:id', {
           id: entity.id,
-          mode: 'read',
         }),
       );
     },
@@ -168,14 +167,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
             return (
               <a
                 onClick={() => {
-                  if (props.simulationMode) {
-                    if (!canSimulate(isV8Enabled, entity)) {
-                      return;
-                    }
-                    onEditRule(entity);
-                  } else {
-                    onViewRule(entity);
-                  }
+                  onViewRule(entity);
                 }}
                 id={entity.id ?? ''}
               >

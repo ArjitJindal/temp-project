@@ -59,6 +59,7 @@ function toRuleInstance(item: any): RuleInstance {
     queueId: item.queueId,
     alertConfig: item.alertConfig,
     checksFor: item.checksFor,
+    createdBy: item.createdBy,
   }
 }
 

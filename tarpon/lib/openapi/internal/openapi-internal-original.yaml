@@ -6488,6 +6488,8 @@ components:
           type: array
           items:
             type: string
+        createdBy:
+          type: string
       required:
         - casePriority
         - nature

@@ -1,0 +1,52 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  gap: 8px;
+}
+
+.header > span {
+  font-weight: 700;
+}
+
+.description {
+  font-weight: 400;
+  color: @fr-colors-v2-gray-8;
+}
+
+.card {
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.leftContent {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.info {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  flex: 1;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.separator {
+  background-color: @fr-colors-v2-gray-2;
+  width: 1px;
+  align-self: stretch;
+}

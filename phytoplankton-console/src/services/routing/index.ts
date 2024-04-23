@@ -40,6 +40,7 @@ import { QASamplesTable } from '@/pages/qa-samples';
 import { QASamplePage } from '@/pages/qa-sample-item';
 import { SimulationHistoryResultPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
 import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage';
+import { RuleInstancePage } from '@/pages/rules/rule-instance-page';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -244,7 +245,8 @@ export function useRoutes(): RouteItem[] {
           },
           {
             path: '/rules/my-rules/:id',
-            redirect: '/rules/my-rules/:id/read',
+            name: 'rule-instance',
+            component: RuleInstancePage,
           },
           {
             path: '/rules/my-rules/:id/:mode',

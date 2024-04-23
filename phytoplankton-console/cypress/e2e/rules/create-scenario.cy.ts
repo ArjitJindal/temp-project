@@ -42,9 +42,15 @@ describe('Create scenario', () => {
       const ruleInstanceId = interception.response?.body?.id;
       cy.message(`Rule created - ${ruleInstanceId}`).should('exist');
       editRule(ruleInstanceId);
+      visitRuleInstancePage(ruleInstanceId);
       deleteScenario(ruleInstanceId);
     });
   });
+
+  function visitRuleInstancePage(ruleInstanceId: string) {
+    cy.visit(`/rules/my-rules/${ruleInstanceId}`);
+    cy.get('button[data-cy="rule-instance-page-simulate-rule-button"]').should('be.disabled');
+  }
 
   function deleteScenario(ruleInstanceId: string) {
     cy.visit('/rules/my-rules');

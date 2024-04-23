@@ -344,6 +344,7 @@ export function RuleConfigurationSimulation(props: Props) {
               isLoading={startSimulationMutation.isLoading}
               onClick={handleStartSimulation}
               requiredPermissions={['simulator:simulations:write']}
+              testName="run-simulation-button"
             >
               Run simulation
             </Button>
