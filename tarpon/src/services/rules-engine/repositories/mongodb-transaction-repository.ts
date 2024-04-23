@@ -246,7 +246,7 @@ export class MongoDbTransactionRepository
       })
     }
 
-    if (params.filterRuleInstancesHit != null) {
+    if (params.filterRuleInstancesHit?.length) {
       conditions.push({
         'hitRules.ruleInstanceId': {
           $in: params.filterRuleInstancesHit,
@@ -262,14 +262,18 @@ export class MongoDbTransactionRepository
       })
     }
 
-    if (params.filterTransactionStatus && params.filterRuleInstancesHit) {
+    if (
+      params.filterTransactionStatus &&
+      params.filterRuleInstancesHit?.length
+    ) {
       const ruleInstanceId = params.filterRuleInstancesHit
+
       conditions.push({
         $or: [
           {
             executedRules: {
               $elemMatch: {
-                ruleInstanceId: ruleInstanceId,
+                ruleInstanceId: { $in: ruleInstanceId },
                 ruleHit: true,
                 ruleAction: { $in: params.filterTransactionStatus },
               },
@@ -282,7 +286,7 @@ export class MongoDbTransactionRepository
                   $all: [
                     {
                       $elemMatch: {
-                        ruleInstanceId: ruleInstanceId,
+                        ruleInstanceId: { $in: ruleInstanceId },
                         ruleHit: false,
                       },
                     },

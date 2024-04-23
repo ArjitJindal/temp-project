@@ -129,7 +129,7 @@ export const transactionParamsToRequest = (
     filterDestinationPaymentMethods: destinationMethodFilter
       ? [destinationMethodFilter]
       : undefined,
-    filterRuleInstancesHit: ruleInstancesHitFilter?.join(','),
+    filterRuleInstancesHit: ruleInstancesHitFilter,
     filterTagKey: tagKey,
     filterTagValue: tagValue,
     filterUserId: params.userFilterMode === 'ALL' ? params.userId : undefined,

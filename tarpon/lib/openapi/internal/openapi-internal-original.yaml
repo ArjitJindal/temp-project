@@ -652,7 +652,9 @@ paths:
           in: query
           name: filterRulesHit
         - schema:
-            type: string
+            type: array
+            items:
+              type: string
           in: query
           name: filterRuleInstancesHit
         - schema:
@@ -4357,7 +4359,9 @@ paths:
           in: query
           name: filterRulesHit
         - schema:
-            type: string
+            type: array
+            items:
+              type: string
           in: query
           name: filterRuleInstancesHit
         - schema:
