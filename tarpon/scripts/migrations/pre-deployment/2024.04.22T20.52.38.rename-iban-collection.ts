@@ -35,7 +35,7 @@ async function migrateTenant(tenant: Tenant) {
   ])
   await collection.updateMany(
     {},
-    { $unset: ['type'], $set: { source: 'iban.com' } }
+    { $unset: { type: '' }, $set: { source: 'iban.com' } }
   )
 }
 
