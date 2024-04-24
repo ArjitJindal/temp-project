@@ -18,9 +18,11 @@ import { humanizeAuto } from '@/utils/humanize';
 import FieldValue from '@/components/SanctionsTable/SearchResultDetailsDrawer/FieldValue';
 import { P } from '@/components/ui/Typography';
 import Portal from '@/components/library/Portal';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
 interface Props {
   hit: ComplyAdvantageSearchHit;
+  searchedAt?: number;
   onClose: () => void;
 }
 
@@ -101,12 +103,16 @@ function Content(props: {
   hit: ComplyAdvantageSearchHit;
   allFields: ComplyAdvantageSearchHitDocFields[];
   pdfMode?: boolean;
+  searchedAt?: number;
 }) {
-  const { hit, allFields, pdfMode = false } = props;
+  const { hit, allFields, pdfMode = false, searchedAt } = props;
   const keyInfoFields = allFields.filter((field) => !field.source);
   const tabItems = useTabs(hit, allFields, pdfMode);
   return (
     <>
+      <Section title={'Searched at'}>
+        {searchedAt ? <TimestampDisplay timestamp={searchedAt} /> : 'N/A'}
+      </Section>
       <Section title={'Key information'}>
         <div className={s.keyInformation}>
           <Form.Layout.Label title={'Full name'}>{hit.doc?.name}</Form.Layout.Label>

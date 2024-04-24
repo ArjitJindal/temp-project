@@ -104,7 +104,9 @@ export function SanctionsSearchTable(props: Props) {
         ]}
         queryResult={{
           data: searchEnabled
-            ? map(queryResults.data, (response) => ({ items: withKey(response.data) }))
+            ? map(queryResults.data, (response) => ({
+                items: withKey(response.data),
+              }))
             : searchId
             ? map(searchHistoryQueryResults.data, (response) => ({
                 items: withKey(response?.response?.data),
@@ -112,6 +114,14 @@ export function SanctionsSearchTable(props: Props) {
             : success({ items: [] }),
           refetch: queryResults.refetch,
         }}
+        searchedAt={
+          searchEnabled
+            ? Date.now()
+            : searchId
+            ? getOr(searchHistoryQueryResults.data, undefined)?.updatedAt ??
+              getOr(searchHistoryQueryResults.data, undefined)?.createdAt
+            : undefined
+        }
       />
     </>
   );

@@ -724,7 +724,9 @@ class DatabricksStack extends TerraformStack {
         : Fn.replace(workspaceProvider.host || '', 'https://', '')
       const path = enableServerlessCompute
         ? sqlWarehouse.odbcParams.get(0).path
-        : `sql/protocolv1/o/${Fn.tostring(workspace.workspaceId)}/${cluster.clusterId}`
+        : `sql/protocolv1/o/${Fn.tostring(workspace.workspaceId)}/${
+            cluster.clusterId
+          }`
 
       new aws.secretsmanagerSecretVersion.SecretsmanagerSecretVersion(
         this,

@@ -29,10 +29,11 @@ interface Props {
   extraTools?: ToolRenderer[];
   params?: AllParams<TableSearchParams>;
   onChangeParams?: (newParams: AllParams<TableSearchParams>) => void;
+  searchedAt?: number;
 }
 
 export default function SanctionsTable(props: Props) {
-  const { isEmbedded, queryResult, extraTools, params, onChangeParams } = props;
+  const { isEmbedded, queryResult, extraTools, params, onChangeParams, searchedAt } = props;
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<ComplyAdvantageSearchHit>();
   const settings = useSettings();
@@ -207,6 +208,7 @@ export default function SanctionsTable(props: Props) {
       {selectedSearchHit && (
         <SearchResultDetailsDrawer
           hit={selectedSearchHit}
+          searchedAt={searchedAt}
           onClose={() => setSelectedSearchHit(undefined)}
         />
       )}
