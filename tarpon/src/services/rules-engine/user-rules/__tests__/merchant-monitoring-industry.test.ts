@@ -46,21 +46,6 @@ beforeAll(async () => {
         .subtract(1, 'hour')
         .valueOf(),
     },
-    {
-      source: { sourceType: 'LINKEDIN' },
-      userId: userId2,
-      industry: 'Renewable Energy',
-      updatedAt: dayjs(exampleDate).valueOf(),
-    },
-    {
-      source: { sourceType: 'LINKEDIN' },
-      userId: userId2,
-      industry: 'Renewable Energy',
-      updatedAt: dayjs(exampleDate)
-        .subtract(1, 'day')
-        .subtract(1, 'hour')
-        .valueOf(),
-    },
   ])
 })
 
@@ -116,7 +101,7 @@ describe.each<UserRuleTestCase>([
       {
         id: 'R-17',
         defaultParameters: {
-          sourceType: ['COMPANIES_HOUSE', 'LINKEDIN'],
+          sourceType: ['COMPANIES_HOUSE'],
         } as MerchantMonitoringIndustryUserRuleParameters,
       },
     ])

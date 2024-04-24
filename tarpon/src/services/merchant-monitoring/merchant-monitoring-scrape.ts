@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosInstance } from 'axios'
+import axios, { AxiosInstance } from 'axios'
 import { convert } from 'html-to-text'
 import { InternalServerError } from 'http-errors'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
@@ -138,7 +138,6 @@ export class MerchantMonitoringScrapeService {
         SCRAPE: () => this.scrape(domain),
         COMPANIES_HOUSE: () => this.companiesHouse(companyName),
         EXPLORIUM: () => this.explorium(companyName),
-        LINKEDIN: () => this.linkedin(domain),
       }
       const results = (
         await Promise.allSettled(
@@ -288,48 +287,6 @@ export class MerchantMonitoringScrapeService {
       logger.error(e)
       throw e
     }
-  }
-
-  public async linkedin(
-    companyName: string
-  ): Promise<MerchantMonitoringSummary | undefined> {
-    if (!this.rapidApiKey) {
-      throw new Error('No rapid api key')
-    }
-    const companyNameOption: AxiosRequestConfig = {
-      method: 'POST',
-      url: 'https://linkedin-company-data.p.rapidapi.com/linkedInCompanyUrlFromSearchTerm',
-      headers: {
-        'content-type': 'application/json',
-        'X-RapidAPI-Key': this.rapidApiKey,
-        'X-RapidAPI-Host': 'linkedin-company-data.p.rapidapi.com',
-      },
-      data: `{"searchTerms":["${companyName}"]}`,
-    }
-
-    const companyDomainData: any = await this.axios.request(companyNameOption)
-    const companyDomain = companyDomainData.data.Results[0][companyName]
-    const options: AxiosRequestConfig = {
-      method: 'POST',
-      url: 'https://linkedin-company-data.p.rapidapi.com/linkedInCompanyDataJson',
-      headers: {
-        'content-type': 'application/json',
-        'X-RapidAPI-Key': this.rapidApiKey,
-        'X-RapidAPI-Host': 'linkedin-company-data.p.rapidapi.com',
-      },
-      data: `{"liUrls":["${companyDomain}"]}`,
-    }
-
-    const data = await this.axios.request(options)
-
-    const summary = await this.summarise('LINKEDIN', JSON.stringify(data.data))
-
-    // Use linkedin description as the summary
-    if (summary) {
-      summary.summary = data.data.results[0].description
-    }
-
-    return summary
   }
 
   public async explorium(

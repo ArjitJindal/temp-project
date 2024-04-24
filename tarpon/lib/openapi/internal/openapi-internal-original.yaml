@@ -9903,7 +9903,6 @@ components:
     MerchantMonitoringSourceType:
       type: string
       enum:
-        - LINKEDIN
         - COMPANIES_HOUSE
         - EXPLORIUM
         - SCRAPE

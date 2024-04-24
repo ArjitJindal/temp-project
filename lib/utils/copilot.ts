@@ -9,7 +9,6 @@ export const COPILOT_QUESTIONS = {
   ONTOLOGY: 'Ontology',
   KYC_SCORING: 'KYC Scoring',
   LINKED_USERS: 'Linked users',
-  LINKEDIN: 'Linkedin',
   PAYMENT_IDENTIFIERS: 'Payment identifiers transacted with',
   REFERENCES_WORD_COUNT: 'Transaction references word count',
   RECOMMENDATION: 'Recommendation',

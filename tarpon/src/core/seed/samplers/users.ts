@@ -454,9 +454,6 @@ export function merchantMonitoringSummaries(
         url =
           'find-and-update.company-information.service.gov.uk/company/01772433'
         break
-      case 'LINKEDIN':
-        url = 'www.linkedin.com/company/flagright'
-        break
       case 'EXPLORIUM':
         url = 'www.explorium.ai/'
         break

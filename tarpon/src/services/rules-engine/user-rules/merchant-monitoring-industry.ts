@@ -19,7 +19,6 @@ const MERCHANT_SOURCE_TYPES: Array<{
   value: MerchantMonitoringSourceType
   label: string
 }> = [
-  { value: 'LINKEDIN', label: 'Linkedin' },
   { value: 'EXPLORIUM', label: 'Explorium' },
   { value: 'COMPANIES_HOUSE', label: 'Companies House' },
   { value: 'SCRAPE', label: 'Website scrape' },
@@ -63,7 +62,6 @@ export default class MerchantMonitoringIndustryUserRule extends UserRule<Merchan
 
     for (const sourceType of this.parameters.sourceType) {
       switch (sourceType) {
-        case 'LINKEDIN':
         case 'EXPLORIUM':
         case 'COMPANIES_HOUSE': {
           allSources.push({
