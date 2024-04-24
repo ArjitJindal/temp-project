@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { uniqBy } from 'lodash'
-import { IBANApiHistory, IBANValidationResponse } from '../types'
-import { IBAN_COM_COLLECTION } from '@/utils/mongodb-definitions'
+import { IBANApiHistory, IBANBankInfo } from '../types'
+import { IBAN_COLLECTION } from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
 
 @traceable
@@ -16,16 +16,19 @@ export class IBANApiRepository {
 
   public async saveIbanValidationHistory(
     iban: string,
-    response: IBANValidationResponse
+    response: IBANBankInfo,
+    rawResponse: object,
+    source: string
   ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<IBANApiHistory>(
-      IBAN_COM_COLLECTION(this.tenantId)
+      IBAN_COLLECTION(this.tenantId)
     )
     await collection.insertOne({
-      type: 'IBAN_VALIDATION',
       request: { iban },
       response,
+      rawResponse,
+      source,
       createdAt: Date.now(),
     })
   }
@@ -34,13 +37,10 @@ export class IBANApiRepository {
   ): Promise<IBANApiHistory | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<IBANApiHistory>(
-      IBAN_COM_COLLECTION(this.tenantId)
+      IBAN_COLLECTION(this.tenantId)
     )
     const result = await collection
-      .find(
-        { type: 'IBAN_VALIDATION', 'request.iban': iban },
-        { sort: { createdAt: -1 }, limit: 1 }
-      )
+      .find({ 'request.iban': iban }, { sort: { createdAt: -1 }, limit: 1 })
       .toArray()
     return result[0] ?? null
   }
@@ -50,11 +50,11 @@ export class IBANApiRepository {
   ): Promise<IBANApiHistory[] | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<IBANApiHistory>(
-      IBAN_COM_COLLECTION(this.tenantId)
+      IBAN_COLLECTION(this.tenantId)
     )
     const results = await collection
       .find(
-        { type: 'IBAN_VALIDATION', 'request.iban': { $in: ibans } },
+        { 'request.iban': { $in: ibans } },
         // We'll only use the latest query result of a iban
         { sort: { createdAt: -1 } }
       )

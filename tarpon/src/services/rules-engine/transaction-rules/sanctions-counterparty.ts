@@ -11,7 +11,7 @@ import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rul
 import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
-import { BankInfo } from '@/services/iban.com'
+import { BankInfo } from '@/services/iban'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { formatConsumerName } from '@/utils/helpers'

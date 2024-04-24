@@ -30,7 +30,7 @@ import {
 import { SheetsApiUsageMetricsService } from './sheets-api-usage-metrics-service'
 import { logger } from '@/core/logger'
 import {
-  IBAN_COM_COLLECTION,
+  IBAN_COLLECTION,
   METRICS_COLLECTION,
   SANCTIONS_SEARCHES_COLLECTION,
   TRANSACTIONS_COLLECTION,
@@ -103,7 +103,7 @@ export class ApiUsageMetricsService {
       timeRange
     )
     const ibanResolutinosCounts = await getDailyUsage(
-      IBAN_COM_COLLECTION(tenantInfo.id),
+      IBAN_COLLECTION(tenantInfo.id),
       'createdAt',
       timeRange
     )

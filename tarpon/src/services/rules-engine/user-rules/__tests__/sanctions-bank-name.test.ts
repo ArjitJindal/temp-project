@@ -42,10 +42,9 @@ const TEST_IBAN_BANK_NAME_MAPPING: { [key: string]: IBANDetails } = {
 
 const TEST_TENANT_ID = getTestTenantId()
 
-jest.mock('@/services/iban.com', () => {
-  const originalModule = jest.requireActual<
-    typeof import('@/services/iban.com')
-  >('@/services/iban.com')
+jest.mock('@/services/iban', () => {
+  const originalModule =
+    jest.requireActual<typeof import('@/services/iban')>('@/services/iban')
 
   return {
     __esModule: true,

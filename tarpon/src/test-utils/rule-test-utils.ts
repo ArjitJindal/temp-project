@@ -37,7 +37,7 @@ import { hasFeature } from '@/core/utils/context'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { getMigratedV8Config } from '@/services/rules-engine/v8-migrations'
 import { SanctionsService } from '@/services/sanctions'
-import { IBANService } from '@/services/iban.com'
+import { IBANService } from '@/services/iban'
 
 const DEFAULT_DESCRIPTION = 'test rule description.'
 

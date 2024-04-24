@@ -9,7 +9,8 @@ export type Secrets = {
   }
   complyAdvantageCreds: { apiKey: string }
   openAI: string
-  ibanComCreds: { apiKey: string }
+  ibanapiCreds: { apiKey: string }
+  apininjasCreds: { apiKey: string }
   IntegrationKey: string
   GoogleSheetsPrivateKey: { privateKey: string }
   MerchantMonitoring: {

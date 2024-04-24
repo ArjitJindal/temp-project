@@ -196,8 +196,8 @@ export const SANCTIONS_SCREENING_DETAILS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-screening-details`
 }
 
-export const IBAN_COM_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-iban-com`
+export const IBAN_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-iban`
 }
 
 export const AUDITLOG_COLLECTION = (tenantId: string) => {
@@ -485,7 +485,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { 'response.data.doc.types': 1 },
         ].map((index) => ({ index })),
     },
-    [IBAN_COM_COLLECTION(tenantId)]: {
+    [IBAN_COLLECTION(tenantId)]: {
       getIndexes: () =>
         [{ 'request.iban': 1, createdAt: 1 }].map((index) => ({ index })),
     },

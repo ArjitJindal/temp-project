@@ -31,7 +31,7 @@ import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositor
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
 import { SanctionsService } from '@/services/sanctions'
-import { IBANService } from '@/services/iban.com'
+import { IBANService } from '@/services/iban'
 
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask

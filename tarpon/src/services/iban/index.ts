@@ -1,60 +1,17 @@
-// API Reference: https://www.iban.com/validation-api
-
-import { URLSearchParams } from 'url'
 import pLimit from 'p-limit'
-import { isEmpty } from 'lodash'
 import { electronicFormatIBAN, isValidIBAN } from 'ibantools'
-import { IBANValidation, IBANValidationResponse } from './types'
 import { IBANApiRepository } from './repositories/iban-api-repository'
+import { IBAN_API_PROVIDERS } from './providers'
+import { IBANBankInfo } from './types'
+import { ApiProvider } from './providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getSecretByName } from '@/utils/secrets-manager'
-import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { logger } from '@/core/logger'
 import { hasFeature } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
-import { apiFetch } from '@/utils/api-fetch'
 
-const IBAN_API_URI = 'https://api.iban.com/clients/api/v4/iban/'
-// NOTE: IBAN.com rate limit: 10 queries per second
 const ibanConcurrencyLimit = pLimit(10)
 
 export type BankInfo = { bankName?: string; iban?: string }
-
-function ibanValidationResponseToIBANDetails(
-  iban: string,
-  response: IBANValidationResponse
-): IBANDetails | null {
-  if (isEmpty(response?.bank_data)) {
-    return null
-  }
-  return {
-    method: 'IBAN',
-    bankName: response.bank_data?.bank,
-    BIC: response.bank_data?.bic,
-    IBAN: iban,
-    bankBranchCode: response.bank_data?.branch_code,
-    bankAddress: {
-      addressLines: [response.bank_data?.address],
-      postcode: response.bank_data?.zip ?? '',
-      city: response.bank_data?.city ?? '',
-      country: response.bank_data?.country ?? '',
-      state: response.bank_data?.state ?? '',
-    },
-  }
-}
-
-function hasAccountError(errors: IBANValidation[]) {
-  return Boolean(
-    errors.find(
-      (error) =>
-        error.code === '301' ||
-        error.code === '302' ||
-        error.code === '303' ||
-        error.code === '304' ||
-        error.code === '305'
-    )
-  )
-}
 
 function sanitizeAndValidateIban(iban: string): string | null {
   const sanitizedIban = electronicFormatIBAN(iban)
@@ -67,22 +24,20 @@ function sanitizeAndValidateIban(iban: string): string | null {
   return sanitizedIban
 }
 
-async function getApiKey(): Promise<string> {
-  if (process.env.IBAN_API_KEY) {
-    return process.env.IBAN_API_KEY
-  }
-  return (await getSecretByName('ibanComCreds'))?.apiKey
-}
-
 @traceable
 export class IBANService {
   apiKey!: string
   ibanApiRepository!: IBANApiRepository
   tenantId: string
   initializationPromise: Promise<void> | null = null
+  providers: ApiProvider[]
 
-  constructor(tenantId: string) {
+  constructor(
+    tenantId: string,
+    providers = IBAN_API_PROVIDERS.filter((provider) => provider.enabled())
+  ) {
     this.tenantId = tenantId
+    this.providers = providers
   }
 
   public async resolveBankNames(bankInfos: BankInfo[]): Promise<BankInfo[]> {
@@ -117,17 +72,11 @@ export class IBANService {
       )
 
     // Convert the IBAN histories to details
-    const ibanDetails = new Map<string, IBANDetails | null>()
+    const ibanDetails = new Map<string, IBANBankInfo | null>()
     ibanHistories?.forEach((history) => {
       const rawIban = sanitizedToRawIban.get(history.request.iban)
       if (rawIban) {
-        ibanDetails.set(
-          rawIban,
-          ibanValidationResponseToIBANDetails(
-            history.request.iban,
-            history.response
-          )
-        )
+        ibanDetails.set(rawIban, history.response)
       }
     })
 
@@ -154,62 +103,42 @@ export class IBANService {
     )
   }
 
-  private async queryIban(iban: string): Promise<IBANDetails | null> {
-    const rawIbanResponse = await apiFetch<IBANValidationResponse>(
-      IBAN_API_URI,
-      {
-        method: 'POST',
-        headers: { 'User-Agent': 'IBAN API Client/0.0.1' },
-        body: this.getRequestBody({ iban }),
+  private async queryIban(iban: string): Promise<IBANBankInfo | null> {
+    if (this.providers.length === 0) {
+      throw new Error('No IBAN providers enabled')
+    }
+    for (const provider of this.providers) {
+      try {
+        const { response, rawResponse } = await provider.resolveIban(iban)
+        if (provider.cacheable()) {
+          await this.ibanApiRepository.saveIbanValidationHistory(
+            iban,
+            response,
+            rawResponse,
+            provider.source
+          )
+        }
+        if (response.bankName) {
+          // If we cannot get the bank name, we will try the next provider
+          return response
+        }
+      } catch (e) {
+        logger.error(
+          `Failed to resolve IBAN ${iban} with ${provider.source} - ${e}`
+        )
       }
-    )
-
-    if (hasAccountError(rawIbanResponse.result.errors ?? [])) {
-      throw new Error(
-        `Fail to access IBAN.com API: ${JSON.stringify(
-          rawIbanResponse.result.errors
-        )}`
-      )
     }
-
-    await this.ibanApiRepository.saveIbanValidationHistory(
-      iban,
-      rawIbanResponse.result
-    )
-    const result = ibanValidationResponseToIBANDetails(
-      iban,
-      rawIbanResponse.result
-    )
-
-    if (!result) {
-      logger.error(
-        `'${iban}' is not a valid IBAN (${JSON.stringify(
-          rawIbanResponse.result.validations
-        )})`
-      )
-    }
-    return result
+    return null
   }
 
   public async initializeInternal() {
     const mongoDb = await getMongoDbClient()
     this.ibanApiRepository = new IBANApiRepository(this.tenantId, mongoDb)
-    this.apiKey = await getApiKey()
   }
 
   public async initialize() {
     this.initializationPromise =
       this.initializationPromise ?? this.initializeInternal()
     await this.initializationPromise
-  }
-
-  private getRequestBody(request: { [key: string]: string }): URLSearchParams {
-    const params = new URLSearchParams()
-    params.append('api_key', this.apiKey)
-    params.append('format', 'json')
-    for (const key in request) {
-      params.append(key, request[key])
-    }
-    return params
   }
 }

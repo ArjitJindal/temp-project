@@ -15,7 +15,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule as RuleModel } from '@/@types/openapi-internal/Rule'
 import { traceable } from '@/core/xray'
 import { SanctionsService } from '@/services/sanctions'
-import { IBANService } from '@/services/iban.com'
+import { IBANService } from '@/services/iban'
 
 export interface PartyVars {
   type?: 'origin' | 'destination'
