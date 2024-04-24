@@ -16,12 +16,21 @@ import { provider as nullProvider } from '@cdktf/provider-null'
 
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
+const stage = process.env.STAGE as Stage
 const adminEmails = [
   'tim+databricks@flagright.com',
   'nadig@flagright.com',
   'chia@flagright.com',
+  ...(stage == 'dev'
+    ? [
+        'aman@flagright.com',
+        'jayant@flagright.com',
+        'kavish@flagright.com',
+        'nikolai@flagright.com',
+      ]
+    : []),
 ]
-const stage = process.env.STAGE as Stage
+
 const region = process.env.REGION as FlagrightRegion
 const env = `${stage}-${region}`
 const config = getTarponConfig(stage, region)
