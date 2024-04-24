@@ -248,12 +248,12 @@ export function Content(props: { userId: string }) {
               id: 'destinationAmount',
               title: 'Destination amount',
               value: (entity): Amount | undefined => {
-                if (entity.originAmountDetails == null) {
+                if (entity.destinationAmountDetails == null) {
                   return undefined;
                 }
                 return {
-                  amountValue: entity.originAmountDetails?.transactionAmount,
-                  amountCurrency: entity.originAmountDetails?.transactionCurrency,
+                  amountValue: entity.destinationAmountDetails?.transactionAmount,
+                  amountCurrency: entity.destinationAmountDetails?.transactionCurrency,
                 };
               },
               type: MONEY,
