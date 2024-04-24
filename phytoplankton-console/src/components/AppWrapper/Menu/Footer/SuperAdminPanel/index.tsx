@@ -1,5 +1,5 @@
 import { Divider, Input, Space } from 'antd';
-import React, { ChangeEvent, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
 import NumberInput from '../../../../library/NumberInput';
@@ -13,9 +13,16 @@ import Modal from '@/components/library/Modal';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
-import { BatchJobNames, Feature, Tenant, TenantSettings } from '@/apis';
+import {
+  BatchJobNames,
+  Feature,
+  SanctionsSettingsMarketType,
+  Tenant,
+  TenantSettings,
+} from '@/apis';
 import { clearAuth0LocalStorage, useAccountRole, useAuth0User } from '@/utils/user-utils';
 import {
+  useFeatureEnabled,
   useFeatures,
   useSettings,
   useUpdateTenantSettings,
@@ -27,6 +34,8 @@ import Confirm from '@/components/utils/Confirm';
 import { getWhiteLabelBrandingByHost, isWhiteLabeled } from '@/utils/branding';
 import Select from '@/components/library/Select';
 import Tag from '@/components/library/Tag';
+import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
+import SelectionGroup from '@/components/library/SelectionGroup';
 
 const featureDescriptions: Record<Feature, { title: string; description: string }> = {
   RISK_LEVELS: { title: 'Risk Levels', description: 'Enable risk levels' },
@@ -89,9 +98,9 @@ export default function SuperAdminPanel() {
   const [tenantIdToDelete, setTenantIdToDelete] = useState<string | undefined>(undefined);
   const [instantDelete, setInstantDelete] = useState<boolean>(false);
 
-  const [complyAdvantageSearchProfileId, setSearchProfileId] = useState<string>(
-    settings.complyAdvantageSearchProfileId || '',
-  );
+  const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
+  const isSanctionsToBeEnabled = isSanctionsEnabled || features?.includes('SANCTIONS');
+  const [caSettings, setCaSettings] = useState(settings.sanctions);
 
   const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
   const user = useAuth0User();
@@ -181,19 +190,26 @@ export default function SuperAdminPanel() {
 
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleSave = async () => {
-    if (complyAdvantageSearchProfileId.length > 0 && !validate(complyAdvantageSearchProfileId)) {
-      message.fatal('Comply Advantage Search profile ID must be a valid UUID');
-      return;
+    // Sanctions settings validation
+    if (isSanctionsToBeEnabled) {
+      if (!caSettings?.marketType) {
+        message.fatal('ComplyAdvantage market type must be set');
+        return;
+      }
+      if (
+        caSettings?.customSearchProfileId &&
+        caSettings.customSearchProfileId.length > 0 &&
+        !validate(caSettings.customSearchProfileId)
+      ) {
+        message.fatal('Comply Advantage Search profile ID must be a valid UUID');
+        return;
+      }
     }
     mutateTenantSettings.mutate({
       ...(features && { features }),
       ...(limits && { limits }),
-      ...(complyAdvantageSearchProfileId && { complyAdvantageSearchProfileId }),
+      sanctions: caSettings,
     });
-  };
-
-  const handleChangeSearchProfileID = async (event: ChangeEvent<HTMLInputElement>) => {
-    setSearchProfileId(event.target.value.trim());
   };
   const showModal = () => {
     setIsModalVisible(true);
@@ -266,7 +282,7 @@ export default function SuperAdminPanel() {
             </Label>
             <Label
               label="Simulation limit"
-              description="The maximum number of simulations that can be run by a tenant."
+              description="The maximum number of simulations that can be run by a tenant"
             >
               <NumberInput
                 value={limits?.simulations ?? 0}
@@ -317,12 +333,42 @@ export default function SuperAdminPanel() {
             >
               Reset current API key view count
             </Button>
-            <Label label="CA Search Profile ID">
-              <Input
-                value={complyAdvantageSearchProfileId}
-                onChange={handleChangeSearchProfileID}
-              />
-            </Label>
+            {isSanctionsToBeEnabled && (
+              <Label label="ComplyAdvantage settings">
+                <Label level={2} label="Market type" required={{ value: true, showHint: true }}>
+                  <SelectionGroup
+                    value={caSettings?.marketType}
+                    onChange={(v) => {
+                      setCaSettings({
+                        ...caSettings,
+                        marketType: v as SanctionsSettingsMarketType,
+                      });
+                    }}
+                    mode={'SINGLE'}
+                    options={SANCTIONS_SETTINGS_MARKET_TYPES.map((v) => ({
+                      label: humanizeConstant(v),
+                      value: v,
+                    }))}
+                  />
+                </Label>
+                <Label
+                  level={2}
+                  label="Custom search profile ID"
+                  description="If being set, we'll only use this search profile ID for ComplyAdvantage searches, and users won't be able to select different search types"
+                >
+                  <Input
+                    value={caSettings?.customSearchProfileId}
+                    onChange={(event) => {
+                      setCaSettings({
+                        ...caSettings,
+                        marketType: caSettings?.marketType ?? 'EMERGING',
+                        customSearchProfileId: event.target.value.trim(),
+                      });
+                    }}
+                  />
+                </Label>
+              </Label>
+            )}
             <Divider />
             <Label label="Run batch job">
               <Select

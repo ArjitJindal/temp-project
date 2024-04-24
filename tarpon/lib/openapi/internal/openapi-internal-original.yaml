@@ -7913,8 +7913,8 @@ components:
             $ref: '#/components/schemas/AIAttribute'
         isPaymentApprovalEnabled:
           type: boolean
-        complyAdvantageSearchProfileId:
-          type: string
+        sanctions:
+          $ref: '#/components/schemas/SanctionsSettings'
         isProductionAccessEnabled:
           type: boolean
         isAiEnabled:
@@ -10650,6 +10650,8 @@ components:
           type: string
         seats:
           type: number
+        sanctionsMarketType:
+          $ref: '#/components/schemas/SanctionsSettingsMarketType'
       required:
         - tenantName
         - tenantWebsite
@@ -11942,6 +11944,22 @@ components:
       enum:
         - 'true'
         - 'false'
+    SanctionsSettings:
+      title: SanctionsSettings
+      type: object
+      properties:
+        marketType:
+          $ref: '#/components/schemas/SanctionsSettingsMarketType'
+        customSearchProfileId:
+          type: string
+      required:
+        - marketType
+    SanctionsSettingsMarketType:
+      title: SanctionsSettingsMarketType
+      type: string
+      enum:
+        - EMERGING
+        - FIRST_WORLD
   securitySchemes:
     Authorization:
       type: http

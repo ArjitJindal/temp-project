@@ -1,9 +1,9 @@
 import { JSONSchemaType } from 'ajv'
-import { isEmpty, mapValues, uniqBy } from 'lodash'
+import { mapValues, uniqBy } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   RESOLVE_IBAN_NUMBER_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_SCHEMA,
+  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
@@ -22,7 +22,7 @@ export type SanctionsCounterPartyRuleParameters = {
   transactionAmountThreshold?: {
     [currency: string]: number
   }
-  screeningTypes: SanctionsSearchType[]
+  screeningTypes?: SanctionsSearchType[]
   fuzziness: number
   resolveIban?: boolean
 }
@@ -35,7 +35,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
       properties: {
         transactionAmountThreshold:
           TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA({}),
-        screeningTypes: SANCTIONS_SCREENING_TYPES_SCHEMA({}),
+        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         resolveIban: RESOLVE_IBAN_NUMBER_SCHEMA({
           uiSchema: {
@@ -43,7 +43,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
           },
         }),
       },
-      required: ['fuzziness', 'screeningTypes'],
+      required: ['fuzziness'],
       additionalProperties: false,
     }
   }
@@ -51,10 +51,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
   public async computeRule() {
     const hitRules: RuleHitResult = []
 
-    if (
-      (this.senderUser && this.receiverUser) ||
-      isEmpty(this.parameters?.screeningTypes)
-    ) {
+    if (this.senderUser && this.receiverUser) {
       return hitRules
     }
 

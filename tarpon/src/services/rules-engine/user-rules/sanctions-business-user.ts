@@ -4,7 +4,7 @@ import { isEmpty } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_SCHEMA,
+  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -27,7 +27,7 @@ const BUSINESS_USER_ENTITY_TYPES: Array<{
 
 export type SanctionsBusinessUserRuleParameters = {
   entityTypes?: SanctionsDetailsEntityType[]
-  screeningTypes: SanctionsSearchType[]
+  screeningTypes?: SanctionsSearchType[]
   fuzziness: number
   ongoingScreening: boolean
 }
@@ -50,14 +50,14 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
           uniqueItems: true,
           nullable: true,
         },
-        screeningTypes: SANCTIONS_SCREENING_TYPES_SCHEMA({}),
+        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
             'It will do a screening every 24hrs of all the existing business users including shareholders and directors after it is enabled.',
         }),
       },
-      required: ['fuzziness', 'screeningTypes'],
+      required: ['fuzziness'],
       additionalProperties: false,
     }
   }
@@ -68,7 +68,6 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
 
     if (
       isEmpty(entityTypes) ||
-      isEmpty(screeningTypes) ||
       !isBusinessUser(this.user) ||
       (this.ongoingScreeningMode && !ongoingScreening)
     ) {

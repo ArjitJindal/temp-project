@@ -1,12 +1,12 @@
 import { JSONSchemaType } from 'ajv'
 import pLimit from 'p-limit'
 
-import { isEmpty, uniqBy } from 'lodash'
+import { uniqBy } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_SCHEMA,
   RESOLVE_IBAN_NUMBER_SCHEMA,
+  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -22,7 +22,7 @@ type BankInfo = { bankName?: string; iban?: string }
 
 export type SanctionsBankUserRuleParameters = {
   resolveIban?: boolean
-  screeningTypes: SanctionsSearchType[]
+  screeningTypes?: SanctionsSearchType[]
   ongoingScreening: boolean
   fuzziness: number
 }
@@ -37,14 +37,14 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
             requiredFeatures: ['IBAN_RESOLUTION'],
           },
         }),
-        screeningTypes: SANCTIONS_SCREENING_TYPES_SCHEMA({}),
+        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
             'It will do a screening every 24hrs of all the existing bank names after it is enabled.',
         }),
       },
-      required: ['fuzziness', 'screeningTypes'],
+      required: ['fuzziness'],
       additionalProperties: false,
     }
   }
@@ -54,7 +54,6 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       this.parameters
 
     if (
-      isEmpty(screeningTypes) ||
       !isBusinessUser(this.user) ||
       (this.ongoingScreeningMode && !ongoingScreening)
     ) {

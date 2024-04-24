@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { startCase } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
+import { useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableColumn, TableData, ToolRenderer } from '@/components/library/Table/types';
@@ -34,6 +35,7 @@ export default function SanctionsTable(props: Props) {
   const { isEmbedded, queryResult, extraTools, params, onChangeParams } = props;
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<ComplyAdvantageSearchHit>();
+  const settings = useSettings();
 
   const helper = new ColumnHelper<ComplyAdvantageSearchHit>();
   const columns: TableColumn<ComplyAdvantageSearchHit>[] = helper.list([
@@ -169,7 +171,9 @@ export default function SanctionsTable(props: Props) {
         step: 0.1,
       },
     },
-    {
+  ];
+  if (!settings.sanctions?.customSearchProfileId) {
+    extraFilters.push({
       title: 'Matched type',
       key: 'types',
       renderer: {
@@ -178,8 +182,8 @@ export default function SanctionsTable(props: Props) {
         mode: 'MULTIPLE',
         displayMode: 'select',
       },
-    },
-  ];
+    });
+  }
 
   return (
     <>

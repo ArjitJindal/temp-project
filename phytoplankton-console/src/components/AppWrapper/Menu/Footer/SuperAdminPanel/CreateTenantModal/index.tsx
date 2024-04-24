@@ -5,13 +5,14 @@ import Modal from '@/components/library/Modal';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { getFixedSchemaJsonForm } from '@/utils/json';
 import { useApi } from '@/api';
-import { TenantCreationResponse } from '@/apis';
+import { SanctionsSettingsMarketType, TenantCreationResponse } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
 import COLORS from '@/components/ui/colors';
 import { Feature } from '@/apis/models/Feature';
 import { useAuth0User } from '@/utils/user-utils';
 import { FEATURES } from '@/apis/models-custom/Feature';
 import { message } from '@/components/library/Message';
+import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
 
 interface Props {
   visible: boolean;
@@ -27,6 +28,7 @@ interface FormDetails {
   emailsOfAdmins: string[];
   featureFlags: Feature[];
   demoMode: boolean;
+  sanctionsMarketType?: SanctionsSettingsMarketType;
 }
 
 const currentEnv = process.env.ENV_NAME;
@@ -70,16 +72,13 @@ export const CreateTenantModal = (props: Props) => {
   }, []);
 
   const handleCreateTenant = useCallback(async () => {
-    const {
-      tenantName,
-      tenantWebsite,
-      tenantId,
-      auth0DisplayName,
-      auth0Domain,
-      emailsOfAdmins,
-      featureFlags,
-      demoMode,
-    } = formDetails;
+    const tenantName = formDetails.tenantName.replaceAll(' ', '');
+    const tenantWebsite = formDetails.tenantWebsite.replaceAll(' ', '');
+    const tenantId = formDetails.tenantId?.replaceAll(' ', '');
+    const auth0DisplayName = formDetails.auth0DisplayName.replaceAll(' ', '');
+    const auth0Domain = formDetails.auth0Domain.replaceAll(' ', '');
+    const emailsOfAdmins = formDetails.emailsOfAdmins.map((email) => email.replaceAll(' ', ''));
+    const { featureFlags, demoMode, sanctionsMarketType } = formDetails;
 
     if (
       !(tenantName && tenantWebsite && auth0DisplayName && auth0Domain && emailsOfAdmins?.length)
@@ -88,28 +87,14 @@ export const CreateTenantModal = (props: Props) => {
       return;
     }
 
-    const isEmailsValid = emailsOfAdmins?.every((email) => {
-      const validEmail = isValidEmail(email);
-      if (!validEmail) {
-        message.error(`Invalid email: ${email}`);
-      }
+    const invalidEmails = emailsOfAdmins?.filter((email) => !isValidEmail(email));
 
-      if (email.includes(' ')) {
-        message.error('Please remove all spaces from the emails');
-      }
-
-      return isValidEmail;
-    });
-
-    if (
-      tenantName.includes(' ') ||
-      tenantWebsite.includes(' ') ||
-      auth0Domain.includes(' ') ||
-      auth0DisplayName.includes(' ') ||
-      tenantId?.includes(' ') ||
-      !isEmailsValid
-    ) {
-      message.error('Please remove all spaces from the fields');
+    if (invalidEmails.length) {
+      message.error(`Invalid email(s): ${invalidEmails.join(', ')}`);
+      return;
+    }
+    if (featureFlags.includes('SANCTIONS') && !sanctionsMarketType) {
+      message.error('Please set ComplyAdvantage market type');
       return;
     }
 
@@ -123,6 +108,7 @@ export const CreateTenantModal = (props: Props) => {
           auth0Domain,
           adminEmails: emailsOfAdmins,
           features: demoMode ? [...featureFlags, 'DEMO_MODE'] : featureFlags,
+          sanctionsMarketType,
         },
       });
 
@@ -132,6 +118,7 @@ export const CreateTenantModal = (props: Props) => {
       message.fatal(`Error creating tenant ${getErrorMessage(error)}`, error);
     }
   }, [formDetails, api]);
+  const isSanctionsEnabled = formDetails.featureFlags.includes('SANCTIONS');
 
   const schema = useMemo(
     () => ({
@@ -176,6 +163,13 @@ export const CreateTenantModal = (props: Props) => {
             enum: UPDATED_FEATURES,
           },
         },
+        ...(isSanctionsEnabled && {
+          sanctionsMarketType: {
+            type: 'string',
+            title: 'ComplyAdvantage market type',
+            enum: SANCTIONS_SETTINGS_MARKET_TYPES,
+          },
+        }),
         ...(currentEnv !== 'prod' && {
           demoMode: {
             type: 'boolean',
@@ -190,9 +184,9 @@ export const CreateTenantModal = (props: Props) => {
         'featureFlags',
         'emailsOfAdmins',
         'auth0Domain',
-      ],
+      ].concat(isSanctionsEnabled ? ['sanctionsMarketType'] : []),
     }),
-    [UPDATED_FEATURES],
+    [UPDATED_FEATURES, isSanctionsEnabled],
   );
 
   const uiSchema = useMemo(

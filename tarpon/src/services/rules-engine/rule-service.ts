@@ -1,7 +1,7 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError, { BadRequest } from 'http-errors'
 import { removeStopwords, eng } from 'stopword'
-import { compact, concat, isEmpty, set, uniq } from 'lodash'
+import { cloneDeep, compact, concat, isEmpty, set, uniq, unset } from 'lodash'
 import { replaceMagicKeyword } from '@flagright/lib/utils/object'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { singular } from 'pluralize'
@@ -183,10 +183,16 @@ export class RuleService {
     } as RuleFilters
   }
 
-  private async replaceDefaultCurrency(rule: Rule): Promise<Rule> {
+  private async getTenantSpecificRule(rule: Rule): Promise<Rule> {
+    const updatedRule = cloneDeep(rule)
     const settings = await tenantSettings(this.ruleInstanceRepository.tenantId)
+
+    // If custom CA search profile is set, we don't allow user to set the screening types
+    if (settings.sanctions?.customSearchProfileId) {
+      unset(updatedRule.parametersSchema, 'properties.screeningTypes')
+    }
     return replaceMagicKeyword(
-      rule,
+      updatedRule,
       DEFAULT_CURRENCY_KEYWORD,
       settings?.defaultValues?.currency ?? 'USD'
     ) as Rule
@@ -194,13 +200,13 @@ export class RuleService {
 
   async getRuleById(ruleId: string): Promise<Rule | null> {
     const rule = await this.ruleRepository.getRuleById(ruleId)
-    return rule ? this.replaceDefaultCurrency(rule) : null
+    return rule ? this.getTenantSpecificRule(rule) : null
   }
 
   async getAllRules(): Promise<Array<Rule>> {
     let rules = await this.ruleRepository.getAllRules()
     rules = await Promise.all(
-      rules.map((rule) => this.replaceDefaultCurrency(rule))
+      rules.map((rule) => this.getTenantSpecificRule(rule))
     )
     return rules.filter(
       (rule) =>

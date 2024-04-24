@@ -205,6 +205,9 @@ export class TenantService {
       limits: { seats: tenantData.seats ?? 5, apiKeyView: 2 },
       features: tenantData.features ?? [],
       auth0Domain: tenantData.auth0Domain,
+      sanctions: tenantData.sanctionsMarketType
+        ? { marketType: tenantData.sanctionsMarketType }
+        : undefined,
     }
 
     const dynamoDb = this.dynamoDb
