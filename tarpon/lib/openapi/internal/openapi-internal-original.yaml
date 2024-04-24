@@ -4230,6 +4230,10 @@ paths:
               type: string
           in: query
           name: filterRuleNature
+        - schema:
+            type: boolean
+          in: query
+          name: includeDeleted
     post:
       summary: Create a Manual Case
       operationId: post-cases-manual
@@ -8635,6 +8639,7 @@ components:
       enum:
         - MANUAL
         - SYSTEM
+        - EXTERNAL
     ManualCaseCreationDataRequest:
       type: object
       title: ManualCaseCreationDataRequest
@@ -8732,13 +8737,7 @@ components:
             type: string
         creationReason:
           $ref: ../public-management/openapi-public-management-original.yaml#/components/schemas/ActionReason
-        deletionReason:
-          $ref: ../public-management/openapi-public-management-original.yaml#/components/schemas/ActionReason
-        isDeleted:
-          type: boolean
         createdTimestampInternal:
-          type: number
-        deletedAt:
           type: number
         tags:
           type: array

@@ -1284,4 +1284,31 @@ export class CaseRepository {
         ),
     ])
   }
+
+  public async addExternalCaseMongo(
+    caseEntity: Case
+  ): Promise<CaseWithoutCaseTransactions> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    await collection.insertOne(caseEntity)
+    return caseEntity
+  }
+
+  public async updateCase(caseEntity: Partial<Case>): Promise<Case | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const updatedCase = await collection.findOneAndUpdate(
+      { caseId: caseEntity.caseId },
+      {
+        $set: {
+          ...caseEntity,
+          updatedAt: Date.now(),
+        },
+      },
+      { returnDocument: 'after' }
+    )
+
+    return updatedCase.value
+  }
 }

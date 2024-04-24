@@ -1,14 +1,15 @@
 import React from 'react';
-import Component, { CaseGenerationMethod } from './index';
+import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
 import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
+import { CaseType } from '@/apis';
 
 export default function (): JSX.Element {
   return (
     <>
       <UseCase title={'Types'}>
-        <PropertyMatrix<CaseGenerationMethod> xLabel={'type'} x={['SYSTEM', 'MANUAL']}>
-          {(x) => <Component method={x} />}
+        <PropertyMatrix xLabel={'type'} x={['SYSTEM', 'MANUAL']}>
+          {(x) => <Component method={x as CaseType} />}
         </PropertyMatrix>
       </UseCase>
     </>

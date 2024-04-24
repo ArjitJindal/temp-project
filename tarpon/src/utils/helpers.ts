@@ -109,3 +109,11 @@ export function getParsedCommentBody(body?: string) {
   const result = body.split(mentionRegex)
   return result.filter((e) => !e.match(/^(google-oauth2|auth0)\|\S+$/)).join('')
 }
+
+export const isStatusInProgress = (status: CaseStatus | undefined): boolean => {
+  return status?.includes('IN_PROGRESS') ?? false
+}
+
+export const isStatusOnHold = (status: CaseStatus | undefined): boolean => {
+  return status?.includes('ON_HOLD') ?? false
+}

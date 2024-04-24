@@ -326,8 +326,8 @@ paths:
                       type: USER
                     caseStatus: OPEN
                     priority: P1
-                    createdTimestamp: 0
-                    updatedAt: 0
+                    createdTimestamp: 1713177955000
+                    updatedAt: 1713177955000
                     relatedCases:
                       - string
                     tags:
@@ -338,13 +338,7 @@ paths:
                       reasons:
                         - string
                       comment: string
-                      timestamp: 0
-                    deletionReason:
-                      reasons:
-                        - string
-                      comment: string
-                      timestamp: 0
-                    isDeleted: false
+                      timestamp: 1713177955000
         '400':
           description: Bad Request
           content:
@@ -356,33 +350,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseCreationRequest'
-  /cases/{caseId}/delete:
-    parameters:
-      - schema:
-          type: string
-        name: caseId
-        in: path
-        required: true
-    post:
-      security:
-        - x-api-key: []
-      summary: Case - Delete
-      operationId: post-cases-caseId-delete
-      responses:
-        '200':
-          description: OK
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ActionReason'
-      description: '### Delete Case'
   /cases/{caseId}:
     parameters:
       - schema:
@@ -456,8 +423,8 @@ paths:
                         - string
                     alertStatus: OPEN
                     priority: P1
-                    createdTimestamp: 0
-                    updatedAt: 0
+                    createdTimestamp: 1713177955000
+                    updatedAt: 1713177955000
                     tags:
                       - $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
                     assignments:
@@ -466,13 +433,7 @@ paths:
                       reasons:
                         - string
                       comment: string
-                      timestamp: 0
-                    deletionReason:
-                      reasons:
-                        - string
-                      comment: string
-                      timestamp: 0
-                    isDeleted: false
+                      timestamp: 1713177955000
         '400':
           description: Bad Request
           content:
@@ -534,33 +495,6 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertUpdatable'
       description: '### Update Alert'
-  /alerts/{alertId}/delete:
-    parameters:
-      - schema:
-          type: string
-        name: alertId
-        in: path
-        required: true
-    post:
-      security:
-        - x-api-key: []
-      summary: Alert - Delete
-      operationId: post-alerts-alertId-delete
-      responses:
-        '200':
-          description: OK
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ActionReason'
-      description: '### Delete Alert'
 components:
   schemas:
     RuleInstance:
@@ -873,13 +807,6 @@ components:
         - entityDetails
         - priority
         - caseId
-    CaseDelete:
-      title: CaseDelete
-      type: object
-      description: ''
-      properties:
-        deletionReason:
-          $ref: '#/components/schemas/ActionReason'
     CaseBase:
       title: CaseBase
       type: object
@@ -969,17 +896,6 @@ components:
           $ref: '#/components/schemas/Status'
         updatedAt:
           type: number
-        isDeleted:
-          type: boolean
-        deletedAt:
-          type: number
-    AlertDeletion:
-      title: AlertDeletion
-      type: object
-      description: ''
-      properties:
-        deletionReason:
-          $ref: '#/components/schemas/ActionReason'
     Alert:
       title: Alert
       type: object
@@ -987,7 +903,6 @@ components:
         - $ref: '#/components/schemas/AlertBase'
         - $ref: '#/components/schemas/AlertUpdatable'
         - $ref: '#/components/schemas/AlertDerived'
-        - $ref: '#/components/schemas/AlertDeletion'
       required:
         - alertId
         - entityDetails
@@ -1051,10 +966,6 @@ components:
           $ref: '#/components/schemas/Status'
         updatedAt:
           type: number
-        isDeleted:
-          type: boolean
-        deletedAt:
-          type: number
     Status:
       title: Status
       type: string
@@ -1072,7 +983,6 @@ components:
       allOf:
         - $ref: '#/components/schemas/CaseBase'
         - $ref: '#/components/schemas/CaseDerived'
-        - $ref: '#/components/schemas/CaseDelete'
         - $ref: '#/components/schemas/CaseUpdateable'
       required:
         - caseId

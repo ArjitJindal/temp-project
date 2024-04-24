@@ -12,6 +12,7 @@ import { syncMongoDbIndexes } from './always-run/sync-mongodb-indexes'
 import { getConfig, loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
 import { syncFeatureFlags } from './utils/tenant'
+import { syncAccountsLocally } from './always-run/sync-accounts'
 import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { seedDynamo } from '@/core/seed/dynamodb'
@@ -151,6 +152,9 @@ async function syncData() {
   await RuleService.syncRulesLibrary()
   await syncListLibrary()
   await syncFeatureFlags()
+  if (envIs('local')) {
+    await syncAccountsLocally()
+  }
 }
 
 main()

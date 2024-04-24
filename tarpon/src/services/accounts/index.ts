@@ -94,6 +94,17 @@ export class AccountsService {
     })
   }
 
+  public async getAllAccountsMongo(tenantId: string): Promise<Account[]> {
+    const db = this.mongoDb.db()
+
+    const accounts = await db
+      .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
+      .find()
+      .toArray()
+
+    return accounts
+  }
+
   public async getAllActiveAccounts(): Promise<Account[]> {
     const userId = (getContext()?.user as Account).id
 

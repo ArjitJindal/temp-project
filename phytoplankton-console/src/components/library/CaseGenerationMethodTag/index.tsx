@@ -2,11 +2,10 @@ import React from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import { humanizeConstant } from '@/utils/humanize';
-
-export type CaseGenerationMethod = 'SYSTEM' | 'MANUAL';
+import { CaseType } from '@/apis';
 
 interface Props {
-  method: CaseGenerationMethod;
+  method: CaseType;
 }
 
 export default function CaseGenerationMethodTag(props: Props) {
