@@ -122,7 +122,6 @@ export class MerchantMonitoringScrapeService {
     const merchantRepository = new MerchantRepository(tenantId, {
       mongoDb,
     })
-
     const existingSummaries = !options?.skipExisting
       ? await merchantRepository.getSummaries(userId)
       : []
@@ -141,11 +140,10 @@ export class MerchantMonitoringScrapeService {
         EXPLORIUM: () => this.explorium(companyName),
         LINKEDIN: () => this.linkedin(domain),
       }
-
       const results = (
         await Promise.allSettled(
           [
-            ...(options?.onlyTypes?.map(
+            ...(onlyTypes?.map(
               (t) =>
                 typesAndFunctions[t]() as Promise<
                   MerchantMonitoringSummary | undefined

@@ -28,7 +28,8 @@ export const merchantMonitoringHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerPostMerchantSummary(async (ctx, request) => {
-      const { userId, refresh } = request.MerchantMonitoringSummaryRequest
+      const { userId, refresh, source } =
+        request.MerchantMonitoringSummaryRequest
       if (!userId) {
         throw new BadRequest('Missing userId')
       }
@@ -41,8 +42,12 @@ export const merchantMonitoringHandler = lambdaApi()(
         tenantId,
         userId as string,
         name as string,
-        domain as string,
+        (source?.sourceType === 'SCRAPE'
+          ? source?.sourceValue
+          : domain) as string,
         {
+          onlyTypes:
+            source && source.sourceType ? [source.sourceType] : undefined,
           refresh: refresh as boolean,
         }
       )

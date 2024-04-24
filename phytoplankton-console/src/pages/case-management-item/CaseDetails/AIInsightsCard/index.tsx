@@ -31,9 +31,12 @@ export default function AIInsightsCard(props: Props) {
   const api = useApi();
 
   const [refresh, setRefresh] = useState<boolean>(false);
+  const [source, setSource] = useState<MerchantMonitoringSource | undefined>();
   const queryResult = useQuery(MERCHANT_SUMMARY(props.user.userId), () =>
     api
-      .postMerchantSummary({ MerchantMonitoringSummaryRequest: { userId: user.userId, refresh } })
+      .postMerchantSummary({
+        MerchantMonitoringSummaryRequest: { userId: user.userId, source, refresh },
+      })
       .finally(() => setRefresh(false)),
   );
 
@@ -53,7 +56,10 @@ export default function AIInsightsCard(props: Props) {
               userId={user.userId}
               summaries={summariesResponse.data}
               showHistory={true}
-              onRefresh={() => setRefresh(true)}
+              onRefresh={(source: MerchantMonitoringSource | undefined) => {
+                setRefresh(true);
+                setSource(source);
+              }}
             />
           )
         }
@@ -71,7 +77,7 @@ const Summaries = ({
   userId: string;
   summaries: MerchantMonitoringSummary[];
   showHistory: boolean;
-  onRefresh?: () => void;
+  onRefresh?: (source: MerchantMonitoringSource | undefined) => void;
 }) => {
   const api = useApi();
   const [sourceHistory, setSourceHistory] = useState<MerchantMonitoringSource | undefined>();
@@ -105,7 +111,7 @@ const Summaries = ({
               style={{ marginLeft: 'auto', width: '122px' }}
               type="SECONDARY"
               icon={<RefreshLine />}
-              onClick={onRefresh}
+              onClick={onRefresh ? () => onRefresh(undefined) : undefined}
             >
               Refresh all
             </Button>
@@ -156,7 +162,7 @@ const Summaries = ({
                   <Button
                     type="SECONDARY"
                     icon={<RefreshLine />}
-                    onClick={() => setSourceHistory(summary.source)}
+                    onClick={onRefresh ? () => onRefresh(summary.source) : undefined}
                     style={{ width: '122px' }}
                   >
                     Refresh
