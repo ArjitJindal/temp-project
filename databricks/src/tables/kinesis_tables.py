@@ -1,8 +1,7 @@
-from typing import Dict
-
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import SparkSession
 
 from src.kinesis.kinesis_reader import KinesisReader
+from src.tables.stream_cache import StreamCache
 from src.tables.table_service import TableService
 
 
@@ -20,7 +19,7 @@ class KinesisTables:
         self.spark = spark
         self.table_service = table_service
         self.kinesis_reader = kinesis_reader
-        self.streams: Dict[str, DataFrame] = {}
+        self.streams = StreamCache()
 
     @staticmethod
     def new(spark: SparkSession):
@@ -28,8 +27,9 @@ class KinesisTables:
 
     def create_stream(self, kinesis_stream: str, table: str):
         read_stream = self.kinesis_reader.read_kinesis(kinesis_stream)
-        if table not in self.streams:
-            self.streams[table] = read_stream
+
+        self.streams.add_stream(table, read_stream)
+
         return self.table_service.write_table_stream(
             table,
             read_stream,
@@ -37,4 +37,4 @@ class KinesisTables:
         )
 
     def get_stream(self, table: str):
-        return self.streams[table]
+        return self.streams.get_stream(table)

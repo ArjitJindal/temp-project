@@ -1,9 +1,11 @@
 import os
-from typing import Dict, List
+from typing import List
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
 
+from src.tables.batch_cache import BatchCache
+from src.tables.stream_cache import StreamCache
 from src.version_service import VersionService
 
 
@@ -22,8 +24,9 @@ class TableService:
         self.version_service = version_service
         self.spark = spark
         self.schema = schema
-        self.streams: Dict[str, DataFrame] = {}
-        self.batches: Dict[str, DataFrame] = {}
+
+        self.streams = StreamCache()
+        self.batches = BatchCache()
 
     @staticmethod
     def new(spark: SparkSession):
@@ -41,9 +44,11 @@ class TableService:
     def read_table_stream(self, table_name: str):
         checkpoint_id = self.version_service.get_pipeline_checkpoint_id()
         table = f"{self.schema}.{table_name}"
-        if table in self.streams:
+
+        existing_stream = self.streams.get_stream(table)
+        if existing_stream:
             print(f"Reusing existing stream for table {table}")
-            return self.streams[table]
+            return existing_stream
 
         print(f"Creating read stream for table {table}")
         stream = (
@@ -55,7 +60,7 @@ class TableService:
             .table(table)
         )
 
-        self.streams[table] = stream
+        self.streams.add_stream(table, stream)
         return stream
 
     def read_table(self, table_name: str, schema=None):
@@ -63,11 +68,12 @@ class TableService:
             schema = self.schema
         table = f"{schema}.{table_name}"
         print(f"Batching table {table}")
-        if table in self.batches:
+        existing_batch = self.batches.get_batch(table)
+        if existing_batch:
             print(f"Reusing existing stream for table {table}")
-            return self.batches[table]
+            return existing_batch
         batch = self.spark.read.format("delta").table(table)
-        self.batches[table] = batch
+        self.batches.add_batch(table, batch)
         return batch
 
     def write_table_stream(self, name: str, df: DataFrame, tenant_partition=True):

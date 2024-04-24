@@ -1,11 +1,11 @@
 import os
-from typing import Dict
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, from_json, lower, regexp_extract
 
 from src.dbutils.dbutils import get_dbutils
 from src.tables.schema import kinesis_event_schema
+from src.tables.stream_cache import StreamCache
 from src.version_service import VersionService
 
 
@@ -25,7 +25,7 @@ class KinesisReader:
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
         self.version_service = version_service
-        self.streams: Dict[str, DataFrame] = {}
+        self.streams = StreamCache()
 
     @staticmethod
     def new(spark: SparkSession):
@@ -37,8 +37,9 @@ class KinesisReader:
         )
 
     def read_kinesis(self, kinesis_stream_name: str):
-        if kinesis_stream_name in self.streams:
-            return self.streams[kinesis_stream_name]
+        existing_stream = self.streams.get_stream(kinesis_stream_name)
+        if existing_stream:
+            return existing_stream
         checkpoint_id = self.version_service.get_kinesis_checkpoint_id()
 
         stream = kinesis_events_transformation(
@@ -54,7 +55,7 @@ class KinesisReader:
             )
             .load()
         )
-        self.streams[kinesis_stream_name] = stream
+        self.streams.add_stream(kinesis_stream_name, stream)
         return stream
 
 
