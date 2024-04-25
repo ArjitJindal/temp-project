@@ -1,5 +1,6 @@
 import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
+import { ADMIN_EMAILS } from '../constants/engineers'
 import { Config } from './config'
 
 const account = '293986822825'
@@ -21,7 +22,6 @@ export const config: Config = {
     VPC: 20,
   },
   resource: {
-    DATABRICKS_ENABLED: true,
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 2048,
       MEMORY_LIMIT: 4096,
@@ -82,6 +82,11 @@ export const config: Config = {
     },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: false,
+  },
+  databricks: {
+    ADMIN_EMAILS: ADMIN_EMAILS,
+    CREATE_METASTORE: false,
+    CREATE_VPC: false,
   },
   application: {
     AUTH0_DOMAIN: 'sandbox-flagright.eu.auth0.com',

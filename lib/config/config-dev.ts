@@ -1,5 +1,6 @@
 import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
+import { ALL_ENGINEERS } from '../constants'
 import { Config } from './config'
 
 const account = '911899431626'
@@ -21,7 +22,6 @@ export const config: Config = {
     VPC: 20,
   },
   resource: {
-    DATABRICKS_ENABLED: true,
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 1024,
       MEMORY_LIMIT: 2048,
@@ -78,6 +78,11 @@ export const config: Config = {
       MEMORY_SIZE: 1024,
     },
     INSPECTOR_ENABLED: false,
+  },
+  databricks: {
+    ADMIN_EMAILS: ALL_ENGINEERS,
+    CREATE_METASTORE: false,
+    CREATE_VPC: true,
   },
   application: {
     DEV_CERTIFICATE_ARN:

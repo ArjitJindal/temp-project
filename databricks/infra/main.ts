@@ -8,34 +8,27 @@ import { Fn } from 'cdktf'
 import { TerraformProvider } from 'cdktf/lib/terraform-provider'
 import { Config } from '@flagright/lib/config/config'
 import { getTarponConfig } from '@flagright/lib/constants/config'
-import { Stage, FlagrightRegion } from '@flagright/lib/constants/deploy'
+import {
+  Stage,
+  FlagrightRegion,
+  DeployStage,
+  DEPLOY_STAGES,
+} from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { AWS_ACCOUNTS } from '@flagright/lib/constants'
 import * as path from 'path'
 import { provider as nullProvider } from '@cdktf/provider-null'
+import { ALL_ENGINEERS } from '../../lib/constants/engineers'
 
 // Toggle this to remove tenants.
 const preventTenantDestruction = false
 const stage = process.env.STAGE as Stage
-const adminEmails = [
-  'tim+databricks@flagright.com',
-  'nadig@flagright.com',
-  'chia@flagright.com',
-  ...(stage == 'dev'
-    ? [
-        'aman@flagright.com',
-        'jayant@flagright.com',
-        'kavish@flagright.com',
-        'nikolai@flagright.com',
-      ]
-    : []),
-]
 
 const region = process.env.REGION as FlagrightRegion
 const env = `${stage}-${region}`
 const config = getTarponConfig(stage, region)
 const awsRegion = config.env.region || ''
-const regionalAdminGroupName = `admins-${awsRegion}`
+const regionalAdminGroupName = `${awsRegion}-admins`
 const stateBucket = `flagright-terraform-state-databricks-${env}`
 const prefix = `flagright-databricks-${stage}-${region}`
 const cidrBlock = '10.4.0.0/16'
@@ -106,15 +99,15 @@ class DatabricksStack extends TerraformStack {
 
     new provider.TimeProvider(this, 'time', {})
 
-    // Conditionals
-    const shouldCreateVpc = stage === 'dev'
-    const shouldCreateMetastore = stage === 'prod'
+    if (!config.databricks) {
+      return
+    }
 
     // Create or retrieve metastores, VPC, users.
-    const { securityGroupIds, subnetIds, vpcId } = shouldCreateVpc
+    const { securityGroupIds, subnetIds, vpcId } = config.databricks.CREATE_VPC
       ? this.createVpc()
       : this.fetchVpc()
-    const metastoreId = shouldCreateMetastore
+    const metastoreId = config.databricks.CREATE_METASTORE
       ? this.createMetastore()
       : this.fetchMetastore()
 
@@ -248,21 +241,57 @@ class DatabricksStack extends TerraformStack {
         }
       )
 
-    adminEmails.forEach((email) => {
-      const user = new databricks.user.User(this, `workspace-user-${email}`, {
-        provider: workspaceProvider,
-        userName: email,
-        force: true,
-      })
+    const stageGroup = new databricks.group.Group(
+      this.mws,
+      `admin-group-${stage}`,
+      {
+        provider: this.mws,
+        displayName: `${stage}-${regionalAdminGroupName}`,
+      }
+    )
+
+    config.databricks?.ADMIN_EMAILS.forEach((email, i) => {
+      const user = new databricks.dataDatabricksUser.DataDatabricksUser(
+        this,
+        `data-user-${email}`,
+        {
+          provider: this.mws,
+          userName: email,
+        }
+      )
+      const workspaceUser = new databricks.user.User(
+        this,
+        `workspace-user-${email}`,
+        {
+          provider: workspaceProvider,
+          userName: email,
+          force: true,
+        }
+      )
       new databricks.groupMember.GroupMember(
         this,
-        `workspace-group-member-${email}`,
+        `workspace-admin-group-member-${email}`,
         {
           provider: workspaceProvider,
           groupId: workspaceGroup.id,
+          memberId: workspaceUser.id,
+        }
+      )
+      new databricks.groupMember.GroupMember(
+        this,
+        `admin-group-member-${stage}-${i}`,
+        {
+          provider: this.mws,
+          groupId: stageGroup.id,
           memberId: user.id,
         }
       )
+      new databricks.userRole.UserRole(this, `admin-${stage}-${i}`, {
+        provider: this.mws,
+        userId: user.id,
+        role: 'account_admin',
+        dependsOn: [user],
+      })
     })
 
     const sparkUser = new aws.iamUser.IamUser(this, 'spark', {
@@ -498,7 +527,7 @@ class DatabricksStack extends TerraformStack {
             }
           : undefined,
         emailNotifications: {
-          onFailure: adminEmails,
+          onFailure: config.databricks?.ADMIN_EMAILS,
         },
         continuous: job.continuous
           ? {
@@ -546,7 +575,7 @@ class DatabricksStack extends TerraformStack {
       provider: workspaceProvider,
       catalog: catalog.id,
       privileges: ['ALL_PRIVILEGES'],
-      principal: regionalAdminGroupName,
+      principal: `${stage}-${regionalAdminGroupName}`,
     })
 
     const defaultSchema = new databricks.schema.Schema(this, 'default-schema', {
@@ -747,8 +776,8 @@ class DatabricksStack extends TerraformStack {
   }
 
   private createUsers() {
-    return adminEmails.map((email) => {
-      return new databricks.user.User(this, `user-${email}`, {
+    return ALL_ENGINEERS.forEach((email) => {
+      new databricks.user.User(this, `user-${email}`, {
         provider: this.mws,
         userName: email,
         force: true,
@@ -1146,7 +1175,7 @@ class DatabricksStack extends TerraformStack {
     }
   }
   private createMetastore(): string {
-    const userIds = this.createUsers()
+    this.createUsers()
     const metaStorageBucket = new aws.s3Bucket.S3Bucket(
       this,
       'meta-storage-bucket',
@@ -1307,19 +1336,6 @@ class DatabricksStack extends TerraformStack {
     const adminGroup = new databricks.group.Group(this, 'admin-group', {
       provider: this.mws,
       displayName: regionalAdminGroupName,
-    })
-
-    userIds.forEach((userId, i) => {
-      new databricks.groupMember.GroupMember(this, `admin-group-member-${i}`, {
-        provider: this.mws,
-        groupId: adminGroup.id,
-        memberId: userId,
-      })
-      new databricks.userRole.UserRole(this, `admin-${i}`, {
-        provider: this.mws,
-        userId: userId,
-        role: 'account_admin',
-      })
     })
 
     const sp =
