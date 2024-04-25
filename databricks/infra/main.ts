@@ -576,6 +576,7 @@ class DatabricksStack extends TerraformStack {
       catalog: catalog.id,
       privileges: ['ALL_PRIVILEGES'],
       principal: `${stage}-${regionalAdminGroupName}`,
+      dependsOn: [stageGroup],
     })
 
     const defaultSchema = new databricks.schema.Schema(this, 'default-schema', {
