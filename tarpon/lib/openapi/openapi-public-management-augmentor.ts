@@ -25,12 +25,8 @@ export const PublicManagementApiPathToLambda: any = {
     StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
   '/cases': StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}': StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME,
-  '/cases/{caseId}/delete':
-    StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME,
   '/alerts': StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
   '/alerts/{alertId}': StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
-  '/alerts/{alertId}/delete':
-    StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(
