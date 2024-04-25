@@ -1,7 +1,5 @@
 import { FieldOrGroup } from '@react-awesome-query-builder/core'
 import { TransactionRuleVariable } from './types'
-import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { Transaction } from '@/@types/openapi-public/Transaction'
 import dayjs from '@/utils/dayjs'
 
 const getUiDefinition = (): FieldOrGroup => ({
@@ -19,7 +17,7 @@ export const TRANSACTION_TIME: TransactionRuleVariable = {
   entity: 'TRANSACTION',
   valueType: 'number',
   uiDefinition: getUiDefinition(),
-  load: async (transaction: InternalTransaction | Transaction) => {
+  load: async (transaction) => {
     const time = dayjs(transaction.timestamp)
     return time.diff(time.startOf('day'), 'seconds')
   },

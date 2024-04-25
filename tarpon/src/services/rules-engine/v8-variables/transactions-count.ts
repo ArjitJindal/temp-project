@@ -9,8 +9,14 @@ export const SENDING_TRANSACTIONS_COUNT: CommonUserRuleVariable<number> = {
     type: 'number',
   },
   valueType: 'number',
-  load: async (user, { dynamoDb, tenantId }) => {
-    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+  load: async (user, context) => {
+    if (!context) {
+      throw new Error('Missing context')
+    }
+    const aggregationRepository = new AggregationRepository(
+      context.tenantId,
+      context.dynamoDb
+    )
 
     const { sendingTransactionsCount } =
       await aggregationRepository.getUserTransactionsCount(user.userId)
@@ -27,8 +33,14 @@ export const RECEIVING_TRANSACTIONS_COUNT: CommonUserRuleVariable<number> = {
     type: 'number',
   },
   valueType: 'number',
-  load: async (user, { dynamoDb, tenantId }) => {
-    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+  load: async (user, context) => {
+    if (!context) {
+      throw new Error('Missing context')
+    }
+    const aggregationRepository = new AggregationRepository(
+      context.tenantId,
+      context.dynamoDb
+    )
 
     const { receivingTransactionsCount } =
       await aggregationRepository.getUserTransactionsCount(user.userId)

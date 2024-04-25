@@ -35,8 +35,11 @@ import {
 } from '../utils/transaction-rule-utils'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import {
+  BusinessUserRuleVariable,
+  CommonUserRuleVariable,
+  ConsumerUserRuleVariable,
   TransactionRuleVariable,
-  TransactionRuleVariableContext,
+  RuleVariableContext,
 } from '../v8-variables/types'
 import { getPaymentDetailsIdentifiersKey } from '../v8-variables/payment-details'
 import {
@@ -45,11 +48,11 @@ import {
   getAggVarHash,
 } from './aggregation-repository'
 import { getVariableKeysFromLogic, transformJsonLogic } from './utils'
+import { Business } from '@/@types/openapi-public/Business'
+import { User } from '@/@types/openapi-public/User'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { generateChecksum } from '@/utils/object'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
-import { Business } from '@/@types/openapi-public/Business'
-import { User } from '@/@types/openapi-public/User'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
 import { handleV8TransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
@@ -98,7 +101,7 @@ export const getJsonLogicEngine = memoizeOne(
 )
 
 const getDataLoader = memoizeOne(
-  (data: RuleData, context: TransactionRuleVariableContext) => {
+  (data: RuleData, context: RuleVariableContext) => {
     return new DataLoader(async (variableKeys: readonly string[]) => {
       return Promise.all(
         variableKeys.map(async (variableKey) => {
@@ -108,15 +111,33 @@ const getDataLoader = memoizeOne(
             return null
           }
           if (variable.entity === 'TRANSACTION') {
-            return variable.load(data.transaction, context)
+            return (variable as TransactionRuleVariable<any>).load(
+              data.transaction,
+              context
+            )
           }
-          if (
-            ['CONSUMER_USER', 'BUSINESS_USER', 'USER'].includes(variable.entity)
-          ) {
-            const user = isSenderUserVariable(variable)
-              ? data.senderUser
-              : data.receiverUser
-            return user ? variable.load(user, context) : null
+
+          const user = isSenderUserVariable(variable)
+            ? data.senderUser
+            : data.receiverUser
+
+          if (!user) {
+            return null
+          }
+          if (variable.entity === 'CONSUMER_USER') {
+            return (variable as ConsumerUserRuleVariable<any>).load(
+              user as User,
+              context
+            )
+          }
+          if (variable.entity === 'BUSINESS_USER') {
+            return (variable as BusinessUserRuleVariable<any>).load(
+              user as Business,
+              context
+            )
+          }
+          if (variable.entity === 'USER') {
+            return (variable as CommonUserRuleVariable<any>).load(user, context)
           }
           return null
         })
@@ -144,7 +165,7 @@ export class RuleJsonLogicEvaluator {
   public async evaluate(
     rawJsonLogic: object,
     aggregationVariables: RuleAggregationVariable[],
-    context: Omit<TransactionRuleVariableContext, 'dynamoDb'>,
+    context: Omit<RuleVariableContext, 'dynamoDb'>,
     data: RuleData
   ): Promise<{
     hit: boolean
@@ -423,11 +444,18 @@ export class RuleJsonLogicEvaluator {
       // Update aggregation result
       const txEntityVariable = getRuleVariableByKey(
         this.getAggregationVarFieldKey(aggregationVariable, direction)
-      )
+      ) as TransactionRuleVariable
       const txGroupByEntityVariable =
         aggregationVariable.aggregationGroupByFieldKey
-          ? getRuleVariableByKey(aggregationVariable.aggregationGroupByFieldKey)
+          ? (getRuleVariableByKey(
+              aggregationVariable.aggregationGroupByFieldKey
+            ) as TransactionRuleVariable)
           : undefined
+      const context: RuleVariableContext = {
+        baseCurrency: aggregationVariable.baseCurrency,
+        dynamoDb: this.dynamoDb,
+        tenantId: this.tenantId,
+      }
       const hasGroups = Boolean(txGroupByEntityVariable)
       const partialTimeAggregatedResult = await groupTransactionsByGranularity(
         targetTransactions,
@@ -435,18 +463,10 @@ export class RuleJsonLogicEvaluator {
           const aggregateValues = await Promise.all(
             groupTransactions.map(async (transaction) => {
               const entityVariable = txEntityVariable
-              const value = await entityVariable?.load(
-                transaction,
-                aggregationVariable.baseCurrency,
-                this.dynamoDb
-              )
+              const value = await entityVariable?.load(transaction, context)
               const groupValue =
                 hasGroups && txGroupByEntityVariable
-                  ? await txGroupByEntityVariable.load(
-                      transaction,
-                      aggregationVariable.baseCurrency,
-                      this.dynamoDb
-                    )
+                  ? await txGroupByEntityVariable.load(transaction, context)
                   : undefined
               return {
                 value,

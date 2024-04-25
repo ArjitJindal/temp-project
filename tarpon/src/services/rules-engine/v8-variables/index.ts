@@ -7,7 +7,7 @@ import {
   RuleEntityType,
   RuleVariableBase as RuleVariable,
   TransactionRuleVariable,
-  TransactionRuleVariableContext,
+  RuleVariableContext,
 } from './types'
 import {
   CONSUMER_USER_CREATION_AGE_DAYS,
@@ -223,17 +223,17 @@ function updatedTransactionEntityVariables(
   )
   const loadTransactionAmount = async (
     amountDetails: TransactionAmountDetails | undefined,
-    context: TransactionRuleVariableContext
+    context?: RuleVariableContext
   ): Promise<number | undefined> => {
     if (!amountDetails) {
       return NaN
     }
-    if (!context.baseCurrency) {
+    if (!context?.baseCurrency) {
       logger.error('Missing base currency for transaction amount variable!')
     }
     const amount = await currencyService.getTargetCurrencyAmount(
       amountDetails,
-      context.baseCurrency ?? 'USD'
+      context?.baseCurrency ?? 'USD'
     )
     return amount.transactionAmount ?? NaN
   }

@@ -36,6 +36,12 @@ import { IBANService } from '@/services/iban'
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask
 ) {
+  updateLogMetadata({
+    aggregationVariableKey: task.aggregationVariable.key,
+    tenantId: task.tenantId,
+    direction: task.direction,
+    transactionId: task.transaction.transactionId,
+  })
   const dynamoDb = getDynamoDbClient()
   const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
   await ruleEvaluator.rebuildOrUpdateAggregationVariable(
@@ -208,13 +214,13 @@ export const transactionAggregationHandler = lambdaConsumer()(
           | V8TransactionAggregationTask
         await withContext(
           async () => {
-            updateLogMetadata(task)
             await initializeTenantContext(task.tenantId)
 
             if ((task as V8TransactionAggregationTask).v8) {
               const v8Task = task as V8TransactionAggregationTask
               await handleV8TransactionAggregationTask(v8Task)
             } else {
+              updateLogMetadata(task)
               const legacyTask = task as TransactionAggregationTask
               const context = getContext()
               if (context) {

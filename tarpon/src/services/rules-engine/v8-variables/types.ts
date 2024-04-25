@@ -1,5 +1,6 @@
 import { FieldOrGroup } from '@react-awesome-query-builder/core'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
@@ -26,7 +27,7 @@ export interface RuleVariableBase {
   load: (...args: any[]) => Promise<any>
 }
 
-export type TransactionRuleVariableContext = {
+export type RuleVariableContext = {
   baseCurrency?: CurrencyCode
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
@@ -36,8 +37,8 @@ export interface TransactionRuleVariable<ReturnType = unknown>
   extends RuleVariableBase {
   entity: 'TRANSACTION'
   load: (
-    transaction: Transaction,
-    context: TransactionRuleVariableContext
+    transaction: Transaction | AuxiliaryIndexTransaction,
+    context?: RuleVariableContext
   ) => Promise<ReturnType>
   sourceField: keyof Transaction
 }
@@ -45,13 +46,13 @@ export interface TransactionRuleVariable<ReturnType = unknown>
 export interface ConsumerUserRuleVariable<ReturnType = unknown>
   extends RuleVariableBase {
   entity: 'CONSUMER_USER'
-  load: (user: User) => Promise<ReturnType>
+  load: (user: User, context?: RuleVariableContext) => Promise<ReturnType>
 }
 
 export interface BusinessUserRuleVariable<ReturnType = unknown>
   extends RuleVariableBase {
   entity: 'BUSINESS_USER'
-  load: (user: Business) => Promise<ReturnType>
+  load: (user: Business, context?: RuleVariableContext) => Promise<ReturnType>
 }
 
 export interface CommonUserRuleVariable<ReturnType = unknown>
@@ -59,6 +60,6 @@ export interface CommonUserRuleVariable<ReturnType = unknown>
   entity: 'USER'
   load: (
     user: User | Business,
-    context: TransactionRuleVariableContext
+    context?: RuleVariableContext
   ) => Promise<ReturnType>
 }
