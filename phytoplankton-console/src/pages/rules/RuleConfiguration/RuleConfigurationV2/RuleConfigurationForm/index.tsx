@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ConfigProvider } from 'antd';
+import dayjs from '@flagright/lib/utils/dayjs';
 import TransactionIcon from '../transaction-icon.react.svg';
 import s from './style.module.less';
 import { message } from '@/components/library/Message';
@@ -65,6 +66,20 @@ interface RuleConfigurationFormProps {
   setIsValuesSame?: (isSame: boolean) => void;
 }
 
+const ageFilterValidator = (value: any) => {
+  if (value?.minAge == null || value?.maxAge == null) {
+    return null;
+  }
+  const minAgeInMs = dayjs
+    .duration(value?.minAge?.units ?? 0, value?.minAge.granularity)
+    .asMilliseconds();
+  const maxAgeInMs = dayjs
+    .duration(value?.maxAge?.units ?? Number.MAX_SAFE_INTEGER, value?.maxAge.granularity)
+    .asMilliseconds();
+
+  return minAgeInMs <= maxAgeInMs ? null : "'To' age should be greater than 'From' age";
+};
+
 const RuleConfigurationForm = (
   props: RuleConfigurationFormProps,
   ref: React.Ref<FormRef<RuleConfigurationFormValues>>,
@@ -100,7 +115,10 @@ const RuleConfigurationForm = (
   const fieldValidators = useMemo(() => {
     return {
       basicDetailsStep: {},
-      standardFiltersStep: {},
+      standardFiltersStep: {
+        userAgeRange: ageFilterValidator,
+        userCreationAgeRange: ageFilterValidator,
+      },
       ruleParametersStep: {
         riskLevelActions: isRiskLevelsEnabled
           ? {

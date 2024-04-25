@@ -1,12 +1,21 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import s from './style.module.less';
+import React, { useCallback } from 'react';
+import style from './style.module.less';
 import Label from '@/components/library/Label';
-import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
 import Select from '@/components/library/Select';
 
 export type Granularity = 'day' | 'month' | 'year';
+export type GranularityExtended = Granularity | 'and above';
+const DAY_RANGE_GRANULARITY: Array<{ value: Granularity; label: string }> = [
+  { value: 'day', label: 'days' },
+  { value: 'month', label: 'months' },
+  { value: 'year', label: 'years' },
+];
+const DAY_RANGE_GRANULARITY_EXTENDED: Array<{ value: GranularityExtended; label: string }> = [
+  ...DAY_RANGE_GRANULARITY,
+  { value: 'and above', label: 'and above' },
+];
 
 export type ValueType = {
   minAge?: {
@@ -14,170 +23,116 @@ export type ValueType = {
     units?: number;
   };
   maxAge?: {
-    granularity?: Granularity;
+    granularity?: GranularityExtended;
     units?: number;
   };
 };
 
 const DEFAULT_GRANULARITY: Granularity = 'year';
 
-const GRANULARITY_RANGE = {
-  year: [0, 100],
-  day: [0, 365],
-  month: [0, 24],
-} as const;
-
-function getGranularityRange(granularity?: string): [number, number] {
-  return (
-    GRANULARITY_RANGE[granularity ?? DEFAULT_GRANULARITY] ?? GRANULARITY_RANGE[DEFAULT_GRANULARITY]
-  );
-}
-
 interface Props extends InputProps<ValueType> {
   defaultGranularity?: Granularity;
 }
 
 export default function AgeRangeInput(props: Props) {
-  const { value, onChange, defaultGranularity = DEFAULT_GRANULARITY, ...rest } = props;
-  const minGranularity = value?.minAge?.granularity;
-  const maxGranularity = value?.maxAge?.granularity;
-  const granularityValue = minGranularity ?? maxGranularity ?? defaultGranularity;
-
-  const [from, to] = getGranularityRange(granularityValue);
-  const minValue = value?.minAge?.units;
-  const maxValue = value?.maxAge?.units;
-
-  const [ageInput, setAgeInput] = useState<number | undefined>(0);
-
+  const { value, onChange, defaultGranularity = DEFAULT_GRANULARITY } = props;
+  const minAge = value?.minAge;
+  const maxAge = value?.maxAge;
   const handleChange = useCallback(
     (newValue: ValueType | undefined) => {
+      if (newValue?.minAge?.granularity && !newValue.minAge.units) newValue.minAge = undefined;
+      if (newValue?.maxAge?.granularity && !newValue.maxAge.units) newValue.maxAge = undefined;
       onChange?.(newValue?.minAge == null && newValue?.maxAge == null ? undefined : newValue);
     },
     [onChange],
   );
-  useEffect(() => {
-    setAgeInput(minValue);
-  }, [minValue]);
-
   return (
-    <div className={s.root}>
-      <Label label={'Min age'} level={2}>
-        <NumberInput
-          {...rest}
-          testName="min-age-input"
-          min={0}
-          max={maxValue ?? to}
-          allowClear={true}
-          value={minValue}
-          onChange={(newValue) => {
-            setAgeInput(newValue);
-          }}
-          onBlur={() => {
-            handleChange({
-              ...value,
-              minAge:
-                ageInput != undefined
-                  ? {
-                      units: ageInput,
-                      granularity: granularityValue,
-                    }
-                  : undefined,
-            });
-          }}
-          onFocus={() => {
-            if (ageInput === undefined) setAgeInput(0);
-          }}
-        />
-      </Label>
-      <Slider
-        {...rest}
-        data-cy="age-range-slider"
-        mode="RANGE"
-        min={from}
-        max={to}
-        step={1}
-        value={value != null ? [value.minAge?.units ?? from, value.maxAge?.units ?? to] : undefined}
-        onChange={(newValue) => {
-          if (newValue == null) {
-            onChange?.(undefined);
-            return;
-          }
-          const [newMin, newMax] = newValue;
-
-          handleChange({
-            minAge:
-              minValue == null && newMin === from
-                ? undefined
-                : {
-                    units: newMin,
-                    granularity: granularityValue,
-                  },
-            maxAge:
-              maxValue == null && newMax === to
-                ? undefined
-                : {
-                    units: newMax,
-                    granularity: granularityValue,
-                  },
-          });
-        }}
-      />
-      <Label label={'Max age'} level={2}>
-        <NumberInput
-          {...rest}
-          testName="max-age-input"
-          min={minValue ?? from}
-          max={to}
-          value={maxValue}
-          allowClear={true}
-          onChange={(newValue) => {
-            setAgeInput(newValue);
-          }}
-          onBlur={() => {
-            handleChange({
-              ...value,
-              maxAge:
-                ageInput != null
-                  ? {
-                      units: ageInput,
-                      granularity: granularityValue,
-                    }
-                  : undefined,
-            });
-          }}
-        />
-      </Label>
-      <Label label={''} level={2} testId="granularity-select">
-        <Select<Granularity>
-          mode="SINGLE"
-          value={granularityValue}
-          options={[
-            { value: 'day', label: 'days' },
-            { value: 'month', label: 'months' },
-            { value: 'year', label: 'years' },
-          ]}
-          onChange={(newGranularity) => {
-            const [from, to] = getGranularityRange(newGranularity);
-
-            handleChange({
-              minAge:
-                minValue != null
-                  ? {
-                      units: Math.min(Math.max(minValue, from), to),
-                      granularity: newGranularity,
-                    }
-                  : undefined,
-              maxAge:
-                maxValue != null
-                  ? {
-                      units: Math.max(Math.min(maxValue, to), from),
-                      granularity: newGranularity,
-                    }
-                  : undefined,
-            });
-          }}
-        />
-      </Label>
+    <div className={style.root}>
+      <div className={style.dayRangeRoot}>
+        <div className={style.dayRangeContainer}>
+          <Label label="From">
+            <div className={style.dayRangeInputContainer}>
+              <NumberInput
+                value={minAge?.units}
+                min={0}
+                onChange={(val) => {
+                  handleChange({
+                    ...value,
+                    minAge: val
+                      ? {
+                          units: val,
+                          granularity: minAge?.granularity ?? defaultGranularity,
+                        }
+                      : undefined,
+                  });
+                }}
+                testName="min-age-input"
+                htmlAttrs={{ type: 'number', style: { width: 100 } }}
+              />
+              <Select
+                options={DAY_RANGE_GRANULARITY}
+                value={minAge?.granularity}
+                style={{ width: 150 }}
+                onChange={(val: Granularity | undefined) => {
+                  handleChange({
+                    ...value,
+                    minAge: {
+                      ...minAge,
+                      granularity: val,
+                    },
+                  });
+                }}
+                testId="min-age-select"
+              />
+            </div>
+          </Label>
+        </div>
+        <div className={style.dayRangeContainer}>
+          <Label label="To">
+            <div className={style.dayRangeInputContainer}>
+              <NumberInput
+                htmlAttrs={{ type: 'number', style: { width: 100 } }}
+                value={maxAge?.units}
+                min={0}
+                isDisabled={
+                  maxAge?.granularity === 'and above' || maxAge?.granularity === undefined
+                }
+                onChange={(val) => {
+                  handleChange({
+                    ...value,
+                    maxAge: val
+                      ? {
+                          units: val,
+                          granularity: maxAge?.granularity,
+                        }
+                      : undefined,
+                  });
+                }}
+                testName="max-age-input"
+              />
+              <Select
+                onChange={(val: GranularityExtended | undefined) => {
+                  handleChange({
+                    ...value,
+                    maxAge:
+                      val === 'and above'
+                        ? undefined
+                        : {
+                            units: maxAge?.units,
+                            granularity: val,
+                          },
+                  });
+                }}
+                options={DAY_RANGE_GRANULARITY_EXTENDED}
+                value={maxAge?.granularity ?? 'and above'}
+                style={{ width: 150 }}
+                mode="SINGLE"
+                testId="max-age-select"
+              />
+            </div>
+          </Label>
+        </div>
+      </div>
     </div>
   );
 }

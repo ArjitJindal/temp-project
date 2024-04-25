@@ -1,62 +1,65 @@
-import { test, describe, expect } from '@jest/globals';
-import { render, screen, fireEvent, waitFor } from 'testing-library-wrapper';
-import AgeRangeInput from '..';
+import React from 'react';
+import { render, fireEvent, screen } from 'testing-library-wrapper';
+import { describe, expect } from '@jest/globals';
+import AgeRangeInput, { ValueType } from '..';
+describe('AgeRangeInput', () => {
+  const defaultValue: ValueType = {
+    minAge: {
+      granularity: 'year',
+      units: 18,
+    },
+  };
 
-describe('AgeRangeInput Component', () => {
-  test('renders elements correctly', () => {
-    render(<AgeRangeInput />);
-    expect(screen.getByTestId('min-age-input')).toBeInTheDocument();
-    expect(screen.getByTestId('max-age-input')).toBeInTheDocument();
-    expect(screen.getByTestId('age-range-slider')).toBeInTheDocument();
-    expect(screen.getByTestId('granularity-select')).toBeInTheDocument();
-  });
+  const renderComponent = (
+    value: ValueType = defaultValue,
+    onChange: (value: ValueType | undefined) => void = jest.fn(),
+  ) => {
+    return render(<AgeRangeInput value={value} onChange={onChange} />);
+  };
 
-  test('handles min age input change with blur', async () => {
-    const handleChange = jest.fn();
-    render(<AgeRangeInput onChange={handleChange} />);
-
+  it('renders the component with default values', () => {
+    renderComponent();
     const minAgeInput = screen.getByTestId('min-age-input');
-    fireEvent.change(minAgeInput, { target: { value: '25' } });
-    fireEvent.blur(minAgeInput);
-
-    await waitFor(() => {
-      expect(handleChange).toHaveBeenCalledTimes(1);
-      const [callArguments] = handleChange.mock.calls;
-      expect(callArguments[0]).toEqual({
-        minAge: { units: 25, granularity: 'year' },
-      });
-    });
-  });
-
-  test('handles max age input change with blur', async () => {
-    const handleChange = jest.fn();
-    render(<AgeRangeInput onChange={handleChange} />);
-
     const maxAgeInput = screen.getByTestId('max-age-input');
-    fireEvent.change(maxAgeInput, { target: { value: '40' } });
-    fireEvent.blur(maxAgeInput); // Simulate blur event
 
-    await waitFor(() => {
-      expect(handleChange).toHaveBeenCalledTimes(1);
-      const [callArguments] = handleChange.mock.calls;
-      expect(callArguments[0]).toEqual({
-        maxAge: { units: 40, granularity: 'year' },
-      });
+    expect(minAgeInput).toHaveValue(18);
+    expect(maxAgeInput).toHaveValue(null);
+    expect(maxAgeInput).toBeDisabled();
+  });
+
+  it('updates the minAge value correctly', () => {
+    const onChange = jest.fn();
+    renderComponent(defaultValue, onChange);
+    const minAgeInput = screen.getByTestId('min-age-input', {});
+
+    fireEvent.change(minAgeInput, { target: { value: '25' } });
+
+    expect(onChange).toHaveBeenCalledWith({
+      minAge: { granularity: 'year', units: 25 },
     });
   });
+  it('updates the maxAge value correctly', () => {
+    const onChange = jest.fn();
+    renderComponent(
+      {
+        minAge: {
+          granularity: 'year',
+          units: 18,
+        },
+        maxAge: {
+          granularity: 'year',
+          units: 20,
+        },
+      },
+      onChange,
+    );
+    const maxAgeInput = screen.getByTestId('max-age-input', {});
 
-  test('handles invalid input', () => {
-    const handleChange = jest.fn();
-    render(<AgeRangeInput onChange={handleChange} />);
+    fireEvent.change(maxAgeInput, { target: { value: '25' } });
 
-    const minAgeInput = screen.getByTestId('min-age-input');
-    fireEvent.change(minAgeInput, { target: { value: 'abc' } });
-
-    expect(handleChange).not.toHaveBeenCalled();
-  });
-
-  test('handles empty values', () => {
-    const handleChange = jest.fn();
-    render(<AgeRangeInput onChange={handleChange} />);
+    expect(onChange).toHaveBeenCalledWith({
+      minAge: { granularity: 'year', units: 18 },
+      maxAge: { granularity: 'year', units: 25 },
+    });
   });
 });

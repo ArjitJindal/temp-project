@@ -1,8 +1,25 @@
 @import 'src/components/ui/colors.less';
 
-.root {
+.dayRangeRoot {
   display: grid;
-  gap: 8px;
-  grid-template-columns: 80px minmax(auto, 180px) 80px min-content;
-  align-items: flex-end;
+  grid-auto-flow: column;
+  gap: 0.5rem;
+  columns: 1fr 1fr;
+}
+.dayRangeContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.dayRangeInputContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
