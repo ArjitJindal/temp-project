@@ -302,7 +302,7 @@ export default function CaseTable(props: Props) {
       helper.display({
         title: 'Operations',
         enableResizing: false,
-        defaultWidth: 120,
+        defaultWidth: 210,
         render: (entity) => {
           if (!entity.caseId) {
             return <></>;
