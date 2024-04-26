@@ -6,7 +6,7 @@ import {
 } from '@/services/copilot/attributes/builder'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
-import { getFullName } from '@/utils/helpers'
+import { consumerName } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 
 @traceable
@@ -38,7 +38,7 @@ function consumerAttributes(
     user.userDetails?.countryOfResidence ||
       user.userDetails?.countryOfNationality
   )
-  attributes.setAttribute('name', `${getFullName(user.userDetails)}`)
+  attributes.setAttribute('name', `${consumerName(user)}`)
 }
 function businessAttributes(
   attributes: AttributeSet,

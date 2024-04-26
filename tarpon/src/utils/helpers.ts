@@ -1,12 +1,13 @@
 import { isValidEmail } from '@flagright/lib/utils'
 import { uniq } from 'lodash'
 import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants'
-import { UserDetails } from '@/@types/openapi-public/UserDetails'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { MissingUser } from '@/@types/openapi-internal/MissingUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { Business } from '@/@types/openapi-public/Business'
+import { User } from '@/@types/openapi-public/User'
 
 export const checkEmail = (email: string) => {
   return isValidEmail(email)
@@ -38,12 +39,12 @@ export function neverReturn<T>(obj: never, defaultValue: T): T {
   return defaultValue
 }
 
-export function getFullName(userDetails: UserDetails | undefined): string {
-  return formatConsumerName(userDetails?.name) ?? 'No name'
+export function consumerName(user?: User, ignoreMiddleName = false): string {
+  return formatConsumerName(user?.userDetails?.name, ignoreMiddleName) ?? ''
 }
 
-export function businessName(user: InternalBusinessUser): string {
-  return user.legalEntity?.companyGeneralDetails?.legalName
+export function businessName(user?: Business): string {
+  return user?.legalEntity?.companyGeneralDetails?.legalName ?? ''
 }
 
 export function getUserName(
@@ -53,7 +54,7 @@ export function getUserName(
     return '-'
   }
   if (user.type === 'CONSUMER') {
-    return getFullName(user.userDetails)
+    return consumerName(user)
   }
   if (user.type === 'BUSINESS') {
     return businessName(user)

@@ -12,7 +12,11 @@ import {
   testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
+import {
+  getTestBusiness,
+  getTestUser,
+  setUpUsersHooks,
+} from '@/test-utils/user-test-utils'
 
 dynamoDbSetupHook()
 
@@ -29,12 +33,11 @@ setUpUsersHooks(TEST_TENANT_ID, [
       },
     },
   }),
-  getTestUser({
+  getTestBusiness({
     userId: '2-1',
-    userDetails: {
-      name: {
-        firstName: 'Ankita',
-        lastName: 'Gupta',
+    legalEntity: {
+      companyGeneralDetails: {
+        legalName: 'Ankita Gupta',
       },
     },
   }),
