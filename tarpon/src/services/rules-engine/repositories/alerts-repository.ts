@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { NotFound } from 'http-errors'
 import { compact, difference } from 'lodash'
-import { paginateArray } from '../utils/paginate-array'
 import { CaseRepository, getRuleQueueFilter } from './case-repository'
 import { MongoDbTransactionRepository } from './mongodb-transaction-repository'
 import {
@@ -818,11 +817,8 @@ export class AlertsRepository {
     )
 
     const result = await transactionsRepo.getTransactionsCursorPaginate({
-      filterIdList: paginateArray(
-        alert.transactionIds,
-        params.pageSize,
-        params.page
-      ),
+      pageSize: params.pageSize,
+      filterIdList: alert.transactionIds.slice(0, 1000),
       afterTimestamp: params.afterTimestamp || 0,
       beforeTimestamp: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
       filterOriginUserId: params.originUserId,
