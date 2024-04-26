@@ -1242,7 +1242,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     }
 
-    new CdkTarponConsoleLambdaStack(
+    const consoleApiStack = new CdkTarponConsoleLambdaStack(
       this,
       `${config.stage}-tarpon-console-api`,
       {
@@ -1264,6 +1264,7 @@ export class CdkTarponStack extends cdk.Stack {
         StackConstants.PUBLIC_API_CANARY_TESTS_NAME,
         10
       )
+      canary.node.addDependency(consoleApiStack)
 
       canary.role?.attachInlinePolicy(
         new Policy(this, getResourceNameForTarpon('CanaryPolicy'), {
