@@ -18,6 +18,7 @@ import { Tag as ApiTag } from '@/apis/models/Tag';
 import UserTypeTag from '@/components/library/Tag/UserTypeTag';
 import Tag from '@/components/library/Tag';
 import TagList from '@/components/library/Tag/TagList';
+import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 
 interface Props {
   user: InternalConsumerUser;
@@ -91,11 +92,9 @@ export default function UsersInfoCard(props: Props) {
       )}
       <div className={s.tag}>
         <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
-          <div>
-            {user.tags?.map(({ key, value }: ApiTag) => (
-              <Tag color={'cyan'}>
-                {key}: <span style={{ fontWeight: 700 }}>{value}</span>
-              </Tag>
+          <div className={s.tags}>
+            {user.tags?.map((tag: ApiTag) => (
+              <KeyValueTag key={tag.key} tag={tag} />
             ))}
           </div>
         </Form.Layout.Label>

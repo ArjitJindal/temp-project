@@ -21,6 +21,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 import Tag from '@/components/library/Tag';
 import UserTypeTag from '@/components/library/Tag/UserTypeTag';
+import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 
 interface Props {
   user: InternalBusinessUser;
@@ -90,11 +91,9 @@ export default function UsersInfoCard(props: Props) {
         {dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
       </Form.Layout.Label>
       <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
-        <div>
-          {user.tags?.map(({ key, value }: ApiTag) => (
-            <Tag color={'cyan'}>
-              {key}: <span style={{ fontWeight: 700 }}>{value}</span>
-            </Tag>
+        <div className={s.tags}>
+          {user.tags?.map((tag: ApiTag) => (
+            <KeyValueTag key={tag.key} tag={tag} />
           ))}
         </div>
       </Form.Layout.Label>
