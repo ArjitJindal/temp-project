@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 6
   cacheKey: 10c0
 
 "@aws-cdk/asset-awscli-v1@npm:^2.2.202":
@@ -1646,27 +1646,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.134.0":
-  version: 2.134.0
-  resolution: "aws-cdk-lib@npm:2.134.0"
+"aws-cdk-lib@npm:~2.135.0":
+  version: 2.135.0
+  resolution: "aws-cdk-lib@npm:2.135.0"
   dependencies:
-    "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
-    "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
-    "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.0.1"
-    "@balena/dockerignore": "npm:^1.0.2"
-    case: "npm:1.6.3"
-    fs-extra: "npm:^11.2.0"
-    ignore: "npm:^5.3.1"
-    jsonschema: "npm:^1.4.1"
-    mime-types: "npm:^2.1.35"
-    minimatch: "npm:^3.1.2"
-    punycode: "npm:^2.3.1"
-    semver: "npm:^7.6.0"
-    table: "npm:^6.8.1"
-    yaml: "npm:1.10.2"
+    "@aws-cdk/asset-awscli-v1": ^2.2.202
+    "@aws-cdk/asset-kubectl-v20": ^2.1.2
+    "@aws-cdk/asset-node-proxy-agent-v6": ^2.0.1
+    "@balena/dockerignore": ^1.0.2
+    case: 1.6.3
+    fs-extra: ^11.2.0
+    ignore: ^5.3.1
+    jsonschema: ^1.4.1
+    mime-types: ^2.1.35
+    minimatch: ^3.1.2
+    punycode: ^2.3.1
+    semver: ^7.6.0
+    table: ^6.8.2
+    yaml: 1.10.2
   peerDependencies:
     constructs: ^10.0.0
-  checksum: 6c3a8c4d5ea8e8398172eb376a774c2e63eeaad22daa80b787f1c0b6a54f2612d382063a3371696f3f05beb8a15be6002ad2f52419cc3d827028ca5f8c4a822f
+  checksum: 8/6e64b34a031740748f65706a84669483c6d83562d7c3b9f28851fe32abbc2e0f7e20663cd9961967cd04e4f3ea79a30db17f102d84de7454cb67e351605c5a79
   languageName: node
   linkType: hard
 
@@ -2098,9 +2098,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>":
+"fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>":
   version: 2.3.2
-  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
+  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
   dependencies:
     node-gyp: "npm:latest"
   conditions: os=darwin
@@ -3243,7 +3243,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"table@npm:^6.8.1":
+"table@npm:^6.8.2":
   version: 6.8.2
   resolution: "table@npm:6.8.2"
   dependencies:
@@ -3274,23 +3274,23 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "tarpon@workspace:."
   dependencies:
-    "@aws-sdk/client-cloudformation": "npm:^3.441.0"
+    "@aws-sdk/client-cloudformation": ^3.441.0
     "@flagright/lib": "link:./lib"
-    "@notionhq/client": "npm:^2.2.14"
-    "@slack/web-api": "npm:^7.0.2"
-    "@tsconfig/node18": "npm:^18.2.1"
-    "@types/lodash": "npm:^4.17.0"
-    aws-cdk: "npm:~2.135.0"
-    aws-cdk-lib: "npm:~2.134.0"
-    constructs: "npm:^10.3.0"
-    husky: "npm:^8.0.1"
-    lodash: "npm:^4.17.21"
-    octokit: "npm:^3.1.2"
-    prettier: "npm:^3.1.1"
-    slackify-markdown: "npm:^4.4.0"
-    ts-node: "npm:^10.9.1"
-    tsconfig-paths: "npm:^4.2.0"
-    typescript: "npm:^5.2.2"
+    "@notionhq/client": ^2.2.14
+    "@slack/web-api": ^7.0.2
+    "@tsconfig/node18": ^18.2.1
+    "@types/lodash": ^4.17.0
+    aws-cdk: ~2.135.0
+    aws-cdk-lib: ~2.135.0
+    constructs: ^10.3.0
+    husky: ^8.0.1
+    lodash: ^4.17.21
+    octokit: ^3.1.2
+    prettier: ^3.1.1
+    slackify-markdown: ^4.4.0
+    ts-node: ^10.9.1
+    tsconfig-paths: ^4.2.0
+    typescript: ^5.2.2
   languageName: unknown
   linkType: soft
 
@@ -3381,13 +3381,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.2.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@^5.2.2#~builtin<compat/typescript>":
   version: 5.4.5
-  resolution: "typescript@patch:typescript@npm%3A5.4.5#optional!builtin<compat/typescript>::version=5.4.5&hash=e012d7"
+  resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=d73830"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 9cf4c053893bcf327d101b6c024a55baf05430dc30263f9adb1bf354aeffc11306fe1f23ba2f9a0209674359f16219b5b7d229e923477b94831d07d5a33a4217
+  checksum: 8/2373c693f3b328f3b2387c3efafe6d257b057a142f9a79291854b14ff4d5367d3d730810aee981726b677ae0fd8329b23309da3b6aaab8263dbdccf1da07a3ba
   languageName: node
   linkType: hard
 
