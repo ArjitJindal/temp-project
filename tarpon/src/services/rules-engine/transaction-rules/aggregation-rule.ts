@@ -5,6 +5,7 @@ import { TransactionRule } from './rule'
 import dayjs, { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
+import { envIs } from '@/utils/env'
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
 const AGGREGATION_VERSION = '2'
@@ -31,7 +32,10 @@ export abstract class TransactionAggregationRule<
   protected abstract getRuleAggregationVersion(): number
 
   protected shouldUseRawData() {
-    return !this.shouldUseAggregation()
+    // Use raw data for sandbox environment if aggregation data is not ready as it's
+    // important to return the correct result when customers are testing the rules.
+    // Related to FR-2916
+    return envIs('sandbox') || !this.shouldUseAggregation()
   }
 
   public async isRebuilt(
@@ -184,10 +188,15 @@ export abstract class TransactionAggregationRule<
       return
     }
 
-    const version = await this.getLatestAvailableAggregationVersion(
-      userKeyId,
-      this.ruleInstance.id as string
-    )
+    // Use the latest version for sandbox environment instead of using the latest available version,
+    // as it's important to return the correct result when customers are testing the rules.
+    // Related to FR-2916
+    const version = envIs('sandbox')
+      ? this.getLatestAggregationVersion()
+      : await this.getLatestAvailableAggregationVersion(
+          userKeyId,
+          this.ruleInstance.id as string
+        )
     if (!version) {
       return
     }

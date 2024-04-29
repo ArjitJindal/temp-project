@@ -125,6 +125,7 @@ async function createUserLocally(userId: string) {
       headers: {
         'x-api-key': 'fake',
         'tenant-id': 'flagright',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(
         omit(user, '_id', 'PartitionKeyID', 'SortKeyID', 'type')
@@ -152,6 +153,7 @@ async function verifyTransactionLocally(transactionId: string) {
         headers: {
           'x-api-key': 'fake',
           'tenant-id': 'flagright',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(
           omit(
