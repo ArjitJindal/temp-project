@@ -10,6 +10,8 @@ import { TenantService } from '@/services/tenants'
 import { logger } from '@/core/logger'
 import { ComplyAdvantageMonitoredSearchUpdated } from '@/@types/openapi-internal/ComplyAdvantageMonitoredSearchUpdated'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const COMPLYADVANTAGE_PRODUCTION_IPS = [
   '54.76.153.128',
@@ -50,10 +52,16 @@ export const webhooksHandler = lambdaApi()(
           `Received ComplyAdvantage webhook event 'monitored_search_updated' (search ID: ${searchUpdated.searchId})`
         )
         const allTenantIds = await TenantService.getAllTenantIds()
-        for (const id of allTenantIds) {
-          const searchId = searchUpdated.searchId as number
-          const sanctionsService = new SanctionsService(id)
-          await sanctionsService.updateMonitoredSearch(searchId)
+        for (const tenantId of allTenantIds) {
+          const tenantRepository = new TenantRepository(tenantId, {
+            dynamoDb: getDynamoDbClient(),
+          })
+          const tenantSettings = await tenantRepository.getTenantSettings()
+          if (tenantSettings.features?.includes('SANCTIONS')) {
+            const searchId = searchUpdated.searchId as number
+            const sanctionsService = new SanctionsService(tenantId)
+            await sanctionsService.updateMonitoredSearch(searchId)
+          }
         }
       } else {
         logger.error(

@@ -173,17 +173,21 @@ export class SanctionsService {
       return
     }
     const response = await this.complyAdvantageMonitoredSearch(caSearchId)
-    if (response) {
-      await this.sanctionsSearchRepository.saveSearchResult({
-        request: result.request,
-        response: getSanctionsSearchResponse(response, result._id),
-        createdAt: result.createdAt,
-        updatedAt: Date.now(),
-      })
-      logger.info(
-        `Updated monitored search (search ID: ${caSearchId}) for tenant ${this.tenantId}`
+    if (!response) {
+      logger.error(
+        `Cannot find complyadvantage monitored search - ${caSearchId}`
       )
+      return
     }
+    await this.sanctionsSearchRepository.saveSearchResult({
+      request: result.request,
+      response: getSanctionsSearchResponse(response, result._id),
+      createdAt: result.createdAt,
+      updatedAt: Date.now(),
+    })
+    logger.info(
+      `Updated monitored search (search ID: ${caSearchId}) for tenant ${this.tenantId}`
+    )
   }
 
   public async search(
