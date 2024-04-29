@@ -15,6 +15,7 @@ class Entity:
     id_column: str
     source: str
     timestamp_column: str
+    quality_checks: Optional[Callable[[DataFrame], None]] = None
     enrichment_fn: Optional[
         Callable[[DataFrame, Callable[[str], DataFrame]], DataFrame]
     ] = None

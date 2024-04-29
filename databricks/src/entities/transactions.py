@@ -21,7 +21,7 @@ def enrich_transactions(
             explode(col("rates")).alias("currency", "rate"),
             col("approximateArrivalTimestamp"),
         )
-        .withWatermark("approximateArrivalTimestamp", "60 minutes")
+        .withWatermark("approximateArrivalTimestamp", "1 second")
     ).dropDuplicates(["date", "currency"])
 
     filtered_currencies_usd = currencies_usd.filter(currencies_usd.date.isNotNull())
@@ -29,15 +29,14 @@ def enrich_transactions(
 
     joined_df = (
         transactions_df.alias("t")
-        .withWatermark("approximateArrivalTimestamp", "1 second")
+        .withWatermark("approximateArrivalTimestamp", "10 minutes")
         .join(
             broadcast_currencies,
             expr(
                 """
             cr.currency = t.originAmountDetails.transactionCurrency AND
             to_date(from_unixtime(t.timestamp / 1000)) = cr.date AND
-            t.approximateArrivalTimestamp >= cr.approximateArrivalTimestamp AND
-            t.approximateArrivalTimestamp <= cr.approximateArrivalTimestamp + interval 1 day
+            cr.approximateArrivalTimestamp < (t.approximateArrivalTimestamp + interval 10 minutes)
         """
             ),
             "leftouter",
@@ -54,6 +53,12 @@ def enrich_transactions(
     )
 
 
+def transaction_quality_check(df: DataFrame):
+    null_count = df.filter(col("transactionAmountUSD").isNull()).count()
+    if null_count > 0:
+        raise ValueError(f" {null_count} nulls in 'transactionAmountUSD' column")
+
+
 transaction_entity = Entity(
     table="transactions",
     schema=transaction_schema,
@@ -62,4 +67,5 @@ transaction_entity = Entity(
     source="kinesis_events",
     timestamp_column="timestamp",
     enrichment_fn=enrich_transactions,
+    quality_checks=transaction_quality_check,
 )

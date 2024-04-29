@@ -93,6 +93,7 @@ class EntityTables:
             enriched_stream = entity.enrichment_fn(
                 df, self.table_service.read_table_stream
             )
+
             self.table_service.write_table_stream(
                 f"{entity.table}_cdc", enriched_stream
             )
@@ -109,8 +110,12 @@ class EntityTables:
         incoming_updates = f"{entity.table}_incoming_updates"
         latest_updates = f"{entity.table}_latest_updates"
         stage = os.environ["STAGE"]
+        quality_checks = entity.quality_checks
 
         def upsert_to_delta(micro_batch_output_df, _batch_id):
+            if quality_checks:
+                quality_checks(micro_batch_output_df)
+
             tenants = [
                 row.tenant
                 for row in micro_batch_output_df.select("tenant").distinct().collect()
