@@ -22,7 +22,6 @@ import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider'
 import { useQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOB } from '@/utils/queries/keys';
 import { isSuccess } from '@/utils/asyncResource';
-import PageTabs from '@/components/ui/PageTabs';
 import * as Card from '@/components/ui/Card';
 import { LoadingCard } from '@/components/ui/Card';
 import Label from '@/components/library/Label';
@@ -42,6 +41,7 @@ import {
 } from '@/apis';
 import StepButtons from '@/components/library/StepButtons';
 import Button from '@/components/library/Button';
+import Tabs from '@/components/library/Tabs';
 
 const DUPLICATE_TAB_KEY = 'duplicate';
 const MAX_SIMULATION_ITERATIONS = 3;
@@ -232,18 +232,53 @@ export function RuleConfigurationSimulation(props: Props) {
           !(isSuccess(jobResult.data) && allIterationsCompleted(jobResult.data.value.iterations))),
     );
   }, [jobId, jobResult.data, startSimulationMutation.isLoading]);
-
+  const handleDeleteIteration = (index: number) => {
+    const updatedIterations = newIterations.filter((_, i) => i !== index);
+    setNewIterations(updatedIterations);
+    updatedIterations.forEach((iteration, i) => {
+      const formValues = ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance);
+      if (formValues)
+        iterationFormRefs[i].current?.setValues({
+          ...formValues,
+          basicDetailsStep: {
+            ...formValues.basicDetailsStep,
+            simulationIterationName: iteration.name,
+            simulationIterationDescription: iteration.description,
+          },
+        });
+    });
+    setActiveTabIndex(Math.max(0, activeTabIndex - 1));
+  };
+  const onEdit = (action: 'add' | 'remove', key?: string) => {
+    if (action === 'add') {
+      handleDuplicate();
+    } else if (action === 'remove' && key) {
+      handleDeleteIteration(parseInt(key));
+    }
+  };
   return (
     <div className={s.root}>
-      <PageTabs
-        isPrimary={false}
-        type="card"
+      <Tabs
+        type="editable-card"
         activeKey={`${activeTabIndex}`}
         onChange={handleChangeIterationTab}
+        hideAdd={iterations.length >= MAX_SIMULATION_ITERATIONS || isShowingResults}
+        addIcon={
+          <Tooltip
+            title="You can simulate a maximum of 3 iterations for this rule at once."
+            placement="bottom"
+          >
+            <div onClick={handleDuplicate} className={s.duplicateButton}>
+              <AddLineIcon width={20} /> <span>Duplicate</span>
+            </div>
+          </Tooltip>
+        }
+        onEdit={(action, key) => onEdit(action, key)}
         items={[
           ...iterations.map((iteration, i) => ({
             title: `Iteration ${i + 1}`,
             key: `${i}`,
+            isClosable: iterations.length > 1 && !isShowingResults,
             children: isLoading ? (
               <LoadingCard loadingMessage="Running the simulation for a subset of transactions & generating results for you." />
             ) : (
@@ -288,20 +323,6 @@ export function RuleConfigurationSimulation(props: Props) {
               </>
             ),
           })),
-          iterations.length < MAX_SIMULATION_ITERATIONS &&
-            !isShowingResults && {
-              key: DUPLICATE_TAB_KEY,
-              title: (
-                <Tooltip
-                  title="You can simulate a maximum of 3 iterations for this rule at once."
-                  placement="bottom"
-                >
-                  <div onClick={handleDuplicate} className={s.duplicateButton}>
-                    <AddLineIcon width={20} /> <span>Duplicate</span>
-                  </div>
-                </Tooltip>
-              ),
-            },
         ].filter(notEmpty)}
       />
       <div className={s.footer}>

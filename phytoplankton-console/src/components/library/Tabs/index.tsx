@@ -13,7 +13,7 @@ export interface TabItem {
 }
 
 export interface Props
-  extends Pick<TabsProps, 'type' | 'activeKey' | 'onChange' | 'defaultActiveKey'> {
+  extends Pick<TabsProps, 'type' | 'activeKey' | 'onChange' | 'defaultActiveKey' | 'hideAdd'> {
   items: TabItem[];
   addIcon?: React.ReactNode;
   tabHeight?: string | number;
@@ -24,10 +24,12 @@ export interface Props
 }
 
 export default function Tabs(props: Props) {
-  const { items, addIcon, tabBarGutter, onEdit, onChange, activeKey, defaultActiveKey } = props;
+  const { items, addIcon, tabBarGutter, onEdit, onChange, activeKey, defaultActiveKey, hideAdd } =
+    props;
 
   return (
     <AntTabs
+      hideAdd={hideAdd}
       activeKey={activeKey}
       type={props?.type}
       size={props?.size}

@@ -7,7 +7,6 @@ import {
 import s from './styles.module.less';
 import { SimulationResult } from './SimulationResult';
 import { ParametersTableTabs } from './ParametersTableTabs';
-import PageTabs from '@/components/ui/PageTabs';
 import * as Card from '@/components/ui/Card';
 import Form from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
@@ -37,6 +36,7 @@ import {
   SimulationPostResponse,
   SimulationRiskFactorsParametersRequest,
 } from '@/apis';
+import Tabs from '@/components/library/Tabs';
 
 interface FormValues {
   name: string;
@@ -171,7 +171,7 @@ export function RiskFactorsSimulation() {
         return resource;
       }),
     );
-    setActiveIterationIndex(iterations.length);
+    setActiveIterationIndex(iterations.length + 1);
   };
 
   const onSaveValues = (
@@ -226,22 +226,57 @@ export function RiskFactorsSimulation() {
       });
     });
   };
+  const handleDeleteIteration = (index: number) => {
+    setIterations((prevIterations) => prevIterations.filter((_iteration, i) => i !== index));
+    setValuesResources((prevValuesResources) =>
+      prevValuesResources.map((resource, i) => {
+        if (i < index) {
+          return resource;
+        } else {
+          if (i + 1 < MAX_SIMULATION_ITERATIONS) {
+            return prevValuesResources[i + 1];
+          }
+          return {};
+        }
+      }),
+    );
+    setActiveIterationIndex(Math.max(1, activeIterationIndex - 1));
+  };
+  const onEdit = (action: 'add' | 'remove', key?: string) => {
+    if (action === 'add') {
+      handleDuplicate();
+    } else if (key && action === 'remove') {
+      handleDeleteIteration(parseInt(key) - 1);
+    }
+  };
   return createdJobId ? (
     <SimulationResult jobId={createdJobId} />
   ) : (
     <div className={s.root}>
       <div>
-        <PageTabs
-          isPrimary={false}
-          type="card"
+        <Tabs
+          type="editable-card"
           activeKey={`${activeIterationIndex}`}
           onChange={(key) => {
             setActiveIterationIndex(parseInt(key));
           }}
+          onEdit={(action, key) => onEdit(action, key)}
+          addIcon={
+            <Tooltip
+              title="You can simulate a maximum of 3 iterations for this rule at once."
+              placement="bottom"
+            >
+              <div className={s.duplicateButton}>
+                <AddLineIcon width={20} /> <span>Duplicate</span>
+              </div>
+            </Tooltip>
+          }
+          hideAdd={iterations.length >= MAX_SIMULATION_ITERATIONS}
           items={[
             ...iterations.map((_iteration, index) => ({
               title: `Iteration ${index + 1}`,
               key: `${index + 1}`,
+              isClosable: iterations.length > 1,
               children: (
                 <RiskFactorsSimulationForm
                   onChangeIterationInfo={onChangeIterationInfo}
@@ -250,23 +285,6 @@ export function RiskFactorsSimulation() {
                 />
               ),
             })),
-            ...(iterations.length < MAX_SIMULATION_ITERATIONS
-              ? [
-                  {
-                    key: `${iterations.length + 1}`,
-                    title: (
-                      <Tooltip
-                        title="You can simulate a maximum of 3 iterations for this rule at once."
-                        placement="bottom"
-                      >
-                        <div onClick={handleDuplicate} className={s.duplicateButton}>
-                          <AddLineIcon width={20} /> <span>Duplicate</span>
-                        </div>
-                      </Tooltip>
-                    ),
-                  },
-                ]
-              : []),
           ]}
         />
       </div>
@@ -298,11 +316,11 @@ interface FormProps {
 
 const RiskFactorsSimulationForm = (props: FormProps) => {
   const { allIterations, currentIterationIndex, onChangeIterationInfo } = props;
-  const iteration =
-    allIterations.length >= currentIterationIndex ? allIterations[currentIterationIndex - 1] : {};
+  const iteration: FormValues = allIterations[currentIterationIndex - 1];
+
   const formId = useId();
   return (
-    <Form<any>
+    <Form<FormValues>
       key={formId}
       id={formId}
       initialValues={iteration}
@@ -324,7 +342,13 @@ const RiskFactorsSimulationForm = (props: FormProps) => {
                 },
               }}
             >
-              {(inputProps) => <TextInput {...inputProps} placeholder={'Enter iteration name'} />}
+              {(inputProps) => (
+                <TextInput
+                  {...inputProps}
+                  value={iteration.name}
+                  placeholder={'Enter iteration name'}
+                />
+              )}
             </InputField>
             <InputField<FormValues, 'description'>
               name={'description'}
@@ -336,7 +360,13 @@ const RiskFactorsSimulationForm = (props: FormProps) => {
                 },
               }}
             >
-              {(inputProps) => <TextInput {...inputProps} placeholder={'Enter iteration name'} />}
+              {(inputProps) => (
+                <TextInput
+                  {...inputProps}
+                  value={iteration.description}
+                  placeholder={'Enter iteration name'}
+                />
+              )}
             </InputField>
           </div>
           <InputField<FormValues, 'samplingSize'>
@@ -348,6 +378,7 @@ const RiskFactorsSimulationForm = (props: FormProps) => {
               <SelectionGroup
                 {...inputProps}
                 mode="SINGLE"
+                value={iteration.samplingSize}
                 options={[
                   {
                     value: 'RANDOM',

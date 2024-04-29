@@ -11,7 +11,6 @@ import {
   SimulationRiskLevelsAndRiskFactorsResult,
 } from '@/apis';
 import { LoadingCard } from '@/components/ui/Card';
-import PageTabs from '@/components/ui/PageTabs';
 import { AsyncResource, init, isLoading, isSuccess, loading, success } from '@/utils/asyncResource';
 import * as Card from '@/components/ui/Card';
 import { RISK_LEVELS } from '@/utils/risk-levels';
@@ -36,6 +35,7 @@ import Confirm from '@/components/utils/Confirm';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+import Tabs from '@/components/library/Tabs';
 
 interface Props {
   jobId: string;
@@ -106,8 +106,7 @@ export const SimulationResult = (props: Props) => {
     />
   ) : (
     <div>
-      <PageTabs
-        isPrimary={false}
+      <Tabs
         type="card"
         activeKey={`${activeIterationIndex}`}
         onChange={(key) => {
