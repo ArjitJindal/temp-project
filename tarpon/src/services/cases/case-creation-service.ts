@@ -1281,20 +1281,13 @@ export class CaseCreationService {
     return await Promise.all(
       savedCases.map((nextCase) => {
         // todo: filter unpublished cases?
-        const relatedCases = nextCase.relatedCases ?? []
+        const relatedCases = [
+          ...(nextCase.relatedCases ?? []),
+          ...savedCases.map(({ caseId }) => caseId),
+        ].filter((caseId) => caseId && caseId !== nextCase.caseId) as string[]
         return this.addOrUpdateCase({
           ...nextCase,
-          relatedCases: [
-            ...relatedCases,
-            ...savedCases
-              .map(({ caseId }) => caseId)
-              .filter(
-                (caseId): caseId is string =>
-                  caseId != null &&
-                  caseId !== nextCase.caseId &&
-                  !relatedCases.includes(caseId)
-              ),
-          ],
+          relatedCases: uniq(relatedCases),
         })
       })
     )

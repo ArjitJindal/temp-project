@@ -449,7 +449,6 @@ export class MongoDbTransactionRepository
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): AggregationCursor<InternalTransaction> {
     const query = this.getTransactionsMongoQuery(params)
-    console.log('query', JSON.stringify(query, null, 2))
     return this.getDenormalizedTransactions(query, params)
   }
 
@@ -607,8 +606,6 @@ export class MongoDbTransactionRepository
     const collection = db.collection<InternalTransaction>(name)
 
     const filter = this.getTransactionsMongoQuery(params)
-
-    console.log('filter', JSON.stringify(filter, null, 2))
 
     return await cursorPaginate<InternalTransaction>(collection, filter, {
       pageSize: params.pageSize ? (params.pageSize as number) : 20,

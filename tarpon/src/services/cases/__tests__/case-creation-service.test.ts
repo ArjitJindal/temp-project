@@ -45,6 +45,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 import { filterLiveRules } from '@/services/rules-engine/utils'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
+import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 dynamoDbSetupHook()
 
@@ -109,6 +110,8 @@ const getHitRuleInstances = async (
 
   return ruleInstances as RuleInstance[]
 }
+
+disableLocalChangeHandler()
 
 describe('Cases (Transaction hit)', () => {
   describe('Env #1', () => {

@@ -194,7 +194,6 @@ export class QaAlertsByChecklistReasonStatsDashboardMetric {
     checklistTemplateId: string,
     checklistCategory: string
   ): Promise<DashboardStatsQaAlertsStatsByChecklistReasonData[]> {
-    console.log('HELLO THIS', checklistTemplateId, checklistCategory)
     const db = await getMongoDbClientDb()
     const collection = db.collection(
       DASHBOARD_QA_ALERTS_BY_CHECKLIST_REASON_COLLECTION_HOURLY(tenantId)
