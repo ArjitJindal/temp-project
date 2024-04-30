@@ -1,9 +1,9 @@
 import { Switch } from 'antd';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { useMutation } from '@tanstack/react-query';
-import { getRuleInstanceDisplayId } from '../../utils';
+import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../../utils';
 import { canSimulate } from '../../my-rules';
 import s from './styles.module.less';
 import { RuleInstance } from '@/apis';
@@ -34,7 +34,17 @@ interface Props {
 }
 
 export const RuleInstanceInfo = (props: Props) => {
-  const { ruleInstance } = props;
+  const { ruleInstance: _ruleInstance } = props;
+  const [ruleInstance, setRuleInstance] = useState(_ruleInstance);
+  const handleRuleInstanceUpdate = useCallback(async (ruleInstance: RuleInstance) => {
+    const ruleInstanceId = ruleInstance.id;
+    if (!ruleInstanceId) {
+      message.fatal('Rule instance ID is not set');
+      return;
+    }
+    setRuleInstance((prev) => ({ ...prev, [ruleInstanceId]: ruleInstance }));
+  }, []);
+  const updateRuleInstanceMutation = useUpdateRuleInstance(handleRuleInstanceUpdate);
   const percent =
     ruleInstance.hitCount && ruleInstance.runCount
       ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
@@ -100,6 +110,15 @@ export const RuleInstanceInfo = (props: Props) => {
   const formatDate = (timestamp?: number): string => {
     return dayjs(timestamp).format(DEFAULT_DATE_TIME_FORMAT);
   };
+  const handleActivationChange = useCallback(
+    async (ruleInstance: RuleInstance, activated: boolean) => {
+      updateRuleInstanceMutation.mutate({
+        ...ruleInstance,
+        status: activated ? 'ACTIVE' : 'INACTIVE',
+      });
+    },
+    [updateRuleInstanceMutation],
+  );
   return (
     <div className={s.root}>
       <Card.Root noBorder>
@@ -112,7 +131,11 @@ export const RuleInstanceInfo = (props: Props) => {
             </div>
             <div className={s.description}>{ruleInstance.ruleDescriptionAlias}</div>
           </div>
-          <Switch checked={ruleInstance.status === 'ACTIVE'} />
+          <Switch
+            disabled={!canWriteRules}
+            checked={ruleInstance.status === 'ACTIVE'}
+            onChange={(checked) => handleActivationChange(ruleInstance, checked)}
+          />
         </Card.Section>
       </Card.Root>
       <Card.Root noBorder>
