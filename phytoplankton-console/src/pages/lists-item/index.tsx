@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { UnorderedListOutlined } from '@ant-design/icons';
 import s from './index.module.less';
@@ -9,14 +8,14 @@ import { useI18n } from '@/locales';
 import { makeUrl } from '@/utils/routing';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
-import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
-import { ListHeader } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
 import FontSizeIcon from '@/components/ui/icons/Remix/editor/font-size.react.svg';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import TimeLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import { parseListType, stringifyListType } from '@/pages/lists/helpers';
+import { useQuery } from '@/utils/queries/hooks';
+import { LISTS_ITEM } from '@/utils/queries/keys';
 
 export default function CreatedLists() {
   const params = useParams<'id' | 'type'>();
@@ -25,25 +24,15 @@ export default function CreatedLists() {
   const i18n = useI18n();
   const api = useApi();
 
-  const [listHeaderRes, setListHeaderRes] = useState<AsyncResource<ListHeader>>(init());
-
-  useEffect(() => {
-    if (listId != null && listType != null) {
-      setListHeaderRes((prevState) => loading(getOr(prevState, null)));
-      api
-        .getList({
-          listId,
-        })
-        .then(
-          (list) => {
-            setListHeaderRes(success(list));
-          },
-          () => {
-            setListHeaderRes(failed(`Unable to find a list by id "${listId}"`));
-          },
-        );
+  const listHeaderRes = useQuery(LISTS_ITEM(listId), async () => {
+    if (listId == null || listType == null) {
+      throw new Error(`listId and listType can not be null`);
     }
-  }, [api, listId, listType]);
+    const list = await api.getList({
+      listId,
+    });
+    return list;
+  });
 
   return (
     <>
@@ -54,7 +43,7 @@ export default function CreatedLists() {
         }}
       >
         <Card.Root className={s.root}>
-          <AsyncResourceRenderer resource={listHeaderRes}>
+          <AsyncResourceRenderer resource={listHeaderRes.data}>
             {(listHeader) => {
               return (
                 <>

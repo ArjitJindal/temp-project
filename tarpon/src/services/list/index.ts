@@ -1,4 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { NotFound } from 'http-errors'
 import { ListRepository } from './repositories/list-repository'
 import { ListType } from '@/@types/openapi-public/ListType'
 import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
@@ -52,7 +53,11 @@ export class ListService {
   }
 
   public async getListHeader(listId: string): Promise<ListHeader | null> {
-    return await this.listRepository.getListHeader(listId)
+    const list = await this.listRepository.getListHeader(listId)
+    if (list === null) {
+      throw new NotFound(`List not found: ${listId}`)
+    }
+    return list
   }
 
   public async updateListHeader(list: ListHeader): Promise<void> {
