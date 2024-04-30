@@ -2663,6 +2663,10 @@ components:
         - Legal
         - Sales
         - Rollover
+        - Equity
+        - Crypto
+        - Business
+        - Employment
     ContactDetails:
       title: ContactDetails
       type: object
