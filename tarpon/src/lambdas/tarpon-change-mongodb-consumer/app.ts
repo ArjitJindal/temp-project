@@ -75,6 +75,12 @@ async function transactionHandler(
     ? await riskScoringService.getArsScore(transaction.transactionId)
     : undefined
 
+  if (isSyncRiskScoringEnabled && !arsScore) {
+    logger.error(
+      `ARS score not found for transaction ${transaction.transactionId} for tenant ${tenantId}: Recalculating Async`
+    )
+  }
+
   const [transactionInMongo, ruleInstances] = await Promise.all([
     transactionsRepo.addTransactionToMongo(
       omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult,
@@ -133,7 +139,7 @@ async function transactionHandler(
     logger.info(`Calculating ARS & DRS`)
 
     const { originDrsScore, destinationDrsScore } =
-      await riskScoringService.updateDynamicRiskScores(transaction)
+      await riskScoringService.updateDynamicRiskScores(transaction, !arsScore)
 
     logger.info(`Calculation of ARS & DRS Completed`)
 

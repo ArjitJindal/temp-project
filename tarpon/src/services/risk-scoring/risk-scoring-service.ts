@@ -1,5 +1,4 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-
 import { FindCursor, MongoClient } from 'mongodb'
 import { get, mean, memoize } from 'lodash'
 import {
@@ -43,7 +42,7 @@ import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { RiskScoreDetails } from '@/@types/openapi-internal/RiskScoreDetails'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
-import { hasFeature, tenantHasFeature } from '@/core/utils/context'
+import { hasFeature } from '@/core/utils/context'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 import { RiskScoreValueLevel } from '@/@types/openapi-internal/RiskScoreValueLevel'
 import { RiskScoreValueScore } from '@/@types/openapi-internal/RiskScoreValueScore'
@@ -570,48 +569,47 @@ export class RiskScoringService {
     return score
   }
 
-  public async getArsScore(transactionId: string): Promise<ArsScore> {
+  public async getArsScore(
+    transactionId: string
+  ): Promise<ArsScore | undefined> {
     const arsScore = await this.riskRepository.getArsScore(transactionId)
 
-    if (!arsScore) {
-      throw new Error(`No ARS score found for transaction ${transactionId}`)
-    }
-
-    return arsScore
+    return arsScore ?? undefined
   }
 
   private async getArsDetails(
-    transaction: Transaction
+    transaction: Transaction,
+    calculateArsScore: boolean = true
   ): Promise<RiskScoreDetails> {
-    const syncRiskScoringEnabled = await this.syncRiskScoringEnabled()
+    if (!calculateArsScore) {
+      const data = await this.getArsScore(transaction.transactionId)
 
-    if (syncRiskScoringEnabled) {
-      const { arsScore, components = [] } = await this.getArsScore(
-        transaction.transactionId
-      )
+      if (!data) {
+        throw new Error(
+          `No ARS score found for transaction ${transaction.transactionId}`
+        )
+      }
 
-      return { score: arsScore, components }
+      return { score: data.arsScore, components: data.components ?? [] }
     }
 
     return this.calculateArsScore(transaction)
   }
 
-  private syncRiskScoringEnabled = memoize(async () => {
-    return await tenantHasFeature(this.tenantId, 'SYNC_TRS_CALCULATION')
-  })
-
-  public async updateDynamicRiskScores(transaction: Transaction): Promise<{
+  public async updateDynamicRiskScores(
+    transaction: Transaction,
+    calculateArsScore: boolean = true
+  ): Promise<{
     originDrsScore: number | undefined | null
     destinationDrsScore: number | undefined | null
   }> {
-    const syncRiskScoringEnabled = await this.syncRiskScoringEnabled()
-
     const { score: arsScore, components } = await this.getArsDetails(
-      transaction
+      transaction,
+      calculateArsScore
     )
 
     const [_, originDrsScore, destinationDrsScore] = await Promise.all([
-      !syncRiskScoringEnabled
+      calculateArsScore
         ? await this.riskRepository.createOrUpdateArsScore(
             transaction.transactionId,
             arsScore,
