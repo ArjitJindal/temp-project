@@ -261,11 +261,11 @@ export class MongoDbTransactionRepository
     if (params.filterIsShadowHit != null) {
       if (params.filterIsShadowHit) {
         conditions.push({
-          hitRules: { $elemMatch: { isShadowHit: true } },
+          hitRules: { $elemMatch: { isShadow: true } },
         })
       } else {
         conditions.push({
-          hitRules: { $not: { $elemMatch: { isShadowHit: true } } },
+          hitRules: { $not: { $elemMatch: { isShadow: true } } },
         })
       }
     }
