@@ -1436,7 +1436,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Too many counterparty countries',
       description:
-        'User is receiving or sending funds from >= X different countries in time t',
+        'User is receiving or sending funds from > X different countries in time t',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} funds from more than {{ parameters.transactionsLimit }} unique country within {{ format-time-window parameters.timeWindow }}",
       defaultParameters,
