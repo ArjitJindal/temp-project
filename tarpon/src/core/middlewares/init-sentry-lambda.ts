@@ -51,6 +51,7 @@ export const initSentryLambda =
         Sentry.setContext('path', (event?.pathParameters as object) || {})
         Sentry.setTag('httpMethod', event?.httpMethod || '')
         Sentry.setTag('resource', event?.resource || '')
+        Sentry.setExtras(getContext()?.sentryExtras || {})
 
         return handler(event, ...args)
       }

@@ -40,6 +40,7 @@ winstonLogger.error = wrap(
       Sentry.withScope((scope) => {
         const context = getContext()
         if (context?.logMetadata) scope.setTags(context.logMetadata)
+        if (context?.sentryExtras) scope.setExtras(context.sentryExtras)
         Sentry.captureException(error, { extra })
       })
     }

@@ -12,7 +12,7 @@ import { prompt } from '@/utils/openai'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { ensureHttps } from '@/utils/http'
 import { apiFetch } from '@/utils/api-fetch'
-import { updateLogMetadata } from '@/core/utils/context'
+import { addSentryExtras } from '@/core/utils/context'
 
 const industries: string[] = [
   'Agriculture and Forestry',
@@ -375,7 +375,7 @@ Summary: Acme is a textile company which sells shoes in Delhi, India and generat
       const result: string[] = re.exec(output as string) as string[]
 
       if (!result || result.length < 2) {
-        updateLogMetadata({ content, output, result })
+        addSentryExtras({ content, output, result })
         logger.error(`Unable to summarise ${source} content`)
         throw new Error('Unable to extract information from the given site')
       }

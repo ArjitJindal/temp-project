@@ -18,6 +18,7 @@ export const initSentryNode =
       const scope = Sentry.getCurrentScope()
       scope.clear()
       Sentry.setTags(getContext()?.logMetadata || {})
+      Sentry.setExtras(getContext()?.sentryExtras || {})
       return handler()
     })
   }

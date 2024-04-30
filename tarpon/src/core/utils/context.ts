@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from 'async_hooks'
 import * as Sentry from '@sentry/serverless'
+import { Extras } from '@sentry/types/types/extra'
 import { utils } from 'aws-xray-sdk-core'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -57,6 +58,7 @@ export type Context = LogMetaData & {
   }
   lastError?: Error
   promises?: Promise<any>[]
+  sentryExtras?: { [key: string]: unknown }
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
@@ -184,6 +186,20 @@ export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
       isNil
     )
     Sentry.setTags(context.logMetadata)
+  }
+}
+
+export function addSentryExtras(addedExtras: Extras) {
+  const context = asyncLocalStorage.getStore()
+  if (context) {
+    context.sentryExtras = {
+      ...context.sentryExtras,
+      ...addedExtras,
+    }
+  }
+
+  if (context?.sentryExtras) {
+    Sentry.setExtras(context.sentryExtras)
   }
 }
 
