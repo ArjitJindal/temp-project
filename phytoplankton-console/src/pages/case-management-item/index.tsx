@@ -17,8 +17,6 @@ import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import { FormValues } from '@/components/CommentEditor';
 
-const CASE_REFETCH_INTERVAL_SECONDS = 60;
-
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
   const location = useLocation();
@@ -29,16 +27,8 @@ function CaseManagementItemPage() {
   useCloseSidebarByDefault();
 
   const updateCaseQueryData = useUpdateCaseQueryData();
-  const queryResults = useQuery(
-    CASES_ITEM(caseId),
-    (): Promise<Case> =>
-      api.getCase({
-        caseId,
-      }),
-    {
-      refetchInterval: CASE_REFETCH_INTERVAL_SECONDS * 1000,
-    },
-  );
+  // TODO: Add Refetch of 60 Seconds again FR-4782
+  const queryResults = useQuery(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }));
   const previousQueryResults = usePrevious(queryResults);
   const caseData = useMemo(() => {
     if (isSuccess(queryResults.data)) {
