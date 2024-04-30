@@ -1,6 +1,17 @@
 import { SIMILAR_TO_OPERATOR } from '../similar-to'
 
-describe('similar to operator', () => {
+describe('similar to operator (single)', () => {
+  test('within threshold', async () => {
+    const result = await SIMILAR_TO_OPERATOR.run('apple', 'appl', [20])
+    expect(result).toBe(true)
+  })
+  test('not within threshold', async () => {
+    const result = await SIMILAR_TO_OPERATOR.run('apple', 'appl', [19])
+    expect(result).toBe(false)
+  })
+})
+
+describe('similar to operator (list)', () => {
   test('within threshold', async () => {
     const result = await SIMILAR_TO_OPERATOR.run('apple', ['appl'], [20])
     expect(result).toBe(true)

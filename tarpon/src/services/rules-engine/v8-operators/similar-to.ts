@@ -1,14 +1,15 @@
 import { getEditDistancePercentage } from '@flagright/lib/utils'
-import { RuleOperator } from './types'
+import { isArray } from 'lodash'
+import { TextRuleOperator } from './types'
 import { getNegatedOperator } from './utils'
 import { logger } from '@/core/logger'
 
-export const SIMILAR_TO_OPERATOR: RuleOperator<string, string[]> = {
+export const SIMILAR_TO_OPERATOR: TextRuleOperator = {
   key: 'op:similarto',
   uiDefinition: {
     label: 'Similar to',
-    valueSources: ['value'],
     valueTypes: ['text'],
+    valueSources: ['value', 'field', 'func'],
   },
   parameters: [
     {
@@ -21,13 +22,19 @@ export const SIMILAR_TO_OPERATOR: RuleOperator<string, string[]> = {
     },
   ],
   run: async (lhs, rhs, parameters) => {
+    if (!lhs) {
+      return false
+    }
+    const values = (isArray(rhs) ? rhs : [rhs]).filter(Boolean) as string[]
     const percentageThreshold = parameters?.[0]
     if (percentageThreshold == null) {
       logger.error('Fuzziness parameter is required for similar to operator')
       return false
     }
-    return rhs.some(
-      (value) => getEditDistancePercentage(lhs, value) <= percentageThreshold
+    return values.some(
+      (value) =>
+        getEditDistancePercentage(lhs.toLowerCase(), value.toLowerCase()) <=
+        percentageThreshold
     )
   },
 }

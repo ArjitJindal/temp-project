@@ -3,6 +3,12 @@ import { Config, Operator } from '@react-awesome-query-builder/core'
 import { JSONSchemaType } from 'ajv'
 import { RuleOperatorType } from '@/@types/openapi-internal/RuleOperatorType'
 
+export type TextRuleOperator = RuleOperator<
+  string | null | undefined,
+  // string: for RHS as field; string[]: for RHS as value
+  string[] | string | null | undefined
+>
+
 export type RuleOperator<LHS = any, RHS = any> = {
   key: RuleOperatorType
   uiDefinition: Operator<Config>

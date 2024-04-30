@@ -6,22 +6,16 @@ import { useQuery } from '@/utils/queries/hooks';
 import { RULE_LOGIC_CONFIG } from '@/utils/queries/keys';
 import { useIsChanged } from '@/utils/hooks';
 import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
-import {
-  RuleAggregationVariable,
-  RuleEntityVariableInUse,
-  RuleLogicConfig,
-  RuleOperator,
-} from '@/apis';
+import { RuleAggregationVariable, RuleEntityVariableInUse, RuleLogicConfig } from '@/apis';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
-import { getOperatorWithParameter } from '@/components/ui/LogicBuilder/operators';
+import {
+  getOperatorWithParameter,
+  getOperatorsByValueType,
+} from '@/components/ui/LogicBuilder/operators';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const InitialConfig = BasicConfig;
-
-function getSupportedOperatorsKeys(operators: RuleOperator[], valueType: string): string[] {
-  return operators.filter((v) => v.uiDefinition.valueTypes?.includes(valueType)).map((v) => v.key);
-}
 
 export function useRuleLogicConfig() {
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
@@ -98,7 +92,7 @@ export function useLogicBuilderConfig(
           if (types[key].widgets[key]) {
             const initialOperators = types[key].widgets[key].operators ?? [];
             types[key].widgets[key].operators = initialOperators.concat(
-              getSupportedOperatorsKeys(operators, key),
+              getOperatorsByValueType(operators, key).map((v) => v.key),
             );
             if (key === 'number') {
               types[key].widgets = {
@@ -120,7 +114,7 @@ export function useLogicBuilderConfig(
             if (key === 'select') {
               types[key].widgets['multiselect'].operators = [
                 ...(types[key].widgets['multiselect'].operators ?? []),
-                ...getSupportedOperatorsKeys(operators, 'multiselect'),
+                ...getOperatorsByValueType(operators, 'multiselect').map((v) => v.key),
               ];
             } else if (key === 'text') {
               types[key].widgets[key].operators = [
@@ -130,6 +124,9 @@ export function useLogicBuilderConfig(
               ];
               types[key].widgets['field'].operators = [
                 ...(types[key].widgets['field'].operators ?? []),
+                // Allow text variable to be used in the RHS
+                ...getOperatorsByValueType(operators, 'text').map((v) => v.key),
+
                 'select_any_in',
                 'select_not_any_in',
               ];

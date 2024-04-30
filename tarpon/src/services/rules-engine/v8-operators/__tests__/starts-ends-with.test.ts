@@ -1,6 +1,16 @@
 import { ENDS_WITH_OPERATOR, STARTS_WITH_OPERATOR } from '../starts-ends-with'
 
-describe('starts with operator', () => {
+describe('starts with (single)', () => {
+  test('not starts with', async () => {
+    const result = await STARTS_WITH_OPERATOR.run('apple', 'pp')
+    expect(result).toBe(false)
+  })
+  test('starts with (match)', async () => {
+    const result = await STARTS_WITH_OPERATOR.run('apple', 'app')
+    expect(result).toBe(true)
+  })
+})
+describe('starts with (list)', () => {
   test('not starts with', async () => {
     const result = await STARTS_WITH_OPERATOR.run('apple', ['pp', 'pl', 'le'])
     expect(result).toBe(false)
@@ -15,7 +25,17 @@ describe('starts with operator', () => {
   })
 })
 
-describe('ends with operator', () => {
+describe('ends with (single)', () => {
+  test('not ends with', async () => {
+    const result = await ENDS_WITH_OPERATOR.run('apple', 'pp')
+    expect(result).toBe(false)
+  })
+  test('ends with (match)', async () => {
+    const result = await ENDS_WITH_OPERATOR.run('apple', 'pple')
+    expect(result).toBe(true)
+  })
+})
+describe('ends with (list)', () => {
   test('not ends with', async () => {
     const result = await ENDS_WITH_OPERATOR.run('apple', ['pp', 'pl', 'ap'])
     expect(result).toBe(false)

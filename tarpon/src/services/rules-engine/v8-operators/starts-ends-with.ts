@@ -1,25 +1,36 @@
-import { RuleOperator } from './types'
+import { isArray } from 'lodash'
+import { TextRuleOperator } from './types'
 
-export const STARTS_WITH_OPERATOR: RuleOperator<string, string[]> = {
+export const STARTS_WITH_OPERATOR: TextRuleOperator = {
   key: 'op:startswith',
   uiDefinition: {
     label: 'Starts with',
     valueTypes: ['text'],
-    valueSources: ['value'],
+    valueSources: ['value', 'field', 'func'],
   },
-  run: async (value, substrs) => {
-    return substrs.some((substr) => value.startsWith(substr))
+  run: async (lhs, rhs) => {
+    if (!lhs) {
+      return false
+    }
+    const lhsValue = lhs.toLowerCase()
+    const values = (isArray(rhs) ? rhs : [rhs]).filter(Boolean) as string[]
+    return values.some((substr) => lhsValue.startsWith(substr.toLowerCase()))
   },
 }
 
-export const ENDS_WITH_OPERATOR: RuleOperator<string, string[]> = {
+export const ENDS_WITH_OPERATOR: TextRuleOperator = {
   key: 'op:endswith',
   uiDefinition: {
     label: 'Ends with',
     valueTypes: ['text'],
     valueSources: ['value'],
   },
-  run: async (value, substrs) => {
-    return substrs.some((substr) => value.endsWith(substr))
+  run: async (lhs, rhs) => {
+    if (!lhs) {
+      return false
+    }
+    const lhsValue = lhs.toLowerCase()
+    const values = (isArray(rhs) ? rhs : [rhs]).filter(Boolean) as string[]
+    return values.some((substr) => lhsValue.endsWith(substr.toLowerCase()))
   },
 }

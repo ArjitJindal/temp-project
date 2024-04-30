@@ -23,6 +23,7 @@ import DatePicker from '../DatePicker';
 import s from './index.module.less';
 import { deserializeCountries, omitCountryGroups, serializeCountries } from './widget-utils';
 import ListSelect from './ListSelect';
+import { isCustomOperator } from './operators';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
@@ -125,19 +126,6 @@ const customNumberWidget: NumberWidget<BasicConfig> = {
   },
 };
 
-const MULTI_SELECT_TEXT_OPERATORS: RuleOperatorType[] = [
-  'op:inlist',
-  'op:!inlist',
-  'op:startswith',
-  'op:endswith',
-  'op:!contains',
-  'op:contains',
-  'op:similarto',
-  'op:!similarto',
-  'op:similartowords',
-  'op:!similartowords',
-];
-
 const MULTI_SELECT_LIST_OPERATORS: RuleOperatorType[] = ['op:inlist', 'op:!inlist'];
 
 const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
@@ -146,10 +134,8 @@ const customTextWidget: TextWidget<BasicConfig> = {
   type: `text`,
   factory: (props) => {
     const operator = props.operator as RuleOperatorType;
-    if (
-      MULTI_SELECT_TEXT_OPERATORS.includes(operator) ||
-      MULTI_SELECT_BUILTIN_OPERATORS.includes(operator)
-    ) {
+    // All text-type operators should support multi-values
+    if (isCustomOperator(operator) || MULTI_SELECT_BUILTIN_OPERATORS.includes(operator)) {
       if (MULTI_SELECT_LIST_OPERATORS.includes(operator)) {
         return (
           <WidgetWrapper widgetFactoryProps={props}>

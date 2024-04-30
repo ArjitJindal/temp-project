@@ -1,25 +1,22 @@
-import { RuleOperator } from './types'
+import { isArray } from 'lodash'
+import { TextRuleOperator } from './types'
 import { getNegatedOperator } from './utils'
 
-// Example walletname incoming is 'Mobiwik-1234' and the array is ['Mobiwik', 'Paytm']
-export const CONTAINS_OPERATOR: RuleOperator<
-  string | null | undefined,
-  string[]
-> = {
+export const CONTAINS_OPERATOR: TextRuleOperator = {
   key: 'op:contains',
   uiDefinition: {
     label: 'Contains',
     valueTypes: ['text'],
-    valueSources: ['value'],
+    valueSources: ['value', 'field', 'func'],
   },
-  run: async (target, values) => {
-    const targetLower = target?.toLowerCase()
+  run: async (target, rhs) => {
+    const values = (isArray(rhs) ? rhs : [rhs]).filter(Boolean) as string[]
     return values?.some((value) => {
-      return targetLower?.includes(value.toLowerCase())
+      return target?.toLowerCase()?.includes((value as string).toLowerCase())
     })
   },
 }
 export const NOT_CONTAINS_OPERATOR = getNegatedOperator(
   CONTAINS_OPERATOR,
-  'Not Contains'
+  'Not contains'
 )

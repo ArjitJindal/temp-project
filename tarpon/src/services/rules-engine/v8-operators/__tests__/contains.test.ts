@@ -1,6 +1,18 @@
 import { CONTAINS_OPERATOR } from '../contains'
 
-describe('Includes in array', () => {
+describe('contains (string)', () => {
+  test('returns true if the value is present in the target', async () => {
+    const result = await CONTAINS_OPERATOR.run('abc', 'a')
+    expect(result).toBe(true)
+  })
+
+  test('return false if the value is present in the target', async () => {
+    const result = await CONTAINS_OPERATOR.run('abc', 'd')
+    expect(result).toBe(false)
+  })
+})
+
+describe('contains (list)', () => {
   test('should return true if the value is present in the array', async () => {
     const blacklist = ['a', 'b', 'c']
     const value = 'b'

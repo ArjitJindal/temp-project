@@ -2,6 +2,17 @@ import { BasicConfig, Config, CoreOperators, Operator } from '@react-awesome-que
 import { omit } from 'lodash';
 import { RuleOperator } from '@/apis';
 
+export const isCustomOperator = (operatorKey?: string): boolean => {
+  return operatorKey?.startsWith('op:') ?? false;
+};
+
+export function getOperatorsByValueType(
+  operators: RuleOperator[],
+  valueType: string,
+): RuleOperator[] {
+  return operators.filter((v) => v.uiDefinition.valueTypes?.includes(valueType));
+}
+
 const BUILT_IN_OPERATORS = omit(BasicConfig.operators, [
   'starts_with',
   'ends_with',
