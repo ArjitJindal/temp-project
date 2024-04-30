@@ -8067,6 +8067,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/NotificationType'
+        isAccountSuspended:
+          type: boolean
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object

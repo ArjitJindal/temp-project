@@ -489,6 +489,33 @@ export default function SuperAdminPanel() {
                     </Button>
                   )}
                 </Confirm>
+                <br />
+                <Confirm
+                  title={`${settings.isAccountSuspended ? 'Unsuspend' : 'Suspend'} tenant: ${
+                    user.tenantName
+                  } (${user.tenantId})`}
+                  onConfirm={async () => {
+                    mutateTenantSettings.mutate({
+                      isAccountSuspended: !(settings.isAccountSuspended ?? false),
+                    });
+                  }}
+                  text={`Are you sure you want to ${
+                    settings.isAccountSuspended ? 'unsuspend' : 'suspend'
+                  } tenant: ${user.tenantName} (${user.tenantId})?`}
+                  onSuccess={() => {
+                    message.success(
+                      `${user.tenantName} (${user.tenantId}) ${
+                        settings.isAccountSuspended ? 'unsuspended' : 'suspended'
+                      }`,
+                    );
+                  }}
+                >
+                  {(props) => (
+                    <Button isDanger type="TETRIARY" onClick={props.onClick}>
+                      {settings.isAccountSuspended ? 'Unsuspend' : 'Suspend'} account
+                    </Button>
+                  )}
+                </Confirm>
               </>
             )}
           </div>

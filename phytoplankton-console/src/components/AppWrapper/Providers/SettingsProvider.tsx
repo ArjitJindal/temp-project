@@ -17,8 +17,9 @@ import { isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 import { capitalizeWords, humanizeConstant } from '@/utils/humanize';
 import ErrorPage from '@/components/ErrorPage';
-import { useAccountRole } from '@/utils/user-utils';
+import { useAccountRole, UserRole } from '@/utils/user-utils';
 import { PageLoading } from '@/components/PageLoading';
+import { SuspendedAccount } from '@/components/SuspendedAccount';
 
 interface ContextValue {
   features: FeatureName[];
@@ -31,6 +32,7 @@ export const Context = React.createContext<ContextValue | null>(null);
 export default function SettingsProvider(props: { children: React.ReactNode }) {
   const globalFeatures = FEATURES_ENABLED as FeatureName[];
   const api = useApi();
+  const role = useAccountRole();
 
   const queryResults = useQuery(
     SETTINGS(),
@@ -65,6 +67,11 @@ export default function SettingsProvider(props: { children: React.ReactNode }) {
   if (features == null) {
     return <PageLoading />;
   }
+
+  if (role !== UserRole.ROOT && settings.isAccountSuspended) {
+    return <SuspendedAccount />;
+  }
+
   return (
     <Context.Provider value={{ features, settings, reloadSettings }}>
       {props.children}

@@ -39,7 +39,11 @@ import { getFullTenantId } from '@/utils/tenant'
 import { tenantSettings } from '@/core/utils/context'
 import { getAuth0Domain, isWhitelabelAuth0Domain } from '@/utils/auth0-utils'
 
-const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
+const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
+  'features',
+  'limits',
+  'isAccountSuspended',
+]
 
 export const tenantsHandler = lambdaApi()(
   async (
@@ -119,6 +123,9 @@ export const tenantsHandler = lambdaApi()(
         ROOT_ONLY_SETTINGS.find((settingName) => newTenantSettings[settingName])
       ) {
         assertCurrentUserRole('root')
+        if (newTenantSettings.isAccountSuspended != null) {
+          assertHasDangerousTenantDelete()
+        }
       }
       assertCurrentUserRole('admin')
       const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
