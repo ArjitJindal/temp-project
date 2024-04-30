@@ -36,6 +36,7 @@ describe('Create scenario', () => {
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
 
     cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
+    cy.get('button[data-cy="modal-ok"]').eq(0).click();
 
     cy.wait('@createdRule').then((interception) => {
       expect(interception.response?.statusCode).to.eq(200);

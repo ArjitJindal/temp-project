@@ -13,6 +13,7 @@ describe('Rule create and delete', () => {
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
+    cy.get('button[data-cy="modal-ok"]').eq(0).click();
     cy.wait('@createdRule').then((interception) => {
       expect(interception.response?.statusCode).to.eq(200);
       const ruleInstanceId = interception.response?.body?.id;
