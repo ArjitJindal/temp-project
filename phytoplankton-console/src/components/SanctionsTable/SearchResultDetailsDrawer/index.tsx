@@ -119,9 +119,6 @@ function Content(props: {
           <Form.Layout.Label title={'Entity type'}>
             {startCase(hit.doc?.entity_type)}
           </Form.Layout.Label>
-          <Form.Layout.Label title={'Entity type'}>
-            {startCase(hit.doc?.entity_type)}
-          </Form.Layout.Label>
           <Form.Layout.Label title={'Aliases'}>
             {uniq(hit.doc?.aka?.map((item) => item.name)).join(', ')}
           </Form.Layout.Label>
