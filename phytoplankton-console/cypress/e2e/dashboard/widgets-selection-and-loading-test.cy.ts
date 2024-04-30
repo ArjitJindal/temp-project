@@ -93,11 +93,9 @@ describe('Dashboard Integration Test', () => {
 
     cy.closeDrawer();
 
-    Cypress._.times(3, () => {
-      cy.wait('@dashboard_stats_Alias', { timeout: 15000 })
-        .its('response.statusCode')
-        .should('be.oneOf', [200, 304]);
-    });
+    cy.wait('@dashboard_stats_Alias', { timeout: 15000 })
+      .its('response.statusCode')
+      .should('be.oneOf', [200, 304]);
 
     cy.wait('@businessAlias', { timeout: 15000 })
       .its('response.statusCode')

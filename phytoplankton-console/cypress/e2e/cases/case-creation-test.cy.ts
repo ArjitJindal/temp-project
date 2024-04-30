@@ -1,4 +1,5 @@
 import { skipOn } from '@cypress/skip-test';
+import { random } from 'lodash';
 import { checkQAUrl } from '../../../src/utils/qaUrl';
 import { PERMISSIONS } from '../../support/permissions';
 import { generateTransactionRequestBody, generateUserRequestBody } from '../../support/utils';
@@ -18,9 +19,9 @@ describe('Case Creation test', () => {
   it('should create a case when the rule is hit', () => {
     const isQAenv = checkQAUrl();
     isQAenv ? skipOn(true) : skipOn(false);
-    const transactionId = `Tx-${Cypress._.random(0, 10000000)}`;
-    const originUserId = `User-${Cypress._.random(0, 10000000)}`;
-    const destinationUserId = `User-${Cypress._.random(0, 10000000)}`;
+    const transactionId = `Tx-${random(0, 10000000)}`;
+    const originUserId = `User-${random(0, 10000000)}`;
+    const destinationUserId = `User-${random(0, 10000000)}`;
     cy.publicApiHandler('POST', 'consumer/users', generateUserRequestBody(originUserId));
     cy.publicApiHandler('POST', 'consumer/users', generateUserRequestBody(destinationUserId));
 
@@ -33,6 +34,7 @@ describe('Case Creation test', () => {
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
+    cy.get('button[data-cy="modal-ok"]').eq(0).click();
     cy.wait('@createdRule').then((interception) => {
       expect(interception.response?.statusCode).to.eq(200);
       const ruleInstanceId = interception.response?.body?.id;
@@ -50,11 +52,12 @@ describe('Case Creation test', () => {
       cy.visit('/case-management/cases');
       cy.intercept('GET', '**/cases**').as('case');
 
-      Cypress._.times(3, () => {
-        cy.wait('@case').then((interception) => {
-          expect(interception.response?.statusCode).to.eq(200);
-        });
+      cy.wait('@case').then((interception) => {
+        expect(interception.response?.statusCode).to.eq(200);
       });
+
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(3000); // Give it some time to create the case
 
       cy.get('[data-cy="rules-filter"]').filter(':contains("Rules")').eq(0).should('exist').click();
       cy.get('.ant-popover .ant-select-selector')

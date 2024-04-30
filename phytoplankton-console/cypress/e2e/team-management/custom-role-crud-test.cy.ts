@@ -1,3 +1,4 @@
+import { random } from 'lodash';
 import { PERMISSIONS } from '../../support/permissions';
 
 describe('Custom Role - CRUD Test', () => {
@@ -9,7 +10,7 @@ describe('Custom Role - CRUD Test', () => {
   it('perform crud operation on custom role', async () => {
     cy.visit('/accounts/roles');
     cy.contains('Create role').click();
-    const roleName = `Role ${Cypress._.random(0, 1000)}`;
+    const roleName = `Role ${random(0, 1000)}`;
     cy.log(roleName);
 
     //create a custom role
