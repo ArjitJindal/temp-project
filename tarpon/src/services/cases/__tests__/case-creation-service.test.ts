@@ -43,6 +43,8 @@ import { getAlertRepo } from '@/lambdas/console-api-dashboard/repositories/__tes
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
+import { filterLiveRules } from '@/services/rules-engine/utils'
+import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 
 dynamoDbSetupHook()
 
@@ -100,7 +102,9 @@ const getHitRuleInstances = async (
   })
 
   const ruleInstances = await ruleInstanceRepository.getRuleInstancesByIds(
-    transaction.hitRules.map((r) => r.ruleInstanceId)
+    filterLiveRules({ hitRules: transaction.hitRules }).hitRules.map(
+      (hitRule) => hitRule.ruleInstanceId
+    )
   )
 
   return ruleInstances as RuleInstance[]
@@ -141,6 +145,41 @@ describe('Cases (Transaction hit)', () => {
       expectUserCase(cases, {
         originUserId: TEST_USER_1.userId,
       })
+    })
+  })
+
+  describe('Env #1 Shadow rules', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setupRules(TEST_TENANT_ID, {
+      mode: 'SHADOW_SYNC',
+    })
+
+    setupUsers(TEST_TENANT_ID)
+
+    test('By origin user, no prior cases', async () => {
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+
+      const transaction = getTestTransaction({
+        originUserId: TEST_USER_1.userId,
+        destinationUserId: undefined,
+      })
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      expect(results.length).not.toEqual(0)
+      const [result] = results
+
+      const cases = await caseCreationService.handleTransaction(
+        { ...transaction, ...result },
+        await getHitRuleInstances(TEST_TENANT_ID, result),
+        await caseCreationService.getTransactionSubjects({
+          ...transaction,
+          ...result,
+        })
+      )
+
+      expect(cases.length).toEqual(0)
     })
   })
 
@@ -220,6 +259,7 @@ describe('Cases (Transaction hit)', () => {
         labels: [],
         checksFor: [],
         type: 'TRANSACTION',
+        mode: 'LIVE_SYNC',
       },
       {
         ruleId: 'NEW_RULE_HIT',
@@ -228,6 +268,7 @@ describe('Cases (Transaction hit)', () => {
         labels: [],
         checksFor: [],
         type: 'TRANSACTION',
+        mode: 'LIVE_SYNC',
       },
     ]
 
@@ -968,6 +1009,63 @@ describe('Cases (User hit)', () => {
     expect(cases[0].alerts).toHaveLength(2)
     expect(cases[0].alerts?.[0].ruleId).toBe('TRANSACTION-R-0')
     expect(cases[0].alerts?.[1].ruleId).toBe('USER-R-0')
+  })
+})
+
+describe('Cases (User not hit) - Shadow rules', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setupRules(TEST_TENANT_ID, { mode: 'SHADOW_SYNC', ruleType: 'USER' })
+  setupRules(TEST_TENANT_ID, { mode: 'SHADOW_SYNC', ruleType: 'TRANSACTION' })
+  setupUsers(TEST_TENANT_ID)
+
+  test('Create a new case for a user rule hit', async () => {
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
+    const user = getTestBusiness()
+    const results = await bulkVerifyUsers(TEST_TENANT_ID, [user])
+    expect(results).toHaveLength(1)
+    const [result] = results
+
+    const internalUser: InternalBusinessUser = {
+      type: 'BUSINESS',
+      ...user,
+      ...result,
+    }
+    const cases = await caseCreationService.handleUser(internalUser)
+    expect(cases).toHaveLength(0)
+  })
+
+  test('Merge a user rule alert into an existing case', async () => {
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
+    const transaction = getTestTransaction({
+      transactionId: '111',
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: undefined,
+    })
+    const results = await bulkVerifyTransactions(TEST_TENANT_ID, [transaction])
+    const [result] = results
+    await caseCreationService.handleTransaction(
+      {
+        ...transaction,
+        ...result,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result),
+      await caseCreationService.getTransactionSubjects({
+        ...transaction,
+        ...result,
+      })
+    )
+
+    const userResults = await bulkVerifyUsers(TEST_TENANT_ID, [TEST_USER_1])
+    const internalUser = {
+      type: 'CONSUMER',
+      ...TEST_USER_1,
+      ...userResults[0],
+    } as InternalUser
+
+    await caseCreationService.handleUser(internalUser)
+    const cases = await caseCreationService.handleUser(internalUser)
+
+    expect(cases).toHaveLength(0)
   })
 })
 
@@ -1779,6 +1877,7 @@ function setupRules(
     hitDirections?: RuleHitDirection[]
     rulesCount?: number
     ruleType?: RuleType
+    mode?: RuleMode
   } = {}
 ) {
   const ruleType = parameters.ruleType ?? 'TRANSACTION'
@@ -1791,6 +1890,7 @@ function setupRules(
         parameters: {
           hitDirections: parameters.hitDirections,
         },
+        mode: parameters.mode ?? 'LIVE_SYNC',
       },
     ])
   }

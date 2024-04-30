@@ -12,6 +12,7 @@ import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
+import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 
 const ALL_RULES = {
   ...TRANSACTION_RULES,
@@ -101,8 +102,8 @@ export class RuleInstanceService {
     return this.ruleInstanceRepository.getActiveRuleInstances(type)
   }
 
-  async getAllRuleInstances(): Promise<RuleInstance[]> {
-    return this.ruleInstanceRepository.getAllRuleInstances()
+  async getAllRuleInstances(mode?: RuleMode): Promise<RuleInstance[]> {
+    return this.ruleInstanceRepository.getAllRuleInstances(mode)
   }
 
   async createOrUpdateRuleInstance(
@@ -137,7 +138,7 @@ export class RuleInstanceService {
     // TODO (V8): FR-3985
     const type = rule ? rule.type : 'TRANSACTION'
     return this.ruleInstanceRepository.createOrUpdateRuleInstance(
-      { ...ruleInstance, type },
+      { ...ruleInstance, type, mode: ruleInstance.mode },
       undefined
     )
   }

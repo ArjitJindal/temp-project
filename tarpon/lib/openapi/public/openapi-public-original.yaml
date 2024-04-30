@@ -2459,6 +2459,8 @@ components:
             $ref: '#/components/schemas/RuleLabels'
         nature:
           $ref: '#/components/schemas/RuleNature'
+        isShadow:
+          type: boolean
       required:
         - ruleInstanceId
         - ruleName
@@ -2503,6 +2505,8 @@ components:
             $ref: '#/components/schemas/RuleLabels'
         nature:
           $ref: '#/components/schemas/RuleNature'
+        isShadow:
+          type: boolean
       required:
         - ruleInstanceId
         - ruleName

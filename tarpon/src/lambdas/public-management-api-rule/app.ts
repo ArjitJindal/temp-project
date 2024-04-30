@@ -105,9 +105,11 @@ export const ruleInstanceHandler = lambdaApi()(
       const ruleInstanceUpdatable = JSON.parse(
         event.body
       ) as RuleInstanceUpdatable
-      const newRuleInstance = {
+
+      const newRuleInstance: RuleInstance = {
         ...ruleInstance,
         ...ruleInstanceUpdatable,
+        mode: 'LIVE_SYNC',
       }
       return ruleInstanceService.createRuleInstance(newRuleInstance)
     } else if (
@@ -125,9 +127,10 @@ export const ruleInstanceHandler = lambdaApi()(
       event.body
     ) {
       const ruleInstance = JSON.parse(event.body) as PublicRuleInstance
-      const newRuleInstance = await ruleInstanceService.createRuleInstance(
-        ruleInstance as RuleInstance
-      )
+      const newRuleInstance = await ruleInstanceService.createRuleInstance({
+        ...ruleInstance,
+        mode: 'LIVE_SYNC',
+      } as RuleInstance)
       return newRuleInstance
     } else if (
       event.httpMethod === 'GET' &&

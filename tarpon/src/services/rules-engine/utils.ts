@@ -7,6 +7,8 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 
 export function getSenderKeys(
   tenantId: string,
@@ -173,8 +175,12 @@ export function getNonUserReceiverKeys(
 }
 
 export function getAggregatedRuleStatus(
-  ruleActions: ReadonlyArray<RuleAction>
+  hitRules: HitRulesDetails[]
 ): RuleAction {
+  const ruleActions = filterLiveRules({ hitRules }).hitRules.map(
+    (hitRule) => hitRule.ruleAction
+  )
+
   return ruleActions.reduce((prev, curr) => {
     if (RULE_ACTIONS.indexOf(curr) < RULE_ACTIONS.indexOf(prev)) {
       return curr
@@ -203,5 +209,20 @@ export function assertValidRiskLevelParameters(
     throw new createHttpError.BadRequest(
       'Risk-level rule actions and risk-level rule parameters should coexist'
     )
+  }
+}
+
+type Executions = {
+  hitRules: HitRulesDetails[]
+  executedRules: ExecutedRulesResult[]
+}
+
+export function filterLiveRules(executions: Partial<Executions>): Executions {
+  return {
+    hitRules: executions.hitRules?.filter((hitRule) => !hitRule.isShadow) ?? [],
+    executedRules:
+      executions.executedRules?.filter(
+        (executedRule) => !executedRule.isShadow
+      ) ?? [],
   }
 }

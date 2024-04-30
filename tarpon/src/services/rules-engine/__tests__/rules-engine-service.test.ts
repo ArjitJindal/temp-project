@@ -71,6 +71,7 @@ describe('Verify Transaction', () => {
             ruleHit: true,
             nature: 'AML',
             labels: [],
+            isShadow: false,
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
             },
@@ -86,6 +87,60 @@ describe('Verify Transaction', () => {
             ruleAction: 'FLAG',
             nature: 'AML',
             labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+      } as TransactionMonitoringResult)
+    })
+  })
+
+  describe('Verify Transaction while being a shadow rule', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'TEST-R-1',
+        ruleImplementationName: 'tests/test-success-rule',
+        type: 'TRANSACTION',
+        mode: 'SHADOW_SYNC',
+      },
+    ])
+
+    test('returns executed rules', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const transaction = getTestTransaction({ transactionId: 'dummy' })
+      const result = await rulesEngine.verifyTransaction(transaction)
+      expect(result).toEqual({
+        transactionId: 'dummy',
+        executedRules: [
+          {
+            ruleId: 'TEST-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            ruleHit: true,
+            nature: 'AML',
+            labels: [],
+            isShadow: true,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+        status: 'ALLOW',
+        hitRules: [
+          {
+            ruleId: 'TEST-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            labels: [],
+            isShadow: true,
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
             },
@@ -126,6 +181,7 @@ describe('Verify Transaction', () => {
         ruleAction: 'FLAG',
         nature: 'AML',
         labels: [],
+        isShadow: false,
         ruleHitMeta: {
           hitDirections: ['DESTINATION'],
         },
@@ -170,6 +226,7 @@ describe('Verify Transaction', () => {
             ruleHit: false,
             nature: 'AML',
             labels: [],
+            isShadow: false,
           },
         ],
         status: 'ALLOW',
@@ -227,6 +284,7 @@ describe('Verify Transaction', () => {
             ruleHit: true,
             nature: 'AML',
             labels: [],
+            isShadow: false,
             ruleHitMeta: {
               hitDirections: ['DESTINATION'],
             },
@@ -242,6 +300,7 @@ describe('Verify Transaction', () => {
             ruleAction: 'FLAG',
             nature: 'AML',
             labels: [],
+            isShadow: false,
             ruleHitMeta: {
               hitDirections: ['DESTINATION'],
             },
@@ -396,6 +455,7 @@ describe('Verify Transaction Event', () => {
                 ruleHit: true,
                 nature: 'AML',
                 labels: [],
+                isShadow: false,
                 ruleHitMeta: {
                   hitDirections: ['ORIGIN', 'DESTINATION'],
                 },
@@ -411,6 +471,7 @@ describe('Verify Transaction Event', () => {
                 ruleAction: 'BLOCK',
                 nature: 'AML',
                 labels: [],
+                isShadow: false,
                 ruleHitMeta: {
                   hitDirections: ['ORIGIN', 'DESTINATION'],
                 },
@@ -438,6 +499,7 @@ describe('Verify Transaction Event', () => {
             ruleHit: true,
             nature: 'AML',
             labels: [],
+            isShadow: false,
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
             },
@@ -452,6 +514,7 @@ describe('Verify Transaction Event', () => {
             ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             labels: [],
+            isShadow: false,
             nature: 'AML',
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
@@ -492,6 +555,7 @@ describe('Verify Transaction for Simulation', () => {
         nature: 'AML',
         labels: [],
         checksFor: [],
+        mode: 'LIVE_SYNC',
       }
     )
     expect(result).toEqual({
@@ -502,6 +566,7 @@ describe('Verify Transaction for Simulation', () => {
       ruleAction: 'BLOCK',
       ruleHit: true,
       labels: [],
+      isShadow: false,
       nature: 'AML',
       ruleHitMeta: {
         hitDirections: ['ORIGIN', 'DESTINATION'],
@@ -624,6 +689,7 @@ describe('Verify Transaction: V8 engine', () => {
             ruleHit: false,
             nature: 'AML',
             labels: [],
+            isShadow: false,
           },
         ],
         hitRules: [],
@@ -653,6 +719,7 @@ describe('Verify Transaction: V8 engine', () => {
             ruleHit: true,
             nature: 'AML',
             labels: [],
+            isShadow: false,
           },
         ],
         hitRules: [
@@ -666,6 +733,7 @@ describe('Verify Transaction: V8 engine', () => {
               hitDirections: ['ORIGIN'],
             },
             labels: [],
+            isShadow: false,
             nature: 'AML',
           },
         ],
@@ -832,6 +900,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
           ruleHit: false,
           nature: 'AML',
           labels: [],
+          isShadow: false,
         },
       ],
       hitRules: [],
@@ -861,6 +930,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
           ruleHit: true,
           nature: 'AML',
           labels: [],
+          isShadow: false,
         },
       ],
       hitRules: [
@@ -874,6 +944,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
             hitDirections: ['ORIGIN'],
           },
           labels: [],
+          isShadow: false,
           nature: 'AML',
         },
       ],
@@ -933,6 +1004,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
           ruleHit: false,
           nature: 'AML',
           labels: [],
+          isShadow: false,
         },
       ],
       hitRules: [],
@@ -960,6 +1032,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
           ruleHit: false,
           nature: 'AML',
           labels: [],
+          isShadow: false,
         },
       ],
       hitRules: [],

@@ -3,9 +3,10 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useLocalStorageState } from 'ahooks';
 import { getRuleInstanceDisplayId, isV8RuleInstance, useUpdateRuleInstance } from '../utils';
 import s from './style.module.less';
-import { RuleInstance } from '@/apis';
+import { RuleInstance, RuleMode } from '@/apis';
 import { useApi } from '@/api';
 import {
   CommonParams,
@@ -32,8 +33,14 @@ import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
+
+const RULES_SEGMENTED_CONTROL_ITEMS: Item<RuleMode>[] = [
+  { value: 'LIVE_SYNC', label: 'Live rules' },
+  { value: 'SHADOW_SYNC', label: 'Shadow rules' },
+];
 
 // TODO: Enalbe simulation for v8 rule (FR-4064)
 export function canSimulate(isV8Enabled: boolean, ruleInstance: RuleInstance) {
@@ -48,6 +55,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );
+  const [ruleMode, setRuleMode] = useLocalStorageState<RuleMode>('ruleMode', 'LIVE_SYNC');
   const actionRef = useRef<TableRefType>(null);
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
@@ -384,52 +392,64 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     handleDeleteRuleInstanceMutation,
     onDuplicateRule,
   ]);
-  const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(params), async (paginationParams) => {
-    const ruleInstances = await api.getRuleInstances({ ...paginationParams });
-    if (focusId) {
-      const ruleInstance = ruleInstances.find((r) => r.id === focusId);
-      if (ruleInstance) {
-        onViewRule(ruleInstance);
-      }
-    }
-
-    // TODO: To be refactored by FR-2677
-    const result = [...ruleInstances];
-    if (params.sort.length > 0) {
-      const [key, order] = params.sort[0];
-      result.sort((a, b) => {
-        let result = 0;
-        if (key === 'ruleId') {
-          result =
-            (a.ruleId ? parseInt(a.ruleId.split('-')[1]) : 0) -
-            (b.ruleId ? parseInt(b.ruleId.split('-')[1]) : 0);
-        } else if (key === 'hitCount') {
-          result =
-            (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
-            (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0);
-        } else if (key === 'createdAt') {
-          result =
-            a.createdAt !== undefined && b.createdAt !== undefined ? a.createdAt - b.createdAt : -1;
-        } else if (key === 'updatedAt') {
-          result =
-            a.updatedAt !== undefined && b.updatedAt !== undefined ? a.updatedAt - b.updatedAt : -1;
-        } else if (key === 'queueId') {
-          result = (b.queueId || 'default') > (a.queueId || 'default') ? 1 : -1;
+  const rulesResult = usePaginatedQuery(
+    GET_RULE_INSTANCES({ ruleMode, params }),
+    async (paginationParams) => {
+      const ruleInstances = await api.getRuleInstances({ ...paginationParams, mode: ruleMode });
+      if (focusId) {
+        const ruleInstance = ruleInstances.find((r) => r.id === focusId);
+        if (ruleInstance) {
+          onViewRule(ruleInstance);
         }
+      }
 
-        result *= order === 'descend' ? -1 : 1;
-        return result;
-      });
-    }
+      // TODO: To be refactored by FR-2677
+      const result = [...ruleInstances];
+      if (params.sort.length > 0) {
+        const [key, order] = params.sort[0];
+        result.sort((a, b) => {
+          let result = 0;
+          if (key === 'ruleId') {
+            result =
+              (a.ruleId ? parseInt(a.ruleId.split('-')[1]) : 0) -
+              (b.ruleId ? parseInt(b.ruleId.split('-')[1]) : 0);
+          } else if (key === 'hitCount') {
+            result =
+              (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
+              (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0);
+          } else if (key === 'createdAt') {
+            result =
+              a.createdAt !== undefined && b.createdAt !== undefined
+                ? a.createdAt - b.createdAt
+                : -1;
+          } else if (key === 'updatedAt') {
+            result =
+              a.updatedAt !== undefined && b.updatedAt !== undefined
+                ? a.updatedAt - b.updatedAt
+                : -1;
+          } else if (key === 'queueId') {
+            result = (b.queueId || 'default') > (a.queueId || 'default') ? 1 : -1;
+          }
 
-    return {
-      items: result,
-      total: result.length,
-    };
-  });
+          result *= order === 'descend' ? -1 : 1;
+          return result;
+        });
+      }
+
+      return {
+        items: result,
+        total: result.length,
+      };
+    },
+  );
 
   return (
     <>
+      <SegmentedControl<RuleMode>
+        active={ruleMode}
+        onChange={setRuleMode}
+        items={RULES_SEGMENTED_CONTROL_ITEMS}
+      />
       <QueryResultsTable<RuleInstance>
         tableId="my-rules-table"
         innerRef={actionRef}

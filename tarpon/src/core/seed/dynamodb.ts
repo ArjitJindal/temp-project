@@ -14,7 +14,6 @@ import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositor
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { ruleInstances } from '@/core/seed/data/rules'
 import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
-import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -72,9 +71,7 @@ export async function seedDynamo(
   for (const txn of getTransactions()) {
     const publicTxn = internalToPublic(txn)
     await txnRepo.saveTransaction(publicTxn, {
-      status: getAggregatedRuleStatus(
-        publicTxn.hitRules.map((hr: HitRulesDetails) => hr.ruleAction)
-      ),
+      status: getAggregatedRuleStatus(publicTxn.hitRules),
       executedRules: publicTxn.executedRules,
       hitRules: publicTxn.hitRules,
     })

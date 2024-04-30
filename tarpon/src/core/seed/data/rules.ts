@@ -19,6 +19,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
   return [
     {
       id: 'e8c3b853',
+      mode: 'LIVE_SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-8',
       casePriority: 'P2',
@@ -107,6 +108,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       id: 'a25685ad-2',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-2',
+      mode: 'LIVE_SYNC',
       casePriority: 'P2',
       parameters: {
         transactionAmountThreshold: {
@@ -167,6 +169,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     {
       id: 'a45615ad-1',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      mode: 'LIVE_SYNC',
       ruleId: 'R-30',
       casePriority: 'P1',
       checksFor: ['No. of transactions', 'Time'],
@@ -244,6 +247,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     },
     {
       id: '2i3nflkd',
+      mode: 'LIVE_SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-16',
       casePriority: 'P1',
@@ -305,6 +309,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     } as RuleInstance,
     {
       id: 'skn2ls',
+      mode: 'LIVE_SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-32',
       casePriority: 'P1',
@@ -372,6 +377,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     } as RuleInstance,
     {
       id: '3oi3nlk',
+      mode: 'LIVE_SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-128',
       casePriority: 'P1',

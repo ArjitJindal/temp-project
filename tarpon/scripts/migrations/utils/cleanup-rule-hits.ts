@@ -115,9 +115,7 @@ async function cleanupRuleHitsInternal(values: Props) {
             },
             ExpressionAttributeValues: {
               ':hitRules': hitRules,
-              ':status': getAggregatedRuleStatus(
-                hitRules.map((v) => v.ruleAction)
-              ),
+              ':status': getAggregatedRuleStatus(hitRules),
             },
             ReturnValues: 'ALL_NEW',
           }

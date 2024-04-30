@@ -30,6 +30,7 @@ describe('Public Management API - Rule', () => {
     await ruleRepository.createOrUpdateRule(RULES_LIBRARY[0])
     await ruleRepository.createOrUpdateRule(RULES_LIBRARY[1])
     await ruleInstanceRepository.createOrUpdateRuleInstance({
+      mode: 'LIVE_SYNC',
       id: TEST_RULE_INSTANCE_ID,
       ruleId: 'R-1',
       parameters: {},
@@ -255,6 +256,7 @@ describe('Public Management API - Rule', () => {
       casePriority: 'P1',
       nature: 'AML',
       labels: [],
+      mode: 'LIVE_SYNC',
     })
   })
 
@@ -289,6 +291,7 @@ describe('Public Management API - Rule', () => {
       runCount: 0,
       hitCount: 0,
       checksFor: ['Transaction amount'],
+      mode: 'LIVE_SYNC',
     })
     const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
       'NEW_RULE_INSTANCE_ID'
@@ -369,6 +372,7 @@ describe('Public Management API - Rule', () => {
       nature: 'AML',
       labels: [],
       checksFor: ['Transaction amount'],
+      mode: 'LIVE_SYNC',
     })
     const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
       TEST_RULE_INSTANCE_ID

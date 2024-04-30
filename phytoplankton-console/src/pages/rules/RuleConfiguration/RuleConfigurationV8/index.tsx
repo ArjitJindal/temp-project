@@ -8,6 +8,7 @@ import {
   useCreateRuleInstance,
   useUpdateRuleInstance,
 } from '../../utils';
+import { RuleModeModal } from '../components/RuleModeModal';
 import s from './style.module.less';
 import RuleConfigurationFormV8, {
   STEPS,
@@ -16,7 +17,7 @@ import RuleConfigurationFormV8, {
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import Button from '@/components/library/Button';
-import { Rule, RuleInstance } from '@/apis';
+import { Rule, RuleInstance, RuleMode } from '@/apis';
 import { FormRef } from '@/components/library/Form';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
@@ -42,6 +43,8 @@ export default function RuleConfigurationV8(props: Props) {
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
   const activeStepIndex = STEPS.findIndex((key) => key === activeStepKey);
   const formRef = useRef<FormRef<RuleConfigurationFormV8Values>>(null);
+  const [ruleMode, setRuleMode] = useState<RuleMode>('LIVE_SYNC');
+  const [isRuleModeModalOpen, setIsRuleModeModalOpen] = useState(false);
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const formInitialValues = ruleInstanceToFormValuesV8(isRiskLevelsEnabled, ruleInstance);
   const [isValuesSame, setIsValuesSame] = useState(
@@ -67,6 +70,7 @@ export default function RuleConfigurationV8(props: Props) {
             {
               ruleId: rule?.id ?? ruleInstance?.ruleId,
               type: rule?.type ?? 'TRANSACTION',
+              mode: ruleMode,
             } as RuleInstance,
             formValues,
             isRiskLevelsEnabled,
@@ -81,6 +85,7 @@ export default function RuleConfigurationV8(props: Props) {
       ruleInstance,
       type,
       updateRuleInstanceMutation,
+      ruleMode,
     ],
   );
 
@@ -159,7 +164,18 @@ export default function RuleConfigurationV8(props: Props) {
                       }
                       isDisabled={readOnly}
                       onClick={() => {
-                        formRef?.current?.submit();
+                        if (type === 'CREATE') {
+                          const isFormValid = formRef?.current?.validate();
+
+                          if (!isFormValid) {
+                            formRef?.current?.submit(); // To show errors
+                            return;
+                          }
+
+                          setIsRuleModeModalOpen(true);
+                        } else {
+                          formRef?.current?.submit();
+                        }
                       }}
                       requiredPermissions={['rules:my-rules:write']}
                       testName="drawer-create-save-button"
@@ -184,6 +200,17 @@ export default function RuleConfigurationV8(props: Props) {
               </Button>
             )}
           </div>
+          <RuleModeModal
+            ruleId={rule?.id ?? ruleInstance?.ruleId ?? ruleInstanceId ?? ''}
+            isOpen={isRuleModeModalOpen}
+            onOk={() => {
+              formRef?.current?.submit();
+              setIsRuleModeModalOpen(false);
+            }}
+            onCancel={() => setIsRuleModeModalOpen(false)}
+            ruleMode={ruleMode}
+            onChangeRuleMode={setRuleMode}
+          />
         </div>
       )}
     </AsyncResourceRenderer>

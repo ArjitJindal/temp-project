@@ -236,6 +236,7 @@ export class UserManagementService {
       ...(await this.rulesEngineService.verifyUser(updatedConsumerUser)),
       riskScoreDetails,
     }
+
     await this.userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
     await this.userRepository.saveConsumerUser(updatedConsumerUserResult)
     return omit(updatedConsumerUserResult, 'type')

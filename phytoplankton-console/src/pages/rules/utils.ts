@@ -301,6 +301,7 @@ export function formValuesToRuleInstance(
   return {
     ...initialRuleInstance,
     ruleId: initialRuleInstance.ruleId,
+    mode: initialRuleInstance.mode,
     ruleNameAlias: basicDetailsStep.ruleName,
     ruleDescriptionAlias: basicDetailsStep.ruleDescription,
     filters: removeEmpty(standardFiltersStep),
@@ -403,6 +404,7 @@ export function formValuesToRuleInstanceV8(
   return {
     ...initialRuleInstance,
     ruleId: initialRuleInstance.ruleId,
+    mode: initialRuleInstance.mode,
     ruleNameAlias: basicDetailsStep.ruleName,
     ruleDescriptionAlias: basicDetailsStep.ruleDescription,
     casePriority: alertCreationDetailsStep.alertPriority,

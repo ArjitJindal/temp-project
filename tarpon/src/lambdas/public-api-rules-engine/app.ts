@@ -32,6 +32,7 @@ import { BusinessOptional } from '@/@types/openapi-public/BusinessOptional'
 import { TransactionUpdatable } from '@/@types/openapi-public/TransactionUpdatable'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
+import { filterLiveRules } from '@/services/rules-engine/utils'
 
 type MissingUserIdMap = { field: string; userId: string }
 
@@ -185,7 +186,10 @@ export const transactionHandler = lambdaApi()(
       const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
       const result = await rulesEngine.verifyTransaction(transaction)
       logger.info(`Completed processing transaction`)
-      return result
+      return {
+        ...result,
+        ...filterLiveRules(result),
+      }
     } else if (event.httpMethod === 'GET' && pathTransactionId) {
       const transactionRepository = new DynamoDbTransactionRepository(
         tenantId,
@@ -197,7 +201,10 @@ export const transactionHandler = lambdaApi()(
       if (!result) {
         throw new NotFound(`Transaction ${pathTransactionId} not found`)
       }
-      return result
+      return {
+        ...result,
+        ...filterLiveRules(result),
+      }
     }
     throw new Error('Unhandled request')
   }
@@ -235,7 +242,12 @@ export const transactionEventHandler = lambdaApi()(
       logger.info(`Processing Transaction Event`) // Need to log to show on the logs
 
       const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
-      return rulesEngine.verifyTransactionEvent(transactionEvent)
+      const result = await rulesEngine.verifyTransactionEvent(transactionEvent)
+
+      return {
+        ...result,
+        ...filterLiveRules(result),
+      }
     }
     if (event.httpMethod === 'GET' && eventId) {
       const result = await transactionEventRepository.getMongoTransactionEvent(
@@ -295,10 +307,15 @@ export const userEventsHandler = lambdaApi()(
         await getMongoDbClient()
       )
 
-      return await userManagementService.verifyConsumerUserEvent(
+      const result = await userManagementService.verifyConsumerUserEvent(
         userEvent,
         allowUserTypeConversion === 'true'
       )
+
+      return {
+        ...result,
+        ...filterLiveRules(result),
+      }
     }
     if (
       event.httpMethod === 'POST' &&
@@ -333,10 +350,15 @@ export const userEventsHandler = lambdaApi()(
           userEvent.userId
         )
       }
-      return await userManagementService.verifyBusinessUserEvent(
+      const result = await userManagementService.verifyBusinessUserEvent(
         userEvent,
         allowUserTypeConversion === 'true'
       )
+
+      return {
+        ...result,
+        ...filterLiveRules(result),
+      }
     }
     if (event.httpMethod === 'GET' && eventId) {
       const result = await userEventRepository.getMongoUserEvent(eventId)

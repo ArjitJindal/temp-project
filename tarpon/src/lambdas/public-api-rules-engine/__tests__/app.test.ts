@@ -67,6 +67,12 @@ describe('Public API - Verify a transaction', () => {
       ruleImplementationName: 'tests/test-success-rule',
       type: 'TRANSACTION',
     },
+    {
+      id: 'TEST-R-2',
+      ruleImplementationName: 'tests/test-success-rule',
+      type: 'TRANSACTION',
+      mode: 'SHADOW_SYNC',
+    },
   ])
 
   test("throws if origin user doesn't exist", async () => {

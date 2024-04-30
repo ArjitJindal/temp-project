@@ -47,6 +47,7 @@ export default function RuleConfiguration(props: Props) {
           labels: [],
           checksFor: props.rule.checksFor,
           type: props.rule.type,
+          mode: 'LIVE_SYNC',
         }}
       />
     );

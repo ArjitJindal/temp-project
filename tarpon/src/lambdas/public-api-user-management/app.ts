@@ -16,6 +16,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { pickKnownEntityFields } from '@/utils/object'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
+import { filterLiveRules } from '@/services/rules-engine/utils'
 
 export const userHandler = lambdaApi()(
   async (
@@ -67,8 +68,10 @@ export const userHandler = lambdaApi()(
             message:
               'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
             riskScoreDetails: user.riskScoreDetails,
-            hitRules: user?.hitRules ?? [],
-            executedRules: user?.executedRules ?? [],
+            ...filterLiveRules({
+              executedRules: user.executedRules,
+              hitRules: user.hitRules,
+            }),
           }
         }
       }
@@ -100,8 +103,10 @@ export const userHandler = lambdaApi()(
             ...(craRiskLevel && { craRiskLevel, craRiskScore }),
           },
         }),
-        hitRules: user?.hitRules ?? [],
-        executedRules: user?.executedRules ?? [],
+        ...filterLiveRules({
+          executedRules: user.executedRules,
+          hitRules: user.hitRules,
+        }),
       } as ConsumerUsersResponse
     }
     return 'Unhandled request'

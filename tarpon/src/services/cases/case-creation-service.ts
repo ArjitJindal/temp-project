@@ -15,6 +15,7 @@ import createHttpError from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
+import { filterLiveRules } from '../rules-engine/utils'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import {
   CaseRepository,
@@ -1234,8 +1235,11 @@ export class CaseCreationService {
 
     const ruleInstances =
       await this.ruleInstanceRepository.getRuleInstancesByIds(
-        hitRules.map((hitRule) => hitRule.ruleInstanceId)
+        filterLiveRules({ hitRules }).hitRules.map(
+          (hitRule) => hitRule.ruleInstanceId
+        )
       )
+
     const casePriority = CaseRepository.getPriority(
       ruleInstances.map((ruleInstance) => ruleInstance.casePriority)
     )

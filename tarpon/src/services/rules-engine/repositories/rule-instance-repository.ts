@@ -25,6 +25,7 @@ import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregati
 import { RuleType } from '@/@types/openapi-internal/RuleType'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CounterRepository } from '@/services/counter/repository'
+import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 
 function toRuleInstance(item: any): RuleInstance {
   return {
@@ -60,6 +61,7 @@ function toRuleInstance(item: any): RuleInstance {
     alertConfig: item.alertConfig,
     checksFor: item.checksFor,
     createdBy: item.createdBy,
+    mode: item.mode,
   }
 }
 
@@ -235,8 +237,16 @@ export class RuleInstanceRepository {
     })
   }
 
-  public async getAllRuleInstances(): Promise<RuleInstance[]> {
-    return this.getRuleInstances({})
+  public async getAllRuleInstances(mode?: RuleMode): Promise<RuleInstance[]> {
+    return this.getRuleInstances(
+      mode
+        ? {
+            FilterExpression: '#mode = :mode',
+            ExpressionAttributeValues: { ':mode': mode },
+            ExpressionAttributeNames: { '#mode': 'mode' },
+          }
+        : {}
+    )
   }
 
   public async getRuleInstanceById(

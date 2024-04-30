@@ -99,7 +99,8 @@ export const ruleInstanceHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetRuleInstances(
-      async () => await ruleInstanceService.getAllRuleInstances()
+      async (ctx, request) =>
+        await ruleInstanceService.getAllRuleInstances(request.mode)
     )
 
     handlers.registerGetRuleInstancesItem(

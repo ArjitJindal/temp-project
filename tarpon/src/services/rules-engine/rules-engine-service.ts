@@ -149,13 +149,14 @@ export function getExecutedAndHitRulesResult(
       ruleHitMeta: result.ruleHitMeta,
       labels: result?.labels,
       nature: result?.nature,
+      isShadow: result?.isShadow,
     }))
     .sort(ruleAscendingComparator) as HitRulesDetails[]
 
   return {
     executedRules,
     hitRules,
-    status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
+    status: getAggregatedRuleStatus(hitRules),
   }
 }
 
@@ -348,6 +349,7 @@ export class RulesEngineService {
                     ruleHitMeta: {
                       hitDirections: ['ORIGIN'],
                     },
+                    isShadow: ruleInstance.mode === 'SHADOW_SYNC',
                   }
 
                   const result: ConsumerUsersResponse | BusinessUsersResponse =
@@ -431,7 +433,7 @@ export class RulesEngineService {
         transactionState: initialTransactionState,
       },
       {
-        status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
+        status: getAggregatedRuleStatus(hitRules),
         executedRules,
         hitRules,
         riskScoreDetails,
@@ -461,7 +463,7 @@ export class RulesEngineService {
       transactionId: savedTransaction.transactionId as string,
       executedRules,
       hitRules,
-      status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
+      status: getAggregatedRuleStatus(hitRules),
       riskScoreDetails,
     }
   }
@@ -523,9 +525,7 @@ export class RulesEngineService {
         executedRules
       ),
       hitRules: mergedHitRules,
-      status: getAggregatedRuleStatus(
-        mergedHitRules.map((hr) => hr.ruleAction)
-      ),
+      status: getAggregatedRuleStatus(mergedHitRules),
     })
     saveTransactionSegment?.close()
 
@@ -975,6 +975,7 @@ export class RulesEngineService {
               isOngoingScreeningHit: ongoingScreeningMode,
             }
           : undefined,
+        isShadow: ruleInstance.mode === 'SHADOW_SYNC',
       },
     }
   }

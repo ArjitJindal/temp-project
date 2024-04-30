@@ -238,6 +238,11 @@ paths:
     get:
       summary: Rule Instance - List
       operationId: get-rule_instances
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/RuleMode'
+          in: query
+          name: mode
       x-flagright:
         permissions:
           - rules:my-rules:read
@@ -657,6 +662,10 @@ paths:
               type: string
           in: query
           name: filterRuleInstancesHit
+        - schema:
+            type: boolean
+          in: query
+          name: filterIsShadowHit
         - schema:
             type: string
           in: query
@@ -1367,6 +1376,16 @@ paths:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleInstancesHit
+        - schema:
+            type: boolean
+          in: query
+          name: filterShadowHit
     parameters: []
   /merchant-monitoring/{userId}/update_monitoring_status:
     post:
@@ -1490,6 +1509,16 @@ paths:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleInstancesHit
+        - schema:
+            type: boolean
+          in: query
+          name: filterShadowHit
     parameters: []
   /users/{userId}/comments:
     parameters:
@@ -1748,6 +1777,16 @@ paths:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleInstancesHit
+        - schema:
+            type: boolean
+          in: query
+          name: filterShadowHit
     parameters: []
   /users/{userId}:
     get:
@@ -6488,12 +6527,21 @@ components:
             type: string
         createdBy:
           type: string
+        mode:
+          $ref: '#/components/schemas/RuleMode'
       required:
         - casePriority
         - nature
         - labels
         - checksFor
         - type
+        - mode
+    RuleMode:
+      title: RuleMode
+      type: string
+      enum:
+        - LIVE_SYNC
+        - SHADOW_SYNC
     NewRuleInstanceIdResponse:
       title: NewRuleInstanceIdResponse
       type: object

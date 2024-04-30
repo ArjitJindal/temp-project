@@ -37,6 +37,7 @@ export default function RuleAndCaseDetails(props: Props) {
         filterAction: action ? action : undefined,
         filterTransactionIds: [transaction.transactionId],
       });
+
       return {
         items: response.data.map(({ alert }) => alert),
         total: response.total,

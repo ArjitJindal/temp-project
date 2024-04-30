@@ -28,6 +28,19 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import AccountTag from '@/components/AccountTag';
+import DirectionLine from '@/components/ui/icons/Remix/map/direction-line.react.svg';
+import TransactionsTable, {
+  transactionParamsToRequest,
+  TransactionsTableParams,
+} from '@/pages/transactions/components/TransactionsTable';
+import { useCursorQuery } from '@/utils/queries/hooks';
+import { TRANSACTIONS_LIST, USERS } from '@/utils/queries/keys';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { H4 } from '@/components/ui/Typography';
+import { UserSearchParams } from '@/pages/users/users-list';
+import { UsersTable } from '@/pages/users/users-list/users-table';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { EmptyEntitiesInfo } from '@/components/library/EmptyDataInfo';
 
 interface Props {
   ruleInstance: RuleInstance;
@@ -44,7 +57,6 @@ export const RuleInstanceInfo = (props: Props) => {
     }
     setRuleInstance((prev) => ({ ...prev, [ruleInstanceId]: ruleInstance }));
   }, []);
-  const updateRuleInstanceMutation = useUpdateRuleInstance(handleRuleInstanceUpdate);
   const percent =
     ruleInstance.hitCount && ruleInstance.runCount
       ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
@@ -107,9 +119,13 @@ export const RuleInstanceInfo = (props: Props) => {
       },
     },
   );
+
+  const updateRuleInstanceMutation = useUpdateRuleInstance(handleRuleInstanceUpdate);
+
   const formatDate = (timestamp?: number): string => {
     return dayjs(timestamp).format(DEFAULT_DATE_TIME_FORMAT);
   };
+
   const handleActivationChange = useCallback(
     async (ruleInstance: RuleInstance, activated: boolean) => {
       updateRuleInstanceMutation.mutate({
@@ -119,6 +135,7 @@ export const RuleInstanceInfo = (props: Props) => {
     },
     [updateRuleInstanceMutation],
   );
+
   return (
     <div className={s.root}>
       <Card.Root noBorder>
@@ -172,6 +189,31 @@ export const RuleInstanceInfo = (props: Props) => {
           </div>
           <div className={s.separator}></div>
           <div className={s.actionButtons}>
+            {ruleInstance.mode === 'SHADOW_SYNC' && (
+              <Confirm
+                title="Change to live rule"
+                text="Are you sure you want to change this rule to a live rule?"
+                onConfirm={() => {
+                  if (canWriteRules && ruleInstance.id) {
+                    updateRuleInstanceMutation.mutate({
+                      ...ruleInstance,
+                      mode: 'LIVE_SYNC',
+                    });
+                  }
+                }}
+              >
+                {({ onClick }) => (
+                  <Button
+                    type="PRIMARY"
+                    onClick={onClick}
+                    isDisabled={!canWriteRules}
+                    testName="rule-instance-convert-to-live-button"
+                  >
+                    Change to live rule
+                  </Button>
+                )}
+              </Confirm>
+            )}
             <Button
               type="SECONDARY"
               icon={<EditIcon />}
@@ -198,6 +240,32 @@ export const RuleInstanceInfo = (props: Props) => {
             >
               Duplicate rule
             </Button>
+            {ruleInstance.mode === 'LIVE_SYNC' && (
+              <Confirm
+                title="Change to shadow rule"
+                text="Are you sure you want to change this rule to a shadow rule?"
+                onConfirm={() => {
+                  if (canWriteRules && ruleInstance.id) {
+                    updateRuleInstanceMutation.mutate({
+                      ...ruleInstance,
+                      mode: 'SHADOW_SYNC',
+                    });
+                  }
+                }}
+              >
+                {({ onClick }) => (
+                  <Button
+                    type="TETRIARY"
+                    onClick={onClick}
+                    isDisabled={!canWriteRules}
+                    testName="rule-instance-convert-to-shadow-button"
+                    icon={<DirectionLine />}
+                  >
+                    Change to shadow rule
+                  </Button>
+                )}
+              </Confirm>
+            )}
             <Confirm
               title={`Are you sure you want to delete this ${getRuleInstanceDisplayId(
                 ruleInstance.ruleId,
@@ -227,6 +295,121 @@ export const RuleInstanceInfo = (props: Props) => {
           </div>
         </Card.Section>
       </Card.Root>
+      {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type === 'TRANSACTION' && (
+        <ShadowRuleTransactionTable ruleInstance={ruleInstance} />
+      )}
+      {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type.includes('USER') && (
+        <ShadowRulesUsersTable ruleInstance={ruleInstance} />
+      )}
     </div>
+  );
+};
+
+const ShadowRuleTransactionTable = (props: Props) => {
+  const { ruleInstance } = props;
+  const [params, setParams] = useState<TransactionsTableParams>({
+    ...DEFAULT_PARAMS_STATE,
+    sort: [['timestamp', 'descend']],
+  });
+  const api = useApi();
+
+  const queryKey = TRANSACTIONS_LIST({
+    ...params,
+    ruleInstanceId: ruleInstance.id,
+    isShadowHit: true,
+  });
+
+  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
+    return await api.getTransactionsList({
+      ...transactionParamsToRequest(params),
+      start: from,
+      filterIsShadowHit: true,
+      filterRuleInstancesHit: [ruleInstance.id as string],
+    });
+  });
+
+  return (
+    <div className={s.tables}>
+      <H4 style={{ paddingBottom: '1rem' }}>Transactions hit</H4>
+      <AsyncResourceRenderer resource={queryResult.data}>
+        {(data) =>
+          data.count ? (
+            <TransactionsTable
+              queryResult={queryResult}
+              params={params}
+              onChangeParams={setParams}
+              isExpandable={false}
+            />
+          ) : (
+            <EmptyEntitiesInfo
+              showIcon={false}
+              title="No transactions hit"
+              description="No transactions are hit by this shadow rule"
+            />
+          )
+        }
+      </AsyncResourceRenderer>
+    </div>
+  );
+};
+
+const ShadowRulesUsersTable = (props: Props) => {
+  const { ruleInstance } = props;
+  const [params, setParams] = useState<UserSearchParams>({
+    ...DEFAULT_PARAMS_STATE,
+    sort: [['timestamp', 'descend']],
+  });
+  const api = useApi();
+
+  const queryKey = USERS('ALL', { ...params, ruleInstanceId: ruleInstance.id, isShadowHit: true });
+
+  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
+    const {
+      pageSize,
+      createdTimestamp,
+      userId,
+      tagKey,
+      tagValue,
+      riskLevels,
+      sort,
+      riskLevelLocked,
+    } = params;
+
+    return await api.getAllUsersList({
+      start: from,
+      pageSize,
+      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+      filterId: userId,
+      filterTagKey: tagKey,
+      filterTagValue: tagValue,
+      filterRiskLevel: riskLevels,
+      sortField: sort[0]?.[0] ?? 'createdTimestamp',
+      sortOrder: sort[0]?.[1] ?? 'descend',
+      filterRiskLevelLocked: riskLevelLocked,
+      filterRuleInstancesHit: [ruleInstance.id as string],
+      filterShadowHit: true,
+    });
+  });
+
+  return (
+    <AsyncResourceRenderer resource={queryResult.data}>
+      {(data) =>
+        data.count ? (
+          <UsersTable
+            queryResults={queryResult}
+            params={params}
+            handleChangeParams={setParams}
+            type="all"
+          />
+        ) : (
+          <EmptyEntitiesInfo
+            showIcon={false}
+            title="No users hit"
+            description="No users are hit by this shadow rule"
+          />
+        )
+      }
+    </AsyncResourceRenderer>
   );
 };

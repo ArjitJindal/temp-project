@@ -120,7 +120,7 @@ export class MongoDbTransactionRepository
     // process transactions without a status set.
     if (internalTransaction && !internalTransaction.status) {
       internalTransaction.status = getAggregatedRuleStatus(
-        internalTransaction.hitRules.map((hr) => hr.ruleAction)
+        internalTransaction.hitRules.map((hr) => hr)
       )
     }
 
@@ -222,44 +222,52 @@ export class MongoDbTransactionRepository
       conditions.push({ caseStatus: { $in: [params.filterCaseStatus] } })
     }
 
-    const executedRulesFilters: Document[] = []
-
     if (params.filterRulesExecuted != null) {
-      executedRulesFilters.push({
-        $elemMatch: { ruleId: { $in: params.filterRulesExecuted } },
+      conditions.push({
+        executedRules: {
+          $elemMatch: { ruleId: { $in: params.filterRulesExecuted } },
+        },
       })
     }
 
     if (params.filterRuleInstancesExecuted != null) {
       conditions.push({
-        'executedRules.ruleInstanceId': {
-          $in: params.filterRuleInstancesExecuted,
+        executedRules: {
+          $elemMatch: {
+            ruleInstanceId: { $in: params.filterRuleInstancesExecuted },
+          },
         },
       })
     }
 
     if (params.filterRulesHit != null) {
       conditions.push({
-        'hitRules.ruleId': {
-          $in: params.filterRulesHit,
+        hitRules: {
+          $elemMatch: { ruleId: { $in: params.filterRulesHit } },
         },
       })
     }
 
     if (params.filterRuleInstancesHit?.length) {
       conditions.push({
-        'hitRules.ruleInstanceId': {
-          $in: params.filterRuleInstancesHit,
+        hitRules: {
+          $elemMatch: {
+            ruleInstanceId: { $in: params.filterRuleInstancesHit },
+          },
         },
       })
     }
 
-    if (executedRulesFilters.length > 0) {
-      conditions.push({
-        executedRules: {
-          $all: executedRulesFilters,
-        },
-      })
+    if (params.filterIsShadowHit != null) {
+      if (params.filterIsShadowHit) {
+        conditions.push({
+          hitRules: { $elemMatch: { isShadowHit: true } },
+        })
+      } else {
+        conditions.push({
+          hitRules: { $not: { $elemMatch: { isShadowHit: true } } },
+        })
+      }
     }
 
     if (
@@ -441,6 +449,7 @@ export class MongoDbTransactionRepository
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): AggregationCursor<InternalTransaction> {
     const query = this.getTransactionsMongoQuery(params)
+    console.log('query', JSON.stringify(query, null, 2))
     return this.getDenormalizedTransactions(query, params)
   }
 
@@ -598,6 +607,8 @@ export class MongoDbTransactionRepository
     const collection = db.collection<InternalTransaction>(name)
 
     const filter = this.getTransactionsMongoQuery(params)
+
+    console.log('filter', JSON.stringify(filter, null, 2))
 
     return await cursorPaginate<InternalTransaction>(collection, filter, {
       pageSize: params.pageSize ? (params.pageSize as number) : 20,

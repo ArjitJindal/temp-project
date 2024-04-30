@@ -31,10 +31,11 @@ import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBus
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { INTERNAL_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { UserService } from '@/services/users'
 import { isDemoTenant } from '@/utils/tenant'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
+import { filterLiveRules } from '@/services/rules-engine/utils'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 async function transactionHandler(
   tenantId: string,
@@ -80,7 +81,9 @@ async function transactionHandler(
       arsScore
     ),
     ruleInstancesRepo.getRuleInstancesByIds(
-      transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
+      filterLiveRules({ hitRules: transaction.hitRules }).hitRules.map(
+        (rule) => rule.ruleInstanceId
+      )
     ),
   ])
 
