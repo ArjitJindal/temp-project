@@ -83,8 +83,8 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     description: 'Allows to sync TRS calculation along with API call',
   },
   NOTIFICATIONS: {
-    title: 'Notifications (In Development)',
-    description: 'Enables notifications (currently in development)',
+    title: 'Console Notifications',
+    description: 'Enables console notifications',
   },
 };
 
