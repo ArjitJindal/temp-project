@@ -65,9 +65,6 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
   return (
     <AsyncResourceRenderer resource={preparedDataRes}>
       {(data) => {
-        if (data.length === 0) {
-          return <Empty description="No data available for selected period" />;
-        }
         return (
           <div ref={pdfRef}>
             <Widget
@@ -96,20 +93,24 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
               resizing="AUTO"
               {...props}
             >
-              <Donut<TransactionType>
-                data={data}
-                colors={{
-                  DEPOSIT: COLORS_V2_ANALYTICS_CHARTS_04,
-                  TRANSFER: COLORS_V2_ANALYTICS_CHARTS_05,
-                  EXTERNAL_PAYMENT: COLORS_V2_ANALYTICS_CHARTS_10,
-                  WITHDRAWAL: COLORS_V2_ANALYTICS_CHARTS_01,
-                  REFUND: COLORS_V2_ANALYTICS_CHARTS_02,
-                  OTHER: COLORS_V2_ANALYTICS_CHARTS_07,
-                }}
-                formatSeries={(series) => {
-                  return humanizeConstant(series);
-                }}
-              />
+              {data.length === 0 ? (
+                <Empty description="No data available for selected period" />
+              ) : (
+                <Donut<TransactionType>
+                  data={data}
+                  colors={{
+                    DEPOSIT: COLORS_V2_ANALYTICS_CHARTS_04,
+                    TRANSFER: COLORS_V2_ANALYTICS_CHARTS_05,
+                    EXTERNAL_PAYMENT: COLORS_V2_ANALYTICS_CHARTS_10,
+                    WITHDRAWAL: COLORS_V2_ANALYTICS_CHARTS_01,
+                    REFUND: COLORS_V2_ANALYTICS_CHARTS_02,
+                    OTHER: COLORS_V2_ANALYTICS_CHARTS_07,
+                  }}
+                  formatSeries={(series) => {
+                    return humanizeConstant(series);
+                  }}
+                />
+              )}
             </Widget>
           </div>
         );

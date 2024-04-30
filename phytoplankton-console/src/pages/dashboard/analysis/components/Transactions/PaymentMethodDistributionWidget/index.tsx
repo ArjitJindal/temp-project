@@ -57,7 +57,7 @@ export default function PaymentMethodDistributionWidget(props: Props) {
   };
 
   const api = useApi();
-  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_TOTAL_STATS({}), async () => {
+  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_TOTAL_STATS(params), async () => {
     return await api.getDashboardStatsTransactionsTotal(params);
   });
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
