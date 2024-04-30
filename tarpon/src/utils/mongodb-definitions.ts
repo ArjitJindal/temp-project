@@ -153,6 +153,12 @@ export const DASHBOARD_QA_OVERVIEW_STATS_COLLECTION_HOURLY = (
   return `${tenantId}-dashboard-qa-overview-stats-hourly`
 }
 
+export const DASHBOARD_QA_ALERTS_BY_CHECKLIST_REASON_COLLECTION_HOURLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-qa-alerts-by-checklist-reason-stats-hourly`
+}
+
 export const REPORT_COLLECTION = (tenandId: string) => {
   return `${tenandId}-report`
 }

@@ -23,6 +23,7 @@ import UserStatusDistributionCard from './components/UserStatusDistributionCard'
 import QaAlertsByRuleHits from './components/Qa/QaAlertsByRuleHits';
 import QaOverview from './components/Qa/QaOverview';
 import Overview from './components/Overview';
+import QaAlertStatsByChecklistReason from './components/Qa/QaAlertStatsByChecklistReason';
 import QaAlertsByAssignee from './components/Qa/QaAlertsByAssignee';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -64,6 +65,7 @@ type KeyValues =
   | 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS'
   | 'TRANSACTIONS_BREAKDOWN_BY_TRS'
   | 'LATEST_TEAM_OVERVIEW'
+  | 'QA_ALERT_STATS_BY_CHECKLIST_REASON'
   | 'QA_ALERTS_BY_RULE_HITS'
   | 'QA_OVERVIEW'
   | 'QA_ALERTS_BY_ASSIGNEE';
@@ -93,6 +95,7 @@ const DEFAULT_VALUES = {
   BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: true,
   LATEST_TEAM_OVERVIEW: true,
   QA_ALERTS_BY_RULE_HITS: true,
+  QA_ALERT_STATS_BY_CHECKLIST_REASON: true,
   QA_OVERVIEW: true,
   QA_ALERTS_BY_ASSIGNEE: true,
 };
@@ -325,6 +328,12 @@ const WIDGETS: Widgets = {
         id: 'QA_ALERTS_BY_RULE_HITS',
         title: 'QA’d alerts overview by rule hit',
         component: QaAlertsByRuleHits,
+        requiredFeatures: ['QA'],
+      },
+      {
+        id: 'QA_ALERT_STATS_BY_CHECKLIST_REASON',
+        title: 'QA’d alerts based on checklist reasons',
+        component: QaAlertStatsByChecklistReason,
         requiredFeatures: ['QA'],
       },
     ],

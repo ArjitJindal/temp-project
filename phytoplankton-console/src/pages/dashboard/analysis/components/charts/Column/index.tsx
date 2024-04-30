@@ -22,6 +22,7 @@ interface Props<X, Y, Series> {
   showTotals?: boolean;
   rotateLabel?: boolean;
   hideLegend?: boolean;
+  elipsisLabel?: boolean;
 }
 
 export default function Column<Series = string, X = string>(props: Props<X, number, Series>) {
@@ -35,6 +36,7 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
     height,
     rotateLabel = true,
     hideLegend = false,
+    elipsisLabel = false,
   } = props;
 
   const annotations: Annotation[] | undefined = [];
@@ -82,6 +84,7 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
           formatter(text, _item, _index) {
             return humanizeAuto(text);
           },
+          autoEllipsis: elipsisLabel,
         },
         title: null,
         grid: {

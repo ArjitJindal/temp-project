@@ -9,6 +9,7 @@ import { CaseStatsDashboardMetric } from './dashboard-metrics/case-stats'
 import { LatestTeamStatsDashboardMetric } from './dashboard-metrics/latest-team-stats'
 import { QaAlertsByRuleStatsDashboardMetric } from './dashboard-metrics/qa-alerts-by-rule-stats'
 import { QaOverviewStatsDashboardMetric } from './dashboard-metrics/qa-overview'
+import { QaAlertsByChecklistReasonStatsDashboardMetric } from './dashboard-metrics/qa-alerts-by-checklist-reason'
 import { QaAlertsByAssigneeStatsDashboardMetric } from './dashboard-metrics/qa-alerts-by-assignee'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
@@ -27,6 +28,7 @@ import { DashboardStatsUsersStats } from '@/@types/openapi-internal/DashboardSta
 import { DashboardStatsQaAlertsCountByRuleData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByRuleData'
 import { DashboardStatsQaOverview } from '@/@types/openapi-internal/DashboardStatsQaOverview'
 import { tenantHasFeature } from '@/core/utils/context'
+import { DashboardStatsQaAlertsStatsByChecklistReasonData } from '@/@types/openapi-internal/DashboardStatsQaAlertsStatsByChecklistReasonData'
 import { DashboardStatsQaAlertsCountByAssigneeData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByAssigneeData'
 
 @traceable
@@ -185,12 +187,21 @@ export class DashboardStatsRepository {
     if (!(await tenantHasFeature(this.tenantId, 'QA'))) return
     await Promise.all([
       this.recalculateQaAlertsByRuleStats(caseUpdatedAtTimeRange),
+      this.recalculateQaAlertsStatsByChecklistReason(caseUpdatedAtTimeRange),
       this.recalculateQaOverviewStats(caseUpdatedAtTimeRange),
       this.recalculateQaAlertsByAssigneeStats(caseUpdatedAtTimeRange),
     ])
   }
   public async recalculateQaAlertsByRuleStats(timeRange?: TimeRange) {
     await QaAlertsByRuleStatsDashboardMetric.refresh(this.tenantId, timeRange)
+  }
+  public async recalculateQaAlertsStatsByChecklistReason(
+    timeRange?: TimeRange
+  ) {
+    await QaAlertsByChecklistReasonStatsDashboardMetric.refresh(
+      this.tenantId,
+      timeRange
+    )
   }
   public async recalculateQaOverviewStats(timeRange?: TimeRange) {
     await QaOverviewStatsDashboardMetric.refresh(this.tenantId, timeRange)
@@ -262,6 +273,21 @@ export class DashboardStatsRepository {
       this.tenantId,
       startTimestamp,
       endTimestamp
+    )
+  }
+
+  public async getQaAlertsStatsByChecklistReason(
+    startTimestamp: number,
+    endTimestamp: number,
+    checklistTemplateId: string,
+    checklistCategory: string
+  ): Promise<DashboardStatsQaAlertsStatsByChecklistReasonData[]> {
+    return QaAlertsByChecklistReasonStatsDashboardMetric.get(
+      this.tenantId,
+      startTimestamp,
+      endTimestamp,
+      checklistTemplateId,
+      checklistCategory
     )
   }
 

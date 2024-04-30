@@ -2328,6 +2328,41 @@ paths:
           in: query
           name: endTimestamp
     parameters: []
+  /dashboard_stats/qa/alerts-stats-by-checklist-reason:
+    get:
+      summary: DashboardStats - Alerts stats by checklist reason
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsQaAlertsStatsByChecklistReason'
+              examples: {}
+      operationId: get-dashboard-stats-qa-alerts-stats-by-checklist-reason
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+        - schema:
+            type: string
+          in: query
+          name: checklistTemplateId
+        - schema:
+            type: string
+          in: query
+          name: checklistCategory
+    parameters: []
   /dashboard_stats/qa/overview:
     get:
       summary: DashboardStats - QA overview
@@ -7340,6 +7375,36 @@ components:
               - ruleId
               - ruleInstanceId
               - alertsCount
+      required:
+        - data
+    DashboardStatsQaAlertsStatsByChecklistReason:
+      type: object
+      x-examples: {}
+      title: DashboardStatsQaAlertsStatsByChecklistReason
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              checklistTemplateId:
+                type: string
+              checklistTemplateCategory:
+                type: string
+              checklistItemId:
+                type: string
+              totalQaPassedAlerts:
+                type: number
+              totalQaFailedAlerts:
+                type: number
+              checklistItemReason:
+                type: string
+            required:
+              - checklistTemplateId
+              - checklistTemplateCategory
+              - checklistItemId
+              - totalQaPassedAlerts
+              - totalQaFailedAlerts
       required:
         - data
     DashboardStatsQaAlertsCountByAssignee:

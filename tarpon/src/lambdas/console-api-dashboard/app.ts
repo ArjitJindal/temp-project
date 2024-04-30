@@ -287,6 +287,39 @@ export const dashboardStatsHandler = lambdaApi()(
       }
     )
 
+    handlers.registerGetDashboardStatsQaAlertsStatsByChecklistReason(
+      async (ctx, request) => {
+        const {
+          startTimestamp,
+          endTimestamp,
+          checklistCategory,
+          checklistTemplateId,
+        } = request
+        if (shouldRefreshAll(event)) {
+          await dashboardStatsRepository.refreshQaStats()
+        }
+        if (!endTimestamp) {
+          throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
+        }
+        if (!startTimestamp) {
+          throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
+        }
+        if (!checklistCategory || !checklistTemplateId) {
+          throw new BadRequest(
+            `Wrong checklist category or template id: ${checklistCategory}, ${checklistTemplateId}`
+          )
+        }
+        const data =
+          await dashboardStatsRepository.getQaAlertsStatsByChecklistReason(
+            startTimestamp,
+            endTimestamp,
+            checklistTemplateId,
+            checklistCategory
+          )
+        return { data }
+      }
+    )
+
     handlers.registerGetDashboardStatsQaOverview(async (ctx, request) => {
       const { startTimestamp, endTimestamp } = request
       if (shouldRefreshAll(event)) {
