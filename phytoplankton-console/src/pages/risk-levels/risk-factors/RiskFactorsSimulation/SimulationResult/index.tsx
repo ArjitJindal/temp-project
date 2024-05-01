@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Progress } from 'antd';
 import { ParametersTableTabs } from '../ParametersTableTabs';
 import s from './styles.module.less';
 import {
@@ -10,7 +11,6 @@ import {
   SimulationRiskFactorsStatisticsRiskTypeEnum,
   SimulationRiskLevelsAndRiskFactorsResult,
 } from '@/apis';
-import { LoadingCard } from '@/components/ui/Card';
 import { AsyncResource, init, isLoading, isSuccess, loading, success } from '@/utils/asyncResource';
 import * as Card from '@/components/ui/Card';
 import { RISK_LEVELS } from '@/utils/risk-levels';
@@ -36,6 +36,7 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import Tabs from '@/components/library/Tabs';
+import Spinner from '@/components/library/Spinner';
 
 interface Props {
   jobId: string;
@@ -45,9 +46,7 @@ const SIMULATION_REFETCH_INTERVAL = 15;
 
 export const SimulationResult = (props: Props) => {
   const { jobId } = props;
-  const { jobId: simulationId } = useParams();
   const navigate = useNavigate();
-
   function isAllIterationsCompleted(iterations: SimulationRiskFactorsIteration[]): boolean {
     return iterations.every(
       (iteration) =>
@@ -73,8 +72,8 @@ export const SimulationResult = (props: Props) => {
   const [updateResouce, setUpdateResource] = useState<AsyncResource>(init());
   const iterations = useMemo(() => {
     if (isSuccess(jobResult.data)) {
-      return jobResult.data.value.iterations;
-    }
+      return jobResult.data.value.iterations ?? [];
+    } else if (isLoading(jobResult.data)) return jobResult.data.lastValue?.iterations ?? [];
     return [];
   }, [jobResult.data]);
 
@@ -95,16 +94,7 @@ export const SimulationResult = (props: Props) => {
       },
     },
   );
-
-  return isLoading(jobResult.data) ? (
-    <Loading
-      message={
-        !simulationId
-          ? 'Running the simulation for a random sample of users & generating results for you.'
-          : ''
-      }
-    />
-  ) : (
+  return (
     <div>
       <Tabs
         type="card"
@@ -121,7 +111,7 @@ export const SimulationResult = (props: Props) => {
         ]}
       />
 
-      {iterations[activeIterationIndex - 1].latestStatus.status === 'SUCCESS' ? (
+      {iterations[activeIterationIndex - 1]?.latestStatus?.status === 'SUCCESS' ? (
         <div className={s.footer}>
           <div className={s.footerButtons}>
             <Confirm
@@ -167,6 +157,7 @@ export type RiskFactorsSettings = {
 
 const SimulationResultWidgets = (props: WidgetProps) => {
   const { iteration } = props;
+  const { pathname } = useLocation();
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['userId', 'ascend']],
@@ -267,7 +258,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   );
 
   const isIterationCompleted = (iteration: SimulationRiskFactorsIteration) => {
-    return iteration.latestStatus.status === 'SUCCESS';
+    return iteration?.latestStatus?.status === 'SUCCESS';
   };
   const getGraphData = useCallback(
     (graphType: SimulationRiskFactorsStatisticsRiskTypeEnum) => {
@@ -368,14 +359,30 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       </Card.Root>
     </div>
   ) : (
-    <LoadingCard />
+    <Loading
+      progress={iteration.progress * 100}
+      message={
+        pathname.includes('simulation-result')
+          ? 'Running the simulation for a random sample of users & generating results for you.'
+          : 'Loading simulation results for you.'
+      }
+    />
   );
 };
 
-export const Loading = ({ message = '' }) => {
+export const Loading = ({ message = '', progress }) => {
   return (
     <div className={s.loadingCard}>
-      <LoadingCard loadingMessage={message} />
+      <div className={s.progressBar}>
+        <Progress percent={progress ?? 0} status="active" />
+        {message ? (
+          <div className={s.loader}>
+            <Spinner size="SMALL" /> {message}
+          </div>
+        ) : (
+          <></>
+        )}
+      </div>
     </div>
   );
 };

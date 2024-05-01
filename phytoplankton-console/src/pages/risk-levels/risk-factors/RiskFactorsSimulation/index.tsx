@@ -1,11 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import {
   BUSINESS_RISK_PARAMETERS,
   TRANSACTION_RISK_PARAMETERS,
   USER_RISK_PARAMETERS,
 } from '../ParametersTable/consts';
 import s from './styles.module.less';
-import { SimulationResult } from './SimulationResult';
 import { ParametersTableTabs } from './ParametersTableTabs';
 import * as Card from '@/components/ui/Card';
 import Form from '@/components/library/Form';
@@ -38,6 +38,15 @@ import {
 } from '@/apis';
 import Tabs from '@/components/library/Tabs';
 
+export type ParameterValue = {
+  [key in Entity]?: {
+    [key in ParameterName]?: AsyncResource<ParameterSettings>;
+  };
+};
+interface Props {
+  parameterValues: ParameterValue;
+}
+
 interface FormValues {
   name: string;
   description: string;
@@ -49,21 +58,29 @@ const DEFAULT_ITERATION: FormValues = {
   description: '',
   samplingSize: 'RANDOM',
 };
+
+const DUPLICATE_TAB_KEY = 'DUPLICATE';
 const MAX_SIMULATION_ITERATIONS = 3;
 
-export function RiskFactorsSimulation() {
+export function RiskFactorsSimulation(props: Props) {
+  const { parameterValues } = props;
   const [iterations, setIterations] = useState([DEFAULT_ITERATION]);
   const api = useApi();
+  const navigate = useNavigate();
 
   const [createdJobId, setCreatedJobId] = useState<string | null>(null);
 
-  const [valuesResources, setValuesResources] = useState<
-    Array<{
-      [key in Entity]?: {
-        [key in ParameterName]?: AsyncResource<ParameterSettings>;
-      };
-    }>
-  >([{}, {}, {}]);
+  useEffect(() => {
+    if (createdJobId) {
+      navigate(`/risk-levels/risk-factors/simulation-result/${createdJobId}`);
+    }
+  }, [createdJobId, navigate]);
+
+  const [valuesResources, setValuesResources] = useState<Array<ParameterValue>>([
+    parameterValues,
+    {},
+    {},
+  ]);
 
   const startSimulationMutation = useMutation<
     SimulationPostResponse,
@@ -165,8 +182,8 @@ export function RiskFactorsSimulation() {
     ]);
     setValuesResources((prevValuesResources) =>
       prevValuesResources.map((resource, index) => {
-        if (index === activeIterationIndex && index > 0) {
-          return prevValuesResources[index - 1];
+        if (index === iterations.length) {
+          return prevValuesResources[activeIterationIndex - 1];
         }
         return resource;
       }),
@@ -206,6 +223,11 @@ export function RiskFactorsSimulation() {
     parameter: ParameterAttributeRiskValuesParameterEnum,
     isActive: boolean,
   ) => {
+    const defaultRiskFactorValue = {
+      values: [],
+      defaultValue: { type: 'RISK_LEVEL', value: 'VERY_HIGH' },
+      weight: 1,
+    };
     setValuesResources((prevValuesResources) => {
       return prevValuesResources.map((prevValuesResource, index) => {
         if (index === activeIterationIndex - 1) {
@@ -214,9 +236,8 @@ export function RiskFactorsSimulation() {
             [entityType]: {
               ...prevValuesResource[entityType],
               [parameter]: success({
-                ...(
-                  (prevValuesResource[entityType]?.[parameter] ?? {}) as Success<ParameterSettings>
-                )?.value,
+                ...((prevValuesResource[entityType]?.[parameter] as Success<ParameterSettings>)
+                  ?.value ?? defaultRiskFactorValue),
                 isActive: isActive,
               }),
             },
@@ -249,16 +270,14 @@ export function RiskFactorsSimulation() {
       handleDeleteIteration(parseInt(key) - 1);
     }
   };
-  return createdJobId ? (
-    <SimulationResult jobId={createdJobId} />
-  ) : (
+  return (
     <div className={s.root}>
       <div>
         <Tabs
           type="editable-card"
           activeKey={`${activeIterationIndex}`}
           onChange={(key) => {
-            setActiveIterationIndex(parseInt(key));
+            if (key !== DUPLICATE_TAB_KEY) setActiveIterationIndex(parseInt(key));
           }}
           onEdit={(action, key) => onEdit(action, key)}
           addIcon={

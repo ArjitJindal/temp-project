@@ -91,6 +91,13 @@ export default function ValuesTable(props: Props) {
     setValues(lastValues);
   }, [lastValues]);
 
+  useEffect(() => {
+    setWeight(lastWeight);
+  }, [lastWeight]);
+
+  useEffect(() => {
+    setDefaultRiskValue(lastDefaultRiskValue);
+  }, [lastDefaultRiskValue]);
   const isEqual = equal(
     { values, defaultRiskValue, weight },
     { values: lastValues, defaultRiskValue: lastDefaultRiskValue, weight: lastWeight },
@@ -267,6 +274,7 @@ export default function ValuesTable(props: Props) {
             min={0}
             max={100}
             step={0.01}
+            isDisabled={loading || !hasWritePermissions}
           />
         </div>
         <div /> {/* Empty div to align with the rest of the table */}

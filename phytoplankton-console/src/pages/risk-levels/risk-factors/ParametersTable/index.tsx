@@ -11,7 +11,7 @@ import {
 } from './types';
 import style from './style.module.less';
 import ValuesTable from './ValuesTable';
-import { AsyncResource, getOr, init, isLoading, map } from '@/utils/asyncResource';
+import { AsyncResource, getOr, isLoading, map, success } from '@/utils/asyncResource';
 import { neverReturn } from '@/utils/lang';
 import ActivityIndicator from '@/pages/risk-levels/risk-factors/ParametersTable/ActivityIndicator';
 import Table from '@/components/library/Table';
@@ -26,6 +26,16 @@ import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider'
 import Tag, { TagColor } from '@/components/library/Tag';
 import { humanizeConstant } from '@/utils/humanize';
 import { RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
+
+const DEFAULT_PARAMETER_SETTINGS: ParameterSettings = {
+  isActive: false,
+  weight: 1,
+  values: [],
+  defaultValue: {
+    type: 'RISK_LEVEL',
+    value: DEFAULT_RISK_LEVEL,
+  },
+};
 
 interface Props {
   parameters: RiskLevelTable;
@@ -120,7 +130,7 @@ export default function ParametersTable(props: Props) {
             render: (item) => {
               const parameterRes =
                 (parameterSettings && parameterSettings[item.parameter]) ??
-                init<ParameterSettings>();
+                success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS);
               const isActiveRes = map(parameterRes, (x) => x.isActive);
               const isActive = getOr(isActiveRes, false);
               return (
@@ -136,7 +146,7 @@ export default function ParametersTable(props: Props) {
             render: (item) => {
               const parameterRes =
                 (parameterSettings && parameterSettings[item.parameter]) ??
-                init<ParameterSettings>();
+                success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS);
               const weightRes = map(parameterRes, (x) => x.weight);
               const weight = getOr(weightRes, 1);
               return weight;
@@ -147,7 +157,7 @@ export default function ParametersTable(props: Props) {
             render: (item) => {
               const parameterRes =
                 (parameterSettings && parameterSettings[item.parameter]) ??
-                init<ParameterSettings>();
+                success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS);
               const isActiveRes = map(parameterRes, (x) => x.isActive);
               const isActive = getOr(isActiveRes, false);
               return (
@@ -175,7 +185,8 @@ export default function ParametersTable(props: Props) {
             canEditParameters={canEditParameters}
             item={item}
             currentValuesRes={map(
-              (parameterSettings && parameterSettings[item.parameter]) ?? init<ParameterSettings>(),
+              (parameterSettings && parameterSettings[item.parameter]) ??
+                success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS),
               (x) => {
                 return x.values;
               },
@@ -184,7 +195,7 @@ export default function ParametersTable(props: Props) {
             currentWeight={
               map(
                 (parameterSettings && parameterSettings[item.parameter]) ??
-                  init<ParameterSettings>(),
+                  success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS),
                 (x) => {
                   return x.weight;
                 },
@@ -193,7 +204,7 @@ export default function ParametersTable(props: Props) {
             currentDefaultValue={
               map(
                 (parameterSettings && parameterSettings[item.parameter]) ??
-                  init<ParameterSettings>(),
+                  success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS),
                 (x) => {
                   return x.defaultValue;
                 },

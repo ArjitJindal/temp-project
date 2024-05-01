@@ -80,6 +80,10 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       )
     })
 
+    handlers.registerGetPulseRiskParameters(async (_ctx, _request) => {
+      return await riskService.getAllRiskParameters()
+    })
+
     return await handlers.handle(event)
   }
 )

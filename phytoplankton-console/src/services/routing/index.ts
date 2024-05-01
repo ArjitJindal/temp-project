@@ -329,6 +329,13 @@ export function useRoutes(): RouteItem[] {
             permissions: ['risk-scoring:risk-factors:read'],
           },
           {
+            name: 'risk-factors',
+            path: '/risk-levels/risk-factors/simulation-result/:jobId',
+            component: SimulationHistoryResultPage,
+            hideInMenu: true,
+            permissions: ['risk-scoring:risk-factors:read'],
+          },
+          {
             name: 'configure',
             path: '/risk-levels/configure',
             component: RiskLevelsConfigurePage,

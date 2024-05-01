@@ -352,3 +352,5 @@ export const SIMULATION_RISK_FACTOR = (jobId: string): QueryKey => [
   'simulation',
   jobId,
 ];
+
+export const RISK_FACTORS = (): QueryKey => ['risk-factor'];

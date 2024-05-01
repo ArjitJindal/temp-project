@@ -87,6 +87,10 @@ export class RiskService {
     )
   }
 
+  async getAllRiskParameters(): Promise<ParameterAttributeRiskValues[]> {
+    return (await this.riskRepository.getParameterRiskItems()) ?? []
+  }
+
   async createOrUpdateRiskParameter(
     parameterAttributeRiskValues: ParameterAttributeRiskValues
   ) {

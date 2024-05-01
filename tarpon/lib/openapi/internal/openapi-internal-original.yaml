@@ -3219,6 +3219,21 @@ paths:
           description: Not enough privileges
       parameters: []
       description: ''
+    get:
+      summary: Parameters Risk Level - GET
+      operationId: get-pulse-risk-parameters
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParameterAttributeRiskValues'
   /slack/oauth_redirect:
     get:
       summary: Slack OAuth Redirect

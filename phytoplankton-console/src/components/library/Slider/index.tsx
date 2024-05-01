@@ -13,6 +13,7 @@ export interface CommonProps {
   max?: number;
   step?: number;
   marks?: AntSliderBaseProps['marks'];
+  className?: string;
 }
 
 interface SingleModeProps extends CommonProps, InputProps<number> {
@@ -40,7 +41,7 @@ export default function Slider(props: Props) {
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+    <div className={cn(s.container, props.className)}>
       {props.marks && (
         <P variant="m" fontWeight="normal">
           {props.marks[props.min ?? 0]}{' '}

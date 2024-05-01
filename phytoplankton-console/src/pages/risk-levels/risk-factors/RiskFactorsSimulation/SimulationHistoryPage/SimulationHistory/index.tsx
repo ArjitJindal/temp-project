@@ -65,6 +65,7 @@ export function SimulationHistory() {
             title: 'Simulation ID',
             key: 'jobId',
             sorting: true,
+            defaultWidth: 300,
             type: {
               render: (jobId) =>
                 jobId ? (
@@ -89,6 +90,7 @@ export function SimulationHistory() {
           helper.simple<'createdBy'>({
             title: 'Created by',
             key: 'createdBy',
+            defaultWidth: 300,
             type: {
               render: (createdBy) => {
                 if (loading || !createdBy) {

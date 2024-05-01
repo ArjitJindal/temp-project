@@ -1,3 +1,4 @@
+import s from './style.module.less';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { TableColumn } from '@/components/library/Table/types';
 import { RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
@@ -45,6 +46,7 @@ export const columns: TableColumn<TableItem>[] = helper.list([
       const end = state[index] ?? 100;
       return (
         <Slider
+          className={s.slider}
           mode="RANGE"
           isDisabled={isDisabled}
           min={0}

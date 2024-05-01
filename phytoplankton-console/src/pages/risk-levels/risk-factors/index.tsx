@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
+import { useQueryClient } from '@tanstack/react-query';
 import ParametersTable from './ParametersTable';
 import {
   ALL_RISK_PARAMETERS,
@@ -10,7 +11,7 @@ import {
   USER_RISK_PARAMETERS,
 } from './ParametersTable/consts';
 import { RiskLevelTableItem } from './ParametersTable/types';
-import { RiskFactorsSimulation } from './RiskFactorsSimulation';
+import { ParameterValue, RiskFactorsSimulation } from './RiskFactorsSimulation';
 import { SimulationHistory } from './RiskFactorsSimulation/SimulationHistoryPage/SimulationHistory';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
@@ -28,6 +29,9 @@ import { makeUrl } from '@/utils/routing';
 import { message } from '@/components/library/Message';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 import { notEmpty } from '@/utils/array';
+import { useQuery } from '@/utils/queries/hooks';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { RISK_FACTORS } from '@/utils/queries/keys';
 
 export default function () {
   const { type = 'consumer' } = useParams();
@@ -82,6 +86,14 @@ export function RiskFactors(props: { type: string }) {
     };
   }>({});
   const navigate = useNavigate();
+  const [isSimulationMode] = useLocalStorageState('SIMULATION_RISK_FACTORS', false);
+
+  const queryParameterValues = useQuery(RISK_FACTORS(), async () => {
+    const response = await api.getPulseRiskParameters();
+    return response;
+  });
+
+  const queryClient = useQueryClient();
 
   const updateValuesResources = useCallback(
     (
@@ -131,6 +143,7 @@ export function RiskFactors(props: { type: string }) {
             },
           },
         });
+        await queryClient.invalidateQueries(RISK_FACTORS());
         updateValuesResources(
           entityType,
           parameter,
@@ -153,7 +166,7 @@ export function RiskFactors(props: { type: string }) {
         hideSavingMessage();
       }
     },
-    [valuesResources, updateValuesResources, api],
+    [valuesResources, updateValuesResources, api, queryClient],
   );
 
   const onSaveValues = useCallback(
@@ -231,7 +244,6 @@ export function RiskFactors(props: { type: string }) {
     [api, updateValuesResources],
   );
 
-  const [isSimulationMode] = useLocalStorageState('SIMULATION_RISK_FACTORS', false);
   useEffect(() => {
     if (isSimulationMode) {
       navigate(makeUrl(`/risk-levels/risk-factors/simulation`), { replace: true });
@@ -239,12 +251,27 @@ export function RiskFactors(props: { type: string }) {
       navigate(makeUrl(`/risk-levels/risk-factors/consumer`), { replace: true });
     }
   }, [isSimulationMode]); // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <div>
       {isSimulationMode ? (
         type !== 'simulation-history' ? (
-          <RiskFactorsSimulation />
+          <AsyncResourceRenderer resource={queryParameterValues.data}>
+            {(data) => {
+              const parameterValues: ParameterValue = {};
+              data.map((item) => {
+                parameterValues[item.riskEntityType] = {
+                  ...(parameterValues[item.riskEntityType] ?? {}),
+                  [item.parameter]: success({
+                    isActive: item.isActive,
+                    values: item.riskLevelAssignmentValues,
+                    defaultValue: item.defaultValue,
+                    weight: item.weight,
+                  }),
+                };
+              });
+              return <RiskFactorsSimulation parameterValues={parameterValues} />;
+            }}
+          </AsyncResourceRenderer>
         ) : (
           <SimulationHistory />
         )
