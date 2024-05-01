@@ -115,7 +115,7 @@ export default function Team() {
       type: {
         render: (role, context) => {
           return (
-            <div>
+            <div className={s.roleTags}>
               {role != null && <RoleTag role={role} />}
               {context.item.isEscalationContact && <Tag className={s.tag}>Escalation reviewer</Tag>}
               {context.item.reviewerId && <Tag className={s.tag}>Maker</Tag>}
