@@ -1,0 +1,37 @@
+name: Test raptor
+
+#defaults:
+#  run:
+#    shell: bash
+#
+#concurrency:
+#  group: ${{ github.ref }}-${{ github.workflow }}
+#  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "raptor/**"
+  workflow_call:
+jobs:
+  test:
+    timeout-minutes: 30
+    name: test-raptor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'poetry'
+      - name: Install dependencies
+        working-directory: "raptor"
+        run: poetry install
+      - name: Run checks
+        working-directory: "raptor"
+        run: make all_checks
