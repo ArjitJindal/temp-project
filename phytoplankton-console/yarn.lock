@@ -8115,9 +8115,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.136.0":
-  version: 2.136.1
-  resolution: "aws-cdk-lib@npm:2.136.1"
+"aws-cdk-lib@npm:~2.137.0":
+  version: 2.137.0
+  resolution: "aws-cdk-lib@npm:2.137.0"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
@@ -8135,7 +8135,7 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: d8606529bb0ddd2c8c4e101569a1f5015acf1214896489d0d3f17a0431be679cf0813402b6dd1a5dce03e6dc1dd8176a3b4051b878f60b171e0fbcda0ca232ae
+  checksum: 0052ad0ddf0d4d532d2ea6cdf946678f4ca5f4d47599442f3a6e6a48b47403456178682aa39699f60d97132fbd7d146a651d56f1b09776a300131cdcc11e25ed
   languageName: node
   linkType: hard
 
@@ -17269,7 +17269,7 @@ __metadata:
     ajv: "npm:^8.12.0"
     antd: "npm:4.21.4"
     aws-cdk: "npm:~2.134.0"
-    aws-cdk-lib: "npm:~2.136.0"
+    aws-cdk-lib: "npm:~2.137.0"
     axios: "npm:^0.26.0"
     carlo: "npm:^0.9.46"
     clsx: "npm:^1.2.1"
