@@ -1,0 +1,12 @@
+name: No test raptor
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "raptor/**"
+jobs:
+  test:
+    name: test-raptor
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'
