@@ -9,6 +9,7 @@ from pyspark.sql.functions import (
     lit,
     lower,
     regexp_extract,
+    to_date,
 )
 
 from src.dbutils.dbutils import get_dbutils
@@ -59,47 +60,39 @@ class EntityTables:
             entity,
             self.table_service.read_table(entity.source),
         )
-        backfill_df = self.table_service.read_table(f"{entity.table}_backfill")
+        backfill_df = self.table_service.read_table(
+            f"{entity.table}_backfill"
+        ).withColumn("date", to_date(col("approximateArrivalTimestamp")))
 
-        print("Refresh from kinesis and the backfill tables")
+        print("Refresh from backfill and kinesis tables")
         tenants = self.table_service.tenant_schemas()
-        self.table_service.clear_table(f"{entity.table}_cdc")
         stage = os.environ["STAGE"]
+
+        def write(tenant: str, df: DataFrame, mode: str):
+            if entity.enrichment_fn is not None:
+                df = entity.enrichment_fn(df, self.table_service.read_table)
+            self.table_service.write_table(
+                entity.table,
+                df.filter(df["tenant"] == tenant),
+                partitions=["tenant", "date"],
+                schema=schema,
+                mode=mode,
+            )
+
         for tenant in tenants:
             schema = f"`{stage}`.`{tenant}`"
-            self.table_service.clear_table(entity.table, schema=schema)
-
-            for stream in [kinesis_df, backfill_df]:
-                if entity.enrichment_fn is not None:
-                    stream = entity.enrichment_fn(stream, self.table_service.read_table)
-                self.table_service.write_table(
-                    entity.table,
-                    stream.filter(stream["tenant"] == tenant),
-                    True,
-                    schema=schema,
-                )
+            write(tenant, backfill_df, "overwrite")
+            write(tenant, kinesis_df, "append")
+            self.table_service.optimize(f"{schema}.{entity.table}")
 
     def start_streams(self, entity: Entity):
         df = cdc_transformation(
             entity,
             self.kinesis_tables.get_stream(entity.source),
         )
-        if entity.enrichment_fn is None:
-            self.create_entity_stream(df, entity)
-        else:
-            # If we want to enrich our entity stream by joining it on other streams,
-            # we must store a CDC intermediate table as stream-stream joins cannot be
-            # persisted in "update" mode.
-            enriched_stream = entity.enrichment_fn(
-                df, self.table_service.read_table_stream
-            )
-
-            self.table_service.write_table_stream(
-                f"{entity.table}_cdc", enriched_stream
-            )
-            self.create_entity_stream(
-                self.table_service.read_table_stream(f"{entity.table}_cdc"), entity
-            )
+        if entity.enrichment_fn is not None:
+            df = entity.enrichment_fn(df, self.table_service.read_table_stream)
+        self.create_entity_stream(df, entity)
 
     def create_entity_stream(self, df: DataFrame, entity: Entity):
         print(f"Setting up {entity.table} table stream")
@@ -151,21 +144,7 @@ class EntityTables:
                 )
 
         return (
-            df.writeStream.format("delta")
-            .foreachBatch(upsert_to_delta)
-            .option("mergeSchema", "true")
-            .outputMode("update")
-            .queryName(entity.table)
-            .start()
-        )
-
-    def create_enrichment_stream(self, entity):
-        entity_stream = self.table_service.read_table_stream(entity.table)
-        enriched_stream = entity.enrichment_fn(
-            entity_stream, self.table_service.read_table_stream
-        )
-        self.table_service.write_table_stream(
-            f"{entity.table}_enriched", enriched_stream
+            df.writeStream.foreachBatch(upsert_to_delta).queryName(entity.table).start()
         )
 
     def backfill(self, entity):
@@ -233,6 +212,7 @@ def backfill_transformation(entity: Entity, df: DataFrame) -> DataFrame:
 
 def cdc_transformation(entity: Entity, read_stream: DataFrame) -> DataFrame:
     sort_key_id_path = "event.dynamodb.Keys.SortKeyID.S"
+
     df = (
         read_stream.filter(col("data").cast("string").contains(entity.partition_key))
         .select("data", "approximateArrivalTimestamp")
@@ -268,6 +248,7 @@ def cdc_transformation(entity: Entity, read_stream: DataFrame) -> DataFrame:
         col("SortKeyID"),
         col("approximateArrivalTimestamp"),
         col("entity.event.eventName").alias("event"),
+        to_date(col("approximateArrivalTimestamp")).alias("date"),
     )
 
     # Ignore remove events

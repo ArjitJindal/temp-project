@@ -38,13 +38,11 @@ class CurrencyTable:
         ).withColumn(
             "approximateArrivalTimestamp", to_timestamp(col("date"), "yyyy-MM-dd")
         )
-        self.table_service.write_table("currency_rates", currency_df, False)
+        self.table_service.write_table("currency_rates", currency_df, [])
 
     def start_stream(self):
         print("Creating currency rates table")
         currency_rates_df = currency_rates_transformation(
             self.table_service.read_table_stream("kinesis_events")
         )
-        self.table_service.write_table_stream(
-            "currency_rates", currency_rates_df, False
-        )
+        self.table_service.write_table_stream("currency_rates", currency_rates_df, [])

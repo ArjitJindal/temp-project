@@ -76,13 +76,14 @@ class TableService:
         self.batches.add_batch(table, batch)
         return batch
 
-    def write_table_stream(self, name: str, df: DataFrame, tenant_partition=True):
+    def write_table_stream(self, name: str, df: DataFrame, partitions=None):
         checkpoint_id = self.version_service.get_pipeline_checkpoint_id()
 
+        if partitions is None:
+            partitions = ["tenant"]
+
         table_name = name
-        write_stream = df.writeStream.format("delta")
-        if tenant_partition:
-            write_stream = write_stream.partitionBy("tenant")
+        write_stream = df.writeStream.format("delta").partitionBy(*partitions)
         print(f"Setting up {name} table stream")
         return (
             write_stream.option(
@@ -99,17 +100,23 @@ class TableService:
         self,
         name: str,
         df: DataFrame,
-        tenant_partition=True,
+        partitions=None,
         mode="append",
         schema=None,
     ):
         if schema is None:
             schema = self.schema
+        if partitions is None:
+            partitions = ["tenant"]
         table_name = name
-        write_stream = df.write.format("delta").option("mergeSchema", "true")
-        if tenant_partition:
-            write_stream = write_stream.partitionBy("tenant")
-        print(f"Batching to table {schema}.{table_name}")
+        write_stream = (
+            df.write.format("delta")
+            .option("mergeSchema", "true")
+            .partitionBy(*partitions)
+        )
+        if mode == "overwrite":
+            write_stream = write_stream.option("overwriteSchema", "true")
+        print(f"Batching to table {schema}.{table_name} in mode {mode}")
         return write_stream.mode(mode).saveAsTable(f"{schema}.{table_name}")
 
     def clear_table(self, table_name: str, schema=None):
@@ -129,6 +136,11 @@ class TableService:
         ]
 
     def optimize(self, table: str):
-        stage = os.environ["STAGE"]
         print(f"Optimizing {table}")
-        self.spark.sql(f"optimize {stage}.{table}")
+        self.spark.sql(f"optimize {table}")
+
+    def optimize_yesterday(self, table: str):
+        print(f"Optimizing {table}")
+        self.spark.sql(
+            f"optimize {table} where date == current_timestamp() - INTERVAL 1 day"
+        )

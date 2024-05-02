@@ -33,7 +33,7 @@ class KinesisTables:
         return self.table_service.write_table_stream(
             table,
             read_stream,
-            False,
+            [],
         )
 
     def get_stream(self, table: str):

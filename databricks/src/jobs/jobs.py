@@ -1,3 +1,5 @@
+import os
+
 from pyspark.sql import SparkSession
 
 from src.dbutils.dbutils import get_dbutils
@@ -91,4 +93,7 @@ class Jobs:
         for entity in entities:
             tenants = self.table_service.tenant_schemas()
             for tenant in tenants:
-                self.table_service.optimize(f"`{tenant}`.{entity.table}")
+                stage = os.environ["STAGE"]
+                self.table_service.optimize_yesterday(
+                    f"{stage}.`{tenant}`.{entity.table}"
+                )
