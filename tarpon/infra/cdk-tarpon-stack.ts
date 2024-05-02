@@ -945,8 +945,26 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(batchJobQueue, { maxConcurrency: 100 })
     )
 
-    /* API Metrics Lambda */
+    /* Cron jobs */
     if (!isDevUserStack) {
+      // Monthly
+      const { func: cronJobMonthlyHandler } = createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.CRON_JOB_MONTHLY,
+        }
+      )
+      const monthlyRule = new Rule(
+        this,
+        getResourceNameForTarpon('MonthlyRule'),
+        {
+          schedule: Schedule.cron({ minute: '0', hour: '0', day: '1' }),
+        }
+      )
+      monthlyRule.addTarget(new LambdaFunctionTarget(cronJobMonthlyHandler))
+
+      // Daily
       const { func: cronJobDailyHandler } = createFunction(
         this,
         lambdaExecutionRole,
@@ -988,8 +1006,9 @@ export class CdkTarponStack extends cdk.Stack {
           schedule: Schedule.cron({ minute: triggerMinute, hour: triggerHour }),
         }
       )
-
       apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobDailyHandler))
+
+      // Every ten minutes
       const { func: cronJobTenMinuteHandler } = createFunction(
         this,
         lambdaExecutionRole,
@@ -999,7 +1018,6 @@ export class CdkTarponStack extends cdk.Stack {
           memorySize: config.resource.CRON_JOB_LAMBDA?.MEMORY_SIZE,
         }
       )
-
       const everyTenMinuteRule = new Rule(
         this,
         getResourceNameForTarpon('EveryTenMinuteRule'),
@@ -1007,30 +1025,10 @@ export class CdkTarponStack extends cdk.Stack {
           schedule: Schedule.cron({ minute: '*/10' }),
         }
       )
-
       everyTenMinuteRule.addTarget(
         new LambdaFunctionTarget(cronJobTenMinuteHandler)
       )
     }
-
-    // Cron Jon Monthly
-    const { func: cronJobMonthlyHandler } = createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CRON_JOB_MONTHLY,
-      }
-    )
-
-    const monthlyRule = new Rule(
-      this,
-      getResourceNameForTarpon('MonthlyRule'),
-      {
-        schedule: Schedule.cron({ minute: '0', hour: '0', day: '1' }),
-      }
-    )
-
-    monthlyRule.addTarget(new LambdaFunctionTarget(cronJobMonthlyHandler))
 
     /* Tarpon Kinesis Change capture consumer */
     if (deployKinesisConsumer) {

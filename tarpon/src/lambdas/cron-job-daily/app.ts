@@ -1,6 +1,7 @@
 import { chunk, groupBy, mapValues } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
+import { cleanUpStaleQaEnvs } from '@lib/qa-cleanup'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantInfo, TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -51,6 +52,10 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
     }
   } catch (e) {
     logger.error(`Failed to delete tenants: ${(e as Error)?.message}`, e)
+  }
+
+  if (envIs('dev')) {
+    await cleanUpStaleQaEnvs()
   }
 })
 
