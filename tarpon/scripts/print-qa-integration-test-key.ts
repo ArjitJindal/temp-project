@@ -1,5 +1,5 @@
 import { APIGatewayClient, GetApiKeyCommand } from '@aws-sdk/client-api-gateway'
-import { getQaIntegrationTestApiKeyId } from '@lib/qa'
+import { getQaIntegrationTestApiKeyId } from '@flagright/lib/qa'
 
 async function main() {
   const apiKey = getQaIntegrationTestApiKeyId()

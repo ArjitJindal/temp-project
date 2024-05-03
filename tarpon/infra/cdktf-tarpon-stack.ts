@@ -21,6 +21,11 @@ export class CdktfTarponStack extends TerraformStack {
     })
     new aws.provider.AwsProvider(this, awsRegion, {
       region: awsRegion,
+      defaultTags: [
+        {
+          tags: { deployment: 'tarpon' },
+        },
+      ],
     })
     const state = new aws.s3Bucket.S3Bucket(this, 'tfstate', {
       bucket: stateBucket,

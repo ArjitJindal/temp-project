@@ -15,7 +15,7 @@ import { LogGroup } from 'aws-cdk-lib/aws-logs'
 import { Asset } from 'aws-cdk-lib/aws-s3-assets'
 import { Construct } from 'constructs'
 import { LAMBDAS } from '@lib/lambdas'
-import { isQaEnv } from '@lib/qa'
+import { isQaEnv } from '@flagright/lib/qa'
 import { random, range } from 'lodash'
 
 const isDevUserStack = isQaEnv()

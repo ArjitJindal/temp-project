@@ -68,6 +68,14 @@ class DatabricksStack extends TerraformStack {
     // Providers
     new aws.provider.AwsProvider(this, 'aws', {
       region: awsRegion,
+      defaultTags: [
+        {
+          tags: {
+            deployment: 'databricks',
+            owner: 'terraform',
+          },
+        },
+      ],
     })
 
     new nullProvider.NullProvider(this, 'null', {})

@@ -3,7 +3,7 @@ import {
   rewriteFramesIntegration,
   debugIntegration,
 } from '@sentry/integrations'
-import { isQaEnv } from '@lib/qa'
+import { isQaEnv } from '@flagright/lib/qa'
 import { getContext } from '../utils/context'
 import { SENTRY_INIT_CONFIG } from '@/utils/sentry'
 import { JWTAuthorizerResult } from '@/@types/jwt'

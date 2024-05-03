@@ -70,7 +70,11 @@ import {
 } from '@lib/lambdas'
 import { Config } from '@flagright/lib/config/config'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
-import { getQaApiKeyId, getQaIntegrationTestApiKeyId, isQaEnv } from '@lib/qa'
+import {
+  getQaApiKeyId,
+  getQaIntegrationTestApiKeyId,
+  isQaEnv,
+} from '@flagright/lib/qa'
 import {
   Chain,
   Choice,
