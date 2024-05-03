@@ -18,10 +18,10 @@ const run = async () => {
   const isValid = xmlDoc.validate(xsdDoc)
 
   if (isValid) {
-    console.log('XML is valid')
+    console.info('XML is valid')
   } else {
-    console.log('XML is invalid')
-    console.log(xmlDoc.validationErrors)
+    console.info('XML is invalid')
+    console.info(xmlDoc.validationErrors)
   }
 }
 

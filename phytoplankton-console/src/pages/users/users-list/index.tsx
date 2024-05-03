@@ -109,6 +109,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         queryResults={queryResults}
         params={params}
         handleChangeParams={handleChangeParams}
+        fitHeight
       />
     </PageWrapperContentContainer>
   );

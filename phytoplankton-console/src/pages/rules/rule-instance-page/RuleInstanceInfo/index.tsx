@@ -295,11 +295,20 @@ export const RuleInstanceInfo = (props: Props) => {
           </div>
         </Card.Section>
       </Card.Root>
-      {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type === 'TRANSACTION' && (
-        <ShadowRuleTransactionTable ruleInstance={ruleInstance} />
+      {ruleInstance.mode === 'SHADOW_SYNC' && (
+        <Card.Root noBorder>
+          <ShadowRuleTransactionTable ruleInstance={ruleInstance} />
+        </Card.Root>
       )}
       {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type.includes('USER') && (
-        <ShadowRulesUsersTable ruleInstance={ruleInstance} />
+        <Card.Root noBorder>
+          <ShadowRulesUsersTable ruleInstance={ruleInstance} />
+        </Card.Root>
+      )}
+      {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type === 'TRANSACTION' && (
+        <Card.Root noBorder>
+          <ShadowRulesTransactionUsersTable ruleInstance={ruleInstance} />
+        </Card.Root>
       )}
     </div>
   );
@@ -393,23 +402,95 @@ const ShadowRulesUsersTable = (props: Props) => {
   });
 
   return (
-    <AsyncResourceRenderer resource={queryResult.data}>
-      {(data) =>
-        data.count ? (
-          <UsersTable
-            queryResults={queryResult}
-            params={params}
-            handleChangeParams={setParams}
-            type="all"
-          />
-        ) : (
-          <EmptyEntitiesInfo
-            showIcon={false}
-            title="No users hit"
-            description="No users are hit by this shadow rule"
-          />
-        )
-      }
-    </AsyncResourceRenderer>
+    <div className={s.tables}>
+      <H4 style={{ paddingBottom: '1rem' }}>Users hit</H4>
+      <AsyncResourceRenderer resource={queryResult.data}>
+        {(data) =>
+          data.count ? (
+            <UsersTable
+              queryResults={queryResult}
+              params={params}
+              handleChangeParams={setParams}
+              type="all"
+            />
+          ) : (
+            <EmptyEntitiesInfo
+              showIcon={false}
+              title="No users hit"
+              description="No users are hit by this shadow rule"
+            />
+          )
+        }
+      </AsyncResourceRenderer>
+    </div>
+  );
+};
+
+const ShadowRulesTransactionUsersTable = (props: Props) => {
+  const { ruleInstance } = props;
+  const [params, setParams] = useState<UserSearchParams>({
+    ...DEFAULT_PARAMS_STATE,
+    sort: [['timestamp', 'descend']],
+  });
+  const api = useApi();
+
+  const queryKey = USERS('ALL', {
+    ...params,
+    ruleInstanceId: ruleInstance.id,
+    type: 'TRANSACTION_USERS_HIT',
+    isShadowHit: true,
+  });
+
+  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
+    const {
+      pageSize,
+      createdTimestamp,
+      userId,
+      tagKey,
+      tagValue,
+      riskLevels,
+      sort,
+      riskLevelLocked,
+    } = params;
+
+    return await api.getRuleInstancesTransactionUsersHit({
+      start: from,
+      pageSize,
+      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+      filterId: userId,
+      filterTagKey: tagKey,
+      filterTagValue: tagValue,
+      filterRiskLevel: riskLevels,
+      sortField: sort[0]?.[0] ?? 'createdTimestamp',
+      sortOrder: sort[0]?.[1] ?? 'descend',
+      filterRiskLevelLocked: riskLevelLocked,
+      ruleInstanceId: ruleInstance.id as string,
+      filterisShadowRuleInstance: true,
+    });
+  });
+
+  return (
+    <div className={s.tables}>
+      <H4 style={{ paddingBottom: '1rem' }}>Users hit</H4>
+      <AsyncResourceRenderer resource={queryResult.data}>
+        {(data) =>
+          data.count ? (
+            <UsersTable
+              queryResults={queryResult}
+              params={params}
+              handleChangeParams={setParams}
+              type="all"
+            />
+          ) : (
+            <EmptyEntitiesInfo
+              showIcon={false}
+              title="No users hit"
+              description="No users are hit by this shadow rule"
+            />
+          )
+        }
+      </AsyncResourceRenderer>
+    </div>
   );
 };

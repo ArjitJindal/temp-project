@@ -20,6 +20,7 @@ type Props = {
   queryResults: QueryResult<TableData<InternalUser>>;
   params: UserSearchParams;
   handleChangeParams: (params: UserSearchParams) => void;
+  fitHeight?: boolean;
 };
 
 const extraFilters = (
@@ -149,7 +150,7 @@ function getRiskScoringColumns(): TableColumn<InternalUser>[] {
 }
 
 export const UsersTable = (props: Props) => {
-  const { type, queryResults, params, handleChangeParams } = props;
+  const { type, queryResults, params, handleChangeParams, fitHeight = false } = props;
 
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
 
@@ -184,7 +185,7 @@ export const UsersTable = (props: Props) => {
       queryResults={queryResults}
       params={params}
       onChangeParams={handleChangeParams}
-      fitHeight={true}
+      fitHeight={fitHeight}
       pagination={true}
     />
   );

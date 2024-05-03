@@ -218,6 +218,14 @@ export const allUsersViewHandler = lambdaApi()(
       return { isOngoingScreening: ongoingScreeningUserRules.length > 0 }
     })
 
+    handlers.registerGetRuleInstancesTransactionUsersHit(
+      async (ctx, request) =>
+        await userService.getRuleInstancesTransactionUsersHit(
+          request.ruleInstanceId,
+          request
+        )
+    )
+
     handlers.registerPostUsersCommentsReply(async (ctx, request) => {
       const { Comment: rawComment } = request
       const mentions = getMentionsFromComments(rawComment.body)

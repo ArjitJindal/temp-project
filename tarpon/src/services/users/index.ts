@@ -24,6 +24,7 @@ import {
   DefaultApiGetBusinessUsersListRequest,
   DefaultApiGetConsumerUsersListRequest,
   DefaultApiGetEventsListRequest,
+  DefaultApiGetRuleInstancesTransactionUsersHitRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { BusinessUsersListResponse } from '@/@types/openapi-internal/BusinessUsersListResponse'
 import { ConsumerUsersListResponse } from '@/@types/openapi-internal/ConsumerUsersListResponse'
@@ -564,18 +565,33 @@ export class UserService {
   public async getUsers(
     params: DefaultApiGetAllUsersListRequest
   ): Promise<AllUsersListResponse> {
-    const result = await this.userRepository.getMongoUsersCursorsPaginate(
-      params
+    return await this.augmentUsers(
+      await this.userRepository.getMongoUsersCursorsPaginate(params)
     )
+  }
+
+  private async augmentUsers(
+    data: AllUsersListResponse
+  ): Promise<AllUsersListResponse> {
     const items = await Promise.all(
-      result.items.map(
-        async (user) => await this.getAugmentedUser<InternalUser>(user)
+      data.items.map(async (user) => {
+        return await this.getAugmentedUser<InternalUser>(user)
+      })
+    )
+
+    return { ...data, items }
+  }
+
+  public async getRuleInstancesTransactionUsersHit(
+    ruleInstanceId: string,
+    params: DefaultApiGetRuleInstancesTransactionUsersHitRequest
+  ): Promise<AllUsersListResponse> {
+    return await this.augmentUsers(
+      await this.userRepository.getRuleInstancesTransactionUsersHit(
+        ruleInstanceId,
+        params
       )
     )
-    return {
-      ...result,
-      items,
-    }
   }
 
   public async updateMointoringStatus(userId: string, isEnabled: boolean) {

@@ -21,7 +21,7 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { get, isEmpty, set } from 'lodash'
+import { get, isEmpty, set, uniq } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { getUsersFilterByRiskLevel } from '../utils/user-utils'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -33,7 +33,11 @@ import {
   prefixRegexMatchFilter,
   regexMatchFilter,
 } from '@/utils/mongodb-utils'
-import { CASES_COLLECTION, USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  CASES_COLLECTION,
+  TRANSACTIONS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongodb-definitions'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { UserType } from '@/@types/user/user-type'
@@ -65,9 +69,14 @@ import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetai
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
-import { DefaultApiGetAllUsersListRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetAllUsersListRequest,
+  DefaultApiGetRuleInstancesTransactionUsersHitRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { Case } from '@/@types/openapi-internal/Case'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
 
 @traceable
 export class UserRepository {
@@ -103,18 +112,11 @@ export class UserRepository {
       : []
   }
   public async getMongoUsersCursorsPaginate(
-    params: OptionalPagination<DefaultApiGetAllUsersListRequest>,
+    params: OptionalPagination<
+      DefaultApiGetAllUsersListRequest & { filterUserIds?: string[] }
+    >,
     userType?: UserType
-  ): Promise<{
-    items: Array<InternalBusinessUser | InternalConsumerUser>
-    next: string
-    prev: string
-    hasPrev: boolean
-    hasNext: boolean
-    count: number
-    limit: number
-    last: string
-  }> {
+  ): Promise<AllUsersListResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<
       InternalBusinessUser | InternalConsumerUser
@@ -204,7 +206,8 @@ export class UserRepository {
         riskClassificationValues
       )
     }
-    return result
+
+    return result as AllUsersListResponse
   }
 
   private insertRiskScores(
@@ -266,6 +269,7 @@ export class UserRepository {
       sortField?: string
       sortOrder?: SortOrder
       filterRiskLevelLocked?: string
+      filterShadowRuleHit?: boolean
     }
   ): Promise<{
     total: number
@@ -292,6 +296,9 @@ export class UserRepository {
       sortField?: string
       sortOrder?: SortOrder
       filterRiskLevelLocked?: string
+      filterShadowHit?: boolean
+      filterRuleInstancesHit?: string[]
+      filterUserIds?: string[]
     },
     riskClassificationValues: RiskClassificationScore[],
     isPulseEnabled: boolean,
@@ -312,6 +319,48 @@ export class UserRepository {
       filterConditions.push({
         userId: params.filterId,
       })
+    }
+
+    if (params.filterUserIds != null) {
+      filterConditions.push({
+        userId: {
+          $in: params.filterUserIds,
+        },
+      })
+    }
+
+    if (params.filterRuleInstancesHit != null) {
+      filterConditions.push({
+        hitRules: {
+          $elemMatch: {
+            ruleInstanceId: {
+              $in: params.filterRuleInstancesHit,
+            },
+          },
+        },
+      })
+    }
+
+    if (params.filterShadowHit != null) {
+      if (params.filterShadowHit) {
+        filterConditions.push({
+          hitRules: {
+            $elemMatch: {
+              isShadowHit: true,
+            },
+          },
+        })
+      } else {
+        filterConditions.push({
+          hitRules: {
+            $not: {
+              $elemMatch: {
+                isShadowHit: true,
+              },
+            },
+          },
+        })
+      }
     }
 
     if (params.filterBusinessIndustries != null) {
@@ -446,6 +495,8 @@ export class UserRepository {
       sortField?: string
       sortOrder?: SortOrder
       filterRiskLevelLocked?: string
+      filterShadowHit?: boolean
+      filterRuleInstancesHit?: string[]
     },
     userType?: UserType
   ): Promise<{
@@ -1084,5 +1135,120 @@ export class UserRepository {
     ])
 
     return users
+  }
+
+  public async getRuleInstancesTransactionUsersHit(
+    ruleInstanceId: string,
+    params: DefaultApiGetRuleInstancesTransactionUsersHitRequest
+  ): Promise<AllUsersListResponse> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+
+    const matchCondition: Filter<InternalTransaction>[] = []
+
+    matchCondition.push({
+      hitRules: {
+        $elemMatch: { ruleInstanceId },
+      },
+    })
+
+    if (params.filterisShadowRuleInstance != null) {
+      if (params.filterisShadowRuleInstance) {
+        matchCondition.push({
+          hitRules: {
+            $elemMatch: { isShadow: true },
+          },
+        })
+      } else {
+        matchCondition.push({
+          hitRules: {
+            $not: {
+              $elemMatch: { isShadow: true },
+            },
+          },
+        })
+      }
+    }
+
+    const pipeline: Document[] = [
+      {
+        $match: {
+          $and: matchCondition,
+        },
+      },
+      {
+        $project: {
+          originUserId: 1,
+          destinationUserId: 1,
+          ruleHitData: {
+            $first: {
+              $filter: {
+                input: '$hitRules',
+                as: 'hitRule',
+                cond: { $eq: ['$$hitRule.ruleInstanceId', ruleInstanceId] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          userIds: {
+            $addToSet: {
+              $switch: {
+                branches: [
+                  {
+                    case: {
+                      $and: [
+                        {
+                          $in: [
+                            'ORIGIN',
+                            '$ruleHitData.ruleHitMeta.hitDirections',
+                          ],
+                        },
+                        {
+                          $in: [
+                            'DESTINATION',
+                            '$ruleHitData.ruleHitMeta.hitDirections',
+                          ],
+                        },
+                      ],
+                    },
+                    then: ['$originUserId', '$destinationUserId'],
+                  },
+                  {
+                    case: {
+                      $in: ['ORIGIN', '$ruleHitData.ruleHitMeta.hitDirections'],
+                    },
+                    then: '$originUserId',
+                  },
+                  {
+                    case: {
+                      $in: [
+                        'DESTINATION',
+                        '$ruleHitData.ruleHitMeta.hitDirections',
+                      ],
+                    },
+                    then: '$destinationUserId',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    ]
+
+    const result = collection.aggregate<{ userIds: string[] }>(pipeline)
+
+    const data = await result.next()
+
+    return this.getMongoUsersCursorsPaginate({
+      ...params,
+      filterUserIds: uniq(data?.userIds.flat()),
+    })
   }
 }

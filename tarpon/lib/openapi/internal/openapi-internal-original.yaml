@@ -328,6 +328,98 @@ paths:
           name: ruleId
           description: Rule ID
       description: Get a new rule instance ID
+  /rule-instances/{ruleInstanceId}/transaction-users-hit:
+    parameters:
+      - schema:
+          type: string
+        name: ruleInstanceId
+        in: path
+        required: true
+    get:
+      summary: Rule Instance - Transaction Users Hit
+      operationId: get-rule-instances-transaction-users-hit
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            type: string
+          in: query
+          name: start
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            $ref: '#/components/schemas/FilterOperator'
+          in: query
+          name: filterOperator
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RiskLevel'
+          in: query
+          name: filterRiskLevel
+        - schema:
+            type: boolean
+          in: query
+          name: includeCasesCount
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: filterRiskLevelLocked
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: boolean
+          in: query
+          name: filterisShadowRuleInstance
+      x-flagright:
+        permissions:
+          - rules:my-rules:read
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllUsersListResponse'
   /import/users:
     parameters: []
     post:
@@ -1376,16 +1468,6 @@ paths:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterRuleInstancesHit
-        - schema:
-            type: boolean
-          in: query
-          name: filterShadowHit
     parameters: []
   /merchant-monitoring/{userId}/update_monitoring_status:
     post:
@@ -1777,16 +1859,6 @@ paths:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterRuleInstancesHit
-        - schema:
-            type: boolean
-          in: query
-          name: filterShadowHit
     parameters: []
   /users/{userId}:
     get:

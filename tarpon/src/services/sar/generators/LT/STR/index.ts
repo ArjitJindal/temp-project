@@ -193,7 +193,6 @@ export class LithuaniaSTRReportGenerator implements ReportGenerator {
     })
 
     if (!valid) {
-      console.log(JSON.stringify(validate.errors, null, 2))
       throw new createError.BadRequest(
         `Invalid report parameters: ${JSON.stringify(
           validate.errors?.map((error) => error.message)
