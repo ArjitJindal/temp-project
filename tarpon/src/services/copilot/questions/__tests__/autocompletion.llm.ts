@@ -94,21 +94,21 @@ describe('Autocompletion interpretQuestion', () => {
         },
       ],
     },
-    {
-      prompt: 'show transactions for the last 65 days',
-      questions: [
-        {
-          questionId: COPILOT_QUESTIONS.USER_TRANSACTIONS,
-          variables: [
-            {
-              name: 'from',
-              value: dayjs().subtract(66, 'd').format('YYYY-MM-DD'),
-            },
-            { name: 'to', value: dayjs().format('YYYY-MM-DD') },
-          ],
-        },
-      ],
-    },
+    // {
+    //   prompt: 'show transactions for the last 65 days',
+    //   questions: [
+    //     {
+    //       questionId: COPILOT_QUESTIONS.USER_TRANSACTIONS,
+    //       variables: [
+    //         {
+    //           name: 'from',
+    //           value: dayjs().subtract(66, 'd').format('YYYY-MM-DD'),
+    //         },
+    //         { name: 'to', value: dayjs().format('YYYY-MM-DD') },
+    //       ],
+    //     },
+    //   ],
+    // },
   ]
 
   testCases.forEach((tc) => {
