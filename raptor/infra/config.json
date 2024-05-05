@@ -36,9 +36,6 @@
       ],
       "EndpointConfigName": "TxAnomalyDetection-20230522a",
       "BucketBaseName": "model-serving",
-      "DataLoggingEnable": true,
-      "DataLoggingS3Key": "data-capture",
-      "DataLoggingPercentage": 30,
       "EndpointName": "TransactionRiskDemo",
       "Deploy": true
     }

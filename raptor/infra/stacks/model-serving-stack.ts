@@ -38,13 +38,9 @@ export class ModelServingStack extends BaseStack {
       modelConfigList.push({
         modelName: modelName,
         variantName: model.VariantName,
-        instanceType: model.InstanceType,
+        serverlessConfig: model.serverlessConfig,
       })
     }
-
-    const loggingBucketName = this.createS3Bucket(
-      stackConfig.BucketBaseName
-    ).bucketName
 
     const endpointConfig = new sagemaker.CfnEndpointConfig(
       this,
@@ -58,12 +54,6 @@ export class ModelServingStack extends BaseStack {
             serverlessConfig: modelConfig.serverlessConfig,
           }
         }),
-        dataCaptureConfig: {
-          captureOptions: [{ captureMode: 'Input' }, { captureMode: 'Output' }],
-          enableCapture: stackConfig.DataLoggingEnable,
-          destinationS3Uri: `s3://${loggingBucketName}/${stackConfig.DataLoggingS3Key}`,
-          initialSamplingPercentage: stackConfig.DataLoggingPercentage,
-        },
       }
     )
 
