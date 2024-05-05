@@ -10,7 +10,6 @@
     "format:write": "prettier --write ."
   },
   "author": "",
-  "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-api-gateway": "^3.540.0",
     "@types/fast-levenshtein": "^0.0.4",
