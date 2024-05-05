@@ -21,7 +21,6 @@
     },
     "ModelServing": {
       "Name": "ModelServingStack",
-
       "ModelList": [
         {
           "ModelName": "Model-A-20230522a",
@@ -29,15 +28,10 @@
           "ModelDockerImage": "492215442770.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3",
           "ModelDockerImage-Desc": "SageMaker Prebuilt Docker Images: https://docs.aws.amazon.com/sagemaker/latest/dg/ecr-eu-central-1.html#sklearn-eu-central-1.title for sklearn images, and https://github.com/aws/deep-learning-containers/blob/master/available_images.md for pytorch",
           "VariantName": "Model-A",
-          "VariantWeight": 1,
-          "InstanceCount": 1,
-          "InstanceType": "ml.c5.xlarge",
-          "ModelServerWorkers": "4",
-          "ModelServerWorkers-Desc": "Please update this value according to InstanceType's vCPU",
-          "AutoScalingEnable": false,
-          "AutoScalingMinCapacity": 2,
-          "AutoScalingMaxCapacity": 4,
-          "AutoScalingTargetInvocation": 50
+          "serverlessConfig": {
+            "maxConcurrency": 2,
+            "memorySizeInMb": 1024
+          }
         }
       ],
       "EndpointConfigName": "TxAnomalyDetection-20230522a",

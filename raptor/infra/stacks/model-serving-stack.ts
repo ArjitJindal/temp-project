@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib'
 import { Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 import * as sagemaker from 'aws-cdk-lib/aws-sagemaker'
-import * as applicationautoscaling from 'aws-cdk-lib/aws-applicationautoscaling'
+import { CfnEndpointConfig, CfnEndpointProps } from 'aws-cdk-lib/aws-sagemaker'
 import { BaseStack, StackCommonProps } from '../lib/base-stack'
 import { Construct } from 'constructs'
 
@@ -14,39 +14,6 @@ interface ModelProps {
   modelServerWorkers: string
 }
 
-interface VariantConfigProps {
-  variantName: string
-  variantWeight: number
-  instanceCount: number
-  instanceType: string
-  modelName: string
-}
-
-interface EndpointConfigProps {
-  endpointConfigName: string
-  role: Role
-
-  variantConfigPropsList: VariantConfigProps[]
-
-  dataLoggingBucketName: string
-  dataLoggingEnable: boolean
-  dataLoggingS3Key: string
-  dataLoggingPercentage: number
-}
-
-interface EndpointProps {
-  endpointName: string
-  endpointConfigName: string
-}
-
-interface ScalingProps {
-  endpointName: string
-  variantName: string
-  minCapacity: number
-  maxCapacity: number
-  targetValue: number
-}
-
 export class ModelServingStack extends BaseStack {
   constructor(scope: Construct, props: StackCommonProps, stackConfig: any) {
     super(scope, stackConfig.Name, props, stackConfig)
@@ -56,7 +23,7 @@ export class ModelServingStack extends BaseStack {
     const modelBucketName: string = this.getParameter(
       'modelArchivingBucketName'
     )
-    let modelConfigList: VariantConfigProps[] = []
+    let modelConfigList: CfnEndpointConfig.ProductionVariantProperty[] = []
     const modelList: any[] = stackConfig.ModelList
     for (let model of modelList) {
       const modelName = this.createModel({
@@ -71,24 +38,36 @@ export class ModelServingStack extends BaseStack {
       modelConfigList.push({
         modelName: modelName,
         variantName: model.VariantName,
-        instanceCount: model.InstanceCount,
         instanceType: model.InstanceType,
-        variantWeight: model.VariantWeight,
       })
     }
 
     const loggingBucketName = this.createS3Bucket(
       stackConfig.BucketBaseName
     ).bucketName
-    const endpointConfigName = this.createEndpointConfig({
-      endpointConfigName: stackConfig.EndpointConfigName,
-      variantConfigPropsList: modelConfigList,
-      dataLoggingBucketName: loggingBucketName,
-      dataLoggingEnable: stackConfig.DataLoggingEnable,
-      dataLoggingS3Key: stackConfig.DataLoggingS3Key,
-      dataLoggingPercentage: stackConfig.DataLoggingPercentage,
-      role: role,
-    })
+
+    const endpointConfig = new sagemaker.CfnEndpointConfig(
+      this,
+      `${stackConfig.EndpointConfigName}-Config`,
+      {
+        endpointConfigName: `${this.projectPrefix}-${stackConfig.EndpointConfigName}-Config`,
+        productionVariants: modelConfigList.map((modelConfig) => {
+          return {
+            modelName: modelConfig.modelName,
+            variantName: modelConfig.variantName,
+            serverlessConfig: modelConfig.serverlessConfig,
+          }
+        }),
+        dataCaptureConfig: {
+          captureOptions: [{ captureMode: 'Input' }, { captureMode: 'Output' }],
+          enableCapture: stackConfig.DataLoggingEnable,
+          destinationS3Uri: `s3://${loggingBucketName}/${stackConfig.DataLoggingS3Key}`,
+          initialSamplingPercentage: stackConfig.DataLoggingPercentage,
+        },
+      }
+    )
+
+    const endpointConfigName = endpointConfig.attrEndpointConfigName
 
     let endpointName = ' '
     if (stackConfig.Deploy) {
@@ -99,18 +78,6 @@ export class ModelServingStack extends BaseStack {
     }
 
     this.putParameter('sageMakerEndpointName', endpointName)
-
-    for (let model of modelList) {
-      if (model.AutoScalingEnable) {
-        this.scaleEndpoint({
-          endpointName: endpointName,
-          variantName: model.VariantName,
-          minCapacity: model.AutoScalingMinCapacity,
-          maxCapacity: model.AutoScalingMaxCapacity,
-          targetValue: model.AutoScalingTargetInvocation,
-        })
-      }
-    }
   }
 
   private createModel(props: ModelProps): string {
@@ -131,34 +98,7 @@ export class ModelServingStack extends BaseStack {
     return model.attrModelName
   }
 
-  private createEndpointConfig(props: EndpointConfigProps): string {
-    const endpointConfig = new sagemaker.CfnEndpointConfig(
-      this,
-      `${props.endpointConfigName}-Config`,
-      {
-        endpointConfigName: `${this.projectPrefix}-${props.endpointConfigName}-Config`,
-        productionVariants: props.variantConfigPropsList.map((modelConfig) => {
-          return {
-            modelName: modelConfig.modelName,
-            variantName: modelConfig.variantName,
-            initialVariantWeight: modelConfig.variantWeight,
-            initialInstanceCount: modelConfig.instanceCount,
-            instanceType: modelConfig.instanceType,
-          }
-        }),
-        dataCaptureConfig: {
-          captureOptions: [{ captureMode: 'Input' }, { captureMode: 'Output' }],
-          enableCapture: props.dataLoggingEnable,
-          destinationS3Uri: `s3://${props.dataLoggingBucketName}/${props.dataLoggingS3Key}`,
-          initialSamplingPercentage: props.dataLoggingPercentage,
-        },
-      }
-    )
-
-    return endpointConfig.attrEndpointConfigName
-  }
-
-  private deployEndpoint(props: EndpointProps): string {
+  private deployEndpoint(props: CfnEndpointProps): string {
     const endpointName = `${this.projectPrefix}-${props.endpointName}-Endpoint`
     const endpoint = new sagemaker.CfnEndpoint(
       this,
@@ -188,31 +128,5 @@ export class ModelServingStack extends BaseStack {
     })
 
     return role
-  }
-
-  private scaleEndpoint(props: ScalingProps) {
-    const baseName = `${props.endpointName}-${props.variantName}`
-
-    const target = new applicationautoscaling.ScalableTarget(
-      this,
-      `${baseName}-ScalableTarget`,
-      {
-        serviceNamespace: applicationautoscaling.ServiceNamespace.SAGEMAKER,
-        minCapacity: props.minCapacity,
-        maxCapacity: props.maxCapacity,
-        resourceId: `endpoint/${props.endpointName}/variant/${props.variantName}`,
-        scalableDimension: 'sagemaker:variant:DesiredInstanceCount',
-      }
-    )
-
-    target.scaleToTrackMetric('INVOCATIONS_PER_INSTANCE', {
-      policyName: `${baseName}-SageMakerAutoScalingPolicy`,
-      targetValue: props.targetValue,
-      scaleInCooldown: cdk.Duration.minutes(2),
-      scaleOutCooldown: cdk.Duration.minutes(2),
-      predefinedMetric:
-        applicationautoscaling.PredefinedMetric
-          .SAGEMAKER_VARIANT_INVOCATIONS_PER_INSTANCE,
-    })
   }
 }
