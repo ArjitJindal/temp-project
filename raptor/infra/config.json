@@ -14,8 +14,8 @@
       "BucketBaseName": "model-archiving",
       "ModelList": [
         {
-          "ModelLocalPath": "../src/models/model-test",
-          "ModelS3Key": "models/model-test"
+          "ModelLocalPath": "../src/models/packed-models",
+          "ModelS3Key": "models/raptor"
         }
       ]
     },
@@ -25,7 +25,7 @@
       "ModelList": [
         {
           "ModelName": "Model-A-20230522a",
-          "ModelS3Key": "models/model-test",
+          "ModelS3Key": "models/raptor",
           "ModelDockerImage": "492215442770.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3",
           "ModelDockerImage-Desc": "SageMaker Prebuilt Docker Images: https://docs.aws.amazon.com/sagemaker/latest/dg/ecr-eu-central-1.html#sklearn-eu-central-1.title for sklearn images, and https://github.com/aws/deep-learning-containers/blob/master/available_images.md for pytorch",
           "VariantName": "Model-A",
