@@ -8,7 +8,7 @@ import {
 import { UserRepository } from '../users/repositories/user-repository'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
-import { CaseRepository } from '../rules-engine/repositories/case-repository'
+import { CaseRepository } from '../cases/repository'
 import { CurrencyService } from '../currency'
 import { RiskRepository } from './repositories/risk-repository'
 import {

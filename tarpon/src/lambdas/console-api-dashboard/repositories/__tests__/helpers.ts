@@ -3,11 +3,11 @@ import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { CaseRepository } from '@/services/cases/repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import { AlertsRepository } from '@/services/alerts/repository'
 
 export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
   return {

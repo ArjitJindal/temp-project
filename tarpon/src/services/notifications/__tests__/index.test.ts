@@ -1,7 +1,7 @@
 import { NotificationRepository } from '../notifications-repository'
 import { ConsoleNotifications } from '../console-notifications'
 import { casesHandler } from '@/lambdas/console-api-case/app'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { CaseRepository } from '@/services/cases/repository'
 import {
   getApiGatewayPatchEvent,
   getApiGatewayPostEvent,

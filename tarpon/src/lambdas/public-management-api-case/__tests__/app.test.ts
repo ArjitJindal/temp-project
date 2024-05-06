@@ -47,7 +47,7 @@ describe('Test Create Case', () => {
 
     expect(response?.statusCode).toBe(400)
     expect(JSON.parse(response?.body as string).message).toBe(
-      'Case id missing in payload. Please provide case id'
+      'Case id missing in payload. Please provide a case id'
     )
   })
 

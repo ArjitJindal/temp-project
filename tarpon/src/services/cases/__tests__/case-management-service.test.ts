@@ -64,7 +64,7 @@ describe('Test Create Case', () => {
     const createCase = caseService.createCase(caseCreationRequest)
 
     await expect(createCase).rejects.toThrowError(
-      'Case ID: C-1 not allowed for creation reserving C-{number} for internal cases'
+      'Case id: C-1 not allowed for creation reserving C-{number} for internal cases'
     )
   })
 
@@ -103,7 +103,7 @@ describe('Test Create Case', () => {
     const createCase = caseService.createCase(caseCreationRequest)
 
     await expect(createCase).rejects.toThrowError(
-      'Case ID: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa is too long. We only support case IDs upto 40 characters'
+      'Case id: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa is too long. We only support case ids upto 40 characters'
     )
   })
 

@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { NotFound, BadRequest } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { AlertsRepository } from '../rules-engine/repositories/alerts-repository'
+import { AlertsRepository } from '../alerts/repository'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { RuleQueuesRepository } from './repositories/rule-queues-repository'
 import { traceable } from '@/core/xray'

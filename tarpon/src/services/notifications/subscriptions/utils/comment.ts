@@ -10,7 +10,7 @@ import {
 } from '@/@types/notifications'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CommentNotification } from '@/@types/openapi-internal/CommentNotification'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 
 export type AlertCommentPayload = NotificationRawPayload<

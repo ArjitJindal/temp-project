@@ -21,7 +21,7 @@ import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
   SubjectCasesQueryParams,
-} from '@/services/rules-engine/repositories/case-repository'
+} from '@/services/cases/repository'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -50,10 +50,10 @@ import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { RoleService } from '@/services/roles'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
-import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { DEFAULT_CASE_AGGREGATES, generateCaseAggreates } from '@/utils/case'
 import {
   tenantSettings as contextTenantSettings,
   getContext,
@@ -977,11 +977,10 @@ export class CaseCreationService {
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
             caseTransactionsIds,
-            caseAggregates:
-              this.getCaseAggregatesFromTransactionsWithExistingAggregates(
-                [filteredTransaction as InternalTransaction],
-                existedCase.caseAggregates
-              ),
+            caseAggregates: generateCaseAggreates(
+              [filteredTransaction as InternalTransaction],
+              existedCase.caseAggregates
+            ),
             caseTransactionsCount: caseTransactionsIds.length,
             priority: minBy(alerts, 'priority')?.priority ?? last(PRIORITYS),
             alerts,
@@ -1028,39 +1027,6 @@ export class CaseCreationService {
       }
     }
     return result
-  }
-
-  private getCaseAggregatesFromTransactionsWithExistingAggregates(
-    transactions: InternalTransaction[],
-    caseAggregates: CaseAggregates
-  ): CaseAggregates {
-    const originPaymentMethods = uniq(
-      compact(
-        transactions.map(
-          (transaction) => transaction?.originPaymentDetails?.method
-        )
-      ).concat(caseAggregates?.originPaymentMethods ?? [])
-    )
-
-    const destinationPaymentMethods = uniq(
-      compact(
-        transactions.map(
-          (transaction) => transaction?.destinationPaymentDetails?.method
-        )
-      ).concat(caseAggregates?.destinationPaymentMethods ?? [])
-    )
-
-    const tags = uniqObjects(
-      transactions
-        .flatMap((transaction) => transaction?.tags ?? [])
-        .concat(caseAggregates?.tags ?? [])
-    )
-
-    return {
-      originPaymentMethods,
-      destinationPaymentMethods,
-      tags,
-    }
   }
 
   async handleTransaction(

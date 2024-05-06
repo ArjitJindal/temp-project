@@ -3,7 +3,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { DashboardRefreshBatchJob } from '@/@types/batch-job'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { CaseRepository } from '@/services/cases/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'
 import {

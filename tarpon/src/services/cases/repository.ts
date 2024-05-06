@@ -1018,17 +1018,14 @@ export class CaseRepository {
   }
 
   public async getCaseById(
-    caseId: string
+    caseId: string,
+    getAggregates = false
   ): Promise<CaseWithoutCaseTransactions | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return await collection.findOne<Case>(
       { caseId },
-      {
-        projection: {
-          caseAggregates: 0,
-        },
-      }
+      !getAggregates ? { projection: { caseAggregates: 0 } } : undefined
     )
   }
 

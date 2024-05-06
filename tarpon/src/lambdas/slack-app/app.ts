@@ -16,7 +16,7 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { AlertPayload } from '@/@types/alert/alert-payload'
 import { logger } from '@/core/logger'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { CaseRepository } from '@/services/cases/repository'
 import { apiFetch } from '@/utils/api-fetch'
 
 export const slackAppHandler = lambdaApi()(

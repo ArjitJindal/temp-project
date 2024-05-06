@@ -18,17 +18,17 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { uuid4 } from '@sentry/utils'
-import {
-  AlertParams,
-  AlertsRepository,
-  FLAGRIGHT_SYSTEM_USER,
-} from '../rules-engine/repositories/alerts-repository'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
-import { CaseRepository } from '../rules-engine/repositories/case-repository'
+import { CaseRepository } from '../cases/repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { SanctionsService } from '../sanctions'
 import { ChecklistTemplatesService } from '../tenants/checklist-template-service'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
+import {
+  AlertParams,
+  AlertsRepository,
+  FLAGRIGHT_SYSTEM_USER,
+} from './repository'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'

@@ -12,7 +12,7 @@ import {
   bulkVerifyTransactions,
   setUpRulesHooks,
 } from '@/test-utils/rule-test-utils'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { CaseRepository } from '@/services/cases/repository'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { SimulationBeaconBatchJob } from '@/@types/batch-job'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'

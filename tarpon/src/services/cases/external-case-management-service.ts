@@ -1,64 +1,34 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
-import { isEmpty, keyBy, memoize, omitBy, uniq } from 'lodash'
-import { CaseRepository } from '../rules-engine/repositories/case-repository'
-import { AccountsService } from '../accounts'
+import { isEmpty, omitBy, uniq } from 'lodash'
 import { UserRepository } from '../users/repositories/user-repository'
+import { CasesAlertsTransformer } from './cases-alerts-transformer'
+import { CaseRepository } from './repository'
 import { Case } from '@/@types/openapi-public-management/Case'
 import { Case as CaseInternal } from '@/@types/openapi-internal/Case'
 import { CaseCreationRequest } from '@/@types/openapi-public-management/CaseCreationRequest'
-import { getContext } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import {
-  isStatusInProgress,
-  isStatusInReview,
-  isStatusOnHold,
-  statusEscalated,
-} from '@/utils/helpers'
-import { STATUSS } from '@/@types/openapi-public-management-custom/Status'
-import { Status } from '@/@types/openapi-public-management/Status'
 import { CaseUpdateable } from '@/@types/openapi-public-management/CaseUpdateable'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { Assignment } from '@/@types/openapi-public-management/Assignment'
 import { PaymentEntityDetails } from '@/@types/openapi-public-management/PaymentEntityDetails'
+import { traceable } from '@/core/xray'
+import { statusEscalated } from '@/utils/helpers'
 
+@traceable
 export class ExternalCaseManagementService {
-  private tenantId: string
-  private mongoDb: MongoClient
   private caseRepository: CaseRepository
-  private auth0Domain: string
-  private accountService: AccountsService
   private userRepository: UserRepository
+  private casesTransformer: CasesAlertsTransformer
 
   constructor(
     tenantId: string,
     connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
-    this.tenantId = tenantId
-    this.mongoDb = connections.mongoDb
-    this.caseRepository = new CaseRepository(this.tenantId, connections)
-    this.auth0Domain =
-      getContext()?.settings?.auth0Domain ||
-      (process.env.AUTH0_DOMAIN as string)
-    this.accountService = new AccountsService(
-      { auth0Domain: this.auth0Domain },
-      { mongoDb: this.mongoDb }
-    )
-    this.userRepository = new UserRepository(this.tenantId, connections)
+    this.caseRepository = new CaseRepository(tenantId, connections)
+    this.userRepository = new UserRepository(tenantId, connections)
+    this.casesTransformer = new CasesAlertsTransformer(tenantId, connections)
   }
-
-  private getAllAccountsMongo = memoize(
-    async (tenantId: string) => {
-      const accounts = await this.accountService.getAllAccountsMongo(tenantId)
-      return {
-        mapByEmail: keyBy(accounts, 'email'),
-        list: accounts,
-        mapById: keyBy(accounts, 'id'),
-      }
-    },
-    (tenantId) => tenantId
-  )
 
   private async validateCaseCreationRequest(
     requestBody: CaseCreationRequest
@@ -67,7 +37,7 @@ export class ExternalCaseManagementService {
 
     if (!caseId) {
       throw new createHttpError.BadRequest(
-        `Case id missing in payload. Please provide case id`
+        `Case id missing in payload. Please provide a case id`
       )
     }
 
@@ -77,7 +47,7 @@ export class ExternalCaseManagementService {
 
     if (caseIdRegex.test(caseId)) {
       throw new createHttpError.BadRequest(
-        `Case ID: ${caseId} not allowed for creation reserving C-{number} for internal cases`
+        `Case id: ${caseId} not allowed for creation reserving C-{number} for internal cases`
       )
     }
 
@@ -90,7 +60,7 @@ export class ExternalCaseManagementService {
     if (requestBody?.caseId) {
       if (caseId.length > 40) {
         throw new createHttpError.BadRequest(
-          `Case ID: ${caseId} is too long. We only support case IDs upto 40 characters`
+          `Case id: ${caseId} is too long. We only support case ids upto 40 characters`
         )
       }
     }
@@ -108,81 +78,10 @@ export class ExternalCaseManagementService {
         throw new createHttpError.BadRequest(
           `Related cases not found: ${caseIdsNotFound.join(
             ', '
-          )}. Please provide case IDs which are already created`
+          )}. Please provide case ids which are already created`
         )
       }
     }
-  }
-
-  private async transformAssignmentsToInternalCase(
-    assignments: Assignment[]
-  ): Promise<CaseInternal['assignments']> {
-    const accounts = await this.getAllAccountsMongo(this.tenantId)
-
-    const accountsMap = accounts.mapByEmail
-
-    return assignments.map((assignment) => {
-      if (!accountsMap[assignment.assigneeEmail]) {
-        throw new createHttpError.BadRequest(
-          `Assignee email ${assignment.assigneeEmail} not found`
-        )
-      }
-
-      if (accountsMap[assignment.assigneeEmail].blocked) {
-        throw new createHttpError.BadRequest(
-          `Seems like assignee email ${assignment.assigneeEmail} is deleted. You can only assign cases to active users. Please invite ${assignment.assigneeEmail} to the platform or assign to another user`
-        )
-      }
-
-      if (
-        assignment.assignedByEmail &&
-        !accountsMap[assignment.assignedByEmail]
-      ) {
-        throw new createHttpError.BadRequest(
-          `Assigned by email ${assignment.assignedByEmail} not found`
-        )
-      }
-
-      if (
-        assignment.assignedByEmail &&
-        accountsMap[assignment.assignedByEmail].blocked
-      ) {
-        throw new createHttpError.BadRequest(
-          `Seems like assigned by email ${assignment.assignedByEmail} is deleted. You can only assign cases to active users. Please invite ${assignment.assignedByEmail} to the platform or assign to another user`
-        )
-      }
-
-      return {
-        assigneeUserId: accountsMap[assignment.assigneeEmail].id,
-        ...(assignment.assignedByEmail && {
-          assignedByUserId: accountsMap[assignment.assignedByEmail]?.id,
-        }),
-        timestamp: assignment.timestamp || Date.now(),
-      }
-    })
-  }
-
-  private async transformAssignmentsToExternalCase(
-    case_: CaseInternal
-  ): Promise<Assignment[]> {
-    const accounts = await this.getAllAccountsMongo(this.tenantId)
-
-    const accountsMap = accounts.mapById
-
-    const assignments =
-      (isStatusInReview(case_.caseStatus)
-        ? case_.reviewAssignments
-        : case_.assignments) || []
-
-    return assignments.map((assignment) => {
-      return {
-        assigneeEmail: accountsMap[assignment.assigneeUserId].email,
-        assignedByEmail: assignment.assignedByUserId
-          ? accountsMap[assignment.assignedByUserId].email
-          : undefined,
-        timestamp: assignment.timestamp,
-      }
-    })
   }
 
   private async getCaseUser(userId: string): Promise<InternalUser> {
@@ -201,7 +100,7 @@ export class ExternalCaseManagementService {
     requestBody: CaseCreationRequest
   ): Promise<CaseInternal> {
     const assignments: CaseInternal['assignments'] =
-      await this.transformAssignmentsToInternalCase(
+      await this.casesTransformer.transformAssignmentsToInternal(
         requestBody.assignments || []
       )
 
@@ -240,24 +139,6 @@ export class ExternalCaseManagementService {
     return case_
   }
 
-  private getExternalCaseStatus(internalCase: CaseStatus): Case['caseStatus'] {
-    let externalCaseStatus: Case['caseStatus'] = 'OPEN'
-
-    if (isStatusInReview(internalCase)) {
-      externalCaseStatus = 'IN_REVIEW'
-    } else if (isStatusInProgress(internalCase)) {
-      externalCaseStatus = 'IN_PROGRESS'
-    } else if (isStatusOnHold(internalCase)) {
-      externalCaseStatus = 'ON_HOLD'
-    } else if (statusEscalated(internalCase)) {
-      externalCaseStatus = 'ESCALATED'
-    } else if (STATUSS.includes(internalCase as Status)) {
-      externalCaseStatus = internalCase as Status
-    }
-
-    return externalCaseStatus
-  }
-
   private getEnitityDetails(internalCase: CaseInternal): Case['entityDetails'] {
     return internalCase.subjectType === 'PAYMENT' && internalCase.paymentDetails
       ? {
@@ -280,7 +161,7 @@ export class ExternalCaseManagementService {
   ): Promise<Case> {
     const caseStatus = internalCase.caseStatus
 
-    const externalCaseStatus = this.getExternalCaseStatus(
+    const externalCaseStatus = this.casesTransformer.getExternalCaseStatus(
       caseStatus as CaseStatus
     )
 
@@ -293,7 +174,11 @@ export class ExternalCaseManagementService {
       updatedAt: internalCase.updatedAt || Date.now(),
       relatedCases: internalCase.relatedCases,
       tags: internalCase.tags,
-      assignments: await this.transformAssignmentsToExternalCase(internalCase),
+      assignments:
+        await this.casesTransformer.transformAssignmentsToExternalCase(
+          internalCase.caseStatus as CaseStatus,
+          internalCase
+        ),
       creationReason: internalCase.creationReason,
     }
   }
@@ -328,7 +213,7 @@ export class ExternalCaseManagementService {
       )
     }
 
-    const externalCaseStatus = this.getExternalCaseStatus(
+    const externalCaseStatus = this.casesTransformer.getExternalCaseStatus(
       internalCase.caseStatus as CaseStatus
     )
 
@@ -342,7 +227,7 @@ export class ExternalCaseManagementService {
     }
 
     const assignments = casePatchRequest.assignments
-      ? await this.transformAssignmentsToInternalCase(
+      ? await this.casesTransformer.transformAssignmentsToInternal(
           casePatchRequest.assignments
         )
       : undefined
@@ -356,7 +241,9 @@ export class ExternalCaseManagementService {
       caseId,
       ...omitBy<Partial<CaseInternal>>(
         {
-          assignments,
+          ...(statusEscalated(internalCase.caseStatus)
+            ? { reviewAssignments: assignments }
+            : { assignments }),
           priority: casePatchRequest.priority,
           tags: casePatchRequest.tags,
           creationReason: casePatchRequest.creationReason,

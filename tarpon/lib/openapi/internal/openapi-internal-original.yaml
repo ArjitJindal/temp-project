@@ -9242,13 +9242,7 @@ components:
             $ref: '#/components/schemas/Assignment'
         creationReason:
           $ref: ../public-management/openapi-public-management-original.yaml#/components/schemas/ActionReason
-        deletionReason:
-          $ref: ../public-management/openapi-public-management-original.yaml#/components/schemas/ActionReason
-        isDeleted:
-          type: boolean
         createdTimestampInternal:
-          type: number
-        deletedAt:
           type: number
         tags:
           type: array

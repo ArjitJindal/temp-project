@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid'
 import { CaseService } from '..'
 import { CASE_TRANSACTIONS } from './utils/case-transactions'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { CaseRepository } from '@/services/cases/repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Account } from '@/services/accounts'
@@ -17,7 +17,7 @@ import { AlertsService } from '@/services/alerts'
 import {
   AlertsRepository,
   FLAGRIGHT_SYSTEM_USER,
-} from '@/services/rules-engine/repositories/alerts-repository'
+} from '@/services/alerts/repository'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import * as Context from '@/core/utils/context'

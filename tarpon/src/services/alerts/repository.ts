@@ -1,11 +1,10 @@
 import { Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
-
 import { NotFound } from 'http-errors'
 import { compact, difference } from 'lodash'
-import { CaseRepository, getRuleQueueFilter } from './case-repository'
-import { MongoDbTransactionRepository } from './mongodb-transaction-repository'
+import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
+import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import {
   lookupPipelineStage,
   paginatePipeline,
@@ -46,6 +45,7 @@ import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 import { CounterRepository } from '@/services/counter/repository'
+import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 
@@ -1333,5 +1333,63 @@ export class AlertsRepository {
     )
 
     await collection.deleteOne({ samplingId: sampleId })
+  }
+
+  public async addAlertToMongo(
+    caseId: string,
+    alert: Alert,
+    caseData: { caseAggregates: CaseAggregates; caseTransactionsIds: string[] }
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const { caseAggregates, caseTransactionsIds } = caseData
+
+    await collection.updateOne(
+      { caseId },
+      {
+        $push: { alerts: alert },
+        $set: {
+          updatedAt: Date.now(),
+          caseAggregates,
+          caseTransactionsIds,
+          caseTransactionsCount: caseTransactionsIds.length,
+        },
+      }
+    )
+  }
+
+  public async updateAlertInMongo(
+    caseId: string,
+    alertId: string,
+    data: Partial<Alert>,
+    caseData: { caseAggregates?: CaseAggregates; caseTransactionIds?: string[] }
+  ): Promise<Case> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const updatedCaseData = await collection.findOneAndUpdate(
+      { caseId, 'alerts.alertId': alertId },
+      {
+        $set: {
+          ...Object.entries(data).reduce((acc, [key, value]) => {
+            acc[`alerts.$.${key}`] = value
+            return acc
+          }, {} as Record<string, unknown>),
+          updatedAt: Date.now(),
+          ...(caseData.caseAggregates && {
+            caseAggregates: caseData.caseAggregates,
+          }),
+          ...(caseData.caseTransactionIds && {
+            caseTransactionsIds: caseData.caseTransactionIds,
+          }),
+          ...(caseData.caseTransactionIds && {
+            caseTransactionsCount: caseData.caseTransactionIds.length,
+          }),
+        },
+      },
+      { returnDocument: 'after' }
+    )
+
+    return updatedCaseData.value as Case
   }
 }

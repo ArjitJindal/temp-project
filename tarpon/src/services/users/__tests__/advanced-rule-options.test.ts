@@ -21,7 +21,7 @@ import * as Context from '@/core/utils/context'
 import { getS3Client } from '@/utils/s3'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
 
 dynamoDbSetupHook()
 

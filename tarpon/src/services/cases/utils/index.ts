@@ -5,7 +5,7 @@ import { AlertCreationIntervalWeekly } from '@/@types/openapi-internal/AlertCrea
 import dayjs, { Timezone, WEEKDAY_NUMBERS, duration } from '@/utils/dayjs'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
-import { CaseWithoutCaseTransactions } from '@/services/rules-engine/repositories/case-repository'
+import { CaseWithoutCaseTransactions } from '@/services/cases/repository'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 

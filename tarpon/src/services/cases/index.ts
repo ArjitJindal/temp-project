@@ -18,7 +18,7 @@ import {
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
-} from '@/services/rules-engine/repositories/case-repository'
+} from '@/services/cases/repository'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import {
@@ -45,7 +45,7 @@ import { isCaseAvailable } from '@/services/cases/utils'
 import {
   AlertsRepository,
   FLAGRIGHT_SYSTEM_USER,
-} from '@/services/rules-engine/repositories/alerts-repository'
+} from '@/services/alerts/repository'
 import { AlertsService } from '@/services/alerts'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
