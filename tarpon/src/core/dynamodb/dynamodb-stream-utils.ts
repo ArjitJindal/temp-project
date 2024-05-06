@@ -26,7 +26,7 @@ import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DYNAMODB_PARTITIONKEYS_COLLECTION } from '@/utils/mongodb-definitions'
 
-type DynamoDbEntityType =
+export type DynamoDbEntityType =
   | 'TRANSACTION'
   | 'USER'
   | 'TRANSACTION_EVENT'

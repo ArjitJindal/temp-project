@@ -2,6 +2,10 @@ import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { isEmpty, pick, omit } from 'lodash'
 import { StackConstants } from '@lib/constants'
+import {
+  SendMessageCommand,
+  SendMessageCommandInput,
+} from '@aws-sdk/client-sqs'
 import { CaseCreationService } from '../../services/cases/case-creation-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -34,6 +38,8 @@ import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { UserService } from '@/services/users'
 import { isDemoTenant } from '@/utils/tenant'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
+import { getSQSClient } from '@/utils/sns-sqs-client'
+import { DynamoDbEntityType } from '@/core/dynamodb/dynamodb-stream-utils'
 import { filterLiveRules } from '@/services/rules-engine/utils'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
@@ -313,6 +319,26 @@ async function transactionEventHandler(
     },
     { upsert: true }
   )
+}
+
+async function _sendEventToQueue(
+  tenantId: string,
+  oldentityObject: object,
+  newentityObject: object,
+  eventType: DynamoDbEntityType
+) {
+  const params: SendMessageCommandInput = {
+    MessageBody: JSON.stringify({
+      eventType,
+      tenantId,
+      oldentityObject,
+      newentityObject,
+    }),
+    QueueUrl: process.env.TRANSACTION_EVENT_QUEUE_URL ?? '',
+    MessageGroupId: tenantId,
+  }
+  const sqsClient = getSQSClient()
+  await sqsClient.send(new SendMessageCommand(params))
 }
 
 const tarponBuilder = new StreamConsumerBuilder(

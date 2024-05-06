@@ -267,6 +267,9 @@ export const StackConstants = {
   NOTIFICATIONS_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'NotificationsConsumerFunction'
   ),
+  TRANSACTION_EVENT_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'TransactionEventQueueConsumerFunction'
+  ),
 }
 
 export const SQSQueues: {
@@ -300,6 +303,9 @@ export const SQSQueues: {
   REQUEST_LOGGER_QUEUE_NAME: {
     name: getResourceName('RequestLoggerQueue'),
     oldestMsgAgeAlarmThresholdMinutes: 60,
+  },
+  TRANSACTION_EVENT_QUEUE_NAME: {
+    name: getResourceName('TransactionEventQueue') + '.fifo',
   },
 }
 
