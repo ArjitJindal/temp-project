@@ -591,7 +591,7 @@ export class CdkTarponStack extends cdk.Stack {
         }),
         new PolicyStatement({
           effect: Effect.ALLOW,
-          actions: ['apigateway:GET'],
+          actions: ['apigateway:GET', 'apigateway:PATCH'],
           resources: ['*'],
         }),
         new PolicyStatement({
