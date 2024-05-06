@@ -624,15 +624,27 @@ export class AlertsRepository {
     )
   }
 
-  public async updateAlertQACountInSampling(alertId: string): Promise<void> {
+  public async updateAlertQACountInSampling(
+    alert: Alert,
+    qaStatus?: ChecklistStatus // In future if we have to revert the QA PASS/FAIL we will be sending qaStatus as undefined so that we can decrement the count
+  ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<AlertsQaSampling>(
       ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
     )
 
-    await collection.updateOne(
-      { alertIds: alertId },
-      { $inc: { numberOfAlertsQaDone: 1 } }
+    await collection.updateMany(
+      { alertIds: alert.alertId as string },
+      {
+        $inc: {
+          numberOfAlertsQaDone:
+            alert.ruleQaStatus && !qaStatus
+              ? -1
+              : !alert.ruleQaStatus && qaStatus
+              ? 1
+              : 0,
+        },
+      }
     )
   }
 

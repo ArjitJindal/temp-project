@@ -1129,7 +1129,6 @@ export class AlertsService extends CaseAlertsCommonService {
         originalChecklist,
         updatedChecklist
       ),
-      this.alertsRepository.updateAlertQACountInSampling(alert.alertId ?? ''),
     ])
   }
 
@@ -1232,13 +1231,19 @@ export class AlertsService extends CaseAlertsCommonService {
           throw new BadRequest(`Acceptance criteria not passed for alert`)
         }
 
-        await Promise.all([
-          this.alertsRepository.saveAlert(alert.caseId ?? '', alert),
-          this.auditLogService.handleAuditLogForAlertQaUpdate(
-            alert.alertId as string,
-            update
-          ),
-        ])
+        await withTransaction(async () => {
+          await Promise.all([
+            this.alertsRepository.saveAlert(alert.caseId ?? '', alert),
+            this.auditLogService.handleAuditLogForAlertQaUpdate(
+              alert.alertId as string,
+              update
+            ),
+            this.alertsRepository.updateAlertQACountInSampling(
+              alert,
+              update.checklistStatus
+            ),
+          ])
+        })
       })
     )
   }
