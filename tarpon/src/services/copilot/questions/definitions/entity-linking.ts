@@ -13,7 +13,7 @@ export const EntityLinking: EmbeddedQuestion<{ userId: string }> = {
   variableOptions: {
     userId: { type: 'SEARCH', search: searchUser },
   },
-  defaults: ({ userId }) => {
+  defaults: ({ userId = '' }) => {
     return { userId }
   },
 }

@@ -1,6 +1,7 @@
 import { uniq } from 'lodash'
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
 import { ChatCompletionRequestMessage } from 'openai/api'
+import { QuestionCategory } from './types'
 import {
   getQueries,
   getQuestions,
@@ -30,12 +31,13 @@ export class AutocompleteService {
     const results: { phrase: string; distance: number }[] = []
 
     const user = c?.caseUsers?.origin || c?.caseUsers?.destination
-    const userCategory = user
+    const userCategory: QuestionCategory | undefined = user
       ? isBusinessUser(user as InternalUser)
         ? 'BUSINESS'
         : 'CONSUMER'
+      : c?.paymentDetails
+      ? 'PAYMENT'
       : undefined
-
     for (const completePhrase of this.phrases) {
       for (const phrase of splitStringIntoSubstrings(completePhrase)) {
         const distance = this.calculateLevenshteinDistance(query, phrase)

@@ -172,7 +172,7 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
   },
   defaults: ({ userId }) => {
     return {
-      userId,
+      userId: userId || '',
     }
   },
 }

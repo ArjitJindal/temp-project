@@ -9,6 +9,7 @@ import { S3 } from '@aws-sdk/client-s3'
 import { capitalize, isEqual, isEmpty, compact, difference } from 'lodash'
 import { MongoClient } from 'mongodb'
 import pluralize from 'pluralize'
+import { getPaymentMethodId } from '../../core/dynamodb/dynamodb-keys'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import {
@@ -627,8 +628,14 @@ export class CaseService extends CaseAlertsCommonService {
     if (case_ == null) {
       throw new NotFound(`Case not found: ${caseId}`)
     }
+    const paymentDetails =
+      case_.paymentDetails?.origin ?? case_.paymentDetails?.destination
+    const paymentMethodId = getPaymentMethodId(paymentDetails)
 
-    return case_
+    return {
+      ...case_,
+      paymentMethodId,
+    }
   }
 
   public async saveComment(caseId: string | undefined, comment: Comment) {

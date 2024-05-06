@@ -7,6 +7,7 @@ import {
   calculatePercentageBreakdown,
   humanReadablePeriod,
   matchPeriod,
+  casePaymentIdentifierQuery,
   Period,
   periodVars,
 } from '@/services/copilot/questions/definitions/util'
@@ -14,21 +15,27 @@ import {
 export const CaseHistory: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.CASES,
-  categories: ['CONSUMER', 'BUSINESS'],
-  title: async ({ username }, vars) => {
-    return `Cases for ${username} ${humanReadablePeriod(vars)}`
+  categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
+  title: async ({ humanReadableId }, vars) => {
+    return `Cases for ${humanReadableId} ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
+  aggregationPipeline: async (
+    { tenantId, userId, humanReadableId, paymentIdentifier },
+    period
+  ) => {
     const client = await getMongoDbClient()
     const db = client.db()
+    const condition = userId
+      ? [
+          { 'caseUsers.origin.userId': userId },
+          { 'caseUsers.destination.userId': userId },
+        ]
+      : casePaymentIdentifierQuery(paymentIdentifier)
     const result = await db
       .collection<Case>(CASES_COLLECTION(tenantId))
       .find({
         ...matchPeriod('createdTimestamp', period),
-        $or: [
-          { 'caseUsers.origin.userId': userId },
-          { 'caseUsers.destination.userId': userId },
-        ],
+        $or: condition,
       })
       .toArray()
 
@@ -49,7 +56,7 @@ export const CaseHistory: TableQuestion<Period> = {
       },
       summary: `There have been ${
         result.length
-      } cases for ${username} ${humanReadablePeriod(
+      } cases for ${humanReadableId} ${humanReadablePeriod(
         period
       )}. For the cases, ${calculatePercentageBreakdown(
         result.map((c) => c?.caseStatus || '')

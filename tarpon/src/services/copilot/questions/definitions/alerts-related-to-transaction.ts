@@ -24,14 +24,14 @@ export const AlertsRelatedToTransaction: TableQuestion<
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.ALERTS_RELATED_TO_TRANSACTION,
   version: 2,
-  categories: ['CONSUMER', 'BUSINESS'],
+  categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
   title: async (_, vars) => {
     return `Alerts related to transaction ${
       vars.transactionId
     } ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async (
-    { tenantId, username },
+    { tenantId, humanReadableId },
     { transactionId, ...period }
   ) => {
     const client = await getMongoDbClient()
@@ -86,7 +86,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
       },
       summary: `There have been ${
         alerts.length
-      } alerts for ${username} ${humanReadablePeriod(
+      } alerts for ${humanReadableId} ${humanReadablePeriod(
         period
       )}. For the alerts, ${calculatePercentageBreakdown(
         alerts.map((a) => a.alertStatus || '')

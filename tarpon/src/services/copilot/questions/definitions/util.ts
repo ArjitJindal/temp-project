@@ -9,6 +9,8 @@ import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getUserName } from '@/utils/helpers'
 import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export const MONGO_DATE_FORMAT = '%Y-%m-%d'
 export const DATE_GRAPH_FORMAT = 'D/M/YYYY'
@@ -225,4 +227,50 @@ export async function queryUsername(userId: string) {
     .findOne({ userId })
 
   return getUserName(result)
+}
+
+export function casePaymentIdentifierQuery(paymentIdentifier?: PaymentDetails) {
+  if (!paymentIdentifier) return []
+  const keys = PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentIdentifier.method]
+  const originConditions = keys.map((key) => {
+    return {
+      [`paymentDetails.origin.${key}`]: paymentIdentifier[key],
+    }
+  })
+  const destinationConditions = keys.map((key) => {
+    return {
+      [`paymentDetails.destination.${key}`]: paymentIdentifier[key],
+    }
+  })
+  return [
+    {
+      $and: originConditions,
+    },
+    {
+      $and: destinationConditions,
+    },
+  ]
+}
+
+export function transactionPaymentIdentifierQuerySQL(
+  paymentIdentifier?: PaymentDetails,
+  direction?: 'ORIGIN' | 'DESTINATION'
+) {
+  if (!paymentIdentifier) return ''
+  const keys = PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentIdentifier.method]
+  const originConditions = keys
+    .filter((key) => paymentIdentifier[key])
+    .map((key) => {
+      return `t.originPaymentDetails.${key} = :${key}`
+    })
+    .join(' AND ')
+  const destinationConditions = keys
+    .filter((key) => paymentIdentifier[key])
+    .map((key) => {
+      return `t.destinationPaymentDetails.${key} = :${key}`
+    })
+    .join(' AND ')
+  if (direction === 'ORIGIN') return originConditions
+  if (direction === 'DESTINATION') return destinationConditions
+  return `(${originConditions}) OR (${destinationConditions})`
 }

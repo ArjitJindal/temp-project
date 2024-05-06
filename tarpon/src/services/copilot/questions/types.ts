@@ -10,6 +10,7 @@ import { PropertiesProperties } from '@/@types/openapi-internal/PropertiesProper
 import { PageSize } from '@/utils/pagination'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export type Variables = {
   [key: string]: (typeof QuestionVariable.prototype)['value']
@@ -38,13 +39,15 @@ export type InvestigationContext = {
   userId: string
   alert: Alert
   _case: Case
-  user: InternalConsumerUser | InternalBusinessUser
+  user?: InternalConsumerUser | InternalBusinessUser
   username: string
   accountService: AccountsService
+  paymentIdentifier?: PaymentDetails
   convert: (amount: number, target: CurrencyCode) => number
+  humanReadableId: string
 }
 
-export type QuestionCategory = 'BUSINESS' | 'CONSUMER'
+export type QuestionCategory = 'BUSINESS' | 'CONSUMER' | 'PAYMENT'
 
 export type QuestionBase<V extends Variables> = {
   questionId: QuestionId

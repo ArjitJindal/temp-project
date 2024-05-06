@@ -7,6 +7,7 @@ import {
   directionDefault,
   directionVars,
   humanReadablePeriod,
+  transactionPaymentIdentifierQuerySQL,
   Period,
   periodDefaults,
   periodVars,
@@ -19,18 +20,21 @@ export const TransactionSummary: PropertiesQuestion<
 > = {
   type: 'PROPERTIES',
   questionId: COPILOT_QUESTIONS.TRANSACTION_INSIGHTS,
-  categories: ['CONSUMER', 'BUSINESS'],
-  title: async ({ username }, { direction, ...period }) => {
-    return `Transaction insights for ${username} as ${direction.toLowerCase()} ${humanReadablePeriod(
+  categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
+  title: async ({ humanReadableId }, { direction, ...period }) => {
+    return `Transaction insights for ${humanReadableId} as ${direction.toLowerCase()} ${humanReadablePeriod(
       period
     )} as originator`
   },
   aggregationPipeline: async (
-    { convert, userId },
+    { convert, userId, paymentIdentifier },
     { direction, currency, ...period }
   ) => {
     const userIdKey =
       direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
+    const condition = userId
+      ? `t.${userIdKey} = :userId`
+      : transactionPaymentIdentifierQuerySQL(paymentIdentifier, direction)
     const raw = await executeSql<{
       count: number
       min: number
@@ -47,10 +51,10 @@ export const TransactionSummary: PropertiesQuestion<
       coalesce(avg(t.transactionAmountUSD), 0) as avg
     from
       transactions t
-      where t.${userIdKey} = :userId
+      where ${condition}
         and t.timestamp between :from and :to
     `,
-      { userId, ...sqlPeriod(period) }
+      { userId, ...sqlPeriod(period), ...paymentIdentifier }
     )
     const result = raw[0]
     return {

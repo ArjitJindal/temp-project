@@ -8974,6 +8974,8 @@ components:
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+        paymentMethodId:
+          type: string
         caseUsers:
           type: object
           properties:

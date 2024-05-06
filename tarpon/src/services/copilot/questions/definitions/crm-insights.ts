@@ -11,7 +11,8 @@ export const CrmInsights: PropertiesQuestion<any> = {
   },
   aggregationPipeline: async ({ user, tenantId }) => {
     const crmService = new CrmService(tenantId)
-    const crmAccountId = user.tags?.find((t) => t.key === 'crmAccountId')?.value
+    const crmAccountId =
+      user?.tags?.find((t) => t.key === 'crmAccountId')?.value ?? ''
 
     if (!crmAccountId) {
       throw new BadRequest('No CRM data attached')

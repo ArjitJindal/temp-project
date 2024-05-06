@@ -18,7 +18,7 @@ export const Website: PropertiesQuestion<{
       const mmss = await MerchantMonitoringScrapeService.init()
       const summaries = await mmss.getMerchantMonitoringSummaries(
         tenantId,
-        userId,
+        userId ?? '',
         username,
         website
       )
@@ -50,13 +50,13 @@ export const Website: PropertiesQuestion<{
     website: 'STRING',
   },
   defaults: ({ user }) => {
-    if (user.type === 'BUSINESS') {
+    if (user?.type === 'BUSINESS') {
       return {
-        website: user.legalEntity.contactDetails?.websites?.at(0) || '',
+        website: user?.legalEntity?.contactDetails?.websites?.at(0) || '',
       }
     }
     return {
-      website: user.contactDetails?.websites?.at(0) || '',
+      website: user?.contactDetails?.websites?.at(0) || '',
     }
   },
 }

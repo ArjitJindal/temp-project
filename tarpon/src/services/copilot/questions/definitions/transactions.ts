@@ -8,6 +8,7 @@ import {
 import {
   calculatePercentageBreakdown,
   humanReadablePeriod,
+  transactionPaymentIdentifierQuerySQL,
   Period,
   periodDefaults,
   periodVars,
@@ -25,7 +26,7 @@ export const transactionQuestion = (
 ): TableQuestion<Period> => ({
   type: 'TABLE',
   questionId,
-  categories: ['CONSUMER', 'BUSINESS'],
+  categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
   title,
   headers: [
     {
@@ -120,6 +121,7 @@ from
       `,
       {
         userId: ctx.userId,
+        ...ctx.paymentIdentifier,
         ...sqlPeriod(period),
       },
       page,
@@ -155,7 +157,7 @@ from
         total,
       },
       summary: `There have been ${total} transactions for ${
-        ctx.username
+        ctx.humanReadableId
       } ${humanReadablePeriod(
         period
       )}.  For the transactions, ${calculatePercentageBreakdown(
@@ -174,7 +176,12 @@ from
 const UserTransactions = transactionQuestion(
   COPILOT_QUESTIONS.USER_TRANSACTIONS,
   async (ctx) => `Transactions for user ${ctx.userId}`,
-  (_) => `WHERE (t.originUserId = :userId or t.destinationUserId = :userId)`
+  (ctx) => {
+    const condition = ctx.userId
+      ? `t.originUserId = :userId or t.destinationUserId = :userId`
+      : transactionPaymentIdentifierQuerySQL(ctx.paymentIdentifier)
+    return `WHERE (${condition})`
+  }
 )
 
 const AlertTransactions = transactionQuestion(

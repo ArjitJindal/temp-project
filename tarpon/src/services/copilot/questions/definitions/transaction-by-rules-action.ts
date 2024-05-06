@@ -12,19 +12,26 @@ import {
   periodDefaults,
   periodVars,
   matchPeriod,
+  casePaymentIdentifierQuery,
 } from '@/services/copilot/questions/definitions/util'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
   type: 'STACKED_BARCHART',
   questionId: COPILOT_QUESTIONS.TRANSACTIONS_BY_RULE_ACTION,
-  categories: ['CONSUMER', 'BUSINESS'],
+  categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
   title: async (_, vars) => {
     return `Transactions by rule action ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
+  aggregationPipeline: async (
+    { tenantId, userId, paymentIdentifier, humanReadableId },
+    period
+  ) => {
     const client = await getMongoDbClient()
     const db = client.db()
+    const condition = userId
+      ? [{ originUserId: userId }, { destinationUserId: userId }]
+      : casePaymentIdentifierQuery(paymentIdentifier)
 
     const results = await db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
@@ -35,14 +42,7 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
       >([
         {
           $match: {
-            $or: [
-              {
-                originUserId: userId,
-              },
-              {
-                destinationUserId: userId,
-              },
-            ],
+            $or: condition,
             ...matchPeriod('timestamp', period),
           },
         },
@@ -108,7 +108,9 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
       ),
       summary: `There have been ${
         results.length
-      } transactions processed for ${username} ${humanReadablePeriod(period)}.`,
+      } transactions processed for ${humanReadableId} ${humanReadablePeriod(
+        period
+      )}.`,
     }
   },
   variableOptions: {

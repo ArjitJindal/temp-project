@@ -16,7 +16,7 @@ export const LinkedUsers: TableQuestion<any> = {
   },
   aggregationPipeline: async ({ tenantId, userId, username }) => {
     const linker = new LinkerService(tenantId)
-    const userIds = await linker.linkedUsers(userId)
+    const userIds = await linker.linkedUsers(userId ?? '')
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db

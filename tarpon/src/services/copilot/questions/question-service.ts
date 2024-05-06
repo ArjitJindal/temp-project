@@ -181,16 +181,23 @@ export class QuestionService {
     a: Alert
   ): Promise<Omit<QuestionResponse, 'createdAt' | 'createdById'>> {
     const userId =
-      c.caseUsers?.destination?.userId || c.caseUsers?.origin?.userId
+      (c.caseUsers?.destination?.userId || c.caseUsers?.origin?.userId) ?? ''
     const user = (c.caseUsers?.destination || c.caseUsers?.origin) as
       | InternalConsumerUser
       | InternalBusinessUser
+    const paymentIdentifier =
+      c.paymentDetails?.origin || c.paymentDetails?.destination
     const username = getUserName(user)
     const tenantId = getContext()?.tenantId
     const caseId = c.caseId
     const alertId = a.alertId
 
-    if (!tenantId || !userId || !caseId || !alertId || !user) {
+    if (
+      !tenantId ||
+      !caseId ||
+      !alertId ||
+      (!userId && !user && !paymentIdentifier)
+    ) {
       throw new Error('Could not get context for question')
     }
 
@@ -211,6 +218,8 @@ export class QuestionService {
       username,
       accountService: this.accountsService,
       convert,
+      paymentIdentifier,
+      humanReadableId: username ?? 'payment details',
     }
 
     const partitionKeyId = DynamoDbKeys.CACHE_QUESTION_RESULT(

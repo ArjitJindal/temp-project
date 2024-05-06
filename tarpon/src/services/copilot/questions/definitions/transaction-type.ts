@@ -5,6 +5,7 @@ import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import {
   humanReadablePeriod,
   matchPeriod,
+  casePaymentIdentifierQuery,
   Period,
   periodDefaults,
   periodVars,
@@ -14,26 +15,25 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 export const TransactionType: BarchartQuestion<Period> = {
   type: 'BARCHART',
   questionId: COPILOT_QUESTIONS.TRANSACTIONS_BY_TYPE,
-  categories: ['CONSUMER', 'BUSINESS'],
+  categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
   title: async (_, vars) => {
     return `Transactions by type ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
+  aggregationPipeline: async (
+    { tenantId, userId, humanReadableId, paymentIdentifier },
+    period
+  ) => {
     const client = await getMongoDbClient()
     const db = client.db()
+    const condition = userId
+      ? [{ originUserId: userId }, { destinationUserId: userId }]
+      : casePaymentIdentifierQuery(paymentIdentifier)
     const results = await db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .aggregate<{ _id: string; count: number }>([
         {
           $match: {
-            $or: [
-              {
-                originUserId: userId,
-              },
-              {
-                destinationUserId: userId,
-              },
-            ],
+            $or: condition,
             ...matchPeriod('timestamp', period),
           },
         },
@@ -52,7 +52,9 @@ export const TransactionType: BarchartQuestion<Period> = {
       summary: `There have been ${results.reduce((acc, curr) => {
         acc += curr.count
         return acc
-      }, 0)} transactions for ${username} ${humanReadablePeriod(period)}.`,
+      }, 0)} transactions for ${humanReadableId} ${humanReadablePeriod(
+        period
+      )}.`,
     }
   },
   variableOptions: {

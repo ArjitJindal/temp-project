@@ -31,6 +31,7 @@ import UserLink from '@/components/UserLink';
 import Spinner from '@/components/library/Spinner';
 import { useElementSize, useElementSizeChangeEffect } from '@/utils/browser';
 import { useIsChanged } from '@/utils/hooks';
+import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
   alertId: string;
@@ -146,14 +147,28 @@ export default function InvestigativeCoPilot(props: Props) {
 
               const caseUserName = getUserName(user as TableUser | undefined);
               const caseUserId = caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '';
+              const paymentDetails =
+                caseItem.paymentDetails?.origin ?? caseItem.paymentDetails?.destination;
 
               return (
                 <div className={s.alertInfo}>
-                  <Form.Layout.Label title={'User'}>{caseUserName}</Form.Layout.Label>
                   {user && 'type' in user && (
-                    <Form.Layout.Label title={'User ID'}>
-                      <UserLink user={user}>{caseUserId}</UserLink>
-                    </Form.Layout.Label>
+                    <>
+                      <Form.Layout.Label title={'User'}>{caseUserName}</Form.Layout.Label>
+                      <Form.Layout.Label title={'User ID'}>
+                        <UserLink user={user}>{caseUserId}</UserLink>
+                      </Form.Layout.Label>
+                    </>
+                  )}
+                  {paymentDetails && (
+                    <>
+                      <Form.Layout.Label title={'Payment method'}>
+                        {humanizeAuto(paymentDetails.method)}
+                      </Form.Layout.Label>
+                      <Form.Layout.Label title={'Payment method ID'}>
+                        {caseItem.paymentMethodId ?? '-'}
+                      </Form.Layout.Label>
+                    </>
                   )}
                   <Form.Layout.Label title={'Alert ID'}>
                     <Id

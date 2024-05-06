@@ -5,6 +5,7 @@ import {
   currencyVars,
   GRANULARITIES,
   humanReadablePeriod,
+  transactionPaymentIdentifierQuerySQL,
   Period,
   periodDefaults,
   periodVars,
@@ -32,7 +33,7 @@ export const transactionAggregationQuestion = (
   type: 'TIME_SERIES',
   questionId: questionId,
   version: 2,
-  categories: ['CONSUMER', 'BUSINESS'],
+  categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
   title: async (_, vars) => {
     return `${title} ${humanReadablePeriod(vars)}`
   },
@@ -41,6 +42,10 @@ export const transactionAggregationQuestion = (
     { granularity, currency, showUserLimit, ...period }
   ) => {
     const sqlExpression = timeXAxis(granularity)
+    const condition = ctx.userId
+      ? `t.originUserId = :userId OR t.destinationUserId = :userId`
+      : transactionPaymentIdentifierQuerySQL(ctx.paymentIdentifier)
+
     const rows = await executeSql<{
       timestamp: Date
       date: string
@@ -75,8 +80,7 @@ FROM
   LEFT JOIN transactions t ON date_trunc('${sqlExpression}', t.date) = ds.period_start
   ${joins}
   AND (
-    t.originUserId = :userId
-    OR t.destinationUserId = :userId
+    ${condition}
   )
 GROUP BY
   t.date
@@ -87,6 +91,7 @@ ORDER BY
         userId: ctx.userId,
         from: dayjs(period.from).format('YYYY-MM-DD'),
         to: dayjs(period.to).format('YYYY-MM-DD'),
+        ...ctx.paymentIdentifier,
       }
     )
 
@@ -102,19 +107,19 @@ ORDER BY
       let limit
       switch (granularity) {
         case 'Daily':
-          limit = ctx.user.transactionLimits?.maximumDailyTransactionLimit
+          limit = ctx.user?.transactionLimits?.maximumDailyTransactionLimit
           break
         case 'Weekly':
-          limit = ctx.user.transactionLimits?.maximumWeeklyTransactionLimit
+          limit = ctx.user?.transactionLimits?.maximumWeeklyTransactionLimit
           break
         case 'Monthly':
-          limit = ctx.user.transactionLimits?.maximumMonthlyTransactionLimit
+          limit = ctx.user?.transactionLimits?.maximumMonthlyTransactionLimit
           break
         case 'Quarterly':
-          limit = ctx.user.transactionLimits?.maximumQuarterlyTransactionLimit
+          limit = ctx.user?.transactionLimits?.maximumQuarterlyTransactionLimit
           break
         case 'Yearly':
-          limit = ctx.user.transactionLimits?.maximumYearlyTransactionLimit
+          limit = ctx.user?.transactionLimits?.maximumYearlyTransactionLimit
           break
       }
       if (limit && values.length > 0) {
