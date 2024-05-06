@@ -1773,7 +1773,7 @@ const getTestCustomerUserSuccess = async () => {
           dataCallback: (_, data, reject) => {
             if (
               !data.validationErrors.startsWith(
-                '[instance value ("AB") not found in enum (possible values:'
+                '[instance value ("AA") not found in enum (possible values:'
               )
             ) {
               reject('Validation error does not match')
