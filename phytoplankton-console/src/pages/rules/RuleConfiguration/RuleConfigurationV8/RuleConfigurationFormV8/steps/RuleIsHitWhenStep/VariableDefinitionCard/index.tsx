@@ -65,6 +65,7 @@ type EditingAggVariable = { type: 'aggregation'; variable: FormRuleAggregationVa
 type EditingEntityVariable = { type: 'entity'; variable?: RuleEntityVariableInUse; index?: number };
 
 interface RuleAggregationVariablesEditorProps {
+  readOnly?: boolean;
   entityVariables: RuleEntityVariableInUse[] | undefined;
   aggregationVariables: RuleAggregationVariable[] | undefined;
   onChange: (value: {
@@ -74,6 +75,7 @@ interface RuleAggregationVariablesEditorProps {
 }
 
 const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
+  readOnly,
   entityVariables,
   aggregationVariables,
   onChange,
@@ -240,7 +242,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
                       actions={[
                         {
                           key: 'edit',
-                          icon: <PencilLineIcon />,
+                          icon: <PencilLineIcon className={s.editVariableIcon} />,
                           action: () => handleEdit(entityVar.key, index),
                         },
                         {
@@ -270,7 +272,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
                         actions={[
                           {
                             key: 'edit',
-                            icon: <PencilLineIcon />,
+                            icon: <PencilLineIcon className={s.editVariableIcon} />,
                             action: () => handleEdit(aggVar.key),
                           },
                           {
@@ -300,6 +302,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
           isNew={isNewVariable}
           entityVariables={entityVariableDefinitions}
           entityVariablesInUse={entityVariables ?? []}
+          readOnly={readOnly}
           onUpdate={handleUpdateEntityVariable}
           onCancel={handleCancelEditVariable}
         />
@@ -309,6 +312,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
           variable={editingVariable.variable}
           isNew={isNewVariable}
           entityVariables={entityVariableDefinitions}
+          readOnly={readOnly}
           onUpdate={handleUpdateAggVariable}
           onCancel={handleCancelEditVariable}
         />

@@ -459,6 +459,18 @@ export function ruleVariantsTest(
       withFeatureHook(['RULES_ENGINE_V8'])
       jestCallback()
     })
+    describe('database:mongodb; V8', () => {
+      withFeatureHook(['RULES_ENGINE_V8'])
+      beforeAll(() => {
+        process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ = 'true'
+        process.env.__INTERNAL_MONGODB_MIRROR__ = 'true'
+      })
+      afterAll(() => {
+        process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ = ''
+        process.env.__INTERNAL_MONGODB_MIRROR__ = ''
+      })
+      jestCallback()
+    })
   }
   describe('database:dynamodb; rule-aggregation:off', () => {
     beforeAll(() => {

@@ -9,6 +9,8 @@ import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import * as Card from '@/components/ui/Card';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
+import Label from '@/components/library/Label';
+import TextArea from '@/components/library/TextArea';
 
 export interface FormValues {
   ruleId: string | undefined;
@@ -16,6 +18,8 @@ export interface FormValues {
   ruleDescription: string | undefined;
   ruleNature: RuleNature;
   ruleLabels: RuleLabels[];
+  simulationIterationName?: string;
+  simulationIterationDescription?: string;
 }
 
 export const INITIAL_VALUES: Partial<FormValues> = {
@@ -28,10 +32,11 @@ export const INITIAL_VALUES: Partial<FormValues> = {
 interface Props {
   rule?: Rule;
   newRuleId?: string;
+  simulationMode?: boolean;
 }
 
 export default function BasicDetailsStep(props: Props) {
-  const { rule, newRuleId } = props;
+  const { rule, newRuleId, simulationMode } = props;
   const [ruleNature, setRuleNature] = useState<RuleNature | undefined>(
     rule?.defaultNature ?? INITIAL_VALUES.ruleNature,
   );
@@ -41,9 +46,16 @@ export default function BasicDetailsStep(props: Props) {
   );
 
   return (
-    <Card.Root>
-      <Card.Section>
-        <div className={s.root}>
+    <div className={s.root}>
+      {simulationMode && (
+        <Card.Root>
+          <Card.Section>
+            <SimulationIterationDetails />
+          </Card.Section>
+        </Card.Root>
+      )}
+      <Card.Root>
+        <Card.Section>
           <PropertyListLayout>
             <InputField<FormValues, 'ruleId'>
               name={'ruleId'}
@@ -112,8 +124,37 @@ export default function BasicDetailsStep(props: Props) {
               )}
             </InputField>
           </PropertyListLayout>
-        </div>
-      </Card.Section>
-    </Card.Root>
+        </Card.Section>
+      </Card.Root>
+    </div>
+  );
+}
+
+function SimulationIterationDetails<
+  T extends { simulationIterationName?: string; simulationIterationDescription?: string },
+>() {
+  return (
+    <>
+      <Label
+        label={'Simulation details'}
+        description={'Define the basic details for this simulation iteration'}
+      />
+      <PropertyListLayout>
+        <InputField<T, 'simulationIterationName'>
+          name={'simulationIterationName'}
+          label={'Iteration name'}
+          labelProps={{ required: { value: false, showHint: true } }}
+        >
+          {(inputProps) => <TextInput {...inputProps} placeholder={'Enter iteration name'} />}
+        </InputField>
+        <InputField<T, 'simulationIterationDescription'>
+          name={'simulationIterationDescription'}
+          label={'Description'}
+          labelProps={{ required: { value: false, showHint: true } }}
+        >
+          {(inputProps) => <TextArea {...inputProps} placeholder={'Enter iteration description'} />}
+        </InputField>
+      </PropertyListLayout>
+    </>
   );
 }

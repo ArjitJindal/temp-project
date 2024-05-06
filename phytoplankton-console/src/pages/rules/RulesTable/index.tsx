@@ -298,7 +298,7 @@ export const RulesTable: React.FC<Props> = (props) => {
                   onClick={props.onCreateRule}
                   testName="create-scenario-button"
                 >
-                  Create rule
+                  {simulationMode ? 'Simulate rule' : 'Create rule'}
                 </Button>
               ),
             ]

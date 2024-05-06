@@ -21,7 +21,6 @@ import { DEFAULT_DATE_TIME_FORMAT, dayjs } from '@/utils/dayjs';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { makeUrl } from '@/utils/routing';
 import { useHasPermissions } from '@/utils/user-utils';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Confirm from '@/components/utils/Confirm';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
@@ -63,7 +62,6 @@ export const RuleInstanceInfo = (props: Props) => {
       : 0;
   const navigate = useNavigate();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
-  const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const api = useApi();
   const [isSimulationModeEnabled, setIsSimulationModeEnabled] = useLocalStorageState(
     'SIMULATION_RULES',
@@ -227,7 +225,7 @@ export const RuleInstanceInfo = (props: Props) => {
               type="TETRIARY"
               icon={<SimulationIcon />}
               onClick={() => onSimulateRule(ruleInstance)}
-              isDisabled={!canSimulate(isV8Enabled, ruleInstance)}
+              isDisabled={!canSimulate(ruleInstance)}
               testName="rule-instance-page-simulate-rule-button"
             >
               Simulate rule

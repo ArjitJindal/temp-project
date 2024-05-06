@@ -72,12 +72,13 @@ export function SimulationHistoryTable() {
             title: 'Rule ID',
             sorting: true,
             defaultWidth: 300,
-            value: (item) => item.defaultRuleInstance,
+            value: (item) => item,
             type: {
-              render: (ruleInstance) => (
+              render: (item) => (
                 <>
-                  {ruleInstance?.ruleId} <br />
-                  {ruleInstance?.ruleNameAlias}
+                  {item?.defaultRuleInstance?.ruleId || 'RC'} <br />
+                  {item?.defaultRuleInstance?.ruleNameAlias ||
+                    item?.iterations[0]?.parameters?.ruleInstance?.ruleNameAlias}
                 </>
               ),
             },
@@ -85,12 +86,14 @@ export function SimulationHistoryTable() {
           helper.derived({
             title: 'Description',
             sorting: true,
-            value: (item) => item.defaultRuleInstance,
+            value: (item) => item,
             type: {
-              render: (ruleInstance) => (
+              render: (item) => (
                 <span>
-                  {ruleInstance?.ruleDescriptionAlias ||
-                    (ruleInstance?.ruleId && rules?.[ruleInstance.ruleId]?.description) ||
+                  {item?.defaultRuleInstance?.ruleDescriptionAlias ||
+                    (item?.defaultRuleInstance?.ruleId &&
+                      rules?.[item?.defaultRuleInstance.ruleId]?.description) ||
+                    item?.iterations[0]?.parameters?.ruleInstance?.ruleDescriptionAlias ||
                     '-'}
                 </span>
               ),

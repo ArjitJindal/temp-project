@@ -785,6 +785,7 @@ export class RulesEngineService {
       database === 'MONGODB' || process.env.__INTERNAL_MONGODB_MIRROR__
         ? 'MONGODB'
         : 'DYNAMODB'
+    this.ruleLogicEvaluator.setMode(mode)
 
     // NOTE: We allow having origin/destination ID in a transaction even if the user with the
     // user ID is not created (FR-1331). When running the rules, we identify a user either using
@@ -1019,33 +1020,37 @@ export class RulesEngineService {
           publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
           logger.info(`Completed rule`)
 
-          await Promise.all(
-            ruleInstance.logicAggregationVariables?.flatMap(async (aggVar) => {
-              const hash = getAggVarHash(aggVar)
-              if (this.updatedAggregationVariables.has(hash)) {
-                return
-              }
+          if (hasFeature('RULES_ENGINE_V8')) {
+            await Promise.all(
+              ruleInstance.logicAggregationVariables?.flatMap(
+                async (aggVar) => {
+                  const hash = getAggVarHash(aggVar)
+                  if (this.updatedAggregationVariables.has(hash)) {
+                    return
+                  }
 
-              this.updatedAggregationVariables.add(hash)
+                  this.updatedAggregationVariables.add(hash)
 
-              return [
-                aggVar.transactionDirection !== 'RECEIVING'
-                  ? await this.ruleLogicEvaluator.updateAggregationVariable(
-                      aggVar,
-                      { transaction: options.transaction },
-                      'origin'
-                    )
-                  : undefined,
-                aggVar.transactionDirection !== 'SENDING'
-                  ? await this.ruleLogicEvaluator.updateAggregationVariable(
-                      aggVar,
-                      { transaction: options.transaction },
-                      'destination'
-                    )
-                  : undefined,
-              ].filter(Boolean)
-            }) ?? []
-          )
+                  return [
+                    aggVar.transactionDirection !== 'RECEIVING'
+                      ? await this.ruleLogicEvaluator.updateAggregationVariable(
+                          aggVar,
+                          { transaction: options.transaction },
+                          'origin'
+                        )
+                      : undefined,
+                    aggVar.transactionDirection !== 'SENDING'
+                      ? await this.ruleLogicEvaluator.updateAggregationVariable(
+                          aggVar,
+                          { transaction: options.transaction },
+                          'destination'
+                        )
+                      : undefined,
+                  ].filter(Boolean)
+                }
+              ) ?? []
+            )
+          }
 
           const transactionAggregationTasks =
             ruleClassInstance instanceof TransactionAggregationRule

@@ -538,6 +538,11 @@ export function useCreateRuleInstance(
   );
 }
 
+export function useShouldUseV8Configuration(rule?: Rule, ruleInstance?: RuleInstance): boolean {
+  const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
+  return isV8Enabled && (!rule || isV8RuleInstance(isV8Enabled, ruleInstance));
+}
+
 export function isV8RuleInstance(v8Enabled: boolean, ruleInstance?: RuleInstance | null): boolean {
   return v8Enabled && ruleInstance && (ruleInstance.logic || ruleInstance.riskLevelLogic);
 }

@@ -49,6 +49,7 @@ interface AggregationVariableFormProps {
   variable: FormRuleAggregationVariable;
   isNew: boolean;
   entityVariables: RuleEntityVariable[];
+  readOnly?: boolean;
   onUpdate: (newAggregationVariable: RuleAggregationVariable) => void;
   onCancel: () => void;
 }
@@ -79,6 +80,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
   variable,
   entityVariables,
   isNew,
+  readOnly,
   onUpdate,
   onCancel,
 }) => {
@@ -231,6 +233,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
         onCancel();
       }}
       width="L"
+      hideOk={readOnly}
       onOk={() => {
         onUpdate(formValues as RuleAggregationVariable);
         setIsOpen(false);

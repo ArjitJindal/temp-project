@@ -38,6 +38,7 @@ interface EntityVariableFormProps {
   entityVariables: RuleEntityVariable[];
   entityVariablesInUse: RuleEntityVariableInUse[];
   isNew: boolean;
+  readOnly?: boolean;
   onUpdate: (newEntityVariable: RuleEntityVariableInUse) => void;
   onCancel: () => void;
 }
@@ -120,6 +121,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   entityVariables,
   entityVariablesInUse,
   isNew,
+  readOnly,
   onUpdate,
   onCancel,
 }) => {
@@ -271,6 +273,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             onUpdate({ key: formValues.variableKey, name: formValues.name });
           }
         }}
+        hideOk={readOnly}
         okText={isNew ? 'Add' : 'Update'}
         okProps={{ isDisabled: !formValues.variableKey }}
         disablePadding

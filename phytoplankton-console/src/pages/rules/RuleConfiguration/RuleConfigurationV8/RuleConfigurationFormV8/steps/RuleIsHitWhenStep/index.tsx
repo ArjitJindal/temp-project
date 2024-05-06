@@ -51,7 +51,7 @@ export const INITIAL_VALUES: Partial<RuleIsHitWhenStepFormValues> = {
   ruleAction: 'FLAG',
 };
 
-export default function RuleIsHitWhenStep() {
+export default function RuleIsHitWhenStep(props: { readOnly?: boolean }) {
   const aggVariablesFieldState = useFieldState<
     RuleIsHitWhenStepFormValues,
     'ruleLogicAggregationVariables'
@@ -76,6 +76,7 @@ export default function RuleIsHitWhenStep() {
   return (
     <div className={s.root}>
       <VariableDefinitionCard
+        readOnly={props.readOnly}
         entityVariables={entityVariablesFieldState.value}
         aggregationVariables={aggVariablesFieldState.value}
         onChange={(v) => {

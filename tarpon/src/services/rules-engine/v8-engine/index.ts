@@ -42,6 +42,8 @@ import {
   RuleVariableContext,
 } from '../v8-variables/types'
 import { getPaymentDetailsIdentifiersKey } from '../v8-variables/payment-details'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
+import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import {
   AggregationData,
   AggregationRepository,
@@ -60,6 +62,8 @@ import { getSQSClient } from '@/utils/sns-sqs-client'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
 import { RuleAggregationTimeWindow } from '@/@types/openapi-internal/RuleAggregationTimeWindow'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const sqs = getSQSClient()
 
@@ -67,6 +71,9 @@ type RuleData = {
   transaction: Transaction
   senderUser?: User | Business
   receiverUser?: User | Business
+}
+type AuxiliaryIndexTransactionWithDirection = AuxiliaryIndexTransaction & {
+  direction?: 'origin' | 'destination'
 }
 
 export const getJsonLogicEngine = memoizeOne(
@@ -148,18 +155,29 @@ const getDataLoader = memoizeOne(
   (a, b) => isEqual(a.slice(0, 2), b.slice(0, 2))
 )
 
+type Mode = 'MONGODB' | 'DYNAMODB'
 export class RuleJsonLogicEvaluator {
   private tenantId: string
   private dynamoDb: DynamoDBDocumentClient
   private aggregationRepository: AggregationRepository
+  private mode: Mode
 
-  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
+  constructor(
+    tenantId: string,
+    dynamoDb: DynamoDBDocumentClient,
+    mode: Mode = 'DYNAMODB'
+  ) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
     this.aggregationRepository = new AggregationRepository(
       this.tenantId,
       this.dynamoDb
     )
+    this.mode = mode
+  }
+
+  public setMode(mode: Mode) {
+    this.mode = mode
   }
 
   public async evaluate(
@@ -347,6 +365,10 @@ export class RuleJsonLogicEvaluator {
     data: RuleData,
     direction: 'origin' | 'destination'
   ) {
+    if (this.mode !== 'DYNAMODB') {
+      return
+    }
+
     const userKeyId = this.getUserKeyId(
       data.transaction,
       direction,
@@ -381,35 +403,74 @@ export class RuleJsonLogicEvaluator {
     direction: 'origin' | 'destination',
     userKeyId: string
   ) {
+    if (this.mode !== 'DYNAMODB') {
+      return
+    }
+
     logger.info('Rebuilding aggregation...')
-    const aggregator = getRuleVariableAggregator(
-      aggregationVariable.aggregationFunc
-    )
-    const transactionRepository = new DynamoDbTransactionRepository(
-      this.tenantId,
-      this.dynamoDb
-    )
     const { afterTimestamp, beforeTimestamp } = this.getTimeRange(
       ruleData.transaction.timestamp,
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
+    const aggregationResult = await this.getRebuiltAggregationVariableResult(
+      aggregationVariable,
+      {
+        userId:
+          direction === 'origin'
+            ? ruleData.transaction.originUserId
+            : ruleData.transaction.destinationUserId,
+        paymentDetails:
+          direction === 'origin'
+            ? ruleData.transaction.originPaymentDetails
+            : ruleData.transaction.destinationPaymentDetails,
+      },
+      {
+        afterTimestamp,
+        beforeTimestamp,
+      }
+    )
+    await this.aggregationRepository.rebuildUserTimeAggregations(
+      userKeyId,
+      aggregationVariable,
+      aggregationResult
+    )
+    await this.aggregationRepository.setAggregationVariableReady(
+      aggregationVariable,
+      userKeyId
+    )
+    logger.info('Rebuilt aggregation')
+  }
 
+  private async getRebuiltAggregationVariableResult(
+    aggregationVariable: RuleAggregationVariable,
+    userIdentifier: {
+      userId: string | undefined
+      paymentDetails: PaymentDetails | undefined
+    },
+    timeRange: { afterTimestamp: number; beforeTimestamp: number }
+  ): Promise<{ [time: string]: AggregationData }> {
+    const aggregator = getRuleVariableAggregator(
+      aggregationVariable.aggregationFunc
+    )
     const aggregationGranularity =
       this.getAggregationGranularity(aggregationVariable)
 
     const fieldsToFetch = this.getTransactionFieldsToFetch(aggregationVariable)
+    const transactionRepository =
+      this.mode === 'DYNAMODB'
+        ? new DynamoDbTransactionRepository(this.tenantId, this.dynamoDb)
+        : new MongoDbTransactionRepository(
+            this.tenantId,
+            await getMongoDbClient()
+          )
     const generator = getTransactionsGenerator(
-      direction == 'origin'
-        ? ruleData.transaction.originUserId
-        : ruleData.transaction.destinationUserId,
-      direction == 'origin'
-        ? ruleData.transaction.originPaymentDetails
-        : ruleData.transaction.destinationPaymentDetails,
+      userIdentifier.userId,
+      userIdentifier.paymentDetails,
       transactionRepository,
       {
-        afterTimestamp,
-        beforeTimestamp,
+        afterTimestamp: timeRange.afterTimestamp,
+        beforeTimestamp: timeRange.beforeTimestamp,
         checkType:
           aggregationVariable.transactionDirection === 'SENDING'
             ? 'sending'
@@ -426,24 +487,34 @@ export class RuleJsonLogicEvaluator {
       [time: string]: AggregationData
     } = {}
     for await (const data of generator) {
-      const transactions = data.sendingTransactions.concat(
-        data.receivingTransactions
-      )
+      const transactions: AuxiliaryIndexTransactionWithDirection[] = [
+        ...data.sendingTransactions.map((tx) => ({
+          ...tx,
+          direction: 'origin' as const,
+        })),
+        ...data.receivingTransactions.map((tx) => ({
+          ...tx,
+          direction: 'destination' as const,
+        })),
+      ]
 
       // Filter transactions by filtersLogic
-      const targetTransactions: Transaction[] = []
+      const targetTransactions: AuxiliaryIndexTransactionWithDirection[] = []
       for (const transaction of transactions) {
         const isTransactionFiltered =
           await this.isDataIncludedInAggregationVariable(aggregationVariable, {
             transaction: transaction as Transaction,
           })
         if (isTransactionFiltered) {
-          targetTransactions.push(transaction as Transaction)
+          targetTransactions.push(transaction)
         }
       }
       // Update aggregation result
-      const txEntityVariable = getRuleVariableByKey(
-        this.getAggregationVarFieldKey(aggregationVariable, direction)
+      const sendingTxEntityVariable = getRuleVariableByKey(
+        this.getAggregationVarFieldKey(aggregationVariable, 'origin')
+      ) as TransactionRuleVariable
+      const receivingTxEntityVariable = getRuleVariableByKey(
+        this.getAggregationVarFieldKey(aggregationVariable, 'destination')
       ) as TransactionRuleVariable
       const txGroupByEntityVariable =
         aggregationVariable.aggregationGroupByFieldKey
@@ -461,18 +532,23 @@ export class RuleJsonLogicEvaluator {
         targetTransactions,
         async (groupTransactions) => {
           const aggregateValues = await Promise.all(
-            groupTransactions.map(async (transaction) => {
-              const entityVariable = txEntityVariable
-              const value = await entityVariable?.load(transaction, context)
-              const groupValue =
-                hasGroups && txGroupByEntityVariable
-                  ? await txGroupByEntityVariable.load(transaction, context)
-                  : undefined
-              return {
-                value,
-                groupValue,
+            groupTransactions.map(
+              async (transaction: AuxiliaryIndexTransactionWithDirection) => {
+                const entityVariable =
+                  transaction.direction === 'origin'
+                    ? sendingTxEntityVariable
+                    : receivingTxEntityVariable
+                const value = await entityVariable?.load(transaction, context)
+                const groupValue =
+                  hasGroups && txGroupByEntityVariable
+                    ? await txGroupByEntityVariable.load(transaction, context)
+                    : undefined
+                return {
+                  value,
+                  groupValue,
+                }
               }
-            })
+            )
           )
           const filteredAggregateValues = aggregateValues.filter((v) => {
             return !isNil(v.value) && (!hasGroups || !isNil(v.groupValue))
@@ -505,16 +581,7 @@ export class RuleJsonLogicEvaluator {
         }
       )
     }
-    await this.aggregationRepository.rebuildUserTimeAggregations(
-      userKeyId,
-      aggregationVariable,
-      timeAggregatedResult
-    )
-    await this.aggregationRepository.setAggregationVariableReady(
-      aggregationVariable,
-      userKeyId
-    )
-    logger.info('Rebuilt aggregation')
+    return timeAggregatedResult
   }
 
   public async updateAggregationVariable(
@@ -522,6 +589,10 @@ export class RuleJsonLogicEvaluator {
     data: RuleData,
     direction: 'origin' | 'destination'
   ) {
+    if (this.mode !== 'DYNAMODB') {
+      return
+    }
+
     const userKeyId = this.getUserKeyId(
       data.transaction,
       direction,
@@ -580,6 +651,10 @@ export class RuleJsonLogicEvaluator {
     direction: 'origin' | 'destination',
     userKeyId: string
   ) {
+    if (this.mode !== 'DYNAMODB') {
+      return
+    }
+
     logger.info('Updating aggregation...')
     const isNewDataFiltered = await this.isDataIncludedInAggregationVariable(
       aggregationVariable,
@@ -730,15 +805,41 @@ export class RuleJsonLogicEvaluator {
     const aggregationGranularity =
       this.getAggregationGranularity(aggregationVariable)
 
-    const aggData =
-      (await this.aggregationRepository.getUserRuleTimeAggregations(
-        userKeyId,
+    let aggData: Array<{ time: string } & AggregationData> = []
+    if (this.mode === 'DYNAMODB') {
+      // If the mode is DYNAMODB, we fetch the pre-built aggregation data
+      aggData =
+        (await this.aggregationRepository.getUserRuleTimeAggregations(
+          userKeyId,
+          aggregationVariable,
+          afterTimestamp,
+          beforeTimestamp,
+          aggregationGranularity
+        )) ?? []
+    } else {
+      // If the mode is MONGODB, we rebuild the fresh aggregation data (without persisting the aggregation data)
+      const rebuiltAggData = await this.getRebuiltAggregationVariableResult(
         aggregationVariable,
-        afterTimestamp,
-        beforeTimestamp,
-        aggregationGranularity
-      )) ?? []
-
+        {
+          userId:
+            direction === 'origin'
+              ? data.transaction.originUserId
+              : data.transaction.destinationUserId,
+          paymentDetails:
+            direction === 'origin'
+              ? data.transaction.originPaymentDetails
+              : data.transaction.destinationPaymentDetails,
+        },
+        {
+          afterTimestamp,
+          beforeTimestamp,
+        }
+      )
+      aggData = Object.entries(rebuiltAggData).map(([time, value]) => ({
+        time,
+        ...value,
+      }))
+    }
     const aggregator = getRuleVariableAggregator(aggregationFunc)
     const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
     const newGroupValue = aggregationVariable.aggregationGroupByFieldKey

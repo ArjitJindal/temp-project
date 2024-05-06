@@ -1,8 +1,13 @@
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect, Ref } from 'react';
 import { cloneDeep, merge } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import { usePrevious } from 'ahooks';
-import s from '../style.module.less';
+import RuleConfigurationFormV8, {
+  RuleConfigurationFormV8Values,
+  STEPS,
+} from '../RuleConfigurationV8/RuleConfigurationFormV8';
+import s from './style.module.less';
+import { SimulationStatistics } from './SimulationStatistics';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import RuleConfigurationForm, {
   RULE_CONFIGURATION_STEPS,
@@ -14,6 +19,8 @@ import {
   useUpdateRuleInstance,
   useCreateRuleInstance,
   ruleInstanceToFormValues,
+  ruleInstanceToFormValuesV8,
+  formValuesToRuleInstanceV8,
 } from '@/pages/rules/utils';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
@@ -25,7 +32,6 @@ import { isSuccess } from '@/utils/asyncResource';
 import * as Card from '@/components/ui/Card';
 import { LoadingCard } from '@/components/ui/Card';
 import Label from '@/components/library/Label';
-import { SimulationStatistics } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/SimulationStatistics';
 import { H4 } from '@/components/ui/Typography';
 import Tooltip from '@/components/library/Tooltip';
 import AddLineIcon from '@/components/ui/icons/Remix/system/add-line.react.svg';
@@ -63,6 +69,7 @@ function allIterationsCompleted(iterations: SimulationIteration[]): boolean {
 }
 
 export interface Props {
+  v8Mode?: boolean;
   rule?: Rule;
   ruleInstance: RuleInstance;
   jobId?: string;
@@ -71,18 +78,12 @@ export interface Props {
 }
 
 export function RuleConfigurationSimulation(props: Props) {
-  const {
-    // isVisible,
-    ruleInstance,
-    // onChangeVisibility,
-    onCancel,
-    onRuleInstanceUpdated,
-    rule,
-  } = props;
+  const { v8Mode, ruleInstance, onCancel, onRuleInstanceUpdated, rule } = props;
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const [showValidationError, setShowValidationError] = useState(false);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
-  const [activeStepKey, setActiveStepKey] = useState(RULE_CONFIGURATION_STEPS[0]);
+  const steps = v8Mode ? STEPS : RULE_CONFIGURATION_STEPS;
+  const [activeStepKey, setActiveStepKey] = useState(steps[0]);
   const [newIterations, setNewIterations] = useState<SimulationBeaconParameters[]>([
     {
       ...DEFAULT_ITERATION,
@@ -91,10 +92,13 @@ export function RuleConfigurationSimulation(props: Props) {
   ]);
   const [createdJobId, setCreatedJobId] = useState<string | undefined>();
   const jobId = useMemo(() => createdJobId ?? props.jobId, [createdJobId, props.jobId]);
-  const activeStepIndex = RULE_CONFIGURATION_STEPS.findIndex((key) => key === activeStepKey);
-  const formRef1 = useRef<FormRef<RuleConfigurationFormValues>>(null);
-  const formRef2 = useRef<FormRef<RuleConfigurationFormValues>>(null);
-  const formRef3 = useRef<FormRef<RuleConfigurationFormValues>>(null);
+  const activeStepIndex = steps.findIndex((key) => key === activeStepKey);
+  const formRef1 =
+    useRef<FormRef<RuleConfigurationFormValues | RuleConfigurationFormV8Values>>(null);
+  const formRef2 =
+    useRef<FormRef<RuleConfigurationFormValues | RuleConfigurationFormV8Values>>(null);
+  const formRef3 =
+    useRef<FormRef<RuleConfigurationFormValues | RuleConfigurationFormV8Values>>(null);
   const iterationFormRefs = useMemo(
     () => [formRef1, formRef2, formRef3],
     [formRef1, formRef2, formRef3],
@@ -102,20 +106,31 @@ export function RuleConfigurationSimulation(props: Props) {
   const syncFormValues = useCallback(() => {
     const updatedIterations = newIterations.map((iteration, i) => {
       const formValues = iterationFormRefs[i].current?.getValues();
-      return formValues
-        ? {
-            ...iteration,
-            name: formValues.basicDetailsStep.simulationIterationName || '',
-            description: formValues.basicDetailsStep.simulationIterationDescription || '',
-            ruleInstance: iterationFormRefs[i].current
-              ? formValuesToRuleInstance(ruleInstance, formValues, isRiskLevelsEnabled)
-              : iteration.ruleInstance ?? ruleInstance,
-          }
-        : iteration;
+      if (!formValues) {
+        return iteration;
+      }
+      return {
+        ...iteration,
+        name: formValues.basicDetailsStep.simulationIterationName || '',
+        description: formValues.basicDetailsStep.simulationIterationDescription || '',
+        ruleInstance: iterationFormRefs[i].current
+          ? v8Mode
+            ? formValuesToRuleInstanceV8(
+                ruleInstance,
+                formValues as RuleConfigurationFormV8Values,
+                isRiskLevelsEnabled,
+              )
+            : formValuesToRuleInstance(
+                ruleInstance,
+                formValues as RuleConfigurationFormValues,
+                isRiskLevelsEnabled,
+              )
+          : iteration.ruleInstance ?? ruleInstance,
+      };
     });
     setNewIterations(updatedIterations);
     return updatedIterations;
-  }, [isRiskLevelsEnabled, iterationFormRefs, newIterations, ruleInstance]);
+  }, [isRiskLevelsEnabled, iterationFormRefs, newIterations, ruleInstance, v8Mode]);
   const handleDuplicate = useCallback(() => {
     const newIterations = syncFormValues();
     const activeIteration = newIterations[activeTabIndex];
@@ -185,7 +200,9 @@ export function RuleConfigurationSimulation(props: Props) {
     const invalidIteration = newIterations.find(
       (iteration) =>
         !formRef.current?.validate(
-          ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
+          v8Mode
+            ? ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance)
+            : ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
         ),
     );
     if (invalidIteration) {
@@ -202,6 +219,7 @@ export function RuleConfigurationSimulation(props: Props) {
     iterationFormRefs,
     startSimulationMutation,
     syncFormValues,
+    v8Mode,
   ]);
 
   // const prevIsVisible = usePrevious(isVisible);
@@ -236,16 +254,14 @@ export function RuleConfigurationSimulation(props: Props) {
     const updatedIterations = newIterations.filter((_, i) => i !== index);
     setNewIterations(updatedIterations);
     updatedIterations.forEach((iteration, i) => {
-      const formValues = ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance);
-      if (formValues)
-        iterationFormRefs[i].current?.setValues({
-          ...formValues,
-          basicDetailsStep: {
-            ...formValues.basicDetailsStep,
-            simulationIterationName: iteration.name,
-            simulationIterationDescription: iteration.description,
-          },
-        });
+      const formValues = v8Mode
+        ? ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance)
+        : ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance);
+      if (formValues) {
+        formValues.basicDetailsStep.simulationIterationName = iteration.name;
+        formValues.basicDetailsStep.simulationIterationDescription = iteration.description;
+        iterationFormRefs[i].current?.setValues(formValues);
+      }
     });
     setActiveTabIndex(Math.max(0, activeTabIndex - 1));
   };
@@ -300,26 +316,48 @@ export function RuleConfigurationSimulation(props: Props) {
                     <H4>Changed rule parameters</H4>
                   </div>
                 )}
-                <RuleConfigurationForm
-                  key={iteration.ruleInstance?.ruleId}
-                  readOnly={Boolean(jobId)}
-                  ref={iterationFormRefs[i]}
-                  rule={rule}
-                  formInitialValues={merge(
-                    ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
-                    {
-                      basicDetailsStep: {
-                        simulationIterationName: iteration.name,
-                        simulationIterationDescription: iteration.description,
+                {v8Mode ? (
+                  <RuleConfigurationFormV8
+                    ref={iterationFormRefs[i] as Ref<FormRef<RuleConfigurationFormV8Values>>}
+                    rule={rule}
+                    formInitialValues={merge(
+                      ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance),
+                      {
+                        basicDetailsStep: {
+                          simulationIterationName: iteration.name,
+                          simulationIterationDescription: iteration.description,
+                        },
                       },
-                    },
-                  )}
-                  simulationMode={true}
-                  activeStepKey={activeStepKey}
-                  showValidationError={showValidationError}
-                  onSubmit={() => {}}
-                  onActiveStepKeyChange={setActiveStepKey}
-                />
+                    )}
+                    readOnly={Boolean(jobId)}
+                    simulationMode={true}
+                    activeStepKey={activeStepKey}
+                    onSubmit={() => {}}
+                    onActiveStepKeyChange={setActiveStepKey}
+                    newRuleId={ruleInstance?.id ?? 'RC'}
+                  />
+                ) : (
+                  <RuleConfigurationForm
+                    key={iteration.ruleInstance?.ruleId}
+                    readOnly={Boolean(jobId)}
+                    ref={iterationFormRefs[i] as Ref<FormRef<RuleConfigurationFormValues>>}
+                    rule={rule}
+                    formInitialValues={merge(
+                      ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
+                      {
+                        basicDetailsStep: {
+                          simulationIterationName: iteration.name,
+                          simulationIterationDescription: iteration.description,
+                        },
+                      },
+                    )}
+                    simulationMode={true}
+                    activeStepKey={activeStepKey}
+                    showValidationError={showValidationError}
+                    onSubmit={() => {}}
+                    onActiveStepKeyChange={setActiveStepKey}
+                  />
+                )}
               </>
             ),
           })),
@@ -330,14 +368,14 @@ export function RuleConfigurationSimulation(props: Props) {
           <div>{/* placeholder invisible component */}</div>
         ) : (
           <StepButtons
-            nextDisabled={activeStepIndex === RULE_CONFIGURATION_STEPS.length - 1}
+            nextDisabled={activeStepIndex === steps.length - 1}
             prevDisabled={activeStepIndex === 0}
             onNext={() => {
-              const nextStep = RULE_CONFIGURATION_STEPS[activeStepIndex + 1];
+              const nextStep = steps[activeStepIndex + 1];
               setActiveStepKey(nextStep);
             }}
             onPrevious={() => {
-              const prevStep = RULE_CONFIGURATION_STEPS[activeStepIndex - 1];
+              const prevStep = steps[activeStepIndex - 1];
               setActiveStepKey(prevStep);
             }}
           />

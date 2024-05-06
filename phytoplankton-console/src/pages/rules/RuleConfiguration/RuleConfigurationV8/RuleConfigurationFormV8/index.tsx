@@ -71,6 +71,7 @@ function RuleConfigurationFormV8(
     onActiveStepKeyChange,
     setIsValuesSame,
     newRuleId,
+    simulationMode,
   } = props;
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const defaultInitialValues = useDefaultInitialValues(rule);
@@ -170,12 +171,21 @@ function RuleConfigurationFormV8(
   const isInitialNameDescriptionDefined =
     !!initialValues.basicDetailsStep.ruleName && !!initialValues.basicDetailsStep.ruleDescription;
   useEffect(() => {
+    if (simulationMode) {
+      return;
+    }
     setShowTopCard(
       showTopCard ||
         (activeStepKey !== BASIC_DETAILS_STEP && isRuleNameDefined) ||
         isInitialNameDescriptionDefined,
     );
-  }, [showTopCard, activeStepKey, isRuleNameDefined, isInitialNameDescriptionDefined]);
+  }, [
+    showTopCard,
+    activeStepKey,
+    isRuleNameDefined,
+    isInitialNameDescriptionDefined,
+    simulationMode,
+  ]);
 
   return (
     <ConfigProvider
@@ -220,6 +230,7 @@ function RuleConfigurationFormV8(
                   activeStepKey={activeStepKey}
                   readOnly={readOnly}
                   newRuleId={newRuleId}
+                  simulationMode={simulationMode}
                 />
               </NestedForm>
             </div>
@@ -230,13 +241,18 @@ function RuleConfigurationFormV8(
   );
 }
 
-function StepSubform(props: { activeStepKey: string; readOnly: boolean; newRuleId?: string }) {
-  const { activeStepKey, newRuleId } = props;
+function StepSubform(props: {
+  activeStepKey: string;
+  readOnly: boolean;
+  newRuleId?: string;
+  simulationMode?: boolean;
+}) {
+  const { activeStepKey, newRuleId, simulationMode } = props;
   if (activeStepKey === BASIC_DETAILS_STEP) {
-    return <BasicDetailsStep newRuleId={newRuleId} />;
+    return <BasicDetailsStep newRuleId={newRuleId} simulationMode={simulationMode} />;
   }
   if (activeStepKey === RULE_IS_HIT_WHEN_STEP) {
-    return <RuleIsHitWhenStep />;
+    return <RuleIsHitWhenStep readOnly={props.readOnly} />;
   }
   if (activeStepKey === ALERT_CREATION_DETAILS_STEP) {
     return <AlertCreationDetailsStep />;

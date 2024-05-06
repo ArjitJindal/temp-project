@@ -4,7 +4,7 @@ import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useLocalStorageState } from 'ahooks';
-import { getRuleInstanceDisplayId, isV8RuleInstance, useUpdateRuleInstance } from '../utils';
+import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
 import s from './style.module.less';
 import { RuleInstance, RuleMode } from '@/apis';
 import { useApi } from '@/api';
@@ -32,7 +32,6 @@ import { parseQueryString, makeUrl } from '@/utils/routing';
 import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
@@ -42,16 +41,14 @@ const RULES_SEGMENTED_CONTROL_ITEMS: Item<RuleMode>[] = [
   { value: 'SHADOW_SYNC', label: 'Shadow rules' },
 ];
 
-// TODO: Enalbe simulation for v8 rule (FR-4064)
-export function canSimulate(isV8Enabled: boolean, ruleInstance: RuleInstance) {
-  return ruleInstance.type === 'TRANSACTION' && !isV8RuleInstance(isV8Enabled, ruleInstance);
+export function canSimulate(ruleInstance: RuleInstance) {
+  return ruleInstance.type === 'TRANSACTION';
 }
 
 const MyRule = (props: { simulationMode?: boolean }) => {
   useScrollToFocus();
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
-  const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );
@@ -313,7 +310,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
               size="MEDIUM"
               type="PRIMARY"
               onClick={() => onEditRule(entity)}
-              isDisabled={!canSimulate(isV8Enabled, entity)}
+              isDisabled={!canSimulate(entity)}
             >
               Simulate
             </Button>
@@ -387,7 +384,6 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     rules,
     canWriteRules,
     handleActivationChange,
-    isV8Enabled,
     deleting,
     handleDeleteRuleInstanceMutation,
     onDuplicateRule,
