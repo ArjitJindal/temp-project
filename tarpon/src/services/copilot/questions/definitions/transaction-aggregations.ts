@@ -67,21 +67,21 @@ export const transactionAggregationQuestion = (
     date_trunc('${sqlExpression}', date)
 )
 SELECT
+  date_format(any_value(ds.period_start), 'yyyy-MM-dd') as date,
   any_value(ds.period_start) as timestamp,
-  date_format(ds.period_start, 'yyyy-MM-dd') as date,
   round(${aggregationExpression(granularity)}, 2) as agg
 FROM
   DateSeries ds
-  LEFT JOIN transactions t ON date_trunc('${sqlExpression}', CAST(DATE(FROM_UNIXTIME(CAST(t.timestamp / 1000 AS BIGINT))) AS DATE)) = ds.period_start
+  LEFT JOIN transactions t ON date_trunc('${sqlExpression}', t.date) = ds.period_start
   ${joins}
   AND (
     t.originUserId = :userId
     OR t.destinationUserId = :userId
   )
 GROUP BY
-  date
+  t.date
 ORDER BY
-  date ASC
+  t.date ASC
     `,
       {
         userId: ctx.userId,
