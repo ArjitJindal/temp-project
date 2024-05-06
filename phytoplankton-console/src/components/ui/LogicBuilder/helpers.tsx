@@ -1,4 +1,4 @@
-import { BasicConfig, CoreOperators, Config } from '@react-awesome-query-builder/ui';
+import { BasicConfig, CoreOperators, Config, Empty } from '@react-awesome-query-builder/ui';
 import '@react-awesome-query-builder/ui/css/styles.css';
 import cn from 'clsx';
 import s from './index.module.less';
@@ -131,31 +131,20 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
           if (!lhsOnly && !rhsOnly) {
             return true;
           }
-          const isValueField = (props as any).isValueField;
-          return isValueField ? rhsOnly : lhsOnly;
+          return lhsOnly;
         });
         return (
-          <OptionalLabel
-            label={'Variable'}
-            showLabel={props.config?.settings.showLabels !== false}
-            testId="logic-variable"
-          >
-            <Select
-              autoTrim={true}
-              dropdownMatchWidth={false}
-              portaled={true}
-              allowClear={false}
-              options={filteredItems.map((x) => ({ label: x.label, value: x.path }))}
-              value={props.selectedKey}
-              onChange={(path) => {
-                const item = props.items.find((x) => x.path === path);
-                if (item?.path) {
-                  props.setField(item.path);
-                }
-              }}
-              tooltip
-            />
-          </OptionalLabel>
+          <FieldInput
+            options={filteredItems.map((x) => ({ label: x.label, value: x.path }))}
+            value={props.selectedKey}
+            onChange={(path) => {
+              const item = props.items.find((x) => x.path === path);
+              if (item?.path) {
+                props.setField(item.path);
+              }
+            }}
+            showlabel={props.config?.settings.showLabels !== false}
+          />
         );
       },
       renderOperator: (props) => {
@@ -233,3 +222,28 @@ function OptionalLabel(
   }
   return <Label {...rest}>{children}</Label>;
 }
+
+interface FieldInputProps {
+  options: Option<any>[];
+  value: string | Empty;
+  onChange: (value) => void;
+  showlabel?: boolean;
+}
+
+export const FieldInput = (props: FieldInputProps) => {
+  const { options, value, onChange, showlabel = true } = props;
+  return (
+    <OptionalLabel label={'Variable'} showLabel={showlabel} testId="logic-variable">
+      <Select
+        autoTrim={true}
+        dropdownMatchWidth={false}
+        portaled={true}
+        allowClear={false}
+        options={options}
+        value={value}
+        onChange={onChange}
+        tooltip
+      />
+    </OptionalLabel>
+  );
+};

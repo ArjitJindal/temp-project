@@ -15,15 +15,23 @@ import {
   BaseWidgetProps,
   DateTimeWidget,
   Operator,
+  FieldWidget,
 } from '@react-awesome-query-builder/ui';
 import moment from 'moment';
 import { TimePicker } from 'antd';
 import React from 'react';
 import DatePicker from '../DatePicker';
 import s from './index.module.less';
-import { deserializeCountries, omitCountryGroups, serializeCountries } from './widget-utils';
+import {
+  deserializeCountries,
+  getFieldOptions,
+  isAnyInOpreator,
+  omitCountryGroups,
+  serializeCountries,
+} from './widget-utils';
 import ListSelect from './ListSelect';
 import { isCustomOperator } from './operators';
+import { FieldInput, LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from './helpers';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
@@ -328,6 +336,34 @@ const customTimeWidget: DateTimeWidget<BasicConfig> = {
   },
 };
 
+const customFieldWidget: FieldWidget<Config> = {
+  valueSrc: 'field',
+  formatValue: () => {}, // no need to format value
+  factory: (props) => {
+    const options = getFieldOptions(props.config?.fields ?? {}, props.field).filter((item) => {
+      const lhsOnly = item.key.endsWith(LHS_ONLY_SYMBOL);
+      const rhsOnly = item.key.endsWith(RHS_ONLY_SYMBOL);
+      if (!lhsOnly && !rhsOnly && !isAnyInOpreator(props.operator)) {
+        return true;
+      }
+      return rhsOnly && isAnyInOpreator(props.operator);
+    });
+    return (
+      <FieldInput
+        options={options.map((x) => ({ label: x.label, value: x.path }))}
+        value={options.find((x) => x.path === props.value)?.label ?? undefined}
+        onChange={(path) => {
+          const item = options.find((x) => x.path === path);
+          if (item?.path) {
+            props.setValue(item.path);
+          }
+        }}
+        showlabel={props.config?.settings.showLabels !== false}
+      />
+    );
+  },
+};
+
 export const customWidgets: CoreWidgets<Config> = {
   ...BasicConfig.widgets,
   text: customTextWidget,
@@ -343,7 +379,7 @@ export const customWidgets: CoreWidgets<Config> = {
   time: customTimeWidget,
   datetime: customDateAndTimeWidget,
   boolean: customBooleanWidget,
-  // field: customWidget,
+  field: customFieldWidget,
   // func: customWidget,
   // case_value: customFieldWidget,
 };

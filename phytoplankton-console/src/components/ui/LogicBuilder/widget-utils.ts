@@ -26,3 +26,19 @@ export const omitCountryGroups = (options: (string | number | ListItem)[]) => {
     return !Object.keys(COUNTRY_GROUPS).includes(option.value as string);
   });
 };
+
+export const getFieldOptions = (fields: object, selectedField) => {
+  const fieldOptions = Object.keys(fields)
+    .map((field) => ({
+      key: field,
+      path: field,
+      label: fields[field].label,
+      fieldSettings: fields['fieldSettings'],
+    }))
+    .filter((field) => field.key !== selectedField);
+  return fieldOptions;
+};
+
+export const isAnyInOpreator = (operator) => {
+  return operator === 'select_any_in' || operator === 'select_not_any_in';
+};
