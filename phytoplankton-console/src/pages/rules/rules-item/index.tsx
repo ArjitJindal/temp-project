@@ -12,7 +12,8 @@ import { Mode } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8';
 import { makeUrl } from '@/utils/routing';
 import { getRuleInstanceTitle } from '@/utils/api/rules';
 import { map, getOr } from '@/utils/asyncResource';
-import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import Breadcrumbs from '@/components/library/Breadcrumbs';
+import PageWrapper from '@/components/PageWrapper';
 
 export default function RulesItemPage() {
   const { id: ruleInstanceId = 'rules-library', mode = 'read' } = useParams<
@@ -83,23 +84,25 @@ function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: s
     return 'READ';
   }, [mode]);
   return (
-    <BreadcrumbsSimulationPageWrapper
-      storageKey={'SIMULATION_RULES'}
-      breadcrumbs={[
-        {
-          title: 'Rules',
-          to: '/rules',
-        },
-        {
-          title: 'My rules',
-          to: '/rules/my-rules',
-        },
-        {
-          title: title,
-          to: makeUrl(`/rules/my-rules/:id/:mode`, { id: ruleInstance.id, mode: mode }),
-        },
-      ]}
-      simulationHistoryUrl="/rules/simulation-history"
+    <PageWrapper
+      header={
+        <Breadcrumbs
+          items={[
+            {
+              title: 'Rules',
+              to: '/rules',
+            },
+            {
+              title: 'My rules',
+              to: '/rules/my-rules',
+            },
+            {
+              title: title,
+              to: makeUrl(`/rules/my-rules/:id/:mode`, { id: ruleInstance.id, mode: mode }),
+            },
+          ]}
+        />
+      }
     >
       <RuleConfiguration
         isSimulation={isSimulationEnabled}
@@ -116,6 +119,6 @@ function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: s
           navigate(makeUrl(`/rules/my-rules/:id/:mode`, { id: ruleInstance.id, mode: 'edit' }));
         }}
       />
-    </BreadcrumbsSimulationPageWrapper>
+    </PageWrapper>
   );
 }

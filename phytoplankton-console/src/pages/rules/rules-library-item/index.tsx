@@ -10,7 +10,8 @@ import { useApi } from '@/api';
 import { Rule } from '@/apis';
 import { Mode } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import PageWrapper from '@/components/PageWrapper';
+import Breadcrumbs from '@/components/library/Breadcrumbs';
 
 export default function RulesLibraryItemPage() {
   const { id: ruleId } = useParams<'id'>();
@@ -42,23 +43,25 @@ function Content(props: { ruleId?: string; rule: Rule | null; mode: Mode }) {
   const navigate = useNavigate();
   const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
   return (
-    <BreadcrumbsSimulationPageWrapper
-      storageKey={'SIMULATION_RULES'}
-      breadcrumbs={[
-        {
-          title: 'Rules',
-          to: '/rules',
-        },
-        {
-          title: 'Library',
-          to: '/rules/rules-library',
-        },
-        {
-          title: ruleId === 'create' ? 'Create new rule' : 'Configure',
-          to: makeUrl(`/rules/rules-library/:id`, { id: ruleId }),
-        },
-      ]}
-      simulationHistoryUrl="/rules/simulation-history"
+    <PageWrapper
+      header={
+        <Breadcrumbs
+          items={[
+            {
+              title: 'Rules',
+              to: '/rules',
+            },
+            {
+              title: 'Library',
+              to: '/rules/rules-library',
+            },
+            {
+              title: ruleId === 'create' ? 'Create new rule' : 'Configure',
+              to: makeUrl(`/rules/rules-library/:id`, { id: ruleId }),
+            },
+          ]}
+        />
+      }
     >
       <RuleConfiguration
         rule={rule ?? undefined}
@@ -71,6 +74,6 @@ function Content(props: { ruleId?: string; rule: Rule | null; mode: Mode }) {
           navigate(makeUrl(`/rules/rules-library`));
         }}
       />
-    </BreadcrumbsSimulationPageWrapper>
+    </PageWrapper>
   );
 }

@@ -87,6 +87,7 @@ function CaseManagementItemPage() {
               />
             </Card.Root>
           }
+          disableHeaderPadding
         >
           <CaseDetails
             caseItem={caseItem}

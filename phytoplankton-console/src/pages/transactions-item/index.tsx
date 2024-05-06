@@ -137,6 +137,7 @@ export default function TransactionsItem() {
     <AsyncResourceRenderer resource={currentItem}>
       {(transaction) => (
         <PageWrapper
+          disableHeaderPadding
           header={
             <Card.Root>
               <EntityHeader

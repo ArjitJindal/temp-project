@@ -1,6 +1,5 @@
 import { useParams } from 'react-router';
 import { RuleInstanceInfo } from './RuleInstanceInfo';
-import s from './styles.module.less';
 import { useApi } from '@/api';
 import { RuleInstance } from '@/apis';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
@@ -28,24 +27,22 @@ export const RuleInstancePage = () => {
   return (
     <PageWrapper
       header={
-        <div className={s.header}>
-          <Breadcrumbs
-            items={[
-              { title: 'Rules', to: '/rules/my-rules' },
-              { title: 'My rules', to: '/rules/my-rules' },
-              ...(ruleInstanceId
-                ? [
-                    {
-                      title: ruleInstanceId,
-                      to: makeUrl('/rules/my-rules/:id', {
-                        id: ruleInstanceId,
-                      }),
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </div>
+        <Breadcrumbs
+          items={[
+            { title: 'Rules', to: '/rules/my-rules' },
+            { title: 'My rules', to: '/rules/my-rules' },
+            ...(ruleInstanceId
+              ? [
+                  {
+                    title: ruleInstanceId,
+                    to: makeUrl('/rules/my-rules/:id', {
+                      id: ruleInstanceId,
+                    }),
+                  },
+                ]
+              : []),
+          ]}
+        />
       }
     >
       <AsyncResourceRenderer resource={ruleInstanceResult.data}>

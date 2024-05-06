@@ -202,15 +202,13 @@ const QASamplesTable = () => {
     <Authorized required={['case-management:qa:read']} showForbiddenPage>
       <PageWrapper
         header={
-          <div style={{ display: 'flex', padding: '1rem' }}>
-            <Breadcrumbs
-              items={[
-                { title: 'Case Management', to: '/case-management' },
-                { title: 'QA', to: '/case-management/cases' },
-                { title: 'Sampling' },
-              ]}
-            />
-          </div>
+          <Breadcrumbs
+            items={[
+              { title: 'Case Management', to: '/case-management' },
+              { title: 'QA', to: '/case-management/cases' },
+              { title: 'Sampling' },
+            ]}
+          />
         }
       >
         <PageWrapperContentContainer>

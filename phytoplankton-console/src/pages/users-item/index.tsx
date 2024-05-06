@@ -84,6 +84,7 @@ export default function UserItem() {
     <AsyncResourceRenderer resource={queryResult.data}>
       {(user) => (
         <PageWrapper
+          disableHeaderPadding
           header={
             <Card.Root noBorder>
               <Header

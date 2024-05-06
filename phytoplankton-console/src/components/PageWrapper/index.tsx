@@ -12,6 +12,7 @@ export interface PageWrapperProps {
   title?: string;
   description?: string;
   header?: React.ReactNode;
+  disableHeaderPadding?: boolean;
   backButton?: {
     title: string;
     url: string;
@@ -36,9 +37,9 @@ export default function PageWrapper(props: PageWrapperProps) {
 }
 
 function Header(props: PageWrapperProps) {
-  const { header, title, description, backButton, actionButton } = props;
+  const { header, title, description, backButton, actionButton, disableHeaderPadding } = props;
   if (header != null) {
-    return <>{header}</>;
+    return <div className={cn(!disableHeaderPadding && s.customHeader)}>{header}</div>;
   }
   return (
     <>
