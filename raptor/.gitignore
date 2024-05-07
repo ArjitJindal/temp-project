@@ -140,3 +140,5 @@ pep8
 # Black
 .pyproject.toml
 .pyproject.toml.bak
+
+artifact/

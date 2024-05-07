@@ -10,6 +10,7 @@ python = "^3.12"
 numpy = "^1.26.4"
 pandas = "^2.2.2"
 seaborn = "^0.13.2"
+scikit-learn = "^1.4.2"
 
 [tool.poetry.dev-dependencies]
 coverage = "^6.4"
@@ -26,3 +27,7 @@ profile = "black"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.mypy.overrides]
+module = "sklearn.*"
+ignore_missing_imports = true
