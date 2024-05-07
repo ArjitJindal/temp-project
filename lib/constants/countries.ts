@@ -249,6 +249,7 @@ export const COUNTRIES = {
   ZM: 'Zambia',
   ZW: 'Zimbabwe',
   AX: 'Åland Islands',
+  XK: 'Kosovo',
 }
 
 export type CountryCode = keyof typeof COUNTRIES
