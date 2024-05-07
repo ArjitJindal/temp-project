@@ -56,10 +56,11 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
 
     uniqueIpAddresses.add(ipAddress)
 
-    const geoIp = await import('fast-geoip')
-    const ipInfos = await Promise.all(
-      Array.from(uniqueIpAddresses).map((ipAddress) => geoIp.lookup(ipAddress))
+    const geoIp = await import('geoip-lite')
+    const ipInfos = Array.from(uniqueIpAddresses).map((ipAddress) =>
+      geoIp.lookup(ipAddress)
     )
+
     const uniqueCities = new Set(
       // NOTE: ipInfo.city could be sometimes empty, if it's empty, we use region or country as an approximation
       ipInfos

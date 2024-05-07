@@ -21,12 +21,14 @@ export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
       if (originIpAddress == null && destinationIpAddress == null) {
         return []
       }
-      const geoIp = await import('fast-geoip')
+      const geoIp = await import('geoip-lite')
 
-      const [originIpInfo, destinationIpInfo] = await Promise.all([
-        originIpAddress ? geoIp.lookup(originIpAddress) : null,
-        destinationIpAddress ? geoIp.lookup(destinationIpAddress) : null,
-      ])
+      const originIpInfo = originIpAddress
+        ? geoIp.lookup(originIpAddress)
+        : undefined
+      const destinationIpInfo = destinationIpAddress
+        ? geoIp.lookup(destinationIpAddress)
+        : undefined
 
       subsegemt?.close()
 

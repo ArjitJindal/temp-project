@@ -5811,6 +5811,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/geoip-lite@npm:^1":
+  version: 1.4.4
+  resolution: "@types/geoip-lite@npm:1.4.4"
+  checksum: 1310e4d7e6f45a9cb7576356f359e409e4f5c919049f647dc073bceee93a6989bc791e130a9ee610b6048c8ff1d0c112c15c8f194fd7b8474e5daeac613a420c
+  languageName: node
+  linkType: hard
+
 "@types/glob@npm:^7.1.3":
   version: 7.2.0
   resolution: "@types/glob@npm:7.2.0"
@@ -7035,6 +7042,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"async@npm:2.1 - 2.6.4":
+  version: 2.6.4
+  resolution: "async@npm:2.6.4"
+  dependencies:
+    lodash: "npm:^4.17.14"
+  checksum: df8e52817d74677ab50c438d618633b9450aff26deb274da6dfedb8014130909482acdc7753bce9b72e6171ce9a9f6a92566c4ced34c3cb3714d57421d58ad27
+  languageName: node
+  linkType: hard
+
 "async@npm:3.2.3":
   version: 3.2.3
   resolution: "async@npm:3.2.3"
@@ -7891,7 +7907,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:4.1.2, chalk@npm:^4, chalk@npm:^4.0.0, chalk@npm:^4.0.2, chalk@npm:^4.1.0, chalk@npm:^4.1.1, chalk@npm:^4.1.2":
+"chalk@npm:4.1 - 4.1.2, chalk@npm:4.1.2, chalk@npm:^4, chalk@npm:^4.0.0, chalk@npm:^4.0.2, chalk@npm:^4.1.0, chalk@npm:^4.1.1, chalk@npm:^4.1.2":
   version: 4.1.2
   resolution: "chalk@npm:4.1.2"
   dependencies:
@@ -10370,13 +10386,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-geoip@npm:^1.1.67":
-  version: 1.1.88
-  resolution: "fast-geoip@npm:1.1.88"
-  checksum: d21f3f1f84719bb2b397891b88f747cd6cab1baf31e37f6afdb2b0d59d34843465461c400e975e920772911b91b9df8280cb034dee54e7a357ce3c8c765e107e
-  languageName: node
-  linkType: hard
-
 "fast-glob@npm:^3.2.9, fast-glob@npm:^3.3.2":
   version: 3.3.2
   resolution: "fast-glob@npm:3.3.2"
@@ -10964,6 +10973,21 @@ __metadata:
   version: 1.0.0-beta.2
   resolution: "gensync@npm:1.0.0-beta.2"
   checksum: 17d8333460204fbf1f9160d067e1e77f908a5447febb49424b8ab043026049835c9ef3974445c57dbd39161f4d2b04356d7de12b2eecaa27a7a7ea7d871cbedd
+  languageName: node
+  linkType: hard
+
+"geoip-lite@npm:^1.4.10":
+  version: 1.4.10
+  resolution: "geoip-lite@npm:1.4.10"
+  dependencies:
+    async: "npm:2.1 - 2.6.4"
+    chalk: "npm:4.1 - 4.1.2"
+    iconv-lite: "npm:0.4.13 - 0.6.3"
+    ip-address: "npm:5.8.9 - 5.9.4"
+    lazy: "npm:1.0.11"
+    rimraf: "npm:2.5.2 - 2.7.1"
+    yauzl: "npm:2.9.2 - 2.10.0"
+  checksum: 8c11c966b5a6d784bb248585f8e4b467dd91d7a3e949789974eb56946a12e29f489c8799898970b0f02db3cbef4b1c079f551109e6850c39c7f71efc7772cd07
   languageName: node
   linkType: hard
 
@@ -11655,21 +11679,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"iconv-lite@npm:0.4.13 - 0.6.3, iconv-lite@npm:0.6.3, iconv-lite@npm:^0.6.2":
+  version: 0.6.3
+  resolution: "iconv-lite@npm:0.6.3"
+  dependencies:
+    safer-buffer: "npm:>= 2.1.2 < 3.0.0"
+  checksum: 24e3292dd3dadaa81d065c6f8c41b274a47098150d444b96e5f53b4638a9a71482921ea6a91a1f59bb71d9796de25e04afd05919fa64c360347ba65d3766f10f
+  languageName: node
+  linkType: hard
+
 "iconv-lite@npm:0.4.24, iconv-lite@npm:^0.4.24":
   version: 0.4.24
   resolution: "iconv-lite@npm:0.4.24"
   dependencies:
     safer-buffer: "npm:>= 2.1.2 < 3"
   checksum: 6d3a2dac6e5d1fb126d25645c25c3a1209f70cceecc68b8ef51ae0da3cdc078c151fade7524a30b12a3094926336831fca09c666ef55b37e2c69638b5d6bd2e3
-  languageName: node
-  linkType: hard
-
-"iconv-lite@npm:0.6.3, iconv-lite@npm:^0.6.2":
-  version: 0.6.3
-  resolution: "iconv-lite@npm:0.6.3"
-  dependencies:
-    safer-buffer: "npm:>= 2.1.2 < 3.0.0"
-  checksum: 24e3292dd3dadaa81d065c6f8c41b274a47098150d444b96e5f53b4638a9a71482921ea6a91a1f59bb71d9796de25e04afd05919fa64c360347ba65d3766f10f
   languageName: node
   linkType: hard
 
@@ -11942,6 +11966,17 @@ __metadata:
   peerDependencies:
     fp-ts: ^2.5.0
   checksum: b917d1ca82e6cde0a7decc7cd08f0fcccf2bb7e1d326c12a7372cadc86e6bf409989a3b85be855f98edcadb6ddf97a0e8d9837812988cffdb5f90cfe9eb1f862
+  languageName: node
+  linkType: hard
+
+"ip-address@npm:5.8.9 - 5.9.4":
+  version: 5.9.4
+  resolution: "ip-address@npm:5.9.4"
+  dependencies:
+    jsbn: "npm:1.1.0"
+    lodash: "npm:^4.17.15"
+    sprintf-js: "npm:1.1.2"
+  checksum: 7b9140a4baf8f0bd18ca5138a391da5c9172fd64b1e7fa044a02341aade5fc5b7708de28cf58158af1e0026a95aa224c3d75d08e063472a86977b1793153db30
   languageName: node
   linkType: hard
 
@@ -13028,6 +13063,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jsbn@npm:1.1.0":
+  version: 1.1.0
+  resolution: "jsbn@npm:1.1.0"
+  checksum: bebe7ae829bbd586ce8cbe83501dd8cb8c282c8902a8aeeed0a073a89dc37e8103b1244f3c6acd60278bcbfe12d93a3f83c9ac396868a3b3bbc3c5e5e3b648ef
+  languageName: node
+  linkType: hard
+
 "jsbn@npm:~0.1.0":
   version: 0.1.1
   resolution: "jsbn@npm:0.1.1"
@@ -13637,6 +13679,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lazy@npm:1.0.11":
+  version: 1.0.11
+  resolution: "lazy@npm:1.0.11"
+  checksum: 12ebb4db919a7cab3d780fdc1eada2985cd07f7cef0df18b8f40f23ceb9dcb2684d924d768f8c1cf603c641df7305f5b77ca9039716e235043e4f25bdba3e886
+  languageName: node
+  linkType: hard
+
 "lazystream@npm:^1.0.0":
   version: 1.0.1
   resolution: "lazystream@npm:1.0.1"
@@ -13996,7 +14045,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.21, lodash@npm:^4.17.15, lodash@npm:^4.17.20, lodash@npm:^4.17.21":
+"lodash@npm:4.17.21, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.20, lodash@npm:^4.17.21":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: c08619c038846ea6ac754abd6dd29d2568aa705feb69339e836dfa8d8b09abbb2f859371e86863eda41848221f9af43714491467b5b0299122431e202bb0c532
@@ -16496,7 +16545,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:^2.6.1":
+"rimraf@npm:2.5.2 - 2.7.1, rimraf@npm:^2.6.1":
   version: 2.7.1
   resolution: "rimraf@npm:2.7.1"
   dependencies:
@@ -17171,6 +17220,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sprintf-js@npm:1.1.2":
+  version: 1.1.2
+  resolution: "sprintf-js@npm:1.1.2"
+  checksum: 0044322a252b36bffc3d8a462a4882de57830e18d37d1cc000104ff4744b512d6a9b1ca6240e7ad141a987a1eaad071668fe12d11c496c11d3641c4797a6cf3f
+  languageName: node
+  linkType: hard
+
 "sprintf-js@npm:~1.0.2":
   version: 1.0.3
   resolution: "sprintf-js@npm:1.0.3"
@@ -17808,6 +17864,7 @@ __metadata:
     "@types/fast-levenshtein": "npm:^0.0.2"
     "@types/flat": "npm:^5.0.2"
     "@types/fs-extra": "npm:^11.0.1"
+    "@types/geoip-lite": "npm:^1"
     "@types/google-spreadsheet": "npm:^3.3.1"
     "@types/html-to-text": "npm:^9.0.0"
     "@types/http-errors": "npm:^1.8.2"
@@ -17862,13 +17919,13 @@ __metadata:
     exponential-backoff: "npm:^3.1.1"
     express: "npm:^4.18.1"
     express-openapi-validator: "npm:^4.13.8"
-    fast-geoip: "npm:^1.1.67"
     fast-levenshtein: "npm:^3.0.0"
     fast-xml-parser: "npm:^4.2.5"
     fetch-retry: "npm:^5.0.6"
     flat: "npm:^5.0.2"
     fp-ts: "npm:^2.11.8"
     fs-extra: "npm:^10.1.0"
+    geoip-lite: "npm:^1.4.10"
     get-port: "npm:^5.1.1"
     google-spreadsheet: "npm:^3.3.0"
     handlebars: "npm:^4.7.7"
@@ -19477,7 +19534,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yauzl@npm:^2.10.0":
+"yauzl@npm:2.9.2 - 2.10.0, yauzl@npm:^2.10.0":
   version: 2.10.0
   resolution: "yauzl@npm:2.10.0"
   dependencies:

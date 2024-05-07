@@ -40,8 +40,8 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
       return
     }
 
-    const geoIp = await import('fast-geoip')
-    const ipInfo = await geoIp.lookup(ipAddress as string)
+    const geoIp = await import('geoip-lite')
+    const ipInfo = geoIp.lookup(ipAddress as string)
 
     if (!ipInfo?.country) {
       return

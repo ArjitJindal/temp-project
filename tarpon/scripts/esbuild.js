@@ -22,11 +22,11 @@ const IGNORED = [
   'encoding',
   'Synthetics',
   'SyntheticsLogger',
-  // The data files inside 'fast-geoip' package cannot be bundled by webpack, we exclude
+  // The data files inside 'geoip-lite' package cannot be bundled by webpack, we exclude
   // it from being bundled and put it to a lambda layer instead.
   // To use it in a lambda, add `fastGeoIpLayer` lambda layer to the lambda in cdk-tarpon-stack and
   // dynamically import it in the code.
-  'fast-geoip',
+  'geoip-lite',
   'superagent-proxy',
 ]
 
@@ -98,8 +98,8 @@ async function main() {
   await copyDirsToDist([
     // Copy geoip
     {
-      src: 'node_modules/fast-geoip',
-      dest: 'layers/fast-geoip/nodejs/node_modules/fast-geoip',
+      src: 'node_modules/geoip-lite',
+      dest: 'layers/geoip-lite/nodejs/node_modules/geoip-lite',
       validateDestPath: false,
     },
     // Copy slack templates

@@ -462,18 +462,14 @@ export class CdkTarponStack extends cdk.Stack {
      * Lambda Layers
      */
 
-    const fastGeoIpLayer = new LayerVersion(
-      this,
-      StackConstants.FAST_GEOIP_LAYER_NAME,
-      {
-        compatibleRuntimes: [Runtime.NODEJS_18_X],
-        code:
-          process.env.INFRA_CI === 'true'
-            ? Code.fromAsset('infra')
-            : Code.fromAsset('dist/layers/fast-geoip'),
-        description: 'fast-geoip npm module',
-      }
-    )
+    const geoipLayer = new LayerVersion(this, StackConstants.GEOIP_LAYER_NAME, {
+      compatibleRuntimes: [Runtime.NODEJS_18_X],
+      code:
+        process.env.INFRA_CI === 'true'
+          ? Code.fromAsset('infra')
+          : Code.fromAsset('dist/layers/geoip-lite'),
+      description: 'geoip-lite npm module',
+    })
 
     /**
      * Lambda Functions
@@ -643,7 +639,7 @@ export class CdkTarponStack extends cdk.Stack {
     const transactionFunctionProps = {
       provisionedConcurrency:
         config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
-      layers: [fastGeoIpLayer],
+      layers: [geoipLayer],
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
     }
 
@@ -698,7 +694,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* User */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
-      layers: [fastGeoIpLayer],
+      layers: [geoipLayer],
       provisionedConcurrency:
         config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
       memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,

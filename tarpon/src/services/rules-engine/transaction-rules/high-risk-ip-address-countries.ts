@@ -25,7 +25,7 @@ export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddres
   }
 
   public async computeRule() {
-    const geoIp = await import('fast-geoip')
+    const geoIp = await import('geoip-lite')
     const originIpAddress = this.transaction.originDeviceData?.ipAddress
     const destinationIpAddress =
       this.transaction.destinationDeviceData?.ipAddress
@@ -34,10 +34,12 @@ export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddres
       return
     }
 
-    const [originIpInfo, destinationIpInfo] = await Promise.all([
-      originIpAddress ? geoIp.lookup(originIpAddress) : null,
-      destinationIpAddress ? geoIp.lookup(destinationIpAddress) : null,
-    ])
+    const originIpInfo = originIpAddress
+      ? geoIp.lookup(originIpAddress)
+      : undefined
+    const destinationIpInfo = destinationIpAddress
+      ? geoIp.lookup(destinationIpAddress)
+      : undefined
 
     const originIpCountry = originIpInfo?.country
     const destinationIpCountry = destinationIpInfo?.country
