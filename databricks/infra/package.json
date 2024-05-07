@@ -27,7 +27,7 @@
     "@cdktf/provider-time": "^10.1.0",
     "@flagright/lib": "file:../../lib",
     "aws-cdk-lib": "~2.137.0",
-    "cdktf": "^0.20.5",
+    "cdktf": "^0.20.7",
     "cdktf-cli": "^0.20.5",
     "constructs": "^10.3.0",
     "prettier": "^3.2.5"
