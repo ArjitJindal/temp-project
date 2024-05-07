@@ -100,8 +100,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   constructor() {
     super()
     const context = getContext()
-    this.auth0Domain =
-      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+    this.auth0Domain = context?.auth0Domain as string
   }
 
   private getTenantByTenantId = memoize(
@@ -250,10 +249,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
   private async deactivateAuth0Users(tenantId: string) {
     const mongoDb = await getMongoDbClient()
-    const context = getContext()
-    const auth0Domain =
-      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+    const accountsService = this.accountsService(this.auth0Domain, mongoDb)
     logger.info('Deactivating all users from Auth0')
     const tenant = await accountsService.getTenantById(tenantId)
     if (!tenant) {

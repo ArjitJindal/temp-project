@@ -26,7 +26,6 @@ import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
 import { NotificationType } from '@/@types/openapi-internal/NotificationType'
-import { getContext } from '@/core/utils/context'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import {
@@ -45,13 +44,7 @@ export class NotificationsService {
   }
 
   private allUsers = memoize(async () => {
-    const settings = getContext()?.settings
-    const auth0Domain =
-      settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-    const accountsService = new AccountsService(
-      { auth0Domain },
-      { mongoDb: this.mongoDb }
-    )
+    const accountsService = await AccountsService.getInstance()
     const tenant = await accountsService.getTenantById(this.tenantId)
     if (!tenant) {
       throw new Error('Tenant not found')
@@ -59,25 +52,12 @@ export class NotificationsService {
     return accountsService.getTenantAccounts(tenant)
   })
 
-  private allRoles = memoize(async () => {
-    const settings = getContext()?.settings
-    const auth0Domain =
-      settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-
-    const accountsService = new RoleService({ auth0Domain })
-
-    return accountsService.getTenantRoles(this.tenantId)
-  })
+  private allRoles = memoize(
+    async () => await RoleService.getInstance().getTenantRoles(this.tenantId)
+  )
 
   private roleById = memoize(
-    async (roleId: string) => {
-      const auth0Domain =
-        getContext()?.settings?.auth0Domain ||
-        (process.env.AUTH0_DOMAIN as string)
-
-      const rolesService = new RoleService({ auth0Domain })
-      return rolesService.getRole(roleId)
-    },
+    async (roleId: string) => await RoleService.getInstance().getRole(roleId),
     (roleId) => roleId
   )
 

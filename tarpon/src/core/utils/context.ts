@@ -59,6 +59,7 @@ export type Context = LogMetaData & {
   lastError?: Error
   promises?: Promise<any>[]
   sentryExtras?: { [key: string]: unknown }
+  auth0Domain?: string
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
@@ -84,6 +85,7 @@ export async function getInitialContext(
       encodedPermissions,
       allowTenantDeletion,
       encodedAllowedRegions,
+      auth0Domain,
     } = (event as APIGatewayEvent)?.requestContext?.authorizer || {}
 
     if (tenantId) {
@@ -141,6 +143,7 @@ export async function getInitialContext(
           }
         : undefined,
       settings,
+      auth0Domain,
     }
     return context
   } catch (e) {
@@ -173,6 +176,7 @@ export async function initializeTenantContext(tenantId: string) {
   context.metricDimensions.tenantId = tenantId
   context.features = tenantSettings?.features
   context.settings = tenantSettings ?? {}
+  context.auth0Domain = tenantSettings?.auth0Domain ?? process.env.AUTH0_DOMAIN
 }
 
 export function updateLogMetadata(addedMetadata: { [key: string]: any }) {

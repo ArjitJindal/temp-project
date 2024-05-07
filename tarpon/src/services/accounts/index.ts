@@ -5,10 +5,6 @@ import {
   GetOrganizations200ResponseOneOfInner,
   GetUsers200ResponseOneOfInner,
 } from 'auth0'
-import {
-  APIGatewayEventLambdaAuthorizerContext,
-  APIGatewayProxyWithLambdaAuthorizerEvent,
-} from 'aws-lambda'
 import { MongoClient } from 'mongodb'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { CaseRepository } from '../cases/repository'
@@ -28,7 +24,7 @@ import { RoleService } from '@/services/roles'
 import { getContext, hasFeature, tenantSettings } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ACCOUNTS_COLLECTION } from '@/utils/mongodb-definitions'
-import { JWTAuthorizerResult, isRoleAboveAdmin } from '@/@types/jwt'
+import { isRoleAboveAdmin } from '@/@types/jwt'
 import {
   DefaultApiAccountsChangeTenantRequest,
   DefaultApiAccountsEditRequest,
@@ -72,17 +68,6 @@ export class AccountsService {
   private mongoDb: MongoClient
   private roleService: RoleService
 
-  public static async fromEvent(
-    event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
-    >
-  ): Promise<AccountsService> {
-    const { auth0Domain } = event.requestContext.authorizer
-    const mongoDb = await getMongoDbClient()
-
-    return new AccountsService({ auth0Domain }, { mongoDb })
-  }
-
   constructor(
     config: { auth0Domain: string },
     connections: { mongoDb: MongoClient }
@@ -92,6 +77,13 @@ export class AccountsService {
     this.roleService = new RoleService({
       auth0Domain: this.config.auth0Domain,
     })
+  }
+
+  public static async getInstance() {
+    return new AccountsService(
+      { auth0Domain: getContext()?.auth0Domain as string },
+      { mongoDb: await getMongoDbClient() }
+    )
   }
 
   public async getAllAccountsMongo(tenantId: string): Promise<Account[]> {
@@ -455,9 +447,8 @@ export class AccountsService {
       this.config.auth0Domain
     )
     const userManager = managementClient.users
-    return AccountsService.userToAccount(
-      await auth0AsyncWrapper(() => userManager.get({ id }))
-    )
+    const user = await auth0AsyncWrapper(() => userManager.get({ id }))
+    return AccountsService.userToAccount(user)
   }
 
   async getAccounts(ids: string[]): Promise<Account[]> {

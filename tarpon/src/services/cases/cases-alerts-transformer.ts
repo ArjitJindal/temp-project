@@ -32,9 +32,7 @@ export class CasesAlertsTransformer {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
-    this.auth0Domain =
-      getContext()?.settings?.auth0Domain ||
-      (process.env.AUTH0_DOMAIN as string)
+    this.auth0Domain = getContext()?.auth0Domain as string
     this.accountService = new AccountsService(
       { auth0Domain: this.auth0Domain },
       { mongoDb: this.mongoDb }

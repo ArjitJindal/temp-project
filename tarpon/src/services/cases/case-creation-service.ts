@@ -55,7 +55,6 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { DEFAULT_CASE_AGGREGATES, generateCaseAggreates } from '@/utils/case'
 import {
-  tenantSettings as contextTenantSettings,
   getContext,
   tenantSettings,
   tenantTimezone,
@@ -1259,16 +1258,11 @@ export class CaseCreationService {
     )
   }
 
-  getUsersByRole = memoize(async (assignedRole) => {
-    const settings = await contextTenantSettings(this.tenantId)
-    const roleService = new RoleService({
-      auth0Domain:
-        settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string),
-    })
-    return (await roleService.getUsersByRole(assignedRole))
+  getUsersByRole = memoize(async (assignedRole) =>
+    (await RoleService.getInstance().getUsersByRole(assignedRole))
       .map((user) => user?.user_id)
       .filter((user) => user !== undefined && user !== '')
-  })
+  )
 
   private getFrozenStatusFilter(
     alert: Alert,

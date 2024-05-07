@@ -8,7 +8,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CaseRepository } from '@/services/cases/repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Account } from '@/services/accounts'
+import { Account, AccountsService } from '@/services/accounts'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -105,32 +105,6 @@ dynamoDbSetupHook()
 
 withFeatureHook(['ADVANCED_WORKFLOWS'])
 
-jest.mock('@/services/accounts', () => {
-  const originalModule = jest.requireActual<
-    typeof import('@/services/accounts')
-  >('@/services/accounts')
-  return {
-    ...originalModule,
-    __esModule: true,
-    AccountsService: jest.fn().mockImplementation(() => {
-      return {
-        getAllActiveAccounts: jest.fn().mockImplementation(() => {
-          return [TEST_ACCOUNT_1, TEST_ACCOUNT_2, REVIEWEE]
-        }),
-        getAccount: jest.fn().mockImplementation((accountId: string) => {
-          if (accountId === TEST_ACCOUNT_1.id) {
-            return TEST_ACCOUNT_1
-          } else if (accountId === TEST_ACCOUNT_2.id) {
-            return TEST_ACCOUNT_2
-          } else if (accountId === REVIEWEE.id) {
-            return REVIEWEE
-          }
-        }),
-      }
-    }),
-  }
-})
-
 jest.mock('@/core/utils/context', () => {
   const originalModule = jest.requireActual<
     typeof import('@/core/utils/context')
@@ -178,6 +152,25 @@ async function getAlertsService(tenantId: string) {
 
 const getContextMocker = jest.spyOn(Context, 'getContext')
 
+jest
+  .spyOn(AccountsService.prototype, 'getAccount')
+  .mockImplementation(async (accountId: string) => {
+    if (accountId === TEST_ACCOUNT_1.id) {
+      return TEST_ACCOUNT_1
+    } else if (accountId === TEST_ACCOUNT_2.id) {
+      return TEST_ACCOUNT_2
+    } else if (accountId === REVIEWEE.id) {
+      return REVIEWEE
+    }
+    return TEST_ACCOUNT_1
+  })
+
+jest
+  .spyOn(AccountsService.prototype, 'getAllActiveAccounts')
+  .mockImplementation(async () => {
+    return [TEST_ACCOUNT_1, TEST_ACCOUNT_2, REVIEWEE]
+  })
+
 describe('Case service', () => {
   beforeAll(async () => {
     getContextMocker.mockReturnValue({
@@ -187,6 +180,7 @@ describe('Case service', () => {
       },
     })
   })
+
   describe('Escalation: single case', () => {
     const TEST_TENANT_ID = getTestTenantId()
 

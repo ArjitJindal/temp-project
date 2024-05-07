@@ -8,6 +8,7 @@ import {
 import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/ManagedRoleName'
 import { traceable } from '@/core/xray'
 import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
+import { getContext } from '@/core/utils/context'
 
 @traceable
 export class RoleService {
@@ -15,6 +16,10 @@ export class RoleService {
 
   constructor(config: { auth0Domain: string }) {
     this.config = config
+  }
+
+  public static getInstance() {
+    return new RoleService({ auth0Domain: getContext()?.auth0Domain as string })
   }
 
   async getTenantRoles(tenantId: string): Promise<AccountRole[]> {

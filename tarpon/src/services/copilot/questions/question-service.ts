@@ -47,8 +47,8 @@ export class QuestionService {
 
     return new QuestionService(
       new InvestigationRepository(mongoClient, tenantId),
-      await AccountsService.fromEvent(event),
-      await getDynamoDbClientByEvent(event)
+      await AccountsService.getInstance(),
+      getDynamoDbClientByEvent(event)
     )
   }
 

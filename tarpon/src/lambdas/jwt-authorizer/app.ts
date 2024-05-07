@@ -148,7 +148,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
       return UNAUTHORIZED_RESPONSE
     }
 
-    updateLogMetadata({ verifiedJwtPayload: verifiedDecoded })
+    updateLogMetadata({ verifiedJwtPayload: verifiedDecoded, auth0Domain })
 
     // TODO: Use role
     const role = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/role`]

@@ -487,20 +487,12 @@ export class TenantService {
       newTenantSettings
     )
 
-    const context = getContext()
-    const auth0Domain =
-      context?.settings?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-
     // Update auth0 tenant metadata for the selected tenant setting properties
     if (
       !isDemoTenant(this.tenantId) &&
       newTenantSettings.isProductionAccessEnabled != null
     ) {
-      const accountsService = new AccountsService(
-        { auth0Domain },
-        { mongoDb: this.mongoDb }
-      )
-
+      const accountsService = await AccountsService.getInstance()
       await accountsService.updateAuth0TenantMetadata(this.tenantId, {
         isProductionAccessDisabled: String(
           !newTenantSettings.isProductionAccessEnabled
@@ -549,15 +541,7 @@ export class TenantService {
       )
     }
 
-    const accountsService = new AccountsService(
-      {
-        auth0Domain:
-          getContext()?.settings?.auth0Domain ??
-          (process.env.AUTH0_DOMAIN as string),
-      },
-      { mongoDb: this.mongoDb }
-    )
-
+    const accountsService = await AccountsService.getInstance()
     const tenant = await accountsService.getTenantById(tenantIdToDelete)
 
     if (

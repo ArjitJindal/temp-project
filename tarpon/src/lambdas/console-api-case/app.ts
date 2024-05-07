@@ -27,7 +27,7 @@ export const casesHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const client = await getMongoDbClient()
-    const dynamoDb = await getDynamoDbClientByEvent(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const alertsService = await AlertsService.fromEvent(event)
 
     const caseService = await CaseService.fromEvent(event)
