@@ -97,11 +97,14 @@ export class TenantService {
     stage?: Stage,
     region?: FlagrightRegion
   ): Promise<TenantInfo[]> => {
-    const stageOrDefault = stage ?? (process.env.ENV as Stage)
-    const regionOrDefault = region ?? process.env.REGION
+    const stageOrDefault = stage ?? (process.env.ENV?.split(':')[0] as Stage)
+    const regionOrDefault = region ?? (process.env.REGION as FlagrightRegion)
     const tenantInfos: Array<TenantInfo> = []
     const mongoDb = await getMongoDbClient()
-    const auth0TenantConfigs = getAuth0TenantConfigs(stageOrDefault, region)
+    const auth0TenantConfigs = getAuth0TenantConfigs(
+      stageOrDefault,
+      regionOrDefault
+    )
     for (const auth0TenantConfig of auth0TenantConfigs) {
       const auth0Domain = getAuth0Domain(
         auth0TenantConfig.tenantName,
