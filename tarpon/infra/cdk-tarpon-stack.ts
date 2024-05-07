@@ -263,6 +263,7 @@ export class CdkTarponStack extends cdk.Stack {
       SQSQueues.TRANSACTION_EVENT_QUEUE_NAME.name,
       {
         fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
       }
     )
 
