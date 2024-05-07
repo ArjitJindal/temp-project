@@ -13,7 +13,15 @@ import Button from '@/components/library/Button';
 
 //utils and hooks
 import { makeUrl } from '@/utils/routing';
-import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
+import {
+  AsyncResource,
+  failed,
+  getOr,
+  init,
+  isSuccess,
+  loading,
+  success,
+} from '@/utils/asyncResource';
 import { Alert, AlertListResponseItem, ApiException, InternalTransaction } from '@/apis';
 import { useApi } from '@/api';
 import PageTabs from '@/components/ui/PageTabs';
@@ -25,6 +33,7 @@ import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
 
 export type RuleAlertMap = Map<string, { alertId: string; caseId: string }>;
 
@@ -37,6 +46,7 @@ export default function TransactionsItem() {
   const api = useApi();
   const navigate = useNavigate();
   const tenantSettings = useSettings();
+  const riskClassificationValues = useRiskClassificationScores();
 
   useEffect(() => {
     if (transactionId == null || transactionId === 'all') {
@@ -117,7 +127,12 @@ export default function TransactionsItem() {
     try {
       await DownloadAsPDF({
         fileName: `transaction-${transaction.transactionId}-report.pdf`,
-        tableOptions: getTransactionReportTables(transaction, ruleAlertMap, tenantSettings),
+        tableOptions: getTransactionReportTables(
+          transaction,
+          ruleAlertMap,
+          tenantSettings,
+          getOr(riskClassificationValues, []),
+        ),
         reportTitle: 'Transaction report',
       });
     } catch (err) {

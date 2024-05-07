@@ -1,5 +1,7 @@
+import { getRiskLevelFromScore } from '@flagright/lib/utils';
+import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils/risk';
 import { RuleAlertMap } from '..';
-import { InternalTransaction, TenantSettings } from '@/apis';
+import { InternalTransaction, RiskClassificationScore, TenantSettings } from '@/apis';
 import { getRiskLevelLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableOptions } from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { ReportItem, getTable, getWidgetTable } from '@/components/DownloadAsPdf/report-utils';
@@ -9,10 +11,14 @@ import { humanizeAuto } from '@/utils/humanize';
 const getTransactionWidgetsProps = (
   transaction: InternalTransaction,
   tenantSettings: TenantSettings,
+  riskClassificationValues: RiskClassificationScore[],
 ): ReportItem[] => {
   const riskScore = transaction.riskScoreDetails?.trsScore ?? transaction.arsScore?.arsScore ?? 0;
   const riskLevel =
-    transaction.riskScoreDetails?.trsRiskLevel ?? transaction.arsScore?.riskLevel ?? 'LOW';
+    transaction.riskScoreDetails?.trsRiskLevel ??
+    getRiskLevelFromScore(riskClassificationValues, riskScore) ??
+    DEFAULT_RISK_LEVEL;
+
   const hitDirections =
     transaction.hitRules.flatMap((rule) => rule.ruleHitMeta?.hitDirections ?? []) ?? [];
   const alertCreatedForUserIds = hitDirections.map((hitDirection) => {
@@ -65,8 +71,9 @@ const getTransactionWidgetsProps = (
 const getTransactionWidgetTable = (
   data: InternalTransaction,
   tenantSettings: TenantSettings,
+  riskClassificationValues: RiskClassificationScore[],
 ): TableOptions => {
-  const props = getTransactionWidgetsProps(data, tenantSettings);
+  const props = getTransactionWidgetsProps(data, tenantSettings, riskClassificationValues);
   return getWidgetTable(props);
 };
 
@@ -92,9 +99,10 @@ export const getTransactionReportTables = (
   transaction: InternalTransaction,
   ruleAlertMap: RuleAlertMap,
   tenantSettings: TenantSettings,
+  riskClassificationValues: RiskClassificationScore[],
 ): TableOptions[] => {
   return [
-    getTransactionWidgetTable(transaction, tenantSettings),
+    getTransactionWidgetTable(transaction, tenantSettings, riskClassificationValues),
     getTransactionSupportTables(transaction, ruleAlertMap),
   ];
 };
