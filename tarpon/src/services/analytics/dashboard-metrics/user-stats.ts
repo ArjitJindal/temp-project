@@ -1,6 +1,9 @@
 import { keyBy } from 'lodash'
-import { getTimeLabels } from '../../utils'
-import { GranularityValuesType, TimeRange } from '../types'
+import { getTimeLabels } from '../../dashboard/utils'
+import {
+  GranularityValuesType,
+  TimeRange,
+} from '../../dashboard/repositories/types'
 import {
   cleanUpStaleData,
   getAttributeCountStatsPipeline,

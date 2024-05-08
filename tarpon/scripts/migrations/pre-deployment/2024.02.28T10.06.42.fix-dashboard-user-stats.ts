@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
-import { UserStats } from '@/lambdas/console-api-dashboard/repositories/dashboard-metrics/user-stats'
+import { UserStats } from '@/services/analytics/dashboard-metrics/user-stats'
 import {
   DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_DAILY,
   DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_HOURLY,

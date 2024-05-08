@@ -54,6 +54,8 @@ export const ConsoleApiPathToLambda: any = {
   '/rule_instances': StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule_instances/{ruleInstanceId}':
     StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
+  '/rule_instances/{ruleInstanceId}/stats':
+    StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule-instances/new-rule-id':
     StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule-instances/{ruleInstanceId}/transaction-users-hit':

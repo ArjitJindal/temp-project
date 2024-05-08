@@ -32,14 +32,20 @@ import TransactionsTable, {
   transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { useCursorQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_LIST, USERS } from '@/utils/queries/keys';
+import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
+import { SHADOW_RULES_ANALYTICS, TRANSACTIONS_LIST, USERS } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { H4 } from '@/components/ui/Typography';
 import { UserSearchParams } from '@/pages/users/users-list';
 import { UsersTable } from '@/pages/users/users-list/users-table';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { EmptyEntitiesInfo } from '@/components/library/EmptyDataInfo';
+import WidgetBase from '@/components/library/Widget/WidgetBase';
+import { OverviewCard } from '@/pages/dashboard/analysis/components/widgets/OverviewCard';
+import { formatDuration, getDuration } from '@/utils/time-utils';
+import WidgetRangePicker, {
+  Value as WidgetRangePickerValue,
+} from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 
 interface Props {
   ruleInstance: RuleInstance;
@@ -67,6 +73,12 @@ export const RuleInstanceInfo = (props: Props) => {
     'SIMULATION_RULES',
     false,
   );
+
+  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>({
+    startTimestamp: dayjs().subtract(1, 'day').valueOf(),
+    endTimestamp: dayjs().valueOf(),
+  });
+
   const onEditRule = useCallback(
     (entity) => {
       if (isSimulationModeEnabled) setIsSimulationModeEnabled(false);
@@ -132,6 +144,17 @@ export const RuleInstanceInfo = (props: Props) => {
       });
     },
     [updateRuleInstanceMutation],
+  );
+
+  const analyticsQueryResult = useQuery(
+    SHADOW_RULES_ANALYTICS({ ...dateRange, ruleInstanceId: ruleInstance.id }),
+    () => {
+      return api.getRuleInstancesRuleInstanceIdStats({
+        ruleInstanceId: ruleInstance.id as string,
+        afterTimestamp: dateRange.startTimestamp,
+        beforeTimestamp: dateRange.endTimestamp,
+      });
+    },
   );
 
   return (
@@ -293,7 +316,65 @@ export const RuleInstanceInfo = (props: Props) => {
           </div>
         </Card.Section>
       </Card.Root>
-      {ruleInstance.mode === 'SHADOW_SYNC' && (
+      <WidgetBase id="shadow-rule-stats" width="FULL">
+        <div className={s.analytics}>
+          <div className={s.analyticsHeader}>
+            <div>
+              <H4>Analytics</H4>
+            </div>
+            <WidgetRangePicker
+              value={dateRange}
+              onChange={(dateRange) => {
+                if (dateRange) {
+                  setDateRange(dateRange);
+                }
+              }}
+            />
+          </div>
+          <AsyncResourceRenderer resource={analyticsQueryResult.data}>
+            {(data) => (
+              <div className={s.analyticsCard}>
+                {ruleInstance.type === 'TRANSACTION' && (
+                  <OverviewCard
+                    sections={[
+                      {
+                        title: 'Transactions hit',
+                        value: data.transactionsHit,
+                      },
+                    ]}
+                  />
+                )}
+                <OverviewCard
+                  sections={[
+                    {
+                      title: 'Users hit',
+                      value: data.usersHit,
+                    },
+                  ]}
+                />
+                <OverviewCard
+                  sections={[
+                    {
+                      title: 'Possible alerts created',
+                      value: data.alertsHit,
+                    },
+                  ]}
+                />
+                <OverviewCard
+                  sections={[
+                    {
+                      title: 'Possible total investigation time',
+                      value: formatDuration(getDuration(data.investigationTime)) || '0',
+                    },
+                  ]}
+                />
+              </div>
+            )}
+          </AsyncResourceRenderer>
+        </div>
+      </WidgetBase>
+
+      {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type === 'TRANSACTION' && (
         <Card.Root noBorder>
           <ShadowRuleTransactionTable ruleInstance={ruleInstance} />
         </Card.Root>

@@ -1,5 +1,9 @@
-import { getAffectedInterval } from '../../utils'
-import { CASE_GROUP_KEYS, CASE_PROJECT_KEYS, TimeRange } from '../types'
+import { getAffectedInterval } from '../../dashboard/utils'
+import {
+  CASE_GROUP_KEYS,
+  CASE_PROJECT_KEYS,
+  TimeRange,
+} from '../../dashboard/repositories/types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {

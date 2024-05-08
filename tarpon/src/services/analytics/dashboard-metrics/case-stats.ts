@@ -1,6 +1,6 @@
 import { keyBy, sortBy, sum } from 'lodash'
-import { GranularityValuesType } from '../types'
-import { getTimeLabels } from '../../utils'
+import { GranularityValuesType } from '../../dashboard/repositories/types'
+import { getTimeLabels } from '../../dashboard/utils'
 import {
   DAY_DATE_FORMAT,
   DAY_DATE_FORMAT_JS,

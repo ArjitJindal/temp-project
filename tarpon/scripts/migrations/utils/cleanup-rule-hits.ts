@@ -17,7 +17,7 @@ import {
 import { logger } from '@/core/logger'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
+import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 
 const TRANSACTIONS_PROCESS_BATCH_SIZE = 20

@@ -39,7 +39,7 @@ import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
 import dayjs, { duration } from '@/utils/dayjs'
-import { getTimeLabels } from '@/lambdas/console-api-dashboard/utils'
+import { getTimeLabels } from '@/services/dashboard/utils'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { neverThrow } from '@/utils/lang'

@@ -1,8 +1,9 @@
 import { last, uniq } from 'lodash'
+import { ShadowRuleStatsAnalytics } from '../analytics/rules/shadow-rule-stats'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { DashboardRefreshBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
+import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
 import { Case } from '@/@types/openapi-internal/Case'
 import {
   CASES_COLLECTION,
@@ -14,8 +15,8 @@ import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { getAffectedInterval } from '@/lambdas/console-api-dashboard/utils'
-import { TimeRange } from '@/lambdas/console-api-dashboard/repositories/types'
+import { getAffectedInterval } from '@/services/dashboard/utils'
+import { TimeRange } from '@/services/dashboard/repositories/types'
 
 function getTargetTimeRanges(timestamps: number[]): TimeRange[] {
   if (timestamps.length === 0) {
@@ -144,6 +145,14 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
           await dashboardStatsRepository.refreshUserStats(timeRange)
           logger.info(`Refreshed user stats - ${JSON.stringify(timeRange)}`)
         }
+      })(),
+
+      // RuleInstance stats
+      (async () => {
+        await ShadowRuleStatsAnalytics.refresh(job.tenantId, checkTimeRange)
+        logger.info(
+          `Refreshed rule instance stats - ${JSON.stringify(checkTimeRange)}`
+        )
       })(),
     ]
 

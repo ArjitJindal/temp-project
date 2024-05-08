@@ -38,7 +38,7 @@ import {
   getSummaries,
 } from '@/core/seed/data/crm'
 import { data as transactionEvents } from '@/core/seed/data/transaction_events'
-import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
+import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
 import { AccountsService } from '@/services/accounts'
 import { setAccounts } from '@/core/seed/samplers/accounts'
 import { getChecklistTemplates } from '@/core/seed/data/checklists'

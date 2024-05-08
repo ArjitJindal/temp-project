@@ -1,5 +1,5 @@
-import { getAffectedInterval } from '../../utils'
-import { TimeRange } from '../types'
+import { getAffectedInterval } from '../../dashboard/utils'
+import { TimeRange } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {
@@ -9,20 +9,20 @@ import {
 } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
-  DASHBOARD_QA_OVERVIEW_STATS_COLLECTION_HOURLY,
+  DASHBOARD_QA_ALERTS_BY_RULE_STATS_COLLECTION_HOURLY,
 } from '@/utils/mongodb-definitions'
 
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
-import { DashboardStatsQaOverview } from '@/@types/openapi-internal/DashboardStatsQaOverview'
+import { DashboardStatsQaAlertsCountByRuleData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByRuleData'
 
 @traceable
-export class QaOverviewStatsDashboardMetric {
+export class QaAlertsByRuleStatsDashboardMetric {
   public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
     const db = await getMongoDbClientDb()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     const aggregationCollection =
-      DASHBOARD_QA_OVERVIEW_STATS_COLLECTION_HOURLY(tenantId)
+      DASHBOARD_QA_ALERTS_BY_RULE_STATS_COLLECTION_HOURLY(tenantId)
     let timestampMatch: any = undefined
 
     if (timeRange) {
@@ -44,7 +44,7 @@ export class QaOverviewStatsDashboardMetric {
       {
         $match: {
           'alerts.alertStatus': 'CLOSED',
-          'alerts.qaAssignment': { $exists: true, $ne: [] },
+          'alerts.ruleQaStatus': { $ne: null },
           ...timestampMatch,
         },
       },
@@ -61,36 +61,24 @@ export class QaOverviewStatsDashboardMetric {
                 },
               },
             },
+            ruleId: '$alerts.ruleId',
+            ruleInstanceId: '$alerts.ruleInstanceId',
           },
-          totalAlertsForQa: {
+          alertsCount: {
             $sum: 1,
-          },
-          totalQaPassedAlerts: {
-            $sum: {
-              $cond: {
-                if: { $eq: ['$alerts.ruleQaStatus', 'PASSED'] },
-                then: 1,
-                else: 0,
-              },
-            },
-          },
-          totalQaFailedAlerts: {
-            $sum: {
-              $cond: {
-                if: { $eq: ['$alerts.ruleQaStatus', 'FAILED'] },
-                then: 1,
-                else: 0,
-              },
-            },
           },
         },
       },
       {
-        $project: {
+        $group: {
           _id: '$_id.time',
-          totalAlertsForQa: '$totalAlertsForQa',
-          totalQaPassedAlerts: '$totalQaPassedAlerts',
-          totalQaFailedAlerts: '$totalQaFailedAlerts',
+          rulesStats: {
+            $push: {
+              ruleId: '$_id.ruleId',
+              ruleInstanceId: '$_id.ruleInstanceId',
+              alertsCount: '$alertsCount',
+            },
+          },
         },
       },
       {
@@ -119,10 +107,10 @@ export class QaOverviewStatsDashboardMetric {
     tenantId: string,
     startTimestamp: number,
     endTimestamp: number
-  ): Promise<DashboardStatsQaOverview> {
+  ): Promise<DashboardStatsQaAlertsCountByRuleData[]> {
     const db = await getMongoDbClientDb()
     const collection = db.collection(
-      DASHBOARD_QA_OVERVIEW_STATS_COLLECTION_HOURLY(tenantId)
+      DASHBOARD_QA_ALERTS_BY_RULE_STATS_COLLECTION_HOURLY(tenantId)
     )
 
     const endDate = dayjs(endTimestamp)
@@ -132,9 +120,8 @@ export class QaOverviewStatsDashboardMetric {
 
     const result = await collection
       .aggregate<{
-        totalAlertsForQa: number
-        totalQaPassedAlerts: number
-        totalQaFailedAlerts: number
+        _id: { ruleId: string; ruleInstanceId: string }
+        alertsCount: number
       }>(
         [
           {
@@ -145,25 +132,26 @@ export class QaOverviewStatsDashboardMetric {
               },
             },
           },
+          { $unwind: { path: '$rulesStats' } },
           {
             $group: {
-              _id: null,
-              totalAlertsForQa: { $sum: '$totalAlertsForQa' },
-              totalQaPassedAlerts: { $sum: '$totalQaPassedAlerts' },
-              totalQaFailedAlerts: { $sum: '$totalQaFailedAlerts' },
+              _id: {
+                ruleId: '$rulesStats.ruleId',
+                ruleInstanceId: '$rulesStats.ruleInstanceId',
+              },
+              alertsCount: { $sum: '$rulesStats.alertsCount' },
             },
           },
+          { $sort: { alertsCount: -1 } },
         ],
         { allowDiskUse: true }
       )
       .toArray()
 
-    return result.length
-      ? result[0]
-      : {
-          totalAlertsForQa: 0,
-          totalQaPassedAlerts: 0,
-          totalQaFailedAlerts: 0,
-        }
+    return result.map((x) => ({
+      ruleId: x._id.ruleId,
+      ruleInstanceId: x._id.ruleInstanceId,
+      alertsCount: x.alertsCount,
+    }))
   }
 }

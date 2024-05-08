@@ -1,7 +1,7 @@
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
-import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
+import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CaseRepository } from '@/services/cases/repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'

@@ -1,6 +1,6 @@
 import { Document, Filter } from 'mongodb'
-import { TimeRange } from '../types'
-import { getAffectedInterval } from '../../utils'
+import { TimeRange } from '../../dashboard/repositories/types'
+import { getAffectedInterval } from '../../dashboard/utils'
 import {
   getDateFormatByGranularity,
   getDateFormatJsByGranularity,

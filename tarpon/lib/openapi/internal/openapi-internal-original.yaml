@@ -203,6 +203,36 @@ paths:
       responses:
         '200':
           description: OK
+  /rule_instances/{ruleInstanceId}/stats:
+    parameters:
+      - schema:
+          type: string
+        name: ruleInstanceId
+        in: path
+        required: true
+    get:
+      summary: Rule Instance - Stats
+      operationId: get-rule_instances-ruleInstanceId-stats
+      x-flagright:
+        permissions:
+          - rules:my-rules:read
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShadowRuleStats'
+              examples: {}
   /rule_instances:
     post:
       summary: Rule Instance - Create
@@ -12157,6 +12187,23 @@ components:
       enum:
         - EMERGING
         - FIRST_WORLD
+    ShadowRuleStats:
+      title: ShadowRuleStats
+      type: object
+      properties:
+        transactionsHit:
+          type: number
+        usersHit:
+          type: number
+        alertsHit:
+          type: number
+        investigationTime:
+          type: number
+      required:
+        - transactionsHit
+        - usersHit
+        - alertsHit
+        - investigationTime
   securitySchemes:
     Authorization:
       type: http

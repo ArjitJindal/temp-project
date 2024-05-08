@@ -7,7 +7,7 @@ import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRis
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
-import { TimeRange } from '@/lambdas/console-api-dashboard/repositories/types'
+import { TimeRange } from '@/services/dashboard/repositories/types'
 
 /* File Import */
 type FileImportBatchJobParameters = {

@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
-import { DashboardStatsRepository } from './repositories/dashboard-stats-repository'
+import { DashboardStatsRepository } from '../../services/dashboard/repositories/dashboard-stats-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { assertCurrentUserRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'

@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { shouldRefreshAll } from '../console-api-dashboard/app'
 import {
   RULE_LOGIC_CONFIG_S3_KEY,
   RuleService,
@@ -17,6 +18,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleInstanceService } from '@/services/rules-engine/rule-instance-service'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { envIs } from '@/utils/env'
+import { ShadowRuleStatsAnalytics } from '@/services/analytics/rules/shadow-rule-stats'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -134,6 +136,22 @@ export const ruleInstanceHandler = lambdaApi()(
         ruleInstanceId: await ruleInstanceService.getNewRuleInstanceId(ruleId),
       }
     })
+
+    handlers.registerGetRuleInstancesRuleInstanceIdStats(
+      async (ctx, request) => {
+        const { ruleInstanceId, afterTimestamp, beforeTimestamp } = request
+        if (shouldRefreshAll(event)) {
+          await ShadowRuleStatsAnalytics.refresh(tenantId)
+        }
+
+        return await ShadowRuleStatsAnalytics.get(
+          tenantId,
+          ruleInstanceId,
+          afterTimestamp || 0,
+          beforeTimestamp || Date.now()
+        )
+      }
+    )
 
     return await handlers.handle(event)
   }

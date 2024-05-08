@@ -84,6 +84,10 @@ export const DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY = (
 ) => {
   return `${tenantId}-dashboard-rule-stats-hourly`
 }
+export const SHADOW_RULE_ANALYTICS_COLLECTION_HOURLY = (tenantId: string) => {
+  return `${tenantId}-shadow-rule-analytics-hourly`
+}
+
 export const DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY = (
   tenantId: string
 ) => {
@@ -288,6 +292,8 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           'executedRules.ruleId',
           'executedRules.ruleInstanceId',
           'hitRules.ruleAction',
+          'hitRules.isShadow',
+          'hitRules.ruleHitMeta.hitDirections',
           'hitRules.ruleInstanceId',
           'originAmountDetails.country',
           'originAmountDetails.transactionAmount',

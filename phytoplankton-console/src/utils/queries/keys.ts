@@ -268,6 +268,10 @@ export const DASHBOARD_TRANSACTIONS_STATS = (params: AnyParameters): QueryKey =>
   'transactions',
   params,
 ];
+export const SHADOW_RULES_ANALYTICS = (params: AnyParameters): QueryKey => [
+  'shadow-rules-analytics',
+  params,
+];
 
 export const DASHBOARD_TRANSACTIONS_TOTAL_STATS = (params: AnyParameters): QueryKey => [
   'dashboard',
