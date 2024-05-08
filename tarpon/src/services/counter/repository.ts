@@ -32,7 +32,7 @@ export class CounterRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
     for (const entity of COUNTER_ENTITIES) {
-      if (!(await collection.find({ entity }))) {
+      if (!(await collection.findOne({ entity }))) {
         await collection.insertOne({ entity, count: 0 })
       }
     }
