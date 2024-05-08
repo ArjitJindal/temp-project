@@ -2,6 +2,7 @@ import { compact } from 'lodash'
 import { TransactionRiskFactorValueHandler } from '.'
 import { addNewSubsegment } from '@/core/xray'
 import { getAllIpAddresses } from '@/utils/ipAddress'
+import { lookupIpLocation } from '@/services/rules-engine/utils/geoip'
 
 export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
   TransactionRiskFactorValueHandler<string | undefined | null>
@@ -21,14 +22,11 @@ export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
       if (originIpAddress == null && destinationIpAddress == null) {
         return []
       }
-      const geoIp = await import('geoip-lite')
 
-      const originIpInfo = originIpAddress
-        ? geoIp.lookup(originIpAddress)
-        : undefined
-      const destinationIpInfo = destinationIpAddress
-        ? geoIp.lookup(destinationIpAddress)
-        : undefined
+      const [originIpInfo, destinationIpInfo] = await Promise.all([
+        originIpAddress ? lookupIpLocation(originIpAddress) : null,
+        destinationIpAddress ? lookupIpLocation(destinationIpAddress) : null,
+      ])
 
       subsegemt?.close()
 

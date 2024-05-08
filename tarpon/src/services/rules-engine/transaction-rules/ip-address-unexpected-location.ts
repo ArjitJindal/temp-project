@@ -6,6 +6,7 @@ import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rul
 import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
+import { lookupIpLocation } from '../utils/geoip'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 import { traceable } from '@/core/xray'
@@ -40,8 +41,7 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
       return
     }
 
-    const geoIp = await import('geoip-lite')
-    const ipInfo = geoIp.lookup(ipAddress as string)
+    const ipInfo = await lookupIpLocation(ipAddress as string)
 
     if (!ipInfo?.country) {
       return

@@ -44,7 +44,7 @@ winstonLogger.error = wrap(
         Sentry.captureException(error, { extra })
       })
     }
-    return func(error, ...rest)
+    return func(error, { ...extra, ...getContext()?.logMetadata })
   }
 ) as LeveledLogMethod
 

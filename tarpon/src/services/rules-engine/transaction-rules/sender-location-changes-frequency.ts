@@ -9,6 +9,7 @@ import {
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { lookupIpLocation } from '../utils/geoip'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { traceable } from '@/core/xray'
 
@@ -56,9 +57,10 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
 
     uniqueIpAddresses.add(ipAddress)
 
-    const geoIp = await import('geoip-lite')
-    const ipInfos = Array.from(uniqueIpAddresses).map((ipAddress) =>
-      geoIp.lookup(ipAddress)
+    const ipInfos = await Promise.all(
+      Array.from(uniqueIpAddresses).map((ipAddress) =>
+        lookupIpLocation(ipAddress)
+      )
     )
 
     const uniqueCities = new Set(

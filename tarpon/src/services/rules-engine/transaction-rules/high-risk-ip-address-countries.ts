@@ -1,9 +1,11 @@
 import { JSONSchemaType } from 'ajv'
 import { COUNTRIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
+import { lookupIpLocation } from '../utils/geoip'
 import { TransactionRule } from './rule'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { traceable } from '@/core/xray'
+import { logger } from '@/core/logger'
 
 export type HighRiskIpAddressCountriesParameters = {
   highRiskCountries: CountryCode[]
@@ -25,7 +27,6 @@ export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddres
   }
 
   public async computeRule() {
-    const geoIp = await import('geoip-lite')
     const originIpAddress = this.transaction.originDeviceData?.ipAddress
     const destinationIpAddress =
       this.transaction.destinationDeviceData?.ipAddress
@@ -34,12 +35,13 @@ export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddres
       return
     }
 
-    const originIpInfo = originIpAddress
-      ? geoIp.lookup(originIpAddress)
-      : undefined
-    const destinationIpInfo = destinationIpAddress
-      ? geoIp.lookup(destinationIpAddress)
-      : undefined
+    const [originIpInfo, destinationIpInfo] = await Promise.all([
+      originIpAddress ? lookupIpLocation(originIpAddress) : null,
+      destinationIpAddress ? lookupIpLocation(destinationIpAddress) : null,
+    ])
+    logger.info(
+      `originIpInfo (${originIpAddress}): ${JSON.stringify(originIpInfo)}`
+    )
 
     const originIpCountry = originIpInfo?.country
     const destinationIpCountry = destinationIpInfo?.country
