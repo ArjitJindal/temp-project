@@ -1,11 +1,7 @@
 import React, { MutableRefObject, useRef, useState } from 'react';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import Donut from '@/pages/dashboard/analysis/components/charts/Donut';
-import {
-  DashboardStatsAlertPriorityDistributionStats,
-  DashboardStatsAlertPriorityDistributionStatsAlertPriorityData,
-} from '@/apis';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { DashboardStatsAlertPriorityDistributionStatsAlertPriorityData } from '@/apis';
 import {
   COLORS_V2_PRIMARY_SHADES_BLUE_100,
   COLORS_V2_PRIMARY_SHADES_BLUE_300,
@@ -21,6 +17,7 @@ import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 import { dayjs } from '@/utils/dayjs';
+import { map, getOr } from '@/utils/asyncResource';
 
 const PRIORITY_COLORS: Record<string, string> = {
   ['P1']: COLORS_V2_PRIMARY_TINTS_BLUE_900,
@@ -44,50 +41,44 @@ const DistributionByAlertPriority = (props: Props) => {
   });
   const data = queryResult.data;
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
+  const dataResource = map(data, ({ alertPriorityData }) => {
+    return alertPriorityData.map(
+      (item: DashboardStatsAlertPriorityDistributionStatsAlertPriorityData) => {
+        return { series: item.priority ?? 'N/A', value: item.value ?? 0 };
+      },
+    );
+  });
   return (
-    <AsyncResourceRenderer<DashboardStatsAlertPriorityDistributionStats> resource={data}>
-      {({ alertPriorityData }) => {
-        const data = alertPriorityData.map(
-          (item: DashboardStatsAlertPriorityDistributionStatsAlertPriorityData) => {
-            return { series: item.priority ?? 'N/A', value: item.value ?? 0 };
-          },
-        );
-        return (
-          <div ref={pdfRef}>
-            <Widget
-              onDownload={(): Promise<{
-                fileName: string;
-                pdfRef: MutableRefObject<HTMLInputElement>;
-                data: string;
-              }> => {
-                return new Promise((resolve, _reject) => {
-                  const fileData = {
-                    fileName: `distribution-by-open-alert-priority-${dayjs().format(
-                      'YYYY_MM_DD',
-                    )}.pdf`,
-                    pdfRef: pdfRef,
-                    data: exportDataForDonuts('alertPriority', data),
-                    tableTitle: `Distribution by open alert priority`,
-                  };
-                  resolve(fileData);
-                });
-              }}
-              width="HALF"
-              resizing="AUTO"
-              extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-              {...props}
-            >
-              <Donut
-                shape="SEMI_CIRCLE"
-                data={data}
-                colors={PRIORITY_COLORS}
-                legendPosition={'BOTTOM'}
-              />
-            </Widget>
-          </div>
-        );
-      }}
-    </AsyncResourceRenderer>
+    <div ref={pdfRef}>
+      <Widget
+        onDownload={(): Promise<{
+          fileName: string;
+          pdfRef: MutableRefObject<HTMLInputElement>;
+          data: string;
+        }> => {
+          return new Promise((resolve, _reject) => {
+            const fileData = {
+              fileName: `distribution-by-open-alert-priority-${dayjs().format('YYYY_MM_DD')}.pdf`,
+              pdfRef: pdfRef,
+              data: exportDataForDonuts('alertPriority', getOr(dataResource, [])),
+              tableTitle: `Distribution by open alert priority`,
+            };
+            resolve(fileData);
+          });
+        }}
+        width="HALF"
+        resizing="AUTO"
+        extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+        {...props}
+      >
+        <Donut
+          shape="SEMI_CIRCLE"
+          data={dataResource}
+          colors={PRIORITY_COLORS}
+          legendPosition={'BOTTOM'}
+        />
+      </Widget>
+    </div>
   );
 };
 

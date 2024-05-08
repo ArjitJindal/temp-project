@@ -1,0 +1,37 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.skeleton,
+.failed {
+  line-height: 1;
+  border-radius: 1em;
+}
+
+.skeleton {
+  background: @fr-colors-v2-skeleton;
+  color: transparent;
+  max-width: 100%;
+  user-select: none;
+  pointer-events: none;
+  animation-name: fr-skeleton-animation;
+  animation-direction: alternate;
+  animation-duration: 2000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in;
+  animation-delay: 1000ms;
+}
+
+.failed {
+  background: @fr-colors-red-tmp-1;
+  color: white;
+  padding: 0 0.25em;
+}
+
+@keyframes fr-skeleton-animation {
+  0% {
+    background: @fr-colors-v2-skeleton;
+  }
+  100% {
+    background: mix(#fff, @fr-colors-v2-skeleton, 80%);
+  }
+}

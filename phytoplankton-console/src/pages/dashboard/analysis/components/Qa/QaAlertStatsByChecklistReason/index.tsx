@@ -4,8 +4,8 @@ import { CHECKLIST_TEMPLATES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { ChecklistTemplatesResponse } from '@/apis';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import WidgetBase from '@/components/library/Widget/WidgetBase';
+import { map } from '@/utils/asyncResource';
 
 interface Props extends WidgetProps {}
 
@@ -16,13 +16,10 @@ const QaAlertStatsByChecklistReason = (props: Props) => {
     api.getChecklistTemplates(),
   );
 
+  const dataRes = map(queryResult.data, ({ data }) => data);
   return (
     <WidgetBase width="FULL" id={`${props.id}-full-widget`}>
-      <AsyncResourceRenderer resource={queryResult.data}>
-        {({ data }) => {
-          return <ChecklistChart {...props} data={data} />;
-        }}
-      </AsyncResourceRenderer>
+      <ChecklistChart {...props} data={dataRes} />
     </WidgetBase>
   );
 };

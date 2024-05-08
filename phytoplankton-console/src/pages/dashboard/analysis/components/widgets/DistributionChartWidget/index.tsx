@@ -10,11 +10,9 @@ import GranularDatePicker, {
 } from '../GranularDatePicker/GranularDatePicker';
 import { formatDate } from '../../../utils/date-utils';
 import s from './styles.module.less';
-import { map } from '@/utils/asyncResource';
+import { map, getOr } from '@/utils/asyncResource';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import Widget from '@/components/library/Widget';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { WidgetProps } from '@/components/library/Widget/types';
 import DatePicker from '@/components/ui/DatePicker';
 import ContainerRectMeasure from '@/components/utils/ContainerRectMeasure';
@@ -110,100 +108,91 @@ export default function DistributionChartWidget<
   const selectedGroupPrefix = groups.length > 1 ? `-${snakeCase(attributeName)}` : '';
 
   return (
-    <AsyncResourceRenderer resource={preparedDataRes}>
-      {(data) => {
-        if (data.length === 0) {
-          return <NoData />;
-        }
-        return (
-          <Widget
-            ref={pdfRef}
-            resizing="FIXED"
-            {...restProps}
-            extraControls={
-              setGranularity && showGranularity
-                ? [
-                    <GranularDatePicker
-                      timeWindowType={timeWindowType}
-                      setTimeWindowType={setTimeWindowType}
-                      setGranularity={setGranularity}
-                      dateRange={dateRange}
-                      setDateRange={(e) => {
-                        onTimeRangeChange({
-                          startTimestamp: e?.[0]?.valueOf() ?? 0,
-                          endTimestamp: e?.[1]?.valueOf() ?? 0,
-                        });
-                      }}
-                    />,
-                  ]
-                : [
-                    <DatePicker.RangePicker
-                      value={dateRange}
-                      onChange={(e) => {
-                        onTimeRangeChange({
-                          startTimestamp: e?.[0]?.valueOf() ?? 0,
-                          endTimestamp: e?.[1]?.valueOf() ?? 0,
-                        });
-                      }}
-                    />,
-                  ]
-            }
-            onDownload={(): Promise<{
-              fileName: string;
-              data: string;
-              pdfRef: MutableRefObject<HTMLInputElement>;
-            }> => {
-              return new Promise((resolve, _reject) => {
-                if (attributeName == null) {
-                  throw new Error(`Unable to download file, attributeName can not be null`);
-                }
-                const fileData = {
-                  fileName: `${downloadFilenamePrefix}${selectedGroupPrefix}-${dayjs().format(
-                    'YYYY_MM_DD',
-                  )}`,
-                  data: exportDataForBarGraphs(
-                    data,
-                    attributeName,
-                    undefined,
-                    groupBy === 'TIME' ? seriesLabel : '',
-                  ),
-                  pdfRef,
-                  tableTitle: `${attributeName} distribution`,
-                };
-                resolve(fileData);
-              });
-            }}
-          >
-            <div className={s.root}>
-              {groups.length > 1 ? (
-                <SegmentedControl<GroupType>
-                  size="MEDIUM"
-                  active={selectedGroup}
-                  onChange={(newValue) => {
-                    setSelectedGroup(newValue);
-                  }}
-                  items={groups.map((group) => ({ label: group.name, value: group.name }))}
-                />
-              ) : null}
-              <div className={s.chartContainer}>
-                <ContainerRectMeasure className={s.chartContainer2}>
-                  {(size) => (
-                    <Column<ValueType, string>
-                      data={data}
-                      colors={attributeColors}
-                      hideLegend={groupBy === 'VALUE'}
-                      height={size.height}
-                      rotateLabel={groupBy === 'TIME'}
-                      formatSeries={getValueName}
-                      formatX={groupBy === 'VALUE' ? getValueName : formatDate}
-                    />
-                  )}
-                </ContainerRectMeasure>
-              </div>
-            </div>
-          </Widget>
-        );
+    <Widget
+      ref={pdfRef}
+      resizing="FIXED"
+      {...restProps}
+      extraControls={
+        setGranularity && showGranularity
+          ? [
+              <GranularDatePicker
+                timeWindowType={timeWindowType}
+                setTimeWindowType={setTimeWindowType}
+                setGranularity={setGranularity}
+                dateRange={dateRange}
+                setDateRange={(e) => {
+                  onTimeRangeChange({
+                    startTimestamp: e?.[0]?.valueOf() ?? 0,
+                    endTimestamp: e?.[1]?.valueOf() ?? 0,
+                  });
+                }}
+              />,
+            ]
+          : [
+              <DatePicker.RangePicker
+                value={dateRange}
+                onChange={(e) => {
+                  onTimeRangeChange({
+                    startTimestamp: e?.[0]?.valueOf() ?? 0,
+                    endTimestamp: e?.[1]?.valueOf() ?? 0,
+                  });
+                }}
+              />,
+            ]
+      }
+      onDownload={(): Promise<{
+        fileName: string;
+        data: string;
+        pdfRef: MutableRefObject<HTMLInputElement>;
+      }> => {
+        return new Promise((resolve, _reject) => {
+          if (attributeName == null) {
+            throw new Error(`Unable to download file, attributeName can not be null`);
+          }
+          const fileData = {
+            fileName: `${downloadFilenamePrefix}${selectedGroupPrefix}-${dayjs().format(
+              'YYYY_MM_DD',
+            )}`,
+            data: exportDataForBarGraphs(
+              getOr(preparedDataRes, []),
+              attributeName,
+              undefined,
+              groupBy === 'TIME' ? seriesLabel : '',
+            ),
+            pdfRef,
+            tableTitle: `${attributeName} distribution`,
+          };
+          resolve(fileData);
+        });
       }}
-    </AsyncResourceRenderer>
+    >
+      <div className={s.root}>
+        {groups.length > 1 ? (
+          <SegmentedControl<GroupType>
+            size="MEDIUM"
+            active={selectedGroup}
+            onChange={(newValue) => {
+              setSelectedGroup(newValue);
+            }}
+            items={groups.map((group) => ({ label: group.name, value: group.name }))}
+          />
+        ) : null}
+        <div className={s.chartContainer}>
+          <ContainerRectMeasure className={s.chartContainer2}>
+            {(size) => (
+              <Column<ValueType, string>
+                data={preparedDataRes}
+                colors={attributeColors}
+                hideLegend={groupBy === 'VALUE'}
+                height={size.height}
+                rotateLabel={groupBy === 'TIME'}
+                formatSeries={getValueName}
+                formatX={groupBy === 'VALUE' ? getValueName : formatDate}
+              />
+            )}
+          </ContainerRectMeasure>
+        </div>
+      </div>
+    </Widget>
   );
 }

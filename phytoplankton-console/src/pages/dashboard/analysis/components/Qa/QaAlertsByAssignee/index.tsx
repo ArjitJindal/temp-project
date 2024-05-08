@@ -11,9 +11,8 @@ import { DASHBOARD_STATS_QA_ALERTS_BY_ASSIGNEE } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useUsers } from '@/utils/user-utils';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { DashboardStatsQaAlertsCountByAssigneeData } from '@/apis';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
+import { map, getOr, isSuccess } from '@/utils/asyncResource';
 
 interface Props extends WidgetProps {}
 
@@ -64,31 +63,16 @@ const QaAlertsByAssignee = (props: Props) => {
 
   const [users] = useUsers();
 
-  const getData = (items: DashboardStatsQaAlertsCountByAssigneeData[]) => {
-    return items
-      .map((item) => {
-        const percentage = item.alertsAssignedForQa
-          ? ((item.alertsQaedByAssignee / item.alertsAssignedForQa) * 100).toFixed(2)
-          : '0';
-        return {
-          label: users?.[item.accountId]?.name ?? users?.[item.accountId]?.email ?? item.accountId,
-          value: parseFloat(percentage),
-          info: (
-            <span>
-              <span className={s.info}>{item.alertsQaedByAssignee} alerts QA'd </span>out of{' '}
-              {item.alertsAssignedForQa}
-            </span>
-          ),
-          valueLabel: `${percentage}%`,
-        };
-      })
-      .sort((a, b) => b.value - a.value);
-  };
+  const itemsRes = map(qaAlertsByAssignee.data, ({ items }) => items);
 
   return (
-    <AsyncResourceRenderer resource={qaAlertsByAssignee.data}>
-      {({ items }) => {
-        const dataToExport = items.map((item) => {
+    <Widget
+      {...props}
+      resizing="AUTO"
+      width="FULL"
+      extraControls={[<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
+      onDownload={(): Promise<{ fileName: string; data: string }> => {
+        const dataToExport = getOr(itemsRes, []).map((item) => {
           return {
             accountId: `${item.accountId}`,
             name: users?.[item.accountId]?.name ?? users?.[item.accountId]?.email ?? item.accountId,
@@ -96,40 +80,53 @@ const QaAlertsByAssignee = (props: Props) => {
             alertsQAed: item.alertsQaedByAssignee,
           };
         });
-        const data = getData(items);
-        return (
-          <Widget
-            {...props}
-            resizing="AUTO"
-            width="FULL"
-            extraControls={[<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
-            onDownload={(): Promise<{ fileName: string; data: string }> => {
-              return new Promise((resolve, _reject) => {
-                const fileData = {
-                  fileName: `qa-alerts-by-assignee-${dayjs().format('YYYY_MM_DD')}.csv`,
-                  data: getCsvData(dataToExport),
-                };
-                resolve(fileData);
-              });
-            }}
-          >
-            {items.length === 0 ? (
-              <NoData />
-            ) : (
-              <div className={s.root}>
-                <div className={s.header}>
-                  <span>Assignee</span>
-                  <span>QA'd alerts</span>
-                </div>
-                <div className={s.chart}>
-                  <BarChart data={data} />
-                </div>
-              </div>
-            )}
-          </Widget>
-        );
+        return new Promise((resolve, _reject) => {
+          const fileData = {
+            fileName: `qa-alerts-by-assignee-${dayjs().format('YYYY_MM_DD')}.csv`,
+            data: getCsvData(dataToExport),
+          };
+          resolve(fileData);
+        });
       }}
-    </AsyncResourceRenderer>
+    >
+      {isSuccess(itemsRes) && itemsRes.value.length === 0 ? (
+        <NoData />
+      ) : (
+        <div className={s.root}>
+          <div className={s.header}>
+            <span>Assignee</span>
+            <span>QA'd alerts</span>
+          </div>
+          <div className={s.chart}>
+            <BarChart
+              data={map(itemsRes, (items) =>
+                items
+                  .map((item) => {
+                    const percentage = item.alertsAssignedForQa
+                      ? ((item.alertsQaedByAssignee / item.alertsAssignedForQa) * 100).toFixed(2)
+                      : '0';
+                    return {
+                      label:
+                        users?.[item.accountId]?.name ??
+                        users?.[item.accountId]?.email ??
+                        item.accountId,
+                      value: parseFloat(percentage),
+                      info: (
+                        <span>
+                          <span className={s.info}>{item.alertsQaedByAssignee} alerts QA'd </span>
+                          out of {item.alertsAssignedForQa}
+                        </span>
+                      ),
+                      valueLabel: `${percentage}%`,
+                    };
+                  })
+                  .sort((a, b) => b.value - a.value),
+              )}
+            />
+          </div>
+        </div>
+      )}
+    </Widget>
   );
 };
 

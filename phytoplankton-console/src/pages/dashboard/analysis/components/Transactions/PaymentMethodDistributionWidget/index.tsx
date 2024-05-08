@@ -11,13 +11,12 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_28,
   COLORS_V2_ANALYTICS_CHARTS_29,
 } from '@/components/ui/colors';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_TOTAL_STATS } from '@/utils/queries/keys';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { getPaymentMethodTitle, PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
-import { map } from '@/utils/asyncResource';
+import { map, getOr } from '@/utils/asyncResource';
 import Treemap, {
   TreemapData,
   TreemapItem,
@@ -80,39 +79,33 @@ export default function PaymentMethodDistributionWidget(props: Props) {
   });
 
   return (
-    <AsyncResourceRenderer resource={preparedDataRes}>
-      {(preparedData) => {
-        return (
-          <div ref={pdfRef}>
-            <Widget
-              extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-              onDownload={(): Promise<{
-                fileName: string;
-                data: string;
-                pdfRef: MutableRefObject<HTMLInputElement>;
-              }> => {
-                return new Promise((resolve, _reject) => {
-                  const fileData = {
-                    fileName: `distribution-by-payment-methods-${dayjs().format('YYYY_MM_DD')}`,
-                    data: exportDataForTreemaps('paymentMethod', preparedData),
-                    pdfRef,
-                    tableTitle: `Distribution by payment methods`,
-                  };
-                  resolve(fileData);
-                });
-              }}
-              resizing="AUTO"
-              {...props}
-            >
-              <Treemap<PaymentMethod>
-                data={preparedData}
-                colors={TREEMAP_COLORS}
-                formatTitle={(name) => (name == null ? `Other` : getPaymentMethodTitle(name))}
-              />
-            </Widget>
-          </div>
-        );
-      }}
-    </AsyncResourceRenderer>
+    <div ref={pdfRef}>
+      <Widget
+        extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+        onDownload={(): Promise<{
+          fileName: string;
+          data: string;
+          pdfRef: MutableRefObject<HTMLInputElement>;
+        }> => {
+          return new Promise((resolve, _reject) => {
+            const fileData = {
+              fileName: `distribution-by-payment-methods-${dayjs().format('YYYY_MM_DD')}`,
+              data: exportDataForTreemaps('paymentMethod', getOr(preparedDataRes, [])),
+              pdfRef,
+              tableTitle: `Distribution by payment methods`,
+            };
+            resolve(fileData);
+          });
+        }}
+        resizing="AUTO"
+        {...props}
+      >
+        <Treemap<PaymentMethod>
+          data={preparedDataRes}
+          colors={TREEMAP_COLORS}
+          formatTitle={(name) => (name == null ? `Other` : getPaymentMethodTitle(name))}
+        />
+      </Widget>
+    </div>
   );
 }

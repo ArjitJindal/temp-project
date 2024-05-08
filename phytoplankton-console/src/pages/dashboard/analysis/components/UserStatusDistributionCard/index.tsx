@@ -11,7 +11,6 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_10,
 } from '@/components/ui/colors';
 import { BusinessUsersListResponse, ConsumerUsersListResponse, UserState } from '@/apis';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Widget from '@/components/library/Widget';
 import WidgetRangePicker, {
@@ -20,6 +19,7 @@ import WidgetRangePicker, {
 import { useUsersQuery } from '@/pages/dashboard/analysis/components/dashboardutils';
 import { capitalizeWords } from '@/utils/humanize';
 import { dayjs } from '@/utils/dayjs';
+import { map, getOr } from '@/utils/asyncResource';
 
 const COLORS = {
   UNACCEPTABLE: COLORS_V2_ANALYTICS_CHARTS_07,
@@ -53,71 +53,71 @@ export default function UserStatusDistributionCard(props: Props) {
   });
   const usersResult = useUsersQuery(userType, dateRange);
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
-  return (
-    <AsyncResourceRenderer resource={usersResult.data}>
-      {(users: ConsumerUsersListResponse | BusinessUsersListResponse) => {
-        const frequencyMap: { [key in UserState]?: number } = {};
-        for (const user of users.items) {
-          const { userStateDetails } = user;
-          if (userStateDetails !== undefined) {
-            frequencyMap[userStateDetails.state] = (frequencyMap[userStateDetails.state] ?? 0) + 1;
-          }
+  const dataResource = map(
+    usersResult.data,
+    (users: ConsumerUsersListResponse | BusinessUsersListResponse): DonutData<UserState> => {
+      const frequencyMap: { [key in UserState]?: number } = {};
+      for (const user of users.items) {
+        const { userStateDetails } = user;
+        if (userStateDetails !== undefined) {
+          frequencyMap[userStateDetails.state] = (frequencyMap[userStateDetails.state] ?? 0) + 1;
         }
+      }
 
-        // Converting the frequency map into an array of objects
-        const data: DonutData<UserState> = Object.entries(frequencyMap).map(([action, value]) => ({
-          series: action as UserState,
-          value: value as number,
-        }));
+      // Converting the frequency map into an array of objects
+      const data: DonutData<UserState> = Object.entries(frequencyMap).map(([action, value]) => ({
+        series: action as UserState,
+        value: value as number,
+      }));
 
-        data.sort((a, b) => {
-          return USER_STATUS_ORDER.indexOf(a.series) - USER_STATUS_ORDER.indexOf(b.series);
-        });
+      data.sort((a, b) => {
+        return USER_STATUS_ORDER.indexOf(a.series) - USER_STATUS_ORDER.indexOf(b.series);
+      });
+      return data;
+    },
+  );
 
-        return (
-          <div ref={pdfRef}>
-            <Widget
-              onDownload={(): Promise<{
-                fileName: string;
-                data: string;
-                pdfRef: MutableRefObject<HTMLInputElement>;
-              }> => {
-                return new Promise((resolve, _reject) => {
-                  const fileData = {
-                    fileName: `${userType.toLowerCase()}-user-status-distribution-${dayjs().format(
-                      'YYYY_MM_DD',
-                    )}`,
-                    data: exportDataForDonuts('userStatus', data),
-                    pdfRef,
-                    tableTitle: `${
-                      userType.charAt(0).toUpperCase() + userType.slice(1).toLowerCase()
-                    } user status distribution`,
-                  };
-                  resolve(fileData);
-                });
-              }}
-              resizing="AUTO"
-              extraControls={[
-                <WidgetRangePicker
-                  value={dateRange}
-                  onChange={(e) => {
-                    e && setDateRange(e);
-                    usersResult.refetch();
-                  }}
-                />,
-              ]}
-              {...props}
-            >
-              <Donut<UserState>
-                data={data}
-                colors={COLORS}
-                legendPosition="RIGHT"
-                formatSeries={(action) => capitalizeWords(action) ?? action}
-              />
-            </Widget>
-          </div>
-        );
-      }}
-    </AsyncResourceRenderer>
+  return (
+    <div ref={pdfRef}>
+      <Widget
+        onDownload={(): Promise<{
+          fileName: string;
+          data: string;
+          pdfRef: MutableRefObject<HTMLInputElement>;
+        }> => {
+          return new Promise((resolve, _reject) => {
+            const fileData = {
+              fileName: `${userType.toLowerCase()}-user-status-distribution-${dayjs().format(
+                'YYYY_MM_DD',
+              )}`,
+              data: exportDataForDonuts('userStatus', getOr(dataResource, [])),
+              pdfRef,
+              tableTitle: `${
+                userType.charAt(0).toUpperCase() + userType.slice(1).toLowerCase()
+              } user status distribution`,
+            };
+            resolve(fileData);
+          });
+        }}
+        resizing="AUTO"
+        extraControls={[
+          <WidgetRangePicker
+            value={dateRange}
+            onChange={(e) => {
+              e && setDateRange(e);
+              usersResult.refetch();
+            }}
+          />,
+        ]}
+        {...props}
+      >
+        <Donut<UserState>
+          data={dataResource}
+          colors={COLORS}
+          legendPosition="RIGHT"
+          formatSeries={(action) => capitalizeWords(action) ?? action}
+        />
+      </Widget>
+    </div>
   );
 }

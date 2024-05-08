@@ -33,9 +33,9 @@ import InformationLineIcon from '@/components/ui/icons/Remix/system/information-
 import Alert from '@/components/library/Alert';
 import CursorPagination from '@/components/library/CursorPagination';
 import { Cursor } from '@/utils/queries/types';
-import Spinner from '@/components/library/Spinner';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { pickSortingParams } from '@/components/library/Table/paramsHelpers';
+import { shouldShowSkeleton } from '@/components/library/Skeleton';
 
 type RowHeightMode = 'FIXED' | 'AUTO';
 
@@ -255,6 +255,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
       >
         {(containerWidth) => {
           const showSizer = sizingMode === 'SCROLL' && containerWidth > table.getTotalSize();
+          const showSkeleton = shouldShowSkeleton(dataRes);
           const rows = table.getRowModel().rows;
           return (
             <table
@@ -311,7 +312,11 @@ function Table<Item extends object, Params extends object = CommonParams>(
               </thead>
               <tbody
                 data-cy={!isLoading(dataRes) ? 'table-body' : ''}
-                className={cn(s.tableBody, isLoading(dataRes) && s.isLoading)}
+                className={cn(
+                  s.tableBody,
+                  !showSkeleton && isLoading(dataRes) && s.isLoading,
+                  showSkeleton && s.showSkeleton,
+                )}
                 aria-label="Table body"
               >
                 {isFailed(dataRes) ? (
@@ -322,14 +327,14 @@ function Table<Item extends object, Params extends object = CommonParams>(
                   </tr>
                 ) : (
                   <>
-                    {rows.length === 0 && (
+                    {!showSkeleton && !isLoading(dataRes) && rows.length === 0 && (
                       <tr>
                         <td
                           className={s.noData}
                           style={{ paddingLeft: containerWidth / 2 }}
                           colSpan={table.getAllFlatColumns().length}
                         >
-                          {isLoading(dataRes) ? <Spinner /> : 'No data to display'}
+                          {'No data to display'}
                         </td>
                       </tr>
                     )}

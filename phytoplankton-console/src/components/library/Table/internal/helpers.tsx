@@ -47,11 +47,13 @@ import {
 } from '../consts';
 import { ColumnOrder, PersistedState, usePersistedSettingsContext } from './settings';
 import { ExternalStateContext } from './externalState';
+import Skeleton, { shouldShowSkeleton } from '@/components/library/Skeleton';
 import { getErrorMessage, isEqual } from '@/utils/lang';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
-import { AsyncResource, getOr } from '@/utils/asyncResource';
+import { AsyncResource, getOr, loading } from '@/utils/asyncResource';
 import { applyUpdater, StatePair, Updater } from '@/utils/state';
 import { getPageCount } from '@/utils/queries/hooks';
+import { makeRandomNumberGenerator } from '@/utils/prng';
 
 export function useLocalStorageOptionally<Value extends PersistedState = PersistedState>(
   key: string | null,
@@ -155,7 +157,15 @@ export function useTanstackTable<
   const [columnVisibility, setColumnVisibility] = extraTableContext.columnVisibility;
   const [columnOrderRestrictions] = extraTableContext.columnOrderRestrictions;
 
-  const data = getOr(dataRes, { items: [] });
+  const showSkeleton = shouldShowSkeleton(dataRes);
+  const data = showSkeleton
+    ? {
+        items: [...new Array(10)].map(() => {
+          return {} as Item;
+        }),
+      }
+    : getOr(dataRes, { items: [] });
+
   const preparedData: TableRow<Item>[] = useMemo(() => {
     let rowIndex = 0;
     return (data.items ?? []).flatMap((item, itemIndex): TableRow<Item>[] => {
@@ -187,11 +197,13 @@ export function useTanstackTable<
   }, [data.items]);
 
   const isAnythingExpandable =
-    typeof isExpandable === 'boolean' ? isExpandable : preparedData.some((x) => isExpandable(x));
+    !showSkeleton &&
+    (typeof isExpandable === 'boolean' ? isExpandable : preparedData.some((x) => isExpandable(x)));
   const isAnythingSelectable =
-    typeof isRowSelectionEnabled === 'boolean'
+    !showSkeleton &&
+    (typeof isRowSelectionEnabled === 'boolean'
       ? isRowSelectionEnabled
-      : preparedData.some((x) => isRowSelectionEnabled(x));
+      : preparedData.some((x) => isRowSelectionEnabled(x)));
 
   const columnDefs = useMemo(() => {
     const columnHelper = TanTable.createColumnHelper<TableRow<Item>>();
@@ -216,7 +228,7 @@ export function useTanstackTable<
           enableResizing: column.enableResizing ?? true,
           enableSorting: column.sorting === true || column.sorting === 'desc',
           sortDescFirst: column.sorting === 'desc',
-          cell: makeSimpleColumnCellComponent({ column, rowKey }),
+          cell: showSkeleton ? SkeletonCell : makeSimpleColumnCellComponent({ column, rowKey }),
           meta: {
             wrapMode: columnDataType.defaultWrapMode ?? DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
@@ -227,7 +239,7 @@ export function useTanstackTable<
         return columnHelper.display({
           id: columnId,
           header: column.title,
-          cell: makeDisplayColumnCellComponent({ column, rowKey }),
+          cell: showSkeleton ? SkeletonCell : makeDisplayColumnCellComponent({ column, rowKey }),
           enableResizing: column.enableResizing ?? true,
           meta: {
             wrapMode: DEFAULT_COLUMN_WRAP_MODE,
@@ -244,7 +256,7 @@ export function useTanstackTable<
           id: columnId,
           header: column.title,
           enableResizing: column.enableResizing ?? true,
-          cell: makeDerivedColumnCellComponent({ column }),
+          cell: showSkeleton ? SkeletonCell : makeDerivedColumnCellComponent({ column }),
           meta: {
             wrapMode: columnDataType.defaultWrapMode ?? DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
@@ -267,7 +279,7 @@ export function useTanstackTable<
     }
 
     return convertColumns(columns);
-  }, [rowKey, columns]);
+  }, [showSkeleton, rowKey, columns]);
 
   const sorting = useMemo(
     () =>
@@ -341,8 +353,10 @@ export function useTanstackTable<
     },
     data: preparedData,
     columns: allColumns,
-    getRowId: (originalRow: TableRow<Item>): string => {
-      return `${applyFieldAccessor(originalRow.content, rowKey as FieldAccessor<Item>)}`;
+    getRowId: (originalRow: TableRow<Item>, index): string => {
+      return showSkeleton
+        ? `skeleton_${index}`
+        : `${applyFieldAccessor(originalRow.content, rowKey as FieldAccessor<Item>)}`;
     },
 
     getCoreRowModel: TanTable.getCoreRowModel(),
@@ -428,6 +442,15 @@ export function useTanstackTable<
 
 type CellComponentProps<Item, Value = unknown> = TanTable.CellContext<TableRow<Item>, Value>;
 type CellComponent<Item> = React.FunctionComponent<CellComponentProps<Item>>;
+
+const SkeletonCell = (props: CellComponentProps<any>) => {
+  const hashCode = props.cell.id
+    .split('')
+    .map((x) => x.charCodeAt(0))
+    .reduce((acc, x) => acc * x, 1);
+  const random = makeRandomNumberGenerator(hashCode % Number.MAX_SAFE_INTEGER);
+  return <Skeleton length={4 + Math.round(10 * random())} res={loading()} />;
+};
 
 function makeSimpleColumnCellComponent<
   Item extends object,

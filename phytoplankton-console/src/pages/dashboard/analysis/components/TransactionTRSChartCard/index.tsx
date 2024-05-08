@@ -12,8 +12,7 @@ import GranularDatePicker, {
 import s from './index.module.less';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { map } from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { map, isSuccess } from '@/utils/asyncResource';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
@@ -85,29 +84,24 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
       ]}
     >
       <div className={s.salesCard}>
-        <AsyncResourceRenderer resource={preparedDataRes}>
-          {(data) => {
-            if (data.length === 0) {
-              return <Empty description="No data available for selected period" />;
-            }
-            return (
-              <Column<RiskLevel>
-                data={data}
-                colors={{
-                  VERY_LOW: COLORS_V2_ANALYTICS_CHARTS_01,
-                  LOW: COLORS_V2_ANALYTICS_CHARTS_04,
-                  MEDIUM: COLORS_V2_ANALYTICS_CHARTS_03,
-                  HIGH: COLORS_V2_ANALYTICS_CHARTS_05,
-                  VERY_HIGH: COLORS_V2_ANALYTICS_CHARTS_02,
-                }}
-                formatSeries={(series) => {
-                  return getRiskLevelLabel(series, settings);
-                }}
-                formatX={formatDate}
-              />
-            );
-          }}
-        </AsyncResourceRenderer>
+        {isSuccess(preparedDataRes) && preparedDataRes.value.length === 0 ? (
+          <Empty description="No data available for selected period" />
+        ) : (
+          <Column<RiskLevel>
+            data={preparedDataRes}
+            colors={{
+              VERY_LOW: COLORS_V2_ANALYTICS_CHARTS_01,
+              LOW: COLORS_V2_ANALYTICS_CHARTS_04,
+              MEDIUM: COLORS_V2_ANALYTICS_CHARTS_03,
+              HIGH: COLORS_V2_ANALYTICS_CHARTS_05,
+              VERY_HIGH: COLORS_V2_ANALYTICS_CHARTS_02,
+            }}
+            formatSeries={(series) => {
+              return getRiskLevelLabel(series, settings);
+            }}
+            formatX={formatDate}
+          />
+        )}
       </div>
     </Widget>
   );

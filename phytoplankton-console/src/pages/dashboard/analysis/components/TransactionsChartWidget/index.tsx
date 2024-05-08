@@ -16,13 +16,13 @@ import {
   getRuleActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import Column, { ColumnData } from '@/pages/dashboard/analysis/components/charts/Column';
 import { RuleAction } from '@/apis';
+import { map, isSuccess } from '@/utils/asyncResource';
 
 export default function TransactionsChartWidget(props: WidgetProps) {
   const settings = useSettings();
@@ -54,6 +54,34 @@ export default function TransactionsChartWidget(props: WidgetProps) {
     return await api.getDashboardStatsTransactions(params);
   });
 
+  const dataResource = map(
+    queryResult.data,
+    ({ data }): ColumnData<string, number, RuleAction> =>
+      data.flatMap((item): ColumnData<string, number, RuleAction> => {
+        return [
+          {
+            xValue: item.time,
+            yValue: item.status_BLOCK ?? 0,
+            series: 'BLOCK',
+          },
+          {
+            xValue: item.time,
+            yValue: item.status_SUSPEND ?? 0,
+            series: 'SUSPEND',
+          },
+          {
+            xValue: item.time,
+            yValue: item.status_FLAG ?? 0,
+            series: 'FLAG',
+          },
+          {
+            xValue: item.time,
+            yValue: item.status_ALLOW ?? 0,
+            series: 'ALLOW',
+          },
+        ];
+      }),
+  );
   return (
     <Widget
       extraControls={[
@@ -68,57 +96,25 @@ export default function TransactionsChartWidget(props: WidgetProps) {
       resizing="AUTO"
       {...props}
     >
-      <AsyncResourceRenderer resource={queryResult.data}>
-        {({ data }) => {
-          const preparedData: ColumnData<string, number, RuleAction> = data.flatMap(
-            (item): ColumnData<string, number, RuleAction> => {
-              return [
-                {
-                  xValue: item.time,
-                  yValue: item.status_BLOCK ?? 0,
-                  series: 'BLOCK',
-                },
-                {
-                  xValue: item.time,
-                  yValue: item.status_SUSPEND ?? 0,
-                  series: 'SUSPEND',
-                },
-                {
-                  xValue: item.time,
-                  yValue: item.status_FLAG ?? 0,
-                  series: 'FLAG',
-                },
-                {
-                  xValue: item.time,
-                  yValue: item.status_ALLOW ?? 0,
-                  series: 'ALLOW',
-                },
-              ];
-            },
-          );
-          return (
-            <>
-              {data.length === 0 ? (
-                <Empty description="No data available for selected period" />
-              ) : (
-                <Column<RuleAction>
-                  data={preparedData}
-                  formatSeries={(action) => {
-                    return getRuleActionLabel(action, settings) ?? action;
-                  }}
-                  formatX={formatDate}
-                  colors={{
-                    SUSPEND: getRuleActionColorForDashboard('SUSPEND'),
-                    FLAG: getRuleActionColorForDashboard('FLAG'),
-                    BLOCK: getRuleActionColorForDashboard('BLOCK'),
-                    ALLOW: getRuleActionColorForDashboard('ALLOW'),
-                  }}
-                />
-              )}
-            </>
-          );
-        }}
-      </AsyncResourceRenderer>
+      <>
+        {isSuccess(dataResource) && dataResource.value.length === 0 ? (
+          <Empty description="No data available for selected period" />
+        ) : (
+          <Column<RuleAction>
+            data={dataResource}
+            formatSeries={(action) => {
+              return getRuleActionLabel(action, settings) ?? action;
+            }}
+            formatX={formatDate}
+            colors={{
+              SUSPEND: getRuleActionColorForDashboard('SUSPEND'),
+              FLAG: getRuleActionColorForDashboard('FLAG'),
+              BLOCK: getRuleActionColorForDashboard('BLOCK'),
+              ALLOW: getRuleActionColorForDashboard('ALLOW'),
+            }}
+          />
+        )}
+      </>
     </Widget>
   );
 }

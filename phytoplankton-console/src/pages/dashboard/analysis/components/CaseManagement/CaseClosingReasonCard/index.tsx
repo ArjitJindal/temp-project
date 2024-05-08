@@ -21,11 +21,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_29,
 } from '@/components/ui/colors';
 import ScopeSelector from '@/pages/dashboard/analysis/components/CaseManagement/CaseClosingReasonCard/ScopeSelector';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import {
-  DashboardStatsClosingReasonDistributionStats,
-  DashboardStatsClosingReasonDistributionStatsClosingReasonsData,
-} from '@/apis';
+import { DashboardStatsClosingReasonDistributionStatsClosingReasonsData } from '@/apis';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -36,6 +32,7 @@ import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 import { dayjs } from '@/utils/dayjs';
+import { map, getOr } from '@/utils/asyncResource';
 
 type ClosingReasons =
   | 'Other'
@@ -93,64 +90,63 @@ const CaseClosingReasonCard = (props: Props) => {
     return response;
   });
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
+  const dataResource = map(
+    queryResult.data,
+    ({ closingReasonsData }): TreemapData<ClosingReasons> => {
+      const data = closingReasonsData
+        ?.map((child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData) => {
+          if (child.reason) {
+            return {
+              name: child.reason,
+              value: child.value ?? 0,
+            };
+          }
+          return null;
+        })
+        .filter(
+          (child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData | null) =>
+            child != null,
+        ) as TreemapData<ClosingReasons>;
+      return data;
+    },
+  );
+
   return (
-    <AsyncResourceRenderer<DashboardStatsClosingReasonDistributionStats>
-      resource={queryResult.data}
-    >
-      {({ closingReasonsData }) => {
-        const data = closingReasonsData
-          ?.map((child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData) => {
-            if (child.reason) {
-              return {
-                name: child.reason,
-                value: child.value ?? 0,
-              };
-            }
-            return null;
-          })
-          .filter(
-            (child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData | null) =>
-              child != null,
-          ) as TreemapData<ClosingReasons>;
-        return (
-          <div ref={pdfRef}>
-            <Widget
-              onDownload={(): Promise<{
-                fileName: string;
-                data: string;
-                pdfRef: MutableRefObject<HTMLInputElement>;
-              }> => {
-                return new Promise((resolve, _reject) => {
-                  const fileData = {
-                    fileName: `distribution-by-${selectedSection.toLowerCase()}-closing-reason-${dayjs().format(
-                      'YYYY_MM_DD',
-                    )}`,
-                    data: exportDataForTreemaps(
-                      `${selectedSection.toLowerCase()}ClosingReason`,
-                      data,
-                    ),
-                    pdfRef: pdfRef,
-                    tableTitle: `Distribution by ${selectedSection.toLowerCase()} closing reason`,
-                  };
-                  resolve(fileData);
-                });
-              }}
-              resizing="AUTO"
-              extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-              {...props}
-            >
-              <div className={s.root}>
-                <ScopeSelector
-                  selectedSection={selectedSection}
-                  setSelectedSection={setSelectedSection}
-                />
-                <Treemap<ClosingReasons> height={350} data={data} colors={TREEMAP_COLORS} />
-              </div>
-            </Widget>
-          </div>
-        );
-      }}
-    </AsyncResourceRenderer>
+    <div ref={pdfRef}>
+      <Widget
+        onDownload={(): Promise<{
+          fileName: string;
+          data: string;
+          pdfRef: MutableRefObject<HTMLInputElement>;
+        }> => {
+          return new Promise((resolve, _reject) => {
+            const fileData = {
+              fileName: `distribution-by-${selectedSection.toLowerCase()}-closing-reason-${dayjs().format(
+                'YYYY_MM_DD',
+              )}`,
+              data: exportDataForTreemaps(
+                `${selectedSection.toLowerCase()}ClosingReason`,
+                getOr(dataResource, []),
+              ),
+              pdfRef: pdfRef,
+              tableTitle: `Distribution by ${selectedSection.toLowerCase()} closing reason`,
+            };
+            resolve(fileData);
+          });
+        }}
+        resizing="AUTO"
+        extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+        {...props}
+      >
+        <div className={s.root}>
+          <ScopeSelector
+            selectedSection={selectedSection}
+            setSelectedSection={setSelectedSection}
+          />
+          <Treemap<ClosingReasons> height={350} data={dataResource} colors={TREEMAP_COLORS} />
+        </div>
+      </Widget>
+    </div>
   );
 };
 export default CaseClosingReasonCard;

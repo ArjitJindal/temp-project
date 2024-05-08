@@ -46,6 +46,7 @@ import { formatDuration, getDuration } from '@/utils/time-utils';
 import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
+import { map } from '@/utils/asyncResource';
 
 interface Props {
   ruleInstance: RuleInstance;
@@ -157,6 +158,7 @@ export const RuleInstanceInfo = (props: Props) => {
     },
   );
 
+  const dataRes = analyticsQueryResult.data;
   return (
     <div className={s.root}>
       <Card.Root noBorder>
@@ -331,46 +333,45 @@ export const RuleInstanceInfo = (props: Props) => {
               }}
             />
           </div>
-          <AsyncResourceRenderer resource={analyticsQueryResult.data}>
-            {(data) => (
-              <div className={s.analyticsCard}>
-                {ruleInstance.type === 'TRANSACTION' && (
-                  <OverviewCard
-                    sections={[
-                      {
-                        title: 'Transactions hit',
-                        value: data.transactionsHit,
-                      },
-                    ]}
-                  />
-                )}
-                <OverviewCard
-                  sections={[
-                    {
-                      title: 'Users hit',
-                      value: data.usersHit,
-                    },
-                  ]}
-                />
-                <OverviewCard
-                  sections={[
-                    {
-                      title: 'Possible alerts created',
-                      value: data.alertsHit,
-                    },
-                  ]}
-                />
-                <OverviewCard
-                  sections={[
-                    {
-                      title: 'Possible total investigation time',
-                      value: formatDuration(getDuration(data.investigationTime)) || '0',
-                    },
-                  ]}
-                />
-              </div>
+          <div className={s.analyticsCard}>
+            {ruleInstance.type === 'TRANSACTION' && (
+              <OverviewCard
+                sections={[
+                  {
+                    title: 'Transactions hit',
+                    value: map(dataRes, (data) => data.transactionsHit),
+                  },
+                ]}
+              />
             )}
-          </AsyncResourceRenderer>
+            <OverviewCard
+              sections={[
+                {
+                  title: 'Users hit',
+                  value: map(dataRes, (data) => data.usersHit),
+                },
+              ]}
+            />
+            <OverviewCard
+              sections={[
+                {
+                  title: 'Possible alerts created',
+                  value: map(dataRes, (data) => data.alertsHit),
+                },
+              ]}
+            />
+            <OverviewCard
+              sections={[
+                {
+                  title: 'Possible total investigation time',
+                  value: map(
+                    dataRes,
+                    (data) => formatDuration(getDuration(data.investigationTime)) || '0',
+                  ),
+                },
+              ]}
+            />
+          </div>
         </div>
       </WidgetBase>
 

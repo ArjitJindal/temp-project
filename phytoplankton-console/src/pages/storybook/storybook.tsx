@@ -64,6 +64,7 @@ import AgeRangeInput from '@/components/library/AgeRangeInput/story';
 import Avatar from '@/components/library/Avatar/story';
 import MarkdownEditor from '@/components/markdown/story';
 import NotificationsDrawerList from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/story';
+import Skeleton from '@/components/library/Skeleton/story';
 
 const config: Config = [
   {
@@ -252,6 +253,12 @@ const config: Config = [
       // todo: Headers should not be here
       // todo: Add priority
       // todo: Multiselect rows
+      {
+        key: 'Skeleton',
+        story: Skeleton,
+        designLink:
+          'https://www.figma.com/file/8pFXj0S40ULQbCSmhMJEJ4/Design-system?node-id=4557-5787&mode=dev',
+      },
     ],
   },
   {

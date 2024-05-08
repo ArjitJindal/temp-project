@@ -194,6 +194,8 @@ export const ALL_CHART_COLORS = [
 export const COLORS_V2_AI_RISK_DISPLAY_BACKGROUND =
   'linear-gradient(144deg, rgba(72, 40, 222, 0.06) 0%, rgba(219, 23, 176, 0.06) 100%), #FFF';
 
+export const COLORS_V2_SKELETON_COLOR = COLORS_V2_GRAY_3;
+
 /*
   Color to use for text when it's over the specified color
  */

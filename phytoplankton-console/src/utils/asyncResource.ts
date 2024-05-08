@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePrevious } from './hooks';
-import { neverThrow } from './lang';
+import { neverThrow, neverReturn } from './lang';
 
 export interface Init {
   readonly kind: 'INIT';
@@ -60,6 +60,7 @@ export function isInit<T>(resource: AsyncResource<T>): resource is Init {
 export function isLoading<T>(resource: AsyncResource<T>): resource is Loading<T> {
   return resource.kind === 'LOADING';
 }
+
 export function isSuccess<T>(resource: AsyncResource<T>): resource is Success<T> {
   return resource.kind === 'SUCCESS';
 }
@@ -193,6 +194,17 @@ export function getOr<T>(asyncResource: AsyncResource<T>, defaultValue: T): T {
       break;
   }
   return defaultValue;
+}
+
+export function hasValue<T>(asyncResource: AsyncResource<T>): boolean {
+  if (asyncResource.kind === 'SUCCESS') {
+    return true;
+  } else if (asyncResource.kind === 'LOADING' || asyncResource.kind === 'FAILED') {
+    return asyncResource.lastValue != null;
+  } else if (asyncResource.kind === 'INIT') {
+    return false;
+  }
+  return neverReturn(asyncResource, false);
 }
 
 /* Helpers */

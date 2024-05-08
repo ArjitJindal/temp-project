@@ -1,6 +1,7 @@
 import { RangeValue } from 'rc-picker/es/interface';
 import React, { MutableRefObject, useEffect, useRef, useState } from 'react';
-import Column from '../../../charts/Column';
+import { Alert } from 'antd';
+import Column, { ColumnData } from '../../../charts/Column';
 import s from './styles.module.less';
 import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import Widget from '@/components/library/Widget';
@@ -12,13 +13,21 @@ import { useApi } from '@/api';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { ChecklistTemplate } from '@/apis';
 import Select from '@/components/library/Select';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
   COLORS_V2_ANALYTICS_CHARTS_15,
 } from '@/components/ui/colors';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
+import {
+  map,
+  isSuccess,
+  getOr,
+  AsyncResource,
+  isFailed,
+  isLoading,
+  loading,
+} from '@/utils/asyncResource';
 
 interface Params {
   dateRange: RangeValue<Dayjs>;
@@ -27,11 +36,11 @@ interface Params {
 }
 
 interface ParamsProps extends WidgetProps {
-  data: Array<ChecklistTemplate>;
+  data: AsyncResource<Array<ChecklistTemplate>>;
 }
 
 export const ChecklistChart = (props: ParamsProps) => {
-  const { data } = props;
+  const { data: templateOptionsRes } = props;
   const api = useApi();
 
   const [params, setParams] = useState<Params>({
@@ -80,6 +89,12 @@ export const ChecklistChart = (props: ParamsProps) => {
       params.checklistCategory ?? '',
     ),
     async () => {
+      if (!(params.checklistTemplateId != null && params.checklistCategory != null)) {
+        return {
+          total: 0,
+          items: [],
+        };
+      }
       const { startTimestamp, endTimestamp } = getStartAndEndTimestamp(params.dateRange);
 
       const result = await api.getDashboardStatsQaAlertsStatsByChecklistReason({
@@ -95,7 +110,8 @@ export const ChecklistChart = (props: ParamsProps) => {
       };
     },
   );
-  const options = data
+  const templateOptions = getOr(templateOptionsRes, []);
+  const options = templateOptions
     .filter((checklist) => checklist.status === 'ACTIVE')
     .map((checklist, index) => ({
       label: checklist.name,
@@ -104,106 +120,112 @@ export const ChecklistChart = (props: ParamsProps) => {
     }));
 
   useEffect(() => {
-    if (data.length > 0) {
+    if (templateOptions.length > 0) {
       setParams((prev: Params) => ({
         ...prev,
-        checklistTemplateId: data[0].id,
-        checklistCategory: data[0].categories[0]?.name,
+        checklistTemplateId: templateOptions[0].id,
+        checklistCategory: templateOptions[0].categories[0]?.name,
       }));
     }
-  }, [data]);
+  }, [templateOptions]);
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
+  const donutDataRes = isLoading(templateOptionsRes)
+    ? loading<ColumnData<unknown, number, unknown>>()
+    : map(qaAlertStatsByChecklistReason.data, ({ items }) => {
+        return items.flatMap((item) => {
+          return [
+            {
+              xValue: item.checklistItemReason,
+              yValue: item.totalQaPassedAlerts,
+              series: 'QA pass',
+            },
+            {
+              xValue: item.checklistItemReason,
+              yValue: item.totalQaFailedAlerts,
+              series: 'QA fail',
+            },
+          ];
+        });
+      });
   return (
-    <AsyncResourceRenderer resource={qaAlertStatsByChecklistReason.data}>
-      {({ items }) => {
-        return (
-          <Widget
-            {...props}
-            ref={pdfRef}
-            resizing="AUTO"
-            extraControls={[
-              <Select
-                className={s.select}
-                options={options}
-                value={data.find((item) => item.id === params.checklistTemplateId)?.name}
-                onChange={(value) => {
-                  setParams((prev: Params) => ({
-                    ...prev,
-                    checklistTemplateId: value,
-                    checklistCategory: data.find((item) => item.id === value)?.categories[0]?.name,
-                  }));
-                }}
-              />,
-              <DatePicker.RangePicker value={params.dateRange} onChange={setDateRange} />,
-            ]}
-            onDownload={(): Promise<{
-              fileName: string;
-              data: string;
-              pdfRef: MutableRefObject<HTMLInputElement>;
-            }> => {
-              return new Promise((resolve, _reject) => {
-                const fileData = {
-                  fileName: `qa-alerts-based-on-checklist-reason-${dayjs().format('YYYY_MM_DD')}`,
-                  data: getCsvData(dataToExport(items)),
-                  pdfRef: pdfRef,
-                };
-                resolve(fileData);
-              });
-            }}
-          >
-            <div className={s.root}>
-              <SegmentedControl<string>
-                size="MEDIUM"
-                active={params.checklistCategory ?? ''}
-                onChange={(newValue) => {
-                  setParams((prev) => ({
-                    ...prev,
-                    checklistCategory: newValue,
-                  }));
-                }}
-                items={
-                  data
-                    .find((item) => item.id === params.checklistTemplateId)
-                    ?.categories.map((category) => ({
-                      value: category.name,
-                      label: category.name,
-                    })) ?? []
-                }
-              />
-              {items.length ? (
-                <Column
-                  data={items.flatMap((item) => {
-                    return [
-                      {
-                        xValue: item.checklistItemReason,
-                        yValue: item.totalQaPassedAlerts,
-                        series: 'QA pass',
-                      },
-                      {
-                        xValue: item.checklistItemReason,
-                        yValue: item.totalQaFailedAlerts,
-                        series: 'QA fail',
-                      },
-                    ];
-                  })}
-                  colors={{
-                    'QA pass': COLORS_V2_ANALYTICS_CHARTS_01,
-                    'QA fail': COLORS_V2_ANALYTICS_CHARTS_15,
-                  }}
-                  rotateLabel={false}
-                  elipsisLabel={true}
-                  height={250}
-                  formatX={(val) => {
-                    return `${val}`.replaceAll("'", '`');
-                  }}
-                />
-              ) : (
-                <NoData />
-              )}
-            </div>
-          </Widget>
-        );
+    <Widget
+      {...props}
+      ref={pdfRef}
+      resizing="AUTO"
+      extraControls={[
+        <Select
+          className={s.select}
+          options={options}
+          value={templateOptions.find((item) => item.id === params.checklistTemplateId)?.name}
+          onChange={(value) => {
+            setParams((prev: Params) => ({
+              ...prev,
+              checklistTemplateId: value,
+              checklistCategory: templateOptions.find((item) => item.id === value)?.categories[0]
+                ?.name,
+            }));
+          }}
+        />,
+        <DatePicker.RangePicker value={params.dateRange} onChange={setDateRange} />,
+      ]}
+      onDownload={(): Promise<{
+        fileName: string;
+        data: string;
+        pdfRef: MutableRefObject<HTMLInputElement>;
+      }> => {
+        return new Promise((resolve, _reject) => {
+          const fileData = {
+            fileName: `qa-alerts-based-on-checklist-reason-${dayjs().format('YYYY_MM_DD')}`,
+            data: getCsvData(dataToExport(getOr(donutDataRes, []))),
+            pdfRef: pdfRef,
+          };
+          resolve(fileData);
+        });
       }}
-    </AsyncResourceRenderer>
+    >
+      <div className={s.root}>
+        <SegmentedControl<string>
+          size="MEDIUM"
+          active={params.checklistCategory ?? ''}
+          onChange={(newValue) => {
+            setParams((prev) => ({
+              ...prev,
+              checklistCategory: newValue,
+            }));
+          }}
+          items={
+            templateOptions
+              .find((item) => item.id === params.checklistTemplateId)
+              ?.categories.map((category) => ({
+                value: category.name,
+                label: category.name,
+              })) ?? []
+          }
+        />
+        {isSuccess(donutDataRes) && donutDataRes.value.length === 0 ? (
+          <NoData />
+        ) : isFailed(donutDataRes) ? (
+          <Alert message={donutDataRes.message} type="error" />
+        ) : (
+          <Column
+            data={
+              isSuccess(donutDataRes)
+                ? donutDataRes
+                : loading<ColumnData<unknown, number, unknown>>()
+            }
+            colors={{
+              'QA pass': COLORS_V2_ANALYTICS_CHARTS_01,
+              'QA fail': COLORS_V2_ANALYTICS_CHARTS_15,
+            }}
+            rotateLabel={false}
+            elipsisLabel={true}
+            height={250}
+            formatX={(val) => {
+              return `${val}`.replaceAll("'", '`');
+            }}
+          />
+        )}
+      </div>
+    </Widget>
   );
 };

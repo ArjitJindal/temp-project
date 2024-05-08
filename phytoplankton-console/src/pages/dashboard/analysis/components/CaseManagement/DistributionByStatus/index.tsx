@@ -14,8 +14,7 @@ import GranularDatePicker, {
 import s from './index.module.less';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { map } from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { map, isSuccess } from '@/utils/asyncResource';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useQuery } from '@/utils/queries/hooks';
@@ -30,6 +29,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_08,
 } from '@/components/ui/colors';
 import { humanizeSnakeCase } from '@/utils/humanize';
+
 type statusType = 'OPEN' | 'CLOSED' | 'REOPENED' | 'ON_HOLD' | 'IN_PROGRESS' | 'ESCALATED';
 const statuses: statusType[] = [
   'REOPENED',
@@ -100,38 +100,31 @@ export default function DistributionByStatus(props: WidgetProps) {
       ]}
     >
       <div className={s.salesCard}>
-        <AsyncResourceRenderer resource={preparedDataRes}>
-          {(data) => {
-            if (data.length === 0) {
-              return <Empty description="No data available for selected period" />;
-            }
-            return (
-              <div className={s.root}>
-                <ScopeSelector
-                  selectedSection={selectedSection}
-                  setSelectedSection={setSelectedSection}
-                />
-                <Column<statusType>
-                  data={data}
-                  colors={{
-                    OPEN: COLORS_V2_ANALYTICS_CHARTS_01,
-                    IN_PROGRESS: COLORS_V2_ANALYTICS_CHARTS_04,
-                    ON_HOLD: COLORS_V2_ANALYTICS_CHARTS_03,
-                    ESCALATED: COLORS_V2_ANALYTICS_CHARTS_06,
-                    CLOSED: COLORS_V2_ANALYTICS_CHARTS_08,
-                    REOPENED: COLORS_V2_ANALYTICS_CHARTS_02,
-                  }}
-                  formatX={formatDate}
-                  formatSeries={(seriesValue) => {
-                    return seriesValue === 'REOPENED'
-                      ? 'Re-opened'
-                      : humanizeSnakeCase(seriesValue);
-                  }}
-                />
-              </div>
-            );
-          }}
-        </AsyncResourceRenderer>
+        {isSuccess(preparedDataRes) && preparedDataRes.value.length === 0 ? (
+          <Empty description="No data available for selected period" />
+        ) : (
+          <div className={s.root}>
+            <ScopeSelector
+              selectedSection={selectedSection}
+              setSelectedSection={setSelectedSection}
+            />
+            <Column<statusType>
+              data={preparedDataRes}
+              colors={{
+                OPEN: COLORS_V2_ANALYTICS_CHARTS_01,
+                IN_PROGRESS: COLORS_V2_ANALYTICS_CHARTS_04,
+                ON_HOLD: COLORS_V2_ANALYTICS_CHARTS_03,
+                ESCALATED: COLORS_V2_ANALYTICS_CHARTS_06,
+                CLOSED: COLORS_V2_ANALYTICS_CHARTS_08,
+                REOPENED: COLORS_V2_ANALYTICS_CHARTS_02,
+              }}
+              formatX={formatDate}
+              formatSeries={(seriesValue) => {
+                return seriesValue === 'REOPENED' ? 'Re-opened' : humanizeSnakeCase(seriesValue);
+              }}
+            />
+          </div>
+        )}
       </div>
     </Widget>
   );

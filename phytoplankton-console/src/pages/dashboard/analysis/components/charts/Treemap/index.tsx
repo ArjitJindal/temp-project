@@ -1,11 +1,21 @@
 import { Datum, Treemap as AntTreemap } from '@ant-design/charts';
 import { Tooltip } from '@ant-design/plots';
 import { useMemo } from 'react';
+import s from './index.module.less';
 import {
   ALL_CHART_COLORS,
   COLORS_V2_ANALYTICS_CHARTS_11,
   COLORS_V2_GRAY_11,
+  COLORS_V2_SKELETON_COLOR,
 } from '@/components/ui/colors';
+import { AsyncResource, getOr, isLoading } from '@/utils/asyncResource';
+import { makeRandomNumberGenerator } from '@/utils/prng';
+
+const random = makeRandomNumberGenerator(999999);
+const SKELETON_DATA: TreemapData<string> = [...new Array(10)].map((_, column) => ({
+  name: [...new Array(4 + Math.floor(8 * random()))].map(() => '■').join('') + `__${column}`,
+  value: 1 + 29 * random(),
+}));
 
 export interface TreemapItem<Name extends string = string> {
   name: Name | null;
@@ -15,7 +25,7 @@ export interface TreemapItem<Name extends string = string> {
 export type TreemapData<Name extends string = string> = TreemapItem<Name>[];
 
 interface Props<Name extends string = string> {
-  data: TreemapData<Name>;
+  data: AsyncResource<TreemapData<Name>>;
   colors: { [key in Name]: string | undefined };
   formatTitle?: (name: Name | null) => string;
   height?: number;
@@ -24,11 +34,14 @@ interface Props<Name extends string = string> {
 export default function Treemap<Name extends string = string>(props: Props<Name>) {
   const { formatTitle, height, data, colors } = props;
 
+  const dataValue = getOr(data, null);
+  const showSkeleton = isLoading(data) && dataValue == null;
+
   const allColors = useMemo(() => {
     const result = { ...colors };
     let i = 0;
     const availableColors = ALL_CHART_COLORS.filter((x) => !Object.values(colors).includes(x));
-    for (const { name } of data) {
+    for (const { name } of dataValue ?? []) {
       if (name != null) {
         if (result[name] == null) {
           i = (i + 1) % ALL_CHART_COLORS.length;
@@ -37,17 +50,22 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
       }
     }
     return result;
-  }, [colors, data]);
+  }, [colors, dataValue]);
 
   return (
     <AntTreemap
+      className={showSkeleton && s.disabled}
       animation={false}
       data={{
         name: 'root',
-        children: data,
+        children: (showSkeleton ? SKELETON_DATA : dataValue) ?? [],
       }}
       colorField={'name'}
-      color={(data: Datum) => allColors[data.name] ?? COLORS_V2_ANALYTICS_CHARTS_11}
+      color={(data: Datum) =>
+        showSkeleton
+          ? COLORS_V2_SKELETON_COLOR
+          : allColors[data.name] ?? COLORS_V2_ANALYTICS_CHARTS_11
+      }
       height={height}
       tooltip={
         {
@@ -64,13 +82,24 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
       }
       legend={{
         position: 'right-top',
-        itemName: {
-          formatter: formatTitle ? (formatTitle as unknown as any) : undefined,
-        },
         padding: [0, 0, 0, 50],
+        itemName: {
+          formatter: showSkeleton
+            ? (value) => {
+                return value.replaceAll(/[^■]/g, '');
+              }
+            : formatTitle
+            ? (formatTitle as unknown as any)
+            : undefined,
+          style: {
+            fill: showSkeleton ? COLORS_V2_SKELETON_COLOR : undefined,
+            stroke: showSkeleton ? COLORS_V2_SKELETON_COLOR : undefined,
+            lineWidth: showSkeleton ? 5 : undefined,
+          },
+        },
       }}
       rectStyle={{
-        strokeOpacity: 0,
+        stroke: showSkeleton ? 'white' : 'transparent',
       }}
       label={{
         content: (item: Datum, positionData: any) => {
@@ -87,7 +116,7 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
           fontWeight: 600,
           fontSize: 12,
           fontFamily: 'Noto Sans',
-          fill: COLORS_V2_GRAY_11,
+          fill: showSkeleton ? 'transparent' : COLORS_V2_GRAY_11,
         },
       }}
     />

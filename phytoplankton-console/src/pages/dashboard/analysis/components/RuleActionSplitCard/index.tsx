@@ -8,7 +8,6 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_12,
 } from '@/components/ui/colors';
 import { RuleAction, RuleInstance } from '@/apis';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Widget from '@/components/library/Widget';
 import {
@@ -20,6 +19,7 @@ import WidgetRangePicker, {
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 import { useFilteredRuleInstances } from '@/pages/dashboard/analysis/components/dashboardutils';
 import { dayjs } from '@/utils/dayjs';
+import { map, getOr } from '@/utils/asyncResource';
 
 const COLORS = {
   BLOCK: COLORS_V2_ANALYTICS_CHARTS_12,
@@ -38,58 +38,55 @@ export default function RuleActionSplitCard(props: Props) {
 
   const settings = useSettings();
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
+  const dataResource = map(filteredDataRes, (instances: RuleInstance[]) => {
+    const frequencyMap: { [key in RuleAction]?: number } = {};
+    for (const instance of instances) {
+      const { action } = instance;
+      if (action !== undefined) {
+        frequencyMap[action] = (frequencyMap[action] ?? 0) + 1;
+      }
+    }
+
+    // Converting the frequency map into an array of objects
+    const data: DonutData<RuleAction> = Object.entries(frequencyMap).map(([action, value]) => ({
+      series: action as RuleAction,
+      value: value as number,
+    }));
+
+    data.sort((a, b) => {
+      return RULE_ACTION_ORDER.indexOf(a.series) - RULE_ACTION_ORDER.indexOf(b.series);
+    });
+    return data;
+  });
   return (
-    <AsyncResourceRenderer resource={filteredDataRes}>
-      {(instances: RuleInstance[]) => {
-        const frequencyMap: { [key in RuleAction]?: number } = {};
-        for (const instance of instances) {
-          const { action } = instance;
-          if (action !== undefined) {
-            frequencyMap[action] = (frequencyMap[action] ?? 0) + 1;
-          }
-        }
-
-        // Converting the frequency map into an array of objects
-        const data: DonutData<RuleAction> = Object.entries(frequencyMap).map(([action, value]) => ({
-          series: action as RuleAction,
-          value: value as number,
-        }));
-
-        data.sort((a, b) => {
-          return RULE_ACTION_ORDER.indexOf(a.series) - RULE_ACTION_ORDER.indexOf(b.series);
-        });
-        return (
-          <div ref={pdfRef}>
-            <Widget
-              onDownload={(): Promise<{
-                fileName: string;
-                data: string;
-                pdfRef: MutableRefObject<HTMLInputElement>;
-              }> => {
-                return new Promise((resolve, _reject) => {
-                  const fileData = {
-                    fileName: `distribution-by-rule-action-${dayjs().format('YYYY_MM_DD')}`,
-                    data: exportDataForDonuts('ruleAction', data),
-                    pdfRef,
-                    tableTitle: `Distribution by rule action`,
-                  };
-                  resolve(fileData);
-                });
-              }}
-              resizing="AUTO"
-              extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
-              {...props}
-            >
-              <Donut<RuleAction>
-                data={data}
-                colors={COLORS}
-                legendPosition="RIGHT"
-                formatSeries={(action) => getRuleActionLabel(action, settings) ?? action}
-              />
-            </Widget>
-          </div>
-        );
-      }}
-    </AsyncResourceRenderer>
+    <div ref={pdfRef}>
+      <Widget
+        onDownload={(): Promise<{
+          fileName: string;
+          data: string;
+          pdfRef: MutableRefObject<HTMLInputElement>;
+        }> => {
+          return new Promise((resolve, _reject) => {
+            const fileData = {
+              fileName: `distribution-by-rule-action-${dayjs().format('YYYY_MM_DD')}`,
+              data: exportDataForDonuts('ruleAction', getOr(dataResource, [])),
+              pdfRef,
+              tableTitle: `Distribution by rule action`,
+            };
+            resolve(fileData);
+          });
+        }}
+        resizing="AUTO"
+        extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+        {...props}
+      >
+        <Donut<RuleAction>
+          data={dataResource}
+          colors={COLORS}
+          legendPosition="RIGHT"
+          formatSeries={(action) => getRuleActionLabel(action, settings) ?? action}
+        />
+      </Widget>
+    </div>
   );
 }

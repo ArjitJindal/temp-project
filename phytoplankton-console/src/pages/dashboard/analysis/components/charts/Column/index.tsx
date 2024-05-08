@@ -1,8 +1,19 @@
 import { Column as AntColumn } from '@ant-design/charts';
 import { Annotation } from '@antv/g2plot';
 import { each, groupBy } from 'lodash';
+import s from './index.module.less';
 import { escapeHtml } from '@/utils/browser';
 import { humanizeAuto } from '@/utils/humanize';
+import { AsyncResource, isLoading, getOr } from '@/utils/asyncResource';
+import { COLORS_V2_SKELETON_COLOR, COLORS_V2_GRAY_6 } from '@/components/ui/colors';
+import { makeRandomNumberGenerator } from '@/utils/prng';
+
+const random = makeRandomNumberGenerator(999999);
+const SKELETON_DATA = [...new Array(10)].map((_, column) => ({
+  xValue: [...new Array(4 + Math.floor(8 * random()))].map(() => '■').join('') + `__${column}`,
+  yValue: 1 + 29 * random(),
+  series: 'skeleton',
+}));
 
 export interface ColumnDataItem<X, Y, Series> {
   xValue: X;
@@ -13,7 +24,7 @@ export interface ColumnDataItem<X, Y, Series> {
 export type ColumnData<X, Y, Series> = ColumnDataItem<X, Y, Series>[];
 
 interface Props<X, Y, Series> {
-  data: ColumnData<X, Y, Series>;
+  data: AsyncResource<ColumnData<X, Y, Series>>;
   colors: { [key: string]: string | undefined };
   formatY?: (value: Y) => string;
   formatX?: (value: X) => string;
@@ -39,10 +50,13 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
     elipsisLabel = false,
   } = props;
 
+  const dataValue = getOr(data, null);
+  const showSkeleton = isLoading(data) && dataValue == null;
+
   const annotations: Annotation[] | undefined = [];
   if (showTotals) {
     each(groupBy(data, 'xValue'), (values, k) => {
-      const value = values.reduce((a, b) => a + b.yValue, 0);
+      const value = (dataValue ?? []).reduce((a, b) => a + b.yValue, 0);
       annotations.push({
         type: 'text',
         position: [k, value],
@@ -59,14 +73,18 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
 
   return (
     <AntColumn
+      className={showSkeleton && s.disabled}
       animation={false}
       height={height}
       isStack={true}
-      data={data}
+      data={showSkeleton ? SKELETON_DATA : dataValue ?? []}
       xField={'xValue'}
       yField={'yValue'}
       seriesField={'series'}
       color={(x) => {
+        if (showSkeleton) {
+          return COLORS_V2_SKELETON_COLOR;
+        }
         return colors[x.series] ?? 'gray';
       }}
       maxColumnWidth={100}
@@ -76,12 +94,26 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
           autoHide: true,
           rotate: rotateLabel ? -Math.PI / 6 : 0,
           offsetX: -10,
-          offsetY: 10 + (rotateLabel ? 7 : 0),
+          offsetY: showSkeleton ? 25 : 20 + (rotateLabel ? 7 : 0),
           style: {
             textAlign: 'center',
             textBaseline: 'bottom',
+            ...(showSkeleton
+              ? {
+                  fill: COLORS_V2_SKELETON_COLOR,
+                  stroke: COLORS_V2_SKELETON_COLOR,
+                  lineWidth: 5,
+                }
+              : {
+                  fill: COLORS_V2_GRAY_6,
+                  stroke: null,
+                  lineWidth: 0,
+                }),
           },
           formatter(text, _item, _index) {
+            if (showSkeleton) {
+              return text.replaceAll(/[^■]/g, '');
+            }
             return humanizeAuto(text);
           },
           autoEllipsis: elipsisLabel,
@@ -127,7 +159,8 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
       }}
       annotations={annotations}
       legend={
-        !hideLegend && {
+        !hideLegend &&
+        !showSkeleton && {
           layout: 'horizontal',
           position: 'bottom',
           reversed: true,

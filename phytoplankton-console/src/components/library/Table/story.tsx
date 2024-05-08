@@ -752,6 +752,61 @@ export default function (): JSX.Element {
           }}
         />
       </UseCase>
+      <UseCase title="Skeleton mode">
+        <WithParams>
+          {(params, onChangeParams) => {
+            const helper = new ColumnHelper<TableItem>();
+            return (
+              <Table<TableItem>
+                tableId="header_subtitle"
+                rowKey="id"
+                params={params}
+                onChangeParams={onChangeParams}
+                columns={helper.list([
+                  helper.simple<'firstName'>({
+                    key: 'firstName',
+                    title: 'First name',
+                    subtitle: 'Simple column subtitle',
+                    tooltip: 'Tooltip text',
+                    sorting: true,
+                  }),
+                  helper.derived<string>({
+                    title: 'Full name',
+                    subtitle: 'Derived column subtitle',
+                    tooltip: 'Tooltip text',
+                    sorting: true,
+                    value: (entity): string => `${entity.firstName} ${entity.lastName}`,
+                  }),
+                  helper.display({
+                    title: 'Actions',
+                    subtitle: 'Display column subtitle',
+                    tooltip: 'Tooltip text',
+                    render: () => <></>,
+                  }),
+                  helper.group({
+                    title: 'Address',
+                    subtitle: 'Group column subtitle',
+                    tooltip: 'Tooltip text',
+                    children: [
+                      helper.simple<'address.street'>({
+                        key: 'address.street',
+                        title: 'Street',
+                        sorting: true,
+                      }),
+                      helper.simple<'address.city'>({
+                        key: 'address.city',
+                        title: 'City',
+                        sorting: true,
+                      }),
+                    ],
+                  }),
+                ])}
+                data={loading()}
+              />
+            );
+          }}
+        </WithParams>
+      </UseCase>
     </>
   );
 }

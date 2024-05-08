@@ -46,6 +46,17 @@
     opacity: 0.5;
   }
 
+  &.showSkeleton {
+    pointer-events: none;
+    user-select: none;
+
+    .td {
+      .tdContent {
+        overflow: hidden;
+      }
+    }
+  }
+
   > tr:last-child {
     > td {
       &:first-child {
