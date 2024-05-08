@@ -8,7 +8,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export type RuleHitResultItem = {
   direction: RuleHitDirection
-  vars: Vars
+  vars?: Vars
   falsePositiveDetails?: FalsePositiveDetails
   sanctionsDetails?: SanctionsDetails[]
 }

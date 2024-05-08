@@ -49,7 +49,11 @@ import {
   AggregationRepository,
   getAggVarHash,
 } from './aggregation-repository'
-import { getVariableKeysFromLogic, transformJsonLogic } from './utils'
+import {
+  getVariableKeysFromLogic,
+  transformJsonLogic,
+  transformJsonLogicVars,
+} from './utils'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -64,6 +68,7 @@ import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationTy
 import { RuleAggregationTimeWindow } from '@/@types/openapi-internal/RuleAggregationTimeWindow'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
 
 const sqs = getSQSClient()
 
@@ -187,10 +192,8 @@ export class RuleJsonLogicEvaluator {
     data: RuleData
   ): Promise<{
     hit: boolean
-    varData: Array<{
-      [key: string]: unknown
-    }>
     hitDirections: RuleHitDirection[]
+    vars: ExecutedRuleVars[]
   }> {
     const entityVarDataloader = getDataLoader(data, {
       ...context,
@@ -233,7 +236,7 @@ export class RuleJsonLogicEvaluator {
 
         return {
           variable: aggVariable,
-          origin:
+          ORIGIN:
             aggVariable.userDirection !== 'RECEIVER' &&
             aggVariable.transactionDirection !== 'RECEIVING'
               ? await aggregationVarLoader.load({
@@ -241,7 +244,7 @@ export class RuleJsonLogicEvaluator {
                   aggVariable,
                 })
               : null,
-          destination:
+          DESTINATION:
             aggVariable.userDirection !== 'SENDER' &&
             aggVariable.transactionDirection !== 'SENDING'
               ? await aggregationVarLoader.load({
@@ -254,35 +257,49 @@ export class RuleJsonLogicEvaluator {
     )
     // NOTE: If a aggregation variable has both user directions, we need to evaluate the logic
     // twice, one for each direction
-    const directions = aggHasBothUserDirections
-      ? ['origin', 'destination']
-      : ['origin']
+    const directions: RuleHitDirection[] = aggHasBothUserDirections
+      ? ['ORIGIN', 'DESTINATION']
+      : ['ORIGIN']
     let hit = false
     // NOTE: If there's no aggregation variable, we hit both directions. One side can be muted
     // by setting alertConfig.alertCreationDirection
     const hitDirections: RuleHitDirection[] =
       aggVariables.length > 0 ? [] : ['ORIGIN', 'DESTINATION']
-    const varDatas: Array<{ [key: string]: any }> = []
+    const vars: ExecutedRuleVars[] = []
     for (const direction of directions) {
       const aggVarEntries: Array<{
         entry: [string, any]
         direction: RuleHitDirection
       }> = aggVarData.map((v) => {
-        const directionToUse =
+        const directionToUse: RuleHitDirection =
           v.variable.userDirection === 'SENDER'
-            ? 'origin'
+            ? 'ORIGIN'
             : v.variable.userDirection === 'RECEIVER'
-            ? 'destination'
+            ? 'DESTINATION'
             : direction
         return {
           entry: [v.variable.key, v[directionToUse]],
-          direction: directionToUse === 'origin' ? 'ORIGIN' : 'DESTINATION',
+          direction: directionToUse,
         }
       })
       const varData = Object.fromEntries(
         entityVarEntries.concat(aggVarEntries.map((v) => v.entry))
       )
-      varDatas.push(varData)
+
+      let varValue: { [key: string]: unknown } = {}
+      try {
+        varValue = transformJsonLogicVars(jsonLogic, varData)
+      } catch (e) {
+        logger.error(
+          `Failed to transform json logic vars: ${(e as Error).message}`
+        )
+      }
+
+      vars.push({
+        direction,
+        value: varValue,
+      })
+
       const jsonLogicEngine = getJsonLogicEngine({
         tenantId: this.tenantId,
         dynamoDb: this.dynamoDb,
@@ -297,9 +314,8 @@ export class RuleJsonLogicEvaluator {
     }
     return {
       hit,
-      // TODO (V8): Persist varData for both directions
-      varData: varDatas,
       hitDirections: hit ? uniq(hitDirections) : [],
+      vars,
     }
   }
 

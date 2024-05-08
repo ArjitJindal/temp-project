@@ -126,11 +126,13 @@ export default function Menu(props: Props) {
         </div>
       </div>
       <Footer isCollapsed={isCollapsed} />
-      <Notifications
-        isNotificationsDrawerVisible={isNotificationsDrawerVisible}
-        setIsNotificationsDrawerVisible={setIsNotificationsDrawerVisible}
-        setHasUnreadNotifications={setHasUnreadNotifications}
-      />
+      {notificationsFeatureEnabled && (
+        <Notifications
+          isNotificationsDrawerVisible={isNotificationsDrawerVisible}
+          setIsNotificationsDrawerVisible={setIsNotificationsDrawerVisible}
+          setHasUnreadNotifications={setHasUnreadNotifications}
+        />
+      )}
     </div>
   );
 }

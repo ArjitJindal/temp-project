@@ -24,7 +24,9 @@ describe('entity variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'TRANSACTION:type': 'TRANSFER' }],
+      vars: [
+        { direction: 'ORIGIN', value: { 'TRANSACTION:type': 'TRANSFER' } },
+      ],
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
@@ -41,7 +43,7 @@ describe('entity variable', () => {
     )
     expect(result).toEqual({
       hit: false,
-      varData: [{ 'TRANSACTION:type': 'DEPOSIT' }],
+      vars: [{ direction: 'ORIGIN', value: { 'TRANSACTION:type': 'DEPOSIT' } }],
       hitDirections: [],
     })
   })
@@ -100,12 +102,15 @@ describe('entity variable (array)', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [
+      vars: [
         {
-          'TRANSACTION:tags': [
-            { key: '1', value: '2' },
-            { key: 'a', value: 'b' },
-          ],
+          direction: 'ORIGIN',
+          value: {
+            'TRANSACTION:tags': {
+              key: ['1', 'a'],
+              value: ['2', 'b'],
+            },
+          },
         },
       ],
       hitDirections: ['ORIGIN', 'DESTINATION'],
@@ -167,9 +172,15 @@ describe('entity variable (array)', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [
+      vars: [
         {
-          'CONSUMER_USER:legalDocuments__SENDER': testLegalDocuments,
+          direction: 'ORIGIN',
+          value: {
+            'CONSUMER_USER:legalDocuments__SENDER': {
+              'tags.key': ['1', 'a', '1', 'a'],
+              'tags.value': ['b', '2', '2', 'b'],
+            },
+          },
         },
       ],
       hitDirections: ['ORIGIN', 'DESTINATION'],
@@ -230,7 +241,12 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 1 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+      ],
       hitDirections: ['ORIGIN'],
     })
   })
@@ -260,7 +276,12 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 1 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+      ],
       hitDirections: ['DESTINATION'],
     })
   })
@@ -307,7 +328,12 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 1, 'agg:456': 1 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1, 'agg:456': 1 },
+        },
+      ],
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
@@ -337,7 +363,16 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 1 }, { 'agg:123': 1 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+        {
+          direction: 'DESTINATION',
+          value: { 'agg:123': 1 },
+        },
+      ],
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
@@ -367,7 +402,12 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 1 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+      ],
       hitDirections: ['ORIGIN'],
     })
   })
@@ -397,7 +437,12 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 1 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+      ],
       hitDirections: ['DESTINATION'],
     })
   })
@@ -433,7 +478,12 @@ describe('aggregation variable', () => {
     )
     expect(resultFilteredOut).toEqual({
       hit: false,
-      varData: [{ 'agg:123': 0 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 0 },
+        },
+      ],
       hitDirections: [],
     })
     const resultFiltered = await evaluator.evaluate(
@@ -451,7 +501,12 @@ describe('aggregation variable', () => {
     )
     expect(resultFiltered).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 1 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+      ],
       hitDirections: ['DESTINATION'],
     })
   })
@@ -484,7 +539,12 @@ describe('aggregation variable', () => {
     )
     expect(resultNotWithinTimeWindow).toEqual({
       hit: false,
-      varData: [{ 'agg:123': 0 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 0 },
+        },
+      ],
       hitDirections: [],
     })
     const resultWithinTimeWindow = await evaluator.evaluate(
@@ -503,7 +563,12 @@ describe('aggregation variable', () => {
     )
     expect(resultWithinTimeWindow).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 1 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+      ],
       hitDirections: ['ORIGIN'],
     })
   })
@@ -542,7 +607,12 @@ describe('aggregation variable', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 108.24283106705523 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 108.24283106705523 },
+        },
+      ],
       hitDirections: ['ORIGIN'],
     })
   })
@@ -710,7 +780,16 @@ describe('Different aggregate fields for receiving and sending', () => {
     )
     expect(result).toEqual({
       hit: true,
-      varData: [{ 'agg:123': 100 }, { 'agg:123': 100 }],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 100 },
+        },
+        {
+          direction: 'DESTINATION',
+          value: { 'agg:123': 100 },
+        },
+      ],
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })

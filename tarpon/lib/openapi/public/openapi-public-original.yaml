@@ -2420,6 +2420,16 @@ components:
       required:
         - trsScore
         - trsRiskLevel
+    ExecutedRuleVars:
+      title: ExecutedRuleVars
+      type: object
+      properties:
+        direction:
+          $ref: '#/components/schemas/RuleHitDirection'
+        value:
+          type: object
+      required:
+        - value
     ExecutedRulesResult:
       title: ExecutedRulesResult
       type: object
@@ -2453,6 +2463,10 @@ components:
           type: boolean
         ruleHitMeta:
           $ref: '#/components/schemas/RuleHitMeta'
+        vars:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutedRuleVars'
         labels:
           type: array
           items:

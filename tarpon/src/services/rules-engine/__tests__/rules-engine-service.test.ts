@@ -647,10 +647,10 @@ describe('Verify Transaction: V8 engine', () => {
     setUpRulesHooks(TEST_TENANT_ID, [
       {
         id: 'V8-R-1',
-        defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+        defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
         defaultLogicAggregationVariables: [
           {
-            key: 'agg:123',
+            key: 'agg:test',
             type: 'PAYMENT_DETAILS_TRANSACTIONS',
             transactionDirection: 'SENDING',
             aggregationFieldKey: 'TRANSACTION:transactionId',
@@ -687,6 +687,20 @@ describe('Verify Transaction: V8 engine', () => {
             ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHit: false,
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'agg:test': 1,
+                },
+              },
+              {
+                direction: 'DESTINATION',
+                value: {
+                  'agg:test': null,
+                },
+              },
+            ],
             nature: 'AML',
             labels: [],
             isShadow: false,
@@ -717,6 +731,20 @@ describe('Verify Transaction: V8 engine', () => {
               hitDirections: ['ORIGIN'],
             },
             ruleHit: true,
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'agg:test': 2,
+                },
+              },
+              {
+                direction: 'DESTINATION',
+                value: {
+                  'agg:test': null,
+                },
+              },
+            ],
             nature: 'AML',
             labels: [],
             isShadow: false,
@@ -807,7 +835,7 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
 
   const TEST_TENANT_ID = getTestTenantId()
   const aggregationVariables: RuleAggregationVariable = {
-    key: 'agg:123',
+    key: 'agg:test',
     type: 'PAYMENT_DETAILS_TRANSACTIONS',
     transactionDirection: 'SENDING',
     aggregationFieldKey: 'TRANSACTION:transactionId',
@@ -821,13 +849,13 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: 'V8-R-1',
-      defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+      defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
       defaultLogicAggregationVariables: [aggregationVariables],
       type: 'TRANSACTION',
     },
     {
       id: 'V8-R-2',
-      defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+      defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
       defaultLogicAggregationVariables: [aggregationVariables],
       type: 'TRANSACTION',
     },
@@ -858,10 +886,10 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: 'V8-R-1',
-      defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+      defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
       defaultLogicAggregationVariables: [
         {
-          key: 'agg:123',
+          key: 'agg:test',
           type: 'PAYMENT_DETAILS_TRANSACTIONS',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
@@ -898,6 +926,20 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
           ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
           ruleHit: false,
+          vars: [
+            {
+              direction: 'ORIGIN',
+              value: {
+                'agg:test': 1,
+              },
+            },
+            {
+              direction: 'DESTINATION',
+              value: {
+                'agg:test': null,
+              },
+            },
+          ],
           nature: 'AML',
           labels: [],
           isShadow: false,
@@ -928,6 +970,20 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
             hitDirections: ['ORIGIN'],
           },
           ruleHit: true,
+          vars: [
+            {
+              direction: 'ORIGIN',
+              value: {
+                'agg:test': 2,
+              },
+            },
+            {
+              direction: 'DESTINATION',
+              value: {
+                'agg:test': null,
+              },
+            },
+          ],
           nature: 'AML',
           labels: [],
           isShadow: false,
@@ -958,10 +1014,10 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: 'V8-R-1',
-      defaultLogic: { and: [{ '>': [{ var: 'agg:123' }, 1] }] },
+      defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
       defaultLogicAggregationVariables: [
         {
-          key: 'agg:123',
+          key: 'agg:test',
           type: 'PAYMENT_DETAILS_TRANSACTIONS',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
@@ -1002,6 +1058,20 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
           ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
           ruleHit: false,
+          vars: [
+            {
+              direction: 'ORIGIN',
+              value: {
+                'agg:test': 1,
+              },
+            },
+            {
+              direction: 'DESTINATION',
+              value: {
+                'agg:test': null,
+              },
+            },
+          ],
           nature: 'AML',
           labels: [],
           isShadow: false,
@@ -1030,6 +1100,20 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
           ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
           ruleHit: false,
+          vars: [
+            {
+              direction: 'ORIGIN',
+              value: {
+                'agg:test': 1,
+              },
+            },
+            {
+              direction: 'DESTINATION',
+              value: {
+                'agg:test': null,
+              },
+            },
+          ],
           nature: 'AML',
           labels: [],
           isShadow: false,

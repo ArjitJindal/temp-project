@@ -100,6 +100,7 @@ import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregati
 import { getSQSClient } from '@/utils/sns-sqs-client'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
 
 const sqs = getSQSClient()
 
@@ -763,7 +764,11 @@ export class RulesEngineService {
     ongoingScreeningMode?: boolean
     tracing?: boolean
     transactionRiskScore?: number
-  }) {
+  }): Promise<{
+    ruleClassInstance: TransactionRuleBase | UserRuleBase | undefined
+    isTransactionHistoricalFiltered: boolean
+    result: ExecutedRulesResult
+  }> {
     const {
       rule,
       ruleInstance,
@@ -806,31 +811,33 @@ export class RulesEngineService {
     let isOriginUserFiltered = true
     let isDestinationUserFiltered = true
     let ruleResult: RuleHitResult | undefined
+    let vars: ExecutedRuleVars[] | undefined
     if (hasFeature('RULES_ENGINE_V8') && logic) {
       if (transactionWithValidUserId) {
-        const { hit, varData, hitDirections } =
-          await this.ruleLogicEvaluator.evaluate(
-            logic,
-            ruleInstance.logicAggregationVariables ?? [],
-            {
-              baseCurrency: ruleInstance.baseCurrency,
-              tenantId: this.tenantId,
-            },
-            {
-              transaction: transactionWithValidUserId,
-              senderUser,
-              receiverUser,
-            }
-          )
+        const {
+          hit,
+          hitDirections,
+          vars: ruleVars,
+        } = await this.ruleLogicEvaluator.evaluate(
+          logic,
+          ruleInstance.logicAggregationVariables ?? [],
+          {
+            baseCurrency: ruleInstance.baseCurrency,
+            tenantId: this.tenantId,
+          },
+          {
+            transaction: transactionWithValidUserId,
+            senderUser,
+            receiverUser,
+          }
+        )
+        vars = ruleVars
         const finalHitDirections = this.getFinalHitDirections(
           hitDirections,
           ruleInstance.alertConfig?.alertCreationDirection ?? 'AUTO'
         )
         if (hit) {
-          ruleResult = finalHitDirections.map((direction) => ({
-            direction,
-            vars: { varData },
-          }))
+          ruleResult = finalHitDirections.map((direction) => ({ direction }))
         }
       }
     } else {
@@ -976,6 +983,7 @@ export class RulesEngineService {
               isOngoingScreeningHit: ongoingScreeningMode,
             }
           : undefined,
+        vars,
         isShadow: ruleInstance.mode === 'SHADOW_SYNC',
       },
     }
