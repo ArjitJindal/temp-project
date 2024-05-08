@@ -1,4 +1,4 @@
-import { execSync } from 'child_process'
+import crypto from 'crypto'
 import { backOff } from 'exponential-backoff'
 import { Octokit } from '@octokit/core'
 import {
@@ -30,10 +30,10 @@ export async function cleanUpStaleQaEnvs() {
   })
 
   const liveQaEnvs: string[] = response.data.map((pr: any) => {
-    const output = execSync(
-      `echo "${pr.head.ref}" | shasum | head -c5`
-    ).toString()
-    return `qa${output}`
+    const hash = crypto.createHash('sha1')
+    // NOTE: Adding '\n' is important to have the same value as using the bash command `| shasum`
+    hash.update(pr + '\n', 'utf-8')
+    return `qa${hash.digest('hex').slice(0, 5)}`
   })
 
   const client = new CloudFormationClient({ region: 'eu-central-1' })

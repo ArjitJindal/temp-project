@@ -984,6 +984,27 @@ export class CdkTarponStack extends cdk.Stack {
           memorySize: config.resource.CRON_JOB_LAMBDA?.MEMORY_SIZE,
         }
       )
+      if (envIs('dev')) {
+        // For cleaning up QA stacks
+        cronJobDailyHandler.role?.attachInlinePolicy(
+          new Policy(
+            this,
+            getResourceNameForTarpon('CronJobDailyFunctionPolicy'),
+            {
+              policyName: getResourceNameForTarpon(
+                'CronJobDailyFunctionPolicy'
+              ),
+              statements: [
+                new PolicyStatement({
+                  effect: Effect.ALLOW,
+                  actions: ['cloudformation:*'],
+                  resources: ['*'],
+                }),
+              ],
+            }
+          )
+        )
+      }
 
       let triggerHour: string = '20'
       let triggerMinute: string = '0'
