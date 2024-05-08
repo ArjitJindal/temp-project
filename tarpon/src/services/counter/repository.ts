@@ -1,6 +1,19 @@
 import { MongoClient } from 'mongodb'
-import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
+
+export type CounterEntity = 'Case' | 'Alert' | 'AlertQASample' | 'Report' | 'RC'
+export const COUNTER_ENTITIES: CounterEntity[] = [
+  'Case',
+  'Alert',
+  'AlertQASample',
+  'Report',
+  'RC',
+]
+export type EntityCounter = {
+  _id?: string
+  entity: CounterEntity
+  count: number
+}
 
 export class CounterRepository {
   private tenantId: string
@@ -11,7 +24,21 @@ export class CounterRepository {
     this.mongoDb = mongoDb
   }
 
-  public async getNextCounterAndUpdate(entity: string): Promise<number> {
+  // If an entity doesn't have a counter yet, we need to initialize it with 0. Otherwise,
+  // if multilpe callers call `getNextCounterAndUpdate` concurrently, we could end up with
+  // duplicate counters.
+  public async initialize(): Promise<void> {
+    const collectionName = COUNTER_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    const collection = db.collection<EntityCounter>(collectionName)
+    for (const entity of COUNTER_ENTITIES) {
+      if (!(await collection.find({ entity }))) {
+        await collection.insertOne({ entity, count: 0 })
+      }
+    }
+  }
+
+  public async getNextCounterAndUpdate(entity: CounterEntity): Promise<number> {
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
@@ -25,7 +52,7 @@ export class CounterRepository {
     return data.value?.count ?? 1
   }
 
-  public async getNextCounter(entity: string): Promise<number> {
+  public async getNextCounter(entity: CounterEntity): Promise<number> {
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)

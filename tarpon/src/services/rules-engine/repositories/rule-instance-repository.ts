@@ -91,7 +91,7 @@ export class RuleInstanceRepository {
 
     const nextCount = await counterRepository[
       update ? 'getNextCounterAndUpdate' : 'getNextCounter'
-    ](ruleId)
+    ](ruleId as any)
 
     if (ruleId.startsWith('RC')) {
       // When we create a new custom rule the rule instance id is `RC-<count>`

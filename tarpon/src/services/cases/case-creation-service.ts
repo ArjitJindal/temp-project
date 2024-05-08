@@ -1095,9 +1095,10 @@ export class CaseCreationService {
     )
     result.push(...cases)
 
-    const savedCases = await Promise.all(
-      result.map((caseItem) => this.addOrUpdateCase(caseItem))
-    )
+    const savedCases: Case[] = []
+    for (const caseItem of cases) {
+      savedCases.push(await this.addOrUpdateCase(caseItem))
+    }
 
     logger.info(`Updated/created cases count`, {
       count: savedCases.length,
@@ -1228,9 +1229,10 @@ export class CaseCreationService {
       ruleInstances
     )
 
-    const savedCases = await Promise.all(
-      result.map((caseItem) => this.addOrUpdateCase(caseItem))
-    )
+    const savedCases: Case[] = []
+    for (const caseItem of result) {
+      savedCases.push(await this.addOrUpdateCase(caseItem))
+    }
 
     logger.info(`Updated/created cases count`, {
       count: savedCases.length,
@@ -1243,19 +1245,20 @@ export class CaseCreationService {
     if (savedCases.length <= 1) {
       return savedCases
     }
-    return await Promise.all(
-      savedCases.map((nextCase) => {
-        // todo: filter unpublished cases?
-        const relatedCases = [
-          ...(nextCase.relatedCases ?? []),
-          ...savedCases.map(({ caseId }) => caseId),
-        ].filter((caseId) => caseId && caseId !== nextCase.caseId) as string[]
-        return this.addOrUpdateCase({
-          ...nextCase,
+    const result: Case[] = []
+    for (const savedCase of savedCases) {
+      const relatedCases = [
+        ...(savedCase.relatedCases ?? []),
+        ...savedCases.map(({ caseId }) => caseId),
+      ].filter((caseId) => caseId && caseId !== savedCase.caseId) as string[]
+      result.push(
+        await this.addOrUpdateCase({
+          ...savedCase,
           relatedCases: uniq(relatedCases),
         })
-      })
-    )
+      )
+    }
+    return result
   }
 
   getUsersByRole = memoize(async (assignedRole) =>

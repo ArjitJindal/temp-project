@@ -23,6 +23,7 @@ import {
   PageSize,
 } from '@/utils/pagination'
 import { logger } from '@/core/logger'
+import { CounterRepository } from '@/services/counter/repository'
 
 let cacheClient: MongoClient
 
@@ -271,6 +272,7 @@ export const createMongoDBCollections = async (
     const definition = indexDefinitions[collectionName]
     await syncIndexes(collection, definition.getIndexes())
   }
+  await new CounterRepository(tenantId, mongoClient).initialize()
 }
 
 export async function allCollections(tenantId: string, db: Db) {

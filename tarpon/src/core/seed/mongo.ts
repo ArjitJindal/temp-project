@@ -42,9 +42,9 @@ import { DashboardStatsRepository } from '@/services/dashboard/repositories/dash
 import { AccountsService } from '@/services/accounts'
 import { setAccounts } from '@/core/seed/samplers/accounts'
 import { getChecklistTemplates } from '@/core/seed/data/checklists'
-import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { CounterEntity, EntityCounter } from '@/services/counter/repository'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -118,7 +118,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   const counterCollection = db.collection<EntityCounter>(
     COUNTER_COLLECTION(tenantId)
   )
-  const counters: [string, number][] = [
+  const counters: [CounterEntity, number][] = [
     ['Report', getReports().length],
     ['Case', getCases().length],
     ['Alert', getCases().flatMap((c) => c.alerts).length],

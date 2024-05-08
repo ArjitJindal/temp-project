@@ -9764,16 +9764,6 @@ components:
       required:
         - userId
         - timestamp
-    EntityCounter:
-      title: EntityCounter
-      type: object
-      properties:
-        _id:
-          type: string
-        entity:
-          type: string
-        count:
-          type: number
     SanctionsSearchRequest:
       title: SanctionsSearchRequest
       type: object
