@@ -669,6 +669,7 @@ export class CdkTarponStack extends cdk.Stack {
     /*  User Event */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
+      layers: [geoipLayer],
     })
 
     /* Rule Template (Public) */
@@ -1071,11 +1072,13 @@ export class CdkTarponStack extends cdk.Stack {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           memorySize:
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
+          layers: [geoipLayer],
         }
       )
       const { alias: tarponChangeCaptureKinesisConsumerRetryAlias } =
         createFunction(this, lambdaExecutionRole, {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+          layers: [geoipLayer],
         })
 
       this.createKinesisEventSource(
