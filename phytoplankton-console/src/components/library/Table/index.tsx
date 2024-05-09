@@ -18,7 +18,7 @@ import {
 import Header from './Header';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE, SPACER_COLUMN_ID } from './consts';
 import Sorter from './Sorter';
-import { PersistedSettingsProvider } from './internal/settings';
+import { PersistedSettingsProvider, usePersistedSettingsContext } from './internal/settings';
 import { useTanstackTable } from './internal/helpers';
 import ScrollContainer from './ScrollContainer';
 import { ToolsOptions } from './Header/Tools';
@@ -124,6 +124,18 @@ function Table<Item extends object, Params extends object = CommonParams>(
     expandedRowId,
     leftTools,
   } = props;
+  const persistedSettingsContextValue = usePersistedSettingsContext();
+  const [persistedSorting] = persistedSettingsContextValue.sort;
+
+  useEffect(() => {
+    if (params.sort.length === 0 && persistedSorting.length !== 0) {
+      onChangeParams({
+        ...params,
+        sort: persistedSorting,
+      });
+    }
+  }, [onChangeParams, params, persistedSorting]);
+
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
     return 'items' in props.data ? success(props.data) : props.data;
   }, [props.data]);

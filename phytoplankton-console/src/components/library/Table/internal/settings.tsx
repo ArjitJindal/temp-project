@@ -4,7 +4,7 @@ import { Updater } from '@tanstack/react-table';
 import { SELECT_COLUMN_ID } from '../consts';
 import { useLocalStorageOptionally } from './helpers';
 import { useAutoFilters } from './filters';
-import { getColumnId, TableColumn } from '@/components/library/Table/types';
+import { getColumnId, TableColumn, SortingParamsItem } from '@/components/library/Table/types';
 import { applyUpdater, StatePair } from '@/utils/state';
 import { FilterProps, ExtraFilterProps } from '@/components/library/Filter/types';
 
@@ -15,6 +15,7 @@ export type OrderRestirction = string[];
 export type PersistedSettingsContextValue = {
   reset: () => void;
   defaultState: PersistedState;
+  sort: StatePair<SortingParamsItem[]>;
   columnOrder: StatePair<ColumnOrder>;
   filtersVisibility: StatePair<FiltersVisibility>;
   columnSizing: StatePair<TanTable.ColumnSizingState>;
@@ -43,6 +44,7 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
 
   const getDefaultValue = useCallback((): PersistedState => {
     return {
+      sort: [],
       columnVisibility: columns.reduce(
         (acc, column) => ({
           ...acc,
@@ -86,6 +88,17 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
         setPersistedState(getDefaultValue());
       },
       defaultState: getDefaultValue(),
+      sort: [
+        persistedState.sort,
+        (updater: Updater<SortingParamsItem[]>) => {
+          setPersistedState((prevState) => {
+            return {
+              ...prevState,
+              sort: applyUpdater(prevState.sort, updater),
+            };
+          });
+        },
+      ],
       columnVisibility: [
         {
           ...getDefaultValue().columnVisibility, // if a column is added and it has a default visibility but local storage doesn't have it, it will be added
@@ -176,6 +189,7 @@ export function usePersistedSettingsContext(): PersistedSettingsContextValue {
 
 export interface PersistedState {
   columnOrder: ColumnOrder;
+  sort: SortingParamsItem[];
   filtersVisibility: FiltersVisibility;
   columnSizing: TanTable.ColumnSizingState;
   columnVisibility: TanTable.VisibilityState;

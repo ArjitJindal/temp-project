@@ -150,6 +150,7 @@ export function useTanstackTable<
   } = options;
   const extraTableContext = usePersistedSettingsContext();
   const [columnOrder] = extraTableContext.columnOrder;
+  const [__, setSortingPersisted] = extraTableContext.sort;
   const [expanded, setExpanded] = useState<TanTable.ExpandedState>({});
   const [rowSelection, setRowSelection] = useState<TanTable.RowSelectionState>({});
   const [columnPinning, setColumnPinning] = extraTableContext.columnPinning;
@@ -293,15 +294,17 @@ export function useTanstackTable<
   const handleChangeSorting = useCallback(
     (changes: Updater<TanTable.SortingState>) => {
       const newState: TanTable.SortingState = applyUpdater(sorting, changes);
+      const newSort: SortingParamsItem[] =
+        newState.length === 0 && defaultSorting != null
+          ? [defaultSorting]
+          : newState.map(({ id, desc }) => [id, desc ? 'descend' : 'ascend']);
       onChangeParams({
         ...params,
-        sort:
-          newState.length === 0 && defaultSorting != null
-            ? [defaultSorting]
-            : newState.map(({ id, desc }) => [id, desc ? 'descend' : 'ascend']),
+        sort: newSort,
       });
+      setSortingPersisted(newSort);
     },
-    [sorting, onChangeParams, params, defaultSorting],
+    [sorting, onChangeParams, params, defaultSorting, setSortingPersisted],
   );
 
   const columnOrderAdapted: ColumnOrder = useMemo(() => {

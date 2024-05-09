@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isEmpty } from 'lodash';
 import { TableSearchParams } from '../types';
@@ -69,6 +69,7 @@ import {
 import Id from '@/components/ui/Id';
 import { denseArray } from '@/utils/lang';
 import { USER_STATES } from '@/apis/models-custom/UserState';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -129,7 +130,7 @@ export default function CaseTable(props: Props) {
     },
   );
 
-  useEffect(() => {
+  useDeepEqualEffect(() => {
     reloadTable();
   }, [params.caseStatus, reloadTable]);
 
