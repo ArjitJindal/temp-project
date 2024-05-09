@@ -25,6 +25,9 @@ export class BusinessUserSegmentRuleFilter extends UserRuleFilter<BusinessUserSe
   }
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     if (!this.parameters.businessUserSegments?.length) {
       return true
     }

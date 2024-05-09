@@ -12,7 +12,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
-import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/transaction-time-range'
+import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/utils/helpers'
 import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,

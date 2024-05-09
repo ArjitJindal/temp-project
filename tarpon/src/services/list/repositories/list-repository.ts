@@ -277,7 +277,6 @@ export class ListRepository {
     } else {
       KeyConditionExpression = neverReturn(method, 'PartitionKeyID = :pk')
     }
-
     const { Items = [] } = await this.dynamoDb.send(
       new QueryCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,

@@ -19,7 +19,7 @@ import {
   getUserReceiverKeys,
   getUserSenderKeys,
 } from '../utils'
-import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/transaction-time-range'
+import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/utils/helpers'
 import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,

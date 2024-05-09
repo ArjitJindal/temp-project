@@ -5,7 +5,7 @@ import {
   TransactionTimeRange,
 } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
-import { transactionTimeRangeRuleFilterPredicate } from './transaction-time-range'
+import { transactionTimeRangeRuleFilterPredicate } from './utils/helpers'
 
 export type TransactionTimeRangeHistoricalRuleFilterParameter = {
   transactionTimeRangeHistorical24hr?: TransactionTimeRange

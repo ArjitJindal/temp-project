@@ -1,7 +1,10 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RuleFilter } from '../filter'
-import { Business } from '@/@types/openapi-public/Business'
+import { getMigratedV8Config } from '../v8-migrations'
+import { LegacyFilters } from '../filters'
+import { RuleJsonLogicEvaluator } from '../v8-engine'
 import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
 
 export abstract class UserRuleFilter<P> extends RuleFilter {
   tenantId: string
@@ -22,5 +25,30 @@ export abstract class UserRuleFilter<P> extends RuleFilter {
     this.user = data.user
     this.parameters = parameters
     this.dynamoDb = dynamoDb
+  }
+  public async v8Runner(): Promise<boolean> {
+    const migratedFilter = getMigratedV8Config(
+      '',
+      undefined,
+      this.parameters as LegacyFilters
+    )
+    return (
+      await new RuleJsonLogicEvaluator(this.tenantId, this.dynamoDb).evaluate(
+        migratedFilter?.logic ?? { and: [true] },
+        [],
+        {
+          tenantId: '',
+          baseCurrency: migratedFilter?.baseCurrency,
+        },
+        {
+          transaction: {
+            transactionId: 'transactionId',
+            type: 'TRANSFER',
+            timestamp: 1231,
+          },
+          senderUser: this.user,
+        }
+      )
+    ).hit
   }
 }

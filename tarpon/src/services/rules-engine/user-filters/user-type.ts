@@ -29,6 +29,9 @@ export class UserTypeRuleFilter extends UserRuleFilter<UserTypeRuleFilterParamet
   }
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     return this.parameters.userType
       ? this.isUserType(this.user, this.parameters.userType)
       : false

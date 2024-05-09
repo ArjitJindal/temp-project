@@ -25,6 +25,9 @@ export class UserIdRuleFilter extends UserRuleFilter<UserIdRuleFilterParameter> 
     }
   }
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     return this.parameters.userIds === undefined
       ? false
       : this.parameters.userIds.includes(this.user.userId)

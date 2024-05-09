@@ -4,9 +4,11 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { filterVariantsTest } from '@/test-utils/filter-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const dynamodb = getDynamoDbClient()
-
+dynamoDbSetupHook()
 interface TestCase {
   name: string
   amounts: Partial<Transaction>
@@ -133,21 +135,22 @@ const TEST_CASES: TestCase[] = [
     expectedResult: false,
   },
 ]
-
-describe.each<TestCase>(TEST_CASES)(
-  '',
-  ({ name, amounts, range, expectedResult }) => {
-    test(name, async () => {
-      expect(
-        await new TransactionAmountRuleFilter(
-          getTestTenantId(),
-          {
-            transaction: getTestTransaction(amounts),
-          },
-          { transactionAmountRange: range },
-          dynamodb
-        ).predicate()
-      ).toBe(expectedResult)
-    })
-  }
-)
+filterVariantsTest({ v8: true }, () => {
+  describe.each<TestCase>(TEST_CASES)(
+    '',
+    ({ name, amounts, range, expectedResult }) => {
+      test(name, async () => {
+        expect(
+          await new TransactionAmountRuleFilter(
+            getTestTenantId(),
+            {
+              transaction: getTestTransaction(amounts),
+            },
+            { transactionAmountRange: range },
+            dynamodb
+          ).predicate()
+        ).toBe(expectedResult)
+      })
+    }
+  )
+})

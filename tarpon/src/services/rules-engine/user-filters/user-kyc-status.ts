@@ -24,6 +24,9 @@ export class UserKycStatusRuleFilter extends UserRuleFilter<UserKycStatusRuleFil
   }
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     if (!this.parameters.kycStatus?.length) {
       return true
     }

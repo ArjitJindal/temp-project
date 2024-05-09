@@ -28,21 +28,42 @@ export function getMigratedV8Config(
   baseCurrency?: CurrencyCode
 } | null {
   const migrationFunc = V8_CONVERSION[ruleId]
-  if (!migrationFunc) {
-    return null
+  if (!migrationFunc && Object.keys(filters).length === 0) {
+    return {
+      logic: {
+        and: [true],
+      },
+      logicAggregationVariables: [],
+      alertCreationDirection: 'ALL',
+    }
   }
   const historicalFilters = pickBy(filters, (_value, key) =>
     key.endsWith('Historical')
   ) as TransactionHistoricalFilters
-  const result = migrationFunc(parameters, historicalFilters)
-  const filterConditions = getFiltersConditions(filters)
+  let result
+  if (migrationFunc) {
+    result = migrationFunc(parameters, historicalFilters)
+  }
+  const {
+    filterConditions,
+    baseCurrency: filtersCurrency,
+    alertCreationDirection: filtersAlertCreationDirection,
+  } = getFiltersConditions(filters)
 
-  if (filterConditions.length > 0) {
+  if (result?.logic === undefined) {
+    return {
+      logic: {
+        and: filterConditions.length === 0 ? [true] : filterConditions,
+      },
+      logicAggregationVariables: [],
+      alertCreationDirection: filtersAlertCreationDirection,
+      baseCurrency: filtersCurrency as CurrencyCode,
+    }
+  } else if (filterConditions.length > 0)
     result.logic = {
       and: [{ and: filterConditions }, result.logic],
     }
-  }
-  if (result.logicAggregationVariables.length > 0) {
+  if (result?.logicAggregationVariables?.length > 0) {
     result.logicAggregationVariables = result.logicAggregationVariables.map(
       (v) => {
         if (v.timeWindow.end.units === 0) {
@@ -57,6 +78,15 @@ export function getMigratedV8Config(
         return v
       }
     )
+  }
+  if (!result?.baseCurrency && filtersCurrency) {
+    result = { ...result, baseCurrency: filtersCurrency as CurrencyCode }
+  }
+  if (!result?.alertCreationDirection && filtersAlertCreationDirection) {
+    result = {
+      ...result,
+      alertCreationDirection: filtersAlertCreationDirection,
+    }
   }
   return result
 }

@@ -2,6 +2,7 @@ import { UserAcquisitionChannelRuleFilter } from '../user-acquisition-channel'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { filterVariantsTest } from '@/test-utils/filter-test-utils'
 
 const dynamoDb = getDynamoDbClient()
 
@@ -29,107 +30,108 @@ const TEST_BUSINESS_USER_WITH_NO_ACQUISITION = getTestBusiness({
 })
 
 const tenantId = getTestTenantId()
+filterVariantsTest({ v8: true }, () => {
+  test('Empty parameter', async () => {
+    expect(
+      await new UserAcquisitionChannelRuleFilter(
+        tenantId,
+        {
+          user: TEST_CONSUMER_USER_WITH_PAID_ACQUISITION,
+        },
+        {},
+        dynamoDb
+      ).predicate()
+    ).toBe(true)
+  })
 
-test('Empty parameter', async () => {
-  expect(
-    await new UserAcquisitionChannelRuleFilter(
-      tenantId,
-      {
-        user: TEST_CONSUMER_USER_WITH_PAID_ACQUISITION,
-      },
-      {},
-      dynamoDb
-    ).predicate()
-  ).toBe(true)
-})
+  test('Acquisition channel match the filter', async () => {
+    expect(
+      await new UserAcquisitionChannelRuleFilter(
+        tenantId,
+        {
+          user: TEST_CONSUMER_USER_WITH_PAID_ACQUISITION,
+        },
+        { acquisitionChannels: ['PAID'] },
+        dynamoDb
+      ).predicate()
+    ).toBe(true)
+  })
 
-test('Acquisition channel match the filter', async () => {
-  expect(
-    await new UserAcquisitionChannelRuleFilter(
-      tenantId,
-      {
-        user: TEST_CONSUMER_USER_WITH_PAID_ACQUISITION,
-      },
-      { acquisitionChannels: ['PAID'] },
-      dynamoDb
-    ).predicate()
-  ).toBe(true)
-})
+  test('Acquisition channel doesnot match the filter', async () => {
+    expect(
+      await new UserAcquisitionChannelRuleFilter(
+        tenantId,
+        {
+          user: TEST_CONSUMER_USER_WITH_PAID_ACQUISITION,
+        },
+        { acquisitionChannels: ['OFFLINE'] },
+        dynamoDb
+      ).predicate()
+    ).toBe(false)
+  })
 
-test('Acquisition channel doesnot match the filter', async () => {
-  expect(
-    await new UserAcquisitionChannelRuleFilter(
-      tenantId,
-      {
-        user: TEST_CONSUMER_USER_WITH_PAID_ACQUISITION,
-      },
-      { acquisitionChannels: ['OFFLINE'] },
-      dynamoDb
-    ).predicate()
-  ).toBe(false)
-})
+  test('Acquisition channel match the filter - offline', async () => {
+    expect(
+      await new UserAcquisitionChannelRuleFilter(
+        tenantId,
+        {
+          user: TEST_CONSUMER_USER_WITH_OFFLINE_ACQUISITION,
+        },
+        { acquisitionChannels: ['OFFLINE'] },
+        dynamoDb
+      ).predicate()
+    ).toBe(true)
+  })
 
-test('Acquisition channel match the filter - offline', async () => {
-  expect(
-    await new UserAcquisitionChannelRuleFilter(
-      tenantId,
-      {
-        user: TEST_CONSUMER_USER_WITH_OFFLINE_ACQUISITION,
-      },
-      { acquisitionChannels: ['OFFLINE'] },
-      dynamoDb
-    ).predicate()
-  ).toBe(true)
-})
+  test('Acquisition channel business user match the filter', async () => {
+    expect(
+      await new UserAcquisitionChannelRuleFilter(
+        tenantId,
+        {
+          user: TEST_BUSINESS_USER_WITH_PAID_ACQUISITION,
+        },
+        { acquisitionChannels: ['PAID'] },
+        dynamoDb
+      ).predicate()
+    ).toBe(true)
+  })
 
-test('Acquisition channel business user match the filter', async () => {
-  expect(
-    await new UserAcquisitionChannelRuleFilter(
-      tenantId,
-      {
-        user: TEST_BUSINESS_USER_WITH_PAID_ACQUISITION,
-      },
-      { acquisitionChannels: ['PAID'] },
-      dynamoDb
-    ).predicate()
-  ).toBe(true)
-})
+  test('Acquisition channel business user doesnot match the filter', async () => {
+    expect(
+      await new UserAcquisitionChannelRuleFilter(
+        tenantId,
+        {
+          user: TEST_BUSINESS_USER_WITH_PAID_ACQUISITION,
+        },
+        { acquisitionChannels: ['OFFLINE'] },
+        dynamoDb
+      ).predicate()
+    ).toBe(false)
+  })
 
-test('Acquisition channel business user doesnot match the filter', async () => {
-  expect(
-    await new UserAcquisitionChannelRuleFilter(
-      tenantId,
-      {
-        user: TEST_BUSINESS_USER_WITH_PAID_ACQUISITION,
-      },
-      { acquisitionChannels: ['OFFLINE'] },
-      dynamoDb
-    ).predicate()
-  ).toBe(false)
-})
+  test('Acquisition channel business user doesnot match the filter - no acquisition channel', async () => {
+    expect(
+      await new UserAcquisitionChannelRuleFilter(
+        tenantId,
+        {
+          user: TEST_BUSINESS_USER_WITH_NO_ACQUISITION,
+        },
+        { acquisitionChannels: ['OFFLINE'] },
+        dynamoDb
+      ).predicate()
+    ).toBe(false)
+  })
 
-test('Acquisition channel business user doesnot match the filter - no acquisition channel', async () => {
-  expect(
-    await new UserAcquisitionChannelRuleFilter(
-      tenantId,
-      {
-        user: TEST_BUSINESS_USER_WITH_NO_ACQUISITION,
-      },
-      { acquisitionChannels: ['OFFLINE'] },
-      dynamoDb
-    ).predicate()
-  ).toBe(false)
-})
-
-test('Acquisition channel consumer user doesnot match the filter - no acquisition channel', async () => {
-  expect(
-    await new UserAcquisitionChannelRuleFilter(
-      tenantId,
-      {
-        user: TEST_USER_WITH_NO_ACQUISITION,
-      },
-      { acquisitionChannels: ['OFFLINE'] },
-      dynamoDb
-    ).predicate()
-  ).toBe(false)
+  test('Acquisition channel consumer user doesnot match the filter - no acquisition channel', async () => {
+    expect(
+      await new UserAcquisitionChannelRuleFilter(
+        tenantId,
+        {
+          user: TEST_USER_WITH_NO_ACQUISITION,
+        },
+        { acquisitionChannels: ['OFFLINE'] },
+        dynamoDb
+      ).predicate()
+    ).toBe(false)
+  })
 })

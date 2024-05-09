@@ -67,6 +67,9 @@ export abstract class TransactionCountryRuleFilterBase<
   public abstract getDirection(): 'origin' | 'destination'
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     const direction = this.getDirection()
 
     const parameterCountries =

@@ -2,46 +2,13 @@ import { JSONSchemaType } from 'ajv'
 import { isEmpty } from 'lodash'
 import {
   TRANSACTION_TIME_RANGE_OPTIONAL_SCHEMA,
-  TimeRangeHourAndMinute,
   TransactionTimeRange,
 } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
+import { transactionTimeRangeRuleFilterPredicate } from './utils/helpers'
 
 export type TransactionTimeRangeRuleFilterParameter = {
   transactionTimeRange24hr?: TransactionTimeRange
-}
-
-export const transactionTimeRangeRuleFilterPredicate = (
-  transactionTimestamp: number,
-  transactionTimeRange?: TransactionTimeRange
-) => {
-  if (!transactionTimeRange || isEmpty(transactionTimeRange)) {
-    return true
-  }
-  const startTime = getTotalMinutesFromTime(transactionTimeRange.startTime)
-  const endTime = getTotalMinutesFromTime(transactionTimeRange.endTime)
-  const transactionTime = getTotalMinutesFromTime(
-    getHoursAndMinutesFromTimestamp(transactionTimestamp)
-  )
-  return startTime <= transactionTime && transactionTime <= endTime
-}
-
-export function getHoursAndMinutesFromTimestamp(
-  timestamp: number
-): TimeRangeHourAndMinute {
-  const date = new Date(timestamp)
-  const utcHours = date.getUTCHours()
-  const utcMinutes = date.getUTCMinutes()
-  return {
-    utcHours,
-    utcMinutes,
-  }
-}
-
-export function getTotalMinutesFromTime(
-  timeRange: TimeRangeHourAndMinute
-): number {
-  return timeRange.utcHours * 60 + timeRange.utcMinutes
 }
 
 export class TransactionTimeRangeRuleFilter extends TransactionRuleFilter<TransactionTimeRangeRuleFilterParameter> {
@@ -66,6 +33,9 @@ export class TransactionTimeRangeRuleFilter extends TransactionRuleFilter<Transa
   }
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     const transactionTimeRange: TransactionTimeRange | undefined =
       this.parameters.transactionTimeRange24hr
     if (!transactionTimeRange || isEmpty(transactionTimeRange)) {

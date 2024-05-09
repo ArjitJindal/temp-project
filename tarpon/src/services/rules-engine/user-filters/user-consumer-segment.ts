@@ -25,6 +25,9 @@ export class ConsumerUserSegmentRuleFilter extends UserRuleFilter<ConsumerUserSe
   }
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     if (!this.parameters.consumerUserSegments?.length) {
       return true
     }

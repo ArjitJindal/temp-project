@@ -34,6 +34,8 @@ export class TransactionStateRuleFilter extends TransactionRuleFilter<Transactio
   }
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__)
+      return await this.v8Runner()
     return transactionStateRuleFilterPredicate(
       this.transaction,
       this.parameters.transactionStates

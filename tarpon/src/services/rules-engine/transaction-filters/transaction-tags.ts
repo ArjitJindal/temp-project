@@ -26,6 +26,9 @@ export class TransactionTagsRuleFilter extends TransactionRuleFilter<Transaction
   }
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     const transactionTags = this.transaction.tags
     const filterTags = this.parameters.transactionTags
 

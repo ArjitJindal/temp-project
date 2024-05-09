@@ -39,6 +39,9 @@ export class TransactionProductTypesRuleFilter extends TransactionRuleFilter<Tra
   }
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     return transactionProductTypesRuleFilterPredicate(
       this.transaction,
       this.parameters.productTypes

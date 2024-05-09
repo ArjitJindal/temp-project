@@ -50,6 +50,9 @@ export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleF
   }
 
   public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
     const { listIds, userIds } = this.parameters.whitelistUsers ?? {}
     const inputUserIds = [this.user.userId]
     if (userIds && intersection(inputUserIds, userIds).length > 0) {
