@@ -96,13 +96,23 @@ class EntityTables:
 
     def create_entity_stream(self, df: DataFrame, entity: Entity):
         print(f"Setting up {entity.table} table stream")
+        stage = os.environ["STAGE"]
+
+        print("Migrating tables to new schema")
+        tenants = self.table_service.tenant_schemas()
+        for tenant in tenants:
+            df_with_new_schema = self.spark.createDataFrame([], df.schema)
+            df_with_new_schema.write.format("delta").mode("append").option(
+                "mergeSchema", "true"
+            ).option("overwriteSchema", "true").saveAsTable(
+                f"`{stage}`.`{tenant}`.`{entity.table}`"
+            )
 
         matcher_condition = f"s.{entity.id_column} = t.{entity.id_column}"
         id_column = entity.id_column
         timestamp_column = entity.timestamp_column
         incoming_updates = f"{entity.table}_incoming_updates"
         latest_updates = f"{entity.table}_latest_updates"
-        stage = os.environ["STAGE"]
         quality_checks = entity.quality_checks
 
         def upsert_to_delta(micro_batch_output_df, _batch_id):
