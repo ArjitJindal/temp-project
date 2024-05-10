@@ -98,7 +98,6 @@ class EntityTables:
         print(f"Setting up {entity.table} table stream")
         stage = os.environ["STAGE"]
 
-        print("Migrating tables to new schema")
         tenants = self.table_service.tenant_schemas()
         for tenant in tenants:
             self.table_service.prepare_table_for_df(

@@ -151,10 +151,13 @@ class TableService:
         try:
             existing_schema = self.spark.table(table).schema
         except:  # pylint: disable=bare-except
-            print(f"Creating table {table}")
             mode = "overwrite"
 
         if existing_schema != df.schema:
+            if mode == "overwrite":
+                print(f"Creating table {table}")
+            else:
+                print(f"Migrating table {table}")
             df_with_new_schema = self.spark.createDataFrame([], df.schema)
             df_with_new_schema.write.format("delta").mode(mode).option(
                 "mergeSchema", "true"

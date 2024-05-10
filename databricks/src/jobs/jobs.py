@@ -72,8 +72,6 @@ class Jobs:
         self.refresh()
 
     def stream(self):
-        print("Checking all tables exist first, in case backfill is still running")
-
         if self.version_service.get_pipeline_checkpoint_id() is None:
             print("Please run backfill first.")
             return
