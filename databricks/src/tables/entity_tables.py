@@ -101,13 +101,9 @@ class EntityTables:
         print("Migrating tables to new schema")
         tenants = self.table_service.tenant_schemas()
         for tenant in tenants:
-            if self.spark.table(f"`{stage}`.`{tenant}`.`{entity.table}`").schema != df.schema:
-                df_with_new_schema = self.spark.createDataFrame([], df.schema)
-                df_with_new_schema.write.format("delta").mode("append").option(
-                    "mergeSchema", "true"
-                ).option("overwriteSchema", "true").saveAsTable(
-                    f"`{stage}`.`{tenant}`.`{entity.table}`"
-                )
+            self.table_service.prepare_table_for_df(
+                df, f"`{stage}`.`{tenant}`.`{entity.table}`"
+            )
 
         matcher_condition = f"s.{entity.id_column} = t.{entity.id_column}"
         id_column = entity.id_column

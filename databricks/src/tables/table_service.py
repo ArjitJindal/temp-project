@@ -144,3 +144,18 @@ class TableService:
         self.spark.sql(
             f"optimize {table} where date == current_timestamp() - INTERVAL 1 day"
         )
+
+    def prepare_table_for_df(self, df: DataFrame, table: str):
+        existing_schema = df.schema
+        mode = "append"
+        try:
+            existing_schema = self.spark.table(table).schema
+        except:  # pylint: disable=bare-except
+            print(f"Creating table {table}")
+            mode = "overwrite"
+
+        if existing_schema != df.schema:
+            df_with_new_schema = self.spark.createDataFrame([], df.schema)
+            df_with_new_schema.write.format("delta").mode(mode).option(
+                "mergeSchema", "true"
+            ).option("overwriteSchema", "true").saveAsTable(table)
