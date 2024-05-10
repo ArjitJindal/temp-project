@@ -146,14 +146,14 @@ class TableService:
         )
 
     def prepare_table_for_df(self, df: DataFrame, table: str):
-        existing_schema = df.schema
+        existing_schema = None
         mode = "append"
         try:
             existing_schema = self.spark.table(table).schema
         except:  # pylint: disable=bare-except
             mode = "overwrite"
 
-        if existing_schema != df.schema:
+        if existing_schema != df.schema or existing_schema is None:
             if mode == "overwrite":
                 print(f"Creating table {table}")
             else:
