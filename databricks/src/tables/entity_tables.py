@@ -110,6 +110,7 @@ class EntityTables:
         incoming_updates = f"{entity.table}_incoming_updates"
         latest_updates = f"{entity.table}_latest_updates"
         quality_checks = entity.quality_checks
+        table = entity.table
 
         def upsert_to_delta(micro_batch_output_df, _batch_id):
             if quality_checks:
@@ -136,7 +137,6 @@ class EntityTables:
                 WHERE rn = 1
             """
             )
-            table = entity.table
 
             for tenant in tenants:
                 spark.sql(
