@@ -3,6 +3,7 @@ from typing import List
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col
+from pyspark.sql.types import StructType, ArrayType
 
 from src.tables.batch_cache import BatchCache
 from src.tables.stream_cache import StreamCache
@@ -153,7 +154,7 @@ class TableService:
         except:  # pylint: disable=bare-except
             mode = "overwrite"
 
-        if existing_schema != df.schema or existing_schema is None:
+        if not schemas_equal(existing_schema, df.schema) or existing_schema is None:
             if mode == "overwrite":
                 print(f"Creating table {table}")
             else:
@@ -162,3 +163,28 @@ class TableService:
             df_with_new_schema.write.format("delta").mode(mode).option(
                 "mergeSchema", "true"
             ).option("overwriteSchema", "true").saveAsTable(table)
+
+
+def schemas_equal(schema1, schema2):
+    fields1 = {field.name: field for field in schema1.fields}
+    fields2 = {field.name: field for field in schema2.fields}
+
+    if set(fields1.keys()) != set(fields2.keys()):
+        return False
+
+    for field_name in fields1:
+        field1 = fields1[field_name]
+        field2 = fields2[field_name]
+        if not (field1.nullable == field2.nullable and data_types_equal(field1.dataType, field2.dataType)):
+            return False
+
+    return True
+
+def data_types_equal(type1, type2):
+    if type(type1) != type(type2):
+        return False
+    if isinstance(type1, StructType):
+        return schemas_equal(type1, type2)
+    elif isinstance(type1, ArrayType):
+        return data_types_equal(type1.elementType, type2.elementType)
+    return type1 == type2
