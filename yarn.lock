@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 6
+  version: 8
   cacheKey: 10c0
 
 "@aws-cdk/asset-awscli-v1@npm:^2.2.202":
@@ -958,23 +958,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@slack/web-api@npm:^7.0.4":
-  version: 7.0.4
-  resolution: "@slack/web-api@npm:7.0.4"
+"@slack/web-api@npm:^7.0.2":
+  version: 7.0.3
+  resolution: "@slack/web-api@npm:7.0.3"
   dependencies:
-    "@slack/logger": ^4.0.0
-    "@slack/types": ^2.9.0
-    "@types/node": ">=18.0.0"
-    "@types/retry": 0.12.0
-    axios: ^1.6.5
-    eventemitter3: ^5.0.1
-    form-data: ^4.0.0
-    is-electron: 2.2.2
-    is-stream: ^2
-    p-queue: ^6
-    p-retry: ^4
-    retry: ^0.13.1
-  checksum: 8/fd80e80bf073d4ae4f2144d48e80c145584a3965e46bd8e366cdeca05f28ddc8ee2bcf27cf4c765272986e7ab9719a9f43a829dbfa5c601eac95fd3440301e49
+    "@slack/logger": "npm:^4.0.0"
+    "@slack/types": "npm:^2.9.0"
+    "@types/node": "npm:>=18.0.0"
+    "@types/retry": "npm:0.12.0"
+    axios: "npm:^1.6.5"
+    eventemitter3: "npm:^5.0.1"
+    form-data: "npm:^4.0.0"
+    is-electron: "npm:2.2.2"
+    is-stream: "npm:^2"
+    p-queue: "npm:^6"
+    p-retry: "npm:^4"
+    retry: "npm:^0.13.1"
+  checksum: 98dbf4bf8d3faa5453df11494c08432d6d157cb7cb79f1043985ed6836c094bb5d77972a00f93473b4b83e55b0a2dd663bc960cc9d0c746ac00b380fc5cd4a38
   languageName: node
   linkType: hard
 
@@ -2098,9 +2098,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>":
+"fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>":
   version: 2.3.2
-  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
+  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
   dependencies:
     node-gyp: "npm:latest"
   conditions: os=darwin
@@ -3274,23 +3274,23 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "tarpon@workspace:."
   dependencies:
-    "@aws-sdk/client-cloudformation": ^3.441.0
+    "@aws-sdk/client-cloudformation": "npm:^3.441.0"
     "@flagright/lib": "link:./lib"
-    "@notionhq/client": ^2.2.14
-    "@slack/web-api": ^7.0.4
-    "@tsconfig/node18": ^18.2.1
-    "@types/lodash": ^4.17.0
-    aws-cdk: ~2.137.0
-    aws-cdk-lib: ~2.137.0
-    constructs: ^10.3.0
-    husky: ^8.0.1
-    lodash: ^4.17.21
-    octokit: ^3.1.2
-    prettier: ^3.1.1
-    slackify-markdown: ^4.4.0
-    ts-node: ^10.9.1
-    tsconfig-paths: ^4.2.0
-    typescript: ^5.2.2
+    "@notionhq/client": "npm:^2.2.14"
+    "@slack/web-api": "npm:^7.0.2"
+    "@tsconfig/node18": "npm:^18.2.1"
+    "@types/lodash": "npm:^4.17.0"
+    aws-cdk: "npm:~2.137.0"
+    aws-cdk-lib: "npm:~2.137.0"
+    constructs: "npm:^10.3.0"
+    husky: "npm:^8.0.1"
+    lodash: "npm:^4.17.21"
+    octokit: "npm:^3.1.2"
+    prettier: "npm:^3.1.1"
+    slackify-markdown: "npm:^4.4.0"
+    ts-node: "npm:^10.9.1"
+    tsconfig-paths: "npm:^4.2.0"
+    typescript: "npm:^5.2.2"
   languageName: unknown
   linkType: soft
 
@@ -3381,13 +3381,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@^5.2.2#~builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^5.2.2#optional!builtin<compat/typescript>":
   version: 5.4.5
-  resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=d73830"
+  resolution: "typescript@patch:typescript@npm%3A5.4.5#optional!builtin<compat/typescript>::version=5.4.5&hash=e012d7"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 8/2373c693f3b328f3b2387c3efafe6d257b057a142f9a79291854b14ff4d5367d3d730810aee981726b677ae0fd8329b23309da3b6aaab8263dbdccf1da07a3ba
+  checksum: 9cf4c053893bcf327d101b6c024a55baf05430dc30263f9adb1bf354aeffc11306fe1f23ba2f9a0209674359f16219b5b7d229e923477b94831d07d5a33a4217
   languageName: node
   linkType: hard
 

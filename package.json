@@ -44,7 +44,7 @@
   "dependencies": {
     "@flagright/lib": "link:./lib",
     "@notionhq/client": "^2.2.14",
-    "@slack/web-api": "^7.0.4",
+    "@slack/web-api": "^7.0.2",
     "@types/lodash": "^4.17.0",
     "aws-cdk": "~2.137.0",
     "aws-cdk-lib": "~2.137.0",
