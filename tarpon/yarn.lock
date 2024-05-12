@@ -90,10 +90,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-cdk/asset-node-proxy-agent-v6@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "@aws-cdk/asset-node-proxy-agent-v6@npm:2.0.1"
-  checksum: 310aa6799ffb9b21b986004d55b55c35cded3e4d65b8a64e5f7f0de2cfef09379eb655099c77902d1e2eb26042a7a300acd022ae4b6a6d3195573792a87bcbc5
+"@aws-cdk/asset-node-proxy-agent-v6@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "@aws-cdk/asset-node-proxy-agent-v6@npm:2.0.3"
+  checksum: 3f12156d8eca864bca1dc666d1f28da4d5606ce83abfbcb2308519af55a728200b1a5985a17801831cce3ca81357b5e3936f7a32b86e38bceb66d87e7297d3fb
   languageName: node
   linkType: hard
 
@@ -7126,13 +7126,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.137.0":
-  version: 2.137.0
-  resolution: "aws-cdk-lib@npm:2.137.0"
+"aws-cdk-lib@npm:~2.138.0":
+  version: 2.138.0
+  resolution: "aws-cdk-lib@npm:2.138.0"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
-    "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.0.1"
+    "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.0.3"
     "@balena/dockerignore": "npm:^1.0.2"
     case: "npm:1.6.3"
     fs-extra: "npm:^11.2.0"
@@ -7146,7 +7146,7 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: 72f2a37832c8b3ec81762dd0ba63b949759717a4b27df36aa71e9486236317969ca9bdd070962118e1ad6fcd5f60450a6ba06fe24ed4d76e8b6fe703ac6e0c95
+  checksum: 75d9dffaf6b68ce6434b6e3d4d74bec8240563673c18c762e1a0dee178387aa355464d831ce60c90d21267cba2704801fd9b188b03d0b811c564431582bc219c
   languageName: node
   linkType: hard
 
@@ -17906,7 +17906,7 @@ __metadata:
     ajv: "npm:8.11.0"
     auth0: "npm:^4.2.0"
     aws-cdk: "npm:~2.134.0"
-    aws-cdk-lib: "npm:~2.137.0"
+    aws-cdk-lib: "npm:~2.138.0"
     aws-sdk: "npm:^2.1587.0"
     aws-sdk-client-mock: "npm:^2.0.1"
     aws-sdk-client-mock-jest: "npm:^2.0.1"

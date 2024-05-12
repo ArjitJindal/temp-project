@@ -19,7 +19,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-cdk/asset-node-proxy-agent-v6@npm:^2.0.1":
+"@aws-cdk/asset-node-proxy-agent-v6@npm:^2.0.3":
   version: 2.0.3
   resolution: "@aws-cdk/asset-node-proxy-agent-v6@npm:2.0.3"
   checksum: fa83c50bff30c5edb70b97314e68bc75362c1e541484b4f39c962e3f742f342ea11278a01606aaeca5b5257c582f108267f44675a452b8ea8a0348c715ad031b
@@ -1646,13 +1646,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.137.0":
-  version: 2.137.0
-  resolution: "aws-cdk-lib@npm:2.137.0"
+"aws-cdk-lib@npm:~2.138.0":
+  version: 2.138.0
+  resolution: "aws-cdk-lib@npm:2.138.0"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
-    "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.0.1"
+    "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.0.3"
     "@balena/dockerignore": "npm:^1.0.2"
     case: "npm:1.6.3"
     fs-extra: "npm:^11.2.0"
@@ -1666,13 +1666,13 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: 0052ad0ddf0d4d532d2ea6cdf946678f4ca5f4d47599442f3a6e6a48b47403456178682aa39699f60d97132fbd7d146a651d56f1b09776a300131cdcc11e25ed
+  checksum: 5470694f37fa3c20d18c1e7e0068c336c38f776ee6d1bda886ce4da79ac3e7527e0d15982d7686c2452075c918f0b98dd6548b62f59bf97d4ca648a20fe18f34
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.137.0":
-  version: 2.137.0
-  resolution: "aws-cdk@npm:2.137.0"
+"aws-cdk@npm:~2.138.0":
+  version: 2.138.0
+  resolution: "aws-cdk@npm:2.138.0"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -1680,7 +1680,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: 532307764c8c3a8a264f7da4681dca071c9ac8b5f94cb55916da396217b9ceaaaf275f1c9222e4a46a08ccebcbee72dc1a03e04f896225382f08c959066edfbe
+  checksum: b1df442b517888cccedd257467730b794dfcc17c848777e33b1423ee84de75349efd34b466e0148852a0cc1440411e2781d2bb5b965670d67c0a1de602da90fc
   languageName: node
   linkType: hard
 
@@ -3280,8 +3280,8 @@ __metadata:
     "@slack/web-api": "npm:^7.0.2"
     "@tsconfig/node18": "npm:^18.2.1"
     "@types/lodash": "npm:^4.17.0"
-    aws-cdk: "npm:~2.137.0"
-    aws-cdk-lib: "npm:~2.137.0"
+    aws-cdk: "npm:~2.138.0"
+    aws-cdk-lib: "npm:~2.138.0"
     constructs: "npm:^10.3.0"
     husky: "npm:^8.0.1"
     lodash: "npm:^4.17.21"
