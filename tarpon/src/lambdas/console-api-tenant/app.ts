@@ -6,7 +6,7 @@ import { Stage } from '@flagright/lib/constants/deploy'
 import { shortId } from '@flagright/lib/utils'
 import createHttpError from 'http-errors'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
-import { flatten } from 'lodash'
+import { flatten, isEqual } from 'lodash'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -117,28 +117,35 @@ export const tenantsHandler = lambdaApi()(
     )
 
     handlers.registerPostTenantsSettings(async (ctx, request) => {
+      assertCurrentUserRole('admin')
       const dynamoDb = getDynamoDbClientByEvent(event)
-      const newTenantSettings = request.TenantSettings
+      const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
+      const changedTenantSettings = Object.fromEntries(
+        Object.entries(request.TenantSettings).filter(
+          ([key, value]) => !isEqual(value, tenantSettingsCurrent[key])
+        )
+      ) as TenantSettings
+
       if (
-        ROOT_ONLY_SETTINGS.find((settingName) => newTenantSettings[settingName])
+        ROOT_ONLY_SETTINGS.find(
+          (settingName) => changedTenantSettings[settingName]
+        )
       ) {
         assertCurrentUserRole('root')
-        if (newTenantSettings.isAccountSuspended != null) {
+        if (changedTenantSettings.isAccountSuspended != null) {
           assertHasDangerousTenantDelete()
         }
       }
-      assertCurrentUserRole('admin')
-      const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
       const tenantService = new TenantService(ctx.tenantId, {
         dynamoDb,
         mongoDb,
       })
       const updatedResult = await tenantService.createOrUpdateTenantSettings(
-        newTenantSettings
+        changedTenantSettings
       )
       if (
         !tenantSettingsCurrent.features?.includes('RISK_SCORING') &&
-        newTenantSettings.features?.includes('RISK_SCORING')
+        changedTenantSettings.features?.includes('RISK_SCORING')
       ) {
         await sendBatchJobCommand({
           type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
@@ -151,7 +158,7 @@ export const tenantsHandler = lambdaApi()(
         action: 'UPDATE',
         timestamp: Date.now(),
         oldImage: tenantSettingsCurrent,
-        newImage: newTenantSettings,
+        newImage: { ...tenantSettingsCurrent, ...changedTenantSettings },
       }
       await publishAuditLog(tenantId, auditLog)
 

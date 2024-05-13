@@ -95,7 +95,6 @@ export const AISources = () => {
                 <Button
                   onClick={() => {
                     updateSettings.mutate({
-                      ...settings,
                       aiSourcesDisabled: aiSourcesDisabled,
                     });
                   }}
