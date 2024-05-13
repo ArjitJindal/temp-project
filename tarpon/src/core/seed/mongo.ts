@@ -45,6 +45,7 @@ import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { CounterEntity, EntityCounter } from '@/services/counter/repository'
+import { ShadowRuleStatsAnalytics } from '@/services/analytics/rules/shadow-rule-stats'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -150,5 +151,6 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   })
 
   await dashboardStatsRepository.refreshAllStats()
+  await ShadowRuleStatsAnalytics.refresh(tenantId)
   logger.info('Dashboard stats refreshed')
 }
