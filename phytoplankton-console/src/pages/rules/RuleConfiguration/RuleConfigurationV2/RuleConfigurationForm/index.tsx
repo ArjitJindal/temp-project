@@ -70,6 +70,13 @@ const ageFilterValidator = (value: any) => {
   if (value?.minAge == null || value?.maxAge == null) {
     return null;
   }
+  if (value.minAge?.units === undefined && value.minAge?.granularity !== undefined) {
+    return `Add number of ${value.minAge?.granularity}s in 'From' field `;
+  }
+  if (value.maxAge?.units === undefined && value.maxAge?.granularity !== undefined) {
+    return `Add number of ${value.maxAge?.granularity}s in 'To' field`;
+  }
+
   const minAgeInMs = dayjs
     .duration(value?.minAge?.units ?? 0, value?.minAge.granularity)
     .asMilliseconds();

@@ -40,8 +40,6 @@ export default function AgeRangeInput(props: Props) {
   const maxAge = value?.maxAge;
   const handleChange = useCallback(
     (newValue: ValueType | undefined) => {
-      if (newValue?.minAge?.granularity && !newValue.minAge.units) newValue.minAge = undefined;
-      if (newValue?.maxAge?.granularity && !newValue.maxAge.units) newValue.maxAge = undefined;
       onChange?.(newValue?.minAge == null && newValue?.maxAge == null ? undefined : newValue);
     },
     [onChange],
@@ -58,12 +56,10 @@ export default function AgeRangeInput(props: Props) {
                 onChange={(val) => {
                   handleChange({
                     ...value,
-                    minAge: val
-                      ? {
-                          units: val,
-                          granularity: minAge?.granularity ?? defaultGranularity,
-                        }
-                      : undefined,
+                    minAge: {
+                      units: val,
+                      granularity: minAge?.granularity ?? defaultGranularity,
+                    },
                   });
                 }}
                 testName="min-age-input"
@@ -100,12 +96,10 @@ export default function AgeRangeInput(props: Props) {
                 onChange={(val) => {
                   handleChange({
                     ...value,
-                    maxAge: val
-                      ? {
-                          units: val,
-                          granularity: maxAge?.granularity,
-                        }
-                      : undefined,
+                    maxAge: {
+                      units: val,
+                      granularity: maxAge?.granularity,
+                    },
                   });
                 }}
                 testName="max-age-input"
