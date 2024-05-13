@@ -31,12 +31,16 @@ export default function Skeleton<T>(props: Props<T>): JSX.Element {
   }
 
   const renderSkeleton = () => {
-    return <span className={s.skeleton}>{[...new Array(length)].map(() => '■').join('')}</span>;
+    return (
+      <span className={s.skeleton} data-cy="skeleton">
+        {[...new Array(length)].map(() => '■').join('')}
+      </span>
+    );
   };
 
   const renderFailed = (reason: string) => {
     return (
-      <span className={cn(s.failed)} title={reason}>
+      <span className={cn(s.failed)} title={reason} data-cy="skeleton">
         N/A
       </span>
     );

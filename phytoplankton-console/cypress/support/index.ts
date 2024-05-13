@@ -57,6 +57,7 @@ declare global {
       selectSegmentedControl(title: string): Chainable<Element>;
       selectTab(title: string): Chainable<Element>;
       asertInputDisabled(label: string): Chai.Assertion;
+      assertSkeletonLoader(): Chai.Assertion;
     }
   }
 }

@@ -11,12 +11,14 @@ describe('Filter according to case id (optimized)', () => {
     cy.intercept('GET', '**/cases**').as('cases');
 
     cy.visit('/case-management/cases');
+    cy.assertSkeletonLoader();
 
     cy.get('[data-cy="caseId"]')
       .first()
       .then(($caseId) => {
         const caseId = $caseId.text().substring(0, 3);
         cy.get('[data-cy="rules-filter"]').contains('Case ID').click().type(caseId);
+        cy.assertSkeletonLoader();
         cy.wait('@cases').then((casesInterception) => {
           expect(casesInterception.response?.statusCode).to.be.oneOf([200, 304]);
           cy.url().should('include', 'caseId');

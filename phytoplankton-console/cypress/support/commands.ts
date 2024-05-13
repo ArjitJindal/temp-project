@@ -333,3 +333,8 @@ Cypress.Commands.add('selectTab', (title) => {
 Cypress.Commands.add('asertInputDisabled', (label: string) => {
   expect(cy.getInputByLabel(label, 'input')).to.be.disabled;
 });
+
+Cypress.Commands.add('assertSkeletonLoader', () => {
+  cy.get("[data-cy='skeleton']").should('exist');
+  cy.get("[data-cy='skeleton']").should('not.exist');
+});
