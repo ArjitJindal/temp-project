@@ -652,6 +652,7 @@ describe('Verify Transaction: V8 engine', () => {
           {
             key: 'agg:test',
             type: 'PAYMENT_DETAILS_TRANSACTIONS',
+            userDirection: 'SENDER_OR_RECEIVER',
             transactionDirection: 'SENDING',
             aggregationFieldKey: 'TRANSACTION:transactionId',
             aggregationFunc: 'COUNT',
@@ -697,7 +698,7 @@ describe('Verify Transaction: V8 engine', () => {
               {
                 direction: 'DESTINATION',
                 value: {
-                  'agg:test': null,
+                  'agg:test': 0,
                 },
               },
             ],
@@ -741,7 +742,7 @@ describe('Verify Transaction: V8 engine', () => {
               {
                 direction: 'DESTINATION',
                 value: {
-                  'agg:test': null,
+                  'agg:test': 0,
                 },
               },
             ],
@@ -891,6 +892,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
         {
           key: 'agg:test',
           type: 'PAYMENT_DETAILS_TRANSACTIONS',
+          userDirection: 'SENDER',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
@@ -933,12 +935,6 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
                 'agg:test': 1,
               },
             },
-            {
-              direction: 'DESTINATION',
-              value: {
-                'agg:test': null,
-              },
-            },
           ],
           nature: 'AML',
           labels: [],
@@ -977,12 +973,6 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
                 'agg:test': 2,
               },
             },
-            {
-              direction: 'DESTINATION',
-              value: {
-                'agg:test': null,
-              },
-            },
           ],
           nature: 'AML',
           labels: [],
@@ -1019,6 +1009,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
         {
           key: 'agg:test',
           type: 'PAYMENT_DETAILS_TRANSACTIONS',
+          userDirection: 'SENDER',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
@@ -1065,12 +1056,6 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
                 'agg:test': 1,
               },
             },
-            {
-              direction: 'DESTINATION',
-              value: {
-                'agg:test': null,
-              },
-            },
           ],
           nature: 'AML',
           labels: [],
@@ -1105,12 +1090,6 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
               direction: 'ORIGIN',
               value: {
                 'agg:test': 1,
-              },
-            },
-            {
-              direction: 'DESTINATION',
-              value: {
-                'agg:test': null,
               },
             },
           ],

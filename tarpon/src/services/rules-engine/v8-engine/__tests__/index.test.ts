@@ -447,6 +447,66 @@ describe('aggregation variable', () => {
     })
   })
 
+  test('executes the json logic (sender + receiving)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
+          transactionDirection: 'RECEIVING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      { baseCurrency: 'EUR', tenantId },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(result).toEqual({
+      hit: false,
+      vars: [{ direction: 'ORIGIN', value: { 'agg:123': 0 } }],
+      hitDirections: [],
+    })
+  })
+
+  test('executes the json logic (receiver + sending)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
+      [
+        {
+          key: 'agg:123',
+          type: 'USER_TRANSACTIONS',
+          userDirection: 'RECEIVER',
+          transactionDirection: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 30, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      { baseCurrency: 'EUR', tenantId },
+      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+    )
+    expect(result).toEqual({
+      hit: false,
+      vars: [{ direction: 'ORIGIN', value: { 'agg:123': 0 } }],
+      hitDirections: [],
+    })
+  })
+
   test('executes the json logic (filters logic)', async () => {
     const tenantId = 'tenant-id'
     const dynamoDbClient = getDynamoDbClient()
@@ -643,6 +703,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
@@ -654,6 +715,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:124',
           type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
@@ -665,6 +727,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:125',
           type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
@@ -676,6 +739,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:126',
           type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'SUM',
@@ -700,6 +764,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:123',
           type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
@@ -711,6 +776,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:124',
           type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'COUNT',
@@ -722,6 +788,7 @@ describe('Testing dataLoader Cache', () => {
         {
           key: 'agg:126',
           type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
           transactionDirection: 'SENDING',
           aggregationFieldKey: 'TRANSACTION:transactionId',
           aggregationFunc: 'SUM',

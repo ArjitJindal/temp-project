@@ -237,16 +237,14 @@ export class RuleJsonLogicEvaluator {
         return {
           variable: aggVariable,
           ORIGIN:
-            aggVariable.userDirection !== 'RECEIVER' &&
-            aggVariable.transactionDirection !== 'RECEIVING'
+            aggVariable.userDirection !== 'RECEIVER'
               ? await aggregationVarLoader.load({
                   direction: 'origin',
                   aggVariable,
                 })
               : null,
           DESTINATION:
-            aggVariable.userDirection !== 'SENDER' &&
-            aggVariable.transactionDirection !== 'SENDING'
+            aggVariable.userDirection !== 'SENDER'
               ? await aggregationVarLoader.load({
                   direction: 'destination',
                   aggVariable,
@@ -873,8 +871,14 @@ export class RuleJsonLogicEvaluator {
       )
     }, aggregator.init())
 
+    const newTransactionIsTargetDirection =
+      (direction === 'origin' &&
+        aggregationVariable.transactionDirection !== 'RECEIVING') ||
+      (direction === 'destination' &&
+        aggregationVariable.transactionDirection !== 'SENDING')
     if (
       aggregationVariable.aggregationFunc !== 'UNIQUE_VALUES' &&
+      newTransactionIsTargetDirection &&
       this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
     ) {
       const shouldIncludeNewData =
