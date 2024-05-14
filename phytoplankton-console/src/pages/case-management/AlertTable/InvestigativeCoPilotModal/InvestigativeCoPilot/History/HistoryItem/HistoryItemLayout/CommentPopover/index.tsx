@@ -49,7 +49,6 @@ export default function CommentPopover(props: Props) {
     <Popover
       trigger="click"
       placement="bottomRight"
-      autoAdjustOverflow={false}
       visible={isPopoverVisible}
       onVisibleChange={setPopoverVisible}
       content={
