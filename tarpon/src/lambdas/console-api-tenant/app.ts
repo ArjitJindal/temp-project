@@ -6,7 +6,7 @@ import { Stage } from '@flagright/lib/constants/deploy'
 import { shortId } from '@flagright/lib/utils'
 import createHttpError from 'http-errors'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
-import { flatten, isEqual } from 'lodash'
+import { flatten, isEmpty, isEqual } from 'lodash'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -125,6 +125,10 @@ export const tenantsHandler = lambdaApi()(
           ([key, value]) => !isEqual(value, tenantSettingsCurrent[key])
         )
       ) as TenantSettings
+
+      if (isEmpty(changedTenantSettings)) {
+        return tenantSettingsCurrent
+      }
 
       if (
         ROOT_ONLY_SETTINGS.find(
