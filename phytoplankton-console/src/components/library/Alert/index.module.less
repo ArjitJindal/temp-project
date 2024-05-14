@@ -2,7 +2,7 @@
 
 .root {
   border: 1px solid transparent;
-  padding: 12px 16px;
+  padding: 8px 12px;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -10,12 +10,24 @@
 
   &.size-s {
     font-size: 12px;
+
+    .iconContainer {
+      padding-top: 1px;
+    }
   }
   &.size-m {
     font-size: 14px;
+
+    .iconContainer {
+      padding-top: 2px;
+    }
   }
   &.size-l {
     font-size: 16px;
+
+    .iconContainer {
+      padding-top: 2px;
+    }
   }
 
   &.type-error {
@@ -57,4 +69,14 @@
 
 .icon {
   width: 16px;
+}
+
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.iconContainer {
+  height: 16px;
 }

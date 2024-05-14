@@ -1,0 +1,30 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+
+  &:not(.isScrollEnabled) {
+    canvas {
+      pointer-events: none;
+    }
+  }
+
+  &.isScrollEnabled {
+    .hint {
+      opacity: 0;
+    }
+  }
+}
+
+.hint {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transition-property: opacity;
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+  z-index: 1;
+}

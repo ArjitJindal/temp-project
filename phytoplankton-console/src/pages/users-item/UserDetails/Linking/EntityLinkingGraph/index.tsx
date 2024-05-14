@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   GraphCanvas,
   GraphCanvasRef,
@@ -9,10 +9,14 @@ import {
   EdgeInterpolation,
   EdgeArrowPosition,
 } from 'reagraph';
-import s from '../index.module.less';
+import cn from 'clsx';
+import parentS from '../index.module.less';
 import { UserPanel } from '../UserPanel';
 import { AttributePanel } from '../AttributePanel';
+import s from './index.module.less';
+import CommandKeyIcon from './command-key-icon.react.svg';
 import { GraphEdges, GraphNodes } from '@/apis';
+import Alert from '@/components/library/Alert';
 
 type EntityLinkingProps = {
   userId: string;
@@ -49,12 +53,39 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
     [selectedNode],
   );
 
+  const [isScrollEnabled, setScrollEnabled] = useState(false);
+  useEffect(() => {
+    const listener = (e) => {
+      setScrollEnabled(e.ctrlKey || e.metaKey || false);
+    };
+    window.addEventListener('keydown', listener);
+    window.addEventListener('keyup', listener);
+    return () => {
+      window.removeEventListener('keydown', listener);
+      window.removeEventListener('keyup', listener);
+    };
+  }, []);
+
   return (
-    <>
+    <div className={cn(s.root, isScrollEnabled && s.isScrollEnabled)}>
+      <div className={s.hint}>
+        <Alert type={'info'}>
+          Hold Ctrl or{' '}
+          <CommandKeyIcon
+            style={{
+              display: 'inline',
+              width: '1.2em',
+              height: '1.2em',
+              verticalAlign: 'text-bottom',
+            }}
+          />{' '}
+          key and scroll to zoom
+        </Alert>
+      </div>
       {selectedNode && (
         <>
           {selectedNode.id.startsWith('user') && userId !== selectedUserId && (
-            <div className={s.contextMenu}>
+            <div className={parentS.contextMenu}>
               <UserPanel
                 followed={followed}
                 onFollow={onFollow}
@@ -64,7 +95,7 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
             </div>
           )}
           {!selectedNode.id.startsWith('user') && (
-            <div className={s.contextMenu}>
+            <div className={parentS.contextMenu}>
               <AttributePanel
                 attributeId={selectedNode.id}
                 isFollowEnabled={isFollowEnabled(selectedNode.id || '')}
@@ -109,7 +140,7 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
         nodes={nodes}
         edges={edges}
       />
-    </>
+    </div>
   );
 };
 
