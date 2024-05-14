@@ -1,7 +1,6 @@
 import { nanoid } from 'nanoid'
 import { MerchantMonitoringIndustryUserRuleParameters } from '../merchant-monitoring-industry'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import {
   UserRuleTestCase,
   createUserRuleTestCase,
@@ -24,7 +23,6 @@ const merchantMonitoringCollectionName =
 const exampleDate = new Date('2021-01-01T00:00:00.000Z')
 
 dynamoDbSetupHook()
-withFeatureHook(['AI_RISK_SCORE'])
 
 beforeAll(async () => {
   const mongoDb = await getMongoDbClient()

@@ -8,7 +8,6 @@ import { MerchantMonitoringToggle } from './MerchantMonitoringToggle';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -52,10 +51,6 @@ export default function SubHeader(props: Props) {
         <div className={s.risks}>
           <KycRiskDisplay userId={user.userId} />
           <DynamicRiskDisplay userId={user.userId} />
-          <AIRiskDisplay
-            businessUser={user.type === 'BUSINESS' ? user : undefined}
-            consumerUser={user.type === 'CONSUMER' ? user : undefined}
-          />
         </div>
       </Feature>
     </div>

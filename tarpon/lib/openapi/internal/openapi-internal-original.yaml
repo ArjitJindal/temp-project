@@ -8612,7 +8612,6 @@ components:
         - MERCHANT_MONITORING
         - SAR
         - QA
-        - AI_RISK_SCORE
         - RULES_ENGINE_V8
         - SYNC_TRS_CALCULATION
         - NOTIFICATIONS

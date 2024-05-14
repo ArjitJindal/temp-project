@@ -5,7 +5,6 @@ import s from './index.module.less';
 
 //components
 import ActionRiskDisplay from '@/components/ui/ActionRiskDisplay';
-import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import * as Form from '@/components/ui/Form';
 import TransactionState from '@/components/ui/TransactionStateDisplay';
@@ -49,7 +48,6 @@ export default function SubHeader(props: Props) {
       <Feature name="RISK_SCORING">
         <div className={s.risks}>
           <ActionRiskDisplay transactionId={transaction.transactionId} />
-          <AIRiskDisplay transaction={transaction} />
         </div>
       </Feature>
     </div>

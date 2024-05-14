@@ -19,7 +19,6 @@ import { makeUrl } from '@/utils/routing';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { getPaymentMethodTitle } from '@/utils/payments';
-import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 
 interface Props {
@@ -227,19 +226,6 @@ export default function SubHeader(props: Props) {
           <div className={s.risks}>
             <KycRiskDisplay userId={caseUser.userId} />
             <DynamicRiskDisplay userId={caseUser.userId} />
-
-            <AIRiskDisplay
-              businessUser={
-                caseUser && 'type' in caseUser && caseUser.type === 'BUSINESS'
-                  ? caseUser
-                  : undefined
-              }
-              consumerUser={
-                caseUser && 'type' in caseUser && caseUser.type === 'CONSUMER'
-                  ? caseUser
-                  : undefined
-              }
-            />
           </div>
         )}
       </Feature>

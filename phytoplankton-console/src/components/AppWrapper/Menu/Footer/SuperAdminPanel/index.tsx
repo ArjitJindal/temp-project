@@ -70,10 +70,6 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
   },
   SAR: { title: 'SAR', description: 'Enables SAR' },
   QA: { title: 'QA', description: 'Enables QA in case management' },
-  AI_RISK_SCORE: {
-    title: "AI Risk Score (Don't Use)",
-    description: 'Enables AI risk score in Demo mode only',
-  },
   RULES_ENGINE_V8: {
     title: 'Rules Engine V8',
     description: 'Enables new rules Engine V8 (Experimental)',
