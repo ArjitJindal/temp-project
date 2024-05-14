@@ -249,25 +249,20 @@ export class MongoDbTransactionRepository
     }
 
     if (params.filterRuleInstancesHit?.length) {
+      const eleMatchCondition = {
+        ruleInstanceId: { $in: params.filterRuleInstancesHit },
+      }
+      if (params.filterIsShadowHit) {
+        eleMatchCondition['isShadow'] = true
+      } else {
+        eleMatchCondition['isShadow'] = { $ne: true }
+      }
+
       conditions.push({
         hitRules: {
-          $elemMatch: {
-            ruleInstanceId: { $in: params.filterRuleInstancesHit },
-          },
+          $elemMatch: eleMatchCondition,
         },
       })
-    }
-
-    if (params.filterIsShadowHit != null) {
-      if (params.filterIsShadowHit) {
-        conditions.push({
-          hitRules: { $elemMatch: { isShadow: true } },
-        })
-      } else {
-        conditions.push({
-          hitRules: { $not: { $elemMatch: { isShadow: true } } },
-        })
-      }
     }
 
     if (
