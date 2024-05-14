@@ -822,37 +822,38 @@ export class RuleJsonLogicEvaluator {
     let aggData: Array<{ time: string } & AggregationData> = []
     if (this.mode === 'DYNAMODB') {
       // If the mode is DYNAMODB, we fetch the pre-built aggregation data
-      aggData =
-        (await this.aggregationRepository.getUserRuleTimeAggregations(
+      const userAggData =
+        await this.aggregationRepository.getUserRuleTimeAggregations(
           userKeyId,
           aggregationVariable,
           afterTimestamp,
           beforeTimestamp,
           aggregationGranularity
-        )) ?? []
+        )
+
+      // Get the rebuilt aggregation data if it's not available yet, it's important to return the
+      // correct result when customers are testing the rules in sandbox.
+      // TODO: FR-2916
+      if (envIs('sandbox') && !userAggData) {
+        aggData = await this.loadAggregationDataFromRawData(
+          aggregationVariable,
+          data,
+          direction,
+          afterTimestamp,
+          beforeTimestamp
+        )
+      } else {
+        aggData = userAggData ?? []
+      }
     } else {
       // If the mode is MONGODB, we rebuild the fresh aggregation data (without persisting the aggregation data)
-      const rebuiltAggData = await this.getRebuiltAggregationVariableResult(
+      aggData = await this.loadAggregationDataFromRawData(
         aggregationVariable,
-        {
-          userId:
-            direction === 'origin'
-              ? data.transaction.originUserId
-              : data.transaction.destinationUserId,
-          paymentDetails:
-            direction === 'origin'
-              ? data.transaction.originPaymentDetails
-              : data.transaction.destinationPaymentDetails,
-        },
-        {
-          afterTimestamp,
-          beforeTimestamp,
-        }
+        data,
+        direction,
+        afterTimestamp,
+        beforeTimestamp
       )
-      aggData = Object.entries(rebuiltAggData).map(([time, value]) => ({
-        time,
-        ...value,
-      }))
     }
     const aggregator = getRuleVariableAggregator(aggregationFunc)
     const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
@@ -897,6 +898,36 @@ export class RuleJsonLogicEvaluator {
       }
     }
     return aggregator.compute(result)
+  }
+
+  private async loadAggregationDataFromRawData(
+    aggregationVariable: RuleAggregationVariable,
+    data: RuleData,
+    direction: 'origin' | 'destination',
+    afterTimestamp: number,
+    beforeTimestamp: number
+  ): Promise<Array<{ time: string } & AggregationData>> {
+    const rebuiltAggData = await this.getRebuiltAggregationVariableResult(
+      aggregationVariable,
+      {
+        userId:
+          direction === 'origin'
+            ? data.transaction.originUserId
+            : data.transaction.destinationUserId,
+        paymentDetails:
+          direction === 'origin'
+            ? data.transaction.originPaymentDetails
+            : data.transaction.destinationPaymentDetails,
+      },
+      {
+        afterTimestamp,
+        beforeTimestamp,
+      }
+    )
+    return Object.entries(rebuiltAggData).map(([time, value]) => ({
+      time,
+      ...value,
+    }))
   }
 
   private async isDataIncludedInAggregationVariable(
@@ -963,7 +994,7 @@ export class RuleJsonLogicEvaluator {
     timeWindowTo: RuleAggregationTimeWindow
   ) {
     let afterTimestamp: number, beforeTimestamp: number
-    if (timeWindowTo.granularity === 'all_time') {
+    if (timeWindowFrom.granularity === 'all_time') {
       afterTimestamp = dayjs(currentTimestamp).subtract(5, 'year').valueOf()
     } else {
       afterTimestamp = getTimestampRange(

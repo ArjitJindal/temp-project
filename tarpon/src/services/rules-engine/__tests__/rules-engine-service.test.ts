@@ -824,6 +824,56 @@ describe('Verify Transaction: V8 engine', () => {
       ])
     })
   })
+
+  describe('"All time" granularity', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'V8-R-2',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:test',
+            type: 'PAYMENT_DETAILS_TRANSACTIONS',
+            userDirection: 'SENDER_OR_RECEIVER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 0, granularity: 'all_time' },
+              end: { units: 0, granularity: 'day' },
+            },
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          timestamp: dayjs('2020-01-01').valueOf(),
+          transactionId: 'tx-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+        })
+      )
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          timestamp: dayjs('2024-01-01').valueOf(),
+          transactionId: 'tx-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+        })
+      )
+      expect(result2.status).toBe('FLAG')
+    })
+  })
 })
 
 describe('Verify Transaction V8 engine with Update Aggregation', () => {

@@ -162,10 +162,13 @@ export function getExecutedAndHitRulesResult(
 }
 
 function mergeRules<T extends { ruleInstanceId: string }>(
-  rulesA: Array<T>,
-  rulesB: Array<T>
+  existingRulesResult: Array<T>,
+  newRulesResults: Array<T>
 ): Array<T> {
-  return uniqBy((rulesA ?? []).concat(rulesB ?? []), (r) => r.ruleInstanceId)
+  return uniqBy(
+    (newRulesResults ?? []).concat(existingRulesResult ?? []),
+    (r) => r.ruleInstanceId
+  )
 }
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {

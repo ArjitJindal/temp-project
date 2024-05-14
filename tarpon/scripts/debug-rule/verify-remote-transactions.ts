@@ -71,33 +71,34 @@ async function getRemoteTransaction(transactionId: string) {
 
 async function getRemoteUser(userId: string) {
   try {
-    const result = (
-      await Promise.race([
-        apiFetch<InternalBusinessUser>(
-          `${api}/console/business/users/${userId}`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${jwt}`,
-            },
-          }
-        ),
-        apiFetch<InternalConsumerUser>(
-          `${api}/console/consumer/users/${userId}`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${jwt}`,
-            },
-          }
-        ),
-      ])
-    ).result
-
-    return result
+    const result = await apiFetch<InternalBusinessUser>(
+      `${api}/console/business/users/${userId}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+      }
+    )
+    return result.result
   } catch (e) {
-    return null
+    // continue
   }
+  try {
+    const result = await apiFetch<InternalConsumerUser>(
+      `${api}/console/consumer/users/${userId}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+      }
+    )
+    return result.result
+  } catch (e) {
+    // continue
+  }
+  return null
 }
 
 async function createRuleInstancesLocally(ruleInstanceIds: string[]) {

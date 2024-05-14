@@ -190,7 +190,7 @@ export abstract class TransactionAggregationRule<
 
     // Use the latest version for sandbox environment instead of using the latest available version,
     // as it's important to return the correct result when customers are testing the rules.
-    // Related to FR-2916
+    // TODO: FR-2916
     const version = envIs('sandbox')
       ? this.getLatestAggregationVersion()
       : await this.getLatestAvailableAggregationVersion(
