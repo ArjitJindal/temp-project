@@ -108,10 +108,12 @@ export default function Team() {
       key: 'email',
       title: 'Email',
       sorting: true,
+      defaultWidth: 350,
     }),
     columnHelper.simple<'role'>({
       key: 'role',
       title: 'Role',
+      defaultWidth: 200,
       type: {
         render: (role, context) => {
           return (
@@ -136,6 +138,7 @@ export default function Team() {
       key: 'emailVerified',
       title: 'Email verification',
       sorting: true,
+      defaultWidth: 250,
       type: {
         render: (emailVerified, context) => {
           return (
