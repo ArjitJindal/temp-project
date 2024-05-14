@@ -65,8 +65,10 @@ function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: s
   let title: string;
   if (isSimulationEnabled) {
     title = 'Simulate';
-  } else if (mode === 'edit' || mode === 'duplicate') {
+  } else if (mode === 'edit') {
     title = `Edit rule`;
+  } else if (mode === 'duplicate') {
+    title = `Duplicate rule`;
   } else {
     title = ruleInstanceTitle;
   }

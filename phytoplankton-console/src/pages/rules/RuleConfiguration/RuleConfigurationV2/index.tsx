@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import { isEqual } from 'lodash';
 import {
   formValuesToRuleInstance,
   ruleInstanceToFormValues,
@@ -40,9 +39,7 @@ export default function RuleConfigurationV2(props: Props) {
   const formRef = useRef<FormRef<RuleConfigurationFormValues>>(null);
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const formInitialValues = ruleInstanceToFormValues(isRiskLevelsEnabled, ruleInstance);
-  const [isValuesSame, setIsValuesSame] = useState(
-    isEqual(formInitialValues, formRef.current?.getValues()),
-  );
+  const [isValuesSame, setIsValuesSame] = useState(true);
   const [ruleMode, setRuleMode] = useState<RuleMode>('LIVE_SYNC');
   const [isRuleModeModalOpen, setIsRuleModeModalOpen] = useState(false);
   const updateRuleInstanceMutation = useUpdateRuleInstance(onRuleInstanceUpdated);
@@ -74,9 +71,7 @@ export default function RuleConfigurationV2(props: Props) {
     ],
   );
 
-  const isMutableOnly = useMemo(() => {
-    return ['CREATE', 'EDIT', 'DUPLICATE'].includes(type) && !readOnly;
-  }, [type, readOnly]);
+  const isMutable = useMemo(() => ['CREATE', 'EDIT', 'DUPLICATE'].includes(type), [type]);
 
   return (
     <div className={s.root}>
@@ -106,7 +101,7 @@ export default function RuleConfigurationV2(props: Props) {
           />
         )}
         <div className={s.footerButtons}>
-          {readOnly && type === 'EDIT' && (
+          {(readOnly || type === 'EDIT') && (
             <Button
               type="TETRIARY"
               onClick={() => {
@@ -116,7 +111,7 @@ export default function RuleConfigurationV2(props: Props) {
               Cancel
             </Button>
           )}
-          {isMutableOnly && (
+          {isMutable && (
             <Button
               type="TETRIARY"
               onClick={() => {
@@ -129,7 +124,7 @@ export default function RuleConfigurationV2(props: Props) {
               Previous
             </Button>
           )}
-          {isMutableOnly && activeStepIndex !== 2 && (
+          {(type === 'EDIT' || activeStepIndex !== 2) && (
             <Button
               type="SECONDARY"
               onClick={() => {
@@ -143,47 +138,53 @@ export default function RuleConfigurationV2(props: Props) {
               Next
             </Button>
           )}
-          {(!readOnly || ['CREATE', 'DUPLICATE'].includes(type)) && activeStepIndex === 2 && (
+          {!readOnly && (type === 'CREATE' || type === 'DUPLICATE') && activeStepIndex === 2 && (
             <>
-              {isValuesSame && ['DUPLICATE'].includes(type) ? (
+              {isValuesSame && type === 'DUPLICATE' ? (
                 <Tooltip
                   placement="topRight"
                   title="Rule parameters have not changed. To save the rule, please modify some rule parameters."
                 >
                   <div>
                     <Button isDisabled={true} requiredPermissions={['rules:my-rules:write']}>
-                      {props.type === 'CREATE' ? 'Done' : 'Save'}
+                      Create
                     </Button>
                   </div>
                 </Tooltip>
               ) : (
                 <Button
                   htmlType="submit"
-                  isLoading={
-                    updateRuleInstanceMutation.isLoading || createRuleInstanceMutation.isLoading
-                  }
+                  isLoading={createRuleInstanceMutation.isLoading}
                   isDisabled={readOnly}
                   onClick={() => {
-                    if (type === 'CREATE') {
-                      const isFormValid = formRef?.current?.validate();
-
-                      if (!isFormValid) {
-                        formRef?.current?.submit(); // To show errors
-                        return;
-                      }
-
-                      setIsRuleModeModalOpen(true);
-                    } else {
-                      formRef?.current?.submit();
+                    if (!formRef?.current?.validate()) {
+                      formRef?.current?.submit(); // To show errors
+                      return;
                     }
+
+                    setIsRuleModeModalOpen(true);
                   }}
                   requiredPermissions={['rules:my-rules:write']}
                   testName="drawer-create-save-button"
                 >
-                  {props.type === 'CREATE' ? 'Done' : 'Save'}
+                  Create
                 </Button>
               )}
             </>
+          )}
+          {!readOnly && type === 'EDIT' && (
+            <Button
+              htmlType="submit"
+              isLoading={updateRuleInstanceMutation.isLoading}
+              isDisabled={readOnly || isValuesSame}
+              onClick={() => {
+                formRef?.current?.submit(); // To show errors
+              }}
+              requiredPermissions={['rules:my-rules:write']}
+              testName="drawer-create-save-button"
+            >
+              Save
+            </Button>
           )}
           {!readOnly && type === 'READ' && (
             <Button
