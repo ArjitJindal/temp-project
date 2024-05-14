@@ -1,5 +1,6 @@
 import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils/risk';
+import { round } from 'lodash';
 import { RuleAlertMap } from '..';
 import { InternalTransaction, RiskClassificationScore, TenantSettings } from '@/apis';
 import { getRiskLevelLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -34,7 +35,7 @@ const getTransactionWidgetsProps = (
     },
     {
       title: 'Transaction risk score (TRS)',
-      value: `${getRiskLevelLabel(riskLevel, tenantSettings)} (${riskScore})`,
+      value: `${getRiskLevelLabel(riskLevel, tenantSettings)} (${round(riskScore, 2)})`,
     },
     {
       title: 'Created on',
