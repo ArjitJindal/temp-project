@@ -8,7 +8,6 @@ import { AllParams, TableColumn, TableData, ToolRenderer } from '@/components/li
 import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { FLOAT } from '@/components/library/Table/standardDataTypes';
 import { QueryResult } from '@/utils/queries/types';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { humanizeSnakeCase } from '@/utils/humanize';
@@ -127,11 +126,6 @@ export default function SanctionsTable(props: Props) {
           );
         },
       },
-    }),
-    helper.simple<'score'>({
-      key: 'score',
-      title: 'Score',
-      type: FLOAT,
     }),
   ]);
 
