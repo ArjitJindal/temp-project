@@ -32,7 +32,7 @@ export async function cleanUpStaleQaEnvs() {
   const liveQaEnvs: string[] = response.data.map((pr: any) => {
     const hash = crypto.createHash('sha1')
     // NOTE: Adding '\n' is important to have the same value as using the bash command `| shasum`
-    hash.update(pr + '\n', 'utf-8')
+    hash.update(pr.head.ref + '\n', 'utf-8')
     return `qa${hash.digest('hex').slice(0, 5)}`
   })
 
