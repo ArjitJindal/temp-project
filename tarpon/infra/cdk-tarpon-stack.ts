@@ -323,7 +323,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const s3BucketCors = [
       {
-        allowedMethods: [HttpMethods.GET, HttpMethods.PUT],
+        allowedMethods: [HttpMethods.GET, HttpMethods.PUT, HttpMethods.POST],
         allowedOrigins: ['*'],
         allowedHeaders: ['*'],
       },
@@ -586,6 +586,8 @@ export class CdkTarponStack extends cdk.Stack {
             's3:List*',
             's3:PutObject',
             's3:PutObjectAcl',
+            's3:PostObject',
+            's3:PostObjectAcl',
           ],
           resources: [
             s3TmpBucket.bucketArn,
