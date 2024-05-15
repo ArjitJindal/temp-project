@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { some } from 'lodash';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
@@ -6,14 +6,13 @@ import s from './index.module.less';
 import {
   isAtLeastAdmin,
   parseUserRole,
+  useAccountsQueryResult,
   useAuth0User,
   useInvalidateUsers,
   UserRole,
   useUsers,
 } from '@/utils/user-utils';
 import { useApi } from '@/api';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { ACCOUNT_LIST_TEAM_MANAGEMENT } from '@/utils/queries/keys';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { Account, AccountDeletePayload } from '@/apis';
 import {
@@ -29,7 +28,6 @@ import RoleTag, { getRoleTitle } from '@/components/library/Tag/RoleTag';
 import Modal from '@/components/library/Modal';
 import Select from '@/components/library/Select';
 import { P } from '@/components/ui/Typography';
-import { getOr } from '@/utils/asyncResource';
 import { CloseMessage, message } from '@/components/library/Message';
 import CheckCircleOutlined from '@/components/ui/icons/Remix/system/checkbox-circle-line.react.svg';
 import MinusCircleOutlined from '@/components/ui/icons/Remix/system/indeterminate-circle-line.react.svg';
@@ -37,6 +35,9 @@ import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-2-line
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Confirm from '@/components/utils/Confirm';
 import Tag from '@/components/library/Tag';
+import { QueryResult } from '@/utils/queries/types';
+import { getOr, isSuccess, loading, success } from '@/utils/asyncResource';
+import { PaginatedData } from '@/utils/queries/hooks';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
@@ -49,24 +50,30 @@ export default function Team() {
     }
   }
   const invalidateUsers = useInvalidateUsers().invalidate;
-  const accountsResult = usePaginatedQuery(
-    ACCOUNT_LIST_TEAM_MANAGEMENT(),
-    async (paginationParams) => {
-      const accounts = await api.getAccounts({ ...paginationParams });
-      const filteredAccounts = accounts.filter((account) => {
+  let messageVar: CloseMessage | null = null;
+  const allAccountsResult = useAccountsQueryResult();
+  const accountsResult: QueryResult<PaginatedData<Account>> = useMemo(() => {
+    if (isSuccess(allAccountsResult.data)) {
+      const filteredAccounts = allAccountsResult.data.value.filter((account) => {
         const role = parseUserRole(account.role);
         return role !== UserRole.ROOT && role !== UserRole.WHITELABEL_ROOT && !account.blocked;
       });
       return {
-        items: filteredAccounts,
-        success: true,
-        total: filteredAccounts.length,
+        ...allAccountsResult,
+        paginate: undefined,
+        data: success({
+          items: filteredAccounts,
+          success: true,
+          total: filteredAccounts.length,
+        }),
       };
-    },
-  );
-
-  let messageVar: CloseMessage | null = null;
-
+    }
+    return {
+      ...allAccountsResult,
+      paginate: undefined,
+      data: loading(),
+    };
+  }, [allAccountsResult]);
   const deactiveUserMutation = useMutation<
     unknown,
     unknown,
@@ -100,8 +107,7 @@ export default function Team() {
   const [isInviteVisible, setIsInviteVisible] = useState(false);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
   const [reassignTo, setReassignTo] = useState<string | null>(null);
-  const [users, loadingUsers] = useUsers();
-
+  const [users, loadingUsers] = useUsers({});
   const columnHelper = new ColumnHelper<Account>();
   const columns: TableColumn<Account>[] = columnHelper.list([
     columnHelper.simple<'email'>({
@@ -266,7 +272,7 @@ export default function Team() {
   const accounts = getOr(accountsResult.data, {
     items: [],
   }).items.filter((account) => {
-    return deletedUserId !== account.id;
+    account;
   });
 
   return (

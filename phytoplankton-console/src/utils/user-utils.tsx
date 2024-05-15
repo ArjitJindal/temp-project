@@ -2,8 +2,9 @@ import React, { useContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { keyBy } from 'lodash';
 import { useQuery } from './queries/hooks';
-import { ACCOUNT_LIST, ACCOUNT_LIST_TEAM_MANAGEMENT, ROLES_LIST } from './queries/keys';
+import { ACCOUNT_LIST, ROLES_LIST } from './queries/keys';
 import { getOr, isLoading } from './asyncResource';
+import { QueryResult } from './queries/types';
 import { useApi } from '@/api';
 import { Account, AccountRole, Permission } from '@/apis';
 
@@ -124,16 +125,9 @@ export function useRoles(): [AccountRole[], boolean] {
   return [getOr(rolesQueryResult.data, []), isLoading(rolesQueryResult.data)];
 }
 
-export function useUsers(
-  options: { includeRootUsers?: boolean; includeBlockedUsers?: boolean } = {
-    includeRootUsers: false,
-    includeBlockedUsers: false,
-  },
-): [{ [userId: string]: Account }, boolean] {
-  const user = useAuth0User();
+export function useAccountsQueryResult(): QueryResult<Account[]> {
   const api = useApi();
-
-  const usersQueryResult = useQuery(ACCOUNT_LIST(), async () => {
+  return useQuery(ACCOUNT_LIST(), async () => {
     try {
       return await api.getAccounts();
     } catch (e) {
@@ -141,9 +135,17 @@ export function useUsers(
       return [];
     }
   });
+}
 
+export function useUsers(
+  options: { includeRootUsers?: boolean; includeBlockedUsers?: boolean } = {
+    includeRootUsers: false,
+    includeBlockedUsers: false,
+  },
+): [{ [userId: string]: Account }, boolean] {
+  const user = useAuth0User();
+  const usersQueryResult = useAccountsQueryResult();
   const users = getOr(usersQueryResult.data, []);
-
   const isSuperAdmin = isAtLeast(user, UserRole.ROOT);
 
   let tempUsers = users;
@@ -166,7 +168,6 @@ export function useInvalidateUsers() {
   return {
     invalidate: () => {
       queryClient.invalidateQueries(ACCOUNT_LIST());
-      queryClient.invalidateQueries(ACCOUNT_LIST_TEAM_MANAGEMENT());
     },
   };
 }

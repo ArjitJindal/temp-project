@@ -52,7 +52,6 @@ export const TRANSACTIONS_FIND = (search: string): QueryKey => [
   search,
 ];
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
-export const ACCOUNT_LIST_TEAM_MANAGEMENT = (): QueryKey => ['accounts', 'list-team-management'];
 export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', accessToken];
 export const CRM_ACCOUNT = (userId: string): QueryKey => ['crmaccount', userId];
 
