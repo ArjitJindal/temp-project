@@ -154,7 +154,7 @@ class TableService:
         except:  # pylint: disable=bare-except
             mode = "overwrite"
 
-        if not schemas_equal(existing_schema, df.schema) or existing_schema is None:
+        if existing_schema is None or schemas_equal(existing_schema, df.schema):
             if mode == "overwrite":
                 print(f"Creating table {table}")
             else:
@@ -166,6 +166,9 @@ class TableService:
 
 
 def schemas_equal(schema1, schema2):
+    if schema1 is None or schema2 is None:
+        return schema1 == schema2
+
     fields1 = {field.name: field for field in schema1.fields}
     fields2 = {field.name: field for field in schema2.fields}
 
