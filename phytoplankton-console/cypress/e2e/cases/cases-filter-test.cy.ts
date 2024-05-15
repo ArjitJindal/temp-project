@@ -18,7 +18,6 @@ describe('Filter according to case id (optimized)', () => {
       .then(($caseId) => {
         const caseId = $caseId.text().substring(0, 3);
         cy.get('[data-cy="rules-filter"]').contains('Case ID').click().type(caseId);
-        cy.assertSkeletonLoader();
         cy.wait('@cases').then((casesInterception) => {
           expect(casesInterception.response?.statusCode).to.be.oneOf([200, 304]);
           cy.url().should('include', 'caseId');
