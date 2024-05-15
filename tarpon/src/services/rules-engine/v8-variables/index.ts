@@ -229,7 +229,7 @@ function updatedTransactionEntityVariables(
       return NaN
     }
     if (!context?.baseCurrency) {
-      logger.error('Missing base currency for transaction amount variable!')
+      throw new Error('Missing base currency for transaction amount variable!')
     }
     const amount = await currencyService.getTargetCurrencyAmount(
       amountDetails,

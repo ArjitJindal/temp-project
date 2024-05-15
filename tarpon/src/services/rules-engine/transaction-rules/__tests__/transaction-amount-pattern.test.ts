@@ -24,7 +24,7 @@ ruleVariantsTest({ v8: true, aggregation: false }, () => {
         patterns: ['999', '123'],
       } as TransactionMatchesPatternRuleParameters,
       defaultAction: 'FLAG',
-      defaultBaseCurrency: 'EUR',
+      defaultBaseCurrency: 'USD',
     },
   ])
 
@@ -36,7 +36,7 @@ ruleVariantsTest({ v8: true, aggregation: false }, () => {
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 10123,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
       ],
@@ -44,7 +44,7 @@ ruleVariantsTest({ v8: true, aggregation: false }, () => {
         descriptionTemplate: getRuleByRuleId('R-117').descriptionTemplate,
       },
       [
-        'Transaction amount of 10123.00 EUR matches a blacklisted pattern ending with 123.',
+        'Transaction amount of 10123.00 USD matches a blacklisted pattern ending with 123.',
       ]
     )
   })
@@ -56,43 +56,43 @@ ruleVariantsTest({ v8: true, aggregation: false }, () => {
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 10123,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 10,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 9999,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 10099,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 999,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 999123,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 999124,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
       ],
@@ -104,13 +104,13 @@ ruleVariantsTest({ v8: true, aggregation: false }, () => {
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 9990,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 999111,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
       ],
@@ -122,25 +122,25 @@ ruleVariantsTest({ v8: true, aggregation: false }, () => {
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 1000.999,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 10.1123,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 9999.99,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
         getTestTransaction({
           originAmountDetails: {
             transactionAmount: 9.99,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'USD',
           },
         }),
       ],
@@ -166,7 +166,7 @@ ruleVariantsTest({ v8: true, aggregation: false }, () => {
           checkDecimal: true,
         } as TransactionMatchesPatternRuleParameters,
         defaultAction: 'FLAG',
-        defaultBaseCurrency: 'EUR',
+        defaultBaseCurrency: 'USD',
       },
     ])
 
@@ -177,25 +177,25 @@ ruleVariantsTest({ v8: true, aggregation: false }, () => {
           getTestTransaction({
             originAmountDetails: {
               transactionAmount: 1000.999,
-              transactionCurrency: 'EUR',
+              transactionCurrency: 'USD',
             },
           }),
           getTestTransaction({
             originAmountDetails: {
               transactionAmount: 10.1123,
-              transactionCurrency: 'EUR',
+              transactionCurrency: 'USD',
             },
           }),
           getTestTransaction({
             originAmountDetails: {
               transactionAmount: 9999.99,
-              transactionCurrency: 'EUR',
+              transactionCurrency: 'USD',
             },
           }),
           getTestTransaction({
             originAmountDetails: {
               transactionAmount: 99.9,
-              transactionCurrency: 'EUR',
+              transactionCurrency: 'USD',
             },
           }),
         ],

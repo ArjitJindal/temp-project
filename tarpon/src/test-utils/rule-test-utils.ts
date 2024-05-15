@@ -256,6 +256,7 @@ export function setUpRulesHooks(
           logic,
           logicAggregationVariables,
           alertCreationDirection: alertDirection,
+          baseCurrency,
         } = getMigratedV8Config(
           libraryRuleV8.id,
           r.defaultParameters,
@@ -264,6 +265,7 @@ export function setUpRulesHooks(
 
         v8Rule.defaultLogic = logic
         v8Rule.defaultLogicAggregationVariables = logicAggregationVariables
+        v8Rule.defaultBaseCurrency = baseCurrency
         if (alertDirection) {
           alertCreationDirection = alertDirection
         }

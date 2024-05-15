@@ -647,6 +647,7 @@ describe('aggregation variable', () => {
           transactionDirection: 'SENDING',
           aggregationFieldKey:
             'TRANSACTION:originAmountDetails-transactionAmount',
+          baseCurrency: 'USD',
           aggregationFunc: 'AVG',
           timeWindow: {
             start: { units: 1, granularity: 'day' },
@@ -678,8 +679,8 @@ describe('aggregation variable', () => {
   })
 })
 
-describe('Testing dataLoader Cache', () => {
-  test('Testing the aggregation variable cache', async () => {
+describe('DataLoader cache', () => {
+  test('same aggregation variables should be loaded only once', async () => {
     const tenantId = 'tenant-id'
     const dynamoDbClient = getDynamoDbClient()
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
@@ -689,7 +690,6 @@ describe('Testing dataLoader Cache', () => {
     )
     const testTransaction = getTestTransaction({ type: 'TRANSFER' })
 
-    loadAggregationDataSpy.mockImplementation(() => Promise.resolve())
     await evaluator.evaluate(
       {
         and: [
@@ -741,8 +741,10 @@ describe('Testing dataLoader Cache', () => {
           type: 'USER_TRANSACTIONS',
           userDirection: 'SENDER',
           transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFieldKey:
+            'TRANSACTION:originAmountDetails-transactionAmount',
           aggregationFunc: 'SUM',
+          baseCurrency: 'EUR',
           timeWindow: {
             start: { units: 30, granularity: 'day' },
             end: { units: 0, granularity: 'day' },
@@ -790,8 +792,10 @@ describe('Testing dataLoader Cache', () => {
           type: 'USER_TRANSACTIONS',
           userDirection: 'SENDER',
           transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFieldKey:
+            'TRANSACTION:originAmountDetails-transactionAmount',
           aggregationFunc: 'SUM',
+          baseCurrency: 'EUR',
           timeWindow: {
             start: { units: 30, granularity: 'day' },
             end: { units: 0, granularity: 'day' },

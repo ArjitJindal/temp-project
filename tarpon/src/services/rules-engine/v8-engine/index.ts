@@ -157,7 +157,11 @@ const getDataLoader = memoizeOne(
     })
   },
   // Don't take dynamoDb into account
-  (a, b) => isEqual(a.slice(0, 2), b.slice(0, 2))
+  ([data1, context1], [data2, context2]) =>
+    isEqual(
+      [data1, omit(context1, 'dynamoDb')],
+      [data2, omit(context2, 'dynamoDb')]
+    )
 )
 
 type Mode = 'MONGODB' | 'DYNAMODB'
@@ -223,16 +227,7 @@ export class RuleJsonLogicEvaluator {
     )
     const aggVarData = await Promise.all(
       aggVariables.map(async (aggVariable) => {
-        const aggEntityVarDataloader = getDataLoader(data, {
-          baseCurrency: aggVariable.baseCurrency,
-          tenantId: this.tenantId,
-          dynamoDb: this.dynamoDb,
-        })
-
-        const aggregationVarLoader = this.aggregationVarLoader(
-          data,
-          aggEntityVarDataloader
-        )
+        const aggregationVarLoader = this.aggregationVarLoader(data)
 
         return {
           variable: aggVariable,
@@ -318,8 +313,8 @@ export class RuleJsonLogicEvaluator {
   }
 
   private aggregationVarLoader = memoizeOne(
-    (data: RuleData, entityVarDataloader: DataLoader<string, unknown>) =>
-      new DataLoader(
+    (data: RuleData) => {
+      return new DataLoader(
         async (
           variableKeys: readonly {
             direction: 'origin' | 'destination'
@@ -328,12 +323,7 @@ export class RuleJsonLogicEvaluator {
         ) => {
           return Promise.all(
             variableKeys.map(async ({ direction, aggVariable }) => {
-              return this.loadAggregationData(
-                direction,
-                aggVariable,
-                data,
-                entityVarDataloader
-              )
+              return this.loadAggregationData(direction, aggVariable, data)
             })
           )
         },
@@ -342,7 +332,8 @@ export class RuleJsonLogicEvaluator {
             return `${direction}-${getAggVarHash(aggVariable)}`
           },
         }
-      ),
+      )
+    },
     /** ignore entity var loader while caching */
     (a, b) => isEqual(a[0], b[0])
   )
@@ -796,8 +787,7 @@ export class RuleJsonLogicEvaluator {
   private async loadAggregationData(
     direction: 'origin' | 'destination',
     aggregationVariable: RuleAggregationVariable,
-    data: RuleData,
-    entityVarDataloader: DataLoader<string, unknown>
+    data: RuleData
   ) {
     const { transaction } = data
     const { aggregationFunc } = aggregationVariable
@@ -857,6 +847,11 @@ export class RuleJsonLogicEvaluator {
     }
     const aggregator = getRuleVariableAggregator(aggregationFunc)
     const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
+    const entityVarDataloader = getDataLoader(data, {
+      baseCurrency: aggregationVariable.baseCurrency,
+      tenantId: this.tenantId,
+      dynamoDb: this.dynamoDb,
+    })
     const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
       ? ((await entityVarDataloader.load(
           aggregationVariable.aggregationGroupByFieldKey

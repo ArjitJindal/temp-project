@@ -437,6 +437,7 @@ const V8_CONVERSION: {
       },
       alertCreationDirection: 'ORIGIN',
       logicAggregationVariables: [],
+      baseCurrency: 'USD',
     }
   },
   'R-69': (parameters: TransactionsVolumeRuleParameters, filters) => {
