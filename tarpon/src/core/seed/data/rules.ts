@@ -167,6 +167,68 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       typologies: [],
     } as RuleInstance,
     {
+      id: 'a25685ad-3',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-2',
+      mode: 'SHADOW_SYNC',
+      casePriority: 'P1',
+      parameters: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      } as TransactionAmountRuleParameters,
+      checksFor: ['Transaction amount'],
+      action: 'SUSPEND',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'Transaction amount too high (shadow)',
+      ruleDescriptionAlias: 'Transaction amount is >= x in USD or equivalent',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        MEDIUM: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        VERY_LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+            ADA: 1000,
+          },
+        } as TransactionAmountRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'SUSPEND',
+        HIGH: 'SUSPEND',
+        MEDIUM: 'SUSPEND',
+        LOW: 'SUSPEND',
+        VERY_LOW: 'SUSPEND',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      runCount: 1848,
+      hitCount: 1434,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+    {
       id: 'a45615ad-1',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       mode: 'LIVE_SYNC',
@@ -468,6 +530,7 @@ export const transactionRules: () => ExecutedRulesResult[] = memoize(() => {
               : { isFalsePositive: false, confidenceScore: 100 },
           hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
         },
+        isShadow: ri.mode === 'SHADOW_SYNC',
       })
     )
 })
