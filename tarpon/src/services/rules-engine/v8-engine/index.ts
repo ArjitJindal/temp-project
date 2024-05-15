@@ -4,7 +4,6 @@ import DataLoader from 'dataloader'
 import {
   groupBy,
   isEqual,
-  isNil,
   mapValues,
   memoize,
   mergeWith,
@@ -556,7 +555,7 @@ export class RuleJsonLogicEvaluator {
             )
           )
           const filteredAggregateValues = aggregateValues.filter((v) => {
-            return !isNil(v.value) && (!hasGroups || !isNil(v.groupValue))
+            return v.value && (!hasGroups || v.groupValue)
           })
           const values = filteredAggregateValues.map((v) => v.value)
           return {
