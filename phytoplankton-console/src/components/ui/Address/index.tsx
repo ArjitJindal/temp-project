@@ -13,7 +13,7 @@ export default function Address({ address }: Props) {
   const postcode = address?.postcode;
   return (
     <>
-      <div className={s.detail}>
+      <div className={s.details}>
         <div className={s.items}>{addressLines?.join(', ')}</div>
         <div>
           {city} {postcode}
