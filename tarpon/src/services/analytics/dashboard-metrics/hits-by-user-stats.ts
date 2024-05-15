@@ -125,7 +125,7 @@ export class HitsByUserStatsDashboardMetric {
       lastUpdatedAt,
       timeRange,
       'HOUR',
-      { direction }
+      { direction, casesCount: { $exists: true } }
     )
   }
 
@@ -227,7 +227,7 @@ export class HitsByUserStatsDashboardMetric {
       lastUpdatedAt,
       timeRange,
       'HOUR',
-      { direction }
+      { direction, rulesRunCount: { $exists: true } }
     )
   }
 
