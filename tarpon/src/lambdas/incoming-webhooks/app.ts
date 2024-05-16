@@ -12,6 +12,7 @@ import { ComplyAdvantageMonitoredSearchUpdated } from '@/@types/openapi-internal
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { updateLogMetadata } from '@/core/utils/context'
 
 const COMPLYADVANTAGE_PRODUCTION_IPS = [
   '54.76.153.128',
@@ -56,6 +57,7 @@ export const webhooksHandler = lambdaApi()(
           const tenantRepository = new TenantRepository(tenantId, {
             dynamoDb: getDynamoDbClient(),
           })
+          updateLogMetadata({ tenantId })
           const tenantSettings = await tenantRepository.getTenantSettings()
           if (tenantSettings.features?.includes('SANCTIONS')) {
             const searchId = searchUpdated.searchId as number
