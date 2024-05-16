@@ -75,11 +75,6 @@ export const RuleInstanceInfo = (props: Props) => {
     false,
   );
 
-  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>({
-    startTimestamp: dayjs().subtract(1, 'day').valueOf(),
-    endTimestamp: dayjs().valueOf(),
-  });
-
   const onEditRule = useCallback(
     (entity) => {
       if (isSimulationModeEnabled) setIsSimulationModeEnabled(false);
@@ -147,18 +142,6 @@ export const RuleInstanceInfo = (props: Props) => {
     [updateRuleInstanceMutation],
   );
 
-  const analyticsQueryResult = useQuery(
-    SHADOW_RULES_ANALYTICS({ ...dateRange, ruleInstanceId: ruleInstance.id }),
-    () => {
-      return api.getRuleInstancesRuleInstanceIdStats({
-        ruleInstanceId: ruleInstance.id as string,
-        afterTimestamp: dateRange.startTimestamp,
-        beforeTimestamp: dateRange.endTimestamp,
-      });
-    },
-  );
-
-  const dataRes = analyticsQueryResult.data;
   return (
     <div className={s.root}>
       <Card.Root noBorder>
@@ -318,62 +301,10 @@ export const RuleInstanceInfo = (props: Props) => {
           </div>
         </Card.Section>
       </Card.Root>
-      <WidgetBase id="shadow-rule-stats" width="FULL">
-        <div className={s.analytics}>
-          <div className={s.analyticsHeader}>
-            <div>
-              <H4>Analytics</H4>
-            </div>
-            <WidgetRangePicker
-              value={dateRange}
-              onChange={(dateRange) => {
-                if (dateRange) {
-                  setDateRange(dateRange);
-                }
-              }}
-            />
-          </div>
-          <div className={s.analyticsCard}>
-            {ruleInstance.type === 'TRANSACTION' && (
-              <OverviewCard
-                sections={[
-                  {
-                    title: 'Transactions hit',
-                    value: map(dataRes, (data) => data.transactionsHit),
-                  },
-                ]}
-              />
-            )}
-            <OverviewCard
-              sections={[
-                {
-                  title: 'Users hit',
-                  value: map(dataRes, (data) => data.usersHit),
-                },
-              ]}
-            />
-            <OverviewCard
-              sections={[
-                {
-                  title: 'Possible alerts created',
-                  value: map(dataRes, (data) => data.alertsHit),
-                },
-              ]}
-            />
-            <OverviewCard
-              sections={[
-                {
-                  title: 'Possible total investigation time',
-                  value: map(
-                    dataRes,
-                    (data) => formatDuration(getDuration(data.investigationTime)) || '0',
-                  ),
-                },
-              ]}
-            />
-          </div>
-        </div>
-      </WidgetBase>
+
+      {ruleInstance.mode === 'SHADOW_SYNC' && (
+        <ShadowRuleAnalyticsWidget ruleInstance={ruleInstance} />
+      )}
 
       {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type === 'TRANSACTION' && (
         <Card.Root noBorder>
@@ -572,5 +503,86 @@ const ShadowRulesTransactionUsersTable = (props: Props) => {
         }
       </AsyncResourceRenderer>
     </div>
+  );
+};
+
+const ShadowRuleAnalyticsWidget = (props: { ruleInstance: RuleInstance }) => {
+  const { ruleInstance } = props;
+  const api = useApi();
+
+  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>({
+    startTimestamp: dayjs().subtract(1, 'day').valueOf(),
+    endTimestamp: dayjs().valueOf(),
+  });
+
+  const analyticsQueryResult = useQuery(
+    SHADOW_RULES_ANALYTICS({ ...dateRange, ruleInstanceId: ruleInstance.id }),
+    () => {
+      return api.getRuleInstancesRuleInstanceIdStats({
+        ruleInstanceId: ruleInstance.id as string,
+        afterTimestamp: dateRange.startTimestamp,
+        beforeTimestamp: dateRange.endTimestamp,
+      });
+    },
+  );
+
+  const dataRes = analyticsQueryResult.data;
+  return (
+    <WidgetBase id="shadow-rule-stats" width="FULL">
+      <div className={s.analytics}>
+        <div className={s.analyticsHeader}>
+          <div>
+            <H4>Analytics</H4>
+          </div>
+          <WidgetRangePicker
+            value={dateRange}
+            onChange={(dateRange) => {
+              if (dateRange) {
+                setDateRange(dateRange);
+              }
+            }}
+          />
+        </div>
+        <div className={s.analyticsCard}>
+          {ruleInstance.type === 'TRANSACTION' && (
+            <OverviewCard
+              sections={[
+                {
+                  title: 'Transactions hit',
+                  value: map(dataRes, (data) => data.transactionsHit),
+                },
+              ]}
+            />
+          )}
+          <OverviewCard
+            sections={[
+              {
+                title: 'Users hit',
+                value: map(dataRes, (data) => data.usersHit),
+              },
+            ]}
+          />
+          <OverviewCard
+            sections={[
+              {
+                title: 'Possible alerts created',
+                value: map(dataRes, (data) => data.alertsHit),
+              },
+            ]}
+          />
+          <OverviewCard
+            sections={[
+              {
+                title: 'Possible total investigation time',
+                value: map(
+                  dataRes,
+                  (data) => formatDuration(getDuration(data.investigationTime)) || '0',
+                ),
+              },
+            ]}
+          />
+        </div>
+      </div>
+    </WidgetBase>
   );
 };
