@@ -3496,6 +3496,9 @@ components:
           $ref: '#/components/schemas/CardType'
         merchantDetails:
           $ref: '#/components/schemas/CardMerchantDetails'
+        networkProviderRiskScore:
+          type: number
+          description: Risk score of the card from your network provider
         tags:
           type: array
           description: Additional information that can be added via tags
