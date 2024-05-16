@@ -160,9 +160,13 @@ class TableService:
             else:
                 print(f"Migrating table {table}")
             df_with_new_schema = self.spark.createDataFrame([], df.schema)
-            df_with_new_schema.write.format("delta").mode(mode).option(
-                "mergeSchema", "true"
-            ).option("overwriteSchema", "true").saveAsTable(table)
+            df_with_new_schema.write.format("delta").partitionBy(["date"]).mode(
+                mode
+            ).option("mergeSchema", "true").option(
+                "overwriteSchema", "true"
+            ).saveAsTable(
+                table
+            )
 
 
 def schemas_equal(schema1, schema2):
