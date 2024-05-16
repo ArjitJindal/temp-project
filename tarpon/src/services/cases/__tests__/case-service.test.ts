@@ -2593,3 +2593,49 @@ describe('Test Alerts Reassignment', () => {
     ])
   })
 })
+
+describe('Test alert should reopen if qa status is failed', () => {
+  test('should reopen alert if qa status is failed', async () => {
+    const testTenantId = getTestTenantId()
+    const case_: Case = {
+      caseType: 'SYSTEM',
+      caseAggregates: {
+        destinationPaymentMethods: [],
+        originPaymentMethods: [],
+        tags: [],
+      },
+      caseStatus: 'OPEN',
+      caseId: 'C-1-5',
+      alerts: [
+        {
+          alertId: 'AL-1234',
+          alertStatus: 'CLOSED',
+          priority: 'P1',
+          createdTimestamp: Date.now(),
+          numberOfTransactionsHit: 5,
+          ruleAction: 'ALLOW',
+          ruleDescription: 'Allow all transactions',
+          ruleInstanceId: 'I-1234',
+          ruleName: 'Allow all transactions',
+        },
+      ],
+    }
+
+    const mongoDb = await getMongoDbClient()
+    const caseRepository = new CaseRepository(testTenantId, { mongoDb })
+    await caseRepository.addCaseMongo(case_)
+    getContextMocker.mockReturnValue({
+      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+    })
+    const alertsService = await getAlertsService(testTenantId)
+    await alertsService.updateAlertQaStatus({
+      alertIds: ['AL-1234'],
+      checklistStatus: 'FAILED',
+      reason: ['Other'],
+    })
+
+    const updatedAlert = await alertsService.getAlert('AL-1234')
+
+    expect(updatedAlert?.alertStatus).toBe('REOPENED')
+  })
+})

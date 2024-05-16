@@ -896,7 +896,7 @@ export class AlertsService extends CaseAlertsCommonService {
       )
 
       const caseIdsWithAllAlertsSameStatus =
-        response.caseIdsWithAllAlertsSameStatus
+        response.caseIdsWithAllAlertsSameStatus // Only for escalated and closed alerts
 
       if (
         caseIdsWithAllAlertsSameStatus.length &&
@@ -1159,77 +1159,78 @@ export class AlertsService extends CaseAlertsCommonService {
     return new ChecklistTemplatesService(this.tenantId, this.mongoDb)
   }
 
-  async updateAlertQaStatus(
-    userId: string,
-    update: AlertQaStatusUpdateRequest
-  ): Promise<void> {
+  async updateAlertQaStatus(update: AlertQaStatusUpdateRequest): Promise<void> {
     const alerts = await this.getAlertsByIds(update.alertIds)
-    await Promise.all(
-      alerts.map(async (alert) => {
-        if (update.checklistStatus === 'FAILED') {
-          // Find who closed the alert and reassign them
-          const originalAssignee = alert.statusChanges
-            ?.slice()
-            .reverse()
-            .find((sc) => sc.caseStatus === 'CLOSED')?.userId
-          if (originalAssignee) {
-            alert.assignments = [
-              {
-                assigneeUserId: originalAssignee,
-                assignedByUserId: userId,
-                timestamp: Date.now(),
-              },
-            ]
-          }
+    const comment = `Alert QA status set to ${update.checklistStatus} with comment: ${update.comment}`
+    const promises = alerts.map(async (alert) => {
+      if (update.checklistStatus === 'FAILED') {
+        // Find who closed the alert and reassign them
+        const originalAssignee = alert.statusChanges
+          ?.slice()
+          .reverse()
+          .find((sc) => sc.caseStatus === 'CLOSED')?.userId
+        if (originalAssignee) {
+          alert.assignments = [
+            {
+              assigneeUserId: originalAssignee,
+              assignedByUserId: getContext()?.user?.id ?? '',
+              timestamp: Date.now(),
+            },
+          ]
         }
-        alert.ruleQaStatus = update.checklistStatus
-        if (!alert.comments) {
-          alert.comments = []
-        }
-        if (!alert.statusChanges) {
-          alert.statusChanges = []
-        }
-        alert.comments?.push({
-          body: `Alert QA status set to ${update.checklistStatus} with comment: ${update.comment}`,
-          createdAt: Date.now(),
-          files: update.files,
-          id: uuid4(),
-          updatedAt: Date.now(),
-          userId,
-        })
-        alert.statusChanges?.push({
-          caseStatus: 'REOPENED',
-          comment: update.comment,
-          otherReason: update.otherReason,
-          reason: update.reason,
-          timestamp: Date.now(),
-          userId,
-        })
-
-        const acceptanceCriteriaPassed =
-          update.checklistStatus === 'PASSED'
-            ? await this.acceptanceCriteriaPassed(alert)
-            : true
-
-        if (!acceptanceCriteriaPassed) {
-          throw new BadRequest(`Acceptance criteria not passed for alert`)
-        }
-
-        await withTransaction(async () => {
-          await Promise.all([
-            this.alertsRepository.saveAlert(alert.caseId ?? '', alert),
-            this.auditLogService.handleAuditLogForAlertQaUpdate(
-              alert.alertId as string,
-              update
-            ),
-            this.alertsRepository.updateAlertQACountInSampling(
-              alert,
-              update.checklistStatus
-            ),
-          ])
-        })
+      }
+      alert.ruleQaStatus = update.checklistStatus
+      ;(alert.comments ?? [])?.push({
+        body: `Alert QA status set to ${update.checklistStatus} with comment: ${update.comment}`,
+        createdAt: Date.now(),
+        files: update.files,
+        id: uuid4(),
+        updatedAt: Date.now(),
+        userId: getContext()?.user?.id ?? '',
       })
-    )
+
+      const acceptanceCriteriaPassed =
+        update.checklistStatus === 'PASSED'
+          ? await this.acceptanceCriteriaPassed(alert)
+          : true
+
+      if (!acceptanceCriteriaPassed) {
+        throw new BadRequest(`Acceptance criteria not passed for alert`)
+      }
+
+      await Promise.all([
+        this.alertsRepository.saveAlert(alert.caseId ?? '', alert),
+        this.auditLogService.handleAuditLogForAlertQaUpdate(
+          alert.alertId as string,
+          update
+        ),
+        this.alertsRepository.updateAlertQACountInSampling(
+          alert,
+          update.checklistStatus
+        ),
+      ])
+    })
+
+    if (update.checklistStatus === 'FAILED') {
+      const alertIds = alerts.map((a) => a.alertId as string)
+
+      promises.push(
+        this.updateStatus(
+          alertIds,
+          {
+            alertStatus: 'REOPENED',
+            reason: update.reason,
+            comment,
+            files: update.files,
+          },
+          { cascadeCaseUpdates: true, bySystem: true, skipReview: true }
+        ) // To systemeatically reopen the case
+      )
+    }
+
+    await withTransaction(async () => {
+      await Promise.all(promises)
+    })
   }
 
   async updateAlertsQaAssignments(

@@ -71,7 +71,6 @@ export const casesHandler = lambdaApi()(
 
     handlers.registerAlertsQaStatusChange(async (ctx, request) => {
       return alertsService.updateAlertQaStatus(
-        ctx.userId,
         request.AlertQaStatusUpdateRequest
       )
     })
