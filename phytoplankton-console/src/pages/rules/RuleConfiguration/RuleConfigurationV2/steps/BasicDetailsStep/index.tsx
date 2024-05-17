@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FrozenStatusesInput } from 'src/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/FrozenStatusInput';
+import { RangeValue } from 'rc-picker/es/interface';
 import StepHeader from '../../StepHeader';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
@@ -25,6 +26,8 @@ import CreationIntervalInput, {
 } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/CreationIntervalInput';
 import { AlertAssignedToInput } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/AlertAssignedToInput/input';
 import { AlertInvestigationChecklist } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/AlertInvestigationChecklist';
+import DatePicker from '@/components/ui/DatePicker';
+import { dayjs, Dayjs } from '@/utils/dayjs';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -34,6 +37,7 @@ export interface FormValues {
   ruleLabels: RuleLabels[];
   ruleInstanceId?: string;
   simulationIterationName?: string;
+  simulationIterationTimeRange?: { start: number; end: number };
   simulationIterationDescription?: string;
   falsePositiveCheckEnabled?: boolean;
   checklistTemplateId?: string;
@@ -155,6 +159,7 @@ function RuleDetails(props: Props) {
             />
           )}
         </InputField>
+
         {rule.defaultFalsePositiveCheckEnabled != null && isFalsePositiveCheckEnabled && (
           <InputField<FormValues, 'falsePositiveCheckEnabled'>
             name={'falsePositiveCheckEnabled'}
@@ -200,6 +205,29 @@ function SimulationIterationDetails() {
           labelProps={{ required: { value: false, showHint: true } }}
         >
           {(inputProps) => <TextArea {...inputProps} placeholder={'Enter iteration description'} />}
+        </InputField>
+        <InputField<FormValues, 'simulationIterationTimeRange'>
+          name={'simulationIterationTimeRange'}
+          label={'Simulation period'}
+          description="Run the simulation for the new parameters and compare against the original parameters for the selected time period. All time is considered by default, if not selected."
+        >
+          {(inputProps) => (
+            <DatePicker.RangePicker
+              onChange={(value) => {
+                inputProps.onChange?.({
+                  start: value?.[0]?.valueOf() || 0,
+                  end: value?.[1]?.valueOf() || Date.now(),
+                });
+              }}
+              style={{ width: 400 }}
+              value={
+                [
+                  inputProps.value?.start ? dayjs(inputProps.value.start) : undefined,
+                  inputProps.value?.end ? dayjs(inputProps.value.end) : undefined,
+                ] as RangeValue<Dayjs>
+              }
+            />
+          )}
         </InputField>
       </PropertyListLayout>
     </>

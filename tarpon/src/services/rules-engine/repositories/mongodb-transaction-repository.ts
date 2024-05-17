@@ -392,11 +392,12 @@ export class MongoDbTransactionRepository
     return { $and: conditions }
   }
 
-  public async getLastNTransactionsHitByRuleInstance(
+  public async getNTransactionsHitByRuleInstance(
     value: number,
     ruleInstanceId: string,
     excludeDestinationUserIds: string[] = [],
-    excludeTransactionIds: string[] = []
+    excludeTransactionIds: string[] = [],
+    timestamps?: { afterTimestamp: number; beforeTimestamp: number }
   ): Promise<InternalTransaction[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
@@ -406,6 +407,14 @@ export class MongoDbTransactionRepository
         'hitRules.ruleInstanceId': ruleInstanceId,
         destinationUserId: { $nin: excludeDestinationUserIds },
         transactionId: { $nin: excludeTransactionIds },
+        ...(timestamps
+          ? {
+              timestamp: {
+                $gte: timestamps.afterTimestamp,
+                $lte: timestamps.beforeTimestamp,
+              },
+            }
+          : {}),
       })
       .sort({ timestamp: -1 })
       .allowDiskUse()
@@ -414,25 +423,34 @@ export class MongoDbTransactionRepository
     return result
   }
 
-  public async getLastNTransactionsNotHitByRuleInstance(
+  public async getNTransactionsNotHitByRuleInstance(
     value: number,
     excludeRuleInstanceId?: string,
     excludeDestinationUserIds: string[] = [],
-    excludeTransactionIds: string[] = []
+    excludeTransactionIds: string[] = [],
+    timestamps?: { afterTimestamp: number; beforeTimestamp: number }
   ): Promise<InternalTransaction[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
     const result = await collection
-      .find(
-        excludeRuleInstanceId
+      .find({
+        ...(excludeRuleInstanceId
           ? {
               'hitRules.ruleInstanceId': { $ne: excludeRuleInstanceId },
               destinationUserId: { $nin: excludeDestinationUserIds },
               transactionId: { $nin: excludeTransactionIds },
             }
-          : {}
-      )
+          : {}),
+        ...(timestamps
+          ? {
+              timestamp: {
+                $gte: timestamps.afterTimestamp,
+                $lte: timestamps.beforeTimestamp,
+              },
+            }
+          : {}),
+      })
       .sort({ timestamp: -1 })
       .allowDiskUse()
       .limit(value)

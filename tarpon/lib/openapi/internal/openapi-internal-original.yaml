@@ -10539,6 +10539,16 @@ components:
       properties:
         transactionsCount:
           type: number
+        filters:
+          type: object
+          properties:
+            afterTimestamp:
+              type: number
+            beforeTimestamp:
+              type: number
+          required:
+            - afterTimestamp
+            - beforeTimestamp
       required:
         - transactionsCount
     SimulationBeaconParameters:

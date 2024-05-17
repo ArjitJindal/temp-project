@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RangeValue } from 'rc-picker/es/interface';
 import s from './style.module.less';
 import { Rule, RuleLabels, RuleNature } from '@/apis';
 import TextInput from '@/components/library/TextInput';
@@ -11,6 +12,8 @@ import * as Card from '@/components/ui/Card';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 import Label from '@/components/library/Label';
 import TextArea from '@/components/library/TextArea';
+import DatePicker from '@/components/ui/DatePicker';
+import { Dayjs, dayjs } from '@/utils/dayjs';
 
 export interface FormValues {
   ruleId: string | undefined;
@@ -20,6 +23,7 @@ export interface FormValues {
   ruleLabels: RuleLabels[];
   simulationIterationName?: string;
   simulationIterationDescription?: string;
+  simulationIterationTimeRange?: { start: number; end: number };
 }
 
 export const INITIAL_VALUES: Partial<FormValues> = {
@@ -153,6 +157,29 @@ function SimulationIterationDetails<
           labelProps={{ required: { value: false, showHint: true } }}
         >
           {(inputProps) => <TextArea {...inputProps} placeholder={'Enter iteration description'} />}
+        </InputField>
+        <InputField<FormValues, 'simulationIterationTimeRange'>
+          name={'simulationIterationTimeRange'}
+          label={'Simulation period'}
+          description="Run the simulation for the new parameters and compare against the original parameters for the selected time period. All time is considered by default, if not selected."
+        >
+          {(inputProps) => (
+            <DatePicker.RangePicker
+              onChange={(value) => {
+                inputProps.onChange?.({
+                  start: value?.[0]?.valueOf() || 0,
+                  end: value?.[1]?.valueOf() || Date.now(),
+                });
+              }}
+              style={{ width: 400 }}
+              value={
+                [
+                  inputProps.value?.start ? dayjs(inputProps.value.start) : undefined,
+                  inputProps.value?.end ? dayjs(inputProps.value.end) : undefined,
+                ] as RangeValue<Dayjs>
+              }
+            />
+          )}
         </InputField>
       </PropertyListLayout>
     </>

@@ -17,6 +17,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
+import { SimulationBeaconSampling } from '@/@types/openapi-internal/SimulationBeaconSampling'
 
 const MAX_TRANSACTIONS = 10000
 const TIMEOUT = 14 * 60 * 1000
@@ -66,9 +67,17 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
 
     try {
       // get transactions
+      const timestampFilter = parameters.sampling?.filters
+        ? {
+            beforeTimestamp: parameters.sampling?.filters?.beforeTimestamp,
+            afterTimestamp: parameters.sampling?.filters?.afterTimestamp,
+          }
+        : undefined
+
       const transactions = await this.getTransactions(
         parameters.sampling,
-        parameters.defaultRuleInstance
+        parameters.defaultRuleInstance,
+        timestampFilter
       )
 
       // simulate transactions
@@ -225,7 +234,8 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
 
   private async getTransactions(
     sampling: SimulationBeaconParameters['sampling'],
-    ruleInstance: RuleInstance
+    ruleInstance: RuleInstance,
+    filters?: SimulationBeaconSampling['filters']
   ): Promise<InternalTransaction[]> {
     const transactionRepository = this.transactionRepository
 
@@ -245,15 +255,21 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     if (transactionRepository) {
       const [transactionsHit, transactionsMiss] = await Promise.all([
         hitCount > 0 && ruleInstance.id
-          ? transactionRepository.getLastNTransactionsHitByRuleInstance(
+          ? transactionRepository.getNTransactionsHitByRuleInstance(
               hitCount,
-              ruleInstance.id
+              ruleInstance.id,
+              [],
+              [],
+              filters
             )
           : ([] as InternalTransaction[]),
         missCount > 0
-          ? transactionRepository.getLastNTransactionsNotHitByRuleInstance(
+          ? transactionRepository.getNTransactionsNotHitByRuleInstance(
               missCount,
-              ruleInstance.id
+              ruleInstance.id,
+              [],
+              [],
+              filters
             )
           : ([] as InternalTransaction[]),
       ])
@@ -278,7 +294,8 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     originalTransactionsHit: InternalTransaction[],
     originalTransactionsMiss: InternalTransaction[],
     transactionRepository: MongoDbTransactionRepository,
-    ruleInstance: RuleInstance
+    ruleInstance: RuleInstance,
+    filters?: SimulationBeaconSampling['filters']
   ): Promise<InternalTransaction[]> {
     // If a transaction's destination user has more than 200k txs in the past 5 days, we
     // skip processing the transaction.
@@ -301,12 +318,20 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       `Number of unique destination users: ${uniqueDestinationUserIds.length}`
     )
 
+    /**
+     * If TimeRange is not provided, we will use the current time as the end time.
+     * If TimeRange is provided, we will use
+     *  - the start time if it is greater than the threshold days from the end time
+     *  - the end time if it is less than the threshold days from the end time
+     */
     const timeRangeFilter = {
-      $gte: dayjs()
+      $gte: dayjs(filters?.beforeTimestamp)
         .subtract(HIGH_FREQUENCY_TRANSACTIONS_THRESHOLD.days, 'day')
         .valueOf(),
-      $lte: dayjs().valueOf(),
+
+      $lte: dayjs(filters?.beforeTimestamp).valueOf(),
     }
+
     const userIdsToFilterOut: string[] = []
     for (const userIdsChunk of chunk(uniqueDestinationUserIds, 100)) {
       await Promise.all(
@@ -348,7 +373,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const additionalTransactionsHit =
       originalTransactionsHit.length - transactionsHitFiltered.length > 0 &&
       ruleInstance.id
-        ? await transactionRepository.getLastNTransactionsHitByRuleInstance(
+        ? await transactionRepository.getNTransactionsHitByRuleInstance(
             originalTransactionsHit.length - transactionsHitFiltered.length,
             ruleInstance.id,
             userIdsToFilterOut,
@@ -358,7 +383,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const additionalTransactionsMiss =
       originalTransactionsMiss.length - transactionsMissFiltered.length > 0 &&
       ruleInstance.id
-        ? await transactionRepository.getLastNTransactionsNotHitByRuleInstance(
+        ? await transactionRepository.getNTransactionsNotHitByRuleInstance(
             originalTransactionsMiss.length - transactionsMissFiltered.length,
             ruleInstance.id,
             userIdsToFilterOut,

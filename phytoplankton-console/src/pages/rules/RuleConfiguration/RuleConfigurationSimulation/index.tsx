@@ -126,8 +126,23 @@ export function RuleConfigurationSimulation(props: Props) {
                 isRiskLevelsEnabled,
               )
           : iteration.ruleInstance ?? ruleInstance,
+        ...(formValues?.basicDetailsStep.simulationIterationTimeRange
+          ? {
+              sampling: {
+                transactionsCount: 10_000,
+                timestamps: {
+                  afterTimestamp:
+                    formValues.basicDetailsStep.simulationIterationTimeRange?.start ?? 0,
+                  beforeTimestamp:
+                    formValues.basicDetailsStep.simulationIterationTimeRange?.end ??
+                    Number.MAX_SAFE_INTEGER,
+                },
+              },
+            }
+          : {}),
       };
     });
+
     setNewIterations(updatedIterations);
     return updatedIterations;
   }, [isRiskLevelsEnabled, iterationFormRefs, newIterations, ruleInstance, v8Mode]);
