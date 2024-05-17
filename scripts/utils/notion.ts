@@ -38,7 +38,12 @@ export async function getNotionPageByTicketID(
 
 export async function updateTicketStatusByID(
   ticketId: string,
-  status: 'In Progress' | 'In Review' | 'Ready to Deploy' | 'Done (Weekly)'
+  status:
+    | 'In Progress'
+    | 'In Review'
+    | 'Ready to Deploy'
+    | 'Ready to Test'
+    | 'Done (Archive)'
 ) {
   const page = await getNotionPageByTicketID(ticketId)
   if (!page.id) {

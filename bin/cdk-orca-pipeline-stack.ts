@@ -26,7 +26,10 @@ import { PRODUCTION_REGIONS } from '@flagright/lib/constants/deploy'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { databricksDeployStage } from './utils/databricks-deploy'
 import { BudgetServiceTypes, createBudget } from '@flagright/lib/cdk-utils'
-import { integrationsUpdateBuildProject } from './utils/integrations-update'
+import {
+  postProdDeployIntegrationsUpdateBuildProject,
+  postSandboxDeployIntegrationsUpdateBuildProject,
+} from './utils/integrations-update'
 const PIPLINE_NAME = 'orca-pipeline'
 
 export type CdkOrcaPipelineStackProps = StackProps
@@ -201,6 +204,16 @@ export class CdkOrcaPipelineStack extends Stack {
           stageName: 'Post_Deploy_Sandbox',
           actions: [
             new codepipline_actions.CodeBuildAction({
+              actionName: 'Integrations_Update',
+              project: postSandboxDeployIntegrationsUpdateBuildProject(
+                this,
+                role
+              ),
+              input: sourceOutput,
+              environmentVariables: getSentryReleaseSpec(false).actionEnv,
+              extraInputs: [tarponBuildOutput],
+            }),
+            new codepipline_actions.CodeBuildAction({
               actionName: 'Post_Deploy_Sandbox',
               project: postDeploymentCodeBuildProject(
                 this,
@@ -269,7 +282,7 @@ export class CdkOrcaPipelineStack extends Stack {
           actions: [
             new codepipline_actions.CodeBuildAction({
               actionName: 'Integrations_Update',
-              project: integrationsUpdateBuildProject(this, role),
+              project: postProdDeployIntegrationsUpdateBuildProject(this, role),
               input: sourceOutput,
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
               extraInputs: [tarponBuildOutput],
