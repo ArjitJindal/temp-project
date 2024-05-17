@@ -189,8 +189,11 @@ export class AlertsService extends CaseAlertsCommonService {
     const requiredAlerts = alerts.filter((alert) =>
       alertIds.includes(alert.alertId ?? '')
     )
-    const valid = requiredAlerts.every((alert) =>
-      alert.ruleChecklist?.every((item) => item.status)
+
+    const valid = requiredAlerts.every(
+      (alert) =>
+        alert.ruleChecklist?.every((item) => item.status) ||
+        !alert.ruleChecklist?.length
     )
 
     return { valid }
