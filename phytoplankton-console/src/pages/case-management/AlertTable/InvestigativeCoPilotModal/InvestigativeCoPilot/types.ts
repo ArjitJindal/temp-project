@@ -36,6 +36,13 @@ export interface QuestionResponseStackedBarchart extends QuestionResponseBase, A
   questionType: 'STACKED_BARCHART';
 }
 
+export type QuestionResponseSkeleton = {
+  questionType: 'SKELETON';
+  requestId: string;
+  requestString: string;
+  error?: string;
+};
+
 export type QuestionResponse =
   | QuestionResponseTable
   | QuestionResponseTimeSeries

@@ -1,27 +1,24 @@
-import React, { useRef, useCallback, useMemo, useLayoutEffect, useState } from 'react';
-import { QuestionResponse } from '../types';
+import React, { useRef, useCallback, useMemo, Dispatch } from 'react';
+import { QuestionResponse, QuestionResponseSkeleton } from '../types';
 import s from './index.module.less';
 import EmptyIcon from './empty.react.svg';
 import HistoryItem from './HistoryItem';
-import { calcVisibleElements, GAP, DATA_KEY } from './helpers';
+import { GAP, DATA_KEY } from './helpers';
+import HistoryItemSkeleton from './HistoryItemSkeleton';
+import { Updater } from '@/utils/state';
+import { itemId } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/helpers';
 
 interface Props {
-  scrollPosition: number;
   alertId: string;
-  items: QuestionResponse[];
-  visibleItems: string[];
-  onShowItems: (ids: string[]) => void;
+  items: (QuestionResponse | QuestionResponseSkeleton)[];
+  seenItems: string[];
+  setSizes: Dispatch<Updater<{ [key: string]: number }>>;
 }
 
 export default function History(props: Props) {
-  const { alertId, items, scrollPosition, visibleItems, onShowItems } = props;
+  const { alertId, items, seenItems, setSizes } = props;
 
   const rootRef = useRef<HTMLDivElement>(null);
-
-  const [sizes, setSizes] = useState<{ [key: string]: number }>({});
-  const itemIds = useMemo(() => {
-    return items.map((x) => x.createdAt.toString());
-  }, [items]);
 
   const observer = useMemo(() => {
     const resizeObserver = new ResizeObserver((entries) => {
@@ -45,10 +42,6 @@ export default function History(props: Props) {
     [observer, setSizes],
   );
 
-  useLayoutEffect(() => {
-    onShowItems(calcVisibleElements(itemIds, sizes, scrollPosition));
-  }, [itemIds, sizes, scrollPosition, onShowItems]);
-
   return (
     <div className={s.root} style={{ gap: GAP }} ref={rootRef}>
       {items.length === 0 && (
@@ -59,15 +52,19 @@ export default function History(props: Props) {
       )}
       {items
         .filter((item) => Boolean(item))
-        .map((item) => (
-          <HistoryItem
-            isVisible={visibleItems.includes(item.createdAt.toString())}
-            key={item.createdAt}
-            alertId={alertId}
-            item={item}
-            observe={observe}
-          />
-        ))}
+        .map((item) =>
+          item.questionType === 'SKELETON' ? (
+            <HistoryItemSkeleton key={itemId(item)} item={item} />
+          ) : (
+            <HistoryItem
+              key={itemId(item)}
+              isUnread={!seenItems.includes(itemId(item))}
+              alertId={alertId}
+              item={item}
+              observe={observe}
+            />
+          ),
+        )}
     </div>
   );
 }

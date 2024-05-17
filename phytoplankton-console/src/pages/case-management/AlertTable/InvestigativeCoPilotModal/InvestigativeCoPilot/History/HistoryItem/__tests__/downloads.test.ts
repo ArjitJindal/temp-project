@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { formatData } from '../HistoryItemLayout/exportUtil';
+import { formatData } from '../HistoryItemBase/exportUtil';
 import { QuestionResponse } from '../../../types';
 import { CsvRow, csvValue, serialize } from '@/utils/csv';
 

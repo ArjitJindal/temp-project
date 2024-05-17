@@ -20,7 +20,9 @@ export default function InvestigativeCoPilotModal(props: Props) {
       width="XL"
       height="FULL"
     >
-      {alertId && caseId && <InvestigativeCoPilot alertId={alertId} caseId={caseId} />}
+      {alertId && caseId && (
+        <InvestigativeCoPilot key={alertId} alertId={alertId} caseId={caseId} />
+      )}
     </Modal>
   );
 }

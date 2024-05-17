@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { UseMutationResult } from '@tanstack/react-query';
 import cn from 'clsx';
 import { useDebounce } from 'ahooks';
-import { compact } from 'lodash';
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils';
 import s from './index.module.less';
 import { useQuery } from '@/utils/queries/hooks';
@@ -11,7 +10,10 @@ import { getOr, isLoading, useFinishedSuccessfully } from '@/utils/asyncResource
 import TextInput from '@/components/library/TextInput';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
-import { QuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
+import {
+  QuestionResponse,
+  QuestionResponseSkeleton,
+} from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { useApi } from '@/api';
 import { COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
 import Form from '@/components/library/Form';
@@ -37,14 +39,13 @@ const SUGGESTIONS_ORDER: readonly QuestionId[] = [
 ];
 
 interface Props {
-  mutation: UseMutationResult<unknown, unknown, FormValues>;
-  history: QuestionResponse[];
+  mutation: UseMutationResult<unknown, unknown, FormValues[]>;
+  history: (QuestionResponse | QuestionResponseSkeleton)[];
   alertId: string;
-  setHistory: (history: QuestionResponse[]) => void;
 }
 
 export default function RequestForm(props: Props) {
-  const { mutation, history, setHistory, alertId } = props;
+  const { mutation, history, alertId } = props;
   const [demoMode] = useDemoMode();
   const mutationRes = getMutationAsyncResource(mutation);
 
@@ -64,19 +65,6 @@ export default function RequestForm(props: Props) {
       return response.suggestions ?? [];
     },
   );
-
-  const [isAutoPilotClicked, setIsAutoPilotClicked] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (isAutoPilotClicked && history.length === SUGGESTIONS_ORDER.length) {
-      const sortedHistory = SUGGESTIONS_ORDER.map((search) =>
-        compact(history).find((question) => question?.questionId === search),
-      );
-
-      setHistory(sortedHistory as QuestionResponse[]);
-      setIsAutoPilotClicked(false);
-    }
-  }, [isAutoPilotClicked, history, setHistory, setIsAutoPilotClicked]);
 
   const suggestions = getOr(suggestionsQueryResult.data, []);
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState<number>();
@@ -107,7 +95,7 @@ export default function RequestForm(props: Props) {
                 data-cy="investigation-suggestion-button"
                 key={suggestion}
                 onClick={() => {
-                  mutation.mutate({ searchString: suggestion });
+                  mutation.mutate([{ searchString: suggestion }]);
                 }}
                 className={cn(s.suggestion, highlightedSuggestionIndex === i && s.isHighlighted)}
               >
@@ -134,7 +122,7 @@ export default function RequestForm(props: Props) {
           className={s.form}
           onSubmit={() => {
             if (!isLoading(mutationRes)) {
-              mutation.mutate({ searchString: searchText });
+              mutation.mutate([{ searchString: searchText }]);
             }
           }}
         >
@@ -172,7 +160,7 @@ export default function RequestForm(props: Props) {
             isLoading={isLoading(mutationRes)}
             onClick={() => {
               if (!isLoading(mutationRes)) {
-                mutation.mutate({ searchString: searchText });
+                mutation.mutate([{ searchString: searchText }]);
               }
             }}
           >
@@ -184,12 +172,7 @@ export default function RequestForm(props: Props) {
               htmlType="button"
               onClick={async () => {
                 setSearchText('');
-                setIsAutoPilotClicked(true);
-                await Promise.all(
-                  SUGGESTIONS_ORDER.map(async (search) =>
-                    mutation.mutate({ searchString: search }),
-                  ),
-                );
+                mutation.mutate(SUGGESTIONS_ORDER.map((searchString) => ({ searchString })));
               }}
               className={s.askAi}
             >

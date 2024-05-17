@@ -4,8 +4,8 @@ import { parseQuestionResponse, QuestionResponse } from '../../types';
 import HistoryItemTable from './HistoryItemTable';
 import HistoryItemStackedBarchart from './HistoryItemStackedBarchart';
 import HistoryItemTimeSeries from './HistoryItemTimeSeries';
-import { VariablesValues } from './HistoryItemLayout/Variables';
-import HistoryItemLayout from './HistoryItemLayout';
+import HistoryItemBase from './HistoryItemBase';
+import { VariablesValues } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBase/Variables';
 import { getErrorMessage, neverReturn } from '@/utils/lang';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
@@ -20,14 +20,14 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 
 interface Props {
-  isVisible: boolean;
+  isUnread: boolean;
   alertId: string;
   item: QuestionResponse;
   observe: (el: Element) => () => void;
 }
 
 export default function HistoryItem(props: Props) {
-  const { isVisible, item, alertId, observe } = props;
+  const { isUnread, item, alertId, observe } = props;
   const [itemState, setItemState] = useState<QuestionResponse>(item);
   const questionId = itemState.questionId;
 
@@ -99,11 +99,11 @@ export default function HistoryItem(props: Props) {
   };
 
   return (
-    <HistoryItemLayout
+    <HistoryItemBase
       ref={rootRef}
       questionId={questionId}
       commentSubmitMutation={commentSubmitMutation}
-      isVisible={isVisible}
+      isUnread={isUnread}
       isLoading={isLoading(getMutationAsyncResource(updateVarsMutation))}
       item={itemState}
       onRefresh={(vars) => {
@@ -112,7 +112,7 @@ export default function HistoryItem(props: Props) {
       }}
     >
       {renderItem(itemState, pageParams, onPageParams)}
-    </HistoryItemLayout>
+    </HistoryItemBase>
   );
 }
 

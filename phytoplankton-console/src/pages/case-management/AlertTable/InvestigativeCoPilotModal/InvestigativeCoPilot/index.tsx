@@ -1,14 +1,14 @@
-import React, { useEffect, useRef, useState, useCallback, useLayoutEffect } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useLayoutEffect, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import cn from 'clsx';
-import { uniq } from 'lodash';
+import { nanoid } from 'nanoid';
 import RequestForm, { FormValues } from './RequestForm';
 import History from './History';
-import { parseQuestionResponse, QuestionResponse } from './types';
+import { parseQuestionResponse, QuestionResponse, QuestionResponseSkeleton } from './types';
 import s from './index.module.less';
 import ScrollButton from './ScrollButton';
-import { useScrollState } from './helpers';
+import { calcIsScrollVisible, calcScrollPosition, itemId } from './helpers';
 import dayjs, { TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
@@ -28,9 +28,10 @@ import { Case } from '@/apis';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
-import Spinner from '@/components/library/Spinner';
-import { useElementSize, useElementSizeChangeEffect } from '@/utils/browser';
+import { useElementSize, scrollTo } from '@/utils/browser';
 import { useIsChanged } from '@/utils/hooks';
+import { calcVisibleElements } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/helpers';
+import { notEmpty } from '@/utils/array';
 import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
@@ -41,7 +42,7 @@ interface Props {
 export default function InvestigativeCoPilot(props: Props) {
   const { alertId, caseId } = props;
   const api = useApi();
-  const [history, setHistory] = useState<QuestionResponse[]>([]);
+  const [history, setHistory] = useState<(QuestionResponse | QuestionResponseSkeleton)[]>([]);
 
   const [rootRef, setRootRef] = useState<HTMLDivElement | null>(null);
   const historyRef = useRef<HTMLDivElement>(null);
@@ -60,6 +61,12 @@ export default function InvestigativeCoPilot(props: Props) {
     });
   });
 
+  const [isScrollVisible, setScrollVisible] = useState(false);
+  const [sizes, setSizes] = useState<{ [key: string]: number }>({});
+  const [isBottom, setIsBottom] = useState(true);
+  const [isScrollEventDisabled, setScrollEventDisabled] = useState(false);
+  const [seenIds, setSeenIds] = useState<string[]>([]);
+
   const historyRes = map(historyQuery.data, parseQuestionResponse);
   const isHistoryLoaded = useFinishedSuccessfully(historyRes);
   useEffect(() => {
@@ -68,37 +75,108 @@ export default function InvestigativeCoPilot(props: Props) {
     }
   }, [historyRes, isHistoryLoaded]);
 
-  const [scrollState, scrollHandlers] = useScrollState(rootRef);
-  const { isBottom, isScrollEventDisabled, isScrollVisible, scrollPosition } = scrollState;
-  const { scroll, refresh } = scrollHandlers;
+  const itemIds: string[] = useMemo(() => {
+    return history.map((x) => (x.questionType === 'SKELETON' ? null : itemId(x))).filter(notEmpty);
+  }, [history]);
+
+  const skeletonsCount: number = useMemo(() => {
+    return history.reduce((acc, x) => acc + (x.questionType === 'SKELETON' ? 1 : 0), 0);
+  }, [history]);
+
+  const handleRefresh = useCallback(() => {
+    setTimeout(() => {
+      if (rootRef) {
+        const isScrollVisible = calcIsScrollVisible(rootRef);
+        const position = calcScrollPosition(rootRef);
+        const isBottom = Math.abs(position) < 10;
+        setIsBottom(isBottom);
+        setScrollVisible(isScrollVisible);
+        const newSeenIds = calcVisibleElements(itemIds, sizes, position);
+        if (newSeenIds.length > seenIds.length) {
+          setSeenIds(newSeenIds);
+        }
+      }
+    }, 0);
+  }, [itemIds, sizes, seenIds, rootRef]);
+
+  const handleScrollTo = useCallback(
+    (direction: 'BOTTOM' | 'TOP', smooth: boolean) => {
+      if (rootRef) {
+        setIsBottom(direction === 'BOTTOM');
+        const top = direction === 'BOTTOM' ? rootRef.scrollHeight - rootRef.clientHeight : 0;
+        if (smooth) {
+          setScrollEventDisabled(true);
+        }
+        scrollTo(
+          rootRef,
+          {
+            top,
+            smooth,
+          },
+          () => {
+            setScrollEventDisabled(false);
+            handleRefresh();
+          },
+        );
+      }
+    },
+    [rootRef, handleRefresh],
+  );
 
   // When user is at the bottom and history size changes - scroll to the bottom again
   const historySize = useElementSize(historyRef.current);
   const isHeightChanged = useIsChanged(historySize?.height);
   useLayoutEffect(() => {
     if (isBottom && isHeightChanged) {
-      scroll('BOTTOM', false);
+      handleScrollTo('BOTTOM', false);
     }
-  }, [isBottom, scroll, isHeightChanged]);
+  }, [isBottom, handleScrollTo, isHeightChanged]);
 
-  const postQuestionMutation = useMutation<QuestionResponse[], unknown, FormValues>(
-    async ({ searchString }) => {
-      const response = await api.postQuestion({
-        QuestionRequest: {
-          question: searchString,
-          variables: Object.entries(DEFAULT_PARAMS_STATE)
-            .filter(([_, value]) => value != null)
-            .map(([name, value]) => ({ name, value })),
-        },
-        alertId: alertId,
-      });
-      return parseQuestionResponse(response);
+  const postQuestionMutation = useMutation<unknown, unknown, FormValues[]>(
+    async (requests) => {
+      for (const request of requests) {
+        const requestId = nanoid();
+        setHistory((items) => [
+          ...items,
+          {
+            questionType: 'SKELETON',
+            requestId,
+            requestString: request.searchString,
+          },
+        ]);
+        api
+          .postQuestion({
+            QuestionRequest: {
+              question: request.searchString,
+              variables: Object.entries(DEFAULT_PARAMS_STATE)
+                .filter(([_, value]) => value != null)
+                .map(([name, value]) => ({ name, value })),
+            },
+            alertId: alertId,
+          })
+          .then((response) => {
+            const [parsedResponse] = parseQuestionResponse(response);
+            setHistory((items) =>
+              items.map((x) =>
+                x.questionType === 'SKELETON' && x.requestId === requestId ? parsedResponse : x,
+              ),
+            );
+          })
+          .catch((error) => {
+            setHistory((items) =>
+              items.map((x) =>
+                x.questionType === 'SKELETON' && x.requestId === requestId
+                  ? { ...x, error: getErrorMessage(error) }
+                  : x,
+              ),
+            );
+          });
+      }
     },
     {
-      onSuccess: (data) => {
-        setHistory((prevState) => [...prevState, ...data]);
+      onSuccess: () => {
         if (isBottom) {
-          scroll('BOTTOM', false);
+          handleScrollTo('BOTTOM', false);
         }
       },
       onError: (error) => {
@@ -113,23 +191,20 @@ export default function InvestigativeCoPilot(props: Props) {
     }),
   );
 
-  const [visibleIds, setVisibleIds] = useState<string[]>([]);
-  const handleShowItems = useCallback((newVisibleIds: string[]) => {
-    setVisibleIds((prevState) => uniq([...prevState, ...newVisibleIds]));
-  }, []);
-  const unreadResponses = history.length - visibleIds.length;
+  const unreadResponses = history.length - skeletonsCount - seenIds.length;
 
   useEffect(() => {
     if (isScrollEventDisabled) {
       return () => {};
     }
     if (rootRef) {
-      rootRef.addEventListener('scroll', refresh, { passive: true });
-      return () => rootRef.removeEventListener('scroll', refresh);
+      const listener = () => {
+        handleRefresh();
+      };
+      rootRef.addEventListener('scroll', listener, { passive: true });
+      return () => rootRef.removeEventListener('scroll', listener);
     }
-  }, [rootRef, isScrollEventDisabled, refresh]);
-
-  useElementSizeChangeEffect(rootRef, refresh);
+  }, [rootRef, isScrollEventDisabled, handleRefresh]);
 
   return (
     <AsyncResourceRenderer resource={historyRes}>
@@ -220,29 +295,17 @@ export default function InvestigativeCoPilot(props: Props) {
             }}
           </AsyncResourceRenderer>
           <div className={s.history} ref={historyRef}>
-            <History
-              alertId={alertId}
-              items={history}
-              scrollPosition={scrollPosition}
-              visibleItems={visibleIds}
-              onShowItems={handleShowItems}
-            />
-            {postQuestionMutation.isLoading && <Spinner />}
+            <History alertId={alertId} items={history} seenItems={seenIds} setSizes={setSizes} />
           </div>
           <div className={s.form}>
             <div className={cn(s.scrollToBottom, !isScrollVisible && s.isHidden)}>
               <ScrollButton
                 isBottom={isBottom}
-                onScroll={scroll}
+                onScroll={handleScrollTo}
                 unreadResponses={unreadResponses}
               />
             </div>
-            <RequestForm
-              mutation={postQuestionMutation}
-              history={history}
-              alertId={alertId}
-              setHistory={setHistory}
-            />
+            <RequestForm mutation={postQuestionMutation} history={history} alertId={alertId} />
           </div>
         </div>
       )}

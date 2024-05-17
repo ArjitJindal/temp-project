@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
@@ -129,9 +130,12 @@ export default function AlertTable(props: Props) {
       .filter(Boolean);
   }, [selectedTxns]);
   const navigate = useNavigate();
-  const parsedParams = queryAdapter.deserializer({
-    ...parseQueryString(location.search),
-  });
+  const location = useLocation();
+  const parsedParams = useMemo(() => {
+    return queryAdapter.deserializer({
+      ...parseQueryString(location.search),
+    });
+  }, [location.search]);
 
   const assignmentsToMutationAlerts = useMutation<unknown, Error, AlertsAssignmentsUpdateRequest>(
     async ({ alertIds, assignments }) => {
@@ -620,6 +624,7 @@ export default function AlertTable(props: Props) {
     );
     return col;
   }, [
+    location.pathname,
     users,
     showUserFilters,
     handleAlertAssignments,

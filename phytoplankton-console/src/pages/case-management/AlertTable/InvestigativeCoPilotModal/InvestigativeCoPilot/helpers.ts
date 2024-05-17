@@ -1,6 +1,10 @@
 import { Dispatch, useState, useCallback, useMemo } from 'react';
 import { Updater } from '@/utils/state';
 import { scrollTo } from '@/utils/browser';
+import {
+  QuestionResponse,
+  QuestionResponseSkeleton,
+} from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 
 export function useScrollState(rootEl: HTMLElement | null): [
   {
@@ -81,4 +85,11 @@ export function calcScrollPosition(element: Element) {
 
 export function calcIsScrollVisible(element: Element) {
   return element.scrollHeight > element.clientHeight;
+}
+
+export function itemId(item: QuestionResponse | QuestionResponseSkeleton): string {
+  if (item.questionType === 'SKELETON') {
+    return item.requestId;
+  }
+  return item.createdAt.toString();
 }

@@ -17,12 +17,13 @@ export function shouldShowSkeleton<T>(dataRes: AsyncResource<T>): boolean {
 
 interface Props<T> {
   res?: AsyncResource<T>;
+  text?: string;
   length?: number;
   children?: ((value: T) => React.ReactNode) | React.ReactNode;
 }
 
 export default function Skeleton<T>(props: Props<T>): JSX.Element {
-  const { res = loading(), length = 4 + Math.round(10 * random()), children } = props;
+  const { res = loading(), text, length = 4 + Math.round(10 * random()), children } = props;
   let newChildren: (value: T) => React.ReactNode = RENDER_NOTHING;
   if (typeof children === 'function') {
     newChildren = children as (value: T) => React.ReactNode;
@@ -33,7 +34,7 @@ export default function Skeleton<T>(props: Props<T>): JSX.Element {
   const renderSkeleton = () => {
     return (
       <span className={s.skeleton} data-cy="skeleton">
-        {[...new Array(length)].map(() => '■').join('')}
+        {text ?? [...new Array(length)].map(() => '■').join('')}
       </span>
     );
   };
