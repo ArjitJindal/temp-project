@@ -90,6 +90,13 @@ const getSelectedCaseIdsForAlerts = (selectedItems: Record<string, TableAlertIte
   return selectedCaseIds;
 };
 
+const isAllAlertsOfStatus = (
+  selectedItems: Record<string, TableAlertItem>,
+  status: string,
+): boolean => {
+  return Object.values(selectedItems).every((item) => item.alertStatus === status);
+};
+
 interface Props {
   params: AlertTableParams;
   onChangeParams?: (newState: AlertTableParams) => void;
@@ -898,8 +905,8 @@ export default function AlertTable(props: Props) {
   ];
 
   const qaModeSelectionActions: SelectionAction<TableAlertItem, AlertTableParams>[] = [
-    ({ selectedIds, params, onResetSelection }) => {
-      if (selectedTransactionIds.length) {
+    ({ selectedIds, params, onResetSelection, selectedItems }) => {
+      if (selectedTransactionIds.length || !isAllAlertsOfStatus(selectedItems, 'CLOSED')) {
         return;
       }
 
@@ -915,8 +922,8 @@ export default function AlertTable(props: Props) {
         )
       );
     },
-    ({ selectedIds, params, onResetSelection }) => {
-      if (selectedTransactionIds.length) {
+    ({ selectedIds, params, onResetSelection, selectedItems }) => {
+      if (selectedTransactionIds.length || !isAllAlertsOfStatus(selectedItems, 'CLOSED')) {
         return;
       }
       return (
