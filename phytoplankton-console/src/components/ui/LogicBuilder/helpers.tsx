@@ -1,9 +1,10 @@
 import { BasicConfig, CoreOperators, Config, Empty } from '@react-awesome-query-builder/ui';
 import '@react-awesome-query-builder/ui/css/styles.css';
 import cn from 'clsx';
+import { isEmpty } from 'lodash';
 import s from './index.module.less';
 import { JSON_LOGIC_FUNCTIONS } from './functions';
-import { JSON_LOGIC_OPERATORS } from './operators';
+import { JSON_LOGIC_OPERATORS, SELECT_OPERATORS } from './operators';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets, isOperatorParameterField } from '@/components/ui/LogicBuilder/widgets';
 import Select, { Option } from '@/components/library/Select';
@@ -148,6 +149,14 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
         );
       },
       renderOperator: (props) => {
+        const isLHSSelectType =
+          (props as any).fieldConfig?.type === 'text' &&
+          !isEmpty((props as any).fieldConfig?.fieldSettings?.listValues);
+        // NOTE: Enum type variable is set to `text` type instead of `select` type to allow comparing
+        // enum with text value. But we still only show select operators for enum type variable.
+        const options = isLHSSelectType
+          ? props.items.filter((item) => SELECT_OPERATORS.includes(item.key))
+          : props.items;
         return (
           <OptionalLabel
             label={'Operator'}
@@ -159,10 +168,10 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
               dropdownMatchWidth={false}
               portaled={true}
               allowClear={false}
-              options={props.items.map((x) => ({ label: x.label, value: x.key }))}
+              options={options.map((x) => ({ label: x.label, value: x.key }))}
               value={props.selectedKey}
               onChange={(key) => {
-                const item = props.items.find((x) => x.key === key);
+                const item = options.find((x) => x.key === key);
                 if (item && item.path) {
                   props.setField(item.path);
                 }

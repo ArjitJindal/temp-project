@@ -16,10 +16,13 @@ import {
   DateTimeWidget,
   Operator,
   FieldWidget,
+  FactoryWithContext,
+  MultiSelectFieldSettings,
 } from '@react-awesome-query-builder/ui';
 import moment from 'moment';
 import { TimePicker } from 'antd';
 import React from 'react';
+import { isEmpty } from 'lodash';
 import DatePicker from '../DatePicker';
 import s from './index.module.less';
 import {
@@ -30,7 +33,11 @@ import {
   serializeCountries,
 } from './widget-utils';
 import ListSelect from './ListSelect';
-import { isCustomOperator } from './operators';
+import {
+  MULTI_SELECT_BUILTIN_OPERATORS,
+  MULTI_SELECT_LIST_OPERATORS,
+  isCustomOperator,
+} from './operators';
 import { FieldInput, LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from './helpers';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { humanizeAuto } from '@/utils/humanize';
@@ -134,29 +141,30 @@ const customNumberWidget: NumberWidget<BasicConfig> = {
   },
 };
 
-const MULTI_SELECT_LIST_OPERATORS: RuleOperatorType[] = ['op:inlist', 'op:!inlist'];
-
-const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
-
 const customTextWidget: TextWidget<BasicConfig> = {
   type: `text`,
   factory: (props) => {
+    const isEnumType = !isEmpty((props as SelectFieldSettings).listValues);
     const operator = props.operator as RuleOperatorType;
-    // All text-type operators should support multi-values
-    if (isCustomOperator(operator) || MULTI_SELECT_BUILTIN_OPERATORS.includes(operator)) {
-      if (MULTI_SELECT_LIST_OPERATORS.includes(operator)) {
-        return (
-          <WidgetWrapper widgetFactoryProps={props}>
-            <ListSelect
-              value={(props.value as any) ?? undefined}
-              onChange={(newValue) => {
-                props.setValue(newValue as any);
-              }}
-            />
-          </WidgetWrapper>
-        );
-      }
 
+    if (MULTI_SELECT_LIST_OPERATORS.includes(operator)) {
+      return (
+        <WidgetWrapper widgetFactoryProps={props}>
+          <ListSelect
+            value={(props.value as any) ?? undefined}
+            onChange={(newValue) => {
+              props.setValue(newValue as any);
+            }}
+          />
+        </WidgetWrapper>
+      );
+    }
+
+    // All text-type operators should support multi-values
+    if (
+      isCustomOperator(operator) ||
+      (!isEnumType && MULTI_SELECT_BUILTIN_OPERATORS.includes(operator))
+    ) {
       return (
         <WidgetWrapper widgetFactoryProps={props}>
           <Select<string>
@@ -172,6 +180,16 @@ const customTextWidget: TextWidget<BasicConfig> = {
         </WidgetWrapper>
       );
     }
+    if (isEnumType) {
+      if (MULTI_SELECT_BUILTIN_OPERATORS.includes(props.operator)) {
+        return (customMultiselectWidget.factory as FactoryWithContext<MultiSelectFieldSettings>)(
+          props,
+        );
+      } else {
+        return (customSelectWidget.factory as FactoryWithContext<SelectFieldSettings>)(props);
+      }
+    }
+
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <TextInput value={props.value ?? undefined} onChange={props.setValue} allowClear={true} />

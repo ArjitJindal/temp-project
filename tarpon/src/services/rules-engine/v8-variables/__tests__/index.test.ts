@@ -19,7 +19,7 @@ describe('List of entity variables', () => {
           sourceField: 'type',
           uiDefinition: {
             label: 'Transaction / type',
-            type: 'select',
+            type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
               listValues: expect.arrayContaining([
@@ -53,7 +53,7 @@ describe('List of entity variables', () => {
           sourceField: 'originAmountDetails',
           uiDefinition: {
             label: 'Transaction / origin amount details > transaction currency',
-            type: 'select',
+            type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
               listValues: expect.arrayContaining([
@@ -82,7 +82,7 @@ describe('List of entity variables', () => {
           uiDefinition: {
             label:
               'Consumer User / user details > country of residence (receiver)',
-            type: 'select',
+            type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
               listValues: expect.arrayContaining([
@@ -101,7 +101,7 @@ describe('List of entity variables', () => {
           uiDefinition: {
             label:
               'Business User / legal entity > company general details > user segment (sender)',
-            type: 'select',
+            type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
               listValues: expect.arrayContaining([
@@ -173,7 +173,7 @@ describe('List of entity variables', () => {
               },
               documentIssuedCountry: {
                 label: 'document issued country',
-                type: 'select',
+                type: 'text',
                 valueSources: ['value', 'field', 'func'],
                 fieldSettings: {
                   listValues: expect.arrayContaining([

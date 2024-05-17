@@ -33,28 +33,6 @@ export function RuleLogicBuilder(props: Props) {
     configParams ?? {},
   );
   const isConfigChanged = useIsChanged(configRes);
-  useEffect(() => {
-    if (isSuccess(configRes) && props.aggregationVariables) {
-      if (state === null || isConfigChanged) {
-        const config = configRes.value;
-        setState((prevState) => {
-          const tree = QbUtils.loadFromJsonLogic(props.jsonLogic, config);
-          return {
-            ...prevState,
-            tree: tree ? QbUtils.checkTree(tree, config) : undefined,
-            config,
-          };
-        });
-      }
-    }
-  }, [configRes, props.aggregationVariables, props.jsonLogic, state, isConfigChanged]);
-
-  const prevAggregationVariables = usePrevious(props.aggregationVariables);
-  useEffect(() => {
-    if (!isEqual(prevAggregationVariables, props.aggregationVariables)) {
-      setState(null);
-    }
-  }, [prevAggregationVariables, props.aggregationVariables]);
   const handleChangeLogic = useCallback(
     (newState: State) => {
       if (newState == null || newState.tree == null) {
@@ -67,6 +45,37 @@ export function RuleLogicBuilder(props: Props) {
     },
     [props],
   );
+  useEffect(() => {
+    if (isSuccess(configRes) && props.aggregationVariables) {
+      if (state === null || isConfigChanged) {
+        const config = configRes.value;
+        setState((prevState) => {
+          const tree = QbUtils.loadFromJsonLogic(props.jsonLogic, config);
+          const newState: State = {
+            ...prevState,
+            tree: tree ? QbUtils.checkTree(tree, config) : undefined,
+            config,
+          };
+          handleChangeLogic(newState);
+          return newState;
+        });
+      }
+    }
+  }, [
+    configRes,
+    props.aggregationVariables,
+    props.jsonLogic,
+    state,
+    isConfigChanged,
+    handleChangeLogic,
+  ]);
+
+  const prevAggregationVariables = usePrevious(props.aggregationVariables);
+  useEffect(() => {
+    if (!isEqual(prevAggregationVariables, props.aggregationVariables)) {
+      setState(null);
+    }
+  }, [prevAggregationVariables, props.aggregationVariables]);
 
   const onChange = useCallback(
     (immutableTree: LogicBuilderValue, config: Config) => {

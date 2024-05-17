@@ -1,6 +1,6 @@
 import { BasicConfig, Config, CoreOperators, Operator } from '@react-awesome-query-builder/ui';
 import { omit } from 'lodash';
-import { RuleOperator } from '@/apis';
+import { RuleOperator, RuleOperatorType } from '@/apis';
 
 export const isCustomOperator = (operatorKey?: string): boolean => {
   return operatorKey?.startsWith('op:') ?? false;
@@ -22,6 +22,16 @@ const BUILT_IN_OPERATORS = omit(BasicConfig.operators, [
   'multi_select_contains',
   'multi_select_not_contains',
 ]) as CoreOperators<Config>;
+export const MULTI_SELECT_LIST_OPERATORS: RuleOperatorType[] = ['op:inlist', 'op:!inlist'];
+export const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
+export const SELECT_OPERATORS: Array<keyof CoreOperators> = [
+  'equal',
+  'not_equal',
+  'select_any_in',
+  'select_not_any_in',
+  'is_null',
+  'is_not_null',
+];
 
 export const JSON_LOGIC_OPERATORS: CoreOperators<Config> = {
   ...BUILT_IN_OPERATORS,

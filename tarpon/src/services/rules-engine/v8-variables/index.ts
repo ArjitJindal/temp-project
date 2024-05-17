@@ -193,7 +193,9 @@ function isTimestampVariable(key: string): boolean {
 
 function getUiDefinitionType(leafInfo: EntityLeafValueInfo) {
   if (leafInfo.options && leafInfo.options.length > 0) {
-    return 'select'
+    // IMPORTANT: We se the type to 'text' instead of 'select' then we can compare 'text' type variable
+    // with 'select' type variable
+    return 'text'
   }
 
   if (isTimestampVariable(leafInfo.pathKey)) {
