@@ -165,6 +165,7 @@ export class DashboardStatsRepository {
       this.recalculateRuleHitStats(caseCreatedAtTimeRange),
       this.recalculateHitsByUser('ORIGIN', caseCreatedAtTimeRange),
       this.recalculateHitsByUser('DESTINATION', caseCreatedAtTimeRange),
+      this.refreshQaStats(caseCreatedAtTimeRange),
     ])
   }
 
