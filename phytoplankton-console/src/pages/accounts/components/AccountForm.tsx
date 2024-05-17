@@ -114,6 +114,7 @@ export default function AccountForm(props: Props) {
     async (payload) => {
       if (isReviewRequired && !payload.reviewerId) {
         message.error('Checker is required');
+        hide?.();
         return;
       }
 
@@ -149,12 +150,16 @@ export default function AccountForm(props: Props) {
     async (payload) => {
       if (isReviewRequired && !payload.AccountPatchPayload.reviewerId) {
         message.error('Checker is required');
+        hide?.();
         return;
       }
       return await api.accountsEdit(payload);
     },
     {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        if (!data) {
+          return;
+        }
         message.success('Account updated!');
         onSuccess();
         hide?.();

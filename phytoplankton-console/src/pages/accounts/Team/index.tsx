@@ -201,7 +201,7 @@ export default function Team() {
         defaultWidth: 350,
         render: (item) => {
           // Do not let people edit themselves or roots.
-          if (item.role == 'root' || item.id === user.userId) {
+          if (item.role == 'root' || item.role !== 'admin') {
             return null;
           }
 
@@ -235,7 +235,7 @@ export default function Team() {
                       testName="accounts-delete-button"
                       type="TETRIARY"
                       onClick={onClick}
-                      isDisabled={item.blocked}
+                      isDisabled={item.blocked || item.id === user.userId}
                       icon={<DeleteOutlined />}
                     >
                       Delete
@@ -256,7 +256,7 @@ export default function Team() {
                       setDeletedUserId(item.id);
                     }
                   }}
-                  isDisabled={item.blocked}
+                  isDisabled={item.blocked || item.id === user.userId}
                   icon={<DeleteOutlined />}
                 >
                   Delete
