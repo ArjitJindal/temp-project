@@ -136,6 +136,7 @@ export default function SuperAdminPanel() {
             </Tag>
           ),
         ];
+
         return {
           value: tenant.id,
           labelText: `${tenant.name} ${tenant.id} ${tenant.region} ${tenant.whitelabel?.name}`,
@@ -144,10 +145,15 @@ export default function SuperAdminPanel() {
               {tenant.name} {tags}
             </Space>
           ),
-          disabled: tenant.isProductionAccessDisabled ?? false,
+          disabled:
+            (tenant.isProductionAccessDisabled ||
+              (tenant.region &&
+                user.allowedRegions?.length &&
+                !user.allowedRegions.includes(tenant.region))) ??
+            false,
         };
       }),
-    [tenants],
+    [tenants, user.allowedRegions],
   );
 
   const handleChangeTenant = async (newTenantId: string) => {
