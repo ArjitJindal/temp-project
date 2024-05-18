@@ -160,7 +160,7 @@ class TableService:
             else:
                 print(f"Migrating table {table}")
             df_with_new_schema = self.spark.createDataFrame([], df.schema)
-            df_with_new_schema.write.format("delta").partitionBy(["date"]).mode(
+            df_with_new_schema.write.format("delta").partitionBy(["tenant", "date"]).mode(
                 mode
             ).option("mergeSchema", "true").option(
                 "overwriteSchema", "true"
