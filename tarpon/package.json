@@ -229,7 +229,7 @@
     "abortcontroller-polyfill": "^1.7.5",
     "ajv": "8.11.0",
     "auth0": "^4.2.0",
-    "aws-sdk": "^2.1587.0",
+    "aws-sdk": "2.1608.0",
     "aws-xray-sdk": "^3.5.0",
     "aws-xray-sdk-core": "^3.3.8",
     "axios": "^1.6.0",
