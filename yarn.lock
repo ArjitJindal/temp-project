@@ -1646,9 +1646,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.138.0":
-  version: 2.138.0
-  resolution: "aws-cdk-lib@npm:2.138.0"
+"aws-cdk-lib@npm:~2.139.0":
+  version: 2.139.1
+  resolution: "aws-cdk-lib@npm:2.139.1"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
@@ -1666,7 +1666,7 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: 5470694f37fa3c20d18c1e7e0068c336c38f776ee6d1bda886ce4da79ac3e7527e0d15982d7686c2452075c918f0b98dd6548b62f59bf97d4ca648a20fe18f34
+  checksum: 386a03c7e9b7f14a1671ea94948a7409177f9f22dc0f241448fa7a42252b5fde6b9eb632cb4fcaf9d1004b06bd87f43747a8c3e01ac44fc3d5c37929c1607c1a
   languageName: node
   linkType: hard
 
@@ -3281,7 +3281,7 @@ __metadata:
     "@tsconfig/node18": "npm:^18.2.1"
     "@types/lodash": "npm:^4.17.0"
     aws-cdk: "npm:~2.139.0"
-    aws-cdk-lib: "npm:~2.138.0"
+    aws-cdk-lib: "npm:~2.139.0"
     constructs: "npm:^10.3.0"
     husky: "npm:^8.0.1"
     lodash: "npm:^4.17.21"
