@@ -516,9 +516,11 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       casePriority: 'P1',
       parameters: {
         fuzziness: 20,
-        ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
         resolveIban: false,
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
       } as SanctionsCounterPartyRuleParameters,
       action: 'SUSPEND',
       checksFor: [
@@ -532,34 +534,44 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {
-          entityTypes: ['BANK_NAME'],
           fuzziness: 20,
-          ongoingScreening: false,
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          resolveIban: false,
         } as SanctionsCounterPartyRuleParameters,
         HIGH: {
           fuzziness: 20,
-          ongoingScreening: false,
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
+          resolveIban: false,
         } as SanctionsCounterPartyRuleParameters,
         MEDIUM: {
           fuzziness: 20,
-          ongoingScreening: false,
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
+          resolveIban: false,
         } as SanctionsCounterPartyRuleParameters,
         LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
+          resolveIban: false,
         } as SanctionsCounterPartyRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
+          resolveIban: false,
         } as SanctionsCounterPartyRuleParameters,
       },
       riskLevelActions: {
