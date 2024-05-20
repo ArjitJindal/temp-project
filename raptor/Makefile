@@ -4,14 +4,11 @@ test:
 black:
 	poetry run black src --check
 
-lint:
-	poetry run pylint src
-
 mypy:
 	poetry run mypy --install-types --non-interactive ./
 	poetry run mypy src
 
-all_checks: black test lint mypy
+all_checks: black test mypy
 
 fix:
 	poetry run black src

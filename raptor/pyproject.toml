@@ -11,6 +11,8 @@ numpy = "^1.26.4"
 pandas = "^2.2.2"
 seaborn = "^0.13.2"
 scikit-learn = "^1.4.2"
+boto3 = "^1.34.108"
+types-boto3 = "^1.0.2"
 
 [tool.poetry.dev-dependencies]
 coverage = "^6.4"
