@@ -10,9 +10,11 @@ import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { TransactionsVelocityRuleParameters } from '@/services/rules-engine/transaction-rules/transactions-velocity'
 import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
 import { LowValueTransactionsRuleParameters } from '@/services/rules-engine/transaction-rules/low-value-transactions-base'
+import { SanctionsCounterPartyRuleParameters } from '@/services/rules-engine/transaction-rules/sanctions-counterparty'
+import { RuleChecksForField } from '@/services/rules-engine/transaction-rules/library'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
-  return ruleInstances().find((ri) => (ri.id = ruleInstanceId)) as RuleInstance
+  return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
 }
 
 export const ruleInstances: () => RuleInstance[] = memoize(() => {
@@ -506,6 +508,77 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       types: [],
       typologies: [],
     } as RuleInstance,
+    {
+      id: 'R-169.1',
+      mode: 'LIVE_SYNC',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-169',
+      casePriority: 'P1',
+      parameters: {
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        resolveIban: false,
+      } as SanctionsCounterPartyRuleParameters,
+      action: 'SUSPEND',
+      checksFor: [
+        RuleChecksForField.CounterpartyUsername,
+        RuleChecksForField.CounterpartyBankName,
+      ],
+      type: 'TRANSACTION',
+      ruleNameAlias: 'Tx’s counterparty screening',
+      ruleDescriptionAlias:
+        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          entityTypes: ['BANK_NAME'],
+          fuzziness: 20,
+          ongoingScreening: false,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        } as SanctionsCounterPartyRuleParameters,
+        HIGH: {
+          fuzziness: 20,
+          ongoingScreening: false,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          entityTypes: ['BANK_NAME'],
+        } as SanctionsCounterPartyRuleParameters,
+        MEDIUM: {
+          fuzziness: 20,
+          ongoingScreening: false,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          entityTypes: ['BANK_NAME'],
+        } as SanctionsCounterPartyRuleParameters,
+        LOW: {
+          fuzziness: 20,
+          ongoingScreening: false,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          entityTypes: ['BANK_NAME'],
+        } as SanctionsCounterPartyRuleParameters,
+        VERY_LOW: {
+          fuzziness: 20,
+          ongoingScreening: false,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          entityTypes: ['BANK_NAME'],
+        } as SanctionsCounterPartyRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'SCREENING',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      runCount: 340,
+      hitCount: 240,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
   ]
 })
 
@@ -556,6 +629,7 @@ export const userRules: () => ExecutedRulesResult[] = memoize(() => {
               : { isFalsePositive: false, confidenceScore: 100 },
           hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
         },
+        isShadow: ri.mode === 'SHADOW_SYNC',
       })
     )
 })

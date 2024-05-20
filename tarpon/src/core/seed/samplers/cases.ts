@@ -110,7 +110,6 @@ export function sampleTransactionUserCases(params: {
   destination?: InternalBusinessUser | InternalConsumerUser
 }): Case[] {
   const { transactions, origin, destination } = params
-
   if (transactions.length === 0) {
     return []
   }
@@ -149,6 +148,7 @@ export function sampleTransactionUserCases(params: {
     const caseStatus = pickRandom(
       CASE_STATUSS.filter((s) => !isStatusInReview(s))
     )
+
     const reasons = randomSubset<CaseReasons>([
       'Anti-money laundering',
       'Documents collected',
@@ -218,21 +218,25 @@ export function sampleTransactionUserCases(params: {
       caseTransactionsIds: caseTransactions.map((t) => t.transactionId),
       alerts: ruleHits
         .filter((rh) => rh.nature === nature)
-        .map((ruleHit) =>
-          sampleAlert({
+        .map((ruleHit) => {
+          const ruleInstance = getRuleInstance(ruleHit.ruleInstanceId)
+
+          const alertTransactions =
+            ruleInstance.type === 'USER'
+              ? []
+              : caseTransactions.filter(
+                  (t) =>
+                    !!t.hitRules.find(
+                      (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
+                    )
+                )
+
+          return sampleAlert({
             caseId,
             ruleHit,
-            transactions:
-              ruleHit.nature === 'SCREENING'
-                ? []
-                : caseTransactions.filter(
-                    (t) =>
-                      !!t.hitRules.find(
-                        (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
-                      )
-                  ),
+            transactions: alertTransactions,
           })
-        ),
+        }),
     }
   }).filter((c) => c.alerts && c.alerts.length > 0)
 }
