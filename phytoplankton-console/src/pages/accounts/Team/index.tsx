@@ -269,12 +269,9 @@ export default function Team() {
     );
   }
 
-  const accounts = getOr(accountsResult.data, {
-    items: [],
-  }).items.filter((account) => {
-    account;
-  });
-
+  const accounts = getOr(accountsResult.data, { items: [] }).items.filter(
+    (account) => account !== null && account.id !== deletedUserId,
+  );
   return (
     <PageWrapperContentContainer>
       <QueryResultsTable<Account>
