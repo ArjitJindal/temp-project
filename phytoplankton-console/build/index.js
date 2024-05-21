@@ -95,7 +95,7 @@ async function main() {
   const heapInitNonce = `${crypto.randomBytes(16).toString('hex')}`;
   const csp = [
     `default-src 'self'`,
-    `script-src 'self' https://cdn.heapanalytics.com https://heapanalytics.com 'nonce-${heapInitNonce}' blob:`,
+    `script-src 'self' https://cdn.heapanalytics.com https://eu-assets.i.posthog.com https://heapanalytics.com 'nonce-${heapInitNonce}' blob:`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com`,
     `object-src 'none'`,
     `base-uri 'self'`,
