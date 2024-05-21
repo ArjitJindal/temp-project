@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
-import { cloneDeep, omit } from 'lodash'
+import { cloneDeep, omit, uniq } from 'lodash'
 import { StackConstants } from '../constants'
 
 type PathToLambda = { [key: string]: string }
@@ -44,6 +44,7 @@ function flattenAndDeRefAllOf(schema: any, schemas: any) {
     }
     return schema
   }
+
   if (schema.allOf) {
     const newSchema: any = {
       type: 'object',
@@ -70,6 +71,10 @@ function flattenAndDeRefAllOf(schema: any, schemas: any) {
         newSchema.required = (newSchema.required ?? []).concat(s.required)
       }
     }
+    newSchema.required = uniq([
+      ...(newSchema.required ?? []),
+      ...(schema.required ?? []),
+    ])
     return newSchema
   }
   return schema
@@ -263,12 +268,13 @@ export function getAugmentedOpenapi(
   }
 
   // Flatten allOf
-  for (const schemaKey in openapi.components.schemas) {
-    openapi.components.schemas[schemaKey] = flattenAndDeRefAllOf(
-      openapi.components.schemas[schemaKey],
-      openapi.components.schemas
-    )
-  }
-
+  openapi.components.schemas = flattenSchemas(openapi.components.schemas)
   return openapi
+}
+
+export function flattenSchemas(schemas: any) {
+  for (const schemaKey in schemas) {
+    schemas[schemaKey] = flattenAndDeRefAllOf(schemas[schemaKey], schemas)
+  }
+  return schemas
 }

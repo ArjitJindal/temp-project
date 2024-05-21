@@ -1,17 +1,12 @@
 #!/usr/bin/env node
-const fs = require('fs-extra')
-const path = require('path')
-const mkdirp = require('mkdirp')
-const _ = require('lodash')
+import path from 'path'
+import fs from 'fs-extra'
+import { pick } from 'lodash'
+import mkdirp from 'mkdirp'
+import { flattenSchemas } from '../../lib/openapi/openapi-augmentor-util'
+import { stringify, parse, localizeRefs, PROJECT_DIR } from './openapi_helpers'
 
-const {
-  PROJECT_DIR,
-  parse,
-  stringify,
-  localizeRefs,
-} = require('./openapi_helpers.js')
-
-async function prepareSchemas(OUTPUT_DIR) {
+async function prepareSchemas(OUTPUT_DIR: string) {
   try {
     const internalDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'internal')
     const publicDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'public')
@@ -68,10 +63,13 @@ async function prepareSchemas(OUTPUT_DIR) {
       internalSchemaYaml.components.schemas = {
         ...internalSchemaYaml.components.schemas,
         ...publicSchemaYaml.components.schemas,
-        ..._.pick(publicManagementSchemaYaml.components.schemas, [
+        ...pick(publicManagementSchemaYaml.components.schemas, [
           'ActionReason',
         ]),
       }
+      internalSchemaYaml.components.schemas = flattenSchemas(
+        internalSchemaYaml.components.schemas
+      )
       await fs.copy(internalDir, internalDirOutput)
       await fs.writeFile(
         path.resolve(internalDirOutput, 'openapi-internal-original.yaml'),
@@ -80,9 +78,12 @@ async function prepareSchemas(OUTPUT_DIR) {
     }
     {
       await fs.copy(publicDir, publicDirOutput)
+      publicSchemaYaml.components.schemas = flattenSchemas(
+        publicSchemaYaml.components.schemas
+      )
       await fs.writeFile(
         path.resolve(publicDirOutput, 'openapi-public-original.yaml'),
-        await stringify(publicSchemaYaml)
+        stringify(publicSchemaYaml)
       )
     }
     {
@@ -94,6 +95,9 @@ async function prepareSchemas(OUTPUT_DIR) {
         ...publicManagementSchemaYaml.components.schemas,
         ...publicSchemaYaml.components.schemas,
       }
+      publicManagementSchemaYaml.components.schemas = flattenSchemas(
+        publicManagementSchemaYaml.components.schemas
+      )
       await fs.writeFile(
         path.resolve(
           publicManagementDirOutput,

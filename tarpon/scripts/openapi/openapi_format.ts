@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const path = require('path')
-const { reformatFile, PROJECT_DIR } = require('./openapi_helpers.js')
+import path from 'path'
+import { reformatFile, PROJECT_DIR } from './openapi_helpers'
 
 async function main() {
   try {
@@ -36,7 +36,7 @@ async function main() {
   }
 }
 
-main().catch((e) => {
+void main().catch((e) => {
   console.error(e)
   process.exit(1)
 })

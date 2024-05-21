@@ -1,31 +1,47 @@
-const fs = require('fs-extra')
-const yaml = require('yaml')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
+import yaml, {
+  CreateNodeOptions,
+  DocumentOptions,
+  ParseOptions,
+  SchemaOptions,
+  ToStringOptions,
+} from 'yaml'
 
 const PROJECT_DIR = path.resolve(__dirname, '..', '..')
 
-const formatOptions = {
+type FormatOptions = DocumentOptions &
+  SchemaOptions &
+  ParseOptions &
+  CreateNodeOptions &
+  ToStringOptions
+
+const formatOptions: FormatOptions = {
   defaultKeyType: 'PLAIN',
   defaultStringType: 'PLAIN',
   singleQuote: true,
   lineWidth: 80,
 }
 
-function stringify(obj) {
+function stringify(obj: any) {
   return yaml.stringify(obj, formatOptions)
 }
 
-function parse(obj) {
+function parse(obj: string) {
   return yaml.parse(obj)
 }
 
-function reformat(text) {
+function reformat(text: string) {
   return stringify(parse(text))
 }
 
 async function reformatFile(file) {
-  const text = (await fs.readFileSync(file)).toString()
-  await fs.writeFile(file, reformat(text))
+  const text = fs.readFileSync(file).toString()
+  fs.writeFile(file, reformat(text), (err: any) => {
+    if (err) {
+      console.error(err)
+    }
+  })
 }
 
 async function localizeRefs(tree) {
@@ -34,7 +50,7 @@ async function localizeRefs(tree) {
     if (!match) {
       return ref
     }
-    const [_, file, path] = match
+    const [_, _file, path] = match
 
     // todo: parse referenced file and resolve model by path
     return `#${path}`
@@ -64,11 +80,4 @@ async function localizeRefs(tree) {
   return await traverse(tree)
 }
 
-module.exports = {
-  PROJECT_DIR,
-  stringify,
-  parse,
-  reformat,
-  reformatFile,
-  localizeRefs,
-}
+export { reformatFile, localizeRefs, stringify, parse, reformat, PROJECT_DIR }
