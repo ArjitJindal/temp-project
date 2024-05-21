@@ -83,7 +83,7 @@ class DataTransformation:
             f"Applying preprocessing object on training dataframe and testing dataframe."
         )
 
-        input_feature_train_arr = preprocessor.fit_transform(train_path)
+        input_feature_train_arr = preprocessor.fit_transform(train_df)
         input_feature_test_arr = preprocessor.transform(test_df)
 
         os.makedirs(
