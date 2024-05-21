@@ -90,6 +90,7 @@ export async function cursorPaginate<T extends Document>(
   last: string
   count: number
   limit: number
+  pageSize: number
 }> {
   const field = query.sortField || '_id'
   const fromRaw: any = query.fromCursorKey || ''
@@ -197,6 +198,7 @@ export async function cursorPaginate<T extends Document>(
     hasPrev,
     count: await count,
     limit: COUNT_QUERY_LIMIT,
+    pageSize: query.pageSize,
   }
 }
 

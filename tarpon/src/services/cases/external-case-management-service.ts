@@ -14,12 +14,22 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { PaymentEntityDetails } from '@/@types/openapi-public-management/PaymentEntityDetails'
 import { traceable } from '@/core/xray'
 import { statusEscalated } from '@/utils/helpers'
+import { DefaultApiGetCasesRequest } from '@/@types/openapi-public-management/RequestParameters'
+import { CasesListResponse } from '@/@types/openapi-public-management/CasesListResponse'
+import { getStatuses } from '@/utils/case'
+import { cursorPaginate, DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { Status } from '@/@types/openapi-public-management/Status'
+import { Priority } from '@/@types/openapi-public-management/Priority'
+import { CaseType } from '@/@types/openapi-internal/CaseType'
 
 @traceable
 export class ExternalCaseManagementService {
   private caseRepository: CaseRepository
   private userRepository: UserRepository
   private casesTransformer: CasesAlertsTransformer
+  private tenantId: string
+  private mongoDb: MongoClient
 
   constructor(
     tenantId: string,
@@ -28,6 +38,8 @@ export class ExternalCaseManagementService {
     this.caseRepository = new CaseRepository(tenantId, connections)
     this.userRepository = new UserRepository(tenantId, connections)
     this.casesTransformer = new CasesAlertsTransformer(tenantId, connections)
+    this.tenantId = tenantId
+    this.mongoDb = connections.mongoDb
   }
 
   private async validateCaseCreationRequest(
@@ -270,5 +282,104 @@ export class ExternalCaseManagementService {
     }
 
     return await this.transformInternalCaseToExternalCase(updatedCase)
+  }
+
+  public validateAndTransformGetCasesRequest(
+    queryObj: Record<string, string | undefined>
+  ): DefaultApiGetCasesRequest {
+    if (queryObj.filterAfterCreatedTimestamp) {
+      const afterTimestamp = Number(queryObj.filterAfterCreatedTimestamp)
+
+      if (isNaN(afterTimestamp)) {
+        throw new createHttpError.BadRequest(
+          `Invalid filterAfterCreatedTimestamp: ${queryObj.filterAfterCreatedTimestamp}. Please provide a valid timestamp`
+        )
+      }
+    }
+
+    if (queryObj.filterBeforeCreatedTimestamp) {
+      const beforeTimestamp = Number(queryObj.filterBeforeCreatedTimestamp)
+
+      if (isNaN(beforeTimestamp)) {
+        throw new createHttpError.BadRequest(
+          `Invalid filterBeforeCreatedTimestamp: ${queryObj.filterBeforeCreatedTimestamp}. Please provide a valid timestamp`
+        )
+      }
+    }
+
+    if (queryObj.pageSize) {
+      const pageSize = Number(queryObj.pageSize)
+
+      if (isNaN(pageSize)) {
+        throw new createHttpError.BadRequest(
+          `Invalid pageSize: ${queryObj.pageSize}. Please provide a valid number`
+        )
+      }
+
+      if (pageSize > 100) {
+        throw new createHttpError.BadRequest(
+          `Invalid pageSize: ${queryObj.pageSize}. Maximum allowed page size is 100`
+        )
+      }
+    }
+
+    return {
+      filterAfterCreatedTimestamp: queryObj.filterAfterCreatedTimestamp
+        ? Number(queryObj.filterAfterCreatedTimestamp)
+        : undefined,
+      filterBeforeCreatedTimestamp: queryObj.filterBeforeCreatedTimestamp
+        ? Number(queryObj.filterBeforeCreatedTimestamp)
+        : undefined,
+      filterCaseStatus: queryObj.filterCaseStatus
+        ? (queryObj.filterCaseStatus.split(',') as Status[])
+        : undefined,
+      filterPriority: queryObj.filterPriority as Priority,
+      filterCaseSource: queryObj.filterCaseSource
+        ? (queryObj.filterCaseSource.split(',') as CaseType[])
+        : undefined,
+      pageSize: queryObj.pageSize
+        ? Number(queryObj.pageSize)
+        : DEFAULT_PAGE_SIZE,
+      sortBy: queryObj.sortBy as DefaultApiGetCasesRequest['sortBy'],
+      sortOrder: queryObj.sortOrder as DefaultApiGetCasesRequest['sortOrder'],
+      start: queryObj.start,
+    }
+  }
+
+  public async getCases(
+    query: DefaultApiGetCasesRequest
+  ): Promise<CasesListResponse> {
+    const casesCondition = await this.caseRepository.getCasesConditions({
+      filterCaseStatus: getStatuses(query.filterCaseStatus),
+      pageSize: query.pageSize,
+      afterTimestamp: query.filterAfterCreatedTimestamp,
+      beforeTimestamp: query.filterBeforeCreatedTimestamp,
+      filterPriority: query.filterPriority,
+      filterCaseTypes: query.filterCaseSource,
+    })
+
+    const db = this.mongoDb.db()
+
+    const data = await cursorPaginate<CaseInternal>(
+      db.collection(CASES_COLLECTION(this.tenantId)),
+      casesCondition[0],
+      {
+        pageSize: query.pageSize ?? DEFAULT_PAGE_SIZE,
+        fromCursorKey: query.start,
+        sortField: query.sortBy || 'createdTimestamp',
+        sortOrder: query.sortOrder === 'asc' ? 'ascend' : 'descend',
+      }
+    )
+
+    const casesItems = await Promise.all(
+      data.items.map((item) => this.transformInternalCaseToExternalCase(item))
+    )
+
+    delete (data as any)?.limit
+
+    return {
+      ...data,
+      items: casesItems,
+    }
   }
 }

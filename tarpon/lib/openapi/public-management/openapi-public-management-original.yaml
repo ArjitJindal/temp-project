@@ -350,6 +350,85 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseCreationRequest'
+    get:
+      security:
+        - x-api-key: []
+      summary: Case - List
+      operationId: get-cases
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CasesListResponse'
+      parameters:
+        - schema:
+            type: string
+          name: start
+          in: query
+          required: false
+        - schema:
+            type: number
+            minimum: 1
+            maximum: 100
+          name: pageSize
+          in: query
+          required: false
+        - schema:
+            type: string
+            enum:
+              - createdTimestamp
+              - updatedAt
+              - caseId
+              - priority
+          name: sortBy
+          in: query
+          required: false
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          name: sortOrder
+          in: query
+          required: false
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Status'
+          name: filterCaseStatus
+          in: query
+          required: false
+        - schema:
+            $ref: '#/components/schemas/Priority'
+          name: filterPriority
+          in: query
+          required: false
+        - schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MANUAL
+                - SYSTEM
+                - EXTERNAL
+          name: filterCaseSource
+          in: query
+          required: false
+        - schema:
+            type: number
+          name: filterAfterCreatedTimestamp
+          in: query
+          required: false
+        - schema:
+            type: number
+          name: filterBeforeCreatedTimestamp
+          in: query
+          required: false
+      description: '### Retrieve Cases'
   /cases/{caseId}:
     parameters:
       - schema:
@@ -915,6 +994,29 @@ components:
         - updatedAt
         - caseId
         - ruleDetails
+    CasesListResponse:
+      title: CasesListResponse
+      type: object
+      description: ''
+      properties:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
+          type: number
+        pageSize:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Case'
     AlertRuleDetails:
       title: AlertRuleDetails
       type: object

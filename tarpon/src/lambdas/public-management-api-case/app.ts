@@ -10,6 +10,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { ExternalCaseManagementService } from '@/services/cases/external-case-management-service'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { DefaultApiGetCasesRequest } from '@/@types/openapi-public-management/RequestParameters'
 
 export const caseHandler = lambdaApi()(
   async (
@@ -62,7 +63,15 @@ export const caseHandler = lambdaApi()(
       }
 
       return await caseService.updateCase(caseId, payload)
+    } else if (event.httpMethod === 'GET' && event.resource === '/cases') {
+      const query: DefaultApiGetCasesRequest =
+        caseService.validateAndTransformGetCasesRequest(
+          event.queryStringParameters || {}
+        )
+
+      return await caseService.getCases(query)
     }
+
     throw new createHttpError.NotFound('Resource not found')
   }
 )

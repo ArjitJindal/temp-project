@@ -143,6 +143,44 @@ describe('Test Create Case', () => {
     )
   })
 
+  test('Get cases', async () => {
+    const response = await caseHandler(
+      getApiGatewayGetEvent(tenantId, '/cases', {}),
+      null as any,
+      null as any
+    )
+
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      hasNext: false,
+      hasPrev: false,
+      count: 1,
+      items: [
+        {
+          caseId: 'CA-1',
+          entityDetails: {
+            type: 'PAYMENT',
+            paymentDetails: {
+              method: 'WALLET',
+              walletType: 'PAYTM',
+            },
+          },
+          priority: 'P2',
+          createdTimestamp: expect.any(Number),
+          assignments: [],
+          updatedAt: expect.any(Number),
+          tags: [],
+          caseStatus: 'OPEN',
+          creationReason: null,
+        },
+      ],
+      last: '',
+      next: '',
+      prev: '',
+      pageSize: 20,
+    })
+  })
+
   test('Get case by id', async () => {
     const response = await caseHandler(
       getApiGatewayGetEvent(tenantId, '/cases/{caseId}', {
