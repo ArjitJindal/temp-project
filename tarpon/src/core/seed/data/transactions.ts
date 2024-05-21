@@ -32,7 +32,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
-  : 50
+  : 200
 
 const generator = function* (): Generator<InternalTransaction> {
   const userTransactionMap = new Map<string, string[]>()
@@ -55,6 +55,7 @@ const generator = function* (): Generator<InternalTransaction> {
       randomNumberGenerator() < 0.75
         ? randomTransactionRules()
         : transactionRules().filter((r) => r.ruleAction === 'SUSPEND')
+
     const randomHitRules = hitRules.map((hitRule) => {
       if (hitRule.ruleHitMeta?.falsePositiveDetails?.isFalsePositive === true) {
         const modifiedHitRule = {

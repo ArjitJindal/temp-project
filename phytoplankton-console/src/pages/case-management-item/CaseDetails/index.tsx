@@ -61,6 +61,7 @@ import Avatar from '@/components/library/Avatar';
 import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
+import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 
 interface Props {
   caseItem: Case;
@@ -70,8 +71,11 @@ interface Props {
 }
 
 interface CommentsHandlers {
-  handleAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
-  onCommentAdded: (newComment: ApiComment) => void;
+  handleAddComment: (
+    commentFormValues: CommentEditorFormValues,
+    groupId: string,
+  ) => Promise<ApiComment>;
+  onCommentAdded: (newComment: ApiComment, groupId: string) => void;
 }
 
 function CaseDetails(props: Props) {
@@ -181,8 +185,8 @@ export function useTabs(
         throw new Error(`Case is is null`);
       }
       const { commentId, groupId } = variables;
-      if (groupId.startsWith('alert-')) {
-        const parentId = groupId.replace('alert-', '');
+      if (groupId.startsWith(ALERT_GROUP_PREFIX)) {
+        const parentId = groupId.replace(ALERT_GROUP_PREFIX, '');
         await api.deleteAlertsComment({ alertId: parentId, commentId });
       } else {
         await api.deleteCasesCaseIdCommentsCommentId({ caseId: caseItem.caseId, commentId });
@@ -192,8 +196,8 @@ export function useTabs(
       onSuccess: (data, variables) => {
         message.success('Comment deleted!');
         const { commentId, groupId } = variables;
-        if (groupId.startsWith('alert-')) {
-          const alertId = groupId.replace('alert-', '');
+        if (groupId.startsWith(ALERT_GROUP_PREFIX)) {
+          const alertId = groupId.replace(ALERT_GROUP_PREFIX, '');
           queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
             if (!alert) {
               return undefined;

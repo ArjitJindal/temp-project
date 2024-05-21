@@ -17,7 +17,7 @@ import { CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 interface Props {
   caseItem: Case;
   onReload: () => void;
-  onCommentAdded: (newComment: Comment) => void;
+  onCommentAdded: (newComment: Comment, groupId: string) => void;
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
 }
 
@@ -101,7 +101,9 @@ export default function Header(props: Props) {
       ]}
       buttons={[
         <CommentButton
-          onSuccess={onCommentAdded}
+          onSuccess={(newComment) => {
+            onCommentAdded(newComment, caseId ?? '');
+          }}
           submitRequest={async (commentFormValues) => {
             if (caseId == null) {
               throw new Error(`Case ID is not defined`);

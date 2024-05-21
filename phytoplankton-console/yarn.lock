@@ -17314,6 +17314,7 @@ __metadata:
     pluralize: "npm:^8.0.0"
     postcss: "npm:^8.4.14"
     postcss-less: "npm:^6.0.0"
+    posthog-js: "npm:^1.131.4"
     prettier: "npm:^2.7.1"
     prompts: "npm:^2.4.2"
     puppeteer-core: "npm:^8.0.0"
@@ -17614,10 +17615,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"posthog-js@npm:^1.131.4":
+  version: 1.131.4
+  resolution: "posthog-js@npm:1.131.4"
+  dependencies:
+    fflate: "npm:^0.4.8"
+    preact: "npm:^10.19.3"
+  checksum: d12f742a4a7614b202e65f5762dc575254eaa35181d5d35a3199b1ff38f4d4f96151908a91e010737ef7e40d44c162ae891828edc169800e5ef4760bbf44a7e8
+  languageName: node
+  linkType: hard
+
 "potpack@npm:^1.0.1":
   version: 1.0.2
   resolution: "potpack@npm:1.0.2"
   checksum: 670c23898a4257130858b960c2e654d3327c0f6a7e7091ff5846f213e65af8f9476320b995b8ad561a47a4d1c359c7ef347de57d22e7b02597051abb52bc85c4
+  languageName: node
+  linkType: hard
+
+"preact@npm:^10.19.3":
+  version: 10.22.0
+  resolution: "preact@npm:10.22.0"
+  checksum: dc5466c5968c56997e917580c00983cec2f6486a89ea9ba29f1bb88dcfd2f9ff67c8d561a69a1b3acdab17f2bb36b311fef0c348b62e89c332d00c674f7871f0
   languageName: node
   linkType: hard
 

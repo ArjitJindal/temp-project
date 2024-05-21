@@ -2,6 +2,7 @@ import { chunk, groupBy, mapValues } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { cleanUpStaleQaEnvs } from '@lib/qa-cleanup'
+import { isQaEnv } from '@flagright/lib/qa'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantInfo, TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -16,7 +17,9 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   )
 
   try {
-    await createApiUsageJobs(tenantInfos)
+    if (!isQaEnv()) {
+      await createApiUsageJobs(tenantInfos)
+    }
   } catch (e) {
     logger.error(`Failed to create API usage jobs: ${(e as Error)?.message}`, e)
   }

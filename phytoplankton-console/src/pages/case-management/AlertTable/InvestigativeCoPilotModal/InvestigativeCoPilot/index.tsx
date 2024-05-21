@@ -155,12 +155,18 @@ export default function InvestigativeCoPilot(props: Props) {
             alertId: alertId,
           })
           .then((response) => {
-            const [parsedResponse] = parseQuestionResponse(response);
-            setHistory((items) =>
-              items.map((x) =>
-                x.questionType === 'SKELETON' && x.requestId === requestId ? parsedResponse : x,
-              ),
-            );
+            const parsedResponses = parseQuestionResponse(response);
+            setHistory((items) => {
+              const result: (QuestionResponse | QuestionResponseSkeleton)[] = [];
+              for (const x of items) {
+                if (x.questionType === 'SKELETON' && x.requestId === requestId) {
+                  result.push(...parsedResponses);
+                } else {
+                  result.push(x);
+                }
+              }
+              return result;
+            });
           })
           .catch((error) => {
             setHistory((items) =>
