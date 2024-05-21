@@ -12,7 +12,11 @@ import { TransactionAmountRuleParameters } from '../transaction-rules/transactio
 import { TransactionMatchesPatternRuleParameters } from '../transaction-rules/transaction-amount-pattern'
 import { TransactionsVolumeRuleParameters } from '../transaction-rules/transactions-volume'
 import { TransactionReferenceKeywordRuleParameters } from '../transaction-rules/transaction-reference-keyword'
-import { getFiltersConditions, migrateCheckDirectionParameters } from './utils'
+import {
+  getFiltersConditions,
+  getHistoricalFilterConditions,
+  migrateCheckDirectionParameters,
+} from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
@@ -38,11 +42,11 @@ export function getMigratedV8Config(
     }
   }
   const historicalFilters = pickBy(filters, (_value, key) =>
-    key.endsWith('Historical')
+    key.includes('Historical')
   ) as TransactionHistoricalFilters
   let result
   if (migrationFunc) {
-    result = migrationFunc(parameters, historicalFilters)
+    result = migrationFunc(parameters)
   }
   const {
     filterConditions,
@@ -88,23 +92,43 @@ export function getMigratedV8Config(
       alertCreationDirection: filtersAlertCreationDirection,
     }
   }
+  if (result?.logicAggregationVariables) {
+    const {
+      conditions: historicalFilterConditions,
+      baseCurrency: filtersCurrency,
+    } = getHistoricalFilterConditions(historicalFilters)
+    if (historicalFilterConditions.length > 0) {
+      result.logicAggregationVariables = result.logicAggregationVariables.map(
+        (v) => {
+          return {
+            ...v,
+            baseCurrency: v.baseCurrency ?? (filtersCurrency as CurrencyCode),
+            filtersLogic: {
+              and: [
+                v.filtersLogic ?? true,
+                { and: historicalFilterConditions },
+              ],
+            },
+          }
+        }
+      )
+    }
+  }
+
   return result
 }
 
 const V8_CONVERSION: {
-  [ruleId: string]: (
-    parameters: any,
-    filters: TransactionHistoricalFilters
-  ) => {
+  [ruleId: string]: (parameters: any) => {
     logic: object
     logicAggregationVariables: RuleAggregationVariable[]
     alertCreationDirection?: AlertCreationDirection
     baseCurrency?: CurrencyCode
   }
 } = {
-  'R-30': (parameters: TransactionsVelocityRuleParameters, filters) => {
+  'R-30': (parameters: TransactionsVelocityRuleParameters) => {
     const { logicAggregationVariables, alertCreationDirection } =
-      migrateCheckDirectionParameters('COUNT', parameters, filters)
+      migrateCheckDirectionParameters('COUNT', parameters)
     const conditions: any[] = []
     if (logicAggregationVariables.length === 1) {
       const v = logicAggregationVariables[0]
@@ -172,22 +196,18 @@ const V8_CONVERSION: {
     }
   },
 
-  'R-5': (parameters: FirstActivityAfterLongTimeRuleParameters, filters) => {
+  'R-5': (parameters: FirstActivityAfterLongTimeRuleParameters) => {
     const { dormancyPeriodDays, checkDirection = 'all' } = parameters
     const aggregationVariable: RuleAggregationVariable[] =
-      migrateCheckDirectionParameters(
-        'COUNT',
-        {
-          timeWindow: {
-            granularity: 'day',
-            units: dormancyPeriodDays,
-            rollingBasis: true,
-          },
-          checkSender: checkDirection,
-          checkReceiver: 'none',
+      migrateCheckDirectionParameters('COUNT', {
+        timeWindow: {
+          granularity: 'day',
+          units: dormancyPeriodDays,
+          rollingBasis: true,
         },
-        filters
-      ).logicAggregationVariables
+        checkSender: checkDirection,
+        checkReceiver: 'none',
+      }).logicAggregationVariables
 
     const conditions: any[] = []
 
@@ -218,12 +238,9 @@ const V8_CONVERSION: {
       alertCreationDirection: 'ORIGIN',
     }
   },
-  'R-77': (
-    parameters: TooManyTransactionsToHighRiskCountryRuleParameters,
-    filters
-  ) => {
+  'R-77': (parameters: TooManyTransactionsToHighRiskCountryRuleParameters) => {
     const { logicAggregationVariables, alertCreationDirection } =
-      migrateCheckDirectionParameters('COUNT', parameters, filters)
+      migrateCheckDirectionParameters('COUNT', parameters)
 
     const conditions: any[] = []
     if (logicAggregationVariables.length === 1) {
@@ -440,11 +457,11 @@ const V8_CONVERSION: {
       baseCurrency: 'USD',
     }
   },
-  'R-69': (parameters: TransactionsVolumeRuleParameters, filters) => {
+  'R-69': (parameters: TransactionsVolumeRuleParameters) => {
     const {
       logicAggregationVariables: amountLogicAggregationVariables,
       alertCreationDirection,
-    } = migrateCheckDirectionParameters('AMOUNT', parameters, filters)
+    } = migrateCheckDirectionParameters('AMOUNT', parameters)
 
     const [currency, lowerThreshold] = Object.entries(
       parameters.transactionVolumeThreshold
@@ -493,7 +510,7 @@ const V8_CONVERSION: {
     }
     if (parameters.initialTransactions) {
       const { logicAggregationVariables: countLogicAggregationVariables } =
-        migrateCheckDirectionParameters('COUNT', parameters, filters)
+        migrateCheckDirectionParameters('COUNT', parameters)
       countLogicAggregationVariables[0].key = 'agg:count'
       logicAggregationVariables = logicAggregationVariables.concat(
         countLogicAggregationVariables

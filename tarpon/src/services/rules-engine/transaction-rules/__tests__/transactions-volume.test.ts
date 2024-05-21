@@ -1109,9 +1109,7 @@ ruleVariantsTest({ aggregation: true, v8: true }, () => {
   })
 })
 
-// Run filter tests only for V2, To revert this after FR-4603
-
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   /**
    * Transaction rule filters
    */
@@ -1437,7 +1435,7 @@ ruleVariantsTest({ aggregation: true }, () => {
               utcMinutes: 0,
             },
             endTime: {
-              utcHours: 1,
+              utcHours: 2,
               utcMinutes: 30,
             },
           },

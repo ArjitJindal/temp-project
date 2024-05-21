@@ -1,5 +1,8 @@
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
-import { TimeWindow } from '../utils/rule-parameter-schemas'
+import {
+  TimeWindow,
+  TransactionTimeRange,
+} from '../utils/rule-parameter-schemas'
 import { PaymentRuleFiltersChildParameters } from '../transaction-filters/payment-filters-base'
 import { RuleAggregationFunc } from '@/@types/openapi-internal/RuleAggregationFunc'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
@@ -21,8 +24,7 @@ export function migrateCheckDirectionParameters(
     checkReceiver?: 'receiving' | 'all' | 'none'
     originMatchPaymentMethodDetails?: boolean
     destinationMatchPaymentMethodDetails?: boolean
-  },
-  _historicalFilters: TransactionHistoricalFilters
+  }
 ): {
   logicAggregationVariables: RuleAggregationVariable[]
   alertCreationDirection: AlertCreationDirection
@@ -128,8 +130,6 @@ export function migrateCheckDirectionParameters(
     alertCreationDirection = 'AUTO_DESTINATION'
   }
 
-  // TODO (V8): Apply historicalFilters to logicAggregationVariables
-
   return {
     logicAggregationVariables,
     alertCreationDirection,
@@ -149,6 +149,7 @@ export function getFiltersConditions(filters: LegacyFilters): {
     )
     conditions.push(...originPaymentCondtions)
   }
+
   if (filters.destinationPaymentFilters) {
     const destinationPaymentCondtions = paymentFilters(
       filters.destinationPaymentFilters,
@@ -166,42 +167,28 @@ export function getFiltersConditions(filters: LegacyFilters): {
       ],
     })
   }
-  if (filters.transactionStates && filters.transactionStates.length > 0) {
-    conditions.push({
-      in: [
-        {
-          var: 'TRANSACTION:transactionState',
-        },
-        filters.transactionStates,
-      ],
-    })
-  }
+
   if (
     filters.originTransactionCountries &&
     filters.originTransactionCountries.length > 0
   ) {
-    console.log('called')
-    conditions.push({
-      in: [
-        {
-          var: 'TRANSACTION:originAmountDetails-country',
-        },
-        filters.originTransactionCountries,
-      ],
-    })
+    conditions.push(
+      transactionCountryFilterConditions(
+        'origin',
+        filters.originTransactionCountries
+      )
+    )
   }
   if (
     filters.destinationTransactionCountries &&
     filters.destinationTransactionCountries.length > 0
   ) {
-    conditions.push({
-      in: [
-        {
-          var: 'TRANSACTION:destinationAmountDetails-country',
-        },
-        filters.destinationTransactionCountries,
-      ],
-    })
+    conditions.push(
+      transactionCountryFilterConditions(
+        'destination',
+        filters.destinationTransactionCountries
+      )
+    )
   }
   if (filters.transactionAmountRange) {
     const amountCondition: { and: any[] } = { and: [] }
@@ -231,6 +218,16 @@ export function getFiltersConditions(filters: LegacyFilters): {
           var: 'TRANSACTION:productType',
         },
         filters.productTypes,
+      ],
+    })
+  }
+  if (filters.transactionStates && filters.transactionStates.length > 0) {
+    conditions.push({
+      in: [
+        {
+          var: 'TRANSACTION:transactionState',
+        },
+        filters.transactionStates,
       ],
     })
   }
@@ -271,17 +268,10 @@ export function getFiltersConditions(filters: LegacyFilters): {
     }
   }
   if (filters.transactionTimeRange24hr) {
-    const { startTime, endTime } = filters.transactionTimeRange24hr
-    conditions.push({
-      'op:between_time': [
-        {
-          var: 'TRANSACTION:time',
-        },
-        startTime.utcHours * 3600 + startTime.utcMinutes * 60,
-        endTime.utcHours * 3600 + endTime.utcMinutes * 60,
-      ],
-    })
+    const timeRange = filters.transactionTimeRange24hr
+    conditions.push(transactionTimeRangeFilterConditions(timeRange))
   }
+
   if (
     filters.userResidenceCountries &&
     filters.userResidenceCountries.length > 0
@@ -1073,4 +1063,125 @@ const paymentFilters = (
     })
   }
   return conditions
+}
+
+const transactionCountryFilterConditions = (
+  direction: 'origin' | 'destination',
+  countries: string[]
+) => {
+  return {
+    in: [
+      {
+        var: `TRANSACTION:${direction}AmountDetails-country`,
+      },
+      countries,
+    ],
+  }
+}
+
+const transactionTimeRangeFilterConditions = (
+  timeRange: TransactionTimeRange
+) => {
+  return {
+    'op:between_time': [
+      {
+        var: 'TRANSACTION:time',
+      },
+      timeRange.startTime.utcHours * 3600 + timeRange.startTime.utcMinutes * 60,
+      timeRange.endTime.utcHours * 3600 + timeRange.endTime.utcMinutes * 60,
+    ],
+  }
+}
+
+export const getHistoricalFilterConditions = (
+  filters: TransactionHistoricalFilters
+) => {
+  const conditions: any[] = []
+  if (filters.transactionTimeRangeHistorical24hr) {
+    const timeRange = filters.transactionTimeRangeHistorical24hr
+    conditions.push(transactionTimeRangeFilterConditions(timeRange))
+  }
+  if (filters.paymentMethodsHistorical) {
+    const paymentMethodHistoricalConditions = paymentFilters(
+      { paymentMethods: filters.paymentMethodsHistorical },
+      'origin'
+    )
+    paymentMethodHistoricalConditions.push(
+      ...paymentFilters(
+        { paymentMethods: filters.paymentMethodsHistorical },
+        'destination'
+      )
+    )
+    conditions.push({ or: paymentMethodHistoricalConditions })
+  }
+  if (filters.transactionAmountRangeHistorical) {
+    const amountCondition: { and: any[] } = { and: [] }
+    const { min, max } = Object.values(
+      filters.transactionAmountRangeHistorical
+    )[0]
+    if (min) {
+      amountCondition.and.push({
+        '>=': [
+          { var: 'TRANSACTION:amountDetails-transactionAmount__BOTH' },
+          min,
+        ],
+      })
+    }
+    if (max) {
+      amountCondition.and.push({
+        '<': [
+          { var: 'TRANSACTION:amountDetails-transactionAmount__BOTH' },
+          max,
+        ],
+      })
+    }
+    conditions.push(amountCondition)
+  }
+
+  if (
+    filters.transactionTypesHistorical &&
+    filters.transactionTypesHistorical.length > 0
+  ) {
+    conditions.push({
+      in: [
+        {
+          var: 'TRANSACTION:type',
+        },
+        filters.transactionTypesHistorical,
+      ],
+    })
+  }
+  if (
+    filters.transactionStatesHistorical &&
+    filters.transactionStatesHistorical.length > 0
+  ) {
+    conditions.push({
+      in: [
+        {
+          var: 'TRANSACTION:transactionState',
+        },
+        filters.transactionStatesHistorical,
+      ],
+    })
+  }
+  if (filters.transactionCountriesHistorical) {
+    conditions.push({
+      or: [
+        transactionCountryFilterConditions(
+          'origin',
+          filters.transactionCountriesHistorical
+        ),
+        transactionCountryFilterConditions(
+          'destination',
+          filters.transactionCountriesHistorical
+        ),
+      ],
+    })
+  }
+  return {
+    conditions: conditions,
+    baseCurrency: Object.keys(
+      filters?.transactionAmountRangeHistorical ?? {}
+    )[0],
+  }
 }
