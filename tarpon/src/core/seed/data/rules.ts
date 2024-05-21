@@ -12,13 +12,14 @@ import { TransactionAmountRuleParameters } from '@/services/rules-engine/transac
 import { LowValueTransactionsRuleParameters } from '@/services/rules-engine/transaction-rules/low-value-transactions-base'
 import { SanctionsCounterPartyRuleParameters } from '@/services/rules-engine/transaction-rules/sanctions-counterparty'
 import { RuleChecksForField } from '@/services/rules-engine/transaction-rules/library'
+import { envIs } from '@/utils/env'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
   return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
 }
 
 export const ruleInstances: () => RuleInstance[] = memoize(() => {
-  return [
+  const data = [
     {
       id: 'e8c3b853',
       mode: 'LIVE_SYNC',
@@ -230,85 +231,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       types: [],
       typologies: [],
     } as RuleInstance,
-    {
-      id: 'a45615ad-1',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
-      mode: 'LIVE_SYNC',
-      ruleId: 'R-30',
-      casePriority: 'P1',
-      checksFor: ['No. of transactions', 'Time'],
-      parameters: {
-        transactionsLimit: 10,
-        timeWindow: {
-          units: 1,
-          granularity: 'day',
-        },
-        uniqueUsersCountThreshold: 10,
-      } as TransactionsVelocityRuleParameters,
-      action: 'FLAG',
-      type: 'TRANSACTION',
-      ruleNameAlias: 'High velocity user',
-      ruleDescriptionAlias: 'High velocity user',
-      filters: {},
-      riskLevelParameters: {
-        VERY_HIGH: {
-          transactionsLimit: 10,
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-          uniqueUsersCountThreshold: 10,
-        } as TransactionsVelocityRuleParameters,
-        HIGH: {
-          transactionsLimit: 10,
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-          uniqueUsersCountThreshold: 10,
-        } as TransactionsVelocityRuleParameters,
-        MEDIUM: {
-          transactionsLimit: 10,
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-          uniqueUsersCountThreshold: 10,
-        } as TransactionsVelocityRuleParameters,
-        LOW: {
-          transactionsLimit: 10,
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-          uniqueUsersCountThreshold: 10,
-        } as TransactionsVelocityRuleParameters,
-        VERY_LOW: {
-          transactionsLimit: 10,
-          timeWindow: {
-            units: 1,
-            granularity: 'day',
-          },
-          uniqueUsersCountThreshold: 10,
-        } as TransactionsVelocityRuleParameters,
-      },
-      riskLevelActions: {
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-        VERY_LOW: 'FLAG',
-      },
-      nature: 'AML',
-      labels: [],
-      status: 'ACTIVE',
-      createdAt: 1685604282954,
-      updatedAt: 1688114634781,
-      runCount: 1848,
-      hitCount: 1434,
-      types: [],
-      typologies: [],
-    },
     {
       id: '2i3nflkd',
       mode: 'LIVE_SYNC',
@@ -591,7 +513,92 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       types: [],
       typologies: [],
     } as RuleInstance,
+    {
+      id: 'a45615ad-1',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      mode: 'LIVE_SYNC',
+      ruleId: 'R-30',
+      casePriority: 'P1',
+      checksFor: ['No. of transactions', 'Time'],
+      parameters: {
+        transactionsLimit: 10,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+        },
+        uniqueUsersCountThreshold: 10,
+      } as TransactionsVelocityRuleParameters,
+      action: 'FLAG',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'High velocity user',
+      ruleDescriptionAlias: 'High velocity user',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+        HIGH: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+        MEDIUM: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+        LOW: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+        VERY_LOW: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      runCount: 1848,
+      hitCount: 1434,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
   ]
+
+  if (envIs('dev')) {
+    return data.slice(0, 3)
+  }
+
+  return data
 })
 
 export const transactionRules: () => ExecutedRulesResult[] = memoize(() => {
