@@ -103,11 +103,13 @@ export default function SubHeader(props: Props) {
             return {
               ...caseItem,
               reviewAssignments: assignments,
+              updatedAt: Date.now(),
             };
           } else {
             return {
               ...caseItem,
               assignments,
+              updatedAt: Date.now(),
             };
           }
         });

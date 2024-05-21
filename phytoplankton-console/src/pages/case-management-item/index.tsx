@@ -1,23 +1,24 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useLocation, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePrevious } from 'ahooks';
 import Header from './components/Header';
 import { Authorized } from '@/components/utils/Authorized';
 import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
-import { useQuery } from '@/utils/queries/hooks';
+import { useNewUpdatesMessage, useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { ALERT_LIST, CASES_ITEM, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
-import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import { FormValues } from '@/components/CommentEditor';
 import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
+import { isSuccess } from '@/utils/asyncResource';
+
+const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
@@ -31,17 +32,14 @@ function CaseManagementItemPage() {
   const updateCaseQueryData = useUpdateCaseQueryData();
   const updateAlertQueryData = useUpdateAlertQueryData();
   const updateAlertCommentsQueryData = useUpdateAlertItemCommentsData();
-  // TODO: Add Refetch of 60 Seconds again FR-4782
   const queryResults = useQuery(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }));
-  const previousQueryResults = usePrevious(queryResults);
-  const caseData = useMemo(() => {
-    if (isSuccess(queryResults.data)) {
-      return queryResults.data;
-    } else if (previousQueryResults != null && isSuccess(previousQueryResults.data)) {
-      return previousQueryResults.data;
-    }
-    return queryResults.data;
-  }, [previousQueryResults, queryResults.data]);
+
+  useNewUpdatesMessage(
+    isSuccess(queryResults.data) ? queryResults.data.value.updatedAt : undefined,
+    async () => (await api.getCase({ caseId })).updatedAt,
+    () => `Case ${caseId} has new updates. Please refresh the page to see the updates.`,
+    { refetchIntervalSeconds: CASE_REFETCH_INTERVAL_SECONDS },
+  );
 
   const handleCommentAdded = async (newComment: Comment, groupId: string) => {
     await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
@@ -76,6 +74,7 @@ function CaseManagementItemPage() {
       return {
         ...caseItem,
         comments: [...(caseItem?.comments ?? []), newComment],
+        updatedAt: Date.now(),
       };
     });
   };
@@ -113,7 +112,7 @@ function CaseManagementItemPage() {
   const [headerStickyElRef, setHeaderStickyElRef] = useState<HTMLDivElement | null>(null);
 
   return (
-    <AsyncResourceRenderer resource={caseData}>
+    <AsyncResourceRenderer resource={queryResults.data}>
       {(caseItem) => (
         <PageWrapper
           header={

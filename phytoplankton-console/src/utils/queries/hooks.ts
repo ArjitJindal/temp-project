@@ -9,9 +9,11 @@ import {
 import { UseQueryOptions, UseQueryResult } from '@tanstack/react-query/src/types';
 import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react-query/src/useQueries';
 import { InfiniteData } from '@tanstack/query-core/src/types';
+import { useInterval } from 'ahooks';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
 import { failed, loading, success, AsyncResource } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
+import { message } from '@/components/library/Message';
 
 export function useQuery<
   TQueryFnData = unknown,
@@ -244,4 +246,31 @@ function convertInfiniteQueryResult<TData>(results: UseInfiniteQueryResult<TData
     refetch: results.refetch,
     hasNext: results.hasNextPage,
   };
+}
+
+export function useNewUpdatesMessage(
+  currentUpdatedAt: number | undefined,
+  fetchNewUpdatedAt: () => Promise<number | undefined>,
+  formatMessage: (lastUpdatedAt: number) => string,
+  options?: { refetchIntervalSeconds?: number },
+) {
+  const [newUpdateMessageVisible, setNewUpdateMessageVisible] = useState(false);
+  const [lastCheckedUpdatedAt, setLastCheckedUpdatedAt] = useState<number | null>(null);
+  useInterval(async () => {
+    const newUpdatedAt = await fetchNewUpdatedAt();
+    if (
+      currentUpdatedAt &&
+      newUpdatedAt &&
+      (lastCheckedUpdatedAt ?? currentUpdatedAt) < newUpdatedAt
+    ) {
+      if (!newUpdateMessageVisible) {
+        message.info(formatMessage(newUpdatedAt), {
+          duration: 24 * 60 * 60,
+          onClose: () => setNewUpdateMessageVisible(false),
+        });
+        setNewUpdateMessageVisible(true);
+      }
+      setLastCheckedUpdatedAt(newUpdatedAt);
+    }
+  }, (options?.refetchIntervalSeconds ?? 60) * 1000);
 }
