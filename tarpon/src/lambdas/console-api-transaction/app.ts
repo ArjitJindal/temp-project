@@ -232,6 +232,11 @@ export const transactionsViewHandler = lambdaApi()(
                 )}. Comment: ${req.TransactionAction.comment}`,
                 files: req.TransactionAction.files,
               })
+              if (req.TransactionAction.action === 'ALLOW')
+                await alertService.closeAlertIfAllTransactionsApproved(
+                  alert,
+                  txnIds
+                )
             }
           })
         })
