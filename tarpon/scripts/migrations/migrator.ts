@@ -81,7 +81,6 @@ function initializeEnvVars() {
     StackConstants.S3_SHARED_ASSETS_PREFIX,
     getConfig()
   )
-  process.env.SEED_TRANSACTIONS_COUNT = '50'
 }
 
 async function main() {

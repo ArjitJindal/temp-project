@@ -29,10 +29,13 @@ import {
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { envIs } from '@/utils/env'
 
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
-  : 200
+  : envIs('local')
+  ? 200
+  : 50
 
 const generator = function* (): Generator<InternalTransaction> {
   const userTransactionMap = new Map<string, string[]>()
