@@ -30,6 +30,7 @@ export const postSandboxDeployIntegrationsUpdateBuildProject = (
           'secrets-manager': {
             NOTION_TOKEN: STACK_CONSTANTS.NOTION_TOKEN,
             GITHUB_TOKEN: STACK_CONSTANTS.GITHUB_TOKEN,
+            SLACK_TOKEN: STACK_CONSTANTS.SLACK_TOKEN,
           },
         },
       }),

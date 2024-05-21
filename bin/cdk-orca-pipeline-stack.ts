@@ -204,16 +204,6 @@ export class CdkOrcaPipelineStack extends Stack {
           stageName: 'Post_Deploy_Sandbox',
           actions: [
             new codepipline_actions.CodeBuildAction({
-              actionName: 'Integrations_Update',
-              project: postSandboxDeployIntegrationsUpdateBuildProject(
-                this,
-                role
-              ),
-              input: sourceOutput,
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
-            }),
-            new codepipline_actions.CodeBuildAction({
               actionName: 'Post_Deploy_Sandbox',
               project: postDeploymentCodeBuildProject(
                 this,
@@ -224,6 +214,18 @@ export class CdkOrcaPipelineStack extends Stack {
               input: sourceOutput,
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
               extraInputs: [tarponBuildOutput],
+              runOrder: 1,
+            }),
+            new codepipline_actions.CodeBuildAction({
+              actionName: 'Integrations_Update',
+              project: postSandboxDeployIntegrationsUpdateBuildProject(
+                this,
+                role
+              ),
+              input: sourceOutput,
+              environmentVariables: getSentryReleaseSpec(false).actionEnv,
+              extraInputs: [tarponBuildOutput],
+              runOrder: 2,
             }),
           ],
         },

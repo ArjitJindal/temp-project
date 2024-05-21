@@ -1,4 +1,3 @@
-import { execSync } from 'child_process'
 import { WebClient } from '@slack/web-api'
 import {
   getNotionPageByTicketID,
