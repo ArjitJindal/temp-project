@@ -3,6 +3,7 @@ import AsyncResourceRenderer from '../utils/AsyncResourceRenderer';
 import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import { P } from '../ui/Typography';
 import PageWrapper, { PageWrapperProps } from '../PageWrapper';
+import { Authorized } from '../utils/Authorized';
 import s from './styles.module.less';
 import Toggle from '@/components/library/Toggle';
 import { useApi } from '@/api';
@@ -69,30 +70,32 @@ export const SimulationPageWrapper = forwardRef<
   );
   const actionButton = (
     <div className={s.simulationRoot}>
-      <div className={s.right}>
-        {isSimulationFeatureEnabled && props.isSimulationModeEnabled && (
-          <SimulationUsageCard
-            usageCount={map(simulationCountResults.data, (x) => x.runJobsCount)}
-          />
-        )}
-        <Label label="Simulator" position="RIGHT">
-          {!isSimulationFeatureEnabled ? (
-            <div>
-              <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="bottomLeft">
-                <span>
-                  <Toggle size="SMALL" disabled={true} />
-                </span>
-              </Tooltip>
-            </div>
-          ) : (
-            <Toggle
-              size="SMALL"
-              value={props.isSimulationModeEnabled}
-              onChange={props.onSimulationModeChange}
+      <Authorized required={['simulator:simulations:read']}>
+        <div className={s.right}>
+          {isSimulationFeatureEnabled && props.isSimulationModeEnabled && (
+            <SimulationUsageCard
+              usageCount={map(simulationCountResults.data, (x) => x.runJobsCount)}
             />
           )}
-        </Label>
-      </div>
+          <Label label="Simulator" position="RIGHT">
+            {!isSimulationFeatureEnabled ? (
+              <div>
+                <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="bottomLeft">
+                  <span>
+                    <Toggle size="SMALL" disabled={true} />
+                  </span>
+                </Tooltip>
+              </div>
+            ) : (
+              <Toggle
+                size="SMALL"
+                value={props.isSimulationModeEnabled}
+                onChange={props.onSimulationModeChange}
+              />
+            )}
+          </Label>
+        </div>
+      </Authorized>
     </div>
   );
   return (
