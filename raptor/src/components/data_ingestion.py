@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split  # type: ignore
 
 print(os.getcwd())
 
-from data_transformation import DataTransformation
+from src.components.data_transformation import DataTransformation
 
 
 @dataclass

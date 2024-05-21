@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+import pickle
 from sklearn.compose import ColumnTransformer  # type: ignore
 from sklearn.impute import SimpleImputer  # type: ignore
 from sklearn.pipeline import Pipeline  # type: ignore
@@ -24,12 +25,9 @@ class DataTransformation:
         """Data transformation pipeline for the model"""
         numeric_features = [
             "originPaymentDetails.merchantDetails.mcc",
-            "datetime",
-            "hour",
-            "day_of_week",
-            "log_origin_amount",
-            "log_destination_amount",
-            "user_avg_transaction",
+            "timestamp",
+            "originAmountDetails.transactionAmount",
+            "destinationAmountDetails.transactionAmount",
         ]
         categorical_features = [
             "transactionId",
@@ -57,7 +55,7 @@ class DataTransformation:
             steps=[
                 ("imputer", SimpleImputer(strategy="constant", fill_value="missing")),
                 ("onehot", OneHotEncoder(handle_unknown="ignore")),
-                ("scaler", StandardScaler()),
+                ("scaler", StandardScaler(with_mean=False, with_std=False)),
             ]
         )
 
@@ -68,9 +66,8 @@ class DataTransformation:
             transformers=[
                 ("num", numberical_pipeine, numeric_features),
                 ("cat", categorical_pipeline, categorical_features),
-            ]
+            ],
         )
-
         return preprocessor
 
     def initiate_date_transaformation(self, train_path, test_path):
