@@ -12,6 +12,7 @@ interface Props {
   mainPanelCustomStyling?: MainPanelCustomStyles;
   showFormulaBackLink?: boolean;
   riskScoreAlgo: (value: ValueItem) => number;
+  hideInfo?: boolean;
 }
 
 export function sortByDate<T extends { createdAt: number }>(items: T[]): T[] {
@@ -29,6 +30,7 @@ export default function RiskScoreDisplay(props: Props) {
     mainPanelCustomStyling,
     showFormulaBackLink,
     riskScoreAlgo,
+    hideInfo,
   } = props;
 
   const [isModalOpen, setModalOpen] = useState(false);
@@ -48,7 +50,9 @@ export default function RiskScoreDisplay(props: Props) {
         lastItem={lastItem}
         riskScoreAlgo={riskScoreAlgo}
         defaultText={
-          !isManualUpdate
+          hideInfo
+            ? undefined
+            : !isManualUpdate
             ? `This is default risk score value when all the risk factors are disabled.`
             : `The CRA of this user has been manually set to ${humanizeConstant(
                 lastItem?.manualRiskLevel ?? '',

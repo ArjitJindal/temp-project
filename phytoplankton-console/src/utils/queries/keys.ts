@@ -357,3 +357,10 @@ export const SIMULATION_RISK_FACTOR = (jobId: string): QueryKey => [
 ];
 
 export const RISK_FACTORS = (): QueryKey => ['risk-factor'];
+export const USER_TRS_RISK_SCORES = (userId: string): QueryKey => [
+  'users',
+  'item',
+  userId,
+  'risks',
+  'trs-score',
+];

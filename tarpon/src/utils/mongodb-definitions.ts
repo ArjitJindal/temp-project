@@ -473,7 +473,12 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       getIndexes: () => [{ userId: 1 }].map((index) => ({ index })),
     },
     [ARS_SCORES_COLLECTION(tenantId)]: {
-      getIndexes: () => [{ transactionId: 1 }].map((index) => ({ index })),
+      getIndexes: () =>
+        [
+          { transactionId: 1 },
+          { originUserId: 1 },
+          { destinationUserId: 1 },
+        ].map((index) => ({ index })),
     },
     [DRS_SCORES_COLLECTION(tenantId)]: {
       getIndexes: () => [{ userId: 1 }].map((index) => ({ index })),

@@ -20,6 +20,7 @@ import { getUserLink, getUserName } from '@/utils/api/users';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { getPaymentMethodTitle } from '@/utils/payments';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
+import { UserTrsRiskDisplay } from '@/pages/users-item/UserDetails/UserTrsRiskDisplay';
 
 interface Props {
   caseItem: Case;
@@ -227,6 +228,7 @@ export default function SubHeader(props: Props) {
         {caseUser?.userId && (
           <div className={s.risks}>
             <KycRiskDisplay userId={caseUser.userId} />
+            <UserTrsRiskDisplay userId={caseUser.userId} />
             <DynamicRiskDisplay userId={caseUser.userId} />
           </div>
         )}

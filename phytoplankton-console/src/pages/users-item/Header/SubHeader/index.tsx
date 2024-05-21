@@ -3,6 +3,7 @@ import KycStatusEditor from '../../UserDetails/KYCStatusEditor';
 import UserStateEditor from '../../UserDetails/UserStateEditor';
 import KycRiskDisplay from '../../UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '../../UserDetails/DynamicRiskDisplay';
+import { UserTrsRiskDisplay } from '../../UserDetails/UserTrsRiskDisplay';
 import s from './index.module.less';
 import { MerchantMonitoringToggle } from './MerchantMonitoringToggle';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
@@ -50,6 +51,7 @@ export default function SubHeader(props: Props) {
       <Feature name="RISK_SCORING">
         <div className={s.risks}>
           <KycRiskDisplay userId={user.userId} />
+          <UserTrsRiskDisplay userId={user.userId} />
           <DynamicRiskDisplay userId={user.userId} />
         </div>
       </Feature>

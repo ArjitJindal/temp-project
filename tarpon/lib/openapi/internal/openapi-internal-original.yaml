@@ -3150,6 +3150,28 @@ paths:
           name: userId
           required: true
           description: UserID of the user to get Dynamic Risk Score
+  /pulse/average-ars-value:
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: query
+        required: true
+    get:
+      summary: TRS Scores of User
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrsScoresResponse'
+              examples: {}
+      operationId: get-trs-scores
+      description: ''
   /auditlog:
     parameters: []
     get:
@@ -10852,6 +10874,14 @@ components:
             - type
             - parameters
             - statistics
+    TrsScoresResponse:
+      title: TrsScoresResponse
+      type: object
+      properties:
+        average:
+          type: number
+      required:
+        - average
     TenantCreationRequest:
       title: TenantCreationRequest
       type: object

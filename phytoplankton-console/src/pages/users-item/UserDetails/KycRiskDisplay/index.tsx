@@ -1,5 +1,5 @@
 import React from 'react';
-import Icon from '@/components/ui/icons/Remix/system/information-line.react.svg';
+import GroupUserIcon from '@/components/ui/icons/group-user.react.svg';
 import { useApi } from '@/api';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import { useQuery } from '@/utils/queries/hooks';
@@ -31,7 +31,7 @@ export default function KycRiskDisplay({ userId }: Props) {
                   ]
                 : []
             }
-            icon={<Icon />}
+            icon={<GroupUserIcon />}
             title="KYC risk score (KRS)"
             riskScoreName="KRS"
             showFormulaBackLink

@@ -38,6 +38,7 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { traceable } from '@/core/xray'
+import { TrsScoresResponse } from '@/@types/openapi-internal/TrsScoresResponse'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -538,6 +539,34 @@ export class RiskRepository {
       }
     )
     return arsScore
+  }
+
+  public async getAverageArsScoreForUser(
+    userId: string
+  ): Promise<TrsScoresResponse> {
+    const db = this.mongoDb.db()
+    const arsScoresCollectionName = ARS_SCORES_COLLECTION(this.tenantId)
+    const arsScoresCollection = db.collection<ArsScore>(arsScoresCollectionName)
+
+    const data = await arsScoresCollection
+      .aggregate<TrsScoresResponse>([
+        {
+          $match: {
+            $or: [{ originUserId: userId }, { destinationUserId: userId }],
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            average: { $avg: '$arsScore' },
+          },
+        },
+      ])
+      .next()
+
+    return {
+      average: data?.average ?? 0,
+    }
   }
 
   async getArsValueFromMongo(transactionId: string): Promise<ArsScore | null> {
