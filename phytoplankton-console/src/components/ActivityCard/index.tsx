@@ -30,8 +30,11 @@ interface Props {
   comments: {
     dataRes: AsyncResource<CommentGroup[]>;
     deleteCommentMutation: Mutation<unknown, unknown, { commentId: string; groupId: string }>;
-    handleAddComment: (commentFormValues: CommentEditorFormValues) => Promise<Comment>;
-    onCommentAdded: (newComment: Comment) => void;
+    handleAddComment: (
+      commentFormValues: CommentEditorFormValues,
+      groupId: string,
+    ) => Promise<Comment>;
+    onCommentAdded: (newComment: Comment, groupId: string) => void;
     writePermissions: Permission[];
   };
 }

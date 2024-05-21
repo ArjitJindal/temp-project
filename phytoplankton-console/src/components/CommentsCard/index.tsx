@@ -27,8 +27,11 @@ interface Props {
   title?: string;
   commentsQuery: AsyncResource<CommentGroup[]>;
   deleteCommentMutation: Mutation<unknown, unknown, { commentId: string; groupId: string }>;
-  handleAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
-  onCommentAdded: (newComment: ApiComment) => void;
+  handleAddComment: (
+    commentFormValues: CommentEditorFormValues,
+    groupId: string,
+  ) => Promise<ApiComment>;
+  onCommentAdded: (newComment: ApiComment, groupId: string) => void;
   writePermissions: Permission[];
 }
 
@@ -84,6 +87,7 @@ export default function CommentsCard(props: Props) {
                       },
                     );
                     const commentsWithReplies = getCommentsWithReplies(group.comments);
+
                     if (nonEmptyGroups.length < 2 && !group.title) {
                       return (
                         <Comments
@@ -91,8 +95,10 @@ export default function CommentsCard(props: Props) {
                           deleteCommentMutation={adaptedMutation}
                           currentUserId={currentUserId}
                           writePermissions={writePermissions}
-                          hanldeAddComment={handleAddComment}
-                          onCommentAdded={onCommentAdded}
+                          hanldeAddComment={(commentFormValues) =>
+                            handleAddComment(commentFormValues, group.id)
+                          }
+                          onCommentAdded={(newComment) => onCommentAdded(newComment, group.id)}
                         />
                       );
                     }
@@ -105,8 +111,10 @@ export default function CommentsCard(props: Props) {
                             deleteCommentMutation={adaptedMutation}
                             currentUserId={currentUserId}
                             writePermissions={writePermissions}
-                            hanldeAddComment={handleAddComment}
-                            onCommentAdded={onCommentAdded}
+                            hanldeAddComment={(commentFormValues) =>
+                              handleAddComment(commentFormValues, group.id)
+                            }
+                            onCommentAdded={(newComment) => onCommentAdded(newComment, group.id)}
                           />
                         </div>
                       </div>

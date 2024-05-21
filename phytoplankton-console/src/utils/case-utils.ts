@@ -26,6 +26,8 @@ export const statusInReview = (
   return status?.startsWith('IN_REVIEW') ?? false;
 };
 
+export const ALERT_GROUP_PREFIX = 'alert-';
+
 export const statusEscalated = (
   status: CaseStatus | undefined,
 ): status is 'ESCALATED' | 'ESCALATED_IN_PROGRESS' | 'ESCALATED_ON_HOLD' => {

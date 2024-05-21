@@ -16,6 +16,8 @@ import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/Side
 import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import { FormValues } from '@/components/CommentEditor';
+import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
+import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
@@ -27,6 +29,8 @@ function CaseManagementItemPage() {
   useCloseSidebarByDefault();
 
   const updateCaseQueryData = useUpdateCaseQueryData();
+  const updateAlertQueryData = useUpdateAlertQueryData();
+  const updateAlertCommentsQueryData = useUpdateAlertItemCommentsData();
   // TODO: Add Refetch of 60 Seconds again FR-4782
   const queryResults = useQuery(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }));
   const previousQueryResults = usePrevious(queryResults);
@@ -39,8 +43,32 @@ function CaseManagementItemPage() {
     return queryResults.data;
   }, [previousQueryResults, queryResults.data]);
 
-  const handleCommentAdded = async (newComment: Comment) => {
+  const handleCommentAdded = async (newComment: Comment, groupId: string) => {
     await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
+
+    if (groupId.startsWith(ALERT_GROUP_PREFIX)) {
+      const alertId = groupId.replace(ALERT_GROUP_PREFIX, '');
+
+      updateAlertQueryData(alertId, (alertItem) => {
+        if (alertItem == null) {
+          return alertItem;
+        }
+        return {
+          ...alertItem,
+          comments: [...(alertItem?.comments ?? []), newComment],
+        };
+      });
+
+      updateAlertCommentsQueryData(alertId, (comments) => {
+        if (comments == null) {
+          return [newComment];
+        }
+        return [...comments, newComment];
+      });
+
+      return;
+    }
+
     updateCaseQueryData(caseId, (caseItem) => {
       if (caseItem == null) {
         return caseItem;
@@ -52,13 +80,24 @@ function CaseManagementItemPage() {
     });
   };
 
-  const handleAddCommentReply = async (commentFormValues: FormValues) => {
+  const handleAddCommentReply = async (commentFormValues: FormValues, groupId: string) => {
     if (caseId == null) {
       throw new Error(`Case ID is not defined`);
     }
     const commentData = {
       Comment: { body: commentFormValues.comment, files: commentFormValues.files },
     };
+
+    if (groupId.startsWith(ALERT_GROUP_PREFIX)) {
+      const alertId = groupId.replace(ALERT_GROUP_PREFIX, '');
+
+      return await api.createAlertsCommentReply({
+        alertId,
+        commentId: commentFormValues.parentCommentId ?? '',
+        ...commentData,
+      });
+    }
+
     return await api.postCaseCommentsReply({
       caseId: caseId,
       commentId: commentFormValues.parentCommentId ?? '',
