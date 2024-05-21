@@ -25,6 +25,7 @@ describe('Rule create and delete from rule instance page', () => {
   });
   function deleteRule(ruleInstanceId: string) {
     cy.visit(`/rules/my-rules/${ruleInstanceId}`);
+    cy.wait(2000); // eslint-disable-line cypress/no-unnecessary-waiting
 
     cy.get('button[data-cy="rule-instance-page-delete-rule-button"]')
       .first()

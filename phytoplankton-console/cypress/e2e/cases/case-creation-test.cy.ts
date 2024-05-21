@@ -79,6 +79,7 @@ function deleteRule(ruleInstanceId: string) {
   cy.visit('/rules/my-rules');
   cy.get('th').contains('Updated at').click({ force: true });
   cy.get('th').contains('Updated at').click({ force: true });
+  cy.wait(2000); // eslint-disable-line cypress/no-unnecessary-waiting
   cy.get('button[data-cy="rule-delete-button"]').first().should('exist').click({ force: true });
   cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
   cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click({ force: true });
