@@ -81,8 +81,12 @@ class EntityTables:
 
         for tenant in tenants:
             schema = f"`{stage}`.`{tenant}`"
-            write(tenant, backfill_df, "overwrite")
-            write(tenant, kinesis_df, "append")
+
+            deduped_kinesis_df = kinesis_df.dropDuplicates(["tenant", entity.id_column])
+            deduped_backfill_df = backfill_df.join(deduped_kinesis_df, entity.id_column, 'left_anti')
+
+            write(tenant, deduped_backfill_df, "overwrite")
+            write(tenant, deduped_kinesis_df, "append")
             self.table_service.optimize(f"{schema}.{entity.table}")
 
     def start_streams(self, entity: Entity):
