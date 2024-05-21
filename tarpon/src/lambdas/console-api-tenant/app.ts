@@ -36,7 +36,7 @@ import {
   RuleQueuesService,
 } from '@/services/tenants/rule-queue-service'
 import { getFullTenantId } from '@/utils/tenant'
-import { tenantSettings } from '@/core/utils/context'
+import { addSentryExtras, tenantSettings } from '@/core/utils/context'
 import { getAuth0Domain, isWhitelabelAuth0Domain } from '@/utils/auth0-utils'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
@@ -94,18 +94,25 @@ export const tenantsHandler = lambdaApi()(
         request.TenantCreationRequest.tenantId ?? newTenantId,
         { mongoDb, dynamoDb }
       )
-      const response = await tenantService.createTenant(
-        request.TenantCreationRequest
-      )
-      if (envIsNot('prod')) {
-        const fullTenantId = getFullTenantId(tenantId, true)
-        await sendBatchJobCommand({
-          type: 'DEMO_MODE_DATA_LOAD',
-          tenantId: fullTenantId,
-          awsCredentials: getCredentialsFromEvent(event),
+      try {
+        const response = await tenantService.createTenant(
+          request.TenantCreationRequest
+        )
+        if (envIsNot('prod')) {
+          const fullTenantId = getFullTenantId(tenantId, true)
+          await sendBatchJobCommand({
+            type: 'DEMO_MODE_DATA_LOAD',
+            tenantId: fullTenantId,
+            awsCredentials: getCredentialsFromEvent(event),
+          })
+        }
+        return response
+      } catch (e) {
+        addSentryExtras({
+          request: JSON.stringify(request.TenantCreationRequest, null, 2),
         })
+        throw createHttpError(400, (e as Error).message)
       }
-      return response
     })
 
     handlers.registerGetTenantsSettings(
