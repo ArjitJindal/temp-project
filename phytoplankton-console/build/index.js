@@ -99,7 +99,7 @@ async function main() {
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com`,
     `object-src 'none'`,
     `base-uri 'self'`,
-    `connect-src 'self' http://localhost:3002 *.amazonaws.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com https://fonts.gstatic.com ${WHITE_LABEL_DOMAINS}`,
+    `connect-src 'self' http://localhost:3002 *.amazonaws.com https://eu.i.posthog.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com https://fonts.gstatic.com ${WHITE_LABEL_DOMAINS}`,
     `font-src 'self' https://fonts.gstatic.com https://heapanalytics.com`,
     `frame-src 'self' https://*.flagright.com https://*.flagright.dev ${WHITE_LABEL_DOMAINS}`,
     `img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://heapanalytics.com`,

@@ -11,6 +11,7 @@ import ApiProviderMock from './mocks/ApiProvider';
 import FlagrightUserProviderMock from './mocks/FlagrightUserProvider';
 import { BrowserSupportProvider } from './BrowserSupportProvider';
 import { SuperAdminModeProvider } from './SuperAdminModeProvider';
+import { PostHogProviderWrapper } from './PostHogProvider';
 import CluesoTokenProvider from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 import ApiProvider from '@/components/AppWrapper/Providers/ApiProvider';
 
@@ -39,6 +40,7 @@ const AllProviders = withProviders(
   FlagrightUserProvider,
   ApiProvider,
   SettingsProvider,
+  PostHogProviderWrapper,
   BrowserSupportProvider,
   SideBarProvider,
   DemoModeProvider,

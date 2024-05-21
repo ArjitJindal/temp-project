@@ -10,6 +10,8 @@
     "SENTRY_DSN": "https://02c8d2cba7c34122b3e765ef586a0dac@o1295082.ingest.sentry.io/6520175",
     "SLACK_CLIENT_ID": "2800969986821.3789460302231",
     "FEATURES_ENABLED": [],
-    "HEAP_APP_ID": "3716559167"
+    "HEAP_APP_ID": "3716559167",
+    "POSTHOG_API_KEY": "phc_o3AIU7twnvMe1oXKZs8ZWYgVjVrI2BgJILpjvm0DWQY",
+    "POSTHOG_HOST": "https://eu.i.posthog.com"
   }
 }
