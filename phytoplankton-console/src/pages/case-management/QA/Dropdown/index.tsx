@@ -4,13 +4,14 @@ import { TableSearchParams } from '../../types';
 import { QAFormValues } from '../types';
 import { QAModal } from '../Modal';
 import { useAlertsSamplingCreateMutation } from '../utils';
+import { getAlertsQueryParams } from '../../common';
 import s from './style.module.less';
 import Dropdown, { DropdownOption } from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import { AllParams } from '@/components/library/Table/types';
-import { useHasPermissions } from '@/utils/user-utils';
-import { AlertQASamplingFilters } from '@/apis';
+import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 
 type OptionTypes = 'CREATE_SAMPLE' | 'VIEW_SAMPLE';
 
@@ -23,6 +24,7 @@ export const QAButton = (props: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const isQAWriteEnabled = useHasPermissions(['case-management:qa:write']);
+  const user = useAuth0User();
 
   const options: DropdownOption<OptionTypes>[] = useMemo(() => {
     const options: DropdownOption<OptionTypes>[] = [
@@ -50,21 +52,7 @@ export const QAButton = (props: Props) => {
 
   const onSubmit = useCallback(
     async (values: QAFormValues) => {
-      const filters: AlertQASamplingFilters = {
-        alertClosedAt: {
-          start: Number(params?.createdTimestamp?.[0] || 0),
-          end: Number(params?.createdTimestamp?.[1] || Number.MAX_SAFE_INTEGER),
-        },
-        alertClosingReasons: params?.filterClosingReason,
-        alertId: params?.alertId,
-        assignedTo: params?.assignedTo,
-        alertPriority: params?.alertPriority,
-        caseTypes: params?.caseTypesFilter,
-        qaAssignedTo: params?.qaAssignment,
-        queueIds: params?.ruleQueueIds,
-        ruleInstances: params?.rulesExecutedFilter,
-        userId: params?.userId,
-      };
+      const filters: DefaultApiGetAlertListRequest = getAlertsQueryParams(params, user);
 
       mutation.mutate({
         ...values,
@@ -75,7 +63,7 @@ export const QAButton = (props: Props) => {
         },
       });
     },
-    [params, mutation],
+    [params, mutation, user],
   );
 
   return (

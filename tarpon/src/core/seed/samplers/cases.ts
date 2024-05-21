@@ -196,6 +196,8 @@ export function sampleTransactionUserCases(params: {
         destinationUserRiskLevel:
           destination?.drsScore?.manualRiskLevel ??
           destination?.drsScore?.derivedRiskLevel,
+        originUserDrsScore: origin?.drsScore?.drsScore,
+        destinationUserDrsScore: destination?.drsScore?.drsScore,
       },
       caseAggregates: {
         originPaymentMethods:

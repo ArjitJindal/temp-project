@@ -74,10 +74,8 @@ import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaSta
 import { ChecklistDoneStatus } from '@/@types/openapi-internal/ChecklistDoneStatus'
 import { AlertsQaSamplingRequest } from '@/@types/openapi-internal/AlertsQaSamplingRequest'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { AlertQASamplingListResponse } from '@/@types/openapi-internal/AlertQASamplingListResponse'
 import { AlertsQaSamplingUpdateRequest } from '@/@types/openapi-internal/AlertsQaSamplingUpdateRequest'
-import { AlertQASamplingFilters } from '@/@types/openapi-internal/AlertQASamplingFilters'
 import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 
 @traceable
@@ -1249,23 +1247,11 @@ export class AlertsService extends CaseAlertsCommonService {
     await this.alertsRepository.saveAlert(alert.caseId ?? '', alert)
   }
 
-  private getQaSamplingFilters(filters: AlertQASamplingFilters): AlertParams {
+  private getQaSamplingFilters(filters: AlertParams): AlertParams {
     return {
+      ...filters,
       filterAlertStatus: ['CLOSED'],
       filterQaStatus: ["NOT_QA'd"],
-      ...(filters.alertClosedAt && {
-        filterAlertsByLastUpdatedStartTimestamp: filters.alertClosedAt.start,
-        filterAlertsByLastUpdatedEndTimestamp: filters.alertClosedAt.end,
-      }),
-      filterAlertId: filters.alertId,
-      filterAlertPriority: filters.alertPriority,
-      filterAssignmentsIds: filters.assignedTo,
-      filterQaAssignmentsIds: filters.qaAssignedTo,
-      filterRuleQueueIds: filters.queueIds,
-      filterRulesExecuted: filters.ruleInstances,
-      filterCaseType: filters.caseTypes,
-      filterClosingReason: filters.alertClosingReasons as CaseReasons[],
-      filterUserId: filters.userId,
     }
   }
 
@@ -1385,9 +1371,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
       const newPercentage = data.samplingPercentage
 
-      const filters = this.getQaSamplingFilters(
-        sampling.filters as AlertQASamplingFilters
-      )
+      const filters = this.getQaSamplingFilters(sampling.filters)
 
       const query = await this.alertsRepository.getAlertsPipeline(filters, {
         excludeProject: true,

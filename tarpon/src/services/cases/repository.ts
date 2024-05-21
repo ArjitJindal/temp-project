@@ -266,7 +266,6 @@ export class CaseRepository {
 
   public async getCasesConditions(
     params: OptionalPagination<DefaultApiGetCaseListRequest>,
-    riskLevelsRequired = true,
     assignments = true
   ): Promise<Filter<Case>[]> {
     const conditions: Filter<Case>[] = []
@@ -350,11 +349,7 @@ export class CaseRepository {
       })
     }
 
-    if (
-      riskLevelsRequired &&
-      params.filterRiskLevel != null &&
-      hasFeature('RISK_LEVELS')
-    ) {
+    if (params.filterRiskLevel != null && hasFeature('RISK_LEVELS')) {
       const riskRepository = new RiskRepository(this.tenantId, {
         dynamoDb: this.dynamoDb,
       })
@@ -540,7 +535,7 @@ export class CaseRepository {
         : 'createdTimestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
-    const conditions = await this.getCasesConditions(params, true)
+    const conditions = await this.getCasesConditions(params)
 
     const filter = conditions.length > 0 ? { $and: conditions } : {}
 
@@ -680,7 +675,7 @@ export class CaseRepository {
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const conditions = await this.getCasesConditions(params, false)
+    const conditions = await this.getCasesConditions(params)
     const count = await collection.countDocuments(
       conditions.length > 0 ? { $and: conditions } : {},
       { limit: COUNT_QUERY_LIMIT }

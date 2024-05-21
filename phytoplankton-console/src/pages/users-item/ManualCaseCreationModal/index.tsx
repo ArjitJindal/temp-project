@@ -70,7 +70,7 @@ export const MannualCaseCreationModal = (props: Props) => {
 
   const existingCaseIds = useQuery<CasesUsersUserIdResponse>(
     CASES_USERS_CASEIDS({ userId: props.userId, caseType: 'MANUAL' }),
-    async () => await api.getCaseIds({ userId: props.userId, filterCaseType: 'MANUAL' }),
+    async () => await api.getCaseIds({ userId: props.userId, filterCaseTypes: 'MANUAL' }),
   );
 
   const createMutation = useMutation(

@@ -151,7 +151,7 @@ export const casesHandler = lambdaApi()(
     handlers.registerGetCaseIds(
       async (ctx, request) =>
         await caseService.getCaseIdsByUserId(request.userId, {
-          caseType: request.filterCaseType,
+          caseType: request.filterCaseTypes,
         })
     )
 

@@ -174,7 +174,7 @@ export class AlertsRepository {
     })
 
     const caseConditions: Filter<Case>[] =
-      await caseRepository.getCasesConditions(params, false, false)
+      await caseRepository.getCasesConditions(params, false)
 
     if (params.filterOutCaseStatus != null) {
       caseConditions.push({
