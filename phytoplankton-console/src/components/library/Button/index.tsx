@@ -44,6 +44,7 @@ function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
     iconRight,
     requiredPermissions = [],
     isDanger = false,
+    analyticsName,
   } = props;
   const hasUserPermissions = useHasPermissions(requiredPermissions);
   const handleClick = () => {
@@ -67,6 +68,7 @@ function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
       disabled={isDisabled || isLoading || !hasUserPermissions}
       type={htmlType}
       data-cy={testName}
+      data-attr={analyticsName}
       {...htmlAttrs}
     >
       {icon && <div className={s.icon}>{icon}</div>}

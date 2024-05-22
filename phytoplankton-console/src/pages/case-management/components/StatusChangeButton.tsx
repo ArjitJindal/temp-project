@@ -129,7 +129,7 @@ export default function StatusChangeButton(props: Props) {
       {ids.length > 0 && (
         <Button
           type="TETRIARY"
-          analyticsName="UpdateStatus"
+          analyticsName={`update-status-${newStatus}`}
           onClick={() => {
             setModalVisible(true);
           }}
