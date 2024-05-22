@@ -7,8 +7,11 @@ import {
   cloneDeep,
   get,
   isArray,
+  isNil,
+  isNaN,
   isPlainObject,
   mapValues,
+  omitBy,
   set,
   uniq,
   unset,
@@ -225,10 +228,13 @@ export function transformJsonLogicVars(
       )
     })
   }
-  return mapValues(newVarData, (value) => {
-    if (isArray(value)) {
-      return value.slice(0, maxVarDataLength)
-    }
-    return value
-  })
+  return omitBy(
+    mapValues(newVarData, (value) => {
+      if (isArray(value)) {
+        return value.slice(0, maxVarDataLength)
+      }
+      return value
+    }),
+    (v) => isNil(v) || isNaN(v)
+  )
 }

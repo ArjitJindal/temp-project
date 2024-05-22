@@ -1,6 +1,7 @@
 import * as createError from 'http-errors'
 import { logger } from '../logger'
 import { HttpError } from '@/@types/http'
+import { envIs } from '@/utils/env'
 
 export const httpErrorHandler =
   () =>
@@ -25,6 +26,9 @@ export const httpErrorHandler =
           },
           statusCode: error.statusCode,
         }
+      }
+      if (envIs('local')) {
+        console.error(error)
       }
       logger.error(error)
       return {

@@ -373,6 +373,14 @@ describe('Transform var data', () => {
     expect(vars).toEqual({ v1: 'k1', v2: 2 })
   })
 
+  it('filter out invalid value', () => {
+    const vars = transformJsonLogicVars(
+      {},
+      { v1: 0, v2: '', v3: null, v4: undefined, v5: NaN }
+    )
+    expect(vars).toEqual({ v1: 0, v2: '' })
+  })
+
   it('truncate list values', () => {
     const vars = transformJsonLogicVars(
       {},
