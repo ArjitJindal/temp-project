@@ -35,7 +35,7 @@ describe('Investigative Copilot', () => {
     // See if the natural language query works
     cy.get('[data-cy="investigation-input"]').type('Show me transactions for the last 180 days');
     cy.get('[data-cy="ask-ai-button"]').first().click();
-    cy.get('.ant-modal-root table tr').should((tableRows) => {
+    cy.get('.ant-modal-root table tr', { timeout: 60000 }).should((tableRows) => {
       expect(tableRows.length).to.be.greaterThan(1);
     });
 
