@@ -97,7 +97,8 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
         await this.getSimulationBeaconStatistics(
           executionDetails,
           transactions,
-          parameters.defaultRuleInstance
+          parameters.defaultRuleInstance,
+          parameters.sampling?.filters
         )
 
       await simulationRepository.updateStatistics<SimulationBeaconStatisticsResult>(
@@ -114,7 +115,8 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   private async getSimulationBeaconStatistics(
     executionDetails: SimulatedTransactionHit[],
     transactions: InternalTransaction[],
-    defaultRuleInstance: RuleInstance
+    defaultRuleInstance: RuleInstance,
+    filters?: SimulationBeaconSampling['filters']
   ): Promise<SimulationBeaconStatisticsResult> {
     const executedTransactionIds = new Set(
       executionDetails.map((d) => d.transaction.transactionId)
@@ -142,10 +144,10 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
         : [],
       this.transactionRepository?.getAllTransactionsCount() ?? 0,
       defaultRuleInstance.id
-        ? this.actualTransactionsHitCount(defaultRuleInstance.id)
+        ? this.actualTransactionsHitCount(defaultRuleInstance.id, filters)
         : 0,
       defaultRuleInstance.id
-        ? this.actualUsersHitCount(defaultRuleInstance.id)
+        ? this.actualUsersHitCount(defaultRuleInstance.id, filters)
         : 0,
     ])
 
@@ -192,11 +194,15 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     }
   }
 
-  private async actualUsersHitCount(ruleInstanceId: string): Promise<number> {
+  private async actualUsersHitCount(
+    ruleInstanceId: string,
+    filters?: SimulationBeaconSampling['filters']
+  ): Promise<number> {
     return (
-      (await this.casesRepository?.getUserCountByRuleInstance(
-        ruleInstanceId
-      )) ?? 0
+      (await this.casesRepository?.getUserCountByRuleInstance(ruleInstanceId, {
+        beforeTimestamp: filters?.beforeTimestamp ?? Number.MAX_SAFE_INTEGER,
+        afterTimestamp: filters?.afterTimestamp ?? 0,
+      })) ?? 0
     )
   }
 
@@ -464,11 +470,18 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   }
 
   private async actualTransactionsHitCount(
-    ruleInstanceId: string
+    ruleInstanceId: string,
+    filters?: SimulationBeaconSampling['filters']
   ): Promise<number> {
     return (
       (await this.transactionRepository?.getTransactionsCountByQuery({
         'hitRules.ruleInstanceId': ruleInstanceId,
+        ...(filters?.beforeTimestamp && {
+          timestamp: {
+            $lte: filters.beforeTimestamp,
+            $gte: filters.afterTimestamp,
+          },
+        }),
       })) ?? 0
     )
   }

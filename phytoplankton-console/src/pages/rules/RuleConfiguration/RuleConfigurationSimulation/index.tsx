@@ -130,7 +130,7 @@ export function RuleConfigurationSimulation(props: Props) {
           ? {
               sampling: {
                 transactionsCount: 10_000,
-                timestamps: {
+                filters: {
                   afterTimestamp:
                     formValues.basicDetailsStep.simulationIterationTimeRange?.start ?? 0,
                   beforeTimestamp:
@@ -341,6 +341,14 @@ export function RuleConfigurationSimulation(props: Props) {
                         basicDetailsStep: {
                           simulationIterationName: iteration.name,
                           simulationIterationDescription: iteration.description,
+                          ...(iteration?.sampling?.filters?.afterTimestamp
+                            ? {
+                                simulationIterationTimeRange: {
+                                  start: iteration.sampling.filters.afterTimestamp,
+                                  end: iteration.sampling.filters.beforeTimestamp,
+                                },
+                              }
+                            : {}),
                         },
                       },
                     )}
@@ -363,6 +371,14 @@ export function RuleConfigurationSimulation(props: Props) {
                         basicDetailsStep: {
                           simulationIterationName: iteration.name,
                           simulationIterationDescription: iteration.description,
+                          ...(iteration?.sampling?.filters?.afterTimestamp
+                            ? {
+                                simulationIterationTimeRange: {
+                                  start: iteration.sampling.filters.afterTimestamp,
+                                  end: iteration.sampling.filters.beforeTimestamp,
+                                },
+                              }
+                            : {}),
                         },
                       },
                     )}

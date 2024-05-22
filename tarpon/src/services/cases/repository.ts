@@ -9,6 +9,7 @@ import {
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { difference, isEmpty, isNil, omitBy } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
+import { TimeRange } from '../rules-engine/repositories/transaction-repository-interface'
 import {
   lookupPipelineStage,
   paginatePipeline,
@@ -684,15 +685,20 @@ export class CaseRepository {
   }
 
   public async getUserCountByRuleInstance(
-    ruleInstanceId: string
+    ruleInstanceId: string,
+    filters?: TimeRange
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    const count = await collection.aggregate([
+    const count = collection.aggregate([
       {
         $match: {
           'alerts.ruleInstanceId': ruleInstanceId,
+          'alerts.createdTimestamp': {
+            $gte: filters?.afterTimestamp ?? 0,
+            $lte: filters?.beforeTimestamp ?? Number.MAX_SAFE_INTEGER,
+          },
         },
       },
       {

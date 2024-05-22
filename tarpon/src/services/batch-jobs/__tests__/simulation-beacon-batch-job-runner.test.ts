@@ -119,7 +119,7 @@ describe('Simulation Beacon Batch Job Runner', () => {
 
   test('Should run the simulation beacon batch job', async () => {
     const mongoDb = await getMongoDbClient()
-    const dynamoDb = await getDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const RULE_INSTANCE_SIMULATION = 'TEST_RULE_INSTANCE_SIMULATION'
     const caseRepository = new CaseRepository(tenantId, {
       mongoDb,
