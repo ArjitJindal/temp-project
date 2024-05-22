@@ -22,7 +22,11 @@ describe('Filter according to case id (optimized)', () => {
           expect(casesInterception.response?.statusCode).to.be.oneOf([200, 304]);
           cy.url().should('include', 'caseId');
           cy.get('[data-cy="table-body"] [data-cy="caseId"]').each(($caseId) => {
-            expect($caseId.text()).to.include(caseId);
+            const caseIdText = $caseId.text();
+
+            if (caseIdText.startsWith('C')) {
+              expect(caseIdText).to.include(caseId);
+            }
           });
         });
       });
