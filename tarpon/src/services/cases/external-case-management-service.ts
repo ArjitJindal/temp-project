@@ -362,7 +362,7 @@ export class ExternalCaseManagementService {
 
     const data = await cursorPaginate<CaseInternal>(
       db.collection(CASES_COLLECTION(this.tenantId)),
-      casesCondition[0],
+      { $and: casesCondition },
       {
         pageSize: query.pageSize ?? DEFAULT_PAGE_SIZE,
         fromCursorKey: query.start,

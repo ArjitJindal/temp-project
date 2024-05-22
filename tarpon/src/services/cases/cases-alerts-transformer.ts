@@ -3,6 +3,7 @@ import { keyBy, memoize } from 'lodash'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
 import { AccountsService } from '../accounts'
+import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
 import { getContext } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -66,9 +67,12 @@ export class CasesAlertsTransformer {
 
     return assignments.map((assignment) => {
       return {
-        assigneeEmail: accountsMap[assignment.assigneeUserId].email,
-        assignedByEmail: assignment.assignedByUserId
-          ? accountsMap[assignment.assignedByUserId].email
+        assigneeEmail:
+          accountsMap?.[assignment?.assigneeUserId]?.email ||
+          FLAGRIGHT_SYSTEM_USER,
+        assignedByEmail: assignment?.assignedByUserId
+          ? accountsMap[assignment?.assignedByUserId]?.email ||
+            FLAGRIGHT_SYSTEM_USER
           : undefined,
         timestamp: assignment.timestamp,
       }
