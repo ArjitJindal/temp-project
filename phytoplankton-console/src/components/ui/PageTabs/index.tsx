@@ -4,6 +4,7 @@ import { TabsType } from 'antd/lib/tabs';
 import React from 'react';
 import s from './index.module.less';
 import { TabItem } from '@/components/library/Tabs';
+import { captureTabEvent } from '@/utils/postHog';
 
 export const TABS_LINE_HEIGHT = 81;
 
@@ -13,6 +14,7 @@ interface Props extends Pick<TabsProps, 'activeKey' | 'onChange' | 'tabBarExtraC
   compact?: boolean;
   isPrimary?: boolean;
   type?: TabsType;
+  eventData?: Record<string, any>;
 }
 
 export default function PageTabs(props: Props) {
@@ -25,6 +27,7 @@ export default function PageTabs(props: Props) {
     activeKey,
     onChange,
     tabBarExtraContent,
+    eventData,
   } = props;
   return (
     <AntTabs
@@ -34,7 +37,10 @@ export default function PageTabs(props: Props) {
         [s.isPrimary]: isPrimary,
       })}
       activeKey={activeKey}
-      onChange={onChange}
+      onChange={(key) => {
+        captureTabEvent(activeKey, key, items ?? [], { ...eventData, component: 'PageTabs' });
+        onChange?.(key);
+      }}
       type={type}
       destroyInactiveTabPane={true}
       tabBarStyle={sticky != null ? { top: sticky } : undefined}

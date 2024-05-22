@@ -1,13 +1,20 @@
-import { PostHog } from 'posthog-js';
 import { PostHogProvider } from 'posthog-js/react';
+import { isAutoCaptureDisabled } from '../../../utils/postHog';
 import { useAuth0User } from '@/utils/user-utils';
+import { postHogClient } from '@/utils/postHog';
 
 export const PostHogProviderWrapper = ({ children }) => {
-  const postHogClient = new PostHog();
   const auth0User = useAuth0User();
 
   postHogClient.init(POSTHOG_API_KEY, {
     api_host: POSTHOG_HOST,
+    autocapture: isAutoCaptureDisabled(auth0User)
+      ? false
+      : {
+          capture_copied_text: false,
+          element_allowlist: ['button'],
+          dom_event_allowlist: ['click', 'submit'],
+        },
   });
 
   postHogClient.identify('User info', {

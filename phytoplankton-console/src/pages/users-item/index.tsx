@@ -106,6 +106,9 @@ export default function UserItem() {
                 },
               );
             }}
+            eventData={{
+              page: 'user-details',
+            }}
             items={[
               {
                 title: 'User details',
@@ -150,6 +153,7 @@ export default function UserItem() {
                       children: <Linking userId={user.userId} />,
                       isClosable: false,
                       isDisabled: false,
+                      captureEvents: true,
                     },
                   ]
                 : []),
@@ -193,6 +197,7 @@ export default function UserItem() {
                 children: <InsightsCard userId={user.userId} />,
                 isClosable: false,
                 isDisabled: false,
+                captureEvents: true,
               },
               {
                 title: 'Activity',

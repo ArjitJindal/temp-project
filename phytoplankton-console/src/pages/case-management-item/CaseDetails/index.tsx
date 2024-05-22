@@ -103,6 +103,9 @@ function CaseDetails(props: Props) {
             { replace: true },
           );
         }}
+        eventData={{
+          page: 'case-details',
+        }}
         items={tabs.map((tab) => ({
           ...tab,
           children: (
@@ -151,7 +154,7 @@ function useAlertsComments(alertIds: string[]): AsyncResource<CommentGroup[]> {
   return all(commentsResources);
 }
 
-export function useTabs(
+function useTabs(
   caseItem: Case,
   expandedAlertId: string | undefined,
   alertIds: string[],
@@ -296,6 +299,7 @@ export function useTabs(
         children: user.userId ? <Linking userId={user.userId} /> : undefined,
         isClosable: false,
         isDisabled: false,
+        captureEvents: true,
       },
     isUserSubject &&
       user &&
@@ -329,6 +333,7 @@ export function useTabs(
           <InsightsCard userId={user.userId} title={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.title} />
         ),
         isClosable: false,
+        captureEvents: true,
         isDisabled: false,
       },
     isExistedUser(user) && {

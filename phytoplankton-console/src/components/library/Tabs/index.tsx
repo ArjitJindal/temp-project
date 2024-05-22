@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs as AntTabs, TabsProps } from 'antd';
 import cn from 'clsx';
 import s from './index.module.less';
+import { captureTabEvent } from '@/utils/postHog';
 
 export interface TabItem {
   title: React.ReactNode;
@@ -10,6 +11,7 @@ export interface TabItem {
   isClosable?: boolean;
   isDisabled?: boolean;
   Icon?: React.ReactNode;
+  captureEvents?: boolean;
 }
 
 export interface Props
@@ -21,11 +23,21 @@ export interface Props
   tabBarGutter?: number;
   onEdit?: (action: 'add' | 'remove', key?: string) => void;
   onChange?: (key?: any) => void;
+  eventData?: Record<string, any>;
 }
 
 export default function Tabs(props: Props) {
-  const { items, addIcon, tabBarGutter, onEdit, onChange, activeKey, defaultActiveKey, hideAdd } =
-    props;
+  const {
+    items,
+    addIcon,
+    tabBarGutter,
+    onEdit,
+    onChange,
+    activeKey,
+    defaultActiveKey,
+    hideAdd,
+    eventData,
+  } = props;
 
   return (
     <AntTabs
@@ -37,7 +49,10 @@ export default function Tabs(props: Props) {
       addIcon={addIcon}
       defaultActiveKey={defaultActiveKey ?? '1'}
       tabBarGutter={tabBarGutter}
-      onChange={onChange ? (key) => onChange(key) : undefined}
+      onChange={(key) => {
+        captureTabEvent(activeKey, key, items ?? [], { ...eventData, component: 'Tabs' });
+        onChange?.(key);
+      }}
       onEdit={
         onEdit
           ? (key, action) => onEdit(action, typeof key === 'string' ? key : undefined)
