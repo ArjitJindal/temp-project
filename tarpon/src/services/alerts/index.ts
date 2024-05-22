@@ -1119,9 +1119,11 @@ export class AlertsService extends CaseAlertsCommonService {
 
   private async acceptanceCriteriaPassed(alert: Alert): Promise<boolean> {
     const ruleChecklistTemplateId = alert.ruleChecklistTemplateId
+
     if (!ruleChecklistTemplateId) {
-      throw new BadRequest('No checklist for alert')
+      return true
     }
+
     const checklistTemplate =
       await this.checklistTemplateService().getChecklistTemplate(
         ruleChecklistTemplateId
