@@ -17,7 +17,7 @@ export const PostHogProviderWrapper = ({ children }) => {
         },
   });
 
-  postHogClient.identify('User info', {
+  postHogClient.identify(auth0User.userId, {
     name: auth0User.name,
     email: auth0User.verifiedEmail,
     auth0Id: auth0User.userId,
