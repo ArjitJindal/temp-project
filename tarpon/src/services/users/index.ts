@@ -345,7 +345,7 @@ export class UserService {
       }
     })
 
-    const promises: Promise<any>[] = [
+    const promises: Promise<void>[] = [
       this.saveUserEvents(
         originUser,
         originUserStateDetails,
