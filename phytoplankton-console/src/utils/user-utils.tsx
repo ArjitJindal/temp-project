@@ -232,3 +232,7 @@ export function useSortedUsers(
 }
 
 export const Context = React.createContext<{ user: FlagrightAuth0User } | null>(null);
+
+export const isFlagrightInternalUser = (user: FlagrightAuth0User) => {
+  return user.verifiedEmail?.endsWith('@flagright.com') ?? false;
+};
