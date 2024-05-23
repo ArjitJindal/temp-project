@@ -11,7 +11,7 @@
     "SLACK_CLIENT_ID": "2800969986821.3797458092182",
     "FEATURES_ENABLED": [],
     "HEAP_APP_ID": "",
-    "POSTHOG_API_KEY": "phc_12mxZXckh9t0LlosLIlraJl5xALKwOc8he1R6Jxwhus",
+    "POSTHOG_API_KEY": "",
     "POSTHOG_HOST": "https://eu.i.posthog.com"
   }
 }
