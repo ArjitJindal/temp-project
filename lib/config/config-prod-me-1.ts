@@ -5,7 +5,6 @@
 
 import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
-import { ADMIN_EMAILS } from '../constants/engineers'
 import { Config } from './config'
 
 const account = '870721492449'
@@ -89,11 +88,6 @@ export const config: Config = {
     },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: false,
-  },
-  databricks: {
-    ADMIN_EMAILS: ADMIN_EMAILS,
-    CREATE_METASTORE: true,
-    CREATE_VPC: false,
   },
   application: {
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',
