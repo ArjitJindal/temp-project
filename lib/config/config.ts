@@ -132,5 +132,7 @@ export type Config = {
     POSTMAN_COLLECTION_ID?: string
     GOOGLE_SHEETS_CLIENT_EMAIL: string
     API_USAGE_GOOGLE_SHEET_ID: string
+    POSTHOG_API_KEY?: string
+    POSTHOG_HOST?: string
   }
 }

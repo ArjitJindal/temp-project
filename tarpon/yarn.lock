@@ -8815,6 +8815,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios@npm:^1.6.2":
+  version: 1.7.2
+  resolution: "axios@npm:1.7.2"
+  dependencies:
+    follow-redirects: "npm:^1.15.6"
+    form-data: "npm:^4.0.0"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: 6ae80dda9736bb4762ce717f1a26ff997d94672d3a5799ad9941c24d4fb019c1dff45be8272f08d1975d7950bac281f3ba24aff5ecd49ef5a04d872ec428782f
+  languageName: node
+  linkType: hard
+
 "b4a@npm:^1.6.4":
   version: 1.6.6
   resolution: "b4a@npm:1.6.6"
@@ -12141,7 +12152,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:1.15.6":
+"follow-redirects@npm:1.15.6, follow-redirects@npm:^1.15.6":
   version: 1.15.6
   resolution: "follow-redirects@npm:1.15.6"
   peerDependenciesMeta:
@@ -17321,6 +17332,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"posthog-node@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "posthog-node@npm:4.0.1"
+  dependencies:
+    axios: "npm:^1.6.2"
+    rusha: "npm:^0.8.14"
+  checksum: c7413f7c669d92a127b4f5d25911e131d1d60659ad9fad004830a356752f7be01659192383637760a11aecaf14f45ae82d30a572f2958c0304b6beed5eff8710
+  languageName: node
+  linkType: hard
+
 "postman-collection-transformer@npm:4.1.6":
   version: 4.1.6
   resolution: "postman-collection-transformer@npm:4.1.6"
@@ -18067,6 +18088,13 @@ __metadata:
   dependencies:
     queue-microtask: "npm:^1.2.2"
   checksum: cb4f97ad25a75ebc11a8ef4e33bb962f8af8516bb2001082ceabd8902e15b98f4b84b4f8a9b222e5d57fc3bd1379c483886ed4619367a7680dad65316993021d
+  languageName: node
+  linkType: hard
+
+"rusha@npm:^0.8.14":
+  version: 0.8.14
+  resolution: "rusha@npm:0.8.14"
+  checksum: cdd0507caa2d045f8a18e1ecfb5bd06cede774cfd53cf686a297070052634fd6aae7423632dc0e2e9c7b6920d2c35f1aaeb4e0338a35611b8487829eaaec3404
   languageName: node
   linkType: hard
 
@@ -19442,6 +19470,7 @@ __metadata:
     p-limit: "npm:^3.0.0"
     p-map: "npm:^4.0.0"
     pluralize: "npm:^8.0.0"
+    posthog-node: "npm:^4.0.1"
     postman-collection: "npm:^4.1.6"
     prettier: "npm:^2.5.1"
     prettyjson: "npm:^1.2.5"

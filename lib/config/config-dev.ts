@@ -105,5 +105,7 @@ export const config: Config = {
     INTEGRATION_TEST_API_KEY_ID: 'hov2hklpll',
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
     API_USAGE_GOOGLE_SHEET_ID: '1JiK5HTWQVfNXO5XeoGheZTx9TwaHpDTQQUc2uNeH5Uw',
+    POSTHOG_API_KEY: 'phc_12mxZXckh9t0LlosLIlraJl5xALKwOc8he1R6Jxwhus',
+    POSTHOG_HOST: 'https://eu.i.posthog.com',
   },
 }

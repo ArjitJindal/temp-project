@@ -20,6 +20,7 @@ import {
   sortBy,
   sumBy,
 } from 'lodash'
+import { PostHog } from 'posthog-node'
 import {
   DailyMetricStats,
   DailyStats,
@@ -230,7 +231,7 @@ export class ApiUsageMetricsService {
     }
     const dimensions = this.getDimensions(tenantInfo)
     const dailyValues = await this.getDailyMetricValues(tenantInfo, timeRange)
-    const monthlyMetrics = await this.getMonthlyMetricValues(dailyValues)
+    const monthlyMetrics = this.getMonthlyMetricValues(dailyValues)
     const dailyMetricsData: MetricsData[] = dailyValues.flatMap((entry) =>
       entry.values.map((item) => ({
         metric: item.metric,
@@ -379,6 +380,85 @@ export class ApiUsageMetricsService {
       )
       await sheetsService.initialize()
       await sheetsService.updateUsageMetrics(dailyMetrics, monthlyMetrics)
+      await this.publishToPostHog(tenantInfo, dailyMetrics, monthlyMetrics)
     }
+  }
+
+  private getPostHogClient(): PostHog | null {
+    if (!process.env.POSTHOG_API_KEY || !process.env.POSTHOG_HOST) {
+      return null
+    }
+
+    return new PostHog(process.env.POSTHOG_API_KEY, {
+      host: process.env.POSTHOG_HOST as string,
+    })
+  }
+
+  private capturePostHogEvents(
+    event: string,
+    date: string,
+    values: Array<{ metric: Metric; value: number }>,
+    timestampFormat: string,
+    tenantInfo: TenantBasic
+  ) {
+    const postHogClient = this.getPostHogClient()
+
+    if (!postHogClient) {
+      return
+    }
+
+    values.forEach((value) => {
+      postHogClient.capture({
+        distinctId: tenantInfo.id,
+        event,
+        disableGeoip: true,
+        properties: {
+          metricName: value.metric.name,
+          metricValue: value.value,
+          date,
+          tenantId: tenantInfo.id,
+          tenantName: tenantInfo.name,
+          region: process.env.AWS_REGION as string,
+          capturedAt: dayjs().valueOf(),
+          capturedAtFormatted: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        },
+        timestamp: dayjs(date, timestampFormat).toDate(),
+      })
+    })
+  }
+
+  private async publishToPostHog(
+    tenantInfo: TenantBasic,
+    dailyMetrics: DailyMetricStats[],
+    monthlyMetrics: MonthlyMetricStats[]
+  ) {
+    const postHogClient = this.getPostHogClient()
+
+    if (!postHogClient) {
+      return
+    }
+
+    dailyMetrics.forEach((dailyMetric) => {
+      this.capturePostHogEvents(
+        'api_usage_daily',
+        dailyMetric.date,
+        dailyMetric.values,
+        'YYYY-MM-DD',
+        tenantInfo
+      )
+    })
+
+    monthlyMetrics.forEach((monthlyMetric) => {
+      this.capturePostHogEvents(
+        'api_usage_monthly',
+        monthlyMetric.month,
+        monthlyMetric.values,
+        'YYYY-MM',
+        tenantInfo
+      )
+    })
+
+    await postHogClient.flush()
+    await postHogClient.shutdown()
   }
 }

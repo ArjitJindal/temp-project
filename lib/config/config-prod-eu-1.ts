@@ -112,5 +112,7 @@ export const config: Config = {
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
     API_USAGE_GOOGLE_SHEET_ID: '1aR0OsWWHP_TDKHZoNvwmkxfCmApWPZDO_78EODig5Ps',
+    POSTHOG_HOST: 'https://eu.i.posthog.com',
+    POSTHOG_API_KEY: 'phc_TjqVLBQelI3KfF61sd8iHiA9ThVmjG1k2vJYVcPgCbO',
   },
 }
