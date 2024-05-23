@@ -1438,39 +1438,4 @@ export class AlertsService extends CaseAlertsCommonService {
 
     return updatedSampling
   }
-
-  public async closeAlertIfAllTransactionsApproved(
-    alert: Alert,
-    newlyApprovedTxIds: string[]
-  ) {
-    const mongoDb = await getMongoDbClient()
-    const transactionRepository = new MongoDbTransactionRepository(
-      this.tenantId,
-      mongoDb
-    )
-    const filteredTransactionIds = difference(
-      alert.transactionIds,
-      newlyApprovedTxIds
-    )
-    const transactions = await transactionRepository.getTransactionsByIds(
-      filteredTransactionIds
-    )
-    if (
-      transactions.every((transaction) => transaction?.status === 'ALLOW') &&
-      alert.alertId
-    ) {
-      await this.updateStatus(
-        [alert.alertId],
-        {
-          reason: ['Other'],
-          comment: 'Alert status changed to closed',
-          otherReason: ' All transactions of this alert are approved',
-          alertStatus: 'CLOSED',
-        },
-        {
-          bySystem: true,
-        }
-      )
-    }
-  }
 }
