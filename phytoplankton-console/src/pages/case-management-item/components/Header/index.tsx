@@ -15,6 +15,7 @@ import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTa
 import { CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
 interface Props {
+  isLoading: boolean;
   caseItem: Case;
   onReload: () => void;
   onCommentAdded: (newComment: Comment, groupId: string) => void;
@@ -22,7 +23,7 @@ interface Props {
 }
 
 export default function Header(props: Props) {
-  const { caseItem, onReload, headerStickyElRef, onCommentAdded } = props;
+  const { isLoading, caseItem, onReload, headerStickyElRef, onCommentAdded } = props;
   const { caseId } = caseItem;
 
   const isReopenEnabled = useHasPermissions(['case-management:case-reopen:write']);
@@ -101,6 +102,7 @@ export default function Header(props: Props) {
       ]}
       buttons={[
         <CommentButton
+          disabled={isLoading}
           onSuccess={(newComment) => {
             onCommentAdded(newComment, caseId ?? '');
           }}
@@ -124,7 +126,7 @@ export default function Header(props: Props) {
                 caseIds={[caseId]}
                 caseStatus={caseItem.caseStatus}
                 onSaved={onReload}
-                isDisabled={caseItem.caseStatus === 'CLOSED' && !isReopenEnabled}
+                isDisabled={(caseItem.caseStatus === 'CLOSED' && !isReopenEnabled) || isLoading}
                 statusTransitions={{
                   OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
                   OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },

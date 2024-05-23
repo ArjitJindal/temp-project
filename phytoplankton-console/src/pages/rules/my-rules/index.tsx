@@ -453,6 +453,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         queryResults={rulesResult}
         pagination={false}
         fitHeight={true}
+        externalHeader={true}
         rowKey="id"
         defaultSorting={DEFAULT_SORTING}
         params={params}

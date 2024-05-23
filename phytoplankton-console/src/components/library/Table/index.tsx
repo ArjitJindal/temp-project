@@ -36,6 +36,7 @@ import { Cursor } from '@/utils/queries/types';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { pickSortingParams } from '@/components/library/Table/paramsHelpers';
 import { shouldShowSkeleton } from '@/components/library/Skeleton';
+import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 
 type RowHeightMode = 'FIXED' | 'AUTO';
 
@@ -271,7 +272,12 @@ function Table<Item extends object, Params extends object = CommonParams>(
           const rows = table.getRowModel().rows;
           return (
             <table
-              className={cn(s.table, fitHeight === true && s.fitHeight)}
+              data-cy={'table'}
+              className={cn(
+                s.table,
+                fitHeight === true && s.fitHeight,
+                isLoading(dataRes) && CY_LOADING_FLAG_CLASS,
+              )}
               style={{
                 width: sizingMode === 'SCROLL' ? table.getTotalSize() : '100%',
               }}

@@ -46,7 +46,7 @@ describe('Escalate a case from case-details', () => {
     selectCase();
     escalateCase();
 
-    cy.wait(2000); // eslint-disable-line cypress/no-unnecessary-waiting
+    cy.waitNothingLoading();
     // Close the case
     cy.get('[data-cy="update-status-button"]').eq(0).should('exist').click({ force: true });
     cy.intercept('PATCH', '**/cases/statusChange').as('case');

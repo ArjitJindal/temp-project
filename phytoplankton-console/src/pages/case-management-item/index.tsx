@@ -16,7 +16,7 @@ import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import { FormValues } from '@/components/CommentEditor';
 import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
-import { isSuccess } from '@/utils/asyncResource';
+import { isSuccess, isLoading } from '@/utils/asyncResource';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
@@ -118,6 +118,7 @@ function CaseManagementItemPage() {
           header={
             <Card.Root>
               <Header
+                isLoading={isLoading(queryResults.data)}
                 headerStickyElRef={setHeaderStickyElRef}
                 caseItem={caseItem}
                 onReload={onReload}

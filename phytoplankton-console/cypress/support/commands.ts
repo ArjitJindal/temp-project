@@ -334,6 +334,14 @@ Cypress.Commands.add('asertInputDisabled', (label: string) => {
   expect(cy.getInputByLabel(label, 'input')).to.be.disabled;
 });
 
+Cypress.Commands.add('waitNothingLoading', () => {
+  cy.get('.cy-loading').should(($div) => {
+    if ($div.length !== 0) {
+      throw new Error(`There are still ${$div.length} elements under loading state`);
+    }
+  });
+});
+
 Cypress.Commands.add('assertSkeletonLoader', () => {
   cy.get("[data-cy='skeleton']").should('exist');
   cy.get("[data-cy='skeleton']").should('not.exist');

@@ -26,6 +26,9 @@ interface Props {
 const StatusChangeMenu = (props: Props) => {
   const { caseItem, onReload } = props;
   const options = useOptions({ caseItem, onReload });
+  if (options.length === 0) {
+    return <></>;
+  }
   return (
     <div>
       <Dropdown options={options} optionClassName={s.option}>
