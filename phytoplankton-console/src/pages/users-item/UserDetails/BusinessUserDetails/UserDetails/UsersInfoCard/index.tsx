@@ -90,13 +90,6 @@ export default function UsersInfoCard(props: Props) {
       <Form.Layout.Label icon={<TimerLineIcon />} title={'Created at'}>
         {dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
       </Form.Layout.Label>
-      <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
-        <div className={s.tags}>
-          {user.tags?.map((tag: ApiTag) => (
-            <KeyValueTag key={tag.key} tag={tag} />
-          ))}
-        </div>
-      </Form.Layout.Label>
       <Form.Layout.Label icon={<GlobalLineIcon />} title={'Ongoing sanctions screening'}>
         <div className={s.ongoingSanctions}>
           <AsyncResourceRenderer resource={ongoingSanctionsScreeningQueryResult.data}>
@@ -114,6 +107,27 @@ export default function UsersInfoCard(props: Props) {
       </Form.Layout.Label>
       <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition channel'}>
         {user.acquisitionChannel ?? '-'}
+      </Form.Layout.Label>
+      {user.mccDetails?.code ? (
+        <Form.Layout.Label icon={<EarthLineIcon />} title={'MCC Code'}>
+          <div>{user.mccDetails.code}</div>
+        </Form.Layout.Label>
+      ) : (
+        <></>
+      )}
+      {user.mccDetails?.description ? (
+        <Form.Layout.Label icon={<EarthLineIcon />} title={'MCC Description'}>
+          <div>{user.mccDetails?.description}</div>
+        </Form.Layout.Label>
+      ) : (
+        <></>
+      )}
+      <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
+        <div className={s.tags}>
+          {user.tags?.map((tag: ApiTag) => (
+            <KeyValueTag key={tag.key} tag={tag} />
+          ))}
+        </div>
       </Form.Layout.Label>
     </PropertyColumns>
   );
