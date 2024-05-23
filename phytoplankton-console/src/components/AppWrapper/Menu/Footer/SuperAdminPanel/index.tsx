@@ -32,7 +32,7 @@ import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
 import { getWhiteLabelBrandingByHost, isWhiteLabeled } from '@/utils/branding';
-import Select from '@/components/library/Select';
+import Select, { Option } from '@/components/library/Select';
 import Tag from '@/components/library/Tag';
 import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
 import SelectionGroup from '@/components/library/SelectionGroup';
@@ -118,7 +118,7 @@ export default function SuperAdminPanel() {
       }) ?? []
     );
   }, [queryResult.data]);
-  const tenantOptions = useMemo(
+  const tenantOptions: Option<string>[] = useMemo(
     () =>
       tenants.map((tenant) => {
         const tags = [
@@ -137,23 +137,20 @@ export default function SuperAdminPanel() {
           ),
         ];
 
-        return {
+        const option: Option<string> = {
           value: tenant.id,
-          labelText: `${tenant.name} ${tenant.id} ${tenant.region} ${tenant.whitelabel?.name}`,
           label: (
             <Space>
               {tenant.name} {tags}
             </Space>
           ),
-          disabled:
-            (tenant.isProductionAccessDisabled ||
-              (tenant.region &&
-                user.allowedRegions?.length &&
-                !user.allowedRegions.includes(tenant.region))) ??
-            false,
+          isDisabled: tenant.isProductionAccessDisabled ?? false,
+          labelText: `${tenant.name} ${tenant.id} ${tenant.region} ${tenant.whitelabel?.name}`,
         };
+
+        return option;
       }),
-    [tenants, user.allowedRegions],
+    [tenants],
   );
 
   const handleChangeTenant = async (newTenantId: string) => {
