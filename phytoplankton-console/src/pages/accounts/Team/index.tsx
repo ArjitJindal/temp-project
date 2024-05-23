@@ -201,7 +201,7 @@ export default function Team() {
         defaultWidth: 350,
         render: (item) => {
           // Do not let people edit themselves or roots.
-          if (item.role == 'root' || item.role !== 'admin') {
+          if (item.role == 'root') {
             return null;
           }
 
