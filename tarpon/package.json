@@ -201,6 +201,7 @@
     "@aws-sdk/lib-dynamodb": "^3.540.0",
     "@aws-sdk/lib-storage": "^3.540.0",
     "@aws-sdk/middleware-retry": "^3.374.0",
+    "@aws-sdk/s3-presigned-post": "^3.574.0",
     "@aws-sdk/s3-request-presigner": "^3.540.0",
     "@aws-sdk/signature-v4-crt": "^3.540.0",
     "@aws-sdk/util-arn-parser": "^3.47.1",

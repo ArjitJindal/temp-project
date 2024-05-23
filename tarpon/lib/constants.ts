@@ -107,6 +107,9 @@ export const StackConstants = {
   PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiAlertFunction'
   ),
+  PUBLIC_MANAGEMENT_API_FILE_UPLOAD_FUNCTION_NAME: getResourceNameForTarpon(
+    'PublicManagementApiFileUploadFunction'
+  ),
   CONSOLE_API_RULE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRuleTemplateFunction'
   ),

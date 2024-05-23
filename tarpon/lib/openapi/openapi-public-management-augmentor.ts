@@ -27,6 +27,8 @@ export const PublicManagementApiPathToLambda: any = {
   '/cases/{caseId}': StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME,
   '/alerts': StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
   '/alerts/{alertId}': StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
+  '/pre-signed-url':
+    StackConstants.PUBLIC_MANAGEMENT_API_FILE_UPLOAD_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

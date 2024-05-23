@@ -445,7 +445,9 @@ export class CdkTarponStack extends cdk.Stack {
         documentBucketName,
         documentBucketName
       )
+
       s3TmpBucket = Bucket.fromBucketName(this, tmpBucketName, tmpBucketName)
+
       s3demoModeBucket = Bucket.fromBucketName(
         this,
         s3demoModeBucketName,
@@ -586,8 +588,6 @@ export class CdkTarponStack extends cdk.Stack {
             's3:List*',
             's3:PutObject',
             's3:PutObjectAcl',
-            's3:PostObject',
-            's3:PostObjectAcl',
           ],
           resources: [
             s3TmpBucket.bucketArn,
@@ -692,6 +692,11 @@ export class CdkTarponStack extends cdk.Stack {
     /* Alert (Public) */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
+    })
+
+    /* Upload file (Public) */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_MANAGEMENT_API_FILE_UPLOAD_FUNCTION_NAME,
     })
 
     /* User */

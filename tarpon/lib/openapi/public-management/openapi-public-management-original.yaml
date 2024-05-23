@@ -574,8 +574,112 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertUpdatable'
       description: '### Update Alert'
+  /pre-signed-url:
+    post:
+      security:
+        - x-api-key: []
+      summary: Get a pre-signed URL
+      operationId: get-upload-presignedUrl
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresignedPostRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      description: >-
+        ### Generate Pre-Signed URL for File Uploads
+
+
+        The `POST /pre-signed-url` endpoint provides a secure, pre-signed URL that you can use to upload files directly to a designated storage service. The URL is time-limited, remaining valid for 15 minutes, and authenticated to ensure that file uploads are secure. The maximum supported file size is 100000000 bytes (100MB).
+
+
+        #### Uploading Your File
+
+
+        Once you have obtained the pre-signed URL and the accompanying fields (`key`, `name`, `x-amz-Algorithm`, `x-amz-credential`, `x-amz-date`, `x-amz-signature`) from the API endpoint:
+
+
+        To upload your file to the designated storage location using the provided data, you need to make a request formatted as follows:
+
+
+        ```bash
+            curl -X POST 'url' \
+            --form 'key="key"' \
+            --form 'name="name"' \
+            --form 'X-Amz-Algorithm="x-amz-algorithm"' \   
+            --form 'X-Amz-Credential="x-amz-credential"' \
+            --form 'X-Amz-Date="x-amz-date"' \
+            --form 'X-Amz-Security-Token="x-amz-security-token"' \
+            --form 'Policy="policy"' \
+            --form 'X-Amz-Signature= "x-amz-signature"' \
+            --form 'file=@"/path/to/file"'
+        ```
+
+        **Important Note:** You must retain the returned `key` as it is essential for later referencing the file in the application, such as attaching it to a case or including it in a user comment.
 components:
   schemas:
+    PresignedPostRequest:
+      title: PresignedPostRequest
+      type: object
+      description: ''
+      properties:
+        filename:
+          type: string
+        fileSize:
+          type: number
+          maximum: 100000000
+          description: File size should be less than 100000000 bytes
+      required:
+        - filename
+        - fileSize
+    PresignedUrlResponse:
+      title: PresignedUrlResponse
+      type: object
+      description: ''
+      properties:
+        url:
+          type: string
+        fields:
+          type: object
+          description: Fields to be used in the form-data request
+          properties:
+            key:
+              type: string
+            policy:
+              type: string
+            x-amz-algorithm:
+              type: string
+            x-amz-credential:
+              type: string
+            x-amz-date:
+              type: string
+            x-amz-signature:
+              type: string
+            name:
+              type: string
+          required:
+            - key
+            - policy
+            - x-amz-algorithm
+            - x-amz-credential
+            - x-amz-date
+            - x-amz-signature
+            - name
+      required:
+        - url
+        - fields
     RuleInstance:
       title: RuleInstance
       allOf:
