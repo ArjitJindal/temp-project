@@ -92,10 +92,9 @@ Cypress.Commands.add('checkAndSwitchToTenant', (tenantDisplayName: string) => {
   cy.intercept('GET', '**/tenants').as('tenants');
   cy.intercept('POST', '**/change_tenant').as('changeTenant');
   cy.visit('/');
-  cy.get("button[data-cy='superadmin-panel-button']").should('be.visible').as('superadminButton');
-  cy.get('@superadminButton').click();
-  cy.get('@superadminButton').then((button) => {
+  cy.get("button[data-cy='superadmin-panel-button']").then((button) => {
     if (button.text() !== tenantDisplayName) {
+      cy.get("button[data-cy='superadmin-panel-button']").click();
       cy.wait('@tenants', { timeout: 15000 }).then((tenantsInterception) => {
         expect(tenantsInterception.response?.statusCode).to.be.oneOf([200, 304]);
         cy.get('.ant-modal .ant-select').first().type(`${tenantDisplayName}{enter}`);
