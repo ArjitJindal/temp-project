@@ -1,5 +1,5 @@
 import { useLocalStorageState } from 'ahooks';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
@@ -47,58 +47,60 @@ function Content(props: { tab: string }) {
   const navigate = useNavigate();
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
+  const handleChange = useCallback(
+    (key) => {
+      navigate(`/rules/${key}`, { replace: true });
+    },
+    [navigate],
+  );
+  const items = useMemo(
+    () => [
+      {
+        title: 'My rules',
+        key: 'my-rules',
+        children: (
+          <PageWrapperContentContainer>
+            <Authorized required={['rules:my-rules:read']}>
+              <MyRule simulationMode={isSimulationEnabled} />
+            </Authorized>
+          </PageWrapperContentContainer>
+        ),
+      },
+      {
+        title: 'Library',
+        key: 'rules-library',
+        children: (
+          <PageWrapperContentContainer>
+            <Authorized required={['rules:library:read']}>
+              <RulesTable
+                simulationMode={isSimulationEnabled}
+                onCreateRule={
+                  v8Enabled
+                    ? () => {
+                        navigate(makeUrl('/rules/rules-library/create'));
+                      }
+                    : undefined
+                }
+                onViewRule={(rule) => {
+                  navigate(makeUrl('/rules/rules-library/:id', { id: rule.id }));
+                }}
+                onEditRule={(rule) => {
+                  navigate(makeUrl('/rules/rules-library/:id', { id: rule.id }));
+                }}
+                onScenarioClick={() => {
+                  navigate(makeUrl('/rules/rules-library/create'));
+                }}
+              />
+            </Authorized>
+          </PageWrapperContentContainer>
+        ),
+      },
+    ],
+    [isSimulationEnabled, navigate, v8Enabled],
+  );
   // NOTE: Rule logic config data size is big, so we prefetch it here
   useRuleLogicConfig();
-  return (
-    <PageTabs
-      activeKey={props.tab}
-      onChange={(key) => {
-        navigate(`/rules/${key}`, { replace: true });
-      }}
-      items={[
-        {
-          title: 'My rules',
-          key: 'my-rules',
-          children: (
-            <PageWrapperContentContainer>
-              <Authorized required={['rules:my-rules:read']}>
-                <MyRule simulationMode={isSimulationEnabled} />
-              </Authorized>
-            </PageWrapperContentContainer>
-          ),
-        },
-        {
-          title: 'Library',
-          key: 'rules-library',
-          children: (
-            <PageWrapperContentContainer>
-              <Authorized required={['rules:library:read']}>
-                <RulesTable
-                  simulationMode={isSimulationEnabled}
-                  onCreateRule={
-                    v8Enabled
-                      ? () => {
-                          navigate(makeUrl('/rules/rules-library/create'));
-                        }
-                      : undefined
-                  }
-                  onViewRule={(rule) => {
-                    navigate(makeUrl('/rules/rules-library/:id', { id: rule.id }));
-                  }}
-                  onEditRule={(rule) => {
-                    navigate(makeUrl('/rules/rules-library/:id', { id: rule.id }));
-                  }}
-                  onScenarioClick={() => {
-                    navigate(makeUrl('/rules/rules-library/create'));
-                  }}
-                />
-              </Authorized>
-            </PageWrapperContentContainer>
-          ),
-        },
-      ]}
-    />
-  );
+  return <PageTabs activeKey={props.tab} onChange={handleChange} items={items} />;
 }
 
 export default TableList;
