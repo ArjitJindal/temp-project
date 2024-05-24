@@ -1,7 +1,16 @@
 import { defineConfig } from 'cypress';
 
-const BASE_URL =
-  process.env.ENV === 'local' ? 'https://flagright.local:8001/' : 'https://console.flagright.dev/';
+let baseUrl: string;
+
+if (process.env.ENV === 'local') {
+  baseUrl = 'https://flagright.local:8001/';
+} else if (process.env.ENV === 'dev') {
+  baseUrl = 'https://console.flagright.dev/';
+} else if (process.env.ENV?.startsWith('qa')) {
+  baseUrl = `https://${process.env.ENV}.console.flagright.dev/`;
+} else {
+  throw new Error('Unknown environment');
+}
 
 export default defineConfig({
   env: {
@@ -15,7 +24,7 @@ export default defineConfig({
   e2e: {
     defaultCommandTimeout: 15000,
     video: false,
-    baseUrl: BASE_URL,
+    baseUrl,
   },
   chromeWebSecurity: false,
   retries: {
