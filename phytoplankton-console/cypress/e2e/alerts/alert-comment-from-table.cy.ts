@@ -1,8 +1,7 @@
 /// <reference types="cypress" />
 import { v4 as uuid } from 'uuid';
 
-// TODO: Unskip in FR-3189
-describe.skip('Comment Alerts from Table', () => {
+describe('Comment Alerts from Table', () => {
   beforeEach(() => {
     cy.loginByRole('super_admin');
   });
