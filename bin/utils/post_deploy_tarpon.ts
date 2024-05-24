@@ -7,7 +7,7 @@ import {
 import { Construct } from 'constructs'
 import { getAssumeRoleCommands } from './assume-role-commands'
 import { GENERATED_DIRS } from '../constants/generatedDirs'
-import { tarponBuildOutput } from '../constants/artifcats'
+import { TARPON_BUILD_ARTIFACT } from '../constants/artifcats'
 import { ComputeType } from 'aws-cdk-lib/aws-codebuild'
 import { IVpc } from 'aws-cdk-lib/aws-ec2'
 
@@ -44,7 +44,7 @@ export const postDeploymentCodeBuildProject = (
             'cd tarpon',
             ...GENERATED_DIRS.map(
               (dir) =>
-                `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`
+                `mv "$CODEBUILD_SRC_DIR_${TARPON_BUILD_ARTIFACT.artifactName}"/${dir} ${dir}`
             ),
             `npm run migration:post:up`,
             'cd ..',

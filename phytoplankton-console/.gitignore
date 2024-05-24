@@ -42,6 +42,9 @@ src/apis
 esbuild.json
 config/openapi.yaml
 .env
-cypress.env.json
-
 .yarn/
+
+# Cypress
+cypress.env.json
+cypress/screenshots
+cypress/videos

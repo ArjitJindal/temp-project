@@ -8,7 +8,7 @@ import {
 import { Config } from '@flagright/lib/config/config'
 import { getAssumeRoleCommands } from './assume-role-commands'
 import { GENERATED_DIRS } from '../constants/generatedDirs'
-import { tarponBuildOutput } from '../constants/artifcats'
+import { TARPON_BUILD_ARTIFACT } from '../constants/artifcats'
 import { getSentryReleaseSpec } from './sentry-release-spec'
 import { installTerraform } from '../constants/terraform-commands'
 import { ComputeType } from 'aws-cdk-lib/aws-codebuild'
@@ -48,7 +48,7 @@ export const tarponDeployStage = (
             'cd tarpon',
             ...GENERATED_DIRS.map(
               (dir) =>
-                `mv "$CODEBUILD_SRC_DIR_${tarponBuildOutput.artifactName}"/${dir} ${dir}`
+                `mv "$CODEBUILD_SRC_DIR_${TARPON_BUILD_ARTIFACT.artifactName}"/${dir} ${dir}`
             ),
             ...(shouldReleaseSentry
               ? getSentryReleaseSpec(false).commands

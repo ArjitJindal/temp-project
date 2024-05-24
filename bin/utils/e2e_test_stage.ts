@@ -31,6 +31,11 @@ export const getE2ETestProject = (
       cache: {
         paths: ['node_modules/**/*'],
       },
+      artifacts: {
+        'base-directory': 'phytoplankton-console/cypress',
+        files: ['videos/**/*', 'screenshots/**/*'],
+        'discard-paths': 'yes',
+      },
       env: {
         'secrets-manager': {
           CYPRESS_CREDS: STACK_CONSTANTS.CYPRESS_CREDS,
@@ -39,7 +44,7 @@ export const getE2ETestProject = (
     }),
     environment: {
       buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
-      computeType: codebuild.ComputeType.MEDIUM,
+      computeType: codebuild.ComputeType.LARGE,
     },
     role: codeDeployRole,
   })

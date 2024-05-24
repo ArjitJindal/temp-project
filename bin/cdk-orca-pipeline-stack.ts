@@ -11,7 +11,11 @@ import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { buildTarpon } from './utils/tarpon-build-stage'
 import { getSentryReleaseSpec } from './utils/sentry-release-spec'
 import { getVpc } from './utils/vpc'
-import { sourceOutput, tarponBuildOutput } from './constants/artifcats'
+import {
+  E2E_ARTIFACT,
+  SOURCE_ARTIFACT,
+  TARPON_BUILD_ARTIFACT,
+} from './constants/artifcats'
 import { tarponDeployStage } from './utils/tarpon-deploy-stage'
 import { config as devConfig } from '@flagright/lib/config/config-dev'
 import { config as sandboxConfig } from '@flagright/lib/config/config-sandbox'
@@ -89,7 +93,7 @@ export class CdkOrcaPipelineStack extends Stack {
               actionName: 'GitHub_Source',
               repo: deployConfig.github.REPO,
               connectionArn: deployConfig.github.GITHUB_CONNECTION_ARN,
-              output: sourceOutput,
+              output: SOURCE_ARTIFACT,
               owner: deployConfig.github.OWNER,
               variablesNamespace: 'SourceVariables',
               triggerOnPush: false,
@@ -103,9 +107,9 @@ export class CdkOrcaPipelineStack extends Stack {
           actions: [
             new codepipline_actions.CodeBuildAction({
               actionName: 'Build',
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
               project: buildTarpon(this, role),
-              outputs: [tarponBuildOutput],
+              outputs: [TARPON_BUILD_ARTIFACT],
               environmentVariables: getSentryReleaseSpec(true).actionEnv,
             }),
           ],
@@ -115,14 +119,14 @@ export class CdkOrcaPipelineStack extends Stack {
           actions: [
             new codepipline_actions.CodeBuildAction({
               actionName: 'Deploy_Tarpon',
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
               project: tarponDeployStage(this, devConfig, role, vpc),
-              extraInputs: [tarponBuildOutput],
+              extraInputs: [TARPON_BUILD_ARTIFACT],
               environmentVariables: getSentryReleaseSpec(true).actionEnv,
             }),
             new codepipline_actions.CodeBuildAction({
               actionName: 'Deploy_Phytoplankton_Console',
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
               project: phytoplanktonDeployStage(
                 this,
                 'dev',
@@ -133,7 +137,7 @@ export class CdkOrcaPipelineStack extends Stack {
             new codepipline_actions.CodeBuildAction({
               actionName: 'Deploy_Databricks',
               project: databricksDeployStage(this, devConfig, role),
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
             }),
           ],
         },
@@ -148,9 +152,9 @@ export class CdkOrcaPipelineStack extends Stack {
                 role,
                 vpc
               ),
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
               environmentVariables: getSentryReleaseSpec(true).actionEnv,
-              extraInputs: [tarponBuildOutput],
+              extraInputs: [TARPON_BUILD_ARTIFACT],
             }),
           ],
         },
@@ -160,7 +164,8 @@ export class CdkOrcaPipelineStack extends Stack {
             new codepipline_actions.CodeBuildAction({
               actionName: 'E2E_Test_Dev',
               project: getE2ETestProject(this, 'dev', role),
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
+              outputs: [E2E_ARTIFACT],
             }),
           ],
         },
@@ -179,8 +184,8 @@ export class CdkOrcaPipelineStack extends Stack {
             new codepipline_actions.CodeBuildAction({
               actionName: 'Deploy_Tarpon',
               project: tarponDeployStage(this, sandboxConfig, role, vpc),
-              input: sourceOutput,
-              extraInputs: [tarponBuildOutput],
+              input: SOURCE_ARTIFACT,
+              extraInputs: [TARPON_BUILD_ARTIFACT],
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
             }),
             new codepipline_actions.CodeBuildAction({
@@ -191,12 +196,12 @@ export class CdkOrcaPipelineStack extends Stack {
                 SANDBOX_CODE_DEPLOY_ROLE_ARN,
                 role
               ),
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
             }),
             new codepipline_actions.CodeBuildAction({
               actionName: 'Deploy_Databricks',
               project: databricksDeployStage(this, sandboxConfig, role),
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
             }),
           ],
         },
@@ -211,9 +216,9 @@ export class CdkOrcaPipelineStack extends Stack {
                 role,
                 vpc
               ),
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
+              extraInputs: [TARPON_BUILD_ARTIFACT],
               runOrder: 1,
             }),
             new codepipline_actions.CodeBuildAction({
@@ -222,9 +227,9 @@ export class CdkOrcaPipelineStack extends Stack {
                 this,
                 role
               ),
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
+              extraInputs: [TARPON_BUILD_ARTIFACT],
               runOrder: 2,
             }),
           ],
@@ -249,8 +254,8 @@ export class CdkOrcaPipelineStack extends Stack {
                     .toUpperCase()
                     .replace('-', '_')}`,
                   project: tarponDeployStage(this, config, role, vpc),
-                  input: sourceOutput,
-                  extraInputs: [tarponBuildOutput],
+                  input: SOURCE_ARTIFACT,
+                  extraInputs: [TARPON_BUILD_ARTIFACT],
                   environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
               ]
@@ -261,7 +266,7 @@ export class CdkOrcaPipelineStack extends Stack {
                       .toUpperCase()
                       .replace('-', '_')}`,
                     project: databricksDeployStage(this, config, role),
-                    input: sourceOutput,
+                    input: SOURCE_ARTIFACT,
                   })
                 )
               }
@@ -275,7 +280,7 @@ export class CdkOrcaPipelineStack extends Stack {
                 PROD_CODE_DEPLOY_ROLE_ARN,
                 role
               ),
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
             }),
           ],
         },
@@ -285,9 +290,9 @@ export class CdkOrcaPipelineStack extends Stack {
             new codepipline_actions.CodeBuildAction({
               actionName: 'Integrations_Update',
               project: postProdDeployIntegrationsUpdateBuildProject(this, role),
-              input: sourceOutput,
+              input: SOURCE_ARTIFACT,
               environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [tarponBuildOutput],
+              extraInputs: [TARPON_BUILD_ARTIFACT],
             }),
             ...PRODUCTION_REGIONS.map((region) => {
               return new codepipline_actions.CodeBuildAction({
@@ -300,9 +305,9 @@ export class CdkOrcaPipelineStack extends Stack {
                   role,
                   vpc
                 ),
-                input: sourceOutput,
+                input: SOURCE_ARTIFACT,
                 environmentVariables: getSentryReleaseSpec(false).actionEnv,
-                extraInputs: [tarponBuildOutput],
+                extraInputs: [TARPON_BUILD_ARTIFACT],
               })
             }),
           ],

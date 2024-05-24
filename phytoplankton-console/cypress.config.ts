@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import { defineConfig } from 'cypress';
 
 let baseUrl: string;
@@ -23,8 +24,23 @@ export default defineConfig({
   },
   e2e: {
     defaultCommandTimeout: 15000,
-    video: false,
     baseUrl,
+    video: true,
+    setupNodeEvents(on) {
+      // Ref: https://docs.cypress.io/guides/guides/screenshots-and-videos#Delete-videos-for-specs-without-failing-or-retried-tests
+      on('after:spec', (spec, results) => {
+        if (results && results.video) {
+          // Do we have failures for any retry attempts?
+          const failures = results.tests.some((test) =>
+            test.attempts.some((attempt) => attempt.state === 'failed'),
+          );
+          if (!failures) {
+            // delete the video if the spec passed and no tests retried
+            fs.unlinkSync(results.video);
+          }
+        }
+      });
+    },
   },
   chromeWebSecurity: false,
   retries: {
