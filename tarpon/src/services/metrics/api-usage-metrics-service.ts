@@ -253,7 +253,12 @@ export class ApiUsageMetricsService {
       dailyValues,
       monthlyMetrics
     )
+
     logger.info('Published to Google Sheet')
+
+    await this.publishToPostHog(tenantInfo, dailyValues, monthlyMetrics)
+
+    logger.info('Published to PostHog')
   }
 
   private async getDailyTransactionsEventsCounts(
@@ -380,7 +385,6 @@ export class ApiUsageMetricsService {
       )
       await sheetsService.initialize()
       await sheetsService.updateUsageMetrics(dailyMetrics, monthlyMetrics)
-      await this.publishToPostHog(tenantInfo, dailyMetrics, monthlyMetrics)
     }
   }
 
@@ -407,23 +411,24 @@ export class ApiUsageMetricsService {
       return
     }
 
-    values.forEach((value) => {
-      postHogClient.capture({
-        distinctId: tenantInfo.id,
-        event,
-        disableGeoip: true,
-        properties: {
-          metricName: value.metric.name,
-          metricValue: value.value,
-          date,
-          tenantId: tenantInfo.id,
-          tenantName: tenantInfo.name,
-          region: process.env.AWS_REGION as string,
-          capturedAt: dayjs().valueOf(),
-          capturedAtFormatted: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        },
-        timestamp: dayjs(date, timestampFormat).toDate(),
-      })
+    postHogClient.capture({
+      distinctId: tenantInfo.id,
+      event,
+      disableGeoip: true,
+      properties: {
+        ...values.reduce(
+          (acc, value) => ({
+            ...acc,
+            [value.metric.name]: value.value,
+          }),
+          {}
+        ),
+        tenantId: tenantInfo.id,
+        tenantName: tenantInfo.name,
+        region: process.env.AWS_REGION,
+        date,
+      },
+      timestamp: dayjs(date, timestampFormat).toDate(),
     })
   }
 
@@ -440,7 +445,7 @@ export class ApiUsageMetricsService {
 
     dailyMetrics.forEach((dailyMetric) => {
       this.capturePostHogEvents(
-        'api_usage_daily',
+        'api-usage-metrics-daily',
         dailyMetric.date,
         dailyMetric.values,
         'YYYY-MM-DD',
@@ -450,7 +455,7 @@ export class ApiUsageMetricsService {
 
     monthlyMetrics.forEach((monthlyMetric) => {
       this.capturePostHogEvents(
-        'api_usage_monthly',
+        'api_usage_metrics_monthly',
         monthlyMetric.month,
         monthlyMetric.values,
         'YYYY-MM',
