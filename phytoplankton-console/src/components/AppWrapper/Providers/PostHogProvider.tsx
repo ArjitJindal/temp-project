@@ -1,4 +1,4 @@
-import { PostHogProvider } from 'posthog-js/react';
+import { PostHog, PostHogProvider } from 'posthog-js/react';
 import { isAutoCaptureDisabled } from '../../../utils/postHog';
 import { isFlagrightInternalUser, useAuth0User } from '@/utils/user-utils';
 import { postHogClient } from '@/utils/postHog';
@@ -6,11 +6,10 @@ import { postHogClient } from '@/utils/postHog';
 export const PostHogProviderWrapper = ({ children }) => {
   const auth0User = useAuth0User();
 
-  if (isFlagrightInternalUser(auth0User)) {
-    postHogClient.opt_out_capturing();
-  }
+  const disableCapture =
+    isFlagrightInternalUser(auth0User) || auth0User.tenantName.includes('Cypress');
 
-  postHogClient.init(POSTHOG_API_KEY, {
+  postHogClient.init(disableCapture ? '' : POSTHOG_API_KEY, {
     api_host: POSTHOG_HOST,
     autocapture: isAutoCaptureDisabled(auth0User)
       ? false
@@ -20,6 +19,11 @@ export const PostHogProviderWrapper = ({ children }) => {
           dom_event_allowlist: ['click', 'submit'],
         },
     capture_pageleave: false,
+    loaded: (ph: PostHog) => {
+      if (disableCapture) {
+        ph.opt_out_capturing();
+      }
+    },
   });
 
   postHogClient.identify(
