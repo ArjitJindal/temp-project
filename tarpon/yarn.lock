@@ -8587,9 +8587,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.139.0":
-  version: 2.139.1
-  resolution: "aws-cdk-lib@npm:2.139.1"
+"aws-cdk-lib@npm:~2.140.0":
+  version: 2.140.0
+  resolution: "aws-cdk-lib@npm:2.140.0"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
@@ -8607,7 +8607,7 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: a0c21c7b0372a5f421220fb77e6509d1e2aac02ca14cf89312dd3dcac2f74ec359800331baa8d963c41eeca0a1aef8a429dc84b76a17841e231e481fb84aa612
+  checksum: 4897b641a2d66ebfee96293088bbec2d08f44ac731233a90dddce01c02ff55513bd1f3649331d3e7d2566872b250129a11ef18e7cdd27390e3581634c5ee3615
   languageName: node
   linkType: hard
 
@@ -19383,7 +19383,7 @@ __metadata:
     ajv: "npm:8.11.0"
     auth0: "npm:^4.2.0"
     aws-cdk: "npm:~2.139.0"
-    aws-cdk-lib: "npm:~2.139.0"
+    aws-cdk-lib: "npm:~2.140.0"
     aws-sdk: "npm:2.1608.0"
     aws-sdk-client-mock: "npm:^2.0.1"
     aws-sdk-client-mock-jest: "npm:^2.0.1"

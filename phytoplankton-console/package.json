@@ -150,7 +150,7 @@
     "@typescript-eslint/parser": "^6.13.2",
     "@umijs/fabric": "^2.12.1",
     "aws-cdk": "~2.139.0",
-    "aws-cdk-lib": "~2.139.0",
+    "aws-cdk-lib": "~2.140.0",
     "carlo": "^0.9.46",
     "constructs": "^10.0.75",
     "cross-env": "^7.0.0",
