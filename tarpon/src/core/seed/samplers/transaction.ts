@@ -173,7 +173,7 @@ export function sampleCardDetails(): CardDetails {
       category: 'category',
       MCC: 'MCC',
       city: 'city',
-      country: 'country',
+      country: 'US',
       state: 'state',
       postCode: 'postCode',
     },

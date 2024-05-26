@@ -45,7 +45,7 @@ describe('Prepopulating', () => {
       expect(
         addressByCardMerchantDetails({
           postCode: '77040',
-          country: 'United States',
+          country: 'US',
           state: 'Texas',
           city: 'Houston',
         })
