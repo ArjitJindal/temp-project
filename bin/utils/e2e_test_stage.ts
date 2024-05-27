@@ -33,8 +33,13 @@ export const getE2ETestProject = (
       },
       artifacts: {
         'base-directory': 'phytoplankton-console/cypress',
-        files: ['videos/**/*', 'screenshots/**/*'],
-        'discard-paths': 'yes',
+        files: [
+          'videos/**/*',
+          'screenshots/**/*',
+          // NOTE: This is a workaround to have at least one file in the artifacts to prevent the
+          // "no matching artifact paths found" error
+          'tsconfig.json',
+        ],
       },
       env: {
         'secrets-manager': {
