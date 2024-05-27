@@ -129,6 +129,7 @@ export class UserRepository {
       isPulseEnabled,
       userType
     )
+
     let result = await cursorPaginate<
       InternalBusinessUser | InternalConsumerUser
     >(
@@ -308,13 +309,6 @@ export class UserRepository {
       InternalBusinessUser | InternalConsumerUser
     >[] = []
 
-    if (params.filterRiskLevelLocked != null) {
-      const isUpdatable = params.filterRiskLevelLocked === 'true' ? false : true
-      filterConditions.push({
-        'drsScore.isUpdatable': isUpdatable,
-      })
-    }
-
     if (params.filterId != null) {
       filterConditions.push({
         userId: params.filterId,
@@ -327,40 +321,6 @@ export class UserRepository {
           $in: params.filterUserIds,
         },
       })
-    }
-
-    if (params.filterRuleInstancesHit != null) {
-      filterConditions.push({
-        hitRules: {
-          $elemMatch: {
-            ruleInstanceId: {
-              $in: params.filterRuleInstancesHit,
-            },
-          },
-        },
-      })
-    }
-
-    if (params.filterShadowHit != null) {
-      if (params.filterShadowHit) {
-        filterConditions.push({
-          hitRules: {
-            $elemMatch: {
-              isShadowHit: true,
-            },
-          },
-        })
-      } else {
-        filterConditions.push({
-          hitRules: {
-            $not: {
-              $elemMatch: {
-                isShadowHit: true,
-              },
-            },
-          },
-        })
-      }
     }
 
     if (params.filterBusinessIndustries != null) {
@@ -376,6 +336,28 @@ export class UserRepository {
         'legalEntity.companyGeneralDetails.userRegistrationStatus': {
           $in: params.filterUserRegistrationStatus,
         },
+      })
+    }
+
+    if (params.filterRiskLevelLocked != null) {
+      const isUpdatable = params.filterRiskLevelLocked === 'true' ? false : true
+      filterConditions.push({
+        'drsScore.isUpdatable': isUpdatable,
+      })
+    }
+
+    if (params.filterRuleInstancesHit != null) {
+      const eleMatchCondition = {
+        ruleInstanceId: { $in: params.filterRuleInstancesHit },
+      }
+      if (params.filterShadowHit) {
+        eleMatchCondition['isShadow'] = true
+      } else {
+        eleMatchCondition['isShadow'] = { $ne: true }
+      }
+
+      filterConditions.push({
+        hitRules: { $elemMatch: eleMatchCondition },
       })
     }
 
@@ -408,6 +390,7 @@ export class UserRepository {
           ],
         })
       }
+
       filterConditions.push({ $and: filterNameConditions })
     }
 
