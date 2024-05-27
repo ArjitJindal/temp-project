@@ -167,6 +167,10 @@ export const REPORT_COLLECTION = (tenandId: string) => {
   return `${tenandId}-report`
 }
 
+export const JOBS_COLLECTION = (tenandId: string) => {
+  return `${tenandId}-jobs`
+}
+
 // Pulse
 export const KRS_SCORES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-kyc-risk-values`
@@ -607,6 +611,13 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
             entity: 1,
           },
         ].map((index) => ({ index })),
+    },
+    [JOBS_COLLECTION(tenantId)]: {
+      getIndexes: () => [
+        { index: { jobId: 1 }, unique: true },
+        { index: { type: 1, 'latestStatus.timestamp': 1 } },
+        { index: { 'latestStatus.timestamp': 1 } },
+      ],
     },
   }
 }

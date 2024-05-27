@@ -164,8 +164,12 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
     const testJob: SimulationRiskFactorsBatchJob = {
       type: 'SIMULATION_RISK_FACTORS',
       tenantId,
-      parameters: { taskId: taskIds[0], jobId, ...parameters.parameters[0] },
-      sampling: parameters.sampling ?? { usersCount: 'RANDOM' },
+      parameters: {
+        taskId: taskIds[0],
+        jobId,
+        ...parameters.parameters[0],
+        sampling: parameters.sampling ?? { usersCount: 'RANDOM' },
+      },
     }
 
     await jobRunnerHandler(testJob)

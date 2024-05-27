@@ -4,6 +4,7 @@ import { backOff } from 'exponential-backoff'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   TransactionAggregationTask,
+  V8RuleAggregationRebuildTask,
   V8TransactionAggregationTask,
 } from '@/services/rules-engine'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -32,6 +33,9 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
 import { SanctionsService } from '@/services/sanctions'
 import { IBANService } from '@/services/iban'
+import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { RulePreAggregationBatchJob } from '@/@types/batch-job'
 
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask
@@ -49,6 +53,54 @@ export async function handleV8TransactionAggregationTask(
     { transaction: task.transaction },
     task.direction
   )
+}
+
+export async function handleV8PreAggregationTask(
+  task: V8RuleAggregationRebuildTask
+) {
+  updateLogMetadata({
+    aggregationVariableKey: task.aggregationVariable.key,
+    tenantId: task.tenantId,
+  })
+  const dynamoDb = getDynamoDbClient()
+  const jobRepository = new BatchJobRepository(
+    task.tenantId,
+    await getMongoDbClient()
+  )
+  const ruleInstanceRepository = new RuleInstanceRepository(task.tenantId, {
+    dynamoDb,
+  })
+  const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
+    task.ruleInstanceId
+  )
+  if (
+    !ruleInstance ||
+    ruleInstance.status === 'INACTIVE' ||
+    ruleInstance.logicAggregationVariables?.find(
+      (v) => v.version !== task.aggregationVariable.version
+    )
+  ) {
+    logger.warn(
+      `Rule instance ${task.ruleInstanceId} is changed/deleted. Skipping pre-aggregation.`
+    )
+  } else {
+    const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
+    await ruleEvaluator.rebuildAggregationVariable(
+      task.aggregationVariable,
+      task.currentTimestamp,
+      task.userId,
+      task.paymentDetails
+    )
+  }
+  const newJob = (await jobRepository.updateJob(task.jobId, {
+    $inc: { 'metadata.completeTasksCount': 1 },
+  })) as RulePreAggregationBatchJob
+  if (
+    newJob.metadata &&
+    newJob.metadata.completeTasksCount === newJob.metadata.tasksCount
+  ) {
+    // TODO (FR-2917): Update rule instance status from DEPLOYING to ACTIVE
+  }
 }
 
 export async function handleTransactionAggregationTask(
@@ -216,9 +268,15 @@ export const transactionAggregationHandler = lambdaConsumer()(
           async () => {
             await initializeTenantContext(task.tenantId)
 
-            if ((task as V8TransactionAggregationTask).v8) {
-              const v8Task = task as V8TransactionAggregationTask
-              await handleV8TransactionAggregationTask(v8Task)
+            if ((task as V8TransactionAggregationTask).type) {
+              const v8Task = task as
+                | V8TransactionAggregationTask
+                | V8RuleAggregationRebuildTask
+              if (v8Task.type === 'TRANSACTION_AGGREGATION') {
+                await handleV8TransactionAggregationTask(v8Task)
+              } else if (v8Task.type === 'PRE_AGGREGATION') {
+                await handleV8PreAggregationTask(v8Task)
+              }
             } else {
               updateLogMetadata(task)
               const legacyTask = task as TransactionAggregationTask

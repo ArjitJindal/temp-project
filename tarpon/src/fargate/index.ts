@@ -1,5 +1,5 @@
 import { BATCH_JOB_PAYLOAD_ENV_VAR } from '@lib/cdk/constants'
-import { BatchJob } from '@/@types/batch-job'
+import { BatchJobWithId } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import {
   initializeTenantContext,
@@ -10,7 +10,7 @@ import { nodeConsumer } from '@/core/middlewares/node-consumer-middleware'
 
 const handler = nodeConsumer()(async () => {
   const jobString = process.env[BATCH_JOB_PAYLOAD_ENV_VAR] as string
-  const job: BatchJob = JSON.parse(jobString) as BatchJob
+  const job = JSON.parse(jobString) as BatchJobWithId
   await initializeTenantContext(job.tenantId)
 
   logger.info(`Starting job - ${job.type}`, job)
@@ -21,7 +21,7 @@ const handler = nodeConsumer()(async () => {
     runner: 'FARGATE',
   })
 
-  const batchJob = getBatchJobRunner(job.type)
+  const batchJob = getBatchJobRunner(job.type, job.jobId)
   await batchJob.execute(job)
 })
 

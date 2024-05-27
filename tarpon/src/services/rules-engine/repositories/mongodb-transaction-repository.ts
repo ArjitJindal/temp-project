@@ -50,8 +50,12 @@ import {
   cursorPaginate,
   CursorPaginationResponse,
 } from '@/utils/pagination'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import {
+  PaymentDetails,
+  PaymentMethod,
+} from '@/@types/tranasction/payment-type'
+import {
+  PAYMENT_METHOD_IDENTIFIER_FIELDS,
   getPaymentDetailsIdentifiers,
   getPaymentMethodId,
 } from '@/core/dynamodb/dynamodb-keys'
@@ -1570,5 +1574,87 @@ export class MongoDbTransactionRepository
     return collection.aggregate<InternalTransaction>([
       { $sample: { size: count } },
     ])
+  }
+
+  public async getUniqueUserIds(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange
+  ): Promise<string[]> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+
+    const userField =
+      direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
+    const result = await (
+      await collection.aggregate([
+        {
+          $match: {
+            timestamp: {
+              $gte: timeRange.afterTimestamp,
+              $lt: timeRange.beforeTimestamp,
+            },
+            [userField]: { $exists: true },
+          },
+        },
+        {
+          $group: {
+            _id: `$${userField}`,
+          },
+        },
+      ])
+    ).toArray()
+    return result.map((v) => v._id)
+  }
+
+  public async getUniquePaymentDetails(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange
+  ): Promise<PaymentDetails[]> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+
+    const paymentDetailsField =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+
+    let allResult: PaymentDetails[] = []
+    for (const paymentMethod in PAYMENT_METHOD_IDENTIFIER_FIELDS) {
+      const paymentIdentifiers =
+        PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentMethod as PaymentMethod]
+      const result = await (
+        await collection.aggregate([
+          {
+            $match: {
+              timestamp: {
+                $gte: timeRange.afterTimestamp,
+                $lt: timeRange.beforeTimestamp,
+              },
+              [paymentDetailsField]: { $exists: true },
+              [`${paymentDetailsField}.method`]: paymentMethod,
+            },
+          },
+          {
+            $group: {
+              _id: paymentIdentifiers.map(
+                (field) => `$${paymentDetailsField}.${field}`
+              ),
+            },
+          },
+        ])
+      ).toArray()
+
+      allResult = allResult.concat(
+        result.map((v) => ({
+          method: paymentMethod,
+          ...Object.fromEntries(
+            paymentIdentifiers.map((field, index) => [field, v._id[index]])
+          ),
+        }))
+      )
+    }
+    return allResult
   }
 }

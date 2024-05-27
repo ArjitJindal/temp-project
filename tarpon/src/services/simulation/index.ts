@@ -92,9 +92,9 @@ export class SimulationService {
               taskId: taskIds[i],
               jobId,
               ...parameters.parameters[i],
-            },
-            sampling: parameters.sampling ?? {
-              usersCount: 'RANDOM',
+              sampling: parameters.sampling ?? {
+                usersCount: 'RANDOM',
+              },
             },
           })
         }

@@ -1,6 +1,7 @@
 import { getFiscalYearStart } from '@flagright/lib/utils/time'
 import { TimeWindow } from './rule-parameter-schemas'
 import dayjs, { Dayjs } from '@/utils/dayjs'
+import { RuleAggregationTimeWindow } from '@/@types/openapi-internal/RuleAggregationTimeWindow'
 
 export type TimeWindowGranularity =
   | 'second'
@@ -64,4 +65,29 @@ export function getTimestampRange(
     afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
     beforeTimestamp: timestamp,
   }
+}
+
+export function getTimeRangeByTimeWindows(
+  currentTimestamp: number,
+  timeWindowFrom: RuleAggregationTimeWindow,
+  timeWindowTo: RuleAggregationTimeWindow
+) {
+  let afterTimestamp: number, beforeTimestamp: number
+  if (timeWindowFrom.granularity === 'all_time') {
+    afterTimestamp = dayjs(currentTimestamp).subtract(5, 'year').valueOf()
+  } else {
+    afterTimestamp = getTimestampRange(
+      currentTimestamp,
+      timeWindowFrom as TimeWindow
+    ).afterTimestamp
+  }
+  if (timeWindowTo.granularity === 'now') {
+    beforeTimestamp = currentTimestamp
+  } else {
+    beforeTimestamp = getTimestampRange(
+      currentTimestamp,
+      timeWindowTo as TimeWindow
+    ).afterTimestamp
+  }
+  return { afterTimestamp, beforeTimestamp }
 }

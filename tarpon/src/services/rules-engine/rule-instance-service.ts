@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError, { NotFound } from 'http-errors'
 import { AlertsRepository } from '../alerts/repository'
+import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { RuleService } from './rule-service'
 import { RuleAuditLogService } from './rules-audit-log-service'
@@ -111,7 +112,7 @@ export class RuleInstanceService {
   ): Promise<RuleInstance> {
     const rule = ruleInstance.ruleId
       ? await this.ruleRepository.getRuleById(ruleInstance.ruleId)
-      : null
+      : undefined
     if (!isV8RuleInstance(ruleInstance) && !rule) {
       throw new createHttpError.BadRequest(
         `Rule ID ${ruleInstance.ruleId} not found`
@@ -135,12 +136,34 @@ export class RuleInstanceService {
         ruleInstance.logicAggregationVariables
       )
     }
+
     // TODO (V8): FR-3985
     const type = rule ? rule.type : 'TRANSACTION'
-    return this.ruleInstanceRepository.createOrUpdateRuleInstance(
-      { ...ruleInstance, type, mode: ruleInstance.mode },
-      undefined
-    )
+    const now = Date.now()
+    const updatedRuleInstance =
+      await this.ruleInstanceRepository.createOrUpdateRuleInstance(
+        { ...ruleInstance, type, mode: ruleInstance.mode },
+        undefined
+      )
+
+    const aggVarsToRebuild =
+      updatedRuleInstance.logicAggregationVariables?.filter(
+        (aggVar) => aggVar.version && aggVar.version > now
+      ) ?? []
+
+    if (aggVarsToRebuild.length > 0) {
+      // TODO (FR-2917): Change rule instance status to DEPLOYING
+      await sendBatchJobCommand({
+        type: 'RULE_PRE_AGGREGATION',
+        tenantId: this.tenantId,
+        parameters: {
+          ruleInstanceId: updatedRuleInstance.id as string,
+          aggregationVariables: aggVarsToRebuild,
+        },
+      })
+    }
+
+    return updatedRuleInstance
   }
 
   public async createRuleInstance(ruleInstance: RuleInstance) {

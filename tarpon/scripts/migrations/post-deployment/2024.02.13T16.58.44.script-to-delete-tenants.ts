@@ -33,7 +33,7 @@ export const up = async () => {
         await sendBatchJobCommand({
           type: 'TENANT_DELETION',
           tenantId,
-          notRecoverable: true,
+          parameters: { notRecoverable: true },
         })
       }
     }

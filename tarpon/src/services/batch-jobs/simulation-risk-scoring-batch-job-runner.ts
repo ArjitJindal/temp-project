@@ -105,7 +105,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       const allUsersCount = await this.userRepository.getUsersCount()
 
       const usersCount =
-        job.sampling.usersCount === 'ALL'
+        job.parameters.sampling.usersCount === 'ALL'
           ? allUsersCount
           : Math.min(allUsersCount, SAMPLE_USERS_COUNT)
 
@@ -231,7 +231,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
   private async processAllUsers(
     riskClassificationValues: RiskClassificationScore[]
   ): Promise<SimulationRiskFactorsResult[]> {
-    const sampling = this.job?.sampling.usersCount || 'RANDOM'
+    const sampling = this.job?.parameters.sampling.usersCount || 'RANDOM'
     const usersCursor =
       sampling === 'ALL'
         ? this.userRepository?.getAllUsersCursor()

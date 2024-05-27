@@ -563,14 +563,6 @@ You have to answer in below format as string. If you don't know any field, just 
             ', '
           )}`
         )
-
-        if (riskLevelKeys.length > 0) {
-          throw new Error(
-            `Invalid risk-level logic: unknown risk-levels: ${riskLevelKeys.join(
-              ', '
-            )}`
-          )
-        }
       }
     }
     const logicToCheck = [

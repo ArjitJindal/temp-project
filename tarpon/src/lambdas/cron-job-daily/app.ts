@@ -43,11 +43,13 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
 
       await sendBatchJobCommand({
         type: 'TENANT_DELETION',
-        notRecoverable:
-          tenant.latestStatus === 'WAITING_HARD_DELETE'
-            ? true
-            : tenant.notRecoverable || false,
         tenantId: tenant.tenantId,
+        parameters: {
+          notRecoverable:
+            tenant.latestStatus === 'WAITING_HARD_DELETE'
+              ? true
+              : tenant.notRecoverable || false,
+        },
       })
     }
   } catch (e) {
@@ -89,9 +91,11 @@ async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
       await sendBatchJobCommand({
         type: 'API_USAGE_METRICS',
         tenantId: '',
-        tenantInfos: tenants,
-        targetMonth: dayjs().subtract(2, 'day').format('YYYY-MM'),
-        googleSheetIds: googleSheetIds,
+        parameters: {
+          tenantInfos: tenants,
+          targetMonth: dayjs().subtract(2, 'day').format('YYYY-MM'),
+          googleSheetIds: googleSheetIds,
+        },
       })
     }
   }

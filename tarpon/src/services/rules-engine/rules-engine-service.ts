@@ -101,6 +101,7 @@ import { getSQSClient } from '@/utils/sns-sqs-client'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 const sqs = getSQSClient()
 
@@ -117,16 +118,29 @@ export type TransactionAggregationTask = {
   isTransactionHistoricalFiltered: boolean
 }
 export type V8TransactionAggregationTask = {
-  v8: true
+  type: 'TRANSACTION_AGGREGATION'
+  tenantId: string
   aggregationVariable: RuleAggregationVariable
   transaction: Transaction
   direction: 'origin' | 'destination'
-  tenantId: string
   filters?: LegacyFilters
+}
+export type V8RuleAggregationRebuildTask = {
+  type: 'PRE_AGGREGATION'
+  tenantId: string
+  ruleInstanceId: string
+  jobId: string
+  aggregationVariable: RuleAggregationVariable
+  currentTimestamp: number
+  userId?: string
+  paymentDetails?: PaymentDetails
 }
 export type TransactionAggregationTaskEntry = {
   userKeyId: string
-  payload: TransactionAggregationTask | V8TransactionAggregationTask
+  payload:
+    | TransactionAggregationTask
+    | V8TransactionAggregationTask
+    | V8RuleAggregationRebuildTask
 }
 
 export function getExecutedAndHitRulesResult(

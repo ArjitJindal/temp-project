@@ -6615,10 +6615,7 @@ components:
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleLabels
         status:
-          type: string
-          enum:
-            - ACTIVE
-            - INACTIVE
+          $ref: '#/components/schemas/RuleInstanceStatus'
         createdAt:
           type: number
         updatedAt:
@@ -6675,6 +6672,13 @@ components:
         - checksFor
         - type
         - mode
+    RuleInstanceStatus:
+      title: RuleInstanceStatus
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - DEPLOYING
     RuleMode:
       title: RuleMode
       type: string

@@ -576,7 +576,7 @@ export class TenantService {
     await sendBatchJobCommand({
       type: 'TENANT_DELETION',
       tenantId: tenantIdToDelete,
-      notRecoverable: notRecoverable ?? false,
+      parameters: { notRecoverable: notRecoverable ?? false },
     })
   }
 }

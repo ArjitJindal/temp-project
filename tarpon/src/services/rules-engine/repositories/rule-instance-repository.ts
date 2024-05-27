@@ -14,10 +14,7 @@ import {
 import { isEqual } from 'lodash'
 import { getAggVarHash } from '../v8-engine/aggregation-repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import {
-  RuleInstance,
-  RuleInstanceStatusEnum,
-} from '@/@types/openapi-internal/RuleInstance'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
@@ -26,6 +23,7 @@ import { RuleType } from '@/@types/openapi-internal/RuleType'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CounterRepository } from '@/services/counter/repository'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
+import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 
 function toRuleInstance(item: any): RuleInstance {
   return {
@@ -223,7 +221,7 @@ export class RuleInstanceRepository {
   public async getActiveRuleInstances(
     type: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {
-    const status: RuleInstanceStatusEnum = 'ACTIVE'
+    const status: RuleInstanceStatus = 'ACTIVE'
     return this.getRuleInstances({
       FilterExpression: '#status = :status AND #type = :type ',
       ExpressionAttributeValues: {

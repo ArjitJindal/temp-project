@@ -12,11 +12,10 @@ import {
 } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
-import dayjs from '@flagright/lib/utils/dayjs'
 import { RULE_FUNCTIONS } from '../v8-functions'
 import { RULE_OPERATORS } from '../v8-operators'
 import { getRuleVariableByKey, isSenderUserVariable } from '../v8-variables'
-import { getTimestampRange } from '../utils/time-utils'
+import { getTimeRangeByTimeWindows } from '../utils/time-utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
 import {
   getRuleVariableAggregator,
@@ -25,6 +24,7 @@ import {
 } from '../v8-variable-aggregators'
 import {
   TransactionAggregationTaskEntry,
+  V8RuleAggregationRebuildTask,
   V8TransactionAggregationTask,
 } from '../rules-engine-service'
 import {
@@ -60,11 +60,13 @@ import { generateChecksum } from '@/utils/object'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
-import { handleV8TransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
+import {
+  handleV8PreAggregationTask,
+  handleV8TransactionAggregationTask,
+} from '@/lambdas/transaction-aggregation/app'
 import { getSQSClient } from '@/utils/sns-sqs-client'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
-import { RuleAggregationTimeWindow } from '@/@types/openapi-internal/RuleAggregationTimeWindow'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
@@ -78,6 +80,35 @@ type RuleData = {
 }
 type AuxiliaryIndexTransactionWithDirection = AuxiliaryIndexTransaction & {
   direction?: 'origin' | 'destination'
+}
+
+export async function sendAggregationTask(
+  task: TransactionAggregationTaskEntry
+) {
+  const payload = task.payload as
+    | V8TransactionAggregationTask
+    | V8RuleAggregationRebuildTask
+  if (envIs('local') || envIs('test')) {
+    if (payload.type === 'TRANSACTION_AGGREGATION') {
+      await handleV8TransactionAggregationTask(payload)
+    } else if (payload.type === 'PRE_AGGREGATION') {
+      await handleV8PreAggregationTask(payload)
+    }
+    return
+  }
+  const command = new SendMessageCommand({
+    MessageBody: JSON.stringify(payload),
+    QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL,
+    MessageGroupId: generateChecksum(task.userKeyId),
+    MessageDeduplicationId: generateChecksum(
+      `${task.userKeyId}:${getAggVarHash(payload.aggregationVariable)}:${
+        payload.type === 'TRANSACTION_AGGREGATION'
+          ? payload.transaction.transactionId
+          : ''
+      }`
+    ),
+  })
+  await sqs.send(command)
 }
 
 export const getJsonLogicEngine = memoizeOne(
@@ -381,18 +412,17 @@ export class RuleJsonLogicEvaluator {
     if (!userKeyId) {
       return
     }
-    const ready = await this.aggregationRepository.isAggregationVariableReady(
+    await this.rebuildAggregationVariable(
       aggregationVariable,
-      userKeyId
+      data.transaction.timestamp,
+      direction === 'origin'
+        ? data.transaction.originUserId
+        : data.transaction.destinationUserId,
+      direction === 'origin'
+        ? data.transaction.originPaymentDetails
+        : data.transaction.destinationPaymentDetails
     )
-    if (!ready) {
-      await this.rebuildAggregationVariable(
-        aggregationVariable,
-        data,
-        direction,
-        userKeyId
-      )
-    }
+
     await this.updateAggregationVariableInternal(
       aggregationVariable,
       data,
@@ -403,31 +433,38 @@ export class RuleJsonLogicEvaluator {
 
   public async rebuildAggregationVariable(
     aggregationVariable: RuleAggregationVariable,
-    ruleData: RuleData,
-    direction: 'origin' | 'destination',
-    userKeyId: string
+    currentTimestamp: number,
+    userId: string | undefined,
+    paymentDetails: PaymentDetails | undefined
   ) {
-    if (this.mode !== 'DYNAMODB') {
+    const userKeyId =
+      aggregationVariable.type === 'USER_TRANSACTIONS'
+        ? userId
+        : paymentDetails && getPaymentDetailsIdentifiersKey(paymentDetails)
+
+    if (this.mode !== 'DYNAMODB' || !userKeyId) {
+      return
+    }
+
+    const ready = await this.aggregationRepository.isAggregationVariableReady(
+      aggregationVariable,
+      userKeyId
+    )
+    if (ready) {
       return
     }
 
     logger.info('Rebuilding aggregation...')
-    const { afterTimestamp, beforeTimestamp } = this.getTimeRange(
-      ruleData.transaction.timestamp,
+    const { afterTimestamp, beforeTimestamp } = getTimeRangeByTimeWindows(
+      currentTimestamp,
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
     const aggregationResult = await this.getRebuiltAggregationVariableResult(
       aggregationVariable,
       {
-        userId:
-          direction === 'origin'
-            ? ruleData.transaction.originUserId
-            : ruleData.transaction.destinationUserId,
-        paymentDetails:
-          direction === 'origin'
-            ? ruleData.transaction.originPaymentDetails
-            : ruleData.transaction.destinationPaymentDetails,
+        userId,
+        paymentDetails,
       },
       {
         afterTimestamp,
@@ -614,31 +651,14 @@ export class RuleJsonLogicEvaluator {
       const task: TransactionAggregationTaskEntry = {
         userKeyId,
         payload: {
-          v8: true,
+          type: 'TRANSACTION_AGGREGATION',
           aggregationVariable,
           transaction: data.transaction,
           direction,
           tenantId: this.tenantId,
         },
       }
-      if (envIs('local') || envIs('test')) {
-        await handleV8TransactionAggregationTask(
-          task.payload as V8TransactionAggregationTask
-        )
-        return
-      }
-
-      const command = new SendMessageCommand({
-        MessageBody: JSON.stringify(task.payload),
-        QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL,
-        MessageGroupId: generateChecksum(task.userKeyId),
-        MessageDeduplicationId: generateChecksum(
-          `${task.userKeyId}:${getAggVarHash(aggregationVariable)}:${
-            data.transaction.transactionId
-          }`
-        ),
-      })
-      await sqs.send(command)
+      await sendAggregationTask(task)
       return
     }
     await this.updateAggregationVariableInternal(
@@ -799,7 +819,7 @@ export class RuleJsonLogicEvaluator {
       return null
     }
 
-    const { afterTimestamp, beforeTimestamp } = this.getTimeRange(
+    const { afterTimestamp, beforeTimestamp } = getTimeRangeByTimeWindows(
       data.transaction.timestamp,
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
@@ -980,30 +1000,5 @@ export class RuleJsonLogicEvaluator {
       aggregationVariable.timeWindow.end.rollingBasis
       ? 'hour'
       : aggregationVariable.timeWindow.start.granularity
-  }
-
-  private getTimeRange(
-    currentTimestamp: number,
-    timeWindowFrom: RuleAggregationTimeWindow,
-    timeWindowTo: RuleAggregationTimeWindow
-  ) {
-    let afterTimestamp: number, beforeTimestamp: number
-    if (timeWindowFrom.granularity === 'all_time') {
-      afterTimestamp = dayjs(currentTimestamp).subtract(5, 'year').valueOf()
-    } else {
-      afterTimestamp = getTimestampRange(
-        currentTimestamp,
-        timeWindowFrom as TimeWindow
-      ).afterTimestamp
-    }
-    if (timeWindowTo.granularity === 'now') {
-      beforeTimestamp = currentTimestamp
-    } else {
-      beforeTimestamp = getTimestampRange(
-        currentTimestamp,
-        timeWindowTo as TimeWindow
-      ).afterTimestamp
-    }
-    return { afterTimestamp, beforeTimestamp }
   }
 }

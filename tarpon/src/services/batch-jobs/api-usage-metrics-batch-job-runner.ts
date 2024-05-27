@@ -8,7 +8,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 @traceable
 export class ApiUsageMetricsBatchJobRunner extends BatchJobRunner {
   protected async run(job: ApiUsageMetricsBatchJob): Promise<any> {
-    const { tenantInfos, targetMonth, googleSheetIds } = job
+    const { tenantInfos, targetMonth, googleSheetIds } = job.parameters
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const apiMetricsService = new ApiUsageMetricsService({

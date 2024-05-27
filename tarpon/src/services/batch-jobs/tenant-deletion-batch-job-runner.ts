@@ -97,8 +97,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   private managementClient = memoize((auth0Domain: string) =>
     getAuth0ManagementClient(auth0Domain)
   )
-  constructor() {
-    super()
+  constructor(jobId: string) {
+    super(jobId)
     const context = getContext()
     this.auth0Domain = context?.auth0Domain as string
   }
@@ -122,13 +122,13 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   protected async run(job: TenantDeletionBatchJob): Promise<void> {
-    const { tenantId, notRecoverable } = job
+    const { tenantId } = job
 
     logger.info(`Started deleting tenant ${tenantId}`)
 
     try {
       await this.addStatusRecord(tenantId, 'IN_PROGRESS')
-      if (notRecoverable) {
+      if (job.parameters.notRecoverable) {
         // No parallelism here because we want to make sure that all data is deleted before
         await Promise.all([
           this.deleteS3Data(tenantId),

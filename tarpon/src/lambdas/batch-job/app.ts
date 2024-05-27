@@ -8,12 +8,14 @@ import {
 } from '@lib/cdk/constants'
 import { getBatchJobRunner } from '@/services/batch-jobs/batch-job-runner-factory'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { BatchJob } from '@/@types/batch-job'
+import { BatchJob, BatchJobWithId } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import {
   initializeTenantContext,
   updateLogMetadata,
 } from '@/core/utils/context'
+import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 function getBatchJobName(batchJobPayload: BatchJob) {
   return `${uuidv4()}-${batchJobPayload.tenantId}-${
@@ -63,6 +65,7 @@ export const jobDecisionHandler = async (
     TEST_FARGATE: 'FARGATE',
     TENANT_DELETION: 'FARGATE',
     SIMULATION_RISK_FACTORS: 'FARGATE',
+    RULE_PRE_AGGREGATION: 'LAMBDA',
   }
 
   return {
@@ -71,13 +74,32 @@ export const jobDecisionHandler = async (
   }
 }
 
-export const jobRunnerHandler = lambdaConsumer()(async (job: BatchJob) => {
-  logger.info(`Starting job - ${job.type}`, job)
-  await initializeTenantContext(job.tenantId)
-  updateLogMetadata({
-    type: job.type,
-    tenantId: job.tenantId,
-    runner: 'LAMBDA',
-  })
-  return getBatchJobRunner(job.type).execute(job)
-})
+export const jobRunnerHandler = lambdaConsumer()(
+  async (job: BatchJobWithId) => {
+    logger.info(`Starting job - ${job.type}`, job)
+    await initializeTenantContext(job.tenantId)
+    updateLogMetadata({
+      jobId: job.jobId,
+      type: job.type,
+      tenantId: job.tenantId,
+      runner: 'LAMBDA',
+    })
+
+    const jobRepository = new BatchJobRepository(
+      job.tenantId,
+      await getMongoDbClient()
+    )
+    const existingJob = await jobRepository.getJobById(job.jobId)
+    if (!existingJob) {
+      await jobRepository.insertJob(job)
+    }
+    try {
+      await jobRepository.updateJobStatus(job.jobId, 'IN_PROGRESS')
+      await getBatchJobRunner(job.type, job.jobId).execute(job)
+      await jobRepository.updateJobStatus(job.jobId, 'SUCCESS')
+    } catch (error) {
+      await jobRepository.updateJobStatus(job.jobId, 'FAILED')
+      throw error
+    }
+  }
+)

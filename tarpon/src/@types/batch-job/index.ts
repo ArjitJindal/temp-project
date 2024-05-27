@@ -4,6 +4,8 @@ import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeacon
 import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { SimulationRiskFactorsParameters } from '../openapi-internal/SimulationRiskFactorsParameters'
 import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRiskFactorsSampling'
+import { RuleAggregationVariable } from '../openapi-internal/RuleAggregationVariable'
+import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
@@ -36,8 +38,8 @@ export type SimulationRiskFactorsBatchJob = {
   parameters: SimulationRiskFactorsParameters & {
     taskId: string
     jobId: string
+    sampling: SimulationRiskFactorsSampling
   }
-  sampling: SimulationRiskFactorsSampling
   awsCredentials?: Credentials
 }
 
@@ -74,12 +76,15 @@ export type PulseDataLoadBatchJob = {
 }
 
 /* Api Usage Metrics */
-export type ApiUsageMetricsBatchJob = {
-  type: 'API_USAGE_METRICS'
-  tenantId: string
+type ApiUsageMetricsBatchJobParameters = {
   targetMonth: string
   tenantInfos: TenantBasic[]
   googleSheetIds: string[]
+}
+export type ApiUsageMetricsBatchJob = {
+  type: 'API_USAGE_METRICS'
+  tenantId: string
+  parameters: ApiUsageMetricsBatchJobParameters
 }
 
 /* Global rule aggregation */
@@ -91,6 +96,22 @@ export type GlobalRuleAggregationRebuildBatchJob = {
   type: 'GLOBAL_RULE_AGGREGATION_REBUILD'
   tenantId: string
   parameters: GlobalRuleAggregationRebuildBatchJobParameters
+}
+
+/* Rule pre-aggregation */
+type RulePreAggregationBatchJobParameters = {
+  ruleInstanceId: string
+  aggregationVariables: RuleAggregationVariable[]
+}
+export type RulePreAggregationMetadata = {
+  tasksCount: number
+  completeTasksCount: number
+}
+export type RulePreAggregationBatchJob = {
+  type: 'RULE_PRE_AGGREGATION'
+  tenantId: string
+  parameters: RulePreAggregationBatchJobParameters
+  metadata?: RulePreAggregationMetadata
 }
 
 /* Dashboard refresh */
@@ -125,10 +146,13 @@ export type TestFargateJob = {
 }
 
 /* Tenant Deletion */
+type TenantDeletionBatchJobParameters = {
+  notRecoverable: boolean
+}
 export type TenantDeletionBatchJob = {
   type: 'TENANT_DELETION'
   tenantId: string
-  notRecoverable: boolean
+  parameters: TenantDeletionBatchJobParameters
 }
 
 export type BatchJob =
@@ -146,6 +170,15 @@ export type BatchJob =
   | SyncIndexesBatchJob
   | TestFargateJob
   | TenantDeletionBatchJob
+  | RulePreAggregationBatchJob
+export type BatchJobWithId = BatchJob & {
+  jobId: string
+}
+
+export type BatchJobInDb = BatchJobWithId & {
+  latestStatus: TaskStatusChange
+  statuses: TaskStatusChange[]
+}
 
 export type BatchJobType = BatchJob['type']
 // Enforce they all have tenantId
