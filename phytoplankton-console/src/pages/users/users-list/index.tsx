@@ -74,7 +74,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
     const queryObj = {
       pageSize,
       afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
       filterId: userId,
       filterTagKey: tagKey,
       filterTagValue: tagValue,

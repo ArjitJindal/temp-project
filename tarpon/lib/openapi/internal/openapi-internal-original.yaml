@@ -392,7 +392,6 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
-          required: true
         - schema:
             type: string
           in: query
@@ -1459,7 +1458,6 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
-          required: true
         - schema:
             type: string
           in: query
@@ -1578,7 +1576,6 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
-          required: true
         - schema:
             type: string
           in: query
@@ -1838,7 +1835,6 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
-          required: true
         - schema:
             type: string
           in: query
