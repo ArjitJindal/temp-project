@@ -122,7 +122,7 @@
     "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.569.0",
+    "@aws-sdk/client-secrets-manager": "^3.370.0",
     "@aws-sdk/credential-providers": "^3.370.0",
     "@cypress/skip-test": "^2.6.1",
     "@openapitools/openapi-generator-cli": "^2.7.0",

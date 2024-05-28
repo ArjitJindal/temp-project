@@ -1331,7 +1331,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-secrets-manager@npm:^3.569.0":
+"@aws-sdk/client-secrets-manager@npm:^3.370.0":
   version: 3.583.0
   resolution: "@aws-sdk/client-secrets-manager@npm:3.583.0"
   dependencies:
@@ -18072,7 +18072,7 @@ __metadata:
     "@ant-design/pro-layout": "npm:^6.15.3"
     "@antv/l7-react": "npm:^2.1.9"
     "@auth0/auth0-react": "npm:^1.9.0"
-    "@aws-sdk/client-secrets-manager": "npm:^3.569.0"
+    "@aws-sdk/client-secrets-manager": "npm:^3.370.0"
     "@aws-sdk/credential-providers": "npm:^3.370.0"
     "@cypress/skip-test": "npm:^2.6.1"
     "@flagright/lib": "link:../lib"
