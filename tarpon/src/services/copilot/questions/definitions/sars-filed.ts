@@ -61,7 +61,7 @@ export const SarsFiled: TableQuestion<Period> = {
       return [
         r.id,
         r.description,
-        accounts && accounts.at(i)?.name,
+        (accounts && accounts.at(i)?.name) ?? '-',
         r.caseId,
         r.createdAt,
       ]
