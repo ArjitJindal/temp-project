@@ -1,5 +1,5 @@
 import { get, lowerCase, startCase, memoize, groupBy, mapValues } from 'lodash'
-import { FieldOrGroup } from '@react-awesome-query-builder/core'
+import { FieldOrGroup, ValueSource } from '@react-awesome-query-builder/core'
 import {
   BusinessUserRuleVariable,
   CommonUserRuleVariable,
@@ -369,11 +369,15 @@ function getAutoRuleEntityVariables(
         },
       }
     })
+  const multiselectVariables = leafValueInfos
+    .filter((info) => info.pathKey.endsWith(ARRAY_ITEM_INDICATOR))
+    .map((info) => {
+      return getLeafArrayEntityVariables(info, entityType)
+    })
   const arrayLeafValueInfos = leafValueInfos
     .filter(
       (info) =>
         info.pathKey.includes(ARRAY_ITEM_INDICATOR) &&
-        // TODO (V8): Support leaf properties in string array type (e.g legalEntity.companyGeneralDetails.businessIndustry)
         !info.pathKey.endsWith(ARRAY_ITEM_INDICATOR)
     )
     .map((info) => ({
@@ -382,9 +386,12 @@ function getAutoRuleEntityVariables(
         .split(new RegExp(`\\.?\\${ARRAY_ITEM_INDICATOR}\\.?`))
         .map((v) => v.split('.')),
     }))
-  return nonArrayVariables.concat(
-    getAutoArrayRuleEntityVariables(entityType, arrayLeafValueInfos)
-  )
+
+  return [
+    ...nonArrayVariables,
+    ...getAutoArrayRuleEntityVariables(entityType, arrayLeafValueInfos),
+    ...multiselectVariables,
+  ]
 }
 
 function getAutoArrayRuleEntityVariableSubfields(
@@ -430,6 +437,27 @@ function getAutoArrayRuleEntityVariables(
       load: async (entity: any) => get(entity, arrayGroupKey),
     }
   })
+}
+
+function getLeafArrayEntityVariables(
+  info: EntityLeafValueInfo,
+  entityType: RuleEntityType
+): RuleVariable {
+  const path = info.path.slice(0, -1)
+  const label = path.map(lowerCase).join(' > ')
+  return {
+    key: path.join('.'),
+    entity: entityType,
+    valueType: 'array',
+    uiDefinition: {
+      label,
+      type: 'multiselect',
+      preferWidgets: ['multiselect'],
+      valueSources: ['value', 'field', 'func'] as ValueSource[],
+      allowCustomValues: true,
+    },
+    load: async (entity: any) => get(entity, path),
+  }
 }
 
 export function getRuleVariableByKey(key: string): RuleVariable | undefined {

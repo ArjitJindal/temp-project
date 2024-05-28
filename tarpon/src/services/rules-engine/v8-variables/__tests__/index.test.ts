@@ -305,4 +305,62 @@ describe('Auto-created entity variables', () => {
       { key: 'k2', value: 'v2' },
     ])
   })
+
+  test('TRANSACTION:relatedTransactionIds', async () => {
+    const variable = getRuleVariableByKey('TRANSACTION:relatedTransactionIds')
+    const relatedTransactionIds = ['T-1', 'T-2']
+    expect(
+      await variable?.load(
+        getTestTransaction({ relatedTransactionIds: relatedTransactionIds })
+      )
+    ).toBe(relatedTransactionIds)
+  })
+
+  test('CONSUMER_USER:contactDetails-emailIds__SENDER', async () => {
+    const variable = getRuleVariableByKey(
+      'CONSUMER_USER:contactDetails-emailIds__SENDER'
+    )
+    const emailIds = ['abc@email.com', 'xyz@email.com']
+    expect(
+      await variable?.load(
+        getTestUser({
+          contactDetails: {
+            emailIds: emailIds,
+          },
+        })
+      )
+    ).toBe(emailIds)
+  })
+
+  test('CONSUMER_USER:contactDetails-contactNumbers__SENDER', async () => {
+    const variable = getRuleVariableByKey(
+      'CONSUMER_USER:contactDetails-contactNumbers__SENDER'
+    )
+    const phoneNumbers = ['1234567890', '0987654321']
+    expect(
+      await variable?.load(
+        getTestUser({
+          contactDetails: {
+            contactNumbers: phoneNumbers,
+          },
+        })
+      )
+    ).toBe(phoneNumbers)
+  })
+
+  test('BUSINESS_USER:linkedEntities-childUserIds__SENDER', async () => {
+    const variable = getRuleVariableByKey(
+      'BUSINESS_USER:linkedEntities-childUserIds__SENDER'
+    )
+    const childUserIds = ['U-1', 'U-2']
+    expect(
+      await variable?.load(
+        getTestBusiness({
+          linkedEntities: {
+            childUserIds: childUserIds,
+          },
+        })
+      )
+    ).toBe(childUserIds)
+  })
 })
