@@ -573,7 +573,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-secrets-manager@npm:^3.569.0":
+"@aws-sdk/client-secrets-manager@npm:^3.540.0":
   version: 3.583.0
   resolution: "@aws-sdk/client-secrets-manager@npm:3.583.0"
   dependencies:
@@ -19584,7 +19584,7 @@ __metadata:
     "@aws-sdk/client-cloudwatch": "npm:^3.569.0"
     "@aws-sdk/client-dynamodb": "npm:^3.540.0"
     "@aws-sdk/client-s3": "npm:^3.540.0"
-    "@aws-sdk/client-secrets-manager": "npm:^3.569.0"
+    "@aws-sdk/client-secrets-manager": "npm:^3.540.0"
     "@aws-sdk/client-sfn": "npm:^3.540.0"
     "@aws-sdk/client-sns": "npm:^3.540.0"
     "@aws-sdk/client-sqs": "npm:^3.540.0"
