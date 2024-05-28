@@ -30,19 +30,16 @@ describe('Rule create and delete from rule instance page', () => {
     cy.get('button[data-cy="rule-instance-page-delete-rule-button"]')
       .first()
       .should('exist')
-      .click({ force: true });
+      .click();
 
     cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
-    cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click({ force: true });
+    cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click();
     cy.message(`Rule deleted`).should('exist');
   }
 
   function editRule(ruleInstanceId: string) {
     cy.visit(`/rules/my-rules/${ruleInstanceId}`);
-    cy.get('button[data-cy="rule-instance-page-edit-rule-button"]')
-      .first()
-      .should('exist')
-      .click({ force: true });
+    cy.get('button[data-cy="rule-instance-page-edit-rule-button"]').first().should('exist').click();
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('input[data-cy="rule-action-selector"]').eq(2).click();
@@ -55,7 +52,7 @@ describe('Rule create and delete from rule instance page', () => {
     cy.get('button[data-cy="rule-instance-page-simulate-rule-button"]')
       .first()
       .should('exist')
-      .click({ force: true });
+      .click();
     cy.get('button[data-cy="run-simulation-button"]').first().should('exist');
   }
 });

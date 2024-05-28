@@ -80,8 +80,8 @@ function deleteRule(ruleInstanceId: string) {
   cy.get('th').contains('Updated at').click({ force: true });
   cy.get('th').contains('Updated at').click({ force: true });
   cy.waitNothingLoading();
-  cy.get('button[data-cy="rule-delete-button"]').first().should('exist').click({ force: true });
+  cy.get('button[data-cy="rule-delete-button"]').first().should('exist').click();
   cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
-  cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click({ force: true });
+  cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click();
   cy.message(`Rule deleted`).should('exist');
 }

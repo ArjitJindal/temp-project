@@ -53,10 +53,10 @@ describe('Create scenario', () => {
     cy.get('th').contains('Updated at').click({ force: true });
     cy.get('th').contains('Updated at').click({ force: true });
     cy.wait(2000); // eslint-disable-line cypress/no-unnecessary-waiting
-    cy.get('button[data-cy="rule-delete-button"]').first().should('exist').click({ force: true });
+    cy.get('button[data-cy="rule-delete-button"]').first().should('exist').click();
 
     cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
-    cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click({ force: true });
+    cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click();
     cy.message(`Rule deleted`).should('exist');
     cy.get('td[data-cy="ruleId"]').should('not.contain', ruleInstanceId);
   }

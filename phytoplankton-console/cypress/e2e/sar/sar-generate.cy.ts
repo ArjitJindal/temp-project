@@ -16,10 +16,7 @@ describe('SAR Generate', () => {
     );
 
     cy.intercept('GET', '**/report-types').as('sarCountries');
-    cy.get('a[data-cy="alert-id"]', { timeout: 15000 })
-      .should('be.visible')
-      .eq(0)
-      .click({ force: true });
+    cy.get('a[data-cy="alert-id"]', { timeout: 15000 }).should('be.visible').eq(0).click();
 
     const SarCountrywithReports = [
       {
@@ -44,7 +41,7 @@ describe('SAR Generate', () => {
         timeout: 15000,
       })
         .first()
-        .click({ force: true });
+        .click();
       cy.get('button[data-cy="sar-button"]').click();
       cy.get('[data-cy="sar-country-select"] input').click();
       cy.get(`div[title="${item.countryName}"]`).click();

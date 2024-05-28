@@ -19,10 +19,7 @@ describe('Approval of payments', () => {
     cy.intercept('POST', '**/transactions/action').as('approval-request');
     cy.visit('/case-management/cases');
     cy.contains('Payment approval').click();
-    cy.get('input[data-cy="row-table-checkbox', { timeout: 20000 })
-      .should('exist')
-      .first()
-      .click({ force: true });
+    cy.get('input[data-cy="row-table-checkbox', { timeout: 20000 }).should('exist').first().click();
     cy.contains('Allow').click();
     allowTransaction();
   });
@@ -40,7 +37,7 @@ describe('Approval of payments', () => {
     cy.intercept('GET', '**/transactions**').as('bulk-approval-request');
     allowTransaction();
 
-    cy.get('[data-cy="status-button"]').click({ force: true });
+    cy.get('[data-cy="status-button"]').click();
     cy.contains('li.ant-dropdown-menu-item', 'Allowed').should('be.visible').click();
     cy.get('h2').first().click();
     cy.wait('@bulk-approval-request', { timeout: 15000 })

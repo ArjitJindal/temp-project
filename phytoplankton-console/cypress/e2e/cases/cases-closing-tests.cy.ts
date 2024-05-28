@@ -60,10 +60,7 @@ describe('Closing and Re-Opening the cases', () => {
       cy.get('input[data-cy="row-table-checkbox"]').eq(i).click();
     }
     // Expanding first case
-    cy.get('button[data-cy="expand-icon"]', { timeout: 2000 })
-      .should('exist')
-      .eq(0)
-      .click({ force: true });
+    cy.get('button[data-cy="expand-icon"]', { timeout: 2000 }).should('exist').eq(0).click();
     cy.get('input[data-cy="header-table-checkbox"]').eq(1).click();
     cy.get('div[data-cy="table-footer"]', {
       timeout: 8000,

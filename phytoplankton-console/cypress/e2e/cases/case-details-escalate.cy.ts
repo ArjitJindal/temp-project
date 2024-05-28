@@ -48,11 +48,11 @@ describe('Escalate a case from case-details', () => {
 
     cy.waitNothingLoading();
     // Close the case
-    cy.get('[data-cy="update-status-button"]').eq(0).should('exist').click({ force: true });
+    cy.get('[data-cy="update-status-button"]').eq(0).should('exist').click();
     cy.intercept('PATCH', '**/cases/statusChange').as('case');
     cy.multiSelect('.ant-modal', 'False positive');
     cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
-    cy.get('.ant-modal-root textarea').eq(0).type('This is a test', { force: true });
+    cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').click();
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').eq(1).click();
     cy.wait('@case').its('response.statusCode').should('eq', 200);

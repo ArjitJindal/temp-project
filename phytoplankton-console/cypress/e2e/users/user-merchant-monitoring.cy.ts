@@ -28,10 +28,8 @@ describe('Check if merchant monitoring is available for a user', () => {
       .find('a[data-cy="business-user-id"]', { timeout: 10000 })
       .should('be.visible')
       .eq(0)
-      .click({ force: true });
-    cy.contains('div[role="tab"]', 'Merchant monitoring')
-      .should('be.visible')
-      .click({ force: true });
+      .click();
+    cy.contains('div[role="tab"]', 'Merchant monitoring').should('be.visible').click();
     cy.wait('@getMerchantMonitoringSummary', { timeout: 10000 }).then((interception) => {
       cy.get('[data-cy="merchant-monitoring-user-summary"]')
         .first()
