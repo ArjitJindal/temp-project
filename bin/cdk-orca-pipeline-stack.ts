@@ -259,7 +259,7 @@ export class CdkOrcaPipelineStack extends Stack {
                   environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
               ]
-              if (config.databricks) {
+              if (config.databricks && config.region !== 'us-1') {
                 actions.push(
                   new codepipline_actions.CodeBuildAction({
                     actionName: `Deploy_Databricks_${region
