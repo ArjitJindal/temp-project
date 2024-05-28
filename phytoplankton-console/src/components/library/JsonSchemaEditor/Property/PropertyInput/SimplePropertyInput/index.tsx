@@ -102,6 +102,7 @@ export default function SimplePropertyInput(props: Props) {
             <div className={s.inputGroup}>
               <NumberInput
                 {...inputProps}
+                step={schema.multipleOf}
                 min={schema.minimum}
                 max={schema.maximum}
                 allowClear={true}
@@ -112,6 +113,7 @@ export default function SimplePropertyInput(props: Props) {
               mode="SINGLE"
               min={schema.minimum}
               max={schema.maximum}
+              step={schema.multipleOf}
               {...inputProps}
               value={inputProps.value ?? false}
             />

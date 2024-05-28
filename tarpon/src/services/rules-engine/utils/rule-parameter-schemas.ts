@@ -799,15 +799,18 @@ export const MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA = (
 
 type PercentSchemaOptions = SchemaOptions & {
   maximum?: number | 'NO_MAXIMUM'
+  minimum?: number
+  multipleOf?: number
 }
 
 export const PERCENT_SCHEMA = (options: PercentSchemaOptions) => {
-  const { maximum, title, description } = options
+  const { maximum, title, description, minimum, multipleOf } = options
   return {
     type: 'number',
     title: title,
     description,
-    minimum: 0,
+    minimum: minimum ?? 0,
+    multipleOf,
     maximum: maximum === 'NO_MAXIMUM' ? undefined : maximum ?? 100,
   } as const
 }
@@ -822,6 +825,7 @@ export const FUZZINESS_SCHEMA = PERCENT_SCHEMA({
   title: 'Fuzziness',
   description:
     'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/ phonetics',
+  multipleOf: 10,
 })
 
 export const SANCTIONS_SCREENING_TYPES_SCHEMA = (options?: SchemaOptions) =>
