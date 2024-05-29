@@ -1,6 +1,6 @@
 import { PostHog } from 'posthog-js';
 import { isEmpty } from 'lodash';
-import { FlagrightAuth0User } from './user-utils';
+import { FlagrightAuth0User, isFlagrightInternalUser } from './user-utils';
 
 export const postHogClient = new PostHog();
 
@@ -16,7 +16,8 @@ export const isAutoCaptureDisabled = (auth0User: FlagrightAuth0User) => {
   return (
     auth0User.tenantName.includes('Cypress') ||
     process.env.ENV_NAME === 'local' ||
-    (process.env.ENV_NAME as string).includes('dev')
+    (process.env.ENV_NAME as string).includes('dev') ||
+    isFlagrightInternalUser(auth0User)
   );
 };
 
