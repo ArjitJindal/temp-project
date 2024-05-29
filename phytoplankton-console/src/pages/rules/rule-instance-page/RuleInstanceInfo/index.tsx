@@ -143,7 +143,7 @@ export const RuleInstanceInfo = (props: Props) => {
   );
 
   return (
-    <div className={s.root}>
+    <div className={s.root} data-cy="rule-instance-info-root">
       <Card.Root noBorder>
         <Card.Section className={s.card}>
           <div className={s.leftContent}>

@@ -25,7 +25,8 @@ describe('Rule create and delete from rule instance page', () => {
   });
   function deleteRule(ruleInstanceId: string) {
     cy.visit(`/rules/my-rules/${ruleInstanceId}`);
-    cy.wait(2000); // eslint-disable-line cypress/no-unnecessary-waiting
+    cy.get('[data-cy="rule-instance-info-root"]').contains(ruleInstanceId).should('exist');
+    cy.waitNothingLoading();
 
     cy.get('button[data-cy="rule-instance-page-delete-rule-button"]')
       .first()
@@ -39,6 +40,8 @@ describe('Rule create and delete from rule instance page', () => {
 
   function editRule(ruleInstanceId: string) {
     cy.visit(`/rules/my-rules/${ruleInstanceId}`);
+    cy.get('[data-cy="rule-instance-info-root"]').contains(ruleInstanceId).should('exist');
+    cy.waitNothingLoading();
     cy.get('button[data-cy="rule-instance-page-edit-rule-button"]').first().should('exist').click();
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
@@ -49,6 +52,8 @@ describe('Rule create and delete from rule instance page', () => {
 
   function simulateRule(ruleInstanceId: string) {
     cy.visit(`/rules/my-rules/${ruleInstanceId}`);
+    cy.get('[data-cy="rule-instance-info-root"]').contains(ruleInstanceId).should('exist');
+    cy.waitNothingLoading();
     cy.get('button[data-cy="rule-instance-page-simulate-rule-button"]')
       .first()
       .should('exist')

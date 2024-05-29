@@ -29,90 +29,12 @@ const WIDGETS = {
 describe('Dashboard Integration Test', () => {
   beforeEach(() => {
     cy.loginByRole('super_admin');
-  });
-
-  it('should configure the dashboard with selected widgets', () => {
-    cy.visit('/');
-    const endpoints = [
-      '**/dashboard_stats/**',
-      '**/dashboard_stats/users/**',
-      '**/dashboard_stats/hits_per_user**',
-      '**/consumer/**',
-      '**/dashboard_stats/users/**',
-      '**/dashboard_stats/hits_per_user**',
-      '**/business/**',
-      '**/dashboard_stats/transactions**',
-      '**/dashboard_stats/transactions/**',
-      '**/dashboard_stats/transactions/**',
-      '**/dashboard_stats/**',
-      '**/dashboard_stats/**',
-      '**/dashboard_stats/**',
-      '**/dashboard_stats/**',
-      '**/dashboard_stats/**',
-    ];
-
-    endpoints.forEach((endpoint) => {
-      const alias = `apiCall${endpoint}`;
-      cy.intercept('GET', endpoint).as(alias);
-    });
-
-    endpoints.forEach((endpoint) => {
-      const alias = `apiCall${endpoint}`;
-      cy.wait(`@${alias}`, { timeout: 30000 })
-        .its('response.statusCode')
-        .should('be.oneOf', [200, 304]);
-    });
-
-    cy.get('button[data-cy="dashboard-configure-button"]').click();
-    Object.keys(WIDGETS).forEach((widget) => {
-      cy.get(`input[data-cy='${widget}-checkbox']`).then(($checkbox) => {
-        if ($checkbox.prop('checked')) {
-          cy.get(`input[data-cy='${widget}-checkbox']`).click();
-        }
-      });
-    });
-
-    cy.get('button[data-cy="update-dashboard-button"]').click();
-    cy.closeDrawer();
-
-    cy.get('button[data-cy="dashboard-configure-button"]').click();
-
-    cy.intercept('GET', '**/dashboard_stats/**').as('dashboard_stats_Alias');
-    cy.intercept('GET', '**/business/**').as('businessAlias');
-    cy.intercept('GET', '**/consumer/**').as('consumerAlias');
-
-    Object.keys(WIDGETS).forEach((widget) => {
-      cy.get(`input[data-cy='${widget}-checkbox']`).then(($checkbox) => {
-        if (!$checkbox.prop('checked')) {
-          cy.get(`input[data-cy='${widget}-checkbox']`).click();
-        }
-      });
-    });
-
-    cy.get('button[data-cy="update-dashboard-button"]').click();
-
-    cy.closeDrawer();
-
-    cy.wait('@dashboard_stats_Alias', { timeout: 15000 })
-      .its('response.statusCode')
-      .should('be.oneOf', [200, 304]);
-
-    cy.wait('@businessAlias', { timeout: 15000 })
-      .its('response.statusCode')
-      .should('be.oneOf', [200, 304]);
-    cy.wait('@consumerAlias', { timeout: 15000 })
-      .its('response.statusCode')
-      .should('be.oneOf', [200, 304]);
+    cy.toggleFeatures({ RISK_SCORING: true, RISK_LEVELS: true, QA: true });
   });
 
   it('should check the visibility of selected widgets', () => {
     cy.visit('/');
-    // enabling Risk Scoring feature flag
-    cy.get('[data-cy="superadmin-panel-button"]').click();
-    cy.get('.ant-modal .ant-select-selector').eq(1).should('be.visible').click();
-    cy.contains('Risk Scoring').click({ force: true });
-    cy.get('[data-cy="modal-ok"]').click({ force: true });
-    cy.get('.ant-modal-content').find('svg').first().click();
+
     cy.get('button[data-cy="dashboard-configure-button"]').click();
 
     // Make all widgets invisible

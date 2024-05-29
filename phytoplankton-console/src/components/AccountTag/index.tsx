@@ -4,6 +4,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import s from './index.module.less';
 import { useUsers } from '@/utils/user-utils';
 import { getAccountUserName } from '@/utils/account';
+import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 
 interface Props {
   accountId?: string;
@@ -19,7 +20,7 @@ export default function AccountTag(props: Props) {
   return (
     <div className={s.root}>
       {loadingUsers ? (
-        <LoadingOutlined />
+        <LoadingOutlined className={CY_LOADING_FLAG_CLASS} />
       ) : (
         <>
           <Avatar size="small" src={users[accountId]?.picture} />

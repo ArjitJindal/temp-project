@@ -16,29 +16,27 @@ describe('Custom Role - CRUD Test', () => {
     //create a custom role
     cy.get('input[placeholder="Enter role name"]').type(`${roleName}`);
     cy.get('input[placeholder="Enter a description"]').type('Custom test role description');
-    cy.intercept('GET', '**/roles**').as('custom-roles-save');
     cy.contains('Save').click();
-    cy.wait('@custom-roles-save').then((interception) => {
-      expect(interception.response?.statusCode).to.eq(200);
-    });
+    cy.message(`${roleName} role saved`).should('exist');
+    cy.waitNothingLoading();
 
     //update a custom role
-    cy.get('div[data-cy="configure-roles"]').contains(roleName).click();
+    cy.get('div[data-cy="roles-menu-item"]').contains(roleName).click();
     cy.get('button[data-cy="edit-role"]').click();
     cy.get('input[placeholder="Enter a description"]').type(
       'Custom test role description after changing',
     );
     cy.contains('Save').click();
-    cy.wait('@custom-roles-save').then((interception) => {
-      expect(interception.response?.statusCode).to.eq(200);
-    });
+    cy.message(`${roleName} role saved`).should('exist');
+    cy.waitNothingLoading();
 
     //delete a custom role
-    cy.get('div[data-cy="configure-roles"]').contains(`${roleName}`).click();
+    cy.get('div[data-cy="roles-menu-item"]').contains(`${roleName}`).click();
     cy.get('button[data-cy="edit-role"]').click();
     cy.get('button[data-cy="delete-role"]').click();
-    cy.wait('@custom-roles-save').then((interception) => {
-      expect(interception.response?.statusCode).to.eq(200);
-    });
+    cy.message(`${roleName} was deleted.`).should('exist');
+    cy.waitNothingLoading();
+
+    cy.get('div[data-cy="roles-menu-item"]').contains(`${roleName}`).should('not.exist');
   });
 });

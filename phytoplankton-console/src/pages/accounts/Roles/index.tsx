@@ -36,6 +36,7 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
   return (
     <div>
       <VerticalMenu
+        testId="roles-menu"
         additionalMenuTop={
           <Button
             type="TETRIARY"

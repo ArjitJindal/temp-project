@@ -15,17 +15,18 @@ interface Props {
   children?: React.ReactNode;
   minWidth?: number;
   additionalMenuTop?: React.ReactNode;
+  testId?: string;
 }
 
 export default function VerticalMenu(props: Props) {
-  const { active, items, children, minWidth, onChange } = props;
+  const { active, items, children, minWidth, onChange, testId = 'vertical-menu' } = props;
   return (
-    <div className={s.root}>
+    <div className={s.root} data-cy={testId}>
       <div className={s.items} style={{ minWidth }}>
         {props.additionalMenuTop}
         {items.map((item) => (
           <div
-            data-cy="configure-roles"
+            data-cy={`${testId}-item`}
             key={item.key}
             className={cn(s.item, active === item.key && s.isActive, item.isInvalid && s.isInvalid)}
             onClick={() => onChange(item.key)}
