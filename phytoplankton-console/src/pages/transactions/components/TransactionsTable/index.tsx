@@ -90,6 +90,7 @@ export interface TransactionsTableParams extends CommonParams {
   destinationPaymentMethodId?: string;
   transactionStatusFilter?: RuleAction[];
   ruleInstancesHitFilter?: string[];
+  productType?: string[];
 }
 
 export const transactionParamsToRequest = (
@@ -110,6 +111,7 @@ export const transactionParamsToRequest = (
     destinationMethodFilter,
     transactionStatusFilter,
     ruleInstancesHitFilter,
+    productType,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
   return {
@@ -138,6 +140,7 @@ export const transactionParamsToRequest = (
     filterOriginPaymentMethodId: params.originPaymentMethodId,
     filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
     filterTransactionStatus: transactionStatusFilter,
+    filterProductType: productType,
   };
 };
 
@@ -393,6 +396,11 @@ export default function TransactionsTable(props: Props) {
         title: 'Tags',
         type: TAGS,
         key: 'tags',
+      }),
+      helper.simple<'productType'>({
+        title: 'Product type',
+        type: STRING,
+        key: 'productType',
       }),
       helper.simple<'reference'>({
         title: 'Reference',

@@ -25,6 +25,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       originPaymentMethodId: params.originPaymentMethodId,
       destinationPaymentMethodId: params.destinationPaymentMethodId,
       ruleInstancesHitFilter: params.ruleInstancesHitFilter?.join(',') ?? '',
+      productType: params.productType?.join(',') ?? '',
     };
   },
   deserializer: (raw): TransactionsTableParams => {
@@ -54,6 +55,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       originPaymentMethodId: raw.originPaymentMethodId,
       destinationPaymentMethodId: raw.destinationPaymentMethodId,
       ruleInstancesHitFilter: raw.ruleInstancesHitFilter?.split(','),
+      productType: raw.productType?.split(','),
     };
   },
 };

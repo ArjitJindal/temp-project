@@ -899,6 +899,12 @@ paths:
               $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterTransactionStatus
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterProductType
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -10320,6 +10326,7 @@ components:
         - CURRENCY
         - COUNTRY
         - BANK_NAMES
+        - PRODUCT_TYPES
     UsersUniquesField:
       title: UsersUniquesField
       type: string

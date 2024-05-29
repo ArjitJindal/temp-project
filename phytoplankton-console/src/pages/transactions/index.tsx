@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
+import ProductTypeSearchButton from './components/ProductTypeSearchButton';
 import { useApi } from '@/api';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -95,6 +96,23 @@ const TableList = () => {
                       ...state,
                       tagKey: value.key ?? undefined,
                       tagValue: value.value ?? undefined,
+                    }));
+                  }}
+                />
+              ),
+            },
+            {
+              key: 'productType',
+              title: 'Product Type',
+              renderer: ({ params, setParams }) => (
+                <ProductTypeSearchButton
+                  initialState={{
+                    productTypes: params.productType ?? undefined,
+                  }}
+                  onConfirm={(value) => {
+                    setParams((state) => ({
+                      ...state,
+                      productType: value.productTypes,
                     }));
                   }}
                 />

@@ -252,6 +252,12 @@ export class MongoDbTransactionRepository
       })
     }
 
+    if (params.filterProductType != null) {
+      conditions.push({
+        productType: { $in: params.filterProductType },
+      })
+    }
+
     if (params.filterRuleInstancesHit?.length) {
       const eleMatchCondition = {
         ruleInstanceId: { $in: params.filterRuleInstancesHit },
@@ -814,6 +820,9 @@ export class MongoDbTransactionRepository
         break
       case 'COUNTRY':
         fieldPath = `${amountDetailsPath}.country`
+        break
+      case 'PRODUCT_TYPES':
+        fieldPath = 'productType'
         break
       default:
         throw neverThrow(params.field, `Unknown field: ${params.field}`)
