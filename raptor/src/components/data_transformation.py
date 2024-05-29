@@ -9,6 +9,8 @@ from sklearn.impute import SimpleImputer  # type: ignore
 from sklearn.pipeline import Pipeline  # type: ignore
 from sklearn.preprocessing import OneHotEncoder, StandardScaler  # type: ignore
 
+from src.components.utils import save_object
+
 
 @dataclass
 class DataTransformationConfig:
@@ -70,7 +72,7 @@ class DataTransformation:
         )
         return preprocessor
 
-    def initiate_date_transaformation(self, train_path, test_path):
+    def initiate_date_transformation(self, train_path: str, test_path: str):
         train_df = pd.read_csv(train_path)
         test_df = pd.read_csv(test_path)
         print("Read complete")
@@ -83,12 +85,8 @@ class DataTransformation:
         input_feature_train_arr = preprocessor.fit_transform(train_df)
         input_feature_test_arr = preprocessor.transform(test_df)
 
-        os.makedirs(
-            os.path.dirname(self.transformation_config.preprocessor_obj_file_path),
-            exist_ok=True,
-        )
-        with open(self.transformation_config.preprocessor_obj_file_path, "wb") as f:
-            pickle.dump(preprocessor, f)
+        save_object(self.transformation_config.preprocessor_obj_file_path, preprocessor)
+
         print("Data transformation complete")
         return (
             input_feature_train_arr,

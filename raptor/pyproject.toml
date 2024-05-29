@@ -31,5 +31,5 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.mypy.overrides]
-module = "sklearn.*"
+module = ["sklearn.*", "dill"]
 ignore_missing_imports = true
