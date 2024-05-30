@@ -25,7 +25,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { ask } from '@/utils/openai'
+import { ask, ModelVersion } from '@/utils/openai'
 import { tenantSettings } from '@/core/utils/context'
 
 type GenerateNarrative = {
@@ -296,7 +296,7 @@ export class CopilotService {
   private async gpt(prompt: string): Promise<string> {
     logger.info(prompt)
     try {
-      return ask(prompt, { temperature: 0.5 })
+      return ask(prompt, { temperature: 0.5, modelVersion: ModelVersion.GPT4O })
     } catch (e) {
       logger.error(e)
       throw e

@@ -14,6 +14,7 @@ let openai: OpenAIApi | null = null
 export enum ModelVersion {
   GPT3 = 'gpt-3.5-turbo',
   GPT4 = 'gpt-4-turbo-preview',
+  GPT4O = 'gpt-4o',
 }
 const modelVersion: ModelVersion = ModelVersion.GPT4
 
