@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash';
 import { FlagrightAuth0User, isFlagrightInternalUser } from './user-utils';
 
 export const postHogClient = new PostHog();
+export const internalPostHogClient = new PostHog();
 
 export const EVENTS = {
   TAB_CLICK: 'tab_click',
@@ -39,4 +40,26 @@ export const captureTabEvent = (
 
     return;
   }
+};
+
+export const identifyUser = (client: PostHog, auth0User: FlagrightAuth0User) => {
+  postHogClient.identify(
+    auth0User.userId,
+    {
+      name: auth0User.name,
+      email: auth0User.verifiedEmail,
+      auth0Id: auth0User.userId,
+      role: auth0User.role,
+      tenantId: auth0User.tenantId,
+      tenantName: auth0User.tenantName,
+      region: auth0User.region,
+      tenantConsoleApiUrl: auth0User.tenantConsoleApiUrl,
+      demoMode: auth0User.demoMode,
+    },
+    {
+      // One time properties (useful for tracking user properties that change over time)
+      $role: auth0User.role,
+      $demoMode: auth0User.demoMode,
+    },
+  );
 };
