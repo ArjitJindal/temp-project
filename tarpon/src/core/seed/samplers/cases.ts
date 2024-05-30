@@ -1,8 +1,9 @@
-import { last, uniq, uniqBy } from 'lodash'
+import { last, memoize, uniq, uniqBy } from 'lodash'
 import { v4 as uuid4 } from 'uuid'
 import { compile } from 'handlebars'
 import { randomBool } from 'fp-ts/Random'
 import { getRuleInstance, transactionRules, userRules } from '../data/rules'
+import { getCases } from '../data/cases'
 import { sampleTimestamp } from './timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -386,3 +387,10 @@ export const sampleAuditLogForStatusChange = (caseItem: Case) => {
     type: 'CASE',
   }
 }
+
+export const getAlerts = memoize(() => {
+  const cases = getCases()
+  const alerts = cases.flatMap((case_) => case_?.alerts ?? [])
+
+  return alerts
+})

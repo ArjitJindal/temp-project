@@ -12,7 +12,6 @@ import { TransactionAmountRuleParameters } from '@/services/rules-engine/transac
 import { LowValueTransactionsRuleParameters } from '@/services/rules-engine/transaction-rules/low-value-transactions-base'
 import { SanctionsCounterPartyRuleParameters } from '@/services/rules-engine/transaction-rules/sanctions-counterparty'
 import { RuleChecksForField } from '@/services/rules-engine/transaction-rules/library'
-import { envIs } from '@/utils/env'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
   return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
@@ -581,10 +580,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       typologies: [],
     } as RuleInstance,
   ]
-
-  if (envIs('dev')) {
-    return data.slice(0, 3)
-  }
 
   return data
 })

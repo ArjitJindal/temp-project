@@ -5,6 +5,7 @@ import { data as krsAndDrsScoreData } from './data/risk-scores'
 import { getCases } from './data/cases'
 import { getNotifications } from './data/notifications'
 import { getArsScores } from './data/ars_scores'
+import { getQASamples } from './samplers/qa-samples'
 import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
@@ -26,6 +27,7 @@ import {
   COUNTER_COLLECTION,
   NOTIFICATIONS_COLLECTION,
   ARS_SCORES_COLLECTION,
+  ALERTS_QA_SAMPLING_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { getTransactions } from '@/core/seed/data/transactions'
 import { getUsers, getMerchantMonitoring } from '@/core/seed/data/users'
@@ -68,6 +70,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [CHECKLIST_TEMPLATE_COLLECTION, () => getChecklistTemplates()],
   [NOTIFICATIONS_COLLECTION, () => getNotifications()],
   [ARS_SCORES_COLLECTION, () => getArsScores()],
+  [ALERTS_QA_SAMPLING_COLLECTION, () => getQASamples()],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
