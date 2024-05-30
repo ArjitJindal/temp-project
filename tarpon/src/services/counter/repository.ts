@@ -58,7 +58,6 @@ export class CounterRepository {
     const collection = db.collection<EntityCounter>(collectionName)
 
     const data = await collection.findOne({ entity })
-
-    return data?.count ?? 1
+    return (data?.count ?? 0) + 1
   }
 }
