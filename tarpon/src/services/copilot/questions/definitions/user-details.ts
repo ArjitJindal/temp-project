@@ -1,4 +1,5 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
+import pluralize from 'pluralize'
 import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -180,6 +181,7 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
 function contactDetails(result: {
   contactDetails?: ContactDetails
 }): { key: string; value: string | undefined }[] {
+  const addressesCount = result.contactDetails?.addresses?.length || 0
   return [
     {
       key: 'Emails',
@@ -193,11 +195,19 @@ function contactDetails(result: {
       key: 'Websites',
       value: result?.contactDetails?.websites?.join(', '),
     },
-    ...(result.contactDetails?.addresses?.map((a, i) => ({
-      key: `Address ${i}`,
-      value: [a.addressLines.join(', '), a.city, a.postcode, a.country].join(
-        ', '
-      ),
-    })) || []),
+    ...(result.contactDetails?.addresses?.map((a, i) => {
+      const addressIndex = i + 1
+      const showAddressIndex = addressesCount > 1
+      const address = [
+        a.addressLines.join(', '),
+        a.city,
+        a.postcode,
+        a.country,
+      ].join(', ')
+      return {
+        key: i === 0 ? pluralize('Address', addressesCount) : '',
+        value: `${showAddressIndex ? `${addressIndex}).` : ''} ${address}`,
+      }
+    }) || []),
   ]
 }
