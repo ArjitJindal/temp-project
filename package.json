@@ -45,7 +45,7 @@
     "@flagright/lib": "link:./lib",
     "@notionhq/client": "^2.2.14",
     "@slack/web-api": "^7.0.4",
-    "@types/lodash": "^4.17.0",
+    "@types/lodash": "^4.17.1",
     "aws-cdk": "~2.140.0",
     "aws-cdk-lib": "~2.140.0",
     "lodash": "^4.17.21",
