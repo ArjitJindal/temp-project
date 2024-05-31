@@ -20,7 +20,6 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { isDemoTenant } from '@/utils/tenant'
-import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getArsScores } from '@/core/seed/data/ars_scores'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
@@ -95,18 +94,8 @@ export async function seedDynamo(
     const nonDemoTenantRepo = new TenantRepository(nonDemoTenantId, {
       dynamoDb,
     })
-    const requiredSettingNames: (keyof TenantSettings)[] = [
-      'features',
-      'isAiEnabled',
-      'isPaymentApprovalEnabled',
-      'aiSourcesDisabled',
-    ]
-    const nonDemoSettings = await nonDemoTenantRepo.getTenantSettings(
-      requiredSettingNames
-    )
-    const demoSettings = await tenantRepo.getTenantSettings(
-      requiredSettingNames
-    )
+    const nonDemoSettings = await nonDemoTenantRepo.getTenantSettings()
+    const demoSettings = await tenantRepo.getTenantSettings()
     if (!isEmpty(nonDemoSettings) && !isEqual(demoSettings, nonDemoSettings)) {
       logger.info('Setting tenant settings...')
       await tenantRepo.createOrUpdateTenantSettings(nonDemoSettings)
