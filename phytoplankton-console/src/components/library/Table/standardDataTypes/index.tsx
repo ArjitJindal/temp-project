@@ -630,9 +630,13 @@ export const TAG: ColumnDataType<string> = {
 
 export const EXTERNAL_LINK: ColumnDataType<string> = {
   render: (link) => {
+    let url = link;
+    if (!link?.startsWith('http://') && !link?.startsWith('https://')) {
+      url = `https://${link}`;
+    }
     return (
       <div>
-        <a href={link} target="_blank">
+        <a href={url} target="_blank" rel="noopener noreferrer">
           {link}
         </a>
       </div>
