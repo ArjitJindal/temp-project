@@ -22,6 +22,7 @@ import { getS3Client } from '@/utils/s3'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
+import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 
 dynamoDbSetupHook()
 
@@ -94,7 +95,7 @@ describe('Advanced Rule Options Tests', () => {
   setUpUsersHooks(tenantId, [user1, business1])
 
   it('should change user state', async () => {
-    const dynamoDb = getDynamoDbClient(undefined, { retry: true })
+    const dynamoDb = getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
     const userRepo = new UserRepository(tenantId, {
       dynamoDb,
@@ -147,6 +148,10 @@ describe('Advanced Rule Options Tests', () => {
       preUser,
       preBusiness
     )
+
+    jest
+      .spyOn(UserEventRepository.prototype, 'saveUserEvent')
+      .mockResolvedValue('test')
 
     const user = await userRepo.getConsumerUser('user1')
 
