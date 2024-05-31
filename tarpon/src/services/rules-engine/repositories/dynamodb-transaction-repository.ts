@@ -336,9 +336,31 @@ export class DynamoDbTransactionRepository
     ).flatMap((e) => e)
   }
 
+  public async checkTransactionStatusByChunk(
+    transactionIds: string[],
+    checkStatus: (txns: TransactionWithRulesResult[]) => boolean
+  ): Promise<boolean> {
+    for (const transactionIdsChunk of chunk(transactionIds, 100)) {
+      const txns = (await this.getTransactionsByIdsChunk(
+        transactionIdsChunk,
+        TransactionWithRulesResult.getAttributeTypeMap()
+      )) as TransactionWithRulesResult[]
+      if (!checkStatus(txns)) {
+        return false
+      }
+    }
+    return true
+  }
+
   private async getTransactionsByIdsChunk(
-    transactionIds: string[]
-  ): Promise<Transaction[]> {
+    transactionIds: string[],
+    transactionAttributeMap: Array<{
+      name: string
+      baseName: string
+      type: string
+      format: string
+    }> = Transaction.getAttributeTypeMap()
+  ): Promise<Transaction[] | TransactionWithRulesResult[]> {
     if (transactionIds.length > 100) {
       // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html
       throw new Error('Can only get at most 100 transactions at a time!')
@@ -347,7 +369,7 @@ export class DynamoDbTransactionRepository
       return []
     }
 
-    const transactionAttributeNames = Transaction.getAttributeTypeMap().map(
+    const transactionAttributeNames = transactionAttributeMap.map(
       (attribute) => attribute.name
     )
     const batchGetItemInput: BatchGetCommandInput = {

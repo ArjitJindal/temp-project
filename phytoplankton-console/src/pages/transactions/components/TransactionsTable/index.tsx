@@ -173,11 +173,12 @@ type Props = {
 export const getStatus = (
   executedRules: ExecutedRulesResult[],
   alert: Alert | undefined,
+  status: RuleAction | undefined,
 ): RuleAction | undefined => {
   if (alert) {
     const ruleInstanceId = alert?.ruleInstanceId;
     const executedRule = executedRules.find((rule) => rule.ruleInstanceId === ruleInstanceId);
-    return executedRule?.ruleHit ? executedRule?.ruleAction : 'ALLOW';
+    return status ?? (executedRule?.ruleHit ? executedRule?.ruleAction : 'ALLOW');
   }
   return undefined;
 };
@@ -285,7 +286,7 @@ export default function TransactionsTable(props: Props) {
               title: 'Status',
               defaultWidth: 80,
               key: 'executedRules.ruleAction',
-              value: (entity) => getStatus(entity.executedRules, alert),
+              value: (entity) => getStatus(entity.executedRules, alert, entity.status),
               type: RULE_ACTION,
             } as DerivedColumn<InternalTransaction, RuleAction>,
           ]

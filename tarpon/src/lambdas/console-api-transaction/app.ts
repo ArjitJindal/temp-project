@@ -219,19 +219,21 @@ export const transactionsViewHandler = lambdaApi()(
                 txnIds.push(tid)
               }
             })
-            if (
-              txnIds.length > 0 &&
-              alert.alertId &&
-              alert.ruleAction === 'SUSPEND'
-            ) {
-              await alertService.saveComment(alert.alertId, {
-                body: `${txnIds.join(', ')} set to ${
-                  req.TransactionAction.action
-                }. Reasons: ${req.TransactionAction.reason.join(
-                  ', '
-                )}. Comment: ${req.TransactionAction.comment}`,
-                files: req.TransactionAction.files,
-              })
+            if (txnIds.length > 0 && alert.alertId) {
+              if (alert.ruleAction === 'SUSPEND')
+                await alertService.saveComment(alert.alertId, {
+                  body: `${txnIds.join(', ')} set to ${
+                    req.TransactionAction.action
+                  }. Reasons: ${req.TransactionAction.reason.join(
+                    ', '
+                  )}. Comment: ${req.TransactionAction.comment}`,
+                  files: req.TransactionAction.files,
+                })
+              if (req.TransactionAction.action === 'ALLOW')
+                await alertService.closeAlertIfAllTransactionsApproved(
+                  alert,
+                  txnIds
+                )
             }
           })
         })

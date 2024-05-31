@@ -24,6 +24,7 @@ import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { SanctionsService } from '../sanctions'
 import { ChecklistTemplatesService } from '../tenants/checklist-template-service'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
+import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
 import {
   AlertParams,
   AlertsRepository,
@@ -60,7 +61,7 @@ import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -1437,5 +1438,42 @@ export class AlertsService extends CaseAlertsCommonService {
     await this.alertsRepository.updateQASampleData(updatedSampling)
 
     return updatedSampling
+  }
+
+  public async closeAlertIfAllTransactionsApproved(
+    alert: Alert,
+    newlyApprovedTxIds: string[]
+  ) {
+    const dynamoDb = getDynamoDbClient()
+    const transactionRepository = new DynamoDbTransactionRepository(
+      this.tenantId,
+      dynamoDb
+    )
+    const filteredTransactionIds = difference(
+      alert.transactionIds,
+      newlyApprovedTxIds
+    )
+
+    const allAllowed =
+      await transactionRepository.checkTransactionStatusByChunk(
+        filteredTransactionIds,
+        (txns) => {
+          return txns.every((txn) => txn.status === 'ALLOW')
+        }
+      )
+    if (allAllowed && alert.alertId) {
+      await this.updateStatus(
+        [alert.alertId],
+        {
+          reason: ['Other'],
+          comment: 'Alert status changed to closed',
+          otherReason: ' All transactions of this alert are approved',
+          alertStatus: 'CLOSED',
+        },
+        {
+          bySystem: true,
+        }
+      )
+    }
   }
 }
