@@ -91,7 +91,6 @@ export class SimulationService {
             parameters: {
               taskId: taskIds[i],
               jobId,
-              ...parameters.parameters[i],
               sampling: parameters.sampling ?? {
                 usersCount: 'RANDOM',
               },

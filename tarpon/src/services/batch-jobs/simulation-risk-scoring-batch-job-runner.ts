@@ -23,6 +23,7 @@ import { SimulationRiskFactorsStatisticsResult } from '@/@types/openapi-internal
 import { SimulationRiskFactorsStatistics } from '@/@types/openapi-internal/SimulationRiskFactorsStatistics'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 const SAMPLE_USERS_COUNT = 10_000
 const SAMPLE_TRANSACTIONS_COUNT = 10_000
@@ -43,6 +44,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
   progress: number = 0
   transactionsResult?: SimulationRiskFactorsResultRaw
   usersResult?: SimulationRiskFactorsResultRaw
+  parameterAttributeRiskValues?: ParameterAttributeRiskValues[]
 
   protected async run(job: SimulationRiskFactorsBatchJob): Promise<void> {
     const { parameters, tenantId } = job
@@ -50,6 +52,18 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
     const dynamoDb = getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
     this.mongoDb = mongoDb
+    const simulationTaskRepository = new SimulationTaskRepository(
+      tenantId,
+      mongoDb
+    )
+    const currentJob = await simulationTaskRepository.getSimulationJob(
+      parameters.jobId
+    )
+    const task = currentJob?.iterations.find(
+      (i) => i.taskId === parameters.taskId
+    )
+    this.parameterAttributeRiskValues =
+      task?.parameters?.parameterAttributeRiskValues
     const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
     this.userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
     this.job = job
@@ -61,11 +75,6 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
     this.transactionRepo = new MongoDbTransactionRepository(
       this.tenantId,
       this.mongoDb
-    )
-
-    const simulationTaskRepository = new SimulationTaskRepository(
-      tenantId,
-      mongoDb
     )
 
     const simulationResultRepository = new SimulationResultRepository(
@@ -299,7 +308,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
           await this.riskScoringService?.calculateArsScore(
             transaction,
             riskClassificationValues,
-            this.job?.parameters.parameterAttributeRiskValues
+            this.parameterAttributeRiskValues ?? []
           )
 
         const riskLevel = getRiskLevelFromScore(
@@ -350,7 +359,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
     const recaluclatedData = await this.riskScoringService?.calculateKrsScore(
       user,
       riskClassificationValues,
-      this.job?.parameters?.parameterAttributeRiskValues ?? []
+      this.parameterAttributeRiskValues ?? []
     )
 
     const simulatedRiskLevel = getRiskLevelFromScore(

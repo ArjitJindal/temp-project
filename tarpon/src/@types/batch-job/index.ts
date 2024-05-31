@@ -2,7 +2,6 @@ import { Credentials } from 'aws-lambda'
 import { SimulationRiskLevelsParameters } from '../openapi-internal/SimulationRiskLevelsParameters'
 import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeaconParameters'
 import { RuleInstance } from '../openapi-internal/RuleInstance'
-import { SimulationRiskFactorsParameters } from '../openapi-internal/SimulationRiskFactorsParameters'
 import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRiskFactorsSampling'
 import { RuleAggregationVariable } from '../openapi-internal/RuleAggregationVariable'
 import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
@@ -35,7 +34,7 @@ export type SimulationRiskLevelsBatchJob = {
 export type SimulationRiskFactorsBatchJob = {
   type: 'SIMULATION_RISK_FACTORS'
   tenantId: string
-  parameters: SimulationRiskFactorsParameters & {
+  parameters: {
     taskId: string
     jobId: string
     sampling: SimulationRiskFactorsSampling

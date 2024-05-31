@@ -167,7 +167,6 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
       parameters: {
         taskId: taskIds[0],
         jobId,
-        ...parameters.parameters[0],
         sampling: parameters.sampling ?? { usersCount: 'RANDOM' },
       },
     }
