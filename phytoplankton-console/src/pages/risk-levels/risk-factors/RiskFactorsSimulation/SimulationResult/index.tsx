@@ -37,12 +37,13 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import Tabs from '@/components/library/Tabs';
 import Spinner from '@/components/library/Spinner';
+import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   jobId: string;
 }
 
-const SIMULATION_REFETCH_INTERVAL = 15;
+const SIMULATION_REFETCH_INTERVAL = 5;
 
 export const SimulationResult = (props: Props) => {
   const { jobId } = props;
@@ -156,15 +157,22 @@ export type RiskFactorsSettings = {
 };
 
 const SimulationResultWidgets = (props: WidgetProps) => {
+  const settings = useSettings();
   const { iteration } = props;
   const { pathname } = useLocation();
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['userId', 'ascend']],
   });
+  const isIterationCompleted = (iteration: SimulationRiskFactorsIteration) => {
+    return iteration?.latestStatus?.status === 'SUCCESS';
+  };
   const api = useApi();
   const iterationQueryResults = useQuery(
-    SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', params),
+    SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', {
+      ...params,
+      isIterationCompleted: isIterationCompleted(iteration),
+    }),
     async () => {
       if (iteration?.taskId) {
         return await api.getSimulationTaskIdResult({
@@ -221,7 +229,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       type: {
         render: (riskLevel) => {
           if (riskLevel) {
-            return <>{capitalizeWords(riskLevel)}</>;
+            return <>{getRiskLevelLabel(riskLevel, settings)}</>;
           } else {
             return <>{'-'}</>;
           }
@@ -234,7 +242,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       type: {
         render: (riskLevel) => {
           if (riskLevel) {
-            return <>{capitalizeWords(riskLevel)}</>;
+            return <>{getRiskLevelLabel(riskLevel, settings)}</>;
           } else {
             return <>{'-'}</>;
           }
@@ -257,9 +265,6 @@ const SimulationResultWidgets = (props: WidgetProps) => {
     [iteration],
   );
 
-  const isIterationCompleted = (iteration: SimulationRiskFactorsIteration) => {
-    return iteration?.latestStatus?.status === 'SUCCESS';
-  };
   const getGraphData = useCallback(
     (graphType: SimulationRiskFactorsStatisticsRiskTypeEnum) => {
       if (!isIterationCompleted(iteration)) return { graphData: [], max: 0 };
@@ -366,21 +371,38 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           ? 'Running the simulation for a random sample of users & generating results for you.'
           : 'Loading simulation results for you.'
       }
+      status={iteration.latestStatus.status}
     />
   );
 };
 
-export const Loading = ({ message = '', progress }) => {
+export const Loading = ({ message = '', progress = 0, status }) => {
+  const isPending = status === 'PENDING';
+  const isFailed = status === 'FAILED';
+  const progressValue = Number(progress?.toFixed(2) ?? 0);
+
   return (
     <div className={s.loadingCard}>
       <div className={s.progressBar}>
-        <Progress percent={progress ?? 0} status="active" />
-        {message ? (
-          <div className={s.loader}>
-            <Spinner size="SMALL" /> {message}
-          </div>
+        {!isFailed && !isPending ? (
+          <>
+            <Progress percent={progressValue} status="active" />
+            {message && (
+              <div className={s.loader}>
+                <Spinner size="SMALL" /> {message}
+              </div>
+            )}
+          </>
         ) : (
-          <></>
+          <div className={s.failed}>
+            {isFailed ? (
+              'Failed to load simulation results'
+            ) : (
+              <>
+                <Spinner size="SMALL" /> <span>Initializing simulation...</span>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
