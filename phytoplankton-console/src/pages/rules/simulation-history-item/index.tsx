@@ -50,6 +50,8 @@ export default function SimulationHistoryItemPage() {
         },
       ]}
       simulationHistoryUrl="/rules/simulation-history"
+      nonSimulationDefaultUrl="/rules/my-rules"
+      simulationDefaultUrl="/rules/my-rules"
     >
       <Authorized required={['simulator:simulations:read']} showForbiddenPage>
         <AsyncResourceRenderer resource={queryResult.data}>

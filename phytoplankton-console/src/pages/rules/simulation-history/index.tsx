@@ -18,6 +18,8 @@ export default function SimulationHistoryPage() {
         },
       ]}
       simulationHistoryUrl="/rules/simulation-history"
+      nonSimulationDefaultUrl="/rules/my-rules"
+      simulationDefaultUrl="/rules/my-rules"
     >
       <Authorized required={['simulator:simulations:read']} showForbiddenPage>
         <SimulationHistoryTable />

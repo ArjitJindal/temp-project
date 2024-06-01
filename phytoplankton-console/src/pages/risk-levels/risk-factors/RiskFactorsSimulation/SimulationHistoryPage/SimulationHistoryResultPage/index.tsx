@@ -14,6 +14,8 @@ export const SimulationHistoryResultPage = () => {
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <BreadcrumbsSimulationPageWrapper
         storageKey={'SIMULATION_RISK_FACTORS'}
+        nonSimulationDefaultUrl="/risk-levels/risk-factors"
+        simulationDefaultUrl="/risk-levels/risk-factors/simulation"
         breadcrumbs={[
           {
             title: 'Risk factors',

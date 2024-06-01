@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { useQueryClient } from '@tanstack/react-query';
@@ -36,10 +36,13 @@ import { RISK_FACTORS } from '@/utils/queries/keys';
 export default function () {
   const { type = 'consumer' } = useParams();
   const [isSimulationMode] = useLocalStorageState('SIMULATION_RISK_FACTORS', false);
+
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <BreadcrumbsSimulationPageWrapper
         storageKey={'SIMULATION_RISK_FACTORS'}
+        nonSimulationDefaultUrl="/risk-levels/risk-factors/"
+        simulationDefaultUrl="/risk-levels/risk-factors/simulation"
         breadcrumbs={[
           {
             title: 'Risk factors',
@@ -243,14 +246,6 @@ export function RiskFactors(props: { type: string }) {
     },
     [api, updateValuesResources],
   );
-
-  useEffect(() => {
-    if (isSimulationMode) {
-      navigate(makeUrl(`/risk-levels/risk-factors/simulation`), { replace: true });
-    } else {
-      navigate(makeUrl(`/risk-levels/risk-factors/consumer`), { replace: true });
-    }
-  }, [isSimulationMode]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div>
       {isSimulationMode ? (

@@ -1,7 +1,7 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle } from 'react';
 import { useLocalStorageState } from 'ahooks';
 import Breadcrumbs, { BreadcrumbItem } from 'src/components/library/Breadcrumbs';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import s from './styles.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
@@ -19,6 +19,8 @@ export type PageWrapperProps = {
   breadcrumbs: BreadcrumbItem[];
   children?: React.ReactNode;
   simulationHistoryUrl: string;
+  simulationDefaultUrl: string;
+  nonSimulationDefaultUrl: string;
   storageKey: 'SIMULATION_RULES' | 'SIMULATION_RISK_FACTORS';
 };
 
@@ -39,9 +41,22 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
       simulationCountResults.refetch();
     },
   }));
+
   const [isSimulationEnabled, setIsSimulationEnabled] = useLocalStorageState<boolean>(
     props.storageKey,
     false,
+  );
+  const navigate = useNavigate();
+  const handleSimulationModeChange = useCallback(
+    (value: boolean | undefined) => {
+      setIsSimulationEnabled(value);
+      if (!value) {
+        navigate(props.nonSimulationDefaultUrl);
+      } else {
+        navigate(props.simulationDefaultUrl);
+      }
+    },
+    [navigate, setIsSimulationEnabled, props.nonSimulationDefaultUrl, props.simulationDefaultUrl],
   );
 
   const location = useLocation();
@@ -50,7 +65,7 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
     <SimulationPageWrapper
       key={`${isSimulationEnabled}`}
       isSimulationModeEnabled={isSimulationEnabled}
-      onSimulationModeChange={setIsSimulationEnabled}
+      onSimulationModeChange={handleSimulationModeChange}
       header={(actionButton) => (
         <div className={s.header}>
           <Breadcrumbs items={props.breadcrumbs} />

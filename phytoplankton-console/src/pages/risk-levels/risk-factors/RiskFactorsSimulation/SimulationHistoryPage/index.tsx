@@ -21,6 +21,8 @@ export const SimulationHistoryPage = () => {
           },
         ].filter(notEmpty)}
         simulationHistoryUrl="/risk-levels/risk-factors/simulation-history"
+        nonSimulationDefaultUrl="/risk-levels/risk-factors"
+        simulationDefaultUrl="/risk-levels/risk-factors/simulation"
       >
         <SimulationHistory />
       </BreadcrumbsSimulationPageWrapper>
