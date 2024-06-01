@@ -8,7 +8,7 @@ import { getSQSClient } from '@/utils/sns-sqs-client'
 const sqsClient = getSQSClient()
 
 export async function sendBatchJobCommand(job: BatchJob) {
-  if (envIs('test')) {
+  if (envIs('test') || job.tenantId === 'cypress-tenant') {
     return
   }
 
