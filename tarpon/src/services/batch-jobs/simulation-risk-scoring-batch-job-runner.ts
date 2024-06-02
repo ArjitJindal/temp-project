@@ -5,7 +5,6 @@ import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { RiskScoringService } from '../risk-scoring'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
-import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { SimulationResultRepository } from '../simulation/repositories/simulation-result-repository'
 import { SimulationTaskRepository } from '../simulation/repositories/simulation-task-repository'
@@ -313,11 +312,14 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
 
         const riskLevel = getRiskLevelFromScore(
           riskClassificationValues,
-          recaluclatedData?.score ?? 0
+          recaluclatedData?.score ?? null
         )
 
-        const currentRiskLevel =
-          transaction.arsScore?.riskLevel || DEFAULT_RISK_LEVEL
+        const currentRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          transaction.arsScore?.arsScore ?? null
+        )
+
         const simulatedRiskLevel = riskLevel
 
         if (this.transactionsResult?.[currentRiskLevel])
@@ -367,7 +369,11 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       recaluclatedData?.score ?? 0
     )
 
-    const currentRiskLevel = user.krsScore?.riskLevel || DEFAULT_RISK_LEVEL
+    const currentRiskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      user.krsScore?.krsScore ?? null
+    )
+
     if (this.usersResult?.[currentRiskLevel])
       this.usersResult[currentRiskLevel].current++
     if (this.usersResult?.[simulatedRiskLevel])
@@ -382,7 +388,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       current: {
         krs: {
           riskScore: user.krsScore?.krsScore,
-          riskLevel: user.krsScore?.riskLevel,
+          riskLevel: currentRiskLevel,
         },
       },
       simulated: {
