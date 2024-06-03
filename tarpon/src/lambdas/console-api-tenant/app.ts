@@ -23,7 +23,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { publishAuditLog } from '@/services/audit-log'
-import { envIs, envIsNot } from '@/utils/env'
+import { envIsNot } from '@/utils/env'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { NarrativeService } from '@/services/tenants/narrative-template-service'
@@ -265,17 +265,11 @@ export const tenantsHandler = lambdaApi()(
           break
         }
         case 'DEMO_MODE_DATA_LOAD': {
-          if (envIsNot('prod')) {
-            let fullTenantId = ctx.tenantId
-            if (envIs('sandbox')) {
-              fullTenantId = getFullTenantId(ctx.tenantId, true)
-            }
-            await sendBatchJobCommand({
-              type: 'DEMO_MODE_DATA_LOAD',
-              tenantId: fullTenantId,
-              awsCredentials: getCredentialsFromEvent(event),
-            })
-          }
+          await sendBatchJobCommand({
+            type: 'DEMO_MODE_DATA_LOAD',
+            tenantId: getFullTenantId(ctx.tenantId, true),
+            awsCredentials: getCredentialsFromEvent(event),
+          })
           break
         }
 
