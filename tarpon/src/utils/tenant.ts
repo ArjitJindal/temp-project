@@ -14,6 +14,10 @@ export const isDemoTenant = (tenantId: string) => {
   return tenantId.endsWith('-test')
 }
 
+export const getNonDemoTenantId = (tenantId: string) => {
+  return tenantId.replace(/-test$/, '')
+}
+
 export const isTenantWhitelabeled = memoize(
   async (tenantId) => {
     const dynamoDb = getDynamoDbClient()

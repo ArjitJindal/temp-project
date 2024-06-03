@@ -32,6 +32,7 @@ import {
 import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { envIsNot } from '@/utils/env'
+import { getNonDemoTenantId } from '@/utils/tenant'
 
 // todo: move to config?
 const CONNECTION_NAME = 'Username-Password-Authentication'
@@ -206,7 +207,8 @@ export class AccountsService {
     return
   }
 
-  async getTenantById(tenantId: string): Promise<Tenant | null> {
+  async getTenantById(rawTenantId: string): Promise<Tenant | null> {
+    const tenantId = getNonDemoTenantId(rawTenantId)
     const allTenants = await this.getTenants()
     return allTenants.find((tenant) => tenant.id === tenantId) ?? null
   }

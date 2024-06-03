@@ -49,6 +49,7 @@ import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { CounterEntity, EntityCounter } from '@/services/counter/repository'
+import { getNonDemoTenantId } from '@/utils/tenant'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -74,7 +75,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
   const db = client.db()
-  const originalTenantId = tenantId.replace('-test', '')
+  const originalTenantId = getNonDemoTenantId(tenantId)
   const tenantRepository = new TenantRepository(originalTenantId, {
     mongoDb: client,
     dynamoDb: getDynamoDbClient(),

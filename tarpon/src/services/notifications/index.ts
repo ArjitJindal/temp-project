@@ -47,7 +47,7 @@ export class NotificationsService {
     const accountsService = await AccountsService.getInstance()
     const tenant = await accountsService.getTenantById(this.tenantId)
     if (!tenant) {
-      throw new Error('Tenant not found')
+      throw new Error(`Tenant not found: ${this.tenantId}`)
     }
     return accountsService.getTenantAccounts(tenant)
   })
