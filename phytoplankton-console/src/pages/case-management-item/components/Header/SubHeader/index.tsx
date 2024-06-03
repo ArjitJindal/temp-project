@@ -223,6 +223,11 @@ export default function SubHeader(props: Props) {
             ))}
           </Form.Layout.Label>
         )}
+        {caseItem.caseType === 'EXTERNAL' && caseItem.creationReason && (
+          <Form.Layout.Label title={'Creation reason'}>
+            {caseItem.creationReason?.reasons.join(', ')}
+          </Form.Layout.Label>
+        )}
       </div>
       <Feature name="RISK_SCORING">
         {caseUser?.userId && (

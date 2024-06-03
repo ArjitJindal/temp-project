@@ -513,6 +513,20 @@ export default function AlertTable(props: Props) {
             },
           },
         }),
+        ...(caseId
+          ? [
+              helper.simple<'creationReason'>({
+                title: 'Creation reason',
+                key: 'creationReason',
+                type: {
+                  render: (value) => {
+                    return <>{value?.reasons.join(', ') ?? '-'}</>;
+                  },
+                },
+                defaultWidth: 200,
+              }),
+            ]
+          : []),
         helper.display({
           title: 'Operations',
           enableResizing: false,
