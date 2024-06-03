@@ -21,7 +21,7 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { get, isEmpty, set, uniq } from 'lodash'
+import { get, isEmpty, keyBy, mapValues, mergeWith, set, uniq } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { getUsersFilterByRiskLevel } from '../utils/user-utils'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -29,6 +29,7 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
+  DAY_DATE_FORMAT,
   paginatePipeline,
   prefixRegexMatchFilter,
   regexMatchFilter,
@@ -1130,37 +1131,23 @@ export class UserRepository {
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-
-    const matchCondition: Filter<InternalTransaction>[] = []
-
-    matchCondition.push({
-      hitRules: {
-        $elemMatch: { ruleInstanceId },
-      },
-    })
-
-    if (params.filterisShadowRuleInstance != null) {
-      if (params.filterisShadowRuleInstance) {
-        matchCondition.push({
-          hitRules: {
-            $elemMatch: { isShadow: true },
-          },
-        })
+    const ruleMatchCondition: Document = { ruleInstanceId }
+    if (params.filterShadowHit != null) {
+      if (params.filterShadowHit) {
+        ruleMatchCondition.isShadow = true
       } else {
-        matchCondition.push({
-          hitRules: {
-            $not: {
-              $elemMatch: { isShadow: true },
-            },
-          },
-        })
+        ruleMatchCondition.isShadow = { $ne: true }
       }
     }
 
     const pipeline: Document[] = [
       {
         $match: {
-          $and: matchCondition,
+          timestamp: {
+            $gte: params.txAfterTimestamp ?? 0,
+            $lt: params.txBeforeTimestamp ?? Number.MAX_SAFE_INTEGER,
+          },
+          hitRules: { $elemMatch: ruleMatchCondition },
         },
       },
       {
@@ -1235,5 +1222,87 @@ export class UserRepository {
       ...params,
       filterUserIds: uniq(data?.userIds.flat()),
     })
+  }
+
+  public async getRuleInstanceStats(
+    ruleInstanceId: string,
+    timeRange: { afterTimestamp: number; beforeTimestamp: number },
+    isShadowRule: boolean
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const timestampMatch = {
+      createdTimestamp: {
+        $gte: timeRange.afterTimestamp,
+        $lt: timeRange.beforeTimestamp,
+      },
+    }
+    const ruleElementMatchCondition = {
+      ruleInstanceId,
+    }
+    if (isShadowRule) {
+      ruleElementMatchCondition['isShadow'] = true
+    } else {
+      ruleElementMatchCondition['isShadow'] = { $ne: true }
+    }
+    const groupBy = {
+      $dateToString: {
+        format: DAY_DATE_FORMAT,
+        date: { $toDate: '$createdTimestamp' },
+      },
+    }
+    const runPipeline = [
+      {
+        $match: {
+          ...timestampMatch,
+          executedRules: { $elemMatch: ruleElementMatchCondition },
+        },
+      },
+      {
+        $group: {
+          _id: groupBy,
+          runCount: { $sum: 1 },
+        },
+      },
+    ]
+    const hitPipeline = [
+      {
+        $match: {
+          ...timestampMatch,
+          hitRules: { $elemMatch: ruleElementMatchCondition },
+        },
+      },
+      {
+        $group: {
+          _id: groupBy,
+          hitCount: { $sum: 1 },
+        },
+      },
+    ]
+    const [runResult, hitResult] = await Promise.all([
+      collection.aggregate(runPipeline).toArray(),
+      collection.aggregate(hitPipeline).toArray(),
+    ])
+    const result = mergeWith(
+      mapValues(keyBy(runResult, '_id'), (v) => ({
+        runCount: v.runCount,
+        hitCount: 0,
+      })),
+      keyBy(hitResult, '_id'),
+      (run, hit) => {
+        return {
+          runCount: run?.runCount ?? 0,
+          hitCount: hit?.hitCount ?? 0,
+        }
+      }
+    ) as {
+      [date: string]: {
+        hitCount: number
+        runCount: number
+      }
+    }
+    return result
   }
 }

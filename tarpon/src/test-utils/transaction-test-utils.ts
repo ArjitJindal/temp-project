@@ -5,6 +5,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 
 export function getTestTransaction(
   transaction: Partial<Transaction | InternalTransaction> = {}
@@ -47,7 +48,7 @@ export function getTestTransaction(
 
 export async function createTransaction(
   testTenantId: string,
-  transaction: Transaction
+  transaction: Transaction | TransactionWithRulesResult
 ): Promise<() => Promise<void>> {
   const transactionRepository = new DynamoDbTransactionRepository(
     testTenantId,
@@ -55,8 +56,9 @@ export async function createTransaction(
   )
 
   await transactionRepository.saveTransaction(transaction, {
-    executedRules: [],
-    hitRules: [],
+    executedRules:
+      (transaction as TransactionWithRulesResult).executedRules ?? [],
+    hitRules: (transaction as TransactionWithRulesResult).hitRules ?? [],
   })
   return async () => {
     await transactionRepository.deleteTransaction(transaction)
@@ -65,7 +67,7 @@ export async function createTransaction(
 
 export function setUpTransactionsHooks(
   tenantId: string,
-  transactions: Transaction[]
+  transactions: Array<Transaction | TransactionWithRulesResult>
 ) {
   const cleanUps: Array<() => Promise<void>> = []
 
@@ -76,13 +78,9 @@ export function setUpTransactionsHooks(
       ))
     )
 
-    cleanUps.push(
-      ...(await Promise.all(
-        transactions.map(async (transaction) => {
-          return createTransaction(tenantId, transaction)
-        })
-      ))
-    )
+    for (const transaction of transactions) {
+      cleanUps.push(await createTransaction(tenantId, transaction))
+    }
   })
 
   afterAll(async () => {

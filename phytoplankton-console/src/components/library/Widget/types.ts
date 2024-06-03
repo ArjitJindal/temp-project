@@ -1,7 +1,7 @@
 import React, { MutableRefObject } from 'react';
 
 export interface WidgetPropsRequired {
-  id: string;
+  id?: string;
 }
 
 export interface WidgetPropsOptional {

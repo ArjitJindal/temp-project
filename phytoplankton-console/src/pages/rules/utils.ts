@@ -574,3 +574,7 @@ export const getRuleInstanceDescription = (
 ) => {
   return ruleInstances[ruleId]?.ruleDescriptionAlias ?? rules[ruleId]?.description;
 };
+
+export function isShadowRule(ruleInstance: RuleInstance) {
+  return ruleInstance.mode === 'SHADOW_SYNC';
+}

@@ -359,7 +359,8 @@ export class CasesAlertsAuditLogService {
 
     let investigationTime: number | undefined
     if (updates.caseStatus === 'CLOSED') {
-      investigationTime = getLatestInvestigationTime(caseEntity) || undefined
+      investigationTime =
+        getLatestInvestigationTime(caseEntity?.statusChanges) || undefined
     }
 
     const newImage: CaseUpdateAuditLogImage = {

@@ -1,4 +1,4 @@
-import Component from './index';
+import { LineChart } from './index';
 import { UseCase } from '@/pages/storybook/components';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
@@ -448,10 +448,10 @@ export default function (): JSX.Element {
   return (
     <>
       <UseCase title={'Basic case'}>
-        <Component data={data} colors={colors} />
+        <LineChart data={data} colors={colors} />
       </UseCase>
       <UseCase title={'Multiple line'}>
-        <Component
+        <LineChart
           data={data.map((x) => ({ ...x, series: Math.random() < 0.5 ? series1 : series2 }))}
           colors={colors}
         />

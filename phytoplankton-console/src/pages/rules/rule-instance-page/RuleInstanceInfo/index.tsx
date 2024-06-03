@@ -3,9 +3,10 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { useMutation } from '@tanstack/react-query';
-import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../../utils';
+import { getRuleInstanceDisplayId, isShadowRule, useUpdateRuleInstance } from '../../utils';
 import { canSimulate } from '../../my-rules';
 import s from './styles.module.less';
+import { RuleInstanceAnalytics } from './RuleInstanceAnalytics';
 import { RuleInstance } from '@/apis';
 import * as Card from '@/components/ui/Card';
 import PriorityTag from '@/components/library/PriorityTag';
@@ -28,25 +29,6 @@ import { getErrorMessage } from '@/utils/lang';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import AccountTag from '@/components/AccountTag';
 import DirectionLine from '@/components/ui/icons/Remix/map/direction-line.react.svg';
-import TransactionsTable, {
-  transactionParamsToRequest,
-  TransactionsTableParams,
-} from '@/pages/transactions/components/TransactionsTable';
-import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
-import { SHADOW_RULES_ANALYTICS, TRANSACTIONS_LIST, USERS } from '@/utils/queries/keys';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { H4 } from '@/components/ui/Typography';
-import { UserSearchParams } from '@/pages/users/users-list';
-import { UsersTable } from '@/pages/users/users-list/users-table';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { EmptyEntitiesInfo } from '@/components/library/EmptyDataInfo';
-import WidgetBase from '@/components/library/Widget/WidgetBase';
-import { OverviewCard } from '@/pages/dashboard/analysis/components/widgets/OverviewCard';
-import { formatDuration, getDuration } from '@/utils/time-utils';
-import WidgetRangePicker, {
-  Value as WidgetRangePickerValue,
-} from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
-import { map } from '@/utils/asyncResource';
 
 interface Props {
   ruleInstance: RuleInstance;
@@ -195,7 +177,7 @@ export const RuleInstanceInfo = (props: Props) => {
           </div>
           <div className={s.separator}></div>
           <div className={s.actionButtons}>
-            {ruleInstance.mode === 'SHADOW_SYNC' && (
+            {isShadowRule(ruleInstance) && (
               <Confirm
                 title="Change to live rule"
                 text="Are you sure you want to change this rule to a live rule?"
@@ -302,287 +284,10 @@ export const RuleInstanceInfo = (props: Props) => {
         </Card.Section>
       </Card.Root>
 
-      {ruleInstance.mode === 'SHADOW_SYNC' && (
-        <ShadowRuleAnalyticsWidget ruleInstance={ruleInstance} />
-      )}
-
-      {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type === 'TRANSACTION' && (
-        <Card.Root noBorder>
-          <ShadowRuleTransactionTable ruleInstance={ruleInstance} />
-        </Card.Root>
-      )}
-      {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type.includes('USER') && (
-        <Card.Root noBorder>
-          <ShadowRulesUsersTable ruleInstance={ruleInstance} />
-        </Card.Root>
-      )}
-      {ruleInstance.mode === 'SHADOW_SYNC' && ruleInstance.type === 'TRANSACTION' && (
-        <Card.Root noBorder>
-          <ShadowRulesTransactionUsersTable ruleInstance={ruleInstance} />
-        </Card.Root>
+      {/* TODO: Support USER_ONGOING_SCREENING type */}
+      {ruleInstance.type !== 'USER_ONGOING_SCREENING' && (
+        <RuleInstanceAnalytics ruleInstance={ruleInstance} />
       )}
     </div>
-  );
-};
-
-const ShadowRuleTransactionTable = (props: Props) => {
-  const { ruleInstance } = props;
-  const [params, setParams] = useState<TransactionsTableParams>({
-    ...DEFAULT_PARAMS_STATE,
-    sort: [['timestamp', 'descend']],
-  });
-  const api = useApi();
-
-  const queryKey = TRANSACTIONS_LIST({
-    ...params,
-    ruleInstanceId: ruleInstance.id,
-    isShadowHit: true,
-  });
-
-  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
-    return await api.getTransactionsList({
-      ...transactionParamsToRequest(params),
-      start: from,
-      filterIsShadowHit: true,
-      filterRuleInstancesHit: [ruleInstance.id as string],
-    });
-  });
-
-  return (
-    <div className={s.tables}>
-      <H4 style={{ paddingBottom: '1rem' }}>Transactions hit</H4>
-      <AsyncResourceRenderer resource={queryResult.data}>
-        {(data) =>
-          data.count ? (
-            <TransactionsTable
-              queryResult={queryResult}
-              params={params}
-              onChangeParams={setParams}
-              isExpandable={false}
-            />
-          ) : (
-            <EmptyEntitiesInfo
-              showIcon={false}
-              title="No transactions hit"
-              description="No transactions are hit by this shadow rule"
-            />
-          )
-        }
-      </AsyncResourceRenderer>
-    </div>
-  );
-};
-
-const ShadowRulesUsersTable = (props: Props) => {
-  const { ruleInstance } = props;
-  const [params, setParams] = useState<UserSearchParams>({
-    ...DEFAULT_PARAMS_STATE,
-    sort: [['timestamp', 'descend']],
-  });
-  const api = useApi();
-
-  const queryKey = USERS('ALL', { ...params, ruleInstanceId: ruleInstance.id, isShadowHit: true });
-
-  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
-    const {
-      pageSize,
-      createdTimestamp,
-      userId,
-      tagKey,
-      tagValue,
-      riskLevels,
-      sort,
-      riskLevelLocked,
-    } = params;
-
-    return await api.getAllUsersList({
-      start: from,
-      pageSize,
-      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
-      filterId: userId,
-      filterTagKey: tagKey,
-      filterTagValue: tagValue,
-      filterRiskLevel: riskLevels,
-      sortField: sort[0]?.[0] ?? 'createdTimestamp',
-      sortOrder: sort[0]?.[1] ?? 'descend',
-      filterRiskLevelLocked: riskLevelLocked,
-      filterRuleInstancesHit: [ruleInstance.id as string],
-      filterShadowHit: true,
-    });
-  });
-
-  return (
-    <div className={s.tables}>
-      <H4 style={{ paddingBottom: '1rem' }}>Users hit</H4>
-      <AsyncResourceRenderer resource={queryResult.data}>
-        {(data) =>
-          data.count ? (
-            <UsersTable
-              queryResults={queryResult}
-              params={params}
-              handleChangeParams={setParams}
-              type="all"
-            />
-          ) : (
-            <EmptyEntitiesInfo
-              showIcon={false}
-              title="No users hit"
-              description="No users are hit by this shadow rule"
-            />
-          )
-        }
-      </AsyncResourceRenderer>
-    </div>
-  );
-};
-
-const ShadowRulesTransactionUsersTable = (props: Props) => {
-  const { ruleInstance } = props;
-  const [params, setParams] = useState<UserSearchParams>({
-    ...DEFAULT_PARAMS_STATE,
-    sort: [['timestamp', 'descend']],
-  });
-  const api = useApi();
-
-  const queryKey = USERS('ALL', {
-    ...params,
-    ruleInstanceId: ruleInstance.id,
-    type: 'TRANSACTION_USERS_HIT',
-    isShadowHit: true,
-  });
-
-  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
-    const {
-      pageSize,
-      createdTimestamp,
-      userId,
-      tagKey,
-      tagValue,
-      riskLevels,
-      sort,
-      riskLevelLocked,
-    } = params;
-
-    return await api.getRuleInstancesTransactionUsersHit({
-      start: from,
-      pageSize,
-      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
-      filterId: userId,
-      filterTagKey: tagKey,
-      filterTagValue: tagValue,
-      filterRiskLevel: riskLevels,
-      sortField: sort[0]?.[0] ?? 'createdTimestamp',
-      sortOrder: sort[0]?.[1] ?? 'descend',
-      filterRiskLevelLocked: riskLevelLocked,
-      ruleInstanceId: ruleInstance.id as string,
-      filterisShadowRuleInstance: true,
-    });
-  });
-
-  return (
-    <div className={s.tables}>
-      <H4 style={{ paddingBottom: '1rem' }}>Users hit</H4>
-      <AsyncResourceRenderer resource={queryResult.data}>
-        {(data) =>
-          data.count ? (
-            <UsersTable
-              queryResults={queryResult}
-              params={params}
-              handleChangeParams={setParams}
-              type="all"
-            />
-          ) : (
-            <EmptyEntitiesInfo
-              showIcon={false}
-              title="No users hit"
-              description="No users are hit by this shadow rule"
-            />
-          )
-        }
-      </AsyncResourceRenderer>
-    </div>
-  );
-};
-
-const ShadowRuleAnalyticsWidget = (props: { ruleInstance: RuleInstance }) => {
-  const { ruleInstance } = props;
-  const api = useApi();
-
-  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>({
-    startTimestamp: dayjs().subtract(1, 'day').valueOf(),
-    endTimestamp: dayjs().valueOf(),
-  });
-
-  const analyticsQueryResult = useQuery(
-    SHADOW_RULES_ANALYTICS({ ...dateRange, ruleInstanceId: ruleInstance.id }),
-    () => {
-      return api.getRuleInstancesRuleInstanceIdStats({
-        ruleInstanceId: ruleInstance.id as string,
-        afterTimestamp: dateRange.startTimestamp,
-        beforeTimestamp: dateRange.endTimestamp,
-      });
-    },
-  );
-
-  const dataRes = analyticsQueryResult.data;
-  return (
-    <WidgetBase id="shadow-rule-stats" width="FULL">
-      <div className={s.analytics}>
-        <div className={s.analyticsHeader}>
-          <div>
-            <H4>Analytics</H4>
-          </div>
-          <WidgetRangePicker
-            value={dateRange}
-            onChange={(dateRange) => {
-              if (dateRange) {
-                setDateRange(dateRange);
-              }
-            }}
-          />
-        </div>
-        <div className={s.analyticsCard}>
-          {ruleInstance.type === 'TRANSACTION' && (
-            <OverviewCard
-              sections={[
-                {
-                  title: 'Transactions hit',
-                  value: map(dataRes, (data) => data.transactionsHit),
-                },
-              ]}
-            />
-          )}
-          <OverviewCard
-            sections={[
-              {
-                title: 'Users hit',
-                value: map(dataRes, (data) => data.usersHit),
-              },
-            ]}
-          />
-          <OverviewCard
-            sections={[
-              {
-                title: 'Possible alerts created',
-                value: map(dataRes, (data) => data.alertsHit),
-              },
-            ]}
-          />
-          <OverviewCard
-            sections={[
-              {
-                title: 'Possible total investigation time',
-                value: map(
-                  dataRes,
-                  (data) => formatDuration(getDuration(data.investigationTime)) || '0',
-                ),
-              },
-            ]}
-          />
-        </div>
-      </div>
-    </WidgetBase>
   );
 };

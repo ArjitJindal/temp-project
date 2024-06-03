@@ -15,7 +15,7 @@ interface Props<X, Y, Series> {
   hideLegend?: boolean;
 }
 
-export default function Line<Series = string, X = string>(props: Props<X, number, Series>) {
+export function LineChart<Series = string, X = string>(props: Props<X, number, Series>) {
   const { data, height, colors, hideLegend } = props;
   return (
     <AntLine
@@ -27,6 +27,9 @@ export default function Line<Series = string, X = string>(props: Props<X, number
       animation={false}
       xAxis={{
         title: null,
+        label: {
+          autoRotate: true,
+        },
         grid: {
           line: {
             style: {

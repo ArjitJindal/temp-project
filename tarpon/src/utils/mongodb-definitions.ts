@@ -298,7 +298,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           'hitRules.ruleAction',
           'hitRules.isShadow',
           'hitRules.ruleHitMeta.hitDirections',
-          'hitRules.ruleInstanceId',
           'originAmountDetails.country',
           'originAmountDetails.transactionAmount',
           'originAmountDetails.transactionCurrency',
@@ -316,6 +315,10 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         })
 
         txnIndexes.push(
+          {
+            'hitRules.ruleInstanceId': 1,
+            timestamp: 1,
+          },
           {
             destinationUserId: 1,
             'executedRules.ruleInstanceId': 1,

@@ -221,17 +221,19 @@ paths:
             type: number
           in: query
           name: afterTimestamp
+          required: true
         - schema:
             type: number
           in: query
           name: beforeTimestamp
+          required: true
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShadowRuleStats'
+                $ref: '#/components/schemas/RuleInstanceStats'
               examples: {}
   /rule_instances:
     post:
@@ -374,6 +376,14 @@ paths:
           in: query
           name: pageSize
         - schema:
+            type: number
+          in: query
+          name: txAfterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: txBeforeTimestamp
+        - schema:
             type: string
           in: query
           name: start
@@ -437,7 +447,7 @@ paths:
         - schema:
             type: boolean
           in: query
-          name: filterisShadowRuleInstance
+          name: filterShadowHit
       x-flagright:
         permissions:
           - rules:my-rules:read
@@ -786,7 +796,7 @@ paths:
         - schema:
             type: boolean
           in: query
-          name: filterIsShadowHit
+          name: filterShadowHit
         - schema:
             type: string
           in: query
@@ -12187,8 +12197,8 @@ components:
       enum:
         - EMERGING
         - FIRST_WORLD
-    ShadowRuleStats:
-      title: ShadowRuleStats
+    RuleInstanceStats:
+      title: RuleInstanceStats
       type: object
       properties:
         transactionsHit:
@@ -12199,11 +12209,27 @@ components:
           type: number
         investigationTime:
           type: number
+        executionStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleInstanceExecutionStats'
       required:
-        - transactionsHit
         - usersHit
         - alertsHit
-        - investigationTime
+        - executionStats
+    RuleInstanceExecutionStats:
+      title: RuleInstanceExecutionStats
+      type: object
+      properties:
+        date:
+          type: string
+        hitCount:
+          type: number
+        runCount:
+          type: number
+      required:
+        - date
+        - runCount
   securitySchemes:
     Authorization:
       type: http

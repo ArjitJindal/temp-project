@@ -226,3 +226,7 @@ export function filterLiveRules(executions: Partial<Executions>): Executions {
       ) ?? [],
   }
 }
+
+export function isShadowRule(ruleInstance: RuleInstance): boolean {
+  return ruleInstance.mode === 'SHADOW_SYNC'
+}

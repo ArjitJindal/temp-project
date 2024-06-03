@@ -93,6 +93,7 @@ const generator = function* (): Generator<InternalTransaction> {
       originUserId,
       destinationUserId,
       createdAt: timestamp,
+      updatedAt: timestamp,
       status: getAggregatedRuleStatus(hitRules),
       hitRules: randomHitRules,
       destinationPaymentMethodId: getPaymentMethodId(

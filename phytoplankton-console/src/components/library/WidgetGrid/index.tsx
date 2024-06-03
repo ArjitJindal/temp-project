@@ -7,12 +7,15 @@ import { WidgetProps } from '@/components/library/Widget/types';
 interface Props {
   groups: {
     groupTitle: string;
-    items: {
-      component: React.FunctionComponent<WidgetProps>;
-      props: WidgetProps;
-    }[];
+    items: WidgetGroupItem[];
   }[];
 }
+
+export type WidgetGroupItem = {
+  component?: React.FunctionComponent<WidgetProps>;
+  props?: WidgetProps;
+  renderComponent?: () => JSX.Element;
+};
 
 export default function WidgetGrid(props: Props) {
   const { groups } = props;
@@ -25,10 +28,12 @@ export default function WidgetGrid(props: Props) {
             <div className={s.items}>
               {items.map((item) => {
                 const Component = item.component;
-                return (
+                return Component ? (
                   <ErrorBoundary>
-                    <Component key={item.props.id} {...item.props} />
+                    <Component key={item.props?.id} {...item.props} />
                   </ErrorBoundary>
+                ) : (
+                  <ErrorBoundary>{item.renderComponent?.()}</ErrorBoundary>
                 );
               })}
             </div>

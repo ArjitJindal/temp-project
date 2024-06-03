@@ -1,5 +1,4 @@
 import { last, uniq } from 'lodash'
-import { ShadowRuleStatsAnalytics } from '../analytics/rules/shadow-rule-stats'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { DashboardRefreshBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -145,14 +144,6 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
           await dashboardStatsRepository.refreshUserStats(timeRange)
           logger.info(`Refreshed user stats - ${JSON.stringify(timeRange)}`)
         }
-      })(),
-
-      // RuleInstance stats
-      (async () => {
-        await ShadowRuleStatsAnalytics.refresh(job.tenantId, checkTimeRange)
-        logger.info(
-          `Refreshed rule instance stats - ${JSON.stringify(checkTimeRange)}`
-        )
       })(),
     ]
 

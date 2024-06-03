@@ -1,4 +1,5 @@
 import { uniq } from 'lodash'
+import { v4 as uuidv4 } from 'uuid'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Business } from '@/@types/openapi-public/Business'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -15,7 +16,7 @@ export function getTestUser(
 ): User | InternalUser {
   return {
     createdTimestamp: 1641654664,
-    userId: '96647cfd9e8fe66ee0f3362e011e34e8',
+    userId: uuidv4(),
     userDetails: {
       name: {
         firstName: 'Baran',

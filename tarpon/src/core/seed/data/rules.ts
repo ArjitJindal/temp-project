@@ -12,6 +12,7 @@ import { TransactionAmountRuleParameters } from '@/services/rules-engine/transac
 import { LowValueTransactionsRuleParameters } from '@/services/rules-engine/transaction-rules/low-value-transactions-base'
 import { SanctionsCounterPartyRuleParameters } from '@/services/rules-engine/transaction-rules/sanctions-counterparty'
 import { RuleChecksForField } from '@/services/rules-engine/transaction-rules/library'
+import { isShadowRule } from '@/services/rules-engine/utils'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
   return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
@@ -605,7 +606,7 @@ export const transactionRules: () => ExecutedRulesResult[] = memoize(() => {
               : { isFalsePositive: false, confidenceScore: 100 },
           hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
         },
-        isShadow: ri.mode === 'SHADOW_SYNC',
+        isShadow: isShadowRule(ri),
       })
     )
 })
@@ -631,7 +632,7 @@ export const userRules: () => ExecutedRulesResult[] = memoize(() => {
               : { isFalsePositive: false, confidenceScore: 100 },
           hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
         },
-        isShadow: ri.mode === 'SHADOW_SYNC',
+        isShadow: isShadowRule(ri),
       })
     )
 })

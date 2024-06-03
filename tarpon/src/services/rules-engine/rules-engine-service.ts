@@ -86,6 +86,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import {
   getAggregatedRuleStatus,
+  isShadowRule,
   isV8RuleInstance,
 } from '@/services/rules-engine/utils'
 import { TransactionStatusDetails } from '@/@types/openapi-public/TransactionStatusDetails'
@@ -367,7 +368,7 @@ export class RulesEngineService {
                     ruleHitMeta: {
                       hitDirections: ['ORIGIN'],
                     },
-                    isShadow: ruleInstance.mode === 'SHADOW_SYNC',
+                    isShadow: isShadowRule(ruleInstance),
                   }
 
                   const result: ConsumerUsersResponse | BusinessUsersResponse =
@@ -1001,7 +1002,7 @@ export class RulesEngineService {
             }
           : undefined,
         vars,
-        isShadow: ruleInstance.mode === 'SHADOW_SYNC',
+        isShadow: isShadowRule(ruleInstance),
       },
     }
   }

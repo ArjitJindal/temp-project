@@ -5,7 +5,17 @@ import {
   FindCursor,
   MongoClient,
 } from 'mongodb'
-import { difference, isEmpty, isNil, mapKeys, omitBy, pick, uniq } from 'lodash'
+import {
+  difference,
+  isEmpty,
+  isNil,
+  keyBy,
+  mapKeys,
+  mapValues,
+  omitBy,
+  pick,
+  uniq,
+} from 'lodash'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -28,6 +38,7 @@ import {
   paginateCursor,
   lookupPipelineStage,
   getMongoDbClient,
+  DAY_DATE_FORMAT,
 } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,
@@ -262,7 +273,7 @@ export class MongoDbTransactionRepository
       const eleMatchCondition = {
         ruleInstanceId: { $in: params.filterRuleInstancesHit },
       }
-      if (params.filterIsShadowHit) {
+      if (params.filterShadowHit) {
         eleMatchCondition['isShadow'] = true
       } else {
         eleMatchCondition['isShadow'] = { $ne: true }
@@ -1665,5 +1676,99 @@ export class MongoDbTransactionRepository
       )
     }
     return allResult
+  }
+  public async getRuleInstanceHitStats(
+    ruleInstanceId: string,
+    timeRange: { afterTimestamp: number; beforeTimestamp: number },
+    isShadowRule: boolean
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const timestampMatch = {
+      timestamp: {
+        $gte: timeRange.afterTimestamp,
+        $lt: timeRange.beforeTimestamp,
+      },
+    }
+    const ruleElementMatchCondition = {
+      ruleInstanceId,
+    }
+    if (isShadowRule) {
+      ruleElementMatchCondition['isShadow'] = true
+    } else {
+      ruleElementMatchCondition['isShadow'] = { $ne: true }
+    }
+
+    const groupBy = {
+      $dateToString: {
+        format: DAY_DATE_FORMAT,
+        date: { $toDate: '$timestamp' },
+      },
+    }
+    const hitMatch = {
+      ...timestampMatch,
+      hitRules: { $elemMatch: ruleElementMatchCondition },
+    }
+    const hitPipeline = [
+      { $match: hitMatch },
+      { $unwind: '$hitRules' },
+      {
+        $match: mapKeys(
+          ruleElementMatchCondition,
+          (_value, key) => `hitRules.${key}`
+        ),
+      },
+      {
+        $project: {
+          timestamp: 1,
+          userIds: {
+            $concatArrays: [
+              {
+                $cond: {
+                  if: {
+                    $in: [
+                      'ORIGIN',
+                      {
+                        $ifNull: ['$hitRules.ruleHitMeta.hitDirections', []],
+                      },
+                    ],
+                  },
+                  then: ['$originUserId'],
+                  else: [],
+                },
+              },
+              {
+                $cond: {
+                  if: {
+                    $in: [
+                      'DESTINATION',
+                      {
+                        $ifNull: ['$hitRules.ruleHitMeta.hitDirections', []],
+                      },
+                    ],
+                  },
+                  then: ['$destinationUserId'],
+                  else: [],
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: groupBy,
+          hitCount: { $sum: 1 },
+          hitUserIds: { $addToSet: '$userIds' },
+        },
+      },
+    ]
+    const hitResult = await collection.aggregate(hitPipeline).toArray()
+    return mapValues(keyBy(hitResult, '_id'), (v) => ({
+      ...v,
+      hitUsersCount: v.hitUserIds.length,
+    }))
   }
 }

@@ -1,8 +1,7 @@
-import React from 'react';
 import { QuestionResponseTimeSeries } from '../../../types';
 import { notEmpty } from '@/utils/array';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
-import Line, { LineData } from '@/pages/dashboard/analysis/components/charts/Line';
+import { LineChart, LineData } from '@/pages/dashboard/analysis/components/charts/Line';
 import { ALL_CHART_COLORS } from '@/components/ui/colors';
 
 interface Props {
@@ -25,7 +24,7 @@ export default function HistoryItemTimeSeries(props: Props) {
     .filter(notEmpty);
 
   return (
-    <Line
+    <LineChart
       data={data}
       colors={seriesLabels.reduce(
         (acc, series, i) => ({ ...acc, [series]: ALL_CHART_COLORS[i % ALL_CHART_COLORS.length] }),

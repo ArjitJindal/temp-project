@@ -5,9 +5,9 @@ import { AlertCreationIntervalWeekly } from '@/@types/openapi-internal/AlertCrea
 import dayjs, { Timezone, WEEKDAY_NUMBERS, duration } from '@/utils/dayjs'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
-import { CaseWithoutCaseTransactions } from '@/services/cases/repository'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
+import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 
 export function calculateCaseAvailableDate(
   now: number,
@@ -45,10 +45,11 @@ export function calculateCaseAvailableDate(
 }
 
 export function getLatestInvestigationTime(
-  Entity: CaseWithoutCaseTransactions | null
+  statusChanges: CaseStatusChange[] | undefined
 ): number | null {
-  const statusChanges = Entity?.statusChanges
-  if (!statusChanges) return null
+  if (!statusChanges || !statusChanges.length) {
+    return null
+  }
   const reversedStatuses = reverse(statusChanges)
   const lastClosedStatusIndex = reversedStatuses.findIndex(
     (v) => v.caseStatus === 'CLOSED'

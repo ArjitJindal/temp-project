@@ -1,19 +1,33 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError, { NotFound } from 'http-errors'
+import { keyBy, mapValues, mean, merge, sum, sumBy } from 'lodash'
 import { AlertsRepository } from '../alerts/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
+import { OverviewStatsDashboardMetric } from '../analytics/dashboard-metrics/overview-stats'
+import { UserRepository } from '../users/repositories/user-repository'
+import { getTimeLabels } from '../dashboard/utils'
+import { DashboardStatsRepository } from '../dashboard/repositories/dashboard-stats-repository'
+import { getLatestInvestigationTime } from '../cases/utils'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { RuleService } from './rule-service'
 import { RuleAuditLogService } from './rules-audit-log-service'
-import { assertValidRiskLevelParameters, isV8RuleInstance } from './utils'
+import {
+  assertValidRiskLevelParameters,
+  isShadowRule,
+  isV8RuleInstance,
+} from './utils'
 import { RuleRepository } from './repositories/rule-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
+import { MongoDbTransactionRepository } from './repositories/mongodb-transaction-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
+import { RuleInstanceStats } from '@/@types/openapi-internal/RuleInstanceStats'
+import { RuleInstanceExecutionStats } from '@/@types/openapi-internal/RuleInstanceExecutionStats'
+import { DAY_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
 
 const ALL_RULES = {
   ...TRANSACTION_RULES,
@@ -29,6 +43,10 @@ export class RuleInstanceService {
   ruleInstanceRepository: RuleInstanceRepository
   ruleAuditLogService: RuleAuditLogService
   ruleRepository: RuleRepository
+  transactionRepository: MongoDbTransactionRepository
+  usersRepository: UserRepository
+  alertsRepository: AlertsRepository
+  dashboardStatsRepository: DashboardStatsRepository
 
   constructor(
     tenantId: string,
@@ -43,6 +61,19 @@ export class RuleInstanceService {
     )
     this.ruleAuditLogService = new RuleAuditLogService(tenantId)
     this.ruleRepository = new RuleRepository(tenantId, connections)
+    this.transactionRepository = new MongoDbTransactionRepository(
+      tenantId,
+      this.mongoDb
+    )
+    this.usersRepository = new UserRepository(tenantId, {
+      mongoDb: this.mongoDb,
+    })
+    this.alertsRepository = new AlertsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+    this.dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+      mongoDb: this.mongoDb,
+    })
   }
 
   public async getRuleInstanceById(ruleInstanceId: string) {
@@ -71,12 +102,8 @@ export class RuleInstanceService {
       runCount: oldRuleInstance?.runCount,
     })
 
-    const alertsRepository = new AlertsRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-    })
-
     if (oldRuleInstance?.queueId !== newRuleInstance.queueId) {
-      await alertsRepository.updateRuleQueue(
+      await this.alertsRepository.updateRuleQueue(
         ruleInstanceId,
         newRuleInstance.queueId
       )
@@ -138,7 +165,7 @@ export class RuleInstanceService {
     }
 
     // TODO (V8): FR-3985
-    const type = rule ? rule.type : 'TRANSACTION'
+    const type = rule ? rule.type : ruleInstance.type ?? 'TRANSACTION'
     const now = Date.now()
     const updatedRuleInstance =
       await this.ruleInstanceRepository.createOrUpdateRuleInstance(
@@ -178,5 +205,110 @@ export class RuleInstanceService {
     return ruleId
       ? await this.ruleInstanceRepository.getNewRuleInstanceId(ruleId)
       : await this.ruleInstanceRepository.getNewCustomRuleId()
+  }
+
+  public async getRuleInstanceStats(
+    ruleInstanceId: string,
+    timeRange: { afterTimestamp: number; beforeTimestamp: number }
+  ): Promise<RuleInstanceStats> {
+    const ruleInstance = await this.getRuleInstanceById(ruleInstanceId)
+    const isShadow = isShadowRule(ruleInstance)
+    let transactionsHit: number | undefined = undefined
+    let usersHit = 0
+    let alertsHit = 0
+    let investigationTime: number | undefined = undefined
+    let executionStats: RuleInstanceExecutionStats[] = []
+    let stats: {
+      [key: string]: {
+        [key: string]: number
+      }
+    } = {}
+    if (ruleInstance.type === 'TRANSACTION') {
+      const [hitStats, txStats] = await Promise.all([
+        this.transactionRepository.getRuleInstanceHitStats(
+          ruleInstanceId,
+          timeRange,
+          isShadow
+        ),
+        // NOTE: We use the dashboard transaction stats to get the transaction count as a performance
+        // optimization to avoid scanning the transantions collection for the target time range
+        this.dashboardStatsRepository.getTransactionCountStats(
+          timeRange.afterTimestamp,
+          timeRange.beforeTimestamp,
+          'DAY'
+        ),
+      ])
+      const runStats = mapValues(keyBy(txStats, 'time'), (v) => ({
+        runCount: sum(
+          Object.entries(v)
+            .filter(([key]) => key.startsWith('status'))
+            .map((v) => v[1])
+        ),
+      }))
+      stats = merge(hitStats, runStats)
+      transactionsHit = sumBy(Object.values(stats), 'hitCount')
+    } else if (ruleInstance.type === 'USER') {
+      stats = await this.usersRepository.getRuleInstanceStats(
+        ruleInstanceId,
+        timeRange,
+        isShadow
+      )
+    } else {
+      throw new Error('Unsupported rule type')
+    }
+
+    const allTimeLabels = getTimeLabels(
+      DAY_DATE_FORMAT_JS,
+      timeRange.afterTimestamp,
+      timeRange.beforeTimestamp,
+      'DAY'
+    )
+    executionStats = allTimeLabels.map((timeLabel) => {
+      if (!stats[timeLabel]) {
+        return {
+          date: timeLabel,
+          runCount: 0,
+          hitCount: 0,
+        }
+      }
+      return {
+        date: timeLabel,
+        runCount: stats[timeLabel].runCount ?? 0,
+        hitCount: stats[timeLabel].hitCount ?? 0,
+      }
+    })
+    usersHit = sumBy(
+      Object.values(stats),
+      ruleInstance.type === 'TRANSACTION' ? 'hitUsersCount' : 'hitCount'
+    )
+
+    if (isShadow) {
+      alertsHit = usersHit
+      investigationTime =
+        await OverviewStatsDashboardMetric.getAverageInvestigationTime(
+          this.tenantId,
+          'alerts'
+        )
+    } else {
+      const alertsResult = await this.alertsRepository.getAlerts({
+        filterRulesHit: [ruleInstanceId],
+        filterAlertAfterCreatedTimestamp: timeRange.afterTimestamp,
+        filterAlertBeforeCreatedTimestamp: timeRange.beforeTimestamp,
+      })
+      const alertInvestigationTimes = alertsResult.data
+        .map((v) => getLatestInvestigationTime(v.alert.statusChanges))
+        .filter(Boolean)
+      if (alertInvestigationTimes.length) {
+        investigationTime = mean(alertInvestigationTimes)
+      }
+      alertsHit = alertsResult.total
+    }
+    return {
+      transactionsHit,
+      usersHit,
+      alertsHit,
+      investigationTime,
+      executionStats,
+    }
   }
 }
