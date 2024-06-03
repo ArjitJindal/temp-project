@@ -1,5 +1,6 @@
 import ContactDetails from '../../ContactDetails/index';
 import Addresses from '../../Addresses';
+import { BankDetails } from '../../BusinessUserDetails/UserDetails/BankDetails';
 import UsersInfoCard from './UsersInfoCard';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
@@ -22,13 +23,27 @@ export default function UserDetails(props: Props) {
             <UsersInfoCard user={user} />
           </Card.Section>
         </Card.Column>
-        <Card.Column className={s.contact}>
-          <Card.Subtitle className={s.border} title="Contact details" icon={<SurveyLineIcon />} />
-          <ContactDetails user={user as InternalConsumerUser} />
-        </Card.Column>
-        <Card.Column className={s.address}>
-          <Card.Subtitle className={s.border} title="Addresses" icon={<CommunityLineIcon />} />
-          <Addresses user={user as InternalConsumerUser} />
+        <Card.Column>
+          <Card.Row>
+            <Card.Column className={s.contact}>
+              <Card.Subtitle
+                className={s.border}
+                title="Contact details"
+                icon={<SurveyLineIcon />}
+              />
+              <ContactDetails user={user as InternalConsumerUser} />
+            </Card.Column>
+            <Card.Column className={s.address}>
+              <Card.Subtitle className={s.border} title="Addresses" icon={<CommunityLineIcon />} />
+              <Addresses user={user as InternalConsumerUser} />
+            </Card.Column>
+          </Card.Row>
+          <Card.Row>
+            <Card.Column>
+              <Card.Subtitle title="Bank details" icon={<SurveyLineIcon />} />
+              <BankDetails user={user} />
+            </Card.Column>
+          </Card.Row>
         </Card.Column>
       </Card.Row>
     </Card.Root>

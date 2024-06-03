@@ -1,6 +1,11 @@
 import React from 'react';
 import s from './index.module.less';
-import { IBANDetails, GenericBankAccountDetails, InternalBusinessUser } from '@/apis';
+import {
+  IBANDetails,
+  GenericBankAccountDetails,
+  InternalBusinessUser,
+  InternalConsumerUser,
+} from '@/apis';
 import * as Card from '@/components/ui/Card';
 import AccountPinCircleLineIcon from '@/components/ui/icons/Remix/user/account-pin-circle-line.react.svg';
 import AccountBoxLineIcon from '@/components/ui/icons/Remix/user/account-box-line.react.svg';
@@ -8,7 +13,7 @@ import FlagLineIcon from '@/components/ui/icons/Remix/business/flag-line.react.s
 import FileListIcon from '@/components/ui/icons/Remix/document/file-list-line.react.svg';
 
 interface Props {
-  user: InternalBusinessUser;
+  user: InternalBusinessUser | InternalConsumerUser;
 }
 
 export function BankDetails(prop: Props) {

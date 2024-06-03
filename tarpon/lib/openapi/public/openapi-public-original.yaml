@@ -1565,6 +1565,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PEPStatus'
+        savedPaymentDetails:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/CardDetails'
+              - $ref: '#/components/schemas/GenericBankAccountDetails'
+              - $ref: '#/components/schemas/IBANDetails'
+              - $ref: '#/components/schemas/ACHDetails'
+              - $ref: '#/components/schemas/SWIFTDetails'
+              - $ref: '#/components/schemas/MpesaDetails'
+              - $ref: '#/components/schemas/UPIDetails'
+              - $ref: '#/components/schemas/WalletDetails'
+              - $ref: '#/components/schemas/CheckDetails'
         tags:
           type: array
           description: Additional information that can be added via tags

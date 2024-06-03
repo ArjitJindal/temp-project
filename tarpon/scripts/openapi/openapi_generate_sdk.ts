@@ -90,6 +90,11 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     `src/@types/openapi-${type}/QuestionVariable.ts`,
     `src/@types/openapi-${type}/SimulationGetResponse.ts`,
     `src/@types/openapi-${type}-custom/DefaultApi.ts`,
+    `src/@types/openapi-${type}/InternalConsumerUser.ts`,
+    `src/@types/openapi-${type}/Consumer.ts`,
+    `src/@types/openapi-${type}/User.ts`,
+    `src/@types/openapi-${type}/UserOptional.ts`,
+    `src/@types/openapi-${type}/UserWithRulesResult.ts`,
   ])
 
   exec(`rm -f src/@types/openapi-${type}/ObjectSerializer.ts`)

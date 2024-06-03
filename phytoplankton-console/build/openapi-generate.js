@@ -102,6 +102,10 @@ sed -i "s/private url: URLParse/private url: URLParse<Record<string, string | un
 fi`);
 
   const pathsToReplace = [
+    'src/apis/models/InternalConsumerUser.ts',
+    'src/apis/models/User.ts',
+    'src/apis/models/UserOptional.ts',
+    'src/apis/models/UserWithRulesResult.ts',
     'src/apis/models/Business.ts',
     'src/apis/models/InternalBusinessUser.ts',
     'src/apis/models/InternalUser.ts',
