@@ -28,6 +28,8 @@ import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { RULE_OPERATORS } from './v8-operators'
 import { RULE_FUNCTIONS } from './v8-functions'
 import { getVariableKeysFromLogic } from './v8-engine/utils'
+import { getTimeRangeByTimeWindows } from './utils/time-utils'
+import { TimeWindow } from './utils/rule-parameter-schemas'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -49,7 +51,10 @@ import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchRespon
 import { scoreObjects } from '@/utils/search'
 import { logger } from '@/core/logger'
 import { getErrorMessage } from '@/utils/lang'
-import { getJsonLogicEngine } from '@/services/rules-engine/v8-engine'
+import {
+  canAggregate,
+  getJsonLogicEngine,
+} from '@/services/rules-engine/v8-engine'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { notNullish } from '@/utils/array'
 import {
@@ -58,6 +63,7 @@ import {
 } from '@/services/rules-engine/v8-variables'
 import { getS3Client } from '@/utils/s3'
 import { envIs } from '@/utils/env'
+import dayjs from '@/utils/dayjs'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
@@ -596,6 +602,18 @@ You have to answer in below format as string. If you don't know any field, just 
         throw new BadRequest(
           `Unknown aggregate group by field: '${v.aggregationGroupByFieldKey}'`
         )
+      }
+      const { afterTimestamp, beforeTimestamp } = getTimeRangeByTimeWindows(
+        Date.now(),
+        v.timeWindow.start as TimeWindow,
+        v.timeWindow.end as TimeWindow
+      )
+      if (
+        afterTimestamp >= beforeTimestamp ||
+        (!canAggregate(v) &&
+          dayjs(beforeTimestamp).diff(afterTimestamp, 'minute') > 60)
+      ) {
+        throw new BadRequest('Invalid aggregation time window')
       }
     })
 

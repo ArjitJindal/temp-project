@@ -70,6 +70,7 @@ import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationTy
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
+import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
 
 const sqs = getSQSClient()
 
@@ -80,6 +81,19 @@ type RuleData = {
 }
 type AuxiliaryIndexTransactionWithDirection = AuxiliaryIndexTransaction & {
   direction?: 'origin' | 'destination'
+}
+
+const NO_AGGREGATION_GRANULARITIES: RuleAggregationTimeWindowGranularity[] = [
+  'second',
+  'minute',
+]
+export function canAggregate(variable: RuleAggregationVariable) {
+  return (
+    !NO_AGGREGATION_GRANULARITIES.includes(
+      variable.timeWindow.start.granularity
+    ) &&
+    !NO_AGGREGATION_GRANULARITIES.includes(variable.timeWindow.end.granularity)
+  )
 }
 
 export async function sendAggregationTask(
@@ -630,7 +644,7 @@ export class RuleJsonLogicEvaluator {
     data: RuleData,
     direction: 'origin' | 'destination'
   ) {
-    if (this.mode !== 'DYNAMODB') {
+    if (this.mode !== 'DYNAMODB' || !canAggregate(aggregationVariable)) {
       return
     }
 
@@ -829,7 +843,7 @@ export class RuleJsonLogicEvaluator {
       this.getAggregationGranularity(aggregationVariable)
 
     let aggData: Array<{ time: string } & AggregationData> = []
-    if (this.mode === 'DYNAMODB') {
+    if (this.mode === 'DYNAMODB' && canAggregate(aggregationVariable)) {
       // If the mode is DYNAMODB, we fetch the pre-built aggregation data
       const userAggData =
         await this.aggregationRepository.getUserRuleTimeAggregations(

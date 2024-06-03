@@ -13,6 +13,7 @@ import {
   CurrencyCode,
   RuleAggregationFunc,
   RuleAggregationTimeWindow,
+  RuleAggregationTimeWindowGranularity,
   RuleAggregationTransactionDirection,
   RuleAggregationType,
   RuleAggregationUserDirection,
@@ -27,13 +28,20 @@ import SelectionGroup from '@/components/library/SelectionGroup';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 
 import TextInput from '@/components/library/TextInput';
-import { dayjs } from '@/utils/dayjs';
+import { Dayjs, dayjs } from '@/utils/dayjs';
 import Alert from '@/components/library/Alert';
 import VariableTimeWindow from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/VariableTimeWindow';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import { Hint } from '@/components/library/Form/InputField';
 import Modal from '@/components/library/Modal';
 import { humanizeAuto } from '@/utils/humanize';
+
+type TimeWindowValidationError =
+  | 'MISSING_FROM_OR_TO'
+  | 'TIME_TO_EARLIER_THAN_TIME_FROM'
+  | 'UNSUPPORTED_GRANULARITY';
+
+const NO_AGGREGATION_GRANULARITIES: RuleAggregationTimeWindowGranularity[] = ['second', 'minute'];
 
 function varLabelWithoutNamespace(label: string): string {
   return label.replace(/^.+\s*\/\s*/, '');
@@ -162,10 +170,10 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     }
     return options;
   }, [entityVariables, formValues.aggregationFieldKey]);
-  const isValidTimeWindow = useMemo(() => {
+  const timeWindowValidationError = useMemo<TimeWindowValidationError | undefined>(() => {
     const { start, end } = formValues.timeWindow;
-    let startTs;
-    let endTs;
+    let startTs: Dayjs | undefined;
+    let endTs: Dayjs | undefined;
     if (start.granularity === 'fiscal_year') {
       if (start.fiscalYear != null) {
         startTs = getFiscalYearStart(dayjs(), start.fiscalYear).subtract(start.units, 'year');
@@ -185,10 +193,19 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     } else {
       endTs = dayjs().subtract(end.units, end.granularity);
     }
-    if (startTs == null || endTs == null) {
-      return false;
+    if (!startTs || !endTs) {
+      return 'MISSING_FROM_OR_TO';
     }
-    return startTs.valueOf() < endTs.valueOf();
+    if (startTs.valueOf() >= endTs.valueOf()) {
+      return 'TIME_TO_EARLIER_THAN_TIME_FROM';
+    }
+    if (
+      (NO_AGGREGATION_GRANULARITIES.includes(start.granularity) ||
+        NO_AGGREGATION_GRANULARITIES.includes(end.granularity)) &&
+      endTs.diff(startTs, 'minute') > 60
+    ) {
+      return 'UNSUPPORTED_GRANULARITY';
+    }
   }, [formValues.timeWindow]);
   const isValidFormValues = useMemo(() => {
     const isTxAmount = formValues.aggregationFieldKey
@@ -200,7 +217,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       formValues.aggregationFieldKey &&
       (!isTxAmount || (isTxAmount && formValues.baseCurrency)) &&
       formValues.aggregationFunc &&
-      isValidTimeWindow
+      !timeWindowValidationError
     );
   }, [
     formValues.aggregationFieldKey,
@@ -208,7 +225,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     formValues.baseCurrency,
     formValues.transactionDirection,
     formValues.type,
-    isValidTimeWindow,
+    timeWindowValidationError,
   ]);
   const variableAutoName = useMemo(() => {
     if (isValidFormValues) {
@@ -393,9 +410,20 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             />
           </div>
         </PropertyColumns>
-        {!isValidTimeWindow && (
+        {timeWindowValidationError && (
           <Alert type="error">
-            <b>Time to</b> should be earlier than <b>Time from</b>
+            {timeWindowValidationError === 'TIME_TO_EARLIER_THAN_TIME_FROM' ? (
+              <>
+                <b>Time to</b> should be earlier than <b>Time from</b>
+              </>
+            ) : timeWindowValidationError === 'UNSUPPORTED_GRANULARITY' ? (
+              <>
+                For <b>Minute</b> / <b>Second</b> granularity, the total duration cannot exceed{' '}
+                <b>1 hour</b>
+              </>
+            ) : (
+              'Unknown error'
+            )}
           </Alert>
         )}
         <div>

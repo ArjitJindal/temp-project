@@ -15,6 +15,12 @@ import { Hint } from '@/components/library/Form/InputField';
 
 interface Props extends InputProps<RuleAggregationVariableTimeWindow> {}
 
+export const NO_ROLLING_BASIS_GRANULARITIES: RuleAggregationTimeWindowGranularity[] = [
+  'second',
+  'minute',
+  'hour',
+];
+
 const DEFAULT_TIME_WINDOW_VALUE: RuleAggregationTimeWindow = {
   units: 1,
   granularity: 'year',
@@ -30,10 +36,7 @@ const FISCAL_YEAR_OPTIONS = [
   { value: 'indian', label: '1st April - 31st March' },
 ];
 
-const granularityOptions = RULE_AGGREGATION_TIME_WINDOW_GRANULARITYS.filter(
-  // TODO: second/minute granularity to be re-enabled by FR-4669
-  (v) => !['second', 'minute'].includes(v),
-).map((granularity) => ({
+const granularityOptions = RULE_AGGREGATION_TIME_WINDOW_GRANULARITYS.map((granularity) => ({
   label: `${granularity === 'now' ? 'now' : humanizeAuto(granularity)} ${
     granularity === 'now' || granularity === 'all_time' ? '' : 'ago'
   }`,
@@ -132,32 +135,34 @@ export default function VariableTimeWindow(props: Props) {
         </Label>
       )}
 
-      {start.granularity !== 'all_time' && (
-        <Label label={'Rolling basis'} level={2} position="RIGHT">
-          <Checkbox
-            value={
-              start?.rollingBasis !== end?.rollingBasis
-                ? undefined
-                : start?.rollingBasis || end?.rollingBasis || false
-            }
-            onChange={(newValue) => {
-              if (newValue != null) {
-                onChange?.({
-                  ...value,
-                  end: {
-                    ...end,
-                    rollingBasis: newValue,
-                  },
-                  start: {
-                    ...start,
-                    rollingBasis: newValue,
-                  },
-                });
+      {start.granularity !== 'all_time' &&
+        !NO_ROLLING_BASIS_GRANULARITIES.includes(start.granularity) &&
+        !NO_ROLLING_BASIS_GRANULARITIES.includes(end.granularity) && (
+          <Label label={'Rolling basis'} level={2} position="RIGHT">
+            <Checkbox
+              value={
+                start?.rollingBasis !== end?.rollingBasis
+                  ? undefined
+                  : start?.rollingBasis || end?.rollingBasis || false
               }
-            }}
-          />
-        </Label>
-      )}
+              onChange={(newValue) => {
+                if (newValue != null) {
+                  onChange?.({
+                    ...value,
+                    end: {
+                      ...end,
+                      rollingBasis: newValue,
+                    },
+                    start: {
+                      ...start,
+                      rollingBasis: newValue,
+                    },
+                  });
+                }
+              }}
+            />
+          </Label>
+        )}
     </div>
   );
 }

@@ -1047,6 +1047,75 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
     } as TransactionMonitoringResult)
   })
 })
+
+describe('Verify Transaction: V8 engine with second/minute granularity', () => {
+  withFeatureHook(['RULES_ENGINE_V8'])
+
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'V8-R-1',
+      defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 0] }] },
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:test',
+          type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
+          transactionDirection: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 5, granularity: 'minute' },
+            end: { units: 10, granularity: 'second' },
+          },
+        },
+      ],
+      type: 'TRANSACTION',
+    },
+  ])
+
+  test('executes the json logic', async () => {
+    const t1 = dayjs()
+    const t2 = t1.add(9, 'second')
+    const t3 = t2.add(5, 'second') // should see t1
+    const t4 = t3.add(5, 'minute').subtract(1, 'second') // should see t3
+    const t5 = t3.add(5, 'minute').add(1, 'second')
+    const results = await bulkVerifyTransactions(
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: 'U-1',
+          timestamp: t1.valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: 'U-1',
+          timestamp: t2.valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: 'U-1',
+          timestamp: t3.valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: 'U-1',
+          timestamp: t4.valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: 'U-1',
+          timestamp: t5.valueOf(),
+        }),
+      ],
+      { autoCreateUser: true }
+    )
+    expect(results.map((v) => v.status !== 'ALLOW')).toEqual([
+      false,
+      false,
+      true,
+      true,
+      false,
+    ])
+  })
+})
+
 describe('Verify Transaction: V8 engine with rolling basis', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
 
