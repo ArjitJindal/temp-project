@@ -8820,13 +8820,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"auth0@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "auth0@npm:4.2.0"
+"auth0@npm:^4.4.0":
+  version: 4.4.0
+  resolution: "auth0@npm:4.4.0"
   dependencies:
     jose: "npm:^4.13.2"
     uuid: "npm:^9.0.0"
-  checksum: 4f4bccc353c0fc7ca3ed438245db33e64fd8761099c1f99f7fb3650d854309f0fe1f050aeb50e2bf95a5271187b54a346d6f9b71830206c56797d3161f4c4bc5
+  checksum: 8781858338c914977ef73adf198c848ebee0c3b35052dd780bfdad2dff7e1e956c14775eed24c2b989ba63c4d2cfbc416f42de05cd073c42472f07fb6d5e0015
   languageName: node
   linkType: hard
 
@@ -19647,7 +19647,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^6.6.0"
     abortcontroller-polyfill: "npm:^1.7.5"
     ajv: "npm:8.11.0"
-    auth0: "npm:^4.2.0"
+    auth0: "npm:^4.4.0"
     aws-cdk: "npm:~2.139.0"
     aws-cdk-lib: "npm:~2.140.0"
     aws-sdk: "npm:2.1618.0"
