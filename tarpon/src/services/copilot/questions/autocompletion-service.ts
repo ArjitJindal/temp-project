@@ -10,7 +10,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { prompt } from '@/utils/openai'
+import { ModelVersion, prompt } from '@/utils/openai'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
@@ -274,7 +274,7 @@ export class AutocompleteService {
         },
       ],
       {
-        model: 'gpt-4-0125-preview',
+        model: ModelVersion.GPT4O,
       }
     )
     const results: {

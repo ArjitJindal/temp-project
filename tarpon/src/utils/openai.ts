@@ -16,7 +16,7 @@ export enum ModelVersion {
   GPT4 = 'gpt-4-turbo-preview',
   GPT4O = 'gpt-4o',
 }
-const modelVersion: ModelVersion = ModelVersion.GPT4
+const modelVersion: ModelVersion = ModelVersion.GPT4O
 
 export type GPTLogObject = {
   prompts: string[] | ChatCompletionRequestMessage[]
