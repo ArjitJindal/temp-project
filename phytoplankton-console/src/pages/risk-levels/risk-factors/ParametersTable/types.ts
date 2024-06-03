@@ -94,6 +94,7 @@ export function riskValueTimeRange(
 export type ParameterName = ParameterAttributeRiskValuesParameterEnum;
 export type Entity = RiskEntityType;
 export type ParameterValues = RiskParameterLevelKeyValue[];
+export type ParameterValueContent = RiskParameterValue['content'];
 export type ParameterSettings = {
   isActive: boolean;
   values: ParameterValues;

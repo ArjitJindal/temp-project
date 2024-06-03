@@ -4,7 +4,6 @@ import { DeleteFilled } from '@ant-design/icons';
 import { isEqual as equal } from 'lodash';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import {
-  DataType,
   Entity,
   ParameterName,
   ParameterValues,
@@ -15,11 +14,12 @@ import {
   DEFAULT_RISK_VALUE,
   INPUT_RENDERERS,
   NEW_VALUE_INFOS,
-  NEW_VALUE_VALIDATIONS,
   VALUE_RENDERERS,
+  PARAMETER_VALUES_FORM_VALIDATIONS,
+  validate,
 } from '../consts';
 import style from './style.module.less';
-import { RiskLevel, RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
+import { RiskLevel, RiskParameterValue, RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { AsyncResource, getOr, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
 import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
@@ -48,19 +48,6 @@ interface Props {
   currentWeight: AsyncResource<number>;
   canEditParameters?: boolean;
 }
-
-const labelsExist: { [key in DataType]?: { input: boolean; value: boolean } } = {
-  DAY_RANGE: { input: true, value: true },
-  TIME_RANGE: { input: true, value: false },
-  AMOUNT_RANGE: { input: true, value: true },
-};
-
-const labelExistsStyle = (dataType: DataType, type: 'input' | 'value'): React.CSSProperties => {
-  if (labelsExist[dataType]?.[type]) {
-    return { marginTop: '1.8rem' };
-  }
-  return {};
-};
 
 export default function ValuesTable(props: Props) {
   const {
@@ -124,7 +111,13 @@ export default function ValuesTable(props: Props) {
           riskValue: newRiskValue,
         },
       ]);
-      setNewValue(null);
+      let initialNewValue: RiskValueContent | null = null;
+      if (dataType === 'RANGE') {
+        if (newValue?.kind === 'RANGE') {
+          initialNewValue = { kind: 'RANGE', start: newValue.end, end: 100 };
+        }
+      }
+      setNewValue(initialNewValue);
       setNewRiskValue(undefined);
     }
   };
@@ -139,20 +132,12 @@ export default function ValuesTable(props: Props) {
     setWeight(lastWeight);
   };
 
-  const newValueValidationMessage: string | null = NEW_VALUE_VALIDATIONS.reduce<string | null>(
-    (acc, validation): string | null => {
-      if (newValue == null || acc != null) {
-        return acc;
-      }
-      return validation({
-        newValue: newValue,
-        newRiskValue: newRiskValue ?? null,
-        newParameterName: parameter,
-        previousValues: values,
-      });
-    },
-    null,
-  );
+  const dataTypeValidations = PARAMETER_VALUES_FORM_VALIDATIONS[dataType] ?? [];
+
+  const newValueValidationMessage: string | null = validate(dataType, dataTypeValidations, {
+    newValue: newValue,
+    previousValues: values.map((x) => x.parameterValue.content),
+  });
 
   const newValueInfoMessage = NEW_VALUE_INFOS.reduce<string | null>(
     (acc, information): string | null => {
@@ -332,53 +317,60 @@ export default function ValuesTable(props: Props) {
           };
 
           return (
-            <React.Fragment key={JSON.stringify(parameterValue)}>
+            <React.Fragment key={index}>
               <div>
                 {VALUE_RENDERERS[dataType]({
                   value: parameterValue.content,
+                  onChange: (newValue: unknown) => {
+                    handleUpdateValues((values: ParameterValues) => {
+                      return values?.map((oldValue, i) => {
+                        if (i !== index) {
+                          return oldValue;
+                        }
+                        return {
+                          ...oldValue,
+                          parameterValue: {
+                            content: newValue as RiskParameterValue['content'],
+                          },
+                        };
+                      });
+                    });
+                  },
                   handleRemoveValue,
                 })}
               </div>
-              <div style={labelExistsStyle(dataType, 'value')}>
-                <RiskLevelSwitch
-                  isDisabled={loading || !hasWritePermissions}
-                  value={
-                    riskValue.type === 'RISK_LEVEL'
-                      ? riskValue.value
-                      : getRiskLevelFromScore(riskClassificationValues, riskValue.value)
-                  }
-                  onChange={handleChangeRiskLevel}
-                />
-              </div>
-              <div style={labelExistsStyle(dataType, 'value')}>
-                <NumberInput
-                  value={
-                    riskValue.type === 'RISK_SCORE'
-                      ? riskValue.value
-                      : getRiskScoreFromLevel(riskClassificationValues, riskValue.value)
-                  }
-                  onChange={handleChangeRiskScore}
-                  isDisabled={loading || !hasWritePermissions}
-                  min={0}
-                  max={100}
-                  step={0.01}
-                />
-              </div>
-              <div style={labelExistsStyle(dataType, 'value')}>
-                <Button
-                  data-cy="delete-risk-factor"
-                  className={style.deleteButton}
-                  type="text"
-                  disabled={
-                    loading ||
-                    (onlyDeleteLast && index !== values.length - 1) ||
-                    !hasWritePermissions
-                  }
-                  onClick={handleDeleteKey}
-                >
-                  <DeleteFilled />
-                </Button>
-              </div>
+              <RiskLevelSwitch
+                isDisabled={loading || !hasWritePermissions}
+                value={
+                  riskValue.type === 'RISK_LEVEL'
+                    ? riskValue.value
+                    : getRiskLevelFromScore(riskClassificationValues, riskValue.value)
+                }
+                onChange={handleChangeRiskLevel}
+              />
+              <NumberInput
+                value={
+                  riskValue.type === 'RISK_SCORE'
+                    ? riskValue.value
+                    : getRiskScoreFromLevel(riskClassificationValues, riskValue.value)
+                }
+                onChange={handleChangeRiskScore}
+                isDisabled={loading || !hasWritePermissions}
+                min={0}
+                max={100}
+                step={0.01}
+              />
+              <Button
+                data-cy="delete-risk-factor"
+                className={style.deleteButton}
+                type="text"
+                disabled={
+                  loading || (onlyDeleteLast && index !== values.length - 1) || !hasWritePermissions
+                }
+                onClick={handleDeleteKey}
+              >
+                <DeleteFilled />
+              </Button>
             </React.Fragment>
           );
         })}
@@ -396,58 +388,52 @@ export default function ValuesTable(props: Props) {
           </div>
           {shouldShowNewValueInput && (
             <>
-              <div style={labelExistsStyle(dataType, 'input')}>
-                <RiskLevelSwitch
-                  isDisabled={loading || !hasWritePermissions}
-                  value={
-                    newRiskValue?.type === 'RISK_LEVEL'
-                      ? newRiskValue.value
-                      : newRiskValue?.value != null
-                      ? getRiskLevelFromScore(riskClassificationValues, newRiskValue.value)
-                      : undefined
+              <RiskLevelSwitch
+                isDisabled={loading || !hasWritePermissions}
+                value={
+                  newRiskValue?.type === 'RISK_LEVEL'
+                    ? newRiskValue.value
+                    : newRiskValue?.value != null
+                    ? getRiskLevelFromScore(riskClassificationValues, newRiskValue.value)
+                    : undefined
+                }
+                onChange={(newRiskLevel) => {
+                  if (newRiskLevel != null) {
+                    setNewRiskValue({ type: 'RISK_LEVEL', value: newRiskLevel });
                   }
-                  onChange={(newRiskLevel) => {
-                    if (newRiskLevel != null) {
-                      setNewRiskValue({ type: 'RISK_LEVEL', value: newRiskLevel });
-                    }
-                  }}
-                />
-              </div>
-              <div style={labelExistsStyle(dataType, 'input')}>
-                <NumberInput
-                  isDisabled={loading || !hasWritePermissions}
-                  value={
-                    newRiskValue?.type === 'RISK_SCORE'
-                      ? newRiskValue.value
-                      : newRiskValue?.value != null
-                      ? getRiskScoreFromLevel(riskClassificationValues, newRiskValue.value)
-                      : undefined
+                }}
+              />
+              <NumberInput
+                isDisabled={loading || !hasWritePermissions}
+                value={
+                  newRiskValue?.type === 'RISK_SCORE'
+                    ? newRiskValue.value
+                    : newRiskValue?.value != null
+                    ? getRiskScoreFromLevel(riskClassificationValues, newRiskValue.value)
+                    : undefined
+                }
+                onChange={(value) => {
+                  if (value != null) {
+                    setNewRiskValue({ type: 'RISK_SCORE', value });
                   }
-                  onChange={(value) => {
-                    if (value != null) {
-                      setNewRiskValue({ type: 'RISK_SCORE', value });
-                    }
-                  }}
-                  min={0}
-                  max={100}
-                  step={0.01}
-                />
-              </div>
-              <div style={labelExistsStyle(dataType, 'input')}>
-                <Button
-                  data-cy="add-risk-factor"
-                  disabled={
-                    loading ||
-                    !newValue ||
-                    newRiskValue == null ||
-                    newValueValidationMessage != null ||
-                    !hasWritePermissions
-                  }
-                  onClick={handleAdd}
-                >
-                  Add
-                </Button>
-              </div>
+                }}
+                min={0}
+                max={100}
+                step={0.01}
+              />
+              <Button
+                data-cy="add-risk-factor"
+                disabled={
+                  loading ||
+                  !newValue ||
+                  newRiskValue == null ||
+                  newValueValidationMessage != null ||
+                  !hasWritePermissions
+                }
+                onClick={handleAdd}
+              >
+                Add
+              </Button>
             </>
           )}
         </>
@@ -470,7 +456,7 @@ export default function ValuesTable(props: Props) {
         </Button>
         <Button
           data-cy="save-risk-factor"
-          disabled={loading || !hasWritePermissions || isEqual}
+          disabled={loading || !hasWritePermissions || isEqual || newValueValidationMessage != null}
           onClick={handleSave}
           type="primary"
         >

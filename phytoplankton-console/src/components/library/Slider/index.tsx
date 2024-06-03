@@ -42,9 +42,9 @@ export default function Slider(props: Props) {
 
   return (
     <div className={cn(s.container, props.className)}>
-      {props.marks && (
+      {props.min && props.marks?.[props.min] && (
         <P variant="m" fontWeight="normal">
-          {props.marks[props.min ?? 0]}{' '}
+          {props.marks[props.min]}
         </P>
       )}
       <div className={cn(s.root)} data-cy="age-range-slider">
@@ -75,9 +75,9 @@ export default function Slider(props: Props) {
           />
         )}
       </div>
-      {props.marks && (
+      {props.max && props.marks?.[props.max] && (
         <P variant="m" fontWeight="normal" style={{ marginLeft: '0.25rem' }}>
-          {props.marks[props.max ?? 0]}
+          {props.marks[props.max]}
         </P>
       )}
       {props.mode === 'SINGLE' && props.textInput && !isEmpty(props.textInput) && (

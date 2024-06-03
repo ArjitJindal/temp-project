@@ -22,7 +22,7 @@ export const DATE_TIME_FORMAT_WITHOUT_SECONDS = 'll LT';
 
 export const convertToDays = (
   value: number,
-  granularity: RiskParameterValueDayRange['startGranularity'],
+  granularity: RiskParameterValueDayRange['startGranularity'] | 'INFINITE',
 ) => {
   switch (granularity) {
     case 'DAYS':
@@ -31,6 +31,8 @@ export const convertToDays = (
       return value * 30;
     case 'YEARS':
       return value * 365;
+    case 'INFINITE':
+      return Number.POSITIVE_INFINITY;
   }
   return neverReturn(granularity, value);
 };

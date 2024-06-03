@@ -9,10 +9,11 @@ export interface Props extends Omit<TextInputProps, keyof InputProps<string>>, I
   min?: number;
   max?: number;
   step?: number;
+  commitMode?: 'ON_CHANGE' | 'ON_BLUR';
 }
 
 export default function NumberInput(props: Props) {
-  const { value, onChange, onBlur, min, max, step = 1, ...rest } = props;
+  const { value, onChange, onBlur, min, max, step = 1, commitMode = 'ON_CHANGE', ...rest } = props;
   const textValue =
     value != null
       ? `${value.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })}`
@@ -20,9 +21,8 @@ export default function NumberInput(props: Props) {
 
   const [inputText, setInputText] = useState<string | undefined>(textValue);
 
-  const prevInputText = usePrevious(inputText);
-  useEffect(() => {
-    if (prevInputText != inputText) {
+  const checkAndApply = useCallback(
+    (inputText, reset = true) => {
       if (inputText == null) {
         onChange?.(undefined);
       } else {
@@ -32,9 +32,13 @@ export default function NumberInput(props: Props) {
           newNumberValue = max != null ? Math.min(max, newNumberValue) : newNumberValue;
           onChange?.(newNumberValue);
         }
+        if (reset) {
+          setInputText(textValue);
+        }
       }
-    }
-  }, [max, min, onChange, prevInputText, inputText]);
+    },
+    [max, min, textValue, onChange],
+  );
 
   const prevValue = usePrevious(value);
   useEffect(() => {
@@ -44,15 +48,22 @@ export default function NumberInput(props: Props) {
   }, [value, prevValue, textValue]);
 
   const handleBlur = useCallback(() => {
-    setInputText(textValue);
+    checkAndApply(inputText, true);
     onBlur?.();
-  }, [onBlur, textValue]);
+  }, [checkAndApply, inputText, onBlur]);
 
-  const handleChange = useCallback((newValue: string | undefined) => {
-    if (newValue == null || newValue.match(/^[-+]?[0-9,.]*$/)) {
-      setInputText(newValue?.replace(',', '.'));
-    }
-  }, []);
+  const handleChange = useCallback(
+    (newValue: string | undefined) => {
+      if (newValue == null || newValue.match(/^[-+]?[0-9,.]*$/)) {
+        const newInputText = newValue?.replace(',', '.');
+        setInputText(newInputText);
+        if (commitMode === 'ON_CHANGE') {
+          checkAndApply(newInputText, false);
+        }
+      }
+    },
+    [checkAndApply, commitMode],
+  );
 
   return (
     <TextInput

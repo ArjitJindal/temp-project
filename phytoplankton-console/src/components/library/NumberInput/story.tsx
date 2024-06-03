@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
+import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 
 export default function (): JSX.Element {
   const [value, setValue] = useState<number>();
@@ -73,6 +74,26 @@ export default function (): JSX.Element {
           }}
           allowClear={true}
         />
+      </UseCase>
+      <UseCase title={'Confirm modes'}>
+        {([state, setState]) => {
+          return (
+            <>
+              <p>State: {state['value']}</p>
+              <PropertyMatrix x={['ON_CHANGE', 'ON_BLUR'] as const} xLabel={'confirmMode'}>
+                {(confirmMode) => (
+                  <Component
+                    value={state['value']}
+                    onChange={(newValue) => {
+                      setState((prevState) => ({ ...prevState, value: newValue }));
+                    }}
+                    commitMode={confirmMode}
+                  />
+                )}
+              </PropertyMatrix>
+            </>
+          );
+        }}
       </UseCase>
     </>
   );

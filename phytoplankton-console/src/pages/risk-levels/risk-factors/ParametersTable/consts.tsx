@@ -1,13 +1,8 @@
 import React, { useEffect } from 'react';
-import { keyBy } from 'lodash';
-import {
-  COUNTRIES,
-  COUNTRY_ALIASES,
-  CURRENCIES,
-  CURRENCIES_SELECT_OPTIONS,
-} from '@flagright/lib/constants';
+import { keyBy, uniq } from 'lodash';
+import { COUNTRIES, COUNTRY_ALIASES, CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import style from './style.module.less';
-import Select from '@/components/library/Select';
+import Select, { Option } from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import Label from '@/components/library/Label';
 import {
@@ -22,10 +17,10 @@ import {
   riskValueRange,
   riskValueTimeRange,
   RiskValueType,
+  ParameterValueContent,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
 import { businessType, consumerType } from '@/utils/customer-type';
-import Slider from '@/components/library/Slider';
 import {
   CurrencyCode,
   RiskParameterValueAmountRange,
@@ -59,6 +54,9 @@ import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import Tag from '@/components/library/Tag';
 import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
 import TagList from '@/components/library/Tag/TagList';
+import { notEmpty } from '@/utils/array';
+import { hasOverlaps } from '@/utils/math';
+import SliderWithInputs from '@/pages/risk-levels/risk-factors/ParametersTable/SliderWithInputs';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -75,6 +73,7 @@ export type InputRenderer<T extends RiskValueType> = (
 
 export type ValueRenderer<T extends RiskValueType> = (props: {
   value?: RiskValueContentByType<T>;
+  onChange: (newValue?: RiskValueContentByType<T>) => void;
   handleRemoveValue?: (value: string) => void;
 }) => React.ReactNode;
 
@@ -123,7 +122,7 @@ export const DEFAULT_RISK_VALUE: RiskScoreValueLevel = {
   value: DEFAULT_RISK_LEVEL,
 };
 
-const DAY_RANGE_GRANULARITY = [
+const DAY_RANGE_GRANULARITY: Option<RiskParameterValueDayRangeStartGranularityEnum>[] = [
   { value: 'DAYS', label: 'days' },
   { value: 'MONTHS', label: 'months' },
   { value: 'YEARS', label: 'years' },
@@ -134,12 +133,11 @@ const USER_REGISTRATION_STATUS_OPTIONS = [
   { value: 'UNREGISTERED', label: 'Unregistered' },
 ];
 
-const EXTENDED_DAY_RANGE_GRANULARITY = [
+const EXTENDED_DAY_RANGE_GRANULARITY: Option<RiskParameterValueDayRangeEndGranularityEnum>[] = [
   ...DAY_RANGE_GRANULARITY,
   { value: 'INFINITE', label: 'and above' },
 ];
 
-// todo: i18n
 export const USER_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'type',
@@ -842,22 +840,23 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
     );
   }) as InputRenderer<'MULTIPLE'>,
   RANGE: (({ disabled, value, onChange }) => {
-    const range = [value?.start ?? 0, value?.end ?? 0];
     return (
-      <>
-        <Slider
-          mode="RANGE"
-          marks={range.reduce((acc, x) => ({ ...acc, [x]: x }), {})}
-          endExclusive={true}
-          value={[range[0], range[1]]}
-          isDisabled={disabled}
-          onChange={(value) => {
-            if (value != null) {
-              onChange(riskValueRange(value[0], value[1]));
-            }
-          }}
-        />
-      </>
+      <SliderWithInputs
+        value={
+          value
+            ? {
+                start: value.start ?? 0,
+                end: value.end ?? 0,
+              }
+            : undefined
+        }
+        isDisabled={disabled}
+        onChange={(value) => {
+          if (value != null) {
+            onChange(riskValueRange(value.start, value.end));
+          }
+        }}
+      />
     );
   }) as InputRenderer<'RANGE'>,
   DAY_RANGE: (({
@@ -1102,12 +1101,11 @@ const DEFAULT_MULTIPLE_RENDERER: ValueRenderer<'MULTIPLE'> = ({ value }) => {
   );
 };
 
-const DEFAULT_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value }) => {
+const DEFAULT_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value, onChange }) => {
   if (value == null) {
     return null;
   }
   const marks = {};
-
   if (value.start != null) {
     marks[value.start] = value.start;
   }
@@ -1115,17 +1113,23 @@ const DEFAULT_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value }) => {
     marks[value.end] = value.end;
   }
   return (
-    <Slider
-      mode="RANGE"
-      endExclusive={true}
-      marks={marks}
-      defaultValue={[value.start ?? 0, value.end ?? 0]}
-      isDisabled={true}
+    <SliderWithInputs
+      value={{
+        start: value.start ?? 0,
+        end: value.end ?? 0,
+      }}
+      onChange={(newValue) => {
+        const newRangeValue: RiskParameterValueRange = {
+          kind: 'RANGE',
+          ...newValue,
+        };
+        onChange(newRangeValue);
+      }}
     />
   );
 };
 
-const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value }) => {
+const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value, onChange }) => {
   if (value == null) {
     return null;
   }
@@ -1136,15 +1140,33 @@ const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value }) => {
         <Label label="From">
           <div className={style.dayRangeInputContainer}>
             <NumberInput
-              isDisabled={true}
+              isDisabled={onChange == null}
               htmlAttrs={{ type: 'number', style: { width: 100 } }}
               value={value.start}
+              onChange={(newValue) => {
+                if (onChange && newValue) {
+                  onChange({
+                    ...value,
+                    kind: 'DAY_RANGE',
+                    start: newValue,
+                  });
+                }
+              }}
             />
-            <Select
-              isDisabled={true}
+            <Select<RiskParameterValueDayRangeStartGranularityEnum>
+              isDisabled={onChange == null}
               value={value.startGranularity}
               options={DAY_RANGE_GRANULARITY}
               style={{ width: 150 }}
+              onChange={(newValue) => {
+                if (onChange && newValue) {
+                  onChange({
+                    ...value,
+                    kind: 'DAY_RANGE',
+                    startGranularity: newValue,
+                  });
+                }
+              }}
             />
           </div>
         </Label>
@@ -1153,15 +1175,33 @@ const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value }) => {
         <Label label="To">
           <div className={style.dayRangeInputContainer}>
             <NumberInput
-              isDisabled={true}
+              isDisabled={onChange == null}
               htmlAttrs={{ type: 'number', style: { width: 100 } }}
               value={value.endGranularity === 'INFINITE' ? undefined : value.end}
+              onChange={(newValue) => {
+                if (onChange && newValue) {
+                  onChange({
+                    ...value,
+                    kind: 'DAY_RANGE',
+                    end: newValue,
+                  });
+                }
+              }}
             />
-            <Select
-              isDisabled={true}
+            <Select<RiskParameterValueDayRangeEndGranularityEnum>
+              isDisabled={onChange == null}
               value={value.endGranularity}
               options={EXTENDED_DAY_RANGE_GRANULARITY}
               style={{ width: 150 }}
+              onChange={(newValue) => {
+                if (onChange && newValue) {
+                  onChange({
+                    ...value,
+                    kind: 'DAY_RANGE',
+                    endGranularity: newValue,
+                  });
+                }
+              }}
             />
           </div>
         </Label>
@@ -1296,17 +1336,64 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
     return <span>{value?.content === true ? 'Yes' : 'No'}</span>;
   }) as ValueRenderer<'LITERAL'>,
   SOURCE_OF_FUNDS: DEFAULT_MULTIPLE_RENDERER,
-  AMOUNT_RANGE: (({ value }) => {
+  AMOUNT_RANGE: (({ value, onChange }) => {
     if (value == null) return null;
-    const currency = CURRENCIES.find((currency) => currency.value === value?.currency);
-    const currencySymbol = currency?.symbol ?? `${currency?.value} `;
     return (
-      <div style={{ display: 'grid', gridAutoFlow: 'column', gap: '.5rem', paddingTop: '32px' }}>
-        <p style={{ marginBottom: 0 }}>
-          {currencySymbol}
-          {value?.start} - {currencySymbol}
-          {value?.end}
-        </p>
+      <div className={style.amount_container}>
+        <div className={style.amountCurrencyContainer}>
+          <Label label={<div className={style.currencyLabel}>Currency</div>}>
+            <Select
+              value={value?.currency}
+              isDisabled={onChange == null}
+              options={CURRENCIES_SELECT_OPTIONS}
+              onChange={(newValue) => {
+                if (newValue) {
+                  onChange?.({
+                    ...value,
+                    kind: 'AMOUNT_RANGE',
+                    currency: newValue as CurrencyCode,
+                  });
+                }
+              }}
+            />
+          </Label>
+        </div>
+        <div className={style.amountRangeLabel}>
+          <Label label="From">
+            <NumberInput
+              min={0}
+              value={value?.start ?? 0}
+              htmlAttrs={{ type: 'number', style: { width: 100 } }}
+              onChange={(newValue) => {
+                if (newValue) {
+                  onChange?.({
+                    ...value,
+                    kind: 'AMOUNT_RANGE',
+                    start: newValue,
+                  });
+                }
+              }}
+            />
+          </Label>
+        </div>
+        <div className={style.amountRangeLabel}>
+          <Label label="To">
+            <NumberInput
+              min={0}
+              value={value?.end ?? 0}
+              htmlAttrs={{ type: 'number', style: { width: 100 } }}
+              onChange={(newValue) => {
+                if (newValue) {
+                  onChange?.({
+                    ...value,
+                    kind: 'AMOUNT_RANGE',
+                    end: newValue,
+                  });
+                }
+              }}
+            />
+          </Label>
+        </div>
       </div>
     );
   }) as ValueRenderer<'AMOUNT_RANGE'>,
@@ -1331,114 +1418,121 @@ export const NEW_VALUE_INFOS: Information<any>[] = [
 ];
 
 type Validation<T extends RiskValueType> = (params: {
-  newParameterName: ParameterName;
-  newValue: RiskValueContentByType<T>;
-  newRiskValue: RiskScoreValueLevel | RiskScoreValueScore | null;
-  previousValues: ParameterValues;
+  allValues: RiskValueContentByType<T>[];
+  newValue: RiskValueContentByType<T> | null;
+  previousValues: ParameterValueContent[];
 }) => null | string;
 
-export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
-  ({ newValue, previousValues }) => {
-    if (newValue.kind.includes('RANGE')) {
-      if (newValue.kind === 'RANGE') {
-        const { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
-        const hasOverlaps = previousValues.some(({ parameterValue }) => {
-          if (parameterValue.content.kind !== 'RANGE') {
-            return false;
-          }
-          const { start: y1 = 0, end: y2 = Number.MAX_SAFE_INTEGER } = parameterValue.content;
-          return x1 < y2 && y1 < x2;
-        });
-        if (hasOverlaps) {
-          return 'Age ranges should not overlap';
-        }
-      } else if (newValue.kind === 'DAY_RANGE') {
-        if (!newValue.endGranularity) {
-          return 'Select end granularity';
-        }
+type ParameterValuesFormValidations = {
+  [K in RiskValueType]?: Validation<K>[];
+};
 
-        if (newValue.endGranularity === 'INFINITE') {
-          return null;
-        }
+export const RANGE_VALIDATIONS: Validation<'RANGE'>[] = [
+  ({ allValues }) => {
+    const overlaps = hasOverlaps(
+      allValues.map((x) => [x.start ?? 0, x.end ?? Number.MAX_SAFE_INTEGER]),
+    );
+    return overlaps ? 'Ranges should not overlap' : null;
+  },
+];
 
-        let { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
+export const DAY_RANGE_VALIDATIONS: Validation<'DAY_RANGE'>[] = [
+  ({ allValues }) => {
+    const overlaps = hasOverlaps(
+      allValues.map((x) => {
+        const start = x.start ?? 0;
+        const end = x.end ?? Number.MAX_SAFE_INTEGER;
+        return [convertToDays(start, x.startGranularity), convertToDays(end, x.endGranularity)];
+      }),
+    );
+    return overlaps ? 'Day ranges should not overlap' : null;
+  },
+];
 
-        if (x1 == null || x2 == null) {
-          return 'Start and end range should be specified';
-        }
-
-        x1 = convertToDays(x1, newValue.startGranularity);
-        x2 = convertToDays(x2, newValue.endGranularity);
-
-        if (x1 >= x2) {
-          return 'Start date should be before end date';
-        }
-
-        const hasOverlaps = previousValues.some(({ parameterValue }) => {
-          if (parameterValue.content.kind !== 'DAY_RANGE') {
-            return false;
-          }
-          let { end: y2 = Number.MAX_SAFE_INTEGER } = parameterValue.content;
-          y2 = convertToDays(
-            y2,
-            parameterValue.content.endGranularity as RiskParameterValueDayRangeStartGranularityEnum,
-          );
-
-          return x1 < y2;
-        });
-        if (hasOverlaps) {
-          return 'Age ranges should not overlap';
-        }
-      } else if (newValue.kind === 'TIME_RANGE') {
-        const { startHour: x1, endHour: x2, timezone } = newValue;
-        if (x1 == null || x2 == null || timezone == null || timezone === '') {
-          return 'Start time, end time and timezone are required';
-        }
-        if (x1 >= x2) {
-          return 'Start time should be before end time';
-        }
-        // do not allow different timezones
-        const hasDifferentTimezone = previousValues.some(({ parameterValue }) => {
-          if (parameterValue.content.kind !== 'TIME_RANGE') {
-            return false;
-          }
-          return parameterValue.content.timezone !== timezone;
-        });
-        if (hasDifferentTimezone) {
-          return 'You can only set values in one timezone';
-        }
-        // do not allow overlapping
-        const hasOverlaps = previousValues.some(({ parameterValue }) => {
-          if (parameterValue.content.kind !== 'TIME_RANGE') {
-            return false;
-          }
-          const { startHour: y1, endHour: y2 } = parameterValue.content;
-          if (y1 == null || y2 == null) {
-            return false;
-          }
-          return x1 < y2 && y1 < x2;
-        });
-        if (hasOverlaps) {
-          return 'Time ranges should not overlap';
-        }
-      } else if (newValue.kind === 'AMOUNT_RANGE') {
-        if (newValue.start > newValue.end) return 'Lower value must be less than the upper value.';
-        const overlaps = previousValues.some(({ parameterValue }) => {
-          if (parameterValue.content.kind !== 'AMOUNT_RANGE') return false;
-          return (
-            parameterValue.content.end > newValue.start &&
-            parameterValue.content.start < newValue.end
-          );
-        });
-        if (overlaps) return 'Value ranges should not overlap.';
-        const differentCurrencies = previousValues.some(({ parameterValue }) => {
-          if (parameterValue.content.kind !== 'AMOUNT_RANGE') return false;
-          return parameterValue.content.currency !== newValue.currency;
-        });
-        if (differentCurrencies)
-          return 'You can only set values in one currency. Transactions in other currencies will be auto converted for the defined value range.';
+export const TIME_RANGE_VALIDATIONS: Validation<'TIME_RANGE'>[] = [
+  ({ allValues }) => {
+    for (const value of allValues) {
+      const { startHour: x1, endHour: x2, timezone } = value;
+      if (x1 == null || x2 == null || timezone == null || timezone === '') {
+        return 'Start time, end time and timezone are required';
+      }
+      if (x1 >= x2) {
+        return 'Start time should be before end time';
       }
     }
     return null;
   },
+  ({ allValues }) => {
+    const hasDifferentTimezone = uniq(allValues.map(({ timezone }) => timezone)).length > 1;
+    if (hasDifferentTimezone) {
+      return 'You can only set values in one timezone';
+    }
+    return null;
+  },
+  ({ allValues }) => {
+    const overlaps = hasOverlaps(allValues.map(({ startHour, endHour }) => [startHour, endHour]));
+
+    return overlaps ? 'Time ranges should not overlap' : null;
+  },
 ];
+
+export const AMOUNT_RANGE_VALIDATIONS: Validation<'AMOUNT_RANGE'>[] = [
+  ({ allValues }) => {
+    for (const range of allValues) {
+      if (range.start > range.end) {
+        return 'Lower value must be less than the upper value.';
+      }
+    }
+    return null;
+  },
+  ({ allValues }) => {
+    const hasDifferentTimezone = uniq(allValues.map(({ currency }) => currency)).length > 1;
+    if (hasDifferentTimezone) {
+      return 'You can only set values in one currency. Transactions in other currencies will be auto converted for the defined value range.';
+    }
+
+    return null;
+  },
+  ({ allValues }) => {
+    const overlaps = hasOverlaps(allValues.map(({ start, end }) => [start, end]));
+    if (overlaps) {
+      return 'Value ranges should not overlap.';
+    }
+
+    return null;
+  },
+];
+
+export const PARAMETER_VALUES_FORM_VALIDATIONS: ParameterValuesFormValidations = {
+  RANGE: RANGE_VALIDATIONS,
+  DAY_RANGE: DAY_RANGE_VALIDATIONS,
+  TIME_RANGE: TIME_RANGE_VALIDATIONS,
+  AMOUNT_RANGE: AMOUNT_RANGE_VALIDATIONS,
+};
+
+export function validate<T extends RiskValueType>(
+  dataType: DataType,
+  dataTypeValidations: Validation<T>[],
+  params: {
+    newValue: RiskValueContentByType<T> | null;
+    previousValues: ParameterValueContent[];
+  },
+): string | null {
+  const allRangeValues = [...params.previousValues, params.newValue]
+    .filter(notEmpty)
+    .filter((x) => x.kind === dataType);
+
+  const result: string | null = dataTypeValidations.reduce<string | null>(
+    (acc, validation): string | null => {
+      if (acc != null) {
+        return acc;
+      }
+      return validation({
+        allValues: allRangeValues as RiskValueContentByType<T>[],
+        ...params,
+      });
+    },
+    null,
+  );
+  return result;
+}

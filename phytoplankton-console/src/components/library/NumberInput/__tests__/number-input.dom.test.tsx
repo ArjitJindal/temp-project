@@ -1,6 +1,6 @@
 import { test, describe, expect } from '@jest/globals';
 
-import React, { useState } from 'react';
+import React, { useState, Dispatch, SetStateAction } from 'react';
 import { render, screen, userEvent } from 'testing-library-wrapper';
 import NumberInput, { Props, Styles as NumberInputStyles } from '..';
 import {
@@ -109,12 +109,66 @@ describe('Editing', () => {
   });
 });
 
+describe('Confirm modes', () => {
+  test('ON_CHANGE', async () => {
+    render(
+      <RenderWithState<number>>
+        {([value, setValue]) => (
+          <div>
+            <p data-cy="state">{value}</p>
+            <NumberInput commitMode={'ON_CHANGE'} value={value} onChange={setValue} />
+          </div>
+        )}
+      </RenderWithState>,
+    );
+    const inputEl = getInput();
+    const stateEl = screen.getByTestId('state');
+    await userEvent.click(inputEl);
+    await userEvent.keyboard('123abc456');
+    expect(inputEl).toHaveDisplayValue('123456');
+    expect(stateEl).toHaveTextContent('123456');
+    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}');
+    expect(inputEl).toHaveDisplayValue('');
+    expect(stateEl).toHaveTextContent('');
+  });
+  test('ON_BLUR', async () => {
+    render(
+      <RenderWithState<number>>
+        {([value, setValue]) => (
+          <div>
+            <p data-cy="state">{value}</p>
+            <NumberInput commitMode={'ON_BLUR'} value={value} onChange={setValue} />
+          </div>
+        )}
+      </RenderWithState>,
+    );
+    const inputEl = getInput();
+    const stateEl = screen.getByTestId('state');
+    await userEvent.click(inputEl);
+    await userEvent.keyboard('123abc456');
+    expect(inputEl).toHaveDisplayValue('123456');
+    expect(stateEl).toHaveTextContent('');
+    await userEvent.keyboard('{Tab}');
+    expect(stateEl).toHaveTextContent('123456');
+  });
+});
+
 /*
   Helpers
  */
+function RenderWithState<T>(props: {
+  children: (state: [T | undefined, Dispatch<SetStateAction<T | undefined>>]) => JSX.Element;
+}) {
+  const state = useState<T | undefined>(undefined);
+  return <>{props.children(state)}</>;
+}
+
 function RenderNumberInput(props: Props) {
-  const [value, setValue] = useState<number>();
-  return <NumberInput {...props} value={value} onChange={setValue} />;
+  return (
+    <RenderWithState<number>>
+      {([value, setValue]) => <NumberInput {...props} value={value} onChange={setValue} />}
+    </RenderWithState>
+  );
 }
 
 function getInput() {
