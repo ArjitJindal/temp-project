@@ -15,7 +15,10 @@ import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
 import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
-import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
+import {
+  DYNAMO_ONLY_USER_ATTRIBUTES,
+  getExternalComment,
+} from './utils/user-utils'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -53,6 +56,7 @@ import { TriggersOnHit } from '@/@types/openapi-internal/TriggersOnHit'
 import { UserAuditLogService } from '@/lambdas/console-api-user/services/user-audit-log-service'
 import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
+import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -75,6 +79,8 @@ const USER_STATE_DETAILS_PRIORITY: Record<UserState, number> = {
   ACTIVE: 5,
   CREATED: 6,
 }
+
+export const API_USER = 'API'
 
 @traceable
 export class UserService {
@@ -779,6 +785,55 @@ export class UserService {
       ...savedComment,
       files: await this.getUpdatedFiles(savedComment.files),
     }
+  }
+
+  public async saveUserCommentExternal(
+    userId: string,
+    comment: CommentRequest
+  ) {
+    const savedComment = await this.saveUserComment(userId, {
+      ...comment,
+      id: comment.commentId,
+      createdAt: comment.createdTimestamp ?? Date.now(),
+      updatedAt: comment.createdTimestamp ?? Date.now(),
+      userId: API_USER,
+    })
+    return getExternalComment(savedComment)
+  }
+
+  public async getUserCommentsExternal(userId: string) {
+    const user = await this.userRepository.getUserById(userId)
+    if (!user) {
+      throw new createError.NotFound(`User ${userId} not found`)
+    }
+
+    const comments = await Promise.all(
+      (user.comments || []).map(async (comment) => ({
+        ...comment,
+        files: await this.getUpdatedFiles(comment.files),
+      }))
+    )
+    return comments.map((comment) => {
+      return getExternalComment(comment)
+    })
+  }
+
+  public async getUserComment(userId: string, commentId: string) {
+    const user = await this.userRepository.getUserById(userId)
+    if (!user) {
+      throw new createError.NotFound(`User ${userId} not found`)
+    }
+
+    const comment = user?.comments?.find((comment) => comment.id === commentId)
+    if (!comment) {
+      throw new createError.NotFound(`Comment ${commentId} not found`)
+    }
+
+    const commentUpdated = {
+      ...comment,
+      files: await this.getUpdatedFiles(comment.files),
+    }
+    return getExternalComment(commentUpdated)
   }
 
   public async saveUserCommentReply(

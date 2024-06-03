@@ -29,6 +29,10 @@ export const PublicManagementApiPathToLambda: any = {
   '/alerts/{alertId}': StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
   '/pre-signed-url':
     StackConstants.PUBLIC_MANAGEMENT_API_FILE_UPLOAD_FUNCTION_NAME,
+  '/users/{userId}/comments':
+    StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
+  '/users/{userId}/comments/{commentId}':
+    StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

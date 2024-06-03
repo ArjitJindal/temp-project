@@ -699,6 +699,11 @@ export class CdkTarponStack extends cdk.Stack {
       name: StackConstants.PUBLIC_MANAGEMENT_API_FILE_UPLOAD_FUNCTION_NAME,
     })
 
+    /* User (Public) */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
+    })
+
     /* User */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,

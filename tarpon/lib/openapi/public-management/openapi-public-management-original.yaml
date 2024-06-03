@@ -628,8 +628,287 @@ paths:
         ```
 
         **Important Note:** You must retain the returned `key` as it is essential for later referencing the file in the application, such as attaching it to a case or including it in a user comment.
+  /users/{userId}/comments:
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve User Comments
+      description: >
+        ## GET User Comments You can retrieve comments for a user using `GET
+        /users/{userId}/comments` endpoint.
+      operationId: get-user-comments
+      parameters:
+        - name: userId
+          in: path
+          description: Unique User Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    - commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                      body: This is a comment
+                      files:
+                        - s3Key: s3://bucket/key
+                          filename: file.txt
+                          size: 1024
+                      createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    post:
+      security:
+        - x-api-key: []
+      summary: Create a Comment
+      description: >
+        ## POST User Comments You can create comments for a user using `POST
+        /users/{userId}/comments` endpoint.
+
+
+        To attach files in the comment upload the file first using the `POST /pre-signed-url` endpoint and then use the returned `key` to attach the file in the comment with the filename and size.`
+      operationId: post-user-comment
+      parameters:
+        - name: userId
+          in: path
+          description: Unique User Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+            examples:
+              example-1:
+                value:
+                  body: This is a comment
+                  files:
+                    - s3Key: s3://bucket/key
+                      filename: file.txt
+                      size: 1024
+                  createdTimestamp: 1641654664000
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                    body: This is a comment
+                    files:
+                      - filename: file.txt
+                        size: 1024
+                        downloadLink: s3://bucket/key
+                    createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /users/{userId}/comments/{commentId}:
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve a Comment
+      description: >
+        ## GET User Comment You can retrieve a comment for a user using `GET
+        /users/{userId}/comments/{commentId}` endpoint.
+      operationId: get-user-comment
+      parameters:
+        - name: userId
+          in: path
+          description: Unique User Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          description: Unique Comment Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                    body: This is a comment
+                    files:
+                      - filename: file.txt
+                        size: 1024
+                        downloadLink: s3://bucket/key
+                    createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    delete:
+      security:
+        - x-api-key: []
+      summary: Delete a Comment
+      description: >
+        ## DELETE User Comment You can delete a comment for a user using `DELETE
+        /users/{userId}/comments/{commentId}` endpoint.
+      operationId: delete-user-comment
+      parameters:
+        - name: userId
+          in: path
+          description: Unique User Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          description: Unique Comment Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted successfully
+          headers: {}
+          content: {}
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Comment not found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
 components:
   schemas:
+    CommentRequest:
+      title: Comment
+      type: object
+      properties:
+        commentId:
+          type: string
+          description: Unique comment ID
+        body:
+          type: string
+          description: Comment body
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestFileInfo'
+        createdTimestamp:
+          type: number
+          description: Timestamp when comment is created
+      required:
+        - body
+        - id
+    RequestFileInfo:
+      title: FileInfo
+      type: object
+      properties:
+        s3Key:
+          type: string
+          description: S3 key of the file
+        filename:
+          type: string
+          description: Name of the file
+        size:
+          type: number
+          description: Size of the file in bytes
+      required:
+        - s3Key
+        - filename
+        - size
+    CommentResponse:
+      title: Comment
+      type: object
+      properties:
+        commentId:
+          type: string
+          description: Unique comment ID
+        body:
+          type: string
+          description: Comment body
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseFileInfo'
+        createdTimestamp:
+          type: number
+          description: Timestamp when comment is created
+        updatedTimestamp:
+          type: number
+          description: Timestamp when comment is updated
+      required:
+        - body
+        - id
+    ResponseFileInfo:
+      title: FileInfo
+      type: object
+      properties:
+        filename:
+          type: string
+          description: Name of the file
+        size:
+          type: number
+          description: Size of the file in bytes
+        downloadLink:
+          type: string
+          description: Download link for the file
+      required:
+        - filename
+        - size
+        - downloadLink
     PresignedPostRequest:
       title: PresignedPostRequest
       type: object
