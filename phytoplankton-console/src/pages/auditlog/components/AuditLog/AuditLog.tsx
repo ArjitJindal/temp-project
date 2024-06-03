@@ -44,6 +44,7 @@ export default function AuditLogTable() {
       const {
         sort,
         page,
+        pageSize,
         filterTypes,
         createdTimestamp,
         filterActionTakenBy,
@@ -56,6 +57,7 @@ export default function AuditLogTable() {
 
       const response = await api.getAuditlog({
         page,
+        pageSize,
         ...paginationParams,
         afterTimestamp: start ? start.startOf('day').valueOf() : 0,
         beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
