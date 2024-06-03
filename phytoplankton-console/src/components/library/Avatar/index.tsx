@@ -21,7 +21,8 @@ const Avatar = (props: Props) => {
   const { user, size = 'small', isLoading = false } = props;
   const branding = getBranding();
   const userName = getNonSuperAdminUserName(user);
-  const systemDisplay = userName === 'System' ? branding.systemAvatarUrl : null;
+  const systemDisplay =
+    userName === 'System' || userName === 'API' ? branding.systemAvatarUrl : null;
   const imgHeight = size === 'small' ? 16 : size === 'medium' ? 20 : size === 'xs' ? 14 : 24;
 
   return isLoading ? (

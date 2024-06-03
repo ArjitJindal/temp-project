@@ -1,4 +1,4 @@
-import { UserRole, isSuperAdmin } from './user-utils';
+import { API_USER, UserRole, isSuperAdmin } from './user-utils';
 import { Account } from '@/apis';
 
 export const getAccountUserName = (account: Account | undefined, defaultStr?: string): string => {
@@ -9,6 +9,10 @@ export const getAccountUserName = (account: Account | undefined, defaultStr?: st
 };
 
 export const getNonSuperAdminUserName = (account?: Account | null): string => {
+  if (account && account.id === API_USER) {
+    return 'API';
+  }
+
   if (!account || isSuperAdmin(account) || account.role === UserRole.WHITELABEL_ROOT) {
     return 'System';
   }

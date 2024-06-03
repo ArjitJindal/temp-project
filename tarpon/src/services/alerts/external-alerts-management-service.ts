@@ -1,10 +1,11 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
-import { compact, isEmpty, memoize, omitBy, uniq } from 'lodash'
+import { compact, isEmpty, memoize, omitBy, pick, uniq } from 'lodash'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'
 import { CaseRepository, MAX_TRANSACTION_IN_A_CASE } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
+import { CasesAlertsAuditLogService } from '../cases/case-alerts-audit-log-service'
 import { AlertsRepository } from './repository'
 import { traceable } from '@/core/xray'
 import { Alert } from '@/@types/openapi-public-management/Alert'
@@ -25,6 +26,7 @@ export class ExternalAlertManagementService {
   private caseRepository: CaseRepository
   private transactionRepository: MongoDbTransactionRepository
   private alertsTransformer: CasesAlertsTransformer
+  private casesAlertsAuditLogService: CasesAlertsAuditLogService
 
   constructor(
     tenantId: string,
@@ -37,6 +39,10 @@ export class ExternalAlertManagementService {
       connections.mongoDb
     )
     this.alertsTransformer = new CasesAlertsTransformer(tenantId, connections)
+    this.casesAlertsAuditLogService = new CasesAlertsAuditLogService(
+      tenantId,
+      connections
+    )
   }
 
   private getCase = memoize(
@@ -294,7 +300,10 @@ export class ExternalAlertManagementService {
     const externalAlert = await this.transformInternalAlertToExternalAlert(
       alert
     )
-
+    await this.casesAlertsAuditLogService.handleAuditLogForNewAlert(
+      alert,
+      'API_CREATION'
+    )
     return externalAlert
   }
 
@@ -432,6 +441,12 @@ export class ExternalAlertManagementService {
       { caseAggregates, caseTransactionIds }
     )
 
+    const oldImage = pick(existingAlert, Object.keys(alertUpdate))
+    await this.casesAlertsAuditLogService.handleAuditLogForAlertUpdateViaApi(
+      alertId,
+      oldImage,
+      alertUpdate
+    )
     const externalAlert = await this.transformInternalAlertToExternalAlert(
       updatedCaseData.alerts?.find(
         (alert) => alert.alertId === alertId

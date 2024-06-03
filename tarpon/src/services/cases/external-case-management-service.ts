@@ -1,10 +1,11 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
-import { isEmpty, omitBy, uniq } from 'lodash'
+import { isEmpty, omitBy, pick, uniq } from 'lodash'
 import { UserRepository } from '../users/repositories/user-repository'
 import { CasesAlertsTransformer } from './cases-alerts-transformer'
 import { CaseRepository } from './repository'
+import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import { Case } from '@/@types/openapi-public-management/Case'
 import { Case as CaseInternal } from '@/@types/openapi-internal/Case'
 import { CaseCreationRequest } from '@/@types/openapi-public-management/CaseCreationRequest'
@@ -30,6 +31,7 @@ export class ExternalCaseManagementService {
   private casesTransformer: CasesAlertsTransformer
   private tenantId: string
   private mongoDb: MongoClient
+  private casesAlertsAuditLogService: CasesAlertsAuditLogService
 
   constructor(
     tenantId: string,
@@ -40,6 +42,10 @@ export class ExternalCaseManagementService {
     this.casesTransformer = new CasesAlertsTransformer(tenantId, connections)
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
+    this.casesAlertsAuditLogService = new CasesAlertsAuditLogService(
+      tenantId,
+      connections
+    )
   }
 
   private async validateCaseCreationRequest(
@@ -210,6 +216,10 @@ export class ExternalCaseManagementService {
     const case_ = await this.transformCreationRequestToInternalCase(requestBody)
 
     const createdCase = await this.caseRepository.addExternalCaseMongo(case_)
+    await this.casesAlertsAuditLogService.handleAuditLogForNewCase(
+      case_,
+      'API_CREATION'
+    )
     return await this.transformInternalCaseToExternalCase(createdCase)
   }
 
@@ -249,30 +259,32 @@ export class ExternalCaseManagementService {
         ? await this.getCaseUser(casePatchRequest.entityDetails.userId)
         : undefined
 
+    const caseUpdates: Partial<CaseInternal> = omitBy<Partial<CaseInternal>>(
+      {
+        ...(statusEscalated(internalCase.caseStatus)
+          ? { reviewAssignments: assignments }
+          : { assignments }),
+        priority: casePatchRequest.priority,
+        tags: casePatchRequest.tags,
+        creationReason: casePatchRequest.creationReason,
+        ...(casePatchRequest.entityDetails?.type === 'PAYMENT' && {
+          paymentDetails: {
+            origin: casePatchRequest.entityDetails.paymentDetails,
+          },
+        }),
+        ...(casePatchRequest.entityDetails?.type === 'USER' && {
+          caseUsers: {
+            origin: user,
+          },
+        }),
+        relatedCases: casePatchRequest.relatedCases,
+      },
+      isEmpty
+    )
+
     const updatedCase = await this.caseRepository.updateCase({
       caseId,
-      ...omitBy<Partial<CaseInternal>>(
-        {
-          ...(statusEscalated(internalCase.caseStatus)
-            ? { reviewAssignments: assignments }
-            : { assignments }),
-          priority: casePatchRequest.priority,
-          tags: casePatchRequest.tags,
-          creationReason: casePatchRequest.creationReason,
-          ...(casePatchRequest.entityDetails?.type === 'PAYMENT' && {
-            paymentDetails: {
-              origin: casePatchRequest.entityDetails.paymentDetails,
-            },
-          }),
-          ...(casePatchRequest.entityDetails?.type === 'USER' && {
-            caseUsers: {
-              origin: user,
-            },
-          }),
-          relatedCases: casePatchRequest.relatedCases,
-        },
-        isEmpty
-      ),
+      ...caseUpdates,
     })
 
     if (!updatedCase) {
@@ -280,6 +292,14 @@ export class ExternalCaseManagementService {
         `Case with id: ${caseId} not found. You can create a new case by calling POST /cases with id: ${caseId}`
       )
     }
+
+    const oldImage = pick(internalCase, Object.keys(caseUpdates))
+
+    await this.casesAlertsAuditLogService.handleAuditLogForCaseUpdateViaApi(
+      caseId,
+      oldImage,
+      caseUpdates
+    )
 
     return await this.transformInternalCaseToExternalCase(updatedCase)
   }

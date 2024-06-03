@@ -48,6 +48,7 @@ import { CounterRepository } from '@/services/counter/repository'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
+export const API_USER = 'API'
 
 export interface AlertParams
   extends OptionalPagination<

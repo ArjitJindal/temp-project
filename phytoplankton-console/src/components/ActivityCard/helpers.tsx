@@ -185,6 +185,24 @@ export const getCreateStatement = (
         </>
       );
     }
+    case 'API_UPDATE': {
+      const updatedProperties = Object.keys(log.newImage)
+        .map((key) => humanizeAuto(key))
+        .join(', ');
+      return (
+        <>
+          {humanizeAuto(entityType)} <b>{entityId}</b> updated using management API. Properties
+          updated: <b>{updatedProperties}</b>
+        </>
+      );
+    }
+    case 'API_CREATION': {
+      return (
+        <>
+          A new {entityType.toLowerCase()} <b>{entityId}</b> is created using management API
+        </>
+      );
+    }
     default:
       return null;
   }

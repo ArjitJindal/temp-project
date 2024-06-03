@@ -18,6 +18,10 @@ export enum UserRole {
 
 export const ROLES_ORDER = ['root', 'whitelabel-root', 'admin', 'user'];
 
+export const FLAGRIGHT_SYSTEM_USER = 'Flagright System';
+
+export const API_USER = 'API';
+
 export interface FlagrightAuth0User {
   name: string | null;
   picture: string | null;
@@ -33,6 +37,29 @@ export interface FlagrightAuth0User {
   allowTenantDeletion?: boolean;
   allowedRegions?: string[];
 }
+
+const SYSTEM_USERS: Account[] = [
+  {
+    name: FLAGRIGHT_SYSTEM_USER,
+    email: FLAGRIGHT_SYSTEM_USER,
+    picture: undefined,
+    role: UserRole.USER,
+    id: FLAGRIGHT_SYSTEM_USER,
+    isEscalationContact: false,
+    emailVerified: true,
+    blocked: false,
+  },
+  {
+    name: API_USER,
+    email: API_USER,
+    picture: undefined,
+    role: UserRole.USER,
+    id: API_USER,
+    isEscalationContact: false,
+    emailVerified: true,
+    blocked: false,
+  },
+];
 
 export const NAMESPACE = 'https://flagright.com';
 
@@ -148,7 +175,7 @@ export function useUsers(
   const users = getOr(usersQueryResult.data, []);
   const isSuperAdmin = isAtLeast(user, UserRole.ROOT);
 
-  let tempUsers = users;
+  let tempUsers = [...users, ...SYSTEM_USERS];
 
   if (!options.includeRootUsers && !isSuperAdmin) {
     tempUsers = tempUsers.filter((user) => {
@@ -181,23 +208,8 @@ export function useUserName(userId: string | null | undefined): string {
   return users[userId]?.name ?? userId ?? 'Unknown user';
 }
 
-export const FLAGRIGHT_SYSTEM_USER = 'Flagright System';
-
 export function useUser(userId: string | null | undefined): Account | null {
   const [users, isLoading] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
-
-  if (userId === FLAGRIGHT_SYSTEM_USER) {
-    return {
-      name: FLAGRIGHT_SYSTEM_USER,
-      email: FLAGRIGHT_SYSTEM_USER,
-      picture: undefined,
-      role: UserRole.USER,
-      id: FLAGRIGHT_SYSTEM_USER,
-      isEscalationContact: false,
-      emailVerified: true,
-      blocked: false,
-    };
-  }
 
   if (isLoading || !userId) {
     return null;

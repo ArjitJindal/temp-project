@@ -11,7 +11,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
-import { AlertsRepository } from '@/services/alerts/repository'
+import { API_USER, AlertsRepository } from '@/services/alerts/repository'
 import { CaseRepository } from '@/services/cases/repository'
 import { traceable } from '@/core/xray'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
@@ -24,6 +24,7 @@ import {
   CaseLogMetaDataType,
   CommentAuditLogImage,
 } from '@/@types/audit-log'
+import { Account } from '@/@types/openapi-internal/Account'
 
 type AuditLogCreateRequest = {
   caseId: string
@@ -317,24 +318,26 @@ export class CasesAlertsAuditLogService {
   }
 
   public async handleAuditLogForNewCase(
-    caseItem: Case | Partial<Case>
+    caseItem: Case | Partial<Case>,
+    subtype: AuditLogSubtypeEnum = 'CREATION'
   ): Promise<void> {
     await this.createAuditLog({
       caseId: caseItem.caseId ?? '',
       logAction: 'CREATE',
       newImage: caseItem,
-      subtype: 'CREATION',
+      subtype,
     })
   }
 
   public async handleAuditLogForNewAlert(
-    alertItem: Alert | Partial<Alert>
+    alertItem: Alert | Partial<Alert>,
+    subtype: AuditLogSubtypeEnum = 'CREATION'
   ): Promise<void> {
     await this.createAlertAuditLog({
       alertId: alertItem.alertId ?? '',
       logAction: 'CREATE',
       newImage: alertItem,
-      subtype: 'CREATION',
+      subtype,
     })
   }
 
@@ -398,7 +401,6 @@ export class CasesAlertsAuditLogService {
     })
 
     const caseEntity = caseDetails ?? (await caseRepository.getCaseById(caseId))
-
     const auditLog: Omit<AuditLog, 'logMetadata'> & {
       logMetadata: CaseLogMetaDataType
     } = {
@@ -416,6 +418,13 @@ export class CasesAlertsAuditLogService {
         caseStatus: caseEntity?.caseStatus,
         reviewAssignments: caseEntity?.reviewAssignments ?? [],
       },
+      ...(subtype?.startsWith('API')
+        ? {
+            user: {
+              id: API_USER,
+            } as Account,
+          }
+        : {}),
     }
     await publishAuditLog(this.tenantId, auditLog)
   }
@@ -451,7 +460,42 @@ export class CasesAlertsAuditLogService {
         alertStatus: alertEntity?.alertStatus,
         caseId: alertEntity?.caseId,
       },
+      ...(subtype?.startsWith('API')
+        ? {
+            user: {
+              id: API_USER,
+            } as Account,
+          }
+        : {}),
     }
     await publishAuditLog(this.tenantId, auditLog)
+  }
+
+  public async handleAuditLogForCaseUpdateViaApi(
+    caseId: string,
+    oldImage: Partial<Case>,
+    newImage: Partial<Case>
+  ): Promise<void> {
+    await this.createAuditLog({
+      caseId,
+      logAction: 'UPDATE',
+      oldImage,
+      newImage,
+      subtype: 'API_UPDATE',
+    })
+  }
+
+  public async handleAuditLogForAlertUpdateViaApi(
+    alertId: string,
+    oldImage: Partial<Alert>,
+    newImage: Partial<Alert>
+  ): Promise<void> {
+    await this.createAlertAuditLog({
+      alertId,
+      logAction: 'UPDATE',
+      oldImage,
+      newImage,
+      subtype: 'API_UPDATE',
+    })
   }
 }

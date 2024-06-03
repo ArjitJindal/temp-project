@@ -10464,6 +10464,8 @@ components:
             - USER_STATUS_CHANGE
             - USER_KYC_STATUS_CHANGE
             - REVIEW_ASSIGNMENT
+            - API_UPDATE
+            - API_CREATION
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:

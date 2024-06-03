@@ -249,7 +249,7 @@ function useTabs(
       isClosable: false,
       isDisabled: false,
     },
-    caseItem.caseType === 'SYSTEM' && {
+    caseItem.caseType !== 'MANUAL' && {
       title: 'Alerts',
       key: 'alerts',
       children: (
