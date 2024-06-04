@@ -1673,7 +1673,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Comment'
+              $ref: '#/components/schemas/CommentRequest'
         required: true
   /copilot/narrative:
     post:
@@ -1769,7 +1769,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Comment'
+              $ref: '#/components/schemas/CommentRequest'
         required: true
   /consumer/users/{userId}:
     get:
@@ -4235,7 +4235,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Comment'
+              $ref: '#/components/schemas/CommentRequest'
         required: true
   /alerts/{alertId}/comments/{commentId}:
     parameters:
@@ -4275,7 +4275,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Comment'
+              $ref: '#/components/schemas/CommentRequest'
         required: true
   /cases:
     get:
@@ -4863,7 +4863,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Comment'
+              $ref: '#/components/schemas/CommentRequest'
         required: true
   /cases/{caseId}/comments/{commentId}:
     parameters:
@@ -4896,7 +4896,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Comment'
+              $ref: '#/components/schemas/CommentRequest'
         required: true
       responses:
         '200':
@@ -7794,34 +7794,46 @@ components:
           type: number
       required:
         - accountId
-    Comment:
-      title: Comment
+    CommentRequest:
+      title: CommentRequest
       type: object
       properties:
         id:
           type: string
         body:
           type: string
-        userId:
-          type: string
-        files:
-          type: array
-          items:
-            $ref: '#/components/schemas/FileInfo'
-        createdAt:
-          type: number
-        updatedAt:
-          type: number
         type:
           type: string
           enum:
             - STATUS_CHANGE
         parentId:
           type: string
-        mentions:
+        files:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/FileInfo'
+      required:
+        - body
+    Comment:
+      title: Comment
+      allOf:
+        - $ref: '#/components/schemas/CommentRequest'
+        - type: object
+          properties:
+            files:
+              type: array
+              items:
+                $ref: '#/components/schemas/FileInfo'
+            userId:
+              type: string
+            createdAt:
+              type: number
+            updatedAt:
+              type: number
+            mentions:
+              type: array
+              items:
+                type: string
       required:
         - body
     NarrativeRequest:
@@ -7977,7 +7989,7 @@ components:
         transactionLimits:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionLimits
         comment:
-          $ref: '#/components/schemas/Comment'
+          $ref: '#/components/schemas/CommentRequest'
     FileImport:
       title: FileImport
       type: object

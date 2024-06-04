@@ -67,6 +67,7 @@ import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { traceable } from '@/core/xray'
+import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
 
 @traceable
 export class CaseService extends CaseAlertsCommonService {
@@ -660,7 +661,7 @@ export class CaseService extends CaseAlertsCommonService {
   public async saveCommentReply(
     caseId: string,
     parentId: string,
-    reply: Comment
+    reply: CommentRequest
   ) {
     const caseEntity = await this.caseRepository.getCaseById(caseId)
 

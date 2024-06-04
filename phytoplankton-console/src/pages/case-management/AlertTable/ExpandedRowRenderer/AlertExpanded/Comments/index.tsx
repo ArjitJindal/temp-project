@@ -47,7 +47,7 @@ export default function Comments(props: Props) {
     async ({ alertId, values }): Promise<ApiComment> => {
       return await api.createAlertsComment({
         alertId,
-        Comment: { body: sanitizeComment(values.comment), files: values.files },
+        CommentRequest: { body: sanitizeComment(values.comment), files: values.files },
       });
     },
     {
@@ -116,7 +116,7 @@ export default function Comments(props: Props) {
     return await api.createAlertsCommentReply({
       alertId,
       commentId: commentFormValues.parentCommentId ?? '',
-      Comment: { body: commentFormValues.comment, files: commentFormValues.files },
+      CommentRequest: { body: commentFormValues.comment, files: commentFormValues.files },
     });
   };
 

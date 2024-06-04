@@ -84,7 +84,7 @@ function CaseManagementItemPage() {
       throw new Error(`Case ID is not defined`);
     }
     const commentData = {
-      Comment: { body: commentFormValues.comment, files: commentFormValues.files },
+      CommentRequest: { body: commentFormValues.comment, files: commentFormValues.files },
     };
 
     if (groupId.startsWith(ALERT_GROUP_PREFIX)) {

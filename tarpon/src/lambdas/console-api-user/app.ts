@@ -148,7 +148,7 @@ export const allUsersViewHandler = lambdaApi()(
     )
 
     handlers.registerPostUserComments(async (ctx, request) => {
-      const { Comment: rawComment } = request
+      const { CommentRequest: rawComment } = request
       const mentions = getMentionsFromComments(rawComment.body)
       const comment = {
         ...rawComment,
@@ -227,7 +227,7 @@ export const allUsersViewHandler = lambdaApi()(
     )
 
     handlers.registerPostUsersCommentsReply(async (ctx, request) => {
-      const { Comment: rawComment } = request
+      const { CommentRequest: rawComment } = request
       const mentions = getMentionsFromComments(rawComment.body)
       const comment: Comment = { ...rawComment, userId, mentions }
 

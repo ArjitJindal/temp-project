@@ -74,7 +74,7 @@ export default function HistoryItem(props: Props) {
     async (values: CommentEditorFormValues) => {
       return await api.createAlertsComment({
         alertId,
-        Comment: { body: sanitizeComment(values.comment), files: values.files },
+        CommentRequest: { body: sanitizeComment(values.comment), files: values.files },
       });
     },
     {

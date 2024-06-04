@@ -65,7 +65,7 @@ export default function UserItem() {
       throw new Error(`User ID is not defined`);
     }
     const commentData = {
-      Comment: { body: commentFormValues.comment, files: commentFormValues.files },
+      CommentRequest: { body: commentFormValues.comment, files: commentFormValues.files },
     };
     return await api.postUsersCommentsReply({
       userId: id,

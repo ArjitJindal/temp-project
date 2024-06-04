@@ -256,12 +256,12 @@ export const casesHandler = lambdaApi()(
     /** Comments APIs */
     handlers.registerCreateAlertsComment(
       async (ctx, request) =>
-        await alertsService.saveComment(request.alertId, request.Comment)
+        await alertsService.saveComment(request.alertId, request.CommentRequest)
     )
 
     handlers.registerPostCaseComments(
       async (ctx, request) =>
-        await caseService.saveComment(request.caseId, request.Comment)
+        await caseService.saveComment(request.caseId, request.CommentRequest)
     )
 
     handlers.registerCreateAlertsCommentReply(
@@ -269,7 +269,7 @@ export const casesHandler = lambdaApi()(
         await alertsService.saveCommentReply(
           request.alertId,
           request.commentId,
-          request.Comment
+          request.CommentRequest
         )
     )
 
@@ -278,7 +278,7 @@ export const casesHandler = lambdaApi()(
         await caseService.saveCommentReply(
           request.caseId,
           request.commentId,
-          request.Comment
+          request.CommentRequest
         )
     )
 

@@ -78,6 +78,7 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { AlertQASamplingListResponse } from '@/@types/openapi-internal/AlertQASamplingListResponse'
 import { AlertsQaSamplingUpdateRequest } from '@/@types/openapi-internal/AlertsQaSamplingUpdateRequest'
 import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
+import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -543,7 +544,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
   public async saveComment(
     alertId: string,
-    comment: Comment
+    comment: CommentRequest
   ): Promise<Comment> {
     const alert = await this.alertsRepository.getAlertById(alertId)
 
