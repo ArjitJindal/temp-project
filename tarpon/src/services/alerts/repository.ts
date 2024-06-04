@@ -830,8 +830,8 @@ export class AlertsRepository {
     )
 
     const result = await transactionsRepo.getTransactionsCursorPaginate({
+      alertId: alert.alertId,
       pageSize: params.pageSize,
-      filterIdList: alert.transactionIds.slice(0, 1000),
       afterTimestamp: params.afterTimestamp || 0,
       beforeTimestamp: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
       filterOriginUserId: params.originUserId,

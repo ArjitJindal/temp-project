@@ -16,6 +16,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { filterLiveRules } from '../rules-engine/utils'
+import { CounterRepository } from '../counter/repository'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import {
   CaseRepository,
@@ -476,6 +477,8 @@ export class CaseCreationService {
     transaction?: InternalTransaction,
     checkListTemplates?: ChecklistTemplate[]
   ): Promise<Alert[]> {
+    const mongoDb = this.mongoDb
+    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
     const alerts: Alert[] = await Promise.all(
       hitRules.map(async (hitRule: HitRulesDetails) => {
         const ruleInstanceMatch: RuleInstance | null =
@@ -500,7 +503,12 @@ export class CaseCreationService {
           ruleInstanceMatch?.alertConfig?.alertAssignees,
           ruleInstanceMatch?.alertConfig?.alertAssigneeRole
         )
+        const alertCount = await counterRepository.getNextCounterAndUpdate(
+          'Alert'
+        )
         return {
+          _id: alertCount,
+          alertId: `A-${alertCount}`,
           createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
           latestTransactionArrivalTimestamp,
           updatedAt: now,
@@ -962,7 +970,6 @@ export class CaseCreationService {
             params.checkListTemplates
           )
           const alerts = [...updatedAlerts, ...closedAlerts]
-
           const caseTransactionsIds = uniq(
             [
               ...(existedCase.caseTransactionsIds ?? []),
@@ -986,6 +993,14 @@ export class CaseCreationService {
             updatedAt: now,
           })
         } else {
+          const newAlerts = await this.getAlertsForNewCase(
+            hitRules,
+            ruleInstances,
+            params.createdTimestamp,
+            params.latestTransactionArrivalTimestamp,
+            params.transaction,
+            params.checkListTemplates
+          )
           logger.info('Create a new case for a transaction')
           result.push({
             ...(subject.type === 'USER'
@@ -1012,14 +1027,7 @@ export class CaseCreationService {
             caseTransactionsCount: filteredTransaction ? 1 : 0,
             priority: params.priority,
             availableAfterTimestamp,
-            alerts: await this.getAlertsForNewCase(
-              hitRules,
-              ruleInstances,
-              params.createdTimestamp,
-              params.latestTransactionArrivalTimestamp,
-              params.transaction,
-              params.checkListTemplates
-            ),
+            alerts: newAlerts,
             updatedAt: now,
           })
         }
@@ -1098,6 +1106,18 @@ export class CaseCreationService {
     const savedCases: Case[] = []
     for (const caseItem of cases) {
       savedCases.push(await this.addOrUpdateCase(caseItem))
+    }
+
+    const txAlerts = savedCases
+      .flatMap((c) => c.alerts ?? [])
+      .filter((alert) =>
+        alert.transactionIds?.includes(transaction.transactionId)
+      )
+    if (txAlerts.length) {
+      await this.transactionRepository.updateTransactionAlertIds(
+        [transaction.transactionId],
+        txAlerts.map((alert) => alert.alertId).filter(Boolean) as string[]
+      )
     }
 
     logger.info(`Updated/created cases count`, {

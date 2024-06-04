@@ -171,6 +171,10 @@ export class MongoDbTransactionRepository
   ): Filter<InternalTransaction> {
     const conditions: Filter<InternalTransaction>[] = additionalFilters
 
+    if (params.alertId) {
+      conditions.push({ alertIds: params.alertId })
+    }
+
     if (params.afterTimestamp) {
       conditions.push({ timestamp: { $gte: params.afterTimestamp || 0 } })
     }
@@ -1594,6 +1598,25 @@ export class MongoDbTransactionRepository
     return collection.aggregate<InternalTransaction>([
       { $sample: { size: count } },
     ])
+  }
+
+  public async updateTransactionAlertIds(
+    transactionIds?: string[],
+    alertIds?: string[]
+  ): Promise<void> {
+    if (!transactionIds || !alertIds) return
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    await collection.updateMany(
+      { transactionId: { $in: transactionIds } },
+      {
+        $addToSet: {
+          alertIds: { $each: alertIds },
+        },
+      }
+    )
   }
 
   public async getUniqueUserIds(

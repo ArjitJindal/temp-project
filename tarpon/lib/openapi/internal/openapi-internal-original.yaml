@@ -915,6 +915,10 @@ paths:
               type: string
           in: query
           name: filterProductType
+        - schema:
+            type: string
+          in: query
+          name: alertId
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -7139,6 +7143,10 @@ components:
               type: number
             updatedAt:
               type: number
+            alertIds:
+              type: array
+              items:
+                type: string
       title: InternalTransaction
     ConsumerUsersListResponse:
       title: ConsumerUsersListResponse

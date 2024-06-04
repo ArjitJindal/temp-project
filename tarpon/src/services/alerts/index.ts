@@ -323,7 +323,10 @@ export class AlertsService extends CaseAlertsCommonService {
         assigneeIds: reviewAssignments.map((a) => a.assigneeUserId),
       }
     }
-
+    const newAlertsTransactions: Array<{
+      alertId: string
+      transactionIds: string[]
+    }> = []
     // get the alerts that are being escalated
     const escalatedAlertsDetails = escalatedAlerts?.map(
       (escalatedAlert: Alert): Alert => {
@@ -354,6 +357,7 @@ export class AlertsService extends CaseAlertsCommonService {
           transactionIds = escalationAlertReq.transactionIds
           alertId = `${escalatedAlert.alertId}.${childNumber}`
           parentAlertId = escalatedAlert.alertId
+          newAlertsTransactions.push({ alertId, transactionIds })
         }
 
         return {
@@ -379,7 +383,11 @@ export class AlertsService extends CaseAlertsCommonService {
         }
       }
     )
-
+    for (const value of newAlertsTransactions) {
+      await transactionsRepo.updateTransactionAlertIds(value.transactionIds, [
+        value.alertId,
+      ])
+    }
     // child case id is the parent case id + the number of child cases
     const childNumber = c.caseHierarchyDetails?.childCaseIds
       ? c.caseHierarchyDetails.childCaseIds.length + 1

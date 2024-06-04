@@ -6,7 +6,11 @@ import { getCases } from './data/cases'
 import { getNotifications } from './data/notifications'
 import { getArsScores } from './data/ars_scores'
 import { getQASamples } from './samplers/qa-samples'
-import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
+import {
+  allCollections,
+  createMongoDBCollections,
+  getMongoDbClient,
+} from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   DRS_SCORES_COLLECTION,
@@ -49,6 +53,9 @@ import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { CounterEntity, EntityCounter } from '@/services/counter/repository'
+import { Case } from '@/@types/openapi-internal/Case'
+import { Alert } from '@/@types/openapi-internal/Alert'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
@@ -148,6 +155,27 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
     for await (const dataChunk of chunk(clonedData, 10000)) {
       await collection.insertMany(dataChunk as any[])
+    }
+  }
+
+  logger.info('Update transaction with alertIds')
+  const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
+  const cases = await casesCollection.find().toArray()
+  const alerts = cases
+    .flatMap((case_) => case_.alerts)
+    .filter(Boolean) as Alert[]
+  const mongoDb = await getMongoDbClient()
+  const transactionRepository = new MongoDbTransactionRepository(
+    tenantId,
+    mongoDb
+  )
+
+  for (const alert of alerts) {
+    for await (const txChunk of chunk(alert.transactionIds, 500)) {
+      if (alert.alertId)
+        await transactionRepository.updateTransactionAlertIds(txChunk, [
+          alert.alertId,
+        ])
     }
   }
 
