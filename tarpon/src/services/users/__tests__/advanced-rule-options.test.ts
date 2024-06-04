@@ -142,16 +142,16 @@ describe('Advanced Rule Options Tests', () => {
     const preUser = await userRepo.getMongoUser('user1')
     const preBusiness = await userRepo.getMongoUser('business1')
 
+    jest
+      .spyOn(UserEventRepository.prototype, 'saveUserEvent')
+      .mockResolvedValue('test')
+
     await userService.handleTransactionUserStatusUpdateTrigger(
       transaction as TransactionWithRulesResult,
       ruleInstances,
       preUser,
       preBusiness
     )
-
-    jest
-      .spyOn(UserEventRepository.prototype, 'saveUserEvent')
-      .mockResolvedValue('test')
 
     const user = await userRepo.getConsumerUser('user1')
 
