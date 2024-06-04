@@ -1,4 +1,5 @@
 import { BatchJobRunner } from './batch-job-runner-base'
+import { envIsNot } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { seedMongo } from '@/core/seed/mongo'
@@ -12,7 +13,7 @@ import { logger } from '@/core/logger'
 export class DemoModeDataLoadJobRunner extends BatchJobRunner {
   protected async run(job: DemoModeDataLoadBatchJob): Promise<void> {
     const { tenantId } = job
-    if (!isDemoTenant(tenantId)) {
+    if (envIsNot('dev') && !isDemoTenant(tenantId)) {
       logger.warn(`Tenant ${tenantId} is not a demo tenant`)
       return
     }
