@@ -28,7 +28,7 @@ export const DYNAMO_ONLY_USER_ATTRIBUTES = businessUserAttributes.concat(
 
 export const getExternalComment = (comment: Comment): CommentResponse => {
   return {
-    commentId: comment.id,
+    commentId: comment.id ?? '',
     body: comment.body,
     createdTimestamp: comment.createdAt,
     files: comment.files?.map((file) => ({

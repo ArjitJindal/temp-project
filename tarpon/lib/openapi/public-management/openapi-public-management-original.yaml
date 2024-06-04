@@ -851,7 +851,7 @@ components:
           description: Timestamp when comment is created
       required:
         - body
-        - id
+        - commentId
     RequestFileInfo:
       title: FileInfo
       type: object
@@ -891,7 +891,7 @@ components:
           description: Timestamp when comment is updated
       required:
         - body
-        - id
+        - commentId
     ResponseFileInfo:
       title: FileInfo
       type: object
