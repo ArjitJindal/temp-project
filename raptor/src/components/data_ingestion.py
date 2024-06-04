@@ -25,7 +25,7 @@ class DataIngestion:
         self.ingestion_config = DataIngestionConfig()
 
     def initialize_ingestion(self):
-        df = pd.read_csv("../../.experimentation_data/transactions.csv")
+        df = pd.read_csv("./.experimentation_data/transactions.csv")
         print("Read complete")
         os.makedirs(
             os.path.dirname(self.ingestion_config.train_data_path), exist_ok=True
