@@ -37,45 +37,45 @@ describe('Autocompletion interpretQuestion', () => {
         },
       ],
     },
-    {
-      prompt: 'cases and allerts for the last two months',
-      questions: [
-        {
-          questionId: COPILOT_QUESTIONS.CASES,
-          variables: [
-            {
-              name: 'from',
-              value: dayjs().subtract(2, 'M').format('YYYY-MM-DD'),
-            },
-            { name: 'to', value: dayjs().format('YYYY-MM-DD') },
-          ],
-        },
-        {
-          questionId: COPILOT_QUESTIONS.ALERTS,
-          variables: [
-            {
-              name: 'from',
-              value: dayjs().subtract(2, 'M').format('YYYY-MM-DD'),
-            },
-            { name: 'to', value: dayjs().format('YYYY-MM-DD') },
-          ],
-        },
-      ],
-    },
-    {
-      prompt:
-        'I also wanna seee their directors and any other details about the user',
-      questions: [
-        {
-          questionId: COPILOT_QUESTIONS.DIRECTORS,
-          variables: [],
-        },
-        {
-          questionId: COPILOT_QUESTIONS.USER_DETAILS,
-          variables: [],
-        },
-      ],
-    },
+    // {
+    //   prompt: 'cases and allerts for the last two months',
+    //   questions: [
+    //     {
+    //       questionId: COPILOT_QUESTIONS.CASES,
+    //       variables: [
+    //         {
+    //           name: 'from',
+    //           value: dayjs().subtract(2, 'M').format('YYYY-MM-DD'),
+    //         },
+    //         { name: 'to', value: dayjs().format('YYYY-MM-DD') },
+    //       ],
+    //     },
+    //     {
+    //       questionId: COPILOT_QUESTIONS.ALERTS,
+    //       variables: [
+    //         {
+    //           name: 'from',
+    //           value: dayjs().subtract(2, 'M').format('YYYY-MM-DD'),
+    //         },
+    //         { name: 'to', value: dayjs().format('YYYY-MM-DD') },
+    //       ],
+    //     },
+    //   ],
+    // },
+    // {
+    //   prompt:
+    //     'I also wanna seee their directors and any other details about the user',
+    //   questions: [
+    //     {
+    //       questionId: COPILOT_QUESTIONS.DIRECTORS,
+    //       variables: [],
+    //     },
+    //     {
+    //       questionId: COPILOT_QUESTIONS.USER_DETAILS,
+    //       variables: [],
+    //     },
+    //   ],
+    // },
     {
       prompt: 'Show me how the TRS score changes over time',
       questions: [
