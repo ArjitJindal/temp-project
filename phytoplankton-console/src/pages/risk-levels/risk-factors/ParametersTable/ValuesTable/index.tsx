@@ -3,6 +3,7 @@ import { Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
 import { isEqual as equal } from 'lodash';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
+import cn from 'clsx';
 import {
   Entity,
   ParameterName,
@@ -33,6 +34,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import Alert from '@/components/library/Alert';
 import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
+import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -184,7 +186,7 @@ export default function ValuesTable(props: Props) {
     ? levelToAlias('VERY_HIGH', configSetting?.riskLevelAlias)
     : 'VERY_HIGH';
   return (
-    <div className={style.root}>
+    <div className={cn(style.root, loading && CY_LOADING_FLAG_CLASS)}>
       <div className={style.table}>
         <div className={style.topHeader}>
           <div className={style.header}>Weight</div>

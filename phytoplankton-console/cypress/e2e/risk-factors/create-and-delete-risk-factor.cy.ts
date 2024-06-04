@@ -20,6 +20,7 @@ describe('Create and delete risk factor', () => {
 function createRiskFactor() {
   cy.visit('risk-levels/risk-factors/transaction');
   cy.get('button[data-cy="expand-icon"]').eq(0).click();
+  cy.waitNothingLoading();
   cy.get('.ant-select-selection-overflow').click();
   cy.get('.ant-select-item-option-content').eq(0).click();
   cy.get('[data-cy="risk-level-MEDIUM"]').eq(1).click();
@@ -33,6 +34,7 @@ function createRiskFactor() {
 function updateRiskFactor() {
   cy.visit('risk-levels/risk-factors/transaction');
   cy.get('button[data-cy="expand-icon"]').eq(0).click();
+  cy.waitNothingLoading();
   cy.get('[data-cy="risk-level-HIGH"]').eq(1).click();
   cy.get('button[data-cy="save-risk-factor"]').click();
   cy.wait('@riskFactor', { timeout: 15000 }).then((interception) => {
