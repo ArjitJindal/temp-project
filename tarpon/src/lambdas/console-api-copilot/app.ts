@@ -16,6 +16,8 @@ import { AutocompleteService } from '@/services/copilot/questions/autocompletion
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { AI_SOURCES } from '@/services/copilot/attributes/ai-sources'
 import { Case } from '@/@types/openapi-internal/Case'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -71,15 +73,30 @@ export const copilotHandler = lambdaApi({})(
           ? ((await caseService.getCase(entityId)) as Case)
           : ((await caseService.getCaseByAlertId(entityId)) as Case)
 
+      const ruleInstanceIds =
+        entityType === 'CASE'
+          ? _case?.alerts?.map((a) => a.ruleInstanceId as string) || []
+          : [
+              _case?.alerts?.find((a) => a.alertId === entityId)
+                ?.ruleInstanceId as string,
+            ]
+
       const user = await userService.getUser(
         _case?.caseUsers?.origin?.userId ||
           _case?.caseUsers?.destination?.userId ||
           ''
       )
 
-      const transactions = await txnRepository.getTransactionsByIds(
-        _case.caseTransactionsIds || []
-      )
+      const ruleInstanceRepository = new RuleInstanceRepository(ctx.tenantId, {
+        dynamoDb: getDynamoDbClientByEvent(event),
+      })
+
+      const [transactions, ruleInstances] = await Promise.all([
+        txnRepository.getTransactionsByIds(_case.caseTransactionsIds || []),
+        ruleInstanceRepository.getRuleInstancesByIds(
+          ruleInstanceIds.filter((id) => id)
+        ),
+      ])
 
       if (_case) {
         return copilotService.getCaseNarrative({
@@ -87,6 +104,7 @@ export const copilotHandler = lambdaApi({})(
           user,
           reasons,
           transactions,
+          ruleInstances,
         })
       }
       throw new NotFound('Case not found')

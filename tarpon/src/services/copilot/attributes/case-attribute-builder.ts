@@ -14,14 +14,26 @@ export class CaseAttributeBuilder implements AttributeBuilder {
   }
 
   build(attributes: AttributeSet, inputData: InputData) {
-    attributes.setAttribute(
-      'ruleHitNames',
-      uniq(inputData._case?.alerts?.map((a) => a.ruleName) || [])
-    )
-    attributes.setAttribute(
-      'ruleHitNature',
-      uniq(inputData._case?.alerts?.map((r) => r.ruleNature))
-    )
+    if (!inputData.ruleInstances?.length) {
+      attributes.setAttribute(
+        'ruleHitNames',
+        uniq(inputData._case?.alerts?.map((a) => a.ruleName) || [])
+      )
+      attributes.setAttribute(
+        'ruleHitNature',
+        uniq(inputData._case?.alerts?.map((r) => r.ruleNature))
+      )
+    } else {
+      attributes.setAttribute(
+        'ruleHitNames',
+        uniq(inputData.ruleInstances.map((r) => r.ruleNameAlias))
+      )
+      attributes.setAttribute(
+        'ruleHitNature',
+        uniq(inputData.ruleInstances.map((r) => r.nature))
+      )
+    }
+
     attributes.setAttribute(
       'caseComments',
       inputData._case?.comments?.map((c) => c.body) || []

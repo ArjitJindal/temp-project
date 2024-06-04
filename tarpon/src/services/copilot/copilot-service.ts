@@ -5,6 +5,8 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
+import { isV8RuleInstance } from '../rules-engine/utils'
+import { RULES_LIBRARY } from '../rules-engine/transaction-rules/library'
 import {
   AttributeGenerator,
   AttributeSet,
@@ -26,37 +28,42 @@ import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { ask, ModelVersion } from '@/utils/openai'
-import { tenantSettings } from '@/core/utils/context'
+import { getContext, tenantSettings } from '@/core/utils/context'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { RuleNature } from '@/@types/openapi-internal/RuleNature'
 
 type GenerateNarrative = {
   _case: Case
   user: InternalBusinessUser | InternalConsumerUser
   reasons: CaseReasons[]
   transactions: InternalTransaction[]
+  ruleInstances?: RuleInstance[]
 }
 
 const SEPARATOR = '----'
 const PROMPT = `Please provide the same text but use placeholders or data from the JSON blob below to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
-const PLACEHOLDER_NARRATIVE = (type: string) => `OVERVIEW
-Name: [name]
-Date of Case Generation: [caseGenerationDate]
-Reason for Case Generation: [ruleHitNames]
-Investigation Period: [caseGenerationDate] - [closureDate]
-Closure Date: [closureDate]
 
-BACKGROUND
-[This section should contain general details about the ${type} in question.]
+const PLACEHOLDER_NARRATIVE = (
+  type: string,
+  ruleNatures: RuleNature[] = []
+) => {
+  const isScreening = ruleNatures.some((r) => r === 'SCREENING')
+  const overview = `OVERVIEW \nName: [name] \nDate of Case Generation: [caseGenerationDate] \nReason for Case Generation: [ruleHitNames] \nInvestigation Period: [caseGenerationDate] - [closureDate] \nClosure Date: [closureDate] \n\n`
+  const background = `BACKGROUND \n[This section should contain general details about the ${type} in question.] \n\n`
+  const investigation = `INVESTIGATION \n[This section should detail the method of the investigation and the ${type}'s activities that took place during the investigation.] \n\n`
+  const findings = `FINDINGS AND ASSESSMENT \n[This section should contain an analysis of the ${type}'s transactions and behaviors.] \n\n`
+  const screening = `SCREENING DETAILS \n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.] \n\n`
+  const conclusion = `CONCLUSION`
 
-INVESTIGATION
-[This section should detail the method of the investigation and the ${type}'s activities that took place during the investigation.]
+  if (isScreening) {
+    return (
+      overview + background + investigation + findings + screening + conclusion
+    )
+  }
 
-FINDINGS AND ASSESSMENT
-[This section should contain an analysis of the ${type}'s transactions and behaviors.]
+  return overview + background + investigation + findings + conclusion
+}
 
-SCREENING DETAILS
-[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.]
-
-CONCLUSION`
 const MAX_TOKEN_OUTPUT = 4096
 
 // Obfuscatable attributes are ones that we can safely search and replace in the prompt. An example of one that isn't would be
@@ -148,32 +155,82 @@ export class CopilotService {
       transactions: request.transactions || [],
       user: request.user,
       _case: request._case,
+      ruleInstances: request.ruleInstances,
     })
+
+    const prompt = this.generateNarrativePrompt(request)
+
+    return this.generate(prompt, attributes)
+  }
+
+  private generateNarrativePrompt(request: GenerateNarrative) {
+    const customerType =
+      request.user.type === 'BUSINESS' ? 'business' : 'customer'
+
+    const narrativeSize = getContext()?.settings?.narrativeMode ?? 'STANDARD'
 
     const reasonNarrs = request.reasons.map(
       (reason) => reasonNarratives.find((rn) => rn.reason === reason)?.narrative
     )
 
-    return this.generate(
-      `
-    The following is a template for a document written by bank staff to justify why they have or have not reported a suspicious ${
-      request.user.type === 'BUSINESS' ? 'business' : 'customer'
-    } to the financial authorities.
-    
-    ${SEPARATOR}
-    ${PLACEHOLDER_NARRATIVE(
-      request.user.type === 'BUSINESS' ? 'business' : 'customer'
-    )}
-    ${reasonNarrs.join(',')}
-    ${SEPARATOR}
-    
-    The following JSON blob is information relevant to a single ${
-      request.user.type === 'BUSINESS' ? 'business' : 'customer'
-    } who is under investigation by bank staff, please rewrite this information so that it conforms to the template above. This case is being closed for the following reasons: ${request.reasons.join(
-        ', '
-      )}.`,
-      attributes
-    )
+    const ruleNatures = request.ruleInstances?.map((r) => r.nature) || []
+
+    let string = `The following is a template for a document written by bank staff to justify why they have or have not reported a suspicious ${customerType} to the financial authorities.`
+    string += `\n\n${SEPARATOR}\n\n`
+
+    if (narrativeSize === 'STANDARD') {
+      string += PLACEHOLDER_NARRATIVE(customerType, ruleNatures)
+      string += `\n\n${SEPARATOR}\n\n`
+    }
+
+    string += reasonNarrs.join(', ')
+
+    string += `The following JSON blob is information relevant to a single ${customerType} who is under investigation by bank staff.\n\n`
+
+    if (request.ruleInstances?.length) {
+      string += `Here is information about the rules that were triggered`
+
+      request.ruleInstances.forEach((ruleInstance) => {
+        string += `\n\nRule: ${ruleInstance.ruleNameAlias}\n`
+        string += `Description: ${ruleInstance.ruleDescriptionAlias}\n`
+        string += `Rule nature: ${ruleInstance.nature}\n`
+
+        if (!isV8RuleInstance(ruleInstance)) {
+          const rule = RULES_LIBRARY.find((r) => r.id === r.id)
+          if (rule) {
+            string += `Checks for: ${rule.checksFor.join(', ')}\n`
+            string += `Rule types: ${rule.types.join(', ')}\n`
+            string += `Typologies: ${rule.typologies.join(', ')}\n`
+            string += `Sample use cases: ${rule.sampleUseCases}\n`
+          }
+        } else {
+          string += `Rule logic: ${JSON.stringify(ruleInstance.logic)}\n`
+          string += `Logic aggregation variables: ${JSON.stringify(
+            ruleInstance.logicAggregationVariables
+          )}\n`
+        }
+
+        string += `\n`
+      })
+
+      string += `\n\n${SEPARATOR}\n\n`
+    }
+
+    if (narrativeSize === 'STANDARD') {
+      string += `Please rewrite this information so that it conforms to the template above.`
+    } else {
+      string += `Please write a narrative strictly in a paragraph (no verbose) straightforward way that explains the ${customerType}'s activities and why they are being reported to the financial authorities.`
+      string += `\n\n${SEPARATOR}\n\n`
+      string += `No detailed information is required about rule, case or any transaction details accomodate everything in a single paragraph and in a very concise and professional manner.`
+    }
+
+    string += `\n\n${SEPARATOR}\n\n`
+
+    string += `The following JSON blob is information relevant to a single ${customerType} who is under investigation by bank staff, please rewrite this information so that it conforms to the template above. This case is being closed for the following reasons: ${request.reasons.join(
+      ', '
+    )}.`
+
+    return string
   }
 
   private async generate(prompt: string, attributes: AttributeSet) {

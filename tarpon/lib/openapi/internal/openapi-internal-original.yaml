@@ -8221,6 +8221,11 @@ components:
               type: number
             ongoingMerchantMonitoringUsers:
               type: number
+        narrativeMode:
+          type: string
+          enum:
+            - STANDARD
+            - COMPACT
         auth0Domain:
           type: string
         notificationsSubscriptions:

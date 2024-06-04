@@ -6,11 +6,13 @@ import { UserAttributeBuilder } from '@/services/copilot/attributes/user-attribu
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseAttributeBuilder } from '@/services/copilot/attributes/case-attribute-builder'
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 export type InputData = {
   transactions: InternalTransaction[]
   user: InternalConsumerUser | InternalBusinessUser
   _case?: Case
+  ruleInstances?: RuleInstance[]
 }
 
 export interface AttributeBuilder {
@@ -19,7 +21,8 @@ export interface AttributeBuilder {
   build(attributes: AttributeSet, inputData: InputData): void
 }
 
-type AttributeValue = string | number | undefined | Array<AttributeValue>
+export type AttributeValue = string | number | undefined | Array<AttributeValue>
+
 export class AttributeSet extends Map<AIAttribute, AttributeValue> {
   getAttribute(key: AIAttribute) {
     if (!this.has(key)) {

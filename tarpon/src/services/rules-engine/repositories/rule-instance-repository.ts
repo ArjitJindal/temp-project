@@ -260,7 +260,7 @@ export class RuleInstanceRepository {
 
   async getRuleInstancesByIds(
     ruleInstanceIds: string[]
-  ): Promise<ReadonlyArray<RuleInstance>> {
+  ): Promise<Array<RuleInstance>> {
     if (ruleInstanceIds.length === 0) {
       return []
     }
