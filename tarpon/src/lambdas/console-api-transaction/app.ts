@@ -208,33 +208,47 @@ export const transactionsViewHandler = lambdaApi()(
         throw new NotFound('Case(s) not found for transactions')
       }
       await Promise.all(
-        cases.data.flatMap(async (c) => {
+        cases.data.flatMap((c) => {
           if (!c.alerts) {
             return []
           }
-          return c.alerts?.map(async (alert) => {
-            const txnIds: string[] = []
-            req.TransactionAction.transactionIds.forEach((tid) => {
-              if (alert.transactionIds?.includes(tid)) {
-                txnIds.push(tid)
-              }
-            })
+          return c.alerts.flatMap((alert) => {
+            const txnIds = req.TransactionAction.transactionIds.filter((tid) =>
+              alert.transactionIds?.includes(tid)
+            )
+
             if (txnIds.length > 0 && alert.alertId) {
-              if (alert.ruleAction === 'SUSPEND')
-                await alertService.saveComment(alert.alertId, {
-                  body: `${txnIds.join(', ')} set to ${
-                    req.TransactionAction.action
-                  }. Reasons: ${req.TransactionAction.reason.join(
-                    ', '
-                  )}. Comment: ${req.TransactionAction.comment}`,
-                  files: req.TransactionAction.files,
-                })
-              if (req.TransactionAction.action === 'ALLOW')
-                await alertService.closeAlertIfAllTransactionsApproved(
-                  alert,
-                  txnIds
+              const promises: Promise<any>[] = []
+
+              if (alert.ruleAction === 'SUSPEND') {
+                const commentBody: string =
+                  txnIds.join(', ') +
+                  ` set to ` +
+                  req.TransactionAction.action +
+                  `. Reasons: ` +
+                  req.TransactionAction.reason.join(', ') +
+                  `. Comment: ` +
+                  req.TransactionAction.comment
+                promises.push(
+                  alertService.saveComment(alert.alertId, {
+                    body: commentBody,
+                    files: req.TransactionAction.files,
+                  })
                 )
+              }
+
+              if (req.TransactionAction.action === 'ALLOW') {
+                promises.push(
+                  alertService.closeAlertIfAllTransactionsApproved(
+                    alert,
+                    txnIds
+                  )
+                )
+              }
+
+              return promises
             }
+            return []
           })
         })
       )
