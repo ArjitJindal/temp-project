@@ -1,13 +1,12 @@
 import { ListSubtype, ListType } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 
-export function parseListType(str: unknown): ListType {
+export function parseListType(str: string | undefined): ListType {
   if (str === 'whitelist') {
     return 'WHITELIST';
-  } else if (str === 'blacklist') {
+  } else {
     return 'BLACKLIST';
   }
-  throw new Error(`Unknown list type: ${str}`);
 }
 
 export function stringifyListType(str: ListType): string {
