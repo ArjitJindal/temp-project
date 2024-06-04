@@ -833,7 +833,7 @@ paths:
 components:
   schemas:
     CommentRequest:
-      title: Comment
+      title: CommentRequest
       type: object
       properties:
         commentId:
@@ -853,7 +853,7 @@ components:
         - body
         - commentId
     RequestFileInfo:
-      title: FileInfo
+      title: RequestFileInfo
       type: object
       properties:
         s3Key:
@@ -870,7 +870,7 @@ components:
         - filename
         - size
     CommentResponse:
-      title: Comment
+      title: CommentResponse
       type: object
       properties:
         commentId:
@@ -893,7 +893,7 @@ components:
         - body
         - commentId
     ResponseFileInfo:
-      title: FileInfo
+      title: ResponseFileInfo
       type: object
       properties:
         filename:
