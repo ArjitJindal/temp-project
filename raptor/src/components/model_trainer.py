@@ -41,16 +41,16 @@ class ModelTrainer:
             "Local Outlier Factor": {
                 "contamination": [outliers_fraction],
                 "n_neighbors": [35],
-                "novelty": ["True"],
+                "novelty": [True],
             },
             "Isolation Forest": {"random_state": [42]},
         }
 
         model_report: dict = evaluate_models(
-            X_train=X_train,
-            y_train=y_train,
-            X_test=X_test,
-            y_test=y_test,
+            X_train=X_train.toarray(),
+            y_train=y_train.toarray(),
+            X_test=X_test.toarray(),
+            y_test=y_test.toarray(),
             models=models,
             param=params,
         )
@@ -72,5 +72,5 @@ class ModelTrainer:
 
         predicted = best_model.predict(X_test)
 
-        r2_square = r2_score(y_test, predicted)
+        r2_square = r2_score(y_test.toarray(), predicted)
         return r2_square
