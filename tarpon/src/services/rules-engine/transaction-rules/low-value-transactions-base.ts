@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import { uniqBy } from 'lodash'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import {
   TRANSACTION_AMOUNT_RANGE_SCHEMA,
@@ -70,37 +71,48 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
     const userId = this.getTransactionUserId()
     if (userId) {
       const lastNTransactionsToCheck = lowTransactionCount - 1
-      const transactions = (
-        (await (this.getDirection() === 'receiving'
-          ? this.transactionRepository.getLastNUserReceivingTransactions(
-              userId,
-              lastNTransactionsToCheck,
-              {
-                transactionStates: this.filters.transactionStatesHistorical,
-                transactionTypes: this.filters.transactionTypesHistorical,
-                transactionAmountRange:
-                  this.filters.transactionAmountRangeHistorical,
-                destinationPaymentMethods:
-                  this.filters.paymentMethodsHistorical,
-                destinationCountries:
-                  this.filters.transactionCountriesHistorical,
-              },
-              ['originAmountDetails', 'destinationAmountDetails']
-            )
-          : this.transactionRepository.getLastNUserSendingTransactions(
-              userId,
-              lastNTransactionsToCheck,
-              {
-                transactionStates: this.filters.transactionStatesHistorical,
-                transactionTypes: this.filters.transactionTypesHistorical,
-                transactionAmountRange:
-                  this.filters.transactionAmountRangeHistorical,
-                originPaymentMethods: this.filters.paymentMethodsHistorical,
-                originCountries: this.filters.transactionCountriesHistorical,
-              },
-              ['originAmountDetails', 'destinationAmountDetails']
-            ))) as Transaction[]
-      ).concat(this.transaction)
+      const transactions = uniqBy(
+        (
+          (await (this.getDirection() === 'receiving'
+            ? this.transactionRepository.getLastNUserReceivingTransactions(
+                userId,
+                lastNTransactionsToCheck,
+                {
+                  transactionStates: this.filters.transactionStatesHistorical,
+                  transactionTypes: this.filters.transactionTypesHistorical,
+                  transactionAmountRange:
+                    this.filters.transactionAmountRangeHistorical,
+                  destinationPaymentMethods:
+                    this.filters.paymentMethodsHistorical,
+                  destinationCountries:
+                    this.filters.transactionCountriesHistorical,
+                },
+                [
+                  'transactionId',
+                  'originAmountDetails',
+                  'destinationAmountDetails',
+                ]
+              )
+            : this.transactionRepository.getLastNUserSendingTransactions(
+                userId,
+                lastNTransactionsToCheck,
+                {
+                  transactionStates: this.filters.transactionStatesHistorical,
+                  transactionTypes: this.filters.transactionTypesHistorical,
+                  transactionAmountRange:
+                    this.filters.transactionAmountRangeHistorical,
+                  originPaymentMethods: this.filters.paymentMethodsHistorical,
+                  originCountries: this.filters.transactionCountriesHistorical,
+                },
+                [
+                  'transactionId',
+                  'originAmountDetails',
+                  'destinationAmountDetails',
+                ]
+              ))) as Transaction[]
+        ).concat(this.transaction),
+        'transactionId'
+      )
       if (transactions.length <= lastNTransactionsToCheck) {
         return undefined
       }
