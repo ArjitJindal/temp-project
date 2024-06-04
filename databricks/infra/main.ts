@@ -237,10 +237,10 @@ class DatabricksStack extends TerraformStack {
       this,
       'datalake-storage-bucket',
       {
-        bucket: awsPrefix,
+        bucket: `${awsPrefix}-bucket`,
         forceDestroy: true,
         tags: {
-          Name: awsPrefix,
+          Name: `${awsPrefix}-bucket`,
         },
       }
     )
