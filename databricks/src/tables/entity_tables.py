@@ -1,6 +1,7 @@
-import os
+import json
 
-from pyspark.sql import DataFrame, SparkSession
+from delta.tables import DeltaTable
+from pyspark.sql import DataFrame, SparkSession, Window
 from pyspark.sql.functions import (
     col,
     concat,
@@ -9,15 +10,18 @@ from pyspark.sql.functions import (
     lit,
     lower,
     regexp_extract,
+    row_number,
     to_date,
 )
 
-from src.dbutils.dbutils import get_dbutils
+from src.aws.s3 import checkpoint_dir
+from src.aws.secrets import get_secret
 from src.dynamo.deserialize import deserialise_dynamo_udf
 from src.entities.entity import Entity
 from src.tables.kinesis_tables import KinesisTables
 from src.tables.schema import kinesis_event_schema
 from src.tables.table_service import TableService
+from src.version_service import VersionService
 
 PARTITION_KEY_ID_PATH = "event.dynamodb.Keys.PartitionKeyID.S"
 
@@ -35,25 +39,33 @@ class EntityTables:
         mongo_uri: str,
         table_service: TableService,
         kinesis_tables: KinesisTables,
+        version_service: VersionService,
     ):
         self.schema = schema
+        self.mongo_uri = mongo_uri
         self.spark = spark
         self.table_service = table_service
-        self.mongo_uri = mongo_uri
         self.kinesis_tables = kinesis_tables
+        self.version_service = version_service
 
     @staticmethod
     def new(spark: SparkSession):
-        dbutils = get_dbutils(spark)
-        mongo_username = dbutils.secrets.get("mongo", "mongo-username")
-        mongo_password = dbutils.secrets.get("mongo", "mongo-password")
-        mongo_host = dbutils.secrets.get("mongo", "mongo-host")
+        mongo_connection = json.loads(get_secret("mongoAtlasCreds"))
+        mongo_username = mongo_connection["username"]
+        mongo_password = mongo_connection["password"]
+        mongo_host = mongo_connection["host"]
         mongo_uri = f"mongodb+srv://{mongo_username}:{mongo_password}@{mongo_host}"
         table_service = TableService.new(spark)
         kinesis_tables = KinesisTables.new(spark)
-        stage = os.environ["STAGE"]
-        schema = f"{stage}.main"
-        return EntityTables(spark, schema, mongo_uri, table_service, kinesis_tables)
+        schema = "main"
+        return EntityTables(
+            spark,
+            schema,
+            mongo_uri,
+            table_service,
+            kinesis_tables,
+            VersionService(spark),
+        )
 
     def refresh(self, entity: Entity):
         kinesis_df = cdc_transformation(
@@ -66,11 +78,12 @@ class EntityTables:
 
         print("Refresh from backfill and kinesis tables")
         tenants = self.table_service.tenant_schemas()
-        stage = os.environ["STAGE"]
 
         def write(tenant: str, df: DataFrame, mode: str):
             if entity.enrichment_fn is not None:
                 df = entity.enrichment_fn(df, self.table_service.read_table)
+            if "_id" in df.columns:
+                df = df.drop("_id")
             self.table_service.write_table(
                 entity.table,
                 df.filter(df["tenant"] == tenant),
@@ -80,13 +93,16 @@ class EntityTables:
             )
 
         for tenant in tenants:
-            schema = f"`{stage}`.`{tenant}`"
+            self.spark.sql(f"create database if not exists {tenant}")
+            schema = f"`{tenant}`"
 
             deduped_kinesis_df = kinesis_df.dropDuplicates(["tenant", entity.id_column])
-            deduped_backfill_df = backfill_df.join(deduped_kinesis_df, entity.id_column, 'left_anti')
-
+            deduped_backfill_df = backfill_df.join(
+                deduped_kinesis_df, entity.id_column, "left_anti"
+            )
             write(tenant, deduped_backfill_df, "overwrite")
             write(tenant, deduped_kinesis_df, "append")
+
             self.table_service.optimize(f"{schema}.{entity.table}")
 
     def start_streams(self, entity: Entity):
@@ -100,63 +116,65 @@ class EntityTables:
 
     def create_entity_stream(self, df: DataFrame, entity: Entity):
         print(f"Setting up {entity.table} table stream")
-        stage = os.environ["STAGE"]
 
         tenants = self.table_service.tenant_schemas()
         for tenant in tenants:
-            self.table_service.prepare_table_for_df(
-                df, f"`{stage}`.`{tenant}`.`{entity.table}`"
-            )
+            self.table_service.prepare_table_for_df(df, f"`{tenant}`.`{entity.table}`")
 
         matcher_condition = f"s.{entity.id_column} = t.{entity.id_column}"
         id_column = entity.id_column
         timestamp_column = entity.timestamp_column
-        incoming_updates = f"{entity.table}_incoming_updates"
-        latest_updates = f"{entity.table}_latest_updates"
         table = entity.table
 
         def upsert_to_delta(micro_batch_output_df, _batch_id):
-            tenants = [
-                row.tenant
-                for row in micro_batch_output_df.select("tenant").distinct().collect()
-            ]
+            window_spec = Window.partitionBy(id_column).orderBy(
+                col(timestamp_column).desc()
+            )
 
-            micro_batch_output_df.createOrReplaceTempView(incoming_updates)
+            # Add a row number within each partition
+            latest_updates_df = (
+                micro_batch_output_df.withColumn("rn", row_number().over(window_spec))
+                .filter("rn = 1")
+                .drop("rn")
+            )
 
             spark = micro_batch_output_df.sparkSession
 
-            spark.sql(
-                f"""
-                CREATE OR REPLACE TEMP VIEW {latest_updates} AS
-                SELECT *
-                FROM (
-                    SELECT *, ROW_NUMBER() OVER (PARTITION BY {id_column} 
-                    ORDER BY {timestamp_column} DESC) AS rn
-                    FROM {incoming_updates}
-                ) tmp
-                WHERE rn = 1
-            """
-            )
+            for tenant in (
+                latest_updates_df.select("tenant")
+                .distinct()
+                .rdd.flatMap(lambda x: x)
+                .collect()
+            ):
+                delta_table = f"`{tenant}`.{table}"
 
-            for tenant in tenants:
-                spark.sql(
-                    f"""
-                    MERGE INTO `{stage}`.`{tenant}`.`{table}` t
-                    USING {latest_updates} s
-                    ON {matcher_condition} and s.tenant = "{tenant}"
-                    WHEN MATCHED THEN UPDATE SET *
-                    WHEN NOT MATCHED THEN INSERT *
-                """
+                # Perform merge operation using Delta Lake
+                (
+                    DeltaTable.forName(spark, delta_table)
+                    .alias("t")
+                    .merge(
+                        latest_updates_df.alias("s"),
+                        f"{matcher_condition} AND s.tenant = '{tenant}'",
+                    )
+                    .whenMatchedUpdateAll()
+                    .whenNotMatchedInsertAll()
+                    .execute()
                 )
 
+        checkpoint_id = self.version_service.get_pipeline_checkpoint_id()
         return (
-            df.writeStream.foreachBatch(upsert_to_delta).queryName(entity.table).start()
+            df.writeStream.foreachBatch(upsert_to_delta)
+            .queryName(entity.table)
+            .option(
+                "checkpointLocation",
+                checkpoint_dir(f"write/{self.schema}/{entity.table}/{checkpoint_id}"),
+            )
+            .start()
         )
 
     def backfill(self, entity):
         table = entity.table
         mongo_table = table.replace("_", "-")
-        db_name = "tarpon"
         table_path = f"{self.schema}.{table}_backfill"
         suffix = f"-{mongo_table}"
 
@@ -179,10 +197,9 @@ class EntityTables:
 
             print(f"Backfilling for: {coll}")
             try:
-                tenant = coll.replace(suffix, "")
                 df = (
                     self.spark.read.format("mongo")
-                    .option("database", db_name)
+                    .option("database", "tarpon")
                     .option("uri", self.mongo_uri)
                     .option("collection", coll)
                     .schema(entity.schema)
@@ -190,14 +207,18 @@ class EntityTables:
                     .withColumn("tenant", lit(tenant.lower()))
                 )
 
+                if "_id" in df.columns:
+                    df = df.drop("_id")
+
                 final_df = backfill_transformation(entity, df)
 
                 final_df.write.option("mergeSchema", "true").format("delta").mode(
                     "append"
                 ).saveAsTable(table_path)
                 print(f"Collection backfilled: {coll}")
-            except:  # pylint: disable=bare-except
+            except Exception as err:  # pylint: disable=broad-exception-caught
                 print(f"Failed to backfill: {coll}")
+                print(err)
             count += 1
             print(f"Completed {count}/{total}")
 
@@ -218,7 +239,6 @@ def backfill_transformation(entity: Entity, df: DataFrame) -> DataFrame:
 
 def cdc_transformation(entity: Entity, read_stream: DataFrame) -> DataFrame:
     sort_key_id_path = "event.dynamodb.Keys.SortKeyID.S"
-
     df = (
         read_stream.filter(col("data").cast("string").contains(entity.partition_key))
         .select("data", "approximateArrivalTimestamp")
@@ -226,12 +246,12 @@ def cdc_transformation(entity: Entity, read_stream: DataFrame) -> DataFrame:
             "event", from_json(col("data").cast("string"), kinesis_event_schema)
         )
         .withColumn(
-            "PartitionKeyID",
-            col(PARTITION_KEY_ID_PATH).alias("PartitionKeyID"),
-        )
-        .withColumn(
             "SortKeyID",
             col(sort_key_id_path).alias("SortKeyID"),
+        )
+        .withColumn(
+            "PartitionKeyID",
+            col(PARTITION_KEY_ID_PATH).alias("PartitionKeyID"),
         )
         .withColumn(
             "tenant",

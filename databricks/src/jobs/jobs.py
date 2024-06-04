@@ -2,7 +2,7 @@ import os
 
 from pyspark.sql import SparkSession
 
-from src.dbutils.dbutils import get_dbutils
+from src.aws.glue import get_arg
 from src.entities.entities import entities
 from src.kinesis.kinesis_reader import KinesisReader
 from src.tables.currency_rates import CurrencyTable
@@ -10,6 +10,12 @@ from src.tables.entity_tables import EntityTables
 from src.tables.kinesis_tables import KinesisTables
 from src.tables.table_service import TableService
 from src.version_service import VersionService
+
+# Tried and failed to use "--customer-driver-env-vars" from
+# https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html
+# so instead we're using flags.
+os.environ["DATALAKE_BUCKET"] = get_arg("datalake_bucket")
+os.environ["TENANTS"] = get_arg("tenants")
 
 
 class Jobs:
@@ -33,14 +39,9 @@ class Jobs:
         self.version_service.reset_pipeline_checkpoint_id()
 
     def backfill(self):
-        dbutils = get_dbutils(self.spark)
+        self.spark.sql("create database if not exists main")
 
-        dbutils.widgets.text(
-            "force",
-            ",".join(entity.table for entity in entities),
-            "Force running backfill",
-        )
-        force = dbutils.widgets.get("force") == "true"
+        force = get_arg("force_backfill") == "true"
 
         if not force and self.table_service.table_exists("kinesis_events"):
             raise Exception(  # pylint: disable=broad-exception-raised
@@ -64,6 +65,7 @@ class Jobs:
 
         self.currency_table.backfill()
         for entity in entities:
+            self.table_service.clear_table(f"{entity.table}_backfill")
             self.entity_tables.backfill(entity)
 
         print("Backfill complete")
@@ -72,9 +74,13 @@ class Jobs:
         self.refresh()
 
     def stream(self):
-        if self.version_service.get_pipeline_checkpoint_id() is None:
+        pipeline_checkpoint_id = self.version_service.get_pipeline_checkpoint_id()
+        if pipeline_checkpoint_id is None:
             print("Please run backfill first.")
             return
+
+        print(f"Current version: {pipeline_checkpoint_id}")
+
         self.kinesis_tables.create_stream(
             "tarponDynamoChangeCaptureStream", "kinesis_events"
         )
@@ -83,15 +89,20 @@ class Jobs:
         )
 
         self.currency_table.start_stream()
+
+        print("Preparing tenant databases")
+        tenants = self.table_service.tenant_schemas()
+        for tenant in tenants:
+            self.spark.sql(f"create database if not exists {tenant}")
+
         for entity in entities:
             print(f"\n\n===== Setting up {entity.table} ======")
             self.entity_tables.start_streams(entity)
+
+        self.spark.streams.awaitAnyTermination()
 
     def optimize(self):
         for entity in entities:
             tenants = self.table_service.tenant_schemas()
             for tenant in tenants:
-                stage = os.environ["STAGE"]
-                self.table_service.optimize_yesterday(
-                    f"{stage}.`{tenant}`.{entity.table}"
-                )
+                self.table_service.optimize_yesterday(f"`{tenant}`.{entity.table}")

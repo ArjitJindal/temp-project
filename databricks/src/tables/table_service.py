@@ -2,9 +2,9 @@ import os
 from typing import List
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col
 from pyspark.sql.types import ArrayType, StructType
 
+from src.aws.s3 import checkpoint_dir
 from src.tables.batch_cache import BatchCache
 from src.tables.stream_cache import StreamCache
 from src.version_service import VersionService
@@ -31,8 +31,7 @@ class TableService:
 
     @staticmethod
     def new(spark: SparkSession):
-        stage = os.environ["STAGE"]
-        schema = f"{stage}.main"
+        schema = "main"
         return TableService(spark, VersionService(spark), schema)
 
     def table_exists(self, name: str):
@@ -55,7 +54,7 @@ class TableService:
         stream = (
             self.spark.readStream.option(
                 "checkpointLocation",
-                f"/tmp/delta/_checkpoints/{table_name}_ingress/{checkpoint_id}",
+                checkpoint_dir(f"read/{self.schema}/{table_name}/{checkpoint_id}"),
             )
             .format("delta")
             .table(table)
@@ -89,7 +88,7 @@ class TableService:
         return (
             write_stream.option(
                 "checkpointLocation",
-                f"/tmp/delta/_checkpoints/{table_name}/{checkpoint_id}",
+                checkpoint_dir(f"write/{self.schema}/{table_name}/{checkpoint_id}"),
             )
             .outputMode("append")
             .option("mergeSchema", "true")
@@ -118,7 +117,11 @@ class TableService:
         if mode == "overwrite":
             write_stream = write_stream.option("overwriteSchema", "true")
         print(f"Batching to table {schema}.{table_name} in mode {mode}")
-        return write_stream.mode(mode).saveAsTable(f"{schema}.{table_name}")
+        return (
+            write_stream.mode(mode)
+            .format("delta")
+            .saveAsTable(f"{schema}.{table_name}")
+        )
 
     def clear_table(self, table_name: str, schema=None):
         if schema is None:
@@ -127,14 +130,7 @@ class TableService:
         self.spark.sql(f"DROP TABLE IF EXISTS {schema}.{table_name}")
 
     def tenant_schemas(self):
-        stage = os.environ["STAGE"]
-        df = self.spark.sql(f"show schemas in {stage}")
-        return [
-            row["databaseName"]
-            for row in df.filter(
-                ~col("databaseName").isin("default", "main", "information_schema")
-            ).collect()
-        ]
+        return os.environ["TENANTS"].split(",")
 
     def optimize(self, table: str):
         print(f"Optimizing {table}")
@@ -151,22 +147,30 @@ class TableService:
         mode = "append"
         try:
             existing_schema = self.spark.table(table).schema
-        except:  # pylint: disable=bare-except
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            print(f"Could not read table {table}")
+            print(err)
             mode = "overwrite"
 
-        if existing_schema is None or schemas_equal(existing_schema, df.schema):
+        if existing_schema is None or not schemas_equal(existing_schema, df.schema):
             if mode == "overwrite":
                 print(f"Creating table {table}")
             else:
                 print(f"Migrating table {table}")
             df_with_new_schema = self.spark.createDataFrame([], df.schema)
-            df_with_new_schema.write.format("delta").partitionBy(["tenant", "date"]).mode(
-                mode
-            ).option("mergeSchema", "true").option(
-                "overwriteSchema", "true"
-            ).saveAsTable(
-                table
-            )
+            df_with_new_schema.write.format("delta").partitionBy(
+                ["tenant", "date"]
+            ).mode(mode).option("overwriteSchema", "true").saveAsTable(table)
+
+
+def data_types_equal(type1, type2):
+    if type(type1) != type(type2):  # pylint: disable=unidiomatic-typecheck
+        return False
+    if isinstance(type1, StructType):
+        return schemas_equal(type1, type2)
+    if isinstance(type1, ArrayType):
+        return data_types_equal(type1.elementType, type2.elementType)
+    return type1 == type2
 
 
 def schemas_equal(schema1, schema2):
@@ -189,13 +193,3 @@ def schemas_equal(schema1, schema2):
             return False
 
     return True
-
-
-def data_types_equal(type1, type2):
-    if type(type1) != type(type2):  # pylint: disable=unidiomatic-typecheck
-        return False
-    if isinstance(type1, StructType):
-        return schemas_equal(type1, type2)
-    if isinstance(type1, ArrayType):
-        return data_types_equal(type1.elementType, type2.elementType)
-    return type1 == type2

@@ -35,7 +35,7 @@ generate-api:
 	touch src/openapi/${API}/__init__.py
 	mv ./openapi/gen/src/openapi/${API}/models src/openapi/${API}/models
 
-patch: generate
+patch:
 	poetry build
-	databricks workspace import-dir --overwrite dist /Shared/
-	databricks fs cp ./data/currency_rates_backfill.json dbfs:/data/currency_rates_backfill.json --overwrite
+	aws s3 cp dist/src-0.1.0-py3-none-any.whl s3://flagright-datalake-dev-eu-1/src-0.1.0-py3-none-any.whl
+	aws s3 cp ./data/currency_rates_backfill.json s3://flagright-datalake-dev-eu-1/currency_rates_backfill.json

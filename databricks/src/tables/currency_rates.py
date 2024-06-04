@@ -1,6 +1,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, from_json, to_timestamp, udf
 
+from src.aws.s3 import file
 from src.dynamo.deserialize import deserialise_dynamo
 from src.entities.currency_rates import currency_schema
 from src.tables.schema import PARTITION_KEY_ID_PATH, kinesis_event_schema
@@ -34,7 +35,7 @@ class CurrencyTable:
     def backfill(self):
         print("Backfilling currencies from dump")
         currency_df = self.spark.read.json(
-            "/data/currency_rates_backfill.json", currency_schema
+            file("currency_rates_backfill.json"), currency_schema
         ).withColumn(
             "approximateArrivalTimestamp", to_timestamp(col("date"), "yyyy-MM-dd")
         )

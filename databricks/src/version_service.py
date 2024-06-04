@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pyspark.sql import SparkSession
 
-from src.dbutils.dbutils import get_dbutils
+from src.aws.s3 import read_file_from_s3, write_file_to_s3
 
 BASE_PATH = "/versions/"
 
@@ -15,7 +15,7 @@ class VersionService:
         self,
         spark: SparkSession,
     ):
-        self.dbutils = get_dbutils(spark)
+        self.spark = spark
 
     def get_pipeline_checkpoint_id(self):
         return self.get_existing_version("pipeline")
@@ -37,7 +37,7 @@ class VersionService:
 
     def get_existing_version(self, name):
         try:
-            version = self.dbutils.fs.head(f"{BASE_PATH}{name}")
+            version = read_file_from_s3(f"{BASE_PATH}{name}")
             if version == "":
                 return None
             return version
@@ -46,8 +46,8 @@ class VersionService:
 
     def reset_version(self, name):
         version = self.get_new_version()
-        self.dbutils.fs.put(f"{BASE_PATH}{name}", self.get_new_version(), True)
+        write_file_to_s3(f"{BASE_PATH}{name}", version)
         return version
 
     def clear_version(self, name):
-        self.dbutils.fs.put(f"{BASE_PATH}{name}", "", True)
+        write_file_to_s3(f"{BASE_PATH}{name}", "")

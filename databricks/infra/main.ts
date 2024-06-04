@@ -2,18 +2,14 @@ import { Construct } from 'constructs'
 import { App, TerraformStack, S3Backend } from 'cdktf'
 import * as aws from './.gen/providers/aws'
 import * as databricks from './.gen/providers/databricks'
+import * as mvn from './.gen/providers/maven'
 import { sleep, provider } from '@cdktf/provider-time'
 import { TerraformHclModule } from 'cdktf'
 import { Fn } from 'cdktf'
 import { TerraformProvider } from 'cdktf/lib/terraform-provider'
 import { Config } from '@flagright/lib/config/config'
 import { getTarponConfig } from '@flagright/lib/constants/config'
-import {
-  Stage,
-  FlagrightRegion,
-  DeployStage,
-  DEPLOY_STAGES,
-} from '@flagright/lib/constants/deploy'
+import { Stage, FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { AWS_ACCOUNTS } from '@flagright/lib/constants'
 import * as path from 'path'
@@ -31,6 +27,7 @@ const awsRegion = config.env.region || ''
 const regionalAdminGroupName = `${awsRegion}-admins`
 const stateBucket = `flagright-terraform-state-databricks-${env}`
 const prefix = `flagright-databricks-${stage}-${region}`
+const awsPrefix = `flagright-datalake-${stage}-${region}`
 const cidrBlock = '10.4.0.0/16'
 const databricksClientId = 'cb9efcf2-ffd5-484a-badc-6317ba4aef91'
 const databricksAccountId = 'e2fae071-88c7-4b3e-90cd-2f4c5ced45a7'
@@ -42,6 +39,40 @@ const serverlessRegions = [
   'us-west-2',
   'us-east-1',
   'us-east-2',
+]
+
+const jobs = [
+  {
+    name: 'refresh',
+    description: 'Rebuild derived tables from kinesis and mongo data.',
+    continuous: false,
+    compute: 'G.1X',
+    // compute: "G.8X",
+    numWorkers: 2,
+  },
+  {
+    name: 'backfill',
+    description:
+      'Reset everything by clearing all tables and backfilling from mongo.',
+    continuous: false,
+    compute: 'G.1X',
+    // compute: "G.8X",
+    numWorkers: 2,
+  },
+  {
+    name: 'stream',
+    description: 'Stream live from kinesis and transform',
+    continuous: true,
+    compute: 'G.1X',
+    numWorkers: 2,
+  },
+  {
+    name: 'optimize',
+    description: 'Optimize all tables nightly',
+    schedule: 'CRON(0 0 0 * * ?)',
+    compute: 'G.1X',
+    numWorkers: 2,
+  },
 ]
 
 const notebookHeader = `
@@ -77,6 +108,8 @@ class DatabricksStack extends TerraformStack {
         },
       ],
     })
+
+    new mvn.provider.MavenProvider(this, 'mvn', {})
 
     new nullProvider.NullProvider(this, 'null', {})
 
@@ -186,6 +219,235 @@ class DatabricksStack extends TerraformStack {
       profileRoleName,
       workspace,
       workspaceProvider,
+    })
+
+    this.awsWorkspace({
+      availabilityZone: `${awsRegion}a`,
+      vpcId: vpcId,
+      subnetId: Fn.element(subnetIds, 0),
+    })
+  }
+
+  private awsWorkspace(vpc: {
+    availabilityZone: string
+    vpcId: string
+    subnetId: string
+  }) {
+    const datalakeBucket = new aws.s3Bucket.S3Bucket(
+      this,
+      'datalake-storage-bucket',
+      {
+        bucket: awsPrefix,
+        forceDestroy: true,
+        tags: {
+          Name: awsPrefix,
+        },
+      }
+    )
+
+    const bucketState =
+      new aws.s3BucketOwnershipControls.S3BucketOwnershipControls(
+        this,
+        'datalake-bucket-state',
+        {
+          bucket: datalakeBucket.id,
+          rule: {
+            objectOwnership: 'BucketOwnerPreferred',
+          },
+        }
+      )
+
+    new aws.s3BucketAcl.S3BucketAcl(this, 'datalake-bucket-acl', {
+      bucket: datalakeBucket.id,
+      acl: 'private',
+      dependsOn: [bucketState],
+    })
+
+    new aws.s3BucketVersioning.S3BucketVersioningA(
+      this,
+      'datalake-bucket-versioning',
+      {
+        bucket: datalakeBucket.id,
+        versioningConfiguration: {
+          status: 'Disabled',
+        },
+      }
+    )
+
+    const doc = new aws.dataAwsIamPolicyDocument.DataAwsIamPolicyDocument(
+      this,
+      'glue-assume-role-doc',
+      {
+        statement: [
+          {
+            effect: 'Allow',
+            actions: ['sts:AssumeRole'],
+            principals: [
+              {
+                identifiers: ['glue.amazonaws.com'],
+                type: 'Service',
+              },
+            ],
+          },
+        ],
+      }
+    )
+
+    const profileRole = new aws.iamRole.IamRole(this, 'glue-role', {
+      name: `glue-role-${region}`,
+      description: 'Role for Glue to access Kinesis etc.',
+      assumeRolePolicy: doc.json,
+      managedPolicyArns: [
+        'arn:aws:iam::aws:policy/AmazonKinesisReadOnlyAccess',
+        'arn:aws:iam::aws:policy/SecretsManagerReadWrite',
+        'arn:aws:iam::aws:policy/AmazonS3FullAccess',
+        'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole',
+      ],
+      tags: { Project: 'databricks' },
+    })
+
+    new aws.athenaWorkgroup.AthenaWorkgroup(this, 'athena-workgroup', {
+      name: 'datalake',
+      configuration: {
+        enforceWorkgroupConfiguration: true,
+        publishCloudwatchMetricsEnabled: true,
+        resultConfiguration: {
+          outputLocation: `s3://${datalakeBucket.bucket}/output/`,
+        },
+      },
+    })
+
+    const mongoJar = new mvn.dataMavenArtifact.DataMavenArtifact(
+      this,
+      'mongo-jar',
+      {
+        groupId: 'org.mongodb.spark',
+        artifactId: 'mongo-spark-connector_2.12',
+        version: '3.0.2',
+      }
+    )
+
+    const mongoJarObject = new aws.s3Object.S3Object(this, 's3-object', {
+      bucket: datalakeBucket.bucket,
+      source: mongoJar.outputPath,
+      key: 'mongo.jar',
+    })
+
+    const pythonPackage = new aws.s3BucketObject.S3BucketObject(
+      this,
+      'python-package',
+      {
+        bucket: datalakeBucket.bucket,
+        key: 'src-0.1.0-py3-none-any.whl',
+        source: path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl'),
+      }
+    )
+
+    const mongoSecret =
+      new aws.dataAwsSecretsmanagerSecret.DataAwsSecretsmanagerSecret(
+        this,
+        'mongo-secret-aws',
+        {
+          name: 'mongoAtlasCreds',
+        }
+      )
+    const mongoSecretVersion =
+      new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
+        this,
+        'mongo-secret-version-aws',
+        {
+          secretId: mongoSecret.id,
+        }
+      )
+    const mongoSecretValue = Fn.jsondecode(mongoSecretVersion.secretString)
+
+    const sg = new aws.securityGroup.SecurityGroup(this, 'glue-sg', {
+      name: 'glue-sg',
+      vpcId: vpc.vpcId,
+    })
+    new aws.securityGroupRule.SecurityGroupRule(this, 'sg-ingress-rule', {
+      type: 'ingress',
+      securityGroupId: sg.id,
+      fromPort: 0,
+      toPort: 65535,
+      protocol: 'tcp',
+      selfAttribute: true,
+    })
+    new aws.securityGroupRule.SecurityGroupRule(this, 'sg-rule', {
+      type: 'egress',
+      securityGroupId: sg.id,
+      fromPort: 0,
+      toPort: 65535,
+      cidrBlocks: ['0.0.0.0/0'],
+      protocol: 'tcp',
+    })
+
+    const mongoConnection = new aws.glueConnection.GlueConnection(
+      this,
+      'mongo-connection',
+      {
+        connectionType: 'MONGODB',
+        connectionProperties: {
+          CONNECTION_URL: `mongodb+srv://${Fn.lookup(mongoSecretValue, 'host')}/tarpon`,
+          USERNAME: Fn.lookup(mongoSecretValue, 'username'),
+          PASSWORD: Fn.lookup(mongoSecretValue, 'password'),
+        },
+        name: 'mongo',
+        physicalConnectionRequirements: {
+          availabilityZone: vpc.availabilityZone,
+          securityGroupIdList: [sg.id],
+          subnetId: vpc.subnetId,
+        },
+      }
+    )
+
+    jobs.map((job) => {
+      const script = new aws.s3Object.S3Object(this, `${job.name}-script`, {
+        bucket: datalakeBucket.bucket,
+        key: `${job.name}.script`,
+        content: this.templateAwsJobNotebook(job.name),
+      })
+      const glueJob = new aws.glueJob.GlueJob(this, `${job.name}-glue-job`, {
+        name: job.name,
+        description: job.schedule,
+        roleArn: profileRole.arn,
+        connections: [mongoConnection.name],
+        command: {
+          name: 'gluestreaming',
+          scriptLocation: `s3://${datalakeBucket.bucket}/${script.key}`,
+          pythonVersion: '3',
+        },
+        workerType: job.compute,
+        numberOfWorkers: job.numWorkers,
+        defaultArguments: {
+          // '--force_backfill': 'false',
+          '--force_backfill': 'true',
+          '--tenants': `${this.tenantIds.join(',')}`,
+          '--datalake_bucket': datalakeBucket.bucket,
+          '--job-language': 'python-3',
+          '--enable-spark-ui': 'true',
+          '--spark-event-logs-path': `s3://${datalakeBucket.bucket}/spark-logs/`,
+          '--enable-continuous-cloudwatch-log': 'true',
+          '--job-bookmark-option': 'job-bookmark-disable',
+          '--enable-glue-datacatalog': 'true',
+          '--datalake-formats': 'delta',
+          '--conf': `spark.sql.streaming.stateStore.stateSchemaCheck=false --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension --conf spark.sql.warehouse.dir=s3://${datalakeBucket.bucket}/warehouse/ --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog --conf spark.delta.logStore.class=org.apache.spark.sql.delta.storage.S3SingleDriverLogStore`,
+          '--additional-python-modules': `s3://${datalakeBucket.bucket}/${pythonPackage.key},delta-spark`,
+          '--extra-jars': `s3://${datalakeBucket.bucket}/${mongoJarObject.key}`,
+        },
+      })
+      if (job.schedule) {
+        new aws.glueTrigger.GlueTrigger(this, `${job.name}-trigger`, {
+          name: `${job.name}-trigger`,
+          schedule: job.schedule,
+          type: 'SCHEDULED',
+          actions: [
+            {
+              jobName: glueJob.name,
+            },
+          ],
+        })
+      }
     })
   }
 
@@ -359,6 +621,7 @@ class DatabricksStack extends TerraformStack {
           secretId: mongoSecret.id,
         }
       )
+    const mongoSecretValue = Fn.jsondecode(mongoSecretVersion.secretString)
 
     const mongoScope = new databricks.secretScope.SecretScope(
       this,
@@ -368,8 +631,6 @@ class DatabricksStack extends TerraformStack {
         name: 'mongo',
       }
     )
-
-    const mongoSecretValue = Fn.jsondecode(mongoSecretVersion.secretString)
 
     new databricks.secret.Secret(this, 'mongo-username', {
       provider: workspaceProvider,
@@ -407,7 +668,6 @@ class DatabricksStack extends TerraformStack {
       stringValue: accessKey.id,
       scope: kinesisScope.id,
     })
-
     new databricks.secret.Secret(this, 'aws-secret-key', {
       provider: workspaceProvider,
       key: 'aws-secret-key',
@@ -486,73 +746,6 @@ class DatabricksStack extends TerraformStack {
         enableServerlessCompute,
       }
     )
-
-    const jobs = [
-      {
-        name: 'refresh',
-        description: 'Rebuild derived tables from kinesis and mongo data.',
-        continuous: false,
-      },
-      {
-        name: 'backfill',
-        description:
-          'Reset everything by clearing all tables and backfilling from mongo.',
-        continuous: false,
-      },
-      {
-        name: 'stream',
-        description: 'Stream live from kinesis and transform',
-        continuous: true,
-      },
-      {
-        name: 'optimize',
-        description: 'Optimize all tables nightly',
-        schedule: '0 0 0 * * ?',
-      },
-    ]
-
-    jobs.map((job) => {
-      new databricks.notebook.Notebook(this, `${job.name}-file`, {
-        provider: workspaceProvider,
-        contentBase64: this.templateJobNotebook(job.name),
-        language: 'PYTHON',
-        path: `/Shared/${job.name}`,
-      })
-      new databricks.job.Job(this, `${job.name}-job`, {
-        provider: workspaceProvider,
-        name: job.name,
-        description: job.description,
-        parameter: [
-          {
-            name: 'force',
-            default: 'false',
-          },
-        ],
-        schedule: job.schedule
-          ? {
-              timezoneId: 'UTC',
-              quartzCronExpression: job.schedule,
-            }
-          : undefined,
-        emailNotifications: {
-          onFailure: config.databricks?.ADMIN_EMAILS,
-        },
-        continuous: job.continuous
-          ? {
-              pauseStatus: 'UNPAUSED',
-            }
-          : undefined,
-        task: [
-          {
-            taskKey: 'main',
-            notebookTask: {
-              notebookPath: `/Shared/${job.name}`,
-            },
-            existingClusterId: cluster.clusterId,
-          },
-        ],
-      })
-    })
 
     const catalog = new databricks.catalog.Catalog(this, 'main-catalog', {
       provider: workspaceProvider,
@@ -1413,6 +1606,20 @@ class DatabricksStack extends TerraformStack {
   private templateJobNotebook(job: string) {
     return btoa(`${notebookHeader}
 Jobs(spark).${job}()`)
+  }
+
+  private templateAwsJobNotebook(job: string) {
+    return `
+import os
+from src.jobs.jobs import Jobs
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+
+sc = SparkContext.getOrCreate()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+
+Jobs(spark).${job}()`
   }
 }
 

@@ -5,7 +5,8 @@
   "sendCrashReports": "true",
   "terraformProviders": [
     "hashicorp/aws@5.40.0",
-    "databricks/databricks@1.34.0"
+    "databricks/databricks@1.34.0",
+    "kota65535/maven@0.1.2"
   ],
   "terraformModules": [
     {
