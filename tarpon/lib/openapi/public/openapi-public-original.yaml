@@ -3503,6 +3503,9 @@ components:
         cardAuthenticated:
           type: boolean
           description: Authentication of Card
+        cardPresent:
+          type: boolean
+          description: Card Present
         paymentChannel:
           type: string
         cardType:
