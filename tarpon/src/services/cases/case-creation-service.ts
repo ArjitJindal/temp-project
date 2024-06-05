@@ -69,7 +69,6 @@ import {
   ThinWebhookDeliveryTask,
   sendWebhookTasks,
 } from '@/services/webhook/utils'
-import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
 import { CaseOpenedDetails } from '@/@types/openapi-public/CaseOpenedDetails'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
@@ -124,7 +123,7 @@ export class CaseCreationService {
   private async sendCasesOpenedWebhook(cases: Case[]) {
     const webhookTasks: ThinWebhookDeliveryTask<CaseOpenedDetails>[] =
       cases.map((case_) => ({
-        event: 'CASE_OPENED' as WebhookEventType,
+        event: 'CASE_OPENED',
         triggeredBy: 'SYSTEM',
         payload: {
           caseObject: case_,

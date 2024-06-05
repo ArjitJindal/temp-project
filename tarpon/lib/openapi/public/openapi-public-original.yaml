@@ -4622,6 +4622,7 @@ components:
         - ALERT_CLOSED
         - TRANSACTION_STATUS_UPDATED
         - KYC_STATUS_UPDATED
+        - CASE_OPENED
     ListType:
       type: string
       enum:
