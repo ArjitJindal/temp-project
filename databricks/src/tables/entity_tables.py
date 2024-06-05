@@ -93,7 +93,7 @@ class EntityTables:
             )
 
         for tenant in tenants:
-            self.spark.sql(f"create database if not exists {tenant}")
+            self.spark.sql(f"create database if not exists `{tenant}`")
             schema = f"`{tenant}`"
 
             deduped_kinesis_df = kinesis_df.dropDuplicates(["tenant", entity.id_column])

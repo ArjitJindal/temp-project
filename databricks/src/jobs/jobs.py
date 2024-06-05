@@ -93,7 +93,7 @@ class Jobs:
         print("Preparing tenant databases")
         tenants = self.table_service.tenant_schemas()
         for tenant in tenants:
-            self.spark.sql(f"create database if not exists {tenant}")
+            self.spark.sql(f"create database if not exists `{tenant}`")
 
         for entity in entities:
             print(f"\n\n===== Setting up {entity.table} ======")
