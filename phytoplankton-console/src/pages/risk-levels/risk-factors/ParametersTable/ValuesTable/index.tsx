@@ -319,7 +319,7 @@ export default function ValuesTable(props: Props) {
           };
 
           return (
-            <React.Fragment key={index}>
+            <div className={style.row} key={index} data-cy={`value-row value-row-${index}`}>
               <div>
                 {VALUE_RENDERERS[dataType]({
                   value: parameterValue.content,
@@ -373,10 +373,10 @@ export default function ValuesTable(props: Props) {
               >
                 <DeleteFilled />
               </Button>
-            </React.Fragment>
+            </div>
           );
         })}
-        <>
+        <div className={style.newItemRow} data-cy="new-item-form">
           <div>
             {INPUT_RENDERERS[dataType]({
               disabled: loading || !hasWritePermissions,
@@ -438,7 +438,7 @@ export default function ValuesTable(props: Props) {
               </Button>
             </>
           )}
-        </>
+        </div>
         <div className={style.alertBox}>
           {newValueInfoMessage != null && newValueValidationMessage == null && (
             <Alert children={newValueInfoMessage} type="info" />
