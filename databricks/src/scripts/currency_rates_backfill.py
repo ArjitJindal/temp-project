@@ -46,5 +46,5 @@ def fetch_currency_data(start_date, end_date, access_key, base="USD"):
 
 
 # Example usage
-API_KEY = "some-api-key"
-fetch_currency_data("2024-04-10", "2024-04-11", API_KEY)
+API_KEY = "79bc9fd5e5dda4dc155ac6e1096071c2"
+fetch_currency_data("2024-04-20", "2024-06-05", API_KEY)

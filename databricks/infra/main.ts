@@ -333,6 +333,12 @@ class DatabricksStack extends TerraformStack {
       key: 'mongo.jar',
     })
 
+    new aws.s3Object.S3Object(this, `currency-rates-json`, {
+      bucket: datalakeBucket.bucket,
+      key: `/currency_rates_backfill.json`,
+      source: path.resolve(__dirname, '../data/currency_rates_backfill.json'),
+    })
+
     const pythonPackage = new aws.s3BucketObject.S3BucketObject(
       this,
       'python-package',
@@ -420,8 +426,7 @@ class DatabricksStack extends TerraformStack {
         workerType: job.compute,
         numberOfWorkers: job.numWorkers,
         defaultArguments: {
-          // '--force_backfill': 'false',
-          '--force_backfill': 'true',
+          '--force_backfill': 'false',
           '--tenants': `${this.tenantIds.join(',')}`,
           '--datalake_bucket': datalakeBucket.bucket,
           '--job-language': 'python-3',
