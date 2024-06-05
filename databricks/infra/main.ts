@@ -46,7 +46,7 @@ const jobs = [
     name: 'refresh',
     description: 'Rebuild derived tables from kinesis and mongo data.',
     continuous: false,
-    compute: 'G.8X',
+    compute: 'G.2X',
     numWorkers: 2,
   },
   {
@@ -54,7 +54,7 @@ const jobs = [
     description:
       'Reset everything by clearing all tables and backfilling from mongo.',
     continuous: false,
-    compute: 'G.8X',
+    compute: 'G.2X',
     numWorkers: 2,
   },
   {
