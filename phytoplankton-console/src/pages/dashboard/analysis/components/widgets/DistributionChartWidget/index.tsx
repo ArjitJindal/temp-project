@@ -102,7 +102,7 @@ export default function DistributionChartWidget<
   );
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   const getValueName = useCallback(
-    (value: string) => valueNames?.[value] ?? humanizeAuto(value),
+    (value: string) => valueNames?.[value] ?? humanizeAuto(String(value)),
     [valueNames],
   );
   const selectedGroupPrefix = groups.length > 1 ? `-${snakeCase(attributeName)}` : '';
