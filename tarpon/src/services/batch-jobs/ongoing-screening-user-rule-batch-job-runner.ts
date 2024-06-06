@@ -2,6 +2,7 @@ import pMap from 'p-map'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { isEqual } from 'lodash'
+import { getTimeDiff } from '../rules-engine/utils/time-utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
@@ -17,6 +18,7 @@ import { tenantHasFeature } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
+import dayjs from '@/utils/dayjs'
 
 const CONCURRENT_BATCH_SIZE = 100
 
@@ -30,6 +32,19 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
   const ruleInstances = (
     await ruleInstanceRepository.getActiveRuleInstances('USER')
   ).filter((ruleInstance) => {
+    const schedule = ruleInstance.userRuleRunCondition?.schedule
+    if (schedule) {
+      // For now the frequency depends on the createdAt date of the rule instance. When a rule instance is created,
+      // the rule will be run on the same day once and then every x time units.
+      // TODO: Allow setting the start date (e.g every Monday, every 1st of the month, etc.)
+      const diffTime = getTimeDiff(
+        dayjs(),
+        dayjs(ruleInstance.createdAt),
+        schedule.unit.toLowerCase() as any
+      )
+      return diffTime % schedule.value === 0
+    }
+
     if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {
       return Boolean(
         Object.values(ruleInstance.riskLevelParameters).find(
@@ -37,7 +52,6 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
         )
       )
     }
-
     return Boolean(ruleInstance.parameters?.ongoingScreening)
   })
 
@@ -82,12 +96,12 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       mongoDb,
     })
     await Promise.all([
-      this.verifyUserRulesOneByOne(),
-      this.verifyAllUserRules(),
+      this.verifyUsersSequentialMode(),
+      this.verifyUsersAgglomerationMode(),
     ])
   }
 
-  private async verifyUserRulesOneByOne() {
+  private async verifyUsersSequentialMode() {
     const ruleInstances = await getOngoingScreeningUserRuleInstances(
       this.tenantId ?? ''
     )
@@ -113,8 +127,11 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     }
   }
 
-  private async verifyAllUserRules() {
-    const ruleInstances = await this.getUserOngoingScreeningRuleInstances()
+  private async verifyUsersAgglomerationMode() {
+    const ruleInstances =
+      await this.ruleInstanceRepository?.getActiveRuleInstances(
+        'USER_ONGOING_SCREENING'
+      )
     if (!ruleInstances?.length) {
       logger.info('No active ongoing screening user rule (all) found. Skip.')
       return
@@ -146,12 +163,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         }
       },
       { concurrency: CONCURRENT_BATCH_SIZE }
-    )
-  }
-
-  private async getUserOngoingScreeningRuleInstances() {
-    return await this.ruleInstanceRepository?.getActiveRuleInstances(
-      'USER_ONGOING_SCREENING'
     )
   }
 

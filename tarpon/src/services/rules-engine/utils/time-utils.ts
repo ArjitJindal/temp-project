@@ -91,3 +91,11 @@ export function getTimeRangeByTimeWindows(
   }
   return { afterTimestamp, beforeTimestamp }
 }
+
+export function getTimeDiff(
+  t1: Dayjs,
+  t2: Dayjs,
+  unit: 'day' | 'week' | 'month' | 'year'
+) {
+  return t1.startOf('day').diff(t2.startOf('day'), unit, true)
+}

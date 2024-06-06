@@ -16,6 +16,10 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
+import { RulesEngineService } from '@/services/rules-engine'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import dayjs from '@/utils/dayjs'
 
 dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS'])
@@ -307,5 +311,76 @@ describe('Batch Job Sanctions Screening Rule Ongoing Screening is Off', () => {
         },
       ],
     })
+  })
+})
+
+describe('V8 ongoing screening', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  const spy = jest.spyOn(RulesEngineService.prototype, 'verifyUserByRules')
+
+  beforeEach(() => {
+    spy.mockClear()
+  })
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      ruleInstanceId: 'test-rule-instance-id',
+      type: 'USER',
+      userRuleRunCondition: {
+        entityUpdated: false,
+        schedule: { value: 1, unit: 'MONTH' },
+      },
+      createdAt: Date.now(),
+    },
+  ])
+
+  const user = getTestUser()
+  setUpUsersHooks(TEST_TENANT_ID, [user])
+
+  it('should run on the same say when the rule is ', async () => {
+    const testJob: OngoingScreeningUserRuleBatchJob = {
+      tenantId: TEST_TENANT_ID,
+      type: 'ONGOING_SCREENING_USER_RULE',
+    }
+    await jobRunnerHandler(testJob)
+    expect(spy).toBeCalledTimes(1)
+  })
+  it('should only run once every x time units', async () => {
+    const dynamoDb = getDynamoDbClient()
+    const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
+      dynamoDb,
+    })
+    const ruleInstance = (await ruleInstanceRepository.getRuleInstanceById(
+      'test-rule-instance-id'
+    )) as RuleInstance
+    await ruleInstanceRepository.createOrUpdateRuleInstance({
+      ...ruleInstance,
+      createdAt: dayjs().add(1, 'month').valueOf(),
+    })
+    const testJob: OngoingScreeningUserRuleBatchJob = {
+      tenantId: TEST_TENANT_ID,
+      type: 'ONGOING_SCREENING_USER_RULE',
+    }
+    await jobRunnerHandler(testJob)
+    expect(spy).toBeCalledTimes(1)
+  })
+  it('should not run in other days', async () => {
+    const dynamoDb = getDynamoDbClient()
+    const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
+      dynamoDb,
+    })
+    const ruleInstance = (await ruleInstanceRepository.getRuleInstanceById(
+      'test-rule-instance-id'
+    )) as RuleInstance
+    await ruleInstanceRepository.createOrUpdateRuleInstance({
+      ...ruleInstance,
+      createdAt: dayjs().add(1, 'month').add(1, 'day').valueOf(),
+    })
+    const testJob: OngoingScreeningUserRuleBatchJob = {
+      tenantId: TEST_TENANT_ID,
+      type: 'ONGOING_SCREENING_USER_RULE',
+    }
+    await jobRunnerHandler(testJob)
+    expect(spy).toBeCalledTimes(0)
   })
 })

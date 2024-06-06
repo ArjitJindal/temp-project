@@ -41,12 +41,8 @@ export abstract class UserRuleFilter<P> extends RuleFilter {
           baseCurrency: migratedFilter?.baseCurrency,
         },
         {
-          transaction: {
-            transactionId: 'transactionId',
-            type: 'TRANSFER',
-            timestamp: 1231,
-          },
-          senderUser: this.user,
+          type: 'USER',
+          user: this.user,
         }
       )
     ).hit

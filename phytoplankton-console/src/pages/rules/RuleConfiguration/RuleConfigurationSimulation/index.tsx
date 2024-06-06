@@ -333,6 +333,7 @@ export function RuleConfigurationSimulation(props: Props) {
                 )}
                 {v8Mode ? (
                   <RuleConfigurationFormV8
+                    mode={'CREATE'}
                     ref={iterationFormRefs[i] as Ref<FormRef<RuleConfigurationFormV8Values>>}
                     rule={rule}
                     formInitialValues={merge(

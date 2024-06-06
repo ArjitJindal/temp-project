@@ -50,7 +50,7 @@ import { RULE_NATURE_LABELS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
 import TextInput from '@/components/library/TextInput';
 import NumberInput from '@/components/library/NumberInput';
 import TextArea from '@/components/library/TextArea';
-import { humanizeConstant } from '@/utils/humanize';
+import { humanizeAuto, humanizeConstant } from '@/utils/humanize';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { getAlertUrl, getCaseUrl, makeUrl } from '@/utils/routing';
@@ -107,6 +107,11 @@ export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   defaultWrapMode: 'WRAP',
   autoFilterDataType: { kind: 'string' },
   link: () => '',
+};
+
+export const ENUM: FullColumnDataType<any> = {
+  render: (value) => <>{value ? humanizeAuto(value) : '-'}</>,
+  stringify: (value) => (value ? humanizeAuto(value) : '-'),
 };
 
 export const NUMBER: ColumnDataType<number> = {

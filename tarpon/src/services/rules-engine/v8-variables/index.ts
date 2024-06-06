@@ -136,26 +136,14 @@ function userEntityVariableWithDirection(variables: RuleVariable[]) {
     {
       ...variable,
       key: `${variable.key}${SENDER_VARIABLE_KEY_SUFFIX}`,
-      uiDefinition: {
-        ...variable.uiDefinition,
-        label: `${variable.uiDefinition.label} (sender)`,
-      },
     },
     {
       ...variable,
       key: `${variable.key}${RECEIVER_VARIABLE_KEY_SUFFIX}`,
-      uiDefinition: {
-        ...variable.uiDefinition,
-        label: `${variable.uiDefinition.label} (receiver)`,
-      },
     },
     {
       ...variable,
       key: `${variable.key}${BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX}`,
-      uiDefinition: {
-        ...variable.uiDefinition,
-        label: `${variable.uiDefinition.label} (sender or receiver)`,
-      },
       load: async () => null,
     },
   ])

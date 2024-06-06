@@ -20,7 +20,10 @@ describe('entity variable', () => {
       { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
       [],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(result).toEqual({
       hit: true,
@@ -39,11 +42,64 @@ describe('entity variable', () => {
       { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
       [],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'DEPOSIT' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'DEPOSIT' }),
+      }
     )
     expect(result).toEqual({
       hit: false,
       vars: [{ direction: 'ORIGIN', value: { 'TRANSACTION:type': 'DEPOSIT' } }],
+      hitDirections: [],
+    })
+  })
+
+  test('executes the json logic - hit (user)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'CONSUMER_USER:userId__SENDER' }, 'abc'] }] },
+      [],
+      { tenantId },
+      {
+        type: 'USER',
+        user: getTestUser({ userId: 'abc' }),
+      }
+    )
+    expect(result).toEqual({
+      hit: true,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'CONSUMER_USER:userId__SENDER': 'abc' },
+        },
+      ],
+      hitDirections: ['ORIGIN'],
+    })
+  })
+
+  test('executes the json logic - no hit (user)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'CONSUMER_USER:userId__SENDER' }, 'abc'] }] },
+      [],
+      { tenantId },
+      {
+        type: 'USER',
+        user: getTestUser({ userId: 'cde' }),
+      }
+    )
+    expect(result).toEqual({
+      hit: false,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'CONSUMER_USER:userId__SENDER': 'cde' },
+        },
+      ],
       hitDirections: [],
     })
   })
@@ -92,6 +148,7 @@ describe('entity variable (array)', () => {
       [],
       { baseCurrency: 'EUR', tenantId },
       {
+        type: 'TRANSACTION',
         transaction: getTestTransaction({
           tags: [
             { key: '1', value: '2' },
@@ -125,6 +182,7 @@ describe('entity variable (array)', () => {
       [],
       { baseCurrency: 'EUR', tenantId },
       {
+        type: 'TRANSACTION',
         transaction: getTestTransaction({
           tags: [
             { key: '1', value: 'b' },
@@ -164,6 +222,7 @@ describe('entity variable (array)', () => {
       [],
       { baseCurrency: 'EUR', tenantId },
       {
+        type: 'TRANSACTION',
         transaction: getTestTransaction(),
         senderUser: getTestUser({
           legalDocuments: testLegalDocuments,
@@ -195,6 +254,7 @@ describe('entity variable (array)', () => {
       [],
       { baseCurrency: 'EUR', tenantId },
       {
+        type: 'TRANSACTION',
         transaction: getTestTransaction(),
         senderUser: getTestUser({
           legalDocuments: [
@@ -237,7 +297,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(result).toEqual({
       hit: true,
@@ -272,7 +335,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(result).toEqual({
       hit: true,
@@ -324,7 +390,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(result).toEqual({
       hit: true,
@@ -359,7 +428,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(result).toEqual({
       hit: true,
@@ -398,7 +470,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(result).toEqual({
       hit: true,
@@ -433,7 +508,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(result).toEqual({
       hit: true,
@@ -468,7 +546,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(result).toEqual({
       hit: false,
@@ -498,7 +579,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(result).toEqual({
       hit: false,
@@ -534,7 +618,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(resultFilteredOut).toEqual({
       hit: false,
@@ -557,7 +644,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(resultFiltered).toEqual({
       hit: true,
@@ -595,7 +685,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(resultNotWithinTimeWindow).toEqual({
       hit: false,
@@ -619,7 +712,10 @@ describe('aggregation variable', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(resultWithinTimeWindow).toEqual({
       hit: true,
@@ -657,6 +753,7 @@ describe('aggregation variable', () => {
       ],
       { baseCurrency: 'USD', tenantId },
       {
+        type: 'TRANSACTION',
         transaction: getTestTransaction({
           type: 'TRANSFER',
           originAmountDetails: {
@@ -752,7 +849,7 @@ describe('DataLoader cache', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: testTransaction }
+      { type: 'TRANSACTION', transaction: testTransaction }
     )
     await evaluator.evaluate(
       {
@@ -803,7 +900,7 @@ describe('DataLoader cache', () => {
         },
       ],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: testTransaction }
+      { type: 'TRANSACTION', transaction: testTransaction }
     )
     /** Validating if the cache is called twice as we have two distinct aggregationFunc (COUNT & SUM) accross two evaluate calls */
     expect(loadAggregationDataSpy).toHaveBeenCalledTimes(2)
@@ -837,6 +934,7 @@ describe('Different aggregate fields for receiving and sending', () => {
       ],
       { baseCurrency: 'EUR', tenantId },
       {
+        type: 'TRANSACTION',
         transaction: getTestTransaction({
           originAmountDetails: {
             transactionAmount: 100,
@@ -878,13 +976,19 @@ describe('operators', () => {
       { and: [{ 'op:startswith': ['a', ['b']] }] },
       [],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     await evaluator.evaluate(
       { and: [{ 'op:startswith': ['b', ['b']] }] },
       [],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(operatorSpy).toBeCalledTimes(2)
   })
@@ -896,13 +1000,19 @@ describe('operators', () => {
       { and: [{ 'op:startswith': ['a', ['b']] }] },
       [],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     await evaluator.evaluate(
       { and: [{ 'op:startswith': ['a', ['b']] }] },
       [],
       { baseCurrency: 'EUR', tenantId },
-      { transaction: getTestTransaction({ type: 'TRANSFER' }) }
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
     )
     expect(operatorSpy).toBeCalledTimes(1)
   })

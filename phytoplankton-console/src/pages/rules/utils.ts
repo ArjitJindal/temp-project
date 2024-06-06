@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllValuesByKey } from '@flagright/lib/utils';
+import { Option } from '@/components/library/SelectionGroup';
 import { RuleConfigurationFormValues } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/RuleConfigurationForm';
 import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8';
 import { useApi } from '@/api';
@@ -11,6 +12,7 @@ import {
   RuleNature,
   TriggersOnHit,
   RuleEntityVariableInUse,
+  RuleType,
 } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { removeEmpty } from '@/utils/json';
@@ -79,9 +81,24 @@ export const RULE_NATURE_LABELS: { [key in RuleNature]: string } = {
 
 export const RULE_NATURE_VALUES: RuleNature[] = Object.keys(RULE_NATURE_LABELS) as RuleNature[];
 
-export const RULE_NATURE_OPTIONS: { label: string; value: RuleNature }[] = RULE_NATURE_VALUES.map(
-  (value) => ({ label: RULE_NATURE_LABELS[value], value }),
-);
+export const RULE_NATURE_OPTIONS: Option<RuleNature>[] = RULE_NATURE_VALUES.map((value) => ({
+  label: RULE_NATURE_LABELS[value],
+  value,
+}));
+export const RULE_TYPE_OPTIONS: Option<RuleType>[] = [
+  {
+    label: 'Transaction',
+    value: 'TRANSACTION',
+    description:
+      'The rule would check for transactions and user properties of a user for the defined rule logic. The rule would be run when there is a new transaction/transaction event occurred.',
+  },
+  {
+    label: 'User',
+    value: 'USER',
+    description:
+      'The rule would check for a user properties for the defined rule logic. The rule would be run when there is a new user/new user event occurred. For ongoing screening the rule would be run for existing users as well.',
+  },
+];
 
 export type AlertCreatedForEnum = 'USER' | 'PAYMENT_DETAILS';
 
@@ -214,10 +231,12 @@ export function ruleInstanceToFormValuesV8(
   };
   return {
     basicDetailsStep: {
+      ruleType: ruleInstance.type,
       ruleName: ruleInstance.ruleNameAlias,
       ruleDescription: ruleInstance.ruleDescriptionAlias,
       ruleNature: ruleInstance.nature,
       ruleLabels: ruleInstance.labels,
+      userRuleRunCondition: ruleInstance.userRuleRunCondition,
     },
     ruleIsHitWhenStep: {
       baseCurrency: ruleInstance.baseCurrency,
@@ -405,6 +424,7 @@ export function formValuesToRuleInstanceV8(
     ...initialRuleInstance,
     ruleId: initialRuleInstance.ruleId,
     mode: initialRuleInstance.mode,
+    type: basicDetailsStep.ruleType ?? 'TRANSACTION',
     ruleNameAlias: basicDetailsStep.ruleName,
     ruleDescriptionAlias: basicDetailsStep.ruleDescription,
     casePriority: alertCreationDetailsStep.alertPriority,
@@ -414,6 +434,8 @@ export function formValuesToRuleInstanceV8(
     falsePositiveCheckEnabled: alertCreationDetailsStep.falsePositiveCheckEnabled === 'true',
     queueId: alertCreationDetailsStep.queueId,
     checklistTemplateId: alertCreationDetailsStep.checklistTemplateId,
+    userRuleRunCondition:
+      basicDetailsStep.ruleType === 'USER' ? basicDetailsStep.userRuleRunCondition : undefined,
     alertConfig: {
       alertAssignees:
         alertCreationDetailsStep.alertAssigneesType == 'EMAIL'

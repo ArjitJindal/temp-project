@@ -12,7 +12,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getBranding } from '@/utils/branding';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { LONG_TEXT, RULE_ACTION } from '@/components/library/Table/standardDataTypes';
+import { ENUM, LONG_TEXT, RULE_ACTION } from '@/components/library/Table/standardDataTypes';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { RULE_ACTION_VALUES } from '@/utils/rules';
 import RuleChecksForTag from '@/components/library/RuleChecksForTag';
@@ -101,6 +101,12 @@ export const RulesTable: React.FC<Props> = (props) => {
           defaultWrapMode: 'OVERFLOW',
         },
       }),
+      helper.simple<'type'>({
+        title: 'Rule type',
+        key: 'type',
+        type: ENUM,
+        sorting: true,
+      }),
 
       helper.simple<'description'>({
         title: 'Description',
@@ -127,11 +133,13 @@ export const RulesTable: React.FC<Props> = (props) => {
         title: 'Default nature',
         key: 'defaultNature',
         defaultWidth: 80,
+        sorting: true,
       }),
       helper.simple<'typologies'>({
         title: 'Typology',
         key: 'typologies',
         defaultWidth: 250,
+        sorting: true,
         type: {
           render: (typologies) => {
             return <>{typologies?.join(', ')}</>;
@@ -232,6 +240,8 @@ export const RulesTable: React.FC<Props> = (props) => {
           result =
             RULE_ACTION_VALUES.indexOf(a.defaultAction) -
             RULE_ACTION_VALUES.indexOf(b.defaultAction);
+        } else {
+          result = a[key] > b[key] ? 1 : -1;
         }
         result *= order === 'descend' ? -1 : 1;
         return result;

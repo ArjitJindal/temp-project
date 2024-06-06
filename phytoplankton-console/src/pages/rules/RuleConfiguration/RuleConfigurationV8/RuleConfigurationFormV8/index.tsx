@@ -2,9 +2,10 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { ConfigProvider } from 'antd';
 import cn from 'clsx';
 import { getAllEntityVariables } from '../../../utils';
+import { Mode } from '..';
 import s from './style.module.less';
 import BasicDetailsStep, {
-  FormValues as BasicDetailsStepFormValues,
+  BasicDetailsFormValues as BasicDetailsStepFormValues,
   INITIAL_VALUES as BASIC_DETAILS_STEP_INITIAL_VALUES,
 } from './steps/BasicDetailsStep';
 import RuleIsHitWhenStep, {
@@ -15,12 +16,12 @@ import AlertCreationDetailsStep, {
   FormValues as AlertCreationDetailsStepFormValues,
   INITIAL_VALUES as ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES,
 } from './steps/AlertCreationDetailsStep';
+import { useId } from '@/utils/hooks';
 import * as Card from '@/components/ui/Card';
 
-import { Rule } from '@/apis';
+import { Rule, RuleType } from '@/apis';
 import { StepperSteps } from '@/components/library/Stepper';
 import Form, { FormRef } from '@/components/library/Form';
-import { useId } from '@/utils/hooks';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
 import { message } from '@/components/library/Message';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -45,6 +46,7 @@ export interface RuleConfigurationFormV8Values {
 
 interface RuleConfigurationFormProps {
   rule?: Rule | null;
+  mode: Mode;
   formInitialValues?: Partial<RuleConfigurationFormV8Values>;
   readOnly?: boolean;
   simulationMode?: boolean;
@@ -64,6 +66,7 @@ function RuleConfigurationFormV8(
   const {
     formInitialValues,
     rule,
+    mode,
     onSubmit,
     readOnly = false,
     showValidationError = false,
@@ -187,6 +190,14 @@ function RuleConfigurationFormV8(
     simulationMode,
   ]);
 
+  // After we leave the Basic Details step, we can assume that the rule type is set and it won't be able to be changed
+  const [isRuleTypeSet, setIsRuleTypeSet] = useState(mode === 'EDIT');
+  useEffect(() => {
+    if (activeStepKey !== BASIC_DETAILS_STEP) {
+      setIsRuleTypeSet(true);
+    }
+  }, [activeStepKey]);
+
   return (
     <ConfigProvider
       getPopupContainer={(trigger: any) =>
@@ -227,6 +238,8 @@ function RuleConfigurationFormV8(
             <div className={cn(props.readOnly ? s.readOnlyFormContent : '')}>
               <NestedForm<RuleConfigurationFormV8Values> name={activeStepKey}>
                 <StepSubform
+                  isRuleTypeSet={isRuleTypeSet}
+                  ruleType={formState.basicDetailsStep.ruleType ?? 'TRANSACTION'}
                   activeStepKey={activeStepKey}
                   readOnly={readOnly}
                   newRuleId={newRuleId}
@@ -242,20 +255,28 @@ function RuleConfigurationFormV8(
 }
 
 function StepSubform(props: {
+  ruleType: RuleType;
+  isRuleTypeSet: boolean;
   activeStepKey: string;
   readOnly: boolean;
   newRuleId?: string;
   simulationMode?: boolean;
 }) {
-  const { activeStepKey, newRuleId, simulationMode } = props;
+  const { activeStepKey, newRuleId, simulationMode, ruleType, isRuleTypeSet } = props;
   if (activeStepKey === BASIC_DETAILS_STEP) {
-    return <BasicDetailsStep newRuleId={newRuleId} simulationMode={simulationMode} />;
+    return (
+      <BasicDetailsStep
+        newRuleId={newRuleId}
+        simulationMode={simulationMode}
+        isRuleTypeSet={isRuleTypeSet}
+      />
+    );
   }
   if (activeStepKey === RULE_IS_HIT_WHEN_STEP) {
-    return <RuleIsHitWhenStep readOnly={props.readOnly} />;
+    return <RuleIsHitWhenStep ruleType={ruleType} readOnly={props.readOnly} />;
   }
   if (activeStepKey === ALERT_CREATION_DETAILS_STEP) {
-    return <AlertCreationDetailsStep />;
+    return <AlertCreationDetailsStep ruleType={ruleType} />;
   }
   return <></>;
 }
@@ -297,6 +318,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
         ruleDescription: rule?.description,
         ruleNature: rule?.defaultNature ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleNature,
         ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
+        ruleType: 'TRANSACTION',
       },
       ruleIsHitWhenStep,
       alertCreationDetailsStep: {

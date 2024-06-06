@@ -17,7 +17,7 @@ import DuplicateIcon from '@/components/ui/icons/Remix/document/file-copy-line.r
 import SimulationIcon from '@/components/ui/icons/Remix/media/rhythm-fill.react.svg';
 import * as Form from '@/components/ui/Form';
 import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
-import { humanizeConstant } from '@/utils/humanize';
+import { humanizeAuto, humanizeConstant } from '@/utils/humanize';
 import { DEFAULT_DATE_TIME_FORMAT, dayjs } from '@/utils/dayjs';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { makeUrl } from '@/utils/routing';
@@ -146,6 +146,9 @@ export const RuleInstanceInfo = (props: Props) => {
       <Card.Root noBorder>
         <Card.Section className={s.card}>
           <div className={s.info}>
+            <Form.Layout.Label title={'Rule type'}>
+              {humanizeAuto(ruleInstance.type)}
+            </Form.Layout.Label>
             <Form.Layout.Label title={'Hit rate'}>
               <RuleHitInsightsTag percentage={percent} runs={ruleInstance.runCount} />
             </Form.Layout.Label>

@@ -70,7 +70,7 @@ describe('List of entity variables', () => {
           entity: 'CONSUMER_USER',
           valueType: 'string',
           uiDefinition: {
-            label: 'Consumer User / user details > date of birth (sender)',
+            label: 'Consumer User / user details > date of birth',
             type: 'text',
             valueSources: ['value', 'field', 'func'],
           },
@@ -80,8 +80,7 @@ describe('List of entity variables', () => {
           entity: 'CONSUMER_USER',
           valueType: 'string',
           uiDefinition: {
-            label:
-              'Consumer User / user details > country of residence (receiver)',
+            label: 'Consumer User / user details > country of residence',
             type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
@@ -100,7 +99,7 @@ describe('List of entity variables', () => {
           valueType: 'string',
           uiDefinition: {
             label:
-              'Business User / legal entity > company general details > user segment (sender)',
+              'Business User / legal entity > company general details > user segment',
             type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
@@ -146,7 +145,7 @@ describe('List of entity variables', () => {
           entity: 'CONSUMER_USER',
           valueType: 'array',
           uiDefinition: {
-            label: 'Consumer User / legal documents (sender)',
+            label: 'Consumer User / legal documents',
             type: '!group',
             mode: 'array',
             conjunctions: ['AND', 'OR'],

@@ -23,6 +23,11 @@
   transition-duration: @default-animation-speed;
   transition-timing-function: @default-animation-function;
 
+  &.fullWidth {
+    flex: 1;
+    max-width: unset;
+  }
+
   &.isActive:not(.isDisabled) {
     background: @fr-colors-v2-highlight-flagrightBlue;
     border-color: @fr-colors-v2-primary-flagrightBlue;

@@ -9,7 +9,7 @@ import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-lin
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
-import { RuleAggregationVariable, RuleEntityVariableInUse } from '@/apis';
+import { RuleAggregationVariable, RuleEntityVariableInUse, RuleType } from '@/apis';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import Tag from '@/components/library/Tag';
 import Button from '@/components/library/Button';
@@ -65,6 +65,7 @@ type EditingAggVariable = { type: 'aggregation'; variable: FormRuleAggregationVa
 type EditingEntityVariable = { type: 'entity'; variable?: RuleEntityVariableInUse; index?: number };
 
 interface RuleAggregationVariablesEditorProps {
+  ruleType: RuleType;
   readOnly?: boolean;
   entityVariables: RuleEntityVariableInUse[] | undefined;
   aggregationVariables: RuleAggregationVariable[] | undefined;
@@ -75,6 +76,7 @@ interface RuleAggregationVariablesEditorProps {
 }
 
 const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
+  ruleType,
   readOnly,
   entityVariables,
   aggregationVariables,
@@ -298,6 +300,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
       </Card.Section>
       {editingVariable?.type === 'entity' && entityVariableDefinitions.length > 0 && (
         <EntityVariableForm
+          ruleType={ruleType}
           variable={editingVariable.variable}
           isNew={isNewVariable}
           entityVariables={entityVariableDefinitions}
@@ -309,6 +312,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
       )}
       {editingVariable?.type === 'aggregation' && entityVariableDefinitions.length > 0 && (
         <AggregationVariableForm
+          ruleType={ruleType}
           variable={editingVariable.variable}
           isNew={isNewVariable}
           entityVariables={entityVariableDefinitions}

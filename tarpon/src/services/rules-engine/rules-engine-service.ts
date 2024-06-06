@@ -51,7 +51,11 @@ import {
   USER_RULES,
   UserRuleBase,
 } from './user-rules'
-import { RuleJsonLogicEvaluator } from './v8-engine'
+import {
+  RuleJsonLogicEvaluator,
+  TransactionRuleData,
+  UserRuleData,
+} from './v8-engine'
 import { getAggVarHash } from './v8-engine/aggregation-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
@@ -610,8 +614,13 @@ export class RulesEngineService {
     user: UserWithRulesResult | BusinessWithRulesResult,
     options?: { ongoingScreeningMode?: boolean }
   ): Promise<ConsumerUsersResponse | BusinessUsersResponse> {
-    const ruleInstances =
+    const ruleInstances = (
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
+    ).filter(
+      (r) =>
+        options?.ongoingScreeningMode ||
+        r.userRuleRunCondition?.entityUpdated !== false
+    )
 
     const rules = await this.ruleRepository.getRulesByIds(
       ruleInstances
@@ -694,25 +703,30 @@ export class RulesEngineService {
       transaction
     )
     const senderUserRiskLevelPromise = this.getUserRiskLevel(senderUser)
-    const transactionRiskDetails = hasFeature('SYNC_TRS_CALCULATION')
-      ? this.riskScoringService.calculateArsScore(transaction)
-      : undefined
 
-    const [ruleInstances, transactionRisk] = await Promise.all([
-      this.ruleInstanceRepository.getActiveRuleInstances('TRANSACTION'),
-      transactionRiskDetails,
+    const [activeRuleInstances, transactionRisk] = await Promise.all([
+      this.ruleInstanceRepository.getActiveRuleInstances(),
+      hasFeature('SYNC_TRS_CALCULATION')
+        ? this.riskScoringService.calculateArsScore(transaction)
+        : undefined,
     ])
+    const transactionRuleInstances = activeRuleInstances.filter(
+      (v) => v.type === 'TRANSACTION'
+    )
+    const userRuleInstances = activeRuleInstances.filter(
+      (v) => v.type === 'USER'
+    )
 
-    const rulesById = await this.getRulesById(ruleInstances)
+    const rulesById = await this.getRulesById(transactionRuleInstances)
 
     getInitialDataSegment?.close()
 
     const runRulesSegment = await addNewSubsegment('Rules Engine', 'Run Rules')
     logger.info(`Running rules`)
 
-    const verifyTransactionResults = compact(
-      await Promise.all(
-        ruleInstances.map(async (ruleInstance) =>
+    const [originalVerifyTransactionResults] = await Promise.all([
+      Promise.all(
+        transactionRuleInstances.map(async (ruleInstance) =>
           this.verifyTransactionRule({
             rule: ruleInstance.ruleId
               ? rulesById[ruleInstance.ruleId]
@@ -725,8 +739,15 @@ export class RulesEngineService {
             transactionRiskScore: transactionRisk?.score,
           })
         )
-      )
-    )
+      ),
+      // Update aggregation variables in V8 user rules
+      Promise.all(
+        userRuleInstances.map((ruleInstance) =>
+          this.handleV8Aggregation(ruleInstance, transaction)
+        )
+      ),
+    ])
+    const verifyTransactionResults = compact(originalVerifyTransactionResults)
 
     const ruleResults = compact(
       map(verifyTransactionResults, (result) => result.result)
@@ -745,7 +766,7 @@ export class RulesEngineService {
       .map((ruleResults) => ruleResults.ruleInstanceId)
 
     await this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
-      ruleInstances.map((ruleInstance) => ruleInstance.id as string),
+      transactionRuleInstances.map((ruleInstance) => ruleInstance.id as string),
       hitRuleInstanceIds
     )
 
@@ -756,16 +777,15 @@ export class RulesEngineService {
     )
 
     updateStatsSegment?.close()
-    const riskDetails = await transactionRiskDetails
     this.updatedAggregationVariables.clear()
     return {
       ...executedAndHitRulesResult,
       transactionAggregationTasks,
-      ...(riskDetails && {
+      ...(transactionRisk && {
         transactionRiskScoreDetails: {
-          riskLevel: riskDetails.riskLevel,
-          score: riskDetails.score,
-          components: riskDetails.components,
+          riskLevel: transactionRisk.riskLevel,
+          score: transactionRisk.score,
+          components: transactionRisk.components,
         },
       }),
     }
@@ -831,7 +851,17 @@ export class RulesEngineService {
     let ruleResult: RuleHitResult | undefined
     let vars: ExecutedRuleVars[] | undefined
     if (hasFeature('RULES_ENGINE_V8') && logic) {
-      if (transactionWithValidUserId) {
+      const data = transactionWithValidUserId
+        ? ({
+            type: 'TRANSACTION',
+            transaction: transactionWithValidUserId,
+            senderUser,
+            receiverUser,
+          } as TransactionRuleData)
+        : senderUser
+        ? ({ type: 'USER', user: senderUser } as UserRuleData)
+        : null
+      if (data) {
         const {
           hit,
           hitDirections,
@@ -843,12 +873,9 @@ export class RulesEngineService {
             baseCurrency: ruleInstance.baseCurrency,
             tenantId: this.tenantId,
           },
-          {
-            transaction: transactionWithValidUserId,
-            senderUser,
-            receiverUser,
-          }
+          data
         )
+
         vars = ruleVars
         const finalHitDirections = this.getFinalHitDirections(
           hitDirections,
@@ -1046,37 +1073,7 @@ export class RulesEngineService {
           publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
           logger.info(`Completed rule`)
 
-          if (hasFeature('RULES_ENGINE_V8')) {
-            await Promise.all(
-              ruleInstance.logicAggregationVariables?.flatMap(
-                async (aggVar) => {
-                  const hash = getAggVarHash(aggVar)
-                  if (this.updatedAggregationVariables.has(hash)) {
-                    return
-                  }
-
-                  this.updatedAggregationVariables.add(hash)
-
-                  return [
-                    aggVar.transactionDirection !== 'RECEIVING'
-                      ? await this.ruleLogicEvaluator.updateAggregationVariable(
-                          aggVar,
-                          { transaction: options.transaction },
-                          'origin'
-                        )
-                      : undefined,
-                    aggVar.transactionDirection !== 'SENDING'
-                      ? await this.ruleLogicEvaluator.updateAggregationVariable(
-                          aggVar,
-                          { transaction: options.transaction },
-                          'destination'
-                        )
-                      : undefined,
-                  ].filter(Boolean)
-                }
-              ) ?? []
-            )
-          }
+          await this.handleV8Aggregation(ruleInstance, options.transaction)
 
           const transactionAggregationTasks =
             ruleClassInstance instanceof TransactionAggregationRule
@@ -1105,6 +1102,48 @@ export class RulesEngineService {
         },
       }
     )
+  }
+
+  private async handleV8Aggregation(
+    ruleInstance: RuleInstance,
+    transaction: Transaction
+  ) {
+    if (!hasFeature('RULES_ENGINE_V8')) {
+      return
+    }
+    const promises =
+      ruleInstance.logicAggregationVariables?.flatMap((aggVar) => {
+        const hash = getAggVarHash(aggVar)
+        if (this.updatedAggregationVariables.has(hash)) {
+          return
+        }
+
+        this.updatedAggregationVariables.add(hash)
+
+        return [
+          aggVar.transactionDirection !== 'RECEIVING'
+            ? this.ruleLogicEvaluator.updateAggregationVariable(
+                aggVar,
+                {
+                  transaction,
+                  type: 'TRANSACTION',
+                },
+                'origin'
+              )
+            : undefined,
+          aggVar.transactionDirection !== 'SENDING'
+            ? this.ruleLogicEvaluator.updateAggregationVariable(
+                aggVar,
+                {
+                  transaction,
+                  type: 'TRANSACTION',
+                },
+                'destination'
+              )
+            : undefined,
+        ].filter(Boolean)
+      }) ?? []
+    await Promise.all(promises)
   }
 
   private async handleTransactionRuleAggregation(

@@ -11,7 +11,7 @@ import NestedSelects, { RefType, Option as NestedSelectsOption } from './NestedS
 import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
-import { RuleEntityVariable, RuleEntityVariableInUse } from '@/apis';
+import { RuleEntityVariable, RuleEntityVariableInUse, RuleType } from '@/apis';
 // TODO: Move PropertyColumns to library
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
@@ -34,6 +34,7 @@ type FormRuleEntityVariable = {
 };
 
 interface EntityVariableFormProps {
+  ruleType: RuleType;
   variable: RuleEntityVariableInUse | undefined;
   entityVariables: RuleEntityVariable[];
   entityVariablesInUse: RuleEntityVariableInUse[];
@@ -43,8 +44,11 @@ interface EntityVariableFormProps {
   onCancel: () => void;
 }
 
-const TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
+const TX_ENTITY_TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
   { value: 'TRANSACTION', label: 'Transaction' },
+  { value: 'USER', label: 'User' },
+];
+const USER_ENTITY_TYPE_OPTIONS: Array<{ value: 'USER'; label: string }> = [
   { value: 'USER', label: 'User' },
 ];
 const TX_DIRECTION_OPTIONS: Array<{ value: TransactionDirection; label: string }> = [
@@ -63,12 +67,16 @@ const USER_NATURE_OPTIONS: Array<{ value: 'CONSUMER_USER' | 'BUSINESS_USER'; lab
 ];
 
 function getInitialFormValues(
+  ruleType: RuleType,
   variable: RuleEntityVariableInUse | undefined,
   entityVariables: RuleEntityVariable[],
 ): FormRuleEntityVariable {
   const entityVariable = entityVariables.find((v) => v.key === variable?.key);
   if (!entityVariable) {
-    return {};
+    if (ruleType === 'TRANSACTION') {
+      return { type: 'TRANSACTION' };
+    }
+    return { type: 'USER', userType: 'BOTH' };
   }
   const result: FormRuleEntityVariable = {
     name: variable?.name,
@@ -117,6 +125,7 @@ function oppositeVariableKey(variableKey: string): string | undefined {
 }
 
 export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
+  ruleType,
   variable,
   entityVariables,
   entityVariablesInUse,
@@ -126,7 +135,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   onCancel,
 }) => {
   const [formValues, setFormValues] = useState<FormRuleEntityVariable>(
-    getInitialFormValues(variable, entityVariables),
+    getInitialFormValues(ruleType, variable, entityVariables),
   );
   const [searchKey, setSearchKey] = useState<string | undefined>();
   const handleUpdateForm = useCallback((newValues: Partial<FormRuleEntityVariable>) => {
@@ -135,14 +144,33 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
       setSearchKey(undefined);
     }
   }, []);
-  const allVariableOptions = useMemo(
-    () =>
-      entityVariables.map((v) => ({
-        value: v.key,
-        label: v.uiDefinition.label,
-      })),
-    [entityVariables],
-  );
+  const allVariableOptions = useMemo(() => {
+    if (ruleType === 'USER') {
+      return entityVariables
+        .filter((v) => v.entity !== 'TRANSACTION' && isUserSenderVariable(v.key))
+        .map((v) => ({
+          value: v.key,
+          label: v.uiDefinition.label,
+        }));
+    } else {
+      return entityVariables.map((v) => {
+        let label = v.uiDefinition.label;
+        if (v.entity !== 'TRANSACTION') {
+          if (isUserSenderVariable(v.key)) {
+            label += ' (sender)';
+          } else if (isUserReceiverVariable(v.key)) {
+            label += ' (receiver)';
+          } else if (isUserSenderOrReceiverVariable(v.key)) {
+            label += ' (sender or receiver)';
+          }
+        }
+        return {
+          value: v.key,
+          label,
+        };
+      });
+    }
+  }, [entityVariables, ruleType]);
 
   const entityVariablesFiltered = useMemo(() => {
     return entityVariables.filter((v) => {
@@ -287,7 +315,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             onChange={(variableKey) => {
               setSearchKey(variableKey ?? undefined);
               if (variableKey) {
-                setFormValues(getInitialFormValues({ key: variableKey }, entityVariables));
+                setFormValues(
+                  getInitialFormValues(ruleType, { key: variableKey }, entityVariables),
+                );
               }
             }}
             placeholder={
@@ -316,7 +346,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                 value={formValues.type}
                 onChange={(type) => handleUpdateForm({ type })}
                 mode={'SINGLE'}
-                options={TYPE_OPTIONS}
+                options={
+                  ruleType === 'TRANSACTION' ? TX_ENTITY_TYPE_OPTIONS : USER_ENTITY_TYPE_OPTIONS
+                }
                 testName="variable-type-v8"
               />
             </Label>
@@ -333,15 +365,17 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             )}
             {formValues.type === 'USER' && (
               <>
-                <Label label="User type" required={{ value: true, showHint: true }}>
-                  <SelectionGroup
-                    value={formValues.userType}
-                    onChange={(userType) => handleUpdateForm({ userType })}
-                    mode={'SINGLE'}
-                    options={USER_TYPE_OPTIONS}
-                    testName="variable-user-type-v8"
-                  />
-                </Label>
+                {ruleType === 'TRANSACTION' && (
+                  <Label label="User type" required={{ value: true, showHint: true }}>
+                    <SelectionGroup
+                      value={formValues.userType}
+                      onChange={(userType) => handleUpdateForm({ userType })}
+                      mode={'SINGLE'}
+                      options={USER_TYPE_OPTIONS}
+                      testName="variable-user-type-v8"
+                    />
+                  </Label>
+                )}
                 <Label label="User nature" required={{ value: false, showHint: true }}>
                   <SelectionGroup
                     value={formValues.userNatures}

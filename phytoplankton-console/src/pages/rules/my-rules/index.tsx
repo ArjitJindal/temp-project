@@ -24,7 +24,7 @@ import { useHasPermissions } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { BOOLEAN, DATE, PRIORITY } from '@/components/library/Table/standardDataTypes';
+import { BOOLEAN, DATE, ENUM, PRIORITY } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useScrollToFocus } from '@/utils/hooks';
@@ -142,7 +142,6 @@ const MyRule = (props: { simulationMode?: boolean }) => {
 
   const getRuleTags = (rule: RuleInstance): string[] => {
     const tags: string[] = [];
-    //Hit rate tags
     const hitCount = rule.hitCount;
     const hitRate = rule.runCount ? ((hitCount ?? 0) / rule.runCount) * 100 : 0;
     if (hitRate === 0) tags.push('Rule not run');
@@ -188,6 +187,12 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         hideInTable: true,
         exporting: true,
       }),
+      helper.simple<'type'>({
+        title: 'Rule type',
+        key: 'type',
+        type: ENUM,
+        sorting: true,
+      }),
       helper.simple<'ruleNameAlias'>({
         title: 'Name',
         key: 'ruleNameAlias',
@@ -209,7 +214,6 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         title: 'Description',
         key: 'ruleDescriptionAlias',
       }),
-
       helper.simple<'nature'>({
         title: 'Nature',
         key: 'nature',
@@ -425,6 +429,8 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 : -1;
           } else if (key === 'queueId') {
             result = (b.queueId || 'default') > (a.queueId || 'default') ? 1 : -1;
+          } else {
+            result = a[key] > b[key] ? 1 : -1;
           }
 
           result *= order === 'descend' ? -1 : 1;

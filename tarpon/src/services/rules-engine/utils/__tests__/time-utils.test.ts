@@ -1,48 +1,5 @@
-import { compileTemplate } from '../format-description'
-import { subtractTime } from '../time-utils'
+import { getTimeDiff, subtractTime } from '../time-utils'
 import dayjs from '@/utils/dayjs'
-
-describe('Basic description formatting', () => {
-  it('should build to original text if no variables used', () => {
-    const template = 'sample template with no vars'
-    const compiled = compileTemplate(template)
-    expect(compiled({})).toEqual(template)
-    expect(compiled({ a: 42 })).toEqual(template)
-    expect(compiled({ a: 'some value' })).toEqual(template)
-  })
-  it('should properly replace simple vars', () => {
-    const template = '{{ var1 }}'
-    const compiled = compileTemplate(template)
-    expect(compiled({ var1: 42 })).toEqual('42')
-  })
-  it('should fail if var is missing in parameters', () => {
-    const template = '{{ var1 }}'
-    const compiled = compileTemplate(template)
-    expect(() => compiled({})).toThrow()
-  })
-  it('should properly handle spaces around statements', () => {
-    expect(compileTemplate('{{var1}}')({ var1: 42 })).toEqual('42')
-    expect(compileTemplate('{{var1 }}')({ var1: 42 })).toEqual('42')
-    expect(compileTemplate('{{var1   }}')({ var1: 42 })).toEqual('42')
-    expect(compileTemplate('{{ var1}}')({ var1: 42 })).toEqual('42')
-    expect(compileTemplate('{{    var1}}')({ var1: 42 })).toEqual('42')
-    expect(compileTemplate('{{ var1 }}')({ var1: 42 })).toEqual('42')
-    expect(compileTemplate('{{    var1    }}')({ var1: 42 })).toEqual('42')
-  })
-  it('should properly replace nested vars', () => {
-    const template = '{{ var1.f1 }}'
-    const compiled = compileTemplate(template)
-    expect(compiled({ var1: { f1: 42 } })).toEqual('42')
-  })
-})
-
-describe('Description formatting helpers', () => {
-  it('possessive', () => {
-    const template = '{{ possessive name }}'
-    const compiled = compileTemplate(template)
-    expect(compiled({ name: 'Nikolai' })).toEqual('Nikolai’s')
-  })
-})
 
 describe('subtractTime', () => {
   it('should return the correct afterTimestamp for units = 0', () => {
@@ -158,5 +115,49 @@ describe('subtractTime', () => {
     )
 
     expect(result.valueOf()).toBe(dayjs('2021-04-01').valueOf())
+  })
+})
+
+describe('getTimeDiff', () => {
+  it('should return the correct difference in days', () => {
+    expect(getTimeDiff(dayjs('2024-06-05'), dayjs('2024-06-01'), 'day')).toBe(4)
+    expect(
+      getTimeDiff(
+        dayjs('2024-06-05').add(1, 'hour'),
+        dayjs('2024-06-01'),
+        'day'
+      )
+    ).toBe(4)
+  })
+
+  it('should return the correct difference in weeks', () => {
+    expect(getTimeDiff(dayjs('2024-06-05'), dayjs('2024-05-22'), 'week')).toBe(
+      2
+    )
+    expect(
+      getTimeDiff(
+        dayjs('2024-06-05').add(1, 'day'),
+        dayjs('2024-05-22'),
+        'week'
+      )
+    ).toBe(2.142857142857143)
+  })
+
+  it('should return the correct difference in months', () => {
+    expect(getTimeDiff(dayjs('2024-06-05'), dayjs('2024-04-05'), 'month')).toBe(
+      2
+    )
+    expect(getTimeDiff(dayjs('2024-06-05'), dayjs('2024-04-04'), 'month')).toBe(
+      2.032258064516129
+    )
+  })
+
+  it('should return the correct difference in years', () => {
+    expect(getTimeDiff(dayjs('2024-06-05'), dayjs('2023-06-05'), 'year')).toBe(
+      1
+    )
+    expect(getTimeDiff(dayjs('2024-06-05'), dayjs('2023-06-04'), 'year')).toBe(
+      1.0026881720430108
+    )
   })
 })

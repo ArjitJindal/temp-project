@@ -20,6 +20,7 @@ import {
   RuleAggregationVariable,
   RuleAggregationVariableTimeWindow,
   RuleEntityVariable,
+  RuleType,
 } from '@/apis';
 import Select from '@/components/library/Select';
 import SelectionGroup from '@/components/library/SelectionGroup';
@@ -54,6 +55,7 @@ export type FormRuleAggregationVariable = Partial<RuleAggregationVariable> & {
   timeWindow: RuleAggregationVariableTimeWindow;
 };
 interface AggregationVariableFormProps {
+  ruleType: RuleType;
   variable: FormRuleAggregationVariable;
   isNew: boolean;
   entityVariables: RuleEntityVariable[];
@@ -85,6 +87,7 @@ function swapOriginAndDestination(text?: string): string {
 }
 
 export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = ({
+  ruleType,
   variable,
   entityVariables,
   isNew,
@@ -280,24 +283,28 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               options={[{ value: 'TRANSACTION', label: 'Transaction' }]}
             />
           </Label>
-          <Label label="Check transactions for" required={{ value: true, showHint: true }}>
-            <SelectionGroup
-              value={formValues.type}
-              onChange={(type) => handleUpdateForm({ type })}
-              mode={'SINGLE'}
-              options={TYPE_OPTIONS}
-              testName="variable-type-v8"
-            />
-          </Label>
-          <Label label={`Check for sender / receiver`} required={{ value: true, showHint: true }}>
-            <SelectionGroup
-              value={formValues.userDirection ?? 'SENDER_OR_RECEIVER'}
-              onChange={(userDirection) => handleUpdateForm({ userDirection })}
-              mode={'SINGLE'}
-              options={USER_DIRECTION_OPTIONS}
-              testName="variable-user-direction-v8"
-            />
-          </Label>
+          {ruleType === 'TRANSACTION' && (
+            <Label label="Check transactions for" required={{ value: true, showHint: true }}>
+              <SelectionGroup
+                value={formValues.type}
+                onChange={(type) => handleUpdateForm({ type })}
+                mode={'SINGLE'}
+                options={TYPE_OPTIONS}
+                testName="variable-type-v8"
+              />
+            </Label>
+          )}
+          {ruleType === 'TRANSACTION' && (
+            <Label label={`Check for sender / receiver`} required={{ value: true, showHint: true }}>
+              <SelectionGroup
+                value={formValues.userDirection ?? 'SENDER_OR_RECEIVER'}
+                onChange={(userDirection) => handleUpdateForm({ userDirection })}
+                mode={'SINGLE'}
+                options={USER_DIRECTION_OPTIONS}
+                testName="variable-user-direction-v8"
+              />
+            </Label>
+          )}
           <Label
             label={`Check for ${
               formValues.type === 'USER_TRANSACTIONS' ? 'user' : 'Payment ID'
@@ -448,6 +455,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
           )}
         </div>
         <AggregationVariableSummary
+          ruleType={ruleType}
           variableFormValues={formValues}
           entityVariables={entityVariables}
         />
@@ -457,6 +465,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
 };
 
 interface AggregationVariableSummaryProps {
+  ruleType: RuleType;
   variableFormValues: FormRuleAggregationVariable;
   entityVariables: RuleEntityVariable[];
 }
@@ -475,6 +484,7 @@ function formatTimeWindow(timeWindow: RuleAggregationTimeWindow): string {
 }
 
 const AggregationVariableSummary: React.FC<AggregationVariableSummaryProps> = ({
+  ruleType,
   variableFormValues,
   entityVariables,
 }) => {
@@ -529,11 +539,13 @@ const AggregationVariableSummary: React.FC<AggregationVariableSummaryProps> = ({
       ? 'receiving'
       : 'sending or receiving';
   const userDirectionLabel =
-    userDirection === 'SENDER'
-      ? 'sender'
-      : userDirection === 'RECEIVER'
-      ? 'receiver'
-      : 'sender or receiver';
+    ruleType === 'TRANSACTION'
+      ? userDirection === 'SENDER'
+        ? 'sender '
+        : userDirection === 'RECEIVER'
+        ? 'receiver '
+        : 'sender or receiver '
+      : '';
   const userLabel = type === 'USER_TRANSACTIONS' ? 'user' : 'payment ID';
   const filtersCount = filtersLogic?.and?.length ?? filtersLogic?.or?.length ?? 0;
 
@@ -550,7 +562,8 @@ const AggregationVariableSummary: React.FC<AggregationVariableSummaryProps> = ({
     ) : undefined,
     'by a',
     <b>
-      {userDirectionLabel} {userLabel}
+      {userDirectionLabel}
+      {userLabel}
     </b>,
     'from',
     <b>{formatTimeWindow(timeWindow.end)}</b>,

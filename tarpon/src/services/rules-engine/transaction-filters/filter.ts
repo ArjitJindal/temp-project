@@ -40,7 +40,7 @@ export abstract class TransactionRuleFilter<P> extends RuleFilter {
           tenantId: '',
           baseCurrency: migratedFilter?.baseCurrency,
         },
-        { transaction: this.transaction }
+        { type: 'TRANSACTION', transaction: this.transaction }
       )
     ).hit
   }

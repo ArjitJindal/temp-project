@@ -164,12 +164,10 @@ export class RuleInstanceService {
       )
     }
 
-    // TODO (V8): FR-3985
-    const type = rule ? rule.type : ruleInstance.type ?? 'TRANSACTION'
     const now = Date.now()
     const updatedRuleInstance =
       await this.ruleInstanceRepository.createOrUpdateRuleInstance(
-        { ...ruleInstance, type, mode: ruleInstance.mode },
+        { ...ruleInstance, type: ruleInstance.type, mode: ruleInstance.mode },
         undefined
       )
 

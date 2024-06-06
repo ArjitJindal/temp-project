@@ -94,6 +94,7 @@ export default function RuleConfigurationV8(props: Props) {
         <div className={s.root}>
           <RuleConfigurationFormV8
             ref={formRef}
+            mode={type}
             rule={rule}
             formInitialValues={formInitialValues}
             readOnly={readOnly || type === 'READ'}

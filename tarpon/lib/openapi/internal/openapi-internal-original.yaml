@@ -6681,6 +6681,8 @@ components:
           type: string
         mode:
           $ref: '#/components/schemas/RuleMode'
+        userRuleRunCondition:
+          $ref: '#/components/schemas/UserRuleRunCondition'
       required:
         - casePriority
         - nature
@@ -6688,6 +6690,31 @@ components:
         - checksFor
         - type
         - mode
+    UserRuleRunCondition:
+      title: UserRuleRunCondition
+      type: object
+      properties:
+        entityUpdated:
+          type: boolean
+        schedule:
+          type: object
+          properties:
+            value:
+              type: number
+            unit:
+              $ref: '#/components/schemas/UserRuleScheduleUnit'
+          required:
+            - value
+            - unit
+      required:
+        - entityUpdated
+    UserRuleScheduleUnit:
+      title: UserRuleScheduleUnit
+      type: string
+      enum:
+        - WEEK
+        - MONTH
+        - YEAR
     RuleInstanceStatus:
       title: RuleInstanceStatus
       type: string

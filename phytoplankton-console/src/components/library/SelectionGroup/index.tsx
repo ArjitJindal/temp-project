@@ -18,6 +18,7 @@ interface CommonProps<Value extends SelectionGroupValueType> {
   name?: string; // todo: generalize
   options: Option<Value>[];
   testName?: string;
+  optionFixedWidth?: number;
 }
 
 interface MultipleProps<Value extends SelectionGroupValueType>
@@ -37,7 +38,7 @@ type Props<Value extends SelectionGroupValueType> = MultipleProps<Value> | Singl
 export default function SelectionGroup<
   Value extends SelectionGroupValueType = SelectionGroupValueType,
 >(props: Props<Value>) {
-  const { mode, options, testName } = props;
+  const { mode, options, testName, optionFixedWidth } = props;
   const isSingle = props.mode === 'SINGLE';
   const values: SelectionGroupValueType[] = isSingle
     ? props.value
@@ -53,6 +54,7 @@ export default function SelectionGroup<
           <label
             key={String(option.value)}
             className={cn(s.option, isActive && s.isActive, option.isDisabled && s.isDisabled)}
+            style={optionFixedWidth ? { width: optionFixedWidth, maxWidth: 'unset' } : undefined}
           >
             <div className={s.top}>
               {isSingle ? (

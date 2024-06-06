@@ -8,6 +8,7 @@ import {
   RuleAction,
   RuleAggregationVariable,
   RuleEntityVariableInUse,
+  RuleType,
   TriggersOnHit,
 } from '@/apis';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
@@ -51,7 +52,7 @@ export const INITIAL_VALUES: Partial<RuleIsHitWhenStepFormValues> = {
   ruleAction: 'FLAG',
 };
 
-export default function RuleIsHitWhenStep(props: { readOnly?: boolean }) {
+export default function RuleIsHitWhenStep(props: { ruleType: RuleType; readOnly?: boolean }) {
   const aggVariablesFieldState = useFieldState<
     RuleIsHitWhenStepFormValues,
     'ruleLogicAggregationVariables'
@@ -76,6 +77,7 @@ export default function RuleIsHitWhenStep(props: { readOnly?: boolean }) {
   return (
     <div className={s.root}>
       <VariableDefinitionCard
+        ruleType={props.ruleType}
         readOnly={props.readOnly}
         entityVariables={entityVariablesFieldState.value}
         aggregationVariables={aggVariablesFieldState.value}

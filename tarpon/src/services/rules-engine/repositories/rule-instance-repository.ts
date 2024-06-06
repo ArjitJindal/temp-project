@@ -60,6 +60,7 @@ function toRuleInstance(item: any): RuleInstance {
     checksFor: item.checksFor,
     createdBy: item.createdBy,
     mode: item.mode,
+    userRuleRunCondition: item.userRuleRunCondition,
   }
 }
 
@@ -219,20 +220,19 @@ export class RuleInstanceRepository {
   }
 
   public async getActiveRuleInstances(
-    type: RuleType
+    type?: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {
     const status: RuleInstanceStatus = 'ACTIVE'
-    return this.getRuleInstances({
-      FilterExpression: '#status = :status AND #type = :type ',
+    const ruleInstances = await this.getRuleInstances({
+      FilterExpression: '#status = :status',
       ExpressionAttributeValues: {
         ':status': status,
-        ':type': type,
       },
       ExpressionAttributeNames: {
         '#status': 'status',
-        '#type': 'type',
       },
     })
+    return type ? ruleInstances.filter((r) => r.type === type) : ruleInstances
   }
 
   public async getAllRuleInstances(mode?: RuleMode): Promise<RuleInstance[]> {

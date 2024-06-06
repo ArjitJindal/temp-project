@@ -7,7 +7,7 @@ import CreationIntervalInput, { AlertCreationInterval } from './CreationInterval
 import { FrozenStatusesInput } from './FrozenStatusInput';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import InputField from '@/components/library/Form/InputField';
-import { AlertCreationDirection, DerivedStatus, Priority } from '@/apis';
+import { AlertCreationDirection, DerivedStatus, Priority, RuleType } from '@/apis';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { ALERT_CREATED_FOR, AlertCreatedForEnum, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
 import Select from '@/components/library/Select';
@@ -38,9 +38,7 @@ export const INITIAL_VALUES: Partial<FormValues> = {
   frozenStatuses: [],
 };
 
-interface Props {}
-
-export default function AlertCreationDetailsStep(_props: Props) {
+export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) {
   return (
     <Card.Root>
       <Card.Section>
@@ -60,47 +58,52 @@ export default function AlertCreationDetailsStep(_props: Props) {
                   />
                 )}
               </InputField>
-              <InputField<FormValues, 'alertCreatedFor'>
-                name={'alertCreatedFor'}
-                label={'Alert created for'}
-                labelProps={{ required: true }}
-              >
-                {(inputProps) => (
-                  <SelectionGroup<AlertCreatedForEnum>
-                    mode="MULTIPLE"
-                    options={ALERT_CREATED_FOR}
-                    {...inputProps}
-                  />
-                )}
-              </InputField>
-              <InputField<FormValues, 'alertCreationDirection'>
-                name={'alertCreationDirection'}
-                label={'Alert creation direction'}
-                labelProps={{ required: true }}
-              >
-                {(inputProps) => (
-                  <Select<AlertCreationDirection>
-                    allowClear={false}
-                    options={[
-                      { value: 'AUTO', label: 'Auto (based on the rule logic)' },
-                      {
-                        value: 'AUTO_ORIGIN',
-                        label: 'Auto (based on the rule logic, but only create for origin user)',
-                      },
-                      {
-                        value: 'AUTO_DESTINATION',
-                        label:
-                          'Auto (based on the rule logic, but only create for destination user)',
-                      },
-                      { value: 'ORIGIN', label: 'Origin user' },
-                      { value: 'DESTINATION', label: 'Destination user' },
-                      { value: 'ALL', label: 'Both origin user and destination user' },
-                    ]}
-                    {...inputProps}
-                    value={inputProps.value ?? 'AUTO'}
-                  />
-                )}
-              </InputField>
+              {props.ruleType === 'TRANSACTION' && (
+                <>
+                  <InputField<FormValues, 'alertCreatedFor'>
+                    name={'alertCreatedFor'}
+                    label={'Alert created for'}
+                    labelProps={{ required: true }}
+                  >
+                    {(inputProps) => (
+                      <SelectionGroup<AlertCreatedForEnum>
+                        mode="MULTIPLE"
+                        options={ALERT_CREATED_FOR}
+                        {...inputProps}
+                      />
+                    )}
+                  </InputField>
+                  <InputField<FormValues, 'alertCreationDirection'>
+                    name={'alertCreationDirection'}
+                    label={'Alert creation direction'}
+                    labelProps={{ required: true }}
+                  >
+                    {(inputProps) => (
+                      <Select<AlertCreationDirection>
+                        allowClear={false}
+                        options={[
+                          { value: 'AUTO', label: 'Auto (based on the rule logic)' },
+                          {
+                            value: 'AUTO_ORIGIN',
+                            label:
+                              'Auto (based on the rule logic, but only create for origin user)',
+                          },
+                          {
+                            value: 'AUTO_DESTINATION',
+                            label:
+                              'Auto (based on the rule logic, but only create for destination user)',
+                          },
+                          { value: 'ORIGIN', label: 'Origin user' },
+                          { value: 'DESTINATION', label: 'Destination user' },
+                          { value: 'ALL', label: 'Both origin user and destination user' },
+                        ]}
+                        {...inputProps}
+                        value={inputProps.value ?? 'AUTO'}
+                      />
+                    )}
+                  </InputField>
+                </>
+              )}
               <InputField<FormValues, 'alertCreationInterval'>
                 name={'alertCreationInterval'}
                 label={'Alert creation interval'}
