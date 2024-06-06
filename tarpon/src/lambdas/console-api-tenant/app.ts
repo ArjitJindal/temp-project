@@ -36,7 +36,11 @@ import {
   RuleQueuesService,
 } from '@/services/tenants/rule-queue-service'
 import { getFullTenantId } from '@/utils/tenant'
-import { addSentryExtras, tenantSettings } from '@/core/utils/context'
+import {
+  addSentryExtras,
+  getContext,
+  tenantSettings,
+} from '@/core/utils/context'
 import { getAuth0Domain, isWhitelabelAuth0Domain } from '@/utils/auth0-utils'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
@@ -147,6 +151,26 @@ export const tenantsHandler = lambdaApi()(
           assertHasDangerousTenantDelete()
         }
       }
+
+      const user = getContext()?.user
+
+      if (
+        user?.role === 'root' &&
+        tenantSettingsCurrent.isProductionAccessEnabled === false
+      ) {
+        const isAnyKeyOutsideRootOnlySettings = Object.keys(
+          changedTenantSettings
+        ).some(
+          (key) => !ROOT_ONLY_SETTINGS.includes(key as keyof TenantSettings)
+        )
+
+        if (isAnyKeyOutsideRootOnlySettings) {
+          throw new createHttpError.Forbidden(
+            'Root users can only change root-only settings when production access is disabled'
+          )
+        }
+      }
+
       const tenantService = new TenantService(ctx.tenantId, {
         dynamoDb,
         mongoDb,

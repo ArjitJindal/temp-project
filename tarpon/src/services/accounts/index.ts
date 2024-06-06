@@ -494,16 +494,7 @@ export class AccountsService {
       return tenants
     }
 
-    return tenants.map((tenant) => {
-      if (user?.allowedRegions?.includes(tenant.region)) {
-        return tenant
-      }
-
-      return {
-        ...tenant,
-        isProductionAccessDisabled: true,
-      }
-    })
+    return tenants
   }
 
   async changeUserTenant(

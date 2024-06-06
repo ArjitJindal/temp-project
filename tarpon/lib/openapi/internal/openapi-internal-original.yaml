@@ -2578,6 +2578,8 @@ paths:
     get:
       summary: Tenant - List
       operationId: get-tenants-list
+      x-flagright:
+        alwaysAllowedAccess: true
       responses:
         '200':
           description: OK
@@ -2590,6 +2592,8 @@ paths:
     post:
       summary: Tenant - Create
       operationId: post-create-tenant
+      x-flagright:
+        alwaysAllowedAccess: true
       responses:
         '200':
           description: OK
@@ -2607,6 +2611,8 @@ paths:
     get:
       summary: Tenant - Get Settings
       operationId: get-tenants-settings
+      x-flagright:
+        alwaysAllowedAccess: true
       responses:
         '200':
           description: OK
@@ -2618,6 +2624,8 @@ paths:
     post:
       summary: Tenant - POST Settings
       operationId: post-tenants-settings
+      x-flagright:
+        alwaysAllowedAccess: true
       responses:
         '200':
           description: OK
@@ -2797,6 +2805,8 @@ paths:
     post:
       summary: Account - Change Tenant
       operationId: accounts-change-tenant
+      x-flagright:
+        alwaysAllowedAccess: true
       requestBody:
         content:
           application/json:
@@ -2838,6 +2848,8 @@ paths:
     get:
       summary: Account - Change Settings
       operationId: account-get-settings
+      x-flagright:
+        alwaysAllowedAccess: true
       responses:
         '200':
           description: OK
@@ -2851,6 +2863,8 @@ paths:
       deprecated: true
       summary: Account - Change Settings
       operationId: account-change-settings
+      x-flagright:
+        alwaysAllowedAccess: true
       requestBody:
         content:
           application/json:

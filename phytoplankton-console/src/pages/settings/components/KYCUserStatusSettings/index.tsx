@@ -25,12 +25,12 @@ export const KYCUserStatusSettings = () => {
       title="KYC/user status lock"
       description="When enabled, prevents editing of 'KYC status' and 'User status' fields on user details page."
     >
-      <Tooltip title={isAtLeastAdmin(user) ? 'User must be at least an admin' : ''}>
+      <Tooltip title={!isAtLeastAdmin(user) ? 'User must be at least an admin' : ''}>
         <Toggle
           value={settings.kycUserStatusLock}
           onChange={settings.kycUserStatusLock ? handleDisable : handleEnable}
           loading={mutateTenantSettings.isLoading}
-          disabled={isAtLeastAdmin(user)}
+          disabled={!isAtLeastAdmin(user)}
         />
       </Tooltip>
     </SettingsCard>

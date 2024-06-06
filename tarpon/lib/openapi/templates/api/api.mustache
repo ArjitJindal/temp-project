@@ -117,3 +117,15 @@ export const {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecas
   {{/operation}}
 {{/operations}}
 }
+
+export const {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_ALWAYS_ALLOWED: {[key: string]: boolean} = {
+{{#operations}}
+  {{#operation}}
+    "{{path}}-{{httpMethod}}": {{#vendorExtensions.x-flagright.alwaysAllowedAccess}}true{{/vendorExtensions.x-flagright.alwaysAllowedAccess}}{{^vendorExtensions.x-flagright.alwaysAllowedAccess}}false{{/vendorExtensions.x-flagright.alwaysAllowedAccess}},
+  {{/operation}}
+{{/operations}}
+};
+
+export function getAlwaysAllowedAccess(resource: string, method: string): boolean {
+    return {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_ALWAYS_ALLOWED[`${resource}-${method}`]
+}

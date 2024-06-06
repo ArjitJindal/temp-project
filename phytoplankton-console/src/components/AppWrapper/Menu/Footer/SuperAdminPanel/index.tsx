@@ -141,16 +141,19 @@ export default function SuperAdminPanel() {
           value: tenant.id,
           label: (
             <Space>
-              {tenant.name} {tags}
+              {tenant.name} {tags} {tenant.isProductionAccessDisabled ? '🔒' : ''}
             </Space>
           ),
-          isDisabled: tenant.isProductionAccessDisabled ?? false,
+          isDisabled:
+            user.allowedRegions?.length && !user.allowedRegions.includes(tenant.region || '')
+              ? true
+              : false,
           labelText: `${tenant.name} ${tenant.id} ${tenant.region} ${tenant.whitelabel?.name}`,
         };
 
         return option;
       }),
-    [tenants],
+    [tenants, user.allowedRegions],
   );
 
   const handleChangeTenant = async (newTenantId: string) => {

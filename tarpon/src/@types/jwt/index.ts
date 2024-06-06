@@ -37,9 +37,22 @@ export function assertCurrentUserRoleAboveAdmin() {
   )
 }
 
+export function assertProductionAccess() {
+  const settings = getContext()?.settings
+  const user = currentUser()
+
+  if (envIsNot('prod')) {
+    return
+  }
+
+  // Explicitly check for false, as undefined means tenantSettings it is available
+  if (settings?.isProductionAccessEnabled === false && user?.role === 'root') {
+    throw new Forbidden('Production access is disabled')
+  }
+}
+
 export function assertAllowAccessTenant() {
   const user = currentUser()
-  const tenantSettings = getContext()?.settings
 
   if (envIsNot('prod')) {
     return
@@ -50,11 +63,6 @@ export function assertAllowAccessTenant() {
   }
 
   const currentRegion = process.env.REGION as string
-
-  // Explicitly check for false, as undefined means tenantSettings it is available
-  if (tenantSettings?.isProductionAccessEnabled === false) {
-    throw new Forbidden('Production access is disabled')
-  }
 
   if (!user?.allowedRegions?.length) {
     return
