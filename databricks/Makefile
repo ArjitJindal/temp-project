@@ -37,5 +37,5 @@ generate-api:
 
 patch:
 	poetry build
-	aws s3 cp dist/src-0.1.0-py3-none-any.whl s3://flagright-datalake-dev-eu-1/src-0.1.0-py3-none-any.whl
-	aws s3 cp ./data/currency_rates_backfill.json s3://flagright-datalake-dev-eu-1/currency_rates_backfill.json
+	aws s3 cp dist/src-0.1.0-py3-none-any.whl s3://flagright-datalake-dev-eu-1-bucket/src-0.1.0-py3-none-any.whl
+	aws s3 cp ./data/currency_rates_backfill.json s3://flagright-datalake-dev-eu-1-bucket/currency_rates_backfill.json

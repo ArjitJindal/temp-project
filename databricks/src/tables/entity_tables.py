@@ -77,33 +77,28 @@ class EntityTables:
         ).withColumn("date", to_date(col("approximateArrivalTimestamp")))
 
         print("Refresh from backfill and kinesis tables")
-        tenants = self.table_service.tenant_schemas()
 
-        def write(tenant: str, df: DataFrame, mode: str):
+        def write(df: DataFrame, mode: str):
             if entity.enrichment_fn is not None:
                 df = entity.enrichment_fn(df, self.table_service.read_table)
             if "_id" in df.columns:
                 df = df.drop("_id")
             self.table_service.write_table(
                 entity.table,
-                df.filter(df["tenant"] == tenant),
+                df,
                 partitions=["tenant", "date"],
-                schema=schema,
+                schema="main",
                 mode=mode,
             )
 
-        for tenant in tenants:
-            self.spark.sql(f"create database if not exists `{tenant}`")
-            schema = f"`{tenant}`"
+        deduped_kinesis_df = kinesis_df.dropDuplicates(["tenant", entity.id_column])
+        deduped_backfill_df = backfill_df.join(
+            deduped_kinesis_df, entity.id_column, "left_anti"
+        )
+        write(deduped_backfill_df, "overwrite")
+        write(deduped_kinesis_df, "append")
 
-            deduped_kinesis_df = kinesis_df.dropDuplicates(["tenant", entity.id_column])
-            deduped_backfill_df = backfill_df.join(
-                deduped_kinesis_df, entity.id_column, "left_anti"
-            )
-            write(tenant, deduped_backfill_df, "overwrite")
-            write(tenant, deduped_kinesis_df, "append")
-
-            self.table_service.optimize(f"{schema}.{entity.table}")
+        self.table_service.optimize(f"main.{entity.table}")
 
     def start_streams(self, entity: Entity):
         df = cdc_transformation(
@@ -117,11 +112,11 @@ class EntityTables:
     def create_entity_stream(self, df: DataFrame, entity: Entity):
         print(f"Setting up {entity.table} table stream")
 
-        tenants = self.table_service.tenant_schemas()
-        for tenant in tenants:
-            self.table_service.prepare_table_for_df(df, f"`{tenant}`.`{entity.table}`")
+        self.table_service.prepare_table_for_df(df, f"main.{entity.table}")
 
-        matcher_condition = f"s.{entity.id_column} = t.{entity.id_column}"
+        matcher_condition = (
+            f"s.{entity.id_column} = t.{entity.id_column} and s.tenant = t.tenant"
+        )
         id_column = entity.id_column
         timestamp_column = entity.timestamp_column
         table = entity.table
@@ -139,27 +134,20 @@ class EntityTables:
             )
 
             spark = micro_batch_output_df.sparkSession
+            delta_table = f"main.{table}"
 
-            for tenant in (
-                latest_updates_df.select("tenant")
-                .distinct()
-                .rdd.flatMap(lambda x: x)
-                .collect()
-            ):
-                delta_table = f"`{tenant}`.{table}"
-
-                # Perform merge operation using Delta Lake
-                (
-                    DeltaTable.forName(spark, delta_table)
-                    .alias("t")
-                    .merge(
-                        latest_updates_df.alias("s"),
-                        f"{matcher_condition} AND s.tenant = '{tenant}'",
-                    )
-                    .whenMatchedUpdateAll()
-                    .whenNotMatchedInsertAll()
-                    .execute()
+            # Perform merge operation using Delta Lake
+            (
+                DeltaTable.forName(spark, delta_table)
+                .alias("t")
+                .merge(
+                    latest_updates_df.alias("s"),
+                    matcher_condition,
                 )
+                .whenMatchedUpdateAll()
+                .whenNotMatchedInsertAll()
+                .execute()
+            )
 
         checkpoint_id = self.version_service.get_pipeline_checkpoint_id()
         return (
@@ -179,7 +167,7 @@ class EntityTables:
         suffix = f"-{mongo_table}"
 
         # List the collections and process each
-        tenants = self.table_service.tenant_schemas()
+        tenants = self.table_service.tenants()
         tenants_upper_lower = [
             (
                 s.upper()

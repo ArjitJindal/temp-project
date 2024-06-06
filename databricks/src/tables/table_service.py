@@ -129,7 +129,7 @@ class TableService:
         print(f"Clearing {schema}.{table_name}")
         self.spark.sql(f"DROP TABLE IF EXISTS {schema}.{table_name}")
 
-    def tenant_schemas(self):
+    def tenants(self):
         return os.environ["TENANTS"].split(",")
 
     def optimize(self, table: str):

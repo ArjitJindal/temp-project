@@ -90,11 +90,6 @@ class Jobs:
 
         self.currency_table.start_stream()
 
-        print("Preparing tenant databases")
-        tenants = self.table_service.tenant_schemas()
-        for tenant in tenants:
-            self.spark.sql(f"create database if not exists `{tenant}`")
-
         for entity in entities:
             print(f"\n\n===== Setting up {entity.table} ======")
             self.entity_tables.start_streams(entity)
@@ -103,6 +98,4 @@ class Jobs:
 
     def optimize(self):
         for entity in entities:
-            tenants = self.table_service.tenant_schemas()
-            for tenant in tenants:
-                self.table_service.optimize_yesterday(f"`{tenant}`.{entity.table}")
+            self.table_service.optimize_yesterday(f"main.{entity.table}")
