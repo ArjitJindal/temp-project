@@ -291,23 +291,6 @@ export async function syncIndexes<T>(
   indexes: { index: Document; unique?: boolean }[]
 ) {
   const currentIndexes = await collection.indexes()
-
-  // Remove orphaned indexes
-  for (const index of currentIndexes) {
-    // Dont drop ID index
-    if (index.name === '_id_') {
-      continue
-    }
-
-    // If index is not desired, delete it
-    if (!indexes.find((desired) => isEqual(desired.index, index.key))) {
-      await collection.dropIndex(index.name)
-      logger.info(
-        `Dropped index - ${index.name} (${collection.collectionName})`
-      )
-    }
-  }
-
   const indexesToCreate = indexes.filter(
     (desired) =>
       !currentIndexes.find((current) => isEqual(desired.index, current.key))
@@ -326,6 +309,24 @@ export async function syncIndexes<T>(
         `Created index - ${JSON.stringify(index)} (${
           collection.collectionName
         })`
+      )
+    }
+  }
+
+  // NOTE: We remove orphaned indexes after the new indexes are created as those indexes could be
+  // created manually for urgent fix. Removing it first could cause performance downgrade before the
+  // new ones are created.
+  for (const index of currentIndexes) {
+    // Don't drop ID index
+    if (index.name === '_id_') {
+      continue
+    }
+
+    // If index is not desired, delete it
+    if (!indexes.find((desired) => isEqual(desired.index, index.key))) {
+      await collection.dropIndex(index.name)
+      logger.info(
+        `Dropped index - ${index.name} (${collection.collectionName})`
       )
     }
   }
