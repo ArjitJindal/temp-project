@@ -310,6 +310,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           'transactionId',
           'transactionState',
           'type',
+          'alertIds',
         ].flatMap((i) => {
           return [{ [i]: 1, _id: 1 }]
         })
