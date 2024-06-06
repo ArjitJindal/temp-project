@@ -219,14 +219,18 @@ class DatabricksStack extends TerraformStack {
       workspaceProvider,
     })
 
-    this.awsWorkspace({
-      availabilityZone: `${awsRegion}a`,
-      vpcId: vpcId,
-      subnetId: Fn.element(subnetIds, 0),
-    })
+    this.awsWorkspace(
+      config.databricks.CREATE_VPC
+        ? undefined
+        : {
+            availabilityZone: `${awsRegion}a`,
+            vpcId: vpcId,
+            subnetId: Fn.element(subnetIds, 0),
+          }
+    )
   }
 
-  private awsWorkspace(vpc: {
+  private awsWorkspace(vpc?: {
     availabilityZone: string
     vpcId: string
     subnetId: string
@@ -364,46 +368,49 @@ class DatabricksStack extends TerraformStack {
         }
       )
     const mongoSecretValue = Fn.jsondecode(mongoSecretVersion.secretString)
+    const connections: string[] = []
 
-    const sg = new aws.securityGroup.SecurityGroup(this, 'glue-sg', {
-      name: 'glue-sg',
-      vpcId: vpc.vpcId,
-    })
-    new aws.securityGroupRule.SecurityGroupRule(this, 'sg-ingress-rule', {
-      type: 'ingress',
-      securityGroupId: sg.id,
-      fromPort: 0,
-      toPort: 65535,
-      protocol: 'tcp',
-      selfAttribute: true,
-    })
-    new aws.securityGroupRule.SecurityGroupRule(this, 'sg-rule', {
-      type: 'egress',
-      securityGroupId: sg.id,
-      fromPort: 0,
-      toPort: 65535,
-      cidrBlocks: ['0.0.0.0/0'],
-      protocol: 'tcp',
-    })
-
-    const mongoConnection = new aws.glueConnection.GlueConnection(
-      this,
-      'mongo-connection',
-      {
-        connectionType: 'MONGODB',
-        connectionProperties: {
-          CONNECTION_URL: `mongodb+srv://${Fn.lookup(mongoSecretValue, 'host')}/tarpon`,
-          USERNAME: Fn.lookup(mongoSecretValue, 'username'),
-          PASSWORD: Fn.lookup(mongoSecretValue, 'password'),
-        },
-        name: 'mongo',
-        physicalConnectionRequirements: {
-          availabilityZone: vpc.availabilityZone,
-          securityGroupIdList: [sg.id],
-          subnetId: vpc.subnetId,
-        },
-      }
-    )
+    if (vpc) {
+      const sg = new aws.securityGroup.SecurityGroup(this, 'glue-sg', {
+        name: 'glue-sg',
+        vpcId: vpc.vpcId,
+      })
+      new aws.securityGroupRule.SecurityGroupRule(this, 'sg-ingress-rule', {
+        type: 'ingress',
+        securityGroupId: sg.id,
+        fromPort: 0,
+        toPort: 65535,
+        protocol: 'tcp',
+        selfAttribute: true,
+      })
+      new aws.securityGroupRule.SecurityGroupRule(this, 'sg-rule', {
+        type: 'egress',
+        securityGroupId: sg.id,
+        fromPort: 0,
+        toPort: 65535,
+        cidrBlocks: ['0.0.0.0/0'],
+        protocol: 'tcp',
+      })
+      const mongoConnection = new aws.glueConnection.GlueConnection(
+        this,
+        'mongo-connection',
+        {
+          connectionType: 'MONGODB',
+          connectionProperties: {
+            CONNECTION_URL: `mongodb+srv://${Fn.lookup(mongoSecretValue, 'host')}/tarpon`,
+            USERNAME: Fn.lookup(mongoSecretValue, 'username'),
+            PASSWORD: Fn.lookup(mongoSecretValue, 'password'),
+          },
+          name: 'mongo',
+          physicalConnectionRequirements: {
+            availabilityZone: vpc.availabilityZone,
+            securityGroupIdList: [sg.id],
+            subnetId: vpc.subnetId,
+          },
+        }
+      )
+      connections.push(mongoConnection.name)
+    }
 
     jobs.map((job) => {
       const script = new aws.s3Object.S3Object(this, `${job.name}-script`, {
@@ -415,7 +422,7 @@ class DatabricksStack extends TerraformStack {
         name: job.name,
         description: job.schedule,
         roleArn: profileRole.arn,
-        connections: [mongoConnection.name],
+        connections,
         command: {
           name: 'gluestreaming',
           scriptLocation: `s3://${datalakeBucket.bucket}/${script.key}`,
