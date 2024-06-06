@@ -26,7 +26,7 @@ async function updateNotionTickets() {
 async function notifySlack() {
   const slackClient = new WebClient(process.env.SLACK_TOKEN)
   const message = slackifyMarkdown(
-    `<!subteam^${QA_SLACK_USER_GROUP_ID}> Sandbox is ready for testing ([tickets](${READY_TO_TEST_TICKETS_URL}))`
+    `<!subteam^${QA_SLACK_USER_GROUP_ID}> Sandbox is ready for testing (<${READY_TO_TEST_TICKETS_URL}|tickets>)`
   )
   await slackClient.chat.postMessage({
     channel: DEPLOYMENT_SLACK_CHANNEL,
