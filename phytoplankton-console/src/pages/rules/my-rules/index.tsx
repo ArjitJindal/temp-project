@@ -2,7 +2,7 @@ import { Switch, Tooltip } from 'antd';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useLocalStorageState } from 'ahooks';
 import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
 import s from './style.module.less';
@@ -169,14 +169,9 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         type: {
           render: (ruleId, { item: entity }) => {
             return (
-              <a
-                onClick={() => {
-                  onViewRule(entity);
-                }}
-                id={entity.id ?? ''}
-              >
+              <Link to={makeUrl('/rules/my-rules/:id', { id: entity.id })}>
                 {getRuleInstanceDisplayId(ruleId, entity.id)}
-              </a>
+              </Link>
             );
           },
         },
@@ -383,7 +378,6 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   }, [
     props.simulationMode,
     onEditRule,
-    onViewRule,
     updatedRuleInstances,
     rules,
     canWriteRules,

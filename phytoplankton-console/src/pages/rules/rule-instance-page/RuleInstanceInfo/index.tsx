@@ -29,6 +29,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import AccountTag from '@/components/AccountTag';
 import DirectionLine from '@/components/ui/icons/Remix/map/direction-line.react.svg';
+import Tooltip from '@/components/library/Tooltip';
 
 interface Props {
   ruleInstance: RuleInstance;
@@ -150,6 +151,11 @@ export const RuleInstanceInfo = (props: Props) => {
               {humanizeAuto(ruleInstance.type)}
             </Form.Layout.Label>
             <Form.Layout.Label title={'Hit rate'}>
+              <Tooltip
+                title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}
+              >
+                {(percent ?? 0.0)?.toFixed(2)}%
+              </Tooltip>
               <RuleHitInsightsTag percentage={percent} runs={ruleInstance.runCount} />
             </Form.Layout.Label>
             <Form.Layout.Label title={'Rule nature'}>{ruleInstance.nature}</Form.Layout.Label>
