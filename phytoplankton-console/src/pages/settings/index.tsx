@@ -26,6 +26,9 @@ import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/Se
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 import { useHasPermissions } from '@/utils/user-utils';
+import Alert from '@/components/library/Alert';
+import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
+import { getOr } from '@/utils/asyncResource';
 
 export default function SettingsPage() {
   const isRiskScoreEnabled = useFeatureEnabled('RISK_SCORING');
@@ -45,6 +48,8 @@ export default function SettingsPage() {
   };
   const navigate = useNavigate();
   const i18n = useI18n();
+  const [isDemoModeRes] = useDemoMode();
+  const isDemoMode = getOr(isDemoModeRes, false);
   return (
     <PageWrapper title={i18n('menu.settings')}>
       <PageTabs
@@ -129,6 +134,13 @@ export default function SettingsPage() {
             isDisabled: !isDevelopersReadEnabled,
             children: (
               <>
+                {isDemoMode && (
+                  <div style={{ marginBottom: '8px' }}>
+                    <Alert type={'warning'} size="m">
+                      Please disable demo mode before testing the API.
+                    </Alert>
+                  </div>
+                )}
                 <ApiKeysSettings />
                 <QuotaSettings />
                 <WebhookSettings />
