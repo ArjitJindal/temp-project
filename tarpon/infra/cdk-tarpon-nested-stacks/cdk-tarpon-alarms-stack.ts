@@ -166,23 +166,23 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         // We only monitor consumed read/write capacity for production as we use on-demand
         // mode only in production & dev right now
 
-        const prodReadConfig = {
-          threshold: 600,
-          statistic: 'Maximum',
-          period: Duration.minutes(1),
-        }
-        const devReadConfig = {
-          threshold: 25,
-          statistic: 'Average',
-          period: Duration.minutes(5),
-        }
         createDynamoDBAlarm(
           this,
           this.betterUptimeCloudWatchTopic,
           `Dynamo${tableName}ConsumedReadCapacityUnits`,
           tableName,
           'ConsumedReadCapacityUnits',
-          this.config.stage === 'prod' ? prodReadConfig : devReadConfig
+          this.config.stage === 'prod'
+            ? {
+                threshold: 600,
+                statistic: 'Maximum',
+                period: Duration.minutes(1),
+              }
+            : {
+                threshold: 30,
+                statistic: 'Average',
+                period: Duration.minutes(5),
+              }
         )
         createDynamoDBAlarm(
           this,
@@ -190,11 +190,17 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           `Dynamo${tableName}ConsumedWriteCapacityUnits`,
           tableName,
           'ConsumedWriteCapacityUnits',
-          {
-            threshold: this.config.stage === 'prod' ? 300 : 40,
-            statistic: 'Maximum',
-            period: Duration.minutes(1),
-          }
+          this.config.stage === 'prod'
+            ? {
+                threshold: 300,
+                statistic: 'Maximum',
+                period: Duration.minutes(1),
+              }
+            : {
+                threshold: 30,
+                statistic: 'Average',
+                period: Duration.minutes(5),
+              }
         )
       }
     }
