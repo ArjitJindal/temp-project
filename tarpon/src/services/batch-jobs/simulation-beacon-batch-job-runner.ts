@@ -20,7 +20,6 @@ import { SimulationTaskRepository } from '@/services/simulation/repositories/sim
 import { SimulationBeaconSampling } from '@/@types/openapi-internal/SimulationBeaconSampling'
 
 const MAX_TRANSACTIONS = 10000
-const TIMEOUT = 14 * 60 * 1000
 
 type SimulatedTransactionHit = {
   transaction: InternalTransaction
@@ -33,16 +32,8 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   private rulesEngineService?: RulesEngineService
   private casesRepository?: CaseRepository
   private userRepository?: UserRepository
-  private timeout = false
-
-  private startTimer() {
-    setTimeout(() => {
-      this.timeout = true
-    }, TIMEOUT)
-  }
 
   protected async run(job: SimulationBeaconBatchJob): Promise<void> {
-    this.startTimer()
     const { tenantId, awsCredentials, parameters } = job
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()
@@ -112,6 +103,25 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     await simulationRepository.updateTaskStatus(parameters.taskId, 'SUCCESS')
   }
 
+  private async getTransactionsCount(
+    filters?: SimulationBeaconSampling['filters']
+  ): Promise<number> {
+    if (!this.transactionRepository) {
+      return 0
+    }
+
+    if (filters) {
+      return this.transactionRepository.getTransactionsCountByQuery({
+        timestamp: {
+          $lte: filters.beforeTimestamp,
+          $gte: filters.afterTimestamp,
+        },
+      })
+    }
+
+    return this.transactionRepository?.getAllTransactionsCount()
+  }
+
   private async getSimulationBeaconStatistics(
     executionDetails: SimulatedTransactionHit[],
     transactions: InternalTransaction[],
@@ -136,20 +146,21 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       originalFalsePositiveUsers,
       totalTransactions,
       transactionsHit,
-      usersHit,
     ] = await Promise.all([
-      this.userRepository?.getUsersCount() ?? 0,
+      this.transactionRepository?.getUsersCount(filters) ?? 0, // Count of Users in that particular time range ran by transactions
       defaultRuleInstance.id
         ? this.getFalsePositiveUserIdsByRuleInstance(defaultRuleInstance.id)
         : [],
-      this.transactionRepository?.getAllTransactionsCount() ?? 0,
+      this.getTransactionsCount(filters),
       defaultRuleInstance.id
         ? this.actualTransactionsHitCount(defaultRuleInstance.id, filters)
         : 0,
-      defaultRuleInstance.id
-        ? this.actualUsersHitCount(defaultRuleInstance.id, filters)
-        : 0,
     ])
+
+    const usersHit = defaultRuleInstance.id
+      ? this.getActualUsersHit(defaultRuleInstance.id, actualTransactionsRan)
+          .length
+      : 0
 
     const falsePositiveCasesCountSimulated =
       this.getSimulatedTransactionsFalsePositiveCount(
@@ -194,18 +205,6 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     }
   }
 
-  private async actualUsersHitCount(
-    ruleInstanceId: string,
-    filters?: SimulationBeaconSampling['filters']
-  ): Promise<number> {
-    return (
-      (await this.casesRepository?.getUserCountByRuleInstance(ruleInstanceId, {
-        beforeTimestamp: filters?.beforeTimestamp ?? Number.MAX_SAFE_INTEGER,
-        afterTimestamp: filters?.afterTimestamp ?? 0,
-      })) ?? 0
-    )
-  }
-
   private numberOfTransactionsHit(
     simulationTransactionsHit: SimulatedTransactionHit[]
   ): number {
@@ -219,23 +218,48 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     executionDetails: SimulatedTransactionHit[]
   ): string[] {
     return chain(executionDetails)
-      .flatMap(({ executedRules, transaction }) => {
-        const ruleHitDirection = executedRules.ruleHitMeta?.hitDirections
-        if (!ruleHitDirection?.length && executedRules.ruleHit) {
-          return [transaction.originUserId, transaction.destinationUserId]
+      .flatMap(({ executedRules, transaction }) =>
+        this.extractHitUserIds(executedRules, transaction)
+      )
+      .uniq()
+      .compact()
+      .value()
+  }
+
+  private getActualUsersHit(
+    ruleInstanceId: string,
+    transactions: InternalTransaction[]
+  ): string[] {
+    return chain(transactions)
+      .flatMap((transaction) => {
+        const executedRule = transaction.executedRules.find(
+          (executedRule) => executedRule.ruleInstanceId === ruleInstanceId
+        )
+
+        if (!executedRule) {
+          return []
         }
-        return [
-          ...(ruleHitDirection?.includes('ORIGIN')
-            ? [transaction.originUserId]
-            : []),
-          ...(ruleHitDirection?.includes('DESTINATION')
-            ? [transaction.destinationUserId]
-            : []),
-        ]
+
+        return this.extractHitUserIds(executedRule, transaction)
       })
       .uniq()
       .compact()
       .value()
+  }
+
+  private extractHitUserIds(
+    executedRules: ExecutedRulesResult,
+    transaction: InternalTransaction
+  ): (string | undefined)[] {
+    const { originUserId, destinationUserId } = transaction
+    const ruleHitDirection = executedRules.ruleHitMeta?.hitDirections
+    if (!ruleHitDirection?.length && executedRules.ruleHit) {
+      return [originUserId, destinationUserId]
+    }
+    return [
+      ...(ruleHitDirection?.includes('ORIGIN') ? [originUserId] : []),
+      ...(ruleHitDirection?.includes('DESTINATION') ? [destinationUserId] : []),
+    ]
   }
 
   private async getTransactions(
@@ -422,9 +446,6 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const executionResults = await pMap(
       transactions,
       async (transaction) => {
-        if (this.timeout) {
-          return
-        }
         try {
           const executedRules =
             await rulesEngineService.verifyTransactionForSimulation(
@@ -517,8 +538,13 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   ): number {
     const users = new Set()
     transactions.forEach((transaction) => {
-      users.add(transaction.originUserId)
-      users.add(transaction.destinationUserId)
+      if (transaction.originUserId) {
+        users.add(transaction.originUserId)
+      }
+
+      if (transaction.destinationUserId) {
+        users.add(transaction.destinationUserId)
+      }
     })
     return users.size
   }

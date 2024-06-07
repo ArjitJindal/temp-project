@@ -6,6 +6,7 @@ import {
   MongoClient,
 } from 'mongodb'
 import {
+  compact,
   difference,
   isEmpty,
   isNil,
@@ -594,13 +595,39 @@ export class MongoDbTransactionRepository
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    return await collection.estimatedDocumentCount()
+
+    return await collection.estimatedDocumentCount({})
+  }
+
+  public async getUsersCount(
+    filters?: OptionalPagination<DefaultApiGetTransactionsListRequest>
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+
+    const filter = filters
+      ? {
+          timestamp: {
+            $gte: filters.afterTimestamp,
+            $lte: filters.beforeTimestamp,
+          },
+        }
+      : {}
+
+    const [originUsers, destinationUsers] = await Promise.all([
+      collection.distinct('originUserId', filter),
+      collection.distinct('destinationUserId', filter),
+    ])
+
+    return compact(uniq([...originUsers, ...destinationUsers])).length
   }
 
   public async getTransactions(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<{ total: number; data: InternalTransaction[] }> {
-    const cursor = await this.getTransactionsCursor(params)
+    const cursor = this.getTransactionsCursor(params)
     const total = await this.getTransactionsCount(params)
     return { total, data: await cursor.toArray() }
   }
