@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { capitalize } from 'lodash';
 import { FormValues } from '..';
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
@@ -17,7 +18,7 @@ export function AlertAssignedToInput() {
       return Object.values(users).map((user) => ({ label: user?.email, value: user?.id }));
     } else {
       return roles
-        .map((role) => ({ label: role?.name ?? '', value: role?.id ?? '' }))
+        .map((role) => ({ label: capitalize(role?.name) ?? '', value: role?.id ?? '' }))
         .filter((data) => data.label !== '');
     }
   }, [users, roles, alertAssigneesTypeFieldState.value]);
