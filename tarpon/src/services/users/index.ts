@@ -41,7 +41,7 @@ import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { Business } from '@/@types/openapi-public/Business'
 import { getS3ClientByEvent } from '@/utils/s3'
-import { getContext, tenantHasFeature } from '@/core/utils/context'
+import { getContext, hasFeature } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserViewConfig } from '@/lambdas/console-api-user/app'
@@ -279,10 +279,7 @@ export class UserService {
     let originKycStatusDetails: KYCStatusDetailsInternal | undefined
     let destinationKycStatusDetails: KYCStatusDetailsInternal | undefined
 
-    const isRiskLevelsEnabled = await tenantHasFeature(
-      this.userRepository.tenantId,
-      'RISK_LEVELS'
-    )
+    const isRiskLevelsEnabled = hasFeature('RISK_LEVELS')
 
     let originKycStatusRID: RuleInstance | undefined
     let destinationKycStatusRID: RuleInstance | undefined

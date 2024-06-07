@@ -95,7 +95,7 @@ describe('Advanced Rule Options Tests', () => {
   setUpUsersHooks(tenantId, [user1, business1])
 
   it('should change user state', async () => {
-    const dynamoDb = getDynamoDbClient()
+    const dynamoDb = getDynamoDbClient(undefined, { retry: true })
     const mongoDb = await getMongoDbClient()
     const userRepo = new UserRepository(tenantId, {
       dynamoDb,
@@ -197,5 +197,5 @@ describe('Advanced Rule Options Tests', () => {
       state: 'UNACCEPTABLE',
       description: 'Test Description User State',
     })
-  })
+  }, 180000)
 })

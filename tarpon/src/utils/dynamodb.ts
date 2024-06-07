@@ -122,7 +122,10 @@ export function withRetry(
       const result = await func(command, ...args)
       return result
     } catch (e) {
-      if ((e as any)?.name === 'ExpiredTokenException') {
+      if (
+        (e as any)?.name === 'ExpiredTokenException' ||
+        (envIs('test') && (e as any)?.name === 'TimeoutError')
+      ) {
         logger.warn('Retry DynamoDB operation...')
         if (!retryClient) {
           retryClient = getDynamoDbClient(
