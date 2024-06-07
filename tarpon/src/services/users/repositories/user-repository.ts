@@ -1006,7 +1006,7 @@ export class UserRepository {
     )
     const commentToSave: Comment = {
       ...comment,
-      id: comment.id ?? uuidv4(),
+      id: uuidv4(),
       createdAt: comment.createdAt ?? Date.now(),
       updatedAt: comment.updatedAt ?? Date.now(),
     }

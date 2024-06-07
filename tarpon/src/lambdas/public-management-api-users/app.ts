@@ -24,11 +24,10 @@ export const userHandler = lambdaApi()(
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/users/{userId}/comments' &&
-      event.pathParameters?.userId &&
-      event.body
+      event.pathParameters?.userId
     ) {
       const userId = event.pathParameters?.userId
-      const payload = JSON.parse(event.body) as CommentRequest
+      const payload = JSON.parse(event.body || '{}') as CommentRequest
       return await userService.saveUserCommentExternal(userId, payload)
     } else if (
       event.httpMethod === 'GET' &&

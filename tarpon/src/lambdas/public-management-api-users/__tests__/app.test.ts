@@ -32,7 +32,6 @@ describe('Public Management API - Users', () => {
   })
   test('creates a comment', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const COMMENT_ID = 'TEST_COMMENT_ID'
     const response0 = await userCreationHandler(
       getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser),
       null as any,
@@ -47,7 +46,6 @@ describe('Public Management API - Users', () => {
         TEST_TENANT_ID,
         '/users/{userId}/comments',
         {
-          commentId: COMMENT_ID,
           body: 'This is a comment',
         },
         {
@@ -60,7 +58,6 @@ describe('Public Management API - Users', () => {
     )
     expect(response1?.statusCode).toBe(200)
     expect(JSON.parse(response1?.body as string)).toMatchObject({
-      commentId: COMMENT_ID,
       body: 'This is a comment',
       files: [],
     })
@@ -68,7 +65,6 @@ describe('Public Management API - Users', () => {
 
   test('gets all comments of a user', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const COMMENT_ID = 'TEST_COMMENT_ID'
     const response0 = await userCreationHandler(
       getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser),
       null as any,
@@ -83,7 +79,6 @@ describe('Public Management API - Users', () => {
         TEST_TENANT_ID,
         '/users/{userId}/comments',
         {
-          commentId: COMMENT_ID,
           body: 'This is a comment',
         },
         {
@@ -96,7 +91,6 @@ describe('Public Management API - Users', () => {
     )
     expect(response1?.statusCode).toBe(200)
     expect(JSON.parse(response1?.body as string)).toMatchObject({
-      commentId: COMMENT_ID,
       body: 'This is a comment',
       files: [],
     })
@@ -110,7 +104,6 @@ describe('Public Management API - Users', () => {
     expect(response2?.statusCode).toBe(200)
     expect(JSON.parse(response2?.body as string)).toMatchObject([
       {
-        commentId: COMMENT_ID,
         body: 'This is a comment',
         files: [],
       },
@@ -118,7 +111,7 @@ describe('Public Management API - Users', () => {
   })
   test('gets a comment', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const COMMENT_ID = 'TEST_COMMENT_ID'
+
     const response0 = await userCreationHandler(
       getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser),
       null as any,
@@ -133,7 +126,6 @@ describe('Public Management API - Users', () => {
         TEST_TENANT_ID,
         '/users/{userId}/comments',
         {
-          commentId: COMMENT_ID,
           body: 'This is a comment',
         },
         {
@@ -145,8 +137,8 @@ describe('Public Management API - Users', () => {
       null as any
     )
     expect(response1?.statusCode).toBe(200)
-    expect(JSON.parse(response1?.body as string)).toMatchObject({
-      commentId: COMMENT_ID,
+    const comment = JSON.parse(response1?.body as string)
+    expect(comment).toMatchObject({
       body: 'This is a comment',
       files: [],
     })
@@ -155,7 +147,7 @@ describe('Public Management API - Users', () => {
         TEST_TENANT_ID,
         '/users/{userId}/comments/{commentId}',
         {
-          pathParameters: { userId: '1', commentId: COMMENT_ID },
+          pathParameters: { userId: '1', commentId: comment.commentId },
         }
       ),
       null as any,
@@ -163,7 +155,6 @@ describe('Public Management API - Users', () => {
     )
     expect(response2?.statusCode).toBe(200)
     expect(JSON.parse(response2?.body as string)).toMatchObject({
-      commentId: COMMENT_ID,
       body: 'This is a comment',
       files: [],
     })
@@ -171,7 +162,6 @@ describe('Public Management API - Users', () => {
 
   test('deletes a comment', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const COMMENT_ID = 'TEST_COMMENT_ID'
     const response0 = await userCreationHandler(
       getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser),
       null as any,
@@ -186,7 +176,6 @@ describe('Public Management API - Users', () => {
         TEST_TENANT_ID,
         '/users/{userId}/comments',
         {
-          commentId: COMMENT_ID,
           body: 'This is a comment',
         },
         {
@@ -198,8 +187,8 @@ describe('Public Management API - Users', () => {
       null as any
     )
     expect(response1?.statusCode).toBe(200)
-    expect(JSON.parse(response1?.body as string)).toMatchObject({
-      commentId: COMMENT_ID,
+    const comment = JSON.parse(response1?.body as string)
+    expect(comment).toMatchObject({
       body: 'This is a comment',
       files: [],
     })
@@ -208,7 +197,7 @@ describe('Public Management API - Users', () => {
         TEST_TENANT_ID,
         '/users/{userId}/comments/{commentId}',
         {
-          pathParameters: { userId: '1', commentId: COMMENT_ID },
+          pathParameters: { userId: '1', commentId: comment.commentId },
         }
       ),
       null as any,

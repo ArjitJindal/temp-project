@@ -633,9 +633,10 @@ paths:
       security:
         - x-api-key: []
       summary: Retrieve User Comments
-      description: >
-        ## GET User Comments You can retrieve comments for a user using `GET
-        /users/{userId}/comments` endpoint.
+      description: |
+        ## GET User Comments
+
+        `GET /users/{userId}/comments` endpoint returns all comments for a user.
       operationId: get-user-comments
       parameters:
         - name: userId
@@ -660,10 +661,6 @@ paths:
                   value:
                     - commentId: 96647cfd9e8fe66ee0f3362e011e34e8
                       body: This is a comment
-                      files:
-                        - s3Key: s3://bucket/key
-                          filename: file.txt
-                          size: 1024
                       createdTimestamp: 1641654664000
         '400':
           description: Bad Request
@@ -682,11 +679,11 @@ paths:
     post:
       security:
         - x-api-key: []
-      summary: Create a Comment
+      summary: Create a User Comment
       description: >
-        ## POST User Comments You can create comments for a user using `POST
-        /users/{userId}/comments` endpoint.
+        ## POST User Comments 
 
+        `POST /users/{userId}/comments` endpoint is used to create a comment for a user.
 
         To attach files in the comment upload the file first using the `POST /pre-signed-url` endpoint and then use the returned `key` to attach the file in the comment with the filename and size.`
       operationId: post-user-comment
@@ -708,10 +705,6 @@ paths:
               example-1:
                 value:
                   body: This is a comment
-                  files:
-                    - s3Key: s3://bucket/key
-                      filename: file.txt
-                      size: 1024
                   createdTimestamp: 1641654664000
         required: true
       responses:
@@ -727,10 +720,6 @@ paths:
                   value:
                     commentId: 96647cfd9e8fe66ee0f3362e011e34e8
                     body: This is a comment
-                    files:
-                      - filename: file.txt
-                        size: 1024
-                        downloadLink: s3://bucket/key
                     createdTimestamp: 1641654664000
         '400':
           description: Bad Request
@@ -743,10 +732,11 @@ paths:
     get:
       security:
         - x-api-key: []
-      summary: Retrieve a Comment
+      summary: Retrieve a User Comment
       description: >
-        ## GET User Comment You can retrieve a comment for a user using `GET
-        /users/{userId}/comments/{commentId}` endpoint.
+        ## GET User Comment
+
+        `GET /users/{userId}/comments/{commentId}` endpoint returns a comment for a user.
       operationId: get-user-comment
       parameters:
         - name: userId
@@ -791,10 +781,11 @@ paths:
     delete:
       security:
         - x-api-key: []
-      summary: Delete a Comment
+      summary: Delete a User Comment
       description: >
-        ## DELETE User Comment You can delete a comment for a user using `DELETE
-        /users/{userId}/comments/{commentId}` endpoint.
+        ## DELETE User Comment
+
+        `DELETE /users/{userId}/comments/{commentId}` endpoint is used to delete a user comment.
       operationId: delete-user-comment
       parameters:
         - name: userId
@@ -836,12 +827,10 @@ components:
       title: CommentRequest
       type: object
       properties:
-        commentId:
-          type: string
-          description: Unique comment ID
         body:
           type: string
           description: Comment body
+          minLength: 1
         files:
           type: array
           items:
@@ -851,7 +840,6 @@ components:
           description: Timestamp when comment is created
       required:
         - body
-        - commentId
     RequestFileInfo:
       title: RequestFileInfo
       type: object

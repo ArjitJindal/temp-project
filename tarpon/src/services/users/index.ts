@@ -765,8 +765,17 @@ export class UserService {
         Bucket: this.documentBucketName,
         Key: file.s3Key,
       })
-
-      await this.s3.send(copyObjectCommand)
+      try {
+        await this.s3.send(copyObjectCommand)
+      } catch (error) {
+        if (
+          (error as any)?.name === 'NoSuchKey' ||
+          (error as any)?.name === 'AccessDenied'
+        ) {
+          throw new createError.BadRequest('Invalid s3Key in files')
+        }
+        throw error
+      }
     }
 
     const files = (comment.files || []).map((file) => ({
@@ -790,7 +799,6 @@ export class UserService {
   ) {
     const savedComment = await this.saveUserComment(userId, {
       ...comment,
-      id: comment.commentId,
       createdAt: comment.createdTimestamp ?? Date.now(),
       updatedAt: comment.createdTimestamp ?? Date.now(),
       userId: API_USER,
