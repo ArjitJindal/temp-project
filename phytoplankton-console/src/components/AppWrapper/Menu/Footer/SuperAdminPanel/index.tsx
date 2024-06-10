@@ -82,6 +82,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Console Notifications',
     description: 'Enables console notifications',
   },
+  KINESIS_ASYNC: {
+    title: 'Kinesis Async',
+    description: 'Enables Kinesis Async for case creation',
+  },
 };
 
 export default function SuperAdminPanel() {

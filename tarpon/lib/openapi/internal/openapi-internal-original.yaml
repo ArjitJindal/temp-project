@@ -8719,6 +8719,7 @@ components:
         - RULES_ENGINE_V8
         - SYNC_TRS_CALCULATION
         - NOTIFICATIONS
+        - KINESIS_ASYNC
       description: ''
     ManagedRoleName:
       type: string

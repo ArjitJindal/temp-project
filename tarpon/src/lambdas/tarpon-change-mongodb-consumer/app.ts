@@ -1,12 +1,9 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { isEmpty, pick, omit } from 'lodash'
+import { pick, omit } from 'lodash'
 import { StackConstants } from '@lib/constants'
-import {
-  SendMessageCommand,
-  SendMessageCommandInput,
-} from '@aws-sdk/client-sqs'
 import { CaseCreationService } from '../../services/cases/case-creation-service'
+import { sendTransactionEvent } from '../transaction-events-consumer/app'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   TRANSACTION_EVENTS_COLLECTION,
@@ -14,18 +11,15 @@ import {
 } from '@/utils/mongodb-definitions'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { CaseRepository } from '@/services/cases/repository'
-import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
-import { RiskScoringService } from '@/services/risk-scoring'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -35,13 +29,8 @@ import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBus
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { INTERNAL_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { UserService } from '@/services/users'
 import { isDemoTenant } from '@/utils/tenant'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
-import { getSQSClient } from '@/utils/sns-sqs-client'
-import { DynamoDbEntityType } from '@/core/dynamodb/dynamodb-stream-utils'
-import { filterLiveRules } from '@/services/rules-engine/utils'
-import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 async function transactionHandler(
   tenantId: string,
@@ -50,119 +39,10 @@ async function transactionHandler(
   if (!transaction || !transaction.transactionId || isDemoTenant(tenantId)) {
     return
   }
-  updateLogMetadata({ transactionId: transaction.transactionId })
-  logger.info(`Processing Transaction`)
-
-  const mongoDb = await getMongoDbClient()
-  const dynamoDb = getDynamoDbClient()
-
-  const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
-  const casesRepo = new CaseRepository(tenantId, {
-    mongoDb,
-    dynamoDb,
-  })
-
-  const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
-    dynamoDb,
-  })
-
-  const riskScoringService = new RiskScoringService(tenantId, {
-    dynamoDb,
-    mongoDb,
-  })
-
-  const settings = await tenantSettings(tenantId)
-
-  const isSyncRiskScoringEnabled = settings.features?.includes(
-    'SYNC_TRS_CALCULATION'
-  )
-
-  const arsScore = isSyncRiskScoringEnabled
-    ? await riskScoringService.getArsScore(transaction.transactionId)
-    : undefined
-
-  if (isSyncRiskScoringEnabled && !arsScore) {
-    logger.error(
-      `ARS score not found for transaction ${transaction.transactionId} for tenant ${tenantId}: Recalculating Async`
-    )
-  }
-
-  const [transactionInMongo, ruleInstances] = await Promise.all([
-    transactionsRepo.addTransactionToMongo(
-      omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult,
-      arsScore
-    ),
-    ruleInstancesRepo.getRuleInstancesByIds(
-      filterLiveRules({ hitRules: transaction.hitRules }).hitRules.map(
-        (rule) => rule.ruleInstanceId
-      )
-    ),
-  ])
-
-  const caseCreationService = new CaseCreationService(tenantId, {
-    mongoDb,
-    dynamoDb,
-  })
-
-  const userService = new UserService(tenantId, { dynamoDb, mongoDb })
-
-  logger.info(`Starting Case Creation`)
-  const timestampBeforeCasesCreation = Date.now()
-
-  const transactionUsers = await caseCreationService.getTransactionSubjects(
-    transaction
-  )
-
-  const ruleWithAdvancedOptions = ruleInstances.filter(
-    (ruleInstance) =>
-      !isEmpty(ruleInstance.triggersOnHit) ||
-      !isEmpty(ruleInstance.riskLevelsTriggersOnHit)
-  )
-
-  const cases = await caseCreationService.handleTransaction(
-    transactionInMongo,
-    ruleInstances as RuleInstance[],
-    transactionUsers
-  )
-
-  const { ORIGIN, DESTINATION } = transactionUsers ?? {}
-  if (
-    ruleWithAdvancedOptions?.length &&
-    (ORIGIN?.type === 'USER' || DESTINATION?.type === 'USER')
-  ) {
-    await userService.handleTransactionUserStatusUpdateTrigger(
-      transaction,
-      ruleInstances as RuleInstance[],
-      ORIGIN?.type === 'USER' ? ORIGIN?.user : null,
-      DESTINATION?.type === 'USER' ? DESTINATION?.user : null
-    )
-  }
-
-  logger.info(`Case Creation Completed`)
-
-  // We don't need to use `tenantHasSetting` because we already have settings from above and we can just check for the feature
-  if (settings?.features?.includes('RISK_SCORING')) {
-    logger.info(`Calculating ARS & DRS`)
-
-    const { originDrsScore, destinationDrsScore } =
-      await riskScoringService.updateDynamicRiskScores(transaction, !arsScore)
-
-    logger.info(`Calculation of ARS & DRS Completed`)
-
-    await casesRepo.updateDynamicRiskScores(
-      transaction.transactionId,
-      originDrsScore,
-      destinationDrsScore
-    )
-
-    logger.info(`DRS Updated in Cases`)
-  }
-
-  await caseCreationService.handleNewCases(
+  await sendTransactionEvent({
     tenantId,
-    timestampBeforeCasesCreation,
-    cases
-  )
+    transaction,
+  })
 }
 
 async function userHandler(
@@ -319,26 +199,6 @@ async function transactionEventHandler(
     },
     { upsert: true }
   )
-}
-
-async function _sendEventToQueue(
-  tenantId: string,
-  oldentityObject: object,
-  newentityObject: object,
-  eventType: DynamoDbEntityType
-) {
-  const params: SendMessageCommandInput = {
-    MessageBody: JSON.stringify({
-      eventType,
-      tenantId,
-      oldentityObject,
-      newentityObject,
-    }),
-    QueueUrl: process.env.TRANSACTION_EVENT_QUEUE_URL ?? '',
-    MessageGroupId: tenantId,
-  }
-  const sqsClient = getSQSClient()
-  await sqsClient.send(new SendMessageCommand(params))
 }
 
 const tarponBuilder = new StreamConsumerBuilder(

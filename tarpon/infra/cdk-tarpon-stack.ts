@@ -264,6 +264,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         fifo: true,
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
     )
 

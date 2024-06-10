@@ -66,10 +66,6 @@ type RuleInstanceHandler = (
   oldRuleInstance: RuleInstance | undefined,
   newRuleInstance: RuleInstance | undefined
 ) => Promise<void>
-type TransactionEventToQueueHandler = (
-  tenantId: string,
-  newTransaction: TransactionWithRulesResult | undefined
-) => Promise<void>
 
 export class StreamConsumerBuilder {
   name: string
@@ -84,20 +80,12 @@ export class StreamConsumerBuilder {
   drsScoreEventHandler?: DrsScoreEventHandler
   krsScoreEventHandler?: KrsScoreEventHandler
   ruleInstanceHandler?: RuleInstanceHandler
-  sendTransactionEventToQueue?: TransactionEventToQueueHandler
 
   constructor(name: string, retrySqsQueue: string, tableName: string) {
     this.name = name
     this.retrySqsQueue = retrySqsQueue
     this.transientRepository = new TransientRepository(getDynamoDbClient())
     this.tableName = tableName
-  }
-
-  public setSendTransactionEventToQueue(
-    sendTransactionEventToQueue: TransactionEventToQueueHandler
-  ): StreamConsumerBuilder {
-    this.sendTransactionEventToQueue = sendTransactionEventToQueue
-    return this
   }
 
   public setTransactionHandler(
