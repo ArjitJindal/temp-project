@@ -12,6 +12,7 @@ import {
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { AlertUpdatable } from '@/@types/openapi-public-management/AlertUpdatable'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 
 dynamoDbSetupHook()
 withLocalChangeHandler()
@@ -40,6 +41,10 @@ describe('End to End External Alerts Management Service', () => {
     })
 
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
+    const transactionRepository = new MongoDbTransactionRepository(
+      tenantId,
+      mongoDb
+    )
     const caseId = 'C-1234'
     const alertId = 'AL-1234'
 
@@ -48,6 +53,7 @@ describe('End to End External Alerts Management Service', () => {
       caseType: 'SYSTEM',
       caseId,
     })
+    const alertTransactionIds = transactionIds.slice(0, 5)
 
     const alertCreationRequest: AlertCreationRequest = {
       caseId,
@@ -56,7 +62,7 @@ describe('End to End External Alerts Management Service', () => {
       priority: 'P1',
       entityDetails: {
         type: 'TRANSACTION',
-        transactionIds: transactionIds.slice(0, 5),
+        transactionIds: alertTransactionIds,
       },
       ruleDetails: {
         action: 'ALLOW',
@@ -68,7 +74,6 @@ describe('End to End External Alerts Management Service', () => {
     }
 
     const alert = await alertsExternalService.createAlert(alertCreationRequest)
-
     expect(alert).toEqual({
       alertId: 'AL-1234',
       alertStatus: 'OPEN',
@@ -88,6 +93,14 @@ describe('End to End External Alerts Management Service', () => {
       },
       updatedAt: expect.any(Number),
       assignments: [],
+    })
+
+    const transactions = await transactionRepository.getTransactionsByIds(
+      alertTransactionIds
+    )
+
+    transactions.forEach((transaction) => {
+      expect(transaction.alertIds).toContain(alertId)
     })
 
     const case1 = await caseRepository.getCaseById(alert.caseId, true)
@@ -142,6 +155,7 @@ describe('End to End External Alerts Management Service', () => {
       { mongoDb, dynamoDb }
     )
 
+    const alertTransactionIds2 = transactionIds.slice(2, 8)
     const alertCreationRequest2: AlertCreationRequest = {
       caseId,
       alertId: alertId2,
@@ -149,7 +163,7 @@ describe('End to End External Alerts Management Service', () => {
       priority: 'P1',
       entityDetails: {
         type: 'TRANSACTION',
-        transactionIds: transactionIds.slice(2, 8),
+        transactionIds: alertTransactionIds2,
       },
       ruleDetails: {
         action: 'ALLOW',
@@ -163,6 +177,13 @@ describe('End to End External Alerts Management Service', () => {
     await alertsExternalService2.createAlert(alertCreationRequest2)
 
     const case2 = await caseRepository.getCaseById(alert.caseId, true)
+
+    const transactions2 = await transactionRepository.getTransactionsByIds(
+      alertTransactionIds2
+    )
+    transactions2.forEach((transaction) => {
+      expect(transaction.alertIds).toContain(alertId2)
+    })
 
     expect(case2).toMatchObject({
       caseAggregates: {
@@ -199,6 +220,8 @@ describe('End to End External Alerts Management Service', () => {
 
     // Replace transactions of alert 1 from 2 - 6
 
+    const updateAlertTransactionIds = transactionIds.slice(2, 7)
+
     const alertUpdateRequest: AlertUpdatable = {
       entityDetails: {
         type: 'TRANSACTION',
@@ -207,6 +230,22 @@ describe('End to End External Alerts Management Service', () => {
     }
 
     await alertsExternalService3.updateAlert(alertId, alertUpdateRequest)
+
+    const transactions3 = await transactionRepository.getTransactionsByIds(
+      updateAlertTransactionIds
+    )
+    const removedTransactions =
+      await transactionRepository.getTransactionsByIds(
+        transactionIds.slice(0, 2)
+      )
+
+    transactions3.forEach((transaction) => {
+      expect(transaction.alertIds).toContain(alertId)
+    })
+
+    removedTransactions.forEach((transaction) => {
+      expect(transaction.alertIds).not.toContain(alertId)
+    })
 
     const case3 = await caseRepository.getCaseById(alert.caseId, true)
 

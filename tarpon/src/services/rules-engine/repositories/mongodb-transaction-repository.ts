@@ -1648,6 +1648,25 @@ export class MongoDbTransactionRepository
     )
   }
 
+  public async removeTransactionAlertIds(
+    transactionIds?: string[],
+    alertIds?: string[]
+  ): Promise<void> {
+    if (!transactionIds || !alertIds) return
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    await collection.updateMany(
+      { transactionId: { $in: transactionIds } },
+      {
+        $pull: {
+          alertIds: { $in: alertIds },
+        },
+      }
+    )
+  }
+
   public async getUniqueUserIds(
     direction: 'ORIGIN' | 'DESTINATION',
     timeRange: TimeRange

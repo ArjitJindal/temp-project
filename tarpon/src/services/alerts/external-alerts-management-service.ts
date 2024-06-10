@@ -1,7 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
-import { compact, isEmpty, memoize, omitBy, pick, uniq } from 'lodash'
+import { compact, difference, isNil, memoize, omitBy, pick, uniq } from 'lodash'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'
 import { CaseRepository, MAX_TRANSACTION_IN_A_CASE } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -296,7 +296,12 @@ export class ExternalAlertManagementService {
       caseAggregates,
       caseTransactionsIds,
     })
-
+    if (alert.alertId) {
+      await this.transactionRepository.updateTransactionAlertIds(
+        alert.transactionIds,
+        [alert.alertId]
+      )
+    }
     const externalAlert = await this.transformInternalAlertToExternalAlert(
       alert
     )
@@ -370,7 +375,7 @@ export class ExternalAlertManagementService {
 
     const transactionIds =
       alert.entityDetails?.type === 'TRANSACTION'
-        ? alert.entityDetails.transactionIds
+        ? uniq(alert.entityDetails.transactionIds)
         : undefined
 
     let caseAggregates: CaseAggregates | undefined
@@ -397,6 +402,18 @@ export class ExternalAlertManagementService {
       destinationPaymentMethods = paymentMethods.destinationPaymentMethods
       caseAggregates = caseData.caseAggregates
       caseTransactionIds = caseData.caseTransactionIds
+      const transactionIdsRemoved = difference(
+        existingAlert.transactionIds ?? [],
+        transactionIds
+      )
+      await this.transactionRepository.removeTransactionAlertIds(
+        transactionIdsRemoved,
+        [alertId]
+      )
+      await this.transactionRepository.updateTransactionAlertIds(
+        transactionIds,
+        [alertId]
+      )
     }
 
     if ((caseTransactionIds?.length ?? 0) > MAX_TRANSACTION_IN_A_CASE) {
@@ -420,18 +437,12 @@ export class ExternalAlertManagementService {
         ruleName: alert.ruleDetails?.name,
         ruleId: alert.ruleDetails?.id,
         updatedAt: Date.now(),
-        transactionIds:
-          alert.entityDetails?.type === 'TRANSACTION'
-            ? uniq(alert.entityDetails.transactionIds)
-            : undefined,
-        numberOfTransactionsHit:
-          alert.entityDetails?.type === 'TRANSACTION'
-            ? alert.entityDetails.transactionIds.length
-            : undefined,
+        transactionIds: transactionIds,
+        numberOfTransactionsHit: transactionIds?.length,
         originPaymentMethods,
         destinationPaymentMethods,
       },
-      isEmpty
+      isNil
     )
 
     const updatedCaseData = await this.alertsRepository.updateAlertInMongo(

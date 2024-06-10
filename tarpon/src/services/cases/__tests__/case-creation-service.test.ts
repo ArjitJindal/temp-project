@@ -46,6 +46,8 @@ import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 import { filterLiveRules } from '@/services/rules-engine/utils'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 dynamoDbSetupHook()
 
@@ -78,12 +80,18 @@ async function getServices(tenantId: string) {
     documentBucketName: 'test-bucket',
     tmpBucketName: 'test-bucket',
   })
+
+  const transactionRepository = new MongoDbTransactionRepository(
+    tenantId,
+    mongoDb
+  )
   return {
     caseCreationService,
     alertsService,
     caseService,
     dynamoDbTranasactionRepository,
     alertsRepository,
+    transactionRepository,
   }
 }
 
@@ -120,7 +128,9 @@ describe('Cases (Transaction hit)', () => {
     setupUsers(TEST_TENANT_ID)
 
     test('By origin user, no prior cases', async () => {
-      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+      const { caseCreationService, transactionRepository } = await getServices(
+        TEST_TENANT_ID
+      )
 
       const transaction = getTestTransaction({
         originUserId: TEST_USER_1.userId,
@@ -133,8 +143,14 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).not.toEqual(0)
       const [result] = results
 
+      const internalTransaction =
+        await transactionRepository.addTransactionToMongo({
+          ...transaction,
+          ...result,
+        })
+
       const cases = await caseCreationService.handleTransaction(
-        { ...transaction, ...result },
+        internalTransaction,
         await getHitRuleInstances(TEST_TENANT_ID, result),
         await caseCreationService.getTransactionSubjects({
           ...transaction,
@@ -144,10 +160,17 @@ describe('Cases (Transaction hit)', () => {
 
       expect(cases.length).toEqual(1)
       expect(cases[0].alerts).toBeDefined()
-
       expectUserCase(cases, {
         originUserId: TEST_USER_1.userId,
       })
+
+      // Check if alertId added to transaction
+      const alertIds = cases[0].alerts?.map((a) => a.alertId)
+      const transactionWithAlertIds =
+        await transactionRepository.getTransactionById(
+          transaction.transactionId
+        )
+      expectTransactionsToHaveAlertIds(transactionWithAlertIds, alertIds)
     })
   })
 
@@ -191,7 +214,9 @@ describe('Cases (Transaction hit)', () => {
     setupRules(TEST_TENANT_ID)
     setupUsers(TEST_TENANT_ID)
     test('By destination user, no prior cases', async () => {
-      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+      const { caseCreationService, transactionRepository } = await getServices(
+        TEST_TENANT_ID
+      )
 
       const transaction = getTestTransaction({
         originUserId: undefined,
@@ -203,9 +228,13 @@ describe('Cases (Transaction hit)', () => {
       ])
       expect(results.length).not.toEqual(0)
       const [result] = results
-
+      const internalTransaction =
+        await transactionRepository.addTransactionToMongo({
+          ...transaction,
+          ...result,
+        })
       const cases = await caseCreationService.handleTransaction(
-        { ...transaction, ...result },
+        internalTransaction,
         await getHitRuleInstances(TEST_TENANT_ID, result),
         await caseCreationService.getTransactionSubjects({
           ...transaction,
@@ -217,6 +246,14 @@ describe('Cases (Transaction hit)', () => {
       expectUserCase(cases, {
         destinationUserId: TEST_USER_1.userId,
       })
+
+      // Check if alertId added to transaction
+      const alertIds = cases[0].alerts?.map((a) => a.alertId) as string[]
+      const transactionWithAlertIds =
+        await transactionRepository.getTransactionById(
+          transaction.transactionId
+        )
+      expectTransactionsToHaveAlertIds(transactionWithAlertIds, alertIds)
     })
   })
 
@@ -364,7 +401,9 @@ describe('Cases (Transaction hit)', () => {
     })
     setupUsers(TEST_TENANT_ID)
     test('Both users, no prior cases', async () => {
-      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+      const { caseCreationService, transactionRepository } = await getServices(
+        TEST_TENANT_ID
+      )
 
       const transaction = getTestTransaction({
         originUserId: TEST_USER_1.userId,
@@ -377,11 +416,13 @@ describe('Cases (Transaction hit)', () => {
       expect(results.length).not.toEqual(0)
       const [result] = results
 
-      const cases = await caseCreationService.handleTransaction(
-        {
+      const internalTransaction =
+        await transactionRepository.addTransactionToMongo({
           ...transaction,
           ...result,
-        },
+        })
+      const cases = await caseCreationService.handleTransaction(
+        internalTransaction,
         await getHitRuleInstances(TEST_TENANT_ID, result),
         await caseCreationService.getTransactionSubjects({
           ...transaction,
@@ -401,6 +442,14 @@ describe('Cases (Transaction hit)', () => {
       expect(case2.alerts).toBeDefined()
       expect(case1.relatedCases?.[0]).toEqual(case2.caseId)
       expect(case2.relatedCases?.[0]).toEqual(case1.caseId)
+
+      // Check if alertId added to transaction
+      const alertIds = cases.flatMap((c) => c.alerts?.map((a) => a.alertId))
+      const transactionWithAlertIds =
+        await transactionRepository.getTransactionById(
+          transaction.transactionId
+        )
+      expectTransactionsToHaveAlertIds(transactionWithAlertIds, alertIds)
     })
   })
 
@@ -409,7 +458,9 @@ describe('Cases (Transaction hit)', () => {
     setupRules(TEST_TENANT_ID)
     setupUsers(TEST_TENANT_ID)
     test('Previous open case should be updated', async () => {
-      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+      const { caseCreationService, transactionRepository } = await getServices(
+        TEST_TENANT_ID
+      )
 
       // Create case
       let firstCase: Case
@@ -424,11 +475,13 @@ describe('Cases (Transaction hit)', () => {
         ])
         expect(results).toHaveLength(1)
         const [result] = results
-        const cases = await caseCreationService.handleTransaction(
-          {
+        const internalTransaction =
+          await transactionRepository.addTransactionToMongo({
             ...transaction,
             ...result,
-          },
+          })
+        const cases = await caseCreationService.handleTransaction(
+          internalTransaction,
           await getHitRuleInstances(TEST_TENANT_ID, result),
           await caseCreationService.getTransactionSubjects({
             ...transaction,
@@ -437,6 +490,14 @@ describe('Cases (Transaction hit)', () => {
         )
         expect(cases).toHaveLength(1)
         firstCase = cases[0]
+
+        // Check if alertId added to transaction
+        const alertIds = cases[0].alerts?.map((a) => a.alertId)
+        const transactionWithAlertIds =
+          await transactionRepository.getTransactionById(
+            transaction.transactionId
+          )
+        expectTransactionsToHaveAlertIds(transactionWithAlertIds, alertIds)
       }
 
       // Add transaction, it should land into existed case
@@ -451,11 +512,13 @@ describe('Cases (Transaction hit)', () => {
         ])
         expect(results.length).not.toEqual(0)
         const [result] = results
-        const cases = await caseCreationService.handleTransaction(
-          {
+        const internalTransaction =
+          await transactionRepository.addTransactionToMongo({
             ...transaction,
             ...result,
-          },
+          })
+        const cases = await caseCreationService.handleTransaction(
+          internalTransaction,
           await getHitRuleInstances(TEST_TENANT_ID, result),
           await caseCreationService.getTransactionSubjects({
             ...transaction,
@@ -467,6 +530,14 @@ describe('Cases (Transaction hit)', () => {
         const nextCase = cases[0]
         expect(nextCase.caseId).toEqual(firstCase.caseId)
         expect(nextCase.caseTransactionsIds).toHaveLength(2)
+
+        // Check if alertId added to transaction
+        const alertIds = cases[0].alerts?.map((a) => a.alertId)
+        const transactionWithAlertIds =
+          await transactionRepository.getTransactionById(
+            transaction.transactionId
+          )
+        expectTransactionsToHaveAlertIds(transactionWithAlertIds, alertIds)
 
         // Close the first alert in the case and assert transction not added
         const alertRepo = await getAlertRepo(TEST_TENANT_ID)
@@ -489,11 +560,13 @@ describe('Cases (Transaction hit)', () => {
           nextTransaction,
         ])
         const [nextResult] = nextResults
-        const finalCases = await caseCreationService.handleTransaction(
-          {
+        const nextInternalTransaction =
+          await transactionRepository.addTransactionToMongo({
             ...nextTransaction,
             ...nextResult,
-          },
+          })
+        const finalCases = await caseCreationService.handleTransaction(
+          nextInternalTransaction,
           await getHitRuleInstances(TEST_TENANT_ID, nextResult),
           await caseCreationService.getTransactionSubjects({
             ...nextTransaction,
@@ -506,6 +579,23 @@ describe('Cases (Transaction hit)', () => {
         expect(
           finalCase.alerts?.at(1)?.transactionIds?.indexOf('333') === -1
         ).toBeTruthy()
+
+        // Check if alertId added to transaction
+        const finalAlertIds = finalCases[0].alerts?.map(
+          (a) => a.alertId
+        ) as string[]
+        const finalTransactionWithAlertIds =
+          await transactionRepository.getTransactionById(
+            nextTransaction.transactionId
+          )
+        expectTransactionsToHaveAlertIds(finalTransactionWithAlertIds, [
+          finalAlertIds[0],
+        ])
+        expect(finalTransactionWithAlertIds).toBeDefined()
+        expect(finalTransactionWithAlertIds?.alertIds).toHaveLength(1)
+        expect(finalTransactionWithAlertIds?.alertIds).not.toContain(
+          finalAlertIds[1]
+        )
       }
     })
   })
@@ -2026,4 +2116,12 @@ async function createAlerts(tenantId: string): Promise<Alert[]> {
   const caseItem = await createCase(tenantId)
   expect(caseItem.alerts).toBeDefined()
   return caseItem.alerts ?? []
+}
+
+function expectTransactionsToHaveAlertIds(
+  transaction: InternalTransaction | null,
+  alertIds?: Array<string | undefined>
+) {
+  expect(alertIds?.length).toBeGreaterThan(0)
+  expect(transaction?.alertIds).toEqual(expect.arrayContaining(alertIds ?? []))
 }
