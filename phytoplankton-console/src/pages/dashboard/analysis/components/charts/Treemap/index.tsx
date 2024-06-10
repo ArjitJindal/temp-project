@@ -69,12 +69,16 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
       height={height}
       tooltip={
         {
-          customItems: (originalItems: { data: TreemapItem<Name>; name?: string }[]) => {
+          customItems(originalItems) {
             return originalItems.map((item) => {
-              const treemapItem = item.data;
+              const treemapItem = item.data as TreemapItem<Name>;
               return {
                 ...item,
-                name: formatTitle && treemapItem.name ? formatTitle(treemapItem.name) : item.name,
+                name:
+                  formatTitle && treemapItem.name != null
+                    ? formatTitle(treemapItem.name)
+                    : item.name,
+                value: treemapItem.value,
               };
             });
           },

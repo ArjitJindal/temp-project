@@ -1,5 +1,4 @@
-import { Pie as AntPie } from '@ant-design/plots';
-import { PieConfig } from '@ant-design/plots/es/components/pie';
+import { Pie as AntPie, PieConfig } from '@ant-design/plots';
 import s from './index.module.less';
 import { escapeHtml } from '@/utils/browser';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
