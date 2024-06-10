@@ -2,6 +2,7 @@ import React, { Dispatch, SetStateAction } from 'react';
 import { uniqBy } from 'lodash';
 import { ExpandContentButton } from '../library/ExpandContentButton';
 import FilesDraggerInput from '../ui/FilesDraggerInput';
+import { ObjectFieldValidator } from '../library/Form/utils/validation/types';
 import s from './index.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Form, { InputProps } from '@/components/library/Form';
@@ -62,6 +63,7 @@ type NarrativeProps<R> = {
   extraFields?: React.ReactNode;
   otherReason?: R;
   advancedOptions?: React.ReactNode;
+  advancedOptionsValidators?: ObjectFieldValidator<any>;
   isCopilotEnabled?: boolean;
   infoText?: string;
 };
@@ -82,6 +84,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
     advancedOptions,
     isCopilotEnabled = true,
     infoText,
+    advancedOptionsValidators,
   } = props;
 
   const showCopilot = useFeatureEnabled('NARRATIVE_COPILOT') && isCopilotEnabled;
@@ -100,6 +103,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
         reasons: notEmpty,
         comment: and([notEmpty, maxLength(MAX_COMMENT_LENGTH)]),
         reasonOther: isOtherReason ? and([notEmpty, maxLength(500)]) : undefined,
+        ...advancedOptionsValidators,
       }}
       onChange={(values) => {
         onChange((state) => ({

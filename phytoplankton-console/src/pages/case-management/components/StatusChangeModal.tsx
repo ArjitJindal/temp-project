@@ -13,6 +13,7 @@ import Label from '@/components/library/Label';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 
 export const ESCALATION_REASONS: CaseReasons[] = [
   'Fraud',
@@ -121,7 +122,12 @@ export default function StatusChangeModal(props: Props) {
     values: initialValues,
     isValid: false,
   });
-
+  const kycStatusDetailsValidator = {
+    reason: formState.values.kycStatusDetails?.status ? notEmpty : undefined,
+  };
+  const userStateDetailsValidator = {
+    reason: formState.values.userStateDetails?.state ? notEmpty : undefined,
+  };
   return (
     <>
       <Modal
@@ -171,6 +177,10 @@ export default function StatusChangeModal(props: Props) {
             setAwaitingConfirmation(true);
           }}
           advancedOptions={advancedOptions}
+          advancedOptionsValidators={{
+            userStateDetails: userStateDetailsValidator,
+            kycStatusDetails: kycStatusDetailsValidator,
+          }}
         />
       </Modal>
       <Modal

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { humanizeKYCStatus } from '../utils/humanizeKYCStatus';
+import { useFormContext } from '../library/Form/utils/hooks';
 import s from './style.module.less';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { USER_DIRECTIONSS } from '@/apis/models-custom/UserDirections';
@@ -42,6 +43,14 @@ export const UserStatusTriggersAdvancedOptionsForm = (
   const [isUserStateDetailsOpen, setIsUserStateDetailsOpen] = useState(false);
   const [isKYCStatusDetailsOpen, setIsKYCStatusDetailsOpen] = useState(false);
 
+  const {
+    values,
+  }: {
+    values: {
+      userStateDetails: UserStateDetails;
+      kycStatusDetails: KYCStatusDetails;
+    };
+  } = useFormContext();
   return (
     <>
       {type === 'RULE' && (
@@ -85,7 +94,13 @@ export const UserStatusTriggersAdvancedOptionsForm = (
             )}
           </InputField>
           {(type === 'RULE' || isUserStateDetailsOpen) && (
-            <InputField<UserStateDetails, 'reason'> name={'reason'} label={'Reason'}>
+            <InputField<UserStateDetails, 'reason'>
+              name={'reason'}
+              label={'Reason'}
+              labelProps={{
+                required: !!values?.userStateDetails?.state,
+              }}
+            >
               {(inputProps) => (
                 <Select<KYCAndUserStatusChangeReason>
                   options={KYC_AND_USER_STATUS_CHANGE_REASONS.map((reason) => ({
@@ -126,7 +141,13 @@ export const UserStatusTriggersAdvancedOptionsForm = (
             )}
           </InputField>
           {(type === 'RULE' || isKYCStatusDetailsOpen) && (
-            <InputField<UserStateDetails, 'reason'> name={'reason'} label={'Reason'}>
+            <InputField<UserStateDetails, 'reason'>
+              name={'reason'}
+              label={'Reason'}
+              labelProps={{
+                required: !!values?.kycStatusDetails?.status,
+              }}
+            >
               {(inputProps) => (
                 <Select<KYCAndUserStatusChangeReason>
                   options={KYC_AND_USER_STATUS_CHANGE_REASONS.map((reason) => ({
