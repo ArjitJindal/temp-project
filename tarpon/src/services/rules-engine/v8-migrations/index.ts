@@ -63,10 +63,11 @@ export function getMigratedV8Config(
       alertCreationDirection: filtersAlertCreationDirection,
       baseCurrency: filtersCurrency as CurrencyCode,
     }
-  } else if (filterConditions.length > 0)
+  } else if (filterConditions.length > 0) {
     result.logic = {
       and: [{ and: filterConditions }, result.logic],
     }
+  }
   if (result?.logicAggregationVariables?.length > 0) {
     result.logicAggregationVariables = result.logicAggregationVariables.map(
       (v) => {

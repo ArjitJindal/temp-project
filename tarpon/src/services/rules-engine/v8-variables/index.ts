@@ -237,14 +237,14 @@ function updatedTransactionEntityVariables(
   } else {
     logger.error('Cannot find origin amount variable')
   }
-  if (destinationAmountVariable)
+  if (destinationAmountVariable) {
     destinationAmountVariable.load = async (transaction, context) => {
       return await loadTransactionAmount(
         transaction.destinationAmountDetails,
         context
       )
     }
-  else {
+  } else {
     logger.error('Cannot find destination amount variable')
   }
 }

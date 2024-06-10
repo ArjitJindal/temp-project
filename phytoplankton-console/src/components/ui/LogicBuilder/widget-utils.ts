@@ -8,13 +8,17 @@ const getSelectedCountryGroups = (value: string[]) => {
 };
 
 export function serializeCountries(newValue?: string[]) {
-  if (!newValue) return [];
+  if (!newValue) {
+    return [];
+  }
   const selectedCountryGroups = getSelectedCountryGroups(newValue);
   return uniq([...expandCountryGroup(newValue), ...selectedCountryGroups]);
 }
 
 export const deserializeCountries = (value: string[]) => {
-  if (!value) return [];
+  if (!value) {
+    return [];
+  }
   const selectedCountryGroups = getSelectedCountryGroups(value);
   const groupCountries = expandCountryGroup(selectedCountryGroups);
   return difference(value, groupCountries);
@@ -22,7 +26,9 @@ export const deserializeCountries = (value: string[]) => {
 
 export const omitCountryGroups = (options: (string | number | ListItem)[]) => {
   return options.filter((option) => {
-    if (typeof option === 'string' || typeof option === 'number') return true;
+    if (typeof option === 'string' || typeof option === 'number') {
+      return true;
+    }
     return !Object.keys(COUNTRY_GROUPS).includes(option.value as string);
   });
 };

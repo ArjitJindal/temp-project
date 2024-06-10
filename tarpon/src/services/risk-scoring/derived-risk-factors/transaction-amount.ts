@@ -8,8 +8,9 @@ export const ARS_TRANSACTION_AMOUNT_RISK_HANDLERS: Array<
     entityType: 'TRANSACTION',
     parameter: 'originAmountDetails.transactionAmount',
     handler: async (transaction) => {
-      if (transaction?.originAmountDetails)
+      if (transaction?.originAmountDetails) {
         return [transaction?.originAmountDetails]
+      }
       return []
     },
   },
@@ -17,8 +18,9 @@ export const ARS_TRANSACTION_AMOUNT_RISK_HANDLERS: Array<
     entityType: 'TRANSACTION',
     parameter: 'destinationAmountDetails.transactionAmount',
     handler: async (transaction) => {
-      if (transaction?.destinationAmountDetails)
+      if (transaction?.destinationAmountDetails) {
         return [transaction?.destinationAmountDetails]
+      }
       return []
     },
   },

@@ -74,7 +74,9 @@ export const SimulationResult = (props: Props) => {
   const iterations = useMemo(() => {
     if (isSuccess(jobResult.data)) {
       return jobResult.data.value.iterations ?? [];
-    } else if (isLoading(jobResult.data)) return jobResult.data.lastValue?.iterations ?? [];
+    } else if (isLoading(jobResult.data)) {
+      return jobResult.data.lastValue?.iterations ?? [];
+    }
     return [];
   }, [jobResult.data]);
 
@@ -267,7 +269,9 @@ const SimulationResultWidgets = (props: WidgetProps) => {
 
   const getGraphData = useCallback(
     (graphType: SimulationRiskFactorsStatisticsRiskTypeEnum) => {
-      if (!isIterationCompleted(iteration)) return { graphData: [], max: 0 };
+      if (!isIterationCompleted(iteration)) {
+        return { graphData: [], max: 0 };
+      }
       let max = 0;
       const graphData: { name: string; label: string; value: number }[] = [];
       RISK_LEVELS.forEach((label) => {

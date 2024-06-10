@@ -36,7 +36,9 @@ export default function UserManualRiskPanel(props: Props) {
   const [isLocked, setIsLocked] = useState(false);
   const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
   const drsScore = useMemo(() => {
-    if (isSuccess(queryResult.data)) return queryResult.data.value;
+    if (isSuccess(queryResult.data)) {
+      return queryResult.data.value;
+    }
     return undefined;
   }, [queryResult.data]);
 

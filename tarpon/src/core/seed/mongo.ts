@@ -172,10 +172,11 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
   for (const alert of alerts) {
     for (const txChunk of chunk(alert.transactionIds, 500)) {
-      if (alert.alertId)
+      if (alert.alertId) {
         await transactionRepository.updateTransactionAlertIds(txChunk, [
           alert.alertId,
         ])
+      }
     }
   }
 

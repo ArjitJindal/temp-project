@@ -159,7 +159,7 @@ export function makeDefaultState(props: PropertyItems): unknown {
 
 export function getScopeSelectorItems(schema?: ExtendedSchema): Item<string>[] | null {
   const properties = Object.keys(schema?.properties ?? {});
-  if (schema?.properties && properties && properties.length)
+  if (schema?.properties && properties && properties.length) {
     return uniq(
       compact(
         properties.map((property) => {
@@ -169,5 +169,6 @@ export function getScopeSelectorItems(schema?: ExtendedSchema): Item<string>[] |
         }),
       ),
     ).map((scope) => ({ value: scope, label: scope }));
+  }
   return null;
 }

@@ -11,7 +11,9 @@ export function formatNumber(
   }
   const compact = options?.compact ?? false;
   let formattedNumber = `${Number(amount ?? 0).toFixed(2)}`;
-  if (formattedNumber === '-') return formattedNumber;
+  if (formattedNumber === '-') {
+    return formattedNumber;
+  }
   if (compact) {
     if (amount >= 1000) {
       formattedNumber = `${Math.round(amount / 10) / 100}`;

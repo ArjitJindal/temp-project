@@ -149,7 +149,7 @@ export default function NotificationsDrawer(props: Props) {
               </div>
             )}
             {notifications.map((notification, i) => {
-              if (notifications.length === i + 1)
+              if (notifications.length === i + 1) {
                 return (
                   <NotificationsDrawerItem
                     key={notification.id}
@@ -158,6 +158,7 @@ export default function NotificationsDrawer(props: Props) {
                     innerRef={ref}
                   />
                 );
+              }
               return (
                 <NotificationsDrawerItem
                   key={notification.id}

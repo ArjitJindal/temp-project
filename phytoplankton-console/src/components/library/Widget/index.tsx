@@ -100,7 +100,9 @@ export function DownloadButton(props: {
 
 function buildDownloadableTable(data?: string): TableOptions | undefined {
   const tableData = getTableHeadAndBody(data);
-  if (!tableData) return undefined;
+  if (!tableData) {
+    return undefined;
+  }
   return {
     tableOptions: {
       head: [tableData.head],

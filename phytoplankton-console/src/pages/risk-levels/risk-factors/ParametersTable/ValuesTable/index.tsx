@@ -143,7 +143,9 @@ export default function ValuesTable(props: Props) {
 
   const newValueInfoMessage = NEW_VALUE_INFOS.reduce<string | null>(
     (acc, information): string | null => {
-      if (newValue == null || acc != null) return acc;
+      if (newValue == null || acc != null) {
+        return acc;
+      }
       return information({
         newValue: newValue,
         newRiskValue: newRiskValue ?? null,
@@ -168,7 +170,9 @@ export default function ValuesTable(props: Props) {
   const handleRemoveValue = useCallback(
     (value: string) => {
       const newValues = values.map(({ parameterValue: { content }, riskValue }) => {
-        if (content.kind !== 'MULTIPLE') return { parameterValue: { content }, riskValue };
+        if (content.kind !== 'MULTIPLE') {
+          return { parameterValue: { content }, riskValue };
+        }
         content.values = content.values.filter(({ content: val }) => val !== value);
         return { parameterValue: { content }, riskValue };
       });

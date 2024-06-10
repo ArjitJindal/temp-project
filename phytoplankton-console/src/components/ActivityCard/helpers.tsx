@@ -209,15 +209,20 @@ export const getCreateStatement = (
 };
 
 export const extractSubtype = (log: AuditLog): string | undefined => {
-  if (log.subtype) return log.subtype;
+  if (log.subtype) {
+    return log.subtype;
+  }
   if (log.logMetadata) {
     const logMetadata = log.logMetadata;
     if (
       isActionUpdate(log) &&
       (has(logMetadata, 'caseAssignment') || has(logMetadata, 'alertAssignment'))
-    )
+    ) {
       return 'ASSIGNMENT';
-    if (isActionCreate(log) && has(logMetadata, 'caseCreationTimestamp')) return 'CREATION';
+    }
+    if (isActionCreate(log) && has(logMetadata, 'caseCreationTimestamp')) {
+      return 'CREATION';
+    }
   }
   return undefined;
 };
@@ -258,7 +263,9 @@ export const handleEscalatedStatus = (
     case 'ESCALATED': {
       const childCase: string = log?.newImage?.alertCaseId;
       if (entityType === 'CASE' && childCase !== entityId[0]) {
-        if (type === 'USER') return null;
+        if (type === 'USER') {
+          return null;
+        }
         const alertIds = log?.newImage?.updatedAlertIds ?? [];
         return (
           <>

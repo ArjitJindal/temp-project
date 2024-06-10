@@ -130,7 +130,9 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
 function estimateWordWidth(word: string, fontSize: number, fontWeight: number) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  if (!ctx) return 0;
+  if (!ctx) {
+    return 0;
+  }
   ctx.font = `${fontWeight} ${fontSize}px 'Noto Sans'`;
   const width = ctx.measureText(word).width;
   canvas.remove();
@@ -138,7 +140,9 @@ function estimateWordWidth(word: string, fontSize: number, fontWeight: number) {
 }
 
 function getDisplayLabel(word: string, wordLength: number, totalWidth: number) {
-  if (Math.floor(totalWidth) >= Math.ceil(wordLength)) return word;
+  if (Math.floor(totalWidth) >= Math.ceil(wordLength)) {
+    return word;
+  }
   totalWidth -= 8.5; // Width required for '...'
   let displayLabel = '';
   let i = 0;

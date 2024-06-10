@@ -67,11 +67,17 @@ export function useUsersQuery(
   let end = dateRange?.endTimestamp;
 
   const userStatusResults = useQuery(USERS(userType, { start, end }), async () => {
-    if (start === undefined) start = 0;
-    if (end === undefined) end = Date.now();
-    if (userType === 'CONSUMER')
+    if (start === undefined) {
+      start = 0;
+    }
+    if (end === undefined) {
+      end = Date.now();
+    }
+    if (userType === 'CONSUMER') {
       return await api.getConsumerUsersList({ afterTimestamp: start, beforeTimestamp: end });
-    else return await api.getBusinessUsersList({ afterTimestamp: start, beforeTimestamp: end });
+    } else {
+      return await api.getBusinessUsersList({ afterTimestamp: start, beforeTimestamp: end });
+    }
   });
   const refetchQuery = () => {
     userStatusResults.refetch();

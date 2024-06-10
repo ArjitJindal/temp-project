@@ -144,8 +144,11 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     const tags: string[] = [];
     const hitCount = rule.hitCount;
     const hitRate = rule.runCount ? ((hitCount ?? 0) / rule.runCount) * 100 : 0;
-    if (hitRate === 0) tags.push('Rule not run');
-    else if (hitRate > 10) tags.push('High hit rate');
+    if (hitRate === 0) {
+      tags.push('Rule not run');
+    } else if (hitRate > 10) {
+      tags.push('High hit rate');
+    }
     return tags;
   };
 

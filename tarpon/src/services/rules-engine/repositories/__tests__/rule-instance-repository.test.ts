@@ -154,21 +154,24 @@ describe('createOrUpdateRuleInstance', () => {
         await ruleInstanceRepository.getRuleInstanceById(
           TEST_RULE_INSTANCE_2.id ?? ''
         )
-      if (beforeRuleInstance1)
+      if (beforeRuleInstance1) {
         await ruleInstanceRepository.createOrUpdateRuleInstance({
           ...beforeRuleInstance1,
           status: 'INACTIVE',
         })
-      if (beforeRuleInstance2)
+      }
+      if (beforeRuleInstance2) {
         await ruleInstanceRepository.createOrUpdateRuleInstance({
           ...beforeRuleInstance2,
           status: 'INACTIVE',
         })
-      if (beforeRuleInstance1)
+      }
+      if (beforeRuleInstance1) {
         await ruleInstanceRepository.createOrUpdateRuleInstance({
           ...beforeRuleInstance1,
           status: 'ACTIVE',
         })
+      }
       const afterRuleInstance1 =
         await ruleInstanceRepository.getRuleInstanceById(
           TEST_RULE_INSTANCE_1.id ?? ''

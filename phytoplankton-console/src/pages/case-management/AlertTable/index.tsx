@@ -266,7 +266,9 @@ export default function AlertTable(props: Props) {
           type: {
             render: (alertId, { item: entity }) => {
               const falsePositiveDetails = entity?.ruleHitMeta?.falsePositiveDetails;
-              if (caseId !== undefined) return <div>{alertId}</div>;
+              if (caseId !== undefined) {
+                return <div>{alertId}</div>;
+              }
               return (
                 <>
                   <Id

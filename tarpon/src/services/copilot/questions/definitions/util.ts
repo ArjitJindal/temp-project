@@ -230,7 +230,9 @@ export async function queryUsername(userId: string) {
 }
 
 export function casePaymentIdentifierQuery(paymentIdentifier?: PaymentDetails) {
-  if (!paymentIdentifier) return []
+  if (!paymentIdentifier) {
+    return []
+  }
   const keys = PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentIdentifier.method]
   const originConditions = keys.map((key) => {
     return {
@@ -256,7 +258,9 @@ export function transactionPaymentIdentifierQuerySQL(
   paymentIdentifier?: PaymentDetails,
   direction?: 'ORIGIN' | 'DESTINATION'
 ) {
-  if (!paymentIdentifier) return ''
+  if (!paymentIdentifier) {
+    return ''
+  }
   const keys = PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentIdentifier.method]
   const originConditions = keys
     .filter((key) => paymentIdentifier[key])
@@ -270,7 +274,11 @@ export function transactionPaymentIdentifierQuerySQL(
       return `t.destinationPaymentDetails.${key} = :${key}`
     })
     .join(' AND ')
-  if (direction === 'ORIGIN') return originConditions
-  if (direction === 'DESTINATION') return destinationConditions
+  if (direction === 'ORIGIN') {
+    return originConditions
+  }
+  if (direction === 'DESTINATION') {
+    return destinationConditions
+  }
   return `(${originConditions}) OR (${destinationConditions})`
 }

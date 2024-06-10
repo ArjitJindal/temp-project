@@ -39,7 +39,9 @@ export async function copyCollections(
 
     let output: any[] = []
     for await (const document of collectionData) {
-      if (!document) continue
+      if (!document) {
+        continue
+      }
 
       if (mappingFn) {
         const collectionName = inputCollectionName.replace(

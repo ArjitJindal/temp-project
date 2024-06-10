@@ -89,11 +89,12 @@ export const getTableHeadAndBody = (data?: string) => {
     .split('\n')
     .map((row) => row.split(','));
 
-  if (csvData && csvData.length)
+  if (csvData && csvData.length) {
     return {
       head: csvData[0],
       rows: csvData.slice(1),
     };
+  }
   return null;
 };
 

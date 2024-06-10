@@ -65,7 +65,9 @@ export class AutocompleteService {
     const questions = getQuestions()
     const data = uniq(combinedResults)
       .filter((r) => {
-        if (!userCategory) return true
+        if (!userCategory) {
+          return true
+        }
         const question = questions.find((q) => q.questionId.toLowerCase() === r)
         return question && question.categories.includes(userCategory)
       })

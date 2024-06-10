@@ -450,7 +450,9 @@ function Analysis() {
             <div className={s.settingsDrawerGroup} key={group}>
               <div className={s.groupTitle}>{humanizeConstant(group)}</div>
               {WIDGETS[group].items.map((widget: WidgetType) => {
-                if (!isWidgetVisible(widget)) return null;
+                if (!isWidgetVisible(widget)) {
+                  return null;
+                }
 
                 return (
                   <Label key={widget.id} label={widget.title} position="RIGHT" level={2}>

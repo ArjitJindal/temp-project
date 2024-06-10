@@ -77,7 +77,9 @@ export default function ReportsTable() {
       key: 'caseUser',
       type: {
         render: (caseUser) => {
-          if (caseUser === undefined) return <div>Not Found</div>;
+          if (caseUser === undefined) {
+            return <div>Not Found</div>;
+          }
           return (
             <div>
               <Id to={getUserLink(caseUser)}>{caseUser.userId}</Id>
@@ -85,7 +87,9 @@ export default function ReportsTable() {
           );
         },
         stringify(caseUser) {
-          if (caseUser === undefined) return 'Not Found';
+          if (caseUser === undefined) {
+            return 'Not Found';
+          }
           return caseUser.userId;
         },
       },
@@ -95,11 +99,15 @@ export default function ReportsTable() {
       key: 'caseUser',
       type: {
         render: (caseUser) => {
-          if (caseUser === undefined) return <div>Not Found</div>;
+          if (caseUser === undefined) {
+            return <div>Not Found</div>;
+          }
           return <div>{getUserName(caseUser)}</div>;
         },
         stringify(value) {
-          if (value === undefined) return 'Not Found';
+          if (value === undefined) {
+            return 'Not Found';
+          }
           return getUserName(value);
         },
       },

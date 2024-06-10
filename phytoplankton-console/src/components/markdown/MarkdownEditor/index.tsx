@@ -38,7 +38,9 @@ export default class MarkdownEditor extends React.Component<Props> {
       const id = this.props.mentionsList?.find(
         (mentionItem) => mentionItem.label === target.id,
       )?.id;
-      if (!id) return;
+      if (!id) {
+        return;
+      }
       this.insertMention({ id: id, label: target.id }, searchPhrase);
       node.remove();
     });
@@ -119,7 +121,9 @@ export default class MarkdownEditor extends React.Component<Props> {
   }
 
   handleMention(_a, event) {
-    if (!this.props.mentionsEnabled) return;
+    if (!this.props.mentionsEnabled) {
+      return;
+    }
     const { key } = event;
     const text = this.editorRef.current?.getInstance()?.getMarkdown() ?? '';
     const cursorPos: number = this.editorRef.current?.getInstance()?.getSelection()[1] as number;

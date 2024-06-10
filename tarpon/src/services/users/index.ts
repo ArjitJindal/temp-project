@@ -257,7 +257,9 @@ export class UserService {
     userRID?: RuleInstance,
     kycStatusRID?: RuleInstance
   ) {
-    if (!user) return
+    if (!user) {
+      return
+    }
     const data = this.getUserEventData(user, userStateDetails, kycStatusDetails)
     if (!isEmpty(data)) {
       await this.updateUser(user, data, {

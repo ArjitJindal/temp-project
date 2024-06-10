@@ -514,7 +514,9 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const falsePositiveUsers = new Set<string>()
 
     for (const executionDetail of executionDetails) {
-      if (!executionDetail.executedRules.ruleHit) continue
+      if (!executionDetail.executedRules.ruleHit) {
+        continue
+      }
 
       const { originUserId, destinationUserId } = executionDetail.transaction
 

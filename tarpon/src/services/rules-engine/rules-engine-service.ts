@@ -895,7 +895,9 @@ export class RulesEngineService {
           `${ruleImplementationName} rule implementation not found!`
         )
       }
-      if (!rule) throw new Error('Rule not found')
+      if (!rule) {
+        throw new Error('Rule not found')
+      }
       ruleClassInstance = transactionWithValidUserId
         ? new (RuleClass as typeof TransactionRuleBase)(
             this.tenantId,

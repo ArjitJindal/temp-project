@@ -24,7 +24,9 @@ export default function TransactionAmountRangeInput(props: Props) {
   >({});
   const isAddDisabled = newItem?.currency == null || (newItem?.min == null && newItem?.min == null);
   const handleAdd = () => {
-    if (newItem.min == null && newItem.max == null) return;
+    if (newItem.min == null && newItem.max == null) {
+      return;
+    }
     if (newItem.min != null && newItem.max != null && newItem.min > newItem.max) {
       message.warn('Min. amount should be less than max. amount');
       return;

@@ -60,7 +60,9 @@ export const RuleInstanceInfo = (props: Props) => {
 
   const onEditRule = useCallback(
     (entity) => {
-      if (isSimulationModeEnabled) setIsSimulationModeEnabled(false);
+      if (isSimulationModeEnabled) {
+        setIsSimulationModeEnabled(false);
+      }
       navigate(
         makeUrl('/rules/my-rules/:id/:mode', {
           id: entity.id,
@@ -73,7 +75,9 @@ export const RuleInstanceInfo = (props: Props) => {
 
   const onDuplicateRule = useCallback(
     (entity) => {
-      if (isSimulationModeEnabled) setIsSimulationModeEnabled(false);
+      if (isSimulationModeEnabled) {
+        setIsSimulationModeEnabled(false);
+      }
       navigate(
         makeUrl('/rules/my-rules/:id/:mode', {
           id: entity.id,
@@ -86,7 +90,9 @@ export const RuleInstanceInfo = (props: Props) => {
 
   const onSimulateRule = useCallback(
     (entity) => {
-      if (!isSimulationModeEnabled) setIsSimulationModeEnabled(true);
+      if (!isSimulationModeEnabled) {
+        setIsSimulationModeEnabled(true);
+      }
       navigate(
         makeUrl('/rules/my-rules/:id/:mode', {
           id: entity.id,

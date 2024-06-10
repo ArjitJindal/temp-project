@@ -46,7 +46,9 @@ export function humanizeCamelCase(name: string): string {
 }
 
 export function humanizeAuto(value: string): string {
-  if (isValidAcronyms(value)) return value;
+  if (isValidAcronyms(value)) {
+    return value;
+  }
   const caseType = recognizeCase(value);
   switch (caseType) {
     case 'CAMEL_CASE':

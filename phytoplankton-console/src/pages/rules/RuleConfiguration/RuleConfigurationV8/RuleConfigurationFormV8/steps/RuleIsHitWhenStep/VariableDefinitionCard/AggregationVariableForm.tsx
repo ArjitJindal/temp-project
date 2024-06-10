@@ -80,7 +80,9 @@ const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; 
 ];
 
 function swapOriginAndDestination(text?: string): string {
-  if (!text) return '';
+  if (!text) {
+    return '';
+  }
   return text.replace(/(origin|destination)/g, (match) => {
     return match === 'origin' ? 'destination' : 'origin';
   });
@@ -123,12 +125,16 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       }));
   }, [entityVariables, formValues.aggregationFieldKey]);
   const secondaryAggregationKeyOptions = useMemo(() => {
-    if (!formValues.aggregationFieldKey) return [];
+    if (!formValues.aggregationFieldKey) {
+      return [];
+    }
     const entityVariable = entityVariables.find((v) => v.key === formValues.aggregationFieldKey);
     const label = varLabelWithoutNamespace(entityVariable?.uiDefinition.label);
     const originRegex = /origin/i;
     const destinationRegex = /destination/i;
-    if (!entityVariable) return [];
+    if (!entityVariable) {
+      return [];
+    }
     if (!originRegex.test(entityVariable.key) && !destinationRegex.test(entityVariable.key)) {
       return [
         {

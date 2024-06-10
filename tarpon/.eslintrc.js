@@ -43,7 +43,8 @@ module.exports = {
           }
         ]
       }
-    ]
+    ],
+    "curly": "error",
   },
   parserOptions: {
     parser: '@typescript-eslint/parser',

@@ -277,7 +277,9 @@ export function RiskFactorsSimulation(props: Props) {
           type="editable-card"
           activeKey={`${activeIterationIndex}`}
           onChange={(key) => {
-            if (key !== DUPLICATE_TAB_KEY) setActiveIterationIndex(parseInt(key));
+            if (key !== DUPLICATE_TAB_KEY) {
+              setActiveIterationIndex(parseInt(key));
+            }
           }}
           onEdit={(action, key) => onEdit(action, key)}
           addIcon={

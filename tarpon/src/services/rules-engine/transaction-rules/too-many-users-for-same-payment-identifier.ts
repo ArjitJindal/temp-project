@@ -74,7 +74,9 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
   }
 
   private getUniqueIdentifier(paymentDetails: PaymentDetails | undefined) {
-    if (paymentDetails?.method === undefined) return undefined
+    if (paymentDetails?.method === undefined) {
+      return undefined
+    }
     const identifiers = PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentDetails?.method]
     return identifiers
       .map(

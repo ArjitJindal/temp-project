@@ -185,7 +185,9 @@ export class DashboardStatsRepository {
   }
 
   public async refreshQaStats(caseUpdatedAtTimeRange?: TimeRange) {
-    if (!(await tenantHasFeature(this.tenantId, 'QA'))) return
+    if (!(await tenantHasFeature(this.tenantId, 'QA'))) {
+      return
+    }
     await Promise.all([
       this.recalculateQaAlertsByRuleStats(caseUpdatedAtTimeRange),
       this.recalculateQaAlertsStatsByChecklistReason(caseUpdatedAtTimeRange),

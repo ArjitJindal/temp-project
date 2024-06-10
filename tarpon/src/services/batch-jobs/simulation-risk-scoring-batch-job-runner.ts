@@ -246,7 +246,9 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
         : this.userRepository?.sampleUsersCursor(SAMPLE_USERS_COUNT)
 
     const usersResultArray: SimulationRiskFactorsResult[] = []
-    if (!usersCursor) throw new Error('usersCursor is undefined')
+    if (!usersCursor) {
+      throw new Error('usersCursor is undefined')
+    }
     await processCursorInBatch<InternalUser>(
       usersCursor,
       async (usersChunk) => {
@@ -271,7 +273,9 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
     )
 
     let transactions: InternalTransaction[] = []
-    if (!transactionsCursor) throw new Error('transactionsCursor is undefined')
+    if (!transactionsCursor) {
+      throw new Error('transactionsCursor is undefined')
+    }
     await processCursorInBatch<InternalTransaction>(
       transactionsCursor,
       async (transactionsChunk) => {
@@ -322,10 +326,12 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
 
         const simulatedRiskLevel = riskLevel
 
-        if (this.transactionsResult?.[currentRiskLevel])
+        if (this.transactionsResult?.[currentRiskLevel]) {
           this.transactionsResult[currentRiskLevel].current++
-        if (this.transactionsResult?.[simulatedRiskLevel])
+        }
+        if (this.transactionsResult?.[simulatedRiskLevel]) {
           this.transactionsResult[simulatedRiskLevel].simulated++
+        }
         this.progress++
       },
       { concurrency: CONCURRENCY }
@@ -374,10 +380,12 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       user.krsScore?.krsScore ?? null
     )
 
-    if (this.usersResult?.[currentRiskLevel])
+    if (this.usersResult?.[currentRiskLevel]) {
       this.usersResult[currentRiskLevel].current++
-    if (this.usersResult?.[simulatedRiskLevel])
+    }
+    if (this.usersResult?.[simulatedRiskLevel]) {
       this.usersResult[simulatedRiskLevel].simulated++
+    }
 
     return {
       taskId: this.job?.parameters.taskId ?? '',

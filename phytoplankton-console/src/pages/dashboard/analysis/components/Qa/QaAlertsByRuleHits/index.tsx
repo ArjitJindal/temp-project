@@ -99,7 +99,9 @@ const QaAlertsByRuleHits = (props: Props) => {
     helper.derived<string>({
       title: 'Rule name',
       value: (stat) => {
-        if (!stat.ruleInstanceId) return stat.ruleId;
+        if (!stat.ruleInstanceId) {
+          return stat.ruleId;
+        }
         return getRuleInstanceDisplay(stat.ruleId, stat.ruleInstanceId, rules, ruleInstances);
       },
       defaultWidth: 250,
@@ -107,7 +109,9 @@ const QaAlertsByRuleHits = (props: Props) => {
     helper.derived<string>({
       title: 'Rule description',
       value: (stat) => {
-        if (!stat.ruleInstanceId) return stat.ruleId;
+        if (!stat.ruleInstanceId) {
+          return stat.ruleId;
+        }
         return getRuleInstanceDescription(stat.ruleId, ruleInstances, rules);
       },
       defaultWidth: 400,

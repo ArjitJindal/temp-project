@@ -96,7 +96,9 @@ export function shouldUseReviewAssignments(
 }
 
 export function getMentionsFromComments(body?: string): string[] {
-  if (!body) return []
+  if (!body) {
+    return []
+  }
   const mentions = body?.match(mentionRegex)?.map((mention) => {
     return mention
       .match(mentionIdRegex)
@@ -106,7 +108,9 @@ export function getMentionsFromComments(body?: string): string[] {
 }
 
 export function getParsedCommentBody(body?: string) {
-  if (!body) return ''
+  if (!body) {
+    return ''
+  }
   const result = body.split(mentionRegex)
   return result.filter((e) => !e.match(/^(google-oauth2|auth0)\|\S+$/)).join('')
 }

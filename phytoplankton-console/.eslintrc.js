@@ -34,6 +34,7 @@ module.exports = {
     '@typescript-eslint/switch-exhaustiveness-check': 'error',
     'custom-rules/enforce-paginated-query-params': 'error',
     'cypress/no-async-tests': 'off',
+    curly: 'error',
   },
   parserOptions: {
     parser: '@typescript-eslint/parser',

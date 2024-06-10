@@ -60,10 +60,11 @@ export async function updateCaseTransactions(
       ) ?? []
     for (const alert of alerts) {
       for (const txChunk of chunk(alert.transactionIds, 1000)) {
-        if (alert.alertId)
+        if (alert.alertId) {
           await transactionRepository.updateTransactionAlertIds(txChunk, [
             alert.alertId,
           ])
+        }
       }
     }
     logger.info(`Updated case ${caseDoc.caseId} with ${alerts.length} alerts`)

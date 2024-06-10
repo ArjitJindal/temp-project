@@ -245,7 +245,9 @@ export class CaseCreationService {
         tags: compact(uniqObjects(transactions.flatMap((t) => t.tags ?? []))),
       },
     })
-    if (!case_.caseId) throw Error('Cannot find CaseId')
+    if (!case_.caseId) {
+      throw Error('Cannot find CaseId')
+    }
     const comment = this.getManualCaseComment(
       manualCaseData,
       case_.caseId,
@@ -280,9 +282,12 @@ export class CaseCreationService {
     transaction: TransactionWithRulesResult
   ): Promise<(InternalConsumerUser | InternalBusinessUser)[]> {
     const userIds = new Set<string>()
-    if (transaction.originUserId) userIds.add(transaction.originUserId)
-    if (transaction.destinationUserId)
+    if (transaction.originUserId) {
+      userIds.add(transaction.originUserId)
+    }
+    if (transaction.destinationUserId) {
       userIds.add(transaction.destinationUserId)
+    }
     if (userIds.size) {
       return await this.userRepository.getMongoUsersByIds([...userIds])
     } else {

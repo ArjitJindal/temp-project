@@ -36,7 +36,9 @@ export type AcceptedPaymentDetails =
 export function isTransactionMethodValid(
   transactionMethod: string | undefined
 ): boolean {
-  if (transactionMethod === undefined) return false
+  if (transactionMethod === undefined) {
+    return false
+  }
   const requiredTransactionMethods = [
     'GENERIC_BANK_ACCOUNT',
     'IBAN',

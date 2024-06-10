@@ -78,8 +78,9 @@ export default function KYCChangeModal(props: Props) {
   }, [fileList]);
 
   useEffect(() => {
-    if (presentKycStatus === 'SUCCESSFUL') setStatusChangeReasons(['Other']);
-    else {
+    if (presentKycStatus === 'SUCCESSFUL') {
+      setStatusChangeReasons(['Other']);
+    } else {
       setStatusChangeReasons(KYC_AND_USER_STATUS_CHANGE_REASONS);
     }
   }, [presentKycStatus]);

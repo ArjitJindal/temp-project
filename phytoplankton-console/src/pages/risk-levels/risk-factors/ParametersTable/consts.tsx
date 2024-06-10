@@ -1337,7 +1337,9 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
   }) as ValueRenderer<'LITERAL'>,
   SOURCE_OF_FUNDS: DEFAULT_MULTIPLE_RENDERER,
   AMOUNT_RANGE: (({ value, onChange }) => {
-    if (value == null) return null;
+    if (value == null) {
+      return null;
+    }
     return (
       <div className={style.amount_container}>
         <div className={style.amountCurrencyContainer}>
@@ -1410,8 +1412,9 @@ type Information<T extends RiskValueType> = (params: {
 export const NEW_VALUE_INFOS: Information<any>[] = [
   ({ newValue, defaultCurrency }) => {
     if (newValue.kind === 'AMOUNT_RANGE') {
-      if (newValue.currency !== defaultCurrency)
+      if (newValue.currency !== defaultCurrency) {
         return 'Transactions in other currencies will be auto converted for the defined value range.';
+      }
     }
     return null;
   },

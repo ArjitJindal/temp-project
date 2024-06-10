@@ -39,8 +39,9 @@ export default function NotificationsDrawerItem(props: Props) {
       className={cn(s.root, !isRead && s.isUnread)}
       onClick={() => {
         window.open(getNotificationUrl(notification));
-        if (notification.consoleNotificationStatuses?.some((x) => x.status === 'SENT'))
+        if (notification.consoleNotificationStatuses?.some((x) => x.status === 'SENT')) {
           handleReadNotification(notification.id);
+        }
       }}
       ref={innerRef}
     >

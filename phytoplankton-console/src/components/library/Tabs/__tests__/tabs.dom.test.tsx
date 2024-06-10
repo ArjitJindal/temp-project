@@ -119,7 +119,9 @@ function getTabByTitle(title: string) {
   const titles = tabEls.map((x) => x.textContent);
   expect(titles).toContain(title);
   const result = tabEls.find((x) => within(x).queryByText(title) != null);
-  if (!result) throw new Error(`Tab with title "${title}" not found`);
+  if (!result) {
+    throw new Error(`Tab with title "${title}" not found`);
+  }
   expect(result).toBeInTheDocument();
   return result;
 }

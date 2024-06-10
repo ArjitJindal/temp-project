@@ -68,7 +68,9 @@ async function getTransactionMissingUsers(
     }
   }
 
-  if (userIds.length === 0) return []
+  if (userIds.length === 0) {
+    return []
+  }
   const users = await userRepository.getUsers(userIds)
   const existingUserIds = users.map((user) => user.userId)
   if (users.length === userIds.length) {

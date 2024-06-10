@@ -25,7 +25,9 @@ const TimeRangeInput = (props: Props) => {
     });
   };
   function getHoursAndMinutesFromTimestamp(timestamp?: number) {
-    if (!timestamp) return undefined;
+    if (!timestamp) {
+      return undefined;
+    }
     const date = new Date(timestamp);
     const utcHours = date.getUTCHours();
     const utcMinutes = date.getUTCMinutes();

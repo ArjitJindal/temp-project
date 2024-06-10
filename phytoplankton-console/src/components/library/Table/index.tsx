@@ -207,7 +207,9 @@ function Table<Item extends object, Params extends object = CommonParams>(
         table.toggleAllRowsSelected(value);
       },
       expandRow: (id: string | undefined) => {
-        if (id !== undefined) table.getRow(id).toggleExpanded(true);
+        if (id !== undefined) {
+          table.getRow(id).toggleExpanded(true);
+        }
       },
     }),
     [handleReload, table],
@@ -221,9 +223,15 @@ function Table<Item extends object, Params extends object = CommonParams>(
   const Rows = table.getRowModel();
   const [rowExpanded, setrowExpanded] = useState<boolean>(false);
   useEffect(() => {
-    if (rowExpanded) return;
-    if (expandedRowId === undefined) return;
-    if (!Rows?.rowsById[expandedRowId]?.getCanExpand()) return;
+    if (rowExpanded) {
+      return;
+    }
+    if (expandedRowId === undefined) {
+      return;
+    }
+    if (!Rows?.rowsById[expandedRowId]?.getCanExpand()) {
+      return;
+    }
     if (Rows?.rowsById[expandedRowId]?.getIsExpanded() === false) {
       Rows?.rowsById[expandedRowId]?.toggleExpanded(true);
       setrowExpanded(true);

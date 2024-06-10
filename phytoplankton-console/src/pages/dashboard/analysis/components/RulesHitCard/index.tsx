@@ -33,7 +33,9 @@ export default function RuleHitCard() {
     helper.derived<string>({
       title: 'Rule name',
       value: (stat) => {
-        if (!stat.ruleInstanceId) return stat.ruleId;
+        if (!stat.ruleInstanceId) {
+          return stat.ruleId;
+        }
         return getRuleInstanceDisplay(stat.ruleId, stat.ruleInstanceId, rules, ruleInstances);
       },
     }),

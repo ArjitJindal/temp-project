@@ -538,7 +538,9 @@ export default function CaseTable(props: Props) {
           );
         },
         ({ selectedIds, isDisabled, selectedItems }) => {
-          if (isEmpty(selectedItems)) return;
+          if (isEmpty(selectedItems)) {
+            return;
+          }
 
           const isInReview = isInReviewCases(selectedItems);
           const caseStatus = selectedItems[selectedIds[0]].caseStatus;
@@ -560,7 +562,9 @@ export default function CaseTable(props: Props) {
           );
         },
         ({ selectedIds, selectedItems, isDisabled }) => {
-          if (isEmpty(selectedItems)) return;
+          if (isEmpty(selectedItems)) {
+            return;
+          }
 
           const [currentCaseStatus, isSingle] = getSingleCaseStatusCurrent(selectedItems);
           const [previousCaseStatus, isSinglePrevious] =
@@ -585,7 +589,9 @@ export default function CaseTable(props: Props) {
           );
         },
         ({ selectedIds, selectedItems, isDisabled }) => {
-          if (isEmpty(selectedItems)) return;
+          if (isEmpty(selectedItems)) {
+            return;
+          }
 
           const selectedIdsCount = selectedIds.length;
           const caseItem = selectedItems[selectedIds[0]];

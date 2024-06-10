@@ -925,7 +925,9 @@ export class RiskScoringService {
       const getUserOrNull = async (
         userId: string | undefined
       ): Promise<User | Business | null> => {
-        if (!userId) return null
+        if (!userId) {
+          return null
+        }
 
         return (
           (await this.userRepository.getUser<User | Business>(userId)) ?? null

@@ -202,7 +202,9 @@ export class StreamConsumerBuilder {
   }
 
   private async sendToRetryQueue(update: DynamoDbEntityUpdate) {
-    if (!update.rawRecord) return
+    if (!update.rawRecord) {
+      return
+    }
     await sqsClient.send(
       new SendMessageCommand({
         MessageBody: JSON.stringify(update.rawRecord),

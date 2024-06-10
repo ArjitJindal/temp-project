@@ -11,9 +11,13 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
   }
   switch (item.questionType) {
     case 'TABLE': {
-      if (!item?.headers) return '';
+      if (!item?.headers) {
+        return '';
+      }
       result.push(item.headers.map((header) => csvValue(header.name)));
-      if (!item.rows) break;
+      if (!item.rows) {
+        break;
+      }
       for (const row of item.rows) {
         const updatedRow: CsvRow = [];
         for (let index = 0; index < item.headers.length; index++) {
@@ -31,7 +35,9 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
       break;
     }
     case 'BARCHART': {
-      if (!item.values) break;
+      if (!item.values) {
+        break;
+      }
       const rows = item.values.map((value) => [
         csvValue(value?.x ?? 'N/A'),
         csvValue(value?.y ?? 0),
@@ -40,7 +46,9 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
       break;
     }
     case 'TIME_SERIES': {
-      if (!item.timeseries) break;
+      if (!item.timeseries) {
+        break;
+      }
       for (const seriesItem of item.timeseries) {
         const rows =
           seriesItem.values
@@ -55,7 +63,9 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
       break;
     }
     case 'PROPERTIES': {
-      if (!item.properties) break;
+      if (!item.properties) {
+        break;
+      }
       const rows = item.properties.map((property) => {
         return [csvValue(humanizeAuto(property.key || '')), csvValue(property.value)];
       });
@@ -63,14 +73,18 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
       break;
     }
     case 'STACKED_BARCHART': {
-      if (!item.series) return '';
+      if (!item.series) {
+        return '';
+      }
       const header: CsvRow = item.series.map((seriesItem) => csvValue(seriesItem.label));
       result.push([csvValue(''), ...header]);
       const lookUp: { [key: string]: CsvRow } = {};
       for (const seriesItem of item.series) {
         for (const item of seriesItem.values ?? []) {
           if (item.x) {
-            if (!lookUp[item.x]) lookUp[item.x] = [];
+            if (!lookUp[item.x]) {
+              lookUp[item.x] = [];
+            }
             lookUp[item.x ?? ''].push(csvValue(item.y));
           }
         }

@@ -140,16 +140,19 @@ export const getStatuses = (
 ): (CaseStatus | AlertStatus)[] => {
   let selectedStatus;
 
-  if (status?.includes('IN_REVIEW'))
+  if (status?.includes('IN_REVIEW')) {
     selectedStatus = [
       ...['IN_REVIEW_OPEN', 'IN_REVIEW_ESCALATED', 'IN_REVIEW_CLOSED', 'IN_REVIEW_REOPENED'],
     ];
+  }
 
-  if (status?.includes('IN_PROGRESS'))
+  if (status?.includes('IN_PROGRESS')) {
     selectedStatus = [...(selectedStatus ?? []), ...['OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS']];
+  }
 
-  if (status?.includes('ON_HOLD'))
+  if (status?.includes('ON_HOLD')) {
     selectedStatus = [...(selectedStatus ?? []), ...['OPEN_ON_HOLD', 'ESCALATED_ON_HOLD']];
+  }
 
   selectedStatus = [...(selectedStatus ?? []), ...intersection(status, CASE_STATUSS)]; // Get the status which are as we store
 

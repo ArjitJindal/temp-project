@@ -1034,10 +1034,11 @@ export class RuleJsonLogicEvaluator {
   private getAggregationGranularity(
     aggregationVariable: RuleAggregationVariable
   ) {
-    if (aggregationVariable.timeWindow.end.granularity === 'all_time')
+    if (aggregationVariable.timeWindow.end.granularity === 'all_time') {
       return 'year'
-    else if (aggregationVariable.timeWindow.start.granularity === 'now')
+    } else if (aggregationVariable.timeWindow.start.granularity === 'now') {
       return aggregationVariable.timeWindow.end.granularity
+    }
     return aggregationVariable.timeWindow.start.rollingBasis ||
       aggregationVariable.timeWindow.end.rollingBasis
       ? 'hour'

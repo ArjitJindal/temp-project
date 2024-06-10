@@ -23,7 +23,9 @@ const getTransactionWidgetsProps = (
   const hitDirections =
     transaction.hitRules.flatMap((rule) => rule.ruleHitMeta?.hitDirections ?? []) ?? [];
   const alertCreatedForUserIds = hitDirections.map((hitDirection) => {
-    if (hitDirection == 'ORIGIN') return transaction.originUserId;
+    if (hitDirection == 'ORIGIN') {
+      return transaction.originUserId;
+    }
     return transaction.destinationUserId;
   });
 
