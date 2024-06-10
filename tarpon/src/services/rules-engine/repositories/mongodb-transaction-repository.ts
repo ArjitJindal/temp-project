@@ -1652,7 +1652,9 @@ export class MongoDbTransactionRepository
     transactionIds?: string[],
     alertIds?: string[]
   ): Promise<void> {
-    if (!transactionIds || !alertIds) return
+    if (!transactionIds || !alertIds) {
+      return
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
