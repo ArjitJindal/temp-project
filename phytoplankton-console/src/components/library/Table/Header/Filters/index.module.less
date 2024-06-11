@@ -3,7 +3,23 @@
   position: relative;
   height: 28px;
   flex: 1;
-  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 90%, transparent, transparent);
+
+  &::before {
+    content: ' ';
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100%;
+    background: linear-gradient(to right, transparent, white, white);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  & > ::-webkit-scrollbar {
+    height: 3px;
+  }
 }
 
 .items {

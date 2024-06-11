@@ -66,3 +66,46 @@ body {
     margin: 0 !important;
   }
 }
+
+* {
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: fade(@fr-colors-v2-gray-3, 50%);
+    border-radius: 2.5px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: fade(@fr-colors-v2-gray-5, 50%);
+    border-radius: 2.5px;
+
+    &:hover {
+      background-color: @fr-colors-v2-gray-5;
+    }
+  }
+
+  &:not(:hover) {
+    & > ::-webkit-scrollbar,
+    & > ::-webkit-scrollbar-track,
+    & > ::-webkit-scrollbar-thumb {
+      background: transparent;
+    }
+  }
+
+  &:hover {
+    & > ::-webkit-scrollbar-track {
+      background: fade(@fr-colors-v2-gray-3, 50%);
+    }
+
+    & > ::-webkit-scrollbar-thumb {
+      background-color: fade(@fr-colors-v2-gray-5, 50%);
+
+      &:hover {
+        background-color: @fr-colors-v2-gray-5;
+      }
+    }
+  }
+}

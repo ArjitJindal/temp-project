@@ -13,6 +13,7 @@ import {
   RowSelectionState,
 } from '@tanstack/react-table';
 import { sortBy } from 'lodash';
+import { ExpandedState } from '@tanstack/table-core';
 import {
   AllParams,
   applyFieldAccessor,
@@ -395,7 +396,17 @@ export function useTanstackTable<
         `This operation is a noop, column order is controlled manually. Use ExtraTableContext instead`,
       );
     },
-    onExpandedChange: setExpanded,
+    onExpandedChange: (updater: Updater<ExpandedState>) => {
+      setExpanded((prevState) => {
+        const newState = applyUpdater(prevState, updater);
+        if (typeof newState === 'boolean' || typeof prevState === 'boolean') {
+          return newState;
+        }
+        return Object.entries(newState)
+          .filter(([key, isExpanded]) => isExpanded && !(key in prevState))
+          .reduce((acc, [key, isExpanded]) => ({ ...acc, [key]: isExpanded }), {});
+      });
+    },
     columnResizeMode: 'onEnd',
     onColumnVisibilityChange: setColumnVisibility,
     onColumnSizingChange: setColumnSizing,
