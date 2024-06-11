@@ -1,12 +1,17 @@
 import { Config, BasicConfig } from '@react-awesome-query-builder/ui';
-import { useState, useEffect } from 'react';
-import { AsyncResource, init, map } from '@/utils/asyncResource';
+import { useState, useEffect, useMemo } from 'react';
+import { AsyncResource, init, isSuccess, map } from '@/utils/asyncResource';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { RULE_LOGIC_CONFIG } from '@/utils/queries/keys';
 import { useIsChanged } from '@/utils/hooks';
 import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
-import { RuleAggregationVariable, RuleEntityVariableInUse, RuleLogicConfig } from '@/apis';
+import {
+  RuleAggregationVariable,
+  RuleEntityVariableInUse,
+  RuleLogicConfig,
+  RuleType,
+} from '@/apis';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import {
@@ -17,10 +22,10 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 
 const InitialConfig = BasicConfig;
 
-export function useRuleLogicConfig() {
+export function useRuleLogicConfig(ruleType: RuleType) {
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const api = useApi();
-  return useQuery<RuleLogicConfig>(
+  const queryResult = useQuery<RuleLogicConfig>(
     RULE_LOGIC_CONFIG(),
     async (): Promise<RuleLogicConfig> => {
       const response = await api.getRuleLogicConfig();
@@ -35,9 +40,48 @@ export function useRuleLogicConfig() {
     },
     { refetchOnMount: false, enabled: v8Enabled },
   );
+  return useMemo(() => {
+    if (isSuccess(queryResult.data)) {
+      const variables = queryResult.data.value.variables.map((v) => {
+        if (ruleType !== 'TRANSACTION') {
+          return v;
+        }
+        if (v.entity === 'TRANSACTION') {
+          return v;
+        }
+        let label = v.uiDefinition.label;
+        if (isUserSenderVariable(v.key)) {
+          label += ' (sender)';
+        } else if (isUserReceiverVariable(v.key)) {
+          label += ' (receiver)';
+        } else if (isUserSenderOrReceiverVariable(v.key)) {
+          label += ' (sender or receiver)';
+        }
+        return {
+          ...v,
+          uiDefinition: {
+            ...v.uiDefinition,
+            label,
+          },
+        };
+      });
+      return {
+        ...queryResult,
+        data: {
+          ...queryResult.data,
+          value: {
+            ...queryResult.data.value,
+            variables,
+          },
+        },
+      };
+    }
+    return queryResult;
+  }, [queryResult, ruleType]);
 }
 
 export function useLogicBuilderConfig(
+  ruleType: RuleType,
   entityVariableTypes: Array<
     'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER' | 'PAYMENT_DETAILS'
   >,
@@ -46,7 +90,7 @@ export function useLogicBuilderConfig(
   configParams: Partial<LogicBuilderConfig>,
 ): AsyncResource<Config> {
   const [result, setResult] = useState<AsyncResource<Config>>(init());
-  const ruleLogicConfigResult = useRuleLogicConfig();
+  const ruleLogicConfigResult = useRuleLogicConfig(ruleType);
   const ruleLogicConfigRes = ruleLogicConfigResult.data;
 
   const variablesChanged = useIsChanged([...aggregationVariables, ...(entityVariablesInUse ?? [])]);

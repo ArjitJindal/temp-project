@@ -101,7 +101,7 @@ function Content(props: { tab: string }) {
     [isSimulationEnabled, navigate, v8Enabled],
   );
   // NOTE: Rule logic config data size is big, so we prefetch it here
-  useRuleLogicConfig();
+  useRuleLogicConfig('TRANSACTION');
   return <PageTabs activeKey={props.tab} onChange={handleChange} items={items} />;
 }
 

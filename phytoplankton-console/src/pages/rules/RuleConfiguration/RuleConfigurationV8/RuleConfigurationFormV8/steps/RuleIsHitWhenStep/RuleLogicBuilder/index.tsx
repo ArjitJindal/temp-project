@@ -7,10 +7,11 @@ import { LogicBuilderValue, LogicBuilderConfig } from '@/components/ui/LogicBuil
 import { isSuccess } from '@/utils/asyncResource';
 import { usePrevious, useIsChanged } from '@/utils/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { RuleAggregationVariable, RuleEntityVariableInUse } from '@/apis';
+import { RuleAggregationVariable, RuleEntityVariableInUse, RuleType } from '@/apis';
 import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
 
 interface Props {
+  ruleType: RuleType;
   jsonLogic: RuleLogic | undefined;
   entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER'>;
   entityVariablesInUse?: RuleEntityVariableInUse[];
@@ -22,11 +23,12 @@ interface Props {
 type State = { tree: LogicBuilderValue; config: Config } | null;
 
 export function RuleLogicBuilder(props: Props) {
-  const { logicBuilderProps, configParams } = props;
+  const { logicBuilderProps, configParams, ruleType } = props;
   const [state, setState] = useState<State>(null);
 
   // Initialize state when config is loaded or changed
   const configRes = useLogicBuilderConfig(
+    ruleType,
     props.entityVariableTypes,
     props.entityVariablesInUse,
     props.aggregationVariables ?? [],

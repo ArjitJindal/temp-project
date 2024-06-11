@@ -92,7 +92,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
       ) === undefined,
     [aggregationVariables, editingVariable?.variable?.key, entityVariables],
   );
-  const ruleLogicConfig = useRuleLogicConfig();
+  const ruleLogicConfig = useRuleLogicConfig(ruleType);
   const entityVariableDefinitions = useMemo(() => {
     if (isSuccess(ruleLogicConfig.data)) {
       return ruleLogicConfig.data.value.variables ?? [];

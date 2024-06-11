@@ -16,12 +16,13 @@ import { FieldState } from '@/components/library/Form/utils/hooks';
 import { RiskLevel } from '@/utils/risk-levels';
 import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
 import Select from '@/components/library/Select';
-import { CurrencyCode } from '@/apis';
+import { CurrencyCode, RuleType } from '@/apis';
 import Alert from '@/components/library/Alert';
 import { isError } from '@/components/library/Form/utils/validation/types';
 import Button from '@/components/library/Button';
 
 interface Props {
+  ruleType: RuleType;
   entityVariablesFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogicEntityVariables']>;
   aggVariablesFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogicAggregationVariables']>;
   logicFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogic']>;
@@ -32,6 +33,7 @@ interface Props {
 
 export default function DefineLogicCard(props: Props) {
   const {
+    ruleType,
     entityVariablesFieldState,
     aggVariablesFieldState,
     riskLevelsLogicFieldState,
@@ -127,6 +129,7 @@ export default function DefineLogicCard(props: Props) {
           <IfThen
             renderIf={
               <RuleLogicBuilder
+                ruleType={ruleType}
                 key={currentRiskLevel}
                 entityVariableTypes={['TRANSACTION', 'CONSUMER_USER', 'BUSINESS_USER', 'USER']}
                 entityVariablesInUse={entityVariablesFieldState.value ?? []}

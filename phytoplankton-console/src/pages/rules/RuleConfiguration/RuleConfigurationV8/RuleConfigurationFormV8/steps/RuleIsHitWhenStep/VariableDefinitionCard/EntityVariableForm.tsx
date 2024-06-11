@@ -145,31 +145,14 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     }
   }, []);
   const allVariableOptions = useMemo(() => {
-    if (ruleType === 'USER') {
-      return entityVariables
-        .filter((v) => v.entity !== 'TRANSACTION' && isUserSenderVariable(v.key))
-        .map((v) => ({
-          value: v.key,
-          label: v.uiDefinition.label,
-        }));
-    } else {
-      return entityVariables.map((v) => {
-        let label = v.uiDefinition.label;
-        if (v.entity !== 'TRANSACTION') {
-          if (isUserSenderVariable(v.key)) {
-            label += ' (sender)';
-          } else if (isUserReceiverVariable(v.key)) {
-            label += ' (receiver)';
-          } else if (isUserSenderOrReceiverVariable(v.key)) {
-            label += ' (sender or receiver)';
-          }
-        }
-        return {
-          value: v.key,
-          label,
-        };
-      });
-    }
+    const filteredEntityVariables =
+      ruleType === 'USER'
+        ? entityVariables.filter((v) => v.entity !== 'TRANSACTION' && isUserSenderVariable(v.key))
+        : entityVariables;
+    return filteredEntityVariables.map((v) => ({
+      value: v.key,
+      label: v.uiDefinition.label,
+    }));
   }, [entityVariables, ruleType]);
 
   const entityVariablesFiltered = useMemo(() => {
