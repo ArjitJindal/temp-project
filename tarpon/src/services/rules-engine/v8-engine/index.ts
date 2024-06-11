@@ -405,21 +405,20 @@ export class RuleJsonLogicEvaluator {
     direction: 'origin' | 'destination',
     type: RuleAggregationType
   ): string | undefined {
-    const userId =
-      direction === 'origin'
-        ? transaction.originUserId
-        : transaction.destinationUserId
-    if (type === 'PAYMENT_DETAILS_TRANSACTIONS' || !userId) {
-      const paymentDetails =
-        direction === 'origin'
-          ? transaction.originPaymentDetails
-          : transaction.destinationPaymentDetails
-      if (paymentDetails) {
-        return getPaymentDetailsIdentifiersKey(paymentDetails)
+    switch (type) {
+      case 'USER_TRANSACTIONS':
+        return direction === 'origin'
+          ? transaction.originUserId
+          : transaction.destinationUserId
+      case 'PAYMENT_DETAILS_TRANSACTIONS': {
+        const paymentDetails =
+          direction === 'origin'
+            ? transaction.originPaymentDetails
+            : transaction.destinationPaymentDetails
+        if (paymentDetails) {
+          return getPaymentDetailsIdentifiersKey(paymentDetails)
+        }
       }
-      return undefined
-    } else {
-      return userId
     }
   }
 

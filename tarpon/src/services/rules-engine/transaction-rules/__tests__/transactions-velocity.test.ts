@@ -540,29 +540,13 @@ ruleVariantsTest({ aggregation: true, v8: true }, () => {
           },
           checkSender: 'sending',
           checkReceiver: 'receiving',
+          originMatchPaymentMethodDetails: true,
+          destinationMatchPaymentMethodDetails: true,
         } as TransactionsVelocityRuleParameters,
       },
     ])
 
     describe.each<TransactionRuleTestCase>([
-      {
-        name: 'Anonymous sender (no identifier) - hit',
-        transactions: [
-          getTestTransaction({
-            originUserId: undefined,
-            originPaymentDetails: undefined,
-            destinationUserId: '1-1',
-            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: undefined,
-            originPaymentDetails: undefined,
-            destinationUserId: '1-1',
-            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
-          }),
-        ],
-        expectedHits: [false, true],
-      },
       {
         name: 'Anonymous sender - hit',
         transactions: [
@@ -582,24 +566,6 @@ ruleVariantsTest({ aggregation: true, v8: true }, () => {
               cardFingerprint: 'fingerprint-1',
             },
             destinationUserId: '2-2',
-            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
-          }),
-        ],
-        expectedHits: [false, true],
-      },
-      {
-        name: 'Anonymous receiver (no identifier) - hit',
-        transactions: [
-          getTestTransaction({
-            originUserId: '3-1',
-            destinationUserId: undefined,
-            destinationPaymentDetails: undefined,
-            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '3-1',
-            destinationUserId: undefined,
-            destinationPaymentDetails: undefined,
             timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
           }),
         ],

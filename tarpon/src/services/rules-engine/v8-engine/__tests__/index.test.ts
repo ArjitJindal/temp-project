@@ -1,4 +1,5 @@
 import { STARTS_WITH_OPERATOR } from '../../v8-operators/starts-ends-with'
+import { TransactionRuleData } from '..'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -11,7 +12,7 @@ const RuleJsonLogicEvaluator = require('..').RuleJsonLogicEvaluator
 
 dynamoDbSetupHook()
 
-describe('entity variable', () => {
+describe('Entity variable', () => {
   test('executes the json logic - hit', async () => {
     const tenantId = 'tenant-id'
     const dynamoDbClient = getDynamoDbClient()
@@ -104,7 +105,7 @@ describe('entity variable', () => {
     })
   })
 })
-describe('entity variable (array)', () => {
+describe('Entity variable (array)', () => {
   const TEST_LOGIC = {
     and: [
       {
@@ -275,7 +276,7 @@ describe('entity variable (array)', () => {
   })
 })
 
-describe('aggregation variable', () => {
+describe('Aggregation variable', () => {
   test('executes the json logic (sending)', async () => {
     const tenantId = 'tenant-id'
     const dynamoDbClient = getDynamoDbClient()
@@ -774,10 +775,151 @@ describe('aggregation variable', () => {
       hitDirections: ['ORIGIN'],
     })
   })
+
+  test('aggregation type (user ID)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const logic = { and: [{ '==': [{ var: 'agg:123' }, 1] }] }
+    const aggVars = [
+      {
+        key: 'agg:123',
+        type: 'USER_TRANSACTIONS',
+        userDirection: 'SENDER',
+        transactionDirection: 'SENDING',
+        aggregationFieldKey: 'TRANSACTION:transactionId',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: { units: 30, granularity: 'day' },
+          end: { units: 0, granularity: 'day' },
+        },
+      },
+    ]
+    const data: TransactionRuleData = {
+      type: 'TRANSACTION',
+      transaction: getTestTransaction({
+        type: 'TRANSFER',
+        originUserId: 'U-1',
+        originPaymentDetails: undefined,
+      }),
+    }
+    const result1 = await evaluator.evaluate(
+      logic,
+      aggVars,
+      { baseCurrency: 'EUR', tenantId },
+      data
+    )
+    expect(result1).toEqual({
+      hit: true,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+      ],
+      hitDirections: ['ORIGIN'],
+    })
+    const result2 = await evaluator.evaluate(
+      logic,
+      aggVars,
+      { baseCurrency: 'EUR', tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({
+          ...data.transaction,
+          originUserId: undefined,
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '1234',
+          },
+        }),
+      }
+    )
+    expect(result2).toEqual({
+      hit: false,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: {},
+        },
+      ],
+      hitDirections: [],
+    })
+  })
+  test('aggregation type (payment ID)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const logic = { and: [{ '==': [{ var: 'agg:123' }, 1] }] }
+    const aggVars = [
+      {
+        key: 'agg:123',
+        type: 'PAYMENT_DETAILS_TRANSACTIONS',
+        userDirection: 'SENDER',
+        transactionDirection: 'SENDING',
+        aggregationFieldKey: 'TRANSACTION:transactionId',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: { units: 30, granularity: 'day' },
+          end: { units: 0, granularity: 'day' },
+        },
+      },
+    ]
+    const data: TransactionRuleData = {
+      type: 'TRANSACTION',
+      transaction: getTestTransaction({
+        type: 'TRANSFER',
+        originUserId: undefined,
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '1234',
+        },
+      }),
+    }
+    const result1 = await evaluator.evaluate(
+      logic,
+      aggVars,
+      { baseCurrency: 'EUR', tenantId },
+      data
+    )
+    expect(result1).toEqual({
+      hit: true,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+      ],
+      hitDirections: ['ORIGIN'],
+    })
+    const result2 = await evaluator.evaluate(
+      logic,
+      aggVars,
+      { baseCurrency: 'EUR', tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({
+          ...data.transaction,
+          originUserId: 'U-1',
+          originPaymentDetails: undefined,
+        }),
+      }
+    )
+    expect(result2).toEqual({
+      hit: false,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: {},
+        },
+      ],
+      hitDirections: [],
+    })
+  })
 })
 
-describe('DataLoader cache', () => {
-  test('same aggregation variables should be loaded only once', async () => {
+describe('Dataloder cache', () => {
+  test('Testing the aggregation variable cache', async () => {
     const tenantId = 'tenant-id'
     const dynamoDbClient = getDynamoDbClient()
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
@@ -964,7 +1106,7 @@ describe('Different aggregate fields for receiving and sending', () => {
   })
 })
 
-describe('operators', () => {
+describe('Operators', () => {
   beforeEach(() => {
     operatorSpy.mockRestore()
   })

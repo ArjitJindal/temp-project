@@ -341,6 +341,8 @@ ruleVariantsTest({ aggregation: true, v8: true }, () => {
           transactionVolumeThreshold: {
             EUR: 300,
           },
+          originMatchPaymentMethodDetails: false,
+          destinationMatchPaymentMethodDetails: false,
         } as TransactionsVolumeRuleParameters,
       },
     ])
