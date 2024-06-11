@@ -42,10 +42,12 @@ export default function Slider(props: Props) {
 
   return (
     <div className={cn(s.container, props.className)}>
-      {props.min && props.marks?.[props.min] && (
+      {props.min && props.marks?.[props.min] ? (
         <P variant="m" fontWeight="normal">
           {props.marks[props.min]}
         </P>
+      ) : (
+        <></>
       )}
       <div className={cn(s.root)} data-cy="age-range-slider">
         {props.mode === 'RANGE' ? (

@@ -37,7 +37,6 @@ export const columns: TableColumn<TableItem>[] = helper.list([
     render: (item, context) => {
       const externalState: ExternalState = context.external as ExternalState;
       const { state, setState, isDisabled } = externalState;
-
       const { index } = item;
       if (state == null) {
         return <></>;
@@ -52,7 +51,7 @@ export const columns: TableColumn<TableItem>[] = helper.list([
           min={0}
           max={100}
           value={[start, end]}
-          endExclusive={true}
+          endExclusive={end !== 100}
           onChange={(newValue) => {
             if (!setState || newValue == null) {
               return;
