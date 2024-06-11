@@ -247,6 +247,20 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
+    const publicAccessBlock =
+      new aws.s3BucketPublicAccessBlock.S3BucketPublicAccessBlock(
+        this,
+        'datalake-bucket-public-access',
+        {
+          bucket: datalakeBucket.id,
+          blockPublicAcls: true,
+          blockPublicPolicy: true,
+          ignorePublicAcls: true,
+          restrictPublicBuckets: true,
+          dependsOn: [datalakeBucket],
+        }
+      )
+
     const bucketState =
       new aws.s3BucketOwnershipControls.S3BucketOwnershipControls(
         this,
@@ -259,10 +273,49 @@ class DatabricksStack extends TerraformStack {
         }
       )
 
+    const bucketPolicy =
+      new aws.dataAwsIamPolicyDocument.DataAwsIamPolicyDocument(
+        this,
+        'datalake-bucket-policy-doc',
+        {
+          statement: [
+            {
+              principals: [
+                {
+                  type: '*',
+                  identifiers: ['*'],
+                },
+              ],
+              effect: 'Allow',
+              actions: ['s3:GetObject', 's3:ListBucket', 's3:PutObject'],
+              resources: [datalakeBucket.arn, `${datalakeBucket.arn}/*`],
+              condition: [
+                {
+                  test: 'StringEquals',
+                  variable: 'aws:PrincipalAccount',
+                  values: [awsAccountId],
+                },
+                {
+                  test: 'ForAnyValue:StringEquals',
+                  variable: 'aws:CalledVia',
+                  values: ['athena.amazonaws.com'],
+                },
+              ],
+            },
+          ],
+        }
+      )
+
     new aws.s3BucketAcl.S3BucketAcl(this, 'datalake-bucket-acl', {
       bucket: datalakeBucket.id,
       acl: 'private',
       dependsOn: [bucketState],
+    })
+
+    new aws.s3BucketPolicy.S3BucketPolicy(this, 'datalake-bucket-policy', {
+      bucket: datalakeBucket.id,
+      policy: bucketPolicy.json,
+      dependsOn: [bucketState, publicAccessBlock],
     })
 
     new aws.s3BucketVersioning.S3BucketVersioningA(
