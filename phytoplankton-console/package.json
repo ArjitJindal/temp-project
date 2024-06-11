@@ -105,7 +105,7 @@
     "pluralize": "^8.0.0",
     "posthog-js": "^1.131.4",
     "rc-resize-observer": "^1.2.0",
-    "react": "18.0.0",
+    "react": "^18.3.1",
     "react-country-flag": "^3.0.2",
     "react-device-detect": "^2.2.2",
     "react-dom": "18.0.0",

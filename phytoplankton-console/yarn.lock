@@ -18371,7 +18371,7 @@ __metadata:
     prompts: "npm:^2.4.2"
     puppeteer-core: "npm:^8.0.0"
     rc-resize-observer: "npm:^1.2.0"
-    react: "npm:18.0.0"
+    react: "npm:^18.3.1"
     react-country-flag: "npm:^3.0.2"
     react-device-detect: "npm:^2.2.2"
     react-dom: "npm:18.0.0"
@@ -20205,12 +20205,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:18.0.0":
-  version: 18.0.0
-  resolution: "react@npm:18.0.0"
+"react@npm:^18.3.1":
+  version: 18.3.1
+  resolution: "react@npm:18.3.1"
   dependencies:
     loose-envify: "npm:^1.1.0"
-  checksum: cf55bc7b4315f54321d04cb0b69241c4973a5182d679551b3e6c3f57b312a4fdeac05038ca9502d48ea4d040d7550b0b7f07b3872a19589a5995ee899cc19d2b
+  checksum: 283e8c5efcf37802c9d1ce767f302dd569dd97a70d9bb8c7be79a789b9902451e0d16334b05d73299b20f048cbc3c7d288bbbde10b701fa194e2089c237dbea3
   languageName: node
   linkType: hard
 
