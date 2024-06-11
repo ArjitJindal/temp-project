@@ -1220,4 +1220,237 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
       hitRules: [],
     } as TransactionMonitoringResult)
   })
+
+  describe('Verify saved payment details for consumer user', () => {
+    withFeatureHook(['RULES_ENGINE_V8'])
+
+    const TEST_TENANT_ID = getTestTenantId()
+    const userId1 = 'U-1'
+    const userId2 = 'U-2'
+    const userId3 = 'U-3'
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-2',
+        ruleId: 'RC-2',
+        logicEntityVariables: [
+          {
+            key: 'CONSUMER_USER:savedPaymentDetails__SENDER',
+          },
+        ],
+        defaultAction: 'FLAG',
+        defaultLogic: {
+          and: [
+            {
+              some: [
+                {
+                  var: 'CONSUMER_USER:savedPaymentDetails__SENDER',
+                },
+                {
+                  '==': [
+                    {
+                      var: 'method',
+                    },
+                    'CARD',
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ])
+
+    setUpUsersHooks(TEST_TENANT_ID, [
+      getTestUser({
+        userId: userId1,
+        savedPaymentDetails: [
+          {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+        ],
+      }),
+      getTestUser({
+        userId: userId2,
+        savedPaymentDetails: [
+          {
+            method: 'CHECK',
+            checkIdentifier: '123',
+          },
+        ],
+      }),
+      getTestUser({
+        userId: userId3,
+        savedPaymentDetails: [
+          {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          {
+            method: 'ACH',
+            accountNumber: '123',
+          },
+        ],
+      }),
+    ])
+
+    test('executes the json logic', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-1',
+          originUserId: userId1,
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+        })
+      )
+      expect(result1).toEqual({
+        transactionId: 'tx-1',
+        status: 'FLAG',
+        executedRules: [
+          {
+            ruleId: 'RC-2',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            ruleHit: true,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'CONSUMER_USER:savedPaymentDetails__SENDER': {
+                    method: ['CARD'],
+                  },
+                },
+              },
+            ],
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+          },
+        ],
+        hitRules: [
+          {
+            ruleId: 'RC-2',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            labels: [],
+            isShadow: false,
+            nature: 'AML',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+      } as TransactionMonitoringResult)
+
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-3',
+          originUserId: userId3,
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+        })
+      )
+
+      expect(result2).toEqual({
+        transactionId: 'tx-3',
+        status: 'FLAG',
+        executedRules: [
+          {
+            ruleId: 'RC-2',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            ruleHit: true,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'CONSUMER_USER:savedPaymentDetails__SENDER': {
+                    method: ['CARD', 'ACH'],
+                  },
+                },
+              },
+            ],
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+          },
+        ],
+        hitRules: [
+          {
+            ruleId: 'RC-2',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            labels: [],
+            isShadow: false,
+            nature: 'AML',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+      } as TransactionMonitoringResult)
+    })
+
+    test('executes the json logic - not hit', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-2',
+          originUserId: userId2,
+          originPaymentDetails: {
+            method: 'CHECK',
+            checkIdentifier: '123',
+          },
+        })
+      )
+      expect(result1).toEqual({
+        transactionId: 'tx-2',
+        status: 'ALLOW',
+        executedRules: [
+          {
+            ruleId: 'RC-2',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            ruleHit: false,
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'CONSUMER_USER:savedPaymentDetails__SENDER': {
+                    method: ['CHECK'],
+                  },
+                },
+              },
+            ],
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+          },
+        ],
+        hitRules: [],
+      } as TransactionMonitoringResult)
+    })
+  })
 })

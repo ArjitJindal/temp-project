@@ -73,69 +73,104 @@ export function getPublicModelLeafAttrs(
   parentPath: string[] = []
 ): EntityLeafValueInfo[] {
   const result: EntityLeafValueInfo[] = []
+
   for (const attribute of entityClass.attributeTypeMap) {
     const path = [...parentPath, attribute.baseName]
-    if (LEAF_VALUE_TYPES.includes(attribute.type as LeafValueType)) {
+    const attributeType = attribute.type
+
+    if (LEAF_VALUE_TYPES.includes(attributeType as LeafValueType)) {
+      // Handle leaf value types directly
       result.push({
         path,
         pathKey: getPathKey(path),
-        type: attribute.type as LeafValueType,
+        type: attributeType as LeafValueType,
       })
-    } else if (attribute.type.includes(' | ')) {
-      // oneOf
-      const oneOfResult: EntityLeafValueInfo[] = []
-      for (const type of attribute.type.split(' | ')) {
-        oneOfResult.push(...getPublicModelLeafAttrsByName(type, path))
-      }
-      // Merge objects with the same 'pathKey'
-      const groups = groupBy(oneOfResult, 'pathKey')
-      for (const groupKey in groups) {
-        const options = groups[groupKey].flatMap((v) => v.options ?? [])
-        result.push({
-          path: groups[groupKey][0].path,
-          pathKey: groups[groupKey][0].pathKey,
-          type: groups[groupKey][0].type,
-          options: options.length > 0 ? options : undefined,
-        })
+    } else if (
+      attributeType.includes(' | ') &&
+      !attributeType.includes('Array')
+    ) {
+      // Handle oneOf types
+      const oneOfResult = attributeType
+        .split(' | ')
+        .flatMap((type) => getPublicModelLeafAttrsByName(type, path))
+      mergeResultsByPathKey(oneOfResult, result)
+    } else if (attributeType.startsWith('Array<')) {
+      // Handle arrays
+      const arrayType = attributeType.match(/Array<(.+)>/)?.[1]
+      if (arrayType) {
+        const arrayPath = [...path, ARRAY_ITEM_INDICATOR]
+        if (LEAF_VALUE_TYPES.includes(arrayType as LeafValueType)) {
+          result.push({
+            path: arrayPath,
+            pathKey: getPathKey(arrayPath),
+            type: arrayType as LeafValueType,
+          })
+        } else {
+          handleArrayTypes(arrayType, arrayPath, result)
+        }
       }
     } else {
-      // Custom model
-      if (attribute.type.startsWith('Array<')) {
-        const arrayType = attribute.type.match(/Array<(.+)>/)?.[1]
-        if (arrayType) {
-          const arrayPath = [...path, ARRAY_ITEM_INDICATOR]
-          if (LEAF_VALUE_TYPES.includes(arrayType as LeafValueType)) {
-            result.push({
-              path: arrayPath,
-              pathKey: getPathKey(arrayPath),
-              type: arrayType as LeafValueType,
-            })
-          } else {
-            const arrayModel = Models[arrayType]
-            if (arrayModel) {
-              result.push(...getPublicModelLeafAttrs(arrayModel, arrayPath))
-            }
-          }
-        }
+      // Handle custom models and enums
+      const leafInfos = getPublicModelLeafAttrsByName(attributeType, path)
+      if (leafInfos.length > 0) {
+        result.push(...leafInfos)
       } else {
-        const leafInfos = getPublicModelLeafAttrsByName(attribute.type, path)
-        if (leafInfos.length > 0) {
-          result.push(...leafInfos)
-        } else {
-          // Enum
-          const enumConstKey = `${snakeCase(attribute.type).toUpperCase()}S`
-          const enumValues = CustomModelData[enumConstKey] as string[]
-          if (enumValues) {
-            result.push({
-              path,
-              pathKey: getPathKey(path),
-              type: 'string',
-              options: getOptions(enumConstKey, enumValues),
-            })
-          }
-        }
+        handleEnumTypes(attributeType, path, result)
       }
     }
   }
+
   return result
+}
+
+function handleArrayTypes(
+  arrayType: string,
+  arrayPath: string[],
+  result: EntityLeafValueInfo[]
+) {
+  if (!arrayType.includes(' | ')) {
+    const arrayModel = Models[arrayType]
+    if (arrayModel) {
+      result.push(...getPublicModelLeafAttrs(arrayModel, arrayPath))
+    }
+  } else {
+    const oneOfResult = arrayType.split(' | ').flatMap((type) => {
+      const arrayModel = Models[type]
+      return arrayModel ? getPublicModelLeafAttrs(arrayModel, arrayPath) : []
+    })
+    mergeResultsByPathKey(oneOfResult, result)
+  }
+}
+
+function handleEnumTypes(
+  attributeType: string,
+  path: string[],
+  result: EntityLeafValueInfo[]
+) {
+  const enumConstKey = `${snakeCase(attributeType).toUpperCase()}S`
+  const enumValues = CustomModelData[enumConstKey] as string[]
+  if (enumValues) {
+    result.push({
+      path,
+      pathKey: getPathKey(path),
+      type: 'string',
+      options: getOptions(enumConstKey, enumValues),
+    })
+  }
+}
+
+function mergeResultsByPathKey(
+  source: EntityLeafValueInfo[],
+  target: EntityLeafValueInfo[]
+) {
+  const groups = groupBy(source, 'pathKey')
+  for (const groupKey in groups) {
+    const options = groups[groupKey].flatMap((v) => v.options ?? [])
+    target.push({
+      path: groups[groupKey][0].path,
+      pathKey: groups[groupKey][0].pathKey,
+      type: groups[groupKey][0].type,
+      options: options.length > 0 ? options : undefined,
+    })
+  }
 }

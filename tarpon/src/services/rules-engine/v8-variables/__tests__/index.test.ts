@@ -4,6 +4,7 @@ import { omit } from 'lodash'
 import { getTransactionRuleEntityVariables, getRuleVariableByKey } from '..'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 describe('List of entity variables', () => {
   test('schema', async () => {
@@ -361,5 +362,27 @@ describe('Auto-created entity variables', () => {
         })
       )
     ).toBe(childUserIds)
+  })
+
+  test('CONSUMER_USER:savedPaymentDetails__SENDER', async () => {
+    const variable = getRuleVariableByKey(
+      'CONSUMER_USER:savedPaymentDetails__SENDER'
+    )
+
+    const savedPaymentDetails: CardDetails[] = [
+      {
+        method: 'CARD',
+        cardType: 'PHYSICAL',
+        cardBrand: 'VISA',
+      },
+    ]
+
+    expect(
+      await variable?.load(
+        getTestUser({
+          savedPaymentDetails: savedPaymentDetails,
+        })
+      )
+    ).toBe(savedPaymentDetails)
   })
 })
