@@ -1,5 +1,6 @@
 import { LeveledLogMethod, createLogger, format, transports } from 'winston'
-import * as Sentry from '@sentry/serverless'
+import * as SentryLambda from '@sentry/serverless'
+import * as SentryNode from '@sentry/node'
 
 import { isPlainObject, wrap } from 'lodash'
 import { getContext } from '../utils/context'
@@ -37,15 +38,19 @@ winstonLogger.error = wrap(
     }
     const extra = rest.find(isPlainObject)
     if (!isLocal) {
-      Sentry.withScope((scope) => {
-        const context = getContext()
-        if (context?.logMetadata) {
-          scope.setTags(context.logMetadata)
-        }
-        if (context?.sentryExtras) {
-          scope.setExtras(context.sentryExtras)
-        }
-        Sentry.captureException(error, { extra })
+      const sentrys = [SentryLambda, SentryNode]
+
+      sentrys.forEach((Sentry) => {
+        Sentry.withScope((scope) => {
+          const context = getContext()
+          if (context?.logMetadata) {
+            scope.setTags(context.logMetadata)
+          }
+          if (context?.sentryExtras) {
+            scope.setExtras(context.sentryExtras)
+          }
+          Sentry.captureException(error, { extra })
+        })
       })
     }
     return func(error, { ...extra, ...getContext()?.logMetadata })

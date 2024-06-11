@@ -2,6 +2,7 @@ import { BATCH_JOB_PAYLOAD_ENV_VAR } from '@lib/cdk/constants'
 import { BatchJobWithId } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import {
+  addSentryExtras,
   initializeTenantContext,
   updateLogMetadata,
 } from '@/core/utils/context'
@@ -20,6 +21,8 @@ const handler = nodeConsumer()(async () => {
     tenantId: job.tenantId,
     runner: 'FARGATE',
   })
+
+  addSentryExtras({ job })
 
   const batchJob = getBatchJobRunner(job.type, job.jobId)
   await batchJob.execute(job)

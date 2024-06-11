@@ -164,6 +164,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
         'FAILED',
         0
       )
+      throw error
     } finally {
       if (interval) {
         clearInterval(interval)
