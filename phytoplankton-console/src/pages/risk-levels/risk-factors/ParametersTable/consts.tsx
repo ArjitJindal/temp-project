@@ -557,7 +557,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     weight: 1,
   },
   {
-    parameter: '_3dsDone',
+    parameter: '3dsDone',
     title: '3DS Done',
     description: 'Risk value based on whether 3DS was done on CARD transaction',
     entity: 'TRANSACTION',

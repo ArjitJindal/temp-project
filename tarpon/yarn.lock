@@ -12244,6 +12244,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fern-api@npm:^0.30.3":
+  version: 0.30.3
+  resolution: "fern-api@npm:0.30.3"
+  bin:
+    fern: cli.cjs
+  checksum: 3eed860219258f35ad622fcc22212493791a2bfab6e9b7bcec988555b0dcf73a90b8844c22117de115b3dc8283dca24748ae47a35676c13caef4306168fafd21
+  languageName: node
+  linkType: hard
+
 "fetch-retry@npm:^5.0.6":
   version: 5.0.6
   resolution: "fetch-retry@npm:5.0.6"
@@ -19682,6 +19691,7 @@ __metadata:
     express-openapi-validator: "npm:^4.13.8"
     fast-levenshtein: "npm:^3.0.0"
     fast-xml-parser: "npm:^4.2.5"
+    fern-api: "npm:^0.30.3"
     fetch-retry: "npm:^5.0.6"
     flat: "npm:^5.0.2"
     fp-ts: "npm:^2.11.8"

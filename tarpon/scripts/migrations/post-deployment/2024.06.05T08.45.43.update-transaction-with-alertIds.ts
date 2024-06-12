@@ -21,7 +21,6 @@ async function migrateTenant(tenant: Tenant) {
 
 export const up = async () => {
   await migrateAllTenants(migrateTenant)
-  throw new Error('Manual migration by Chia')
 }
 export const down = async () => {
   // skip

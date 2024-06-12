@@ -241,7 +241,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       parameterType: 'VARIABLE',
     },
     {
-      parameter: '_3dsDone',
+      parameter: '3dsDone',
       isActive: true,
       isDerived: true,
       riskEntityType: 'TRANSACTION',

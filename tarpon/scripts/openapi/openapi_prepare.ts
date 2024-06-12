@@ -1,10 +1,20 @@
 #!/usr/bin/env node
 import path from 'path'
+import { execSync } from 'child_process'
 import fs from 'fs-extra'
 import { pick } from 'lodash'
 import mkdirp from 'mkdirp'
 import { flattenSchemas } from '../../lib/openapi/openapi-augmentor-util'
 import { stringify, parse, localizeRefs, PROJECT_DIR } from './openapi_helpers'
+
+function listSubDirectories(directoryPath: string) {
+  const items = fs.readdirSync(directoryPath)
+  const subDirectories = items.filter((item) => {
+    const itemPath = path.join(directoryPath, item)
+    return fs.statSync(itemPath).isDirectory()
+  })
+  return subDirectories
+}
 
 async function prepareSchemas(OUTPUT_DIR: string) {
   try {
@@ -111,10 +121,28 @@ async function prepareSchemas(OUTPUT_DIR: string) {
   }
 }
 
+async function validateSchemas(openapiDir: string) {
+  for (const apiDir of listSubDirectories(openapiDir)) {
+    const targetDir = `fern/apis/${apiDir}/openapi`
+    fs.ensureDirSync(targetDir)
+    fs.copySync(`${openapiDir}/${apiDir}`, targetDir)
+  }
+  fs.writeFileSync(
+    'fern/fern.config.json',
+    JSON.stringify({ organization: 'flagright', version: '0.30.3' })
+  )
+  try {
+    execSync('fern check', { stdio: 'inherit' })
+  } finally {
+    execSync('rm -rf fern')
+  }
+}
+
 async function main() {
   const OUTPUT_DIR = './dist/openapi'
   mkdirp.sync(OUTPUT_DIR)
   await prepareSchemas(OUTPUT_DIR)
+  await validateSchemas(OUTPUT_DIR)
   console.log('Preparation completed.')
 }
 
