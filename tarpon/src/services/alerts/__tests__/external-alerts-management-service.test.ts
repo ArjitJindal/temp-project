@@ -12,6 +12,7 @@ import {
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { AlertUpdatable } from '@/@types/openapi-public-management/AlertUpdatable'
+import { getS3ClientByEvent } from '@/utils/s3'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 
 dynamoDbSetupHook()
@@ -34,11 +35,20 @@ describe('End to End External Alerts Management Service', () => {
   test('should make successful call to create, update and get alerts', async () => {
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
+    const s3 = getS3ClientByEvent(null as any)
 
-    const alertsExternalService = new ExternalAlertManagementService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
+    const alertsExternalService = new ExternalAlertManagementService(
+      tenantId,
+      {
+        mongoDb,
+        dynamoDb,
+      },
+      s3,
+      {
+        documentBucketName: 'test document bucket',
+        tmpBucketName: 'test tmp bucket',
+      }
+    )
 
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
     const transactionRepository = new MongoDbTransactionRepository(
@@ -152,7 +162,12 @@ describe('End to End External Alerts Management Service', () => {
 
     const alertsExternalService2 = new ExternalAlertManagementService(
       tenantId,
-      { mongoDb, dynamoDb }
+      { mongoDb, dynamoDb },
+      s3,
+      {
+        documentBucketName: 'test document bucket',
+        tmpBucketName: 'test tmp bucket',
+      }
     )
 
     const alertTransactionIds2 = transactionIds.slice(2, 8)
@@ -215,7 +230,12 @@ describe('End to End External Alerts Management Service', () => {
 
     const alertsExternalService3 = new ExternalAlertManagementService(
       tenantId,
-      { mongoDb, dynamoDb }
+      { mongoDb, dynamoDb },
+      s3,
+      {
+        documentBucketName: 'test document bucket',
+        tmpBucketName: 'test tmp bucket',
+      }
     )
 
     // Replace transactions of alert 1 from 2 - 6
@@ -268,11 +288,19 @@ describe('End to End External Alerts Management Service', () => {
   test('Alert Id more the 40 characters should throw error', async () => {
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-
-    const alertsExternalService = new ExternalAlertManagementService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
+    const s3 = getS3ClientByEvent(null as any)
+    const alertsExternalService = new ExternalAlertManagementService(
+      tenantId,
+      {
+        mongoDb,
+        dynamoDb,
+      },
+      s3,
+      {
+        documentBucketName: 'test document bucket',
+        tmpBucketName: 'test tmp bucket',
+      }
+    )
 
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
     const caseId = 'C-1234'
@@ -312,11 +340,19 @@ describe('End to End External Alerts Management Service', () => {
   test('Alert id with A-<number> should throw error', async () => {
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-
-    const alertsExternalService = new ExternalAlertManagementService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
+    const s3 = getS3ClientByEvent(null as any)
+    const alertsExternalService = new ExternalAlertManagementService(
+      tenantId,
+      {
+        mongoDb,
+        dynamoDb,
+      },
+      s3,
+      {
+        documentBucketName: 'test document bucket',
+        tmpBucketName: 'test tmp bucket',
+      }
+    )
 
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
     const caseId = 'C-1234'

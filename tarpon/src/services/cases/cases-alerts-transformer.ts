@@ -144,4 +144,22 @@ export class CasesAlertsTransformer {
 
     return externalCaseStatus
   }
+
+  public getInternalCaseStatus(externalCaseStatus: Status): CaseStatus {
+    let internalCaseStatus: CaseStatus = 'OPEN'
+
+    if (externalCaseStatus === 'IN_REVIEW') {
+      internalCaseStatus = 'IN_REVIEW_OPEN'
+    } else if (externalCaseStatus === 'IN_PROGRESS') {
+      internalCaseStatus = 'OPEN_IN_PROGRESS'
+    } else if (externalCaseStatus === 'ON_HOLD') {
+      internalCaseStatus = 'OPEN_ON_HOLD'
+    } else if (externalCaseStatus === 'ESCALATED') {
+      internalCaseStatus = 'ESCALATED'
+    } else {
+      internalCaseStatus = externalCaseStatus as CaseStatus
+    }
+
+    return internalCaseStatus
+  }
 }

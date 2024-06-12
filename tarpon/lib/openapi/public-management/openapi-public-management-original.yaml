@@ -479,6 +479,40 @@ paths:
             schema:
               $ref: '#/components/schemas/CaseUpdateable'
       description: '### Update Case'
+  /cases/{caseId}/statuses:
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+    post:
+      security:
+        - x-api-key: []
+      summary: Case - Update Status
+      operationId: post-cases-caseId-statuses
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  caseStatus:
+                    $ref: '#/components/schemas/ExternalRequestCaseStatus'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseStatusChangeRequest'
+      description: '### Update Case Status'
   /alerts:
     post:
       security:
@@ -574,17 +608,46 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertUpdatable'
       description: '### Update Alert'
+  /alerts/{alertId}/statuses:
+    parameters:
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+    post:
+      security:
+        - x-api-key: []
+      summary: Alert - Update Status
+      operationId: post-alerts-alertId-statuses
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alertStatus:
+                    $ref: '#/components/schemas/ExternalRequestCaseStatus'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertStatusChangeRequest'
+      description: '### Update Alert Status'
   /pre-signed-url:
     post:
       security:
         - x-api-key: []
       summary: Get a pre-signed URL
       operationId: get-upload-presignedUrl
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PresignedPostRequest'
       responses:
         '200':
           description: OK
@@ -598,6 +661,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresignedPostRequest'
       description: >-
         ### Generate Pre-Signed URL for File Uploads
 
@@ -823,6 +891,15 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
 components:
   schemas:
+    ExternalRequestCaseStatus:
+      type: string
+      title: ExternalRequestCaseStatus
+      enum:
+        - OPEN
+        - CLOSED
+        - REOPENED
+        - IN_PROGRESS
+        - ON_HOLD
     CommentRequest:
       title: CommentRequest
       type: object
@@ -947,6 +1024,54 @@ components:
       required:
         - url
         - fields
+    AlertStatusChangeRequest:
+      title: AlertStatusChangeRequest
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ExternalRequestCaseStatus'
+        reason:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseReasons'
+        otherReason:
+          type: string
+        comment:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestFileInfo'
+        timestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+      required:
+        - status
+    CaseStatusChangeRequest:
+      title: CaseStatusChangeRequest
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ExternalRequestCaseStatus'
+        reason:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseReasons'
+        otherReason:
+          type: string
+        comment:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestFileInfo'
+        timestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+      required:
+        - status
     RuleInstance:
       title: RuleInstance
       allOf:
@@ -981,6 +1106,26 @@ components:
         - type
         - ruleId
         - checksFor
+    CaseReasons:
+      type: string
+      title: CaseReasons
+      enum:
+        - Other
+        - False positive
+        - Documents collected
+        - Transaction Rejected
+        - Transaction Refunded
+        - Suspicious activity reported (SAR)
+        - Documents not collected
+        - Investigation completed
+        - Escalated
+        - Fraud
+        - Anti-money laundering
+        - Terrorist financing
+        - User Blacklisted
+        - User Terminated
+        - Internal referral
+        - External referral
     RuleInstanceUpdatable:
       title: RuleInstanceUpdatable
       type: object

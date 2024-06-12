@@ -26,6 +26,7 @@ import { ChecklistTemplatesService } from '../tenants/checklist-template-service
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
 import {
+  API_USER,
   AlertParams,
   AlertsRepository,
   FLAGRIGHT_SYSTEM_USER,
@@ -760,6 +761,7 @@ export class AlertsService extends CaseAlertsCommonService {
       skipReview?: boolean
       account?: Account
       updateChecklistStatus?: boolean
+      externalRequest?: boolean
     }
   ): Promise<void> {
     if (!alertIds.length) {
@@ -772,13 +774,14 @@ export class AlertsService extends CaseAlertsCommonService {
       skipReview = false,
       account,
       updateChecklistStatus = true,
+      externalRequest = false,
     } = options ?? {}
-    const userId = getContext()?.user?.id ?? ''
+    const userId = externalRequest ? API_USER : getContext()?.user?.id ?? ''
     const statusChange: CaseStatusChange = {
       userId: bySystem
         ? FLAGRIGHT_SYSTEM_USER
         : userId ?? FLAGRIGHT_SYSTEM_USER,
-      timestamp: Date.now(),
+      timestamp: statusUpdateRequest.timestamp ?? Date.now(),
       reason: statusUpdateRequest.reason,
       caseStatus: statusUpdateRequest.alertStatus,
       otherReason: statusUpdateRequest.otherReason,
@@ -792,10 +795,12 @@ export class AlertsService extends CaseAlertsCommonService {
     })
 
     const accountsService = await AccountsService.getInstance()
-    const userAccount = account ?? (await accountsService.getAccount(userId))
-
-    if (userAccount == null) {
-      throw new Error(`User account not found`)
+    let userAccount: Account | undefined = undefined
+    if (!externalRequest) {
+      userAccount = account ?? (await accountsService.getAccount(userId))
+      if (userAccount == null) {
+        throw new Error(`User account not found`)
+      }
     }
     let isReview = false
 
@@ -819,11 +824,12 @@ export class AlertsService extends CaseAlertsCommonService {
     const isLastInReview = isStatusInReview(alerts[0]?.alertStatus)
 
     if (
-      userAccount.reviewerId &&
+      userAccount?.reviewerId &&
       !isInProgressOrOnHold &&
       !skipReview &&
       !isLastInReview &&
-      hasFeature('ADVANCED_WORKFLOWS')
+      hasFeature('ADVANCED_WORKFLOWS') &&
+      !externalRequest
     ) {
       if (!userAccount.reviewerId) {
         throw new Error(`User account reviewerId is null`)
@@ -862,7 +868,7 @@ export class AlertsService extends CaseAlertsCommonService {
           files: statusUpdateRequest.files,
           type: 'STATUS_CHANGE',
         }),
-        ...(isReview && userAccount.reviewerId && !skipReview
+        ...(isReview && userAccount?.reviewerId && !skipReview
           ? [
               this.alertsRepository.updateInReviewAssignments(
                 alertIds,
@@ -883,7 +889,8 @@ export class AlertsService extends CaseAlertsCommonService {
               ),
             ]
           : []),
-        ...(hasFeature('ADVANCED_WORKFLOWS') &&
+        ...(!externalRequest &&
+        hasFeature('ADVANCED_WORKFLOWS') &&
         alertsWithPreviousEscalations.length &&
         statusUpdateRequest?.alertStatus === 'CLOSED'
           ? [
@@ -935,6 +942,7 @@ export class AlertsService extends CaseAlertsCommonService {
             cascadeAlertsUpdate: false,
             account: userAccount,
             updateChecklistStatus: false,
+            externalRequest: externalRequest,
           }
         )
       }
@@ -960,7 +968,7 @@ export class AlertsService extends CaseAlertsCommonService {
       }
     })
 
-    if (statusUpdateRequest.alertStatus === 'CLOSED') {
+    if (statusUpdateRequest.alertStatus === 'CLOSED' && !externalRequest) {
       await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
     }
   }

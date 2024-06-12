@@ -7,6 +7,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { Account, AccountsService } from '@/services/accounts'
 import { CaseCreationRequest } from '@/@types/openapi-public-management/CaseCreationRequest'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
+import { getS3ClientByEvent } from '@/utils/s3'
 
 dynamoDbSetupHook()
 
@@ -34,10 +35,19 @@ const accounts: Account[] = [
 const getCaseManagementService = async (tenantId: string) => {
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
-  return new ExternalCaseManagementService(tenantId, {
-    mongoDb,
-    dynamoDb,
-  })
+  const s3 = getS3ClientByEvent(null as any)
+  return new ExternalCaseManagementService(
+    tenantId,
+    {
+      mongoDb,
+      dynamoDb,
+    },
+    s3,
+    {
+      documentBucketName: 'test',
+      tmpBucketName: 'test',
+    }
+  )
 }
 
 describe('Test Create Case', () => {

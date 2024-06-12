@@ -264,4 +264,26 @@ describe('Test Create Alert', () => {
       'Resource not found'
     )
   })
+
+  test('Alert status change', async () => {
+    const response = await alertHandler(
+      getApiGatewayPostEvent(
+        tenantId,
+        '/alerts/{alertId}/statuses',
+        {
+          status: 'CLOSED',
+          reason: ['False Positive'],
+        },
+        {
+          pathParameters: { alertId: 'AL-1' },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      alertStatus: 'CLOSED',
+    })
+  })
 })
