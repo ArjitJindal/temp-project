@@ -1050,7 +1050,7 @@ __metadata:
     "@types/node": "npm:^20.11.16"
     "@typescript-eslint/eslint-plugin": "npm:^7.0.1"
     "@typescript-eslint/parser": "npm:^7.0.1"
-    aws-cdk-lib: "npm:~2.141.0"
+    aws-cdk-lib: "npm:~2.142.1"
     constructs: "npm:^10.3.0"
     dayjs: "npm:^1.11.11"
     eslint: "npm:^8.56.0"
@@ -2568,9 +2568,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.141.0":
-  version: 2.141.0
-  resolution: "aws-cdk-lib@npm:2.141.0"
+"aws-cdk-lib@npm:~2.142.1":
+  version: 2.142.1
+  resolution: "aws-cdk-lib@npm:2.142.1"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
@@ -2588,7 +2588,7 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: dafcb002efd20571da36030117a85aa4e9364ec8d42f5b9629c0101c82472cfb7b08aa778be56995ca3eab6e930e7752f903da0833804c36c44c65307c18c15d
+  checksum: 956a6bc2f2a8fa6e094962162e46734b4ee849f9cab00ccb1aa22909e0814b80070f8d39feeab33fa4f70779469bc33b5eb07b39cdd162b751512137d567c3e2
   languageName: node
   linkType: hard
 
