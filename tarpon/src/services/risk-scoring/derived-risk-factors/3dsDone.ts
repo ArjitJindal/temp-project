@@ -5,7 +5,7 @@ export const ARS_3DSDONE_RISK_HANDLERS: Array<
 > = [
   {
     entityType: 'TRANSACTION',
-    parameter: '_3dsDone',
+    parameter: '3dsDone',
     handler: async (transaction) => {
       const paymentDetails = transaction.originPaymentDetails
 

@@ -95,9 +95,9 @@ const RISK_FACTOR: (
 })
 
 createArsRiskFactorTestCases(
-  '_3dsDone',
+  '3dsDone',
   CLASSFICATIONS,
-  RISK_FACTOR('_3dsDone'),
+  RISK_FACTOR('3dsDone'),
   [
     {
       testName: '3dsDone is true',
@@ -132,9 +132,9 @@ createArsRiskFactorTestCases(
 )
 
 createArsRiskFactorTestCases(
-  '_3dsDone',
+  '3dsDone',
   CLASSFICATIONS,
-  RISK_FACTOR('_3dsDone'),
+  RISK_FACTOR('3dsDone'),
   [
     {
       testName: '3dsDone is false',
@@ -169,9 +169,9 @@ createArsRiskFactorTestCases(
 )
 
 createArsRiskFactorTestCases(
-  '_3dsDone',
+  '3dsDone',
   CLASSFICATIONS,
-  RISK_FACTOR('_3dsDone'),
+  RISK_FACTOR('3dsDone'),
   [
     {
       testName: '3dsDone is undefined',

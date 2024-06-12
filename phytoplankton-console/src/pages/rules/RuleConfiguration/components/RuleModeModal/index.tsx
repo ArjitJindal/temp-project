@@ -8,13 +8,13 @@ const RULE_MODE_OPTIONS: Option<RuleInstance['mode']>[] = [
     value: 'LIVE_SYNC',
     label: 'Live rule',
     description:
-      'Live rule would be deploying the model and will generate alerts when hit. Suggested for rules which doesn’t require validation.',
+      'A live rule deploys the model and generates alerts when triggered. It is suggested for rules that do not require validation.',
   },
   {
     value: 'SHADOW_SYNC',
     label: 'Shadow rule',
     description:
-      'Shadow rule would run the rule with live transaction data but would not be generating any alerts. It helps to monitor the model performance before deploying it live.',
+      'A shadow rule processes live transaction data but does not generate alerts. It helps monitor model performance before deploying it live.',
   },
 ];
 

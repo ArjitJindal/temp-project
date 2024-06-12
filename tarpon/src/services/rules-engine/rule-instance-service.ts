@@ -277,7 +277,9 @@ export class RuleInstanceService {
     })
     usersHit = sumBy(
       Object.values(stats),
-      ruleInstance.type === 'TRANSACTION' ? 'hitUsersCount' : 'hitCount'
+      (v) =>
+        (ruleInstance.type === 'TRANSACTION' ? v.hitUsersCount : v.hitCount) ??
+        0
     )
 
     if (isShadow) {

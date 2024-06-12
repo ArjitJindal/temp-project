@@ -2,10 +2,13 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
 import { isEmpty, omitBy, pick, uniq } from 'lodash'
+import { S3 } from '@aws-sdk/client-s3'
 import { UserRepository } from '../users/repositories/user-repository'
+import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CasesAlertsTransformer } from './cases-alerts-transformer'
 import { CaseRepository } from './repository'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
+import { CaseService } from '.'
 import { Case } from '@/@types/openapi-public-management/Case'
 import { Case as CaseInternal } from '@/@types/openapi-internal/Case'
 import { CaseCreationRequest } from '@/@types/openapi-public-management/CaseCreationRequest'
@@ -15,6 +18,7 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { PaymentEntityDetails } from '@/@types/openapi-public-management/PaymentEntityDetails'
 import { traceable } from '@/core/xray'
 import { statusEscalated } from '@/utils/helpers'
+import { CaseStatusChangeRequest } from '@/@types/openapi-public-management/CaseStatusChangeRequest'
 import { DefaultApiGetCasesRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { CasesListResponse } from '@/@types/openapi-public-management/CasesListResponse'
 import { getStatuses } from '@/utils/case'
@@ -23,25 +27,32 @@ import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { Status } from '@/@types/openapi-public-management/Status'
 import { Priority } from '@/@types/openapi-public-management/Priority'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
+import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 
 @traceable
-export class ExternalCaseManagementService {
+export class ExternalCaseManagementService extends CaseAlertsCommonService {
   private caseRepository: CaseRepository
   private userRepository: UserRepository
   private casesTransformer: CasesAlertsTransformer
   private tenantId: string
-  private mongoDb: MongoClient
+  private connections: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBDocumentClient
+  }
   private casesAlertsAuditLogService: CasesAlertsAuditLogService
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
+    s3: S3,
+    s3Config: S3Config
   ) {
+    super(s3, s3Config)
     this.caseRepository = new CaseRepository(tenantId, connections)
     this.userRepository = new UserRepository(tenantId, connections)
     this.casesTransformer = new CasesAlertsTransformer(tenantId, connections)
     this.tenantId = tenantId
-    this.mongoDb = connections.mongoDb
+    this.connections = connections
     this.casesAlertsAuditLogService = new CasesAlertsAuditLogService(
       tenantId,
       connections
@@ -68,7 +79,6 @@ export class ExternalCaseManagementService {
         `Case id: ${caseId} not allowed for creation reserving C-{number} for internal cases`
       )
     }
-
     if (case_) {
       throw new createHttpError.Conflict(
         `Case with id: ${caseId} already exists. Please provide a case id which does not exist`
@@ -304,6 +314,52 @@ export class ExternalCaseManagementService {
     return await this.transformInternalCaseToExternalCase(updatedCase)
   }
 
+  public async updateCaseStatus(
+    updateRequest: CaseStatusChangeRequest,
+    caseId: string
+  ) {
+    const internalCase = await this.caseRepository.getCaseById(caseId)
+    if (!internalCase) {
+      throw new createHttpError.NotFound('Case not found')
+    }
+    const internalStatus = this.casesTransformer.getInternalCaseStatus(
+      updateRequest.status
+    )
+    if (internalStatus === internalCase.caseStatus) {
+      throw new createHttpError.BadRequest(
+        'Case status is already ' + updateRequest.status
+      )
+    }
+    if (internalStatus === 'CLOSED' && !updateRequest.reason?.length) {
+      throw new createHttpError.BadRequest(
+        'Reason is required for closing a case'
+      )
+    }
+    const internalCaseService = new CaseService(
+      this.caseRepository,
+      this.s3,
+      this.s3Config
+    )
+    const internalStatusChangeRequest: CaseStatusUpdate = {
+      caseStatus: internalStatus,
+      reason: updateRequest.reason ?? [],
+      comment: updateRequest.comment,
+      files: updateRequest.files,
+      timestamp: Date.now(),
+      otherReason: updateRequest.otherReason,
+    }
+    await internalCaseService.updateStatus(
+      [caseId],
+      internalStatusChangeRequest,
+      {
+        externalRequest: true,
+        cascadeAlertsUpdate: true,
+        skipReview: true,
+      }
+    )
+    return { caseStatus: (await this.getCaseById(caseId)).caseStatus }
+  }
+
   public validateAndTransformGetCasesRequest(
     queryObj: Record<string, string | undefined>
   ): DefaultApiGetCasesRequest {
@@ -378,7 +434,7 @@ export class ExternalCaseManagementService {
       filterCaseTypes: query.filterCaseSource,
     })
 
-    const db = this.mongoDb.db()
+    const db = this.connections.mongoDb.db()
 
     const data = await cursorPaginate<CaseInternal>(
       db.collection(CASES_COLLECTION(this.tenantId)),

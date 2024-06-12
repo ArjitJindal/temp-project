@@ -2,11 +2,14 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
 import { compact, difference, isNil, memoize, omitBy, pick, uniq } from 'lodash'
+import { S3 } from '@aws-sdk/client-s3'
+import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'
 import { CaseRepository, MAX_TRANSACTION_IN_A_CASE } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { CasesAlertsAuditLogService } from '../cases/case-alerts-audit-log-service'
 import { AlertsRepository } from './repository'
+import { AlertsService } from '.'
 import { traceable } from '@/core/xray'
 import { Alert } from '@/@types/openapi-public-management/Alert'
 import { Alert as AlertInternal } from '@/@types/openapi-internal/Alert'
@@ -19,9 +22,11 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertUpdatable } from '@/@types/openapi-public-management/AlertUpdatable'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { statusEscalated } from '@/utils/helpers'
+import { AlertStatusChangeRequest } from '@/@types/openapi-public-management/AlertStatusChangeRequest'
 
+import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 @traceable
-export class ExternalAlertManagementService {
+export class ExternalAlertManagementService extends CaseAlertsCommonService {
   private alertsRepository: AlertsRepository
   private caseRepository: CaseRepository
   private transactionRepository: MongoDbTransactionRepository
@@ -30,8 +35,11 @@ export class ExternalAlertManagementService {
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
+    s3: S3,
+    s3Config: S3Config
   ) {
+    super(s3, s3Config)
     this.alertsRepository = new AlertsRepository(tenantId, connections)
     this.caseRepository = new CaseRepository(tenantId, connections)
     this.transactionRepository = new MongoDbTransactionRepository(
@@ -465,5 +473,49 @@ export class ExternalAlertManagementService {
     )
 
     return externalAlert
+  }
+
+  public async updateAlertStatus(
+    updateRequest: AlertStatusChangeRequest,
+    alertId: string
+  ) {
+    const alert = await this.alertsRepository.getAlertById(alertId)
+    const status = updateRequest.status
+    if (!alert) {
+      throw new createHttpError.NotFound(
+        `Alert with id ${alertId} not found. Please provide a valid alert id`
+      )
+    }
+    const internalStatus = this.alertsTransformer.getInternalCaseStatus(status)
+    if (internalStatus === alert.alertStatus) {
+      throw new createHttpError.BadRequest(
+        `Alert with id ${alertId} already in ${internalStatus} status`
+      )
+    }
+    if (internalStatus === 'CLOSED' && !updateRequest.reason?.length) {
+      throw new createHttpError.BadRequest(
+        'Reason is required for closing an alert'
+      )
+    }
+    const internalAlertsService = new AlertsService(
+      this.alertsRepository,
+      this.s3,
+      this.s3Config
+    )
+    const internalUpdateRequest: AlertStatusUpdateRequest = {
+      reason: updateRequest.reason ?? [],
+      alertStatus: internalStatus,
+      otherReason: updateRequest.otherReason,
+      comment: updateRequest.comment,
+      files: updateRequest.files,
+      alertCaseId: alert.caseId,
+    }
+    await internalAlertsService.updateStatus([alertId], internalUpdateRequest, {
+      bySystem: false,
+      cascadeCaseUpdates: true,
+      externalRequest: true,
+      skipReview: true,
+    })
+    return { alertStatus: (await this.getAlert(alertId)).alertStatus }
   }
 }

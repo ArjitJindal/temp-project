@@ -62,7 +62,7 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { CursorPaginationResponse } from '@/utils/pagination'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { ManualCasePatchRequest } from '@/@types/openapi-internal/ManualCasePatchRequest'
-import { UserService } from '@/services/users'
+import { API_USER, UserService } from '@/services/users'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
@@ -268,9 +268,12 @@ export class CaseService extends CaseAlertsCommonService {
 
   private getStatusChange(
     updates: CaseStatusUpdate,
-    bySystem = false
+    bySystem = false,
+    externalRequest?: boolean
   ): CaseStatusChange {
-    const userId = (getContext()?.user as Account).id
+    const userId = externalRequest
+      ? API_USER
+      : (getContext()?.user as Account).id
     return {
       userId: bySystem
         ? FLAGRIGHT_SYSTEM_USER
@@ -415,6 +418,7 @@ export class CaseService extends CaseAlertsCommonService {
       account?: Account
       filterInReview?: boolean
       updateChecklistStatus?: boolean
+      externalRequest?: boolean
     }
   ): Promise<void> {
     const {
@@ -422,8 +426,13 @@ export class CaseService extends CaseAlertsCommonService {
       skipReview = false,
       account,
       updateChecklistStatus = true,
+      externalRequest = false,
     } = options ?? {}
-    const statusChange = this.getStatusChange(updates, options?.bySystem)
+    const statusChange = this.getStatusChange(
+      updates,
+      options?.bySystem,
+      externalRequest
+    )
 
     const cases = await this.caseRepository.getCasesByIds(caseIds)
 
@@ -437,8 +446,10 @@ export class CaseService extends CaseAlertsCommonService {
 
     const context = getContext()
     const accountsService = await AccountsService.getInstance()
-    const userId = (context?.user as Account)?.id
-    const accountUser = account ?? (await accountsService.getAccount(userId))
+    const userId = externalRequest ? API_USER : (context?.user as Account)?.id
+    const accountUser = externalRequest
+      ? undefined
+      : account ?? (await accountsService.getAccount(userId))
     const isLastInReview = isStatusInReview(
       cases[0].lastStatusChange?.caseStatus
     )
@@ -454,7 +465,8 @@ export class CaseService extends CaseAlertsCommonService {
       !isInProgressOrOnHold &&
       !skipReview &&
       hasFeature('ADVANCED_WORKFLOWS') &&
-      !isLastInReview
+      !isLastInReview &&
+      !externalRequest
     ) {
       const caseStatusToChange = `IN_REVIEW_${updates.caseStatus?.replace(
         'IN_REVIEW_',
@@ -476,7 +488,9 @@ export class CaseService extends CaseAlertsCommonService {
 
     await withTransaction(async () => {
       await Promise.all([
-        this.updateKycAndUserState(cases, updates),
+        ...(!externalRequest
+          ? [this.updateKycAndUserState(cases, updates)]
+          : []),
         this.caseRepository.updateStatusOfCases(
           caseIds,
           statusChange,
@@ -489,7 +503,7 @@ export class CaseService extends CaseAlertsCommonService {
           type: 'STATUS_CHANGE',
         }),
         ...(isReview &&
-        accountUser.reviewerId &&
+        accountUser?.reviewerId &&
         hasFeature('ADVANCED_WORKFLOWS')
           ? [
               this.caseRepository.updateInReviewAssignmentsOfCases(
@@ -511,7 +525,8 @@ export class CaseService extends CaseAlertsCommonService {
               ),
             ]
           : []),
-        ...(casesWithPreviousEscalations?.length &&
+        ...(!externalRequest &&
+        casesWithPreviousEscalations?.length &&
         hasFeature('ADVANCED_WORKFLOWS') &&
         updates?.caseStatus === 'CLOSED'
           ? [
@@ -526,6 +541,7 @@ export class CaseService extends CaseAlertsCommonService {
           ? [this.caseRepository.markAllChecklistItemsAsDone(caseIds)]
           : []),
       ])
+
       await this.auditLogService.handleAuditLogForCaseUpdate(cases, updates)
 
       if (updates.caseStatus && cascadeAlertsUpdate && !isInProgressOrOnHold) {
@@ -580,11 +596,12 @@ export class CaseService extends CaseAlertsCommonService {
           account,
           skipReview: skipReview || isLastInReview,
           updateChecklistStatus: false,
+          externalRequest: externalRequest,
         })
       }
     })
 
-    if (updates.caseStatus === 'CLOSED') {
+    if (!externalRequest && updates.caseStatus === 'CLOSED') {
       await this.sendCasesClosedWebhook(cases, updates)
     }
 

@@ -5,11 +5,14 @@ import {
 } from 'aws-lambda'
 import createHttpError from 'http-errors'
 import { isEmpty } from 'lodash'
+import { CaseConfig } from '../console-api-case/app'
 import { AlertCreationRequest } from '@/@types/openapi-public-management/AlertCreationRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { ExternalAlertManagementService } from '@/services/alerts/external-alerts-management-service'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { AlertStatusChangeRequest } from '@/@types/openapi-public-management/AlertStatusChangeRequest'
+import { getS3ClientByEvent } from '@/utils/s3'
 
 export const alertHandler = lambdaApi()(
   async (
@@ -21,11 +24,20 @@ export const alertHandler = lambdaApi()(
 
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
-
-    const service = new ExternalAlertManagementService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
+    const s3 = getS3ClientByEvent(event)
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
+    const service = new ExternalAlertManagementService(
+      tenantId,
+      {
+        mongoDb,
+        dynamoDb,
+      },
+      s3,
+      {
+        documentBucketName: DOCUMENT_BUCKET,
+        tmpBucketName: TMP_BUCKET,
+      }
+    )
 
     if (event.httpMethod === 'POST' && event.resource === '/alerts') {
       const payload = JSON.parse(event.body || '{}') as AlertCreationRequest
@@ -59,7 +71,16 @@ export const alertHandler = lambdaApi()(
       }
 
       return await service.updateAlert(alertId, payload)
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/alerts/{alertId}/statuses' &&
+      event.pathParameters?.alertId
+    ) {
+      const alertId = event.pathParameters.alertId
+      const payload = JSON.parse(event.body || '{}') as AlertStatusChangeRequest
+      return await service.updateAlertStatus(payload, alertId)
     }
+
     throw new createHttpError.NotFound('Resource not found')
   }
 )

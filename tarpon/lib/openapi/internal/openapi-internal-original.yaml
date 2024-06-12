@@ -55,7 +55,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Rule'
-              examples: {}
       operationId: get-rules
       description: ''
       parameters:
@@ -150,7 +149,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RuleFilters'
-              examples: {}
       operationId: get-rule-filters
       description: ''
       parameters:
@@ -234,7 +232,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RuleInstanceStats'
-              examples: {}
   /rule_instances:
     post:
       summary: Rule Instance - Create
@@ -249,18 +246,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RuleInstance'
-              examples:
-                example-1:
-                  value:
-                    id: string
-                    ruleId: string
-                    action: FLAG
-                    parameters: {}
-                    status: ACTIVE
-                    createdAt: 0
-                    updatedAt: 0
-                    runCount: 0
-                    hitCount: 0
       requestBody:
         content:
           application/json:
@@ -475,13 +460,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ImportRequest'
-            examples:
-              example-1:
-                value:
-                  type: USER
-                  format: flagright
-                  filename: filename
-                  s3Key: s3-key-in-a-bucket
         required: true
   /import/transactions:
     parameters: []
@@ -499,13 +477,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ImportRequest'
-            examples:
-              example-1:
-                value:
-                  type: TRANSACTION
-                  format: flagright
-                  filename: filename
-                  s3Key: s3-key-in-a-bucket
         required: true
   /imports/{importId}:
     parameters:
@@ -537,7 +508,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PresignedUrlResponse'
-              examples: {}
       description: Get a presigned URL for uploading a file
   /lists:
     get:
@@ -716,7 +686,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionsResponse'
-              examples: {}
       operationId: get-transactions-list
       description: ''
       parameters:
@@ -938,7 +907,6 @@ paths:
                     type: string
                 required:
                   - downloadUrl
-              examples: {}
         '400':
           description: Bad Request
           content:
@@ -948,9 +916,6 @@ paths:
                 properties:
                   message:
                     type: string
-              examples:
-                example-1:
-                  value: {}
       operationId: get-transactions-list-export
       description: ''
       parameters:
@@ -1083,7 +1048,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionsStatsByTypesResponse'
-              examples: {}
       operationId: get-transactions-stats-by-type
       description: ''
       parameters:
@@ -1221,7 +1185,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionsStatsByTimeResponse'
-              examples: {}
       operationId: get-transactions-stats-by-time
       description: ''
       parameters:
@@ -1358,7 +1321,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CrmAccountResponse'
-              examples: {}
       operationId: get-crm-account
       description: ''
       parameters:
@@ -1380,7 +1342,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Graph'
-              examples: {}
       operationId: get-user-entity
       description: ''
       parameters:
@@ -1402,7 +1363,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Graph'
-              examples: {}
       operationId: get-txn-linking
       description: ''
       parameters:
@@ -1451,7 +1411,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConsumerUsersListResponse'
-              examples: {}
       operationId: get-consumer-users-list
       description: ''
       parameters:
@@ -1552,7 +1511,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MerchantMonitoringStatsResponse'
-              examples: {}
       operationId: get-merchant-monitoring-stats
       description: ''
   /users:
@@ -1569,7 +1527,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AllUsersListResponse'
-              examples: {}
       operationId: get-all-users-list
       description: ''
       parameters:
@@ -1785,7 +1742,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalConsumerUser'
-              examples: {}
       operationId: get-consumer-users-item
       description: ''
       parameters: []
@@ -1828,7 +1784,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BusinessUsersListResponse'
-              examples: {}
       operationId: get-business-users-list
       description: ''
       parameters:
@@ -1920,7 +1875,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalUser'
-              examples: {}
       operationId: get-users-item
       description: ''
       parameters: []
@@ -1943,7 +1897,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalUserEventsResponse'
-              examples: {}
       operationId: get-events-list
       description: ''
       parameters:
@@ -1982,7 +1935,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalBusinessUser'
-              examples: {}
       operationId: get-business-users-item
       description: ''
       parameters: []
@@ -2109,7 +2061,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsTransactionsCount'
-              examples: {}
       operationId: get-dashboard-stats-transactions
       description: ''
       parameters:
@@ -2149,7 +2100,6 @@ paths:
                     $ref: '#/components/schemas/DashboardStatsTransactionsCountItem'
                 required:
                   - data
-              examples: {}
       operationId: get-dashboard-stats-transactions-total
       description: ''
       parameters:
@@ -2176,7 +2126,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsRulesCount'
-              examples: {}
       operationId: get-dashboard-stats-rule-hit
       description: ''
       parameters:
@@ -2246,7 +2195,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsHitsPerUser'
-              examples: {}
       operationId: get-dashboard-stats-hits-per-user
       description: ''
       parameters:
@@ -2354,7 +2302,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsOverview'
-              examples: {}
       operationId: get-dashboard-stats-overview
       description: ''
   /dashboard_stats/closing_reason_distribution:
@@ -2371,7 +2318,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsClosingReasonDistributionStats'
-              examples: {}
       operationId: get-dashboard-stats-closing-reason-distribution-stats
       description: ''
       parameters:
@@ -2404,7 +2350,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsAlertAndCaseStatusDistributionStats'
-              examples: {}
       operationId: get-dashboard-stats-alert-and-case-status-distribution-stats
       description: ''
       parameters:
@@ -2446,7 +2391,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsAlertPriorityDistributionStats'
-              examples: {}
       operationId: get-dashboard-stats-alert-priority-distribution-stats
       description: ''
       parameters:
@@ -2472,7 +2416,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsQaAlertsCountByRule'
-              examples: {}
       operationId: get-dashboard-stats-qa-alerts-by-rule-hit
       description: ''
       parameters:
@@ -2499,7 +2442,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsQaAlertsStatsByChecklistReason'
-              examples: {}
       operationId: get-dashboard-stats-qa-alerts-stats-by-checklist-reason
       description: ''
       parameters:
@@ -2534,7 +2476,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsQaOverview'
-              examples: {}
       operationId: get-dashboard-stats-qa-overview
       description: ''
       parameters:
@@ -2561,7 +2502,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStatsQaAlertsCountByAssignee'
-              examples: {}
       operationId: get-dashboard-stats-qa-alerts-by-assignee
       description: ''
       parameters:
@@ -3007,12 +2947,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RiskClassificationScore'
-              examples:
-                example-1:
-                  value:
-                    - riskLevel: VERY_LOW
-                      lowerBoundRiskScore: 0
-                      upperBoundRiskScore: 25
       operationId: get-pulse-risk-classification
       description: ''
     post:
@@ -3030,12 +2964,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RiskClassificationScore'
-              examples:
-                example-1:
-                  value:
-                    - riskLevel: VERY_LOW
-                      lowerBoundRiskScore: 0
-                      upperBoundRiskScore: 25
         '400':
           description: Bad Request
       requestBody:
@@ -3199,7 +3127,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TrsScoresResponse'
-              examples: {}
       operationId: get-trs-scores
       description: ''
   /auditlog:
@@ -3650,7 +3577,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AlertListResponse'
-              examples: {}
       operationId: get-alert-list
       description: ''
       parameters:
@@ -4305,7 +4231,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CasesListResponse'
-              examples: {}
       operationId: get-case-list
       description: ''
       parameters:
@@ -4529,7 +4454,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionsResponse'
-              examples: {}
       operationId: get-case-transactions
       description: ''
       parameters:
@@ -6399,17 +6323,6 @@ components:
     Rule:
       title: Rule
       type: object
-      x-examples:
-        example-1:
-          id: R-1
-          name: Rule name
-          description: Rule description
-          defaultParameters:
-            threshold: 3
-          defaultAction: FLAG
-          ruleImplementationName: code-filename
-          createdAt: 0
-          updatedAt: 0
       properties:
         id:
           type: string
@@ -6880,7 +6793,6 @@ components:
       title: TransactionsResponse
       type: object
       description: ''
-      x-examples: {}
       properties:
         hasPrev:
           type: boolean
@@ -7049,7 +6961,6 @@ components:
       title: TransactionsStatsByTypesResponse
       type: object
       description: ''
-      x-examples: {}
       properties:
         data:
           type: array
@@ -7080,10 +6991,9 @@ components:
       required:
         - data
     TransactionsStatsByTimeResponse:
-      title: TransactionsStatsByTypesResponse
+      title: TransactionsStatsByTimeResponse
       type: object
       description: ''
-      x-examples: {}
       properties:
         data:
           type: array
@@ -7145,7 +7055,6 @@ components:
       title: InternalUserEventsResponse
       type: object
       description: ''
-      x-examples: {}
       properties:
         items:
           type: array
@@ -7443,7 +7352,6 @@ components:
         - time
     DashboardStatsRulesCount:
       type: object
-      x-examples: {}
       title: DashboardStatsRulesCount
       properties:
         data:
@@ -7506,7 +7414,6 @@ components:
         - time
     DashboardStatsKRSDistribution:
       type: object
-      x-examples: {}
       title: DashboardStatsKRSDistribution
       properties:
         data:
@@ -7533,7 +7440,6 @@ components:
         - data
     DashboardStatsKYCStatusDistribution:
       type: object
-      x-examples: {}
       title: DashboardStatsKYCStatusDistribution
       properties:
         data:
@@ -7556,7 +7462,6 @@ components:
         - data
     DashboardStatsOverview:
       type: object
-      x-examples: {}
       title: DashboardStatsOverview
       properties:
         totalOpenCases:
@@ -7577,7 +7482,6 @@ components:
         - totalSarReported
     DashboardStatsClosingReasonDistributionStats:
       type: object
-      x-examples: {}
       title: DashboardStatsClosingReasonDistributionStats
       properties:
         closingReasonsData:
@@ -7593,7 +7497,6 @@ components:
         - closingReasonsData
     DashboardStatsAlertPriorityDistributionStats:
       type: object
-      x-examples: {}
       title: DashboardStatsAlertPriorityDistributionStats
       properties:
         alertPriorityData:
@@ -7609,7 +7512,6 @@ components:
         - alertPriorityData
     DashboardStatsQaAlertsCountByRule:
       type: object
-      x-examples: {}
       title: DashboardStatsQaAlertsCountByRule
       properties:
         data:
@@ -7631,7 +7533,6 @@ components:
         - data
     DashboardStatsQaAlertsStatsByChecklistReason:
       type: object
-      x-examples: {}
       title: DashboardStatsQaAlertsStatsByChecklistReason
       properties:
         data:
@@ -7661,7 +7562,6 @@ components:
         - data
     DashboardStatsQaAlertsCountByAssignee:
       type: object
-      x-examples: {}
       title: DashboardStatsQaAlertsCountByAssignee
       properties:
         data:
@@ -7683,7 +7583,6 @@ components:
         - data
     DashboardStatsQaOverview:
       type: object
-      x-examples: {}
       title: DashboardStatsQaOverview
       properties:
         totalAlertsForQa:
@@ -7698,7 +7597,6 @@ components:
         - totalQaPassedAlerts
     UpdateMonitoringStatusRequest:
       type: object
-      x-examples: {}
       title: UpdateMonitoringStatusRequest
       properties:
         isMonitoringEnabled:
@@ -8444,7 +8342,6 @@ components:
         - VERY_LOW
     RiskParameterLevelKeyValue:
       type: object
-      x-examples: {}
       title: RiskParameterLevelKeyValue
       properties:
         parameterValue:
@@ -8576,13 +8473,6 @@ components:
     ParameterAttributeRiskValues:
       title: ParameterAttributeRiskValues
       type: object
-      x-examples:
-        example-1:
-          parameter: userDetails.countryOfResidence
-          riskEntityType: CONSUMER_USER
-          riskLevelAssignmentValues:
-            DE: LOW
-            TR: HIGH
       properties:
         parameter:
           type: string
@@ -8611,7 +8501,7 @@ components:
             - domesticOrForeignDestinationCountryConsumer
             - domesticOrForeignOriginCountryBusiness
             - domesticOrForeignDestinationCountryBusiness
-            - _3dsDone
+            - 3dsDone
             - cardIssuedCountry
             - legalEntity.companyGeneralDetails.userRegistrationStatus
             - legalEntity.companyGeneralDetails.userSegment
@@ -9416,7 +9306,6 @@ components:
       title: CasesListResponse
       type: object
       description: ''
-      x-examples: {}
       properties:
         total:
           type: number
@@ -9431,7 +9320,6 @@ components:
       title: AlertListResponse
       type: object
       description: ''
-      x-examples: {}
       properties:
         total:
           type: number
@@ -9480,7 +9368,6 @@ components:
       title: AuditLogListResponse
       type: object
       description: ''
-      x-examples: {}
       properties:
         total:
           type: number
@@ -9494,7 +9381,6 @@ components:
     CaseRuleTransactionListResponse:
       title: CaseRuleTransactionListResponse
       type: object
-      x-examples: {}
       properties:
         total:
           type: number
@@ -9540,9 +9426,10 @@ components:
           $ref: '#/components/schemas/UserStateDetailsInternal'
         kycStatusDetails:
           $ref: '#/components/schemas/KYCStatusDetailsInternal'
+        timestamp:
+          type: number
       required:
         - reason
-      x-examples: {}
       description: ''
     CasesAssignmentsUpdateRequest:
       title: CasesAssignmentsUpdateRequest
@@ -9660,6 +9547,8 @@ components:
             type: string
         closeSourceCase:
           type: boolean
+        timestamp:
+          type: number
       required:
         - alertStatus
         - reason

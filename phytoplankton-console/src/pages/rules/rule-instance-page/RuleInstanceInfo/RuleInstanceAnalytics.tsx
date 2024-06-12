@@ -86,7 +86,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                 sections={[
                   {
                     title: 'Users hit',
-                    value: map(dataRes, (data) => data.usersHit),
+                    value: map(dataRes, (data) => data.usersHit ?? 0),
                   },
                 ]}
               />
@@ -96,7 +96,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                     title: isShadowRule(ruleInstance)
                       ? 'Estimated alerts created'
                       : 'Alerts created',
-                    value: map(dataRes, (data) => data.alertsHit),
+                    value: map(dataRes, (data) => data.alertsHit ?? 0),
                   },
                 ]}
               />
@@ -107,7 +107,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                       ? 'Estimated avg investigation time'
                       : 'Avg investigation time',
                     value: map(dataRes, (data) =>
-                      data.investigationTime
+                      data.usersHit > 0 && data.investigationTime
                         ? formatDuration(getDuration(data.investigationTime))
                         : '-',
                     ),

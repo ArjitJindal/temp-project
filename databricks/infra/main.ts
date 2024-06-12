@@ -450,7 +450,10 @@ class DatabricksStack extends TerraformStack {
         {
           connectionType: 'MONGODB',
           connectionProperties: {
-            CONNECTION_URL: `mongodb+srv://${Fn.lookup(mongoSecretValue, 'host')}/tarpon`,
+            CONNECTION_URL: `mongodb+srv://${Fn.lookup(
+              mongoSecretValue,
+              'host'
+            )}/tarpon`,
             USERNAME: Fn.lookup(mongoSecretValue, 'username'),
             PASSWORD: Fn.lookup(mongoSecretValue, 'password'),
           },

@@ -224,4 +224,26 @@ describe('Test Create Case', () => {
       'Resource not found'
     )
   })
+
+  test('Change the status of a case', async () => {
+    const response = await caseHandler(
+      getApiGatewayPostEvent(
+        tenantId,
+        '/cases/{caseId}/statuses',
+        {
+          status: 'CLOSED',
+          reason: ['False Positive'],
+        },
+        {
+          pathParameters: { caseId: 'CA-1' },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      caseStatus: 'CLOSED',
+    })
+  })
 })
