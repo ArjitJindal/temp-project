@@ -10,8 +10,8 @@ export function getNegatedOperator(
       ...operator.uiDefinition,
       label,
     },
-    run: async (lhs, rhs, context) => {
-      const result = await operator.run(lhs, rhs, context)
+    run: async (...args) => {
+      const result = await operator.run(...args)
       return !result
     },
   }

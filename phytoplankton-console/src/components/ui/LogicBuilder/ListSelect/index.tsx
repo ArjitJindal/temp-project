@@ -18,7 +18,7 @@ export default function ListSelect(props: Pick<SelectProps<string>, 'value' | 'o
   return (
     <Select<string>
       portaled={true}
-      mode={'TAGS'}
+      mode={'MULTIPLE'}
       allowClear={true}
       options={getOr(res, []).map((list) => ({
         value: list.listId,
