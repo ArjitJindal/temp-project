@@ -1588,6 +1588,10 @@ components:
       properties:
         caseStatus:
           $ref: '#/components/schemas/Status'
+        alertIds:
+          type: array
+          items:
+            type: string
         updatedAt:
           type: number
     Status:
@@ -1612,6 +1616,7 @@ components:
         - caseId
         - entityDetails
         - caseStatus
+        - alertIds
         - priority
         - createdTimestamp
         - updatedAt

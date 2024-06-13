@@ -1,7 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
-import { isEmpty, omitBy, pick, uniq } from 'lodash'
+import { compact, isEmpty, omitBy, pick, uniq } from 'lodash'
 import { S3 } from '@aws-sdk/client-s3'
 import { UserRepository } from '../users/repositories/user-repository'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
@@ -192,11 +192,15 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     const externalCaseStatus = this.casesTransformer.getExternalCaseStatus(
       caseStatus as CaseStatus
     )
+    const caseAlertIds = compact(
+      internalCase.alerts?.map((alert) => alert?.alertId)
+    )
 
     return {
       caseId: internalCase.caseId as string,
       entityDetails: this.getEnitityDetails(internalCase),
       caseStatus: externalCaseStatus,
+      alertIds: caseAlertIds ?? [],
       priority: internalCase.priority || 'P1',
       createdTimestamp: internalCase.createdTimestamp || Date.now(),
       updatedAt: internalCase.updatedAt || Date.now(),

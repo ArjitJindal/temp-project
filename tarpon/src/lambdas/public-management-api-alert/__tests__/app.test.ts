@@ -96,6 +96,7 @@ describe('Test Create Alert', () => {
       },
       priority: 'P1',
       createdTimestamp: request.createdTimestamp,
+      alertIds: [],
       assignments: [],
       updatedAt: expect.any(Number),
       tags: [],
