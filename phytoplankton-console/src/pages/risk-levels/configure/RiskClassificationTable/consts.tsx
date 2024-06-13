@@ -43,6 +43,10 @@ export const columns: TableColumn<TableItem>[] = helper.list([
       }
       const start = state[index - 1] ?? 0;
       const end = state[index] ?? 100;
+      let lastEndInclusiveIndex = state.findIndex((element) => element === 100);
+      if (lastEndInclusiveIndex === -1) {
+        lastEndInclusiveIndex = state.length;
+      }
       return (
         <Slider
           className={s.slider}
@@ -51,7 +55,7 @@ export const columns: TableColumn<TableItem>[] = helper.list([
           min={0}
           max={100}
           value={[start, end]}
-          endExclusive={end !== 100}
+          endExclusive={index !== lastEndInclusiveIndex}
           onChange={(newValue) => {
             if (!setState || newValue == null) {
               return;
