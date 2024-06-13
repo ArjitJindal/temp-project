@@ -617,10 +617,11 @@ export class AccountsService {
     await Promise.all([
       userManager.update({ id: accountId }, { blocked: true }),
       this.updateAuth0UserInMongo(tenantId, accountId, { blocked: true }),
-      userManager.deleteRoles(
-        { id: accountId },
-        { roles: userRoles.data.map((role) => role.id) }
-      ),
+      userRoles.data.length &&
+        userManager.deleteRoles(
+          { id: accountId },
+          { roles: userRoles.data.map((role) => role.id) }
+        ),
     ])
   }
 
