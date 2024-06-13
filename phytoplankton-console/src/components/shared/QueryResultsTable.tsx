@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { ParamsType } from '@ant-design/pro-provider';
 import Table, { Props as TableProps } from '@/components/library/Table';
 import { QueryResult } from '@/utils/queries/types';
@@ -16,11 +16,15 @@ export default function QueryResultsTable<T extends object, Params extends objec
   props: Props<T, Params>,
 ): JSX.Element {
   const { queryResults, showResultsInfo = true, expandedRowId, ...rest } = props;
+  const handleReload = useCallback(() => {
+    rest.onReload?.();
+    queryResults.refetch();
+  }, [queryResults, rest]);
 
   return (
     <Table
       {...rest}
-      onReload={queryResults.refetch}
+      onReload={handleReload}
       data={queryResults.data}
       cursor={queryResults?.cursor}
       onPaginateData={queryResults.paginate}

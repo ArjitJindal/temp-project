@@ -1,10 +1,10 @@
-import { Switch } from 'antd';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { useMutation } from '@tanstack/react-query';
 import { getRuleInstanceDisplayId, isShadowRule, useUpdateRuleInstance } from '../../utils';
 import { canSimulate } from '../../my-rules';
+import { RuleStatusSwitch } from '../../components/RuleStatusSwitch';
 import s from './styles.module.less';
 import { RuleInstanceAnalytics } from './RuleInstanceAnalytics';
 import { RuleInstance } from '@/apis';
@@ -143,10 +143,9 @@ export const RuleInstanceInfo = (props: Props) => {
             </div>
             <div className={s.description}>{ruleInstance.ruleDescriptionAlias}</div>
           </div>
-          <Switch
-            disabled={!canWriteRules}
-            checked={ruleInstance.status === 'ACTIVE'}
-            onChange={(checked) => handleActivationChange(ruleInstance, checked)}
+          <RuleStatusSwitch
+            ruleInstance={ruleInstance}
+            onToggle={(checked) => handleActivationChange(ruleInstance, checked)}
           />
         </Card.Section>
       </Card.Root>

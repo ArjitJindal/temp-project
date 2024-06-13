@@ -95,11 +95,19 @@ export async function handleV8PreAggregationTask(
   const newJob = (await jobRepository.updateJob(task.jobId, {
     $inc: { 'metadata.completeTasksCount': 1 },
   })) as RulePreAggregationBatchJob
+
   if (
     newJob.metadata &&
-    newJob.metadata.completeTasksCount === newJob.metadata.tasksCount
+    newJob.metadata.completeTasksCount >= newJob.metadata.tasksCount &&
+    ruleInstance?.status === 'DEPLOYING'
   ) {
-    // TODO (FR-2917): Update rule instance status from DEPLOYING to ACTIVE
+    logger.info(
+      `Pr-aggregation complete (job: ${task.jobId}). Switching rule instance ${task.ruleInstanceId} to ACTIVE`
+    )
+    await ruleInstanceRepository.createOrUpdateRuleInstance({
+      ...ruleInstance,
+      status: 'ACTIVE',
+    })
   }
 }
 

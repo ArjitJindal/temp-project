@@ -158,14 +158,11 @@ export const USER_FILES = (params?: AnyParameters): QueryKey =>
 export const RULES_AND_RULE_INSTANCES = (): QueryKey => ['rules-and-rule-instances'];
 export const GET_RULES = (params: AnyParameters): QueryKey => ['get-rules', params];
 export const GET_RULE = (id: string | undefined): QueryKey => ['rules', 'item', id];
-export const GET_RULE_INSTANCES = (params: AnyParameters): QueryKey => [
-  'get-rule-instances',
-  params,
-];
-export const GET_RULES_INSTANCE = (id: string | undefined): QueryKey => [
-  'rule-instances',
-  'item',
-  id,
+export const GET_RULE_INSTANCES = (params?: AnyParameters): QueryKey =>
+  ['get-rule-instances', params].filter(Boolean);
+export const GET_RULE_INSTANCE = (ruleInstanceId: string): QueryKey => [
+  'rule-instance',
+  ruleInstanceId,
 ];
 export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id].filter(Boolean);
 export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];

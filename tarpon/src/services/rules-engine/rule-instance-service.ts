@@ -165,7 +165,7 @@ export class RuleInstanceService {
     }
 
     const now = Date.now()
-    const updatedRuleInstance =
+    let updatedRuleInstance =
       await this.ruleInstanceRepository.createOrUpdateRuleInstance(
         { ...ruleInstance, type: ruleInstance.type, mode: ruleInstance.mode },
         undefined
@@ -177,7 +177,14 @@ export class RuleInstanceService {
       ) ?? []
 
     if (aggVarsToRebuild.length > 0) {
-      // TODO (FR-2917): Change rule instance status to DEPLOYING
+      updatedRuleInstance =
+        await this.ruleInstanceRepository.createOrUpdateRuleInstance(
+          {
+            ...updatedRuleInstance,
+            status: 'DEPLOYING',
+          },
+          updatedRuleInstance.updatedAt
+        )
       await sendBatchJobCommand({
         type: 'RULE_PRE_AGGREGATION',
         tenantId: this.tenantId,

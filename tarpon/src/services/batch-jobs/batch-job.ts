@@ -19,7 +19,7 @@ export async function sendBatchJobCommand(job: BatchJob) {
   if (envIs('local')) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const jobRunnerHandler = require('@/lambdas/batch-job/app').jobRunnerHandler
-    await jobRunnerHandler(jobWithId)
+    jobRunnerHandler(jobWithId)
     return
   }
 

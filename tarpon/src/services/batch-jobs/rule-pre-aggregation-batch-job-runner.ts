@@ -1,4 +1,4 @@
-import { uniq, uniqBy } from 'lodash'
+import { compact, uniq, uniqBy } from 'lodash'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { isV8RuleInstance } from '../rules-engine/utils'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
@@ -33,6 +33,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       logger.warn(`Rule instance ${ruleInstanceId} not found. Skipping job.`)
       return
     }
+
     const isV8Rule =
       (await tenantHasFeature(job.tenantId, 'RULES_ENGINE_V8')) &&
       isV8RuleInstance(ruleInstance)
@@ -42,6 +43,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       )
       return
     }
+
     const metadata: RulePreAggregationMetadata = {
       tasksCount: 0,
       completeTasksCount: 0,
@@ -50,12 +52,22 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       $set: { metadata },
     })
 
+    let tasks = 0
     for (const aggregationVariable of aggregationVariables) {
-      await this.preAggregateVariable(
+      tasks += await this.preAggregateVariable(
         job.tenantId,
         ruleInstanceId,
         aggregationVariable
       )
+    }
+    if (tasks === 0 && ruleInstance.status === 'DEPLOYING') {
+      logger.info(
+        `No tasks to pre-aggregate. Switching rule instance ${ruleInstanceId} to ACTIVE`
+      )
+      await ruleInstanceRepository.createOrUpdateRuleInstance({
+        ...ruleInstance,
+        status: 'ACTIVE',
+      })
     }
   }
 
@@ -63,7 +75,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     tenantId: string,
     ruleInstanceId: string,
     aggregationVariable: RuleAggregationVariable
-  ) {
+  ): Promise<number> {
     const transactionsRepo = new MongoDbTransactionRepository(
       tenantId,
       await getMongoDbClient()
@@ -74,7 +86,6 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       timeWindow.start,
       timeWindow.end
     )
-    let tasksCount = 0
     if (aggregationVariable.type === 'USER_TRANSACTIONS') {
       const originUserIds =
         aggregationVariable.transactionDirection === 'RECEIVING'
@@ -85,6 +96,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
           ? []
           : await transactionsRepo.getUniqueUserIds('DESTINATION', timeRange)
       const allUserIds = uniq(originUserIds.concat(destinationUserIds))
+      await this.incrementTasksCount(allUserIds.length)
       for (const userId of allUserIds) {
         await sendAggregationTask({
           userKeyId: userId,
@@ -98,8 +110,8 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
             ruleInstanceId,
           },
         })
-        tasksCount += 1
       }
+      return allUserIds.length
     } else if (aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS') {
       const originPaymentDetails =
         aggregationVariable.transactionDirection === 'RECEIVING'
@@ -112,33 +124,42 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
               'DESTINATION',
               timeRange
             )
-      const allPaymentDetails = uniqBy(
-        originPaymentDetails.concat(destinationPaymentDetails),
-        generateChecksum
+      const userInfos = compact(
+        uniqBy(
+          originPaymentDetails.concat(destinationPaymentDetails),
+          generateChecksum
+        ).map((v) => {
+          const userKeyId = getPaymentDetailsIdentifiersKey(v)
+          if (userKeyId) {
+            return { userKeyId, paymentDetails: v }
+          }
+        })
       )
-      for (const paymentDetails of allPaymentDetails) {
-        const userKeyId = getPaymentDetailsIdentifiersKey(paymentDetails)
-        if (userKeyId) {
-          await sendAggregationTask({
-            userKeyId,
-            payload: {
-              type: 'PRE_AGGREGATION',
-              aggregationVariable,
-              tenantId,
-              paymentDetails,
-              currentTimestamp: Date.now(),
-              jobId: this.jobId,
-              ruleInstanceId,
-            },
-          })
-          tasksCount += 1
-        }
+      await this.incrementTasksCount(userInfos.length)
+
+      for (const userInfo of userInfos) {
+        await sendAggregationTask({
+          userKeyId: userInfo.userKeyId,
+          payload: {
+            type: 'PRE_AGGREGATION',
+            aggregationVariable,
+            tenantId,
+            paymentDetails: userInfo.paymentDetails,
+            currentTimestamp: Date.now(),
+            jobId: this.jobId,
+            ruleInstanceId,
+          },
+        })
       }
-    } else {
-      throw new Error(
-        `Unsupported aggregation variable type: ${aggregationVariable.type}`
-      )
+      return userInfos.length
     }
+
+    throw new Error(
+      `Unsupported aggregation variable type: ${aggregationVariable.type}`
+    )
+  }
+
+  private async incrementTasksCount(tasksCount: number) {
     await this.jobRepository.updateJob(this.jobId, {
       $inc: { 'metadata.tasksCount': tasksCount },
     })

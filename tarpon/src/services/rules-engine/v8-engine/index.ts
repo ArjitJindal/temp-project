@@ -877,28 +877,14 @@ export class RuleJsonLogicEvaluator {
       if (!userKeyId) {
         return null
       }
-      const userAggData =
-        await this.aggregationRepository.getUserRuleTimeAggregations(
+      aggData =
+        (await this.aggregationRepository.getUserRuleTimeAggregations(
           userKeyId,
           aggregationVariable,
           afterTimestamp,
           beforeTimestamp,
           aggregationGranularity
-        )
-
-      // Get the rebuilt aggregation data if it's not available yet, it's important to return the
-      // correct result when customers are testing the rules in sandbox.
-      // TODO: FR-2916
-      if (envIs('sandbox') && !userAggData) {
-        aggData = await this.loadAggregationDataFromRawData(
-          aggregationVariable,
-          userIdentifier,
-          afterTimestamp,
-          beforeTimestamp
-        )
-      } else {
-        aggData = userAggData ?? []
-      }
+        )) ?? []
     } else {
       // If the mode is MONGODB, we rebuild the fresh aggregation data (without persisting the aggregation data)
       aggData = await this.loadAggregationDataFromRawData(

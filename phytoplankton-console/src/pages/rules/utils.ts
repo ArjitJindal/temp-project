@@ -22,7 +22,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { humanizeConstant } from '@/utils/humanize';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { GET_RULES_INSTANCE } from '@/utils/queries/keys';
+import { GET_RULE_INSTANCE, GET_RULE_INSTANCES } from '@/utils/queries/keys';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -526,8 +526,16 @@ export function useUpdateRuleInstance(
         if (onRuleInstanceUpdated) {
           onRuleInstanceUpdated(updatedRuleInstance);
         }
-        await queryClient.invalidateQueries(GET_RULES_INSTANCE(updatedRuleInstance.id));
-        message.success(`Rule updated - ${updatedRuleInstance.id}`);
+        await queryClient.invalidateQueries(GET_RULE_INSTANCE(updatedRuleInstance.id as string));
+        await queryClient.invalidateQueries(GET_RULE_INSTANCES());
+
+        if (updatedRuleInstance.status === 'DEPLOYING') {
+          message.success(
+            `Rule ${updatedRuleInstance.id} has been successfully updated and will be live once deployed.`,
+          );
+        } else {
+          message.success(`Rule updated - ${updatedRuleInstance.id}`);
+        }
       },
       onError: async (err) => {
         message.fatal(`Unable to update the rule - ${getErrorMessage(err)}`, err);
@@ -540,6 +548,7 @@ export function useCreateRuleInstance(
   onRuleInstanceCreated?: (ruleInstance: RuleInstance) => void,
 ) {
   const api = useApi();
+  const queryClient = useQueryClient();
   return useMutation<RuleInstance, unknown, RuleInstance>(
     async (ruleInstance: RuleInstance) => {
       return api.postRuleInstances({
@@ -551,6 +560,7 @@ export function useCreateRuleInstance(
         if (onRuleInstanceCreated) {
           onRuleInstanceCreated(newRuleInstance);
         }
+        await queryClient.invalidateQueries(GET_RULE_INSTANCES());
         message.success(`Rule created - ${newRuleInstance.id}`);
       },
       onError: async (err) => {

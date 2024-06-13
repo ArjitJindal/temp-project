@@ -5,7 +5,7 @@ import { RuleInstance } from '@/apis';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
-import { GET_RULES_INSTANCE } from '@/utils/queries/keys';
+import { GET_RULE_INSTANCE } from '@/utils/queries/keys';
 import { makeUrl } from '@/utils/routing';
 import PageWrapper from '@/components/PageWrapper';
 
@@ -13,7 +13,7 @@ export const RuleInstancePage = () => {
   const { id: ruleInstanceId } = useParams<{ id: string }>();
   const api = useApi();
   const ruleInstanceResult = useQuery<RuleInstance>(
-    GET_RULES_INSTANCE(ruleInstanceId),
+    GET_RULE_INSTANCE(ruleInstanceId as string),
     async (_paginationParams) => {
       if (ruleInstanceId == null) {
         throw new Error(`ruleInstanceId can not be null`);

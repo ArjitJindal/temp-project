@@ -4,7 +4,7 @@ import RuleConfiguration from 'src/pages/rules/RuleConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { useLocalStorageState } from 'ahooks';
 import { useQuery } from '@/utils/queries/hooks';
-import { GET_RULES_INSTANCE, GET_RULE } from '@/utils/queries/keys';
+import { GET_RULE_INSTANCE, GET_RULE } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { RuleInstance, Rule } from '@/apis';
@@ -21,7 +21,7 @@ export default function RulesItemPage() {
   >();
   const api = useApi();
   const ruleInstanceResult = useQuery<RuleInstance>(
-    GET_RULES_INSTANCE(ruleInstanceId),
+    GET_RULE_INSTANCE(ruleInstanceId),
     async (_paginationParams) => {
       if (ruleInstanceId == null) {
         throw new Error(`ruleInstanceId can not be null`);

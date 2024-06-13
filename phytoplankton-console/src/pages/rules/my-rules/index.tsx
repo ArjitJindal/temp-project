@@ -1,10 +1,11 @@
-import { Switch, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLocalStorageState } from 'ahooks';
 import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
+import { RuleStatusSwitch } from '../components/RuleStatusSwitch';
 import s from './style.module.less';
 import { RuleInstance, RuleMode } from '@/apis';
 import { useApi } from '@/api';
@@ -100,6 +101,13 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     sort: [DEFAULT_SORTING],
     pagination: false,
   });
+  const handleChangeParams = useCallback((newParams: CommonParams) => {
+    setParams(newParams);
+    setUpdatedRuleInstances({});
+  }, []);
+  const handleReload = useCallback(() => {
+    setUpdatedRuleInstances({});
+  }, []);
 
   const focusId = useMemo(() => parseQueryString(location.search).focus, []);
 
@@ -290,10 +298,9 @@ const MyRule = (props: { simulationMode?: boolean }) => {
             }
             const ruleInstance = updatedRuleInstances[entity.id] || entity;
             return (
-              <Switch
-                disabled={!canWriteRules}
-                checked={ruleInstance.status === 'ACTIVE'}
-                onChange={(checked) => handleActivationChange(ruleInstance, checked)}
+              <RuleStatusSwitch
+                ruleInstance={ruleInstance}
+                onToggle={(checked) => handleActivationChange(ruleInstance, checked)}
               />
             );
           },
@@ -460,7 +467,8 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         rowKey="id"
         defaultSorting={DEFAULT_SORTING}
         params={params}
-        onChangeParams={setParams}
+        onChangeParams={handleChangeParams}
+        onReload={handleReload}
       />
     </>
   );
