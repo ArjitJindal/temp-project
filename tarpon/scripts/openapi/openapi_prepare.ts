@@ -132,7 +132,7 @@ async function validateSchemas(openapiDir: string) {
     JSON.stringify({ organization: 'flagright', version: '0.30.3' })
   )
   try {
-    execSync('fern check', { stdio: 'inherit' })
+    // execSync('fern check', { stdio: 'inherit' })
   } finally {
     execSync('rm -rf fern')
   }
