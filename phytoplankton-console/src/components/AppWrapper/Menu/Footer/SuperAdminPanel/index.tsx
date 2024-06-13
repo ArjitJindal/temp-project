@@ -86,6 +86,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Kinesis Async',
     description: 'Enables Kinesis Async for case creation',
   },
+  FILES_AI_SUMMARY: {
+    title: 'AI Attachment Summarization',
+    description: 'Enables AI Attachment Summarization (pdf only)',
+  },
 };
 
 export default function SuperAdminPanel() {

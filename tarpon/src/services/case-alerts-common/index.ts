@@ -1,6 +1,7 @@
 import { sample } from 'lodash'
 import { S3, CopyObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { Credentials } from 'aws-lambda'
 import * as createError from 'http-errors'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
@@ -17,10 +18,12 @@ export type S3Config = {
 export class CaseAlertsCommonService {
   protected s3: S3
   protected s3Config: S3Config
+  protected awsCredentials?: Credentials
 
-  constructor(s3: S3, s3Config: S3Config) {
+  constructor(s3: S3, s3Config: S3Config, awsCredentials?: Credentials) {
     this.s3 = s3
     this.s3Config = s3Config
+    this.awsCredentials = awsCredentials
   }
 
   protected getEscalationAssignments(accounts: Account[]): Assignment[] {

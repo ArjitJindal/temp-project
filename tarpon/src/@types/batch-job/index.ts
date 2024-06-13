@@ -154,6 +154,17 @@ export type TenantDeletionBatchJob = {
   parameters: TenantDeletionBatchJobParameters
 }
 
+export type FilesAISummary = {
+  type: 'FILES_AI_SUMMARY'
+  tenantId: string
+  parameters: {
+    commentId: string
+    type: 'USER' | 'CASE' | 'ALERT'
+    entityId: string
+  }
+  awsCredentials?: Credentials
+}
+
 export type BatchJob =
   | FileImportBatchJob
   | SimulationRiskLevelsBatchJob
@@ -170,6 +181,8 @@ export type BatchJob =
   | TestFargateJob
   | TenantDeletionBatchJob
   | RulePreAggregationBatchJob
+  | FilesAISummary
+
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

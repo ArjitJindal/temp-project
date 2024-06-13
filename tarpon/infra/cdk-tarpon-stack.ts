@@ -316,6 +316,7 @@ export class CdkTarponStack extends cdk.Stack {
      * NOTE: Bucket name needs to be unique across accounts. We append account ID to the
      * logical bucket name.
      */
+
     let s3ImportBucket
     let s3DocumentBucket
     let s3TmpBucket
@@ -349,12 +350,10 @@ export class CdkTarponStack extends cdk.Stack {
       StackConstants.S3_SHARED_ASSETS_PREFIX,
       config
     )
-
     const serverAccessLogBucketName = getNameForGlobalResource(
       StackConstants.S3_SERVER_ACCESS_LOGS_BUCKET_NAME,
       config
     )
-
     if (!isDevUserStack) {
       const serverAccessLogBucket = new Bucket(
         this,
@@ -460,7 +459,6 @@ export class CdkTarponStack extends cdk.Stack {
         sharedAssetsBucketName
       )
     }
-
     /**
      * Lambda Layers
      */
@@ -591,9 +589,9 @@ export class CdkTarponStack extends cdk.Stack {
             's3:PutObjectAcl',
           ],
           resources: [
-            s3TmpBucket.bucketArn,
             s3ImportBucket.bucketArn,
             s3DocumentBucket.bucketArn,
+            s3TmpBucket.bucketArn,
             s3demoModeBucket.bucketArn,
             s3SharedAssetsBucket.bucketArn,
           ],
@@ -820,6 +818,18 @@ export class CdkTarponStack extends cdk.Stack {
           config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
           config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
       }
+    )
+
+    jobRunnerAlias.role?.attachInlinePolicy(
+      new Policy(this, getResourceNameForTarpon('BatchJobRunnerPolicy'), {
+        statements: [
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['s3:GetObject*'],
+            resources: [`${s3DocumentBucket.bucketArn}/*`],
+          }),
+        ],
+      })
     )
 
     let ecsBatchJobTask: Chain | null = null

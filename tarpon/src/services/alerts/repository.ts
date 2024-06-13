@@ -114,6 +114,35 @@ export class AlertsRepository {
     }
   }
 
+  public updateAISummary(
+    alertId: string,
+    commentId: string,
+    fileS3Key: string,
+    summary: string
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    return collection.updateOne(
+      { 'alerts.alertId': alertId },
+      {
+        $set: {
+          'alerts.$[alert].comments.$[comment].files.$[file].aiSummary':
+            summary,
+          'alerts.$[alert].updatedAt': Date.now(),
+          updatedAt: Date.now(),
+        },
+      },
+      {
+        arrayFilters: [
+          { 'alert.alertId': alertId },
+          { 'comment.id': commentId },
+          { 'file.s3Key': fileS3Key },
+        ],
+      }
+    )
+  }
+
   private getAssignmentFilter = (
     key: 'reviewAssignments' | 'assignments',
     filterAssignmentsIds: string[]

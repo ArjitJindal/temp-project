@@ -97,6 +97,34 @@ export class UserRepository {
     this.tenantId = tenantId
   }
 
+  public updateAISummary(
+    userId: string,
+    commentId: string,
+    fileS3Key: string,
+    summary: string
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    return collection.updateOne(
+      { userId },
+      {
+        $set: {
+          'comments.$[comment].files.$[file].aiSummary': summary,
+          updatedAt: Date.now(),
+        },
+      },
+      {
+        arrayFilters: [
+          { 'comment.id': commentId },
+          { 'file.s3Key': fileS3Key },
+        ],
+      }
+    )
+  }
+
   private isPulseEnabled() {
     return hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')
   }

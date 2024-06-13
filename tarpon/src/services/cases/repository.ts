@@ -1030,6 +1030,32 @@ export class CaseRepository {
     )
   }
 
+  public updateAISummary(
+    caseId: string,
+    commentId: string,
+    fileS3Key: string,
+    summary: string
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    return collection.updateOne(
+      { caseId, 'comments.id': commentId },
+      {
+        $set: {
+          'comments.$[comment].files.$[file].aiSummary': summary,
+          updatedAt: Date.now(),
+        },
+      },
+      {
+        arrayFilters: [
+          { 'comment.id': commentId },
+          { 'file.s3Key': fileS3Key },
+        ],
+      }
+    )
+  }
+
   public async getCaseByAlertId(
     alertId: string
   ): Promise<CaseWithoutCaseTransactions | null> {

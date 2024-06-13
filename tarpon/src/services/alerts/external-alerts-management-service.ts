@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
 import { compact, difference, isNil, memoize, omitBy, pick, uniq } from 'lodash'
 import { S3 } from '@aws-sdk/client-s3'
+import { Credentials } from 'aws-lambda'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'
 import { CaseRepository, MAX_TRANSACTION_IN_A_CASE } from '../cases/repository'
@@ -37,9 +38,10 @@ export class ExternalAlertManagementService extends CaseAlertsCommonService {
     tenantId: string,
     connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
     s3: S3,
-    s3Config: S3Config
+    s3Config: S3Config,
+    awsCredentials?: Credentials
   ) {
-    super(s3, s3Config)
+    super(s3, s3Config, awsCredentials)
     this.alertsRepository = new AlertsRepository(tenantId, connections)
     this.caseRepository = new CaseRepository(tenantId, connections)
     this.transactionRepository = new MongoDbTransactionRepository(
@@ -500,8 +502,10 @@ export class ExternalAlertManagementService extends CaseAlertsCommonService {
     const internalAlertsService = new AlertsService(
       this.alertsRepository,
       this.s3,
-      this.s3Config
+      this.s3Config,
+      this.awsCredentials
     )
+
     const internalUpdateRequest: AlertStatusUpdateRequest = {
       reason: updateRequest.reason ?? [],
       alertStatus: internalStatus,

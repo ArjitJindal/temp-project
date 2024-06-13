@@ -8,9 +8,6 @@ import { UserService } from '../../services/users'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { getS3ClientByEvent } from '@/utils/s3'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CrmService } from '@/services/crm'
 import { hasFeature } from '@/core/utils/context'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
@@ -31,17 +28,8 @@ export const businessUsersViewHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
-    const s3 = getS3ClientByEvent(event)
-    const client = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClientByEvent(event)
-    const userService = new UserService(
-      tenantId,
-      { mongoDb: client, dynamoDb },
-      s3,
-      TMP_BUCKET,
-      DOCUMENT_BUCKET
-    )
+
+    const userService = await UserService.fromEvent(event)
     const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
@@ -78,20 +66,7 @@ export const consumerUsersViewHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
-    const s3 = getS3ClientByEvent(event)
-    const client = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClientByEvent(event)
-    const userService = new UserService(
-      tenantId,
-      {
-        mongoDb: client,
-        dynamoDb,
-      },
-      s3,
-      TMP_BUCKET,
-      DOCUMENT_BUCKET
-    )
+    const userService = await UserService.fromEvent(event)
     const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
@@ -124,18 +99,7 @@ export const allUsersViewHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId, userId } = event.requestContext.authorizer
-    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
-    const s3 = getS3ClientByEvent(event)
-    const mongoDb = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClientByEvent(event)
-    const userService = new UserService(
-      tenantId,
-      { mongoDb, dynamoDb },
-      s3,
-      TMP_BUCKET,
-      DOCUMENT_BUCKET
-    )
-
+    const userService = await UserService.fromEvent(event)
     const linkerService = new LinkerService(tenantId)
     const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()

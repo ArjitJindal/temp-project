@@ -7875,6 +7875,8 @@ components:
           type: number
         downloadLink:
           type: string
+        aiSummary:
+          type: string
       required:
         - s3Key
         - filename
@@ -8610,6 +8612,7 @@ components:
         - SYNC_TRS_CALCULATION
         - NOTIFICATIONS
         - KINESIS_ASYNC
+        - FILES_AI_SUMMARY
       description: ''
     ManagedRoleName:
       type: string

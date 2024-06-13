@@ -15,6 +15,7 @@ import { SimulationBeaconBatchJobRunner } from '@/services/batch-jobs/simulation
 import { SimulationRiskLevelsBatchJobRunner } from '@/services/batch-jobs/simulation-pulse-batch-job-runner'
 import { SyncMongoDbIndexesBatchJobRunner } from '@/services/batch-jobs/sync-mongo-indexes-job-runner'
 import { TestFargateBatchJobRunner } from '@/services/batch-jobs/test-fargate-batch-job'
+import { FilesAiSummaryBatchJobRunner } from '@/services/batch-jobs/files-ai-summary-batch-job-runner'
 
 type JobRunnerMap = Record<BatchJobType, (jobId) => BatchJobRunner>
 
@@ -41,6 +42,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new SimulationRiskFactorsBatchJobRunner(jobId),
     RULE_PRE_AGGREGATION: (jobId) =>
       new RulePreAggregationBatchJobRunner(jobId),
+    FILES_AI_SUMMARY: (jobId) => new FilesAiSummaryBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

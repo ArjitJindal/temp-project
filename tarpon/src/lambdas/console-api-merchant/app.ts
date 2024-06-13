@@ -24,7 +24,6 @@ export const merchantMonitoringHandler = lambdaApi()(
       { mongoDb: await getMongoDbClient() }
     )
     const userService = await UserService.fromEvent(event)
-
     const handlers = new Handlers()
 
     handlers.registerPostMerchantSummary(async (ctx, request) => {

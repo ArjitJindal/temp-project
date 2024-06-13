@@ -3,6 +3,7 @@ import { NotFound, BadRequest } from 'http-errors'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
+  Credentials as LambdaCredentials,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
@@ -10,6 +11,7 @@ import { capitalize, isEqual, isEmpty, compact, difference } from 'lodash'
 import { MongoClient } from 'mongodb'
 import pluralize from 'pluralize'
 import { getPaymentMethodId } from '../../core/dynamodb/dynamodb-keys'
+import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import {
@@ -68,6 +70,7 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { traceable } from '@/core/xray'
 import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
+import { getCredentialsFromEvent } from '@/utils/credentials'
 
 @traceable
 export class CaseService extends CaseAlertsCommonService {
@@ -86,21 +89,28 @@ export class CaseService extends CaseAlertsCommonService {
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
     const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
-    const dynamoDb = await getDynamoDbClientByEvent(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
 
     const caseRepository = new CaseRepository(tenantId, {
       mongoDb: client,
       dynamoDb,
     })
 
-    return new CaseService(caseRepository, s3, {
-      documentBucketName: DOCUMENT_BUCKET,
-      tmpBucketName: TMP_BUCKET,
-    })
+    return new CaseService(
+      caseRepository,
+      s3,
+      { documentBucketName: DOCUMENT_BUCKET, tmpBucketName: TMP_BUCKET },
+      getCredentialsFromEvent(event)
+    )
   }
 
-  constructor(caseRepository: CaseRepository, s3: S3, s3Config: S3Config) {
-    super(s3, s3Config)
+  constructor(
+    caseRepository: CaseRepository,
+    s3: S3,
+    s3Config: S3Config,
+    awsCredentials?: LambdaCredentials
+  ) {
+    super(s3, s3Config, awsCredentials)
     this.caseRepository = caseRepository
     this.tenantId = caseRepository.tenantId
     this.mongoDb = caseRepository.mongoDb
@@ -110,7 +120,8 @@ export class CaseService extends CaseAlertsCommonService {
     this.alertsService = new AlertsService(
       alertsRepository,
       this.s3,
-      this.s3Config
+      this.s3Config,
+      awsCredentials
     )
     this.auditLogService = new CasesAlertsAuditLogService(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -663,11 +674,16 @@ export class CaseService extends CaseAlertsCommonService {
       userId,
     })
 
-    await this.auditLogService.handleAuditLogForCasesComments(caseId, {
-      ...savedComment,
-      body: getParsedCommentBody(savedComment.body),
-      mentions,
-    })
+    await Promise.all([
+      ...(savedComment.id
+        ? [this.sendFilesAiSummaryBatchJob([caseId], savedComment.id)]
+        : []),
+      this.auditLogService.handleAuditLogForCasesComments(caseId, {
+        ...savedComment,
+        body: getParsedCommentBody(savedComment.body),
+        mentions,
+      }),
+    ])
 
     return {
       ...savedComment,
@@ -697,6 +713,31 @@ export class CaseService extends CaseAlertsCommonService {
     return this.saveComment(caseId, { ...reply, parentId })
   }
 
+  private async sendFilesAiSummaryBatchJob(
+    caseIds: string[],
+    commentId: string
+  ): Promise<void> {
+    if (!hasFeature('FILES_AI_SUMMARY')) {
+      return
+    }
+
+    await Promise.all(
+      caseIds.map(
+        async (caseId) =>
+          await sendBatchJobCommand({
+            type: 'FILES_AI_SUMMARY',
+            tenantId: this.tenantId,
+            parameters: {
+              type: 'CASE',
+              entityId: caseId,
+              commentId,
+            },
+            awsCredentials: this.awsCredentials,
+          })
+      )
+    )
+  }
+
   private async saveCasesComment(caseIds: string[], comment: Comment) {
     const files = await this.copyFiles(comment.files ?? [])
 
@@ -704,6 +745,10 @@ export class CaseService extends CaseAlertsCommonService {
       ...comment,
       files,
     })
+
+    if (savedComment.id) {
+      await this.sendFilesAiSummaryBatchJob(caseIds, savedComment.id)
+    }
 
     return {
       ...savedComment,
@@ -744,7 +789,7 @@ export class CaseService extends CaseAlertsCommonService {
 
   private async getAugmentedCase(caseEntity: Case) {
     const commentsWithUrl = await Promise.all(
-      await (caseEntity.comments ?? []).map(async (comment) => ({
+      (caseEntity.comments ?? []).map(async (comment) => ({
         ...comment,
         files: await this.getUpdatedFiles(comment.files),
       }))

@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
 import { compact, isEmpty, omitBy, pick, uniq } from 'lodash'
 import { S3 } from '@aws-sdk/client-s3'
+import { Credentials } from 'aws-lambda'
 import { UserRepository } from '../users/repositories/user-repository'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CasesAlertsTransformer } from './cases-alerts-transformer'
@@ -45,9 +46,10 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     tenantId: string,
     connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
     s3: S3,
-    s3Config: S3Config
+    s3Config: S3Config,
+    awsCredentials?: Credentials
   ) {
-    super(s3, s3Config)
+    super(s3, s3Config, awsCredentials)
     this.caseRepository = new CaseRepository(tenantId, connections)
     this.userRepository = new UserRepository(tenantId, connections)
     this.casesTransformer = new CasesAlertsTransformer(tenantId, connections)
@@ -342,7 +344,8 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     const internalCaseService = new CaseService(
       this.caseRepository,
       this.s3,
-      this.s3Config
+      this.s3Config,
+      this.awsCredentials
     )
     const internalStatusChangeRequest: CaseStatusUpdate = {
       caseStatus: internalStatus,

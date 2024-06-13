@@ -16,6 +16,7 @@ import {
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
+  Credentials,
 } from 'aws-lambda'
 import { uuid4 } from '@sentry/utils'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
@@ -25,6 +26,7 @@ import { SanctionsService } from '../sanctions'
 import { ChecklistTemplatesService } from '../tenants/checklist-template-service'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
+import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import {
   API_USER,
   AlertParams,
@@ -80,6 +82,7 @@ import { AlertQASamplingListResponse } from '@/@types/openapi-internal/AlertQASa
 import { AlertsQaSamplingUpdateRequest } from '@/@types/openapi-internal/AlertsQaSamplingUpdateRequest'
 import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
+import { getCredentialsFromEvent } from '@/utils/credentials'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -88,6 +91,7 @@ export class AlertsService extends CaseAlertsCommonService {
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
+  caseRepository: CaseRepository
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -101,14 +105,21 @@ export class AlertsService extends CaseAlertsCommonService {
     const repo = new AlertsRepository(tenantId, { mongoDb, dynamoDb })
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
 
-    return new AlertsService(repo, s3, {
-      documentBucketName: DOCUMENT_BUCKET,
-      tmpBucketName: TMP_BUCKET,
-    })
+    return new AlertsService(
+      repo,
+      s3,
+      { documentBucketName: DOCUMENT_BUCKET, tmpBucketName: TMP_BUCKET },
+      getCredentialsFromEvent(event)
+    )
   }
 
-  constructor(alertsRepository: AlertsRepository, s3: S3, s3Config: S3Config) {
-    super(s3, s3Config)
+  constructor(
+    alertsRepository: AlertsRepository,
+    s3: S3,
+    s3Config: S3Config,
+    awsCredentials?: Credentials
+  ) {
+    super(s3, s3Config, awsCredentials)
     this.alertsRepository = alertsRepository
     this.tenantId = alertsRepository.tenantId
     this.mongoDb = alertsRepository.mongoDb
@@ -117,6 +128,10 @@ export class AlertsService extends CaseAlertsCommonService {
       alertsRepository.tenantId,
       { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
     )
+
+    this.caseRepository = new CaseRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
   }
 
   public async getAlerts(
@@ -219,13 +234,15 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const isReviewRequired = currentUserAccount.reviewerId ?? false
 
-    const caseRepository = new CaseRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-    })
-
-    const caseService = new CaseService(caseRepository, this.s3, this.s3Config)
+    const caseService = new CaseService(
+      this.caseRepository,
+      this.s3,
+      this.s3Config,
+      this.awsCredentials
+    )
 
     const c = await caseService.getCase(caseId)
+
     if (!c) {
       throw new NotFound(`Cannot find case ${caseId}`)
     }
@@ -502,8 +519,8 @@ export class AlertsService extends CaseAlertsCommonService {
       updatedExistingCase.caseStatus = 'CLOSED'
     }
 
-    await caseRepository.addCaseMongo(omit(newCase, '_id'))
-    await caseRepository.addCaseMongo(updatedExistingCase)
+    await this.caseRepository.addCaseMongo(omit(newCase, '_id'))
+    await this.caseRepository.addCaseMongo(updatedExistingCase)
 
     await caseService.updateStatus([newCase.caseId ?? ''], {
       ...caseUpdateRequest,
@@ -563,11 +580,16 @@ export class AlertsService extends CaseAlertsCommonService {
       { ...comment, files, userId }
     )
 
-    await this.auditLogService.handleAuditLogForAlertsComments(alertId, {
-      ...savedComment,
-      body: getParsedCommentBody(savedComment.body),
-      mentions,
-    })
+    await Promise.all([
+      ...(savedComment.id
+        ? [this.sendFilesAiSummaryBatchJob([alertId], savedComment.id)]
+        : []),
+      this.auditLogService.handleAuditLogForAlertsComments(alertId, {
+        ...savedComment,
+        body: getParsedCommentBody(savedComment.body),
+        mentions,
+      }),
+    ])
 
     return {
       ...savedComment,
@@ -594,6 +616,29 @@ export class AlertsService extends CaseAlertsCommonService {
 
     return this.saveComment(alertId, { ...reply, parentId: commentId })
   }
+  private async sendFilesAiSummaryBatchJob(
+    alertIds: string[],
+    commentId: string
+  ) {
+    if (!hasFeature('FILES_AI_SUMMARY')) {
+      return
+    }
+
+    await Promise.all([
+      alertIds.map(async (alertId) => {
+        await sendBatchJobCommand({
+          type: 'FILES_AI_SUMMARY',
+          tenantId: this.tenantId,
+          parameters: {
+            commentId,
+            type: 'ALERT',
+            entityId: alertId,
+          },
+          awsCredentials: this.awsCredentials,
+        })
+      }),
+    ])
+  }
 
   private async saveComments(
     alertIds: string[],
@@ -607,6 +652,10 @@ export class AlertsService extends CaseAlertsCommonService {
       caseIds,
       { ...comment, files }
     )
+
+    if (savedComment.id) {
+      await this.sendFilesAiSummaryBatchJob(alertIds, savedComment.id)
+    }
 
     return {
       ...savedComment,
@@ -790,10 +839,6 @@ export class AlertsService extends CaseAlertsCommonService {
       },
     }
 
-    const caseRepository = new CaseRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-    })
-
     const accountsService = await AccountsService.getInstance()
     let userAccount: Account | undefined = undefined
     if (!externalRequest) {
@@ -806,7 +851,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const [alerts, cases] = await Promise.all([
       this.getAlertsByIds(alertIds),
-      caseRepository.getCasesByAlertIds(alertIds),
+      this.caseRepository.getCasesByAlertIds(alertIds),
     ])
 
     const alertsNotFound = alertIds.filter(
@@ -852,7 +897,13 @@ export class AlertsService extends CaseAlertsCommonService {
       alerts[0]?.alertStatus
     )
 
-    const caseService = new CaseService(caseRepository, this.s3, this.s3Config)
+    const caseService = new CaseService(
+      this.caseRepository,
+      this.s3,
+      this.s3Config,
+      this.awsCredentials
+    )
+
     const alertsWithPreviousEscalations = alerts.filter(
       (alert) =>
         alert.alertStatus === 'ESCALATED' ||

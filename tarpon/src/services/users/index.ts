@@ -6,6 +6,7 @@ import { S3, GetObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
+  Credentials as LambdaCredentials,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
@@ -15,6 +16,7 @@ import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
 import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
+import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import {
   DYNAMO_ONLY_USER_ATTRIBUTES,
   getExternalComment,
@@ -57,6 +59,7 @@ import { UserAuditLogService } from '@/lambdas/console-api-user/services/user-au
 import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
+import { getCredentialsFromEvent } from '@/utils/credentials'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -91,16 +94,15 @@ export class UserService {
   tmpBucketName: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
+  awsCredentials?: LambdaCredentials
 
   constructor(
     tenantId: string,
-    connections: {
-      dynamoDb?: DynamoDBDocumentClient
-      mongoDb?: MongoClient
-    },
+    connections: { dynamoDb?: DynamoDBDocumentClient; mongoDb?: MongoClient },
     s3?: S3,
     tmpBucketName?: string,
-    documentBucketName?: string
+    documentBucketName?: string,
+    awsCredentials?: LambdaCredentials
   ) {
     this.userRepository = new UserRepository(tenantId, {
       mongoDb: connections.mongoDb,
@@ -115,6 +117,7 @@ export class UserService {
     this.documentBucketName = documentBucketName as string
     this.mongoDb = connections.mongoDb as MongoClient
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
+    this.awsCredentials = awsCredentials
   }
 
   public static async fromEvent(
@@ -127,15 +130,15 @@ export class UserService {
     const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const lambdaCredentials = getCredentialsFromEvent(event)
+
     return new UserService(
       tenantId,
-      {
-        mongoDb: client,
-        dynamoDb,
-      },
+      { mongoDb: client, dynamoDb },
       s3,
       TMP_BUCKET,
-      DOCUMENT_BUCKET
+      DOCUMENT_BUCKET,
+      lambdaCredentials
     )
   }
 
@@ -784,10 +787,24 @@ export class UserService {
       ...file,
       bucket: this.documentBucketName,
     }))
+
     const savedComment = await this.userRepository.saveUserComment(userId, {
       ...comment,
       files,
     })
+
+    if (comment.files?.length && comment.id && hasFeature('FILES_AI_SUMMARY')) {
+      await sendBatchJobCommand({
+        type: 'FILES_AI_SUMMARY',
+        tenantId: this.userRepository.tenantId,
+        parameters: {
+          type: 'USER',
+          entityId: userId,
+          commentId: comment.id,
+        },
+        awsCredentials: this.awsCredentials,
+      })
+    }
 
     return {
       ...savedComment,

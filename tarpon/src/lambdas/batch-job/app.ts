@@ -66,6 +66,7 @@ export const jobDecisionHandler = async (
     TENANT_DELETION: 'FARGATE',
     SIMULATION_RISK_FACTORS: 'FARGATE',
     RULE_PRE_AGGREGATION: 'LAMBDA',
+    FILES_AI_SUMMARY: 'LAMBDA',
   }
 
   return {

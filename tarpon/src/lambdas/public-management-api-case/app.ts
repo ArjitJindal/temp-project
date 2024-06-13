@@ -14,6 +14,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseStatusChangeRequest } from '@/@types/openapi-public-management/CaseStatusChangeRequest'
 import { DefaultApiGetCasesRequest } from '@/@types/openapi-public-management/RequestParameters'
+import { getCredentialsFromEvent } from '@/utils/credentials'
 
 export const caseHandler = lambdaApi()(
   async (
@@ -29,15 +30,10 @@ export const caseHandler = lambdaApi()(
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
     const caseService = new ExternalCaseManagementService(
       tenantId,
-      {
-        mongoDb,
-        dynamoDb,
-      },
+      { mongoDb, dynamoDb },
       s3,
-      {
-        documentBucketName: DOCUMENT_BUCKET,
-        tmpBucketName: TMP_BUCKET,
-      }
+      { documentBucketName: DOCUMENT_BUCKET, tmpBucketName: TMP_BUCKET },
+      getCredentialsFromEvent(event)
     )
 
     if (event.httpMethod === 'POST' && event.resource === '/cases') {

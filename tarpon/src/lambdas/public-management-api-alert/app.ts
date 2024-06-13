@@ -13,6 +13,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { AlertStatusChangeRequest } from '@/@types/openapi-public-management/AlertStatusChangeRequest'
 import { getS3ClientByEvent } from '@/utils/s3'
+import { getCredentialsFromEvent } from '@/utils/credentials'
 
 export const alertHandler = lambdaApi()(
   async (
@@ -28,15 +29,10 @@ export const alertHandler = lambdaApi()(
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
     const service = new ExternalAlertManagementService(
       tenantId,
-      {
-        mongoDb,
-        dynamoDb,
-      },
+      { mongoDb, dynamoDb },
       s3,
-      {
-        documentBucketName: DOCUMENT_BUCKET,
-        tmpBucketName: TMP_BUCKET,
-      }
+      { documentBucketName: DOCUMENT_BUCKET, tmpBucketName: TMP_BUCKET },
+      getCredentialsFromEvent(event)
     )
 
     if (event.httpMethod === 'POST' && event.resource === '/alerts') {

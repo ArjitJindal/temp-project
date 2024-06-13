@@ -29,7 +29,6 @@ export const casesHandler = lambdaApi()(
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
     const alertsService = await AlertsService.fromEvent(event)
-
     const caseService = await CaseService.fromEvent(event)
 
     const caseCreationService = new CaseCreationService(tenantId, {
