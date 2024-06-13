@@ -1,6 +1,7 @@
 import { sample } from 'lodash'
 import { S3, CopyObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import * as createError from 'http-errors'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -50,8 +51,16 @@ export class CaseAlertsCommonService {
         Bucket: this.s3Config.documentBucketName,
         Key: file.s3Key,
       })
-
-      await this.s3.send(copyObjectCommand)
+      try {
+        await this.s3.send(copyObjectCommand)
+      } catch (error) {
+        if (
+          (error as any)?.name === 'NoSuchKey' ||
+          (error as any)?.name === 'AccessDenied'
+        ) {
+          throw new createError.BadRequest('Invalid s3Key in files')
+        }
+      }
     }
 
     const filesTransformerd = (files || []).map((file) => ({
