@@ -68,7 +68,11 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
             iban: paymentDetails.IBAN,
           }
         }
-        if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
+        if (
+          paymentDetails.method === 'GENERIC_BANK_ACCOUNT' ||
+          paymentDetails.method === 'ACH' ||
+          paymentDetails.method === 'SWIFT'
+        ) {
           return {
             bankName: paymentDetails.bankName,
             iban: paymentDetails.accountNumber,

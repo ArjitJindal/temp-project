@@ -17,7 +17,9 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 process.env.IBAN_API_KEY = 'fake'
 
-const TEST_IBAN_BANK_NAME_MAPPING: { [key: string]: IBANDetails } = {
+const TEST_IBAN_BANK_NAME_MAPPING: {
+  [key: string]: IBANDetails
+} = {
   DE19500105178788668945: {
     method: 'IBAN',
     IBAN: 'DE19500105178788668945',
@@ -243,6 +245,61 @@ describe('IBAN resolution disabled', () => {
         }),
       ],
       expectetRuleHitMetadata: [undefined],
+    },
+    {
+      name: '',
+      users: [
+        getTestBusiness({
+          legalEntity: {
+            companyGeneralDetails: {
+              legalName: 'Company Name',
+            },
+          },
+          savedPaymentDetails: [
+            {
+              method: 'ACH',
+              accountNumber: 'DE19500105178788668900012',
+              bankName: 'Bank 1',
+            },
+          ],
+        }),
+        getTestBusiness({
+          legalEntity: {
+            companyGeneralDetails: {
+              legalName: 'Company Name 2',
+            },
+          },
+          savedPaymentDetails: [
+            {
+              method: 'SWIFT',
+              accountNumber: 'DE1950010517878863123123',
+              bankName: 'Bank 3',
+            },
+          ],
+        }),
+      ],
+      expectetRuleHitMetadata: [
+        {
+          hitDirections: ['ORIGIN'],
+          sanctionsDetails: [
+            {
+              name: 'Bank 1',
+              iban: 'DE19500105178788668900012',
+              searchId: 'test-search-id',
+            },
+          ],
+        },
+        {
+          hitDirections: ['ORIGIN'],
+          sanctionsDetails: [
+            {
+              name: 'Bank 3',
+              iban: 'DE1950010517878863123123',
+              searchId: 'test-search-id',
+            },
+          ],
+        },
+      ],
     },
   ])('', ({ name, users, expectetRuleHitMetadata }) => {
     createUserRuleTestCase(name, TEST_TENANT_ID, users, expectetRuleHitMetadata)
