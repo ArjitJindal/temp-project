@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash'
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
 import {
   TimeWindow,
@@ -190,7 +191,7 @@ export function getFiltersConditions(filters: LegacyFilters): {
       )
     )
   }
-  if (filters.transactionAmountRange) {
+  if (!isEmpty(filters.transactionAmountRange)) {
     const amountCondition: { and: any[] } = { and: [] }
     const { min, max } = Object.values(filters.transactionAmountRange)[0]
     if (min) {

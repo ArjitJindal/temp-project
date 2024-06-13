@@ -27,6 +27,7 @@ import {
 } from '@/services/rules-engine/filters'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { initializeTenantContext, withContext } from '@/core/utils/context'
 
 /**
  * Custom query
@@ -168,11 +169,10 @@ async function runReadOnlyQueryForEnv(env: Env) {
       if (query === 'features') {
         result = await tenantFeatures(dynamoDb, tenant.tenant.id)
       } else {
-        result = await runReadOnlyQueryForTenant(
-          mongoDb,
-          dynamoDb,
-          tenant.tenant.id
-        )
+        result = await withContext(async () => {
+          await initializeTenantContext(tenant.tenant.id)
+          return runReadOnlyQueryForTenant(mongoDb, dynamoDb, tenant.tenant.id)
+        })
       }
       if (!isEmpty(result)) {
         console.info(
