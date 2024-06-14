@@ -4524,6 +4524,30 @@ components:
           type: string
         ruleInstanceId:
           type: string
+    AlertOpenedDetails:
+      title: AlertOpenedDetails
+      type: object
+      properties:
+        alertId:
+          type: string
+        status:
+          type: string
+        transactionIds:
+          type: array
+          items:
+            type: string
+        ruleName:
+          type: string
+        ruleDescription:
+          type: string
+        ruleId:
+          type: string
+        ruleInstanceId:
+          type: string
+        caseId:
+          type: string
+        userId:
+          type: string
     TransactionStatusDetails:
       title: TransactionStatusDetails
       type: object
@@ -4611,6 +4635,7 @@ components:
                 - $ref: '#/components/schemas/CaseClosedDetails'
                 - $ref: '#/components/schemas/CaseOpenedDetails'
                 - $ref: '#/components/schemas/AlertClosedDetails'
+                - $ref: '#/components/schemas/AlertOpenedDetails'
                 - $ref: '#/components/schemas/TransactionStatusDetails'
                 - $ref: '#/components/schemas/KYCStatusDetails'
           required:
@@ -4626,6 +4651,7 @@ components:
         - TRANSACTION_STATUS_UPDATED
         - KYC_STATUS_UPDATED
         - CASE_OPENED
+        - ALERT_OPENED
     ListType:
       type: string
       enum:

@@ -82,6 +82,7 @@ import { AlertQASamplingListResponse } from '@/@types/openapi-internal/AlertQASa
 import { AlertsQaSamplingUpdateRequest } from '@/@types/openapi-internal/AlertsQaSamplingUpdateRequest'
 import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
+import { AlertOpenedDetails } from '@/@types/openapi-public/AlertOpenedDetails'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 
 @traceable
@@ -402,6 +403,7 @@ export class AlertsService extends CaseAlertsCommonService {
         }
       }
     )
+
     for (const value of newAlertsTransactions) {
       await transactionsRepo.updateTransactionAlertIds(value.transactionIds, [
         value.alertId,
@@ -556,7 +558,6 @@ export class AlertsService extends CaseAlertsCommonService {
     const assigneeIds = reviewAssignments
       .map((v) => v.assigneeUserId)
       .filter(Boolean)
-
     return { childCaseId, assigneeIds }
   }
 
@@ -1543,5 +1544,33 @@ export class AlertsService extends CaseAlertsCommonService {
         }
       )
     }
+  }
+
+  public async sendAlertOpenedWebhook(alerts: Alert[], cases: Case[]) {
+    const webhookTasks: ThinWebhookDeliveryTask<AlertOpenedDetails>[] =
+      alerts.map((alert) => {
+        const alertCase = cases.find((c) =>
+          c.alerts?.some((a) => a.alertId === alert.alertId)
+        )
+        return {
+          event: 'ALERT_OPENED',
+          triggeredBy: 'SYSTEM',
+          payload: {
+            alertId: alert.alertId,
+            status: alert.alertStatus,
+            transactionIds: alert.transactionIds,
+            ruleName: alert.ruleName,
+            ruleDescription: alert.ruleDescription,
+            ruleId: alert.ruleId,
+            ruleInstanceId: alert.ruleInstanceId,
+            userId:
+              alertCase?.caseUsers?.origin?.userId ??
+              alertCase?.caseUsers?.destination?.userId,
+            caseId: alertCase?.caseId,
+          },
+        }
+      })
+
+    await sendWebhookTasks<AlertOpenedDetails>(this.tenantId, webhookTasks)
   }
 }

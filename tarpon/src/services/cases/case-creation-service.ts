@@ -17,6 +17,7 @@ import { MongoClient } from 'mongodb'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { filterLiveRules } from '../rules-engine/utils'
 import { CounterRepository } from '../counter/repository'
+import { AlertsService } from '../alerts'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import {
   CaseRepository,
@@ -51,7 +52,10 @@ import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { RoleService } from '@/services/roles'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
+import {
+  AlertsRepository,
+  FLAGRIGHT_SYSTEM_USER,
+} from '@/services/alerts/repository'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { DEFAULT_CASE_AGGREGATES, generateCaseAggreates } from '@/utils/case'
@@ -72,6 +76,8 @@ import {
 import { CaseOpenedDetails } from '@/@types/openapi-public/CaseOpenedDetails'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
+import { getS3Client } from '@/utils/s3'
+import { CaseConfig } from '@/lambdas/console-api-case/app'
 
 type CaseSubject =
   | {
@@ -1040,6 +1046,19 @@ export class CaseCreationService {
     return result
   }
 
+  private async sendAlertOpenedWebhook(alerts: Alert[], cases: Case[]) {
+    const alertsRepository = new AlertsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+    const s3 = getS3Client()
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
+    const alertsService = new AlertsService(alertsRepository, s3, {
+      tmpBucketName: TMP_BUCKET,
+      documentBucketName: DOCUMENT_BUCKET,
+    })
+    await alertsService.sendAlertOpenedWebhook(alerts, cases)
+  }
+
   async handleTransaction(
     transaction: InternalTransaction,
     ruleInstances: RuleInstance[],
@@ -1146,6 +1165,8 @@ export class CaseCreationService {
       (c) =>
         c.createdTimestamp && c.createdTimestamp >= timestampBeforeCasesCreation
     )
+
+    await this.sendAlertOpenedWebhook((newAlerts ?? []) as Alert[], cases)
 
     if (await this.tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
       for (const caseItem of newCases) {
