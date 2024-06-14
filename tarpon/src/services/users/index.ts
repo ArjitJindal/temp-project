@@ -17,10 +17,7 @@ import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
 import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
-import {
-  DYNAMO_ONLY_USER_ATTRIBUTES,
-  getExternalComment,
-} from './utils/user-utils'
+import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -59,6 +56,7 @@ import { UserAuditLogService } from '@/lambdas/console-api-user/services/user-au
 import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
+import { getExternalComment } from '@/utils/external-transformer'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {

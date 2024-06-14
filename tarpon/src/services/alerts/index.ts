@@ -561,9 +561,49 @@ export class AlertsService extends CaseAlertsCommonService {
     return { childCaseId, assigneeIds }
   }
 
+  public async getCommentsByAlertId(alertId: string): Promise<Comment[]> {
+    const alert = await this.alertsRepository.getAlertById(alertId)
+
+    if (alert == null) {
+      throw new NotFound(`"${alertId}" alert not found`)
+    }
+    const comments = await Promise.all(
+      (alert.comments ?? []).map(async (c) => {
+        const files = await this.getUpdatedFiles(c.files)
+        return {
+          ...c,
+          files,
+        }
+      })
+    )
+    return comments
+  }
+
+  public async getCommentByCommentId(
+    alertId: string,
+    commentId: string
+  ): Promise<Comment> {
+    const alert = await this.alertsRepository.getAlertById(alertId)
+    if (alert == null) {
+      throw new NotFound(`"${alertId}" alert not found`)
+    }
+
+    const comment = alert.comments?.find((c) => c.id === commentId)
+
+    if (comment == null) {
+      throw new NotFound(`"${commentId}" comment not found`)
+    }
+    const files = await this.getUpdatedFiles(comment.files)
+    return {
+      ...comment,
+      files: files,
+    }
+  }
+
   public async saveComment(
     alertId: string,
-    comment: CommentRequest
+    comment: CommentRequest,
+    externalRequest?: boolean
   ): Promise<Comment> {
     const alert = await this.alertsRepository.getAlertById(alertId)
 
@@ -572,14 +612,17 @@ export class AlertsService extends CaseAlertsCommonService {
     }
 
     const files = await this.copyFiles(comment.files || [])
-    const mentions = getMentionsFromComments(comment.body)
-    const userId = getContext()?.user?.id
+
+    const userId = externalRequest ? API_USER : getContext()?.user?.id
 
     const savedComment = await this.alertsRepository.saveComment(
       alert.caseId ?? '',
       alertId,
       { ...comment, files, userId }
     )
+    const mentions = externalRequest
+      ? undefined
+      : getMentionsFromComments(comment.body)
 
     await Promise.all([
       ...(savedComment.id

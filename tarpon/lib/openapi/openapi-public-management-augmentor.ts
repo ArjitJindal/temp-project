@@ -29,6 +29,10 @@ export const PublicManagementApiPathToLambda: any = {
     StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME,
   '/alerts': StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
   '/alerts/{alertId}': StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
+  '/alerts/{alertId}/comments':
+    StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
+  '/alerts/{alertId}/comments/{commentId}':
+    StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
   '/alerts/{alertId}/statuses':
     StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
   '/pre-signed-url':

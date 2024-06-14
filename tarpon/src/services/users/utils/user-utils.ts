@@ -5,9 +5,6 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
-import { Comment } from '@/@types/openapi-internal/Comment'
-import { CommentResponse } from '@/@types/openapi-public-management/CommentResponse'
-
 const internalUserAttributes = InternalUser.getAttributeTypeMap().map(
   (v) => v.name
 )
@@ -25,20 +22,6 @@ export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
 export const DYNAMO_ONLY_USER_ATTRIBUTES = businessUserAttributes.concat(
   consumerUserAttributes
 )
-
-export const getExternalComment = (comment: Comment): CommentResponse => {
-  return {
-    commentId: comment.id ?? '',
-    body: comment.body,
-    createdTimestamp: comment.createdAt,
-    files: comment.files?.map((file) => ({
-      filename: file.filename,
-      size: file.size,
-      downloadLink: file.downloadLink ?? '',
-    })),
-    updatedTimestamp: comment.updatedAt,
-  }
-}
 
 export const getUsersFilterByRiskLevel = (
   filterRiskLevels: RiskLevel[],

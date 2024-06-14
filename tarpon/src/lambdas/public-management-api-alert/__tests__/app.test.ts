@@ -1,5 +1,6 @@
 import { alertHandler } from '../app'
 import {
+  getApiGatewayDeleteEvent,
   getApiGatewayGetEvent,
   getApiGatewayPatchEvent,
   getApiGatewayPostEvent,
@@ -265,7 +266,136 @@ describe('Test Create Alert', () => {
       'Resource not found'
     )
   })
+  test('tries to get a comment failed (not present)', async () => {
+    const COMMENT_ID = 'TEST_COMMENT_ID'
+    const response = await alertHandler(
+      getApiGatewayGetEvent(
+        tenantId,
+        '/alerts/{alertId}/comments/{commentId}',
+        {
+          pathParameters: { alertId: 'AL-2', commentId: COMMENT_ID },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(404)
+  })
 
+  test('creates a comment', async () => {
+    const response = await alertHandler(
+      getApiGatewayPostEvent(
+        tenantId,
+        '/alerts/{alertId}/comments',
+        {
+          body: 'This is a comment',
+        },
+        {
+          pathParameters: { alertId: 'AL-1' },
+        }
+      ),
+
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      body: 'This is a comment',
+      files: [],
+    })
+  })
+  test('gets all comments of a user', async () => {
+    const response = await alertHandler(
+      getApiGatewayGetEvent(tenantId, '/alerts/{alertId}/comments', {
+        pathParameters: { alertId: 'AL-1' },
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toMatchObject([
+      {
+        body: 'This is a comment',
+        files: [],
+      },
+    ])
+  })
+
+  test('gets a comment', async () => {
+    const response = await alertHandler(
+      getApiGatewayPostEvent(
+        tenantId,
+        '/alerts/{alertId}/comments',
+        {
+          body: 'This is a comment',
+        },
+        {
+          pathParameters: { alertId: 'AL-1' },
+        }
+      ),
+
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    const comment = JSON.parse(response?.body as string)
+    expect(comment).toMatchObject({
+      body: 'This is a comment',
+      files: [],
+    })
+    const response2 = await alertHandler(
+      getApiGatewayGetEvent(
+        tenantId,
+        '/alerts/{alertId}/comments/{commentId}',
+        {
+          pathParameters: { alertId: 'AL-1', commentId: comment.commentId },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response2?.statusCode).toBe(200)
+    expect(JSON.parse(response2?.body as string)).toMatchObject({
+      body: 'This is a comment',
+      files: [],
+    })
+  })
+
+  test('deletes a comment', async () => {
+    const response = await alertHandler(
+      getApiGatewayPostEvent(
+        tenantId,
+        '/alerts/{alertId}/comments',
+        {
+          body: 'This is a comment',
+        },
+        {
+          pathParameters: { alertId: 'AL-1' },
+        }
+      ),
+
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    const comment = JSON.parse(response?.body as string)
+    expect(comment).toMatchObject({
+      body: 'This is a comment',
+      files: [],
+    })
+    const response2 = await alertHandler(
+      getApiGatewayDeleteEvent(
+        tenantId,
+        '/alerts/{alertId}/comments/{commentId}',
+        {
+          pathParameters: { alertId: 'AL-1', commentId: comment.commentId },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response2?.statusCode).toBe(200)
+  })
   test('Alert status change', async () => {
     const response = await alertHandler(
       getApiGatewayPostEvent(

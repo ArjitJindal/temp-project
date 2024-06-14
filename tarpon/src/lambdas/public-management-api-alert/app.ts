@@ -11,8 +11,9 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { ExternalAlertManagementService } from '@/services/alerts/external-alerts-management-service'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { AlertStatusChangeRequest } from '@/@types/openapi-public-management/AlertStatusChangeRequest'
 import { getS3ClientByEvent } from '@/utils/s3'
+import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
+import { AlertStatusChangeRequest } from '@/@types/openapi-public-management/AlertStatusChangeRequest'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 
 export const alertHandler = lambdaApi()(
@@ -67,6 +68,39 @@ export const alertHandler = lambdaApi()(
       }
 
       return await service.updateAlert(alertId, payload)
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/alerts/{alertId}/comments' &&
+      event.pathParameters?.alertId
+    ) {
+      const alertId = event.pathParameters.alertId
+      return await service.getComments(alertId)
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/alerts/{alertId}/comments' &&
+      event.pathParameters?.alertId
+    ) {
+      const alertId = event.pathParameters.alertId
+      const payload = JSON.parse(event.body || '{}') as CommentRequest
+      return await service.saveAlertComment(alertId, payload)
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/alerts/{alertId}/comments/{commentId}' &&
+      event.pathParameters?.alertId &&
+      event.pathParameters?.commentId
+    ) {
+      const alertId = event.pathParameters.alertId
+      const commentId = event.pathParameters.commentId
+      return await service.getComment(alertId, commentId)
+    } else if (
+      event.httpMethod === 'DELETE' &&
+      event.resource === '/alerts/{alertId}/comments/{commentId}' &&
+      event.pathParameters?.alertId &&
+      event.pathParameters?.commentId
+    ) {
+      const alertId = event.pathParameters.alertId
+      const commentId = event.pathParameters.commentId
+      return await service.deleteAlertComment(alertId, commentId)
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/alerts/{alertId}/statuses' &&

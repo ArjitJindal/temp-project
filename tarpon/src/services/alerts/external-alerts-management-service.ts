@@ -1,10 +1,20 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
-import { compact, difference, isNil, memoize, omitBy, pick, uniq } from 'lodash'
+import {
+  compact,
+  difference,
+  isNil,
+  memoize,
+  omit,
+  omitBy,
+  pick,
+  uniq,
+} from 'lodash'
+
 import { S3 } from '@aws-sdk/client-s3'
 import { Credentials } from 'aws-lambda'
-import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
+import { S3Config } from '../case-alerts-common'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'
 import { CaseRepository, MAX_TRANSACTION_IN_A_CASE } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -23,16 +33,19 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertUpdatable } from '@/@types/openapi-public-management/AlertUpdatable'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { statusEscalated } from '@/utils/helpers'
+import { getExternalComment } from '@/utils/external-transformer'
+import { CommentRequest as CommentRequestExternal } from '@/@types/openapi-public-management/CommentRequest'
+import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
 import { AlertStatusChangeRequest } from '@/@types/openapi-public-management/AlertStatusChangeRequest'
-
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 @traceable
-export class ExternalAlertManagementService extends CaseAlertsCommonService {
+export class ExternalAlertManagementService {
   private alertsRepository: AlertsRepository
   private caseRepository: CaseRepository
   private transactionRepository: MongoDbTransactionRepository
   private alertsTransformer: CasesAlertsTransformer
   private casesAlertsAuditLogService: CasesAlertsAuditLogService
+  private alertsInternalService: AlertsService
 
   constructor(
     tenantId: string,
@@ -41,7 +54,6 @@ export class ExternalAlertManagementService extends CaseAlertsCommonService {
     s3Config: S3Config,
     awsCredentials?: Credentials
   ) {
-    super(s3, s3Config, awsCredentials)
     this.alertsRepository = new AlertsRepository(tenantId, connections)
     this.caseRepository = new CaseRepository(tenantId, connections)
     this.transactionRepository = new MongoDbTransactionRepository(
@@ -52,6 +64,12 @@ export class ExternalAlertManagementService extends CaseAlertsCommonService {
     this.casesAlertsAuditLogService = new CasesAlertsAuditLogService(
       tenantId,
       connections
+    )
+    this.alertsInternalService = new AlertsService(
+      this.alertsRepository,
+      s3,
+      s3Config,
+      awsCredentials
     )
   }
 
@@ -477,6 +495,36 @@ export class ExternalAlertManagementService extends CaseAlertsCommonService {
     return externalAlert
   }
 
+  public async getComments(alertId: string) {
+    const comments = await this.alertsInternalService.getCommentsByAlertId(
+      alertId
+    )
+    return comments.map((comment) => getExternalComment(comment))
+  }
+
+  public async getComment(alertId: string, commentId: string) {
+    const comment = await this.alertsInternalService.getCommentByCommentId(
+      alertId,
+      commentId
+    )
+    return getExternalComment(comment)
+  }
+
+  public async saveAlertComment(
+    alertId: string,
+    comment: CommentRequestExternal
+  ) {
+    const commentInternal = await this.alertsInternalService.saveComment(
+      alertId,
+      omit(comment, ['createdAt']) as CommentRequest,
+      true
+    )
+    return getExternalComment(commentInternal)
+  }
+
+  public async deleteAlertComment(alertId: string, commentId: string) {
+    await this.alertsInternalService.deleteComment(alertId, commentId)
+  }
   public async updateAlertStatus(
     updateRequest: AlertStatusChangeRequest,
     alertId: string
@@ -499,13 +547,6 @@ export class ExternalAlertManagementService extends CaseAlertsCommonService {
         'Reason is required for closing an alert'
       )
     }
-    const internalAlertsService = new AlertsService(
-      this.alertsRepository,
-      this.s3,
-      this.s3Config,
-      this.awsCredentials
-    )
-
     const internalUpdateRequest: AlertStatusUpdateRequest = {
       reason: updateRequest.reason ?? [],
       alertStatus: internalStatus,
@@ -514,12 +555,16 @@ export class ExternalAlertManagementService extends CaseAlertsCommonService {
       files: updateRequest.files,
       alertCaseId: alert.caseId,
     }
-    await internalAlertsService.updateStatus([alertId], internalUpdateRequest, {
-      bySystem: false,
-      cascadeCaseUpdates: true,
-      externalRequest: true,
-      skipReview: true,
-    })
+    await this.alertsInternalService.updateStatus(
+      [alertId],
+      internalUpdateRequest,
+      {
+        bySystem: false,
+        cascadeCaseUpdates: true,
+        externalRequest: true,
+        skipReview: true,
+      }
+    )
     return { alertStatus: (await this.getAlert(alertId)).alertStatus }
   }
 }

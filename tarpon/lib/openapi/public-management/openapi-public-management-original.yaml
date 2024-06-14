@@ -608,6 +608,178 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertUpdatable'
       description: '### Update Alert'
+  /alerts/{alertId}/comments:
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve Alert Comments
+      description: >
+        ## GET Alert Comments
+
+        `GET /alerts/{alertId}/comments` endpoint returns all comments for an alert.
+      operationId: get-alert-comments
+      parameters:
+        - name: alertId
+          in: path
+          description: Unique Alert Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    - commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                      body: This is a comment
+                      files:
+                        - filename: file.txt
+                          size: 1024
+                          downloadLink: s3://bucket/key
+                      createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    post:
+      security:
+        - x-api-key: []
+      summary: Create an Alert Comment
+      description: >
+        ## POST Alert Comments 
+
+        `POST /alerts/{alertId}/comments` endpoint is used to create a comment for an alert.
+
+        To attach files in the comment upload the file first using the `POST /pre-signed-url` endpoint and then use the returned `key` to attach the file in the comment with the filename and size.`
+      operationId: post-alert-comment
+      parameters:
+        - name: alertId
+          in: path
+          description: Unique Alert Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+            examples:
+              example-1:
+                value:
+                  body: This is a comment
+                  createdTimestamp: 1641654664000
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                    body: This is a comment
+                    createdTimestamp: 1641654664000
+  /alerts/{alertId}/comments/{commentId}:
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve an Alert Comment
+      description: >
+        ## GET Alert Comment
+
+        `GET /alerts/{alertId}/comments/{commentId}` endpoint returns a comment for an alert.
+      operationId: get-alert-comment
+      parameters:
+        - name: alertId
+          in: path
+          description: Unique Alert Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          description: Unique Comment Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                    body: This is a comment
+                    files:
+                      - filename: file.txt
+                        size: 1024
+                        downloadLink: s3://bucket/key
+                    createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    delete:
+      security:
+        - x-api-key: []
+      summary: Delete an Alert Comment
+      description: >
+        ## DELETE Alert Comment
+
+        `DELETE /alerts/{alertId}/comments/{commentId}` endpoint is used to delete an alert comment.
+      operationId: delete-alert-comment
+      parameters:
+        - name: alertId
+          in: path
+          description: Unique Alert Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          description: Unique Comment Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted successfully
+          headers: {}
+          content: {}
+        '400':
+          description: Bad Request
+          headers: {}
   /alerts/{alertId}/statuses:
     parameters:
       - schema:

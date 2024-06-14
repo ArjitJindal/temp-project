@@ -44,10 +44,7 @@ describe('End to End External Alerts Management Service', () => {
         dynamoDb,
       },
       s3,
-      {
-        documentBucketName: 'test document bucket',
-        tmpBucketName: 'test tmp bucket',
-      }
+      { documentBucketName: 'test-bucket', tmpBucketName: 'test-bucket' }
     )
 
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
@@ -162,12 +159,12 @@ describe('End to End External Alerts Management Service', () => {
 
     const alertsExternalService2 = new ExternalAlertManagementService(
       tenantId,
-      { mongoDb, dynamoDb },
-      s3,
       {
-        documentBucketName: 'test document bucket',
-        tmpBucketName: 'test tmp bucket',
-      }
+        mongoDb,
+        dynamoDb,
+      },
+      s3,
+      { documentBucketName: 'test-bucket', tmpBucketName: 'test-bucket' }
     )
 
     const alertTransactionIds2 = transactionIds.slice(2, 8)
@@ -230,14 +227,13 @@ describe('End to End External Alerts Management Service', () => {
 
     const alertsExternalService3 = new ExternalAlertManagementService(
       tenantId,
-      { mongoDb, dynamoDb },
-      s3,
       {
-        documentBucketName: 'test document bucket',
-        tmpBucketName: 'test tmp bucket',
-      }
+        mongoDb,
+        dynamoDb,
+      },
+      s3,
+      { documentBucketName: 'test-bucket', tmpBucketName: 'test-bucket' }
     )
-
     // Replace transactions of alert 1 from 2 - 6
 
     const updateAlertTransactionIds = transactionIds.slice(2, 7)
@@ -296,10 +292,7 @@ describe('End to End External Alerts Management Service', () => {
         dynamoDb,
       },
       s3,
-      {
-        documentBucketName: 'test document bucket',
-        tmpBucketName: 'test tmp bucket',
-      }
+      { documentBucketName: 'test-bucket', tmpBucketName: 'test-bucket' }
     )
 
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
@@ -348,10 +341,7 @@ describe('End to End External Alerts Management Service', () => {
         dynamoDb,
       },
       s3,
-      {
-        documentBucketName: 'test document bucket',
-        tmpBucketName: 'test tmp bucket',
-      }
+      { documentBucketName: 'test-bucket', tmpBucketName: 'test-bucket' }
     )
 
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
