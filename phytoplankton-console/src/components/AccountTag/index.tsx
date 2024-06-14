@@ -2,8 +2,7 @@ import React from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import Avatar from '../library/Avatar';
 import s from './index.module.less';
-import { useUsers } from '@/utils/user-utils';
-import { getNonSuperAdminUserName } from '@/utils/account';
+import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 
 interface Props {
@@ -23,7 +22,7 @@ export default function AccountTag(props: Props) {
       ) : (
         <>
           <Avatar size="xs" user={users[accountId]} />
-          {getNonSuperAdminUserName(users[accountId])}
+          {getDisplayedUserInfo(users[accountId]).name}
         </>
       )}
     </div>

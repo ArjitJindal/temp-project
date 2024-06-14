@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { maxBy, orderBy } from 'lodash';
 import s from './index.module.less';
 import Comment from './Comment';
@@ -105,18 +105,16 @@ export default function CommentsCard(props: Props) {
                     return (
                       <div className={s.group} key={group.title}>
                         <P bold>{group.title}</P>
-                        <div className={s.groupComments}>
-                          <Comments
-                            comments={commentsWithReplies}
-                            deleteCommentMutation={adaptedMutation}
-                            currentUserId={currentUserId}
-                            writePermissions={writePermissions}
-                            hanldeAddComment={(commentFormValues) =>
-                              handleAddComment(commentFormValues, group.id)
-                            }
-                            onCommentAdded={(newComment) => onCommentAdded(newComment, group.id)}
-                          />
-                        </div>
+                        <Comments
+                          comments={commentsWithReplies}
+                          deleteCommentMutation={adaptedMutation}
+                          currentUserId={currentUserId}
+                          writePermissions={writePermissions}
+                          hanldeAddComment={(commentFormValues) =>
+                            handleAddComment(commentFormValues, group.id)
+                          }
+                          onCommentAdded={(newComment) => onCommentAdded(newComment, group.id)}
+                        />
                       </div>
                     );
                   });

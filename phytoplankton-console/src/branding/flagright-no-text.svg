@@ -1,5 +1,6 @@
-<svg width="30" height="24" viewBox="0 0 30 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g id="side-nav">
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="40" height="40" fill="rgba(17, 104, 249, 0.05)"/>
+  <g id="side-nav" transform="translate(7,9)">
     <g id="state-is=collapsed">
       <rect width="60" height="832" transform="translate(-15 -52)"/>
       <g id="Frame 524876" clip-path="url(#clip0_1884_27450)">

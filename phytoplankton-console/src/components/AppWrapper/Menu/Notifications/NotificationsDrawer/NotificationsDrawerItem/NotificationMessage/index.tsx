@@ -1,6 +1,5 @@
 import React from 'react';
-import { useUsers } from '@/utils/user-utils';
-import { getNonSuperAdminUserName } from '@/utils/account';
+import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 import { neverReturn } from '@/utils/lang';
 import { Notification } from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/NotificationsDrawerItem';
 
@@ -135,5 +134,5 @@ function Author(props: Props) {
     includeRootUsers: true,
   });
   const user = users[notification.triggeredBy];
-  return <b>‘{getNonSuperAdminUserName(user)}’</b>;
+  return <b>‘{getDisplayedUserInfo(user).name}’</b>;
 }

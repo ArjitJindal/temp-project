@@ -1,7 +1,6 @@
 import { every, some, uniq, map, intersection } from 'lodash';
 import { DEFAULT_TIME_FORMAT } from './dayjs';
-import { getAccountUserName } from './account';
-import { FLAGRIGHT_SYSTEM_USER } from './user-utils';
+import { FLAGRIGHT_SYSTEM_USER, getDisplayedUserInfo } from './user-utils';
 import { humanizeSnakeCase } from './humanize';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { dayjs } from '@/utils/dayjs';
@@ -169,7 +168,7 @@ export function commentsToString(comments: Comment[], users: { [userId: string]:
       ? `${comment.createdAt ? ' ' : '\n'}Added by: ${
           comment.userId === FLAGRIGHT_SYSTEM_USER
             ? FLAGRIGHT_SYSTEM_USER
-            : getAccountUserName(users?.[comment?.userId ?? ''])
+            : getDisplayedUserInfo(users?.[comment?.userId ?? '']).name
         }`
       : '';
     commentData += comment.files?.length ? `\n\n${comment.files.length} attachment(s) added` : '';

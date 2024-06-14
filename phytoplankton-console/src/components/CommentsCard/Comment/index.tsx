@@ -5,11 +5,10 @@ import pluralize from 'pluralize';
 import { Reply } from '../Reply';
 import { CommentWithReplies } from '..';
 import styles from './index.module.less';
-import { useUsers } from '@/utils/user-utils';
+import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 import FilesList from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import Avatar from '@/components/library/Avatar';
-import { getNonSuperAdminUserName } from '@/utils/account';
 import { Mutation } from '@/utils/queries/types';
 import Spinner from '@/components/library/Spinner';
 import { Comment as ApiComment } from '@/apis';
@@ -89,7 +88,7 @@ export default function Comment(props: Props) {
             <Spinner size="SMALL" />
           ) : (
             <div className={styles.name} data-cy="comment-created-by">
-              {getNonSuperAdminUserName(user)}
+              {getDisplayedUserInfo(user).name}
             </div>
           )}
           <div className={styles.date} data-cy="comment-created-on">

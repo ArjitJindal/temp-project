@@ -1,10 +1,8 @@
 import cn from 'clsx';
-import { COLORS_V2_GRAY_3 } from '../../ui/colors';
 import Spinner from '../Spinner';
 import s from './index.module.less';
 import { Account } from '@/apis';
-import { getBranding } from '@/utils/branding';
-import { getNonSuperAdminUserName } from '@/utils/account';
+import { getDisplayedUserInfo } from '@/utils/user-utils';
 
 interface Props {
   user: Account | null;
@@ -12,19 +10,10 @@ interface Props {
   isLoading?: boolean;
 }
 
-const DEFAULT_AVATAR_STYLE = {
-  borderRadius: '50%',
-  backgroundColor: COLORS_V2_GRAY_3,
-};
-
 const Avatar = (props: Props) => {
   const { user, size = 'small', isLoading = false } = props;
-  const branding = getBranding();
-  const userName = getNonSuperAdminUserName(user);
-  const systemDisplay =
-    userName === 'System' || userName === 'API' ? branding.systemAvatarUrl : null;
-  const imgHeight = size === 'small' ? 16 : size === 'medium' ? 20 : size === 'xs' ? 14 : 24;
-
+  const userInfo = getDisplayedUserInfo(user);
+  const avatar = userInfo.avatar;
   return isLoading ? (
     <div className={cn(s.avatar, s[`size-${size}`])}>
       <Spinner size="SMALL" />
@@ -32,19 +21,9 @@ const Avatar = (props: Props) => {
   ) : (
     <div
       className={cn(s.avatar, s[`size-${size}`])}
-      style={
-        !systemDisplay && user?.picture
-          ? {
-              backgroundImage: `url(${user?.picture})`,
-            }
-          : systemDisplay
-          ? {}
-          : DEFAULT_AVATAR_STYLE
-      }
-      title={`${userName} avatar`}
-    >
-      {systemDisplay && <img className={s.image} src={systemDisplay} height={imgHeight} />}
-    </div>
+      style={{ backgroundImage: `url(${avatar})` }}
+      title={`${userInfo.name} avatar`}
+    />
   );
 };
 

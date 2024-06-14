@@ -5,6 +5,7 @@ import { useQuery } from './queries/hooks';
 import { ACCOUNT_LIST, ROLES_LIST } from './queries/keys';
 import { getOr, isLoading } from './asyncResource';
 import { QueryResult } from './queries/types';
+import { getBranding } from './branding';
 import { useApi } from '@/api';
 import { Account, AccountRole, Permission } from '@/apis';
 
@@ -248,3 +249,25 @@ export const Context = React.createContext<{ user: FlagrightAuth0User } | null>(
 export const isFlagrightInternalUser = (user: FlagrightAuth0User) => {
   return user.verifiedEmail?.endsWith('@flagright.com') ?? false;
 };
+
+const getAccountUserName = (account: Account | undefined, defaultStr?: string): string => {
+  if (account == null && defaultStr != null) {
+    return defaultStr;
+  }
+  return (account?.name || account?.email || account?.id) + (account?.blocked ? ' (Deleted)' : '');
+};
+
+function isSystemUser(id: string): boolean {
+  return SYSTEM_USERS.some((systemUser) => systemUser.id === id);
+}
+
+export function getDisplayedUserInfo(account?: Account | null): { name: string; avatar?: string } {
+  const branding = getBranding();
+  if (account && isSystemUser(account.id)) {
+    return { name: account.id, avatar: branding.systemAvatarUrl };
+  }
+  if (!account || isSuperAdmin(account) || account.role === UserRole.WHITELABEL_ROOT) {
+    return { name: `${branding.companyName} System`, avatar: branding.systemAvatarUrl };
+  }
+  return { name: getAccountUserName(account), avatar: account.picture };
+}

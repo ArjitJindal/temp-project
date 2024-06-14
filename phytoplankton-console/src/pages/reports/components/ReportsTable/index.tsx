@@ -9,7 +9,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DATE, LONG_TEXT } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { AllParams } from '@/components/library/Table/types';
-import { isSuperAdmin, useAuth0User, useUsers } from '@/utils/user-utils';
+import { getDisplayedUserInfo, isSuperAdmin, useAuth0User, useUsers } from '@/utils/user-utils';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
@@ -24,7 +24,6 @@ import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
-import { getAccountUserName } from '@/utils/account';
 import { humanizeConstant } from '@/utils/humanize';
 import Tag from '@/components/library/Tag';
 
@@ -124,7 +123,7 @@ export default function ReportsTable() {
           );
         },
         stringify(value, items) {
-          return items.createdById ? getAccountUserName(users[items.createdById]) : '-';
+          return items.createdById ? getDisplayedUserInfo(users[items.createdById]).name : '-';
         },
       },
     }),
