@@ -6,7 +6,7 @@ import { CaseStatus, FileInfo, KYCStatusDetailsInternal, UserStateDetailsInterna
 import { CaseReasons } from '@/apis/models/CaseReasons';
 import Modal from '@/components/library/Modal';
 import Checkbox from '@/components/library/Checkbox';
-import Narrative, { CLOSING_REASONS, COMMON_REASONS } from '@/components/Narrative';
+import Narrative, { CLOSING_REASONS, COMMON_REASONS, OTHER_REASON } from '@/components/Narrative';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import Label from '@/components/library/Label';
@@ -151,6 +151,7 @@ export default function StatusChangeModal(props: Props) {
         <Narrative
           showErrors={showErrors}
           values={formState}
+          otherReason={OTHER_REASON}
           onChange={setFormState}
           alertMessage={alertMessage}
           entityType={entityName}
