@@ -354,6 +354,7 @@ export class TenantService {
       let value = x.value
 
       if (
+        !isFlagrightInternalUser() &&
         unmaskingOptions.unmask &&
         apiKeyViewTimes >= (settings?.limits?.apiKeyView ?? 2)
       ) {
