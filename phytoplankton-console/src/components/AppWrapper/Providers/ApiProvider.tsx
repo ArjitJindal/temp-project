@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { message } from '@/components/library/Message';
 import { ObjectDefaultApi as FlagrightApi } from '@/apis/types/ObjectParamAPI';
 import { useAuth0User } from '@/utils/user-utils';
 import {
@@ -78,11 +79,15 @@ export function useAuth(): SecurityAuthentication {
             scope: 'openid profile email',
             audience,
           });
-        } catch (e) {
-          token = await getAccessTokenWithPopup({
-            scope: 'openid profile email',
-            audience,
-          });
+        } catch (silentAuthError) {
+          try {
+            token = await getAccessTokenWithPopup({
+              scope: 'openid profile email',
+              audience,
+            });
+          } catch (popupAuthError) {
+            message.error('Failed to authenticate user');
+          }
         }
         return token;
       },
