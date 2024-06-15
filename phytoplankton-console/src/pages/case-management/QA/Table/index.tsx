@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
+import { UserOutlined } from '@ant-design/icons';
 import { useAlertsSamplingCreateMutation, useAlertsSamplingUpdateMutation } from '../utils';
 import { QAModal } from '../Modal';
 import { AddToSampleModal } from '../AddToSampleModal';
@@ -26,7 +27,7 @@ import { message } from '@/components/library/Message';
 import { useAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { DefaultApiPatchAlertsQaAssignmentsRequest } from '@/apis/types/ObjectParamAPI';
-import { AssignmentButton } from '@/pages/case-management/components/AssignmentButton';
+import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { CLOSING_REASONS } from '@/components/Narrative';
 import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useQaMode } from '@/utils/qa-mode';
@@ -243,7 +244,9 @@ export default function QaTable(props: Props) {
         title: 'QA assigned to',
         showFilterByDefault: true,
         renderer: ({ params, setParams }) => (
-          <AssignmentButton
+          <AccountsFilter
+            includeUnassigned={true}
+            Icon={<UserOutlined />}
             users={params.qaAssignment ?? []}
             title="QA assigned to"
             onConfirm={(value) => {

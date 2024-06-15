@@ -1,8 +1,8 @@
 import { Avatar, Select } from 'antd';
 import cn from 'clsx';
 import { LoadingOutlined } from '@ant-design/icons';
-import { colorSchema } from './utils';
 import s from './index.module.less';
+import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
 import { useSortedUsers } from '@/utils/user-utils';
 import { Assignment } from '@/apis';
 import AccountTag from '@/components/AccountTag';

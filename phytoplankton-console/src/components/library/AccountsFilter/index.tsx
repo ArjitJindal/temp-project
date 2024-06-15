@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { UserOutlined } from '@ant-design/icons';
 import PopupContent from './PopupContent';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 import { useUsers } from '@/utils/user-utils';
@@ -8,10 +7,12 @@ interface Props {
   onConfirm: (users: string[]) => void;
   users: string[];
   onUpdateFilterClose?: (status: boolean) => void;
-  title?: string;
+  title: string;
+  includeUnassigned?: boolean;
+  Icon?: React.ReactNode;
 }
 
-export function AssignmentButton(props: Props) {
+export function AccountsFilter(props: Props) {
   const [users, loading] = useUsers();
   const { onConfirm, onUpdateFilterClose } = props;
 
@@ -26,7 +27,7 @@ export function AssignmentButton(props: Props) {
 
   return (
     <QuickFilterBase
-      icon={<UserOutlined />}
+      icon={props?.Icon ?? undefined}
       analyticsName="assigned-to-filter"
       title={props.title ?? 'Assigned to'}
       buttonText={isEmpty ? undefined : finalUsers.join(', ')}
@@ -39,7 +40,11 @@ export function AssignmentButton(props: Props) {
       }
       onUpdateFilterClose={onUpdateFilterClose}
     >
-      <PopupContent value={props.users} onConfirm={props.onConfirm} />
+      <PopupContent
+        value={props.users}
+        onConfirm={props.onConfirm}
+        includeUnassigned={props?.includeUnassigned ?? false}
+      />
     </QuickFilterBase>
   );
 }

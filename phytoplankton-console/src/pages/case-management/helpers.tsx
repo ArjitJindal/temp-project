@@ -1,5 +1,6 @@
+import { UserOutlined } from '@ant-design/icons';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
-import { AssignmentButton } from './components/AssignmentButton';
+import { AccountsFilter } from '@/components/library/AccountsFilter';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
@@ -215,7 +216,10 @@ export const useCaseAlertFilters = (
       title: 'Assigned to',
       showFilterByDefault: false,
       renderer: ({ params, setParams, onUpdateFilterClose }) => (
-        <AssignmentButton
+        <AccountsFilter
+          includeUnassigned={true}
+          title="Assigned to"
+          Icon={<UserOutlined />}
           users={params.assignedTo ?? []}
           onConfirm={(value) => {
             setParams((state) => ({

@@ -2,6 +2,7 @@ import { useRef, useState, useContext, useMemo } from 'react';
 import { Typography } from 'antd';
 import { RangeValue } from 'rc-picker/es/interface';
 import { isEqual } from 'lodash';
+import { HighlightOutlined } from '@ant-design/icons';
 import AuditLogModal from '../AuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import { TableItem, TableSearchParams } from './types';
@@ -18,7 +19,7 @@ import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
-import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
+import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import AccountTag from '@/components/AccountTag';
 import { dayjs, Dayjs } from '@/utils/dayjs';
@@ -84,7 +85,6 @@ export default function AuditLogTable() {
   const tableQueryResult = useTableData(queryResults);
 
   const actionRef = useRef<TableRefType>(null);
-
   const helper = new ColumnHelper<TableItem>();
 
   const columns: TableColumn<TableItem>[] = helper.list([
@@ -138,16 +138,13 @@ export default function AuditLogTable() {
       title: 'Changes',
       hideInTable: true,
       exporting: true,
-
       value: (item) => item,
       type: {
         render: (item) =>
           !item || isEqual(item.oldImage, item.newImage) ? <div>No</div> : <div>Yes</div>,
-
         stringify: (item) => (!item || isEqual(item.oldImage, item.newImage) ? 'No' : 'Yes'),
       },
     }),
-
     helper.derived({
       title: 'Parameter',
       hideInTable: true,
@@ -206,6 +203,7 @@ export default function AuditLogTable() {
       type: DATE_TIME,
     }),
   ]);
+
   return (
     <PageWrapperContentContainer>
       <QueryResultsTable<TableItem, TableSearchParams>
@@ -235,8 +233,11 @@ export default function AuditLogTable() {
             key: 'filterActionTakenBy',
             title: 'Action taken by',
             renderer: ({ params, setParams }) => (
-              <ActionTakenByFilterButton
-                initialState={params.filterActionTakenBy ?? []}
+              <AccountsFilter
+                title="Action taken by"
+                Icon={<HighlightOutlined />}
+                users={params.filterActionTakenBy ?? []}
+                includeUnassigned={false}
                 onConfirm={(value) => {
                   setParams((prevState) => ({
                     ...prevState,

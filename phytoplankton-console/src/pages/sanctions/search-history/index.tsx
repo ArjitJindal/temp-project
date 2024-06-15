@@ -17,7 +17,7 @@ import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType
 import { humanizeCamelCase } from '@/utils/humanize';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import AccountTag from '@/components/AccountTag';
-import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
+import { AccountsFilter } from '@/components/library/AccountsFilter';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
@@ -112,15 +112,14 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
       title: 'Searched by',
       key: 'searchedBy',
       renderer: ({ params, setParams }) => (
-        <ActionTakenByFilterButton
-          initialState={params.searchedBy ?? []}
+        <AccountsFilter
+          users={params.searchedBy ?? []}
           onConfirm={(value) => {
             setParams((prevState) => ({
               ...prevState,
               searchedBy: value,
             }));
           }}
-          hideIcon
           title="Searched by"
         />
       ),

@@ -17,7 +17,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { ALERT_QA_SAMPLING } from '@/utils/queries/keys';
 import { useUsers } from '@/utils/user-utils';
 import AccountTag from '@/components/AccountTag';
-import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
+import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
 import Button from '@/components/library/Button';
@@ -234,8 +234,8 @@ const QASamplesTable = () => {
                 key: 'createdBy',
                 title: 'Created by',
                 renderer: ({ params, setParams }) => (
-                  <ActionTakenByFilterButton
-                    initialState={params.createdBy ?? []}
+                  <AccountsFilter
+                    users={params.createdBy ?? []}
                     title="Created by"
                     onConfirm={(value) => {
                       setParams((prevState) => ({
@@ -243,7 +243,6 @@ const QASamplesTable = () => {
                         createdBy: value,
                       }));
                     }}
-                    hideIcon
                   />
                 ),
               },

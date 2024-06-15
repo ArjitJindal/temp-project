@@ -1,13 +1,14 @@
 import React, { useCallback } from 'react';
 import { Avatar, List, Typography } from 'antd';
 import cn from 'clsx';
-import { colorSchema } from '../../AssigneesDropdown/utils';
 import s from './style.module.less';
+import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
 import { useUsers } from '@/utils/user-utils';
 
 interface Props {
   value: string[];
   onConfirm: (users: string[]) => void;
+  includeUnassigned?: boolean;
 }
 
 const UNASSIGNED = 'Unassigned';
@@ -34,7 +35,9 @@ export default function PopupContent(props: Props) {
     },
     [value, users],
   );
-  const options = [UNASSIGNED, ...Object.keys(users).map((key) => users[key].name)];
+  const options = props?.includeUnassigned
+    ? [UNASSIGNED, ...Object.keys(users).map((key) => users[key].name)]
+    : [...Object.keys(users).map((key) => users[key].name)];
   return (
     <div className={s.root}>
       <List
@@ -78,7 +81,11 @@ export default function PopupContent(props: Props) {
                   <Avatar
                     size="small"
                     className={s.avatar}
-                    style={{ backgroundColor: randomColor.background, color: randomColor.text }}
+                    style={{
+                      backgroundColor: randomColor.background,
+                      color: randomColor.text,
+                      marginRight: '8px',
+                    }}
                   >
                     {user.slice(0, 2).toUpperCase()}
                   </Avatar>
