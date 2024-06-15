@@ -757,7 +757,7 @@ describe('Post APIs Alerts Tests', () => {
           ],
           comments: [
             {
-              body: 'Alert status changed to Closed. Reasons: False positive\nsome comment',
+              body: 'Alert status changed to Closed. Reasons: False positive, some other reason\nsome comment',
               files: [],
               createdAt: expect.any(Number),
               updatedAt: expect.any(Number),
@@ -856,7 +856,7 @@ describe('Post APIs Alerts Tests', () => {
           ],
           comments: [
             {
-              body: 'Alert status changed to Closed. Reasons: False positive\nsome comment',
+              body: 'Alert status changed to Closed. Reasons: False positive, some other reason\nsome comment',
               files: [],
               createdAt: expect.any(Number),
               updatedAt: expect.any(Number),
@@ -1690,7 +1690,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       ],
       comments: [
         {
-          body: 'Case status changed to In Review and is requested to be Closed. Reason: False positive\nI am closing this case',
+          body: 'Case status changed to In Review and is requested to be Closed. Reasons: False positive, This is a duplicate case\nI am closing this case',
           files: [],
           userId: REVIEWEE.id,
         },
@@ -1788,7 +1788,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       ],
       comments: [
         {
-          body: 'Case status changed to In Review and is requested to be Escalated. Reason: False positive\nI am closing this case',
+          body: 'Case status changed to In Review and is requested to be Escalated. Reasons: False positive, This is a duplicate case\nI am closing this case',
           files: [],
           userId: REVIEWEE.id,
         },
@@ -1914,7 +1914,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       ],
       comments: [
         {
-          body: 'Case status changed to In Review and is requested to be Closed. Reason: False positive\nI am closing this case',
+          body: 'Case status changed to In Review and is requested to be Closed. Reasons: False positive, This is a duplicate case\nI am closing this case',
           userId: REVIEWEE.id,
         },
         {
@@ -2070,7 +2070,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       ],
       comments: [
         {
-          body: 'Case status changed to In Review and is requested to be Escalated. Reason: False positive\nI am closing this case',
+          body: 'Case status changed to In Review and is requested to be Escalated. Reasons: False positive, This is a duplicate case\nI am closing this case',
           userId: 'ACCOUNT-3',
         },
         {
@@ -2218,7 +2218,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         {
           userId: 'ACCOUNT-3',
           body:
-            'Alert status changed to In Review and is requested to be Closed. Reasons: False positive\n' +
+            'Alert status changed to In Review and is requested to be Closed. Reasons: False positive, This is a duplicate alert\n' +
             'I am closing this alert',
         },
       ],

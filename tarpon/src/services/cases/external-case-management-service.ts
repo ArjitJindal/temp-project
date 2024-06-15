@@ -352,7 +352,6 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
       reason: updateRequest.reason ?? [],
       comment: updateRequest.comment,
       files: updateRequest.files,
-      timestamp: Date.now(),
       otherReason: updateRequest.otherReason,
     }
     await internalCaseService.updateStatus(

@@ -827,7 +827,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const allReasons = [
       ...(reason?.filter((x) => x !== 'Other') ?? []),
-      ...(reason?.includes('Other') && otherReason ? [otherReason] : []),
+      ...(otherReason ? [otherReason] : []), // Changed logic to display other reason even without other selected as enum from public management API
     ]
 
     if (allReasons.length > 0) {
@@ -874,7 +874,7 @@ export class AlertsService extends CaseAlertsCommonService {
       userId: bySystem
         ? FLAGRIGHT_SYSTEM_USER
         : userId ?? FLAGRIGHT_SYSTEM_USER,
-      timestamp: statusUpdateRequest.timestamp ?? Date.now(),
+      timestamp: Date.now(),
       reason: statusUpdateRequest.reason,
       caseStatus: statusUpdateRequest.alertStatus,
       otherReason: statusUpdateRequest.otherReason,

@@ -326,7 +326,7 @@ export class CaseService extends CaseAlertsCommonService {
 
     const allReasons = [
       ...(reason?.filter((reason) => reason !== 'Other') ?? []),
-      ...(reason?.includes('Other') && otherReason ? [otherReason] : []),
+      ...(otherReason ? [otherReason] : []), // Changed logic to display other reason even without other selected as enum from public management API
     ]
 
     if (allReasons.length > 0) {

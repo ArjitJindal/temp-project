@@ -512,7 +512,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseStatusChangeRequest'
-      description: '### Update Case Status'
+      description: >-
+        ### Update Case Status 
+
+        The `POST /cases/{caseId}/statuses` endpoint is used to update the status of a case. The status can be one of the following values: `OPEN`, `CLOSED`, `REOPENED`, `IN_PROGRESS`, `ON_HOLD`.
+
+        Note: When closing a case the `reason` field is required.
   /alerts:
     post:
       security:
@@ -813,7 +818,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertStatusChangeRequest'
-      description: '### Update Alert Status'
+      description: >-
+        ### Update Alert Status 
+
+        The `POST /alerts/{alertId}/statuses` endpoint is used to update the status of an alert. The status can be one of the following values: `OPEN`, `CLOSED`, `REOPENED`, `IN_PROGRESS`, `ON_HOLD`.
+
+        Note: When closing an alert the `reason` field is required.
   /pre-signed-url:
     post:
       security:
@@ -1214,10 +1224,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RequestFileInfo'
-        timestamp:
-          type: number
-          minimum: 1262300400000
-          maximum: 4133890801000
       required:
         - status
     CaseStatusChangeRequest:
@@ -1238,10 +1244,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RequestFileInfo'
-        timestamp:
-          type: number
-          minimum: 1262300400000
-          maximum: 4133890801000
       required:
         - status
     RuleInstance:

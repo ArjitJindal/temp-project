@@ -9429,8 +9429,6 @@ components:
           $ref: '#/components/schemas/UserStateDetailsInternal'
         kycStatusDetails:
           $ref: '#/components/schemas/KYCStatusDetailsInternal'
-        timestamp:
-          type: number
       required:
         - reason
       description: ''
@@ -9550,8 +9548,6 @@ components:
             type: string
         closeSourceCase:
           type: boolean
-        timestamp:
-          type: number
       required:
         - alertStatus
         - reason
