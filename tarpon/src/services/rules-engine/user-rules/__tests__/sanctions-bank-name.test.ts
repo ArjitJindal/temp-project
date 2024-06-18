@@ -1,5 +1,5 @@
 import { SanctionsBankUserRuleParameters } from '../sanctions-bank-name'
-import { getTestBusiness } from '@/test-utils/user-test-utils'
+import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import {
   setUpRulesHooks,
@@ -299,6 +299,61 @@ describe('IBAN resolution disabled', () => {
             },
           ],
         },
+      ],
+    },
+  ])('', ({ name, users, expectetRuleHitMetadata }) => {
+    createUserRuleTestCase(name, TEST_TENANT_ID, users, expectetRuleHitMetadata)
+  })
+})
+
+describe('Check for consumer user with IBAN resolution disabled', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'R-32',
+      defaultParameters: {
+        resolveIban: false,
+        screeningTypes: ['SANCTIONS'],
+        fuzziness: 0.5,
+      } as SanctionsBankUserRuleParameters,
+    },
+  ])
+
+  describe.each<UserRuleTestCase>([
+    {
+      name: '',
+      users: [
+        getTestUser({
+          savedPaymentDetails: [
+            {
+              method: 'ACH',
+              accountNumber: 'DE19500105178788668900012',
+              bankName: 'Bank 1',
+            },
+          ],
+        }),
+        getTestUser({
+          savedPaymentDetails: [
+            {
+              method: 'IBAN',
+              IBAN: 'DE19500105178788668945',
+            },
+          ],
+        }),
+      ],
+      expectetRuleHitMetadata: [
+        {
+          hitDirections: ['ORIGIN'],
+          sanctionsDetails: [
+            {
+              name: 'Bank 1',
+              iban: 'DE19500105178788668900012',
+              searchId: 'test-search-id',
+            },
+          ],
+        },
+        undefined,
       ],
     },
   ])('', ({ name, users, expectetRuleHitMetadata }) => {

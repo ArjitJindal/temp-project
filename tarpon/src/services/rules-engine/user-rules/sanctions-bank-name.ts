@@ -8,13 +8,12 @@ import {
   RESOLVE_IBAN_NUMBER_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
-import { Business } from '@/@types/openapi-public/Business'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { logger } from '@/core/logger'
+import { User } from '@/@types/openapi-public/User'
 
 const caConcurrencyLimit = pLimit(10)
 
@@ -53,14 +52,11 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     const { fuzziness, resolveIban, screeningTypes, ongoingScreening } =
       this.parameters
 
-    if (
-      !isBusinessUser(this.user) ||
-      (this.ongoingScreeningMode && !ongoingScreening)
-    ) {
+    if (this.ongoingScreeningMode && !ongoingScreening) {
       return
     }
-    const business = this.user as Business
-    let bankInfos = (business.savedPaymentDetails || [])
+    const user = this.user as User
+    let bankInfos = (user.savedPaymentDetails || [])
       ?.map((paymentDetails) => {
         if (paymentDetails.method === 'IBAN') {
           return {
