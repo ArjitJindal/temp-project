@@ -108,7 +108,7 @@ async function updateNotionTickets() {
     .filter(Boolean) as string[]
 
   for (const ticketId of notionTicketIds) {
-    await updateTicketStatusByID(ticketId, 'Done (Archive)')
+    await updateTicketStatusByID(ticketId, 'Done (Weekly)')
   }
 }
 
