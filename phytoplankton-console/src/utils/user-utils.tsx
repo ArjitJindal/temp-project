@@ -257,7 +257,7 @@ const getAccountUserName = (account: Account | undefined, defaultStr?: string): 
   return (account?.name || account?.email || account?.id) + (account?.blocked ? ' (Deleted)' : '');
 };
 
-function isSystemUser(id: string): boolean {
+export function isSystemUser(id: string): boolean {
   return SYSTEM_USERS.some((systemUser) => systemUser.id === id);
 }
 
