@@ -1,6 +1,8 @@
-import { get, keyBy, set, unset } from 'lodash'
+import { get, keyBy, set, some, unset } from 'lodash'
 import { replaceMagicKeyword } from '@flagright/lib/utils/object'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
+import { StackConstants } from '@lib/constants'
+import { PutCommand, PutCommandInput } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from './tenant'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -17,7 +19,9 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
-
+import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { ruleInstanceAggregationVariablesRebuild } from '@/services/rules-engine/utils'
 function isRule(rule: Rule | RuleInstance) {
   return !!(rule as Rule).defaultParameters
 }
@@ -561,4 +565,56 @@ export const renameV8Key = async (
   await migrateAllTenants(async (tenant) => {
     await renameV8KeyForTenant(oldKey, newKey, type, tenant.id)
   })
+}
+
+export async function bumpRuleAggregationVariablesVersion(
+  tenantId: string,
+  toUpdateCallback: (
+    RuleAggregationVariable: RuleAggregationVariable
+  ) => boolean
+) {
+  const dynamoDb = getDynamoDbClient()
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+  const activeTransactionRuleInstances =
+    await ruleInstanceRepository.getActiveRuleInstances('TRANSACTION')
+  const activeUserRuleInstances =
+    await ruleInstanceRepository.getActiveRuleInstances('USER')
+  const activeRuleInstances = [
+    ...activeTransactionRuleInstances,
+    ...activeUserRuleInstances,
+  ]
+  for (const ruleInstance of activeRuleInstances) {
+    if (
+      ruleInstance.logicAggregationVariables &&
+      some(ruleInstance.logicAggregationVariables ?? [], toUpdateCallback)
+    ) {
+      const newVersion = Date.now()
+      ruleInstance.logicAggregationVariables =
+        ruleInstance.logicAggregationVariables.map((aggVar) => {
+          if (toUpdateCallback(aggVar)) {
+            return {
+              ...aggVar,
+              version: newVersion,
+            }
+          }
+          return aggVar
+        })
+      const putItemInput: PutCommandInput = {
+        TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+        Item: {
+          ...DynamoDbKeys.RULE_INSTANCE(tenantId, ruleInstance.id),
+          ...ruleInstance,
+        },
+      }
+      await dynamoDb.send(new PutCommand(putItemInput))
+      await ruleInstanceAggregationVariablesRebuild(
+        ruleInstance,
+        newVersion,
+        tenantId,
+        ruleInstanceRepository
+      )
+    }
+  }
 }

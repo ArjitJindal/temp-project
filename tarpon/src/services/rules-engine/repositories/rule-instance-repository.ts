@@ -116,7 +116,6 @@ export class RuleInstanceRepository {
     updatedAt?: number
   ): Promise<RuleInstance> {
     const ruleId = ruleInstance.ruleId ?? (await this.getNewCustomRuleId(true))
-
     const ruleInstanceId =
       ruleInstance.id || (await this.getNewRuleInstanceId(ruleId, true))
 
@@ -171,7 +170,6 @@ export class RuleInstanceRepository {
     const oldRuleInstance = ruleInstance.id
       ? await this.getRuleInstanceById(ruleInstance.id)
       : null
-
     // Early return if aggregation variables are not changed
     const isBeingEnabled =
       (!oldRuleInstance || oldRuleInstance?.status === 'INACTIVE') &&
@@ -202,6 +200,7 @@ export class RuleInstanceRepository {
       const existingSameAggVar = activeLogicAggregationVariables.find(
         (v) => getAggVarHash(v, false) === getAggVarHash(aggVar, false)
       )
+
       // NOTE: An aggregation variable's version is determined by the timestamp when
       // it is first created and enabled. This is to ensure that the version is consistent.
       return {

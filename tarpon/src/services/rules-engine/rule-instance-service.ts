@@ -3,7 +3,6 @@ import { MongoClient } from 'mongodb'
 import createHttpError, { NotFound } from 'http-errors'
 import { keyBy, mapValues, mean, merge, sum, sumBy } from 'lodash'
 import { AlertsRepository } from '../alerts/repository'
-import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { OverviewStatsDashboardMetric } from '../analytics/dashboard-metrics/overview-stats'
 import { UserRepository } from '../users/repositories/user-repository'
 import { getTimeLabels } from '../dashboard/utils'
@@ -16,6 +15,7 @@ import {
   assertValidRiskLevelParameters,
   isShadowRule,
   isV8RuleInstance,
+  ruleInstanceAggregationVariablesRebuild,
 } from './utils'
 import { RuleRepository } from './repositories/rule-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
@@ -165,35 +165,18 @@ export class RuleInstanceService {
     }
 
     const now = Date.now()
-    let updatedRuleInstance =
+    const updatedRuleInstance =
       await this.ruleInstanceRepository.createOrUpdateRuleInstance(
         { ...ruleInstance, type: ruleInstance.type, mode: ruleInstance.mode },
         undefined
       )
 
-    const aggVarsToRebuild =
-      updatedRuleInstance.logicAggregationVariables?.filter(
-        (aggVar) => aggVar.version && aggVar.version > now
-      ) ?? []
-
-    if (aggVarsToRebuild.length > 0) {
-      updatedRuleInstance =
-        await this.ruleInstanceRepository.createOrUpdateRuleInstance(
-          {
-            ...updatedRuleInstance,
-            status: 'DEPLOYING',
-          },
-          updatedRuleInstance.updatedAt
-        )
-      await sendBatchJobCommand({
-        type: 'RULE_PRE_AGGREGATION',
-        tenantId: this.tenantId,
-        parameters: {
-          ruleInstanceId: updatedRuleInstance.id as string,
-          aggregationVariables: aggVarsToRebuild,
-        },
-      })
-    }
+    await ruleInstanceAggregationVariablesRebuild(
+      updatedRuleInstance,
+      now,
+      this.tenantId,
+      this.ruleInstanceRepository
+    )
 
     return updatedRuleInstance
   }

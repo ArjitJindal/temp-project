@@ -373,11 +373,18 @@ export async function groupTransactions<T>(
 // TODO: We use UTC time for getting the time label for now. We could use
 // the customer specified timezone if there's a need.
 
+export const MINUTE_GROUP_SIZE = 10 // Will require a migration (use bumpRuleAggregationVariableVersion util) to be run whenever updated.
+
 export function getTransactionStatsTimeGroupLabel(
   timestamp: number,
   timeGranularity: RuleAggregationTimeWindowGranularity
 ): string {
   switch (timeGranularity) {
+    case 'minute': {
+      const date = dayjs(timestamp)
+      const minuteGroup = Math.floor(date.minute() / MINUTE_GROUP_SIZE)
+      return dayjs(timestamp).format('YYYY-MM-DD-HH') + `-${minuteGroup}`
+    }
     case 'day':
       return dayjs(timestamp).format('YYYY-MM-DD')
     case 'week': {

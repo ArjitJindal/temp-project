@@ -1,4 +1,6 @@
 import createHttpError from 'http-errors'
+import { sendBatchJobCommand } from '../batch-jobs/batch-job'
+import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -196,6 +198,36 @@ export function isV8RuleInstance(ruleInstance: RuleInstance): boolean {
 
 export function isV8Rule(rule: Rule): boolean {
   return !!rule.defaultLogic
+}
+
+export async function ruleInstanceAggregationVariablesRebuild(
+  ruleInstance: RuleInstance,
+  comparisonTime: number,
+  tenantId: string,
+  ruleInstanceRepository: RuleInstanceRepository
+) {
+  const aggVarsToRebuild =
+    ruleInstance.logicAggregationVariables?.filter(
+      (aggVar) => aggVar.version && aggVar.version >= comparisonTime
+    ) ?? []
+
+  if (aggVarsToRebuild.length > 0) {
+    ruleInstance = await ruleInstanceRepository.createOrUpdateRuleInstance(
+      {
+        ...ruleInstance,
+        status: 'DEPLOYING',
+      },
+      ruleInstance.updatedAt
+    )
+    await sendBatchJobCommand({
+      type: 'RULE_PRE_AGGREGATION',
+      tenantId: tenantId,
+      parameters: {
+        ruleInstanceId: ruleInstance.id as string,
+        aggregationVariables: aggVarsToRebuild,
+      },
+    })
+  }
 }
 
 export function assertValidRiskLevelParameters(

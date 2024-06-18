@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { STARTS_WITH_OPERATOR } from '../../v8-operators/starts-ends-with'
+import { createAggregationVariable } from '../test-utils'
 import { AggregationRepository } from '../aggregation-repository'
 import { TransactionRuleData } from '..'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -12,11 +13,11 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import dayjs from '@/utils/dayjs'
 
 const operatorSpy = jest.spyOn(STARTS_WITH_OPERATOR, 'run')
-/* eslint-disable @typescript-eslint/no-var-requires */
-const RuleJsonLogicEvaluator = require('..').RuleJsonLogicEvaluator
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { RuleJsonLogicEvaluator, canAggregate } = require('..')
 const bulkVerifyTransactions =
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   require('@/test-utils/rule-test-utils').bulkVerifyTransactions
-/* eslint-enable @typescript-eslint/no-var-requires */
 
 dynamoDbSetupHook()
 
@@ -1114,7 +1115,75 @@ describe('Different aggregate fields for receiving and sending', () => {
   })
 })
 
-describe('Operators', () => {
+describe('Test canAggregate function', () => {
+  test('canAggregate function tests', () => {
+    const variable1 = createAggregationVariable({
+      timeWindow: {
+        start: { units: 30, granularity: 'day' },
+        end: { units: 0, granularity: 'day' },
+      },
+    })
+    expect(canAggregate(variable1)).toBe(true)
+
+    const variable2 = createAggregationVariable({
+      timeWindow: {
+        start: { units: 1, granularity: 'hour' },
+        end: { units: 0, granularity: 'hour' },
+      },
+    })
+    expect(canAggregate(variable2)).toBe(true)
+
+    const variable3 = createAggregationVariable({
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+    })
+    expect(canAggregate(variable3)).toBe(true)
+
+    const variable4 = createAggregationVariable({
+      timeWindow: {
+        start: { units: 20, granularity: 'minute' },
+        end: { units: 0, granularity: 'now' },
+      },
+    })
+    expect(canAggregate(variable4)).toBe(true)
+
+    const variable5 = createAggregationVariable({
+      timeWindow: {
+        start: { units: 9, granularity: 'minute' },
+        end: { units: 0, granularity: 'now' },
+      },
+    })
+    expect(canAggregate(variable5)).toBe(false)
+
+    const variable6 = createAggregationVariable({
+      timeWindow: {
+        start: { units: 15, granularity: 'minute' },
+        end: { units: 0, granularity: 'now' },
+      },
+    })
+    expect(canAggregate(variable6)).toBe(true)
+
+    const variable7 = createAggregationVariable({
+      timeWindow: {
+        start: { units: 30, granularity: 'minute' },
+        end: { units: 10, granularity: 'minute' },
+      },
+    })
+    expect(canAggregate(variable7)).toBe(true)
+
+    const variable8 = createAggregationVariable({
+      timeWindow: {
+        start: { units: 15, granularity: 'minute' },
+        end: { units: 10, granularity: 'minute' },
+      },
+    })
+    expect(canAggregate(variable8)).toBe(false)
+  })
+})
+
+describe('operators', () => {
   beforeEach(() => {
     operatorSpy.mockRestore()
   })
@@ -1178,7 +1247,10 @@ describe('V8 aggregator', () => {
       aggregationFieldKey,
       aggregationFunc,
       timeWindow: {
-        start: { granularity: granularity, units: 3 },
+        start: {
+          granularity: granularity,
+          units: granularity === 'minute' ? 40 : 4,
+        },
         end: { granularity: 'now', units: 0 },
       },
       userDirection: 'SENDER',
@@ -1472,6 +1544,81 @@ describe('V8 aggregator', () => {
       { time: '2023-01-01-12', value: 1 },
       { time: '2023-01-01-13', value: 1 },
       { time: '2023-01-01-14', value: 2 },
+    ])
+  })
+
+  test('Should rebuild the aggregation data for the user for granularity minute - checks count', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const ruleJsonLogicEvaluator = new RuleJsonLogicEvaluator(
+      tenantId,
+      dynamoDb
+    )
+    const afterTimestamp = dayjs('2023-01-01T12:00:00.000Z').valueOf()
+    const beforeTimestamp = dayjs('2023-01-01T12:30:10.000Z').valueOf()
+    const AGG_VARIABLE = getAggVar(
+      'TRANSACTION:transactionId',
+      'COUNT',
+      'minute'
+    )
+    const transactions = [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 100,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: undefined,
+        timestamp: afterTimestamp,
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 1000,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: undefined,
+        timestamp: dayjs('2023-01-01T12:05:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 2000,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: undefined,
+        timestamp: beforeTimestamp,
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 3000,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: undefined,
+        timestamp: dayjs('2023-01-01T12:25:00.000Z').valueOf(),
+      }),
+    ]
+    await bulkVerifyTransactions(tenantId, transactions)
+
+    await ruleJsonLogicEvaluator.rebuildAggregationVariable(
+      AGG_VARIABLE,
+      beforeTimestamp + 1,
+      '1',
+      undefined
+    )
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserRuleTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'minute'
+    )
+    expect(aggData).toEqual([
+      { time: '2023-01-01-12-0', value: 2 },
+      { time: '2023-01-01-12-2', value: 1 },
+      { time: '2023-01-01-12-3', value: 1 },
     ])
   })
 
@@ -1823,5 +1970,93 @@ describe('V8 aggregator', () => {
       'hour'
     )
     expect(aggData2).toEqual([{ time: '2023-01-01-14', value: ['2'] }])
+  })
+
+  test('Should rebuild the aggregation data for the user for granularity minute - checks unique count', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const ruleJsonLogicEvaluator = new RuleJsonLogicEvaluator(
+      tenantId,
+      dynamoDb
+    )
+    const afterTimestamp = dayjs('2023-01-01T12:00:00.000Z').valueOf()
+    const beforeTimestamp = dayjs('2023-01-01T12:30:10.000Z').valueOf()
+    const AGG_VARIABLE = getAggVar(
+      'TRANSACTION:originUserId',
+      'UNIQUE_COUNT',
+      'minute'
+    )
+    const transactions = [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 100,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: undefined,
+        timestamp: afterTimestamp,
+      }),
+      getTestTransaction({
+        originUserId: undefined,
+        destinationUserId: '1',
+        destinationAmountDetails: {
+          transactionAmount: 200,
+          transactionCurrency: 'EUR',
+        },
+        timestamp: afterTimestamp,
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 1000,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: undefined,
+        timestamp: dayjs('2023-01-01T12:12:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '2',
+        originAmountDetails: {
+          transactionAmount: 1000,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: undefined,
+        timestamp: beforeTimestamp,
+      }),
+    ]
+    await bulkVerifyTransactions(tenantId, transactions)
+
+    await ruleJsonLogicEvaluator.rebuildAggregationVariable(
+      AGG_VARIABLE,
+      beforeTimestamp + 1,
+      '1',
+      undefined
+    )
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserRuleTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'minute'
+    )
+    expect(aggData).toEqual([
+      { time: '2023-01-01-12-0', value: ['1'] },
+      { time: '2023-01-01-12-1', value: ['1'] },
+    ])
+    await ruleJsonLogicEvaluator.rebuildAggregationVariable(
+      AGG_VARIABLE,
+      beforeTimestamp + 1,
+      '2',
+      undefined
+    )
+    const aggData2 = await aggregationRepository.getUserRuleTimeAggregations(
+      '2',
+      AGG_VARIABLE,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'minute'
+    )
+    expect(aggData2).toEqual([{ time: '2023-01-01-12-3', value: ['2'] }])
   })
 })

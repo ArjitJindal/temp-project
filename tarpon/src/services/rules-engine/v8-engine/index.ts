@@ -28,6 +28,7 @@ import {
   V8TransactionAggregationTask,
 } from '../rules-engine-service'
 import {
+  MINUTE_GROUP_SIZE,
   getTransactionStatsTimeGroupLabel,
   getTransactionsGenerator,
   groupTransactionsByGranularity,
@@ -70,7 +71,6 @@ import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationTy
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
-import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
 
 const sqs = getSQSClient()
 
@@ -93,18 +93,25 @@ type UserIdentifier = {
 type AuxiliaryIndexTransactionWithDirection = AuxiliaryIndexTransaction & {
   direction?: 'origin' | 'destination'
 }
+const MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY = 3
 
-const NO_AGGREGATION_GRANULARITIES: RuleAggregationTimeWindowGranularity[] = [
-  'second',
-  'minute',
-]
 export function canAggregate(variable: RuleAggregationVariable) {
-  return (
-    !NO_AGGREGATION_GRANULARITIES.includes(
-      variable.timeWindow.start.granularity
-    ) &&
-    !NO_AGGREGATION_GRANULARITIES.includes(variable.timeWindow.end.granularity)
-  )
+  const { units: startUnits, granularity: startGranularity } =
+    variable.timeWindow.start
+  const { units: endUnits, granularity: endGranularity } =
+    variable.timeWindow.end
+  if (startGranularity === 'second' || endGranularity === 'second') {
+    return false
+  }
+  if (startGranularity === 'minute' || endGranularity === 'minute') {
+    return (
+      startGranularity === 'all_time' ||
+      (endGranularity === 'now'
+        ? startUnits >= MINUTE_GROUP_SIZE
+        : startUnits - endUnits >= MINUTE_GROUP_SIZE)
+    )
+  }
+  return true
 }
 
 export async function sendAggregationTask(
@@ -1021,12 +1028,23 @@ export class RuleJsonLogicEvaluator {
   ) {
     if (aggregationVariable.timeWindow.end.granularity === 'all_time') {
       return 'year'
-    } else if (aggregationVariable.timeWindow.start.granularity === 'now') {
-      return aggregationVariable.timeWindow.end.granularity
+    } else if (aggregationVariable.timeWindow.end.granularity === 'now') {
+      return aggregationVariable.timeWindow.start.granularity === 'hour' &&
+        aggregationVariable.timeWindow.start.units <=
+          MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY
+        ? 'minute'
+        : aggregationVariable.timeWindow.start.granularity
     }
     return aggregationVariable.timeWindow.start.rollingBasis ||
       aggregationVariable.timeWindow.end.rollingBasis
       ? 'hour'
-      : aggregationVariable.timeWindow.start.granularity
+      : aggregationVariable.timeWindow.start.granularity === 'hour' &&
+        aggregationVariable.timeWindow.start.units -
+          (aggregationVariable.timeWindow.end.granularity === 'hour'
+            ? aggregationVariable.timeWindow.end.units
+            : 0) <=
+          MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY
+      ? 'minute'
+      : aggregationVariable.timeWindow.end.granularity
   }
 }
