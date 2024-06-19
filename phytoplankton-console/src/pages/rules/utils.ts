@@ -90,13 +90,13 @@ export const RULE_TYPE_OPTIONS: Option<RuleType>[] = [
     label: 'Transaction',
     value: 'TRANSACTION',
     description:
-      'The rule would check for transactions and user properties of a user for the defined rule logic. The rule would be run when there is a new transaction/transaction event occurred.',
+      'The rule checks for transactions and user properties based on the defined rule logic. The rule is executed whenever a new transaction or transaction event occurs.',
   },
   {
     label: 'User',
     value: 'USER',
     description:
-      'The rule would check for a user properties for the defined rule logic. The rule would be run when there is a new user/new user event occurred. For ongoing screening the rule would be run for existing users as well.',
+      'The rule checks user properties based on the defined rule logic. The rule is executed whenever a new user or new user event occurs. For ongoing screening, the rule is also executed for existing users.',
   },
 ];
 
