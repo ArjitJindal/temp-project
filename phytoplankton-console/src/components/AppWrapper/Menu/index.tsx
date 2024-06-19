@@ -150,7 +150,7 @@ function RenderItem(props: {
   const icon = item.icon ? icons[item.icon] : undefined;
 
   const submenu =
-    'routes' in item && !item.hideChildrenInMenu
+    'routes' in item && !item.hideChildrenInMenu && !item.disabled
       ? item.routes
           .filter(isLeaf)
           .filter((x) => !x.hideInMenu)
