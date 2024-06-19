@@ -49,7 +49,7 @@ export class DashboardStatsRepository {
   public async refreshAllStats(timeRange?: TimeRange) {
     await Promise.all([
       this.refreshTransactionStats(timeRange),
-      this.refreshCaseStats(timeRange),
+      this.refreshAlertsStats(timeRange),
       this.refreshUserStats(timeRange),
       this.refreshTeamStats(timeRange),
       this.refreshQaStats(timeRange),
@@ -61,7 +61,7 @@ export class DashboardStatsRepository {
     direction: 'ORIGIN' | 'DESTINATION',
     timeRange?: TimeRange
   ) {
-    await HitsByUserStatsDashboardMetric.refreshCaseStats(
+    await HitsByUserStatsDashboardMetric.refreshAlertsStats(
       this.tenantId,
       direction,
       timeRange
@@ -83,7 +83,21 @@ export class DashboardStatsRepository {
   }
 
   public async recalculateRuleHitStats(timeRange?: TimeRange) {
-    await RuleHitsStatsDashboardMetric.refresh(this.tenantId, timeRange)
+    await RuleHitsStatsDashboardMetric.refreshTransactionsStats(
+      this.tenantId,
+      timeRange
+    )
+  }
+  public async recalculateRuleHitAlertsStats(timeRange?: TimeRange) {
+    await RuleHitsStatsDashboardMetric.refreshAlertsStats(
+      this.tenantId,
+      timeRange
+    )
+  }
+
+  public async refreshRuleHitStats(timeRange?: TimeRange) {
+    await this.recalculateRuleHitStats(timeRange)
+    await this.recalculateRuleHitAlertsStats(timeRange)
   }
   public async getRuleHitCountStats(
     startTimestamp: number,
@@ -144,6 +158,7 @@ export class DashboardStatsRepository {
         'ORIGIN',
         timestampTimeRange
       ),
+      this.recalculateRuleHitStats(timestampTimeRange),
     ])
   }
 
@@ -160,12 +175,11 @@ export class DashboardStatsRepository {
     )
   }
 
-  public async refreshCaseStats(caseCreatedAtTimeRange?: TimeRange) {
+  public async refreshAlertsStats(alertCreatedAtTimeRange?: TimeRange) {
     await Promise.all([
-      this.recalculateRuleHitStats(caseCreatedAtTimeRange),
-      this.recalculateHitsByUser('ORIGIN', caseCreatedAtTimeRange),
-      this.recalculateHitsByUser('DESTINATION', caseCreatedAtTimeRange),
-      this.refreshQaStats(caseCreatedAtTimeRange),
+      this.recalculateRuleHitStats(alertCreatedAtTimeRange),
+      this.recalculateHitsByUser('ORIGIN', alertCreatedAtTimeRange),
+      this.recalculateHitsByUser('DESTINATION', alertCreatedAtTimeRange),
     ])
   }
 
@@ -184,15 +198,15 @@ export class DashboardStatsRepository {
     await LatestTeamStatsDashboardMetric.refresh(this.tenantId)
   }
 
-  public async refreshQaStats(caseUpdatedAtTimeRange?: TimeRange) {
+  public async refreshQaStats(alertUpdatedAtTimeRange?: TimeRange) {
     if (!(await tenantHasFeature(this.tenantId, 'QA'))) {
       return
     }
     await Promise.all([
-      this.recalculateQaAlertsByRuleStats(caseUpdatedAtTimeRange),
-      this.recalculateQaAlertsStatsByChecklistReason(caseUpdatedAtTimeRange),
-      this.recalculateQaOverviewStats(caseUpdatedAtTimeRange),
-      this.recalculateQaAlertsByAssigneeStats(caseUpdatedAtTimeRange),
+      this.recalculateQaAlertsByRuleStats(alertUpdatedAtTimeRange),
+      this.recalculateQaAlertsStatsByChecklistReason(alertUpdatedAtTimeRange),
+      this.recalculateQaOverviewStats(alertUpdatedAtTimeRange),
+      this.recalculateQaAlertsByAssigneeStats(alertUpdatedAtTimeRange),
     ])
   }
   public async recalculateQaAlertsByRuleStats(timeRange?: TimeRange) {

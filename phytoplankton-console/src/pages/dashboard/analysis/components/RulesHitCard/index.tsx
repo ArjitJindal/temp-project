@@ -2,15 +2,16 @@
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/lib/interface';
 import { Link } from 'react-router-dom';
+import pluralize from 'pluralize';
+import { generateAlertsListUrl } from '../HitsPerUserCard/utils';
 import DatePicker from '@/components/ui/DatePicker';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { DashboardStatsRulesCountData } from '@/apis';
 import { useApi } from '@/api';
-import { makeUrl } from '@/utils/routing';
 import { getRuleInstanceDisplay, getRuleInstanceDisplayId } from '@/pages/rules/utils';
 import { TableColumn } from '@/components/library/Table/types';
 import { useRules } from '@/utils/rules';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER_STATS } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -43,31 +44,23 @@ export default function RuleHitCard() {
       title: 'Rules hit',
       key: 'hitCount',
     }),
-    helper.simple<'openCasesCount'>({
-      title: 'Open cases',
-      key: 'openCasesCount',
+    helper.simple<'openAlertsCount'>({
+      title: 'Open alerts',
+      key: 'openAlertsCount',
       type: {
-        render: (openCasesCount, { item }) => {
-          let startTimestamp;
-          let endTimestamp;
-          const [start, end] = dateRange ?? [];
-          if (start != null && end != null) {
-            startTimestamp = start.startOf('day').valueOf();
-            endTimestamp = end.endOf('day').valueOf();
-          }
+        render: (openAlertsCount, { item }) => {
           return (
             <>
               <Link
-                to={makeUrl(
-                  '/case-management/cases',
-                  {},
+                to={generateAlertsListUrl(
                   {
                     rulesHitFilter: item.ruleInstanceId,
-                    createdTimestamp: `${startTimestamp},${endTimestamp}`,
                   },
+                  'ALL',
+                  dateRange,
                 )}
               >
-                {openCasesCount} Cases
+                {openAlertsCount} open {pluralize('alert', openAlertsCount)}
               </Link>
             </>
           );
@@ -76,29 +69,25 @@ export default function RuleHitCard() {
     }),
   ]);
 
-  const rulesHitResult = usePaginatedQuery(
-    HITS_PER_USER_STATS(dateRange),
-    async (paginationParams) => {
-      let startTimestamp = dayjs().subtract(1, 'day').valueOf();
-      let endTimestamp = Date.now();
+  const rulesHitResult = useQuery(HITS_PER_USER_STATS(dateRange), async () => {
+    let startTimestamp = dayjs().subtract(1, 'day').valueOf();
+    let endTimestamp = Date.now();
 
-      const [start, end] = dateRange ?? [];
-      if (start != null && end != null) {
-        startTimestamp = start.startOf('day').valueOf();
-        endTimestamp = end.endOf('day').valueOf();
-      }
-      const result = await api.getDashboardStatsRuleHit({
-        ...paginationParams,
-        startTimestamp,
-        endTimestamp,
-      });
+    const [start, end] = dateRange ?? [];
+    if (start != null && end != null) {
+      startTimestamp = start.startOf('day').valueOf();
+      endTimestamp = end.endOf('day').valueOf();
+    }
+    const result = await api.getDashboardStatsRuleHit({
+      startTimestamp,
+      endTimestamp,
+    });
 
-      return {
-        total: result.data.length,
-        items: result.data,
-      };
-    },
-  );
+    return {
+      total: result.data.length,
+      items: result.data,
+    };
+  });
 
   return (
     <QueryResultsTable<DashboardStatsRulesCountData>

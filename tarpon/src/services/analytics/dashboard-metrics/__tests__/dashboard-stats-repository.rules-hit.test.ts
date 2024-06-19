@@ -10,11 +10,28 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { Alert } from '@/@types/openapi-internal/Alert'
+import { Priority } from '@/@types/openapi-internal/Priority'
 
 dynamoDbSetupHook()
 
-describe('Verify case stats', () => {
-  test(`Single case`, async () => {
+const TEST_ALERT: Alert = {
+  alertId: 'A-1',
+  alertStatus: 'OPEN',
+  createdTimestamp: 0,
+  latestTransactionArrivalTimestamp: 0,
+  ruleName: '',
+  ruleDescription: '',
+  ruleId: 'R-1',
+  ruleInstanceId: '1',
+  ruleAction: 'FLAG',
+  numberOfTransactionsHit: 1,
+  priority: 'P1' as Priority,
+  transactionIds: ['T-0', 'T-1', 'T-2', 'T-3', 'T-4'],
+}
+
+describe('Verify alerts stats', () => {
+  test(`Single alert`, async () => {
     const TENANT_ID = getTestTenantId()
     const caseRepository = await getCaseRepo(TENANT_ID)
     const statsRepository = await getStatsRepo(TENANT_ID)
@@ -58,8 +75,16 @@ describe('Verify case stats', () => {
       caseTransactionsIds: transactions.map((t) => t.transactionId),
       caseAggregates: DEFAULT_CASE_AGGREGATES,
       updatedAt: createdTimestamp,
+      alerts: [
+        {
+          ...TEST_ALERT,
+          alertId: 'A-1',
+          createdTimestamp: createdTimestamp,
+          transactionIds: transactions.map((t) => t.transactionId),
+        },
+      ],
     })
-    await statsRepository.recalculateRuleHitStats({
+    await statsRepository.refreshRuleHitStats({
       startTimestamp: createdTimestamp,
     })
     const stats = await statsRepository.getRuleHitCountStats(
@@ -70,9 +95,8 @@ describe('Verify case stats', () => {
       {
         ruleId: 'R-1',
         ruleInstanceId: '1',
-        hitCount: 2,
-        casesCount: 1,
-        openCasesCount: 1,
+        hitCount: 1,
+        openAlertsCount: 1,
       },
     ])
   })
@@ -109,6 +133,14 @@ test(`Multiple cases`, async () => {
     caseTransactionsIds: [transaction.transactionId],
     caseAggregates: DEFAULT_CASE_AGGREGATES,
     updatedAt: timestamp,
+    alerts: [
+      {
+        ...TEST_ALERT,
+        alertId: 'A-1',
+        createdTimestamp: timestamp,
+        transactionIds: [transaction.transactionId],
+      },
+    ],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-2',
@@ -117,6 +149,14 @@ test(`Multiple cases`, async () => {
     caseTransactionsIds: [transaction.transactionId],
     caseAggregates: DEFAULT_CASE_AGGREGATES,
     updatedAt: timestamp,
+    alerts: [
+      {
+        ...TEST_ALERT,
+        alertId: 'A-2',
+        createdTimestamp: timestamp,
+        transactionIds: [transaction.transactionId],
+      },
+    ],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
@@ -125,8 +165,16 @@ test(`Multiple cases`, async () => {
     caseTransactionsIds: [transaction.transactionId],
     caseAggregates: DEFAULT_CASE_AGGREGATES,
     updatedAt: timestamp,
+    alerts: [
+      {
+        ...TEST_ALERT,
+        alertId: 'A-3',
+        createdTimestamp: timestamp,
+        transactionIds: [transaction.transactionId],
+      },
+    ],
   })
-  await statsRepository.recalculateRuleHitStats({ startTimestamp: timestamp })
+  await statsRepository.refreshRuleHitStats({ startTimestamp: timestamp })
   const stats = await statsRepository.getRuleHitCountStats(
     dayjs('2022-01-30T00:00:00.000Z').valueOf(),
     dayjs('2022-01-31T00:00:00.000Z').valueOf()
@@ -135,9 +183,8 @@ test(`Multiple cases`, async () => {
     {
       ruleId: 'R-1',
       ruleInstanceId: '1',
-      hitCount: 3,
-      casesCount: 3,
-      openCasesCount: 3,
+      hitCount: 1,
+      openAlertsCount: 3,
     },
   ])
 })
@@ -173,6 +220,14 @@ test(`Multiple cases - opened and closed`, async () => {
     caseTransactionsIds: [transaction.transactionId],
     caseAggregates: DEFAULT_CASE_AGGREGATES,
     updatedAt: timestamp,
+    alerts: [
+      {
+        ...TEST_ALERT,
+        alertId: 'A-1',
+        createdTimestamp: timestamp,
+        transactionIds: [transaction.transactionId],
+      },
+    ],
   })
   await caseRepository.addCaseMongo({
     caseType: 'SYSTEM',
@@ -182,6 +237,15 @@ test(`Multiple cases - opened and closed`, async () => {
     caseTransactionsIds: [transaction.transactionId],
     caseAggregates: DEFAULT_CASE_AGGREGATES,
     updatedAt: timestamp,
+    alerts: [
+      {
+        ...TEST_ALERT,
+        alertId: 'A-2',
+        createdTimestamp: timestamp,
+        transactionIds: [transaction.transactionId],
+        alertStatus: 'CLOSED',
+      },
+    ],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
@@ -191,6 +255,15 @@ test(`Multiple cases - opened and closed`, async () => {
     caseTransactionsIds: [transaction.transactionId],
     caseAggregates: DEFAULT_CASE_AGGREGATES,
     updatedAt: timestamp,
+    alerts: [
+      {
+        ...TEST_ALERT,
+        alertId: 'A-3',
+        createdTimestamp: timestamp,
+        transactionIds: [transaction.transactionId],
+        alertStatus: 'OPEN',
+      },
+    ],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-4',
@@ -200,8 +273,17 @@ test(`Multiple cases - opened and closed`, async () => {
     caseTransactionsIds: [transaction.transactionId],
     caseAggregates: DEFAULT_CASE_AGGREGATES,
     updatedAt: timestamp,
+    alerts: [
+      {
+        ...TEST_ALERT,
+        alertId: 'A-4',
+        createdTimestamp: timestamp,
+        transactionIds: [transaction.transactionId],
+        alertStatus: 'REOPENED',
+      },
+    ],
   })
-  await statsRepository.recalculateRuleHitStats({ startTimestamp: timestamp })
+  await statsRepository.refreshRuleHitStats({ startTimestamp: timestamp })
   const stats = await statsRepository.getRuleHitCountStats(
     dayjs('2022-01-30T00:00:00.000Z').valueOf(),
     dayjs('2022-01-31T00:00:00.000Z').valueOf()
@@ -210,9 +292,8 @@ test(`Multiple cases - opened and closed`, async () => {
     {
       ruleId: 'R-1',
       ruleInstanceId: '1',
-      hitCount: 4,
-      casesCount: 4,
-      openCasesCount: 3,
+      hitCount: 1,
+      openAlertsCount: 3,
     },
   ])
 })

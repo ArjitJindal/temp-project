@@ -7365,9 +7365,7 @@ components:
                 type: string
               hitCount:
                 type: number
-              casesCount:
-                type: number
-              openCasesCount:
+              openAlertsCount:
                 type: number
             required:
               - ruleId
@@ -7677,14 +7675,12 @@ components:
                 oneOf:
                   - $ref: '#/components/schemas/InternalConsumerUser'
                   - $ref: '#/components/schemas/InternalBusinessUser'
-              casesCount:
-                type: number
-              openCasesCount:
+              openAlertsCount:
                 type: number
               rulesRunCount:
                 type: number
             required:
-              - originUserId
+              - userId
               - rulesHitCount
               - rulesRunCount
       required:

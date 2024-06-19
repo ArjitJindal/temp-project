@@ -124,7 +124,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const { startTimestamp, endTimestamp } = request
 
       if (shouldRefreshAll(event)) {
-        await dashboardStatsRepository.refreshCaseStats()
+        await dashboardStatsRepository.refreshAlertsStats()
       }
       if (!endTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)

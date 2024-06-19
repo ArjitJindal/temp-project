@@ -38,6 +38,7 @@ export class QaAlertsByAssigneeStatsDashboardMetric {
       {
         $match: {
           'alerts.alertStatus': 'CLOSED',
+          ...timestampMatch,
         },
       },
       {

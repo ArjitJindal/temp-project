@@ -11,12 +11,26 @@ import {
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { Alert } from '@/@types/openapi-internal/Alert'
 
 dynamoDbSetupHook()
 
-const refreshCaseStatsMock = jest.spyOn(
+const TEST_ALERT: Alert = {
+  alertId: 'A-1',
+  createdTimestamp: 0,
+  transactionIds: ['T-1'],
+  ruleName: 'R-1',
+  ruleInstanceId: '1',
+  ruleAction: 'BLOCK',
+  updatedAt: 0,
+  priority: 'P1',
+  ruleDescription: 'Test rule which always hit',
+  numberOfTransactionsHit: 1,
+}
+
+const refreshAlertsStatsMock = jest.spyOn(
   DashboardStatsRepository.prototype,
-  'refreshCaseStats'
+  'refreshAlertsStats'
 )
 const refreshTeamStatsMock = jest.spyOn(
   DashboardStatsRepository.prototype,
@@ -34,6 +48,18 @@ const refreshUserStatsMock = jest.spyOn(
 describe('Dashboard refresh runner', () => {
   test('refreshs all the dashboard stats', async () => {
     const tenantId = await getTestTenantId()
+    const caseUsers = {
+      origin: {
+        userId: 'U-1',
+        updatedAt: 0,
+        type: 'CONSUMER',
+      },
+      destination: {
+        userId: 'U-2',
+        updatedAt: 0,
+        type: 'CONSUMER',
+      },
+    }
     // Prepare testing data
     const latest = dayjs('2023-09-21')
     const mongoDb = await getMongoDbClient()
@@ -45,14 +71,32 @@ describe('Dashboard refresh runner', () => {
         updatedAt: latest.valueOf(),
         caseType: 'SYSTEM',
         caseAggregates: DEFAULT_CASE_AGGREGATES,
+        caseUsers,
+        alerts: [
+          {
+            ...TEST_ALERT,
+            createdTimestamp: latest.valueOf(),
+            updatedAt: latest.valueOf(),
+            alertId: 'A-1',
+          },
+        ],
       }),
       // C-2 and C-3 should be merged into one time range
       caseRepository.addCaseMongo({
         caseId: 'C-2',
         createdTimestamp: latest.subtract(1, 'day').valueOf(),
-        updatedAt: latest.valueOf(),
+        updatedAt: latest.subtract(1, 'day').valueOf(),
         caseType: 'SYSTEM',
         caseAggregates: DEFAULT_CASE_AGGREGATES,
+        caseUsers,
+        alerts: [
+          {
+            ...TEST_ALERT,
+            createdTimestamp: latest.subtract(1, 'day').valueOf(),
+            updatedAt: latest.subtract(1, 'day').valueOf(),
+            alertId: 'A-2',
+          },
+        ],
       }),
       caseRepository.addCaseMongo({
         caseId: 'C-3',
@@ -60,9 +104,21 @@ describe('Dashboard refresh runner', () => {
           .subtract(1, 'day')
           .subtract(1, 'hour')
           .valueOf(),
-        updatedAt: latest.valueOf(),
+        updatedAt: latest.subtract(1, 'day').subtract(1, 'hour').valueOf(),
         caseType: 'SYSTEM',
         caseAggregates: DEFAULT_CASE_AGGREGATES,
+        caseUsers,
+        alerts: [
+          {
+            ...TEST_ALERT,
+            createdTimestamp: latest
+              .subtract(1, 'day')
+              .subtract(1, 'hour')
+              .valueOf(),
+            updatedAt: latest.subtract(1, 'day').subtract(1, 'hour').valueOf(),
+            alertId: 'A-3',
+          },
+        ],
       }),
     ])
     const transactionsCollection = mongoDb
@@ -121,12 +177,8 @@ describe('Dashboard refresh runner', () => {
       endTimestamp: 1695258000000,
     })
 
-    expect(refreshCaseStatsMock).toBeCalledTimes(2)
-    expect(refreshCaseStatsMock).toHaveBeenNthCalledWith(1, {
-      startTimestamp: 1695164400000,
-      endTimestamp: 1695171600000,
-    })
-    expect(refreshCaseStatsMock).toHaveBeenNthCalledWith(2, {
+    expect(refreshAlertsStatsMock).toBeCalledTimes(1)
+    expect(refreshAlertsStatsMock).toHaveBeenNthCalledWith(1, {
       startTimestamp: 1695254400000,
       endTimestamp: 1695258000000,
     })

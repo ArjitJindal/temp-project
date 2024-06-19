@@ -59,31 +59,51 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
     )
     const { checkTimeRange } = job.parameters
     const refreshJobs = [
-      // Case stats
+      // Alerts stats
       (async () => {
         const casesCollection = db.collection<Case>(
           CASES_COLLECTION(job.tenantId)
         )
-        const cases = await casesCollection
-          .find(
+        const checkTimeRangeCondition = {
+          'alerts.updatedAt': {
+            $gte: checkTimeRange?.startTimestamp ?? 0,
+            $lt: checkTimeRange?.endTimestamp ?? Number.MAX_SAFE_INTEGER,
+          },
+        }
+        const alerts = await casesCollection
+          .aggregate([
             {
-              updatedAt: {
-                $gte: checkTimeRange?.startTimestamp ?? 0,
-                $lt: checkTimeRange?.endTimestamp ?? Number.MAX_SAFE_INTEGER,
+              $match: checkTimeRangeCondition,
+            },
+            {
+              $unwind: '$alerts',
+            },
+            {
+              $match: checkTimeRangeCondition,
+            },
+            {
+              $project: {
+                alert: '$alerts',
               },
             },
-            { projection: { createdTimestamp: 1 } }
-          )
+          ])
           .toArray()
-
-        const targetTimeRanges = getTargetTimeRanges(
-          cases.map((c) => c.createdTimestamp ?? 0)
+        const createdAtTargetTimeRanges = getTargetTimeRanges(
+          alerts.map((alert) => alert.alert.createdTimestamp ?? 0)
         )
 
-        for (const timeRange of targetTimeRanges) {
-          await dashboardStatsRepository.refreshCaseStats(timeRange)
-          await dashboardStatsRepository.refreshLatestTeamStats()
-          logger.info(`Refreshed case stats - ${JSON.stringify(timeRange)}`)
+        const updatedAtTargetTimeRanges = getTargetTimeRanges(
+          alerts.map((alert) => alert.alert.updatedAt ?? 0)
+        )
+
+        for (const timeRange of createdAtTargetTimeRanges) {
+          await dashboardStatsRepository.refreshAlertsStats(timeRange)
+          logger.info(`Refreshed alerts stats - ${JSON.stringify(timeRange)}`)
+        }
+
+        for (const timeRange of updatedAtTargetTimeRanges) {
+          await dashboardStatsRepository.refreshQaStats(timeRange)
+          logger.info(`Refreshed QA stats - ${JSON.stringify(timeRange)}`)
         }
       })(),
 
@@ -91,6 +111,8 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
       (async () => {
         await dashboardStatsRepository.refreshTeamStats(checkTimeRange)
         logger.info(`Refreshed team stats - ${JSON.stringify(checkTimeRange)}`)
+        await dashboardStatsRepository.refreshLatestTeamStats()
+        logger.info(`Refreshed latest team stats`)
       })(),
 
       // Transaction stats

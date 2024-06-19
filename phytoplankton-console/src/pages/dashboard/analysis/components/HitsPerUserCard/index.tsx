@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
 import { round } from 'lodash';
 import { TableItem } from './types';
-import { generateCaseListUrl } from './utils';
+import { generateAlertsListUrl } from './utils';
 import { Dayjs } from '@/utils/dayjs';
 import UserLink from '@/components/UserLink';
 import { getUserLink, getUserName } from '@/utils/api/users';
@@ -66,25 +66,33 @@ export default function HitsPerUserCard(props: Props) {
         },
       },
     }),
-    helper.simple<'openCasesCount'>({
-      title: 'Open cases',
-      key: 'openCasesCount',
+    helper.simple<'openAlertsCount'>({
+      title: 'Open alerts',
+      key: 'openAlertsCount',
       enableResizing: false,
       type: {
-        render: (openCasesCount, { item: entity }) => {
+        render: (openAlertsCount, { item: entity }) => {
           return (
             <>
               <Link
-                to={entity.userId ? generateCaseListUrl(entity.userId, direction, dateRange) : '#'}
+                to={
+                  entity.userId
+                    ? generateAlertsListUrl({ userId: entity.userId }, direction, dateRange)
+                    : '#'
+                }
               >
-                {entity.openCasesCount} Open {pluralize('case', entity.openCasesCount)}
+                {openAlertsCount} open {pluralize('alert', openAlertsCount)}
               </Link>
             </>
           );
         },
         stringify(value, item) {
           const link = item.userId
-            ? `(${getCurrentDomain()}${generateCaseListUrl(item.userId, direction, dateRange)})`
+            ? `(${getCurrentDomain()}${generateAlertsListUrl(
+                { userId: item.userId },
+                direction,
+                dateRange,
+              )})`
             : undefined;
           return `${value} ${link}`;
         },

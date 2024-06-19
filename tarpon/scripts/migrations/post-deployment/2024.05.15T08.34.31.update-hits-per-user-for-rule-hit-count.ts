@@ -43,12 +43,12 @@ async function migrateTenant(tenant: Tenant) {
   ].filter((timeRange) => timeRange.startTimestamp < lastCompletedTimestamp)
   for (const timeRange of targetTimeRanges) {
     await Promise.all([
-      HitsByUserStatsDashboardMetric.refreshCaseStats(
+      HitsByUserStatsDashboardMetric.refreshAlertsStats(
         tenant.id,
         'ORIGIN',
         timeRange
       ),
-      HitsByUserStatsDashboardMetric.refreshCaseStats(
+      HitsByUserStatsDashboardMetric.refreshAlertsStats(
         tenant.id,
         'DESTINATION',
         timeRange

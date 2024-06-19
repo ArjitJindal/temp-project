@@ -2,7 +2,7 @@ import { useLocalStorageState } from 'ahooks';
 import { RangeValue } from 'rc-picker/es/interface';
 import React, { useMemo, useState } from 'react';
 import HitsPerUserCard from './HitsPerUserCard';
-import { generateCaseListUrl } from './HitsPerUserCard/utils';
+import { generateAlertsListUrl } from './HitsPerUserCard/utils';
 import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import Widget from '@/components/library/Widget';
@@ -66,14 +66,18 @@ const TopUsersHitCard = (props: Props) => {
   const dataToExport = useMemo(() => {
     if (isSuccess(hitsPerUserResult.data)) {
       const data = hitsPerUserResult.data.value.items.map((item) => {
-        const caseLink = item.userId
-          ? `${getCurrentDomain()}${generateCaseListUrl(item.userId, direction, dateRange)}`
+        const alertLink = item.userId
+          ? `${getCurrentDomain()}${generateAlertsListUrl(
+              { userId: item.userId },
+              direction,
+              dateRange,
+            )}`
           : null;
         return {
           userId: `${item.userId} (${getCurrentDomain()}${getUserLink(item.user)})`,
           userName: getUserName(item.user) ?? '',
           ruleHit: `${item.rulesHitCount} hits`,
-          openCases: `${item.openCasesCount} open cases ${caseLink ? `(${caseLink})` : ''}`,
+          openAlerts: `${item.openAlertsCount} open alerts ${alertLink ? `(${alertLink})` : ''}`,
         };
       });
       return data;

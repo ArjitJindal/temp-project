@@ -1,7 +1,5 @@
 import { getAffectedInterval } from '../../dashboard/utils'
 import {
-  CASE_GROUP_KEYS,
-  CASE_PROJECT_KEYS,
   DashboardStatsRiskLevelDistributionData,
   TimeRange,
 } from '../../dashboard/repositories/types'
@@ -21,115 +19,93 @@ import {
 import { Case } from '@/@types/openapi-internal/Case'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { traceable } from '@/core/xray'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 @traceable
 export class RuleHitsStatsDashboardMetric {
-  public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
+  public static async refreshAlertsStats(
+    tenantId,
+    timeRange?: TimeRange
+  ): Promise<void> {
     const db = await getMongoDbClientDb()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     const aggregationCollection =
       DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
+    await this.createIndexes(tenantId)
     let timestampMatch: any = undefined
 
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampMatch = {
-        updatedAt: {
+        'alerts.createdTimestamp': {
           $gte: start,
           $lt: end,
         },
       }
     }
+
     const pipeline = [
-      { $match: { ...timestampMatch } },
       {
-        $lookup: {
-          from: TRANSACTIONS_COLLECTION(tenantId),
-          localField: 'caseTransactionsIds',
-          foreignField: 'transactionId',
-          as: 'caseTransactions',
-          pipeline: [
-            {
-              $project: {
-                transactionId: 1,
-                hitRules: 1,
-              },
-            },
-          ],
-        },
+        $match: { ...timestampMatch },
       },
       {
-        $unwind: {
-          path: '$caseTransactions',
-          preserveNullAndEmptyArrays: false,
-        },
+        $unwind: '$alerts',
       },
       {
-        $addFields: {
-          userHitRules: {
-            $concatArrays: [
-              {
-                $ifNull: ['$caseUsers.origin.hitRules', []],
-              },
-              {
-                $ifNull: ['$caseUsers.destination.hitRules', []],
-              },
-            ],
-          },
-        },
-      },
-      {
-        $addFields: {
-          allHitRules: {
-            $concatArrays: ['$caseTransactions.hitRules', '$userHitRules'],
-          },
-        },
-      },
-      {
-        $unwind: {
-          path: '$allHitRules',
-          preserveNullAndEmptyArrays: false,
-        },
+        $match: { ...timestampMatch },
       },
       {
         $group: {
           _id: {
-            time: {
+            date: {
               $dateToString: {
                 format: HOUR_DATE_FORMAT,
                 date: {
                   $toDate: {
-                    $toLong: '$createdTimestamp',
+                    $toLong: '$alerts.createdTimestamp',
                   },
                 },
               },
             },
-            ruleId: '$allHitRules.ruleId',
-            ruleInstanceId: '$allHitRules.ruleInstanceId',
+            ruleId: '$alerts.ruleId',
+            ruleInstanceId: '$alerts.ruleInstanceId',
           },
-          hitCount: {
-            $sum: 1,
+          ruleHitCount: {
+            $sum: {
+              $cond: {
+                if: { $eq: ['$alerts.numberOfTransactionsHit', 0] },
+                then: 1,
+                else: 0,
+              },
+            },
           },
-          ...CASE_GROUP_KEYS,
+          openAlertsCount: {
+            $sum: {
+              $cond: {
+                if: { $ne: ['$alerts.alertStatus', 'CLOSED'] },
+                then: 1,
+                else: 0,
+              },
+            },
+          },
         },
       },
       {
-        $group: {
-          _id: '$_id.time',
-          rulesStats: {
-            $push: {
-              ruleId: '$_id.ruleId',
-              ruleInstanceId: '$_id.ruleInstanceId',
-              hitCount: '$hitCount',
-              ...CASE_PROJECT_KEYS,
-            },
-          },
+        $project: {
+          _id: false,
+          date: '$_id.date',
+          ruleId: '$_id.ruleId',
+          ruleInstanceId: '$_id.ruleInstanceId',
+          hitCount: '$rulesHitCount',
+          openAlertsCount: '$openAlertsCount',
         },
       },
       {
         $merge: {
           into: aggregationCollection,
+          on: ['date', 'ruleId', 'ruleInstanceId'],
           whenMatched: 'merge',
+          whenNotMatched: 'insert',
         },
       },
     ]
@@ -141,11 +117,134 @@ export class RuleHitsStatsDashboardMetric {
 
     await cleanUpStaleData(
       aggregationCollection,
-      '_id',
+      'date',
       lastUpdatedAt,
       timeRange,
-      'HOUR'
+      'HOUR',
+      { openAlertsCount: { $exists: true } }
     )
+  }
+
+  public static async refreshTransactionsStats(
+    tenantId,
+    timeRange?: TimeRange
+  ): Promise<void> {
+    const db = await getMongoDbClientDb()
+    const transactionsCollection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(tenantId)
+    )
+    await this.createIndexes(tenantId)
+    const aggregationCollection =
+      DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
+
+    let tranasctionTimestampMatch: any = undefined
+    if (timeRange) {
+      const { start, end } = getAffectedInterval(timeRange, 'HOUR')
+      tranasctionTimestampMatch = {
+        timestamp: {
+          $gte: start,
+          $lt: end,
+        },
+      }
+    }
+
+    const mergePipeline = [
+      {
+        $merge: {
+          into: aggregationCollection,
+          on: ['date', 'ruleId', 'ruleInstanceId'],
+          whenMatched: 'merge',
+          whenNotMatched: 'insert',
+        },
+      },
+    ]
+
+    const transactionsPipeline = [
+      {
+        $match: {
+          ...tranasctionTimestampMatch,
+        },
+      },
+      {
+        $unwind: { path: '$hitRules' },
+      },
+      {
+        $match: {
+          'hitRules.ruleId': { $exists: true },
+          'hitRules.ruleInstanceId': { $exists: true },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            date: {
+              $dateToString: {
+                format: HOUR_DATE_FORMAT,
+                date: {
+                  $toDate: {
+                    $toLong: '$timestamp',
+                  },
+                },
+              },
+            },
+            ruleId: '$hitRules.ruleId',
+            ruleInstanceId: '$hitRules.ruleInstanceId',
+          },
+          rulesHitCount: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: false,
+          date: '$_id.date',
+          ruleId: '$_id.ruleId',
+          ruleInstanceId: '$_id.ruleInstanceId',
+          hitCount: '$rulesHitCount',
+        },
+      },
+      ...mergePipeline,
+    ]
+
+    const lastUpdatedAt = Date.now()
+
+    // Execute the transactions aggregation pipeline
+    await transactionsCollection
+      .aggregate(withUpdatedAt(transactionsPipeline, lastUpdatedAt), {
+        allowDiskUse: true,
+      })
+      .next()
+
+    await cleanUpStaleData(
+      aggregationCollection,
+      'date',
+      lastUpdatedAt,
+      timeRange,
+      'HOUR',
+      { hitCount: { $exists: true }, openAlertsCount: { $exists: false } }
+    )
+  }
+
+  private static async createIndexes(tenantId: string) {
+    const db = await getMongoDbClientDb()
+    const aggregationCollection =
+      DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
+
+    await db.collection(aggregationCollection).createIndex(
+      {
+        ruleId: 1,
+        date: -1,
+        ruleInstanceId: 1,
+      },
+      {
+        unique: true,
+      }
+    )
+    await db.collection(aggregationCollection).createIndex({
+      updatedAt: 1,
+      date: 1,
+    })
   }
 
   public static async get(
@@ -157,38 +256,33 @@ export class RuleHitsStatsDashboardMetric {
     const collection = db.collection<DashboardStatsRiskLevelDistributionData>(
       DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
     )
-
     const endDate = dayjs(endTimestamp)
     const endDateText: string = endDate.format(HOUR_DATE_FORMAT_JS)
     const startDateText: string =
       dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
-
     const result = await collection
       .aggregate<{
         _id: { ruleId: string; ruleInstanceId: string }
         hitCount: number
-        casesCount: number
-        openCasesCount: number
+        openAlertsCount: number
       }>(
         [
           {
             $match: {
-              _id: {
-                $gt: startDateText,
+              date: {
+                $gte: startDateText,
                 $lte: endDateText,
               },
             },
           },
-          { $unwind: { path: '$rulesStats' } },
           {
             $group: {
               _id: {
-                ruleId: '$rulesStats.ruleId',
-                ruleInstanceId: '$rulesStats.ruleInstanceId',
+                ruleId: '$ruleId',
+                ruleInstanceId: '$ruleInstanceId',
               },
-              hitCount: { $sum: '$rulesStats.hitCount' },
-              casesCount: { $sum: '$rulesStats.casesCount' },
-              openCasesCount: { $sum: '$rulesStats.openCasesCount' },
+              hitCount: { $sum: '$hitCount' },
+              openAlertsCount: { $sum: '$openAlertsCount' },
             },
           },
           { $sort: { hitCount: -1 } },
@@ -201,8 +295,7 @@ export class RuleHitsStatsDashboardMetric {
       ruleId: x._id.ruleId,
       ruleInstanceId: x._id.ruleInstanceId,
       hitCount: x.hitCount,
-      casesCount: x.casesCount,
-      openCasesCount: x.openCasesCount,
+      openAlertsCount: x.openAlertsCount,
     }))
   }
 }

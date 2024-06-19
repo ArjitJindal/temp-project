@@ -36,6 +36,12 @@ export class QaOverviewStatsDashboardMetric {
     }
     const pipeline = [
       {
+        $match: {
+          'alerts.alertStatus': 'CLOSED',
+          ...timestampMatch,
+        },
+      },
+      {
         $unwind: {
           path: '$alerts',
           preserveNullAndEmptyArrays: false,

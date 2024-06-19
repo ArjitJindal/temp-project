@@ -10,8 +10,8 @@ async function migrateTenant(tenant: Tenant) {
   const collection = db.collection<DashboardStatsTransactionsCountData>(
     DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenant.id)
   )
-  await HitsByUserStatsDashboardMetric.refreshCaseStats(tenant.id, 'ORIGIN')
-  await HitsByUserStatsDashboardMetric.refreshCaseStats(
+  await HitsByUserStatsDashboardMetric.refreshAlertsStats(tenant.id, 'ORIGIN')
+  await HitsByUserStatsDashboardMetric.refreshAlertsStats(
     tenant.id,
     'DESTINATION'
   )

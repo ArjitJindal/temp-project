@@ -1,9 +1,5 @@
 import { getAffectedInterval } from '../../dashboard/utils'
-import {
-  CASE_GROUP_KEYS,
-  CASE_PROJECT_KEYS,
-  TimeRange,
-} from '../../dashboard/repositories/types'
+import { TimeRange } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {
@@ -29,7 +25,7 @@ import { traceable } from '@/core/xray'
 
 @traceable
 export class HitsByUserStatsDashboardMetric {
-  public static async refreshCaseStats(
+  public static async refreshAlertsStats(
     tenantId,
     direction: 'ORIGIN' | 'DESTINATION',
     timeRange?: TimeRange
@@ -46,11 +42,11 @@ export class HitsByUserStatsDashboardMetric {
 
     await this.createIndexes(tenantId)
 
-    let timestampMatch: any = undefined
+    let alertTimestampMatch: any = {}
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
-      timestampMatch = {
-        createdTimestamp: {
+      alertTimestampMatch = {
+        'alerts.createdTimestamp': {
           $gte: start,
           $lt: end,
         },
@@ -68,16 +64,30 @@ export class HitsByUserStatsDashboardMetric {
       },
     ]
 
-    const casesPipeline = [
+    const alertsPipeline = [
       {
         $match: {
-          ...timestampMatch,
           [userFieldName]: { $ne: null },
+          ...alertTimestampMatch,
+        },
+      },
+      {
+        $unwind: {
+          path: '$alerts',
+        },
+      },
+      {
+        $match: {
+          ...alertTimestampMatch,
+          'alerts.alertStatus': {
+            $ne: 'CLOSED',
+          },
         },
       },
       {
         $project: {
-          caseTransactions: 0,
+          alerts: 1,
+          [userFieldName]: 1,
         },
       },
       {
@@ -88,14 +98,16 @@ export class HitsByUserStatsDashboardMetric {
                 format: HOUR_DATE_FORMAT,
                 date: {
                   $toDate: {
-                    $toLong: '$createdTimestamp',
+                    $toLong: '$alerts.createdTimestamp',
                   },
                 },
               },
             },
             userId: `$${userFieldName}`,
           },
-          ...CASE_GROUP_KEYS,
+          openAlertsCount: {
+            $sum: 1,
+          },
         },
       },
       {
@@ -104,7 +116,7 @@ export class HitsByUserStatsDashboardMetric {
           date: '$_id.date',
           userId: '$_id.userId',
           direction,
-          ...CASE_PROJECT_KEYS,
+          openAlertsCount: '$openAlertsCount',
         },
       },
       ...mergePipeline,
@@ -114,7 +126,7 @@ export class HitsByUserStatsDashboardMetric {
 
     // Execute the cases aggregation pipeline
     await casesCollection
-      .aggregate(withUpdatedAt(casesPipeline, lastUpdatedAt), {
+      .aggregate(withUpdatedAt(alertsPipeline, lastUpdatedAt), {
         allowDiskUse: true,
       })
       .next()
@@ -125,7 +137,7 @@ export class HitsByUserStatsDashboardMetric {
       lastUpdatedAt,
       timeRange,
       'HOUR',
-      { direction, casesCount: { $exists: true } }
+      { direction, openAlertsCount: { $exists: true } }
     )
   }
 
@@ -287,8 +299,7 @@ export class HitsByUserStatsDashboardMetric {
       .aggregate<{
         _id: string
         user: InternalConsumerUser | InternalBusinessUser | null
-        casesCount: number
-        openCasesCount: number
+        openAlertsCount: number
         rulesRunCount: number
         rulesHitCount: number
       }>(
@@ -296,14 +307,12 @@ export class HitsByUserStatsDashboardMetric {
           {
             $match: {
               ...condition.$match,
-              rulesRunCount: { $gt: 0 },
             },
           },
           {
             $group: {
               _id: `$userId`,
-              casesCount: { $sum: '$casesCount' },
-              openCasesCount: { $sum: '$openCasesCount' },
+              openAlertsCount: { $sum: '$openAlertsCount' },
               rulesRunCount: { $sum: '$rulesRunCount' },
               rulesHitCount: { $sum: '$rulesHitCount' },
             },
@@ -311,6 +320,7 @@ export class HitsByUserStatsDashboardMetric {
           {
             $match: {
               rulesHitCount: { $gt: 0 },
+              rulesRunCount: { $gt: 0 },
             },
           },
           {
@@ -344,8 +354,7 @@ export class HitsByUserStatsDashboardMetric {
         userId: x._id,
         user: x.user ?? undefined,
         rulesHitCount: x.rulesHitCount,
-        casesCount: x.casesCount,
-        openCasesCount: x.openCasesCount,
+        openAlertsCount: x.openAlertsCount,
         rulesRunCount: x.rulesRunCount,
       }
     })

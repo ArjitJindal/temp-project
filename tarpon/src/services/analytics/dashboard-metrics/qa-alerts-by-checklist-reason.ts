@@ -38,9 +38,7 @@ export class QaAlertsByChecklistReasonStatsDashboardMetric {
     }
 
     const pipeline = [
-      {
-        $match: { ...timestampMatch },
-      },
+      { $match: { ...timestampMatch } },
       {
         $unwind: {
           path: '$alerts',
