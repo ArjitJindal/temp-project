@@ -1565,6 +1565,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PEPStatus'
+        linkedEntities:
+          $ref: '#/components/schemas/UserEntityLink'
         savedPaymentDetails:
           type: array
           items:
@@ -3375,7 +3377,7 @@ components:
           items:
             $ref: '#/components/schemas/PaymentMethod'
         linkedEntities:
-          $ref: '#/components/schemas/BusinessEntityLink'
+          $ref: '#/components/schemas/UserEntityLink'
         acquisitionChannel:
           $ref: '#/components/schemas/AcquisitionChannel'
         savedPaymentDetails:
@@ -5624,8 +5626,8 @@ components:
         - PAYMENT_NAME
         - PAYMENT_BENEFICIARY_NAME
         - BANK_NAME
-    BusinessEntityLink:
-      title: BusinessEntityLink
+    UserEntityLink:
+      title: UserEntityLink
       type: object
       properties:
         parentUserId:

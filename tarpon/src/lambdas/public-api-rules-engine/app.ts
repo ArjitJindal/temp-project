@@ -309,6 +309,14 @@ export const userEventsHandler = lambdaApi()(
         await getMongoDbClient()
       )
 
+      const { updatedConsumerUserAttributes } = userEvent
+      if (updatedConsumerUserAttributes?.linkedEntities) {
+        await userManagementService.validateLinkedEntitiesAndEmitEvent(
+          updatedConsumerUserAttributes?.linkedEntities,
+          userEvent.userId
+        )
+      }
+
       const result = await userManagementService.verifyConsumerUserEvent(
         userEvent,
         allowUserTypeConversion === 'true'

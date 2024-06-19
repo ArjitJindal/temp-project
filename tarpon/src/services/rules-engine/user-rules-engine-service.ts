@@ -5,13 +5,13 @@ import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { RiskScoringService } from '../risk-scoring'
 import { UserEventRepository } from './repositories/user-event-repository'
+import { isBusinessUser } from './utils/user-rule-utils'
 import { RulesEngineService } from '.'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import { BusinessEntityLink } from '@/@types/openapi-internal/BusinessEntityLink'
 import { UserType } from '@/@types/user/user-type'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -21,6 +21,7 @@ import { UserBase } from '@/@types/openapi-internal/UserBase'
 import { traceable } from '@/core/xray'
 import { hasFeature } from '@/core/utils/context'
 import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDetails'
+import { UserEntityLink } from '@/@types/openapi-public/UserEntityLink'
 
 @traceable
 export class UserManagementService {
@@ -66,11 +67,11 @@ export class UserManagementService {
   ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     const isConsumerUser = type === 'CONSUMER'
 
-    if (!isConsumerUser && (userPayload as Business)?.linkedEntities) {
+    if (userPayload.linkedEntities) {
       try {
-        if ((userPayload as Business).linkedEntities) {
+        if (userPayload.linkedEntities) {
           await this.validateLinkedEntitiesAndEmitEvent(
-            (userPayload as Business).linkedEntities ?? {},
+            userPayload.linkedEntities ?? {},
             userPayload.userId
           )
         }
@@ -95,13 +96,13 @@ export class UserManagementService {
   }
 
   public async validateLinkedEntitiesAndEmitEvent(
-    linkedEntities: BusinessEntityLink,
+    linkedEntities: UserEntityLink,
     currentUserId: string
   ) {
     if (linkedEntities?.parentUserId) {
       const parentUserId = linkedEntities.parentUserId
-      const parentUser = await this.userRepository.getBusinessUser(
-        parentUserId as string
+      const parentUser = await this.userRepository.getUser<User | Business>(
+        parentUserId
       )
       if (!parentUser) {
         throw new BadRequest(
@@ -130,23 +131,31 @@ export class UserManagementService {
         }
       }
 
-      const parentUserEvent: BusinessUserEvent = {
+      const parentUserEvent = {
         timestamp: Date.now(),
         userId: parentUser.userId,
         reason: `Entity ${currentUserId} linked to it's parent ${parentUser.userId}`,
-        updatedBusinessUserAttributes: updateParentAttributes,
       }
-
-      await this.verifyBusinessUserEvent(parentUserEvent)
+      if (isBusinessUser(parentUser)) {
+        await this.verifyBusinessUserEvent({
+          ...parentUserEvent,
+          updatedBusinessUserAttributes: updateParentAttributes,
+        })
+      } else {
+        await this.verifyConsumerUserEvent({
+          ...parentUserEvent,
+          updatedConsumerUserAttributes: updateParentAttributes,
+        })
+      }
     }
 
     if (linkedEntities?.childUserIds) {
       const existingChildUsers = (
         await Promise.all(
           linkedEntities.childUserIds.map(async (childUserId: string) => {
-            const childUser = await this.userRepository.getBusinessUser(
-              childUserId
-            )
+            const childUser = await this.userRepository.getUser<
+              User | Business
+            >(childUserId)
             if (childUser) {
               let updateChildAttributes
               if (childUser.linkedEntities) {
@@ -163,15 +172,22 @@ export class UserManagementService {
                   },
                 }
               }
-              const childUserEvent: BusinessUserEvent = {
+              const childUserEvent = {
                 timestamp: Date.now(),
                 userId: childUser.userId,
                 reason: `Entity ${currentUserId} linked to it's child ${childUser.userId}`,
-                updatedBusinessUserAttributes: updateChildAttributes,
               }
-
-              await this.verifyBusinessUserEvent(childUserEvent)
-
+              if (isBusinessUser(childUser)) {
+                await this.verifyBusinessUserEvent({
+                  ...childUserEvent,
+                  updatedBusinessUserAttributes: updateChildAttributes,
+                })
+              } else {
+                await this.verifyConsumerUserEvent({
+                  ...childUserEvent,
+                  updatedConsumerUserAttributes: updateChildAttributes,
+                })
+              }
               return childUser
             }
           })
