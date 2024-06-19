@@ -11,8 +11,8 @@ import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
-import { everyAsync } from '@/core/utils/array'
 import { traceable } from '@/core/xray'
+import { everyAsync } from '@/utils/array'
 
 export type LowValueTransactionsRuleParameters = {
   lowTransactionValues: TransactionAmountRange

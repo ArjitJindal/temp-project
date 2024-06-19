@@ -210,6 +210,13 @@ export const SANCTIONS_SEARCH_LIST = (searchIds: string[]): QueryKey => [
   'list-by-ids',
   searchIds,
 ];
+export const SANCTIONS_HITS_ALL = (): QueryKey => ['sanctions', 'hits', 'search'];
+export const SANCTIONS_HITS_SEARCH = (params: AnyParameters): QueryKey => [
+  'sanctions',
+  'hits',
+  'search',
+  params,
+];
 export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
 export const ALERT_CHECKLIST = (alertId: string | undefined): QueryKey => [
   'alerts',

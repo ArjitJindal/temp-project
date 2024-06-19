@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router';
+import SanctionsHitStatusChangeModal from 'src/pages/case-management/AlertTable/SanctionsHitStatusChangeModal';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
@@ -14,6 +15,7 @@ import {
   AlertsReviewAssignmentsUpdateRequest,
   Assignment,
   ChecklistStatus,
+  SanctionHitStatusUpdateRequest,
 } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
@@ -70,9 +72,12 @@ import Button from '@/components/library/Button';
 import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal';
 import { getOr } from '@/utils/asyncResource';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
-import { denseArray } from '@/utils/lang';
+import { denseArray, getErrorMessage } from '@/utils/lang';
 import { useRuleQueues } from '@/components/rules/util';
 import { notEmpty } from '@/utils/array';
+import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
+import { SANCTIONS_HITS_ALL, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;
@@ -125,9 +130,15 @@ export default function AlertTable(props: Props) {
   const [qaMode] = useQaMode();
   const qaEnabled = useQaEnabled();
   const api = useApi();
+  const queryClient = useQueryClient();
   const user = useAuth0User();
   const [users] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
+  const [selectedSanctionHits, setSelectedSanctionHits] = useState<{ [alertId: string]: string[] }>(
+    {},
+  );
+  const [statusChangeModalVisibility, setStatusChangeModalVisibility] = useState<boolean>(false);
+
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
   const params = useMemo(() => internalParams ?? externalParams, [externalParams, internalParams]);
@@ -136,6 +147,11 @@ export default function AlertTable(props: Props) {
       .flatMap((v) => v)
       .filter(Boolean);
   }, [selectedTxns]);
+  const selectedSanctionHitsIds = useMemo(() => {
+    return Object.values(selectedSanctionHits)
+      .flatMap((v) => v)
+      .filter(Boolean);
+  }, [selectedSanctionHits]);
   const navigate = useNavigate();
   const location = useLocation();
   const parsedParams = useMemo(() => {
@@ -184,6 +200,48 @@ export default function AlertTable(props: Props) {
       },
       onError: (error) => {
         message.fatal(`Unable to assign alert: ${error.message}`);
+      },
+    },
+  );
+
+  const changeStatusMutation = useMutation<
+    unknown,
+    unknown,
+    {
+      alertId: string;
+      sanctionHitIds: string[];
+      updates: SanctionHitStatusUpdateRequest;
+    },
+    unknown
+  >(
+    async (variables: {
+      alertId: string;
+      sanctionHitIds: string[];
+      updates: SanctionHitStatusUpdateRequest;
+    }) => {
+      const { alertId, sanctionHitIds, updates } = variables;
+      const hideMessage = message.loading(`Saving...`);
+      try {
+        await api.changeSanctionsHitsStatus({
+          SanctionHitsStatusUpdateRequest: {
+            alertId,
+            sanctionHitIds,
+            updates,
+          },
+        });
+      } finally {
+        hideMessage();
+      }
+    },
+    {
+      onError: (e) => {
+        message.error(`Failed to update hits! ${getErrorMessage(e)}`);
+      },
+      onSuccess: async (_, variables) => {
+        message.success(`Done!`);
+        await queryClient.invalidateQueries(SANCTIONS_HITS_ALL());
+        await queryClient.invalidateQueries(ALERT_ITEM_COMMENTS(variables.alertId));
+        setSelectedSanctionHits({});
       },
     },
   );
@@ -701,14 +759,29 @@ export default function AlertTable(props: Props) {
           .flatMap(([, txns]) => txns),
       ),
     ];
-    const entityName = selectedTransactions.length ? 'transaction' : 'alert';
-    const count = entityName === 'alert' ? selectedAlerts.length : selectedTransactions.length;
-    return count > 0
-      ? {
-          entityName: entityName,
-          entityCount: count,
-        }
-      : undefined;
+    const selectedSanctionsHits = [
+      ...new Set(
+        Object.entries(selectedSanctionHits)
+          .filter(([_, ids]) => ids.length > 0)
+          .flatMap(([, ids]) => ids),
+      ),
+    ];
+    if (selectedTransactions.length > 0) {
+      return {
+        entityName: 'transaction',
+        entityCount: selectedTransactions.length,
+      };
+    }
+    if (selectedSanctionsHits.length > 0) {
+      return {
+        entityName: 'hit',
+        entityCount: selectedSanctionsHits.length,
+      };
+    }
+    return {
+      entityName: 'alert',
+      entityCount: selectedAlerts.length,
+    };
   };
   const handleChangeParams = useCallback(
     (params: AlertTableParams) => {
@@ -722,6 +795,23 @@ export default function AlertTable(props: Props) {
   );
 
   const selectionActions: SelectionAction<TableAlertItem, AlertTableParams>[] = [
+    ({ isDisabled }) => {
+      if (selectedSanctionHitsIds.length === 0) {
+        return;
+      }
+
+      return (
+        <Button
+          onClick={() => {
+            // setSelectionIds(props.selectedIds);
+            setStatusChangeModalVisibility(true);
+          }}
+          isDisabled={isDisabled}
+        >
+          Clear
+        </Button>
+      );
+    },
     ({ selectedIds, isDisabled }) => {
       if (!sarEnabled) {
         return;
@@ -745,7 +835,7 @@ export default function AlertTable(props: Props) {
       );
     },
     ({ selectedIds, selectedItems, isDisabled }) => {
-      if (selectedTransactionIds.length) {
+      if (selectedAlerts.length === 0) {
         return;
       }
 
@@ -905,7 +995,7 @@ export default function AlertTable(props: Props) {
       ) : null;
     },
     ({ selectedIds, params, onResetSelection }) => {
-      if (selectedTransactionIds.length) {
+      if (selectedTransactionIds.length || selectedSanctionHitsIds.length) {
         return;
       }
       return (
@@ -971,12 +1061,7 @@ export default function AlertTable(props: Props) {
         queryResults={queryResults}
         params={internalParams ?? params}
         onChangeParams={handleChangeParams}
-        selectedIds={[
-          ...selectedAlerts,
-          ...Object.entries(selectedTxns)
-            .filter(([_, txns]) => txns.length > 0)
-            .map(([key]) => key),
-        ]}
+        selectedIds={[...selectedAlerts, ...selectedTransactionIds, ...selectedSanctionHitsIds]}
         extraFilters={filters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionInfo={getSelectionInfo()}
@@ -988,14 +1073,27 @@ export default function AlertTable(props: Props) {
                   alert={alert ?? null}
                   escalatedTransactionIds={props.escalatedTransactionIds || []}
                   selectedTransactionIds={selectedTxns[alert.alertId ?? ''] ?? []}
+                  selectedSanctionsHitsIds={selectedSanctionHitsIds}
                   onTransactionSelect={(alertId, transactionIds) => {
                     setSelectedTxns((prevSelectedTxns) => ({
                       ...prevSelectedTxns,
                       [alertId]: [...transactionIds],
                     }));
+                    setSelectedSanctionHits({});
                     if (transactionIds.length > 0) {
                       setSelectedAlerts((prevState) => prevState.filter((x) => x !== alertId));
+                      setSelectedSanctionHits({});
                     }
+                  }}
+                  onSanctionsHitSelect={(alertId, sanctionsHitsIds) => {
+                    if (sanctionsHitsIds.length > 0) {
+                      setSelectedAlerts([]);
+                      setSelectedTxns({});
+                    }
+                    setSelectedSanctionHits((prevState) => ({
+                      ...prevState,
+                      [alertId]: sanctionsHitsIds,
+                    }));
                   }}
                 />
               )
@@ -1016,6 +1114,7 @@ export default function AlertTable(props: Props) {
             ids.reduce((acc, id) => ({ ...acc, [id]: [] }), prevState),
           );
           setSelectedAlerts(ids);
+          setSelectedSanctionHits({});
         }}
         toolsOptions={{
           reload: true,
@@ -1037,6 +1136,35 @@ export default function AlertTable(props: Props) {
             }),
           );
         }}
+      />
+      <SanctionsHitStatusChangeModal
+        entityIds={selectedSanctionHitsIds}
+        isVisible={statusChangeModalVisibility}
+        onClose={() => {
+          setStatusChangeModalVisibility(false);
+        }}
+        newStatus={'CLEARED'}
+        updateMutation={adaptMutationVariables(changeStatusMutation, (formValues) => {
+          const alertIds = Object.entries(selectedSanctionHits)
+            .filter(([_, values]) => values != null && values.length > 0)
+            .map(([key]) => key);
+          if (alertIds.length !== 1) {
+            throw new Error(`Its only possible to change status for a single alert`);
+          }
+          const [alertId] = alertIds;
+          return {
+            alertId: alertId,
+            sanctionHitIds: selectedSanctionHitsIds,
+            updates: {
+              alertId: alertId,
+              comment: formValues.comment,
+              files: formValues.files,
+              reasons: formValues.reasons,
+              whitelistHits: formValues.whitelistHits,
+              status: 'CLEARED' as const,
+            },
+          };
+        })}
       />
     </>
   );

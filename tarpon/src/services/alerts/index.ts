@@ -22,7 +22,6 @@ import { uuid4 } from '@sentry/utils'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CaseRepository } from '../cases/repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
-import { SanctionsService } from '../sanctions'
 import { ChecklistTemplatesService } from '../tenants/checklist-template-service'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
@@ -62,7 +61,6 @@ import { isAlertAvailable } from '@/services/cases/utils'
 import { CasesAlertsAuditLogService } from '@/services/cases/case-alerts-audit-log-service'
 import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
-import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
@@ -561,6 +559,18 @@ export class AlertsService extends CaseAlertsCommonService {
     return { childCaseId, assigneeIds }
   }
 
+  public static formatReasonsComment(params: {
+    reasons?: (string | 'Other')[]
+    otherReason?: string
+  }): undefined | string {
+    const { reasons, otherReason } = params
+    const allReasons = [
+      ...(reasons?.filter((x) => x !== 'Other') ?? []),
+      ...(reasons?.includes('Other') && otherReason ? [otherReason] : []),
+    ]
+    return allReasons.join(', ')
+  }
+
   public async getCommentsByAlertId(alertId: string): Promise<Comment[]> {
     const alert = await this.alertsRepository.getAlertById(alertId)
 
@@ -660,6 +670,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     return this.saveComment(alertId, { ...reply, parentId: commentId })
   }
+
   private async sendFilesAiSummaryBatchJob(
     alertIds: string[],
     commentId: string
@@ -1053,11 +1064,6 @@ export class AlertsService extends CaseAlertsCommonService {
             if (!c || !alert) {
               return
             }
-            const userId =
-              c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId
-            if (userId) {
-              await this.whiltelistSanctionEntities(userId, [alert])
-            }
           })
         )
       }
@@ -1137,25 +1143,6 @@ export class AlertsService extends CaseAlertsCommonService {
       beforeTimestamp: params?.beforeTimestamp,
       afterTimestamp: params?.afterTimestamp,
     })
-  }
-
-  public async whiltelistSanctionEntities(userId: string, alerts: Alert[]) {
-    const sanctionsService = new SanctionsService(this.tenantId)
-    const searchIds = alerts
-      .flatMap((alert) =>
-        alert.ruleHitMeta?.sanctionsDetails?.map((v) => v.searchId)
-      )
-      .filter(Boolean) as string[]
-    if (searchIds.length === 0) {
-      return
-    }
-
-    const searchs = await sanctionsService.getSearchHistoriesByIds(searchIds)
-    const entities = searchs
-      .flatMap((search) => search?.response?.data)
-      .map((v) => v?.doc)
-      .filter(Boolean) as ComplyAdvantageSearchHitDoc[]
-    await sanctionsService.addWhitelistEntities(entities, userId)
   }
 
   async updateAlertChecklistStatus(

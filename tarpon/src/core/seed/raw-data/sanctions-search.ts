@@ -1,96 +1,148 @@
 import { v4 as uuid4 } from 'uuid'
 import { randomSubsetOfSize } from '../samplers/prng'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import { ComplyAdvantageSearchHitDocAka } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDocAka'
+import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 
-export const businessSanctionsSearch = (
-  username: string
-): SanctionsSearchHistory => {
+export const sanctionsSearchHit = (
+  searchId: string,
+  username: string,
+  userId: string
+): SanctionsHit => {
   const id = uuid4()
   const { sources, source_notes, media } = getSourcesAndMedia()
   return {
-    _id: id,
+    searchId,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    sanctionsHitId: `SH-${Math.round(999999 * Math.random())
+      .toString()
+      .padStart(6, '0')}`,
+    status: 'OPEN',
+    hitContext: {
+      userId,
+    },
+    caEntity: {
+      id: id,
+      last_updated_utc: new Date(),
+      types: [
+        'adverse-media',
+        'adverse-media-v2-fraud-linked',
+        'adverse-media-v2-general-aml-cft',
+        'adverse-media-v2-other-minor',
+        'adverse-media-v2-other-serious',
+        'adverse-media-v2-property',
+        'adverse-media-v2-terrorism',
+        'adverse-media-v2-violence-aml-cft',
+        'sanction',
+      ],
+      name: `${username}#${Math.round(1000 * Math.random())}`,
+      entity_type: 'organisation',
+      keywords: [],
+      sources,
+      source_notes,
+      media,
+      fields: [
+        {
+          name: 'Countries',
+          tag: 'country_names',
+          value: 'Russian Federation',
+        },
+        {
+          name: 'Countries',
+          tag: 'country_names',
+          value: 'Turkey',
+        },
+        {
+          name: 'Countries',
+          tag: 'country_names',
+          value: 'Portugal',
+        },
+      ],
+    },
+    caMatchTypes: ['aka_exact', 'name_phonetic'],
+  }
+}
+
+export const businessSanctionsSearch = (
+  username: string,
+  userId: string
+): {
+  historyItem: SanctionsSearchHistory
+  hits: SanctionsHit[]
+} => {
+  const searchId = uuid4()
+  const hits = [
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+  ]
+  const historyItem = {
+    _id: searchId,
     request: {
       searchTerm: username,
     },
     response: {
-      total: 100,
-      data: [
-        {
-          doc: {
-            id: 'G4C22IUVXN9JYBZ',
-            last_updated_utc: new Date(),
-            types: [
-              'adverse-media',
-              'adverse-media-v2-fraud-linked',
-              'adverse-media-v2-general-aml-cft',
-              'adverse-media-v2-other-minor',
-              'adverse-media-v2-other-serious',
-              'adverse-media-v2-property',
-              'adverse-media-v2-terrorism',
-              'adverse-media-v2-violence-aml-cft',
-              'sanction',
-            ],
-            name: username,
-            entity_type: 'organisation',
-            keywords: [],
-            sources,
-            source_notes,
-            media,
-          },
-          score: 1.7,
-        },
-      ],
+      hitsCount: hits.length,
       rawComplyAdvantageResponse: {},
       searchId: '229b87fa-05ab-4b1d-82f8-b2df32fdcab7',
     },
     createdAt: 1683301138980,
   }
+  return { historyItem, hits }
 }
 
 export const consumerSanctionsSearch = (
-  username: string
-): SanctionsSearchHistory => {
-  const id = uuid4()
-  const { sources, source_notes, media } = getSourcesAndMedia()
-  return {
-    _id: id,
+  username: string,
+  userId: string
+): {
+  historyItem: SanctionsSearchHistory
+  hits: SanctionsHit[]
+} => {
+  const searchId = uuid4()
+  const hits = [
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+    sanctionsSearchHit(searchId, username, userId),
+  ]
+  const historyItem = {
+    _id: searchId,
     request: {
       searchTerm: username,
     },
     response: {
-      total: 100,
-      data: [
-        {
-          doc: {
-            id: 'G4C22IUVXN9JYBZ',
-            last_updated_utc: new Date(),
-            types: [
-              'adverse-media',
-              'adverse-media-v2-fraud-linked',
-              'adverse-media-v2-general-aml-cft',
-              'adverse-media-v2-other-minor',
-              'adverse-media-v2-other-serious',
-              'adverse-media-v2-property',
-              'adverse-media-v2-terrorism',
-              'adverse-media-v2-violence-aml-cft',
-              'sanction',
-            ],
-            name: username,
-            entity_type: 'person',
-            keywords: [],
-            sources,
-            source_notes,
-            media,
-            aka: [username] as ComplyAdvantageSearchHitDocAka[],
-          },
-          score: 1.7,
-        },
-      ],
+      hitsCount: hits.length,
       rawComplyAdvantageResponse: {},
-      searchId: id,
+      searchId: searchId,
     },
     createdAt: 1683301138980,
+  }
+  return {
+    historyItem,
+    hits,
   }
 }
 

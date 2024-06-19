@@ -7,6 +7,7 @@ import { ColumnDataType, FullColumnDataType } from '../types';
 import { CloseMessage, message } from '../../Message';
 import PriorityTag from '../../PriorityTag';
 import s from './index.module.less';
+import SanctionsHitStatusTag from '@/components/ui/SanctionsHitStatusTag';
 import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
@@ -27,6 +28,7 @@ import {
   RuleNature,
   Tag as ApiTag,
   TransactionState as ApiTransactionState,
+  SanctionsHitStatus as ApiSanctionsHitStatus,
   TransactionType,
   UserState,
   Case,
@@ -62,6 +64,7 @@ import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableItem, TableUser } from '@/pages/case-management/CaseTable/types';
 import { DurationDisplay } from '@/components/ui/DurationDisplay';
 import { getDuration, formatDuration } from '@/utils/time-utils';
+import { SANCTIONS_HIT_STATUSS } from '@/apis/models-custom/SanctionsHitStatus';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import { Option } from '@/components/library/Select';
@@ -308,6 +311,20 @@ export const TRANSACTION_STATE: ColumnDataType<ApiTransactionState> = {
   autoFilterDataType: {
     kind: 'select',
     options: TRANSACTION_STATES.map((type) => ({
+      value: type,
+      label: humanizeConstant(type),
+    })),
+    displayMode: 'list',
+    mode: 'MULTIPLE',
+  },
+};
+
+export const SANCTIONS_HIT_STATUS: ColumnDataType<ApiSanctionsHitStatus> = {
+  render: (value) => <SanctionsHitStatusTag status={value} />,
+  stringify: (value) => `${value}`,
+  autoFilterDataType: {
+    kind: 'select',
+    options: SANCTIONS_HIT_STATUSS.map((type) => ({
       value: type,
       label: humanizeConstant(type),
     })),

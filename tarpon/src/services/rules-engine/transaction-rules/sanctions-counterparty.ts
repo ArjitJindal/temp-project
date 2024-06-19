@@ -15,8 +15,8 @@ import { BankInfo } from '@/services/iban'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { formatConsumerName } from '@/utils/helpers'
-import { notNullish } from '@/core/utils/array'
 import { traceable } from '@/core/xray'
+import { notNullish } from '@/utils/array'
 
 export type SanctionsCounterPartyRuleParameters = {
   transactionAmountThreshold?: {
@@ -205,7 +205,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
             }
           )
 
-          if (result.data.length > 0) {
+          if (result.hitsCount > 0) {
             return {
               name,
               iban,

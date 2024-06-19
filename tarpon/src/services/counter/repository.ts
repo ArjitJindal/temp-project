@@ -1,7 +1,13 @@
 import { MongoClient } from 'mongodb'
 import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
 
-export type CounterEntity = 'Case' | 'Alert' | 'AlertQASample' | 'Report' | 'RC'
+export type CounterEntity =
+  | 'Case'
+  | 'Alert'
+  | 'AlertQASample'
+  | 'Report'
+  | 'RC'
+  | 'SanctionsHit'
 export const COUNTER_ENTITIES: CounterEntity[] = [
   'Case',
   'Alert',
@@ -50,6 +56,24 @@ export class CounterRepository {
     )
 
     return data.value?.count ?? 1
+  }
+
+  public async getNextCountersAndUpdate(
+    entity: CounterEntity,
+    count: number
+  ): Promise<number[]> {
+    const collectionName = COUNTER_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    const collection = db.collection<EntityCounter>(collectionName)
+
+    const data = await collection.findOneAndUpdate(
+      { entity },
+      { $inc: { count } },
+      { upsert: true, returnDocument: 'after' }
+    )
+
+    const value = data.value?.count ?? 1
+    return [...new Array(count)].map((_, i) => value - i)
   }
 
   public async getNextCounter(entity: CounterEntity): Promise<number> {

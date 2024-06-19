@@ -202,6 +202,10 @@ export const SANCTIONS_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-searches`
 }
 
+export const SANCTIONS_HITS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-sanctions-hits`
+}
+
 export const SANCTIONS_WHITELIST_ENTITIES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-whitelist-entities`
 }
@@ -509,6 +513,16 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { 'request.searchTerm': 1 },
           { 'response.data.doc.types': 1 },
         ].map((index) => ({ index })),
+    },
+    [SANCTIONS_HITS_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [
+          { searchId: 1, sanctionsHitId: 1 },
+          { sanctionsHitId: 1 },
+          { createdAt: 1, sanctionsHitId: 1 },
+        ].map((index) => ({
+          index,
+        })),
     },
     [IBAN_COLLECTION(tenantId)]: {
       getIndexes: () =>

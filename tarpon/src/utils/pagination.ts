@@ -34,6 +34,7 @@ export interface CursorPaginationResponse<T> {
   count: number
   limit: number
   last: string
+  pageSize?: number
 }
 
 export type OptionalPagination<Params> = Omit<Params, 'pageSize' | 'page'> &
@@ -69,7 +70,7 @@ export async function* iterateItems<T>(
 }
 
 export interface CursorPaginationParams {
-  pageSize: number
+  pageSize?: number
   sortField?: string
   fromCursorKey?: string
   sortOrder?: 'ascend' | 'descend'
@@ -81,17 +82,7 @@ export async function cursorPaginate<T extends Document>(
   collection: Collection<T>,
   filter: Filter<WithId<T>>,
   query: CursorPaginationParams
-): Promise<{
-  items: WithId<T>[]
-  next: string
-  prev: string
-  hasNext: boolean
-  hasPrev: boolean
-  last: string
-  count: number
-  limit: number
-  pageSize: number
-}> {
+): Promise<CursorPaginationResponse<WithId<T>>> {
   const field = query.sortField || '_id'
   const fromRaw: any = query.fromCursorKey || ''
   const fromOperator = query.sortOrder === 'ascend' ? '$gt' : '$lt'
@@ -161,14 +152,15 @@ export async function cursorPaginate<T extends Document>(
     .find({ $and: lastFindFilters })
     .sort({ [field]: prevDirection, _id: prevDirection })
 
-  const lastFindPromise = lastFind.skip(query.pageSize).limit(1).toArray()
+  const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
+  const lastFindPromise = lastFind.skip(pageSize).limit(1).toArray()
 
   // Find prev
   const prevCursorPromise = getPrevCursor(prevFind, query)
 
   // Determine next cursor
   const count = countDocuments(collection, filter)
-  const items = await find.limit(query.pageSize + 1).toArray()
+  const items = await find.limit(pageSize + 1).toArray()
   const { hasPrev, prev } = await prevCursorPromise
   const lastItems = await lastFindPromise
   const lastItem = lastItems.at(-1)
@@ -177,8 +169,8 @@ export async function cursorPaginate<T extends Document>(
 
   // Remove extra item
   let hasNext = false
-  if (items.length > query.pageSize) {
-    hasNext = items.length > query.pageSize
+  if (items.length > pageSize) {
+    hasNext = items.length > pageSize
     items.pop()
   }
 
@@ -206,13 +198,14 @@ async function getPrevCursor<T>(
   prevFind: FindCursor<WithId<T>>,
   query: CursorPaginationParams
 ): Promise<{ prev: string; hasPrev: boolean }> {
+  const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
   if (!query.fromCursorKey || query.fromCursorKey === '') {
     return { hasPrev: false, prev: '' }
   }
-  const prevItems = await prevFind.limit(query.pageSize + 1).toArray()
+  const prevItems = await prevFind.limit(pageSize + 1).toArray()
   const prevItem = prevItems.at(-2)
 
-  if (!prevItem || prevItems.length === query.pageSize - 1) {
+  if (!prevItem || prevItems.length === pageSize - 1) {
     return { hasPrev: true, prev: '' }
   }
 

@@ -4845,6 +4845,23 @@ paths:
                 $ref: '#/components/schemas/Comment'
         '404':
           description: Not found
+  /sanctions/hits/status:
+    post:
+      summary: Change sanctions hits status
+      operationId: change-sanctions-hits-status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanctionHitsStatusUpdateRequest'
+        required: true
   /sanctions/search:
     post:
       summary: Search Sanctions
@@ -5014,22 +5031,50 @@ paths:
           in: query
           name: userId
       operationId: get-sanctions-search-$-searchId
-  /sanctions/whitelist:
-    post:
-      summary: Whitelist sanctions entities
-      operationId: post-sanctions-whitelist
+  /sanctions/hits/search:
+    get:
+      summary: Get hits for a search
+      tags: []
       x-flagright:
         permissions:
-          - sanctions:search:write
+          - sanctions:search:read
       responses:
         '200':
           description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SanctionsWhitelistRequest'
-        required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsHitListResponse'
+      parameters:
+        - schema:
+            type: array
+            items:
+              type: string
+          name: filterSearchId
+          in: query
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SanctionsHitStatus'
+          name: filterStatus
+          in: query
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            type: string
+          in: query
+          name: start
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: sortField
+      operationId: search-sanctions-hits
   /webhooks/complyadvantage:
     post:
       summary: Receive webhook events from Comply Advantage
@@ -7784,6 +7829,7 @@ components:
             - CASE
             - TRANSACTION
             - REPORT
+            - SANCTIONS_HIT
         reasons:
           type: array
           items:
@@ -7804,6 +7850,7 @@ components:
             - CASE
             - TRANSACTION
             - REPORT
+            - SANCTIONS_HIT
         narrative:
           type: string
       required:
@@ -8852,6 +8899,12 @@ components:
         - User Terminated
         - Internal referral
         - External referral
+    SanctionsHitReasons:
+      type: string
+      title: SanctionsHitReasons
+      enum:
+        - FALSE_POSITIVE
+        - OTHER
     MissingUser:
       title: MissingUser
       type: object
@@ -9547,6 +9600,59 @@ components:
       required:
         - alertStatus
         - reason
+    SanctionsHitListResponse:
+      title: SanctionsHitListResponse
+      type: object
+      properties:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
+          type: number
+        limit:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsHit'
+      required:
+        - hasPrev
+        - prev
+        - next
+        - hasNext
+        - items
+        - count
+        - limit
+        - last
+    SanctionHitStatusUpdateRequest:
+      title: SanctionHitStatusUpdateRequest
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SanctionsHitStatus'
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsHitReasons'
+        otherReason:
+          type: string
+        whitelistHits:
+          type: boolean
+        comment:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+      required:
+        - reasons
     AlertsAssignmentsUpdateRequest:
       title: AlertsAssignmentsUpdateRequest
       type: object
@@ -9612,6 +9718,22 @@ components:
           $ref: '#/components/schemas/AlertStatusUpdateRequest'
       required:
         - alertIds
+        - updates
+    SanctionHitsStatusUpdateRequest:
+      title: SanctionHitsStatusUpdateRequest
+      type: object
+      properties:
+        alertId:
+          type: string
+        sanctionHitIds:
+          type: array
+          items:
+            type: string
+        updates:
+          $ref: '#/components/schemas/SanctionHitStatusUpdateRequest'
+      required:
+        - alertId
+        - sanctionHitIds
         - updates
     AlertChecklistQaUpdateRequest:
       title: AlertChecklistQaUpdateRequest
@@ -9766,7 +9888,7 @@ components:
       title: SanctionsSearchResponse
       type: object
       properties:
-        total:
+        hitsCount:
           type: number
         data:
           type: array
@@ -9777,8 +9899,7 @@ components:
         rawComplyAdvantageResponse:
           $ref: '#/components/schemas/ComplyAdvantageSearchResponse'
       required:
-        - total
-        - data
+        - hitsCount
         - searchId
     SanctionsSearchHistoryResponse:
       title: SanctionsSearchHistoryResponse
@@ -9827,6 +9948,8 @@ components:
           type: number
         searchedBy:
           type: string
+        hitContext:
+          $ref: '#/components/schemas/SanctionsHitContext'
       required:
         - _id
         - request
@@ -9904,28 +10027,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SanctionsScreeningEntityStats'
-    SanctionsWhitelistRequest:
-      title: SanctionsWhitelistRequest
-      type: object
-      properties:
-        whitelisted:
-          type: boolean
-        searchId:
-          type: string
-        caEntityIds:
-          type: array
-          items:
-            type: string
-        reason:
-          type: string
-        comment:
-          type: string
-        userId:
-          type: string
-      required:
-        - whitelisted
-        - searchId
-        - caEntityIds
     ComplyAdvantageSearchResponse:
       title: ComplyAdvantageSearchResponse
       type: object
@@ -10121,6 +10222,51 @@ components:
           type: number
       required:
         - count
+    SanctionsHit:
+      title: SanctionsHit
+      type: object
+      properties:
+        sanctionsHitId:
+          type: string
+        searchId:
+          type: string
+        status:
+          $ref: '#/components/schemas/SanctionsHitStatus'
+        clearingReason:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        hitContext:
+          $ref: '#/components/schemas/SanctionsHitContext'
+        caEntity:
+          $ref: '#/components/schemas/ComplyAdvantageSearchHitDoc'
+        caMatchTypes:
+          type: array
+          items:
+            type: string
+      required:
+        - sanctionsHitId
+        - searchId
+        - createdAt
+        - updatedAt
+        - caEntity
+        - caMatchTypes
+    SanctionsHitContext:
+      type: object
+      title: SanctionsHitContext
+      properties:
+        entity:
+          $ref: '#/components/schemas/SanctionsScreeningEntity'
+        userId:
+          type: string
+        transactionId:
+          type: string
+        ruleInstanceId:
+          type: string
+        iban:
+          type: string
     ComplyAdvantageSearchHit:
       type: object
       properties:
@@ -10169,6 +10315,8 @@ components:
                   type: string
         score:
           type: number
+      required:
+        - doc
     ComplyAdvantageSearchHitDoc:
       type: object
       properties:
@@ -11779,6 +11927,12 @@ components:
       enum:
         - PASSED
         - FAILED
+    SanctionsHitStatus:
+      type: string
+      enum:
+        - OPEN
+        - CLEARED
+        - ESCALATED
     ChecklistDoneStatus:
       type: string
       enum:

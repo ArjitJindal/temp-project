@@ -73,7 +73,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         isOngoingScreening: this.ongoingScreeningMode,
       }
     )
-    if (result.data && result.data.length > 0) {
+    if (result.hitsCount > 0) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: this.getUserVars(),

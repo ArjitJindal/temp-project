@@ -7,30 +7,38 @@ import {
   UserRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import {
   MOCK_CA_SEARCH_NO_HIT_RESPONSE,
   MOCK_CA_SEARCH_RESPONSE,
 } from '@/test-utils/resources/mock-ca-search-response'
+import { SanctionsService } from '@/services/sanctions'
 
 const TEST_SANCTIONS_HITS = ['Vladimir Putin']
 jest.mock('@/services/sanctions', () => {
+  type SanctionsServiceInstanceType = InstanceType<typeof SanctionsService>
   return {
     SanctionsService: jest.fn().mockImplementation(() => {
+      type SearchMethodType = SanctionsServiceInstanceType['search']
       return {
         search: jest
           .fn()
-          .mockImplementation((request: SanctionsSearchRequest) => {
-            const rawComplyAdvantageResponse = TEST_SANCTIONS_HITS.includes(
-              request.searchTerm
-            )
-              ? MOCK_CA_SEARCH_RESPONSE
-              : MOCK_CA_SEARCH_NO_HIT_RESPONSE
-            return {
-              data: rawComplyAdvantageResponse.content.data.hits,
-              searchId: 'test-search-id',
+          .mockImplementation(
+            async (
+              ...params: Parameters<SearchMethodType>
+            ): ReturnType<SearchMethodType> => {
+              const [request] = params
+              const rawComplyAdvantageResponse = TEST_SANCTIONS_HITS.includes(
+                request.searchTerm
+              )
+                ? MOCK_CA_SEARCH_RESPONSE
+                : MOCK_CA_SEARCH_NO_HIT_RESPONSE
+
+              return {
+                hitsCount: rawComplyAdvantageResponse.content.data.hits.length,
+                searchId: 'test-search-id',
+              }
             }
-          }),
+          ),
       }
     }),
   }

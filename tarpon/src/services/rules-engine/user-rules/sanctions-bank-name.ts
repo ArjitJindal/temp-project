@@ -114,7 +114,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
               }
             )
             let sanctionsDetails: SanctionsDetails
-            if (result.data && result.data.length > 0) {
+            if (result.hitsCount > 0) {
               sanctionsDetails = {
                 name: bankName,
                 iban: bankInfo.iban,

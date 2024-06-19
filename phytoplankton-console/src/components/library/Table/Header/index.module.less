@@ -7,6 +7,25 @@
   flex-direction: column;
   gap: 16px;
   margin-bottom: 16px;
+
+  &.externalHeader {
+    margin-bottom: 0;
+
+    .root {
+      position: absolute;
+      top: 0;
+      width: fit-content;
+      right: 0;
+      margin-bottom: 0;
+      transform: translateY(-100%) translateY(-16px);
+    }
+  }
+
+  &.filtersVisible {
+    .right {
+      border-left: 1px solid @fr-colors-v2-gray-2;
+    }
+  }
 }
 
 .root {
@@ -14,21 +33,6 @@
   align-items: center;
   justify-content: space-between;
   min-height: 32px;
-
-  &.filtersVisible {
-    .right {
-      border-left: 1px solid @fr-colors-v2-gray-2;
-    }
-  }
-
-  &.externalHeader {
-    position: absolute;
-    top: 0;
-    width: fit-content;
-    right: 0;
-    margin-bottom: 0;
-    transform: translateY(-100%);
-  }
 }
 
 .right {

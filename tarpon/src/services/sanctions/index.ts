@@ -5,7 +5,9 @@ import { SanctionsSearchRepository } from './repositories/sanctions-search-repos
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
+import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
+import { SanctionHitStatusUpdateRequest } from '@/@types/openapi-internal/SanctionHitStatusUpdateRequest'
 import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -20,16 +22,19 @@ import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchTy
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
-import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { apiFetch } from '@/utils/api-fetch'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
+import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { envIs } from '@/utils/env'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { getContext, tenantSettings } from '@/core/utils/context'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
-import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
+import { SanctionsHitListResponse } from '@/@types/openapi-internal/SanctionsHitListResponse'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
 import { SanctionsSettingsMarketType } from '@/@types/openapi-internal/SanctionsSettingsMarketType'
+import { CounterRepository } from '@/services/counter/repository'
+import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
+import { CursorPaginationParams } from '@/utils/pagination'
 
 const DEFAULT_FUZZINESS = 0.5
 const COMPLYADVANTAGE_SEARCH_API_URI =
@@ -97,18 +102,6 @@ const SEARCH_PROFILE_IDS: Record<
     FIRST_WORLD: SANDBOX_PROFILES,
   },
 }
-function getSanctionsSearchResponse(
-  rawComplyAdvantageResponse: ComplyAdvantageSearchResponse,
-  searchId: string
-): SanctionsSearchResponse {
-  const hits = rawComplyAdvantageResponse.content?.data?.hits || []
-  return {
-    total: hits.length,
-    data: hits,
-    rawComplyAdvantageResponse,
-    searchId,
-  }
-}
 
 @traceable
 export class SanctionsService {
@@ -116,8 +109,10 @@ export class SanctionsService {
   complyAdvantageMarketType: SanctionsSettingsMarketType | undefined
   complyAdvantageSearchProfileId: string | undefined
   sanctionsSearchRepository!: SanctionsSearchRepository
+  sanctionsHitsRepository!: SanctionsHitsRepository
   sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
   sanctionsScreeningDetailsRepository!: SanctionsScreeningDetailsRepository
+  counterRepository!: CounterRepository
   tenantId: string
   initializationPromise: Promise<void> | null = null
 
@@ -139,6 +134,11 @@ export class SanctionsService {
     )
     this.sanctionsScreeningDetailsRepository =
       new SanctionsScreeningDetailsRepository(this.tenantId, mongoDb)
+    this.counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    this.sanctionsHitsRepository = new SanctionsHitsRepository(
+      this.tenantId,
+      mongoDb
+    )
 
     this.apiKey = await this.getApiKey()
     const settings = await tenantSettings(this.tenantId)
@@ -163,7 +163,7 @@ export class SanctionsService {
     return (await getSecretByName('complyAdvantageCreds')).apiKey
   }
 
-  public async updateMonitoredSearch(caSearchId: number) {
+  public async refreshSearch(caSearchId: number) {
     await this.initialize()
     const result =
       await this.sanctionsSearchRepository.getSearchResultByCASearchId(
@@ -172,19 +172,33 @@ export class SanctionsService {
     if (!result) {
       return
     }
-    const response = await this.complyAdvantageMonitoredSearch(caSearchId)
+    const response = await this.fetchNewSearchHits(caSearchId)
     if (!response) {
       logger.error(
         `Cannot find complyadvantage monitored search - ${caSearchId}`
       )
       return
     }
+
+    const newHits = await this.sanctionsHitsRepository.addNewHits(
+      result._id,
+      response.content?.data?.hits || [],
+      result.hitContext
+    )
+
+    const parsedResponse = {
+      hitsCount: (result.response?.hitsCount ?? 0) + newHits.length,
+      rawComplyAdvantageResponse: response,
+      searchId: result._id,
+    }
     await this.sanctionsSearchRepository.saveSearchResult({
       request: result.request,
-      response: getSanctionsSearchResponse(response, result._id),
+      response: parsedResponse,
       createdAt: result.createdAt,
       updatedAt: Date.now(),
+      hitContext: result.hitContext,
     })
+
     logger.info(
       `Updated monitored search (search ID: ${caSearchId}) for tenant ${this.tenantId}`
     )
@@ -192,13 +206,8 @@ export class SanctionsService {
 
   public async search(
     request: SanctionsSearchRequest,
-    context?: {
-      entity?: SanctionsScreeningEntity
-      userId?: string
-      transactionId?: string
-      ruleInstanceId: string
+    context?: SanctionsHitContext & {
       isOngoingScreening?: boolean
-      iban?: string
     }
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
@@ -210,7 +219,7 @@ export class SanctionsService {
       (request.yearOfBirth &&
         (request.yearOfBirth < 1900 || request.yearOfBirth > dayjs().year()))
     ) {
-      return { total: 0, data: [], searchId: 'invalid_search' }
+      return { hitsCount: 0, searchId: 'invalid_search' }
     }
 
     request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
@@ -218,39 +227,44 @@ export class SanctionsService {
       ? request.types
       : SANCTIONS_SEARCH_TYPES
 
-    const result = await this.sanctionsSearchRepository.getSearchResultByParams(
-      request
-    )
-    let response = result?.response
+    const searchId = uuidv4()
 
-    if (!response) {
-      const searchId = uuidv4()
+    const existedSearch =
+      await this.sanctionsSearchRepository.getSearchResultByParams(request)
+    let rawResponse
+    if (existedSearch?.response == null) {
       const searchProfileId =
         this.complyAdvantageSearchProfileId ||
         this.pickSearchProfileId(request.types) ||
         (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
 
-      const rawResponse = await this.complyAdvantageSearch(searchProfileId, {
+      rawResponse = await this.complyAdvantageSearch(searchProfileId, {
         ...request,
       })
-
-      const responseWithId = getSanctionsSearchResponse(rawResponse, searchId)
-      response = responseWithId
-      await this.sanctionsSearchRepository.saveSearchResult({
-        request,
-        response: responseWithId,
-        searchedBy: !context ? getContext()?.user?.id : undefined,
-      })
-      if (request.monitoring) {
-        await this.updateSearch(searchId, request.monitoring)
-      }
+    } else {
+      rawResponse = existedSearch.response.rawComplyAdvantageResponse
+    }
+    const hits = await this.sanctionsHitsRepository.addHits(
+      searchId,
+      rawResponse.content?.data?.hits ?? [],
+      context
+    )
+    const response = {
+      rawComplyAdvantageResponse: rawResponse,
+      searchId,
+      hitsCount: hits.length,
+    }
+    await this.sanctionsSearchRepository.saveSearchResult({
+      request,
+      response,
+      searchedBy: !context ? getContext()?.user?.id : undefined,
+      hitContext: context,
+    })
+    if (request.monitoring) {
+      await this.updateSearch(searchId, request.monitoring)
     }
 
-    const finalResponse = await this.filterOutWhitelistEntites(
-      response,
-      context?.userId
-    )
-    if (context) {
+    if (context && context.ruleInstanceId) {
       // Save the screening details check when running a rule
       const details: SanctionsScreeningDetails = {
         name: request.searchTerm,
@@ -260,8 +274,8 @@ export class SanctionsService {
         transactionIds: context.transactionId
           ? [context.transactionId]
           : undefined,
-        isOngoingScreening: context.isOngoingScreening,
-        isHit: finalResponse.total > 0,
+        isOngoingScreening: context?.isOngoingScreening,
+        isHit: response.hitsCount > 0,
         searchId: response.searchId,
       }
       await this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
@@ -277,69 +291,7 @@ export class SanctionsService {
         )
       }
     }
-    return finalResponse
-  }
-
-  private async filterOutWhitelistEntites(
-    response: SanctionsSearchResponse,
-    userId?: string
-  ): Promise<SanctionsSearchResponse> {
-    const augmentedResponse = await this.augmentWhitelistEntites(
-      response,
-      userId
-    )
-    const filteredData = augmentedResponse.data.filter(
-      (d) => !d.doc?.flagrightWhitelistInfo?.whitelisted
-    )
-    return { ...response, total: filteredData.length, data: filteredData }
-  }
-
-  private async augmentWhitelistEntites(
-    response: SanctionsSearchResponse,
-    userId?: string
-  ): Promise<SanctionsSearchResponse> {
-    await this.initialize()
-    const entityIds = response.data
-      .map((d) => d?.doc?.id)
-      .filter(Boolean) as string[]
-    const [globalWhitelistEntities, userLevelWhitelistEntities] =
-      await Promise.all([
-        this.sanctionsWhitelistEntityRepository.getWhitelistEntities(entityIds),
-        userId
-          ? this.sanctionsWhitelistEntityRepository.getWhitelistEntities(
-              entityIds,
-              userId
-            )
-          : Promise.resolve([]),
-      ])
-    const augmentedData: ComplyAdvantageSearchHit[] = response.data.map((d) => {
-      const whitelistEntity =
-        globalWhitelistEntities.find(
-          (entity) => entity.caEntity.id === d.doc?.id
-        ) ??
-        userLevelWhitelistEntities.find(
-          (entity) =>
-            entity.caEntity.id === d.doc?.id && entity.userId === userId
-        )
-      const newData: ComplyAdvantageSearchHit = {
-        ...d,
-        doc: {
-          ...d.doc,
-          flagrightWhitelistInfo: whitelistEntity
-            ? {
-                whitelisted: true,
-                reason: whitelistEntity.reason,
-                comment: whitelistEntity.comment,
-              }
-            : undefined,
-        },
-      }
-      return newData
-    })
-    return {
-      ...response,
-      data: augmentedData,
-    }
+    return response
   }
 
   private getSanitizedFuzziness(
@@ -384,7 +336,7 @@ export class SanctionsService {
     return rawComplyAdvantageResponse.result
   }
 
-  private async complyAdvantageMonitoredSearch(
+  private async fetchNewSearchHits(
     searchId: number
   ): Promise<ComplyAdvantageSearchResponse> {
     const rawComplyAdvantageResponse =
@@ -413,19 +365,12 @@ export class SanctionsService {
   }
 
   public async getSearchHistory(
-    searchId: string,
-    userId?: string
+    searchId: string
   ): Promise<SanctionsSearchHistory | null> {
     await this.initialize()
     const result = await this.sanctionsSearchRepository.getSearchResult(
       searchId
     )
-    if (result?.response) {
-      result.response = await this.augmentWhitelistEntites(
-        result?.response,
-        userId
-      )
-    }
 
     return result
   }
@@ -559,5 +504,32 @@ export class SanctionsService {
       caEntityIds,
       userId
     )
+  }
+
+  /*
+    Methods to work with hits
+   */
+  public async searchHits(
+    params: {
+      filterSearchId?: string[]
+      filterStatus?: SanctionsHitStatus[]
+    } & CursorPaginationParams
+  ): Promise<SanctionsHitListResponse> {
+    await this.initialize()
+    const hits = await this.sanctionsHitsRepository.searchHits(params)
+    return hits
+  }
+
+  public async updateHits(
+    sanctionsHitIds: string[],
+    updates: SanctionHitStatusUpdateRequest
+  ): Promise<{ modifiedCount: number }> {
+    await this.initialize()
+    const { modifiedCount } =
+      await this.sanctionsHitsRepository.updateHitsByIds(sanctionsHitIds, {
+        status: updates.status,
+      })
+    // todo: add audit log record
+    return { modifiedCount }
   }
 }

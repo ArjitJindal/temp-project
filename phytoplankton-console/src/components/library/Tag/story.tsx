@@ -23,6 +23,7 @@ import { PAYMENT_METHODS } from '@/apis/models-custom/PaymentMethod';
 import { RULE_ACTIONS } from '@/apis/models-custom/RuleAction';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
+import SanctionsHitStatusTag from '@/components/ui/SanctionsHitStatusTag';
 
 function TagsList<T>(props: { items: T[]; children: (value: T) => JSX.Element }) {
   return (
@@ -188,10 +189,14 @@ export default function (): JSX.Element {
           )}
         </PropertyMatrix>
       </UseCase>
-
       <UseCase title={'UserTypeTag'}>
         <PropertyMatrix x={['BUSINESS', 'CONSUMER'] as const}>
           {(x) => <UserTypeTag type={x} />}
+        </PropertyMatrix>
+      </UseCase>
+      <UseCase title={'SanctionsHitStatusTag'}>
+        <PropertyMatrix x={['OPEN', 'CLEARED', 'ESCALATED'] as const}>
+          {(x) => <SanctionsHitStatusTag status={x} />}
         </PropertyMatrix>
       </UseCase>
     </>

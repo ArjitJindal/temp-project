@@ -1,7 +1,7 @@
 import { v4 as uuid4 } from 'uuid'
 import { ManipulateType } from '@flagright/lib/utils/dayjs'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
-import { getSanctions } from '../data/sanctions'
+import { getSanctions, getSanctionsHits } from '../data/sanctions'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
 import { sampleTag } from './tag'
@@ -174,7 +174,11 @@ const legalDocument = (name: ConsumerName): LegalDocument => {
   }
 }
 
-export function getUserRules(username: string, type: 'CONSUMER' | 'BUSINESS') {
+export function getUserRules(
+  userId: string,
+  username: string,
+  type: 'CONSUMER' | 'BUSINESS'
+) {
   const hitRules =
     randomFloat() < 0.2
       ? randomUserRules().filter((r) =>
@@ -187,20 +191,34 @@ export function getUserRules(username: string, type: 'CONSUMER' | 'BUSINESS') {
       return r
     }
 
-    // Seed a sanctions response
-    const sanctionsSearchResult =
-      type === 'CONSUMER'
-        ? consumerSanctionsSearch(username)
-        : businessSanctionsSearch(username)
-    getSanctions().push(sanctionsSearchResult)
+    const entityTypes = [
+      'CONSUMER_NAME',
+      'NAME_ON_CARD',
+      'PAYMENT_NAME',
+      'PAYMENT_BENEFICIARY_NAME',
+    ] as const
 
-    const sanctionsDetails: SanctionsDetails = {
-      name: username,
-      searchId: sanctionsSearchResult._id,
-      entityType: type === 'CONSUMER' ? 'CONSUMER_NAME' : 'LEGAL_NAME',
+    for (const entityType of entityTypes) {
+      // Seed a sanctions response
+      const { historyItem, hits } =
+        type === 'CONSUMER'
+          ? consumerSanctionsSearch(username, userId)
+          : businessSanctionsSearch(username, userId)
+      getSanctions().push(historyItem)
+      getSanctionsHits().push(...hits)
+
+      const sanctionsDetails: SanctionsDetails = {
+        name: username,
+        searchId: historyItem._id,
+        entityType: type === 'CONSUMER' ? entityType : 'LEGAL_NAME',
+      }
+
+      r.ruleHitMeta.sanctionsDetails = [
+        ...(r.ruleHitMeta.sanctionsDetails ?? []),
+        sanctionsDetails,
+      ]
     }
 
-    r.ruleHitMeta.sanctionsDetails = [sanctionsDetails]
     return r
   })
 }
@@ -244,6 +262,7 @@ export function sampleConsumerUser() {
       }
     }),
     hitRules: getUserRules(
+      userId,
       `${name.firstName} ${name.middleName} ${name.lastName}`,
       'CONSUMER'
     ),
@@ -328,7 +347,7 @@ export function sampleBusinessUser({
     ],
     userStateDetails: sampleUserStateDetails(),
     executedRules: userRules(),
-    hitRules: getUserRules(name, 'BUSINESS'),
+    hitRules: getUserRules(userId, name, 'BUSINESS'),
     updatedAt: timestamp,
     comments: [],
     kycStatusDetails: sampleKycStatusDetails(),

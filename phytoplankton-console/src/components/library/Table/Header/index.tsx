@@ -80,10 +80,14 @@ export default function Header<Item extends object, Params extends object = Comm
   }
 
   return (
-    <div className={s.container}>
-      <div
-        className={cn(s.root, showFilters && s.filtersVisible, externalHeader && s.externalHeader)}
-      >
+    <div
+      className={cn(
+        s.container,
+        externalHeader && s.externalHeader,
+        showFilters && s.filtersVisible,
+      )}
+    >
+      <div className={cn(s.root)}>
         {showFilters ? (
           <Filters<Params>
             filters={allFilters}

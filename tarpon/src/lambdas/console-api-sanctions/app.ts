@@ -6,7 +6,8 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsService } from '@/services/sanctions'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
+import { DefaultApiSearchSanctionsHitsRequest } from '@/@types/openapi-internal/RequestParameters'
+import { AlertsService } from '@/services/alerts'
 
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
   async (
@@ -16,6 +17,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const sanctionsService = new SanctionsService(tenantId)
+    const alertsServicePromise = AlertsService.fromEvent(event)
     const handlers = new Handlers()
 
     handlers.registerPostSanctions(
@@ -31,27 +33,6 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       async (ctx, request) =>
         await sanctionsService.getSearchHistory(request.searchId)
     )
-
-    handlers.registerPostSanctionsWhitelist(async (ctx, _request) => {
-      const request = _request.SanctionsWhitelistRequest
-      if (request.whitelisted) {
-        const search = await sanctionsService.getSearchHistory(request.searchId)
-        const entities = search?.response?.data
-          .map((v) => v?.doc)
-          .filter((entity) =>
-            request.caEntityIds.includes(entity?.id as string)
-          ) as ComplyAdvantageSearchHitDoc[]
-        await sanctionsService.addWhitelistEntities(entities, request.userId, {
-          reason: request.reason,
-          comment: request.comment,
-        })
-      } else {
-        await sanctionsService.removeWhitelistEntities(
-          request.caEntityIds,
-          request.userId
-        )
-      }
-    })
 
     handlers.registerGetSanctionsScreeningActivityStats(
       async (_ctx, request) => {
@@ -69,6 +50,71 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerGetSanctionsScreeningActivityDetails(
       async (_ctx, request) => {
         return await sanctionsService.getSanctionsScreeningDetails(request)
+      }
+    )
+
+    handlers.registerSearchSanctionsHits(
+      async (_ctx, request: DefaultApiSearchSanctionsHitsRequest) => {
+        return await sanctionsService.searchHits({
+          ...request,
+          pageSize: request.pageSize,
+          fromCursorKey: request.start,
+          sortField: request.sortField,
+          sortOrder: request.sortOrder,
+        })
+      }
+    )
+
+    handlers.registerChangeSanctionsHitsStatus(
+      async (_ctx, { SanctionHitsStatusUpdateRequest }) => {
+        const { alertId, sanctionHitIds, updates } =
+          SanctionHitsStatusUpdateRequest
+        const { whitelistHits } = updates
+        const result = await sanctionsService.updateHits(
+          sanctionHitIds,
+          updates
+        )
+        const alertsService = await alertsServicePromise
+
+        let commentBody = `${sanctionHitIds.join(', ')} hits are moved to "${
+          updates.status
+        }" status`
+        const reasonsComment = AlertsService.formatReasonsComment(updates)
+        if (reasonsComment !== '') {
+          commentBody += `. Reasons: ` + reasonsComment
+        }
+        if (updates?.comment) {
+          commentBody += `\n\n${updates.comment}`
+        }
+        await alertsService.saveComment(alertId, {
+          body: commentBody,
+          files: updates.files,
+        })
+
+        if (whitelistHits) {
+          for await (const hit of sanctionsService.sanctionsHitsRepository.iterateHits(
+            {
+              filterIds: sanctionHitIds,
+            }
+          )) {
+            if (
+              hit.hitContext &&
+              hit.hitContext.userId != null &&
+              hit.caEntity
+            ) {
+              await sanctionsService.addWhitelistEntities(
+                [hit.caEntity],
+                hit.hitContext.userId,
+                {
+                  reason: reasonsComment,
+                  comment: updates.comment,
+                }
+              )
+            }
+          }
+        }
+
+        return result
       }
     )
 

@@ -11,7 +11,7 @@ import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react
 import { InfiniteData } from '@tanstack/query-core/src/types';
 import { useInterval } from 'ahooks';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
-import { failed, loading, success, AsyncResource } from '@/utils/asyncResource';
+import { failed, loading, success, AsyncResource, init } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 import { message } from '@/components/library/Message';
 
@@ -27,8 +27,9 @@ export function useQuery<
     'queryKey' | 'queryFn' | 'initialData'
   > & { initialData?: () => undefined },
 ): QueryResult<TData> {
+  const isQueryEnabled = options?.enabled ?? true;
   const results = useQueryRQ<TQueryFnData, string, TData, TQueryKey>(queryKey, queryFn, options);
-  return convertQueryResult(results);
+  return convertQueryResult(results, isQueryEnabled);
 }
 
 export function useQueries<T>({
@@ -44,7 +45,14 @@ export function useQueries<T>({
 
 function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
   results: UseQueryResult<TData, string>,
+  isQueryEnabled: boolean = true,
 ): QueryResult<TData> {
+  if (!isQueryEnabled) {
+    return {
+      data: init(),
+      refetch: results.refetch,
+    };
+  }
   if (results.isLoading) {
     return {
       data: loading<TData>(results.data ?? null),
@@ -79,10 +87,7 @@ export type PaginatedData<T> = {
   next?: string;
 };
 
-export type CursorPaginatedData<T> = {
-  success?: boolean;
-  total?: number;
-  items: Array<T>;
+export type CursorPaginatedData<T> = PaginatedData<T> & {
   next: string;
   prev: string;
   last: string;

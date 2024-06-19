@@ -6,6 +6,7 @@ import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
+import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { cursorPaginate } from '@/utils/pagination'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
@@ -42,6 +43,7 @@ export class SanctionsSearchRepository {
     createdAt?: number
     updatedAt?: number
     searchedBy?: string
+    hitContext: SanctionsHitContext | undefined
   }): Promise<void> {
     const { request, response, createdAt, updatedAt } = props
     const db = this.mongoDb.db()

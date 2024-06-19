@@ -24,7 +24,7 @@ interface Props<Item extends object, Params extends object> {
 export default function Footer<Item extends object, Params extends object>(
   props: Props<Item, Params>,
 ) {
-  const { table, selectionActions, params, onChangeParams, selectionInfo } = props;
+  const { table, selectionActions = [], params, onChangeParams, selectionInfo } = props;
 
   const tooltipProps: TooltipProps = {
     title: `You can select a maximum of ${DEFAULT_BULK_ACTIONS_LIMIT} rows`,
@@ -33,9 +33,18 @@ export default function Footer<Item extends object, Params extends object>(
     }),
   };
 
+  const showSelectionActions =
+    selectionActions.length > 0 && Object.keys(table.getState().rowSelection).length > 0;
+
+  const showSelectionInfo = selectionInfo != null && selectionInfo.entityCount > 0;
+
+  if (!showSelectionInfo && !showSelectionActions) {
+    return <></>;
+  }
+
   return (
     <div className={s.tableSelectionFooter} data-cy="table-footer">
-      {selectionInfo && selectionInfo.entityCount > 0 && (
+      {showSelectionInfo && (
         <div className={s.selectionInfo}>
           {' '}
           <Checkbox value={true} />
@@ -45,16 +54,18 @@ export default function Footer<Item extends object, Params extends object>(
           </Tooltip>
         </div>
       )}
-      <div className={s.selectionActions}>
-        <SelectionActions
-          table={table}
-          params={params}
-          onChangeParams={(cb) => {
-            onChangeParams(cb(params));
-          }}
-          actions={selectionActions ?? []}
-        />
-      </div>
+      {showSelectionActions && (
+        <div className={s.selectionActions}>
+          <SelectionActions
+            table={table}
+            params={params}
+            onChangeParams={(cb) => {
+              onChangeParams(cb(params));
+            }}
+            actions={selectionActions}
+          />
+        </div>
+      )}
     </div>
   );
 }

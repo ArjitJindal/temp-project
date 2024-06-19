@@ -117,7 +117,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               isOngoingScreening: this.ongoingScreeningMode,
             }
           )
-          if (result.data && result.data.length > 0) {
+          if (result.hitsCount > 0) {
             const resultDetails: SanctionsDetails = {
               name: entity.name,
               entityType: entity.entityType,

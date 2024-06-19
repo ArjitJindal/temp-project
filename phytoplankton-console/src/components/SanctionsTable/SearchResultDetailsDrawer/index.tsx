@@ -6,7 +6,7 @@ import s from './index.module.less';
 import ListingCard from './ListingCard';
 import Section from './Section';
 import { normalizeAmlTypes, ADVERSE_MEDIA, TABS_ORDER } from './helpers';
-import { ComplyAdvantageSearchHit, ComplyAdvantageSearchHitDocFields } from '@/apis';
+import { SanctionsHit, ComplyAdvantageSearchHitDocFields } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
@@ -21,7 +21,7 @@ import Portal from '@/components/library/Portal';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
 interface Props {
-  hit: ComplyAdvantageSearchHit;
+  hit: SanctionsHit;
   searchedAt?: number;
   onClose: () => void;
 }
@@ -29,12 +29,12 @@ interface Props {
 export default function SearchResultDetailsDrawer(props: Props) {
   const { hit, onClose } = props;
   const allFields = useMemo(
-    () => hit.doc?.fields?.sort((a, b) => a.name?.localeCompare(b?.name ?? '') || 0) || [],
-    [hit.doc?.fields],
+    () => hit.caEntity?.fields?.sort((a, b) => a.name?.localeCompare(b?.name ?? '') || 0) || [],
+    [hit.caEntity?.fields],
   );
 
   const [pdfRef, setPdfRef] = useState<HTMLDivElement | null>(null);
-  const pdfName = hit.doc?.name;
+  const pdfName = hit.caEntity?.name;
   const [isDownloading, setDownloading] = useState<boolean>(false);
   const handleDownloadClick = async () => {
     setDownloading(true);
@@ -100,7 +100,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
 }
 
 function Content(props: {
-  hit: ComplyAdvantageSearchHit;
+  hit: SanctionsHit;
   allFields: ComplyAdvantageSearchHitDocFields[];
   pdfMode?: boolean;
   searchedAt?: number;
@@ -115,12 +115,12 @@ function Content(props: {
       </Section>
       <Section title={'Key information'}>
         <div className={s.keyInformation}>
-          <Form.Layout.Label title={'Full name'}>{hit.doc?.name}</Form.Layout.Label>
+          <Form.Layout.Label title={'Full name'}>{hit.caEntity?.name}</Form.Layout.Label>
           <Form.Layout.Label title={'Entity type'}>
-            {startCase(hit.doc?.entity_type)}
+            {startCase(hit.caEntity?.entity_type)}
           </Form.Layout.Label>
           <Form.Layout.Label title={'Aliases'}>
-            {uniq(hit.doc?.aka?.map((item) => item.name)).join(', ')}
+            {uniq(hit.caEntity?.aka?.map((item) => item.name)).join(', ')}
           </Form.Layout.Label>
           {keyInfoFields.map((field) =>
             field.name ? (
@@ -148,17 +148,13 @@ function Content(props: {
 /*
   Helpers
  */
-function useTabs(
-  hit: ComplyAdvantageSearchHit,
-  allFields: ComplyAdvantageSearchHitDocFields[],
-  pdfMode,
-) {
+function useTabs(hit: SanctionsHit, allFields: ComplyAdvantageSearchHitDocFields[], pdfMode) {
   return useMemo(() => {
     const sourceGroupes: {
       [key: string]: { sourceName: string; fields: ComplyAdvantageSearchHitDocFields[] }[];
     } = {};
-    for (const source of hit.doc?.sources || []) {
-      const amlTypes = normalizeAmlTypes(hit.doc?.source_notes?.[source]?.aml_types ?? []);
+    for (const source of hit.caEntity?.sources || []) {
+      const amlTypes = normalizeAmlTypes(hit.caEntity?.source_notes?.[source]?.aml_types ?? []);
       for (const amlType of amlTypes) {
         sourceGroupes[amlType] = [
           ...(sourceGroupes[amlType] ?? []),
@@ -182,7 +178,7 @@ function useTabs(
           children: (
             <div className={s.listingItems}>
               {sources.map((source) => {
-                const sourceNote = hit.doc?.source_notes?.[source.sourceName];
+                const sourceNote = hit.caEntity?.source_notes?.[source.sourceName];
                 const sourceTitle = sourceNote?.url ? (
                   <a href={sourceNote?.url} target="_blank">
                     {sourceNote?.name}
@@ -201,7 +197,7 @@ function useTabs(
                   >
                     {groupKey === ADVERSE_MEDIA ? (
                       <div className={s.adverseMediaList}>
-                        {hit.doc?.media?.map((media) => (
+                        {hit.caEntity?.media?.map((media) => (
                           <div key={media.title}>
                             <P>
                               <a href={media.url} target="_blank" className={s.link}>

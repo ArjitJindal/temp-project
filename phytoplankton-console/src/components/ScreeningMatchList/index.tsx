@@ -1,27 +1,57 @@
-import React, { useMemo } from 'react';
-import { MatchListDropdown } from './MatchListDropdown';
-import { Alert, SanctionsDetails } from '@/apis';
+import React, { useMemo, useState } from 'react';
+import { Alert, SanctionsDetails, SanctionsHit } from '@/apis';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { success } from '@/utils/asyncResource';
 import Checklist from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Checklist';
 import Comments from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Comments';
+import { QueryResult } from '@/utils/queries/types';
+import { useApi } from '@/api';
+import { useCursorQuery, CursorPaginatedData } from '@/utils/queries/hooks';
+import { SANCTIONS_HITS_SEARCH } from '@/utils/queries/keys';
+import SanctionsTable, { TableSearchParams } from '@/components/SanctionsTable';
+import { message } from '@/components/library/Message';
+import { AllParams } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 interface Props {
   details: SanctionsDetails[];
   alert?: Alert;
+  selectedSanctionsHitsIds?: string[];
+  onSanctionsHitSelect?: (alertId: string, sanctionsHitsIds: string[]) => void;
 }
 
 export default function ScreeningMatchList(props: Props) {
-  const { details, alert } = props;
+  const { details, alert, selectedSanctionsHitsIds, onSanctionsHitSelect } = props;
 
-  const tabs: TabItem[] = useMemo(() => {
-    return [
+  const [tableParams, setTableParams] =
+    useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const hitsQueryResults = useSanctionHitsQuery(details, tableParams);
+
+  const tabs: TabItem[] = useMemo(
+    () => [
       {
         title: 'Match list',
         key: 'match_list',
-        children: <MatchListDropdown details={details} />,
+        children: (
+          <SanctionsTable
+            tableRef={null}
+            queryResult={hitsQueryResults}
+            isEmbedded={true}
+            selectedIds={selectedSanctionsHitsIds}
+            selection={true}
+            params={tableParams}
+            onChangeParams={setTableParams}
+            onSelect={(sanctionHitsIds) => {
+              if (!alert?.alertId) {
+                message.fatal('Unable to select transactions, alert id is empty');
+                return;
+              }
+              onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds);
+            }}
+          />
+        ),
       },
-      ...(alert != null && alert.alertId != null
+      ...(alert?.alertId != null
         ? [
             ...(alert.ruleChecklistTemplateId
               ? [
@@ -39,8 +69,42 @@ export default function ScreeningMatchList(props: Props) {
             },
           ]
         : []),
-    ];
-  }, [details, alert]);
+    ],
+    [hitsQueryResults, alert, tableParams, selectedSanctionsHitsIds, onSanctionsHitSelect],
+  );
 
-  return <Tabs type="line" items={tabs} />;
+  return (
+    <>
+      <Tabs type="line" items={tabs} />
+    </>
+  );
+}
+
+/*
+  Helpers
+ */
+function useSanctionHitsQuery(
+  sanctionDetails: SanctionsDetails[],
+  params: AllParams<TableSearchParams>,
+): QueryResult<CursorPaginatedData<SanctionsHit>> {
+  const api = useApi();
+  const searchIds = sanctionDetails.map((sanctionsDetails) => sanctionsDetails.searchId);
+  const filters = {
+    filterSearchId: searchIds,
+    filterStatus: ['OPEN' as const],
+  };
+  return useCursorQuery(
+    SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
+    async (paginationParams) => {
+      const request = {
+        ...filters,
+        ...params,
+        ...paginationParams,
+      };
+      return await api.searchSanctionsHits({
+        ...request,
+        start: request.from,
+      });
+    },
+  );
 }

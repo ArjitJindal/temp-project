@@ -5,12 +5,12 @@ import FilesDraggerInput from '../ui/FilesDraggerInput';
 import { ObjectFieldValidator } from '../library/Form/utils/validation/types';
 import s from './index.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Form, { InputProps } from '@/components/library/Form';
+import Form, { InputProps, FormRef } from '@/components/library/Form';
 import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { and } from '@/components/library/Form/utils/validation/combinators';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import InputField from '@/components/library/Form/InputField';
-import { CaseReasons, FileInfo } from '@/apis';
+import { CaseReasons, FileInfo, NarrativeRequestEntityTypeEnum } from '@/apis';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
@@ -19,6 +19,7 @@ import GenericFormField from '@/components/library/Form/GenericFormField';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import Alert from '@/components/library/Alert';
 import Label from '@/components/library/Label';
+import { humanizeAuto } from '@/utils/humanize';
 
 export const OTHER_REASON: CaseReasons = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
@@ -36,21 +37,22 @@ export const CLOSING_REASONS: CaseReasons[] = [
   'Escalated',
 ];
 
-export type EntityType = 'ALERT' | 'CASE' | 'TRANSACTION' | 'REPORT';
+export type EntityType = NarrativeRequestEntityTypeEnum;
 
-export type FormValues<R> = {
+export type FormValues<R, ExtraFields = unknown> = {
   reasons: R[];
   reasonOther: string | undefined;
   comment: string | undefined;
   files: FileInfo[];
-};
+} & ExtraFields;
 
-export type NarrativeFormValues<R> = {
-  values: FormValues<R>;
+export type NarrativeFormValues<R, ExtraFields = unknown> = {
+  values: FormValues<R, ExtraFields>;
   isValid: boolean;
 };
 
 type NarrativeProps<R> = {
+  formRef?: React.Ref<FormRef<FormValues<R>>>;
   values: NarrativeFormValues<R>;
   onChange: Dispatch<SetStateAction<NarrativeFormValues<R>>>;
   alertMessage?: string;
@@ -58,7 +60,7 @@ type NarrativeProps<R> = {
   placeholder: string;
   entityType: EntityType;
   possibleReasons: R[];
-  onSubmit: () => void;
+  onSubmit: (values: FormValues<R>) => void;
   showErrors: boolean;
   extraFields?: React.ReactNode;
   otherReason?: R;
@@ -70,6 +72,7 @@ type NarrativeProps<R> = {
 
 export default function Narrative<R extends string>(props: NarrativeProps<R>) {
   const {
+    formRef,
     possibleReasons,
     onChange,
     values,
@@ -92,11 +95,12 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
 
   return (
     <Form<FormValues<R>>
+      ref={formRef}
       initialValues={values.values}
       className={s.root}
-      onSubmit={(_, state) => {
+      onSubmit={(values, state) => {
         if (state.isValid) {
-          onSubmit();
+          onSubmit(values);
         }
       }}
       fieldValidators={{
@@ -108,6 +112,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
       onChange={(values) => {
         onChange((state) => ({
           ...values,
+          isValid: values.isValid,
           values: {
             ...values.values,
             files: state.values.files,
@@ -130,7 +135,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
           <Select<R>
             {...inputProps}
             mode={'MULTIPLE'}
-            options={possibleReasons.map((label) => ({ value: label, label }))}
+            options={possibleReasons.map((value) => ({ value: value, label: humanizeAuto(value) }))}
           />
         )}
       </InputField>
@@ -175,7 +180,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
                 rows={4}
                 placeholder={placeholder}
                 className={s.commentBox}
-                minHeight={'300px'}
+                minHeight={'250px'}
               />
             </>
           )}

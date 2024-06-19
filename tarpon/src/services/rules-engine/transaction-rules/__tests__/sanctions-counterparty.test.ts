@@ -1,5 +1,4 @@
 import { SanctionsCounterPartyRuleParameters } from '../sanctions-counterparty'
-import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
@@ -16,6 +15,7 @@ import {
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
+import { SanctionsService } from '@/services/sanctions'
 
 process.env.IBAN_API_KEY = 'fake'
 
@@ -50,23 +50,30 @@ const TEST_IBAN_BANK_NAME_MAPPING: { [key: string]: IBANDetails } = {
 }
 
 jest.mock('@/services/sanctions', () => {
+  type SanctionsServiceInstanceType = InstanceType<typeof SanctionsService>
   return {
     SanctionsService: jest.fn().mockImplementation(() => {
+      type SearchMethodType = SanctionsServiceInstanceType['search']
       return {
         search: jest
           .fn()
-          .mockImplementation((request: SanctionsSearchRequest) => {
-            const rawComplyAdvantageResponse = TEST_SANCTIONS_HITS.includes(
-              request.searchTerm
-            )
-              ? MOCK_CA_SEARCH_RESPONSE
-              : MOCK_CA_SEARCH_NO_HIT_RESPONSE
+          .mockImplementation(
+            async (
+              ...params: Parameters<SearchMethodType>
+            ): ReturnType<SearchMethodType> => {
+              const [request] = params
+              const rawComplyAdvantageResponse = TEST_SANCTIONS_HITS.includes(
+                request.searchTerm
+              )
+                ? MOCK_CA_SEARCH_RESPONSE
+                : MOCK_CA_SEARCH_NO_HIT_RESPONSE
 
-            return {
-              data: rawComplyAdvantageResponse.content.data.hits,
-              searchId: 'test-search-id',
+              return {
+                hitsCount: rawComplyAdvantageResponse.content.data.hits.length,
+                searchId: 'test-search-id',
+              }
             }
-          }),
+          ),
       }
     }),
   }

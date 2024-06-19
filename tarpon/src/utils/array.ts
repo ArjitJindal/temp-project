@@ -10,6 +10,14 @@ export async function everyAsync<T>(
   return true
 }
 
+export async function fromAsync<T>(it: AsyncIterable<T>): Promise<T[]> {
+  const result: T[] = []
+  for await (const item of it) {
+    result.push(item)
+  }
+  return result
+}
+
 export function notNullish<T>(value: T | undefined | null): value is T {
   return value != null
 }

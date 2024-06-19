@@ -7,6 +7,7 @@ import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearc
 import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-utils'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { fromAsync } from '@/utils/array'
 
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
@@ -31,10 +32,14 @@ describe('Sanctions Service', () => {
         monitoring: { enabled: true },
       }
       const response = await service.search(request)
+      const hits = await fromAsync(
+        service.sanctionsHitsRepository.iterateHits({
+          filterSearchId: [response.searchId],
+        })
+      )
       testSearchId = response.searchId
       expect(response).toMatchObject({
-        total: 1,
-        data: MOCK_CA_SEARCH_RESPONSE.content?.data?.hits,
+        hitsCount: hits.length,
         searchId: expect.any(String),
         rawComplyAdvantageResponse: MOCK_CA_SEARCH_RESPONSE,
       })
@@ -99,27 +104,34 @@ describe('Sanctions Service', () => {
         yearOfBirth: 1992,
         types: ['SANCTIONS', 'PEP'],
       }
+      {
+        const response = await service.search(request)
+        expect(response.hitsCount).toEqual(1)
+        const hitsCount = await service.sanctionsHitsRepository.countHits({
+          filterSearchId: [response.searchId],
+        })
+        expect(hitsCount).toEqual(1)
+      }
       await service.addWhitelistEntities(
         MOCK_CA_SEARCH_RESPONSE.content.data.hits.map(
           (v) => v.doc
         ) as any as ComplyAdvantageSearchHitDoc[]
       )
-      const response = await service.search(request)
-      expect(response.data).toHaveLength(0)
-      expect(
-        (
-          await service.search(request, {
-            ruleInstanceId: 'test',
-            userId: 'foo',
-          })
-        ).data
-      ).toHaveLength(0)
+      {
+        const response = await service.search(request)
+        expect(response.hitsCount).toEqual(0)
+        const hitsCount = await service.sanctionsHitsRepository.countHits({
+          filterSearchId: [response.searchId],
+        })
+        expect(hitsCount).toEqual(0)
+      }
     })
 
     test('Filter out whitelist entities (user level)', async () => {
       const TEST_TENANT_ID = getTestTenantId()
       const service = new SanctionsService(TEST_TENANT_ID)
       const testUserId = 'test-user-id'
+      const testUserId2 = 'test-user-id-2'
       const request: SanctionsSearchRequest = {
         searchTerm: 'test',
         fuzziness: 0.5,
@@ -127,18 +139,45 @@ describe('Sanctions Service', () => {
         yearOfBirth: 1992,
         types: ['SANCTIONS', 'PEP'],
       }
+      {
+        const response = await service.search(request, {
+          ruleInstanceId: 'test',
+          userId: testUserId,
+        })
+        expect(response.hitsCount).toEqual(1)
+        const hitsCount = await service.sanctionsHitsRepository.countHits({
+          filterSearchId: [response.searchId],
+        })
+        expect(hitsCount).toEqual(1)
+      }
       await service.addWhitelistEntities(
         MOCK_CA_SEARCH_RESPONSE.content.data.hits.map(
           (v) => v.doc
         ) as any as ComplyAdvantageSearchHitDoc[],
         testUserId
       )
-      const response = await service.search(request, {
-        ruleInstanceId: 'test',
-        userId: testUserId,
-      })
-      expect(response.data).toHaveLength(0)
-      expect((await service.search(request)).data.length).toBeGreaterThan(0)
+      {
+        const response = await service.search(request, {
+          ruleInstanceId: 'test',
+          userId: testUserId,
+        })
+        expect(response.hitsCount).toEqual(0)
+        const hitsCount = await service.sanctionsHitsRepository.countHits({
+          filterSearchId: [response.searchId],
+        })
+        expect(hitsCount).toEqual(0)
+      }
+      {
+        const response = await service.search(request, {
+          ruleInstanceId: 'test',
+          userId: testUserId2,
+        })
+        expect(response.hitsCount).toEqual(1)
+        const hitsCount = await service.sanctionsHitsRepository.countHits({
+          filterSearchId: [response.searchId],
+        })
+        expect(hitsCount).toEqual(1)
+      }
     })
   })
 

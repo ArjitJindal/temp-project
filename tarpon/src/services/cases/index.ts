@@ -615,19 +615,6 @@ export class CaseService extends CaseAlertsCommonService {
     if (!externalRequest && updates.caseStatus === 'CLOSED') {
       await this.sendCasesClosedWebhook(cases, updates)
     }
-
-    if (updates.caseStatus === 'CLOSED' && hasFeature('SANCTIONS')) {
-      await Promise.all(
-        cases.map(async (c) => {
-          const userId =
-            c?.caseUsers?.origin?.userId ?? c?.caseUsers?.destination?.userId
-          const alerts = c?.alerts ?? []
-          if (userId && alerts.length) {
-            await this.alertsService.whiltelistSanctionEntities(userId, alerts)
-          }
-        })
-      )
-    }
   }
 
   public async getCase(

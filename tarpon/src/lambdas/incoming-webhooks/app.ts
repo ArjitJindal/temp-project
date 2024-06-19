@@ -62,7 +62,7 @@ export const webhooksHandler = lambdaApi()(
           if (tenantSettings.features?.includes('SANCTIONS')) {
             const searchId = searchUpdated.searchId as number
             const sanctionsService = new SanctionsService(tenantId)
-            await sanctionsService.updateMonitoredSearch(searchId)
+            await sanctionsService.refreshSearch(searchId)
           }
         }
       } else {

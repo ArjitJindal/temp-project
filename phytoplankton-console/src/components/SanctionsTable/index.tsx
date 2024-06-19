@@ -4,8 +4,15 @@ import { COUNTRIES } from '@flagright/lib/constants';
 import { useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { AllParams, TableColumn, TableData, ToolRenderer } from '@/components/library/Table/types';
-import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
+import {
+  AllParams,
+  TableColumn,
+  TableData,
+  ToolRenderer,
+  SelectionAction,
+  TableRefType,
+} from '@/components/library/Table/types';
+import { SanctionsHit } from '@/apis/models/SanctionsHit';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { QueryResult } from '@/utils/queries/types';
@@ -13,8 +20,10 @@ import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType
 import { humanizeSnakeCase } from '@/utils/humanize';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
+import { ID, SANCTIONS_HIT_STATUS, STRING } from '@/components/library/Table/standardDataTypes';
+import { notEmpty } from '@/utils/array';
 
-interface TableSearchParams {
+export interface TableSearchParams {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
@@ -22,77 +31,81 @@ interface TableSearchParams {
 }
 
 interface Props {
+  tableRef?: React.Ref<TableRefType>;
   isEmbedded?: boolean;
-  searchId?: string;
-  queryResult: QueryResult<TableData<ComplyAdvantageSearchHit>>;
+  searchIds?: string;
+  queryResult: QueryResult<TableData<SanctionsHit>>;
   extraTools?: ToolRenderer[];
   params?: AllParams<TableSearchParams>;
   onChangeParams?: (newParams: AllParams<TableSearchParams>) => void;
+  selection?: boolean;
+  selectedIds?: string[];
+  onSelect?: (sanctionHitsIds: string[]) => void;
   searchedAt?: number;
+  selectionActions?: SelectionAction<SanctionsHit, TableSearchParams>[];
 }
 
 export default function SanctionsTable(props: Props) {
-  const { isEmbedded, queryResult, extraTools, params, onChangeParams, searchedAt } = props;
+  const {
+    isEmbedded,
+    queryResult,
+    extraTools,
+    params,
+    onChangeParams,
+    searchedAt,
+    selection,
+    selectionActions,
+    tableRef,
+    selectedIds,
+    onSelect,
+  } = props;
 
-  const [selectedSearchHit, setSelectedSearchHit] = useState<ComplyAdvantageSearchHit>();
+  const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsHit>();
   const settings = useSettings();
 
-  const helper = new ColumnHelper<ComplyAdvantageSearchHit>();
-  const columns: TableColumn<ComplyAdvantageSearchHit>[] = helper.list([
+  const helper = new ColumnHelper<SanctionsHit>();
+  const columns: TableColumn<SanctionsHit>[] = helper.list([
     // Data fields
-    helper.simple<'doc.entity_type'>({
-      title: 'Type',
-      key: 'doc.entity_type',
-      type: {
-        render: (value) => <Tag>{startCase(value)}</Tag>,
-      },
+    helper.simple<'sanctionsHitId'>({
+      title: 'Hit ID',
+      key: 'sanctionsHitId',
+      type: ID,
     }),
-    helper.simple<'doc.name'>({
+    helper.simple<'caEntity.name'>({
       title: 'Name',
-      key: 'doc.name',
+      key: 'caEntity.name',
       type: {
         render: (name, { item: entity }) => (
           <div>{<a onClick={() => setSelectedSearchHit(entity)}>{name}</a>}</div>
         ),
       },
     }),
-    helper.derived<string>({
-      title: 'Date of birth',
-      value: (item: ComplyAdvantageSearchHit): string | undefined => {
-        const fields = item?.doc?.fields;
-        const dob =
-          fields?.find(
-            (field) => field.source === 'complyadvantage' && field.tag === 'date_of_birth',
-          )?.value ?? fields?.find((field) => field.tag === 'date_of_birth')?.value;
-        return dob;
-      },
-      type: {
-        render: (dob) => {
-          return <>{dob}</>;
-        },
-      },
-    }),
-    helper.derived<string>({
+    helper.derived<string[]>({
       title: 'Countries',
-      value: (item: ComplyAdvantageSearchHit): string | undefined => {
-        return item?.doc?.fields?.find((field) => field.name === 'Countries')?.value;
+      value: (item: SanctionsHit): string[] => {
+        return (
+          item?.caEntity?.fields
+            ?.filter((field) => field.name === 'Countries')
+            .map(({ value }) => value)
+            .filter(notEmpty) ?? []
+        );
       },
       type: {
         defaultWrapMode: 'WRAP',
         render: (countryNames, _edit) => (
-          <>
-            {countryNames?.split(/,\s*/)?.map((countryName) => (
+          <div>
+            {countryNames?.map((countryName) => (
               <CountryDisplay key={countryName} countryName={countryName} />
             ))}
-          </>
+          </div>
         ),
       },
       sorting: true,
     }),
     helper.derived<string[]>({
       title: 'Matched types',
-      value: (entity: ComplyAdvantageSearchHit) => {
-        return entity.doc?.types;
+      value: (entity: SanctionsHit) => {
+        return entity.caEntity?.types;
       },
       type: {
         defaultWrapMode: 'WRAP',
@@ -111,21 +124,27 @@ export default function SanctionsTable(props: Props) {
     }),
     helper.derived<string[]>({
       title: 'Relevance',
-      value: (entity: ComplyAdvantageSearchHit) => {
-        return entity.doc?.types;
+      value: (entity: SanctionsHit) => {
+        return entity.caMatchTypes;
       },
       type: {
         defaultWrapMode: 'WRAP',
         render: (match_types) => {
           return (
-            <div>
-              {match_types?.map((matchType) => (
-                <Tag key={matchType}>{startCase(matchType)}</Tag>
-              ))}
-            </div>
+            <div>{match_types?.map((matchType) => humanizeSnakeCase(matchType)).join(', ')}</div>
           );
         },
       },
+    }),
+    helper.simple<'status'>({
+      title: 'Status',
+      key: 'status',
+      type: SANCTIONS_HIT_STATUS,
+    }),
+    helper.simple<'clearingReason'>({
+      title: 'Clearing reason',
+      key: 'clearingReason',
+      type: STRING,
     }),
   ]);
 
@@ -182,22 +201,32 @@ export default function SanctionsTable(props: Props) {
 
   return (
     <>
-      <QueryResultsTable<ComplyAdvantageSearchHit, TableSearchParams>
+      <QueryResultsTable<SanctionsHit, TableSearchParams>
+        innerRef={tableRef}
         tableId="sanctions-search-results"
+        onSelect={onSelect}
+        selectedIds={selectedIds}
+        selection={selection || (selectionActions != null && selectionActions.length > 0)}
+        selectionInfo={{
+          entityName: 'hit',
+          entityCount: selectedIds?.length ?? 0,
+        }}
+        selectionActions={selectionActions}
         extraTools={extraTools}
         extraFilters={extraFilters}
         queryResults={queryResult}
         params={params}
         onChangeParams={onChangeParams}
-        rowKey="doc.id"
+        rowKey="sanctionsHitId"
         columns={columns}
         hideFilters={isEmbedded}
-        pagination={false}
+        pagination={'HIDE_FOR_ONE_PAGE'}
         externalHeader={isEmbedded}
         toolsOptions={{
           reload: false,
         }}
-        fitHeight={isEmbedded ? 400 : true}
+        fitHeight={isEmbedded ? 300 : true}
+        cursor={queryResult.cursor}
       />
       {selectedSearchHit && (
         <SearchResultDetailsDrawer

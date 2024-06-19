@@ -7,14 +7,30 @@ interface Props {
   alert: TableAlertItem;
   escalatedTransactionIds?: string[];
   selectedTransactionIds?: string[];
+  selectedSanctionsHitsIds?: string[];
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
+  onSanctionsHitSelect?: (alertId: string, sanctionsHitsIds: string[]) => void;
 }
 
 export default function ExpandedRowRenderer(props: Props) {
-  const { alert, selectedTransactionIds, onTransactionSelect, escalatedTransactionIds } = props;
+  const {
+    alert,
+    selectedTransactionIds,
+    selectedSanctionsHitsIds,
+    onTransactionSelect,
+    onSanctionsHitSelect,
+    escalatedTransactionIds,
+  } = props;
 
   if (alert.ruleNature === 'SCREENING' && alert.ruleHitMeta?.sanctionsDetails && alert.alertId) {
-    return <ScreeningMatchList details={alert.ruleHitMeta?.sanctionsDetails ?? []} alert={alert} />;
+    return (
+      <ScreeningMatchList
+        details={alert.ruleHitMeta?.sanctionsDetails ?? []}
+        alert={alert}
+        selectedSanctionsHitsIds={selectedSanctionsHitsIds}
+        onSanctionsHitSelect={onSanctionsHitSelect}
+      />
+    );
   }
 
   return (

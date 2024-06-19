@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { getOr, isLoading, map, success } from '@/utils/asyncResource';
+import { SanctionsHit, SanctionsSearchType } from '@/apis';
+import { getOr, map, isLoading, loading } from '@/utils/asyncResource';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { SANCTIONS_SEARCH, SANCTIONS_SEARCH_HISTORY } from '@/utils/queries/keys';
-import { LoadingCard } from '@/components/ui/Card';
+import {
+  SANCTIONS_SEARCH,
+  SANCTIONS_SEARCH_HISTORY,
+  SANCTIONS_HITS_SEARCH,
+} from '@/utils/queries/keys';
 import Button from '@/components/library/Button';
 import SanctionsTable from '@/components/SanctionsTable';
-import { SanctionsSearchType } from '@/apis';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
-
-function withKey<T>(array?: T[]): T[] {
-  return array?.map((item, i) => ({ ...item, key: i })) || [];
-}
+import { makeUrl } from '@/utils/routing';
 
 interface TableSearchParams {
   searchTerm?: string;
@@ -32,8 +33,7 @@ export function SanctionsSearchTable(props: Props) {
   const api = useApi();
   const currentUser = useAuth0User();
 
-  const showSearchHistory = Boolean(searchId);
-  const searchHistoryQueryResults = useQuery(
+  const historyItemQueryResults = useQuery(
     SANCTIONS_SEARCH_HISTORY(searchId),
     () => {
       if (searchId == null) {
@@ -41,27 +41,31 @@ export function SanctionsSearchTable(props: Props) {
       }
       return api.getSanctionsSearchSearchId({ searchId: searchId });
     },
-    { enabled: showSearchHistory },
+    { enabled: searchId != null },
   );
-  const searchHistoryQueryResponse = map(searchHistoryQueryResults.data, (response) => response);
-  const searchHistory = getOr(searchHistoryQueryResponse, null);
+
+  const historyItem = getOr(
+    map(historyItemQueryResults.data, (response) => response),
+    null,
+  );
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
   useEffect(() => {
-    if (searchHistory) {
+    if (historyItem) {
       setParams((params) => ({
         ...params,
-        searchTerm: searchHistory.request?.searchTerm,
-        yearOfBirth: searchHistory.request?.yearOfBirth,
-        countryCodes: searchHistory.request?.countryCodes,
-        fuzziness: searchHistory.request?.fuzziness,
+        searchTerm: historyItem.request?.searchTerm,
+        yearOfBirth: historyItem.request?.yearOfBirth,
+        countryCodes: historyItem.request?.countryCodes,
+        fuzziness: historyItem.request?.fuzziness,
       }));
     }
-  }, [searchHistory]);
+  }, [historyItem]);
 
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useState<AllParams<TableSearchParams>>(params);
   const searchEnabled = !!searchParams.searchTerm;
-  const queryResults = useQuery(
+  const newSearchQueryResults = useQuery(
     SANCTIONS_SEARCH(searchParams),
     () => {
       return api.postSanctions({
@@ -74,7 +78,20 @@ export function SanctionsSearchTable(props: Props) {
         },
       });
     },
-    { enabled: searchEnabled },
+    {
+      enabled: searchEnabled,
+      onSuccess: (data) => {
+        navigate(
+          makeUrl(
+            `/sanctions/search/:searchId`,
+            {
+              searchId: data.searchId,
+            },
+            {},
+          ),
+        );
+      },
+    },
   );
   const searchDisabled =
     !params.searchTerm ||
@@ -82,47 +99,57 @@ export function SanctionsSearchTable(props: Props) {
     (process.env.ENV_NAME === 'prod' &&
       isSuperAdmin(currentUser) &&
       !currentUser.tenantName.toLowerCase().includes('flagright'));
-  return showSearchHistory && isLoading(searchHistoryQueryResponse) ? (
-    <LoadingCard />
-  ) : (
-    <>
-      <SanctionsTable
-        params={params}
-        onChangeParams={setParams}
-        extraTools={[
-          () => (
-            <Button
-              isDisabled={searchDisabled}
-              onClick={() => {
-                setSearchParams(params);
-              }}
-              requiredPermissions={['sanctions:search:read']}
-            >
-              Search
-            </Button>
-          ),
-        ]}
-        queryResult={{
-          data: searchEnabled
-            ? map(queryResults.data, (response) => ({
-                items: withKey(response.data),
-              }))
-            : searchId
-            ? map(searchHistoryQueryResults.data, (response) => ({
-                items: withKey(response?.response?.data),
-              }))
-            : success({ items: [] }),
-          refetch: queryResults.refetch,
-        }}
-        searchedAt={
-          searchEnabled
-            ? Date.now()
-            : searchId
-            ? getOr(searchHistoryQueryResults.data, undefined)?.updatedAt ??
-              getOr(searchHistoryQueryResults.data, undefined)?.createdAt
-            : undefined
-        }
-      />
-    </>
+
+  const searchIdToUse =
+    getOr(
+      map(newSearchQueryResults.data, (x) => x.searchId),
+      null,
+    ) ?? searchId;
+
+  const hitsQueryResults = useQuery(
+    SANCTIONS_HITS_SEARCH({ filterSearchId: searchIdToUse }),
+    () => {
+      if (searchIdToUse == null) {
+        throw new Error(`Unable to get search, searchId is empty!`);
+      }
+      return api.searchSanctionsHits({
+        filterSearchId: [searchIdToUse],
+      });
+    },
+    { enabled: searchIdToUse != null },
+  );
+
+  return (
+    <SanctionsTable
+      params={params}
+      onChangeParams={setParams}
+      extraTools={[
+        () => (
+          <Button
+            isDisabled={searchDisabled}
+            onClick={() => {
+              setSearchParams(params);
+            }}
+            requiredPermissions={['sanctions:search:read']}
+          >
+            Search
+          </Button>
+        ),
+      ]}
+      queryResult={{
+        data:
+          isLoading(historyItemQueryResults.data) || isLoading(newSearchQueryResults.data)
+            ? loading<{ items: SanctionsHit[] }>(null)
+            : hitsQueryResults.data,
+        refetch: hitsQueryResults.refetch,
+      }}
+      searchedAt={
+        searchEnabled
+          ? Date.now()
+          : searchId
+          ? historyItem?.updatedAt ?? historyItem?.createdAt
+          : undefined
+      }
+    />
   );
 }

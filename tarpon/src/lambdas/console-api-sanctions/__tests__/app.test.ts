@@ -20,11 +20,6 @@ describe.each<TestApiEndpointOptions>([
     path: '/sanctions/search/{searchId}',
     payload: { searchId: 'searchId' },
   },
-  {
-    method: 'POST',
-    path: '/sanctions/whitelist',
-    payload: { whitelisted: true },
-  },
 ])('Sanctions API', ({ method, path, payload }) => {
   testApiEndPoints.testApi({ method, path, payload })
 })

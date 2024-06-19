@@ -43,7 +43,6 @@ import {
   calculateCaseAvailableDate,
   getDerivedStatus,
 } from '@/services/cases/utils'
-import { notNullish } from '@/core/utils/array'
 import { getDefaultTimezone } from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
@@ -76,6 +75,7 @@ import {
 import { CaseOpenedDetails } from '@/@types/openapi-public/CaseOpenedDetails'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
+import { notNullish } from '@/utils/array'
 import { getS3Client } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 

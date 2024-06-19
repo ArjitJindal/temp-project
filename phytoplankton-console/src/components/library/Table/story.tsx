@@ -807,6 +807,22 @@ export default function (): JSX.Element {
           }}
         </WithParams>
       </UseCase>
+      <UseCase title={'External header'}>
+        <div style={{ background: 'yellow', padding: '0.5em' }}>Some prior block</div>
+        <Table<TableItem>
+          rowKey="id"
+          externalHeader={true}
+          columns={[
+            { key: 'bio', type: LONG_TEXT, title: 'Bio', filtering: false } as SimpleColumn<
+              TableItem,
+              'bio'
+            >,
+          ]}
+          data={{
+            items: data.slice(0, 10),
+          }}
+        />
+      </UseCase>
     </>
   );
 }
