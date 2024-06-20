@@ -18,6 +18,7 @@ const { notify } = require('./helpers.js');
 const https = require('node:https');
 const { Metafile } = require('esbuild');
 const brandingJson = require('@flagright/lib/config/config-branding-json.json');
+const { execSync } = require('child_process');
 
 const SCRIPT_DIR = __dirname;
 
@@ -71,7 +72,8 @@ function serve() {
 }
 
 async function main() {
-  const bundleBaseName = `bundle`;
+  const latestCommit = execSync('git rev-parse --short HEAD').toString().trim();
+  const bundleBaseName = `bundle-${latestCommit}`;
   const bundleJs = `${bundleBaseName}.js`;
   const bundleCss = `${bundleBaseName}.css`;
 
