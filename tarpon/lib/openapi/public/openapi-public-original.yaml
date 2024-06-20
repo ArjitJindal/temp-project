@@ -1765,14 +1765,12 @@ components:
           type: number
           description: User's identity document issuance date (UNIX timestamp in
             milliseconds)
-          minimum: 1262300400000
           maximum: 4133890801000
         documentExpirationDate:
           type: number
           description:
             User's identity document expiration date (UNIX timestamp in
             milliseconds)
-          minimum: 1262300400000
           maximum: 4133890801000
         documentIssuedCountry:
           $ref: '#/components/schemas/CountryCode'
