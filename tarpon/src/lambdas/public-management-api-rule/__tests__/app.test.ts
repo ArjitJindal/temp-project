@@ -263,22 +263,18 @@ describe('Public Management API - Rule', () => {
   test('Rule Instances - Create', async () => {
     const response: any = await ruleInstanceHandler(
       getApiGatewayPostEvent(TEST_TENANT_ID, '/rule-instances', {
-        id: 'NEW_RULE_INSTANCE_ID',
-        type: 'TRANSACTION',
         ruleId: 'R-1',
         ruleNameAlias: 'Foo bar - new',
         parameters: {},
         action: 'SUSPEND',
         status: 'ACTIVE',
-        casePriority: 'P1',
-        checksFor: ['Transaction amount'],
       }),
       null as any,
       null as any
     )
     const ruleInstanceResponse = JSON.parse(response.body)
     expect(ruleInstanceResponse).toEqual({
-      id: 'NEW_RULE_INSTANCE_ID',
+      id: expect.any(String),
       type: 'TRANSACTION',
       ruleId: 'R-1',
       ruleNameAlias: 'Foo bar - new',
@@ -290,11 +286,13 @@ describe('Public Management API - Rule', () => {
       updatedAt: expect.any(Number),
       runCount: 0,
       hitCount: 0,
-      checksFor: ['Transaction amount'],
+      checksFor: ['1st transaction'],
       mode: 'LIVE_SYNC',
+      nature: 'AML',
+      labels: [],
     })
     const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
-      'NEW_RULE_INSTANCE_ID'
+      ruleInstanceResponse.id
     )
     expect(ruleInstance).toEqual(ruleInstanceResponse)
   })

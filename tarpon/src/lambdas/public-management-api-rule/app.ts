@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { NotFound } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
 import { Credentials } from '@aws-sdk/client-sts'
 import { toPublicRule } from './utils'
 import { RuleService } from '@/services/rules-engine/rule-service'
@@ -87,6 +87,7 @@ export const ruleInstanceHandler = lambdaApi()(
       event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClientByEvent(event)
     const mongoDb = await getMongoDbClient()
+    const ruleService = new RuleService(tenantId, { dynamoDb, mongoDb })
     const ruleInstanceService = new RuleInstanceService(tenantId, {
       dynamoDb,
       mongoDb,
@@ -126,11 +127,23 @@ export const ruleInstanceHandler = lambdaApi()(
       event.resource === '/rule-instances' &&
       event.body
     ) {
-      const ruleInstance = JSON.parse(event.body) as PublicRuleInstance
+      const ruleInstance = JSON.parse(event.body) as RuleInstanceUpdatable
+      if (!ruleInstance.ruleId) {
+        throw new BadRequest('ruleId is required')
+      }
+      const rule = await ruleService.getRuleById(ruleInstance.ruleId)
+      if (!rule) {
+        throw new BadRequest('Invalid rule ID')
+      }
       const newRuleInstance = await ruleInstanceService.createRuleInstance({
         ...ruleInstance,
         mode: 'LIVE_SYNC',
-      } as RuleInstance)
+        type: rule.type,
+        labels: rule.labels,
+        checksFor: rule.checksFor,
+        nature: rule.defaultNature,
+        casePriority: rule.defaultCasePriority,
+      })
       return newRuleInstance
     } else if (
       event.httpMethod === 'GET' &&
