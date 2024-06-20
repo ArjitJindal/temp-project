@@ -342,7 +342,6 @@ export class AccountsService {
       }
       throw e
     }
-
     return account
   }
 

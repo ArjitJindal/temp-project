@@ -306,7 +306,10 @@ export default function Team() {
         editAccount={editAccount}
         isVisibile={isInviteVisible}
         onChangeVisibility={setIsInviteVisible}
-        onSuccess={refreshTable}
+        onSuccess={() => {
+          setIsInviteVisible(false);
+          refreshTable();
+        }}
         key={editAccount?.id ?? 'new'}
       />
       <Modal

@@ -123,10 +123,11 @@ export default function AccountForm(props: Props) {
       });
     },
     {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         if (!data) {
           return;
         }
+        await new Promise((resolve) => setTimeout(resolve, 3000)); // sleep for 3 seconds to let the account get synced
         message.success('User invited!');
         onSuccess();
         hide?.();
