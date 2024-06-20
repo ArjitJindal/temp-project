@@ -1026,25 +1026,35 @@ export class RuleJsonLogicEvaluator {
   private getAggregationGranularity(
     aggregationVariable: RuleAggregationVariable
   ) {
-    if (aggregationVariable.timeWindow.end.granularity === 'all_time') {
-      return 'year'
-    } else if (aggregationVariable.timeWindow.end.granularity === 'now') {
-      return aggregationVariable.timeWindow.start.granularity === 'hour' &&
-        aggregationVariable.timeWindow.start.units <=
-          MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY
-        ? 'minute'
-        : aggregationVariable.timeWindow.start.granularity
+    const maxHoursToAggregateWithMinuteGranularity =
+      // TODO: to be reverted in FR-5010
+      this.tenantId === 'QYF2BOXRJI' // Capimoney
+        ? 24
+        : MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY
+
+    let start = aggregationVariable.timeWindow.start
+    const end = aggregationVariable.timeWindow.end
+
+    // TODO: to be reverted in FR-5010
+    if (start.granularity === 'day' && start.units === 1) {
+      start = { units: 24, granularity: 'hour' }
     }
-    return aggregationVariable.timeWindow.start.rollingBasis ||
-      aggregationVariable.timeWindow.end.rollingBasis
+
+    if (end.granularity === 'all_time') {
+      return 'year'
+    }
+    if (end.granularity === 'now') {
+      return start.granularity === 'hour' &&
+        start.units <= maxHoursToAggregateWithMinuteGranularity
+        ? 'minute'
+        : start.granularity
+    }
+    return start.rollingBasis || end.rollingBasis
       ? 'hour'
-      : aggregationVariable.timeWindow.start.granularity === 'hour' &&
-        aggregationVariable.timeWindow.start.units -
-          (aggregationVariable.timeWindow.end.granularity === 'hour'
-            ? aggregationVariable.timeWindow.end.units
-            : 0) <=
-          MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY
+      : start.granularity === 'hour' &&
+        start.units - (end.granularity === 'hour' ? end.units : 0) <=
+          maxHoursToAggregateWithMinuteGranularity
       ? 'minute'
-      : aggregationVariable.timeWindow.end.granularity
+      : end.granularity
   }
 }
