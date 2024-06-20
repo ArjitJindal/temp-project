@@ -39,16 +39,7 @@ function getOptions(
     }))
   }
   if (enumConstKey === 'COUNTRY_CODES') {
-    return concat(
-      Object.entries(COUNTRIES).map((entry) => ({
-        title: `${entry[1]} (${entry[0]})`,
-        value: entry[0],
-      })),
-      Object.entries(COUNTRY_GROUP_LABELS).map((entry) => ({
-        title: `${entry[1]} (${entry[0]})`,
-        value: entry[0],
-      }))
-    )
+    return getCountriesOptions()
   }
 
   return optionValues.map((value) => ({
@@ -173,4 +164,17 @@ function mergeResultsByPathKey(
       options: options.length > 0 ? options : undefined,
     })
   }
+}
+
+export function getCountriesOptions(): Array<{ title: string; value: string }> {
+  return concat(
+    Object.entries(COUNTRIES).map((entry) => ({
+      title: `${entry[1]} (${entry[0]})`,
+      value: entry[0],
+    })),
+    Object.entries(COUNTRY_GROUP_LABELS).map((entry) => ({
+      title: `${entry[1]} (${entry[0]})`,
+      value: entry[0],
+    }))
+  )
 }
