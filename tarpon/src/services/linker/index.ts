@@ -24,6 +24,7 @@ type UsersProjectedData = Pick<
   | 'shareHolders'
   | 'userDetails'
   | 'type'
+  | 'linkedEntities'
 >
 @traceable
 export class LinkerService {
@@ -43,6 +44,8 @@ export class LinkerService {
       addressLinked,
       phoneLinked,
       paymentMethodLinked,
+      childrenLinked,
+      parentLinked,
     } = await this.entity(userId)
 
     const nodeMap: Map<string, string> = new Map()
@@ -52,6 +55,8 @@ export class LinkerService {
       ['paymentIdentifier', paymentMethodLinked],
       ['address', addressLinked],
       ['contactNumber', phoneLinked],
+      ['parent', parentLinked],
+      ['children', childrenLinked],
     ]
 
     for (const [userId, label] of linkedUsers) {
@@ -295,6 +300,8 @@ export class LinkerService {
     phoneLinked: Map<string, string[]>
     paymentMethodLinked: Map<string, string[]>
     linkedUsers: Map<string, string>
+    childrenLinked: Map<string, string[]>
+    parentLinked: Map<string, string[]>
   }> {
     const mongoClient = await getMongoDbClient()
     const db = mongoClient.db()
@@ -422,6 +429,12 @@ export class LinkerService {
           ]
         }),
         { userId },
+        {
+          'linkedEntities.childUserIds': userId,
+        },
+        {
+          'linkedEntities.parentUserId': userId,
+        },
       ],
     }
 
@@ -435,12 +448,15 @@ export class LinkerService {
         contactDetails: 1,
         userDetails: 1,
         type: 1,
+        linkedEntities: 1,
       })
       .toArray()
 
     const emailLinked = new Map<string, string[]>()
     const addressLinked = new Map<string, string[]>()
     const phoneLinked = new Map<string, string[]>()
+    const childrenLinked = new Map<string, string[]>()
+    const parentLinked = new Map<string, string[]>()
 
     for (const user of users) {
       const contactDetails = this.getAllContactDetails(user)
@@ -458,6 +474,18 @@ export class LinkerService {
           this.processLink(user, contactNumber, phoneLinked)
         )
       })
+    }
+
+    const currentUser = users.find((u) => u.userId === userId)
+    const link = currentUser?.linkedEntities
+    if (link?.childUserIds) {
+      childrenLinked.set(link.childUserIds.join(', '), [
+        ...link.childUserIds,
+        userId,
+      ])
+    }
+    if (link?.parentUserId) {
+      parentLinked.set(link.parentUserId, [link.parentUserId, userId])
     }
 
     // Merge origin and destination payment method links
@@ -516,6 +544,8 @@ export class LinkerService {
       addressLinked,
       paymentMethodLinked,
       linkedUsers,
+      childrenLinked,
+      parentLinked,
     }
   }
 }

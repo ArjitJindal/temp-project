@@ -170,5 +170,11 @@ const getIcon = (id: string): string => {
   if (id.startsWith('payment')) {
     return `/linking/card.png`;
   }
+  if (id.startsWith('parent')) {
+    return `/linking/parent.png`;
+  }
+  if (id.startsWith('child')) {
+    return `/linking/children.png`;
+  }
   return '';
 };
