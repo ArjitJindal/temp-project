@@ -745,7 +745,7 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.TRANSACTION_AGGREGATION_FUNCTION_NAME,
-
+        layers: [geoipLayer],
         memorySize:
           this.config.resource.TRANSACTION_AGGREGATION_LAMBDA?.MEMORY_SIZE,
       }
@@ -817,6 +817,7 @@ export class CdkTarponStack extends cdk.Stack {
         memorySize:
           config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
           config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
+        layers: [geoipLayer],
       }
     )
 
