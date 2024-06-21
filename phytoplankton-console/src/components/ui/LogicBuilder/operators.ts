@@ -24,6 +24,10 @@ const BUILT_IN_OPERATORS = omit(BasicConfig.operators, [
 ]) as CoreOperators<Config>;
 export const MULTI_SELECT_LIST_OPERATORS: RuleOperatorType[] = ['op:inlist', 'op:!inlist'];
 export const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
+export const MULTI_SELECT_OPERATORS = [
+  ...MULTI_SELECT_LIST_OPERATORS,
+  ...MULTI_SELECT_BUILTIN_OPERATORS,
+];
 export const SELECT_OPERATORS: Array<keyof CoreOperators> = [
   'equal',
   'not_equal',

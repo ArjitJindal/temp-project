@@ -22,7 +22,7 @@ import {
 import moment from 'moment';
 import { TimePicker } from 'antd';
 import React from 'react';
-import { isEmpty } from 'lodash';
+import { isArray, isEmpty } from 'lodash';
 import DatePicker from '../DatePicker';
 import s from './index.module.less';
 import {
@@ -36,6 +36,7 @@ import ListSelect from './ListSelect';
 import {
   MULTI_SELECT_BUILTIN_OPERATORS,
   MULTI_SELECT_LIST_OPERATORS,
+  MULTI_SELECT_OPERATORS,
   isCustomOperator,
 } from './operators';
 import { FieldInput, LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from './helpers';
@@ -146,6 +147,19 @@ const customTextWidget: TextWidget<BasicConfig> = {
   factory: (props) => {
     const isEnumType = !isEmpty((props as SelectFieldSettings).listValues);
     const operator = props.operator as RuleOperatorType;
+
+    // NOTE: As we apply some hacks to allow comparing a text value with multiple text values, we cannot
+    // rely on react-awesome-query-builder to clear value when the changed operator is not compatible with
+    // the existing value. So we need to clear the value by ourselves when switching between text and array.
+    if (MULTI_SELECT_OPERATORS.includes(operator)) {
+      if (!isArray(props.value)) {
+        setTimeout(() => props.setValue(undefined), 0);
+      }
+    } else {
+      if (isArray(props.value)) {
+        setTimeout(() => props.setValue(undefined), 0);
+      }
+    }
 
     if (MULTI_SELECT_LIST_OPERATORS.includes(operator)) {
       return (
@@ -292,7 +306,7 @@ const customMultiselectWidget: MultiSelectWidget<BasicConfig> = {
             }) ?? []
           }
           value={
-            isCountryField
+            isCountryField && isArray(props.value)
               ? deserializeCountries(props.value as string[])
               : props.value ?? undefined
           }
