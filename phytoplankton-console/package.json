@@ -76,7 +76,7 @@
     "@antv/l7-react": "^2.1.9",
     "@auth0/auth0-react": "^1.9.0",
     "@flagright/lib": "link:../lib",
-    "@react-awesome-query-builder/ui": "^6.4.2",
+    "@react-awesome-query-builder/ui": "^6.6.0",
     "@rjsf/antd": "^4.2.2",
     "@rjsf/core": "^4.2.2",
     "@sentry/browser": "^7.109.0",
