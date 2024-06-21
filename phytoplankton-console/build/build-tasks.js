@@ -7,6 +7,7 @@ const LessImportResolvePlugin = require('./less-import-resolve-plugin.js');
 const lessPlugin = require('./esbuild-plugin-less-loader.js');
 const svgrPlugin = require('./esbuild-plugin-svgr.js');
 const cssModulesPlugin = require('./esbuild-plugin-css-modules.js');
+const fontsPlugin = require('./esbuild-plugin-fonts');
 const resolveVirtuals = require('./esbuild-plugin-resolve-virtuals.js');
 const { log, error, notify } = require('./helpers.js');
 const parse = require('json-templates');
@@ -105,6 +106,7 @@ async function buildCode(env, options) {
     loader: {
       '.svg': 'file',
       '.png': 'file',
+      '.ttf': 'file',
     },
     define: {
       'process.env.RELEASE': JSON.stringify(release),
@@ -118,6 +120,12 @@ async function buildCode(env, options) {
       ),
     },
     plugins: [
+      fontsPlugin(
+        {},
+        {
+          rootDir: PROJECT_DIR,
+        },
+      ),
       lessPlugin(
         {
           javascriptEnabled: true,

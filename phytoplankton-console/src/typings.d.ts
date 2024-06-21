@@ -22,6 +22,7 @@ declare module '*.jpeg';
 declare module '*.gif';
 declare module '*.bmp';
 declare module '*.tiff';
+declare module '*.ttf';
 declare module '@rjsf/antd';
 declare module 'esbuild:source-file-meta' {
   declare const relativeResolveDir: string;
