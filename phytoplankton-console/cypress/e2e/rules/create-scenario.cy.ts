@@ -22,8 +22,8 @@ describe('Create scenario', () => {
     createAggregationVariable('Variable 1', 'type');
     createTransactionEntityVariable('type');
     cy.get('button[data-cy="add-logic-v8"]').click();
-    cy.get('[data-cy="logic-variable"]').eq(0).click().type('Transaction / type{enter}');
-    cy.get('.widget--widget').eq(0).first().click().type('Deposit{enter}');
+    cy.waitNothingLoading();
+    addCondition('Transaction / type{enter}', 'Deposit{enter}');
     addCondition('Variable 1', 5);
     cy.get('[data-cy="apply-to-risk-levels"]')
       .click()
