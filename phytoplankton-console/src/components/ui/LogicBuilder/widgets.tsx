@@ -36,7 +36,6 @@ import ListSelect from './ListSelect';
 import {
   MULTI_SELECT_BUILTIN_OPERATORS,
   MULTI_SELECT_LIST_OPERATORS,
-  MULTI_SELECT_OPERATORS,
   isCustomOperator,
 } from './operators';
 import { FieldInput, LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from './helpers';
@@ -148,10 +147,14 @@ const customTextWidget: TextWidget<BasicConfig> = {
     const isEnumType = !isEmpty((props as SelectFieldSettings).listValues);
     const operator = props.operator as RuleOperatorType;
 
+    // All text-type operators should support multi-values
+    const isArrayType =
+      MULTI_SELECT_BUILTIN_OPERATORS.includes(operator) || isCustomOperator(operator);
+
     // NOTE: As we apply some hacks to allow comparing a text value with multiple text values, we cannot
     // rely on react-awesome-query-builder to clear value when the changed operator is not compatible with
     // the existing value. So we need to clear the value by ourselves when switching between text and array.
-    if (MULTI_SELECT_OPERATORS.includes(operator)) {
+    if (isArrayType) {
       if (!isArray(props.value)) {
         setTimeout(() => props.setValue(undefined), 0);
       }
@@ -174,11 +177,17 @@ const customTextWidget: TextWidget<BasicConfig> = {
       );
     }
 
-    // All text-type operators should support multi-values
-    if (
-      isCustomOperator(operator) ||
-      (!isEnumType && MULTI_SELECT_BUILTIN_OPERATORS.includes(operator))
-    ) {
+    if (isEnumType) {
+      if (MULTI_SELECT_BUILTIN_OPERATORS.includes(props.operator)) {
+        return (customMultiselectWidget.factory as FactoryWithContext<MultiSelectFieldSettings>)(
+          props,
+        );
+      } else {
+        return (customSelectWidget.factory as FactoryWithContext<SelectFieldSettings>)(props);
+      }
+    }
+
+    if (isArrayType) {
       return (
         <WidgetWrapper widgetFactoryProps={props}>
           <Select<string>
@@ -193,15 +202,6 @@ const customTextWidget: TextWidget<BasicConfig> = {
           />
         </WidgetWrapper>
       );
-    }
-    if (isEnumType) {
-      if (MULTI_SELECT_BUILTIN_OPERATORS.includes(props.operator)) {
-        return (customMultiselectWidget.factory as FactoryWithContext<MultiSelectFieldSettings>)(
-          props,
-        );
-      } else {
-        return (customSelectWidget.factory as FactoryWithContext<SelectFieldSettings>)(props);
-      }
     }
 
     return (
