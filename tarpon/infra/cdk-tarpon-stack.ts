@@ -564,6 +564,11 @@ export class CdkTarponStack extends cdk.Stack {
         }),
         new PolicyStatement({
           effect: Effect.ALLOW,
+          actions: ['glue:*'],
+          resources: ['*'],
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
           actions: ['sqs:*'],
           resources: [
             auditLogQueue.queueArn,
@@ -599,6 +604,7 @@ export class CdkTarponStack extends cdk.Stack {
             s3TmpBucket.bucketArn,
             s3demoModeBucket.bucketArn,
             s3SharedAssetsBucket.bucketArn,
+            `arn:aws:s3:::flagright-datalake-${config.stage}-${config.region}-bucket`,
           ],
         }),
         new PolicyStatement({
