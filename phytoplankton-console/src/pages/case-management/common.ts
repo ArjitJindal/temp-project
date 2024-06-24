@@ -143,6 +143,10 @@ function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
       caseUserId: caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '',
       caseType: rest.caseType,
       user: user as TableUser | undefined,
+      lastStatusChangeReasons: {
+        reasons: alert.lastStatusChange?.reason ?? [],
+        otherReason: alert.lastStatusChange?.otherReason ?? null,
+      },
     };
   });
 }

@@ -1,5 +1,5 @@
 import { TableUser } from '../CaseTable/types';
-import { Alert, CaseType } from '@/apis';
+import { Alert, CaseType, CaseReasons } from '@/apis';
 
 export interface TableAlertItem extends Omit<Alert, 'transactionIds' | 'ruleChecklist'> {
   alertId?: string;
@@ -10,4 +10,8 @@ export interface TableAlertItem extends Omit<Alert, 'transactionIds' | 'ruleChec
   caseUserId: string;
   caseType: CaseType;
   user?: TableUser;
+  lastStatusChangeReasons?: {
+    reasons: CaseReasons[];
+    otherReason: string | null;
+  };
 }

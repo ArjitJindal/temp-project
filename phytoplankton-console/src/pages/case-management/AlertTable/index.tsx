@@ -78,6 +78,7 @@ import { notEmpty } from '@/utils/array';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
 import { SANCTIONS_HITS_ALL, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
+import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;
@@ -287,6 +288,11 @@ export default function AlertTable(props: Props) {
 
   const ruleQueues = useRuleQueues();
 
+  const showClosingReason =
+    parsedParams.caseStatus?.includes('CLOSED') ||
+    parsedParams.alertStatus?.includes('CLOSED') ||
+    false;
+
   const columns = useMemo(() => {
     const mergedColumns = (
       showUserColumns: boolean,
@@ -423,6 +429,42 @@ export default function AlertTable(props: Props) {
             reload,
           }),
         }),
+        ...(showClosingReason
+          ? [
+              helper.simple<'lastStatusChangeReasons'>({
+                title: 'Closing reason',
+                tooltip: 'Reason provided for closing an alert',
+                key: 'lastStatusChangeReasons',
+                type: {
+                  render: (lastStatusChangeReasons) => {
+                    return lastStatusChangeReasons ? (
+                      <>
+                        {lastStatusChangeReasons.reasons.map((closingReason, index) => (
+                          <ClosingReasonTag key={index}>{closingReason}</ClosingReasonTag>
+                        ))}
+                        {lastStatusChangeReasons.otherReason && (
+                          <div>
+                            <span>Other Reasons: </span>
+                            {lastStatusChangeReasons.otherReason}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>-</>
+                    );
+                  },
+                  stringify: (lastStatusChangeReasons) => {
+                    return [
+                      ...(lastStatusChangeReasons?.reasons ?? []),
+                      lastStatusChangeReasons?.otherReason,
+                    ]
+                      .filter((x) => !!x)
+                      .join('; ');
+                  },
+                },
+              }),
+            ]
+          : []),
         ...(qaEnabled
           ? [
               helper.simple<'ruleQaStatus'>({
@@ -723,6 +765,7 @@ export default function AlertTable(props: Props) {
     params,
     navigate,
     expandedAlertId,
+    showClosingReason,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
