@@ -51,22 +51,15 @@ export const transactionAggregationQuestion = (
       date: string
       agg: number
     }>(
-      `
-        WITH DateSeries AS (
+      `, DateSeries AS (
   SELECT
     date_trunc('${sqlExpression}', date) AS period_start
   FROM
     (
-      SELECT
-        EXPLODE(
-          SEQUENCE(
-            TO_DATE(:from),
-            TO_DATE(:to),
-            INTERVAL ${
-              sqlExpression === 'QUARTER' ? '3 MONTH' : `1 ${sqlExpression}`
-            }
-          )
-        ) AS date
+      SELECT 
+       date_add('day', row_number() OVER () - 1, DATE :from) AS date
+      FROM 
+       unnest(sequence(1, (date_diff('day', DATE :from, DATE :to) + 1))) AS t(day_number)
     )
   GROUP BY
     date_trunc('${sqlExpression}', date)
@@ -83,9 +76,9 @@ FROM
     ${condition}
   )
 GROUP BY
-  t.date
+  ds.period_start
 ORDER BY
-  t.date ASC
+  ds.period_start ASC
     `,
       {
         userId: ctx.userId,
@@ -201,7 +194,7 @@ const AverageTransactionAmount = transactionAggregationQuestion(
 const MedianTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MEDIAN_TRANSACTION_AMOUNT,
   'Median transaction amount',
-  () => 'percentile_approx(transactionAmountUSD, 0.5)',
+  () => 'approx_percentile(transactionAmountUSD, 0.5)',
   true
 )
 

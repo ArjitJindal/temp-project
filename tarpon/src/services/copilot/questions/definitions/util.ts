@@ -131,8 +131,8 @@ export function matchPeriod(timestampField: string, period: Period) {
 
 export function sqlPeriod(period: Period) {
   return {
-    from: (period.from || 0).toFixed(2),
-    to: (period.to || new Date().valueOf()).toFixed(2),
+    from: period.from || 0,
+    to: period.to || new Date().valueOf(),
   }
 }
 

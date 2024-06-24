@@ -9,7 +9,7 @@ export async function paginatedSqlQuery<T>(
 ): Promise<{ rows: T[]; total: number }> {
   const pageOrDefault = page || 1
   const pageSizeOrDefault = pageSize || DEFAULT_PAGE_SIZE
-  const rowsQuery = executeSql<T>(`${sqlQuery} limit :limit offset :offset`, {
+  const rowsQuery = executeSql<T>(`${sqlQuery} offset :offset limit :limit`, {
     ...params,
     limit: pageSizeOrDefault,
     offset: (pageOrDefault - 1) * pageSizeOrDefault,

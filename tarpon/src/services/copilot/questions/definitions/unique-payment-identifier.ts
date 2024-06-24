@@ -46,7 +46,7 @@ export const UniquePaymentIdentifier: TableQuestion<
     }>(
       `
     select
-      first(t.${paymentDetailsKey}.method) as method,
+      any_value(t.${paymentDetailsKey}.method) as method,
       count(*) as count,
       sum(t.transactionAmountUSD) as sum,
       t.${paymentDetailsKey} as paymentDetails

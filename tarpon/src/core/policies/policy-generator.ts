@@ -14,9 +14,22 @@ export default class PolicyBuilder {
     this.statements = []
   }
 
+  athena() {
+    this.statements.push({
+      Effect: 'Allow',
+      Action: ['athena:*'],
+      Resource: ['*'],
+      Condition: {
+        StringEquals: {
+          'athena:queryPartitionValue': `tenant=${this.tenantId}`,
+        },
+      },
+    })
+    return this
+  }
+
   dynamoDb(tables: string[]) {
     this.statements.push({
-      Sid: `AllowAllActionsOfTenantData`,
       Effect: 'Allow',
       Action: ['dynamodb:*'],
       Resource: tables.map((table) => `arn:aws:dynamodb:*:*:table/${table}`),
@@ -27,7 +40,6 @@ export default class PolicyBuilder {
       },
     })
     this.statements.push({
-      Sid: `ReadOnlyAPIActionsOnFlagrightItems`,
       Effect: 'Allow',
       Action: [
         'dynamodb:GetItem',
@@ -48,7 +60,6 @@ export default class PolicyBuilder {
 
   s3() {
     this.statements.push({
-      Sid: 'AllowAllActionsInTenantFolders',
       Action: ['s3:*'],
       Effect: 'Allow',
       Resource: [
@@ -63,7 +74,6 @@ export default class PolicyBuilder {
 
   secretsManager() {
     this.statements.push({
-      Sid: 'AllowAllActionsOfTenantSecrets',
       Action: ['secretsmanager:*'],
       Effect: 'Allow',
       Resource: [`arn:aws:secretsmanager:*:*:secret:${this.tenantId}*`],

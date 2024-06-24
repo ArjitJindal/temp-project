@@ -27,7 +27,7 @@ import {
   DeleteRequest,
 } from '@aws-sdk/client-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
-import { StandardRetryStrategy } from '@aws-sdk/middleware-retry'
+import { StandardRetryStrategy } from '@smithy/middleware-retry'
 import { getCredentialsFromEvent } from './credentials'
 import { addNewSubsegment } from '@/core/xray'
 import {

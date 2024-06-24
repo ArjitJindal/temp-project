@@ -44,8 +44,8 @@ export const UsersTransactedWith: TableQuestion<
       `
 select
   t.${otherUserIdKey} as userId,
-  FIRST(case when u.type = 'CONSUMER' THEN u.userDetails.name.firstName ELSE u.legalEntity.companyGeneralDetails.legalName END) as name,
-  FIRST(u.type) as userType,
+  any_value(case when u.type = 'CONSUMER' THEN u.userDetails.name.firstName ELSE u.legalEntity.companyGeneralDetails.legalName END) as name,
+  any_value(u.type) as userType,
   count(*) as count,
   sum(t.transactionAmountUSD) as sum
 from

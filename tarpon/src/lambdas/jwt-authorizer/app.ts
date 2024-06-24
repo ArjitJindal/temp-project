@@ -49,6 +49,7 @@ async function getTenantScopeCredentials(
       new PolicyBuilder(tenantId)
         .s3()
         .secretsManager()
+        .athena()
         .dynamoDb([
           StackConstants.TARPON_DYNAMODB_TABLE_NAME,
           StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,

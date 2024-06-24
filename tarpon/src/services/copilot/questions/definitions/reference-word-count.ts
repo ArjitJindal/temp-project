@@ -34,9 +34,10 @@ export const ReferenceWordCount: TableQuestion<Period> = {
         select
           transactionId,
           reference,
-          explode(split(reference, ' ')) as word
+          word
         from
           transactions
+        cross join unnest(split(reference, ' ')) AS t (word)
         where 
           originUserId = :userId or destinationUserId = :userId
       ) words

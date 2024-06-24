@@ -559,6 +559,11 @@ export class CdkTarponStack extends cdk.Stack {
         }),
         new PolicyStatement({
           effect: Effect.ALLOW,
+          actions: ['athena:*'],
+          resources: ['*'],
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
           actions: ['sqs:*'],
           resources: [
             auditLogQueue.queueArn,

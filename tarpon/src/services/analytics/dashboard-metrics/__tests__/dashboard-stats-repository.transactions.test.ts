@@ -9,7 +9,7 @@ import {
 import dayjs from '@/utils/dayjs'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { RISK_LEVELS } from '@/@types/openapi-public-custom/all'
+import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 
