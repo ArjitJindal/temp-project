@@ -58,6 +58,7 @@ import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
 import { getExternalComment } from '@/utils/external-transformer'
 import { getCredentialsFromEvent } from '@/utils/credentials'
+import { getParsedCommentBody } from '@/utils/helpers'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -93,6 +94,7 @@ export class UserService {
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   awsCredentials?: LambdaCredentials
+  userAuditLogService: UserAuditLogService
 
   constructor(
     tenantId: string,
@@ -110,6 +112,7 @@ export class UserService {
       mongoDb: connections.mongoDb,
       dynamoDb: connections.dynamoDb,
     })
+    this.userAuditLogService = new UserAuditLogService(tenantId)
     this.s3 = s3 as S3
     this.tmpBucketName = tmpBucketName as string
     this.documentBucketName = documentBucketName as string
@@ -721,10 +724,6 @@ export class UserService {
       userStateRuleInstance: options?.userStateRuleInstance,
     })
 
-    const userAuditLogService = new UserAuditLogService(
-      this.userRepository.tenantId
-    )
-
     const [savedComment] = await Promise.all([
       this.userRepository.saveUserComment(user.userId, {
         body: commentBody ?? '',
@@ -735,7 +734,7 @@ export class UserService {
         files: updateRequest.comment?.files ?? [],
         updatedAt: Date.now(),
       }),
-      userAuditLogService.handleAuditLogForUserUpdate(
+      this.userAuditLogService.handleAuditLogForUserUpdate(
         updateRequest,
         user.userId
       ),
@@ -803,7 +802,11 @@ export class UserService {
         awsCredentials: this.awsCredentials,
       })
     }
-
+    await this.userAuditLogService.handleAuditLogForAddComment(userId, {
+      ...comment,
+      body: getParsedCommentBody(comment.body),
+      files: comment.files,
+    })
     return {
       ...savedComment,
       files: await this.getUpdatedFiles(savedComment.files),
@@ -879,7 +882,10 @@ export class UserService {
       ...reply,
       parentId: commentId,
     })
-
+    await this.userAuditLogService.handleAuditLogForAddComment(userId, {
+      ...reply,
+      body: getParsedCommentBody(reply.body),
+    })
     return {
       ...savedReply,
       files: await this.getUpdatedFiles(savedReply.files),
@@ -903,6 +909,12 @@ export class UserService {
       })
     }
     await this.userRepository.deleteUserComment(userId, commentId)
+    if (comment) {
+      await this.userAuditLogService.handleAuditLogForDeleteComment(
+        userId,
+        comment
+      )
+    }
   }
 
   public async getEventsList(params: DefaultApiGetEventsListRequest) {

@@ -14,7 +14,7 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { LinkerService } from '@/services/linker'
 import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { getMentionsFromComments, getParsedCommentBody } from '@/utils/helpers'
+import { getMentionsFromComments } from '@/utils/helpers'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -101,7 +101,6 @@ export const allUsersViewHandler = lambdaApi()(
     const { principalId: tenantId, userId } = event.requestContext.authorizer
     const userService = await UserService.fromEvent(event)
     const linkerService = new LinkerService(tenantId)
-    const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
     handlers.registerGetAllUsersList(
@@ -123,28 +122,12 @@ export const allUsersViewHandler = lambdaApi()(
         request.userId,
         comment
       )
-      await userAuditLogService.handleAuditLogForAddComment(request.userId, {
-        ...rawComment,
-        mentions,
-        body: getParsedCommentBody(rawComment.body),
-      })
       return createdComment
     })
 
     handlers.registerDeleteUsersUserIdCommentsCommentId(
       async (ctx, request) => {
-        const comment = (
-          await userService.getUser(request.userId)
-        ).comments?.find((comment) => comment.id === request.commentId)
-
         await userService.deleteUserComment(request.userId, request.commentId)
-
-        if (comment) {
-          await userAuditLogService.handleAuditLogForDeleteComment(
-            request.userId,
-            comment
-          )
-        }
       }
     )
 
@@ -208,12 +191,6 @@ export const allUsersViewHandler = lambdaApi()(
         request.commentId,
         comment
       )
-
-      await userAuditLogService.handleAuditLogForAddComment(request.userId, {
-        ...rawComment,
-        mentions,
-        body: getParsedCommentBody(rawComment.body),
-      })
       return createdComment
     })
 
