@@ -1,5 +1,6 @@
 import React from 'react';
 import { startCase } from 'lodash';
+import s from './PermissionTable.module.less';
 import Table from '@/components/library/Table';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { PermissionRow } from '@/pages/accounts/Roles/types';
@@ -27,17 +28,19 @@ export default function PermissionTable(props: Props) {
   const { items, onChange, tableRef, onExpandedChange } = props;
 
   return (
-    <Table<PermissionRow>
-      innerRef={tableRef}
-      data={{ items }}
-      rowKey={'name'}
-      columns={roleColumns}
-      pagination={false}
-      toolsOptions={false}
-      onExpandedMetaChange={({ isAllExpanded }) => onExpandedChange?.(isAllExpanded)}
-      renderExpanded={(record) => {
-        return <ExtendedRowRenderer record={record} onChange={onChange} />;
-      }}
-    />
+    <div className={s.rolePermissionTable}>
+      <Table<PermissionRow>
+        innerRef={tableRef}
+        data={{ items }}
+        rowKey={'name'}
+        columns={roleColumns}
+        pagination={false}
+        toolsOptions={false}
+        onExpandedMetaChange={({ isAllExpanded }) => onExpandedChange?.(isAllExpanded)}
+        renderExpanded={(record) => {
+          return <ExtendedRowRenderer record={record} onChange={onChange} />;
+        }}
+      />
+    </div>
   );
 }
