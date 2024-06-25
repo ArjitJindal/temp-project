@@ -156,7 +156,7 @@ export default function BasicDetailsStep(props: Props) {
               <PropertyColumns>
                 <InputField<BasicDetailsFormValues, 'userRuleRunCondition'>
                   name={'userRuleRunCondition'}
-                  label={'Run is run when'}
+                  label={'Rule is run when'}
                   labelProps={{ required: true }}
                 >
                   {(inputProps) => (
