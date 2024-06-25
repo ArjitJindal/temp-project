@@ -34,7 +34,11 @@ export class LinkerService {
     this.tenantId = tenantId
   }
 
-  public async entityGraph(userId: string): Promise<{
+  public async entityGraph(
+    userId: string,
+    afterTimestamp?: number,
+    beforeTimestamp?: number
+  ): Promise<{
     nodes: GraphNodes[]
     edges: GraphEdges[]
   }> {
@@ -46,7 +50,7 @@ export class LinkerService {
       paymentMethodLinked,
       childrenLinked,
       parentLinked,
-    } = await this.entity(userId)
+    } = await this.entity(userId, afterTimestamp, beforeTimestamp)
 
     const nodeMap: Map<string, string> = new Map()
     const linkedEdges: GraphEdges[] = []
@@ -120,7 +124,11 @@ export class LinkerService {
     }
   }
 
-  public async transactions(userId: string): Promise<{
+  public async transactions(
+    userId: string,
+    afterTimestamp?: number,
+    beforeTimestamp?: number
+  ): Promise<{
     nodes: GraphNodes[]
     edges: GraphEdges[]
   }> {
@@ -158,7 +166,10 @@ export class LinkerService {
               ...(!isPaymentId
                 ? { originUserId: userId }
                 : { originPaymentMethodId: userId }),
-              timestamp: { $gte: dayjs().subtract(30, 'day').valueOf() },
+              timestamp: {
+                $gte: afterTimestamp || dayjs().subtract(30, 'days').valueOf(),
+                $lte: beforeTimestamp || dayjs().valueOf(),
+              },
             },
           },
           { $limit: 10000 },
@@ -194,7 +205,10 @@ export class LinkerService {
               ...(!isPaymentId
                 ? { destinationUserId: userId }
                 : { destinationPaymentMethodId: userId }),
-              timestamp: { $gte: dayjs().subtract(30, 'day').valueOf() },
+              timestamp: {
+                $gte: afterTimestamp || dayjs().subtract(30, 'days').valueOf(),
+                $lte: beforeTimestamp || dayjs().valueOf(),
+              },
             },
           },
           { $limit: 10000 },
@@ -288,13 +302,21 @@ export class LinkerService {
     }
   }
 
-  public async linkedUsers(userId: string): Promise<string[]> {
-    const entity = await this.entity(userId)
+  public async linkedUsers(
+    userId: string,
+    afterTimestamp?: number,
+    beforeTimestamp?: number
+  ): Promise<string[]> {
+    const entity = await this.entity(userId, afterTimestamp, beforeTimestamp)
     entity.linkedUsers.delete(userId)
     return [...entity.linkedUsers.keys()]
   }
 
-  public async entity(userId: string): Promise<{
+  public async entity(
+    userId: string,
+    afterTimestamp?: number,
+    beforeTimestamp?: number
+  ): Promise<{
     emailLinked: Map<string, string[]>
     addressLinked: Map<string, string[]>
     phoneLinked: Map<string, string[]>
@@ -317,7 +339,10 @@ export class LinkerService {
       {
         originUserId: userId,
         originPaymentMethodId: { $ne: undefined },
-        timestamp: { $gte: dayjs().subtract(30, 'day').valueOf() },
+        timestamp: {
+          $gte: afterTimestamp || dayjs().subtract(30, 'days').valueOf(),
+          $lte: beforeTimestamp || dayjs().valueOf(),
+        },
       }
     )
 
@@ -326,7 +351,10 @@ export class LinkerService {
       {
         destinationUserId: userId,
         destinationPaymentMethodId: { $ne: undefined },
-        timestamp: { $gte: dayjs().subtract(30, 'day').valueOf() },
+        timestamp: {
+          $gte: afterTimestamp || dayjs().subtract(30, 'days').valueOf(),
+          $lte: beforeTimestamp || dayjs().valueOf(),
+        },
       }
     )
 

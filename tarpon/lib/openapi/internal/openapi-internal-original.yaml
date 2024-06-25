@@ -1350,6 +1350,14 @@ paths:
           name: userId
           required: true
           in: path
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
   /users/{userId}/txn-links:
     get:
       summary: Transaction Linking
@@ -1371,6 +1379,14 @@ paths:
           name: userId
           required: true
           in: path
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
   /users/{userId}/screening-status:
     get:
       summary: Screening Status

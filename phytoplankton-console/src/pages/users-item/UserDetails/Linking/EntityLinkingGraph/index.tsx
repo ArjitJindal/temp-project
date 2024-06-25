@@ -21,6 +21,7 @@ import Alert from '@/components/library/Alert';
 
 type EntityLinkingProps = {
   userId: string;
+  extraHints: string[];
   onFollow: (userId: string) => void;
   nodes: GraphNodes[];
   edges: GraphEdges[];
@@ -41,7 +42,9 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
     edgeArrowPosition = 'none',
     edgeInterpolation = 'linear',
     isFollowEnabled,
+    extraHints,
   } = props;
+
   const { selections, actives, onNodePointerOver, onNodePointerOut } = useSelection({
     ref: graphRef,
     pathHoverType: 'all',
@@ -70,6 +73,11 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
   return (
     <div className={cn(s.root, isScrollEnabled && s.isScrollEnabled)}>
       <div className={s.hint}>
+        {extraHints.map((hint, index) => (
+          <Alert key={index} type={'info'}>
+            {hint}
+          </Alert>
+        ))}
         <Alert type={'info'}>
           Hold Ctrl or{' '}
           <CommandKeyIcon
@@ -116,7 +124,10 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
         theme={{
           ...lightTheme,
           edge: { ...lightTheme.edge, activeFill: '#52c41a' },
-          node: { ...lightTheme.node, label: { ...lightTheme.node.label, activeColor: '#52c41a' } },
+          node: {
+            ...lightTheme.node,
+            label: { ...lightTheme.node.label, activeColor: '#52c41a' },
+          },
         }}
         selections={selections}
         actives={actives}

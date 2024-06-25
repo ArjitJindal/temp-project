@@ -17,15 +17,23 @@ const Linking = (props: Props) => {
   const api = useApi();
 
   const getUser = useCallback(
-    (userId) => {
-      return api.getUserEntity({ userId });
+    (userId: string, afterTimestamp?: number, beforeTimestamp?: number) => {
+      return api.getUserEntity({
+        userId,
+        afterTimestamp,
+        beforeTimestamp,
+      });
     },
     [api],
   );
 
   const getTxn = useCallback(
-    (userId) => {
-      return api.getTxnLinking({ userId });
+    (userId: string, afterTimestamp?: number, beforeTimestamp?: number) => {
+      return api.getTxnLinking({
+        userId,
+        afterTimestamp,
+        beforeTimestamp,
+      });
     },
     [api],
   );

@@ -168,11 +168,19 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetUserEntity(async (ctx, request) => {
-      return await linkerService.entityGraph(request.userId)
+      return await linkerService.entityGraph(
+        request.userId,
+        request?.afterTimestamp,
+        request?.beforeTimestamp
+      )
     })
 
     handlers.registerGetTxnLinking(async (ctx, request) => {
-      return linkerService.transactions(request.userId)
+      return linkerService.transactions(
+        request.userId,
+        request?.afterTimestamp,
+        request?.beforeTimestamp
+      )
     })
 
     handlers.registerGetUserScreeningStatus(async (_ctx, _request) => {
