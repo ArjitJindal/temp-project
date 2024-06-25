@@ -29,6 +29,9 @@ export default function ExpandedRowRenderer(props: Props) {
         alert={alert}
         selectedSanctionsHitsIds={selectedSanctionsHitsIds}
         onSanctionsHitSelect={onSanctionsHitSelect}
+        selectedTransactionIds={selectedTransactionIds}
+        onTransactionSelect={onTransactionSelect}
+        escalatedTransactionIds={escalatedTransactionIds}
       />
     );
   }

@@ -287,6 +287,7 @@ export function setUpRulesHooks(
           {
             ...(omit(rule, 'id') as RuleInstance),
             alertConfig: {
+              ...(rule as RuleInstance).alertConfig,
               alertCreationDirection,
             },
           }

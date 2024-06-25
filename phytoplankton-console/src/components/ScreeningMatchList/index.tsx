@@ -1,9 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, SanctionsDetails, SanctionsHit } from '@/apis';
+import { SanctionsDetails, SanctionsHit } from '@/apis';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { success } from '@/utils/asyncResource';
 import Checklist from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Checklist';
 import Comments from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Comments';
+import TransactionsTab from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/TransactionsTab';
+import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
+import { notEmpty } from '@/utils/array';
 import { QueryResult } from '@/utils/queries/types';
 import { useApi } from '@/api';
 import { useCursorQuery, CursorPaginatedData } from '@/utils/queries/hooks';
@@ -15,13 +18,24 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 interface Props {
   details: SanctionsDetails[];
-  alert?: Alert;
+  alert?: TableAlertItem;
+  escalatedTransactionIds?: string[];
+  selectedTransactionIds?: string[];
+  onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
   selectedSanctionsHitsIds?: string[];
   onSanctionsHitSelect?: (alertId: string, sanctionsHitsIds: string[]) => void;
 }
 
 export default function ScreeningMatchList(props: Props) {
-  const { details, alert, selectedSanctionsHitsIds, onSanctionsHitSelect } = props;
+  const {
+    details,
+    alert,
+    selectedSanctionsHitsIds,
+    onSanctionsHitSelect,
+    escalatedTransactionIds,
+    selectedTransactionIds,
+    onTransactionSelect,
+  } = props;
 
   const [tableParams, setTableParams] =
     useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
@@ -51,26 +65,43 @@ export default function ScreeningMatchList(props: Props) {
           />
         ),
       },
-      ...(alert?.alertId != null
+      ...(alert != null && alert.alertId != null
         ? [
-            ...(alert.ruleChecklistTemplateId
-              ? [
-                  {
-                    title: 'Checklist',
-                    key: 'checklist',
-                    children: <Checklist alert={alert} />,
-                  },
-                ]
-              : []),
+            alert.ruleChecklistTemplateId && {
+              title: 'Checklist',
+              key: 'checklist',
+              children: <Checklist alert={alert} />,
+            },
             {
               title: 'Comments',
               key: 'comments',
               children: <Comments alertsRes={success(alert)} alertId={alert.alertId} />,
             },
-          ]
+            alert.numberOfTransactionsHit > 0 && {
+              title: 'Transactions details',
+              key: 'transactions',
+              children: (
+                <TransactionsTab
+                  alert={alert}
+                  selectedTransactionIds={selectedTransactionIds}
+                  onTransactionSelect={onTransactionSelect}
+                  escalatedTransactionIds={escalatedTransactionIds}
+                />
+              ),
+            },
+          ].filter(notEmpty)
         : []),
     ],
-    [hitsQueryResults, alert, tableParams, selectedSanctionsHitsIds, onSanctionsHitSelect],
+    [
+      hitsQueryResults,
+      alert,
+      tableParams,
+      selectedSanctionsHitsIds,
+      onSanctionsHitSelect,
+      selectedTransactionIds,
+      onTransactionSelect,
+      escalatedTransactionIds,
+    ],
   );
 
   return (

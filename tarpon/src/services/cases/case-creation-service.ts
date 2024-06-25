@@ -462,7 +462,8 @@ export class CaseCreationService {
               latestTransaction,
               latestTransactionArrivalTimestamp,
               ruleInstances,
-              checkListTemplates
+              checkListTemplates,
+              hitRules
             )
           : []
 
@@ -567,7 +568,8 @@ export class CaseCreationService {
     transaction?: InternalTransaction,
     latestTransactionArrivalTimestamp?: number,
     ruleInstances?: readonly RuleInstance[],
-    checkListTemplates?: ChecklistTemplate[]
+    checkListTemplates?: ChecklistTemplate[],
+    hitRules?: HitRulesDetails[]
   ): Alert[] {
     return alerts.map((alert) => {
       if (!transaction || !latestTransactionArrivalTimestamp) {
@@ -594,6 +596,11 @@ export class CaseCreationService {
           transaction.destinationPaymentDetails.method
         )
       }
+
+      const sanctionsDetails = (hitRules ?? [])
+        .filter((hit) => alert.ruleInstanceId === hit.ruleInstanceId)
+        .flatMap((hit) => hit.ruleHitMeta?.sanctionsDetails ?? [])
+
       return {
         ...alert,
         latestTransactionArrivalTimestamp: latestTransactionArrivalTimestamp,
@@ -602,6 +609,16 @@ export class CaseCreationService {
         destinationPaymentMethods: Array.from(destinationPaymentDetails),
         numberOfTransactionsHit: txnSet.size,
         updatedAt: Date.now(),
+        ruleHitMeta:
+          sanctionsDetails.length > 0
+            ? {
+                ...alert.ruleHitMeta,
+                sanctionsDetails: [
+                  ...(alert?.ruleHitMeta?.sanctionsDetails ?? []),
+                  ...(sanctionsDetails ?? []),
+                ],
+              }
+            : alert.ruleHitMeta,
         ruleChecklistTemplateId:
           alert?.ruleChecklistTemplateId ??
           ruleInstances?.find((rule) => rule.id === alert.ruleInstanceId)
