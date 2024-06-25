@@ -3456,6 +3456,19 @@ components:
             $ref: '#/components/schemas/ExecutedRulesResult'
       required:
         - userId
+    CardStatus:
+      title: CardStatus
+      type: string
+      description: Status of the card
+      enum:
+        - ACTIVE
+        - FROZEN
+        - BLOCKED
+        - SUSPECTED_FRAUD
+        - STOLEN
+        - LOST
+        - CLOSED
+        - OTHER
     CardDetails:
       title: CardDetails
       type: object
@@ -3478,6 +3491,8 @@ components:
             card payment scheme provider
         emailId:
           $ref: '#/components/schemas/EmailId'
+        cardStatus:
+          $ref: '#/components/schemas/CardStatus'
         cardIssuedCountry:
           $ref: '#/components/schemas/CountryCode'
         transactionReferenceField:
