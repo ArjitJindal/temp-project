@@ -380,17 +380,23 @@ export const CASEID: ColumnDataType<string, Pick<Case, 'caseId'>> = {
   },
 };
 
-export const QA_SAMPLE_ID: ColumnDataType<string, Pick<AlertsQaSampling, 'samplingId'>> = {
+export const QA_SAMPLE_ID: ColumnDataType<
+  string,
+  Pick<AlertsQaSampling, 'samplingId' | 'samplingType'>
+> = {
   render: (value, { item: entity }) => {
     return (
       <>
         {entity?.samplingId && (
-          <Id
-            to={addBackUrlToRoute(`/case-management/qa-sampling/${entity.samplingId}`)}
-            testName="sampling-id"
-          >
-            {entity.samplingId}
-          </Id>
+          <div className={s.samplingId}>
+            <Id
+              to={addBackUrlToRoute(`/case-management/qa-sampling/${entity.samplingId}`)}
+              testName="sampling-id"
+            >
+              {entity.samplingId}
+            </Id>
+            {entity.samplingType === 'MANUAL' && <Tag color="gold">Manual</Tag>}
+          </div>
         )}
       </>
     );

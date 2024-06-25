@@ -9118,12 +9118,12 @@ components:
             - AUTOMATIC
         filters:
           $ref: '#/components/schemas/AlertQASamplingFilters'
-        samplingPercentage:
+        samplingQuantity:
           type: number
       required:
         - filters
-        - samplingPercentage
         - samplingType
+        - samplingQuantity
     AlertsQASamplingManualData:
       title: AlertsQASamplingManualData
       type: object
@@ -9172,7 +9172,7 @@ components:
           type: array
           items:
             type: string
-        samplingPercentage:
+        samplingQuantity:
           type: number
     AlertsQASampleIds:
       title: AlertsQASampleIds
@@ -9196,7 +9196,7 @@ components:
       title: AlertsQASampling
       type: object
       properties:
-        samplingPercentage:
+        samplingQuantity:
           type: number
         samplingName:
           type: string
@@ -9232,7 +9232,7 @@ components:
           items:
             type: string
       required:
-        - samplingPercentage
+        - samplingQuantity
         - samplingName
         - samplingDescription
         - priority

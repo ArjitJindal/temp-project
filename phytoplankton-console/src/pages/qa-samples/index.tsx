@@ -29,7 +29,6 @@ interface TableItem extends AlertsQaSampling {}
 
 interface TableParams {
   samplingName?: string;
-  samplingPercentage?: number;
   samplingId?: string;
   priority?: Priority;
   createdAt?: number[];
@@ -53,7 +52,6 @@ const QASamplesTable = () => {
         sortField: params.sort?.[0]?.[0],
         sortOrder: params.sort?.[0]?.[1] ?? 'descend',
         filterSampleName: params.samplingName,
-        filterSamplePercentage: params.samplingPercentage,
         filterSampleId: params.samplingId,
       });
 
@@ -107,25 +105,6 @@ const QASamplesTable = () => {
         key: 'samplingDescription',
         filtering: true,
       }),
-      helper.simple<'samplingPercentage'>({
-        title: 'Sampling %',
-        key: 'samplingPercentage',
-        type: {
-          render: (value, item) => {
-            return (
-              <>
-                {item.item.samplingType === 'MANUAL'
-                  ? 'Manual'
-                  : `${Number(value ?? 0).toFixed(2)}%`}
-              </>
-            );
-          },
-          stringify: (value, item) => {
-            return item.samplingType === 'MANUAL' ? 'Manual' : `${Number(value ?? 0).toFixed(2)}%`;
-          },
-        },
-        filtering: true,
-      }),
       helper.derived<string>({
         title: "No. of alerts QA'd",
         value: (item) => `${item.numberOfAlertsQaDone ?? 0} / ${item.numberOfAlerts}`,
@@ -172,13 +151,15 @@ const QASamplesTable = () => {
                     body: {
                       samplingName: values.samplingName,
                       samplingDescription: values.samplingDescription,
-                      samplingPercentage: values.samplingPercentage,
+                      samplingQuantity: values.samplingQuantity,
                       priority: values.priority,
                     },
                   });
                 }}
                 sampleType={item.samplingType}
                 type="EDIT"
+                params={item.samplingType === 'AUTOMATIC' ? item.filters : undefined}
+                initialValues={item}
               />
               <Confirm
                 onConfirm={() => deleteMutation.mutate(item.samplingId)}

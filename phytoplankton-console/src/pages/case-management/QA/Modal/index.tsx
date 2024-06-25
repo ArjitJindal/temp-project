@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { QAFormValues } from '../types';
+import { TableSearchParams } from '../../types';
+import { useAlertQuery } from '../../common';
+import { ChecklistStatus } from '../../../../apis/models/ChecklistStatus';
 import Modal from '@/components/library/Modal';
 import Form from '@/components/library/Form';
 import { AlertsQaSampling } from '@/apis';
@@ -11,12 +14,17 @@ import { PRIORITYS } from '@/apis/models-custom/Priority';
 import Slider from '@/components/library/Slider';
 import Alert from '@/components/library/Alert';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
+import { AllParams } from '@/components/library/Table/types';
+import { getOr } from '@/utils/asyncResource';
+import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 
 const initialValues: QAFormValues = {
   samplingName: '',
   samplingDescription: '',
   priority: 'P1',
-  samplingPercentage: 20,
+  samplingQuantity: 0,
+  filters: {},
+  numberOfAlertsQaDone: 0,
 };
 
 type QAModalProps = {
@@ -26,6 +34,7 @@ type QAModalProps = {
   type: 'CREATE' | 'EDIT';
   initialValues?: QAFormValues;
   sampleType: AlertsQaSampling['samplingType'];
+  params?: AllParams<TableSearchParams>;
 };
 
 export const QAModal = (props: QAModalProps) => {
@@ -50,13 +59,6 @@ export const QAModal = (props: QAModalProps) => {
         fieldValidators={{
           samplingName: notEmpty,
           samplingDescription: notEmpty,
-          samplingPercentage: (value) => {
-            if (!value || value <= 0) {
-              return 'Sampling % must be greater than 0';
-            }
-
-            return null;
-          },
         }}
       >
         <InputField<QAFormValues, 'samplingName'>
@@ -88,37 +90,76 @@ export const QAModal = (props: QAModalProps) => {
             />
           )}
         </InputField>
-        {sampleType === 'AUTOMATIC' && (
-          <>
-            <InputField<QAFormValues, 'samplingPercentage'>
-              name="samplingPercentage"
-              label="Sampling %"
-              labelProps={{ required: true }}
-            >
-              {(inputProps) => (
-                <Slider
-                  {...inputProps}
-                  mode="SINGLE"
-                  min={0}
-                  max={100}
-                  marks={{ 0: '0', 100: '100' }}
-                  textInput={{
-                    min: 0,
-                    max: 100,
-                    step: 1,
-                    htmlAttrs: { style: { width: '2.5rem' } },
-                  }}
-                />
-              )}
-            </InputField>
-            <Alert type="info">
-              {type === 'CREATE'
-                ? 'Note that any filters applied to the Not QA’d alerts will be considered during the creation of a sample. '
-                : 'Note that you can only extend the sampling %. Extending the sampling % will add alerts to the existing sample.'}
-            </Alert>
-          </>
-        )}
+        {sampleType === 'AUTOMATIC' && <QASlider {...props} formState={formState} />}
       </Form>
     </Modal>
   );
+};
+
+const QASlider = (props: QAModalProps & { formState: { values: QAFormValues } }) => {
+  const { type, params, formState, initialValues } = props;
+
+  const alertsQueryResult = useAlertQuery(
+    {
+      ...(type === 'CREATE' && params),
+      pageSize: 1,
+      filterQaStatus: ["NOT_QA'd"],
+      sort: [['createdAt', 'descend']],
+      alertStatus: ['CLOSED'],
+    },
+    type === 'EDIT'
+      ? ({
+          ...params,
+          filterQaStatus: ["NOT_QA'd" as ChecklistStatus],
+          filterAlertStatus: ['CLOSED'],
+          sortField: 'createdAt',
+          sortOrder: 'descend',
+        } as DefaultApiGetAlertListRequest)
+      : undefined,
+  );
+
+  const count = useMemo(
+    () => getOr(alertsQueryResult.data, { items: [], total: 0 }),
+    [alertsQueryResult.data],
+  );
+
+  const alertsQAed = formState.values.numberOfAlertsQaDone;
+
+  const totalAlerts =
+    useMemo(() => (alertsQAed ?? 0) + (count?.total ?? 0), [alertsQAed, count.total]) || 0;
+
+  return count != null ? (
+    <>
+      <InputField<QAFormValues, 'samplingQuantity'>
+        name="samplingQuantity"
+        label={'Number of Not QA’d alerts to be included'}
+        labelProps={{ required: true }}
+      >
+        {(inputProps) => {
+          const currentAlerts = initialValues?.samplingQuantity || 0;
+
+          return (
+            <Slider
+              {...inputProps}
+              mode="SINGLE"
+              min={currentAlerts}
+              max={totalAlerts}
+              marks={{ [currentAlerts]: `${currentAlerts}`, [totalAlerts]: totalAlerts }}
+              textInput={{
+                min: currentAlerts,
+                max: totalAlerts,
+                step: 1,
+                htmlAttrs: { style: { width: '2.5rem' } },
+              }}
+            />
+          );
+        }}
+      </InputField>
+      <Alert type="info">
+        {type === 'CREATE'
+          ? 'Note that any filters applied to the Not QA’d alerts will be considered during the creation of a sample. '
+          : 'Note that you can only increase the number of alerts in the sample. '}
+      </Alert>
+    </>
+  ) : null;
 };

@@ -18,6 +18,7 @@ export const getAlertsQueryParams = (
   params: AllParams<TableSearchParams>,
   user: FlagrightAuth0User,
   paginationParams?: Partial<PaginationParams>,
+  defaultApiParams?: DefaultApiGetAlertListRequest,
 ) => {
   const {
     sort,
@@ -104,26 +105,34 @@ export const getAlertsQueryParams = (
     filterRuleNature: ruleNature,
     filterCaseTypes: caseTypesFilter,
     filterRiskLevel: riskLevels,
+    ...defaultApiParams,
   };
   return preparedParams;
 };
 
 export function useAlertQuery(
   params: AllParams<TableSearchParams>,
+  defaultApiParams?: DefaultApiGetAlertListRequest,
 ): QueryResult<TableData<TableAlertItem>> {
   const api = useApi();
   const user = useAuth0User();
-  return usePaginatedQuery(ALERT_LIST(params), async (paginationParams) => {
-    const preparedParams = getAlertsQueryParams(params, user, paginationParams);
+  return usePaginatedQuery(
+    ALERT_LIST({ ...params, ...defaultApiParams }),
+    async (paginationParams) => {
+      const preparedParams = getAlertsQueryParams(params, user, paginationParams, defaultApiParams);
 
-    const result = await api.getAlertList(
-      Object.entries(preparedParams).reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
-    );
-    return {
-      items: presentAlertData(result.data),
-      total: result.total,
-    };
-  });
+      const result = await api.getAlertList(
+        Object.entries(preparedParams).reduce(
+          (acc, [key, value]) => ({ ...acc, [key]: value }),
+          {},
+        ),
+      );
+      return {
+        items: presentAlertData(result.data),
+        total: result.total,
+      };
+    },
+  );
 }
 
 function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {

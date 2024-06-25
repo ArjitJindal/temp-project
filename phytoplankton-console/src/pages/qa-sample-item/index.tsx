@@ -90,7 +90,7 @@ export const QASamplePage = () => {
                     <div className={s.cardSection}>
                       <PriorityTag priority={sample.priority} />
                       <Tag color="gray">{`Sampling - ${
-                        sample.samplingPercentage ? `${sample.samplingPercentage}%` : 'Manual'
+                        sample.samplingQuantity ? `${sample.samplingQuantity}` : 'Manual'
                       }`}</Tag>
                       <Link style={{ fontWeight: 600 }} to="#">
                         {sample.samplingId}
@@ -132,9 +132,9 @@ export const QASamplePage = () => {
                         setIsModalOpen={setIsModalOpen}
                         type="EDIT"
                         onSubmit={(values: QAFormValues) => {
-                          if (values.samplingPercentage < sample.samplingPercentage) {
+                          if (values.samplingQuantity < sample.samplingQuantity) {
                             return message.error(
-                              'Sampling % must be greater than the current value',
+                              'Number of alerts in the sample cannot be less than the current number of alerts',
                             );
                           }
 
@@ -144,11 +144,12 @@ export const QASamplePage = () => {
                               priority: values.priority,
                               samplingName: values.samplingName,
                               samplingDescription: values.samplingDescription,
-                              samplingPercentage: values.samplingPercentage,
+                              samplingQuantity: values.samplingQuantity,
                             },
                           });
                         }}
                         initialValues={sample}
+                        params={sample.filters}
                         sampleType={sample.samplingType}
                       />
                     </div>

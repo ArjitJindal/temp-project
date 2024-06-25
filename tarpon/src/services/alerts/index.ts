@@ -1282,36 +1282,48 @@ export class AlertsService extends CaseAlertsCommonService {
           ]
         }
       }
-      alert.ruleQaStatus = update.checklistStatus
-      ;(alert.comments ?? [])?.push({
-        body: `Alert QA status set to ${update.checklistStatus} with comment: ${update.comment}`,
-        createdAt: Date.now(),
-        files: update.files,
-        id: uuid4(),
-        updatedAt: Date.now(),
-        userId: getContext()?.user?.id ?? '',
-      })
+
+      const updatedAlert: Alert = {
+        ...alert,
+        ruleQaStatus: update.checklistStatus,
+        comments: [
+          ...(alert.comments ?? []),
+          {
+            body: comment,
+            createdAt: Date.now(),
+            files: update.files,
+            id: uuid4(),
+            updatedAt: Date.now(),
+            userId: getContext()?.user?.id ?? '',
+          },
+        ],
+      }
 
       const acceptanceCriteriaPassed =
         update.checklistStatus === 'PASSED'
-          ? await this.acceptanceCriteriaPassed(alert)
+          ? await this.acceptanceCriteriaPassed(updatedAlert)
           : true
 
       if (!acceptanceCriteriaPassed) {
         throw new BadRequest(`Acceptance criteria not passed for alert`)
       }
 
-      await Promise.all([
-        this.alertsRepository.saveAlert(alert.caseId ?? '', alert),
-        this.auditLogService.handleAuditLogForAlertQaUpdate(
-          alert.alertId as string,
-          update
-        ),
-        this.alertsRepository.updateAlertQACountInSampling(
-          alert,
-          update.checklistStatus
-        ),
-      ])
+      await withTransaction(async () => {
+        await Promise.all([
+          this.alertsRepository.saveAlert(
+            updatedAlert.caseId ?? '',
+            updatedAlert
+          ),
+          this.auditLogService.handleAuditLogForAlertQaUpdate(
+            updatedAlert.alertId as string,
+            update
+          ),
+          this.alertsRepository.updateAlertQACountInSampling(
+            alert,
+            update.checklistStatus
+          ),
+        ])
+      })
     })
 
     if (update.checklistStatus === 'FAILED') {
@@ -1357,26 +1369,19 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
-  private caluclateAlertsForQaSamplingPercentage(
-    totalAlerts: number,
-    percentage: number
-  ): number {
-    return Math.floor(Math.max(totalAlerts * (percentage / 100), 1))
-  }
-
   async createAlertsQaSampling(
     data: AlertsQaSamplingRequest
   ): Promise<AlertsQaSampling> {
     let sample: Pick<
       AlertsQaSampling,
-      'alertIds' | 'samplingPercentage' | 'samplingType' | 'filters'
+      'alertIds' | 'samplingQuantity' | 'samplingType' | 'filters'
     > | null = null
 
     const sampleId = await this.alertsRepository.getSampleIdForQA()
     if (data.samplingData.samplingType === 'MANUAL') {
       sample = {
         filters: {},
-        samplingPercentage: 0,
+        samplingQuantity: data.samplingData.alertIds.length,
         samplingType: 'MANUAL',
         alertIds: data.samplingData.alertIds,
       }
@@ -1390,20 +1395,14 @@ export class AlertsService extends CaseAlertsCommonService {
         countOnly: true,
       })
 
-      const count = await this.alertsRepository.getAlertsCount(query)
-      const totalAlertsRequired = this.caluclateAlertsForQaSamplingPercentage(
-        count,
-        data.samplingData.samplingPercentage
-      )
-
       const sampleAlerts = await this.alertsRepository.getAlertsForQA(
         query,
-        totalAlertsRequired
+        data.samplingData.samplingQuantity
       )
 
       sample = {
         filters: data.samplingData.filters,
-        samplingPercentage: data.samplingData.samplingPercentage,
+        samplingQuantity: data.samplingData.samplingQuantity,
         alertIds: sampleAlerts.map((a) => a.alerts.alertId),
         samplingType: 'AUTOMATIC',
       }
@@ -1465,30 +1464,16 @@ export class AlertsService extends CaseAlertsCommonService {
 
     if (
       sampling.samplingType === 'AUTOMATIC' &&
-      data?.samplingPercentage &&
-      data.samplingPercentage > sampling.samplingPercentage
+      data?.samplingQuantity != null &&
+      data.samplingQuantity > sampling.samplingQuantity
     ) {
-      const currentAlertsCount =
-        (sampling.alertIds ?? []).length - (sampling.manuallyAdded ?? []).length
-
-      const newPercentage = data.samplingPercentage
+      const alertsInSample = (sampling.alertIds ?? []).length
 
       const filters = this.getQaSamplingFilters(sampling.filters)
 
-      const query = await this.alertsRepository.getAlertsPipeline(filters, {
-        excludeProject: true,
-        hideTransactionIds: true,
-        countOnly: true,
-      })
-
-      const newAlertsCount = await this.alertsRepository.getAlertsCount(query)
-
-      const totalAlertsRequired = this.caluclateAlertsForQaSamplingPercentage(
-        newAlertsCount,
-        newPercentage
-      )
-
-      const countOfNewAlerts = totalAlertsRequired - currentAlertsCount
+      const countOfAlertsRequired =
+        (data.samplingQuantity || 0) -
+        ((alertsInSample || 0) + (sampling?.numberOfAlertsQaDone || 0))
 
       const queryWithExcludedAlerts =
         await this.alertsRepository.getAlertsPipeline(
@@ -1502,7 +1487,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
       const newAlerts = await this.alertsRepository.getAlertsForQA(
         queryWithExcludedAlerts,
-        countOfNewAlerts
+        countOfAlertsRequired
       )
 
       allAlertIds = uniq([

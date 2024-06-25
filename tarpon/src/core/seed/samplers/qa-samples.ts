@@ -25,12 +25,12 @@ export const getQASamples = memoize(() => {
     createdAt: Date.now(),
     priority: pickRandom(PRIORITYS),
     samplingName: 'First QA Sample',
-    samplingPercentage: percentage,
     samplingDescription: `This is a QA sample of ${percentage}% of the closed alerts`,
     updatedAt: Date.now(),
     alertIds: _40PercentOfAlerts,
     samplingId: `S-${sampleCount++}`,
     samplingType: 'AUTOMATIC',
+    samplingQuantity: _40PercentOfAlerts.length,
   }
 
   const manualAlerts = shuffle(
@@ -42,13 +42,13 @@ export const getQASamples = memoize(() => {
     createdAt: Date.now(),
     priority: pickRandom(PRIORITYS),
     samplingName: 'Second QA Sample (Manual)',
-    samplingPercentage: 0,
     samplingDescription: `This is a QA sample of ${percentage}% of the closed alerts`,
     updatedAt: Date.now(),
     alertIds: manualAlerts,
     samplingId: `S-${sampleCount++}`,
     samplingType: 'MANUAL',
     manuallyAdded: manualAlerts,
+    samplingQuantity: manualAlerts.length,
   }
 
   return [autoSample, manualSample]

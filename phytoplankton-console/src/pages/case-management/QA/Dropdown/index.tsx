@@ -58,7 +58,7 @@ export const QAButton = (props: Props) => {
         ...values,
         samplingData: {
           samplingType: 'AUTOMATIC',
-          samplingPercentage: values.samplingPercentage,
+          samplingQuantity: values.samplingQuantity,
           filters,
         },
       });
@@ -82,6 +82,7 @@ export const QAButton = (props: Props) => {
         onSubmit={onSubmit}
         type="CREATE"
         sampleType="AUTOMATIC"
+        params={params}
       />
     </>
   );

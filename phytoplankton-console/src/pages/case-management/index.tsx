@@ -79,7 +79,11 @@ export default function CaseManagementPage() {
     pushParamsToNavigation(newParams);
   };
 
-  const getDefaultStatus = (_param?: string): DerivedStatus[] | undefined => {
+  const getDefaultStatus = (param?: ScopeSelectorValue): DerivedStatus[] => {
+    if (param?.includes('QA')) {
+      return ['CLOSED'];
+    }
+
     return ['OPEN'];
   };
 
