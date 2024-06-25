@@ -604,7 +604,9 @@ export class CdkTarponStack extends cdk.Stack {
             s3TmpBucket.bucketArn,
             s3demoModeBucket.bucketArn,
             s3SharedAssetsBucket.bucketArn,
-            `arn:aws:s3:::flagright-datalake-${config.stage}-${config.region}-bucket`,
+            `arn:aws:s3:::flagright-datalake-${config.stage}-${
+              config.region || 'eu-1'
+            }-bucket`,
           ],
         }),
         new PolicyStatement({
