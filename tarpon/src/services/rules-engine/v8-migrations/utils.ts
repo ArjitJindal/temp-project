@@ -402,157 +402,45 @@ export function getFiltersConditions(filters: LegacyFilters): {
     const { minAge, maxAge } = filters.userAgeRange
     const minGranularity = minAge?.granularity
     const maxGranularity = maxAge?.granularity
-    /* ToDo: Remove the customer type check and use direction less variable after FR-4816 */
     conditions.push({
       or: [
         {
-          or: [
+          and: [
             {
-              and: [
+              '>=': [
                 {
-                  '==': [
-                    {
-                      var: 'USER:type__SENDER',
-                    },
-                    'CONSUMER',
-                  ],
+                  var: `CONSUMER_USER:age${getUnit(minGranularity)}__BOTH`,
                 },
-                {
-                  and: [
-                    {
-                      '>=': [
-                        {
-                          var: `CONSUMER_USER:age${getUnit(
-                            minGranularity
-                          )}__SENDER`,
-                        },
-                        minAge?.units ?? 0,
-                      ],
-                    },
-                    {
-                      '<': [
-                        {
-                          var: `CONSUMER_USER:age${getUnit(
-                            maxGranularity
-                          )}__SENDER`,
-                        },
-                        maxAge?.units ?? Number.MAX_SAFE_INTEGER,
-                      ],
-                    },
-                  ],
-                },
+                minAge?.units ?? 0,
               ],
             },
             {
-              and: [
+              '<': [
                 {
-                  '==': [
-                    {
-                      var: 'USER:type__SENDER',
-                    },
-                    'BUSINESS',
-                  ],
+                  var: `CONSUMER_USER:age${getUnit(maxGranularity)}__BOTH`,
                 },
-                {
-                  and: [
-                    {
-                      '>=': [
-                        {
-                          var: `BUSINESS_USER:age${getUnit(
-                            minGranularity
-                          )}__SENDER`,
-                        },
-                        minAge?.units ?? 0,
-                      ],
-                    },
-                    {
-                      '<': [
-                        {
-                          var: `BUSINESS_USER:age${getUnit(
-                            maxGranularity
-                          )}__SENDER`,
-                        },
-                        maxAge?.units ?? Number.MAX_SAFE_INTEGER,
-                      ],
-                    },
-                  ],
-                },
+                maxAge?.units ?? Number.MAX_SAFE_INTEGER,
               ],
             },
           ],
         },
+
         {
-          or: [
+          and: [
             {
-              and: [
+              '>=': [
                 {
-                  '==': [
-                    {
-                      var: 'USER:type__RECEIVER',
-                    },
-                    'CONSUMER',
-                  ],
+                  var: `BUSINESS_USER:age${getUnit(minGranularity)}__BOTH`,
                 },
-                {
-                  and: [
-                    {
-                      '>=': [
-                        {
-                          var: `CONSUMER_USER:age${getUnit(
-                            minGranularity
-                          )}__RECEIVER`,
-                        },
-                        minAge?.units ?? 0,
-                      ],
-                    },
-                    {
-                      '<': [
-                        {
-                          var: `CONSUMER_USER:age${getUnit(
-                            maxGranularity
-                          )}__RECEIVER`,
-                        },
-                        maxAge?.units ?? Number.MAX_SAFE_INTEGER,
-                      ],
-                    },
-                  ],
-                },
+                minAge?.units ?? 0,
               ],
             },
             {
-              and: [
+              '<': [
                 {
-                  '==': [
-                    {
-                      var: 'USER:type__RECEIVER',
-                    },
-                    'BUSINESS',
-                  ],
+                  var: `BUSINESS_USER:age${getUnit(maxGranularity)}__BOTH`,
                 },
-                {
-                  and: [
-                    {
-                      '>=': [
-                        {
-                          var: `BUSINESS_USER:age${getUnit(
-                            minGranularity
-                          )}__RECEIVER`,
-                        },
-                        minAge?.units ?? 0,
-                      ],
-                    },
-                    {
-                      '<': [
-                        {
-                          var: `BUSINESS_USER:age${getUnit(
-                            maxGranularity
-                          )}__RECEIVER`,
-                        },
-                        maxAge?.units ?? Number.MAX_SAFE_INTEGER,
-                      ],
-                    },
-                  ],
-                },
+                maxAge?.units ?? Number.MAX_SAFE_INTEGER,
               ],
             },
           ],
@@ -564,157 +452,52 @@ export function getFiltersConditions(filters: LegacyFilters): {
     const { minAge, maxAge } = filters.userCreationAgeRange
     const minGranularity = minAge?.granularity
     const maxGranularity = maxAge?.granularity
-    /* ToDo: Remove the customer type check and use direction less variable after FR-4816 */
     conditions.push({
       or: [
         {
-          or: [
+          and: [
             {
-              and: [
+              '>=': [
                 {
-                  '==': [
-                    {
-                      var: 'USER:type__RECEIVER',
-                    },
-                    'CONSUMER',
-                  ],
+                  var: `CONSUMER_USER:creationAge${getUnit(
+                    minGranularity
+                  )}__BOTH`,
                 },
-                {
-                  and: [
-                    {
-                      '>=': [
-                        {
-                          var: `CONSUMER_USER:creationAge${getUnit(
-                            minGranularity
-                          )}__RECEIVER`,
-                        },
-                        minAge?.units ?? 0,
-                      ],
-                    },
-                    {
-                      '<=': [
-                        {
-                          var: `CONSUMER_USER:creationAge${getUnit(
-                            maxGranularity
-                          )}__RECEIVER`,
-                        },
-                        maxAge?.units ?? Number.MAX_SAFE_INTEGER,
-                      ],
-                    },
-                  ],
-                },
+                minAge?.units ?? 0,
               ],
             },
             {
-              and: [
+              '<': [
                 {
-                  '==': [
-                    {
-                      var: 'USER:type__RECEIVER',
-                    },
-                    'BUSINESS',
-                  ],
+                  var: `CONSUMER_USER:creationAge${getUnit(
+                    maxGranularity
+                  )}__BOTH`,
                 },
-                {
-                  and: [
-                    {
-                      '>=': [
-                        {
-                          var: `BUSINESS_USER:creationAge${getUnit(
-                            minGranularity
-                          )}__RECEIVER`,
-                        },
-                        minAge?.units ?? 0,
-                      ],
-                    },
-                    {
-                      '<=': [
-                        {
-                          var: `BUSINESS_USER:creationAge${getUnit(
-                            maxGranularity
-                          )}__RECEIVER`,
-                        },
-                        maxAge?.units ?? Number.MAX_SAFE_INTEGER,
-                      ],
-                    },
-                  ],
-                },
+                maxAge?.units ?? Number.MAX_SAFE_INTEGER,
               ],
             },
           ],
         },
         {
-          or: [
+          and: [
             {
-              and: [
+              '>=': [
                 {
-                  '==': [
-                    {
-                      var: 'USER:type__SENDER',
-                    },
-                    'CONSUMER',
-                  ],
+                  var: `BUSINESS_USER:creationAge${getUnit(
+                    minGranularity
+                  )}__BOTH`,
                 },
-                {
-                  and: [
-                    {
-                      '>=': [
-                        {
-                          var: `CONSUMER_USER:creationAge${getUnit(
-                            minGranularity
-                          )}__SENDER`,
-                        },
-                        minAge?.units ?? 0,
-                      ],
-                    },
-                    {
-                      '<=': [
-                        {
-                          var: `CONSUMER_USER:creationAge${getUnit(
-                            maxGranularity
-                          )}__SENDER`,
-                        },
-                        maxAge?.units ?? Number.MAX_SAFE_INTEGER,
-                      ],
-                    },
-                  ],
-                },
+                minAge?.units ?? 0,
               ],
             },
             {
-              and: [
+              '<': [
                 {
-                  '==': [
-                    {
-                      var: 'USER:type__SENDER',
-                    },
-                    'BUSINESS',
-                  ],
+                  var: `BUSINESS_USER:creationAge${getUnit(
+                    maxGranularity
+                  )}__BOTH`,
                 },
-                {
-                  and: [
-                    {
-                      '>=': [
-                        {
-                          var: `BUSINESS_USER:creationAge${getUnit(
-                            minGranularity
-                          )}__SENDER`,
-                        },
-                        minAge?.units ?? 0,
-                      ],
-                    },
-                    {
-                      '<=': [
-                        {
-                          var: `BUSINESS_USER:creationAge${getUnit(
-                            maxGranularity
-                          )}__SENDER`,
-                        },
-                        maxAge?.units ?? Number.MAX_SAFE_INTEGER,
-                      ],
-                    },
-                  ],
-                },
+                maxAge?.units ?? Number.MAX_SAFE_INTEGER,
               ],
             },
           ],

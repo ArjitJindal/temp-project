@@ -1,6 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Config, Operator } from '@react-awesome-query-builder/core'
 import { JSONSchemaType } from 'ajv'
+import { CustomBuiltInRuleOperatorKeyType } from './custom-built-in-operators'
 import { RuleOperatorType } from '@/@types/openapi-internal/RuleOperatorType'
 
 export type TextRuleOperator = RuleOperator<
@@ -10,7 +11,7 @@ export type TextRuleOperator = RuleOperator<
 >
 
 export type RuleOperator<LHS = any, RHS = any> = {
-  key: RuleOperatorType
+  key: RuleOperatorType | CustomBuiltInRuleOperatorKeyType
   uiDefinition: Operator<Config>
   // NOTE: The order of the parameters is important. Same order will be used in the UI
   // and the same order will be used in the run function

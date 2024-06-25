@@ -13,7 +13,6 @@ import {
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { RULE_FUNCTIONS } from '../v8-functions'
-import { RULE_OPERATORS } from '../v8-operators'
 import { getRuleVariableByKey, isSenderUserVariable } from '../v8-variables'
 import { getTimeRangeByTimeWindows } from '../utils/time-utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
@@ -44,6 +43,8 @@ import {
 import { getPaymentDetailsIdentifiersKey } from '../v8-variables/payment-details'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
+import { CUSTOM_BUILT_IN_RULE_OPERATORS } from '../v8-operators/custom-built-in-operators'
+import { RULE_OPERATORS } from '../v8-operators'
 import {
   AggregationData,
   AggregationRepository,
@@ -149,7 +150,7 @@ export const getJsonLogicEngine = memoizeOne(
     RULE_FUNCTIONS.filter((v) => v.run).forEach((v) =>
       jsonLogicEngine.addMethod(v.key, v.run)
     )
-    RULE_OPERATORS.forEach((v) =>
+    CUSTOM_BUILT_IN_RULE_OPERATORS.concat(RULE_OPERATORS).forEach((v) =>
       jsonLogicEngine.addMethod(
         v.key,
         memoize(

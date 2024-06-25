@@ -64,6 +64,7 @@ import {
 import { getS3Client } from '@/utils/s3'
 import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
+import { RuleLogicConfig } from '@/@types/openapi-internal/RuleLogicConfig'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
@@ -72,7 +73,7 @@ export function getRuleLogicConfig() {
     variables: Object.values(getTransactionRuleEntityVariables()),
     operators: RULE_OPERATORS,
     functions: RULE_FUNCTIONS,
-  }
+  } as RuleLogicConfig
 }
 
 type AIFilters = {
