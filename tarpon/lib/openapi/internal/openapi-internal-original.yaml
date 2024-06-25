@@ -8584,7 +8584,7 @@ components:
             - generalDetails.countryOfNationality
         weight:
           type: number
-          minimum: 0.1
+          minimum: 0.01
           maximum: 1
         isNullableAllowed:
           type: boolean
