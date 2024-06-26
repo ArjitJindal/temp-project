@@ -289,6 +289,7 @@ export const SQSQueues: {
   },
   TRANSACTION_AGGREGATION_QUEUE_NAME: {
     name: getResourceName('TransactionAggregationQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 60,
   },
   SLACK_ALERT_QUEUE_NAME: {
     name: getResourceName('SlackAlertQueue'),
