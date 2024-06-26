@@ -1547,6 +1547,8 @@ components:
           $ref: '#/components/schemas/ContactDetails'
         transactionLimits:
           $ref: '#/components/schemas/TransactionLimits'
+        expectedIncome:
+          $ref: '#/components/schemas/ExpectedIncome'
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
         acquisitionChannel:
@@ -3981,6 +3983,21 @@ components:
               $ref: '#/components/schemas/TransactionLimit'
             CHECK:
               $ref: '#/components/schemas/TransactionLimit'
+    ExpectedIncome:
+      title: ExpectedIncome
+      type: object
+      description: Model for expected income details
+      properties:
+        dailyExpectedIncome:
+          $ref: '#/components/schemas/Amount'
+        weeklyExpectedIncome:
+          $ref: '#/components/schemas/Amount'
+        monthlyExpectedIncome:
+          $ref: '#/components/schemas/Amount'
+        quarterlyExpectedIncome:
+          $ref: '#/components/schemas/Amount'
+        yearlyExpectedIncome:
+          $ref: '#/components/schemas/Amount'
     RuleAction:
       type: string
       title: RuleAction
