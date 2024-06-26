@@ -197,7 +197,8 @@ const customTextWidget: TextWidget<BasicConfig> = {
             options={[]}
             value={(props.value as any) ?? undefined}
             onChange={(newValue) => {
-              props.setValue(newValue as any);
+              const formattedValue = newValue?.map((v) => v.trim());
+              props.setValue(formattedValue as any);
             }}
           />
         </WidgetWrapper>
