@@ -70,6 +70,11 @@ export default function UserManualRiskPanel(props: Props) {
     };
   }, [userId, api]);
 
+  const defaultRiskScore = useRiskScore(DEFAULT_RISK_LEVEL);
+  const defaultRiskLevel =
+    useRiskLevel(
+      drsScore && drsScore.length ? drsScore[drsScore.length - 1].drsScore : defaultRiskScore,
+    ) ?? undefined;
   const handleLockingAndUnlocking = () => {
     setSyncState(loading(getOr(syncState, null)));
     api
@@ -81,7 +86,7 @@ export default function UserManualRiskPanel(props: Props) {
               syncState,
               ({ manualRiskLevel, derivedRiskLevel }) => manualRiskLevel || derivedRiskLevel,
             ),
-            undefined,
+            defaultRiskLevel,
           ),
           isUpdatable: isLocked,
         },
@@ -129,8 +134,6 @@ export default function UserManualRiskPanel(props: Props) {
     }
   };
 
-  const defaultRiskScore = useRiskScore(DEFAULT_RISK_LEVEL);
-
   return (
     <div className={s.root}>
       <RiskLevelSwitch
@@ -141,9 +144,7 @@ export default function UserManualRiskPanel(props: Props) {
             ({ manualRiskLevel, derivedRiskLevel }) =>
               manualRiskLevel || derivedRiskLevel || undefined,
           ),
-          useRiskLevel(
-            drsScore && drsScore.length ? drsScore[drsScore.length - 1].drsScore : defaultRiskScore,
-          ) ?? undefined,
+          defaultRiskLevel,
         )}
         onChange={handleChangeRiskLevel}
       />
