@@ -11,7 +11,7 @@
   },
   "author": "",
   "dependencies": {
-    "@aws-sdk/client-api-gateway": "^3.563.0",
+    "@aws-sdk/client-api-gateway": "^3.590.0",
     "@types/fast-levenshtein": "^0.0.4",
     "aws-cdk-lib": "~2.142.1",
     "constructs": "^10.3.0",

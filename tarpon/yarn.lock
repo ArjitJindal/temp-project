@@ -7232,9 +7232,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-sdk@npm:2.1618.0":
-  version: 2.1618.0
-  resolution: "aws-sdk@npm:2.1618.0"
+"aws-sdk@npm:^2.1634.0":
+  version: 2.1648.0
+  resolution: "aws-sdk@npm:2.1648.0"
   dependencies:
     buffer: "npm:4.9.2"
     events: "npm:1.1.1"
@@ -7246,7 +7246,7 @@ __metadata:
     util: "npm:^0.12.4"
     uuid: "npm:8.0.0"
     xml2js: "npm:0.6.2"
-  checksum: 3bd2eef3c2df5885e523cd210a8dbc4f84afd166c2922985d24b4276dfd6fe1172aa0b82990c0345dfd5b8cb6ec93ccd46e95a1359379d7625835adafcca3636
+  checksum: b856015985a84617953d3f013cabcdb3cffb214125d706089c64af706779ff10d46ae9ded0a7cf7ca96ada6e4132bf63235ada574865ebaf73653192215ec580
   languageName: node
   linkType: hard
 
@@ -10588,14 +10588,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-type@npm:16.5.3":
-  version: 16.5.3
-  resolution: "file-type@npm:16.5.3"
+"file-type@npm:16.5.4":
+  version: 16.5.4
+  resolution: "file-type@npm:16.5.4"
   dependencies:
     readable-web-to-node-stream: "npm:^3.0.0"
     strtok3: "npm:^6.2.4"
     token-types: "npm:^4.1.1"
-  checksum: 2f2580539ac339fc02a8e2073325b91d4487a510e92925dc536c429f4c80097ad7707656853ebdda6b27382478d2f121bcbed005455e431c5c46d7b8198cf854
+  checksum: 46ced46bb925ab547e0a6d43108a26d043619d234cb0588d7abce7b578dafac142bcfd2e23a6adb0a4faa4b951bd1b14b355134a193362e07cd352f9bf0dc349
   languageName: node
   linkType: hard
 
@@ -18020,7 +18020,7 @@ __metadata:
     auth0: "npm:^4.4.0"
     aws-cdk: "npm:~2.139.0"
     aws-cdk-lib: "npm:~2.140.0"
-    aws-sdk: "npm:2.1618.0"
+    aws-sdk: "npm:^2.1634.0"
     aws-sdk-client-mock: "npm:^2.0.1"
     aws-sdk-client-mock-jest: "npm:^2.0.1"
     aws-xray-sdk: "npm:^3.5.0"
@@ -18054,7 +18054,7 @@ __metadata:
     fast-xml-parser: "npm:^4.2.5"
     fern-api: "npm:^0.30.3"
     fetch-retry: "npm:^5.0.6"
-    file-type: "npm:16.5.3"
+    file-type: "npm:16.5.4"
     flat: "npm:^5.0.2"
     fp-ts: "npm:^2.11.8"
     fs-extra: "npm:^10.1.0"
