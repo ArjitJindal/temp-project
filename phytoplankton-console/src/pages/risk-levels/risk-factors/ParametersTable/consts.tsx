@@ -234,7 +234,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'CONSUMER_USER',
     dataType: 'SOURCE_OF_FUNDS',
     isDerived: false,
-    parameterType: 'VARIABLE',
+    parameterType: 'ITERABLE',
     defaultValue: DEFAULT_RISK_VALUE,
     weight: 1,
   },
