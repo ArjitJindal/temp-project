@@ -75,32 +75,31 @@ export const jobDecisionHandler = async (
   }
 }
 
-export const jobRunnerHandler = lambdaConsumer()(
-  async (job: BatchJobWithId) => {
-    logger.info(`Starting job - ${job.type}`, job)
-    await initializeTenantContext(job.tenantId)
-    updateLogMetadata({
-      jobId: job.jobId,
-      type: job.type,
-      tenantId: job.tenantId,
-      runner: 'LAMBDA',
-    })
+export const genericJobRunnerHandler = async (job: BatchJobWithId) => {
+  logger.info(`Starting job - ${job.type}`, job)
+  await initializeTenantContext(job.tenantId)
+  updateLogMetadata({
+    jobId: job.jobId,
+    type: job.type,
+    tenantId: job.tenantId,
+  })
 
-    const jobRepository = new BatchJobRepository(
-      job.tenantId,
-      await getMongoDbClient()
-    )
-    const existingJob = await jobRepository.getJobById(job.jobId)
-    if (!existingJob) {
-      await jobRepository.insertJob(job)
-    }
-    try {
-      await jobRepository.updateJobStatus(job.jobId, 'IN_PROGRESS')
-      await getBatchJobRunner(job.type, job.jobId).execute(job)
-      await jobRepository.updateJobStatus(job.jobId, 'SUCCESS')
-    } catch (error) {
-      await jobRepository.updateJobStatus(job.jobId, 'FAILED')
-      throw error
-    }
+  const jobRepository = new BatchJobRepository(
+    job.tenantId,
+    await getMongoDbClient()
+  )
+  const existingJob = await jobRepository.getJobById(job.jobId)
+  if (!existingJob) {
+    await jobRepository.insertJob(job)
   }
-)
+  try {
+    await jobRepository.updateJobStatus(job.jobId, 'IN_PROGRESS')
+    await getBatchJobRunner(job.type, job.jobId).execute(job)
+    await jobRepository.updateJobStatus(job.jobId, 'SUCCESS')
+  } catch (error) {
+    await jobRepository.updateJobStatus(job.jobId, 'FAILED')
+    throw error
+  }
+}
+
+export const jobRunnerHandler = lambdaConsumer()(genericJobRunnerHandler)

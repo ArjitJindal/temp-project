@@ -1,31 +1,13 @@
 import { BATCH_JOB_PAYLOAD_ENV_VAR } from '@lib/cdk/constants'
 import { BatchJobWithId } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
-import {
-  addSentryExtras,
-  initializeTenantContext,
-  updateLogMetadata,
-} from '@/core/utils/context'
-import { getBatchJobRunner } from '@/services/batch-jobs/batch-job-runner-factory'
 import { nodeConsumer } from '@/core/middlewares/node-consumer-middleware'
+import { genericJobRunnerHandler } from '@/lambdas/batch-job/app'
 
 const handler = nodeConsumer()(async () => {
   const jobString = process.env[BATCH_JOB_PAYLOAD_ENV_VAR] as string
   const job = JSON.parse(jobString) as BatchJobWithId
-  await initializeTenantContext(job.tenantId)
-
-  logger.info(`Starting job - ${job.type}`, job)
-
-  updateLogMetadata({
-    type: job.type,
-    tenantId: job.tenantId,
-    runner: 'FARGATE',
-  })
-
-  addSentryExtras({ job })
-
-  const batchJob = getBatchJobRunner(job.type, job.jobId)
-  await batchJob.execute(job)
+  await genericJobRunnerHandler(job)
 })
 
 void handler()
