@@ -1,6 +1,7 @@
 import React from 'react';
 import { uniqBy } from 'lodash';
 import s from './index.module.less';
+import PlaceOfBirth from './PlaceOfBirth';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
 import { InternalConsumerUser } from '@/apis';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
@@ -19,6 +20,7 @@ import UserTypeTag from '@/components/library/Tag/UserTypeTag';
 import Tag from '@/components/library/Tag';
 import TagList from '@/components/library/Tag/TagList';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';
+import CommunityLineIcon from '@/components/ui/icons/Remix/buildings/community-line.react.svg';
 
 interface Props {
   user: InternalConsumerUser;
@@ -49,6 +51,11 @@ export default function UsersInfoCard(props: Props) {
       <div className={s.time}>
         <Form.Layout.Label icon={<TimerLineIcon />} title={'Created at'}>
           {dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+        </Form.Layout.Label>
+      </div>
+      <div className={s.placeOfBirth}>
+        <Form.Layout.Label icon={<CommunityLineIcon />} title={'Place of birth'}>
+          {user.userDetails?.placeOfBirth ? <PlaceOfBirth user={user} /> : '-'}
         </Form.Layout.Label>
       </div>
       <div className={s.inner}>

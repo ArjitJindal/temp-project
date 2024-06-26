@@ -2772,6 +2772,8 @@ components:
           $ref: '#/components/schemas/CountryCode'
         gender:
           $ref: '#/components/schemas/Gender'
+        placeOfBirth:
+          $ref: '#/components/schemas/PlaceOfBirth'
       required:
         - name
     UserRegistrationStatus:
@@ -5753,6 +5755,19 @@ components:
       enum:
         - VIRTUAL
         - PHYSICAL
+    PlaceOfBirth:
+      title: PlaceOfBirth
+      description: Place of birth of the individual
+      type: object
+      properties:
+        city:
+          type: string
+        state:
+          type: string
+        country:
+          $ref: '#/components/schemas/CountryCode'
+      required:
+        - country
     MpesaTransactionType:
       title: MpesaTransactionType
       description: Type of transaction
