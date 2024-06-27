@@ -46,7 +46,7 @@ function getDefaultParams(): TransactionsAverageAmountExceededParameters {
   }
 }
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   const defaultParams = getDefaultParams()
 
   describe('Core logic', () => {

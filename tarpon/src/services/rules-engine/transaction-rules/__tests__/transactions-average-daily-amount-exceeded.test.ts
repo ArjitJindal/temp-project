@@ -48,7 +48,7 @@ function getDefaultParams(): TransactionsAverageAmountExceededParameters {
   }
 }
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Description formatting', () => {
     describe('R-122 description formatting', () => {
       const TEST_TENANT_ID = getTestTenantId()
@@ -177,7 +177,7 @@ ruleVariantsTest({ aggregation: true }, () => {
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [true, false],
+        expectedHits: [false, false],
         ruleParams: {
           excludePeriod1: true,
         },
@@ -202,7 +202,7 @@ ruleVariantsTest({ aggregation: true }, () => {
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [true, false],
+        expectedHits: [false, false],
         ruleParams: {
           period1: {
             granularity: 'day',

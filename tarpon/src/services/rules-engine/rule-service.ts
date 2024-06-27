@@ -134,8 +134,8 @@ export class RuleService {
         )
       }
       await ruleRepository.createOrUpdateRule(rule)
-      console.info(`Synced rule ${rule.id} (${rule.name})`)
     }
+    console.info(`Synced ${RULES_LIBRARY.length} rules`)
 
     if (!envIs('local')) {
       const s3Client = getS3Client()

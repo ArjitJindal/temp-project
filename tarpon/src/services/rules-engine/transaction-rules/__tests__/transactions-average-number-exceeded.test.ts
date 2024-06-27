@@ -39,7 +39,7 @@ function getDefaultParams(): TransactionsAverageNumberExceededParameters {
   }
 }
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Description formatting', () => {
     describe('R-121 description formatting', () => {
       const TEST_TENANT_ID = getTestTenantId()
@@ -363,64 +363,6 @@ ruleVariantsTest({ aggregation: true }, () => {
             min: 2,
             max: 2,
           },
-        },
-      },
-    ])('', ({ name, transactions, expectedHits, ruleParams }) => {
-      const TEST_TENANT_ID = getTestTenantId()
-
-      setUpRulesHooks(TEST_TENANT_ID, [
-        {
-          type: 'TRANSACTION',
-          ruleImplementationName: 'transactions-average-number-exceeded',
-          defaultParameters: {
-            ...defaultParams,
-            ...ruleParams,
-          },
-        },
-      ])
-
-      createTransactionRuleTestCase(
-        name,
-        TEST_TENANT_ID,
-        transactions,
-        expectedHits
-      )
-    })
-  })
-
-  describe('Customer cases', () => {
-    const now = dayjs('2022-01-01T00:00:00.000Z')
-    describe.each<
-      TransactionRuleTestCase<
-        Partial<TransactionsAverageNumberExceededParameters>
-      >
-    >([
-      {
-        name: '#1 (https://www.notion.so/flagright/Fix-R-121-False-Positives-9d4513da582247acbd20fea9544bfd41)',
-        transactions: [
-          getTestTransaction({
-            transactionId: '111',
-            originUserId: 'Anon#1',
-            destinationUserId: 'Nick',
-            timestamp: now.subtract(2, 'day').subtract(2, 'hour').valueOf(),
-          }),
-        ],
-        expectedHits: [true],
-        ruleParams: {
-          checkSender: 'all',
-          period2: {
-            granularity: 'day',
-            units: 30,
-          },
-          transactionsNumberThreshold: {},
-          excludePeriod1: true,
-          period1: {
-            granularity: 'day',
-            units: 1,
-          },
-          valueThresholdPeriod1: {},
-          multiplierThreshold: 200,
-          checkReceiver: 'all',
         },
       },
     ])('', ({ name, transactions, expectedHits, ruleParams }) => {

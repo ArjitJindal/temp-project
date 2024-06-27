@@ -8,6 +8,8 @@ import { PaymentRuleFiltersChildParameters } from '../transaction-filters/paymen
 import { RuleAggregationFunc } from '@/@types/openapi-internal/RuleAggregationFunc'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { generateChecksum } from '@/utils/object'
 
 const getUnit = (granularity: string | undefined) => {
   return granularity === 'day'
@@ -17,8 +19,8 @@ const getUnit = (granularity: string | undefined) => {
     : 'Years'
 }
 
-export function migrateCheckDirectionParameters(
-  type: 'COUNT' | 'AMOUNT',
+export function migrateCheckDirectionParameters(props: {
+  type: 'COUNT' | 'AMOUNT'
   parameters: {
     timeWindow: TimeWindow
     checkSender?: 'sending' | 'all' | 'none'
@@ -26,17 +28,23 @@ export function migrateCheckDirectionParameters(
     originMatchPaymentMethodDetails?: boolean
     destinationMatchPaymentMethodDetails?: boolean
   }
-): {
+  aggFunc?: RuleAggregationFunc
+  baseCurrency?: CurrencyCode
+}): {
   logicAggregationVariables: RuleAggregationVariable[]
   alertCreationDirection: AlertCreationDirection
 } {
-  let aggregationFunc: RuleAggregationFunc
-  if (type === 'COUNT') {
-    aggregationFunc = 'COUNT'
-  } else if (type === 'AMOUNT') {
-    aggregationFunc = 'SUM'
-  } else {
-    throw new Error('Invalid type')
+  const { type, parameters, aggFunc, baseCurrency } = props
+  const aggKeyHash = generateChecksum(props, 5)
+  let aggregationFunc: RuleAggregationFunc | undefined = aggFunc
+  if (!aggregationFunc) {
+    if (type === 'COUNT') {
+      aggregationFunc = 'COUNT'
+    } else if (type === 'AMOUNT') {
+      aggregationFunc = 'SUM'
+    } else {
+      throw new Error('Invalid type')
+    }
   }
   let aggregationFieldKey: string = ''
   if (type === 'COUNT') {
@@ -49,7 +57,7 @@ export function migrateCheckDirectionParameters(
       aggregationFieldKey = 'TRANSACTION:originAmountDetails-transactionAmount'
     }
     logicAggregationVariables.push({
-      key: 'agg:sending',
+      key: `agg:sending-${aggKeyHash}`,
       type: parameters.originMatchPaymentMethodDetails
         ? 'PAYMENT_DETAILS_TRANSACTIONS'
         : 'USER_TRANSACTIONS',
@@ -69,7 +77,7 @@ export function migrateCheckDirectionParameters(
         'TRANSACTION:destinationAmountDetails-transactionAmount'
     }
     logicAggregationVariables.push({
-      key: 'agg:receiving',
+      key: `agg:receiving-${aggKeyHash}`,
       type: parameters.destinationMatchPaymentMethodDetails
         ? 'PAYMENT_DETAILS_TRANSACTIONS'
         : 'USER_TRANSACTIONS',
@@ -104,7 +112,7 @@ export function migrateCheckDirectionParameters(
       }
     }
     logicAggregationVariables.push({
-      key: 'agg:sending-receiving',
+      key: `agg:sending-receiving-${aggKeyHash}`,
       type:
         parameters.originMatchPaymentMethodDetails ||
         parameters.destinationMatchPaymentMethodDetails
@@ -129,6 +137,12 @@ export function migrateCheckDirectionParameters(
     parameters.checkSender == 'none'
   ) {
     alertCreationDirection = 'AUTO_DESTINATION'
+  }
+
+  if (baseCurrency) {
+    logicAggregationVariables.forEach((variable) => {
+      variable.baseCurrency = baseCurrency
+    })
   }
 
   return {

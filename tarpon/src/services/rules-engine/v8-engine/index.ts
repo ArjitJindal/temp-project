@@ -1048,17 +1048,19 @@ export class RuleJsonLogicEvaluator {
     if (end.granularity === 'all_time') {
       return 'year'
     }
+    if (start.rollingBasis || end.rollingBasis) {
+      return 'hour'
+    }
+
     if (end.granularity === 'now') {
       return start.granularity === 'hour' &&
         start.units <= maxHoursToAggregateWithMinuteGranularity
         ? 'minute'
         : start.granularity
     }
-    return start.rollingBasis || end.rollingBasis
-      ? 'hour'
-      : start.granularity === 'hour' &&
-        start.units - (end.granularity === 'hour' ? end.units : 0) <=
-          maxHoursToAggregateWithMinuteGranularity
+    return start.granularity === 'hour' &&
+      start.units - (end.granularity === 'hour' ? end.units : 0) <=
+        maxHoursToAggregateWithMinuteGranularity
       ? 'minute'
       : end.granularity
   }

@@ -253,7 +253,10 @@ export default abstract class TransactionsDeviationBaseRule<
 
     const { value: maxMultiplier, currency } = this.getMultiplierThresholds()
 
-    if (multiplierToPercents(multiplier) > maxMultiplier) {
+    if (
+      Number.isFinite(multiplier) &&
+      multiplierToPercents(multiplier) > maxMultiplier
+    ) {
       let falsePositiveDetails
 
       if (this.ruleInstance.falsePositiveCheckEnabled) {

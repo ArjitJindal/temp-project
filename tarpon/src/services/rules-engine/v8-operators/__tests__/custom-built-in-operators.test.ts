@@ -68,6 +68,14 @@ describe('custom-built-in-operators', () => {
       null
     )
     expect(result5).toBe(false)
+
+    expect(
+      await CUSTOM_IN_BUILT_LESS_THAN_OR_EQUAL_TO_OPERATOR.run(1, 2, 3)
+    ).toBe(true)
+
+    expect(
+      await CUSTOM_IN_BUILT_LESS_THAN_OR_EQUAL_TO_OPERATOR.run(3, 2, 4)
+    ).toBe(false)
   })
   test('test >= operator', async () => {
     const result = await CUSTOM_IN_BUILT_GREATER_THAN_OR_EQUAL_TO_OPERATOR.run(

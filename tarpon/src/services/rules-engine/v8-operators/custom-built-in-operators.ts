@@ -15,7 +15,8 @@ function getCustomBuiltInComparisonRuleOperators(
     },
     run: async (
       lhs: number | null | undefined,
-      rhs: number | null | undefined
+      rhs: number | null | undefined,
+      parameters?: number
     ) => {
       if (isNil(lhs) || isNil(rhs)) {
         return false
@@ -26,6 +27,10 @@ function getCustomBuiltInComparisonRuleOperators(
         case '<':
           return lhs < rhs
         case '<=':
+          // <= is used for 'Between' operator
+          if (parameters != null && Number.isFinite(parameters)) {
+            return lhs <= rhs && rhs <= parameters
+          }
           return lhs <= rhs
         case '>=':
           return lhs >= rhs

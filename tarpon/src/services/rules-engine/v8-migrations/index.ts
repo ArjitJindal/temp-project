@@ -1,4 +1,4 @@
-import { pickBy } from 'lodash'
+import { isEmpty, pickBy, zip } from 'lodash'
 import { expandCountryGroup } from '@flagright/lib/constants'
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
 import { TransactionsVelocityRuleParameters } from '../transaction-rules/transactions-velocity'
@@ -12,6 +12,9 @@ import { TransactionAmountRuleParameters } from '../transaction-rules/transactio
 import { TransactionMatchesPatternRuleParameters } from '../transaction-rules/transaction-amount-pattern'
 import { TransactionsVolumeRuleParameters } from '../transaction-rules/transactions-volume'
 import { TransactionReferenceKeywordRuleParameters } from '../transaction-rules/transaction-reference-keyword'
+import { TransactionsAverageAmountExceededParameters } from '../transaction-rules/transactions-average-amount-exceeded'
+import { TransactionsAverageNumberExceededParameters } from '../transaction-rules/transactions-average-number-exceeded'
+import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from '../transaction-rules/total-transactions-volume-exceeds'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -119,6 +122,174 @@ export function getMigratedV8Config(
   return result
 }
 
+const DEVIATION_RULE_MIGRATION = (
+  type: 'COUNT' | 'AMOUNT',
+  aggFunc: 'AVG' | 'SUM' | 'COUNT',
+  daily: boolean,
+  parameters:
+    | TransactionsAverageAmountExceededParameters &
+        TransactionsAverageNumberExceededParameters &
+        TransactionsAverageAmountExceededParameters &
+        TransactionVolumeExceedsTwoPeriodsRuleParameters
+) => {
+  const { multiplierThreshold, excludePeriod1 } = parameters
+  const baseCurrency =
+    type === 'AMOUNT'
+      ? (multiplierThreshold.currency as CurrencyCode)
+      : undefined
+  const {
+    logicAggregationVariables: period1LogicAggregationVariablesAvgAmount,
+    alertCreationDirection,
+  } = migrateCheckDirectionParameters({
+    type,
+    parameters: {
+      timeWindow: parameters.period1,
+      checkSender: parameters.checkSender,
+      checkReceiver: parameters.checkReceiver,
+    },
+    aggFunc,
+    baseCurrency,
+  })
+  const {
+    logicAggregationVariables: period2LogicAggregationVariablesAvgAmount,
+  } = migrateCheckDirectionParameters({
+    type,
+    parameters: {
+      timeWindow: parameters.period2,
+      checkSender: parameters.checkSender,
+      checkReceiver: parameters.checkReceiver,
+    },
+    aggFunc,
+    baseCurrency,
+  })
+  let period1LogicAggregationVariablesCount: RuleAggregationVariable[] = []
+  let period2LogicAggregationVariablesCount: RuleAggregationVariable[] = []
+  if (!isEmpty(parameters.transactionsNumberThreshold)) {
+    const { logicAggregationVariables } = migrateCheckDirectionParameters({
+      type: 'COUNT',
+      parameters: {
+        timeWindow: parameters.period1,
+        checkSender: parameters.checkSender,
+        checkReceiver: parameters.checkReceiver,
+      },
+    })
+    period1LogicAggregationVariablesCount = logicAggregationVariables
+  }
+  if (!isEmpty(parameters.transactionsNumberThreshold2)) {
+    const { logicAggregationVariables } = migrateCheckDirectionParameters({
+      type: 'COUNT',
+      parameters: {
+        timeWindow: parameters.period2,
+        checkSender: parameters.checkSender,
+        checkReceiver: parameters.checkReceiver,
+      },
+    })
+    period2LogicAggregationVariablesCount = logicAggregationVariables
+  }
+
+  const period1TimeWindow =
+    period1LogicAggregationVariablesAvgAmount[0].timeWindow
+  if (excludePeriod1) {
+    period2LogicAggregationVariablesAvgAmount.forEach((v) => {
+      v.timeWindow.end = period1TimeWindow.start
+    })
+    period2LogicAggregationVariablesCount.forEach((v) => {
+      v.timeWindow.end = period1TimeWindow.start
+    })
+  }
+
+  const conditions: any[] = []
+  for (const tuple of zip(
+    period1LogicAggregationVariablesAvgAmount,
+    period2LogicAggregationVariablesAvgAmount,
+    period1LogicAggregationVariablesCount,
+    period2LogicAggregationVariablesCount
+  )) {
+    const period1AvgAmountVar = tuple[0] as RuleAggregationVariable
+    const period2AvgAmountVar = tuple[1] as RuleAggregationVariable
+    const period1CountVar = tuple[2] as RuleAggregationVariable
+    const period2CountVar = tuple[3] as RuleAggregationVariable
+
+    const period1Var = daily
+      ? {
+          '/': [{ var: period1AvgAmountVar.key }, parameters.period1.units],
+        }
+      : { var: period1AvgAmountVar.key }
+    const period2Var = daily
+      ? {
+          '/': [
+            { var: period2AvgAmountVar.key },
+            parameters.excludePeriod1
+              ? parameters.period2.units - parameters.period1.units
+              : parameters.period2.units,
+          ],
+        }
+      : { var: period2AvgAmountVar.key }
+
+    const subconditions: any[] = [
+      {
+        '>': [period2Var, 0],
+      },
+      {
+        '>': [
+          {
+            '/': [period1Var, period2Var],
+          },
+          (type === 'AMOUNT'
+            ? multiplierThreshold.value
+            : multiplierThreshold) / 100,
+        ],
+      },
+    ]
+
+    if (period1CountVar) {
+      subconditions.push({
+        '<=': [
+          parameters.transactionsNumberThreshold?.min ?? 0,
+          {
+            var: period1CountVar.key,
+          },
+          parameters.transactionsNumberThreshold?.max ??
+            Number.MAX_SAFE_INTEGER,
+        ],
+      })
+    }
+    if (period2CountVar) {
+      subconditions.push({
+        '<=': [
+          parameters.transactionsNumberThreshold2?.min ?? 0,
+          {
+            var: period2CountVar.key,
+          },
+          parameters.transactionsNumberThreshold2?.max ??
+            Number.MAX_SAFE_INTEGER,
+        ],
+      })
+    }
+    if (!isEmpty(parameters.valueThresholdPeriod1)) {
+      subconditions.push({
+        '<=': [
+          parameters.valueThresholdPeriod1?.min ?? 0,
+          period1Var,
+          parameters.valueThresholdPeriod1?.max ?? Number.MAX_SAFE_INTEGER,
+        ],
+      })
+    }
+    conditions.push({ and: subconditions })
+  }
+
+  return {
+    logic: { or: conditions },
+    logicAggregationVariables: [
+      ...period1LogicAggregationVariablesAvgAmount,
+      ...period2LogicAggregationVariablesAvgAmount,
+      ...period1LogicAggregationVariablesCount,
+      ...period2LogicAggregationVariablesCount,
+    ],
+    alertCreationDirection,
+  }
+}
+
 const V8_CONVERSION: {
   [ruleId: string]: (parameters: any) => {
     logic: object
@@ -129,7 +300,7 @@ const V8_CONVERSION: {
 } = {
   'R-30': (parameters: TransactionsVelocityRuleParameters) => {
     const { logicAggregationVariables, alertCreationDirection } =
-      migrateCheckDirectionParameters('COUNT', parameters)
+      migrateCheckDirectionParameters({ type: 'COUNT', parameters })
     const conditions: any[] = []
     if (logicAggregationVariables.length === 1) {
       const v = logicAggregationVariables[0]
@@ -200,14 +371,17 @@ const V8_CONVERSION: {
   'R-5': (parameters: FirstActivityAfterLongTimeRuleParameters) => {
     const { dormancyPeriodDays, checkDirection = 'all' } = parameters
     const aggregationVariable: RuleAggregationVariable[] =
-      migrateCheckDirectionParameters('COUNT', {
-        timeWindow: {
-          granularity: 'day',
-          units: dormancyPeriodDays,
-          rollingBasis: true,
+      migrateCheckDirectionParameters({
+        type: 'COUNT',
+        parameters: {
+          timeWindow: {
+            granularity: 'day',
+            units: dormancyPeriodDays,
+            rollingBasis: true,
+          },
+          checkSender: checkDirection,
+          checkReceiver: 'none',
         },
-        checkSender: checkDirection,
-        checkReceiver: 'none',
       }).logicAggregationVariables
 
     const conditions: any[] = []
@@ -241,7 +415,7 @@ const V8_CONVERSION: {
   },
   'R-77': (parameters: TooManyTransactionsToHighRiskCountryRuleParameters) => {
     const { logicAggregationVariables, alertCreationDirection } =
-      migrateCheckDirectionParameters('COUNT', parameters)
+      migrateCheckDirectionParameters({ type: 'COUNT', parameters })
 
     const conditions: any[] = []
     if (logicAggregationVariables.length === 1) {
@@ -462,7 +636,7 @@ const V8_CONVERSION: {
     const {
       logicAggregationVariables: amountLogicAggregationVariables,
       alertCreationDirection,
-    } = migrateCheckDirectionParameters('AMOUNT', parameters)
+    } = migrateCheckDirectionParameters({ type: 'AMOUNT', parameters })
 
     const [currency, lowerThreshold] = Object.entries(
       parameters.transactionVolumeThreshold
@@ -511,7 +685,7 @@ const V8_CONVERSION: {
     }
     if (parameters.initialTransactions) {
       const { logicAggregationVariables: countLogicAggregationVariables } =
-        migrateCheckDirectionParameters('COUNT', parameters)
+        migrateCheckDirectionParameters({ type: 'COUNT', parameters })
       countLogicAggregationVariables[0].key = 'agg:count'
       logicAggregationVariables = logicAggregationVariables.concat(
         countLogicAggregationVariables
@@ -577,4 +751,8 @@ const V8_CONVERSION: {
       alertCreationDirection: 'ORIGIN',
     }
   },
+  'R-27': (params) => DEVIATION_RULE_MIGRATION('AMOUNT', 'SUM', false, params),
+  'R-120': (params) => DEVIATION_RULE_MIGRATION('AMOUNT', 'AVG', false, params),
+  'R-121': (params) => DEVIATION_RULE_MIGRATION('COUNT', 'COUNT', true, params),
+  'R-122': (params) => DEVIATION_RULE_MIGRATION('AMOUNT', 'SUM', true, params),
 }

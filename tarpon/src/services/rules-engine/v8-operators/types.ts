@@ -19,7 +19,7 @@ export type RuleOperator<LHS = any, RHS = any> = {
   run: (
     lhs: LHS,
     rhs: RHS,
-    parameters?: any[],
+    parameters?: any,
     context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient }
   ) => Promise<boolean>
 }
