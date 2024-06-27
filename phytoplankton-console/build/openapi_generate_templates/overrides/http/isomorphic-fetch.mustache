@@ -59,7 +59,7 @@ export class IsomorphicFetchHttpLibrary implements HttpLibrary {
                 method,
                 body,
                 headers,
-                seconds: Math.trunc(timeAfterRequest - timeBeforeRequest)
+                seconds: Math.trunc((timeAfterRequest - timeBeforeRequest)/1000)
             };
             throw error;
         });
