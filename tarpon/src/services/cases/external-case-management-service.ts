@@ -6,6 +6,7 @@ import { S3 } from '@aws-sdk/client-s3'
 import { Credentials } from 'aws-lambda'
 import { UserRepository } from '../users/repositories/user-repository'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
+import { API_USER } from '../users'
 import { CasesAlertsTransformer } from './cases-alerts-transformer'
 import { CaseRepository } from './repository'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
@@ -29,6 +30,7 @@ import { Status } from '@/@types/openapi-public-management/Status'
 import { Priority } from '@/@types/openapi-public-management/Priority'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
+import { Comment } from '@/@types/openapi-internal/Comment'
 
 @traceable
 export class ExternalCaseManagementService extends CaseAlertsCommonService {
@@ -164,9 +166,29 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
       latestTransactionArrivalTimestamp: 0,
       priority: requestBody.priority,
       subjectType: requestBody.entityDetails.type,
+      comments: requestBody.creationReason
+        ? [this.getCreationComment(requestBody)]
+        : [],
     }
 
     return case_
+  }
+
+  private getCreationComment(requestBody: CaseCreationRequest): Comment {
+    let message = `Case **${requestBody.caseId}** is created using management API`
+    if (requestBody.creationReason) {
+      const reasons = requestBody.creationReason.reasons?.join(', ')
+      const comment = requestBody.creationReason.comment
+
+      message += `, Case creation reasons: ${reasons}.`
+
+      if (comment) {
+        message += `\nComment: ${comment}`
+      }
+    } else {
+      message += '.'
+    }
+    return { body: message, userId: API_USER }
   }
 
   private getEnitityDetails(internalCase: CaseInternal): Case['entityDetails'] {
