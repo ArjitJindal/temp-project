@@ -11,12 +11,7 @@ import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { PaymentMethod, getPaymentMethodTitle } from '@/utils/payments';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 import { humanizeConstant } from '@/utils/humanize';
-import {
-  ALL_RISK_PARAMETERS,
-  BUSINESS_USER_SEGMENT_OPTIONS,
-  CONSUMER_EMPLOYMENT_STATUS_OPTIONS,
-  CONSUMER_USER_SEGMENT_OPTIONS,
-} from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
+import { ALL_RISK_PARAMETERS } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 
@@ -52,7 +47,7 @@ export const CONSTANT_RENDERER: ParameterRenderer<string> = (value) => {
   };
 };
 
-export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } = {
+export const PARAMETER_RENDERERS: Record<DataType, ParameterRenderer<any>> = {
   STRING: DEFAULT_RENDERER,
   CURRENCY: ((value) => {
     const valueLabel = CURRENCIES.find((x) => x.value === value)?.label ?? value;
@@ -84,15 +79,9 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
   CONSUMER_USER_TYPE: CONSTANT_RENDERER,
   BUSINESS_USER_TYPE: CONSTANT_RENDERER,
   BANK_NAMES: CONSTANT_RENDERER,
-  BUSINESS_USER_SEGMENT: (value) => {
-    return BUSINESS_USER_SEGMENT_OPTIONS.find((x) => x.value === value)?.label ?? value;
-  },
-  CONSUMER_USER_SEGMENT: (value) => {
-    return CONSUMER_USER_SEGMENT_OPTIONS.find((x) => x.value === value)?.label ?? value;
-  },
-  CONSUMER_EMPLOYMENT_STATUS: (value) => {
-    return CONSUMER_EMPLOYMENT_STATUS_OPTIONS.find((x) => x.value === value)?.label ?? value;
-  },
+  BUSINESS_USER_SEGMENT: CONSTANT_RENDERER,
+  CONSUMER_USER_SEGMENT: CONSTANT_RENDERER,
+  CONSUMER_EMPLOYMENT_STATUS: CONSTANT_RENDERER,
   USER_REGISTRATION_STATUS: DEFAULT_RENDERER,
   RANGE: DEFAULT_RENDERER,
   DAY_RANGE: DEFAULT_RENDERER,

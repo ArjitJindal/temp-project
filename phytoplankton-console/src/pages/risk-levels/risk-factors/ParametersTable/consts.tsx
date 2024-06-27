@@ -49,7 +49,7 @@ import NumberInput from '@/components/library/NumberInput';
 import { getOr } from '@/utils/asyncResource';
 import { BOOLEAN_OPTIONS } from '@/utils/booleanOptions';
 import { SOURCE_OF_FUNDSS } from '@/apis/models-custom/SourceOfFunds';
-import { capitalizeWords } from '@/utils/humanize';
+import { capitalizeWords, humanizeConstant } from '@/utils/humanize';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import Tag from '@/components/library/Tag';
 import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
@@ -57,6 +57,9 @@ import TagList from '@/components/library/Tag/TagList';
 import { notEmpty } from '@/utils/array';
 import { hasOverlaps } from '@/utils/math';
 import SliderWithInputs from '@/pages/risk-levels/risk-factors/ParametersTable/SliderWithInputs';
+import { EMPLOYMENT_STATUSS } from '@/apis/models-custom/EmploymentStatus';
+import { BUSINESS_USER_SEGMENTS } from '@/apis/models-custom/BusinessUserSegment';
+import { CONSUMER_USER_SEGMENTS } from '@/apis/models-custom/ConsumerUserSegment';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -259,39 +262,16 @@ const timeZonesData = timezones.map((name) => ({
 
 const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+const arrayOptionsGenerator = (values: string[]) => {
+  return values.map((value) => ({ value, label: humanizeConstant(value) }));
+};
+
 const timeZonesDataMap = keyBy(timeZonesData, 'value');
 
-export const BUSINESS_USER_SEGMENT_OPTIONS = [
-  { value: 'SOLE_PROPRIETORSHIP', label: 'Sole Proprietorship' },
-  { value: 'LIMITED', label: 'Limited' },
-  { value: 'SMB', label: 'SMB' },
-  { value: 'SMALL', label: 'Small' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'LARGE', label: 'Large' },
-  { value: 'UNKNOWN', label: 'Unknown' },
-];
-
-export const CONSUMER_USER_SEGMENT_OPTIONS = [
-  { value: 'RETAIL', label: 'Retail' },
-  { value: 'PROFESSIONAL', label: 'Professional' },
-];
-
-export const CONSUMER_EMPLOYMENT_STATUS_OPTIONS = [
-  { value: 'UNEMPLOYED', label: 'Unemployed' },
-  { value: 'STUDENT', label: 'Student' },
-  { value: 'FULL_TIME', label: 'Full-time' },
-  { value: 'PART_TIME', label: 'Part-time' },
-  { value: 'SOLE_PROPRIETOR', label: 'Sole proprietor' },
-  { value: 'PENSIONER', label: 'Pensioner' },
-  { value: 'COMPANY_OWNER', label: 'Company owner' },
-];
-
-export const SOURCE_OF_FUNDS_OPTIONS = SOURCE_OF_FUNDSS.map((source) => {
-  return {
-    value: source,
-    label: source,
-  };
-});
+export const BUSINESS_USER_SEGMENT_OPTIONS = arrayOptionsGenerator(BUSINESS_USER_SEGMENTS);
+export const CONSUMER_USER_SEGMENT_OPTIONS = arrayOptionsGenerator(CONSUMER_USER_SEGMENTS);
+export const CONSUMER_EMPLOYMENT_STATUS_OPTIONS = arrayOptionsGenerator(EMPLOYMENT_STATUSS);
+export const SOURCE_OF_FUNDS_OPTIONS = arrayOptionsGenerator(SOURCE_OF_FUNDSS);
 
 export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   {
