@@ -35,6 +35,10 @@ Sentry.init({
   environment: process.env.ENV_NAME,
   enabled: !['local', 'dev:user'].includes(process.env.ENV_NAME ?? ''),
   beforeSend(event, hint) {
+    if (!(hint?.originalException instanceof Error)) {
+      return event;
+    }
+
     const error = hint?.originalException as HttpError | Error;
     if (error && 'code' in error && error.code && error.code >= 400 && error.code < 500) {
       return null;
