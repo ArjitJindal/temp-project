@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Popover } from 'antd';
 import { UseMutationResult } from '@tanstack/react-query';
-import { QuestionResponseBase } from '../../../../types';
 import s from './index.module.less';
 import CommentEditor, {
   CommentEditorRef,
@@ -13,13 +12,11 @@ import { useFinishedSuccessfully } from '@/utils/asyncResource';
 
 interface Props {
   commentSubmitMutation: UseMutationResult<unknown, unknown, CommentEditorFormValues>;
-  item: QuestionResponseBase;
+  summary?: string;
 }
 
 export default function CommentPopover(props: Props) {
-  const { commentSubmitMutation, item } = props;
-
-  const { summary } = item;
+  const { commentSubmitMutation, summary } = props;
 
   const [commentFormValues, setCommentFormValues] = useState<CommentEditorFormValues>({
     comment: summary ?? '',

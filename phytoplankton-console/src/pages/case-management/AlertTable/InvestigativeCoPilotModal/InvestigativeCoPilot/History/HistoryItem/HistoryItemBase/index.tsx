@@ -48,7 +48,7 @@ function HistoryItemBase(props: Props, ref?: React.ForwardedRef<HTMLDivElement |
               }}
             />
           )}
-          <CommentPopover commentSubmitMutation={commentSubmitMutation} item={item} />
+          <CommentPopover commentSubmitMutation={commentSubmitMutation} summary={item.summary} />
           {item.questionType !== 'EMBEDDED' && (
             <DownloadButton
               onDownload={async () => {

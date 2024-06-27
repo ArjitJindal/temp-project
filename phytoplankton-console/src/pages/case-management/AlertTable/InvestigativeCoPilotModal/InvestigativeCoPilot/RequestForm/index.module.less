@@ -6,7 +6,6 @@
   display: flex;
   gap: 16px;
   flex-direction: column;
-  padding: 16px;
   box-shadow: 0 1px 7px -1px fade(black, 20%);
   border-radius: 8px;
   transition-duration: @default-animation-speed;
@@ -18,62 +17,4 @@
     pointer-events: none;
     transition-delay: 100ms;
   }
-}
-
-.grid {
-  display: grid;
-  gap: 16px;
-}
-
-.suggestions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  overflow: hidden;
-  position: relative;
-  padding-right: 24px;
-
-  &:not(.showMore) {
-    height: 32px;
-  }
-}
-
-.suggestion {
-  background: @fr-colors-navyBlueTint;
-  white-space: nowrap;
-  padding: 4px 8px;
-  border-radius: 4px;
-  max-width: 400px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border: 1px solid @fr-colors-navyBlueTint;
-  cursor: pointer;
-
-  &.isHighlighted {
-    background: @fr-colors-brandBlueTint;
-    color: @fr-colors-brandBlue;
-    border-color: @fr-colors-brandBlue;
-  }
-}
-
-&.moreButton {
-  position: absolute;
-  top: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  height: 30px;
-}
-
-.form {
-  display: flex;
-  gap: 8px;
-}
-
-.textInput {
-  flex: 1;
-}
-
-.brainIcon {
-  height: 16px;
 }

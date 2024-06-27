@@ -65,6 +65,7 @@ import Avatar from '@/components/library/Avatar/story';
 import MarkdownEditor from '@/components/markdown/story';
 import NotificationsDrawerList from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/story';
 import Skeleton from '@/components/library/Skeleton/story';
+import AiAlertSummary from '@/components/AlertDetailsPage/AiAlertSummary/story';
 
 const config: Config = [
   {
@@ -338,6 +339,10 @@ const config: Config = [
       {
         key: '@/components/AppWrapper/Menu/NotificationsDrawer',
         story: NotificationsDrawerList,
+      },
+      {
+        key: '@/components/AlertDetailsPage/AiAlertSummary',
+        story: AiAlertSummary,
       },
       {
         key: '@/components/ui/Typography',
