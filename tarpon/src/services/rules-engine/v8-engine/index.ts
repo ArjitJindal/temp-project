@@ -41,7 +41,10 @@ import {
   RuleVariableContext,
 } from '../v8-variables/types'
 import { getPaymentDetailsIdentifiersKey } from '../v8-variables/payment-details'
-import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
+import {
+  AuxiliaryIndexTransaction,
+  TransactionWithRiskDetails,
+} from '../repositories/transaction-repository-interface'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { CUSTOM_BUILT_IN_RULE_OPERATORS } from '../v8-operators/custom-built-in-operators'
 import { RULE_OPERATORS } from '../v8-operators'
@@ -81,6 +84,7 @@ export type TransactionRuleData = {
   senderUser?: User | Business
   receiverUser?: User | Business
 }
+
 export type UserRuleData = {
   type: 'USER'
   user: User | Business
@@ -582,7 +586,7 @@ export class RuleJsonLogicEvaluator {
         const isTransactionFiltered =
           await this.isDataIncludedInAggregationVariable(aggregationVariable, {
             type: 'TRANSACTION',
-            transaction: transaction as Transaction,
+            transaction: transaction as TransactionWithRiskDetails,
           })
         if (isTransactionFiltered) {
           targetTransactions.push(transaction)

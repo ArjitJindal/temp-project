@@ -11,7 +11,7 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 dynamoDbSetupHook()
-withFeatureHook(['RISK_SCORING', 'SYNC_TRS_CALCULATION', 'RISK_LEVELS'])
+withFeatureHook(['RISK_SCORING', 'RISK_LEVELS'])
 
 ruleVariantsTest({ aggregation: true }, () => {
   describe('Core logic', () => {

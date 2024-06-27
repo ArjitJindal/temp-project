@@ -261,6 +261,7 @@
   "TRANSACTION:originPaymentDetailsIdentifier",
   "TRANSACTION:paymentDetailsIdentifier__BOTH",
   "TRANSACTION:destinationPaymentDetailsIdentifier",
+  "TRANSACTION:trsScore",
   "TRANSACTION:originIpCity",
   "TRANSACTION:ipCity__BOTH",
   "TRANSACTION:destinationIpCity",

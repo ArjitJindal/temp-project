@@ -6216,6 +6216,10 @@ components:
             - boolean
             - date
             - array
+        requiredFeatures:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
       required:
         - key
         - uiDefinition
@@ -8668,7 +8672,6 @@ components:
         - SAR
         - QA
         - RULES_ENGINE_V8
-        - SYNC_TRS_CALCULATION
         - NOTIFICATIONS
         - KINESIS_ASYNC
         - FILES_AI_SUMMARY

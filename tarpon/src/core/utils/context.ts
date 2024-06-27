@@ -7,7 +7,6 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Context as LambdaContext,
 } from 'aws-lambda'
-
 import {
   CloudWatchClient,
   MetricDatum,
@@ -31,6 +30,7 @@ import { Permission } from '@/@types/openapi-internal/Permission'
 import { envIs } from '@/utils/env'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { Timezone, getDefaultTimezone } from '@/utils/dayjs'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
 type LogMetaData = {
   tenantId?: string
@@ -47,6 +47,7 @@ export type Context = LogMetaData & {
   rawTraceId?: string
   settings?: TenantSettings
   features?: Feature[]
+  riskClassificationValues?: RiskClassificationScore[]
   logMetadata?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }
   metrics?: { [namespace: string]: MetricDatum[] }
@@ -218,6 +219,15 @@ export function updateTenantSettings(settings: TenantSettings) {
   const context = asyncLocalStorage.getStore()
   if (context) {
     context.settings = settings
+  }
+}
+
+export function updateTenantRiskClassificationValues(
+  riskClassificationValues: RiskClassificationScore[]
+) {
+  const context = asyncLocalStorage.getStore()
+  if (context) {
+    context.riskClassificationValues = riskClassificationValues
   }
 }
 

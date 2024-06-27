@@ -18,13 +18,15 @@ import {
   getOperatorWithParameter,
   getOperatorsByValueType,
 } from '@/components/ui/LogicBuilder/operators';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const InitialConfig = BasicConfig;
 
 export function useRuleLogicConfig(ruleType: RuleType) {
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const api = useApi();
+  const settings = useSettings();
+
   const queryResult = useQuery<RuleLogicConfig>(
     RULE_LOGIC_CONFIG(),
     async (): Promise<RuleLogicConfig> => {
@@ -40,31 +42,38 @@ export function useRuleLogicConfig(ruleType: RuleType) {
     },
     { refetchOnMount: false, enabled: v8Enabled },
   );
+
   return useMemo(() => {
     if (isSuccess(queryResult.data)) {
-      const variables = queryResult.data.value.variables.map((v) => {
-        if (ruleType !== 'TRANSACTION') {
-          return v;
-        }
-        if (v.entity === 'TRANSACTION') {
-          return v;
-        }
-        let label = v.uiDefinition.label;
-        if (isUserSenderVariable(v.key)) {
-          label += ' (sender)';
-        } else if (isUserReceiverVariable(v.key)) {
-          label += ' (receiver)';
-        } else if (isUserSenderOrReceiverVariable(v.key)) {
-          label += ' (sender or receiver)';
-        }
-        return {
-          ...v,
-          uiDefinition: {
-            ...v.uiDefinition,
-            label,
-          },
-        };
-      });
+      const variables = queryResult.data.value.variables
+        .filter(
+          (v) =>
+            !v?.requiredFeatures?.length ||
+            v.requiredFeatures.every((f) => settings.features?.includes(f)),
+        )
+        .map((v) => {
+          if (ruleType !== 'TRANSACTION') {
+            return v;
+          }
+          if (v.entity === 'TRANSACTION') {
+            return v;
+          }
+          let label = v.uiDefinition.label;
+          if (isUserSenderVariable(v.key)) {
+            label += ' (sender)';
+          } else if (isUserReceiverVariable(v.key)) {
+            label += ' (receiver)';
+          } else if (isUserSenderOrReceiverVariable(v.key)) {
+            label += ' (sender or receiver)';
+          }
+          return {
+            ...v,
+            uiDefinition: {
+              ...v.uiDefinition,
+              label,
+            },
+          };
+        });
       return {
         ...queryResult,
         data: {
@@ -77,7 +86,7 @@ export function useRuleLogicConfig(ruleType: RuleType) {
       };
     }
     return queryResult;
-  }, [queryResult, ruleType]);
+  }, [queryResult, ruleType, settings.features]);
 }
 
 export function useLogicBuilderConfig(

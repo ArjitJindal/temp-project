@@ -85,6 +85,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
   const [editingVariable, setEditingVariable] = useState<
     EditingAggVariable | EditingEntityVariable | undefined
   >(undefined);
+  const settings = useSettings();
   const isNewVariable = useMemo(
     () =>
       [...(aggregationVariables ?? []), ...(entityVariables ?? [])].find(
@@ -95,11 +96,15 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
   const ruleLogicConfig = useRuleLogicConfig(ruleType);
   const entityVariableDefinitions = useMemo(() => {
     if (isSuccess(ruleLogicConfig.data)) {
-      return ruleLogicConfig.data.value.variables ?? [];
+      return (ruleLogicConfig.data.value.variables ?? []).filter(
+        (v) =>
+          !v?.requiredFeatures?.length ||
+          v.requiredFeatures.every((f) => settings.features?.includes(f)),
+      );
     }
     return [];
-  }, [ruleLogicConfig.data]);
-  const settings = useSettings();
+  }, [ruleLogicConfig.data, settings.features]);
+
   const handleDelete = useCallback(
     (varKey: string) => {
       onChange({

@@ -1,10 +1,13 @@
 import { FieldOrGroup } from '@react-awesome-query-builder/core'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
-import { Transaction } from '@/@types/openapi-public/Transaction'
+import {
+  AuxiliaryIndexTransaction,
+  TransactionWithRiskDetails,
+} from '../repositories/transaction-repository-interface'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
 export type RuleValueTypesEnum =
   | 'string'
@@ -24,6 +27,7 @@ export interface RuleVariableBase {
   entity: RuleEntityType
   uiDefinition: FieldOrGroup
   valueType: RuleValueTypesEnum
+  requiredFeatures?: Feature[]
   load: (...args: any[]) => Promise<any>
 }
 
@@ -37,10 +41,10 @@ export interface TransactionRuleVariable<ReturnType = unknown>
   extends RuleVariableBase {
   entity: 'TRANSACTION'
   load: (
-    transaction: Transaction | AuxiliaryIndexTransaction,
+    transaction: TransactionWithRiskDetails | AuxiliaryIndexTransaction,
     context?: RuleVariableContext
   ) => Promise<ReturnType>
-  sourceField: keyof Transaction
+  sourceField: keyof TransactionWithRiskDetails
 }
 
 export interface ConsumerUserRuleVariable<ReturnType = unknown>

@@ -271,6 +271,10 @@ describe('Public API - Retrieve a Transaction', () => {
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
+      riskScoreDetails: {
+        trsRiskLevel: 'VERY_HIGH',
+        trsScore: 90,
+      },
     })
   })
 })
@@ -1093,6 +1097,10 @@ describe('Public API - Verify Transction and Transaction Event', () => {
       executedRules: [],
       hitRules: [],
       status: 'ALLOW',
+      riskScoreDetails: {
+        trsRiskLevel: 'VERY_HIGH',
+        trsScore: 90,
+      },
     })
 
     const mongoDbTransactionRepository = new MongoDbTransactionRepository(

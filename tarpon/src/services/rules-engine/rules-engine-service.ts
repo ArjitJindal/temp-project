@@ -57,6 +57,7 @@ import {
   UserRuleData,
 } from './v8-engine'
 import { getAggVarHash } from './v8-engine/aggregation-repository'
+import { TransactionWithRiskDetails } from './repositories/transaction-repository-interface'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -129,6 +130,7 @@ export type V8TransactionAggregationTask = {
   transaction: Transaction
   direction: 'origin' | 'destination'
   filters?: LegacyFilters
+  transactionRiskScore?: number
 }
 export type V8RuleAggregationRebuildTask = {
   type: 'PRE_AGGREGATION'
@@ -423,16 +425,9 @@ export class RulesEngineService {
       executedRules,
       hitRules,
       transactionAggregationTasks,
-      transactionRiskScoreDetails,
+      riskScoreDetails,
+      riskScoreComponents,
     } = await this.verifyTransactionInternal(transaction)
-
-    const riskScoreDetails: TransactionRiskScoringResult | undefined =
-      transactionRiskScoreDetails
-        ? {
-            trsRiskLevel: transactionRiskScoreDetails.riskLevel,
-            trsScore: transactionRiskScoreDetails.score,
-          }
-        : undefined
 
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
@@ -440,13 +435,13 @@ export class RulesEngineService {
     )
     const initialTransactionState = transaction.transactionState || 'CREATED'
 
-    if (hasFeature('SYNC_TRS_CALCULATION') && transactionRiskScoreDetails) {
+    if (hasFeature('RISK_SCORING') && riskScoreDetails) {
       await this.riskRepository.createOrUpdateArsScore(
         transaction.transactionId,
-        transactionRiskScoreDetails.score,
+        riskScoreDetails.trsScore,
         transaction.originUserId,
         transaction.destinationUserId,
-        transactionRiskScoreDetails.components
+        riskScoreComponents
       )
     }
 
@@ -518,16 +513,8 @@ export class RulesEngineService {
       executedRules,
       hitRules,
       transactionAggregationTasks,
-      transactionRiskScoreDetails,
+      riskScoreDetails,
     } = await this.verifyTransactionInternal(updatedTransaction)
-
-    const riskScoreDetails: TransactionRiskScoringResult | undefined =
-      transactionRiskScoreDetails
-        ? {
-            trsRiskLevel: transactionRiskScoreDetails.riskLevel,
-            trsScore: transactionRiskScoreDetails.score,
-          }
-        : undefined
 
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
@@ -538,6 +525,8 @@ export class RulesEngineService {
       {
         executedRules,
         hitRules,
+        riskScoreDetails,
+        status: getAggregatedRuleStatus(hitRules),
       }
     )
     // Update transaction with the latest payload.
@@ -549,6 +538,8 @@ export class RulesEngineService {
       ),
       hitRules: mergedHitRules,
       status: getAggregatedRuleStatus(mergedHitRules),
+      riskScoreDetails,
+      transactionId: transaction.transactionId,
     })
     saveTransactionSegment?.close()
 
@@ -688,11 +679,8 @@ export class RulesEngineService {
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
     transactionAggregationTasks: TransactionAggregationTaskEntry[]
-    transactionRiskScoreDetails?: {
-      score: number
-      riskLevel: RiskLevel
-      components: RiskScoreComponent[]
-    }
+    riskScoreDetails?: TransactionRiskScoringResult
+    riskScoreComponents?: RiskScoreComponent[]
   }> {
     const getInitialDataSegment = await addNewSubsegment(
       'Rules Engine',
@@ -706,7 +694,7 @@ export class RulesEngineService {
 
     const [activeRuleInstances, transactionRisk] = await Promise.all([
       this.ruleInstanceRepository.getActiveRuleInstances(),
-      hasFeature('SYNC_TRS_CALCULATION')
+      hasFeature('RISK_SCORING')
         ? this.riskScoringService.calculateArsScore(transaction)
         : undefined,
     ])
@@ -716,6 +704,19 @@ export class RulesEngineService {
     const userRuleInstances = activeRuleInstances.filter(
       (v) => v.type === 'USER'
     )
+
+    const riskScoreDetails: TransactionRiskScoringResult | undefined =
+      transactionRisk
+        ? {
+            trsRiskLevel: transactionRisk.riskLevel,
+            trsScore: transactionRisk.score,
+          }
+        : undefined
+
+    const transactionWithRiskDetails: TransactionWithRiskDetails = {
+      ...transaction,
+      riskScoreDetails,
+    }
 
     const rulesById = await this.getRulesById(transactionRuleInstances)
 
@@ -733,7 +734,7 @@ export class RulesEngineService {
               : undefined,
             ruleInstance,
             senderUserRiskLevel: await senderUserRiskLevelPromise,
-            transaction,
+            transaction: transactionWithRiskDetails,
             senderUser,
             receiverUser,
             transactionRiskScore: transactionRisk?.score,
@@ -743,7 +744,7 @@ export class RulesEngineService {
       // Update aggregation variables in V8 user rules
       Promise.all(
         userRuleInstances.map((ruleInstance) =>
-          this.handleV8Aggregation(ruleInstance, transaction)
+          this.handleV8Aggregation(ruleInstance, transactionWithRiskDetails)
         )
       ),
     ])
@@ -778,16 +779,12 @@ export class RulesEngineService {
 
     updateStatsSegment?.close()
     this.updatedAggregationVariables.clear()
+
     return {
       ...executedAndHitRulesResult,
       transactionAggregationTasks,
-      ...(transactionRisk && {
-        transactionRiskScoreDetails: {
-          riskLevel: transactionRisk.riskLevel,
-          score: transactionRisk.score,
-          components: transactionRisk.components,
-        },
-      }),
+      riskScoreDetails,
+      riskScoreComponents: transactionRisk?.components,
     }
   }
 
@@ -857,6 +854,7 @@ export class RulesEngineService {
             transaction: transactionWithValidUserId,
             senderUser,
             receiverUser,
+            transactionRiskScore,
           } as TransactionRuleData)
         : senderUser
         ? ({ type: 'USER', user: senderUser } as UserRuleData)
@@ -1042,7 +1040,7 @@ export class RulesEngineService {
     rule?: Rule
     ruleInstance: RuleInstance
     senderUserRiskLevel: RiskLevel | undefined
-    transaction: Transaction
+    transaction: TransactionWithRiskDetails
     senderUser?: User | Business
     receiverUser?: User | Business
     transactionRiskScore?: number
@@ -1108,7 +1106,7 @@ export class RulesEngineService {
 
   private async handleV8Aggregation(
     ruleInstance: RuleInstance,
-    transaction: Transaction
+    transaction: TransactionWithRiskDetails
   ) {
     if (!hasFeature('RULES_ENGINE_V8')) {
       return

@@ -12,7 +12,7 @@ import {
   PutCommandInput,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
+import { isEmpty, omit } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -39,6 +39,10 @@ import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { traceable } from '@/core/xray'
 import { TrsScoresResponse } from '@/@types/openapi-internal/TrsScoresResponse'
+import {
+  getContext,
+  updateTenantRiskClassificationValues,
+} from '@/core/utils/context'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -269,6 +273,16 @@ export class RiskRepository {
   }
 
   async getRiskClassificationValues(): Promise<Array<RiskClassificationScore>> {
+    const contextRiskClassificationValues =
+      getContext()?.riskClassificationValues
+
+    if (
+      contextRiskClassificationValues &&
+      !isEmpty(contextRiskClassificationValues)
+    ) {
+      return contextRiskClassificationValues
+    }
+
     const queryInput: QueryCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -280,9 +294,14 @@ export class RiskRepository {
     try {
       const result = await paginateQuery(this.dynamoDb, queryInput)
 
-      return result.Items && result.Items.length > 0
-        ? result.Items[0].classificationValues
-        : DEFAULT_CLASSIFICATION_SETTINGS
+      const riskClassificationValues =
+        result.Items && result.Items.length > 0
+          ? result.Items[0].classificationValues
+          : DEFAULT_CLASSIFICATION_SETTINGS
+
+      updateTenantRiskClassificationValues(riskClassificationValues)
+
+      return riskClassificationValues
     } catch (e) {
       logger.error(e)
       return DEFAULT_CLASSIFICATION_SETTINGS
@@ -307,6 +326,9 @@ export class RiskRepository {
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
     logger.info(`Updated risk classification config.`)
+
+    updateTenantRiskClassificationValues(riskClassificationValues)
+
     return newRiskClassificationValues
   }
 

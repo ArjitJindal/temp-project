@@ -8,9 +8,14 @@ import {
   PaymentDetails,
   PaymentMethod,
 } from '@/@types/tranasction/payment-type'
-import { Transaction } from '@/@types/openapi-public/Transaction'
+import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 
-export type AuxiliaryIndexTransaction = Partial<Transaction> & {
+export type TransactionWithRiskDetails = Omit<
+  TransactionWithRulesResult,
+  'executedRules' | 'hitRules' | 'status'
+>
+
+export type AuxiliaryIndexTransaction = Partial<TransactionWithRiskDetails> & {
   senderKeyId?: string
   receiverKeyId?: string
 }

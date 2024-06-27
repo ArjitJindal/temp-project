@@ -911,7 +911,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: RuleNature.FRAUD,
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
-      requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS', 'SYNC_TRS_CALCULATION'],
+      requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS'],
       types: [RuleTypeField.AnomalyDetection],
       typologies: [
         RuleTypology.UnusualBehaviour,
