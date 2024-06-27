@@ -1,4 +1,4 @@
-import {HttpLibrary, RequestContext, ResponseContext} from './http{{extensionForDeno}}';
+import { HttpLibrary, RequestContext, ResponseContext } from './http{{extensionForDeno}}';
 import { from, Observable } from {{#useRxJS}}'rxjs'{{/useRxJS}}{{^useRxJS}}'../rxjsStub{{extensionForDeno}}'{{/useRxJS}};
 {{#platforms}}
 {{#node}}
@@ -9,22 +9,6 @@ import "whatwg-fetch";
 {{/browser}}
 {{/platforms}}
 
-
-export class FetchCallError extends Error {
-  public constructor(
-    message: string,
-    public request: {
-      url: string;
-      method: string;
-      body: unknown,
-      headers: unknown,
-    },
-  ) {
-    super(message);
-    this.name = "FetchCallError"
-  }
-}
-
 export class IsomorphicFetchHttpLibrary implements HttpLibrary {
 
     public send(request: RequestContext): Observable<ResponseContext> {
@@ -32,8 +16,8 @@ export class IsomorphicFetchHttpLibrary implements HttpLibrary {
         let body = request.getBody();
 
         const url = request.getUrl();
-       const headers = request.getHeaders();
-
+        const headers = request.getHeaders();
+        const timeBeforeRequest = Date.now()
         const resultPromise = fetch(url, {
             method: method,
             body: body as any,
@@ -68,17 +52,17 @@ export class IsomorphicFetchHttpLibrary implements HttpLibrary {
             {{/platforms}}
             return new ResponseContext(resp.status, headers, body);
         }, (e) => {
-          // If fetch failed on network level, create custom error with details
-          if (e instanceof TypeError && e.message === 'Failed to fetch') {
-            throw new FetchCallError(`HTTP fetch failed (${method} ${url})`, {
-              url,
-              method,
-              body,
-              headers,
-            });
-          }
-          throw e;
-       });
+            let error = e;
+            const timeAfterRequest = Date.now();
+            (error as any).request = {
+                url,
+                method,
+                body,
+                headers,
+                seconds: Math.trunc(timeAfterRequest - timeBeforeRequest)
+            };
+            throw error;
+        });
 
         return from<Promise<ResponseContext>>(resultPromise);
 

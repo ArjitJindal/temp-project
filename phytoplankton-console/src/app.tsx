@@ -4,7 +4,6 @@ import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/browser';
 import { Navigate, Route, Routes, useParams } from 'react-router';
 import { Debug } from '@sentry/integrations';
-import { FetchCallError } from './apis';
 import AppWrapper from '@/components/AppWrapper';
 
 import { useRoutes } from '@/services/routing';
@@ -40,7 +39,7 @@ Sentry.init({
     if (error && 'code' in error && error.code && error.code >= 400 && error.code < 500) {
       return null;
     }
-    if (error instanceof FetchCallError) {
+    if ('request' in error) {
       // These errors happen ofter when running cypress, because of it's internal
       // architecture, so ignoring them
       if (event.tags?.['tenantId'] === 'cypress-tenant') {
