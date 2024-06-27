@@ -4,7 +4,15 @@ describe('Create scenario', () => {
     cy.toggleFeatures({ RISK_LEVELS: true, RULES_ENGINE_V8: true });
   });
 
-  it('should create a scenario!', () => {
+  it('should create a transaction rule!', () => {
+    ruleCreationFlow('TRANSACTION');
+  });
+
+  it('should create a user rule!', () => {
+    ruleCreationFlow('USER');
+  });
+
+  function ruleCreationFlow(type: 'USER' | 'TRANSACTION') {
     cy.visit('/rules/rules-library');
     cy.intercept('POST', '**/rule_instances').as('createdRule');
 
@@ -17,13 +25,31 @@ describe('Create scenario', () => {
       cy.contains('AML').click();
     });
 
+    cy.get('[data-cy="rule-type"]').within(() => {
+      cy.contains(`${type === 'TRANSACTION' ? 'Transaction' : 'User'}`).click();
+    });
+
+    if (type === 'USER') {
+      cy.get('[data-cy="rule-is-run-when"]').within(() => {
+        cy.contains('User is created/updated').click();
+      });
+    }
+
     //Rule is hit when
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
     createAggregationVariable('Variable 1', 'type');
-    createTransactionEntityVariable('type');
+    if (type === 'USER') {
+      createEntityVariable('User id', type);
+    } else {
+      createEntityVariable('type', type);
+    }
     cy.get('button[data-cy="add-logic-v8"]').click();
     cy.waitNothingLoading();
-    addCondition('Transaction / type{enter}', 'Deposit{enter}');
+    if (type === 'USER') {
+      addCondition('User / id{enter}', '123');
+    } else {
+      addCondition('Transaction / type{enter}', 'Deposit{enter}');
+    }
     addCondition('Variable 1', 5);
     cy.get('[data-cy="apply-to-risk-levels"]')
       .click()
@@ -46,7 +72,7 @@ describe('Create scenario', () => {
       cy.visit(`/rules/my-rules/${ruleInstanceId}`);
       deleteScenario(ruleInstanceId);
     });
-  });
+  }
 
   function deleteScenario(ruleInstanceId: string) {
     cy.visit('/rules/my-rules');
@@ -101,10 +127,14 @@ describe('Create scenario', () => {
       });
   }
 
-  function createTransactionEntityVariable(entityText: string) {
+  function createEntityVariable(entityText: string, type: 'USER' | 'TRANSACTION') {
     cy.get('button[data-cy="add-variable-v8"]').first().click();
     cy.get('[role="menuitem"]').contains('Entity variable').click();
-    cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
+    if (type === 'USER') {
+      cy.get('input[data-cy="variable-user-nature-v8-checkbox"]').eq(0).click(); // Added for consumer user nature
+    } else {
+      cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
+    }
     cy.get('[data-cy="variable-entity-v8"]').click().type(`${entityText}`).type(`{enter}`);
     cy.get('button[data-cy="modal-ok"]').first().click();
   }
@@ -113,7 +143,6 @@ describe('Create scenario', () => {
     cy.get('button[data-cy="add-variable-v8"]').first().click();
     cy.get('[role="menuitem"]').contains('Aggregate variable').click();
     cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}`).blur();
-    cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
     cy.get('input[data-cy="variable-tx-direction-v8"]').eq(0).click();
     cy.wait('@ruleLogicConfig').then((interception) => {
       expect(interception.response?.statusCode).to.oneOf([200, 304]);
