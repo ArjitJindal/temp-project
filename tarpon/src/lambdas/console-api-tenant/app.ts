@@ -373,7 +373,10 @@ export const tenantsHandler = lambdaApi()(
         throw createHttpError(400, 'tenantId is required')
       }
 
-      await tenantService.deleteTenant(request.DeleteTenant.tenantId)
+      await tenantService.deleteTenant(
+        request.DeleteTenant.tenantId,
+        request.DeleteTenant.notRecoverable
+      )
 
       return
     })
