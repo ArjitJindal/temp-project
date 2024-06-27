@@ -39,7 +39,7 @@ Sentry.init({
     if (error && 'code' in error && error.code && error.code >= 400 && error.code < 500) {
       return null;
     }
-    if ('request' in error) {
+    if (error && 'request' in error) {
       // These errors happen ofter when running cypress, because of it's internal
       // architecture, so ignoring them
       if (event.tags?.['tenantId'] === 'cypress-tenant') {
