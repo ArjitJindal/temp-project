@@ -157,7 +157,7 @@ export default function BasicDetailsStep(props: Props) {
                 <InputField<BasicDetailsFormValues, 'userRuleRunCondition'>
                   name={'userRuleRunCondition'}
                   label={'Rule is run when'}
-                  labelProps={{ required: true }}
+                  labelProps={{ required: true, testId: 'rule-is-run-when' }}
                 >
                   {(inputProps) => (
                     <SelectionGroup<'ENTITY_UPDATE' | 'SCHEDULE'>
