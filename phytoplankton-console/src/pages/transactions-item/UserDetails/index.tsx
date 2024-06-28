@@ -2,11 +2,17 @@ import cn from 'clsx';
 import { Tooltip } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import React from 'react';
+import { isNil } from 'lodash';
 import s from './index.module.less';
 import Avatar from './Avatar';
 import OriginIcon from './origin-icon.react.svg';
 import DestinationIcon from './destination-icon.react.svg';
-import { InternalBusinessUser, InternalConsumerUser, TransactionAmountDetails } from '@/apis';
+import {
+  DeviceData,
+  InternalBusinessUser,
+  InternalConsumerUser,
+  TransactionAmountDetails,
+} from '@/apis';
 import * as Card from '@/components/ui/Card';
 import * as Form from '@/components/ui/Form';
 import { getUserName } from '@/utils/api/users';
@@ -16,6 +22,7 @@ import { makeUrl } from '@/utils/routing';
 import Money from '@/components/ui/Money';
 import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
 import { PaymentDetails } from '@/utils/api/payment-details';
+import { humanizeAuto } from '@/utils/humanize';
 
 function getUnknownUserTooltipMessage(userId?: string) {
   return userId
@@ -29,11 +36,11 @@ interface Props {
   amountDetails: TransactionAmountDetails | undefined;
   paymentDetails: PaymentDetails | undefined;
   userId?: string;
-  ipAddress?: string;
+  deviceData?: DeviceData;
 }
 
 export default function UserDetails(props: Props) {
-  const { type, user, userId, amountDetails, paymentDetails, ipAddress } = props;
+  const { type, user, userId, amountDetails, paymentDetails, deviceData } = props;
   const isDestination = type === 'DESTINATION';
   return (
     <Card.Root className={cn(s.root, s[`type-${type}`])}>
@@ -73,17 +80,31 @@ export default function UserDetails(props: Props) {
             </Id>
           )}
         </div>
-        {amountDetails && (
-          <div className={s.mainInfo}>
-            <Form.Layout.Label title={isDestination ? 'Amount received' : 'Amount sent'}>
-              <Money transactionAmount={amountDetails} />
-            </Form.Layout.Label>
-            <Form.Layout.Label title={isDestination ? 'Country received in' : 'Country sent from'}>
-              <CountryDisplay isoCode={amountDetails.country}></CountryDisplay>
-            </Form.Layout.Label>
-            <Form.Layout.Label title={'IP address'}>{ipAddress}</Form.Layout.Label>
-          </div>
-        )}
+        <div className={s.mainInfo}>
+          {amountDetails && (
+            <>
+              <Form.Layout.Label title={isDestination ? 'Amount received' : 'Amount sent'}>
+                <Money transactionAmount={amountDetails} />
+              </Form.Layout.Label>
+              <Form.Layout.Label
+                title={isDestination ? 'Country received in' : 'Country sent from'}
+              >
+                <CountryDisplay isoCode={amountDetails.country}></CountryDisplay>
+              </Form.Layout.Label>
+            </>
+          )}
+          {deviceData && (
+            <>
+              {Object.entries(deviceData)
+                .filter(([_key, value]) => !isNil(value))
+                .map(([key, value]) => (
+                  <Form.Layout.Label title={humanizeAuto(key)} key={key}>
+                    {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
+                  </Form.Layout.Label>
+                ))}
+            </>
+          )}
+        </div>
         <Card.Root>
           <Card.Section>
             <PaymentDetailsProps paymentDetails={paymentDetails} />
