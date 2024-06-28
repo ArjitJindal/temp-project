@@ -2,6 +2,7 @@ import React from 'react';
 import { TableAlertItem } from '../types';
 import AlertExpanded from './AlertExpanded';
 import ScreeningMatchList from '@/components/ScreeningMatchList';
+import { SanctionsHitStatus } from '@/apis';
 
 interface Props {
   alert: TableAlertItem;
@@ -9,7 +10,11 @@ interface Props {
   selectedTransactionIds?: string[];
   selectedSanctionsHitsIds?: string[];
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
-  onSanctionsHitSelect?: (alertId: string, sanctionsHitsIds: string[]) => void;
+  onSanctionsHitSelect?: (
+    alertId: string,
+    sanctionsHitsIds: string[],
+    status: SanctionsHitStatus,
+  ) => void;
 }
 
 export default function ExpandedRowRenderer(props: Props) {

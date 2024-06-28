@@ -9,14 +9,15 @@ import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
-import { useApi } from '@/api';
 import {
+  SanctionsHitStatus,
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
   Assignment,
   ChecklistStatus,
   SanctionHitStatusUpdateRequest,
 } from '@/apis';
+import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,
@@ -135,9 +136,12 @@ export default function AlertTable(props: Props) {
   const user = useAuth0User();
   const [users] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
-  const [selectedSanctionHits, setSelectedSanctionHits] = useState<{ [alertId: string]: string[] }>(
-    {},
-  );
+  const [selectedSanctionHits, setSelectedSanctionHits] = useState<{
+    [alertId: string]: {
+      id: string;
+      status: SanctionsHitStatus;
+    }[];
+  }>({});
   const [statusChangeModalVisibility, setStatusChangeModalVisibility] = useState<boolean>(false);
 
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
@@ -150,7 +154,12 @@ export default function AlertTable(props: Props) {
   }, [selectedTxns]);
   const selectedSanctionHitsIds = useMemo(() => {
     return Object.values(selectedSanctionHits)
-      .flatMap((v) => v)
+      .flatMap((v) => v.map((x) => x.id))
+      .filter(Boolean);
+  }, [selectedSanctionHits]);
+  const selectedSanctionHitsStatuses = useMemo(() => {
+    return Object.values(selectedSanctionHits)
+      .flatMap((v) => v.map((x) => x.status))
       .filter(Boolean);
   }, [selectedSanctionHits]);
   const navigate = useNavigate();
@@ -843,16 +852,32 @@ export default function AlertTable(props: Props) {
         return;
       }
 
+      const isAllOpen = selectedSanctionHitsStatuses.every((x) => x === 'OPEN');
+      const isAllCleared = selectedSanctionHitsStatuses.every((x) => x === 'CLEARED');
+
       return (
-        <Button
-          onClick={() => {
-            // setSelectionIds(props.selectedIds);
-            setStatusChangeModalVisibility(true);
-          }}
-          isDisabled={isDisabled}
-        >
-          Clear
-        </Button>
+        <>
+          {isAllOpen && (
+            <Button
+              onClick={() => {
+                setStatusChangeModalVisibility(true);
+              }}
+              isDisabled={isDisabled}
+            >
+              Clear
+            </Button>
+          )}
+          {isAllCleared && (
+            <Button
+              onClick={() => {
+                setStatusChangeModalVisibility(true);
+              }}
+              isDisabled={isDisabled}
+            >
+              Restore
+            </Button>
+          )}
+        </>
       );
     },
     ({ selectedIds, isDisabled }) => {
@@ -1128,14 +1153,14 @@ export default function AlertTable(props: Props) {
                       setSelectedSanctionHits({});
                     }
                   }}
-                  onSanctionsHitSelect={(alertId, sanctionsHitsIds) => {
+                  onSanctionsHitSelect={(alertId, sanctionsHitsIds, status) => {
                     if (sanctionsHitsIds.length > 0) {
                       setSelectedAlerts([]);
                       setSelectedTxns({});
                     }
                     setSelectedSanctionHits((prevState) => ({
                       ...prevState,
-                      [alertId]: sanctionsHitsIds,
+                      [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
                     }));
                   }}
                 />
@@ -1186,7 +1211,7 @@ export default function AlertTable(props: Props) {
         onClose={() => {
           setStatusChangeModalVisibility(false);
         }}
-        newStatus={'CLEARED'}
+        newStatus={selectedSanctionHitsStatuses[0] === 'CLEARED' ? 'OPEN' : 'CLEARED'}
         updateMutation={adaptMutationVariables(changeStatusMutation, (formValues) => {
           const alertIds = Object.entries(selectedSanctionHits)
             .filter(([_, values]) => values != null && values.length > 0)
@@ -1204,7 +1229,7 @@ export default function AlertTable(props: Props) {
               files: formValues.files,
               reasons: formValues.reasons,
               whitelistHits: formValues.whitelistHits,
-              status: 'CLEARED' as const,
+              status: formValues.newStatus,
             },
           };
         })}

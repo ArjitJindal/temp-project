@@ -13,6 +13,7 @@ import {
   TableRefType,
 } from '@/components/library/Table/types';
 import { SanctionsHit } from '@/apis/models/SanctionsHit';
+import { SanctionsHitStatus } from '@/apis/models/SanctionsHitStatus';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { QueryResult } from '@/utils/queries/types';
@@ -24,6 +25,7 @@ import { ID, SANCTIONS_HIT_STATUS, STRING } from '@/components/library/Table/sta
 import { notEmpty } from '@/utils/array';
 
 export interface TableSearchParams {
+  statuses?: SanctionsHitStatus[];
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;

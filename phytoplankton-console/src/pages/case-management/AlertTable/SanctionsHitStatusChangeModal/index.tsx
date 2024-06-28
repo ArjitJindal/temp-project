@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { SanctionsHitReasons, SanctionsHitStatus } from '@/apis';
 import Narrative, { NarrativeFormValues } from '@/components/Narrative';
 import Modal from '@/components/library/Modal';
@@ -8,6 +8,7 @@ import { isLoading } from '@/utils/asyncResource';
 import { FormRef } from '@/components/library/Form';
 import Label from '@/components/library/Label';
 import GenericFormField from '@/components/library/Form/GenericFormField';
+import { neverReturn } from '@/utils/lang';
 
 type FormState = NarrativeFormValues<
   SanctionsHitReasons,
@@ -22,31 +23,49 @@ interface Props {
   isVisible: boolean;
   onClose: () => void;
   newStatus: SanctionsHitStatus;
-  updateMutation: Mutation<unknown, unknown, FormValues, unknown>;
+  updateMutation: Mutation<
+    unknown,
+    unknown,
+    FormValues & {
+      newStatus: SanctionsHitStatus;
+    },
+    unknown
+  >;
 }
 
-const possibleReasons: SanctionsHitReasons[] = ['FALSE_POSITIVE', 'OTHER'];
-
-const initialFormState: FormState = {
-  values: {
-    reasons: ['FALSE_POSITIVE'],
-    reasonOther: undefined,
-    comment: undefined,
-    whitelistHits: true,
-    files: [],
-  },
-  isValid: false,
-};
-
 export default function SanctionsHitStatusChangeModal(props: Props) {
-  const { updateMutation, entityIds, isVisible, onClose } = props;
+  const { newStatus, updateMutation, entityIds, isVisible, onClose } = props;
 
-  const showErrors = false;
+  const possibleReasons = useMemo(() => getReasons(newStatus), [newStatus]);
+  const initialFormState: FormState = useMemo(
+    () => ({
+      values: {
+        reasons: possibleReasons.slice(0, 1),
+        reasonOther: undefined,
+        comment: undefined,
+        whitelistHits: true,
+        files: [],
+      },
+      isValid: false,
+    }),
+    [possibleReasons],
+  );
+
   const [formState, setFormState] = useState<FormState>(initialFormState);
+  useEffect(() => {
+    if (!isVisible) {
+      formRef.current?.resetFields(initialFormState.values);
+      setFormState(initialFormState);
+    }
+  }, [isVisible, initialFormState]);
 
   const formRef = useRef<FormRef<FormValues>>(null);
 
-  const handleConfirm = (formValues: FormValues) => {
+  const handleConfirm = (
+    formValues: FormValues & {
+      newStatus: SanctionsHitStatus;
+    },
+  ) => {
     updateMutation.mutate(formValues, {
       onSuccess: () => {
         onClose();
@@ -58,7 +77,7 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
 
   return (
     <Modal
-      title={'Clear sanctions hits'}
+      title={getTitle(newStatus)}
       isOpen={isVisible}
       okProps={{
         isLoading: isLoading(updateMutation.dataResource),
@@ -75,7 +94,7 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
     >
       <Narrative<SanctionsHitReasons>
         formRef={formRef}
-        showErrors={showErrors}
+        showErrors={false}
         values={formState}
         onChange={setFormState}
         entityType={'SANCTIONS_HIT'}
@@ -84,17 +103,49 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
         possibleReasons={possibleReasons}
         extraFields={
           <>
-            <GenericFormField<FormValues, 'whitelistHits'> name="whitelistHits">
-              {(props) => (
-                <Label label={'Whitelist the selected hits'} position="RIGHT" level={2}>
-                  <Checkbox {...props} />
-                </Label>
-              )}
-            </GenericFormField>
+            {newStatus === 'CLEARED' && (
+              <GenericFormField<FormValues, 'whitelistHits'> name="whitelistHits">
+                {(props) => (
+                  <Label label={'Whitelist the selected hits'} position="RIGHT" level={2}>
+                    <Checkbox {...props} />
+                  </Label>
+                )}
+              </GenericFormField>
+            )}
           </>
         }
-        onSubmit={handleConfirm}
+        onSubmit={(values) => {
+          handleConfirm({
+            ...values,
+            newStatus,
+          });
+        }}
       />
     </Modal>
   );
+}
+
+/*
+  Helpers
+ */
+function getReasons(newStatus: SanctionsHitStatus): SanctionsHitReasons[] {
+  if (newStatus === 'OPEN') {
+    return ['OTHER'];
+  } else if (newStatus === 'CLEARED') {
+    return ['FALSE_POSITIVE', 'OTHER'];
+  } else if (newStatus === 'ESCALATED') {
+    return ['OTHER'];
+  }
+  return neverReturn(newStatus, ['OTHER']);
+}
+
+function getTitle(newStatus: SanctionsHitStatus): string {
+  if (newStatus === 'OPEN') {
+    return 'Restore sanctions hits';
+  } else if (newStatus === 'CLEARED') {
+    return 'Clear sanctions hits';
+  } else if (newStatus === 'ESCALATED') {
+    return 'Escalate sanctions hits';
+  }
+  return neverReturn(newStatus, `Change status to "${newStatus}"`);
 }

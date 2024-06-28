@@ -16,7 +16,7 @@ export interface FormRef<FormValues> {
   setValues: (formValues: FormValues) => void;
   validate: (externalFormValues?: FormValues) => boolean;
   submit: () => void;
-  resetFields: () => void;
+  resetFields: (formValues?: FormValues) => void;
 }
 
 interface ChildrenProps<FormValues> {
@@ -80,8 +80,8 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
       submit: () => {
         handleSubmit();
       },
-      resetFields: () => {
-        setFormValues(initialValues);
+      resetFields: (values = initialValues) => {
+        setFormValues(values);
         setFieldsMeta({});
       },
     }),
