@@ -1,6 +1,6 @@
 import * as createError from 'http-errors'
-import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
+import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { S3, GetObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3'
 import {
@@ -58,6 +58,7 @@ import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
 import { getExternalComment } from '@/utils/external-transformer'
 import { getCredentialsFromEvent } from '@/utils/credentials'
+import { CaseRepository } from '@/services/cases/repository'
 import { getParsedCommentBody } from '@/utils/helpers'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
@@ -87,6 +88,7 @@ export const API_USER = 'API'
 @traceable
 export class UserService {
   userRepository: UserRepository
+  caseRepository: CaseRepository
   userEventRepository: UserEventRepository
   s3: S3
   documentBucketName: string
@@ -109,6 +111,10 @@ export class UserService {
       dynamoDb: connections.dynamoDb,
     })
     this.userEventRepository = new UserEventRepository(tenantId, {
+      mongoDb: connections.mongoDb,
+      dynamoDb: connections.dynamoDb,
+    })
+    this.caseRepository = new CaseRepository(tenantId, {
       mongoDb: connections.mongoDb,
       dynamoDb: connections.dynamoDb,
     })
@@ -714,6 +720,8 @@ export class UserService {
       },
       isBusiness ? 'BUSINESS' : 'CONSUMER'
     )
+
+    await this.caseRepository.syncUsersCases(user.userId, updateRequest)
 
     const commentBody = this.getKycAndUserUpdateComment({
       caseId: options?.caseId,

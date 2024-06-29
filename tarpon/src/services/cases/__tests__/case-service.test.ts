@@ -25,6 +25,11 @@ import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import dayjs from '@/utils/dayjs'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { getTestUser } from '@/test-utils/user-test-utils'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { UserService } from '@/services/users'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',
@@ -123,9 +128,11 @@ jest.mock('@/core/utils/context', () => {
 
 async function getCaseService(tenantId: string) {
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const s3 = getS3ClientByEvent(null as any)
   const caseRepository = new CaseRepository(tenantId, {
     mongoDb,
+    dynamoDb,
   })
   const caseService = new CaseService(caseRepository, s3, {
     documentBucketName: 'test-bucket',
@@ -148,6 +155,28 @@ async function getAlertsService(tenantId: string) {
   })
 
   return alertsService
+}
+
+async function getUsersService(tenantId: string) {
+  const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
+  const usersService = new UserService(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
+
+  return usersService
+}
+
+async function getUsersRepository(tenantId: string) {
+  const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
+  const usersService = new UserRepository(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
+
+  return usersService
 }
 
 const getContextMocker = jest.spyOn(Context, 'getContext')
@@ -2412,6 +2441,198 @@ describe('Case/Alerts Service - Status Change Tests', () => {
       },
       updatedAt: expect.any(Number),
     })
+  })
+
+  test('Closing case with updating users should update user data in case', async () => {
+    const userRepository = await getUsersRepository(tenantId)
+    const caseService = await getCaseService(tenantId)
+    const caseId1 = nanoid()
+    const caseId2 = nanoid()
+
+    const savedUser1 = await userRepository.saveUser(
+      getTestUser({
+        userStateDetails: {
+          state: 'ACTIVE',
+        },
+      }),
+      'CONSUMER'
+    )
+    const savedUser2 = await userRepository.saveUser(
+      getTestUser({
+        userStateDetails: {
+          state: 'ACTIVE',
+        },
+      }),
+      'CONSUMER'
+    )
+
+    for (const caseId of [caseId1, caseId2]) {
+      await caseService.caseRepository.addCaseMongo({
+        caseId: caseId,
+        caseType: 'MANUAL',
+        caseStatus: 'OPEN',
+        caseUsers:
+          caseId === caseId1
+            ? {
+                origin: savedUser1,
+                destination: undefined,
+              }
+            : {
+                origin: undefined,
+                destination: savedUser2,
+              },
+        alerts: [TEST_ALERT_1],
+        statusChanges: [
+          {
+            userId: 'TEST_IN_REVIEW_USER',
+            caseStatus: 'IN_REVIEW_CLOSED',
+            reason: ['False positive'],
+            timestamp: Date.now(),
+          },
+        ],
+        lastStatusChange: {
+          userId: 'TEST_IN_REVIEW_USER',
+          caseStatus: 'IN_REVIEW_CLOSED',
+          reason: ['False positive'],
+          timestamp: Date.now(),
+        },
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
+      })
+    }
+
+    await caseService.updateStatus([caseId1, caseId2], {
+      caseStatus: 'CLOSED',
+      reason: ['False positive'],
+      userStateDetails: {
+        state: 'TERMINATED',
+        reason: 'Testing',
+      },
+    })
+
+    // Check that users are updated
+    {
+      const u1 = await userRepository.getUser<InternalConsumerUser>(
+        savedUser1.userId
+      )
+      const u2 = await userRepository.getUser<InternalConsumerUser>(
+        savedUser2.userId
+      )
+      expect(u1?.userStateDetails?.state).toBe('TERMINATED')
+      expect(u2?.userStateDetails?.state).toBe('TERMINATED')
+    }
+
+    // Check that user in case is updated
+    {
+      const case1 = await caseService.getCase(caseId1)
+      expect(
+        (case1?.caseUsers?.origin as InternalConsumerUser)?.userStateDetails
+          ?.state
+      ).toBe('TERMINATED')
+      const case2 = await caseService.getCase(caseId2)
+      expect(
+        (case2?.caseUsers?.destination as InternalConsumerUser)
+          ?.userStateDetails?.state
+      ).toBe('TERMINATED')
+    }
+  })
+
+  test('Changing user data should change it in the case too', async () => {
+    const userRepository = await getUsersRepository(tenantId)
+    const userService = await getUsersService(tenantId)
+    const caseService = await getCaseService(tenantId)
+    const caseId1 = nanoid()
+    const caseId2 = nanoid()
+
+    const savedUser1 = await userRepository.saveUser(
+      getTestUser({
+        userStateDetails: {
+          state: 'ACTIVE',
+        },
+      }),
+      'CONSUMER'
+    )
+    const savedUser2 = await userRepository.saveUser(
+      getTestUser({
+        userStateDetails: {
+          state: 'ACTIVE',
+        },
+      }),
+      'CONSUMER'
+    )
+
+    for (const caseId of [caseId1, caseId2]) {
+      await caseService.caseRepository.addCaseMongo({
+        caseId: caseId,
+        caseType: 'MANUAL',
+        caseStatus: 'OPEN',
+        caseUsers:
+          caseId === caseId1
+            ? {
+                origin: savedUser1,
+                destination: undefined,
+              }
+            : {
+                origin: undefined,
+                destination: savedUser2,
+              },
+        alerts: [TEST_ALERT_1],
+        statusChanges: [
+          {
+            userId: 'TEST_IN_REVIEW_USER',
+            caseStatus: 'IN_REVIEW_CLOSED',
+            reason: ['False positive'],
+            timestamp: Date.now(),
+          },
+        ],
+        lastStatusChange: {
+          userId: 'TEST_IN_REVIEW_USER',
+          caseStatus: 'IN_REVIEW_CLOSED',
+          reason: ['False positive'],
+          timestamp: Date.now(),
+        },
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
+      })
+    }
+
+    // Update users
+    await userService.updateUser(savedUser1, {
+      userStateDetails: {
+        state: 'TERMINATED',
+        reason: 'Testing',
+      },
+    })
+    await userService.updateUser(savedUser2, {
+      userStateDetails: {
+        state: 'TERMINATED',
+        reason: 'Testing',
+      },
+    })
+
+    // Check that users are updated
+    {
+      const u1 = await userRepository.getUser<InternalConsumerUser>(
+        savedUser1.userId
+      )
+      const u2 = await userRepository.getUser<InternalConsumerUser>(
+        savedUser2.userId
+      )
+      expect(u1?.userStateDetails?.state).toBe('TERMINATED')
+      expect(u2?.userStateDetails?.state).toBe('TERMINATED')
+    }
+
+    // Check that user in case is updated
+    {
+      const case1 = await caseService.getCase(caseId1)
+      expect(
+        (case1?.caseUsers?.origin as InternalConsumerUser)?.userStateDetails
+          ?.state
+      ).toBe('TERMINATED')
+      const case2 = await caseService.getCase(caseId2)
+      expect(
+        (case2?.caseUsers?.destination as InternalConsumerUser)
+          ?.userStateDetails?.state
+      ).toBe('TERMINATED')
+    }
   })
 
   test('Alerts Status Change - In review closed to closed', async () => {

@@ -5,6 +5,8 @@ import {
   Filter,
   MongoClient,
   UpdateFilter,
+  MatchKeysAndValues,
+  UpdateResult,
 } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { difference, isEmpty, isNil, omitBy } from 'lodash'
@@ -43,6 +45,7 @@ import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { Account } from '@/@types/openapi-internal/Account'
 import { CounterRepository } from '@/services/counter/repository'
+import { notEmpty } from '@/utils/array'
 
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
@@ -1334,5 +1337,69 @@ export class CaseRepository {
     )
 
     return updatedCase.value
+  }
+
+  public async syncUsersCases(
+    userId: string,
+    changes: Partial<User>
+  ): Promise<void> {
+    const caseIds = (await this.getCaseIdsByUserId(userId))
+      .map(({ caseId }) => caseId)
+      .filter(notEmpty)
+
+    const keysToUpdate = Object.entries(changes)
+      .filter(([_, value]) => value != null)
+      .map(([key]) => key)
+    if (keysToUpdate.length != null) {
+      await Promise.all([
+        this.updateCases(
+          caseIds,
+          keysToUpdate.reduce(
+            (acc, key) => ({
+              ...acc,
+              [`caseUsers.origin.${key}`]: changes[key],
+            }),
+            {}
+          ),
+          {
+            'caseUsers.origin': { $ne: null },
+          }
+        ),
+        this.updateCases(
+          caseIds,
+          keysToUpdate.reduce(
+            (acc, key) => ({
+              ...acc,
+              [`caseUsers.destination.${key}`]: changes[key],
+            }),
+            {}
+          ),
+          {
+            'caseUsers.destination': { $ne: null },
+          }
+        ),
+      ])
+    }
+  }
+
+  public async updateCases(
+    caseIds: string[],
+    updates: MatchKeysAndValues<Case>,
+    extraFilters?: Filter<Case>
+  ): Promise<UpdateResult<Case>> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const updatedCase: UpdateResult<Case> = await collection.updateMany(
+      { caseId: { $in: caseIds }, ...extraFilters },
+      {
+        $set: {
+          ...updates,
+          updatedAt: Date.now(),
+        },
+      }
+    )
+
+    return updatedCase
   }
 }

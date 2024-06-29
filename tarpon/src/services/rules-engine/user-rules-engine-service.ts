@@ -22,6 +22,7 @@ import { traceable } from '@/core/xray'
 import { hasFeature } from '@/core/utils/context'
 import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDetails'
 import { UserEntityLink } from '@/@types/openapi-public/UserEntityLink'
+import { CaseRepository } from '@/services/cases/repository'
 
 @traceable
 export class UserManagementService {
@@ -31,6 +32,7 @@ export class UserManagementService {
   userRepository: UserRepository
   userEventRepository: UserEventRepository
   riskScoringService: RiskScoringService
+  caseRepository: CaseRepository
 
   constructor(
     tenantId: string,
@@ -56,6 +58,10 @@ export class UserManagementService {
       mongoDb
     )
     this.riskScoringService = new RiskScoringService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+    this.caseRepository = new CaseRepository(tenantId, {
       dynamoDb,
       mongoDb,
     })
@@ -221,9 +227,9 @@ export class UserManagementService {
       user = pickKnownEntityFields(user, UserBase)
     }
 
-    const { userId, updatedConsumerUserAttributes } = userEvent
+    const { userId, updatedConsumerUserAttributes = {} } = userEvent
     if (hasFeature('RISK_LEVELS')) {
-      const preDefinedRiskLevel = updatedConsumerUserAttributes?.riskLevel
+      const preDefinedRiskLevel = updatedConsumerUserAttributes.riskLevel
 
       if (preDefinedRiskLevel) {
         await this.riskScoringService.handleManualRiskLevel({
@@ -235,7 +241,7 @@ export class UserManagementService {
 
     const updatedConsumerUser: User = mergeEntities(
       user,
-      updatedConsumerUserAttributes || {}
+      updatedConsumerUserAttributes
     ) as User
 
     let riskScoreDetails: UserRiskScoreDetails | undefined
@@ -255,6 +261,10 @@ export class UserManagementService {
 
     await this.userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
     await this.userRepository.saveConsumerUser(updatedConsumerUserResult)
+    await this.caseRepository.syncUsersCases(
+      userId,
+      updatedConsumerUserAttributes
+    )
     return omit(updatedConsumerUserResult, 'type')
   }
 
@@ -318,6 +328,10 @@ export class UserManagementService {
 
     await this.userEventRepository.saveUserEvent(userEvent, 'BUSINESS')
     await this.userRepository.saveBusinessUser(updatedBusinessUserResult)
+    await this.caseRepository.syncUsersCases(
+      userId,
+      updatedBusinessUserAttributes
+    )
     return omit(updatedBusinessUserResult, 'type')
   }
 }
