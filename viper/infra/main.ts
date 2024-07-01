@@ -484,7 +484,6 @@ class DatabricksStack extends TerraformStack {
           '--job-language': 'python-3',
           '--enable-spark-ui': 'true',
           '--spark-event-logs-path': `s3://${datalakeBucket.bucket}/spark-logs/`,
-          '--enable-continuous-cloudwatch-log': 'true',
           '--job-bookmark-option': 'job-bookmark-disable',
           '--enable-glue-datacatalog': 'true',
           '--datalake-formats': 'delta',
