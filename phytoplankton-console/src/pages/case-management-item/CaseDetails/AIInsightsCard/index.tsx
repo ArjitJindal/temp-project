@@ -21,6 +21,17 @@ import Drawer from '@/components/library/Drawer';
 import TextInput from '@/components/library/TextInput';
 import { message } from '@/components/library/Message';
 
+function getValidUrl(url?: string): string | null {
+  if (!url) {
+    return null;
+  }
+  try {
+    return new URL(url).href ?? null;
+  } catch {
+    return null;
+  }
+}
+
 interface Props {
   user: InternalBusinessUser;
   title?: string;
@@ -85,10 +96,14 @@ const Summaries = ({
   const [scrapedSummary, setScrapedSummary] = useState<MerchantMonitoringSummary>();
   const [scraping, setScraping] = useState<boolean>(false);
   const requestData = () => {
+    const url = getValidUrl(scrapedDomain);
+    if (!url) {
+      return;
+    }
     setScraping(true);
     api
       .postMerchantScrape({
-        MerchantMonitoringScrapeRequest: { userId, url: scrapedDomain },
+        MerchantMonitoringScrapeRequest: { userId, url },
       })
       .then(setScrapedSummary)
       .catch(() => message.error(`Unable to crawl ${scrapedDomain}`))
@@ -104,7 +119,12 @@ const Summaries = ({
               value={scrapedDomain}
               onChange={setScrapeDomain}
             />
-            <Button type="PRIMARY" isLoading={scraping} onClick={requestData}>
+            <Button
+              type="PRIMARY"
+              isLoading={scraping}
+              onClick={requestData}
+              isDisabled={!getValidUrl(scrapedDomain)}
+            >
               Request data
             </Button>
             <Button
