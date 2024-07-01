@@ -259,7 +259,7 @@ export class CdkOrcaPipelineStack extends Stack {
                   environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
               ]
-              if (config.Viper && config.region !== 'us-1') {
+              if (config.viper) {
                 actions.push(
                   new codepipline_actions.CodeBuildAction({
                     actionName: `Deploy_Viper_${region

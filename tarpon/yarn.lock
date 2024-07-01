@@ -7050,9 +7050,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.140.0":
-  version: 2.140.0
-  resolution: "aws-cdk-lib@npm:2.140.0"
+"aws-cdk-lib@npm:~2.142.0":
+  version: 2.142.1
+  resolution: "aws-cdk-lib@npm:2.142.1"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
@@ -7070,13 +7070,13 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: 4897b641a2d66ebfee96293088bbec2d08f44ac731233a90dddce01c02ff55513bd1f3649331d3e7d2566872b250129a11ef18e7cdd27390e3581634c5ee3615
+  checksum: e4d7666f5eae11e7c15a1e94b072b1d4105c34fd41ba21fbd9ddd361fbef2cabad08b134ba6943dad748ad0aeca8f0d3207c88861a77cfb9ca3ec6aae5ba6eb0
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.139.0":
-  version: 2.139.1
-  resolution: "aws-cdk@npm:2.139.1"
+"aws-cdk@npm:~2.144.0":
+  version: 2.144.0
+  resolution: "aws-cdk@npm:2.144.0"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -7084,7 +7084,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: 2ee3e973ebc0120daaa3e7d48ee4223a100dec7b432d581519cb7ab4382c76d3dcd0203b0f066748daa6a2f7039f1a878e903d5ece1618a923de4eba7afcd691
+  checksum: b06fe9eb19cf641fbcbf625afcee3a19ce8ac0e66793026940bc6360ca17022c20071de76a7afdd60a5291f58f36a1397b8a9131d8163a55a8fe7145e970b1f9
   languageName: node
   linkType: hard
 
@@ -17666,8 +17666,8 @@ __metadata:
     ajv: "npm:8.11.0"
     athena-struct-parser: "npm:^1.1.0"
     auth0: "npm:^4.4.0"
-    aws-cdk: "npm:~2.139.0"
-    aws-cdk-lib: "npm:~2.140.0"
+    aws-cdk: "npm:~2.144.0"
+    aws-cdk-lib: "npm:~2.142.0"
     aws-sdk: "npm:^2.1634.0"
     aws-sdk-client-mock: "npm:^2.0.1"
     aws-sdk-client-mock-jest: "npm:^2.0.1"
