@@ -45,6 +45,7 @@ export default function TransactionsList(props: Props) {
         start: from,
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
+        filterTransactionState: selectorParams.selectedTransactionStates,
         includeEvents: true,
         includeUsers: true,
       });

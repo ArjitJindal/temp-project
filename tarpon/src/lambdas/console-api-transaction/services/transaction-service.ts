@@ -134,11 +134,13 @@ export class TransactionService {
 
   public async getStatsByTime(
     params: DefaultApiGetTransactionsListRequest,
-    referenceCurrency: Currency
+    referenceCurrency: Currency,
+    aggregateBy: 'status' | 'transactionState'
   ): Promise<TransactionsStatsByTimeResponse['data']> {
     return await this.transactionRepository.getStatsByTime(
       params,
-      referenceCurrency
+      referenceCurrency,
+      aggregateBy
     )
   }
 

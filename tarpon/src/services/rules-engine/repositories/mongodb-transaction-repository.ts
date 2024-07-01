@@ -987,7 +987,8 @@ export class MongoDbTransactionRepository
 
   public async getStatsByTime(
     params: DefaultApiGetTransactionsListRequest,
-    referenceCurrency: Currency
+    referenceCurrency: Currency,
+    aggregateBy: 'status' | 'transactionState'
   ): Promise<TransactionsStatsByTimeResponse['data']> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
@@ -1073,15 +1074,17 @@ export class MongoDbTransactionRepository
           }
           result.push(counters)
         }
+        const key = transaction[aggregateBy]
+        if (key) {
+          const ruleActionCounter = counters.values[key] ?? {
+            count: 0,
+            amount: 0,
+          }
+          counters.values[key] = ruleActionCounter
 
-        const ruleActionCounter = counters.values[transaction.status] ?? {
-          count: 0,
-          amount: 0,
+          ruleActionCounter.count = ruleActionCounter.count + 1
+          ruleActionCounter.amount = ruleActionCounter.amount + amount
         }
-        counters.values[transaction.status] = ruleActionCounter
-
-        ruleActionCounter.count = ruleActionCounter.count + 1
-        ruleActionCounter.amount = ruleActionCounter.amount + amount
       }
     }
 

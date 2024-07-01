@@ -4,17 +4,35 @@ import { Currency } from '@flagright/lib/constants';
 import { CalculatedParams, DataItem, Series } from '../types';
 import s from './styles.module.less';
 import Popover from './Popover';
-import { RuleAction } from '@/apis';
+import { RuleAction, TransactionState } from '@/apis';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
+import COLORS from '@/components/ui/colors';
+
+export const TRANSACTION_STATE_COLORS: {
+  [key in TransactionState]: string;
+} = {
+  CREATED: COLORS.yellow.base,
+  PROCESSING: COLORS.orange.base,
+  SENT: COLORS.brandBlue.base,
+  EXPIRED: COLORS.purpleGray.base,
+  DECLINED: COLORS.red.base,
+  SUSPENDED: COLORS.lightRed.base,
+  REFUNDED: COLORS.green.base,
+  SUCCESSFUL: COLORS.lightGreen.base,
+  REVERSED: COLORS.purple.base,
+};
 
 function Category(props: {
-  ruleAction: RuleAction;
+  ruleAction?: RuleAction;
+  transactionState?: TransactionState;
   value: number;
   total: number;
   currency: Currency | null;
 }) {
-  const { ruleAction, value, total } = props;
-  const color = getRuleActionColorForDashboard(ruleAction);
+  const { ruleAction, value, total, transactionState } = props;
+  const color = ruleAction
+    ? getRuleActionColorForDashboard(ruleAction)
+    : TRANSACTION_STATE_COLORS[transactionState as TransactionState];
   return (
     <div
       className={cn(s.category)}
@@ -75,15 +93,19 @@ export default function Column(props: Props) {
             width: calculatedParams.columnWidth,
           }}
         >
-          {Object.entries(item.values).map(([status, value]) => (
-            <Category
-              key={status}
-              total={total}
-              value={value}
-              ruleAction={status as RuleAction}
-              currency={currency}
-            />
-          ))}
+          {Object.entries(item.values).map(([status, value]) => {
+            const isState = status.toUpperCase() in TRANSACTION_STATE_COLORS;
+            const keys = isState
+              ? {
+                  transactionState: status.toUpperCase() as TransactionState,
+                }
+              : {
+                  ruleAction: status as RuleAction,
+                };
+            return (
+              <Category key={status} total={total} value={value} currency={currency} {...keys} />
+            );
+          })}
         </div>
       </Popover>
     </div>

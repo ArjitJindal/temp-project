@@ -5,12 +5,16 @@ import { CURRENCIES_SELECT_OPTIONS, Currency } from '@flagright/lib/constants';
 import TransactionCountChart from './Chart';
 import s from './styles.module.less';
 import SwitchButton from './SwitchButton';
+import { TRANSACTION_STATE_COLORS } from './Chart/Column';
 import ContainerWidthMeasure from '@/components/utils/ContainerWidthMeasure';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import { RuleAction } from '@/apis/models/RuleAction';
 import * as Form from '@/components/ui/Form';
 import { QueryResult } from '@/utils/queries/types';
-import { TransactionsStatsByTimeResponseData } from '@/apis';
+import {
+  TransactionState as LastTransactionState,
+  RuleAction,
+  TransactionsStatsByTimeResponseData,
+} from '@/apis';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
@@ -19,15 +23,19 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PARTIAL_RULE_ACTIONS } from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsSelector/Chart/types';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
+import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
+import TransactionState from '@/components/ui/TransactionStateDisplay';
 
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
-
+export type AggregateByField = 'status' | 'transactionState';
 export interface Params {
-  selectedRuleActions: RuleAction[];
+  selectedRuleActions?: RuleAction[];
+  selectedTransactionStates?: LastTransactionState[];
   displayBy: DisplayByType;
   currency: Currency;
   transactionsCount: number;
+  aggregateBy: AggregateByField;
 }
 
 interface Props {
@@ -39,46 +47,91 @@ interface Props {
 
 export default function TransactionsSelector(props: Props) {
   const { userId, params, onChangeParams, currency } = props;
-
   const response = useStatsQuery(params, userId, currency);
+  const selectedKeys =
+    params.aggregateBy === 'status' ? params.selectedRuleActions : params.selectedTransactionStates;
+  const options = params.aggregateBy === 'status' ? PARTIAL_RULE_ACTIONS : TRANSACTION_STATES;
 
   return (
     <div className={cn(s.root)}>
       <div className={s.header}>
         <div className={cn(s.buttons)}>
           <SwitchButton
-            isActive={params.selectedRuleActions.length === 0}
+            isActive={!selectedKeys?.length}
             onClick={() => {
               onChangeParams({
                 ...params,
                 selectedRuleActions: [],
+                selectedTransactionStates: [],
               });
             }}
           >
             All
           </SwitchButton>
-          {PARTIAL_RULE_ACTIONS.map((ruleAction) => {
-            const checked = params.selectedRuleActions.indexOf(ruleAction) !== -1;
-            return (
-              <SwitchButton
-                key={ruleAction}
-                isActive={checked}
-                onClick={() => {
-                  onChangeParams({
-                    ...params,
-                    selectedRuleActions: [
-                      ...params.selectedRuleActions.filter((x) => x != ruleAction),
-                      ...(checked ? [] : [ruleAction]),
-                    ],
-                  });
-                }}
-              >
-                <RuleActionStatus ruleAction={ruleAction} isForChart />
-              </SwitchButton>
-            );
-          })}
+          {params.aggregateBy === 'status'
+            ? PARTIAL_RULE_ACTIONS.map((option: RuleAction) => {
+                const checked = params.selectedRuleActions?.indexOf(option) !== -1;
+                return (
+                  <SwitchButton
+                    key={option}
+                    isActive={checked}
+                    onClick={() => {
+                      onChangeParams({
+                        ...params,
+                        selectedRuleActions: [
+                          ...(params.selectedRuleActions?.filter((x) => x != option) ?? []),
+                          ...(checked ? [] : [option]),
+                        ],
+                        selectedTransactionStates: [],
+                      });
+                    }}
+                  >
+                    <RuleActionStatus ruleAction={option as RuleAction} isForChart />
+                  </SwitchButton>
+                );
+              })
+            : TRANSACTION_STATES.map((option: LastTransactionState) => {
+                const checked = params.selectedTransactionStates?.indexOf(option) !== -1;
+                return (
+                  <SwitchButton
+                    key={option}
+                    isActive={checked}
+                    onClick={() => {
+                      onChangeParams({
+                        ...params,
+                        selectedRuleActions: [],
+                        selectedTransactionStates: [
+                          ...(params.selectedTransactionStates?.filter((x) => x != option) ?? []),
+                          ...(checked ? [] : [option]),
+                        ],
+                      });
+                    }}
+                  >
+                    <div className={s.transactionState}>
+                      <div
+                        className={s.marker}
+                        style={{ backgroundColor: TRANSACTION_STATE_COLORS[option] }}
+                      ></div>
+                      <TransactionState transactionState={option as LastTransactionState} />
+                    </div>
+                  </SwitchButton>
+                );
+              })}
         </div>
         <div className={s.settings}>
+          <Select<string>
+            value={`${params.aggregateBy}`}
+            onChange={(value) => {
+              onChangeParams({
+                ...params,
+                aggregateBy: value as AggregateByField,
+              });
+            }}
+            options={[
+              { value: 'status', label: 'Transaction status' },
+              { value: 'transactionState', label: 'Last transaction state' },
+            ]}
+          />
           <Select<string>
             value={`${params.transactionsCount}`}
             onChange={(value) => {
@@ -142,15 +195,19 @@ export default function TransactionsSelector(props: Props) {
                   }}
                   data={data.map((x) => ({
                     series: x.series,
-                    values: PARTIAL_RULE_ACTIONS.map((category) => [
-                      category,
-                      x.values[category]?.[params.displayBy === 'COUNT' ? 'count' : 'amount'] ?? 0,
-                    ]).reduce((acc, [category, value]) => ({ ...acc, [category]: value }), {
-                      ALLOW: 0,
-                      FLAG: 0,
-                      BLOCK: 0,
-                      SUSPEND: 0,
-                    }),
+                    values: options
+                      .map((category) => [
+                        category,
+                        x.values[category]?.[params.displayBy === 'COUNT' ? 'count' : 'amount'] ??
+                          0,
+                      ])
+                      .reduce(
+                        (acc, [category, value]) => ({ ...acc, [category]: value }),
+                        options.reduce((acc, item) => {
+                          acc[item] = 0;
+                          return acc;
+                        }, {} as { [key in RuleAction | LastTransactionState]: number }),
+                      ),
                   }))}
                 />
               );
@@ -169,14 +226,21 @@ function useStatsQuery(
 ): QueryResult<TransactionsStatsByTimeResponseData[]> {
   const api = useApi();
   return useQuery(
-    TRANSACTIONS_STATS('by-date', { ...selectorParams, userId, currency }),
+    TRANSACTIONS_STATS('by-date', {
+      ...selectorParams,
+      userId,
+      currency,
+      aggregateBy: selectorParams.aggregateBy,
+    }),
     async (): Promise<TransactionsStatsByTimeResponseData[]> => {
       const response = await api.getTransactionsStatsByTime({
         ...FIXED_API_PARAMS,
         pageSize: selectorParams.transactionsCount,
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
+        filterTransactionState: selectorParams.selectedTransactionStates,
         referenceCurrency: currency,
+        aggregateBy: selectorParams.aggregateBy,
       });
 
       return response.data;

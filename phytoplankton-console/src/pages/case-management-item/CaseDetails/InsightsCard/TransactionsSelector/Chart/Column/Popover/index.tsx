@@ -2,16 +2,18 @@ import React from 'react';
 import { Popover as AntPopover } from 'antd';
 import { Currency } from '@flagright/lib/constants';
 import { DataItem, Series } from '../../types';
+import { TRANSACTION_STATE_COLORS } from '..';
 import s from './styles.module.less';
 import { P } from '@/components/ui/Typography';
 import { ColorIndicator } from '@/pages/case-management-item/CaseDetails/InsightsCard/components/Legend';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
-import { RuleAction } from '@/apis';
+import { RuleAction, TransactionState } from '@/apis';
 import Money from '@/components/ui/Money';
 import {
   getRuleActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
   series: Series;
@@ -30,15 +32,24 @@ export default function Popover(props: Props) {
         {`Transactions ${currency == null ? 'count' : 'amount'} on ${series.label}`}
       </P>
       <div className={s.indicatorsTable}>
-        {Object.entries(dataItem.values).map(([ruleAction, value]) => (
-          <IndicatorRow
-            key={ruleAction}
-            color={getRuleActionColorForDashboard(ruleAction as RuleAction)}
-            title={getRuleActionLabel(ruleAction as RuleAction, settings) || 'Unknown'}
-            value={value}
-            currency={currency}
-          />
-        ))}
+        {Object.entries(dataItem.values).map(([status, value]) => {
+          const isState = status in TRANSACTION_STATE_COLORS;
+          const color = isState
+            ? TRANSACTION_STATE_COLORS[status as TransactionState]
+            : getRuleActionColorForDashboard(status as RuleAction);
+          const title = isState
+            ? humanizeAuto(status)
+            : getRuleActionLabel(status as RuleAction, settings) || 'Unknown';
+          return (
+            <IndicatorRow
+              key={status}
+              color={color}
+              title={title}
+              value={value}
+              currency={currency}
+            />
+          );
+        })}
       </div>
     </div>
   );

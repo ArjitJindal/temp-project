@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import cn from 'clsx';
 import { Currency } from '@flagright/lib/constants';
 import s from './styles.module.less';
-import TransactionsSelector, { Params } from './TransactionsSelector';
+import TransactionsSelector, { AggregateByField, Params } from './TransactionsSelector';
 import TypesChart from './TypesChart';
 import AmountsChart from './AmountsChart';
 import InsightCard from './components/InsightCard';
@@ -33,11 +33,12 @@ export default function InsightsCard(props: Props) {
   const settings = useSettings();
   const [selectorParams, setSelectorParams] = useState<Params>({
     selectedRuleActions: [],
+    selectedTransactionStates: [],
     displayBy: 'COUNT',
     transactionsCount: 10,
     currency: (settings?.defaultValues?.currency ?? 'USD') as unknown as Currency,
+    aggregateBy: 'status' as AggregateByField,
   });
-
   const statsQueryResult = useStatsQuery(selectorParams, userId, selectorParams.currency);
 
   return (
@@ -92,6 +93,7 @@ function useStatsQuery(
         pageSize: selectorParams.transactionsCount,
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
+        filterTransactionState: selectorParams.selectedTransactionStates,
         referenceCurrency,
       });
       return response.data;

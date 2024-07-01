@@ -124,7 +124,8 @@ export const transactionsViewHandler = lambdaApi()(
     handlers.registerGetTransactionsStatsByTime(async (context, request) => ({
       data: await transactionService.getStatsByTime(
         request,
-        request.referenceCurrency || 'USD'
+        request.referenceCurrency || 'USD',
+        request.aggregateBy ?? 'status'
       ),
     }))
 

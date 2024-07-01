@@ -1308,6 +1308,13 @@ paths:
             type: string
           in: query
           name: referenceCurrency
+        - schema:
+            type: string
+            enum:
+              - status
+              - transactionState
+          in: query
+          name: aggregateBy
   /users/{userId}/crm:
     get:
       summary: CRM Account - List
@@ -7032,6 +7039,8 @@ components:
           items:
             type: object
             properties:
+              transactionState:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
               transactionType:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
               count:
