@@ -24,7 +24,18 @@ import dayjs from '@/utils/dayjs'
 dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS'])
 
+const MIDDLE_OF_JUNE = '2024-06-15T12:00:00.000Z'
+const END_OF_JUNE = '2024-06-30T12:00:00.000Z'
+const END_OF_JULY = '2024-07-30T12:00:00.000Z'
+
 const TEST_SANCTIONS_HITS = ['Vladimir Putin']
+
+const fakeTimers = jest.useFakeTimers({
+  advanceTimers: true,
+  doNotFake: ['performance'],
+})
+
+fakeTimers.setSystemTime(new Date(MIDDLE_OF_JUNE))
 
 jest.mock('@/services/sanctions', () => {
   type SanctionsServiceInstanceType = InstanceType<typeof SanctionsService>
@@ -91,6 +102,10 @@ describe('Batch Job Sanctions Screening Rule', () => {
   })
 
   setUpUsersHooks(TEST_TENANT_ID, [user1, user2])
+
+  beforeEach(() => {
+    fakeTimers.setSystemTime(new Date(MIDDLE_OF_JUNE))
+  })
 
   it('should run screening rules', async () => {
     const mongoDb = await getMongoDbClient()
@@ -224,6 +239,10 @@ describe('Batch Job Sanctions Screening Rule', () => {
 
 describe('Batch Job Sanctions Screening Rule Ongoing Screening is Off', () => {
   const TEST_TENANT_ID = 'test-tenant-id-2'
+
+  beforeEach(() => {
+    fakeTimers.setSystemTime(new Date(MIDDLE_OF_JUNE))
+  })
 
   setUpRulesHooks(TEST_TENANT_ID, [
     {
@@ -371,7 +390,38 @@ describe('V8 ongoing screening', () => {
     await jobRunnerHandler(testJob)
     expect(spy).toBeCalledTimes(1)
   })
-  it('should not run in other days', async () => {
+
+  describe.each<string>([MIDDLE_OF_JUNE, END_OF_JULY])(
+    'when today is %s',
+    (today) => {
+      it('should not run in other days', async () => {
+        fakeTimers.setSystemTime(new Date(today))
+        const dynamoDb = getDynamoDbClient()
+        const ruleInstanceRepository = new RuleInstanceRepository(
+          TEST_TENANT_ID,
+          {
+            dynamoDb,
+          }
+        )
+        const ruleInstance = (await ruleInstanceRepository.getRuleInstanceById(
+          'test-rule-instance-id'
+        )) as RuleInstance
+        await ruleInstanceRepository.createOrUpdateRuleInstance({
+          ...ruleInstance,
+          createdAt: dayjs().add(1, 'month').add(1, 'day').valueOf(),
+        })
+        const testJob: OngoingScreeningUserRuleBatchJob = {
+          tenantId: TEST_TENANT_ID,
+          type: 'ONGOING_SCREENING_USER_RULE',
+        }
+        await jobRunnerHandler(testJob)
+        expect(spy).toBeCalledTimes(0)
+      })
+    }
+  )
+
+  it('should run if rule created on the end of month and next month have more days', async () => {
+    fakeTimers.setSystemTime(new Date(END_OF_JUNE))
     const dynamoDb = getDynamoDbClient()
     const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
       dynamoDb,
@@ -388,6 +438,6 @@ describe('V8 ongoing screening', () => {
       type: 'ONGOING_SCREENING_USER_RULE',
     }
     await jobRunnerHandler(testJob)
-    expect(spy).toBeCalledTimes(0)
+    expect(spy).toBeCalledTimes(1)
   })
 })
