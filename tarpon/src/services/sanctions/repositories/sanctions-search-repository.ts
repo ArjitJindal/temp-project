@@ -205,11 +205,11 @@ export class SanctionsSearchRepository {
         'response.rawComplyAdvantageResponse.content.data.id': caSearchId,
       })
       .toArray()
-    if (searches.length > 1) {
-      throw new Error(
-        `Found more than 1 searches by CA id: ${caSearchId} (found ${searches.length})`
-      )
-    }
+    // if (searches.length > 1) {
+    //   throw new Error(
+    //     `Found more than 1 searches by CA id: ${caSearchId} (found ${searches.length})`
+    //   )
+    // }
     return searches[0]
   }
 
