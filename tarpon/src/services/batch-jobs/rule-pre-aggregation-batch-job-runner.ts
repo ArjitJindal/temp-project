@@ -64,10 +64,10 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       logger.info(
         `No tasks to pre-aggregate. Switching rule instance ${ruleInstanceId} to ACTIVE`
       )
-      await ruleInstanceRepository.createOrUpdateRuleInstance({
-        ...ruleInstance,
-        status: 'ACTIVE',
-      })
+      await ruleInstanceRepository.updateRuleInstanceStatus(
+        ruleInstance.id as string,
+        'ACTIVE'
+      )
     }
   }
 

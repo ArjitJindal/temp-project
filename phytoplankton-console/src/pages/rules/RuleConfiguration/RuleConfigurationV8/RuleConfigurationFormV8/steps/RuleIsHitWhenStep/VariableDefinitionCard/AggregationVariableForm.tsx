@@ -1,9 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getFiscalYearStart } from '@flagright/lib/utils/time';
 import { isEqual, lowerCase } from 'lodash';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import pluralize from 'pluralize';
+import { getAllValuesByKey } from '@flagright/lib/utils';
 import { RuleLogicBuilder } from '../RuleLogicBuilder';
 import { isTransactionAmountVariable, isTransactionOriginOrDestinationVariable } from '../helpers';
 import s from './style.module.less';
@@ -36,6 +37,7 @@ import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigu
 import { Hint } from '@/components/library/Form/InputField';
 import Modal from '@/components/library/Modal';
 import { humanizeAuto } from '@/utils/humanize';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type TimeWindowValidationError =
   | 'MISSING_FROM_OR_TO'
@@ -99,6 +101,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [formValues, setFormValues] = useState<FormRuleAggregationVariable>(variable);
+  const settings = useSettings();
   const aggregateFieldOptions = useMemo(() => {
     return entityVariables
       .filter((v) => v.entity === 'TRANSACTION' && !isTransactionOriginOrDestinationVariable(v.key))
@@ -216,19 +219,34 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       return 'UNSUPPORTED_GRANULARITY';
     }
   }, [formValues.timeWindow]);
-  const isValidFormValues = useMemo(() => {
-    const isTxAmount = formValues.aggregationFieldKey
+  const baseCurrencyRequired = useMemo(() => {
+    const hasTxAmountInFilters = Boolean(
+      getAllValuesByKey<string>('var', formValues.filtersLogic).find(isTransactionAmountVariable),
+    );
+    const isAggFieldTxAmount = formValues.aggregationFieldKey
       ? isTransactionAmountVariable(formValues.aggregationFieldKey)
       : false;
+    return hasTxAmountInFilters || isAggFieldTxAmount;
+  }, [formValues.aggregationFieldKey, formValues.filtersLogic]);
+  useEffect(() => {
+    if (baseCurrencyRequired && !formValues.baseCurrency) {
+      setFormValues((prevValues) => ({
+        ...prevValues,
+        baseCurrency: settings.defaultValues?.currency ?? 'USD',
+      }));
+    }
+  }, [baseCurrencyRequired, formValues.baseCurrency, settings.defaultValues?.currency]);
+  const isValidFormValues = useMemo(() => {
     return (
       formValues.type &&
       formValues.transactionDirection &&
       formValues.aggregationFieldKey &&
-      (!isTxAmount || (isTxAmount && formValues.baseCurrency)) &&
+      (!baseCurrencyRequired || (baseCurrencyRequired && formValues.baseCurrency)) &&
       formValues.aggregationFunc &&
       !timeWindowValidationError
     );
   }, [
+    baseCurrencyRequired,
     formValues.aggregationFieldKey,
     formValues.aggregationFunc,
     formValues.baseCurrency,
@@ -398,20 +416,19 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             />
           </Label>
           {/* TODO (v8): Base currency design TBD */}
-          {formValues.aggregationFieldKey &&
-            isTransactionAmountVariable(formValues.aggregationFieldKey) && (
-              <Label label="Base currency" required={{ value: true, showHint: true }}>
-                <Select<string>
-                  value={formValues.baseCurrency}
-                  onChange={(baseCurrency) =>
-                    handleUpdateForm({ baseCurrency: baseCurrency as CurrencyCode })
-                  }
-                  mode="SINGLE"
-                  placeholder="Select base currency"
-                  options={CURRENCIES_SELECT_OPTIONS}
-                />
-              </Label>
-            )}
+          {baseCurrencyRequired && (
+            <Label label="Base currency" required={{ value: true, showHint: true }}>
+              <Select<string>
+                value={formValues.baseCurrency}
+                onChange={(baseCurrency) =>
+                  handleUpdateForm({ baseCurrency: baseCurrency as CurrencyCode })
+                }
+                mode="SINGLE"
+                placeholder="Select base currency"
+                options={CURRENCIES_SELECT_OPTIONS}
+              />
+            </Label>
+          )}
           <div className={s.timeWindow}>
             <VariableTimeWindow
               value={formValues.timeWindow}

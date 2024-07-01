@@ -104,10 +104,10 @@ export async function handleV8PreAggregationTask(
     logger.info(
       `Pr-aggregation complete (job: ${task.jobId}). Switching rule instance ${task.ruleInstanceId} to ACTIVE`
     )
-    await ruleInstanceRepository.createOrUpdateRuleInstance({
-      ...ruleInstance,
-      status: 'ACTIVE',
-    })
+    await ruleInstanceRepository.updateRuleInstanceStatus(
+      ruleInstance.id as string,
+      'ACTIVE'
+    )
   }
 }
 

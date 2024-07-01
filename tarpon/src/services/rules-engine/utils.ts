@@ -212,12 +212,9 @@ export async function ruleInstanceAggregationVariablesRebuild(
     ) ?? []
 
   if (aggVarsToRebuild.length > 0) {
-    ruleInstance = await ruleInstanceRepository.createOrUpdateRuleInstance(
-      {
-        ...ruleInstance,
-        status: 'DEPLOYING',
-      },
-      ruleInstance.updatedAt
+    await ruleInstanceRepository.updateRuleInstanceStatus(
+      ruleInstance.id as string,
+      'DEPLOYING'
     )
     await sendBatchJobCommand({
       type: 'RULE_PRE_AGGREGATION',

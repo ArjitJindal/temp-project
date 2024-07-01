@@ -156,6 +156,25 @@ export class RuleInstanceRepository {
     return newRuleInstance
   }
 
+  public async updateRuleInstanceStatus(
+    ruleInstanceId: string,
+    status: RuleInstanceStatus
+  ): Promise<void> {
+    const updateItemInput: UpdateCommandInput = {
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
+      UpdateExpression: `SET #status = :status`,
+      ExpressionAttributeValues: {
+        ':status': status,
+      },
+      ExpressionAttributeNames: {
+        '#status': 'status',
+      },
+      ReturnValues: 'UPDATED_NEW',
+    }
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
+  }
+
   private async getLogicAggVarsWithUpdatedVersion(
     ruleInstance: RuleInstance
   ): Promise<RuleAggregationVariable[] | undefined> {
