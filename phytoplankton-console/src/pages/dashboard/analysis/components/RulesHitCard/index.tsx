@@ -70,14 +70,10 @@ export default function RuleHitCard() {
   ]);
 
   const rulesHitResult = useQuery(HITS_PER_USER_STATS(dateRange), async () => {
-    let startTimestamp = dayjs().subtract(1, 'day').valueOf();
-    let endTimestamp = Date.now();
-
     const [start, end] = dateRange ?? [];
-    if (start != null && end != null) {
-      startTimestamp = start.startOf('day').valueOf();
-      endTimestamp = end.endOf('day').valueOf();
-    }
+    const startTimestamp = start?.startOf('day').valueOf();
+    const endTimestamp = end?.endOf('day').valueOf();
+
     const result = await api.getDashboardStatsRuleHit({
       startTimestamp,
       endTimestamp,

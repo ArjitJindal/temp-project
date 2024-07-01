@@ -24,7 +24,7 @@ import { humanizeConstant } from '@/utils/humanize';
 import DatePicker from '@/components/ui/DatePicker';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 
-const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
+const DEFAULT_DATE_RANGE: RangeValue<Dayjs> = [dayjs().subtract(1, 'year'), dayjs()];
 
 export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 
@@ -32,14 +32,9 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
 
   const api = useApi();
-  let startTimestamp = dayjs().subtract(1, 'day').valueOf();
-  let endTimestamp = Date.now();
-
   const [start, end] = dateRange ?? [];
-  if (start != null && end != null) {
-    startTimestamp = start.startOf('day').valueOf();
-    endTimestamp = end.endOf('day').valueOf();
-  }
+  const startTimestamp = start?.startOf('day').valueOf();
+  const endTimestamp = end?.endOf('day').valueOf();
 
   const params = {
     startTimestamp,
@@ -65,10 +60,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
     <div ref={pdfRef}>
       <Widget
         extraControls={[
-          <DatePicker.RangePicker
-            value={dateRange}
-            onChange={(e) => setDateRange(e ?? DEFAULT_DATE_RANGE)}
-          />,
+          <DatePicker.RangePicker value={dateRange} onChange={(e) => setDateRange(e)} />,
         ]}
         onDownload={(): Promise<{
           fileName: string;

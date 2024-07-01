@@ -7,7 +7,7 @@ import DatePicker from '@/components/ui/DatePicker';
 export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
 export const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
-export const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
+export const DEFAULT_DATE_RANGE: RangeValue<Dayjs> = [dayjs().subtract(1, 'year'), dayjs()];
 
 export const calcGranularity = (type: string): GranularityValuesType => {
   if (type === 'YEAR') {

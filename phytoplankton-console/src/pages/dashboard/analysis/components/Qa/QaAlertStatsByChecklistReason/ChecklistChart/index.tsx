@@ -54,25 +54,6 @@ export const ChecklistChart = (props: ParamsProps) => {
       dateRange,
     }));
   };
-  const getStartAndEndTimestamp = (
-    dateRange: RangeValue<Dayjs>,
-  ): {
-    startTimestamp: number;
-    endTimestamp: number;
-  } => {
-    let startTimestamp = dayjs().subtract(1, 'month').valueOf();
-    let endTimestamp = Date.now();
-
-    const [start, end] = dateRange ?? [];
-    if (start != null && end != null) {
-      startTimestamp = start.startOf('day').valueOf();
-      endTimestamp = end.endOf('day').valueOf();
-    }
-    return {
-      startTimestamp,
-      endTimestamp,
-    };
-  };
 
   const dataToExport = (items) => {
     return items.map((item) => ({
@@ -95,8 +76,9 @@ export const ChecklistChart = (props: ParamsProps) => {
           items: [],
         };
       }
-      const { startTimestamp, endTimestamp } = getStartAndEndTimestamp(params.dateRange);
-
+      const [start, end] = params.dateRange ?? [];
+      const startTimestamp = start?.startOf('day').valueOf();
+      const endTimestamp = end?.endOf('day').valueOf();
       const result = await api.getDashboardStatsQaAlertsStatsByChecklistReason({
         startTimestamp,
         endTimestamp,

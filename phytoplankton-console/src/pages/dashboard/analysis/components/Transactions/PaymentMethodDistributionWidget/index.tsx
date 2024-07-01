@@ -47,9 +47,11 @@ const TREEMAP_COLORS: { [key in PaymentMethod]: string } = {
 interface Props extends WidgetProps {}
 
 export default function PaymentMethodDistributionWidget(props: Props) {
-  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
+  const [dateRange, setDateRange] = useState<WidgetRangePickerValue | undefined>(
+    DEFAULT_DATE_RANGE,
+  );
 
-  const { startTimestamp, endTimestamp } = dateRange ?? DEFAULT_DATE_RANGE;
+  const { startTimestamp, endTimestamp } = dateRange ?? {};
   const params = {
     startTimestamp,
     endTimestamp,
@@ -81,7 +83,14 @@ export default function PaymentMethodDistributionWidget(props: Props) {
   return (
     <div ref={pdfRef}>
       <Widget
-        extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+        extraControls={[
+          <WidgetRangePicker
+            value={dateRange}
+            onChange={(val) => {
+              setDateRange(val);
+            }}
+          />,
+        ]}
         onDownload={(): Promise<{
           fileName: string;
           data: string;

@@ -2,6 +2,7 @@
 import { MutableRefObject, useCallback, useMemo, useRef, useState } from 'react';
 import { snakeCase } from 'lodash';
 import { useLocalStorageState } from 'ahooks';
+import { RangeValue } from 'rc-picker/es/interface';
 import { exportDataForBarGraphs } from '../../../utils/export-data-build-util';
 import Column, { ColumnData } from '../../charts/Column';
 import GranularDatePicker, {
@@ -32,8 +33,8 @@ interface Props<DataType, ValueType extends string, GroupType extends string> ex
   values: ValueType[];
   valueNames?: { [key in ValueType]: string };
   queryResult: QueryResult<DataType[]>;
-  timeRange: { startTimestamp: number; endTimestamp: number };
-  onTimeRangeChange: (dateRange: { startTimestamp: number; endTimestamp: number }) => void;
+  timeRange: RangeValue<Dayjs>;
+  onTimeRangeChange: (dateRange) => void;
   setGranularity?: (granularity: GranularityValuesType) => void;
   showGranularity?: boolean;
 }
@@ -57,10 +58,6 @@ export default function DistributionChartWidget<
     showGranularity,
     ...restProps
   } = props;
-  const dateRange = useMemo<[Dayjs, Dayjs]>(
-    () => [dayjs(timeRange.startTimestamp), dayjs(timeRange.endTimestamp)],
-    [timeRange.endTimestamp, timeRange.startTimestamp],
-  );
   const [selectedGroup, setSelectedGroup] = useLocalStorageState<GroupType>(
     `dashboard-${restProps.id}`,
     groups[0].name,
@@ -119,23 +116,17 @@ export default function DistributionChartWidget<
                 timeWindowType={timeWindowType}
                 setTimeWindowType={setTimeWindowType}
                 setGranularity={setGranularity}
-                dateRange={dateRange}
-                setDateRange={(e) => {
-                  onTimeRangeChange({
-                    startTimestamp: e?.[0]?.valueOf() ?? 0,
-                    endTimestamp: e?.[1]?.valueOf() ?? 0,
-                  });
+                dateRange={timeRange}
+                setDateRange={(value) => {
+                  onTimeRangeChange(value);
                 }}
               />,
             ]
           : [
               <DatePicker.RangePicker
-                value={dateRange}
-                onChange={(e) => {
-                  onTimeRangeChange({
-                    startTimestamp: e?.[0]?.valueOf() ?? 0,
-                    endTimestamp: e?.[1]?.valueOf() ?? 0,
-                  });
+                value={timeRange}
+                onChange={(value) => {
+                  onTimeRangeChange(value);
                 }}
               />,
             ]

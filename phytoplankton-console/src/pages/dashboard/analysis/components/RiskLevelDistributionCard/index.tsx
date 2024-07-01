@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { useMemo, useState } from 'react';
+import { RangeValue } from 'rc-picker/es/interface';
 import DistributionChartWidget from '../widgets/DistributionChartWidget';
 import {
   GranularityValuesType,
@@ -17,7 +18,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { USERS_STATS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { DashboardStatsUsersStats, RiskLevel } from '@/apis';
-import { dayjs } from '@/utils/dayjs';
+import { Dayjs, dayjs } from '@/utils/dayjs';
 import { RISK_LEVELS } from '@/utils/risk-levels';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -44,17 +45,20 @@ export function RiskLevelBreakdownCard(props: Props) {
 
 function RiskLevelDistributionCardBase(props: Props & { groupBy: 'VALUE' | 'TIME' }) {
   const { userType = 'CONSUMER', groupBy, showGranularity = false, ...restProps } = props;
-  const [timeRange, setTimeRange] = useState({
-    startTimestamp: dayjs().subtract(1, 'year').valueOf(),
-    endTimestamp: dayjs().valueOf(),
-  });
+  const [timeRange, setTimeRange] = useState<RangeValue<Dayjs>>([
+    dayjs().subtract(1, 'year'),
+    dayjs(),
+  ]);
   const [granularity, setGranularity] = useState<GranularityValuesType>(
     granularityValues.MONTH as GranularityValuesType,
   );
+  const [start, end] = timeRange ?? [];
+  const startTimestamp = start?.startOf('day').valueOf();
+  const endTimestamp = end?.endOf('day').valueOf();
   const params = {
     userType: userType,
-    startTimestamp: timeRange.startTimestamp,
-    endTimestamp: timeRange.endTimestamp,
+    startTimestamp,
+    endTimestamp,
     granularity: granularity,
   };
   const settings = useSettings();

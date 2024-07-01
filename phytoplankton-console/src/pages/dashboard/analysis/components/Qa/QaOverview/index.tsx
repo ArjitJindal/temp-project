@@ -20,13 +20,9 @@ export default function QaOverview(props: Props) {
   ]);
   const api = useApi();
   const queryResult = useQuery(DASHBOARD_STATS_QA_OVERVIEW(dateRange), async () => {
-    let startTimestamp = dayjs().subtract(1, 'month').valueOf();
-    let endTimestamp = Date.now();
     const [start, end] = dateRange ?? [];
-    if (start != null && end != null) {
-      startTimestamp = start.startOf('day').valueOf();
-      endTimestamp = end.endOf('day').valueOf();
-    }
+    const startTimestamp = start?.startOf('day').valueOf();
+    const endTimestamp = end?.endOf('day').valueOf();
     return await api.getDashboardStatsQaOverview({ startTimestamp, endTimestamp });
   });
   const dataRes = map(

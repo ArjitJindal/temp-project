@@ -24,30 +24,12 @@ const QaAlertsByAssignee = (props: Props) => {
 
   const api = useApi();
 
-  const getStartAndEndTimestamp = (
-    dateRange: RangeValue<Dayjs>,
-  ): {
-    startTimestamp: number;
-    endTimestamp: number;
-  } => {
-    let startTimestamp = dayjs().subtract(1, 'month').valueOf();
-    let endTimestamp = Date.now();
-
-    const [start, end] = dateRange ?? [];
-    if (start != null && end != null) {
-      startTimestamp = start.startOf('day').valueOf();
-      endTimestamp = end.endOf('day').valueOf();
-    }
-    return {
-      startTimestamp,
-      endTimestamp,
-    };
-  };
-
   const qaAlertsByAssignee = useQuery(
     DASHBOARD_STATS_QA_ALERTS_BY_ASSIGNEE(dateRange),
     async () => {
-      const { startTimestamp, endTimestamp } = getStartAndEndTimestamp(dateRange);
+      const [start, end] = dateRange ?? [];
+      const startTimestamp = start?.startOf('day').valueOf();
+      const endTimestamp = end?.endOf('day').valueOf();
 
       const result = await api.getDashboardStatsQaAlertsByAssignee({
         startTimestamp,

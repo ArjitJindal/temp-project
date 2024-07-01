@@ -11,6 +11,7 @@ import { AccountsService } from '@/services/accounts'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { DashboardStatsTransactionsCountItem } from '@/@types/openapi-internal/DashboardStatsTransactionsCountItem'
+import dayjs from '@/utils/dayjs'
 
 let localRefreshedAll = false
 
@@ -34,6 +35,13 @@ export function shouldRefreshAll(
   return false
 }
 
+function formatTimestamp(
+  startTimestamp = dayjs().subtract(10, 'year').valueOf(),
+  endTimestamp = dayjs().endOf('day').valueOf()
+) {
+  return { start: startTimestamp, end: endTimestamp }
+}
+
 export const dashboardStatsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -50,17 +58,13 @@ export const dashboardStatsHandler = lambdaApi()(
 
     handlers.registerGetDashboardStatsTransactions(async (ctx, request) => {
       const { startTimestamp, endTimestamp, granularity } = request
-      if (!endTimestamp || !startTimestamp) {
-        throw new BadRequest(
-          `Wrong timestamp format: start: ${startTimestamp}, end: ${endTimestamp}`
-        )
-      }
+      const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
       const data = await dashboardStatsRepository.getTransactionCountStats(
-        startTimestamp,
-        endTimestamp,
+        start,
+        end,
         granularity
       )
       return { data }
@@ -69,19 +73,15 @@ export const dashboardStatsHandler = lambdaApi()(
     handlers.registerGetDashboardStatsTransactionsTotal(
       async (ctx, request) => {
         const { startTimestamp, endTimestamp } = request
-        if (!endTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-        }
-        if (!startTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-        }
+
+        const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
 
         if (shouldRefreshAll(event)) {
           await dashboardStatsRepository.refreshAllStats()
         }
         const data = await dashboardStatsRepository.getTransactionCountStats(
-          startTimestamp,
-          endTimestamp,
+          start,
+          end,
           'DAY'
         )
         const result: { [key: string]: number } = {}
@@ -100,20 +100,14 @@ export const dashboardStatsHandler = lambdaApi()(
 
     handlers.registerGetDashboardStatsHitsPerUser(async (ctx, request) => {
       const { startTimestamp, endTimestamp, direction, userType } = request
-      if (!endTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-      }
-      if (!startTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-      }
-
+      const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshUserStats()
       }
       return {
         data: await dashboardStatsRepository.getHitsByUserStats(
-          startTimestamp,
-          endTimestamp,
+          start,
+          end,
           direction,
           userType
         ),
@@ -126,36 +120,25 @@ export const dashboardStatsHandler = lambdaApi()(
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAlertsStats()
       }
-      if (!endTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-      }
-      if (!startTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-      }
+
+      const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
       return {
-        data: await dashboardStatsRepository.getRuleHitCountStats(
-          startTimestamp,
-          endTimestamp
-        ),
+        data: await dashboardStatsRepository.getRuleHitCountStats(start, end),
       }
     })
 
     handlers.registerGetDashboardStatsUsersByTime(async (ctx, request) => {
       const { userType, startTimestamp, endTimestamp, granularity } = request
-      if (!endTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-      }
-      if (!startTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-      }
+
+      const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
 
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshUserStats()
       }
       const data = await dashboardStatsRepository.getUserTimewindowStats(
         userType,
-        startTimestamp,
-        endTimestamp,
+        start,
+        end,
         granularity ?? 'MONTH'
       )
       return data
@@ -174,10 +157,11 @@ export const dashboardStatsHandler = lambdaApi()(
         .filter((account) => account.role !== 'root')
         .map((account) => account.id)
 
+      const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
       return await dashboardStatsRepository.getTeamStatistics(
         scope,
-        startTimestamp ? startTimestamp : 0,
-        endTimestamp ? endTimestamp : Number.MAX_SAFE_INTEGER,
+        start,
+        end,
         caseStatus,
         accountIds
       )
@@ -230,15 +214,11 @@ export const dashboardStatsHandler = lambdaApi()(
     handlers.registerGetDashboardStatsAlertAndCaseStatusDistributionStats(
       async (ctx, request) => {
         const { startTimestamp, endTimestamp, entity, granularity } = request
-        if (!endTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-        }
-        if (!startTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-        }
+
+        const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
         return await dashboardStatsRepository.getAlertAndCaseStatusDistributionStatistics(
-          startTimestamp,
-          endTimestamp,
+          start,
+          end,
           granularity,
           entity
         )
@@ -273,15 +253,11 @@ export const dashboardStatsHandler = lambdaApi()(
         if (shouldRefreshAll(event)) {
           await dashboardStatsRepository.refreshQaStats()
         }
-        if (!endTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-        }
-        if (!startTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-        }
+
+        const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
         const data = await dashboardStatsRepository.getQaAlertsByRuleHitStats(
-          startTimestamp,
-          endTimestamp
+          start,
+          end
         )
         return { data }
       }
@@ -298,12 +274,8 @@ export const dashboardStatsHandler = lambdaApi()(
         if (shouldRefreshAll(event)) {
           await dashboardStatsRepository.refreshQaStats()
         }
-        if (!endTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-        }
-        if (!startTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-        }
+
+        const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
         if (!checklistCategory || !checklistTemplateId) {
           throw new BadRequest(
             `Wrong checklist category or template id: ${checklistCategory}, ${checklistTemplateId}`
@@ -311,8 +283,8 @@ export const dashboardStatsHandler = lambdaApi()(
         }
         const data =
           await dashboardStatsRepository.getQaAlertsStatsByChecklistReason(
-            startTimestamp,
-            endTimestamp,
+            start,
+            end,
             checklistTemplateId,
             checklistCategory
           )
@@ -325,16 +297,9 @@ export const dashboardStatsHandler = lambdaApi()(
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshQaStats()
       }
-      if (!endTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-      }
-      if (!startTimestamp) {
-        throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-      }
-      const data = await dashboardStatsRepository.getQaOverviewStats(
-        startTimestamp,
-        endTimestamp
-      )
+
+      const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
+      const data = await dashboardStatsRepository.getQaOverviewStats(start, end)
       return data
     })
 
@@ -344,15 +309,11 @@ export const dashboardStatsHandler = lambdaApi()(
         if (shouldRefreshAll(event)) {
           await dashboardStatsRepository.refreshQaStats()
         }
-        if (!endTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-        }
-        if (!startTimestamp) {
-          throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
-        }
+
+        const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
         const data = await dashboardStatsRepository.getQaAlertsByAssigneeStats(
-          startTimestamp,
-          endTimestamp
+          start,
+          end
         )
         return { data }
       }

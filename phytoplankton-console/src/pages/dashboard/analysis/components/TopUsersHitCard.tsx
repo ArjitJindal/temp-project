@@ -40,14 +40,9 @@ const TopUsersHitCard = (props: Props) => {
   const hitsPerUserResult = usePaginatedQuery(
     HITS_PER_USER(dateRange, direction),
     async (paginationParams) => {
-      let startTimestamp = dayjs().subtract(1, 'day').valueOf();
-      let endTimestamp = Date.now();
-
       const [start, end] = dateRange ?? [];
-      if (start != null && end != null) {
-        startTimestamp = start.startOf('day').valueOf();
-        endTimestamp = end.endOf('day').valueOf();
-      }
+      const startTimestamp = start?.startOf('day').valueOf();
+      const endTimestamp = end?.endOf('day').valueOf();
 
       const result = await api.getDashboardStatsHitsPerUser({
         ...paginationParams,

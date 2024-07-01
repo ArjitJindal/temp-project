@@ -47,9 +47,9 @@ interface Props extends WidgetProps {
 
 export default function UserStatusDistributionCard(props: Props) {
   const { userType = 'CONSUMER' } = props;
-  const [dateRange, setDateRange] = useState<WidgetRangePickerValue>({
-    startTimestamp: Date.now() - 7 * 24 * 60 * 60 * 1000,
-    endTimestamp: Date.now(),
+  const [dateRange, setDateRange] = useState<WidgetRangePickerValue | undefined>({
+    startTimestamp: dayjs().subtract(1, 'year').valueOf(),
+    endTimestamp: dayjs().valueOf(),
   });
   const usersResult = useUsersQuery(userType, dateRange);
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
@@ -104,7 +104,7 @@ export default function UserStatusDistributionCard(props: Props) {
           <WidgetRangePicker
             value={dateRange}
             onChange={(e) => {
-              e && setDateRange(e);
+              setDateRange(e);
               usersResult.refetch();
             }}
           />,

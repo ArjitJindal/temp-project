@@ -10,7 +10,7 @@ import GranularDatePicker, {
   timeframe,
 } from '../widgets/GranularDatePicker/GranularDatePicker';
 import s from './index.module.less';
-import { dayjs, Dayjs } from '@/utils/dayjs';
+import { Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { map, isSuccess } from '@/utils/asyncResource';
 import Widget from '@/components/library/Widget';
@@ -37,14 +37,9 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const api = useApi();
-  let startTimestamp = dayjs().subtract(1, 'day').valueOf();
-  let endTimestamp = Date.now();
-
   const [start, end] = dateRange ?? [];
-  if (start != null && end != null) {
-    startTimestamp = start.startOf('day').valueOf();
-    endTimestamp = end.endOf('day').valueOf();
-  }
+  const startTimestamp = start?.startOf('day').valueOf();
+  const endTimestamp = end?.endOf('day').valueOf();
 
   const params = {
     startTimestamp,

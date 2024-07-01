@@ -31,20 +31,10 @@ const QaAlertsByRuleHits = (props: Props) => {
 
   const api = useApi();
 
-  const getStartAndEndTimestamp = (
-    dateRange: RangeValue<Dayjs>,
-  ): {
-    startTimestamp: number;
-    endTimestamp: number;
-  } => {
-    let startTimestamp = dayjs().subtract(1, 'month').valueOf();
-    let endTimestamp = Date.now();
-
+  const getStartAndEndTimestamp = (dateRange: RangeValue<Dayjs>) => {
     const [start, end] = dateRange ?? [];
-    if (start != null && end != null) {
-      startTimestamp = start.startOf('day').valueOf();
-      endTimestamp = end.endOf('day').valueOf();
-    }
+    const startTimestamp = start?.startOf('day').valueOf();
+    const endTimestamp = end?.endOf('day').valueOf();
     return {
       startTimestamp,
       endTimestamp,

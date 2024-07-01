@@ -10,7 +10,7 @@ import GranularDatePicker, {
 } from '../widgets/GranularDatePicker/GranularDatePicker';
 import { formatDate } from '../../utils/date-utils';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
-import { dayjs, Dayjs } from '@/utils/dayjs';
+import { Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import {
   getRuleActionLabel,
@@ -35,14 +35,9 @@ export default function TransactionsChartWidget(props: WidgetProps) {
 
   const api = useApi();
 
-  let startTimestamp = dayjs().subtract(1, 'year').valueOf();
-  let endTimestamp = Date.now();
-
-  const [start, end] = dateRange ?? DEFAULT_DATE_RANGE;
-  if (start != null && end != null) {
-    startTimestamp = start.startOf('day').valueOf();
-    endTimestamp = end.endOf('day').valueOf();
-  }
+  const [start, end] = dateRange ?? [];
+  const startTimestamp = start?.startOf('day').valueOf();
+  const endTimestamp = end?.endOf('day').valueOf();
 
   const params = {
     startTimestamp,
