@@ -488,6 +488,51 @@ export const createLambdaMemoryUtilizationAlarm = (
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }
 
+export const createGlueJobFailedAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  glueJobName: string
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  const glueJobFailedMetric = new Metric({
+    namespace: 'AWS/Glue',
+    metricName: 'GlueJobRunFailed',
+    dimensionsMap: {
+      JobName: glueJobName,
+    },
+    statistic: 'sum',
+    period: Duration.minutes(5),
+  })
+
+  const glueJobErroredMetric = new Metric({
+    namespace: 'AWS/Glue',
+    metricName: 'GlueJobRunError',
+    dimensionsMap: {
+      JobName: glueJobName,
+    },
+    statistic: 'sum',
+    period: Duration.minutes(5),
+  })
+
+  new Alarm(context, `${glueJobName}GlueJobFailedAlarm`, {
+    metric: glueJobFailedMetric,
+    threshold: 1,
+    evaluationPeriods: 1,
+    comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+    alarmDescription: `Alarm if Glue job ${glueJobName} fails`,
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+
+  new Alarm(context, `${glueJobName}GlueJobErroredAlarm`, {
+    metric: glueJobErroredMetric,
+    threshold: 1,
+    evaluationPeriods: 1,
+    comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+    alarmDescription: `Alarm if Glue job ${glueJobName} encounters an error`,
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}
+
 export const createSQSOldestMessageAgeAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
