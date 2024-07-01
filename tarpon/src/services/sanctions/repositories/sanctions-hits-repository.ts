@@ -141,7 +141,7 @@ export class SanctionsHitsRepository {
           },
           {
             $project: {
-              docId: '$doc.id',
+              docId: '$caEntity.id',
             },
           },
         ])

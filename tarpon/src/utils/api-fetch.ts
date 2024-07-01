@@ -11,10 +11,15 @@ const fetchWithRetry = fetchRetry(fetch, {
   retries: 6,
 })
 
+export interface ApiFetchResult<T> {
+  statusCode: number
+  result: T
+}
+
 export const apiFetch = async <T>(
   url: RequestInfo,
   options?: RequestInitWithRetry
-): Promise<{ statusCode: number; result: T }> => {
+): Promise<ApiFetchResult<T>> => {
   const subsegment = await addNewSubsegment('ApiFetch', url.toString())
   subsegment?.addMetadata('url', url.toString())
   subsegment?.addMetadata('options', options)

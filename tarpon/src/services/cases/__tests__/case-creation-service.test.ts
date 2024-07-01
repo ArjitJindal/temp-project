@@ -50,7 +50,6 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   MOCK_CA_SEARCH_NO_HIT_RESPONSE,
-  MOCK_CA_SEARCH_RESPONSE_2,
   MOCK_CA_SEARCH_RESPONSE,
 } from '@/test-utils/resources/mock-ca-search-response'
 import { SanctionsService } from '@/services/sanctions'
@@ -69,10 +68,11 @@ jest.mock('@/services/sanctions', () => {
             ): ReturnType<SearchMethodType> => {
               const [request] = params
               let rawComplyAdvantageResponse
-              if (request.searchTerm.toLowerCase().includes('huawei')) {
+              if (
+                request.searchTerm.toLowerCase().includes('huawei') ||
+                request.searchTerm.toLowerCase().includes('putin')
+              ) {
                 rawComplyAdvantageResponse = MOCK_CA_SEARCH_RESPONSE
-              } else if (request.searchTerm.toLowerCase().includes('putin')) {
-                rawComplyAdvantageResponse = MOCK_CA_SEARCH_RESPONSE_2
               } else {
                 rawComplyAdvantageResponse = MOCK_CA_SEARCH_NO_HIT_RESPONSE
               }

@@ -1,6 +1,6 @@
-import { SanctionsService } from '..'
+import { SanctionsService, convertEntityToHit } from '..'
 import { SanctionsSearchRepository } from '../repositories/sanctions-search-repository'
-import { MOCK_CA_SEARCH_RESPONSE } from '../../../test-utils/resources/mock-ca-search-response'
+import { MOCK_SEARCH_1794517025_DATA } from '@/test-utils/resources/mock-ca-search-response'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
@@ -11,6 +11,11 @@ import { fromAsync } from '@/utils/array'
 
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
+
+const totalMockHitsCount = MOCK_SEARCH_1794517025_DATA.entities.reduce(
+  (acc, x) => acc + x.content.length,
+  0
+)
 
 describe('Sanctions Service', () => {
   const TEST_TENANT_ID = getTestTenantId()
@@ -38,12 +43,17 @@ describe('Sanctions Service', () => {
         })
       )
       testSearchId = response.searchId
+      expect(
+        response.rawComplyAdvantageResponse?.content?.data?.hits
+      ).toHaveLength(totalMockHitsCount)
       expect(response).toMatchObject({
         hitsCount: hits.length,
         searchId: expect.any(String),
-        rawComplyAdvantageResponse: MOCK_CA_SEARCH_RESPONSE,
       })
-      expect(mockFetch).toBeCalledTimes(2)
+      // 1 for creating new search
+      // 5 for paginating entities
+      // 1 for updating monitoring state
+      expect(mockFetch).toBeCalledTimes(1 + 5 + 1)
       expect(mockFetch.mock.calls[0]).toEqual([
         `https://api.complyadvantage.com/searches`,
         {
@@ -59,8 +69,8 @@ describe('Sanctions Service', () => {
           method: 'POST',
         },
       ])
-      expect(mockFetch.mock.calls[1]).toEqual([
-        `https://api.complyadvantage.com/searches/1051192082/monitors`,
+      expect(mockFetch.mock.calls[mockFetch.mock.calls.length - 1]).toEqual([
+        `https://api.complyadvantage.com/searches/1794517025/monitors`,
         {
           headers: {
             Authorization: 'Token fake',
@@ -90,8 +100,9 @@ describe('Sanctions Service', () => {
         types: ['SANCTIONS', 'PEP'],
       }
       await service.search(request)
+      const firstSearchCallsCount = mockFetch.mock.calls.length
       await service.search(request)
-      expect(mockFetch).toBeCalledTimes(1)
+      expect(mockFetch).toBeCalledTimes(firstSearchCallsCount)
     })
 
     test('Filter out whitelist entities (global level)', async () => {
@@ -106,17 +117,19 @@ describe('Sanctions Service', () => {
       }
       {
         const response = await service.search(request)
-        expect(response.hitsCount).toEqual(1)
+        expect(response.hitsCount).toEqual(totalMockHitsCount)
         const hitsCount = await service.sanctionsHitsRepository.countHits({
           filterSearchId: [response.searchId],
         })
-        expect(hitsCount).toEqual(1)
+        expect(hitsCount).toEqual(totalMockHitsCount)
       }
-      await service.addWhitelistEntities(
-        MOCK_CA_SEARCH_RESPONSE.content.data.hits.map(
-          (v) => v.doc
-        ) as any as ComplyAdvantageSearchHitDoc[]
-      )
+      for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
+        await service.addWhitelistEntities(
+          entityList.content.map(
+            (v) => convertEntityToHit(v).doc
+          ) as any as ComplyAdvantageSearchHitDoc[]
+        )
+      }
       {
         const response = await service.search(request)
         expect(response.hitsCount).toEqual(0)
@@ -144,18 +157,20 @@ describe('Sanctions Service', () => {
           ruleInstanceId: 'test',
           userId: testUserId,
         })
-        expect(response.hitsCount).toEqual(1)
+        expect(response.hitsCount).toEqual(totalMockHitsCount)
         const hitsCount = await service.sanctionsHitsRepository.countHits({
           filterSearchId: [response.searchId],
         })
-        expect(hitsCount).toEqual(1)
+        expect(hitsCount).toEqual(totalMockHitsCount)
       }
-      await service.addWhitelistEntities(
-        MOCK_CA_SEARCH_RESPONSE.content.data.hits.map(
-          (v) => v.doc
-        ) as any as ComplyAdvantageSearchHitDoc[],
-        testUserId
-      )
+      for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
+        await service.addWhitelistEntities(
+          entityList.content.map(
+            (v) => convertEntityToHit(v).doc
+          ) as any as ComplyAdvantageSearchHitDoc[],
+          testUserId
+        )
+      }
       {
         const response = await service.search(request, {
           ruleInstanceId: 'test',
@@ -172,11 +187,11 @@ describe('Sanctions Service', () => {
           ruleInstanceId: 'test',
           userId: testUserId2,
         })
-        expect(response.hitsCount).toEqual(1)
+        expect(response.hitsCount).toEqual(totalMockHitsCount)
         const hitsCount = await service.sanctionsHitsRepository.countHits({
           filterSearchId: [response.searchId],
         })
-        expect(hitsCount).toEqual(1)
+        expect(hitsCount).toEqual(totalMockHitsCount)
       }
     })
   })
@@ -189,7 +204,7 @@ describe('Sanctions Service', () => {
       })
       expect(mockFetch).toBeCalledTimes(1)
       expect(mockFetch.mock.calls[0]).toEqual([
-        `https://api.complyadvantage.com/searches/1051192082/monitors`,
+        `https://api.complyadvantage.com/searches/1794517025/monitors`,
         {
           headers: {
             Authorization: 'Token fake',

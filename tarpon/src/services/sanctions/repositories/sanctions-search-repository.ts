@@ -200,9 +200,17 @@ export class SanctionsSearchRepository {
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
-    return await collection.findOne({
-      'response.rawComplyAdvantageResponse.content.data.id': caSearchId,
-    })
+    const searches = await collection
+      .find({
+        'response.rawComplyAdvantageResponse.content.data.id': caSearchId,
+      })
+      .toArray()
+    if (searches.length > 1) {
+      throw new Error(
+        `Found more than 1 searches by CA id: ${caSearchId} (found ${searches.length})`
+      )
+    }
+    return searches[0]
   }
 
   public async updateSearchMonitoring(

@@ -1,0 +1,60 @@
+{
+  "status": "success",
+  "code": 200,
+  "content": {
+    "data": {
+      "id": 1051192082,
+      "ref": "1665008971-sY_uzk_L",
+      "searcher_id": 21260,
+      "assignee_id": 21260,
+      "filters": {
+        "country_codes": [],
+        "exact_match": false,
+        "fuzziness": 0.5,
+        "remove_deceased": 0,
+        "types": [
+          "pep",
+          "sanction",
+          "warning",
+          "fitness-probity",
+          "pep-class-4",
+          "pep-class-2",
+          "pep-class-3",
+          "pep-class-1"
+        ]
+      },
+      "match_status": "potential_match",
+      "risk_level": "unknown",
+      "search_term": "Huawei",
+      "submitted_term": "Huawei",
+      "client_ref": null,
+      "total_hits": 266,
+      "total_matches": 266,
+      "total_blacklist_hits": 0,
+      "created_at": "2022-10-05 22:29:31",
+      "updated_at": "2022-10-05 22:29:31",
+      "tags": [],
+      "labels": [],
+      "limit": 500,
+      "offset": 0,
+      "searcher": {
+        "id": 21260,
+        "email": "chia@flagright.com",
+        "name": "Chia-Lun Wu",
+        "phone": null,
+        "created_at": "2022-05-17 07:48:50",
+        "user_is_active": true
+      },
+      "assignee": {
+        "id": 21260,
+        "email": "chia@flagright.com",
+        "name": "Chia-Lun Wu",
+        "phone": null,
+        "created_at": "2022-05-17 07:48:50",
+        "user_is_active": true
+      },
+      "hits": [],
+      "blacklist_hits": []
+    }
+  }
+}
