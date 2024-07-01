@@ -28,7 +28,7 @@ import { getE2ETestProject } from './utils/e2e_test_stage'
 import { postDeploymentCodeBuildProject } from './utils/post_deploy_tarpon'
 import { PRODUCTION_REGIONS } from '@flagright/lib/constants/deploy'
 import { getTarponConfig } from '@flagright/lib/constants/config'
-import { databricksDeployStage } from './utils/databricks-deploy'
+import { viperDeployStage } from './utils/viper-deploy'
 import { BudgetServiceTypes, createBudget } from '@flagright/lib/cdk-utils'
 import {
   postProdDeployIntegrationsUpdateBuildProject,
@@ -135,8 +135,8 @@ export class CdkOrcaPipelineStack extends Stack {
               ),
             }),
             new codepipline_actions.CodeBuildAction({
-              actionName: 'Deploy_Databricks',
-              project: databricksDeployStage(this, devConfig, role),
+              actionName: 'Deploy_Viper',
+              project: viperDeployStage(this, devConfig, role),
               input: SOURCE_ARTIFACT,
             }),
           ],
@@ -199,8 +199,8 @@ export class CdkOrcaPipelineStack extends Stack {
               input: SOURCE_ARTIFACT,
             }),
             new codepipline_actions.CodeBuildAction({
-              actionName: 'Deploy_Databricks',
-              project: databricksDeployStage(this, sandboxConfig, role),
+              actionName: 'Deploy_Viper',
+              project: viperDeployStage(this, sandboxConfig, role),
               input: SOURCE_ARTIFACT,
             }),
           ],
@@ -259,13 +259,13 @@ export class CdkOrcaPipelineStack extends Stack {
                   environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
               ]
-              if (config.databricks && config.region !== 'us-1') {
+              if (config.Viper && config.region !== 'us-1') {
                 actions.push(
                   new codepipline_actions.CodeBuildAction({
-                    actionName: `Deploy_Databricks_${region
+                    actionName: `Deploy_Viper_${region
                       .toUpperCase()
                       .replace('-', '_')}`,
-                    project: databricksDeployStage(this, config, role),
+                    project: viperDeployStage(this, config, role),
                     input: SOURCE_ARTIFACT,
                   })
                 )

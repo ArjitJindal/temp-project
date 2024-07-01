@@ -13,7 +13,7 @@ import {
   periodVars,
   sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
-import { executeSql } from '@/utils/databricks'
+import { executeSql } from '@/utils/viper'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 export const TransactionSummary: PropertiesQuestion<
   Period & { currency: CurrencyCode; direction: Direction }

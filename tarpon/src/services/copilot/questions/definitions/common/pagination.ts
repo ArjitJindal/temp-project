@@ -1,4 +1,4 @@
-import { executeSql } from '@/utils/databricks'
+import { executeSql } from '@/utils/viper'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 
 export async function paginatedSqlQuery<T>(

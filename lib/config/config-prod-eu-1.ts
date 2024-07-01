@@ -91,7 +91,7 @@ export const config: Config = {
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: true,
   },
-  databricks: {
+  viper: {
     ADMIN_EMAILS: ADMIN_EMAILS,
     CREATE_METASTORE: true,
     CREATE_VPC: false,

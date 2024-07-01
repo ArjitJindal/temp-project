@@ -96,7 +96,7 @@ export type Config = {
     LAMBDA_VPC_ENABLED?: boolean
     INSPECTOR_ENABLED: boolean
   }
-  databricks?: {
+  viper?: {
     ADMIN_EMAILS: string[]
     CREATE_METASTORE: boolean
     CREATE_VPC: boolean

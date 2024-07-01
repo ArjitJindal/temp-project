@@ -207,7 +207,6 @@
     "@aws-sdk/signature-v4-crt": "^3.587.0",
     "@aws-sdk/util-arn-parser": "^3.47.1",
     "@aws-sdk/util-dynamodb": "^3.592.0",
-    "@databricks/sql": "1.7.0",
     "@fast-csv/format": "^4.3.5",
     "@fast-csv/parse": "^4.3.6",
     "@flagright/lib": "link:../lib",

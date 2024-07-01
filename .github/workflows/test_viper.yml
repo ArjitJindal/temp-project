@@ -1,4 +1,4 @@
-name: Test databricks
+name: Test viper
 
 #defaults:
 #  run:
@@ -12,12 +12,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "databricks/**"
+      - "viper/**"
   workflow_call:
 jobs:
   test:
     timeout-minutes: 30
-    name: test-databricks
+    name: test-viper
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,11 +34,11 @@ jobs:
         with:
           node-version: 18
       - name: Install dependencies
-        working-directory: "databricks"
+        working-directory: "viper"
         run: poetry install
       - name: Generate sources
-        working-directory: "databricks"
+        working-directory: "viper"
         run: make generate
       - name: Run checks
-        working-directory: "databricks"
+        working-directory: "viper"
         run: make all_checks

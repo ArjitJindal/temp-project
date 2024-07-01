@@ -7,8 +7,8 @@ infra:
 frontend:
   - phytoplankton-console/**
 
-databricks:
-  - databricks/**
+viper:
+  - viper/**
 
 raptor:
   - raptor/**

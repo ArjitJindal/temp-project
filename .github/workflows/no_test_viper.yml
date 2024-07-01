@@ -1,12 +1,12 @@
-name: No test databricks
+name: No test viper
 on:
   pull_request:
     branches: [main]
     paths-ignore:
-      - "databricks/**"
+      - "viper/**"
 jobs:
   test:
-    name: test-databricks
+    name: test-viper
     runs-on: ubuntu-latest
     steps:
       - run: 'echo "No build required"'

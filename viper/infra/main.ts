@@ -138,15 +138,15 @@ class DatabricksStack extends TerraformStack {
 
     new provider.TimeProvider(this, 'time', {})
 
-    if (!config.databricks) {
+    if (!config.viper) {
       return
     }
 
     // Create or retrieve metastores, VPC, users.
-    const { securityGroupIds, subnetIds, vpcId } = config.databricks.CREATE_VPC
+    const { securityGroupIds, subnetIds, vpcId } = config.viper.CREATE_VPC
       ? this.createVpc()
       : this.fetchVpc()
-    const metastoreId = config.databricks.CREATE_METASTORE
+    const metastoreId = config.viper.CREATE_METASTORE
       ? this.createMetastore()
       : this.fetchMetastore()
 
@@ -210,17 +210,8 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
-    // Configure workspace internals
-    // Note; On first run, this should be commented out. On second run, it should be uncommented.
-    // This is an unresolved dependency issue.
-    this.workspace({
-      profileRoleName,
-      workspace,
-      workspaceProvider,
-    })
-
     this.awsWorkspace(
-      config.databricks.CREATE_VPC
+      config.viper.CREATE_VPC
         ? undefined
         : {
             availabilityZone: `${awsRegion}a`,
@@ -586,7 +577,7 @@ class DatabricksStack extends TerraformStack {
       }
     )
 
-    config.databricks?.ADMIN_EMAILS.forEach((email, i) => {
+    config.viper?.ADMIN_EMAILS.forEach((email, i) => {
       const user = new databricks.dataDatabricksUser.DataDatabricksUser(
         this,
         `data-user-${email}`,
@@ -1667,11 +1658,6 @@ class DatabricksStack extends TerraformStack {
         }
       )
     return Fn.lookup(metastores.ids, `primary-${region}`)
-  }
-
-  private templateJobNotebook(job: string) {
-    return btoa(`${notebookHeader}
-Jobs(spark).${job}()`)
   }
 
   private templateAwsJobNotebook(job: string) {

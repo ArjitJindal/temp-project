@@ -12,7 +12,7 @@ import {
   TimeGranularity,
   timeXAxis,
 } from '@/services/copilot/questions/definitions/util'
-import { executeSql } from '@/utils/databricks'
+import { executeSql } from '@/utils/viper'
 import dayjs from '@/utils/dayjs'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { notEmpty } from '@/utils/array'

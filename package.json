@@ -1,7 +1,7 @@
 {
   "name": "tarpon",
   "version": "1.0.0",
-  "description": "`phytoplankton` - Frontend code for the console `tarpon` - Our backend API `databricks` - Our ML stack",
+  "description": "`phytoplankton` - Frontend code for the console `tarpon` - Our backend API `viper` - Our data platform",
   "main": "index.js",
   "scripts": {
     "preinstall": "cd lib && corepack enable && yarn",

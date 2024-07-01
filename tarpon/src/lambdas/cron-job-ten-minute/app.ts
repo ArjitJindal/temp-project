@@ -6,7 +6,7 @@ import dayjs from '@/utils/dayjs'
 import { CurrencyService } from '@/services/currency'
 
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
-  // Hack to ensure we query the currency data for databricks.
+  // Hack to ensure we query the currency data for viper.
   await new CurrencyService().getCurrencyExchangeRate('USD', 'EUR')
   const tenantIds = await TenantService.getAllTenantIds()
 

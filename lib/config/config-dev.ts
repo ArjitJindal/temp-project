@@ -79,7 +79,7 @@ export const config: Config = {
     },
     INSPECTOR_ENABLED: false,
   },
-  databricks: {
+  viper: {
     ADMIN_EMAILS: ALL_ENGINEERS,
     CREATE_METASTORE: false,
     CREATE_VPC: true,

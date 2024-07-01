@@ -5,14 +5,14 @@ import { getAssumeRoleCommands } from './assume-role-commands'
 import { installTerraform } from '../constants/terraform-commands'
 import { ComputeType } from 'aws-cdk-lib/aws-codebuild'
 
-export const databricksDeployStage = (
+export const viperDeployStage = (
   scope: Construct,
   config: Config,
   codeDeployRole: iam.IRole
 ) => {
   return new codebuild.PipelineProject(
     scope,
-    `DatabricksBuild-${config.stage}-${config.region}`,
+    `ViperBuild-${config.stage}-${config.region}`,
     {
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
@@ -28,7 +28,7 @@ export const databricksDeployStage = (
               'yarn install --immutable',
               'cd lib',
               'yarn install --immutable',
-              'cd ../databricks/infra',
+              'cd ../viper/infra',
               'npm install',
               ...getAssumeRoleCommands(config),
               'cd ../..',
@@ -37,7 +37,7 @@ export const databricksDeployStage = (
           build: {
             commands: [
               ...installTerraform,
-              'cd databricks',
+              'cd viper',
               'make generate',
               'cd infra',
               'pip install poetry',
