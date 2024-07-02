@@ -204,4 +204,40 @@ describe('Linker', () => {
     expect(entity.phoneLinked.size).toBe(1)
     expect(entity.phoneLinked.get('123456789')).toHaveLength(2)
   })
+
+  test('Users wih no links', async () => {
+    const tenantId = getTestTenantId()
+    const mongoClient = await getMongoDbClient()
+    const db = mongoClient.db()
+
+    const userCollection = db.collection<InternalUser>(
+      USERS_COLLECTION(tenantId)
+    )
+    await userCollection.insertMany([
+      {
+        type: 'BUSINESS',
+        userId: 'u1',
+        createdTimestamp: 0,
+        legalEntity: {
+          companyGeneralDetails: { legalName: 'Acme' },
+        },
+      },
+      {
+        type: 'BUSINESS',
+        userId: 'u2',
+        createdTimestamp: 0,
+        legalEntity: {
+          companyGeneralDetails: { legalName: 'Glitter Corp' },
+        },
+      },
+    ])
+
+    const ls = new LinkerService(tenantId)
+    const entity = await ls.entity('u1')
+
+    expect(entity.emailLinked.size).toBe(0)
+    expect(entity.addressLinked.size).toBe(0)
+    expect(entity.phoneLinked.size).toBe(0)
+    expect(entity.paymentMethodLinked.size).toBe(0)
+  })
 })

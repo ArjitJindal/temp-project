@@ -81,7 +81,8 @@ export class LinkerService {
 
     for (const [nodeId] of nodeMap.entries()) {
       if (
-        !linkedEdges.some((e) => e.source === nodeId || e.target === nodeId)
+        !linkedEdges.some((e) => e.source === nodeId || e.target === nodeId) &&
+        nodeId !== `user:${userId}`
       ) {
         nodeMap.delete(nodeId)
       }
